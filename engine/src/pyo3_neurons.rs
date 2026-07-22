@@ -91,9 +91,17 @@ mod sensory_bindings;
 mod synapse_bindings;
 
 pub use biophysical_bindings::*;
+pub use cerebellar_bindings::*;
+pub use channel_bindings::*;
+pub use interneuron_bindings::*;
 pub use map_bindings::*;
+pub use misc_bindings::*;
+pub use motor_bindings::*;
 pub use multi_compartment_bindings::*;
+pub use population_bindings::*;
+pub use sensory_bindings::*;
 pub use simple_spiking_bindings::*;
+pub use synapse_bindings::*;
 pub use trivial_bindings::*;
 
 // EPropALIFNeuron: needs tau params
@@ -1129,21 +1137,13 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     adex_neuron_binding::register(m)?;
     crate::exp_if_binding::register_legacy_alias(m)?;
     lapicque_neuron_binding::register(m)?;
-    // interneurons
     interneuron_bindings::register(m)?;
-    // motor
     motor_bindings::register(m)?;
-    // sensory
     sensory_bindings::register(m)?;
-    // cerebellar
     cerebellar_bindings::register(m)?;
-    // channels
     channel_bindings::register(m)?;
-    // population
     population_bindings::register(m)?;
-    // misc
     misc_bindings::register(m)?;
-    // gap synapse models
     synapse_bindings::register(m)?;
     Ok(())
 }

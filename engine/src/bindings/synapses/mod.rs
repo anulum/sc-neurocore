@@ -12,6 +12,10 @@ mod dopamine_stdp_synapse;
 mod short_term_plasticity_synapse;
 mod triplet_stdp_synapse;
 
+pub use dopamine_stdp_synapse::PyDopamineStdpSynapse;
+pub use short_term_plasticity_synapse::PyShortTermPlasticitySynapse;
+pub use triplet_stdp_synapse::PyTripletStdpSynapse;
+
 /// Register the three model-owned synapse classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     triplet_stdp_synapse::register(module)?;

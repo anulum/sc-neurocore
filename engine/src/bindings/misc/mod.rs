@@ -17,6 +17,15 @@ mod myelinated_axon;
 mod node_of_ranvier;
 mod smooth_muscle_cell;
 
+pub use cardiac_purkinje_fibre::PyCardiacPurkinjeFibre;
+pub use endocrine_beta_cell::PyEndocrineBetaCell;
+pub use frankenhaeuser_huxley_axon::PyFHAxon;
+pub use gap_junction_neuron::PyGapJunctionNeuron;
+pub use graded_synapse_neuron::PyGradedSynapseNeuron;
+pub use myelinated_axon::PyMyelinatedAxon;
+pub use node_of_ranvier::PyNodeOfRanvier;
+pub use smooth_muscle_cell::PySmoothMuscleCell;
+
 /// Register the eight model-owned miscellaneous neuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     graded_synapse_neuron::register(module)?;

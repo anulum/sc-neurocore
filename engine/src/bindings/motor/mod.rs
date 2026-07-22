@@ -14,6 +14,12 @@ mod motor_unit;
 mod renshaw_cell;
 mod upper_motor_neuron;
 
+pub use alpha_motor_neuron::PyAlphaMotorNeuron;
+pub use gamma_motor_neuron::PyGammaMotorNeuron;
+pub use motor_unit::PyMotorUnit;
+pub use renshaw_cell::PyRenshawCell;
+pub use upper_motor_neuron::PyUpperMotorNeuron;
+
 /// Register the five model-owned motor neuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     alpha_motor_neuron::register(module)?;

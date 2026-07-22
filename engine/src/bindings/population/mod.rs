@@ -13,6 +13,11 @@ mod el_boustani_network;
 mod montbrio_mean_field;
 mod tum_network;
 
+pub use brunel_network::PyBrunelNetwork;
+pub use el_boustani_network::PyElBoustaniNetwork;
+pub use montbrio_mean_field::PyMontbrioMeanField;
+pub use tum_network::PyTUMNetwork;
+
 /// Register the four model-owned population classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     montbrio_mean_field::register(module)?;

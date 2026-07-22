@@ -15,6 +15,13 @@ mod pv_fast_spiking_neuron;
 mod sst_neuron;
 mod vip_neuron;
 
+pub use cerebellar_basket_neuron::PyCerebellarBasketNeuron;
+pub use chandelier_neuron::PyChandelierNeuron;
+pub use martinotti_neuron::PyMartinottiNeuron;
+pub use pv_fast_spiking_neuron::PyPVFastSpikingNeuron;
+pub use sst_neuron::PySSTNeuron;
+pub use vip_neuron::PyVIPNeuron;
+
 /// Register the six model-owned interneuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     pv_fast_spiking_neuron::register(module)?;

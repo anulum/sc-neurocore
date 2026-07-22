@@ -15,6 +15,13 @@ mod lugaro_cell;
 mod stellate_cell;
 mod unipolar_brush_cell;
 
+pub use dcn_neuron::PyDCNNeuron;
+pub use golgi_cell::PyGolgiCell;
+pub use granule_cell::PyGranuleCell;
+pub use lugaro_cell::PyLugaroCell;
+pub use stellate_cell::PyStellateCell;
+pub use unipolar_brush_cell::PyUnipolarBrushCell;
+
 /// Register the six model-owned cerebellar neuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     granule_cell::register(module)?;

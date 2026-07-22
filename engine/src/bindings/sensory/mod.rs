@@ -24,6 +24,19 @@ mod retinal_ganglion_cell;
 mod rod_photoreceptor;
 mod taste_receptor_cell;
 
+pub use cochlear_hair_cell::PyCochlearHairCell;
+pub use cone_photoreceptor::PyConePhotoreceptor;
+pub use direction_selective_rgc::PyDirectionSelectiveRGC;
+pub use inner_hair_cell::PyInnerHairCell;
+pub use merkel_cell::PyMerkelCell;
+pub use nociceptor::PyNociceptor;
+pub use olfactory_receptor_neuron::PyOlfactoryReceptorNeuron;
+pub use outer_hair_cell::PyOuterHairCell;
+pub use pacinian_corpuscle::PyPacinianCorpuscle;
+pub use retinal_ganglion_cell::PyRetinalGanglionCell;
+pub use rod_photoreceptor::PyRodPhotoreceptor;
+pub use taste_receptor_cell::PyTasteReceptorCell;
+
 /// Register the twelve model-owned sensory-neuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     inner_hair_cell::register(module)?;

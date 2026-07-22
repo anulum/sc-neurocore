@@ -16,6 +16,14 @@ mod persistent_na_neuron;
 mod sk_neuron;
 mod t_type_ca_neuron;
 
+pub use a_type_k_neuron::PyATypeKNeuron;
+pub use bk_neuron::PyBKNeuron;
+pub use ih_neuron::PyIhNeuron;
+pub use nmda_neuron::PyNMDANeuron;
+pub use persistent_na_neuron::PyPersistentNaNeuron;
+pub use sk_neuron::PySKNeuron;
+pub use t_type_ca_neuron::PyTTypeCaNeuron;
+
 /// Register the seven model-owned ion-channel neuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     persistent_na_neuron::register(module)?;
