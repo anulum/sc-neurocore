@@ -74,7 +74,9 @@ def test_binary_hashes_bind_loaded_native_artefacts() -> None:
 
 def test_committed_evidence_matches_sources_and_bounded_parity() -> None:
     """Reject stale evidence, unavailable runtimes, and unbounded trace drift."""
-    payload = json.loads(benchmark.DEFAULT_OUTPUT.read_text(encoding="utf-8"))
+    artifact_text = benchmark.DEFAULT_OUTPUT.read_text(encoding="utf-8")
+    assert str(benchmark.REPOSITORY) not in artifact_text
+    payload = json.loads(artifact_text)
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
     assert payload["kernel"] == benchmark.KERNEL
     assert payload["production_speed_claim"] is False

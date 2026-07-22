@@ -409,12 +409,13 @@ def main(argv: list[str] | None = None) -> int:
             "runtime_cpuset_shield_claimed": False,
         },
     }
-    rendered = json.dumps(report, indent=2, sort_keys=True)
-    print(rendered)
     if parity_failed:
+        print("Wilson-Cowan parity failed; benchmark evidence was not written")
         return 3
+    rendered = json.dumps(report, indent=2, sort_keys=True)
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(rendered + "\n", encoding="utf-8")
+    print(f"Wrote {args.json}")
     return 0
 
 

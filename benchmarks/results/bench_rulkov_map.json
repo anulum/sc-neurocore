@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 16.366592957638204,
-      "min_ms": 14.782850979827344,
+      "median_ms": 22.05812791362405,
+      "min_ms": 19.172752974554896,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 21.32856044012815,
+      "speedup_vs_python": 44.76143074350274,
       "spikes": 34
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 21.064689033664763,
-      "min_ms": 17.67419499810785,
+      "median_ms": 32.55572193302214,
+      "min_ms": 23.520336020737886,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 16.57161264227935,
+      "speedup_vs_python": 30.328105362501834,
       "spikes": 34
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 16.877539921551943,
-      "min_ms": 14.486799947917461,
+      "median_ms": 18.36253982037306,
+      "min_ms": 17.915287986397743,
       "parity_max_abs_diff": 1.7763568394002505e-15,
-      "speedup_vs_python": 20.682864251454458,
+      "speedup_vs_python": 53.76997815092815,
       "spikes": 34
     },
     "python": {
       "backend": "python",
-      "median_ms": 349.07586709596217,
-      "min_ms": 334.7923510009423,
+      "median_ms": 987.3533649370074,
+      "min_ms": 812.3806279618293,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 34
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 13.44356406480074,
-      "min_ms": 13.166729942895472,
+      "median_ms": 22.493492113426328,
+      "min_ms": 16.523983096703887,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 25.966021020418754,
+      "speedup_vs_python": 43.895067958241036,
       "spikes": 34
     }
   },
@@ -51,42 +51,42 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 349.07586709596217,
-      "min_ms": 334.7923510009423,
+      "median_ms": 987.3533649370074,
+      "min_ms": 812.3806279618293,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 34
     },
     {
       "backend": "rust",
-      "median_ms": 13.44356406480074,
-      "min_ms": 13.166729942895472,
+      "median_ms": 22.493492113426328,
+      "min_ms": 16.523983096703887,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 25.966021020418754,
+      "speedup_vs_python": 43.895067958241036,
       "spikes": 34
     },
     {
       "backend": "julia",
-      "median_ms": 21.064689033664763,
-      "min_ms": 17.67419499810785,
+      "median_ms": 32.55572193302214,
+      "min_ms": 23.520336020737886,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 16.57161264227935,
+      "speedup_vs_python": 30.328105362501834,
       "spikes": 34
     },
     {
       "backend": "go",
-      "median_ms": 16.366592957638204,
-      "min_ms": 14.782850979827344,
+      "median_ms": 22.05812791362405,
+      "min_ms": 19.172752974554896,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 21.32856044012815,
+      "speedup_vs_python": 44.76143074350274,
       "spikes": 34
     },
     {
       "backend": "mojo",
-      "median_ms": 16.877539921551943,
-      "min_ms": 14.486799947917461,
+      "median_ms": 18.36253982037306,
+      "min_ms": 17.915287986397743,
       "parity_max_abs_diff": 1.7763568394002505e-15,
-      "speedup_vs_python": 20.682864251454458,
+      "speedup_vs_python": 53.76997815092815,
       "spikes": 34
     }
   ],
@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_rulkov_map.py": "d0198665235c66d968c9a104faac74dedbfb369d58e6bb3cb93cb23cc22632ca",
     "engine/src/lib": {
-      "rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5"
+      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
     },
-    "engine/src/lib.rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5",
+    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
     "engine/src/neurons/rulkov_map": {
       "rs": "e68dbf88c51ed6a05b0cb2a8b2dafcb005936539573eefe4fe267aa389a1267c"
     },

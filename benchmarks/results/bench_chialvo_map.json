@@ -8,10 +8,13 @@
         "x": 0.10810054306166875,
         "y": 2.0422731728210026
       },
-      "median_call_ms": 20.524409,
-      "minimum_call_ms": 19.558373,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 3.4389158187764224e-14,
+      "median_call_ms": 75.248328,
+      "minimum_call_ms": 35.074869,
+      "parity_atol": 1e-10,
       "parity_max_abs_diff": 3.5424996269739495e-12,
-      "speedup_vs_python": 106.01355556693497,
+      "speedup_vs_python": 106.61285231480491,
       "used": true
     },
     "julia": {
@@ -22,10 +25,13 @@
         "x": 0.10810054306171848,
         "y": 2.042273172820973
       },
-      "median_call_ms": 9.575935,
-      "minimum_call_ms": 9.134327,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 1.534883331544279e-14,
+      "median_call_ms": 30.689904,
+      "minimum_call_ms": 19.954681,
+      "parity_atol": 1e-10,
       "parity_max_abs_diff": 1.7363888105137448e-12,
-      "speedup_vs_python": 227.22225808759146,
+      "speedup_vs_python": 261.4031923983861,
       "used": true
     },
     "mojo": {
@@ -36,10 +42,13 @@
         "x": 0.10810055061477401,
         "y": 2.0422731681758846
       },
-      "median_call_ms": 11.373089,
-      "minimum_call_ms": 10.773861,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 7.553070877075463e-09,
+      "median_call_ms": 15.055512,
+      "minimum_call_ms": 13.340943,
+      "parity_atol": 1e-06,
       "parity_max_abs_diff": 6.83866635764474e-07,
-      "speedup_vs_python": 191.3170268868906,
+      "speedup_vs_python": 532.8572605169455,
       "used": true
     },
     "python": {
@@ -50,8 +59,11 @@
         "x": 0.10810054306170314,
         "y": 2.042273172820982
       },
-      "median_call_ms": 2175.865574,
-      "minimum_call_ms": 2134.55726,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 8022.43888,
+      "minimum_call_ms": 7219.613688,
+      "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -64,37 +76,40 @@
         "x": 0.10810054306173869,
         "y": 2.04227317282096
       },
-      "median_call_ms": 7.26987,
-      "minimum_call_ms": 6.901604,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 3.555489236362064e-14,
+      "median_call_ms": 12.570333,
+      "minimum_call_ms": 8.794663,
+      "parity_atol": 1e-10,
       "parity_max_abs_diff": 5.1951776214309575e-12,
-      "speedup_vs_python": 299.29910356031127,
+      "speedup_vs_python": 638.2041653152705,
       "used": true
     }
   },
   "kernel": "chialvo_map_simulate",
   "measured_order": [
     "rust",
-    "julia",
     "mojo",
+    "julia",
     "go",
     "python"
   ],
   "meta": {
     "affinity": [
-      4
+      8
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      3.5810546875,
-      3.19580078125,
-      3.62939453125
+      33.97607421875,
+      33.07373046875,
+      29.271484375
     ],
     "load_average_start": [
-      3.1767578125,
-      3.1025390625,
-      3.60595703125
+      33.10693359375,
+      32.55126953125,
+      28.8271484375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -110,10 +125,10 @@
   },
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
-    "benchmarks/bench_chialvo_map.py": "d671222b8d25d728fbabedfa1b16ec6d1b80ea8f1cfaa2219ef55645d503b6c1",
-    "bridge/sc_neurocore_engine/__init__.py": "dc04a0b7a4538fea93bb369834bdf1a60362808005dc2519248fd27e85c5c1f3",
-    "engine/src/lib.rs": "bfa2cc5e631c345390c8651c216708438fde26d2e1a138cb80ed3b9b80556a07",
-    "engine/src/neurons/maps.rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483",
+    "benchmarks/bench_chialvo_map.py": "4cc9223f487303aae19348a3621739ee308f16d54d065a54a98cebe33810d48d",
+    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
+    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
+    "engine/src/neurons/chialvo_map.rs": "3b23aa76d48b64da889bed3aa482e2203607e81593358f97337f8fbef92b0c3e",
     "src/sc_neurocore/accel/go/neurons/chialvo_map/chialvo_map.go": "787bf993c6e617f787ae1503b72c89d35cc1bf045f0cc0392a7450ed52b67bb3",
     "src/sc_neurocore/accel/go/services/chialvo_map.go": "1d879a94055efb9f39bc0fd48b0647d4b3f648519c68cab4bbcba528ef2cf9ff",
     "src/sc_neurocore/accel/julia/neurons/chialvo_map.jl": "059519f7351682bde284f2606ea9392e5e6318b7b9933666d3a88eaac41ff6a8",

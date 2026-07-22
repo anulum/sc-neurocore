@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 12.041572015732527,
-      "min_ms": 9.709884994663298,
+      "median_ms": 14.020616887137294,
+      "min_ms": 12.784268008545041,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 77.04974547817422,
+      "speedup_vs_python": 127.66983217717745,
       "spikes": 24
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 27.677409001626074,
-      "min_ms": 26.224902947433293,
+      "median_ms": 35.07880889810622,
+      "min_ms": 34.4228979665786,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 33.52192609195418,
+      "speedup_vs_python": 51.02823788004828,
       "spikes": 24
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 10.084601934067905,
-      "min_ms": 9.785331087186933,
+      "median_ms": 14.46149405092001,
+      "min_ms": 13.453662861138582,
       "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 92.00165410941932,
+      "speedup_vs_python": 123.77765386470853,
       "spikes": 24
     },
     "python": {
       "backend": "python",
-      "median_ms": 927.8000589692965,
-      "min_ms": 857.3091790312901,
+      "median_ms": 1790.0098050013185,
+      "min_ms": 1622.6151990704238,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 24
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 12.100009014829993,
-      "min_ms": 11.910640983842313,
+      "median_ms": 16.93249703384936,
+      "min_ms": 15.836049104109406,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 76.67763369698054,
+      "speedup_vs_python": 105.71446145379218,
       "spikes": 24
     }
   },
@@ -51,42 +51,42 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 927.8000589692965,
-      "min_ms": 857.3091790312901,
+      "median_ms": 1790.0098050013185,
+      "min_ms": 1622.6151990704238,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 24
     },
     {
       "backend": "rust",
-      "median_ms": 12.100009014829993,
-      "min_ms": 11.910640983842313,
+      "median_ms": 16.93249703384936,
+      "min_ms": 15.836049104109406,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 76.67763369698054,
+      "speedup_vs_python": 105.71446145379218,
       "spikes": 24
     },
     {
       "backend": "julia",
-      "median_ms": 27.677409001626074,
-      "min_ms": 26.224902947433293,
+      "median_ms": 35.07880889810622,
+      "min_ms": 34.4228979665786,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 33.52192609195418,
+      "speedup_vs_python": 51.02823788004828,
       "spikes": 24
     },
     {
       "backend": "go",
-      "median_ms": 12.041572015732527,
-      "min_ms": 9.709884994663298,
+      "median_ms": 14.020616887137294,
+      "min_ms": 12.784268008545041,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 77.04974547817422,
+      "speedup_vs_python": 127.66983217717745,
       "spikes": 24
     },
     {
       "backend": "mojo",
-      "median_ms": 10.084601934067905,
-      "min_ms": 9.785331087186933,
+      "median_ms": 14.46149405092001,
+      "min_ms": 13.453662861138582,
       "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 92.00165410941932,
+      "speedup_vs_python": 123.77765386470853,
       "spikes": 24
     }
   ],
@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_cazelles_map.py": "28919b591aab9b075a334cfc3a74643863b1755f2a014893bd9b7ebfe54d8713",
     "engine/src/lib": {
-      "rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5"
+      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
     },
-    "engine/src/lib.rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5",
+    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
     "engine/src/neurons/cazelles_map": {
       "rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85"
     },

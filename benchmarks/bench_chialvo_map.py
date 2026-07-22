@@ -41,11 +41,18 @@ N_REPEATS = 5
 CURRENT = 0.0
 KERNEL = "chialvo_map_simulate"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
+PARITY_ATOL = {
+    "python": 0.0,
+    "rust": 1.0e-10,
+    "julia": 1.0e-10,
+    "go": 1.0e-10,
+    "mojo": 1.0e-6,
+}
 SOURCE_PATHS = (
     "benchmarks/bench_chialvo_map.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/lib.rs",
-    "engine/src/neurons/maps.rs",
+    "engine/src/neurons/chialvo_map.rs",
     "src/sc_neurocore/accel/go/neurons/chialvo_map/chialvo_map.go",
     "src/sc_neurocore/accel/go/services/chialvo_map.go",
     "src/sc_neurocore/accel/julia/neurons/chialvo_map.jl",
@@ -210,6 +217,7 @@ def main(argv: list[str]) -> int:
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
     reference_spikes: int | None = None
+    reference_final: tuple[float, float] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
@@ -224,11 +232,22 @@ def main(argv: list[str]) -> int:
             reference = trace
             reference_ms = median_ms
             reference_spikes = spikes
+            reference_final = (x_final, y_final)
             parity = 0.0
+            final_state_delta = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if (
+                reference is None
+                or reference_ms is None
+                or reference_spikes is None
+                or reference_final is None
+            ):
                 raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference)))
+            final_state_delta = max(
+                abs(x_final - reference_final[0]),
+                abs(y_final - reference_final[1]),
+            )
         rows[backend] = {
             "available": True,
             "used": True,
@@ -236,11 +255,14 @@ def main(argv: list[str]) -> int:
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": (reference_ms / median_ms) if reference_ms is not None else 1.0,
             "parity_max_abs_diff": parity,
+            "parity_atol": PARITY_ATOL[backend],
             "event_count": spikes,
             "event_count_matches_python": (
                 True if reference_spikes is None else spikes == reference_spikes
             ),
             "final_state": {"x": x_final, "y": y_final},
+            "final_state_max_abs_diff": final_state_delta,
+            "final_state_matches_python": final_state_delta <= PARITY_ATOL[backend],
         }
 
     measured_order = sorted(
@@ -261,9 +283,6 @@ def main(argv: list[str]) -> int:
         "measured_order": measured_order,
         "source_hashes": _source_hashes(),
     }
-    args.json.parent.mkdir(parents=True, exist_ok=True)
-    args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
     print(f"Chialvo benchmark: {N_STEPS:,} iterations x {N_REPEATS} repeats")
     for backend in measured_order:
         row = rows[backend]
@@ -274,10 +293,21 @@ def main(argv: list[str]) -> int:
             f"events={int(row['event_count'])}"
         )
     print(f"Measured order: {', '.join(measured_order)}")
-    print(f"Wrote {args.json}")
-
-    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+    fidelity_failed = any(
+        row.get("used") is True
+        and (
+            not bool(row.get("event_count_matches_python"))
+            or not bool(row.get("final_state_matches_python"))
+            or float(row["parity_max_abs_diff"]) > PARITY_ATOL[backend]
+        )
+        for backend, row in rows.items()
+    )
+    if fidelity_failed:
+        print("Chialvo fidelity failed; benchmark evidence was not written")
         return 3
+    args.json.parent.mkdir(parents=True, exist_ok=True)
+    args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Wrote {args.json}")
     return 0
 
 

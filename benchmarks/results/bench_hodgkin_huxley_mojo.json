@@ -10,10 +10,10 @@
         "n": 0.4793337094301593,
         "v": -65.85312343949775
       },
-      "median_call_ms": 0.962347,
-      "minimum_call_ms": 0.831693,
+      "median_call_ms": 1.025955,
+      "minimum_call_ms": 0.746385,
       "parity_max_abs_diff": 1.6047962958509743e-10,
-      "speedup_vs_python": 150.3371704800867,
+      "speedup_vs_python": 127.99899508263034,
       "used": true
     },
     "python": {
@@ -26,8 +26,8 @@
         "n": 0.47933370943008335,
         "v": -65.85312343949003
       },
-      "median_call_ms": 144.676525,
-      "minimum_call_ms": 93.245828,
+      "median_call_ms": 131.321209,
+      "minimum_call_ms": 98.266331,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -42,10 +42,10 @@
         "n": 0.47933370943008374,
         "v": -65.85312343949006
       },
-      "median_call_ms": 0.960078,
-      "minimum_call_ms": 0.753815,
+      "median_call_ms": 0.91513,
+      "minimum_call_ms": 0.639683,
       "parity_max_abs_diff": 9.485745522397337e-13,
-      "speedup_vs_python": 150.69246977849716,
+      "speedup_vs_python": 143.5000590080098,
       "used": true
     }
   },
@@ -57,20 +57,20 @@
   ],
   "meta": {
     "affinity": [
-      2
+      8
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      20.85791015625,
-      17.978515625,
-      16.7236328125
+      30.68505859375,
+      34.9384765625,
+      27.3505859375
     ],
     "load_average_start": [
-      20.85791015625,
-      17.978515625,
-      16.7236328125
+      30.68505859375,
+      34.9384765625,
+      27.3505859375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -97,9 +97,9 @@
     },
     "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
     "engine/src/pyo3_neurons": {
-      "rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9"
+      "rs": "370077f231a4189644880bdde11d0eacc95b67b4e9e6b8ad99ae097022adb645"
     },
-    "engine/src/pyo3_neurons.rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9",
+    "engine/src/pyo3_neurons.rs": "370077f231a4189644880bdde11d0eacc95b67b4e9e6b8ad99ae097022adb645",
     "src/sc_neurocore/accel/go/services/hodgkin_huxley": {
       "go": "630937354359111414f1dac84f36b666acd9a1f199f9d548fab97c4e9e342271"
     },

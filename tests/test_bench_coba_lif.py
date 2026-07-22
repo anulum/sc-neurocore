@@ -97,7 +97,13 @@ def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
         "warmup_steps": benchmark.WARMUP_STEPS,
     }
     assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
-    assert payload["recommended_auto_backend"] == "julia"
+    measured_order = sorted(
+        benchmark.BACKENDS,
+        key=lambda backend: float(payload["backends"][backend]["median_call_ms"]),
+    )
+    native_order = [backend for backend in measured_order if backend != "python"]
+    assert payload["measured_order"] == measured_order
+    assert payload["recommended_auto_backend"] == native_order[0]
     assert payload["verification"]["rust_safety"]["passed"] is True
     assert payload["meta"]["single_cpu_pinned"] is True
     assert payload["meta"]["exclusive_cpu_isolation_claimed"] is False

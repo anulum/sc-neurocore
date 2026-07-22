@@ -12,10 +12,10 @@
         "n": 0.5162641019382804,
         "v": 43.414460539399464
       },
-      "median_call_ms": 4.974272,
-      "minimum_call_ms": 4.440987,
+      "median_call_ms": 5.002094,
+      "minimum_call_ms": 4.653189,
       "parity_max_abs_diff": 7.9102448768964e-07,
-      "speedup_vs_python": 49.25112860736204,
+      "speedup_vs_python": 61.534900383719304,
       "used": true
     },
     "python": {
@@ -30,8 +30,8 @@
         "n": 0.5162640994287648,
         "v": 43.41446009137186
       },
-      "median_call_ms": 244.98851,
-      "minimum_call_ms": 195.754627,
+      "median_call_ms": 307.803356,
+      "minimum_call_ms": 272.731051,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -48,10 +48,10 @@
         "n": 0.516264099428764,
         "v": 43.414460091371694
       },
-      "median_call_ms": 7.757325,
-      "minimum_call_ms": 6.754488,
+      "median_call_ms": 8.245581,
+      "minimum_call_ms": 6.434434,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 31.581570966795898,
+      "speedup_vs_python": 37.32949273071237,
       "used": true
     }
   },
@@ -63,20 +63,20 @@
   ],
   "meta": {
     "affinity": [
-      2
+      8
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      18.12939453125,
-      17.365234375,
-      16.51416015625
+      30.7451171875,
+      35.02197265625,
+      27.3359375
     ],
     "load_average_start": [
-      18.05322265625,
-      17.33740234375,
-      16.50048828125
+      30.81005859375,
+      35.10693359375,
+      27.3212890625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -103,9 +103,9 @@
     },
     "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
     "engine/src/pyo3_neurons": {
-      "rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9"
+      "rs": "370077f231a4189644880bdde11d0eacc95b67b4e9e6b8ad99ae097022adb645"
     },
-    "engine/src/pyo3_neurons.rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9",
+    "engine/src/pyo3_neurons.rs": "370077f231a4189644880bdde11d0eacc95b67b4e9e6b8ad99ae097022adb645",
     "src/sc_neurocore/accel/go/services/connor_stevens": {
       "go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995"
     },

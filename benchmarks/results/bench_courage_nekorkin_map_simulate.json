@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 15.618189005181193,
-      "min_ms": 15.377789968624711,
+      "median_ms": 21.319138118997216,
+      "min_ms": 19.382543163374066,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 38.606155669268865,
+      "speedup_vs_python": 52.969084333871194,
       "spikes": 371008
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 19.577004946768284,
-      "min_ms": 15.97172999754548,
+      "median_ms": 25.509703205898404,
+      "min_ms": 20.33163304440677,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 30.79930958007053,
+      "speedup_vs_python": 44.26767398412942,
       "spikes": 371008
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 14.85948299523443,
-      "min_ms": 14.332459075376391,
+      "median_ms": 19.47882422246039,
+      "min_ms": 18.923309864476323,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 40.57733611589735,
+      "speedup_vs_python": 57.97347992126263,
       "spikes": 371063
     },
     "python": {
       "backend": "python",
-      "median_ms": 602.9582360060886,
-      "min_ms": 565.3406380442902,
+      "median_ms": 1129.2552249506116,
+      "min_ms": 1060.1297821849585,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 12.75552506558597,
-      "min_ms": 12.609506025910378,
+      "median_ms": 15.310399001464248,
+      "min_ms": 14.968140982091427,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 47.27035797474555,
+      "speedup_vs_python": 73.75740010711755,
       "spikes": 371008
     }
   },
@@ -51,42 +51,42 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 602.9582360060886,
-      "min_ms": 565.3406380442902,
+      "median_ms": 1129.2552249506116,
+      "min_ms": 1060.1297821849585,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     {
       "backend": "rust",
-      "median_ms": 12.75552506558597,
-      "min_ms": 12.609506025910378,
+      "median_ms": 15.310399001464248,
+      "min_ms": 14.968140982091427,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 47.27035797474555,
+      "speedup_vs_python": 73.75740010711755,
       "spikes": 371008
     },
     {
       "backend": "julia",
-      "median_ms": 19.577004946768284,
-      "min_ms": 15.97172999754548,
+      "median_ms": 25.509703205898404,
+      "min_ms": 20.33163304440677,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 30.79930958007053,
+      "speedup_vs_python": 44.26767398412942,
       "spikes": 371008
     },
     {
       "backend": "go",
-      "median_ms": 15.618189005181193,
-      "min_ms": 15.377789968624711,
+      "median_ms": 21.319138118997216,
+      "min_ms": 19.382543163374066,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 38.606155669268865,
+      "speedup_vs_python": 52.969084333871194,
       "spikes": 371008
     },
     {
       "backend": "mojo",
-      "median_ms": 14.85948299523443,
-      "min_ms": 14.332459075376391,
+      "median_ms": 19.47882422246039,
+      "min_ms": 18.923309864476323,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 40.57733611589735,
+      "speedup_vs_python": 57.97347992126263,
       "spikes": 371063
     }
   ],
@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_courage_nekorkin_map_simulate.py": "260663bb7f0dd129fd04b44813f05f79bb1577ecab7f15801e93d7a73d064b2e",
     "engine/src/lib": {
-      "rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5"
+      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
     },
-    "engine/src/lib.rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5",
+    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
     "engine/src/neurons/courage_nekorkin_map": {
       "rs": "d02e322d8af53ac6631f603f8f4d1b6a8aaa3b8f90b7a2a25d59c664c6c7ff80"
     },

@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 71.16693002171814,
-      "min_ms": 70.48679795116186,
+      "median_ms": 93.89344695955515,
+      "min_ms": 78.79587891511619,
       "parity_max_abs_diff": 3.97237798210881e-12,
-      "speedup_vs_python": 5.480145468143705,
+      "speedup_vs_python": 8.212679895054938,
       "spikes": 20137
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 49.58856699522585,
-      "min_ms": 44.35501294210553,
+      "median_ms": 65.58206886984408,
+      "min_ms": 63.84030799381435,
       "parity_max_abs_diff": 8.539835505416704e-13,
-      "speedup_vs_python": 7.864819507241795,
+      "speedup_vs_python": 11.758043584329808,
       "spikes": 20137
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 52.09395301062614,
-      "min_ms": 51.15329101681709,
+      "median_ms": 62.37752619199455,
+      "min_ms": 61.52985314838588,
       "parity_max_abs_diff": 1.836397700571979e-11,
-      "speedup_vs_python": 7.486571981985424,
+      "speedup_vs_python": 12.362093709017751,
       "spikes": 20137
     },
     "python": {
       "backend": "python",
-      "median_ms": 390.0051290402189,
-      "min_ms": 367.13526293169707,
+      "median_ms": 771.1168241221458,
+      "min_ms": 617.2192608937621,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 20137
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 49.64854603167623,
-      "min_ms": 48.039732966572046,
+      "median_ms": 69.52797714620829,
+      "min_ms": 60.202204855158925,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 7.855318236135092,
+      "speedup_vs_python": 11.090741537044684,
       "spikes": 20137
     }
   },
@@ -51,42 +51,42 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 390.0051290402189,
-      "min_ms": 367.13526293169707,
+      "median_ms": 771.1168241221458,
+      "min_ms": 617.2192608937621,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 20137
     },
     {
       "backend": "rust",
-      "median_ms": 49.64854603167623,
-      "min_ms": 48.039732966572046,
+      "median_ms": 69.52797714620829,
+      "min_ms": 60.202204855158925,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 7.855318236135092,
+      "speedup_vs_python": 11.090741537044684,
       "spikes": 20137
     },
     {
       "backend": "julia",
-      "median_ms": 49.58856699522585,
-      "min_ms": 44.35501294210553,
+      "median_ms": 65.58206886984408,
+      "min_ms": 63.84030799381435,
       "parity_max_abs_diff": 8.539835505416704e-13,
-      "speedup_vs_python": 7.864819507241795,
+      "speedup_vs_python": 11.758043584329808,
       "spikes": 20137
     },
     {
       "backend": "go",
-      "median_ms": 71.16693002171814,
-      "min_ms": 70.48679795116186,
+      "median_ms": 93.89344695955515,
+      "min_ms": 78.79587891511619,
       "parity_max_abs_diff": 3.97237798210881e-12,
-      "speedup_vs_python": 5.480145468143705,
+      "speedup_vs_python": 8.212679895054938,
       "spikes": 20137
     },
     {
       "backend": "mojo",
-      "median_ms": 52.09395301062614,
-      "min_ms": 51.15329101681709,
+      "median_ms": 62.37752619199455,
+      "min_ms": 61.52985314838588,
       "parity_max_abs_diff": 1.836397700571979e-11,
-      "speedup_vs_python": 7.486571981985424,
+      "speedup_vs_python": 12.362093709017751,
       "spikes": 20137
     }
   ],
@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_ermentrout_kopell_map.py": "9d72d25d24e33ed12b44e7c39a116462cc38428bc8fabf4f5f96a56e89d7df3f",
     "engine/src/lib": {
-      "rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5"
+      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
     },
-    "engine/src/lib.rs": "a76eedd451d7b6d0cb1ac7b3edd2ba6bd221ef659323e6e0e49fe2a496405eb5",
+    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
     "engine/src/neurons/ermentrout_kopell_map": {
       "rs": "b2dde8eb0b745eed748eaffe8bf0f0743750bb6c5572cbafd53e4ca8e4a29740"
     },
