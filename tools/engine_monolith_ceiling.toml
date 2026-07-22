@@ -71,5 +71,5 @@ max_lines = 53
 max_pyfunctions = 0
 
 [targets."engine/src/pyo3_neurons.rs"]
-max_lines = 1181
+max_lines = 1180
 max_pyfunctions = 0

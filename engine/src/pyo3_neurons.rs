@@ -104,7 +104,27 @@ pub use simple_spiking_bindings::*;
 pub use synapse_bindings::*;
 pub use trivial_bindings::*;
 
-// EPropALIFNeuron: needs tau params
+pub use adaptive_threshold_moe_neuron_binding::PyAdaptiveThresholdMoENeuron;
+pub use adex_neuron_binding::PyAdExNeuron;
+pub use alpha_binding::PyAlphaNeuron;
+pub use arcane_neuron_binding::PyArcaneNeuron;
+pub use attention_gated_neuron_binding::PyAttentionGatedNeuron;
+pub use compositional_binding_neuron_binding::PyCompositionalBindingNeuron;
+pub use continuous_attractor_neuron_binding::PyContinuousAttractorNeuron;
+pub use differentiable_surrogate_neuron_binding::PyDifferentiableSurrogateNeuron;
+pub use ermentrout_kopell_pop_binding::PyErmentroutKopellPopulation;
+pub use hybrid_linear_attention_neuron_binding::PyHybridLinearAttentionNeuron;
+pub use jansen_rit_binding::PyJansenRitUnit;
+pub use lapicque_neuron_binding::PyLapicqueNeuron;
+pub use mcculloch_pitts_binding::PyMcCullochPittsNeuron;
+pub use meta_plastic_neuron_binding::PyMetaPlasticNeuron;
+pub use multi_timescale_neuron_binding::PyMultiTimescaleNeuron;
+pub use predictive_coding_neuron_binding::PyPredictiveCodingNeuron;
+pub use quantum_inspired_lif_neuron_binding::PyQuantumInspiredLIFNeuron;
+pub use self_referential_neuron_binding::PySelfReferentialNeuron;
+pub use sigmoid_rate_binding::PySigmoidRateNeuron;
+pub use threshold_linear_rate_binding::PyThresholdLinearRateNeuron;
+
 #[pyclass(
     name = "EPropALIFNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -138,7 +158,6 @@ impl PyEPropALIFNeuron {
     }
 }
 
-// SuperSpikeNeuron: needs tau params
 #[pyclass(
     name = "SuperSpikeNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -171,7 +190,6 @@ impl PySuperSpikeNeuron {
     }
 }
 
-// BendaHerzNeuron: needs seed
 #[pyclass(
     name = "BendaHerzNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -205,11 +223,6 @@ impl PyBendaHerzNeuron {
 
 py_neuron_default!("BrunelWangNeuron", PyBrunelWangNeuron, neurons::BrunelWangNeuron, state v, state ref_remaining);
 
-// ═══════════════════════════════════════════════════════════════════
-// multi_compartment.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-// PinskyRinzelNeuron: step(current_soma, current_dend)
 #[pyclass(
     name = "PinskyRinzelNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -242,7 +255,6 @@ impl PyPinskyRinzelNeuron {
     }
 }
 
-// HayL5PyramidalNeuron: step(current_soma, current_tuft)
 #[pyclass(
     name = "HayL5PyramidalNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -280,7 +292,6 @@ py_neuron_default!("MarderSTGNeuron", PyMarderSTGNeuron, neurons::MarderSTGNeuro
 py_neuron_default!("BoothRinzelNeuron", PyBoothRinzelNeuron, neurons::BoothRinzelNeuron, state vs, state vd, state ca);
 py_neuron_default!("DendrifyNeuron", PyDendrifyNeuron, neurons::DendrifyNeuron, state v_s, state v_d);
 
-// RallCableNeuron: variable compartments
 #[pyclass(
     name = "RallCableNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -312,7 +323,6 @@ impl PyRallCableNeuron {
     }
 }
 
-// TwoCompartmentLIFNeuron: step(i_soma, i_dend)
 #[pyclass(
     name = "TwoCompartmentLIFNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -344,10 +354,6 @@ impl PyTwoCompartmentLIFNeuron {
         Ok(d.into_any().unbind())
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// special.rs models (stochastic / population / neural mass)
-// ═══════════════════════════════════════════════════════════════════
 
 #[pyclass(
     name = "InhomogeneousPoissonNeuron",
@@ -497,7 +503,6 @@ impl PyGalvesLocherbachNeuron {
 
 py_neuron_default!("SpikeResponseNeuron", PySpikeResponseNeuron, neurons::SpikeResponseNeuron, state v, state time_since_spike);
 
-// GLMNeuron: needs n_k, n_h, seed
 #[pyclass(name = "GLMNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
 #[derive(Clone)]
 pub struct PyGLMNeuron {
@@ -521,7 +526,6 @@ impl PyGLMNeuron {
     }
 }
 
-// WilsonCowanUnit: step returns f64
 #[pyclass(
     name = "WilsonCowanUnit",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -554,7 +558,6 @@ impl PyWilsonCowanUnit {
     }
 }
 
-// WongWangUnit: step(stim1, stim2) -> (f64, f64)
 #[pyclass(
     name = "WongWangUnit",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -602,7 +605,6 @@ impl PyWongWangUnit {
     }
 }
 
-// WendlingNeuron: step returns f64
 #[pyclass(
     name = "WendlingNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -629,7 +631,6 @@ impl PyWendlingNeuron {
     }
 }
 
-// LarterBreakspearNeuron: step returns f64
 #[pyclass(
     name = "LarterBreakspearNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -663,9 +664,7 @@ impl PyLarterBreakspearNeuron {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // hardware.rs models
-// ═══════════════════════════════════════════════════════════════════
 
 #[pyclass(
     name = "LoihiCUBANeuron",
