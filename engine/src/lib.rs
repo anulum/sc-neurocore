@@ -330,7 +330,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBrunelNetwork>()?;
     izhikevich_binding::register(m)?;
     ir::bindings::register(m)?;
-    m.add_class::<PyAdExNeuron>()?;
     m.add_class::<PyExpIFNeuron>()?;
     m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
@@ -505,38 +504,7 @@ fn set_num_threads(n: usize) -> PyResult<()> {
         .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
 }
 
-// ── AdEx, ExpIF, Lapicque PyO3 wrappers ────────────────────────
-
-#[pyclass(
-    name = "AdExNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyAdExNeuron {
-    inner: neuron::AdExNeuron,
-}
-
-#[pymethods]
-impl PyAdExNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neuron::AdExNeuron::new(),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("w", self.inner.w)?;
-        Ok(d.into_any().unbind())
-    }
-}
+// ── ExpIF and Lapicque PyO3 wrappers ────────────────────────────
 
 #[pyclass(
     name = "ExpIFNeuron",
