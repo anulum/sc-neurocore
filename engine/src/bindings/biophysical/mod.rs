@@ -31,6 +31,27 @@ mod traub_miles;
 mod wang_buzsaki;
 mod yamada;
 
+pub use av_ron_cardiac::PyAvRonCardiacNeuron;
+pub use bertram_phantom_burster::PyBertramPhantomBurster;
+pub use connor_stevens::PyConnorStevensNeuron;
+pub use de_schutter_purkinje::PyDeSchutterPurkinjeNeuron;
+pub use destexhe_thalamic::PyDestexheThalamicNeuron;
+pub use durstewitz_dopamine::PyDurstewitzDopamineNeuron;
+pub use gif_population::PyGIFPopulationNeuron;
+pub use glif::PyGLIFNeuron;
+pub use golomb_fs::PyGolombFSNeuron;
+pub use hill_tononi::PyHillTononiNeuron;
+pub use hodgkin_huxley::PyHodgkinHuxleyNeuron;
+pub use huber_braun::PyHuberBraunNeuron;
+pub use mainen_sejnowski::PyMainenSejnowskiNeuron;
+pub use mihalas_niebur::PyMihalasNieburNeuron;
+pub use plant_r15::PyPlantR15Neuron;
+pub use pospischil::PyPospischilNeuron;
+pub use prescott::PyPrescottNeuron;
+pub use traub_miles::PyTraubMilesNeuron;
+pub use wang_buzsaki::PyWangBuzsakiNeuron;
+pub use yamada::PyYamadaNeuron;
+
 /// Register the twenty model-owned biophysical neuron bindings in stable class order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     hodgkin_huxley::register(module)?;

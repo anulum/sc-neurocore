@@ -25,6 +25,16 @@ mod medvedev_map;
 #[path = "../rulkov_map.rs"]
 mod rulkov_map;
 
+pub use aihara_map::PyAiharaMapNeuron;
+pub use cazelles_map::PyCazellesMapNeuron;
+pub use chialvo_map::PyChialvoMapNeuron;
+pub use courage_nekorkin_map::PyCourageNekorkinMapNeuron;
+pub use ermentrout_kopell_map::PyErmentroutKopellMapNeuron;
+pub use ibarz_tanaka_map::PyIbarzTanakaMapNeuron;
+pub use kilinc_bhatt_map::PyKilincBhattMapNeuron;
+pub use medvedev_map::PyMedvedevMapNeuron;
+pub use rulkov_map::PyRulkovMapNeuron;
+
 /// Register the nine model-owned map-neuron bindings in stable class order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     chialvo_map::register(module)?;

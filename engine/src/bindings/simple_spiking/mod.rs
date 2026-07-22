@@ -33,6 +33,23 @@ mod terman_wang;
 #[path = "../wilson_hr.rs"]
 mod wilson_hr;
 
+pub use balanced_resonate_and_fire::PyBalancedResonateAndFireNeuron;
+pub use butera_respiratory::PyButeraRespiratoryNeuron;
+pub use chay::PyChayNeuron;
+pub use chay_keizer::PyChayKeizerNeuron;
+pub use fitzhugh_nagumo::PyFitzHughNagumoNeuron;
+pub use fitzhugh_rinzel::PyFitzHughRinzelNeuron;
+pub use gutkin_ermentrout::PyGutkinErmentroutNeuron;
+pub use hindmarsh_rose::PyHindmarshRoseNeuron;
+pub use learnable_neuron_model::PyLearnableNeuronModel;
+pub use mckean::PyMcKeanNeuron;
+pub use morris_lecar::PyMorrisLecarNeuron;
+pub use pernarowski::PyPernarowskiNeuron;
+pub use resonate_and_fire::PyResonateAndFireNeuron;
+pub use sherman_rinzel_keizer::PyShermanRinzelKeizerNeuron;
+pub use terman_wang::PyTermanWangOscillator;
+pub use wilson_hr::PyWilsonHRNeuron;
+
 /// Register default simple-spiking bindings that precede custom classes.
 pub(crate) fn register_primary(module: &Bound<'_, PyModule>) -> PyResult<()> {
     fitzhugh_nagumo::register(module)?;

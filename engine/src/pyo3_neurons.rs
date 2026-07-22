@@ -6,11 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — PyO3 wrappers for all neuron models
 
-//! PyO3 wrappers for all neuron models.
-//!
-//! Each wrapper follows the same pattern:
-//!   #[pyclass(name = "Model")] struct Py<Model> { inner: neurons::<Model> }
-//!   #[pymethods] impl Py<Model> { #[new] fn new(...) -> Self; fn step(...); fn reset(&mut self); fn get_state(...) }
+//! PyO3 wrappers and compatibility exports for all neuron models.
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::exceptions::PyValueError;
@@ -94,9 +90,11 @@ mod sensory_bindings;
 #[path = "bindings/synapses/mod.rs"]
 mod synapse_bindings;
 
-pub use multi_compartment_bindings::{
-    PyAstrocyteLIFNeuron, PyDendriticNMDANeuron, PyMulticompartmentMCNNeuron,
-};
+pub use biophysical_bindings::*;
+pub use map_bindings::*;
+pub use multi_compartment_bindings::*;
+pub use simple_spiking_bindings::*;
+pub use trivial_bindings::*;
 
 // EPropALIFNeuron: needs tau params
 #[pyclass(

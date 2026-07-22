@@ -26,6 +26,23 @@ mod sfa;
 mod sigma_delta;
 mod theta;
 
+pub use adaptive_threshold_if::PyAdaptiveThresholdIFNeuron;
+pub use closed_form_continuous::PyClosedFormContinuousNeuron;
+pub use complementary_lif::PyComplementaryLIFNeuron;
+pub use energy_lif::PyEnergyLIFNeuron;
+pub use gated_lif::PyGatedLIFNeuron;
+pub use inhibitory_lif::PyInhibitoryLIFNeuron;
+pub use klif::PyKLIFNeuron;
+pub use mat::PyMATNeuron;
+pub use non_resetting_lif::PyNonResettingLIFNeuron;
+pub use nonlinear_lif::PyNonlinearLIFNeuron;
+pub use parametric_lif::PyParametricLIFNeuron;
+pub use perfect_integrator::PyPerfectIntegratorNeuron;
+pub use quadratic_if::PyQuadraticIFNeuron;
+pub use sfa::PySFANeuron;
+pub use sigma_delta::PySigmaDeltaNeuron;
+pub use theta::PyThetaNeuron;
+
 /// Register the sixteen model-owned simple integrate-and-fire classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     quadratic_if::register(module)?;
