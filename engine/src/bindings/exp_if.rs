@@ -19,6 +19,12 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+/// Register the historical mixed-case class alias.
+pub(crate) fn register_legacy_alias(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyExpIfNeuron>()?;
+    Ok(())
+}
+
 #[pyclass(
     name = "ExpIFNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
@@ -45,6 +51,37 @@ impl PyExpIFNeuron {
         self.inner.reset();
     }
 
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("refractory_remaining", self.inner.refractory_remaining)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+#[pyclass(
+    name = "ExpIfNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyExpIfNeuron {
+    inner: neuron::ExpIfNeuron,
+}
+
+#[pymethods]
+impl PyExpIfNeuron {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: neuron::ExpIfNeuron::new(),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
