@@ -104,6 +104,8 @@ mod quantum_inspired_lif_neuron_binding;
 mod self_referential_neuron_binding;
 #[path = "bindings/sensory/mod.rs"]
 mod sensory_bindings;
+#[path = "bindings/synapses/mod.rs"]
+mod synapse_bindings;
 
 // Gap models: CochlearHairCell (step(displacement) -> i32)
 py_neuron_default!("RustCochlearHairCell", PyCochlearHairCell, neurons::CochlearHairCell, state v, state glutamate_release);
@@ -247,135 +249,6 @@ impl PyDirectionSelectiveRGC {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
         d.set_item("is_on_centre", self.inner.is_on_centre)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap synapse models: TripletStdpSynapse
-#[pyclass(
-    name = "RustTripletStdpSynapse",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyTripletStdpSynapse {
-    inner: crate::synapses::TripletStdpSynapse,
-}
-
-#[pymethods]
-impl PyTripletStdpSynapse {
-    #[new]
-    #[pyo3(signature = (weight=0.5, w_min=0.0, w_max=1.0))]
-    fn new(weight: f64, w_min: f64, w_max: f64) -> Self {
-        Self {
-            inner: crate::synapses::TripletStdpSynapse::new(weight, w_min, w_max),
-        }
-    }
-    fn step(&mut self, pre_spike: bool, post_spike: bool) {
-        self.inner.step(pre_spike, post_spike);
-    }
-    #[getter]
-    fn weight(&self) -> f64 {
-        self.inner.weight
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("weight", self.inner.weight)?;
-        d.set_item("r1", self.inner.r1)?;
-        d.set_item("o1", self.inner.o1)?;
-        d.set_item("r2", self.inner.r2)?;
-        d.set_item("o2", self.inner.o2)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap synapse models: ShortTermPlasticitySynapse
-#[pyclass(
-    name = "RustShortTermPlasticitySynapse",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyShortTermPlasticitySynapse {
-    inner: crate::synapses::ShortTermPlasticitySynapse,
-}
-
-#[pymethods]
-impl PyShortTermPlasticitySynapse {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: crate::synapses::ShortTermPlasticitySynapse::new_depressing(),
-        }
-    }
-    #[staticmethod]
-    fn depressing() -> Self {
-        Self {
-            inner: crate::synapses::ShortTermPlasticitySynapse::new_depressing(),
-        }
-    }
-    #[staticmethod]
-    fn facilitating() -> Self {
-        Self {
-            inner: crate::synapses::ShortTermPlasticitySynapse::new_facilitating(),
-        }
-    }
-    fn step(&mut self, pre_spike: bool) -> f64 {
-        self.inner.step(pre_spike)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("x", self.inner.x)?;
-        d.set_item("u", self.inner.u)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap synapse models: DopamineStdpSynapse
-#[pyclass(
-    name = "RustDopamineStdpSynapse",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyDopamineStdpSynapse {
-    inner: crate::synapses::DopamineStdpSynapse,
-}
-
-#[pymethods]
-impl PyDopamineStdpSynapse {
-    #[new]
-    #[pyo3(signature = (weight=0.5, w_min=0.0, w_max=1.0))]
-    fn new(weight: f64, w_min: f64, w_max: f64) -> Self {
-        Self {
-            inner: crate::synapses::DopamineStdpSynapse::new(weight, w_min, w_max),
-        }
-    }
-    fn step(&mut self, pre_spike: bool, post_spike: bool, reward: f64) {
-        self.inner.step(pre_spike, post_spike, reward);
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    #[getter]
-    fn weight(&self) -> f64 {
-        self.inner.weight
-    }
-    #[getter]
-    fn dopamine(&self) -> f64 {
-        self.inner.dopamine
-    }
-    #[getter]
-    fn eligibility(&self) -> f64 {
-        self.inner.eligibility
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("weight", self.inner.weight)?;
-        d.set_item("eligibility", self.inner.eligibility)?;
-        d.set_item("dopamine", self.inner.dopamine)?;
-        d.set_item("trace_pre", self.inner.trace_pre)?;
-        d.set_item("trace_post", self.inner.trace_post)?;
         Ok(d.into_any().unbind())
     }
 }
@@ -1609,9 +1482,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // misc
     misc_bindings::register(m)?;
     // gap synapse models
-    m.add_class::<PyTripletStdpSynapse>()?;
-    m.add_class::<PyShortTermPlasticitySynapse>()?;
-    m.add_class::<PyDopamineStdpSynapse>()?;
+    synapse_bindings::register(m)?;
     Ok(())
 }
 
