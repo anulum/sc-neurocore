@@ -11,11 +11,49 @@
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
+
+use crate::neurons;
 
 /// Register the EscapeRate simulator with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyEscapeRateNeuron>()?;
     module.add_function(wrap_pyfunction!(py_escape_rate_simulate, module)?)?;
     Ok(())
+}
+
+// EscapeRateNeuron needs seed
+#[pyclass(
+    name = "EscapeRateNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyEscapeRateNeuron {
+    inner: neurons::EscapeRateNeuron,
+}
+
+#[pymethods]
+impl PyEscapeRateNeuron {
+    #[new]
+    #[pyo3(signature = (seed=0xACE1))]
+    fn new(seed: u16) -> Self {
+        Self {
+            inner: neurons::EscapeRateNeuron::new(u64::from(seed)),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("rng_state", self.inner.rng_state)?;
+        d.set_item("initial_seed", self.inner.initial_seed)?;
+        Ok(d.into_any().unbind())
+    }
 }
 
 /// Full-contract seeded EscapeRate batch with the canonical LFSR16 trial.

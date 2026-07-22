@@ -19,7 +19,7 @@ max_lines = 252
 max_pyfunctions = 0
 
 [targets."engine/src/pyo3_neurons.rs"]
-max_lines = 2256
+max_lines = 2221
 max_pyfunctions = 0
 
 [targets."engine/src/learning_bindings.rs"]

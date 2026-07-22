@@ -539,40 +539,6 @@ impl PyIntegerQIFNeuron {
     }
 }
 
-// EscapeRateNeuron needs seed
-#[pyclass(
-    name = "EscapeRateNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyEscapeRateNeuron {
-    inner: neurons::EscapeRateNeuron,
-}
-
-#[pymethods]
-impl PyEscapeRateNeuron {
-    #[new]
-    #[pyo3(signature = (seed=0xACE1))]
-    fn new(seed: u16) -> Self {
-        Self {
-            inner: neurons::EscapeRateNeuron::new(u64::from(seed)),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("rng_state", self.inner.rng_state)?;
-        d.set_item("initial_seed", self.inner.initial_seed)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // simple_spiking.rs models
 // ═══════════════════════════════════════════════════════════════════
@@ -2034,7 +2000,6 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyNonlinearLIFNeuron>()?;
     m.add_class::<PySFANeuron>()?;
     m.add_class::<PyMATNeuron>()?;
-    m.add_class::<PyEscapeRateNeuron>()?;
     m.add_class::<PyKLIFNeuron>()?;
     m.add_class::<PyInhibitoryLIFNeuron>()?;
     m.add_class::<PyComplementaryLIFNeuron>()?;
