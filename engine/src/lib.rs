@@ -60,6 +60,8 @@ pub mod evo;
 pub mod fault;
 #[path = "bindings/fault.rs"]
 mod fault_binding;
+#[path = "bindings/fitzhugh_nagumo.rs"]
+mod fitzhugh_nagumo_binding;
 pub mod fusion;
 #[path = "bindings/glif.rs"]
 mod glif_binding;
@@ -681,7 +683,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ibarz_tanaka_map_binding::register(m)?;
     medvedev_map_binding::register(m)?;
     ermentrout_kopell_map_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_fitzhugh_nagumo_simulate, m)?)?;
+    fitzhugh_nagumo_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_hindmarsh_rose_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_izhikevich2007_simulate, m)?)?;
@@ -2157,41 +2159,6 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-/// Parity contract with
-/// `sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron.simulate`:
-/// for the same parameters and constant input the returned `v` trace, upward-
-/// crossing spike count, and final `(v, w)` state are bit-identical to the
-/// Python RK4 reference (the right-hand side is exact arithmetic — a cube
-/// `v.powi(3)` = `v*v*v`, additions and multiplications, no transcendental
-/// functions — and a two-dimensional flow cannot be chaotic).
-#[pyfunction]
-#[pyo3(signature = (v0, w0, a, b, epsilon, dt, v_threshold, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_fitzhugh_nagumo_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    w0: f64,
-    a: f64,
-    b: f64,
-    epsilon: f64,
-    dt: f64,
-    v_threshold: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::FitzHughNagumoNeuron {
-        v: v0,
-        w: w0,
-        a,
-        b,
-        epsilon,
-        dt,
-        v_threshold,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w)
 }
 
 /// Parity contract with
