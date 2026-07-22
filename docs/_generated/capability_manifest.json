@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1501
+    "test_files": 1502
   },
   "documentation": {
     "public_pages": [
@@ -3224,6 +3224,7 @@
       "tests/test_edge/test_web_deploy.py",
       "tests/test_edge_crossing_detection.py",
       "tests/test_edge_neuron_and_online_o1.py",
+      "tests/test_ei_network_engine_binding.py",
       "tests/test_encoding_zoo.py",
       "tests/test_energy_accounting/test_sustainability_profiler.py",
       "tests/test_energy_accounting.py",
