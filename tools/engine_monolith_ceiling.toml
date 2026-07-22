@@ -18,6 +18,10 @@ schema_version = 1
 max_lines = 252
 max_pyfunctions = 0
 
+[targets."engine/src/pyo3_neurons.rs"]
+max_lines = 2256
+max_pyfunctions = 0
+
 [targets."engine/src/learning_bindings.rs"]
 max_lines = 29
 max_pyfunctions = 0
