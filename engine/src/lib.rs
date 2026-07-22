@@ -61,6 +61,8 @@ pub mod fault;
 #[path = "bindings/fault.rs"]
 mod fault_binding;
 pub mod fusion;
+#[path = "bindings/glif.rs"]
+mod glif_binding;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod grad;
@@ -674,7 +676,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     poisson_binding::register(m)?;
     iqif_binding::register(m)?;
     mihalas_niebur_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_glif_simulate, m)?)?;
+    glif_binding::register(m)?;
     rulkov_map_binding::register(m)?;
     ibarz_tanaka_map_binding::register(m)?;
     medvedev_map_binding::register(m)?;
@@ -2155,73 +2157,6 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-/// Parity contract with
-/// `sc_neurocore.neurons.models.glif.GLIFNeuron.simulate`: for the same
-/// parameters and constant input the returned `v` trace, total spike count, and
-/// final `(v, theta, i_asc1, i_asc2)` state are bit-identical to the Python RK4
-/// reference. The Allen GLIF5 model has a purely linear right-hand side (no
-/// transcendental functions), so every RK4 stage is exact arithmetic and the
-/// trace reproduces to the last bit across Rust/Julia/Go (Mojo FMA-fuses,
-/// validated non-amplifying).
-#[pyfunction]
-#[pyo3(signature = (
-    v0, theta0, theta_inf, i_asc1_0, i_asc2_0, v_rest, v_reset, tau_m, tau_theta,
-    tau_asc1, tau_asc2, a_theta, delta_theta, r_asc1, r_asc2, resistance, dt,
-    n_steps, current
-))]
-#[allow(clippy::too_many_arguments)]
-fn py_glif_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    theta0: f64,
-    theta_inf: f64,
-    i_asc1_0: f64,
-    i_asc2_0: f64,
-    v_rest: f64,
-    v_reset: f64,
-    tau_m: f64,
-    tau_theta: f64,
-    tau_asc1: f64,
-    tau_asc2: f64,
-    a_theta: f64,
-    delta_theta: f64,
-    r_asc1: f64,
-    r_asc2: f64,
-    resistance: f64,
-    dt: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64, f64) {
-    let mut neuron = crate::neurons::GLIFNeuron {
-        v: v0,
-        theta: theta0,
-        theta_inf,
-        i_asc1: i_asc1_0,
-        i_asc2: i_asc2_0,
-        v_rest,
-        v_reset,
-        tau_m,
-        tau_theta,
-        tau_asc1,
-        tau_asc2,
-        a_theta,
-        delta_theta,
-        r_asc1,
-        r_asc2,
-        resistance,
-        dt,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (
-        trace.into_pyarray(py),
-        spikes,
-        neuron.v,
-        neuron.theta,
-        neuron.i_asc1,
-        neuron.i_asc2,
-    )
 }
 
 /// Parity contract with

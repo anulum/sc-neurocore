@@ -2,45 +2,45 @@
   "benchmark": "glif_simulate",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
+    "numpy": "2.2.6",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 2316.0119650128763,
-      "min_ms": 2299.678249997669,
+      "median_ms": 3521.3721259497106,
+      "min_ms": 3309.628263115883,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
     {
       "backend": "rust",
-      "median_ms": 89.07517499756068,
-      "min_ms": 86.94947899493854,
+      "median_ms": 106.3537779264152,
+      "min_ms": 101.78073984570801,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 26.000644568773513
+      "speedup_vs_python": 33.109986261006185
     },
     {
       "backend": "julia",
-      "median_ms": 92.16605199617334,
-      "min_ms": 83.80423299968243,
+      "median_ms": 112.05859598703682,
+      "min_ms": 109.11388788372278,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 25.12868800227046
+      "speedup_vs_python": 31.424381993480182
     },
     {
       "backend": "go",
-      "median_ms": 81.67362000676803,
-      "min_ms": 80.62321800389327,
+      "median_ms": 100.07353196851909,
+      "min_ms": 97.90398296900094,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 28.356915792650746
+      "speedup_vs_python": 35.18784694296046
     },
     {
       "backend": "mojo",
-      "median_ms": 88.33934499125462,
-      "min_ms": 87.83431899792049,
+      "median_ms": 106.29148106090724,
+      "min_ms": 104.31311000138521,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 26.21721912520583
+      "speedup_vs_python": 33.12939184591746
     }
   ],
   "workload": {
