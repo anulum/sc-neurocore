@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 1518
+    "test_files": 1519
   },
   "documentation": {
     "public_pages": [
@@ -4225,6 +4225,7 @@
       "tests/test_tools/test_capability_manifest.py",
       "tests/test_tools/test_check_mojo_isa_baseline.py",
       "tests/test_tools/test_ci_go_cache_contract.py",
+      "tests/test_tools/test_ci_julia_runtime_contract.py",
       "tests/test_tools/test_ci_security_packet.py",
       "tests/test_tools/test_compiler_e2e_workflow_contract.py",
       "tests/test_tools/test_cosim_q88_import_contract.py",

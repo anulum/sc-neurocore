@@ -161,6 +161,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
+      # juliacall 0.9.x currently constrains Julia to 1.10.3-1.11. GitHub's
+      # hosted image also exposes Julia 1.12, which juliapkg rejects before
+      # attempting an uncontrolled fallback download. Install the exact
+      # compatible runtime once and put it first on PATH for every matrix leg.
+      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        with:
+          version: "1.11.9"
+          show-versioninfo: "never"
+
       # Go toolchain for the c-shared accel backends. Must match accel/go/go.mod's
       # `go 1.26.3` (and release.yml / security-scanners.yml) — an older pin left
       # `go build` rejecting the module under GOTOOLCHAIN=local. The builder also
@@ -280,8 +289,12 @@ jobs:
       # into the shared ~/.julia depot; under `pytest -n auto` several xdist
       # workers hit that lazily at once, race on the depot and OOM ("node down").
       # Warming it here means the workers reuse the ready depot.
-      - name: Warm up juliacall (Julia depot)
-        run: python -c "import juliacall; juliacall.Main.seval('1+1')"
+      - name: Verify and warm up juliacall (Julia depot)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(julia --startup-file=no -e 'print(VERSION)')" = "1.11.9"
+          python -c "import juliacall; juliacall.Main.seval('1+1')"
 
       - name: Test + coverage
         shell: bash
