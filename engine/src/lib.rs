@@ -119,6 +119,8 @@ pub mod phi;
 mod phi_binding;
 pub mod photonic;
 pub mod ping;
+#[path = "bindings/ping.rs"]
+mod ping_binding;
 #[path = "bindings/poisson.rs"]
 mod poisson_binding;
 pub mod predictive_coding;
@@ -382,8 +384,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     izhikevich2007_binding::register(m)?;
     fault_binding::register(m)?;
     partition_binding::register(m)?;
-    // PINGCircuit per-step kernel
-    m.add_function(wrap_pyfunction!(py_ping_step, m)?)?;
+    ping_binding::register(m)?;
     // CorticalColumn block-CSR per-row-parallel spmv
     m.add_function(wrap_pyfunction!(py_parallel_csr_spmv_add, m)?)?;
     m.add_function(wrap_pyfunction!(py_parallel_csr_multi_spmv_add, m)?)?;
@@ -1744,98 +1745,6 @@ impl PySCPNMetrics {
     fn consciousness_index(phases_l4: Vec<f64>, glyph_l7: [f64; 6]) -> f64 {
         scpn::SCPNMetrics::consciousness_index(&phases_l4, &glyph_l7)
     }
-}
-
-// ── PINGCircuit per-step kernel ─────────────────────────────────────
-//
-// Mirrors `PINGCircuit.step()` in
-// `src/sc_neurocore/network/gamma_oscillation.py`. Caller hands over
-// the per-instance state arrays + this-step `xi` noise samples (drawn
-// on the Python side from the per-instance RNG so seed determinism is
-// preserved), and the kernel writes the new state in-place plus a
-// boolean spike vector per population. Returns `(n_e_spikes,
-// n_i_spikes)` so the caller can do the synaptic-conductance update
-// step (which needs the cross-population summary, not the per-cell
-// detail).
-
-#[pyfunction]
-#[pyo3(signature = (
-    v_e, g_ampa_e, g_gaba_e, refrac_e, i_drive_e, xi_e, spikes_e_out,
-    v_i, g_ampa_i, g_gaba_i, refrac_i, i_drive_i, xi_i, spikes_i_out,
-    e_l, e_ampa, e_gaba, g_l, c_m, v_threshold, v_reset, t_refrac,
-    tau_ampa, tau_gaba, sigma_e, sigma_i, dt,
-))]
-#[allow(clippy::too_many_arguments)]
-fn py_ping_step<'py>(
-    _py: Python<'py>,
-    v_e: PyReadwriteArray1<'_, f64>,
-    g_ampa_e: PyReadwriteArray1<'_, f64>,
-    g_gaba_e: PyReadwriteArray1<'_, f64>,
-    refrac_e: PyReadwriteArray1<'_, f64>,
-    i_drive_e: PyReadonlyArray1<'_, f64>,
-    xi_e: PyReadonlyArray1<'_, f64>,
-    spikes_e_out: PyReadwriteArray1<'_, u8>,
-    v_i: PyReadwriteArray1<'_, f64>,
-    g_ampa_i: PyReadwriteArray1<'_, f64>,
-    g_gaba_i: PyReadwriteArray1<'_, f64>,
-    refrac_i: PyReadwriteArray1<'_, f64>,
-    i_drive_i: PyReadonlyArray1<'_, f64>,
-    xi_i: PyReadonlyArray1<'_, f64>,
-    spikes_i_out: PyReadwriteArray1<'_, u8>,
-    e_l: f64,
-    e_ampa: f64,
-    e_gaba: f64,
-    g_l: f64,
-    c_m: f64,
-    v_threshold: f64,
-    v_reset: f64,
-    t_refrac: f64,
-    tau_ampa: f64,
-    tau_gaba: f64,
-    sigma_e: f64,
-    sigma_i: f64,
-    dt: f64,
-) -> PyResult<(u32, u32)> {
-    let mut v_e = v_e;
-    let mut g_ampa_e = g_ampa_e;
-    let mut g_gaba_e = g_gaba_e;
-    let mut refrac_e = refrac_e;
-    let mut spikes_e_out = spikes_e_out;
-    let mut v_i = v_i;
-    let mut g_ampa_i = g_ampa_i;
-    let mut g_gaba_i = g_gaba_i;
-    let mut refrac_i = refrac_i;
-    let mut spikes_i_out = spikes_i_out;
-    let (ne, ni) = ping::step_kernel(
-        v_e.as_slice_mut()?,
-        g_ampa_e.as_slice_mut()?,
-        g_gaba_e.as_slice_mut()?,
-        refrac_e.as_slice_mut()?,
-        i_drive_e.as_slice()?,
-        xi_e.as_slice()?,
-        spikes_e_out.as_slice_mut()?,
-        v_i.as_slice_mut()?,
-        g_ampa_i.as_slice_mut()?,
-        g_gaba_i.as_slice_mut()?,
-        refrac_i.as_slice_mut()?,
-        i_drive_i.as_slice()?,
-        xi_i.as_slice()?,
-        spikes_i_out.as_slice_mut()?,
-        e_l,
-        e_ampa,
-        e_gaba,
-        g_l,
-        c_m,
-        v_threshold,
-        v_reset,
-        t_refrac,
-        tau_ampa,
-        tau_gaba,
-        sigma_e,
-        sigma_i,
-        dt,
-    );
-    Ok((ne, ni))
 }
 
 // ── CorticalColumn block-CSR spmv (per-row-parallel) ────────────────
