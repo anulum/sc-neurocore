@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 177,
-    "test_files": 1510
+    "test_files": 1511
   },
   "documentation": {
     "public_pages": [
@@ -3003,6 +3003,7 @@
       "tests/test_bipolar_sc.py",
       "tests/test_bit_true_cosim.py",
       "tests/test_bit_true_kernel.py",
+      "tests/test_bitstream_engine_binding.py",
       "tests/test_block_floating_dense_hdl.py",
       "tests/test_bridges/quantum_annealing_test_helpers.py",
       "tests/test_bridges/test_bridges_optional_exports.py",
