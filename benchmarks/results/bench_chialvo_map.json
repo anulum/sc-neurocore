@@ -112,7 +112,7 @@
   "source_hashes": {
     "benchmarks/bench_chialvo_map.py": "d671222b8d25d728fbabedfa1b16ec6d1b80ea8f1cfaa2219ef55645d503b6c1",
     "bridge/sc_neurocore_engine/__init__.py": "dc04a0b7a4538fea93bb369834bdf1a60362808005dc2519248fd27e85c5c1f3",
-    "engine/src/lib.rs": "dcc5c9ec16a07f3024ba46c982d6b6f86f072937941fbedfd8184807aac8b85c",
+    "engine/src/lib.rs": "5e252457a68c751cdbdbddec3a44259f8119768cd242cdecebdb47f3dfed597f",
     "engine/src/neurons/maps.rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483",
     "src/sc_neurocore/accel/go/neurons/chialvo_map/chialvo_map.go": "787bf993c6e617f787ae1503b72c89d35cc1bf045f0cc0392a7450ed52b67bb3",
     "src/sc_neurocore/accel/go/services/chialvo_map.go": "1d879a94055efb9f39bc0fd48b0647d4b3f648519c68cab4bbcba528ef2cf9ff",
