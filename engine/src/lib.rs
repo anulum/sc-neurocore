@@ -145,6 +145,8 @@ mod sc_inference_binding;
 pub mod scpn;
 pub mod simd;
 pub mod sobol;
+#[path = "bindings/stdp_synapse.rs"]
+mod stdp_synapse_binding;
 #[cfg(feature = "z3")]
 pub mod supervisor;
 pub mod synapses;
@@ -157,57 +159,6 @@ mod wilson_cowan_binding;
 #[path = "bindings/wilson_hr.rs"]
 mod wilson_hr_binding;
 pub mod wong_wang;
-
-#[pyclass(
-    name = "StdpSynapse",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-pub struct StdpSynapse {
-    inner: synapses::StdpSynapse,
-}
-
-#[pymethods]
-impl StdpSynapse {
-    #[new]
-    #[pyo3(signature = (initial_weight, data_width=16, fraction=8))]
-    fn new(initial_weight: i16, data_width: u32, fraction: u32) -> Self {
-        Self {
-            inner: synapses::StdpSynapse::new(initial_weight, data_width, fraction),
-        }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (pre_spike, post_spike, a_plus=16, a_minus=-16, decay=250, w_min=0, w_max=32767))]
-    fn step(
-        &mut self,
-        pre_spike: bool,
-        post_spike: bool,
-        a_plus: i16,
-        a_minus: i16,
-        decay: i16,
-        w_min: i16,
-        w_max: i16,
-    ) {
-        let params = synapses::StdpParams {
-            a_plus,
-            a_minus,
-            decay,
-            w_min,
-            w_max,
-        };
-        self.inner.step(pre_spike, post_spike, &params);
-    }
-
-    #[getter]
-    fn weight(&self) -> i16 {
-        self.inner.weight
-    }
-
-    #[setter]
-    fn set_weight(&mut self, value: i16) {
-        self.inner.weight = value;
-    }
-}
 
 // ── Brunel Network PyO3 wrapper ──────────────────────────────────────
 
@@ -322,7 +273,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<gpu::PyGpuKuramoto>()?;
     #[cfg(feature = "gpu")]
     m.add_class::<gpu::PyGpuIzhikevichBatch>()?;
-    m.add_class::<StdpSynapse>()?;
+    stdp_synapse_binding::register(m)?;
     learning_bindings::register(m)?;
     m.add_class::<PyKuramotoSolver>()?;
     m.add_class::<PySCPNMetrics>()?;
