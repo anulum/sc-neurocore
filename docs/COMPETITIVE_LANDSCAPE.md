@@ -98,7 +98,7 @@ quadrantChart
    statements (100 assert, 7 assume, 23 cover) across the HDL formal tree
    (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   186 Rust PyO3 model wrappers and a 162-model NetworkRunner
+   185 Rust PyO3 model wrappers and a 162-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 132 spike train analysis functions across

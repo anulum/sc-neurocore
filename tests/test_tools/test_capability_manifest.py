@@ -86,6 +86,31 @@ def test_rust_model_wrapper_scan_excludes_engine_infrastructure(tmp_path: Path) 
     assert tool._rust_pyo3_wrapper_names(facade) == ["ActualModel"]
 
 
+def test_manifest_ignores_commented_rust_wrapper_examples() -> None:
+    tool = _load_tool()
+    with _tempdir() as repo:
+        _write_portable_fixture(repo)
+        _write_file(
+            repo / "engine/src/pyo3_neurons.rs",
+            "\n".join(
+                (
+                    '//! #[pyclass(name = "DocExample")] struct PyDocExample;',
+                    '// py_neuron_default!("CommentedMacro", PyCommented, Commented);',
+                    'py_neuron_default!("ActualMacro", PyActualMacro, ActualMacro);',
+                )
+            ),
+        )
+        _write_file(
+            repo / "engine/src/bindings/actual.rs",
+            '#[pyclass(\n    name = "ActualClass", module = "example"\n)]\nstruct PyActualClass;\n',
+        )
+
+        manifest = tool.build_capability_manifest(repo)
+
+        assert manifest["counts"]["rust_pyo3_model_wrappers"] == 2
+        assert manifest["models"]["rust_pyo3_wrappers"] == ["ActualClass", "ActualMacro"]
+
+
 def test_manifest_validation_rejects_count_drift() -> None:
     tool = _load_tool()
     manifest = tool.build_capability_manifest(_repo_root())
