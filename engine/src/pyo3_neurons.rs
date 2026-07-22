@@ -84,6 +84,8 @@ mod hybrid_linear_attention_neuron_binding;
 mod interneuron_bindings;
 #[path = "bindings/meta_plastic_neuron.rs"]
 mod meta_plastic_neuron_binding;
+#[path = "bindings/motor/mod.rs"]
+mod motor_bindings;
 #[path = "bindings/multi_timescale_neuron.rs"]
 mod multi_timescale_neuron_binding;
 #[path = "bindings/predictive_coding_neuron.rs"]
@@ -1434,16 +1436,6 @@ impl PyAmariNeuralField {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// motor.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("AlphaMotorNeuron", PyAlphaMotorNeuron, neurons::AlphaMotorNeuron, state v, state h, state n, state m_pic, state ca);
-py_neuron_default!("GammaMotorNeuron", PyGammaMotorNeuron, neurons::GammaMotorNeuron, state v, state adapt);
-py_neuron_default!("UpperMotorNeuron", PyUpperMotorNeuron, neurons::UpperMotorNeuron, state v, state m, state h, state n, state p, state s);
-py_neuron_default!("RenshawCell", PyRenshawCell, neurons::RenshawCell, state v, state h, state n, state adapt);
-py_neuron_default!("MotorUnit", PyMotorUnit, neurons::MotorUnit, state v, state adapt, state force);
-
 // cerebellar.rs models
 py_neuron_default!("GranuleCell", PyGranuleCell, neurons::GranuleCell, state v, state m, state h, state n, state ca);
 py_neuron_default!("GolgiCell", PyGolgiCell, neurons::GolgiCell, state v, state m, state h, state p_na, state n, state a, state b, state w, state m_t, state s, state c_n, state r, state ca);
@@ -1669,11 +1661,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // interneurons
     interneuron_bindings::register(m)?;
     // motor
-    m.add_class::<PyAlphaMotorNeuron>()?;
-    m.add_class::<PyGammaMotorNeuron>()?;
-    m.add_class::<PyUpperMotorNeuron>()?;
-    m.add_class::<PyRenshawCell>()?;
-    m.add_class::<PyMotorUnit>()?;
+    motor_bindings::register(m)?;
     // sensory
     m.add_class::<PyInnerHairCell>()?;
     m.add_class::<PyOuterHairCell>()?;
