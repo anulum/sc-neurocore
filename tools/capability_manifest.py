@@ -590,7 +590,7 @@ def _rust_pyo3_wrapper_names(path: Path) -> list[str]:
     names: set[str] = set()
     for source in sources:
         text = source.read_text(encoding="utf-8")
-        names.update(re.findall(r'(?m)^[ \t]*py_neuron_default!\("([^"]+)"', text))
+        names.update(re.findall(r'(?m)^[ \t]*py_neuron_default!\(\s*"([^"]+)"', text))
         names.update(re.findall(r'(?m)^[ \t]*#\[pyclass\(\s*name\s*=\s*"([^"]+)"', text))
     names.difference_update(_RUST_PYO3_NON_MODEL_CLASSES)
     return sorted(names)

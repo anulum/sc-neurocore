@@ -970,7 +970,7 @@
     "public_documentation_pages": 583,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
-    "rust_pyo3_model_wrappers": 185,
+    "rust_pyo3_model_wrappers": 186,
     "test_files": 1518
   },
   "documentation": {
@@ -2583,6 +2583,7 @@
       "CorticalColumnRust",
       "CourageNekorkinMapNeuron",
       "DCNNeuron",
+      "DPINeuron",
       "DeSchutterPurkinjeNeuron",
       "DendrifyNeuron",
       "DestexheThalamicNeuron",

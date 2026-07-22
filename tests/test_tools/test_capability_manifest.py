@@ -97,6 +97,7 @@ def test_manifest_ignores_commented_rust_wrapper_examples() -> None:
                     '//! #[pyclass(name = "DocExample")] struct PyDocExample;',
                     '// py_neuron_default!("CommentedMacro", PyCommented, Commented);',
                     'py_neuron_default!("ActualMacro", PyActualMacro, ActualMacro);',
+                    'py_neuron_default!(\n    "MultilineMacro",\n    PyMultilineMacro,\n    MultilineMacro\n);',
                 )
             ),
         )
@@ -107,8 +108,12 @@ def test_manifest_ignores_commented_rust_wrapper_examples() -> None:
 
         manifest = tool.build_capability_manifest(repo)
 
-        assert manifest["counts"]["rust_pyo3_model_wrappers"] == 2
-        assert manifest["models"]["rust_pyo3_wrappers"] == ["ActualClass", "ActualMacro"]
+        assert manifest["counts"]["rust_pyo3_model_wrappers"] == 3
+        assert manifest["models"]["rust_pyo3_wrappers"] == [
+            "ActualClass",
+            "ActualMacro",
+            "MultilineMacro",
+        ]
 
 
 def test_manifest_validation_rejects_count_drift() -> None:
