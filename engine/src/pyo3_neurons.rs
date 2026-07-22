@@ -8,11 +8,7 @@
 
 //! PyO3 wrappers and compatibility exports for all neuron models.
 
-use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
-
-use crate::neurons;
 
 #[macro_use]
 #[path = "bindings/default_neuron.rs"]
@@ -136,177 +132,6 @@ pub use self_referential_neuron_binding::PySelfReferentialNeuron;
 pub use sigmoid_rate_binding::PySigmoidRateNeuron;
 pub use threshold_linear_rate_binding::PyThresholdLinearRateNeuron;
 
-#[pyclass(
-    name = "BendaHerzNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyBendaHerzNeuron {
-    inner: neurons::BendaHerzNeuron,
-}
-
-#[pymethods]
-impl PyBendaHerzNeuron {
-    #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
-        Self {
-            inner: neurons::BendaHerzNeuron::new(seed),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("a", self.inner.a)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-py_neuron_default!("BrunelWangNeuron", PyBrunelWangNeuron, neurons::BrunelWangNeuron, state v, state ref_remaining);
-
-#[pyclass(
-    name = "WilsonCowanUnit",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyWilsonCowanUnit {
-    inner: neurons::WilsonCowanUnit,
-}
-
-#[pymethods]
-impl PyWilsonCowanUnit {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::WilsonCowanUnit::new(),
-        }
-    }
-    #[pyo3(signature = (ext_input=0.0))]
-    fn step(&mut self, ext_input: f64) -> f64 {
-        self.inner.step(ext_input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("e", self.inner.e)?;
-        d.set_item("i", self.inner.i)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "WongWangUnit",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyWongWangUnit {
-    inner: neurons::WongWangUnit,
-}
-
-#[pymethods]
-impl PyWongWangUnit {
-    #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
-        Self {
-            inner: neurons::WongWangUnit::new(seed),
-        }
-    }
-    #[pyo3(signature = (stim1=0.0, stim2=0.0))]
-    fn step(&mut self, stim1: f64, stim2: f64) -> PyResult<(f64, f64)> {
-        self.inner.step(stim1, stim2).map_err(PyValueError::new_err)
-    }
-    #[pyo3(signature = (stim1=0.0, stim2=0.0, xi1=0.0, xi2=0.0))]
-    fn step_with_gaussian_samples(
-        &mut self,
-        stim1: f64,
-        stim2: f64,
-        xi1: f64,
-        xi2: f64,
-    ) -> PyResult<(f64, f64)> {
-        self.inner
-            .step_with_gaussian_samples(stim1, stim2, xi1, xi2)
-            .map_err(PyValueError::new_err)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("s1", self.inner.s1)?;
-        d.set_item("s2", self.inner.s2)?;
-        d.set_item("noise1", self.inner.noise1)?;
-        d.set_item("noise2", self.inner.noise2)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "WendlingNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyWendlingNeuron {
-    inner: neurons::WendlingNeuron,
-}
-
-#[pymethods]
-impl PyWendlingNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::WendlingNeuron::new(),
-        }
-    }
-    #[pyo3(signature = (p_ext=220.0))]
-    fn step(&mut self, p_ext: f64) -> f64 {
-        self.inner.step(p_ext)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-}
-
-#[pyclass(
-    name = "LarterBreakspearNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyLarterBreakspearNeuron {
-    inner: neurons::LarterBreakspearNeuron,
-}
-
-#[pymethods]
-impl PyLarterBreakspearNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::LarterBreakspearNeuron::new(),
-        }
-    }
-    #[pyo3(signature = (coupling=0.0))]
-    fn step(&mut self, coupling: f64) -> f64 {
-        self.inner.step(coupling)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("w", self.inner.w)?;
-        d.set_item("z", self.inner.z)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // Registration function — call from lib.rs pymodule init
 // ═══════════════════════════════════════════════════════════════════
@@ -327,8 +152,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     quantum_inspired_lif_neuron_binding::register(m)?;
     trivial_bindings::register(m)?;
     simple_spiking_bindings::register_primary(m)?;
-    m.add_class::<PyBendaHerzNeuron>()?;
-    m.add_class::<PyBrunelWangNeuron>()?;
+    stochastic_bindings::register_adaptation(m)?;
+    population_bindings::register_brunel_wang(m)?;
     alpha_binding::register(m)?;
     simple_spiking_bindings::register_conductance_models(m)?;
     learning_bindings::register(m)?;
@@ -337,13 +162,12 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     biophysical_bindings::register(m)?;
     multi_compartment_bindings::register(m)?;
     stochastic_bindings::register(m)?;
-    m.add_class::<PyWilsonCowanUnit>()?;
+    population_bindings::register_wilson_cowan_unit(m)?;
     jansen_rit_binding::register(m)?;
-    m.add_class::<PyWongWangUnit>()?;
+    population_bindings::register_wong_wang_unit(m)?;
     wong_wang_binding::register(m)?;
     ermentrout_kopell_pop_binding::register(m)?;
-    m.add_class::<PyWendlingNeuron>()?;
-    m.add_class::<PyLarterBreakspearNeuron>()?;
+    population_bindings::register_neural_mass_tail(m)?;
     hardware_bindings::register(m)?;
     // rate
     mcculloch_pitts_binding::register(m)?;

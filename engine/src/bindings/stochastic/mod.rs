@@ -8,6 +8,7 @@
 
 use pyo3::prelude::*;
 
+mod benda_herz;
 mod galves_locherbach;
 mod gamma_renewal;
 mod glm;
@@ -16,6 +17,7 @@ mod spike_response;
 mod stochastic_if;
 mod stochastic_lif;
 
+pub use benda_herz::PyBendaHerzNeuron;
 pub use galves_locherbach::PyGalvesLocherbachNeuron;
 pub use gamma_renewal::PyGammaRenewalNeuron;
 pub use glm::PyGLMNeuron;
@@ -23,6 +25,11 @@ pub use inhomogeneous_poisson::PyInhomogeneousPoissonNeuron;
 pub use spike_response::PySpikeResponseNeuron;
 pub use stochastic_if::PyStochasticIFNeuron;
 pub use stochastic_lif::PyStochasticLIFNeuron;
+
+pub(crate) fn register_adaptation(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    benda_herz::register(module)?;
+    Ok(())
+}
 
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     inhomogeneous_poisson::register(module)?;
