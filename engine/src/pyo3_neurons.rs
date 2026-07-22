@@ -48,6 +48,8 @@ mod map_bindings;
 mod multi_compartment_bindings;
 #[path = "bindings/simple_spiking/mod.rs"]
 mod simple_spiking_bindings;
+#[path = "bindings/stochastic/mod.rs"]
+mod stochastic_bindings;
 #[path = "bindings/trivial/mod.rs"]
 mod trivial_bindings;
 
@@ -104,6 +106,7 @@ pub use multi_compartment_bindings::*;
 pub use population_bindings::*;
 pub use sensory_bindings::*;
 pub use simple_spiking_bindings::*;
+pub use stochastic_bindings::*;
 pub use synapse_bindings::*;
 pub use trivial_bindings::*;
 
@@ -225,177 +228,6 @@ impl PyBendaHerzNeuron {
 }
 
 py_neuron_default!("BrunelWangNeuron", PyBrunelWangNeuron, neurons::BrunelWangNeuron, state v, state ref_remaining);
-
-#[pyclass(
-    name = "InhomogeneousPoissonNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyInhomogeneousPoissonNeuron {
-    inner: neurons::InhomogeneousPoissonNeuron,
-}
-
-#[pymethods]
-impl PyInhomogeneousPoissonNeuron {
-    #[new]
-    #[pyo3(signature = (dt_ms=1.0, seed=42))]
-    fn new(dt_ms: f64, seed: u64) -> Self {
-        Self {
-            inner: neurons::InhomogeneousPoissonNeuron::new(dt_ms, seed),
-        }
-    }
-    fn step(&mut self, rate_hz: f64) -> i32 {
-        self.inner.step(rate_hz)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-}
-
-#[pyclass(
-    name = "GammaRenewalNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyGammaRenewalNeuron {
-    inner: neurons::GammaRenewalNeuron,
-}
-
-#[pymethods]
-impl PyGammaRenewalNeuron {
-    #[new]
-    #[pyo3(signature = (rate_hz=50.0, shape_k=3, seed=42))]
-    fn new(rate_hz: f64, shape_k: u32, seed: u64) -> Self {
-        Self {
-            inner: neurons::GammaRenewalNeuron::new(rate_hz, shape_k, seed),
-        }
-    }
-    #[pyo3(signature = (rate_override=-1.0))]
-    fn step(&mut self, rate_override: f64) -> i32 {
-        self.inner.step(rate_override)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-}
-
-#[pyclass(
-    name = "StochasticIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyStochasticIFNeuron {
-    inner: neurons::StochasticIFNeuron,
-}
-
-#[pymethods]
-impl PyStochasticIFNeuron {
-    #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
-        Self {
-            inner: neurons::StochasticIFNeuron::new(seed),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "StochasticLIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyStochasticLIFNeuron {
-    inner: neurons::StochasticLIFNeuron,
-}
-
-#[pymethods]
-impl PyStochasticLIFNeuron {
-    #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
-        Self {
-            inner: neurons::StochasticLIFNeuron::new(seed),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "GalvesLocherbachNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyGalvesLocherbachNeuron {
-    inner: neurons::GalvesLocherbachNeuron,
-}
-
-#[pymethods]
-impl PyGalvesLocherbachNeuron {
-    #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
-        Self {
-            inner: neurons::GalvesLocherbachNeuron::new(seed),
-        }
-    }
-    fn step(&mut self, weighted_input: f64) -> i32 {
-        self.inner.step(weighted_input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-py_neuron_default!("SpikeResponseNeuron", PySpikeResponseNeuron, neurons::SpikeResponseNeuron, state v, state time_since_spike);
-
-#[pyclass(name = "GLMNeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
-#[derive(Clone)]
-pub struct PyGLMNeuron {
-    inner: neurons::GLMNeuron,
-}
-
-#[pymethods]
-impl PyGLMNeuron {
-    #[new]
-    #[pyo3(signature = (n_k=10, n_h=20, seed=42))]
-    fn new(n_k: usize, n_h: usize, seed: u64) -> Self {
-        Self {
-            inner: neurons::GLMNeuron::new(n_k, n_h, seed),
-        }
-    }
-    fn step(&mut self, stimulus: f64) -> i32 {
-        self.inner.step(stimulus)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-}
 
 #[pyclass(
     name = "WilsonCowanUnit",
@@ -784,14 +616,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     map_bindings::register(m)?;
     biophysical_bindings::register(m)?;
     multi_compartment_bindings::register(m)?;
-    // special
-    m.add_class::<PyInhomogeneousPoissonNeuron>()?;
-    m.add_class::<PyGammaRenewalNeuron>()?;
-    m.add_class::<PyStochasticIFNeuron>()?;
-    m.add_class::<PyStochasticLIFNeuron>()?;
-    m.add_class::<PyGalvesLocherbachNeuron>()?;
-    m.add_class::<PySpikeResponseNeuron>()?;
-    m.add_class::<PyGLMNeuron>()?;
+    stochastic_bindings::register(m)?;
     m.add_class::<PyWilsonCowanUnit>()?;
     jansen_rit_binding::register(m)?;
     m.add_class::<PyWongWangUnit>()?;
