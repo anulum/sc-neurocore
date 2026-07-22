@@ -386,7 +386,7 @@ reported a 95% interval of 5.1153–5.4610 ms for 100,000 steps on the loaded,
 non-isolated workstation. It is a local regression measurement, not a reserved-
 core throughput claim.
 
-### AI-Optimised (`neurons/ai_optimized.rs`)
+### AI-Optimised (`neurons/ai_optimized/`)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

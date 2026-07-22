@@ -90,6 +90,17 @@ def test_live_tree_is_within_committed_ceiling() -> None:
     assert report["passed"], report["violations"]
 
 
+def test_ai_optimized_facade_ceiling_matches_current_down_only_surface() -> None:
+    tool = _load_tool()
+    repo = _repo_root()
+    ceiling = tool.load_ceiling(repo / tool.DEFAULT_CEILING)
+    target = ceiling["targets"]["engine/src/neurons/ai_optimized.rs"]
+    assert target == {
+        "max_lines": tool.measure_target(repo, "engine/src/neurons/ai_optimized.rs")["lines"],
+        "max_pyfunctions": 0,
+    }
+
+
 def test_channels_facade_ceiling_matches_current_down_only_surface() -> None:
     tool = _load_tool()
     repo = _repo_root()
@@ -253,6 +264,7 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert tool.main(["--check", "--repo", str(_repo_root())]) == 0
     output = capsys.readouterr().out
     assert "engine/src/lib.rs" in output
+    assert "engine/src/neurons/ai_optimized.rs" in output
     assert "engine/src/neurons/biophysical.rs" in output
     assert "engine/src/neurons/cerebellar.rs" in output
     assert "engine/src/neurons/channels.rs" in output

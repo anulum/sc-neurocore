@@ -22,6 +22,10 @@ max_pyfunctions = 0
 max_lines = 252
 max_pyfunctions = 0
 
+[targets."engine/src/neurons/ai_optimized.rs"]
+max_lines = 35
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/biophysical.rs"]
 max_lines = 71
 max_pyfunctions = 0
