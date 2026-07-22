@@ -88,6 +88,8 @@ mod hybrid_linear_attention_neuron_binding;
 mod interneuron_bindings;
 #[path = "bindings/meta_plastic_neuron.rs"]
 mod meta_plastic_neuron_binding;
+#[path = "bindings/misc/mod.rs"]
+mod misc_bindings;
 #[path = "bindings/motor/mod.rs"]
 mod motor_bindings;
 #[path = "bindings/multi_timescale_neuron.rs"]
@@ -1442,16 +1444,6 @@ impl PyAmariNeuralField {
     }
 }
 
-// misc.rs models
-py_neuron_default!("GradedSynapseNeuron", PyGradedSynapseNeuron, neurons::GradedSynapseNeuron, state v);
-py_neuron_default!("GapJunctionNeuron", PyGapJunctionNeuron, neurons::GapJunctionNeuron, state v);
-py_neuron_default!("FrankenhaeUserHuxleyAxon", PyFHAxon, neurons::FrankenhaeUserHuxleyAxon, state v, state m, state h, state n, state p);
-py_neuron_default!("NodeOfRanvier", PyNodeOfRanvier, neurons::NodeOfRanvier, state v, state m, state h, state p, state s);
-py_neuron_default!("MyelinatedAxon", PyMyelinatedAxon, neurons::MyelinatedAxon, state v_inter);
-py_neuron_default!("CardiacPurkinjeFibre", PyCardiacPurkinjeFibre, neurons::CardiacPurkinjeFibre, state v, state d, state f, state y);
-py_neuron_default!("SmoothMuscleCell", PySmoothMuscleCell, neurons::SmoothMuscleCell, state v, state ca, state ca_store);
-py_neuron_default!("EndocrineBetaCell", PyEndocrineBetaCell, neurons::EndocrineBetaCell, state v, state n, state ca);
-
 // ═══════════════════════════════════════════════════════════════════
 // sensory.rs models (10 sensory neuron types)
 // ═══════════════════════════════════════════════════════════════════
@@ -1666,14 +1658,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // population
     population_bindings::register(m)?;
     // misc
-    m.add_class::<PyGradedSynapseNeuron>()?;
-    m.add_class::<PyGapJunctionNeuron>()?;
-    m.add_class::<PyFHAxon>()?;
-    m.add_class::<PyNodeOfRanvier>()?;
-    m.add_class::<PyMyelinatedAxon>()?;
-    m.add_class::<PyCardiacPurkinjeFibre>()?;
-    m.add_class::<PySmoothMuscleCell>()?;
-    m.add_class::<PyEndocrineBetaCell>()?;
+    misc_bindings::register(m)?;
     // gap synapse models
     m.add_class::<PyTripletStdpSynapse>()?;
     m.add_class::<PyShortTermPlasticitySynapse>()?;
