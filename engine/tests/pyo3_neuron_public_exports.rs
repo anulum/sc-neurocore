@@ -22,10 +22,10 @@ use sc_neurocore_engine::pyo3_neurons::{
     PyCourageNekorkinMapNeuron, PyDCNNeuron, PyDPINeuron, PyDeSchutterPurkinjeNeuron,
     PyDendrifyNeuron, PyDendriticNMDANeuron, PyDestexheThalamicNeuron,
     PyDifferentiableSurrogateNeuron, PyDirectionSelectiveRGC, PyDopamineStdpSynapse,
-    PyDurstewitzDopamineNeuron, PyElBoustaniNetwork, PyEndocrineBetaCell, PyEnergyLIFNeuron,
-    PyErmentroutKopellMapNeuron, PyErmentroutKopellPopulation, PyFHAxon, PyFitzHughNagumoNeuron,
-    PyFitzHughRinzelNeuron, PyFractionalLIFNeuron, PyGIFPopulationNeuron, PyGLIFNeuron,
-    PyGLMNeuron, PyGalvesLocherbachNeuron, PyGammaMotorNeuron, PyGammaRenewalNeuron,
+    PyDurstewitzDopamineNeuron, PyEPropALIFNeuron, PyElBoustaniNetwork, PyEndocrineBetaCell,
+    PyEnergyLIFNeuron, PyErmentroutKopellMapNeuron, PyErmentroutKopellPopulation, PyFHAxon,
+    PyFitzHughNagumoNeuron, PyFitzHughRinzelNeuron, PyFractionalLIFNeuron, PyGIFPopulationNeuron,
+    PyGLIFNeuron, PyGLMNeuron, PyGalvesLocherbachNeuron, PyGammaMotorNeuron, PyGammaRenewalNeuron,
     PyGapJunctionNeuron, PyGatedLIFNeuron, PyGolgiCell, PyGolombFSNeuron, PyGradedSynapseNeuron,
     PyGranuleCell, PyGutkinErmentroutNeuron, PyHayL5PyramidalNeuron, PyHillTononiNeuron,
     PyHindmarshRoseNeuron, PyHodgkinHuxleyNeuron, PyHuberBraunNeuron,
@@ -47,7 +47,7 @@ use sc_neurocore_engine::pyo3_neurons::{
     PyShermanRinzelKeizerNeuron, PyShortTermPlasticitySynapse, PySiegertTransferFunction,
     PySigmaDeltaNeuron, PySigmoidRateNeuron, PySmoothMuscleCell, PySpiNNaker2Neuron,
     PySpiNNakerLIFNeuron, PySpikeResponseNeuron, PyStellateCell, PyStochasticIFNeuron,
-    PyStochasticLIFNeuron, PyTTypeCaNeuron, PyTUMNetwork, PyTasteReceptorCell,
+    PyStochasticLIFNeuron, PySuperSpikeNeuron, PyTTypeCaNeuron, PyTUMNetwork, PyTasteReceptorCell,
     PyTermanWangOscillator, PyThetaNeuron, PyThresholdLinearRateNeuron, PyTraubMilesNeuron,
     PyTripletStdpSynapse, PyTrueNorthNeuron, PyTsodyksMarkramNeuron, PyTwoCompartmentLIFNeuron,
     PyUnipolarBrushCell, PyUpperMotorNeuron, PyVIPNeuron, PyWangBuzsakiNeuron, PyWilsonHRNeuron,
@@ -224,6 +224,8 @@ fn decomposed_wrappers_remain_distinct_public_types() {
         TypeId::of::<PyParallelSpikingNeuron>(),
         TypeId::of::<PySiegertTransferFunction>(),
         TypeId::of::<PyTsodyksMarkramNeuron>(),
+        TypeId::of::<PyEPropALIFNeuron>(),
+        TypeId::of::<PySuperSpikeNeuron>(),
     ];
     let unique: HashSet<_> = exports.into_iter().collect();
 
