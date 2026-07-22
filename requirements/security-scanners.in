@@ -9,4 +9,4 @@
 bandit==1.9.4
 pip-audit==2.10.1
 reuse==6.2.0
-ruff==0.15.20
+ruff==0.15.22
