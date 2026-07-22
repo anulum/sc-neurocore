@@ -14,16 +14,12 @@
 
 schema_version = 1
 
-[targets."engine/src/lib.rs"]
-max_lines = 252
-max_pyfunctions = 0
-
-[targets."engine/src/pyo3_neurons.rs"]
-max_lines = 2221
-max_pyfunctions = 0
-
 [targets."engine/src/learning_bindings.rs"]
 max_lines = 29
+max_pyfunctions = 0
+
+[targets."engine/src/lib.rs"]
+max_lines = 252
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/biophysical.rs"]
@@ -52,4 +48,8 @@ max_pyfunctions = 0
 
 [targets."engine/src/neurons/trivial.rs"]
 max_lines = 53
+max_pyfunctions = 0
+
+[targets."engine/src/pyo3_neurons.rs"]
+max_lines = 2162
 max_pyfunctions = 0

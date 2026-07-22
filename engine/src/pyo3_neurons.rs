@@ -481,64 +481,6 @@ py_neuron_default!("SigmaDeltaNeuron", PySigmaDeltaNeuron, neurons::SigmaDeltaNe
 py_neuron_default!("EnergyLIFNeuron", PyEnergyLIFNeuron, neurons::EnergyLIFNeuron, state v, state epsilon);
 py_neuron_default!("ClosedFormContinuousNeuron", PyClosedFormContinuousNeuron, neurons::ClosedFormContinuousNeuron, state x);
 
-#[pyclass(
-    name = "IntegerQIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyIntegerQIFNeuron {
-    inner: neurons::IntegerQIFNeuron,
-}
-
-#[pymethods]
-impl PyIntegerQIFNeuron {
-    #[new]
-    #[pyo3(signature = (v=128, v_rest=128, v_threshold=200, v_reset=128, a=1, b=1, v_max=255, v_min=0))]
-    #[allow(clippy::too_many_arguments)]
-    fn new(
-        v: i32,
-        v_rest: i32,
-        v_threshold: i32,
-        v_reset: i32,
-        a: i32,
-        b: i32,
-        v_max: i32,
-        v_min: i32,
-    ) -> PyResult<Self> {
-        Ok(Self {
-            inner: neurons::IntegerQIFNeuron::with_parameters(
-                v,
-                v_rest,
-                v_threshold,
-                v_reset,
-                a,
-                b,
-                v_max,
-                v_min,
-            )
-            .map_err(PyValueError::new_err)?,
-        })
-    }
-    fn step(&mut self, current: i32) -> PyResult<i32> {
-        self.inner.try_step(current).map_err(PyValueError::new_err)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("v_rest", self.inner.v_rest)?;
-        d.set_item("v_threshold", self.inner.v_threshold)?;
-        d.set_item("v_reset", self.inner.v_reset)?;
-        d.set_item("a", self.inner.a)?;
-        d.set_item("b", self.inner.b)?;
-        d.set_item("v_max", self.inner.v_max)?;
-        d.set_item("v_min", self.inner.v_min)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // simple_spiking.rs models
 // ═══════════════════════════════════════════════════════════════════
@@ -2009,7 +1951,6 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     adaptive_threshold_if_binding::register(m)?;
     m.add_class::<PySigmaDeltaNeuron>()?;
     m.add_class::<PyEnergyLIFNeuron>()?;
-    m.add_class::<PyIntegerQIFNeuron>()?;
     m.add_class::<PyClosedFormContinuousNeuron>()?;
     // simple_spiking
     m.add_class::<PyFitzHughNagumoNeuron>()?;
