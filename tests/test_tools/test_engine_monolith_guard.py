@@ -79,7 +79,7 @@ def test_measure_target_matches_independent_recount() -> None:
     assert actual["lines"] == len(text.splitlines())
     assert actual["pyfunctions"] == text.count("#[pyfunction]") + text.count("#[pyfunction(")
     assert actual["lines"] > 0
-    assert actual["pyfunctions"] > 0
+    assert actual["pyfunctions"] == 0
 
 
 def test_live_tree_is_within_committed_ceiling() -> None:
