@@ -46,6 +46,8 @@ mod wong_wang_binding;
 mod biophysical_bindings;
 #[path = "bindings/maps/mod.rs"]
 mod map_bindings;
+#[path = "bindings/multi_compartment/mod.rs"]
+mod multi_compartment_bindings;
 #[path = "bindings/simple_spiking/mod.rs"]
 mod simple_spiking_bindings;
 #[path = "bindings/trivial/mod.rs"]
@@ -92,108 +94,9 @@ mod sensory_bindings;
 #[path = "bindings/synapses/mod.rs"]
 mod synapse_bindings;
 
-// Gap models: DendriticNMDANeuron (step(i_soma, glutamate))
-#[pyclass(
-    name = "RustDendriticNMDANeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyDendriticNMDANeuron {
-    inner: neurons::DendriticNMDANeuron,
-}
-
-#[pymethods]
-impl PyDendriticNMDANeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::DendriticNMDANeuron::new(),
-        }
-    }
-    fn step(&mut self, i_soma: f64, glutamate: f64) -> i32 {
-        self.inner.step(i_soma, glutamate)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v_soma", self.inner.v_soma)?;
-        d.set_item("v_dend", self.inner.v_dend)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap models: MulticompartmentMCNNeuron (step_compartments(x_b, x_a, I))
-#[pyclass(
-    name = "RustMulticompartmentMCNNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyMulticompartmentMCNNeuron {
-    inner: neurons::MulticompartmentMCNNeuron,
-}
-
-#[pymethods]
-impl PyMulticompartmentMCNNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::MulticompartmentMCNNeuron::new(),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn step_compartments(&mut self, x_basal: f64, x_apical: f64, i_soma: f64) -> i32 {
-        self.inner.step_compartments(x_basal, x_apical, i_soma)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("u", self.inner.u)?;
-        d.set_item("v_basal", self.inner.v_basal)?;
-        d.set_item("v_apical", self.inner.v_apical)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap models: AstrocyteLIFNeuron (step_with_pre(i_ext, pre_spike))
-#[pyclass(
-    name = "RustAstrocyteLIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyAstrocyteLIFNeuron {
-    inner: neurons::AstrocyteLIFNeuron,
-}
-
-#[pymethods]
-impl PyAstrocyteLIFNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::AstrocyteLIFNeuron::new(),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn step_with_pre(&mut self, i_ext: f64, pre_spike: bool) -> i32 {
-        self.inner.step_with_pre(i_ext, pre_spike)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("ca", self.inner.ca)?;
-        Ok(d.into_any().unbind())
-    }
-}
+pub use multi_compartment_bindings::{
+    PyAstrocyteLIFNeuron, PyDendriticNMDANeuron, PyMulticompartmentMCNNeuron,
+};
 
 // EPropALIFNeuron: needs tau params
 #[pyclass(
@@ -1184,10 +1087,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBoothRinzelNeuron>()?;
     m.add_class::<PyDendrifyNeuron>()?;
     m.add_class::<PyTwoCompartmentLIFNeuron>()?;
-    // gap models (multi_compartment)
-    m.add_class::<PyDendriticNMDANeuron>()?;
-    m.add_class::<PyMulticompartmentMCNNeuron>()?;
-    m.add_class::<PyAstrocyteLIFNeuron>()?;
+    multi_compartment_bindings::register(m)?;
     // special
     m.add_class::<PyInhomogeneousPoissonNeuron>()?;
     m.add_class::<PyGammaRenewalNeuron>()?;
