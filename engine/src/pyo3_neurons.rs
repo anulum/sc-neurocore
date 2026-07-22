@@ -74,6 +74,8 @@ mod arcane_neuron_binding;
 mod attention_gated_neuron_binding;
 #[path = "bindings/cerebellar/mod.rs"]
 mod cerebellar_bindings;
+#[path = "bindings/channels/mod.rs"]
+mod channel_bindings;
 #[path = "bindings/compositional_binding_neuron.rs"]
 mod compositional_binding_neuron_binding;
 #[path = "bindings/continuous_attractor_neuron.rs"]
@@ -1438,15 +1440,6 @@ impl PyAmariNeuralField {
     }
 }
 
-// channels.rs models
-py_neuron_default!("PersistentNaNeuron", PyPersistentNaNeuron, neurons::PersistentNaNeuron, state v, state h, state n, state p);
-py_neuron_default!("IhNeuron", PyIhNeuron, neurons::IhNeuron, state v, state h, state n, state r);
-py_neuron_default!("TTypeCaNeuron", PyTTypeCaNeuron, neurons::TTypeCaNeuron, state v, state h, state n, state s);
-py_neuron_default!("ATypeKNeuron", PyATypeKNeuron, neurons::ATypeKNeuron, state v, state h, state n, state a, state b);
-py_neuron_default!("BKNeuron", PyBKNeuron, neurons::BKNeuron, state v, state h, state n, state ca);
-py_neuron_default!("SKNeuron", PySKNeuron, neurons::SKNeuron, state v, state h, state n, state ca);
-py_neuron_default!("NMDANeuron", PyNMDANeuron, neurons::NMDANeuron, state v, state h, state n, state s_nmda);
-
 // population.rs models
 py_neuron_default!("MontbrioMeanField", PyMontbrioMeanField, neurons::MontbrioMeanField, state r, state v);
 py_neuron_default!("BrunelNetwork", PyBrunelNetwork, neurons::BrunelNetwork, state r_e, state r_i);
@@ -1673,13 +1666,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // cerebellar
     cerebellar_bindings::register(m)?;
     // channels
-    m.add_class::<PyPersistentNaNeuron>()?;
-    m.add_class::<PyIhNeuron>()?;
-    m.add_class::<PyTTypeCaNeuron>()?;
-    m.add_class::<PyATypeKNeuron>()?;
-    m.add_class::<PyBKNeuron>()?;
-    m.add_class::<PySKNeuron>()?;
-    m.add_class::<PyNMDANeuron>()?;
+    channel_bindings::register(m)?;
     // population
     m.add_class::<PyMontbrioMeanField>()?;
     m.add_class::<PyBrunelNetwork>()?;
