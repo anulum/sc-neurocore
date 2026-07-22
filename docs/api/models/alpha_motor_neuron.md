@@ -1,6 +1,6 @@
 # AlphaMotorNeuron
 
-**Module:** `engine/src/neurons/motor.rs`
+**Module:** `engine/src/neurons/motor/alpha_motor_neuron.rs`
 **Reference:** Powers & Binder, J. Neurophysiol. 86, 2001; Heckman & Enoka, Compr. Physiol. 2(4), 2012
 **Family:** Hodgkin-Huxley variant, spinal motor neuron with PIC and AHP
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `m_pic` (PIC activation), `ca` (intracellular Ca2+)
@@ -87,7 +87,7 @@ Sub-stepping: 50 steps per call (0.5 ms real time per call).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/motor.rs` |
+| Rust implementation | `engine/src/neurons/motor/alpha_motor_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::AlphaMotor` |
 | `create_neuron("AlphaMotor")` | Yes |

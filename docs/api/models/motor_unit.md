@@ -8,7 +8,7 @@
 
 # MotorUnit
 
-**Module:** `engine/src/neurons/motor.rs`
+**Module:** `engine/src/neurons/motor/motor_unit.rs`
 **Reference:** Fuglevand et al., J. Neurophysiol. 70(6), 1993; Heckman & Enoka, Compr. Physiol. 2(4), 2012
 **Family:** LIF motor neuron with exact adaptation relaxation and muscle fibre force model
 **State variables:** `v` (membrane potential), `adapt` (adaptation current), `force` (normalised force output)
@@ -82,7 +82,7 @@ where $A_{twitch}$ is the peak twitch amplitude and $\tau_{twitch}$ is the contr
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/motor.rs` |
+| Rust implementation | `engine/src/neurons/motor/motor_unit.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, adapt, force) |
 | NetworkRunner wired | `NeuronVariant::MotorUnitCell` |
 | `create_neuron("MotorUnit")` | Yes (creates slow subtype) |

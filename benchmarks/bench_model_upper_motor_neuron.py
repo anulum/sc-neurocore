@@ -7,6 +7,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — upper motor neuron exponential-Euler multi-backend local regression benchmark
 
+"""Benchmark the maintained UpperMotorNeuron implementations across backends."""
+
 from __future__ import annotations
 
 import hashlib
@@ -38,7 +40,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_upper_motor_neuron_exp_euler.rs": REPO_ROOT
     / "engine/examples/bench_upper_motor_neuron_exp_euler.rs",
-    "engine/src/neurons/motor.rs": REPO_ROOT / "engine/src/neurons/motor.rs",
+    "engine/src/neurons/motor/upper_motor_neuron.rs": REPO_ROOT
+    / "engine/src/neurons/motor/upper_motor_neuron.rs",
     "src/sc_neurocore/neurons/models/upper_motor_neuron.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/upper_motor_neuron.py",
     "src/sc_neurocore/accel/go/services/upper_motor_neuron.go": REPO_ROOT
@@ -325,6 +328,7 @@ def _require_spike_parity(summaries: dict[str, dict[str, object]]) -> None:
 
 
 def main() -> None:
+    """Collect parity-preserving local regression evidence for every backend."""
     python = _run_python_backend()
     rust = _run_rust_backend()
     go = _run_go_backend()

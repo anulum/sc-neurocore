@@ -202,7 +202,7 @@ compute cycles for the 64x32 dense contract.
 > Remaining sensory rows retain their previously documented measurement date
 > until each model is remeasured after its own hardening pass.
 
-### Motor Neurons (`neurons/motor.rs`) — Motor model group
+### Motor Neurons (`neurons/motor/`) — Motor model group
 
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|

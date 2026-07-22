@@ -38,6 +38,10 @@ max_pyfunctions = 0
 max_lines = 26
 max_pyfunctions = 0
 
+[targets."engine/src/neurons/motor.rs"]
+max_lines = 21
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/multi_compartment.rs"]
 max_lines = 34
 max_pyfunctions = 0

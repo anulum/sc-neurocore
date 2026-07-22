@@ -8,7 +8,7 @@
 
 # GammaMotorNeuron
 
-**Module:** `engine/src/neurons/motor.rs`
+**Module:** `engine/src/neurons/motor/gamma_motor_neuron.rs`
 **Reference:** Prochazka & Hulliger, Prog. Brain Res. 80, 1989; Taylor et al., J. Physiol. 519(3), 1999
 **Family:** Leaky integrate-and-fire with adaptation, fusimotor neuron
 **State variables:** `v` (membrane potential), `adapt` (slow adaptation current)
@@ -75,7 +75,7 @@ and non-finite candidate states before mutation.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/motor.rs` |
+| Rust implementation | `engine/src/neurons/motor/gamma_motor_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::GammaMotor` |
 | `create_neuron("GammaMotor")` | Yes (creates dynamic subtype) |

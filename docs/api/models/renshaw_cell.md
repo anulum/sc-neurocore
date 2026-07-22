@@ -8,7 +8,7 @@
 
 # RenshawCell
 
-**Module:** `engine/src/neurons/motor.rs`
+**Module:** `engine/src/neurons/motor/renshaw_cell.rs`
 **Reference:** Renshaw, J. Neurophysiol. 4, 1941 (discovery); Windhorst, Prog. Neurobiol. 46(5), 1996
 **Family:** Wang-Buzsaki HH variant with exact gate relaxation, conductance-form membrane integration, and adaptation, spinal inhibitory interneuron
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `adapt` (adaptation current)
@@ -81,7 +81,7 @@ Sub-stepping: 50 per call (0.5 ms real time per call).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/motor.rs` |
+| Rust implementation | `engine/src/neurons/motor/renshaw_cell.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::Renshaw` |
 | `create_neuron("Renshaw")` | Yes |

@@ -8,7 +8,7 @@
 
 # UpperMotorNeuron
 
-**Module:** `engine/src/neurons/motor.rs`
+**Module:** `engine/src/neurons/motor/upper_motor_neuron.rs`
 **Reference:** Pospischil et al., Biol. Cybern. 99(4-5), 2008 (RS variant); Larkum, Trends Neurosci. 36(3), 2013
 **Family:** Hodgkin-Huxley variant, L5 pyramidal regular-spiking with dendritic Ca2+
 **State variables:** `v` (membrane potential), `m` (Na+ activation), `h` (Na+ inactivation), `n` (K+ activation), `p` (M-current activation), `s` (high-threshold Ca2+ activation)
@@ -101,7 +101,7 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/motor.rs` |
+| Rust implementation | `engine/src/neurons/motor/upper_motor_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::UpperMotor` |
 | `create_neuron("UpperMotor")` | Yes |
