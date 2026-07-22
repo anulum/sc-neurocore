@@ -67,6 +67,8 @@ pub mod grad;
 pub mod graph;
 #[path = "bindings/ibarz_tanaka_map.rs"]
 mod ibarz_tanaka_map_binding;
+#[path = "bindings/iqif.rs"]
+mod iqif_binding;
 pub mod ir;
 pub mod layer;
 pub(crate) mod learning_bindings;
@@ -668,7 +670,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     coba_lif_binding::register(m)?;
     escape_rate_binding::register(m)?;
     poisson_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_iqif_simulate, m)?)?;
+    iqif_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_mihalas_niebur_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_glif_simulate, m)?)?;
     rulkov_map_binding::register(m)?;
@@ -2151,43 +2153,6 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-/// Full-contract Wu et al. (2021) IQIF integer batch.
-#[pyfunction]
-#[pyo3(signature = (v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current))]
-#[allow(clippy::too_many_arguments, clippy::type_complexity)]
-fn py_iqif_simulate<'py>(
-    py: Python<'py>,
-    v: i32,
-    v_rest: i32,
-    v_threshold: i32,
-    v_reset: i32,
-    a: i32,
-    b: i32,
-    v_max: i32,
-    v_min: i32,
-    n_steps: usize,
-    current: i32,
-) -> PyResult<(Bound<'py, PyArray1<i64>>, i64, i64)> {
-    let mut neuron = crate::neurons::IntegerQIFNeuron::with_parameters(
-        v,
-        v_rest,
-        v_threshold,
-        v_reset,
-        a,
-        b,
-        v_max,
-        v_min,
-    )
-    .map_err(PyValueError::new_err)?;
-    let mut trace = Vec::with_capacity(n_steps);
-    let mut spikes = 0_i64;
-    for _ in 0..n_steps {
-        spikes += i64::from(neuron.try_step(current).map_err(PyValueError::new_err)?);
-        trace.push(neuron.v);
-    }
-    Ok((trace.into_pyarray(py), spikes, neuron.v))
 }
 
 /// Parity contract with

@@ -15,8 +15,8 @@
 schema_version = 1
 
 [targets."engine/src/lib.rs"]
-max_lines = 2685
-max_pyfunctions = 30
+max_lines = 2650
+max_pyfunctions = 29
 
 [targets."engine/src/neurons/biophysical.rs"]
 max_lines = 71

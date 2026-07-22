@@ -48,6 +48,7 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_iqif.py",
     "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/iqif.rs",
     "engine/src/lib.rs",
     "engine/src/network_runner.rs",
     "engine/src/neurons/trivial/integer_qif.rs",
