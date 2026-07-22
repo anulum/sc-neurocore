@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Mihalas-Niebur batch simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons;
+
+py_neuron_default!("MihalasNieburNeuron", PyMihalasNieburNeuron, neurons::MihalasNieburNeuron, state v, state theta, state i1, state i2);
+
+/// Register the Mihalas-Niebur class and batch simulator.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyMihalasNieburNeuron>()?;
     module.add_function(wrap_pyfunction!(py_mihalas_niebur_simulate, module)?)?;
     Ok(())
 }

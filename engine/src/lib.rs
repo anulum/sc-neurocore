@@ -76,8 +76,6 @@ mod fitzhugh_rinzel_binding;
 #[path = "bindings/fixed_point_lif.rs"]
 mod fixed_point_lif_binding;
 pub mod fusion;
-#[path = "bindings/glif.rs"]
-mod glif_binding;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod grad;
@@ -106,8 +104,6 @@ mod matrix_inputs_binding;
 mod mckean_binding;
 #[path = "bindings/medvedev_map.rs"]
 mod medvedev_map_binding;
-#[path = "bindings/mihalas_niebur.rs"]
-mod mihalas_niebur_binding;
 #[path = "bindings/mixed_dense.rs"]
 mod mixed_dense_binding;
 pub mod network_runner;
@@ -234,8 +230,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     escape_rate_binding::register(m)?;
     poisson_binding::register(m)?;
     iqif_binding::register(m)?;
-    mihalas_niebur_binding::register(m)?;
-    glif_binding::register(m)?;
     rulkov_map_binding::register(m)?;
     ibarz_tanaka_map_binding::register(m)?;
     medvedev_map_binding::register(m)?;

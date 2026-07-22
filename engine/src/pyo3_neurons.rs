@@ -44,6 +44,8 @@ mod threshold_linear_rate_binding;
 #[path = "bindings/wong_wang.rs"]
 mod wong_wang_binding;
 
+#[path = "bindings/biophysical/mod.rs"]
+mod biophysical_bindings;
 #[path = "bindings/trivial/mod.rs"]
 mod trivial_bindings;
 
@@ -326,64 +328,6 @@ py_neuron_default!("CourageNekorkinMapNeuron", PyCourageNekorkinMapNeuron, neuro
 py_neuron_default!("AiharaMapNeuron", PyAiharaMapNeuron, neurons::AiharaMapNeuron, state x, state y);
 py_neuron_default!("KilincBhattMapNeuron", PyKilincBhattMapNeuron, neurons::KilincBhattMapNeuron, state x, state theta);
 py_neuron_default!("ErmentroutKopellMapNeuron", PyErmentroutKopellMapNeuron, neurons::ErmentroutKopellMapNeuron, state theta);
-
-// ═══════════════════════════════════════════════════════════════════
-// biophysical/ model modules
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("HodgkinHuxleyNeuron", PyHodgkinHuxleyNeuron, neurons::HodgkinHuxleyNeuron, state v, state m, state h, state n);
-py_neuron_default!("TraubMilesNeuron", PyTraubMilesNeuron, neurons::TraubMilesNeuron, state v, state m, state h, state n);
-py_neuron_default!("WangBuzsakiNeuron", PyWangBuzsakiNeuron, neurons::WangBuzsakiNeuron, state v, state h, state n);
-py_neuron_default!("ConnorStevensNeuron", PyConnorStevensNeuron, neurons::ConnorStevensNeuron, state v, state m, state h, state n, state a, state b);
-py_neuron_default!("DestexheThalamicNeuron", PyDestexheThalamicNeuron, neurons::DestexheThalamicNeuron, state v, state h_na, state n_k, state m_t, state h_t);
-py_neuron_default!("HuberBraunNeuron", PyHuberBraunNeuron, neurons::HuberBraunNeuron, state v, state a_sd, state a_sr);
-py_neuron_default!("GolombFSNeuron", PyGolombFSNeuron, neurons::GolombFSNeuron, state v, state h, state n, state p);
-py_neuron_default!("PospischilNeuron", PyPospischilNeuron, neurons::PospischilNeuron, state v, state m, state h, state n, state p);
-py_neuron_default!("MainenSejnowskiNeuron", PyMainenSejnowskiNeuron, neurons::MainenSejnowskiNeuron, state vs, state va, state m, state h, state n);
-py_neuron_default!("DeSchutterPurkinjeNeuron", PyDeSchutterPurkinjeNeuron, neurons::DeSchutterPurkinjeNeuron, state v, state h_na, state n_k, state m_cap, state h_cap, state q_kca, state ca);
-py_neuron_default!("PlantR15Neuron", PyPlantR15Neuron, neurons::PlantR15Neuron, state v, state m, state h, state n, state ca);
-py_neuron_default!("PrescottNeuron", PyPrescottNeuron, neurons::PrescottNeuron, state v, state w);
-py_neuron_default!("MihalasNieburNeuron", PyMihalasNieburNeuron, neurons::MihalasNieburNeuron, state v, state theta, state i1, state i2);
-py_neuron_default!("GLIFNeuron", PyGLIFNeuron, neurons::GLIFNeuron, state v, state theta, state i_asc1, state i_asc2);
-py_neuron_default!("AvRonCardiacNeuron", PyAvRonCardiacNeuron, neurons::AvRonCardiacNeuron, state v, state h, state n, state s);
-py_neuron_default!("DurstewitzDopamineNeuron", PyDurstewitzDopamineNeuron, neurons::DurstewitzDopamineNeuron, state v, state h_na, state n_k);
-py_neuron_default!("HillTononiNeuron", PyHillTononiNeuron, neurons::HillTononiNeuron, state v, state h_na, state n_k, state m_h, state h_t, state na_i);
-py_neuron_default!("BertramPhantomBurster", PyBertramPhantomBurster, neurons::BertramPhantomBurster, state v, state s1, state s2);
-py_neuron_default!("YamadaNeuron", PyYamadaNeuron, neurons::YamadaNeuron, state v, state n, state q);
-
-// GIFPopulationNeuron: needs seed
-#[pyclass(
-    name = "GIFPopulationNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyGIFPopulationNeuron {
-    inner: neurons::GIFPopulationNeuron,
-}
-
-#[pymethods]
-impl PyGIFPopulationNeuron {
-    #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
-        Self {
-            inner: neurons::GIFPopulationNeuron::new(seed),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("theta", self.inner.theta)?;
-        d.set_item("eta", self.inner.eta)?;
-        Ok(d.into_any().unbind())
-    }
-}
 
 // ═══════════════════════════════════════════════════════════════════
 // multi_compartment.rs models
@@ -1288,27 +1232,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAiharaMapNeuron>()?;
     m.add_class::<PyKilincBhattMapNeuron>()?;
     m.add_class::<PyErmentroutKopellMapNeuron>()?;
-    // biophysical
-    m.add_class::<PyHodgkinHuxleyNeuron>()?;
-    m.add_class::<PyTraubMilesNeuron>()?;
-    m.add_class::<PyWangBuzsakiNeuron>()?;
-    m.add_class::<PyConnorStevensNeuron>()?;
-    m.add_class::<PyDestexheThalamicNeuron>()?;
-    m.add_class::<PyHuberBraunNeuron>()?;
-    m.add_class::<PyGolombFSNeuron>()?;
-    m.add_class::<PyPospischilNeuron>()?;
-    m.add_class::<PyMainenSejnowskiNeuron>()?;
-    m.add_class::<PyDeSchutterPurkinjeNeuron>()?;
-    m.add_class::<PyPlantR15Neuron>()?;
-    m.add_class::<PyPrescottNeuron>()?;
-    m.add_class::<PyMihalasNieburNeuron>()?;
-    m.add_class::<PyGLIFNeuron>()?;
-    m.add_class::<PyGIFPopulationNeuron>()?;
-    m.add_class::<PyAvRonCardiacNeuron>()?;
-    m.add_class::<PyDurstewitzDopamineNeuron>()?;
-    m.add_class::<PyHillTononiNeuron>()?;
-    m.add_class::<PyBertramPhantomBurster>()?;
-    m.add_class::<PyYamadaNeuron>()?;
+    biophysical_bindings::register(m)?;
     // multi_compartment
     m.add_class::<PyPinskyRinzelNeuron>()?;
     m.add_class::<PyHayL5PyramidalNeuron>()?;

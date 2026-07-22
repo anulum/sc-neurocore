@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the GLIF batch simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons;
+
+py_neuron_default!("GLIFNeuron", PyGLIFNeuron, neurons::GLIFNeuron, state v, state theta, state i_asc1, state i_asc2);
+
+/// Register the GLIF class and batch simulator.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyGLIFNeuron>()?;
     module.add_function(wrap_pyfunction!(py_glif_simulate, module)?)?;
     Ok(())
 }
