@@ -311,8 +311,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     adc_to_spike_binding::register(m)?;
     sc_inference_binding::register(m)?;
     wilson_cowan_binding::register(m)?;
-    m.add_class::<Lfsr16>()?;
-    m.add_class::<BitstreamEncoder>()?;
     m.add_class::<DenseLayer>()?;
     #[cfg(feature = "gpu")]
     m.add_class::<gpu::PyGpuDenseLayer>()?;
@@ -504,98 +502,6 @@ fn set_num_threads(n: usize) -> PyResult<()> {
         .num_threads(n)
         .build_global()
         .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
-}
-
-#[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
-pub struct Lfsr16 {
-    inner: encoder::Lfsr16,
-    seed_init: u16,
-}
-
-#[pymethods]
-impl Lfsr16 {
-    #[new]
-    #[pyo3(signature = (seed=0xACE1))]
-    fn new(seed: u16) -> PyResult<Self> {
-        if seed == 0 {
-            return Err(PyValueError::new_err("LFSR seed must be non-zero."));
-        }
-        Ok(Self {
-            inner: encoder::Lfsr16::new(seed),
-            seed_init: seed,
-        })
-    }
-
-    fn step(&mut self) -> u16 {
-        self.inner.step()
-    }
-
-    #[getter]
-    fn reg(&self) -> u16 {
-        self.inner.reg
-    }
-
-    #[getter]
-    fn width(&self) -> u32 {
-        self.inner.width
-    }
-
-    #[pyo3(signature = (seed=None))]
-    fn reset(&mut self, seed: Option<u16>) -> PyResult<()> {
-        let next = seed.unwrap_or(self.seed_init);
-        if next == 0 {
-            return Err(PyValueError::new_err("LFSR seed must be non-zero."));
-        }
-        self.inner = encoder::Lfsr16::new(next);
-        self.seed_init = next;
-        Ok(())
-    }
-}
-
-#[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
-pub struct BitstreamEncoder {
-    inner: encoder::BitstreamEncoder,
-    seed_init: u16,
-}
-
-#[pymethods]
-impl BitstreamEncoder {
-    #[new]
-    #[pyo3(signature = (data_width=16, seed=0xACE1))]
-    fn new(data_width: u32, seed: u16) -> PyResult<Self> {
-        if seed == 0 {
-            return Err(PyValueError::new_err("LFSR seed must be non-zero."));
-        }
-        Ok(Self {
-            inner: encoder::BitstreamEncoder::new(data_width, seed),
-            seed_init: seed,
-        })
-    }
-
-    fn step(&mut self, x_value: u16) -> u8 {
-        self.inner.step(x_value)
-    }
-
-    #[getter]
-    fn data_width(&self) -> u32 {
-        self.inner.data_width
-    }
-
-    #[getter]
-    fn reg(&self) -> u16 {
-        self.inner.lfsr.reg
-    }
-
-    #[pyo3(signature = (seed=None))]
-    fn reset(&mut self, seed: Option<u16>) -> PyResult<()> {
-        let next = seed.unwrap_or(self.seed_init);
-        if next == 0 {
-            return Err(PyValueError::new_err("LFSR seed must be non-zero."));
-        }
-        self.inner.reset(Some(next));
-        self.seed_init = next;
-        Ok(())
-    }
 }
 
 // ── Izhikevich PyO3 wrapper ─────────────────────────────────────
