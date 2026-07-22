@@ -40,6 +40,7 @@ def test_exported_names_signatures_and_top_level_identities_are_stable() -> None
     class_signatures = {
         "Lfsr16": "(seed=44257)",
         "BitstreamEncoder": "(data_width=16, seed=44257)",
+        "BitstreamAverager": "(window=1024)",
     }
     for name, signature in class_signatures.items():
         binding_class = getattr(extension, name)
@@ -47,6 +48,18 @@ def test_exported_names_signatures_and_top_level_identities_are_stable() -> None
         assert binding_class.__module__ == "sc_neurocore_engine.sc_neurocore_engine"
         assert binding_class.__text_signature__ == signature
         assert getattr(engine, name) is binding_class
+
+
+def test_bitstream_averager_preserves_windowed_estimate_and_reset() -> None:
+    averager = extension.BitstreamAverager(window=4)
+
+    for bit in (1, 0, 1, 1):
+        averager.push(bit)
+
+    assert averager.window == 4
+    assert averager.estimate() == 0.75
+    averager.reset()
+    assert averager.estimate() == 0.0
 
 
 def test_generic_one_and_two_dimensional_roundtrips_are_exact() -> None:

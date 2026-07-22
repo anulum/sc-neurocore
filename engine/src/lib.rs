@@ -327,7 +327,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     hdc_binding::register(m)?;
     m.add_class::<PyBrunelNetwork>()?;
     m.add_class::<PyIzhikevich>()?;
-    m.add_class::<PyBitstreamAverager>()?;
     ir::bindings::register(m)?;
     m.add_class::<PyAdExNeuron>()?;
     m.add_class::<PyExpIFNeuron>()?;
@@ -545,42 +544,6 @@ impl PyIzhikevich {
 }
 
 // ── BitstreamAverager PyO3 wrapper ──────────────────────────────
-
-#[pyclass(
-    name = "BitstreamAverager",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-pub struct PyBitstreamAverager {
-    inner: neuron::BitstreamAverager,
-}
-
-#[pymethods]
-impl PyBitstreamAverager {
-    #[new]
-    #[pyo3(signature = (window=1024))]
-    fn new(window: usize) -> Self {
-        Self {
-            inner: neuron::BitstreamAverager::new(window),
-        }
-    }
-
-    fn push(&mut self, bit: u8) {
-        self.inner.push(bit);
-    }
-
-    fn estimate(&self) -> f64 {
-        self.inner.estimate()
-    }
-
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-
-    #[getter]
-    fn window(&self) -> usize {
-        self.inner.window()
-    }
-}
 
 // ── AdEx, ExpIF, Lapicque PyO3 wrappers ────────────────────────
 

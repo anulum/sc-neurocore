@@ -13,12 +13,13 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::IntoPyObject;
 
-use crate::{bitstream, encoder, simd};
+use crate::{bitstream, encoder, neuron, simd};
 
 /// Register bitstream bindings without adding implementation code to the crate root.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<Lfsr16>()?;
     module.add_class::<BitstreamEncoder>()?;
+    module.add_class::<PyBitstreamAverager>()?;
     module.add_function(wrap_pyfunction!(pack_bitstream, module)?)?;
     module.add_function(wrap_pyfunction!(unpack_bitstream, module)?)?;
     module.add_function(wrap_pyfunction!(popcount, module)?)?;
@@ -28,6 +29,42 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(batch_encode, module)?)?;
     module.add_function(wrap_pyfunction!(batch_encode_numpy, module)?)?;
     Ok(())
+}
+
+#[pyclass(
+    name = "BitstreamAverager",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyBitstreamAverager {
+    inner: neuron::BitstreamAverager,
+}
+
+#[pymethods]
+impl PyBitstreamAverager {
+    #[new]
+    #[pyo3(signature = (window=1024))]
+    fn new(window: usize) -> Self {
+        Self {
+            inner: neuron::BitstreamAverager::new(window),
+        }
+    }
+
+    fn push(&mut self, bit: u8) {
+        self.inner.push(bit);
+    }
+
+    fn estimate(&self) -> f64 {
+        self.inner.estimate()
+    }
+
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+
+    #[getter]
+    fn window(&self) -> usize {
+        self.inner.window()
+    }
 }
 
 #[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
