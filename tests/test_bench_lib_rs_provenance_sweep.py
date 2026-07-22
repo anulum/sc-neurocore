@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — committed benchmark-evidence crate-root provenance sweep
 
-"""Repository-tree sweep binding every committed benchmark JSON to the live crate root."""
+"""Repository sweep keeping benchmark evidence off shared engine aggregators."""
 
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ def _load_tool() -> Any:
 gate = _load_tool()
 
 
-def test_all_committed_benchmark_evidence_binds_current_engine_crate_root() -> None:
-    """Reject any committed benchmark JSON whose crate-root hash has drifted from live."""
+def test_all_committed_benchmark_evidence_has_no_stale_crate_root_binding() -> None:
+    """Reject any legacy crate-root binding whose digest has drifted from live."""
     failures = gate.evaluate(repo_root=REPO_ROOT)
     assert failures == [], "stale engine/src/lib.rs provenance in: " + ", ".join(
         f"{failure.artefact} (recorded {failure.recorded[:12]}, live {failure.expected[:12]})"
@@ -42,15 +42,19 @@ def test_all_committed_benchmark_evidence_binds_current_engine_crate_root() -> N
     )
 
 
-def test_sweep_discovers_known_crate_root_binders() -> None:
-    """Guard against a vacuous pass: the sweep must find the maintained crate-root binders."""
+def test_benchmarks_use_model_owned_sources_not_shared_engine_aggregators() -> None:
+    """Keep evidence stable across unrelated engine facade decomposition."""
     binders = {
         path.relative_to(REPO_ROOT).as_posix()
         for path, _ in gate.iter_crate_root_bindings(REPO_ROOT / "benchmarks")
     }
-    for expected in (
-        "benchmarks/results/bench_wong_wang.json",
-        "benchmarks/results/bench_predictive_model.json",
-    ):
-        assert expected in binders, f"sweep failed to discover {expected}"
-    assert len(binders) >= 10, f"crate-root binder set shrank unexpectedly to {len(binders)}"
+    assert binders == set()
+
+    shared_aggregators = ("engine/src/lib.rs", "engine/src/pyo3_neurons.rs")
+    offenders = {
+        path.relative_to(REPO_ROOT).as_posix(): aggregate
+        for path in sorted((REPO_ROOT / "benchmarks").glob("bench_*.py"))
+        for aggregate in shared_aggregators
+        if aggregate in path.read_text(encoding="utf-8")
+    }
+    assert offenders == {}

@@ -47,7 +47,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASH_PATHS = (
     "benchmarks/bench_ermentrout_kopell_map.py",
     "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/ermentrout_kopell_map.rs",
     "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go",
     "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl",

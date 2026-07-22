@@ -46,7 +46,6 @@ DISPATCH_ORDER = ("go", "julia", "mojo", "rust", "python")
 SOURCE_PATHS = (
     "benchmarks/bench_model_dpi_neuron.py",
     "engine/src/neurons/hardware.rs",
-    "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/dpi_neuron.py",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h",

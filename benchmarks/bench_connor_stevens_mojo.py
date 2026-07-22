@@ -47,7 +47,6 @@ SOURCE_PATHS = (
     "benchmarks/bench_connor_stevens_mojo.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/neurons/biophysical.rs",
-    "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/go/services/connor_stevens.go",
     "src/sc_neurocore/accel/julia/neurons/connor_stevens.jl",
     "src/sc_neurocore/accel/mojo/kernels/connor_stevens.mojo",

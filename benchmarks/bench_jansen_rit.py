@@ -65,7 +65,6 @@ SOURCE_PATHS = (
     "engine/src/neurons/jansen_rit.rs",
     "engine/src/neurons/mod.rs",
     "engine/src/neurons/special.rs",
-    "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/go/jansen_rit/__init__.py",
     "src/sc_neurocore/accel/go/jansen_rit/jansen_rit.go",
     "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit.h",

@@ -63,7 +63,6 @@ SOURCE_PATHS = (
     "engine/src/network_runner.rs",
     "engine/src/neurons/trivial.rs",
     "engine/src/neurons/trivial/adaptive_threshold_if.rs",
-    "engine/src/pyo3_neurons.rs",
     "pyproject.toml",
     "src/sc_neurocore/accel/go/go.mod",
     "src/sc_neurocore/accel/go/adaptive_threshold_if/__init__.py",

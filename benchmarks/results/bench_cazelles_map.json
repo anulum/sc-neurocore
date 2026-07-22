@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 14.020616887137294,
-      "min_ms": 12.784268008545041,
+      "median_ms": 26.055956026539207,
+      "min_ms": 19.611757015809417,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 127.66983217717745,
+      "speedup_vs_python": 72.25089107956619,
       "spikes": 24
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 35.07880889810622,
-      "min_ms": 34.4228979665786,
+      "median_ms": 64.08282206393778,
+      "min_ms": 51.726057194173336,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 51.02823788004828,
+      "speedup_vs_python": 29.377077666291683,
       "spikes": 24
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 14.46149405092001,
-      "min_ms": 13.453662861138582,
+      "median_ms": 13.863751199096441,
+      "min_ms": 12.80459389090538,
       "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 123.77765386470853,
+      "speedup_vs_python": 135.79052406610884,
       "spikes": 24
     },
     "python": {
       "backend": "python",
-      "median_ms": 1790.0098050013185,
-      "min_ms": 1622.6151990704238,
+      "median_ms": 1882.5660408474505,
+      "min_ms": 1670.8900260273367,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 24
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 16.93249703384936,
-      "min_ms": 15.836049104109406,
+      "median_ms": 16.897717956453562,
+      "min_ms": 14.977923827245831,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 105.71446145379218,
+      "speedup_vs_python": 111.40948415040047,
       "spikes": 24
     }
   },
@@ -51,54 +51,50 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 1790.0098050013185,
-      "min_ms": 1622.6151990704238,
+      "median_ms": 1882.5660408474505,
+      "min_ms": 1670.8900260273367,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 24
     },
     {
       "backend": "rust",
-      "median_ms": 16.93249703384936,
-      "min_ms": 15.836049104109406,
+      "median_ms": 16.897717956453562,
+      "min_ms": 14.977923827245831,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 105.71446145379218,
+      "speedup_vs_python": 111.40948415040047,
       "spikes": 24
     },
     {
       "backend": "julia",
-      "median_ms": 35.07880889810622,
-      "min_ms": 34.4228979665786,
+      "median_ms": 64.08282206393778,
+      "min_ms": 51.726057194173336,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 51.02823788004828,
+      "speedup_vs_python": 29.377077666291683,
       "spikes": 24
     },
     {
       "backend": "go",
-      "median_ms": 14.020616887137294,
-      "min_ms": 12.784268008545041,
+      "median_ms": 26.055956026539207,
+      "min_ms": 19.611757015809417,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 127.66983217717745,
+      "speedup_vs_python": 72.25089107956619,
       "spikes": 24
     },
     {
       "backend": "mojo",
-      "median_ms": 14.46149405092001,
-      "min_ms": 13.453662861138582,
+      "median_ms": 13.863751199096441,
+      "min_ms": 12.80459389090538,
       "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 123.77765386470853,
+      "speedup_vs_python": 135.79052406610884,
       "spikes": 24
     }
   ],
   "source_hashes": {
     "benchmarks/bench_cazelles_map": {
-      "py": "28919b591aab9b075a334cfc3a74643863b1755f2a014893bd9b7ebfe54d8713"
+      "py": "d675230df45c202859c7431479c0fc1c84d42454798ca6cf4e76b309b11641b5"
     },
-    "benchmarks/bench_cazelles_map.py": "28919b591aab9b075a334cfc3a74643863b1755f2a014893bd9b7ebfe54d8713",
-    "engine/src/lib": {
-      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
-    },
-    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
+    "benchmarks/bench_cazelles_map.py": "d675230df45c202859c7431479c0fc1c84d42454798ca6cf4e76b309b11641b5",
     "engine/src/neurons/cazelles_map": {
       "rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85"
     },

@@ -160,11 +160,7 @@ _STOCHASTIC = frozenset(
 _KNOWN_PARITY_DIVERGENCE = frozenset({"ChayKeizerNeuron"})
 
 _DOC_PATH = Path("docs/api/neuron_models.md")
-_RUST_SOURCE_PATHS = (
-    Path("engine/src/bindings/adaptive_threshold_if.rs"),
-    Path("engine/src/bindings/ermentrout_kopell_pop.rs"),
-    Path("engine/src/bindings/jansen_rit.rs"),
-    Path("engine/src/bindings/resonate_and_fire.rs"),
+_RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/pyo3_neurons.rs"),
     Path("engine/src/lib.rs"),
 )
@@ -225,14 +221,19 @@ def _make_rs(name: str) -> StepModel:
 def _rust_source_names() -> set[str]:
     """Return PyO3 class names declared by the committed Rust sources."""
 
+    root = _repo_root()
+    binding_paths = sorted((root / "engine/src/bindings").glob("*.rs"))
+    aggregate_paths = tuple(root / path for path in _RUST_AGGREGATE_SOURCE_PATHS)
     source_text = "\n".join(
-        (_repo_root() / path).read_text(encoding="utf-8") for path in _RUST_SOURCE_PATHS
+        path.read_text(encoding="utf-8") for path in (*aggregate_paths, *binding_paths)
     )
-    macro_names = re.findall(r'py_neuron_default!\(\s*"([^"]+)"', source_text)
-    explicit_names = re.findall(
-        r'#\[pyclass\(\s*name\s*=\s*"([^"]+)"',
+    macro_names = re.findall(
+        r'(?m)^[ \t]*py_neuron_default!\(\s*"([^"]+)"',
         source_text,
-        flags=re.S,
+    )
+    explicit_names = re.findall(
+        r'(?m)^[ \t]*#\[pyclass\(\s*name\s*=\s*"([^"]+)"',
+        source_text,
     )
     return set(macro_names + explicit_names)
 

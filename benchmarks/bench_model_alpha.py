@@ -65,7 +65,6 @@ SOURCE_PATHS = (
     "engine/src/network_runner.rs",
     "engine/src/neurons/simple_spiking.rs",
     "engine/src/neurons/simple_spiking/alpha.rs",
-    "engine/src/pyo3_neurons.rs",
     "pyproject.toml",
     "src/sc_neurocore/accel/go/go.mod",
     "src/sc_neurocore/accel/go/alpha/__init__.py",

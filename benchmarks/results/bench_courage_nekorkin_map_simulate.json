@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 21.319138118997216,
-      "min_ms": 19.382543163374066,
+      "median_ms": 37.068234058097005,
+      "min_ms": 26.73037303611636,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 52.969084333871194,
+      "speedup_vs_python": 38.053438685833456,
       "spikes": 371008
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 25.509703205898404,
-      "min_ms": 20.33163304440677,
+      "median_ms": 39.92236591875553,
+      "min_ms": 24.357602931559086,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 44.26767398412942,
+      "speedup_vs_python": 35.33292026811542,
       "spikes": 371008
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 19.47882422246039,
-      "min_ms": 18.923309864476323,
+      "median_ms": 31.781770987436175,
+      "min_ms": 23.548290133476257,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 57.97347992126263,
+      "speedup_vs_python": 44.38310792937056,
       "spikes": 371063
     },
     "python": {
       "backend": "python",
-      "median_ms": 1129.2552249506116,
-      "min_ms": 1060.1297821849585,
+      "median_ms": 1410.5737719219178,
+      "min_ms": 1204.2744711507112,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 15.310399001464248,
-      "min_ms": 14.968140982091427,
+      "median_ms": 18.96635303273797,
+      "min_ms": 16.434791963547468,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 73.75740010711755,
+      "speedup_vs_python": 74.372430455508,
       "spikes": 371008
     }
   },
@@ -51,54 +51,50 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 1129.2552249506116,
-      "min_ms": 1060.1297821849585,
+      "median_ms": 1410.5737719219178,
+      "min_ms": 1204.2744711507112,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     {
       "backend": "rust",
-      "median_ms": 15.310399001464248,
-      "min_ms": 14.968140982091427,
+      "median_ms": 18.96635303273797,
+      "min_ms": 16.434791963547468,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 73.75740010711755,
+      "speedup_vs_python": 74.372430455508,
       "spikes": 371008
     },
     {
       "backend": "julia",
-      "median_ms": 25.509703205898404,
-      "min_ms": 20.33163304440677,
+      "median_ms": 39.92236591875553,
+      "min_ms": 24.357602931559086,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 44.26767398412942,
+      "speedup_vs_python": 35.33292026811542,
       "spikes": 371008
     },
     {
       "backend": "go",
-      "median_ms": 21.319138118997216,
-      "min_ms": 19.382543163374066,
+      "median_ms": 37.068234058097005,
+      "min_ms": 26.73037303611636,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 52.969084333871194,
+      "speedup_vs_python": 38.053438685833456,
       "spikes": 371008
     },
     {
       "backend": "mojo",
-      "median_ms": 19.47882422246039,
-      "min_ms": 18.923309864476323,
+      "median_ms": 31.781770987436175,
+      "min_ms": 23.548290133476257,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 57.97347992126263,
+      "speedup_vs_python": 44.38310792937056,
       "spikes": 371063
     }
   ],
   "source_hashes": {
     "benchmarks/bench_courage_nekorkin_map_simulate": {
-      "py": "260663bb7f0dd129fd04b44813f05f79bb1577ecab7f15801e93d7a73d064b2e"
+      "py": "e24cd4dbf90ef279245fd6c726b21d9267620e1e588c3d6729de60d4188637af"
     },
-    "benchmarks/bench_courage_nekorkin_map_simulate.py": "260663bb7f0dd129fd04b44813f05f79bb1577ecab7f15801e93d7a73d064b2e",
-    "engine/src/lib": {
-      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
-    },
-    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
+    "benchmarks/bench_courage_nekorkin_map_simulate.py": "e24cd4dbf90ef279245fd6c726b21d9267620e1e588c3d6729de60d4188637af",
     "engine/src/neurons/courage_nekorkin_map": {
       "rs": "d02e322d8af53ac6631f603f8f4d1b6a8aaa3b8f90b7a2a25d59c664c6c7ff80"
     },

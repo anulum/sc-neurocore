@@ -7,10 +7,10 @@
       "final_state": {
         "u": 0.2514078836724436
       },
-      "median_call_ms": 57.383172,
-      "minimum_call_ms": 38.78843,
+      "median_call_ms": 31.868477,
+      "minimum_call_ms": 29.807858,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 9.751808875257018,
+      "speedup_vs_python": 19.382704545309775,
       "used": true
     },
     "julia": {
@@ -20,10 +20,10 @@
       "final_state": {
         "u": 0.2514078836724436
       },
-      "median_call_ms": 14.042233,
-      "minimum_call_ms": 12.937679,
+      "median_call_ms": 23.261956,
+      "minimum_call_ms": 16.51304,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 39.850480048294315,
+      "speedup_vs_python": 26.553969666179402,
       "used": true
     },
     "mojo": {
@@ -33,10 +33,10 @@
       "final_state": {
         "u": 0.2514078836724436
       },
-      "median_call_ms": 35.508145,
-      "minimum_call_ms": 25.216134,
+      "median_call_ms": 47.144079,
+      "minimum_call_ms": 23.40482,
       "parity_max_abs_diff": 6.80566714095221e-14,
-      "speedup_vs_python": 15.759475072550257,
+      "speedup_vs_python": 13.102329859917297,
       "used": true
     },
     "python": {
@@ -46,8 +46,8 @@
       "final_state": {
         "u": 0.2514078836724436
       },
-      "median_call_ms": 559.589726,
-      "minimum_call_ms": 497.682759,
+      "median_call_ms": 617.697274,
+      "minimum_call_ms": 559.19324,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -59,19 +59,19 @@
       "final_state": {
         "u": 0.2514078836724436
       },
-      "median_call_ms": 29.908207,
-      "minimum_call_ms": 17.270795,
+      "median_call_ms": 18.07798,
+      "minimum_call_ms": 17.103132,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 18.710239834838646,
+      "speedup_vs_python": 34.16848973170675,
       "used": true
     }
   },
   "kernel": "medvedev_map_simulate",
   "measured_order": [
-    "julia",
     "rust",
-    "mojo",
+    "julia",
     "go",
+    "mojo",
     "python"
   ],
   "meta": {
@@ -82,14 +82,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      40.001953125,
-      31.95751953125,
-      21.3017578125
+      30.3896484375,
+      27.54443359375,
+      28.568359375
     ],
     "load_average_start": [
-      35.5771484375,
-      30.34326171875,
-      20.4462890625
+      31.57568359375,
+      27.359375,
+      28.53955078125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -106,17 +106,13 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_medvedev_map": {
-      "py": "a1909438b48026404742d7c46b5e209a848e3528c0a51973ab9674daae874e96"
+      "py": "da2b300fcbe906d6ba1bc4ff075948d170ab37f10602209d676fed04cc28c3fe"
     },
-    "benchmarks/bench_medvedev_map.py": "a1909438b48026404742d7c46b5e209a848e3528c0a51973ab9674daae874e96",
+    "benchmarks/bench_medvedev_map.py": "da2b300fcbe906d6ba1bc4ff075948d170ab37f10602209d676fed04cc28c3fe",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
     },
     "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
-    "engine/src/lib": {
-      "rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f"
-    },
-    "engine/src/lib.rs": "83e6a523f4c9b80aef44838463ebe619f4ce0e7a530da3ea31e194e73d19bb7f",
     "engine/src/neurons/medvedev_map": {
       "rs": "8663bec2d95e79ee4488eba753552ecbfeb5be6cd9ecd4a78f65fcc057a09fd1"
     },

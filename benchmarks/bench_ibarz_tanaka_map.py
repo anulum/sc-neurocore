@@ -44,7 +44,6 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_ibarz_tanaka_map.py",
     "bridge/sc_neurocore_engine/__init__.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/ibarz_tanaka_map.rs",
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go",
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h",

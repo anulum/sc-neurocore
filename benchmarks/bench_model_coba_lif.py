@@ -50,9 +50,7 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_coba_lif.py",
     "bridge/sc_neurocore_engine/__init__.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/simple_spiking.rs",
-    "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/coba_lif.py",
     "src/sc_neurocore/accel/go/neurons/coba_lif/coba_lif.go",
     "src/sc_neurocore/accel/go/neurons/coba_lif/libcoba_lif.h",

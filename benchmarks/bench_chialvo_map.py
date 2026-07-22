@@ -51,7 +51,6 @@ PARITY_ATOL = {
 SOURCE_PATHS = (
     "benchmarks/bench_chialvo_map.py",
     "bridge/sc_neurocore_engine/__init__.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/chialvo_map.rs",
     "src/sc_neurocore/accel/go/neurons/chialvo_map/chialvo_map.go",
     "src/sc_neurocore/accel/go/services/chialvo_map.go",

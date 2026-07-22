@@ -62,7 +62,6 @@ SOURCE_PATHS = (
     "engine/src/neurons/ermentrout_kopell_pop.rs",
     "engine/src/neurons/mod.rs",
     "engine/src/neurons/special.rs",
-    "engine/src/pyo3_neurons.rs",
     "pyproject.toml",
     "src/sc_neurocore/accel/go/go.mod",
     "src/sc_neurocore/accel/go/ermentrout_kopell_pop/__init__.py",

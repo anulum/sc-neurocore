@@ -48,7 +48,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASH_PATHS = (
     "benchmarks/bench_courage_nekorkin_map_simulate.py",
     "src/sc_neurocore/neurons/models/courage_nekorkin_map.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/courage_nekorkin_map.rs",
     "src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go",
     "src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl",

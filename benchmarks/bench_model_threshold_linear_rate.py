@@ -47,7 +47,6 @@ SOURCE_PATHS = (
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/threshold_linear_rate.rs",
     "engine/src/neurons/rate.rs",
-    "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/threshold_linear_rate.py",
     "src/sc_neurocore/accel/go/neurons/threshold_linear_rate/libthreshold_linear_rate.h",
     "src/sc_neurocore/accel/go/neurons/threshold_linear_rate/threshold_linear_rate.go",

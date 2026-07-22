@@ -47,7 +47,6 @@ SOURCE_PATHS = (
     "benchmarks/bench_hodgkin_huxley_mojo.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/neurons/biophysical.rs",
-    "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/go/services/hodgkin_huxley.go",
     "src/sc_neurocore/accel/julia/neurons/hodgkin_huxley.jl",
     "src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley.mojo",

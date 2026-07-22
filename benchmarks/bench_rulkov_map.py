@@ -47,7 +47,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASH_PATHS = (
     "benchmarks/bench_rulkov_map.py",
     "src/sc_neurocore/neurons/models/rulkov_map.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/rulkov_map.rs",
     "src/sc_neurocore/accel/go/neurons/rulkov_map/rulkov_map.go",
     "src/sc_neurocore/accel/julia/neurons/rulkov_map.jl",

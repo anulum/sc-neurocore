@@ -66,7 +66,6 @@ SOURCE_PATHS = (
     "src/sc_neurocore/world_model/_lgssm_em.py",
     "src/sc_neurocore/world_model/_predictive_world_model.py",
     "engine/src/lgssm.rs",
-    "engine/src/lib.rs",
     "bridge/sc_neurocore_engine/__init__.py",
     "bridge/sc_neurocore_engine/world_model.py",
     "src/sc_neurocore/accel/rust/safety/predictive_model.rs",

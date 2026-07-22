@@ -47,7 +47,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASH_PATHS = (
     "benchmarks/bench_cazelles_map.py",
     "src/sc_neurocore/neurons/models/cazelles_map.py",
-    "engine/src/lib.rs",
     "engine/src/neurons/cazelles_map.rs",
     "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go",
     "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl",
