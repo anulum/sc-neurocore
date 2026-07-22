@@ -62,6 +62,8 @@ pub mod fault;
 mod fault_binding;
 #[path = "bindings/fitzhugh_nagumo.rs"]
 mod fitzhugh_nagumo_binding;
+#[path = "bindings/fitzhugh_rinzel.rs"]
+mod fitzhugh_rinzel_binding;
 pub mod fusion;
 #[path = "bindings/glif.rs"]
 mod glif_binding;
@@ -687,7 +689,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ermentrout_kopell_map_binding::register(m)?;
     fitzhugh_nagumo_binding::register(m)?;
     hindmarsh_rose_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
+    fitzhugh_rinzel_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_izhikevich2007_simulate, m)?)?;
     fault_binding::register(m)?;
     // Hierarchical partitioner KL refine
@@ -2161,48 +2163,6 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-/// Parity contract with
-/// `sc_neurocore.neurons.models.fitzhugh_rinzel.FitzHughRinzelNeuron.simulate`:
-/// for the same parameters and constant input the returned `v` trace, upward-
-/// crossing spike count, and final `(v, w, y)` state are bit-identical to the
-/// Python RK4 reference (the right-hand side is exact arithmetic — `v.powi(3)`
-/// = `v*v*v`, additions and multiplications, no transcendental functions).
-#[pyfunction]
-#[pyo3(signature = (v0, w0, y0, a, b, c, d, delta, mu, dt, v_threshold, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_fitzhugh_rinzel_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    w0: f64,
-    y0: f64,
-    a: f64,
-    b: f64,
-    c: f64,
-    d: f64,
-    delta: f64,
-    mu: f64,
-    dt: f64,
-    v_threshold: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
-    let mut neuron = crate::neurons::FitzHughRinzelNeuron {
-        v: v0,
-        w: w0,
-        y: y0,
-        a,
-        b,
-        c,
-        d,
-        delta,
-        mu,
-        dt,
-        v_threshold,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.y)
 }
 
 /// Parity contract with

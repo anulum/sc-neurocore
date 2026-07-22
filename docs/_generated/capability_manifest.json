@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1498
+    "test_files": 1499
   },
   "documentation": {
     "public_pages": [
@@ -3324,6 +3324,7 @@
       "tests/test_fitzhugh_nagumo_backends.py",
       "tests/test_fitzhugh_nagumo_engine_binding.py",
       "tests/test_fitzhugh_rinzel_backends.py",
+      "tests/test_fitzhugh_rinzel_engine_binding.py",
       "tests/test_folded_area_estimator.py",
       "tests/test_folded_datapath.py",
       "tests/test_folded_heterogeneous_params.py",
