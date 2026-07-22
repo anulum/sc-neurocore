@@ -276,7 +276,9 @@ def test_current_public_entrypoints_use_generated_inventory_terms() -> None:
 
     assert f"{counts['python_model_source_modules']} Python model source modules" in all_entrypoints
     assert f"{counts['python_model_classes']} lazy-loaded Python model classes" in all_entrypoints
-    assert f"{counts['rust_pyo3_model_wrappers']} Rust PyO3 model wrappers" in all_entrypoints
+    wrapper_claim = f"{counts['rust_pyo3_model_wrappers']} Rust PyO3 model wrappers"
+    for entrypoint in (readme, docs_index, neuron_reference, mkdocs_metadata):
+        assert wrapper_claim in entrypoint
     assert f"{rust_models}-model NetworkRunner" in all_entrypoints
     assert f"| Python test files | {counts['test_files']} |" in readme
 

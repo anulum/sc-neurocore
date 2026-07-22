@@ -7,7 +7,7 @@
 # SC-NeuroCore — Source/config provenance header
 
 site_name: SC-NeuroCore Documentation
-site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design - 158 lazy-loaded Python model classes, 185 Rust PyO3 model wrappers, bit-true FPGA co-simulation"
+site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design - 158 lazy-loaded Python model classes, 186 Rust PyO3 model wrappers, bit-true FPGA co-simulation"
 site_author: Miroslav Šotek
 site_url: https://anulum.github.io/sc-neurocore/
 repo_url: https://github.com/anulum/sc-neurocore
