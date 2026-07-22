@@ -35,8 +35,6 @@ mod jansen_rit_binding;
 mod lapicque_neuron_binding;
 #[path = "bindings/mcculloch_pitts.rs"]
 mod mcculloch_pitts_binding;
-#[path = "bindings/resonate_and_fire.rs"]
-mod resonate_and_fire_binding;
 #[path = "bindings/sigmoid_rate.rs"]
 mod sigmoid_rate_binding;
 #[path = "bindings/threshold_linear_rate.rs"]
@@ -48,6 +46,8 @@ mod wong_wang_binding;
 mod biophysical_bindings;
 #[path = "bindings/maps/mod.rs"]
 mod map_bindings;
+#[path = "bindings/simple_spiking/mod.rs"]
+mod simple_spiking_bindings;
 #[path = "bindings/trivial/mod.rs"]
 mod trivial_bindings;
 
@@ -194,27 +194,6 @@ impl PyAstrocyteLIFNeuron {
         Ok(d.into_any().unbind())
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// simple_spiking.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("FitzHughNagumoNeuron", PyFitzHughNagumoNeuron, neurons::FitzHughNagumoNeuron, state v, state w);
-py_neuron_default!("MorrisLecarNeuron", PyMorrisLecarNeuron, neurons::MorrisLecarNeuron, state v, state w);
-py_neuron_default!("HindmarshRoseNeuron", PyHindmarshRoseNeuron, neurons::HindmarshRoseNeuron, state x, state y, state z);
-py_neuron_default!("ResonateAndFireNeuron", PyResonateAndFireNeuron, neurons::ResonateAndFireNeuron, state x, state y);
-py_neuron_default!("BalancedResonateAndFireNeuron", PyBalancedResonateAndFireNeuron, neurons::BalancedResonateAndFireNeuron, state x, state y, state q);
-py_neuron_default!("FitzHughRinzelNeuron", PyFitzHughRinzelNeuron, neurons::FitzHughRinzelNeuron, state v, state w, state y);
-py_neuron_default!("McKeanNeuron", PyMcKeanNeuron, neurons::McKeanNeuron, state v, state w);
-py_neuron_default!("TermanWangOscillator", PyTermanWangOscillator, neurons::TermanWangOscillator, state v, state w);
-py_neuron_default!("GutkinErmentroutNeuron", PyGutkinErmentroutNeuron, neurons::GutkinErmentroutNeuron, state v, state n);
-py_neuron_default!("WilsonHRNeuron", PyWilsonHRNeuron, neurons::WilsonHRNeuron, state v, state r);
-py_neuron_default!("ChayNeuron", PyChayNeuron, neurons::ChayNeuron, state v, state n, state ca);
-py_neuron_default!("ChayKeizerNeuron", PyChayKeizerNeuron, neurons::ChayKeizerNeuron, state v, state n, state ca);
-py_neuron_default!("ShermanRinzelKeizerNeuron", PyShermanRinzelKeizerNeuron, neurons::ShermanRinzelKeizerNeuron, state v, state n, state s);
-py_neuron_default!("ButeraRespiratoryNeuron", PyButeraRespiratoryNeuron, neurons::ButeraRespiratoryNeuron, state v, state n, state h_nap);
-py_neuron_default!("LearnableNeuronModel", PyLearnableNeuronModel, neurons::LearnableNeuronModel, state v);
-py_neuron_default!("PernarowskiNeuron", PyPernarowskiNeuron, neurons::PernarowskiNeuron, state v, state w, state z);
 
 // EPropALIFNeuron: needs tau params
 #[pyclass(
@@ -1187,29 +1166,14 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     hybrid_linear_attention_neuron_binding::register(m)?;
     quantum_inspired_lif_neuron_binding::register(m)?;
     trivial_bindings::register(m)?;
-    // simple_spiking
-    m.add_class::<PyFitzHughNagumoNeuron>()?;
-    m.add_class::<PyMorrisLecarNeuron>()?;
-    m.add_class::<PyHindmarshRoseNeuron>()?;
-    m.add_class::<PyResonateAndFireNeuron>()?;
-    resonate_and_fire_binding::register(m)?;
-    m.add_class::<PyBalancedResonateAndFireNeuron>()?;
-    m.add_class::<PyFitzHughRinzelNeuron>()?;
-    m.add_class::<PyMcKeanNeuron>()?;
-    m.add_class::<PyTermanWangOscillator>()?;
+    simple_spiking_bindings::register_primary(m)?;
     m.add_class::<PyBendaHerzNeuron>()?;
     m.add_class::<PyBrunelWangNeuron>()?;
     alpha_binding::register(m)?;
-    m.add_class::<PyGutkinErmentroutNeuron>()?;
-    m.add_class::<PyWilsonHRNeuron>()?;
-    m.add_class::<PyChayNeuron>()?;
-    m.add_class::<PyChayKeizerNeuron>()?;
-    m.add_class::<PyShermanRinzelKeizerNeuron>()?;
-    m.add_class::<PyButeraRespiratoryNeuron>()?;
+    simple_spiking_bindings::register_conductance_models(m)?;
     m.add_class::<PyEPropALIFNeuron>()?;
     m.add_class::<PySuperSpikeNeuron>()?;
-    m.add_class::<PyLearnableNeuronModel>()?;
-    m.add_class::<PyPernarowskiNeuron>()?;
+    simple_spiking_bindings::register_tail(m)?;
     map_bindings::register(m)?;
     biophysical_bindings::register(m)?;
     // multi_compartment

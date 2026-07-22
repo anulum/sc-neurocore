@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the FitzHugh-Rinzel batch simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::FitzHughRinzelNeuron;
+
+py_neuron_default!("FitzHughRinzelNeuron", PyFitzHughRinzelNeuron, FitzHughRinzelNeuron, state v, state w, state y);
+
+/// Register the FitzHugh-Rinzel class and batch simulator.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyFitzHughRinzelNeuron>()?;
     module.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, module)?)?;
     Ok(())
 }
@@ -42,7 +48,7 @@ fn py_fitzhugh_rinzel_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
-    let mut neuron = crate::neurons::FitzHughRinzelNeuron {
+    let mut neuron = FitzHughRinzelNeuron {
         v: v0,
         w: w0,
         y: y0,

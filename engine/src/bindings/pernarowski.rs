@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Pernarowski simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::PernarowskiNeuron;
+
+py_neuron_default!("PernarowskiNeuron", PyPernarowskiNeuron, PernarowskiNeuron, state v, state w, state z);
+
+/// Register the Pernarowski class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyPernarowskiNeuron>()?;
     module.add_function(wrap_pyfunction!(py_pernarowski_simulate, module)?)?;
     Ok(())
 }
@@ -43,7 +49,7 @@ fn py_pernarowski_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
-    let mut neuron = crate::neurons::PernarowskiNeuron {
+    let mut neuron = PernarowskiNeuron {
         v: v0,
         w: w0,
         z: z0,

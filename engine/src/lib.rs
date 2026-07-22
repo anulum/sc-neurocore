@@ -61,10 +61,6 @@ pub mod evo;
 pub mod fault;
 #[path = "bindings/fault.rs"]
 mod fault_binding;
-#[path = "bindings/fitzhugh_nagumo.rs"]
-mod fitzhugh_nagumo_binding;
-#[path = "bindings/fitzhugh_rinzel.rs"]
-mod fitzhugh_rinzel_binding;
 #[path = "bindings/fixed_point_lif.rs"]
 mod fixed_point_lif_binding;
 pub mod fusion;
@@ -72,8 +68,6 @@ pub mod fusion;
 pub mod gpu;
 pub mod grad;
 pub mod graph;
-#[path = "bindings/hindmarsh_rose.rs"]
-mod hindmarsh_rose_binding;
 #[path = "bindings/iqif.rs"]
 mod iqif_binding;
 pub mod ir;
@@ -90,8 +84,6 @@ pub mod lgssm;
 mod lgssm_binding;
 #[path = "bindings/matrix_inputs.rs"]
 mod matrix_inputs_binding;
-#[path = "bindings/mckean.rs"]
-mod mckean_binding;
 #[path = "bindings/mixed_dense.rs"]
 mod mixed_dense_binding;
 pub mod network_runner;
@@ -107,8 +99,6 @@ mod optimizer_binding;
 pub mod partition;
 #[path = "bindings/partition.rs"]
 mod partition_binding;
-#[path = "bindings/pernarowski.rs"]
-mod pernarowski_binding;
 pub mod phi;
 #[path = "bindings/phi.rs"]
 mod phi_binding;
@@ -144,14 +134,10 @@ mod stdp_synapse_binding;
 #[cfg(feature = "z3")]
 pub mod supervisor;
 pub mod synapses;
-#[path = "bindings/terman_wang.rs"]
-mod terman_wang_binding;
 pub mod topology;
 pub mod wilson_cowan;
 #[path = "bindings/wilson_cowan.rs"]
 mod wilson_cowan_binding;
-#[path = "bindings/wilson_hr.rs"]
-mod wilson_hr_binding;
 pub mod wong_wang;
 
 /// SC-NeuroCore ─ High-Performance Rust Engine
@@ -205,17 +191,10 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     evolution_binding::register(m)?;
     lgssm_binding::register(m)?;
     ollivier_ricci_binding::register(m)?;
-    mckean_binding::register(m)?;
-    wilson_hr_binding::register(m)?;
-    pernarowski_binding::register(m)?;
-    terman_wang_binding::register(m)?;
     coba_lif_binding::register(m)?;
     escape_rate_binding::register(m)?;
     poisson_binding::register(m)?;
     iqif_binding::register(m)?;
-    fitzhugh_nagumo_binding::register(m)?;
-    hindmarsh_rose_binding::register(m)?;
-    fitzhugh_rinzel_binding::register(m)?;
     izhikevich2007_binding::register(m)?;
     fault_binding::register(m)?;
     partition_binding::register(m)?;

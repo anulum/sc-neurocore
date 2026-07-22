@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the McKean simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::McKeanNeuron;
+
+py_neuron_default!("McKeanNeuron", PyMcKeanNeuron, McKeanNeuron, state v, state w);
+
+/// Register the McKean class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyMcKeanNeuron>()?;
     module.add_function(wrap_pyfunction!(py_mckean_simulate, module)?)?;
     Ok(())
 }
@@ -41,7 +47,7 @@ fn py_mckean_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::McKeanNeuron {
+    let mut neuron = McKeanNeuron {
         v: v0,
         w: w0,
         a,

@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Terman-Wang simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::TermanWangOscillator;
+
+py_neuron_default!("TermanWangOscillator", PyTermanWangOscillator, TermanWangOscillator, state v, state w);
+
+/// Register the Terman-Wang class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyTermanWangOscillator>()?;
     module.add_function(wrap_pyfunction!(py_terman_wang_simulate, module)?)?;
     Ok(())
 }
@@ -43,7 +49,7 @@ fn py_terman_wang_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::TermanWangOscillator {
+    let mut neuron = TermanWangOscillator {
         v: v0,
         w: w0,
         alpha,

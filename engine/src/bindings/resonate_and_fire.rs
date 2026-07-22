@@ -11,7 +11,10 @@ use pyo3::exceptions::{PyFloatingPointError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+use crate::neurons;
 use crate::neurons::simple_spiking::resonate_and_fire::{self, ResonateAndFireError};
+
+py_neuron_default!("ResonateAndFireNeuron", PyResonateAndFireNeuron, neurons::ResonateAndFireNeuron, state x, state y);
 
 fn map_resonate_and_fire_error(error: ResonateAndFireError) -> PyErr {
     match error {
@@ -22,8 +25,9 @@ fn map_resonate_and_fire_error(error: ResonateAndFireError) -> PyErr {
     }
 }
 
-/// Register the configured exact-flow batch function.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+/// Register the resonate-and-fire class and exact-flow batch function.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyResonateAndFireNeuron>()?;
     module.add_function(wrap_pyfunction!(py_resonate_and_fire_simulate, module)?)?;
     Ok(())
 }

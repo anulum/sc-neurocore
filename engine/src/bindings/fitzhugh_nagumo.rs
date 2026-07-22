@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the FitzHugh-Nagumo batch simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::FitzHughNagumoNeuron;
+
+py_neuron_default!("FitzHughNagumoNeuron", PyFitzHughNagumoNeuron, FitzHughNagumoNeuron, state v, state w);
+
+/// Register the FitzHugh-Nagumo class and batch simulator.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyFitzHughNagumoNeuron>()?;
     module.add_function(wrap_pyfunction!(py_fitzhugh_nagumo_simulate, module)?)?;
     Ok(())
 }
@@ -39,7 +45,7 @@ fn py_fitzhugh_nagumo_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::FitzHughNagumoNeuron {
+    let mut neuron = FitzHughNagumoNeuron {
         v: v0,
         w: w0,
         a,

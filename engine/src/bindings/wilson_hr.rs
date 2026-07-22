@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Wilson-HR simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::WilsonHRNeuron;
+
+py_neuron_default!("WilsonHRNeuron", PyWilsonHRNeuron, WilsonHRNeuron, state v, state r);
+
+/// Register the Wilson-HR class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyWilsonHRNeuron>()?;
     module.add_function(wrap_pyfunction!(py_wilson_hr_simulate, module)?)?;
     Ok(())
 }
@@ -38,7 +44,7 @@ fn py_wilson_hr_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::WilsonHRNeuron {
+    let mut neuron = WilsonHRNeuron {
         v: v0,
         r: r0,
         tau_r,
