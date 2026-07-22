@@ -78,6 +78,8 @@ mod ibarz_tanaka_map_binding;
 #[path = "bindings/iqif.rs"]
 mod iqif_binding;
 pub mod ir;
+#[path = "bindings/izhikevich2007.rs"]
+mod izhikevich2007_binding;
 pub mod layer;
 pub(crate) mod learning_bindings;
 pub mod lgssm;
@@ -690,7 +692,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     fitzhugh_nagumo_binding::register(m)?;
     hindmarsh_rose_binding::register(m)?;
     fitzhugh_rinzel_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_izhikevich2007_simulate, m)?)?;
+    izhikevich2007_binding::register(m)?;
     fault_binding::register(m)?;
     // Hierarchical partitioner KL refine
     m.add_function(wrap_pyfunction!(py_kl_refine, m)?)?;
@@ -2163,50 +2165,6 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-/// Parity contract with
-/// `sc_neurocore.neurons.models.izhikevich2007.Izhikevich2007Neuron.simulate`:
-/// for the same parameters and constant input the returned `v` trace, spike
-/// count, and final `(v, u)` state are bit-identical to the Python RK4 reference
-/// (the NeuroML right-hand side `k (v-vr)(v-vt)/C` is exact arithmetic — products,
-/// a sum and a division, no transcendental functions).
-#[pyfunction]
-#[pyo3(signature = (v0, u0, cap, k, vr, vt, vpeak, a, b, c, d, dt, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_izhikevich2007_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    u0: f64,
-    cap: f64,
-    k: f64,
-    vr: f64,
-    vt: f64,
-    vpeak: f64,
-    a: f64,
-    b: f64,
-    c: f64,
-    d: f64,
-    dt: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::rk4_neurons::Izhikevich2007Rk4 {
-        v: v0,
-        u: u0,
-        cap,
-        k,
-        vr,
-        vt,
-        vpeak,
-        a,
-        b,
-        c,
-        d,
-        dt,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.u)
 }
 
 // ── Hierarchical partitioner — KL refine (PyO3) ──

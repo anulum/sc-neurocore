@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1499
+    "test_files": 1500
   },
   "documentation": {
     "public_pages": [
@@ -3461,6 +3461,7 @@
       "tests/test_ir_python.py",
       "tests/test_ir_type_checker.py",
       "tests/test_izhikevich2007_backends.py",
+      "tests/test_izhikevich2007_engine_binding.py",
       "tests/test_izhikevich_20_patterns.py",
       "tests/test_jansen_rit_accel_dispatch_contracts.py",
       "tests/test_jansen_rit_backends.py",
