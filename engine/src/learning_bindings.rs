@@ -8,7 +8,10 @@
 
 //! Python bindings for surrogate training, differentiable dense layers, attention, and GNNs.
 
-use crate::{attention, extract_matrix_f64, grad, graph, reshape_flat_to_rows};
+use crate::{
+    attention, grad, graph,
+    matrix_inputs_binding::{extract_matrix_f64, reshape_flat_to_rows},
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 

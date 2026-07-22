@@ -11,7 +11,7 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-use crate::{extract_matrix_f64, scpn};
+use crate::{matrix_inputs_binding::extract_matrix_f64, scpn};
 
 /// Register the Kuramoto solver with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
