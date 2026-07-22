@@ -8,7 +8,6 @@
 
 //! PyO3 wrappers and compatibility exports for all neuron models.
 
-use numpy::{IntoPyArray, PyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -87,6 +86,8 @@ mod population_bindings;
 mod predictive_coding_neuron_binding;
 #[path = "bindings/quantum_inspired_lif_neuron.rs"]
 mod quantum_inspired_lif_neuron_binding;
+#[path = "bindings/rate/mod.rs"]
+mod rate_bindings;
 #[path = "bindings/self_referential_neuron.rs"]
 mod self_referential_neuron_binding;
 #[path = "bindings/sensory/mod.rs"]
@@ -104,6 +105,7 @@ pub use misc_bindings::*;
 pub use motor_bindings::*;
 pub use multi_compartment_bindings::*;
 pub use population_bindings::*;
+pub use rate_bindings::*;
 pub use sensory_bindings::*;
 pub use simple_spiking_bindings::*;
 pub use stochastic_bindings::*;
@@ -368,225 +370,6 @@ impl PyLarterBreakspearNeuron {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// rate.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-// AstrocyteModel: step returns f64
-#[pyclass(
-    name = "AstrocyteModel",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyAstrocyteModel {
-    inner: neurons::AstrocyteModel,
-}
-
-#[pymethods]
-impl PyAstrocyteModel {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::AstrocyteModel::new(),
-        }
-    }
-    fn step(&mut self, current: f64) -> f64 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("ca", self.inner.ca)?;
-        d.set_item("h", self.inner.h)?;
-        d.set_item("ip3", self.inner.ip3)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// TsodyksMarkramNeuron: step(current, presynaptic_spike)
-#[pyclass(
-    name = "TsodyksMarkramNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyTsodyksMarkramNeuron {
-    inner: neurons::TsodyksMarkramNeuron,
-}
-
-#[pymethods]
-impl PyTsodyksMarkramNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::TsodyksMarkramNeuron::new(),
-        }
-    }
-    #[pyo3(signature = (current, presynaptic_spike=false))]
-    fn step(&mut self, current: f64, presynaptic_spike: bool) -> i32 {
-        self.inner.step(current, presynaptic_spike)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("x", self.inner.x)?;
-        d.set_item("u", self.inner.u)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-py_neuron_default!("LiquidTimeConstantNeuron", PyLiquidTimeConstantNeuron, neurons::LiquidTimeConstantNeuron, state x);
-
-// CompteWMNeuron: step(current, spike_in)
-#[pyclass(
-    name = "CompteWMNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyCompteWMNeuron {
-    inner: neurons::CompteWMNeuron,
-}
-
-#[pymethods]
-impl PyCompteWMNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::CompteWMNeuron::new(),
-        }
-    }
-    #[pyo3(signature = (current, spike_in=false))]
-    fn step(&mut self, current: f64, spike_in: bool) -> i32 {
-        self.inner.step(current, spike_in)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("s_nmda", self.inner.s_nmda)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// SiegertTransferFunction: step returns f64, no &mut self
-#[pyclass(
-    name = "SiegertTransferFunction",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PySiegertTransferFunction {
-    inner: neurons::SiegertTransferFunction,
-}
-
-#[pymethods]
-impl PySiegertTransferFunction {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::SiegertTransferFunction::new(),
-        }
-    }
-    fn step(&self, current: f64) -> f64 {
-        self.inner.step(current)
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// rate.rs models requiring non-default constructors or Vec state
-// ═══════════════════════════════════════════════════════════════════
-
-#[pyclass(
-    name = "FractionalLIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyFractionalLIFNeuron {
-    inner: neurons::FractionalLIFNeuron,
-}
-
-#[pymethods]
-impl PyFractionalLIFNeuron {
-    #[new]
-    #[pyo3(signature = (alpha=0.8, max_hist=50))]
-    fn new(alpha: f64, max_hist: usize) -> Self {
-        Self {
-            inner: neurons::FractionalLIFNeuron::new(alpha, max_hist),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "ParallelSpikingNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyParallelSpikingNeuron {
-    inner: neurons::ParallelSpikingNeuron,
-}
-
-#[pymethods]
-impl PyParallelSpikingNeuron {
-    #[new]
-    #[pyo3(signature = (kernel_size=8, v_threshold=1.0))]
-    fn new(kernel_size: usize, v_threshold: f64) -> Self {
-        Self {
-            inner: neurons::ParallelSpikingNeuron::new(kernel_size, v_threshold),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-}
-
-#[pyclass(
-    name = "AmariNeuralField",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyAmariNeuralField {
-    inner: neurons::AmariNeuralField,
-}
-
-#[pymethods]
-impl PyAmariNeuralField {
-    #[new]
-    #[pyo3(signature = (n=64))]
-    fn new(n: usize) -> Self {
-        Self {
-            inner: neurons::AmariNeuralField::new(n),
-        }
-    }
-    fn step(&mut self, input: Vec<f64>) -> f64 {
-        self.inner.step(&input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state<'py>(&self, py: Python<'py>) -> Bound<'py, PyArray1<f64>> {
-        self.inner.u.clone().into_pyarray(py)
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════
 // Registration function — call from lib.rs pymodule init
 // ═══════════════════════════════════════════════════════════════════
 
@@ -629,15 +412,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     mcculloch_pitts_binding::register(m)?;
     sigmoid_rate_binding::register(m)?;
     threshold_linear_rate_binding::register(m)?;
-    m.add_class::<PyAstrocyteModel>()?;
-    m.add_class::<PyTsodyksMarkramNeuron>()?;
-    m.add_class::<PyLiquidTimeConstantNeuron>()?;
-    m.add_class::<PyCompteWMNeuron>()?;
-    m.add_class::<PySiegertTransferFunction>()?;
-    m.add_class::<PyFractionalLIFNeuron>()?;
-    m.add_class::<PyParallelSpikingNeuron>()?;
-    m.add_class::<PyAmariNeuralField>()?;
-    m.add_class::<PyLeakyCompeteFireNeuron>()?;
+    rate_bindings::register(m)?;
     arcane_neuron_binding::register(m)?;
     // neuron.rs (legacy)
     adex_neuron_binding::register(m)?;
@@ -652,36 +427,4 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     misc_bindings::register(m)?;
     synapse_bindings::register(m)?;
     Ok(())
-}
-
-// LeakyCompeteFireNeuron: step(Vec) -> Vec
-#[pyclass(
-    name = "LeakyCompeteFireNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyLeakyCompeteFireNeuron {
-    inner: neurons::LeakyCompeteFireNeuron,
-}
-
-#[pymethods]
-impl PyLeakyCompeteFireNeuron {
-    #[new]
-    #[pyo3(signature = (n_units=4))]
-    fn new(n_units: usize) -> Self {
-        Self {
-            inner: neurons::LeakyCompeteFireNeuron::new(n_units),
-        }
-    }
-    fn step(&mut self, currents: Vec<f64>) -> Vec<i32> {
-        self.inner.step(&currents)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v.clone())?;
-        Ok(d.into_any().unbind())
-    }
 }
