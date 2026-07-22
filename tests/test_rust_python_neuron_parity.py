@@ -222,7 +222,7 @@ def _rust_source_names() -> set[str]:
     """Return PyO3 class names declared by the committed Rust sources."""
 
     root = _repo_root()
-    binding_paths = sorted((root / "engine/src/bindings").glob("*.rs"))
+    binding_paths = sorted((root / "engine/src/bindings").rglob("*.rs"))
     aggregate_paths = tuple(root / path for path in _RUST_AGGREGATE_SOURCE_PATHS)
     source_text = "\n".join(
         path.read_text(encoding="utf-8") for path in (*aggregate_paths, *binding_paths)

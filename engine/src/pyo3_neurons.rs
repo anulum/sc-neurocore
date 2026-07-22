@@ -80,6 +80,8 @@ mod continuous_attractor_neuron_binding;
 mod differentiable_surrogate_neuron_binding;
 #[path = "bindings/hybrid_linear_attention_neuron.rs"]
 mod hybrid_linear_attention_neuron_binding;
+#[path = "bindings/interneurons/mod.rs"]
+mod interneuron_bindings;
 #[path = "bindings/meta_plastic_neuron.rs"]
 mod meta_plastic_neuron_binding;
 #[path = "bindings/multi_timescale_neuron.rs"]
@@ -1433,17 +1435,6 @@ impl PyAmariNeuralField {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// interneurons.rs models (6 specific interneuron types)
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("PVFastSpikingNeuron", PyPVFastSpikingNeuron, neurons::PVFastSpikingNeuron, state v, state h, state n, state p);
-py_neuron_default!("SSTNeuron", PySSTNeuron, neurons::SSTNeuron, state v, state m, state h, state n, state p, state s, state r);
-py_neuron_default!("VIPNeuron", PyVIPNeuron, neurons::VIPNeuron, state v, state h, state n, state a, state b);
-py_neuron_default!("ChandelierNeuron", PyChandelierNeuron, neurons::ChandelierNeuron, state v, state h, state n, state d, state p);
-py_neuron_default!("CerebellarBasketNeuron", PyCerebellarBasketNeuron, neurons::CerebellarBasketNeuron, state v, state h, state n, state a, state b, state ca);
-py_neuron_default!("MartinottiNeuron", PyMartinottiNeuron, neurons::MartinottiNeuron, state v, state m, state h, state n, state p, state s);
-
-// ═══════════════════════════════════════════════════════════════════
 // motor.rs models
 // ═══════════════════════════════════════════════════════════════════
 
@@ -1676,12 +1667,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     crate::exp_if_binding::register_legacy_alias(m)?;
     lapicque_neuron_binding::register(m)?;
     // interneurons
-    m.add_class::<PyPVFastSpikingNeuron>()?;
-    m.add_class::<PySSTNeuron>()?;
-    m.add_class::<PyVIPNeuron>()?;
-    m.add_class::<PyChandelierNeuron>()?;
-    m.add_class::<PyCerebellarBasketNeuron>()?;
-    m.add_class::<PyMartinottiNeuron>()?;
+    interneuron_bindings::register(m)?;
     // motor
     m.add_class::<PyAlphaMotorNeuron>()?;
     m.add_class::<PyGammaMotorNeuron>()?;
