@@ -331,7 +331,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     izhikevich_binding::register(m)?;
     ir::bindings::register(m)?;
     m.add_class::<PyExpIFNeuron>()?;
-    m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
     network_runner_binding::register(m)?;
     #[cfg(feature = "z3")]
@@ -504,7 +503,7 @@ fn set_num_threads(n: usize) -> PyResult<()> {
         .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
 }
 
-// ── ExpIF and Lapicque PyO3 wrappers ────────────────────────────
+// ── ExpIF PyO3 wrapper ──────────────────────────────────────────
 
 #[pyclass(
     name = "ExpIFNeuron",
@@ -533,37 +532,6 @@ impl PyExpIFNeuron {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
         d.set_item("refractory_remaining", self.inner.refractory_remaining)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "LapicqueNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyLapicqueNeuron {
-    inner: neuron::LapicqueNeuron,
-}
-
-#[pymethods]
-impl PyLapicqueNeuron {
-    #[new]
-    #[pyo3(signature = (tau=20.0, resistance=1.0, threshold=1.0, dt=1.0))]
-    fn new(tau: f64, resistance: f64, threshold: f64, dt: f64) -> Self {
-        Self {
-            inner: neuron::LapicqueNeuron::new(tau, resistance, threshold, dt),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
         Ok(d.into_any().unbind())
     }
 }
