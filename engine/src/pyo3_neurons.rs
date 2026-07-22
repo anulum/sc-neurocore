@@ -66,6 +66,9 @@ macro_rules! py_neuron_default {
     };
 }
 
+#[path = "bindings/trivial/mod.rs"]
+mod trivial_bindings;
+
 #[path = "bindings/adaptive_threshold_moe_neuron.rs"]
 mod adaptive_threshold_moe_neuron_binding;
 #[path = "bindings/arcane_neuron.rs"]
@@ -209,27 +212,6 @@ impl PyAstrocyteLIFNeuron {
         Ok(d.into_any().unbind())
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// trivial.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("QuadraticIFNeuron", PyQuadraticIFNeuron, neurons::QuadraticIFNeuron, state v);
-py_neuron_default!("ThetaNeuron", PyThetaNeuron, neurons::ThetaNeuron, state theta);
-py_neuron_default!("PerfectIntegratorNeuron", PyPerfectIntegratorNeuron, neurons::PerfectIntegratorNeuron, state v);
-py_neuron_default!("GatedLIFNeuron", PyGatedLIFNeuron, neurons::GatedLIFNeuron, state v);
-py_neuron_default!("NonlinearLIFNeuron", PyNonlinearLIFNeuron, neurons::NonlinearLIFNeuron, state v, state w);
-py_neuron_default!("SFANeuron", PySFANeuron, neurons::SFANeuron, state v, state g_sfa);
-py_neuron_default!("MATNeuron", PyMATNeuron, neurons::MATNeuron, state v, state theta1, state theta2);
-py_neuron_default!("KLIFNeuron", PyKLIFNeuron, neurons::KLIFNeuron, state v);
-py_neuron_default!("InhibitoryLIFNeuron", PyInhibitoryLIFNeuron, neurons::InhibitoryLIFNeuron, state v, state inh_trace);
-py_neuron_default!("ComplementaryLIFNeuron", PyComplementaryLIFNeuron, neurons::ComplementaryLIFNeuron, state v_pos, state v_neg);
-py_neuron_default!("ParametricLIFNeuron", PyParametricLIFNeuron, neurons::ParametricLIFNeuron, state v);
-py_neuron_default!("NonResettingLIFNeuron", PyNonResettingLIFNeuron, neurons::NonResettingLIFNeuron, state v, state theta);
-py_neuron_default!("AdaptiveThresholdIFNeuron", PyAdaptiveThresholdIFNeuron, neurons::AdaptiveThresholdIFNeuron, state v, state theta);
-py_neuron_default!("SigmaDeltaNeuron", PySigmaDeltaNeuron, neurons::SigmaDeltaNeuron, state sigma);
-py_neuron_default!("EnergyLIFNeuron", PyEnergyLIFNeuron, neurons::EnergyLIFNeuron, state v, state epsilon);
-py_neuron_default!("ClosedFormContinuousNeuron", PyClosedFormContinuousNeuron, neurons::ClosedFormContinuousNeuron, state x);
 
 // ═══════════════════════════════════════════════════════════════════
 // simple_spiking.rs models
@@ -1294,24 +1276,8 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     adaptive_threshold_moe_neuron_binding::register(m)?;
     hybrid_linear_attention_neuron_binding::register(m)?;
     quantum_inspired_lif_neuron_binding::register(m)?;
-    // trivial
-    m.add_class::<PyQuadraticIFNeuron>()?;
-    m.add_class::<PyThetaNeuron>()?;
-    m.add_class::<PyPerfectIntegratorNeuron>()?;
-    m.add_class::<PyGatedLIFNeuron>()?;
-    m.add_class::<PyNonlinearLIFNeuron>()?;
-    m.add_class::<PySFANeuron>()?;
-    m.add_class::<PyMATNeuron>()?;
-    m.add_class::<PyKLIFNeuron>()?;
-    m.add_class::<PyInhibitoryLIFNeuron>()?;
-    m.add_class::<PyComplementaryLIFNeuron>()?;
-    m.add_class::<PyParametricLIFNeuron>()?;
-    m.add_class::<PyNonResettingLIFNeuron>()?;
-    m.add_class::<PyAdaptiveThresholdIFNeuron>()?;
+    trivial_bindings::register(m)?;
     adaptive_threshold_if_binding::register(m)?;
-    m.add_class::<PySigmaDeltaNeuron>()?;
-    m.add_class::<PyEnergyLIFNeuron>()?;
-    m.add_class::<PyClosedFormContinuousNeuron>()?;
     // simple_spiking
     m.add_class::<PyFitzHughNagumoNeuron>()?;
     m.add_class::<PyMorrisLecarNeuron>()?;
