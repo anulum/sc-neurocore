@@ -40,6 +40,8 @@ mod wong_wang_binding;
 
 #[path = "bindings/biophysical/mod.rs"]
 mod biophysical_bindings;
+#[path = "bindings/hardware/mod.rs"]
+mod hardware_bindings;
 #[path = "bindings/maps/mod.rs"]
 mod map_bindings;
 #[path = "bindings/multi_compartment/mod.rs"]
@@ -93,6 +95,7 @@ mod synapse_bindings;
 pub use biophysical_bindings::*;
 pub use cerebellar_bindings::*;
 pub use channel_bindings::*;
+pub use hardware_bindings::*;
 pub use interneuron_bindings::*;
 pub use map_bindings::*;
 pub use misc_bindings::*;
@@ -664,178 +667,6 @@ impl PyLarterBreakspearNeuron {
     }
 }
 
-// hardware.rs models
-
-#[pyclass(
-    name = "LoihiCUBANeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyLoihiCUBANeuron {
-    inner: neurons::LoihiCUBANeuron,
-}
-
-#[pymethods]
-impl PyLoihiCUBANeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::LoihiCUBANeuron::new(),
-        }
-    }
-    fn step(&mut self, weighted_input: i32) -> i32 {
-        self.inner.step(weighted_input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("u", self.inner.u)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "Loihi2Neuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyLoihi2Neuron {
-    inner: neurons::Loihi2Neuron,
-}
-
-#[pymethods]
-impl PyLoihi2Neuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::Loihi2Neuron::new(),
-        }
-    }
-    fn step(&mut self, weighted_input: i32) -> i32 {
-        self.inner.step(weighted_input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("s1", self.inner.s1)?;
-        d.set_item("s2", self.inner.s2)?;
-        d.set_item("s3", self.inner.s3)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-#[pyclass(
-    name = "TrueNorthNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyTrueNorthNeuron {
-    inner: neurons::TrueNorthNeuron,
-}
-
-#[pymethods]
-impl PyTrueNorthNeuron {
-    #[new]
-    #[pyo3(signature = (threshold=100))]
-    fn new(threshold: i32) -> Self {
-        Self {
-            inner: neurons::TrueNorthNeuron::new(threshold),
-        }
-    }
-    fn step(&mut self, weighted_input: i32) -> i32 {
-        self.inner.step(weighted_input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-py_neuron_default!("BrainScaleSAdExNeuron", PyBrainScaleSAdExNeuron, neurons::BrainScaleSAdExNeuron, state v, state w);
-py_neuron_default!("SpiNNakerLIFNeuron", PySpiNNakerLIFNeuron, neurons::SpiNNakerLIFNeuron, state v, state refrac_count);
-
-#[pyclass(
-    name = "SpiNNaker2Neuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PySpiNNaker2Neuron {
-    inner: neurons::SpiNNaker2Neuron,
-}
-
-#[pymethods]
-impl PySpiNNaker2Neuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::SpiNNaker2Neuron::new(),
-        }
-    }
-    fn step(&mut self, current: i32) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-py_neuron_default!(
-    "DPINeuron",
-    PyDPINeuron,
-    neurons::DPINeuron,
-    state i_mem,
-    state i_ahp,
-    state refractory_time
-);
-
-#[pyclass(
-    name = "AkidaNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyAkidaNeuron {
-    inner: neurons::AkidaNeuron,
-}
-
-#[pymethods]
-impl PyAkidaNeuron {
-    #[new]
-    #[pyo3(signature = (threshold=100))]
-    fn new(threshold: i32) -> Self {
-        Self {
-            inner: neurons::AkidaNeuron::new(threshold),
-        }
-    }
-    fn step(&mut self, weight: i32) -> i32 {
-        self.inner.step(weight as f64)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("rank", self.inner.rank)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-py_neuron_default!("NeuroGridNeuron", PyNeuroGridNeuron, neurons::NeuroGridNeuron, state v_s, state v_d);
-
 // ═══════════════════════════════════════════════════════════════════
 // rate.rs models
 // ═══════════════════════════════════════════════════════════════════
@@ -1108,16 +939,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ermentrout_kopell_pop_binding::register(m)?;
     m.add_class::<PyWendlingNeuron>()?;
     m.add_class::<PyLarterBreakspearNeuron>()?;
-    // hardware
-    m.add_class::<PyLoihiCUBANeuron>()?;
-    m.add_class::<PyLoihi2Neuron>()?;
-    m.add_class::<PyTrueNorthNeuron>()?;
-    m.add_class::<PyBrainScaleSAdExNeuron>()?;
-    m.add_class::<PySpiNNakerLIFNeuron>()?;
-    m.add_class::<PySpiNNaker2Neuron>()?;
-    m.add_class::<PyDPINeuron>()?;
-    m.add_class::<PyAkidaNeuron>()?;
-    m.add_class::<PyNeuroGridNeuron>()?;
+    hardware_bindings::register(m)?;
     // rate
     mcculloch_pitts_binding::register(m)?;
     sigmoid_rate_binding::register(m)?;
