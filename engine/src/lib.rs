@@ -19,7 +19,6 @@ use numpy::{
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 
 pub mod adc_to_spike;
 #[path = "bindings/adc_to_spike.rs"]
@@ -33,6 +32,8 @@ mod bitstream_binding;
 mod escape_rate_binding;
 #[path = "bindings/evolution.rs"]
 mod evolution_binding;
+#[path = "bindings/exp_if.rs"]
+mod exp_if_binding;
 #[path = "bindings/hdc.rs"]
 mod hdc_binding;
 pub use hdc_binding::PyBitStreamTensor;
@@ -285,7 +286,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBrunelNetwork>()?;
     izhikevich_binding::register(m)?;
     ir::bindings::register(m)?;
-    m.add_class::<PyExpIFNeuron>()?;
+    exp_if_binding::register(m)?;
     pyo3_neurons::register_neuron_classes(m)?;
     network_runner_binding::register(m)?;
     #[cfg(feature = "z3")]
@@ -375,39 +376,6 @@ fn set_num_threads(n: usize) -> PyResult<()> {
         .num_threads(n)
         .build_global()
         .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
-}
-
-// ── ExpIF PyO3 wrapper ──────────────────────────────────────────
-
-#[pyclass(
-    name = "ExpIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyExpIFNeuron {
-    inner: neuron::ExpIfNeuron,
-}
-
-#[pymethods]
-impl PyExpIFNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neuron::ExpIfNeuron::new(),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("refractory_remaining", self.inner.refractory_remaining)?;
-        Ok(d.into_any().unbind())
-    }
 }
 
 // ── DenseLayer ──────────────────────────────────────────────────
