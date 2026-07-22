@@ -110,6 +110,8 @@ pub mod optimizer;
 #[path = "bindings/optimizer.rs"]
 mod optimizer_binding;
 pub mod partition;
+#[path = "bindings/partition.rs"]
+mod partition_binding;
 #[path = "bindings/pernarowski.rs"]
 mod pernarowski_binding;
 pub mod phi;
@@ -379,8 +381,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     fitzhugh_rinzel_binding::register(m)?;
     izhikevich2007_binding::register(m)?;
     fault_binding::register(m)?;
-    // Hierarchical partitioner KL refine
-    m.add_function(wrap_pyfunction!(py_kl_refine, m)?)?;
+    partition_binding::register(m)?;
     // PINGCircuit per-step kernel
     m.add_function(wrap_pyfunction!(py_ping_step, m)?)?;
     // CorticalColumn block-CSR per-row-parallel spmv
@@ -1743,48 +1744,6 @@ impl PySCPNMetrics {
     fn consciousness_index(phases_l4: Vec<f64>, glyph_l7: [f64; 6]) -> f64 {
         scpn::SCPNMetrics::consciousness_index(&phases_l4, &glyph_l7)
     }
-}
-
-// ── Hierarchical partitioner — KL refine (PyO3) ──
-//
-// Caller passes flat numpy arrays (CSR adjacency + flat scc weights +
-// flat vertex_weights + initial part_map). The kernel mutates a copy
-// of part_map in-place and returns (new_part_map, num_moves).
-
-#[pyfunction]
-#[pyo3(signature = (
-    adj_offsets, adj_neighbours, adj_scc_abs, vertex_weights,
-    part_map, parts_concat, parts_offsets,
-    n_parts, kl_iterations, correlation_penalty,
-))]
-#[allow(clippy::too_many_arguments)]
-fn py_kl_refine<'py>(
-    py: Python<'py>,
-    adj_offsets: PyReadonlyArray1<'_, i64>,
-    adj_neighbours: PyReadonlyArray1<'_, i32>,
-    adj_scc_abs: PyReadonlyArray1<'_, f64>,
-    vertex_weights: PyReadonlyArray1<'_, f64>,
-    part_map: PyReadonlyArray1<'_, i32>,
-    parts_concat: PyReadonlyArray1<'_, i32>,
-    parts_offsets: PyReadonlyArray1<'_, i64>,
-    n_parts: i32,
-    kl_iterations: i32,
-    correlation_penalty: f64,
-) -> PyResult<(Py<PyArray1<i32>>, u64)> {
-    let mut pm = part_map.as_slice()?.to_vec();
-    let moves = partition::kl_refine(
-        adj_offsets.as_slice()?,
-        adj_neighbours.as_slice()?,
-        adj_scc_abs.as_slice()?,
-        vertex_weights.as_slice()?,
-        &mut pm,
-        parts_concat.as_slice()?,
-        parts_offsets.as_slice()?,
-        n_parts,
-        kl_iterations,
-        correlation_penalty,
-    );
-    Ok((pm.into_pyarray(py).into(), moves))
 }
 
 // ── PINGCircuit per-step kernel ─────────────────────────────────────

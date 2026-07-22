@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_rulkov_map.py": "d0198665235c66d968c9a104faac74dedbfb369d58e6bb3cb93cb23cc22632ca",
     "engine/src/lib": {
-      "rs": "62522ce25c17acbe91f1de9b6ecf1b0c8e08591a11de8078ee5f9b0d68641e36"
+      "rs": "4f4327ef2c2ccf55ea14095f48177394a167a2a6cc134cb24163e1777ee306a0"
     },
-    "engine/src/lib.rs": "62522ce25c17acbe91f1de9b6ecf1b0c8e08591a11de8078ee5f9b0d68641e36",
+    "engine/src/lib.rs": "4f4327ef2c2ccf55ea14095f48177394a167a2a6cc134cb24163e1777ee306a0",
     "engine/src/neurons/rulkov_map": {
       "rs": "e68dbf88c51ed6a05b0cb2a8b2dafcb005936539573eefe4fe267aa389a1267c"
     },
