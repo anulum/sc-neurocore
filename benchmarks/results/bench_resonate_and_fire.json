@@ -249,9 +249,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     ".github/workflows/ci": {
-      "yml": "7071f265fb8303b1ded56903d4af8424dba5880b7f6d3742687af45456ff1133"
+      "yml": "de2dd8613a8d513aadd803678b1ad4b25c6484d423d58aac0112bd9acac7539a"
     },
-    ".github/workflows/ci.yml": "7071f265fb8303b1ded56903d4af8424dba5880b7f6d3742687af45456ff1133",
+    ".github/workflows/ci.yml": "de2dd8613a8d513aadd803678b1ad4b25c6484d423d58aac0112bd9acac7539a",
     "Cargo": {
       "lock": "620ef71b9177692260386cb2c1f94868886489c9ffb0e8cbcdb27ed2b48add1b"
     },
