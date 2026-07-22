@@ -1311,41 +1311,6 @@ py_neuron_default!("NeuroGridNeuron", PyNeuroGridNeuron, neurons::NeuroGridNeuro
 // rate.rs models
 // ═══════════════════════════════════════════════════════════════════
 
-// ThresholdLinearRateNeuron: step returns f64
-#[pyclass(
-    name = "ThresholdLinearRateNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyThresholdLinearRateNeuron {
-    inner: neurons::ThresholdLinearRateNeuron,
-}
-
-#[pymethods]
-impl PyThresholdLinearRateNeuron {
-    #[new]
-    #[pyo3(signature = (r=0.0, theta=0.0, gain=1.0))]
-    fn new(r: f64, theta: f64, gain: f64) -> PyResult<Self> {
-        Ok(Self {
-            inner: neurons::ThresholdLinearRateNeuron::with_parameters(r, theta, gain)
-                .map_err(PyValueError::new_err)?,
-        })
-    }
-    fn step(&mut self, current: f64) -> PyResult<f64> {
-        self.inner.try_step(current).map_err(PyValueError::new_err)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("r", self.inner.r)?;
-        d.set_item("theta", self.inner.theta)?;
-        d.set_item("gain", self.inner.gain)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // AstrocyteModel: step returns f64
 #[pyclass(
     name = "AstrocyteModel",
@@ -1886,7 +1851,6 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // rate
     mcculloch_pitts_binding::register(m)?;
     sigmoid_rate_binding::register(m)?;
-    m.add_class::<PyThresholdLinearRateNeuron>()?;
     threshold_linear_rate_binding::register(m)?;
     m.add_class::<PyAstrocyteModel>()?;
     m.add_class::<PyTsodyksMarkramNeuron>()?;
