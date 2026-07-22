@@ -48,7 +48,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | Multi-compartment | 7 | `neurons/multi_compartment/` + facade | Done |
 | Stochastic/population | 13 | `neurons/special.rs` | Done |
 | Hardware emulators | 9 | `neurons/hardware.rs` | Done |
-| Rate/other | 11 | `neurons/rate.rs` | Done |
+| Rate/other | 11 | `neurons/rate/` | Done |
 | AI-optimized | 1 | `neurons/special.rs` (Arcane) | Done |
 
 ## Synapses

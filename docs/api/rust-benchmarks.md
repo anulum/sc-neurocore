@@ -350,7 +350,7 @@ compute cycles for the 64x32 dense contract.
 > surfaces. Older rows in this section retain their 2026-04-05 measurement
 > date until their own model-specific hardening pass is completed.
 
-### Rate / Mean-Field (`neurons/rate.rs`)
+### Rate / Mean-Field (`neurons/rate/`)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

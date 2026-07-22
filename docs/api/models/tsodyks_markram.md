@@ -503,7 +503,7 @@ print(f"Total: {spike_count(mon)}")
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/tsodyks_markram.py` | ~50 | Python reference |
-| `engine/src/neurons/rate.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/rate/tsodyks_markram.rs` | model-owned | Rust implementation |
 | `tests/test_model_tsodyks_markram.py` | ~200 | 23 tests |
 
 ---

@@ -46,6 +46,10 @@ max_pyfunctions = 0
 max_lines = 34
 max_pyfunctions = 0
 
+[targets."engine/src/neurons/rate.rs"]
+max_lines = 35
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/sensory.rs"]
 max_lines = 38
 max_pyfunctions = 0

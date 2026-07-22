@@ -51,7 +51,7 @@ SOURCE_PATHS = (
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/mcculloch_pitts.rs",
     "engine/src/network_runner.rs",
-    "engine/src/neurons/rate.rs",
+    "engine/src/neurons/rate/mcculloch_pitts.rs",
     "src/sc_neurocore/accel/mcculloch_pitts.py",
     "src/sc_neurocore/accel/go/neurons/mcculloch_pitts/mcculloch_pitts.go",
     "src/sc_neurocore/accel/go/neurons/mcculloch_pitts/libmcculloch_pitts.h",

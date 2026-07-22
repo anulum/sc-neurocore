@@ -176,9 +176,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_sigmoid_rate": {
-      "py": "f9f148250112bc4cdd4d3c7fffdc491efdb07012a20998d8fe180be80f8b89f5"
+      "py": "1f21ae34ee681e62f4d1f93047afe663aa4dc1665282165711d0031050650a69"
     },
-    "benchmarks/bench_model_sigmoid_rate.py": "f9f148250112bc4cdd4d3c7fffdc491efdb07012a20998d8fe180be80f8b89f5",
+    "benchmarks/bench_model_sigmoid_rate.py": "1f21ae34ee681e62f4d1f93047afe663aa4dc1665282165711d0031050650a69",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
     },
@@ -187,10 +187,10 @@
       "rs": "b6487c31e845fdd2790dda584c6a856a0da7507723b68d2f5959262b8990c667"
     },
     "engine/src/bindings/sigmoid_rate.rs": "b6487c31e845fdd2790dda584c6a856a0da7507723b68d2f5959262b8990c667",
-    "engine/src/neurons/rate": {
-      "rs": "bce9e6b54e0c1c6c3dd572dc97b90e8b65f93406ca74211041b6a1a9a73f88e9"
+    "engine/src/neurons/rate/sigmoid_rate": {
+      "rs": "dfdc03fec9599eb7544f3fded6f3ad885d6e4167c02962c6be73b3e58fe1d71e"
     },
-    "engine/src/neurons/rate.rs": "bce9e6b54e0c1c6c3dd572dc97b90e8b65f93406ca74211041b6a1a9a73f88e9",
+    "engine/src/neurons/rate/sigmoid_rate.rs": "dfdc03fec9599eb7544f3fded6f3ad885d6e4167c02962c6be73b3e58fe1d71e",
     "src/sc_neurocore/accel/go/neurons/sigmoid_rate/libsigmoid_rate": {
       "h": "6633a86cd30bf25e4f2870b1a7e7fceb3d5f63dff9c6d54aeb8c066e67905b27"
     },

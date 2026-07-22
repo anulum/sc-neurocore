@@ -44,7 +44,7 @@ SOURCE_PATHS = (
     "benchmarks/bench_model_sigmoid_rate.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/sigmoid_rate.rs",
-    "engine/src/neurons/rate.rs",
+    "engine/src/neurons/rate/sigmoid_rate.rs",
     "src/sc_neurocore/accel/sigmoid_rate.py",
     "src/sc_neurocore/accel/go/neurons/sigmoid_rate/libsigmoid_rate.h",
     "src/sc_neurocore/accel/go/neurons/sigmoid_rate/sigmoid_rate.go",

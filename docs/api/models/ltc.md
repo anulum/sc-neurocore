@@ -1,7 +1,7 @@
 # LiquidTimeConstantNeuron
 
-**Module:** `engine/src/neurons/rate.rs`
-**Rust struct:** `LiquidTimeConstantNeuron` (line 229)
+**Module:** `engine/src/neurons/rate/liquid_time_constant.rs`
+**Rust struct:** `LiquidTimeConstantNeuron`
 **Reference:** Hasani et al., NeurIPS 2021
 **Family:** Integrate-and-fire with input-adaptive time constant
 **State variables:** `x` (hidden state)
@@ -407,7 +407,7 @@ Both sigmoid and tanh can be approximated with piecewise-linear LUTs for FPGA.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/rate.rs:229` |
+| Rust implementation | `engine/src/neurons/rate/liquid_time_constant.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::LTC` |
 | `create_neuron("LiquidTimeConstantNeuron")` | Yes |
@@ -571,5 +571,5 @@ where the temporal structure must be manually designed.
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/rate.rs:229–273`.
+*Document verified against Rust source `engine/src/neurons/rate/liquid_time_constant.rs`.
 All equations, parameters, and default values read directly from the implementation.*

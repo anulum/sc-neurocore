@@ -139,7 +139,7 @@ only the bounded co-simulation claim above.
 
 - Python reference: `src/sc_neurocore/neurons/models/sigmoid_rate.py`
 - public dispatcher: `src/sc_neurocore/accel/sigmoid_rate.py`
-- Rust engine: `engine/src/neurons/rate.rs` and
+- Rust engine: `engine/src/neurons/rate/sigmoid_rate.rs` and
   `engine/src/bindings/sigmoid_rate.rs`
 - independent Rust safety: `src/sc_neurocore/accel/rust/safety/sigmoid_rate.rs`
 - Julia: `src/sc_neurocore/accel/julia/neurons/sigmoid_rate.jl`
