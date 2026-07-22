@@ -92,6 +92,8 @@ mod meta_plastic_neuron_binding;
 mod motor_bindings;
 #[path = "bindings/multi_timescale_neuron.rs"]
 mod multi_timescale_neuron_binding;
+#[path = "bindings/population/mod.rs"]
+mod population_bindings;
 #[path = "bindings/predictive_coding_neuron.rs"]
 mod predictive_coding_neuron_binding;
 #[path = "bindings/quantum_inspired_lif_neuron.rs"]
@@ -1440,12 +1442,6 @@ impl PyAmariNeuralField {
     }
 }
 
-// population.rs models
-py_neuron_default!("MontbrioMeanField", PyMontbrioMeanField, neurons::MontbrioMeanField, state r, state v);
-py_neuron_default!("BrunelNetwork", PyBrunelNetwork, neurons::BrunelNetwork, state r_e, state r_i);
-py_neuron_default!("TUMNetwork", PyTUMNetwork, neurons::TUMNetwork, state r, state x, state u);
-py_neuron_default!("ElBoustaniNetwork", PyElBoustaniNetwork, neurons::ElBoustaniNetwork, state r_e, state r_i, state s);
-
 // misc.rs models
 py_neuron_default!("GradedSynapseNeuron", PyGradedSynapseNeuron, neurons::GradedSynapseNeuron, state v);
 py_neuron_default!("GapJunctionNeuron", PyGapJunctionNeuron, neurons::GapJunctionNeuron, state v);
@@ -1668,10 +1664,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // channels
     channel_bindings::register(m)?;
     // population
-    m.add_class::<PyMontbrioMeanField>()?;
-    m.add_class::<PyBrunelNetwork>()?;
-    m.add_class::<PyTUMNetwork>()?;
-    m.add_class::<PyElBoustaniNetwork>()?;
+    population_bindings::register(m)?;
     // misc
     m.add_class::<PyGradedSynapseNeuron>()?;
     m.add_class::<PyGapJunctionNeuron>()?;
