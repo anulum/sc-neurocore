@@ -150,6 +150,8 @@ pub mod sc_inference;
 #[path = "bindings/sc_inference.rs"]
 mod sc_inference_binding;
 pub mod scpn;
+#[path = "bindings/scpn_metrics.rs"]
+mod scpn_metrics_binding;
 pub mod simd;
 pub mod sobol;
 #[path = "bindings/stdp_synapse.rs"]
@@ -192,7 +194,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     stdp_synapse_binding::register(m)?;
     learning_bindings::register(m)?;
     m.add_class::<PyKuramotoSolver>()?;
-    m.add_class::<PySCPNMetrics>()?;
+    scpn_metrics_binding::register(m)?;
     hdc_binding::register(m)?;
     brunel_binding::register(m)?;
     izhikevich_binding::register(m)?;
@@ -558,29 +560,5 @@ impl PyKuramotoSolver {
         validate_kuramoto_finite("coupling", &coupling_flat)?;
         self.inner.set_coupling(coupling_flat);
         Ok(())
-    }
-}
-
-#[pyclass(
-    name = "SCPNMetrics",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-pub struct PySCPNMetrics;
-
-#[pymethods]
-impl PySCPNMetrics {
-    #[new]
-    fn new() -> Self {
-        Self
-    }
-
-    #[staticmethod]
-    fn global_coherence(weights: [f64; 7], metrics: [f64; 7]) -> f64 {
-        scpn::SCPNMetrics::global_coherence(&weights, &metrics)
-    }
-
-    #[staticmethod]
-    fn consciousness_index(phases_l4: Vec<f64>, glyph_l7: [f64; 6]) -> f64 {
-        scpn::SCPNMetrics::consciousness_index(&phases_l4, &glyph_l7)
     }
 }

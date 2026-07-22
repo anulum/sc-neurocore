@@ -79,7 +79,7 @@ def test_rust_model_wrapper_scan_excludes_engine_infrastructure(tmp_path: Path) 
         binding,
         "\n".join(
             f'#[pyclass(name = "{name}", module = "example")]\nstruct Py{name};'
-            for name in ("BitstreamAverager", "Lfsr16", "NetworkRunner")
+            for name in ("BitstreamAverager", "Lfsr16", "NetworkRunner", "SCPNMetrics")
         ),
     )
 

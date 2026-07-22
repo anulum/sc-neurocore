@@ -50,6 +50,7 @@ _RUST_PYO3_NON_MODEL_CLASSES = frozenset(
         "BitstreamAverager",
         "Lfsr16",
         "NetworkRunner",
+        "SCPNMetrics",
     }
 )
 
