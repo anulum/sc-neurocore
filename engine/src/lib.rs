@@ -136,6 +136,8 @@ mod predictive_coding_binding;
 pub mod pyo3_neurons;
 pub mod quantum;
 pub mod rall_dendrite;
+#[path = "bindings/rall_dendrite.rs"]
+mod rall_dendrite_binding;
 pub mod recorder;
 pub mod recurrent;
 pub mod rk4_neurons;
@@ -294,7 +296,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     predictive_coding_binding::register(m)?;
     phi_binding::register(m)?;
     cortical_column_binding::register(m)?;
-    m.add_class::<PyRallDendrite>()?;
+    rall_dendrite_binding::register(m)?;
     analysis::bindings::register(m)?;
     dna::bindings::register(m)?;
     quantum::bindings::register(m)?;
@@ -330,46 +332,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ping_binding::register(m)?;
     cortical_inject_binding::register(m)?;
     Ok(())
-}
-
-// ── Rall dendrite ────────────────────────────────────────────────────
-
-#[pyclass(
-    name = "RallDendriteRust",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-pub struct PyRallDendrite {
-    inner: rall_dendrite::RallDendriteRust,
-}
-
-#[pymethods]
-impl PyRallDendrite {
-    #[new]
-    fn new(n_branches: usize, branch_length: usize, tau: f64, coupling: f64, dt: f64) -> Self {
-        Self {
-            inner: rall_dendrite::RallDendriteRust::new(
-                n_branches,
-                branch_length,
-                tau,
-                coupling,
-                dt,
-            ),
-        }
-    }
-
-    fn step(&mut self, branch_inputs: PyReadonlyArray1<'_, f64>) -> PyResult<f64> {
-        let inputs = branch_inputs.as_slice()?;
-        Ok(self.inner.step(inputs))
-    }
-
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-
-    #[getter]
-    fn soma_v(&self) -> f64 {
-        self.inner.soma_v
-    }
 }
 
 /// Returns the highest SIMD tier available on this CPU.
