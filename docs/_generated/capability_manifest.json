@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 177,
-    "test_files": 1505
+    "test_files": 1506
   },
   "documentation": {
     "public_pages": [
@@ -2893,6 +2893,7 @@
       "tests/test_adaptive_threshold_if_native_abi.py",
       "tests/test_adaptive_threshold_if_parity.py",
       "tests/test_adaptive_threshold_if_rust_parity.py",
+      "tests/test_adc_to_spike_engine_binding.py",
       "tests/test_adc_to_spike_kernel.py",
       "tests/test_adc_to_spike_kernel_parity.py",
       "tests/test_adc_to_spike_quantiser.py",

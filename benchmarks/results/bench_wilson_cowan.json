@@ -225,9 +225,9 @@
     },
     "engine/src/bindings/wilson_cowan.rs": "b96579ececbecbb570f76cd4aa5d877900ef8666267e5a683b5ab662850b0004",
     "engine/src/lib": {
-      "rs": "bfa2cc5e631c345390c8651c216708438fde26d2e1a138cb80ed3b9b80556a07"
+      "rs": "ae54a53b75c171c70df884fd9a3b2a98f42f8741580454fa36b17b7d14ea4265"
     },
-    "engine/src/lib.rs": "bfa2cc5e631c345390c8651c216708438fde26d2e1a138cb80ed3b9b80556a07",
+    "engine/src/lib.rs": "ae54a53b75c171c70df884fd9a3b2a98f42f8741580454fa36b17b7d14ea4265",
     "engine/src/wilson_cowan": {
       "rs": "86c4742f5095e497daff90c3b20870e1467cc47bd5be0c1c6fd9b8ab619c34ec"
     },

@@ -205,9 +205,9 @@
     },
     "engine/src/bindings/escape_rate.rs": "727a73123cbd657b8032a614c96fa3d7dda182dc1bf265120d0f130a352539a8",
     "engine/src/lib": {
-      "rs": "bfa2cc5e631c345390c8651c216708438fde26d2e1a138cb80ed3b9b80556a07"
+      "rs": "ae54a53b75c171c70df884fd9a3b2a98f42f8741580454fa36b17b7d14ea4265"
     },
-    "engine/src/lib.rs": "bfa2cc5e631c345390c8651c216708438fde26d2e1a138cb80ed3b9b80556a07",
+    "engine/src/lib.rs": "ae54a53b75c171c70df884fd9a3b2a98f42f8741580454fa36b17b7d14ea4265",
     "engine/src/neurons/trivial/escape_rate": {
       "rs": "31a580c360ea9f910dcd5e8536c85e5d5a355de24979e22a1461d56c6af27afe"
     },
