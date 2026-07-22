@@ -407,7 +407,7 @@
   "schema_version": 2,
   "source_sha256": {
     "benchmarks/bench_predictive_model.py": "ff1ed36f58c99e3f3010c48a77dea9cfab323354fbb8e3a5bbc3be6e98315286",
-    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
+    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
     "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
     "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
     "engine/src/lib.rs": "bfa2cc5e631c345390c8651c216708438fde26d2e1a138cb80ed3b9b80556a07",

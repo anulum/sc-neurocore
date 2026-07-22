@@ -217,17 +217,17 @@
     },
     "benchmarks/bench_wilson_cowan.py": "4ad992a42c5fd43dbb4553209742dba61356490ebfa5cc7849a6fef19de6bb22",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
+      "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
+    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
     "engine/src/bindings/wilson_cowan": {
       "rs": "b96579ececbecbb570f76cd4aa5d877900ef8666267e5a683b5ab662850b0004"
     },
     "engine/src/bindings/wilson_cowan.rs": "b96579ececbecbb570f76cd4aa5d877900ef8666267e5a683b5ab662850b0004",
     "engine/src/lib": {
-      "rs": "f1e0958ee9a5f2ce64272ba146c5f79697a297f757a2fb7ed425746b48bd92ae"
+      "rs": "a658d2b38fa85fe27404350a480d9dc572605c0d89ef1e478e0b6a513e578ef8"
     },
-    "engine/src/lib.rs": "f1e0958ee9a5f2ce64272ba146c5f79697a297f757a2fb7ed425746b48bd92ae",
+    "engine/src/lib.rs": "a658d2b38fa85fe27404350a480d9dc572605c0d89ef1e478e0b6a513e578ef8",
     "engine/src/wilson_cowan": {
       "rs": "86c4742f5095e497daff90c3b20870e1467cc47bd5be0c1c6fd9b8ab619c34ec"
     },

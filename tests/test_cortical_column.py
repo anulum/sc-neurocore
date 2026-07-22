@@ -707,6 +707,12 @@ class TestNativeDiscovery:
 # ── Published fidelity (Potjans 2014 Table 4) ────────────────────────
 
 
+@pytest.fixture(scope="class")
+def rasters():
+    col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
+    return col, col.simulate(duration_ms=600.0, dt=0.1)
+
+
 class TestPublishedFidelity:
     """Pin the qualitative features of the asynchronous-irregular state.
 
@@ -714,11 +720,6 @@ class TestPublishedFidelity:
     `scale=0.1` with full-scale in-degree preservation. Each takes
     ~25 s on a modern CPU.
     """
-
-    @pytest.fixture(scope="class")
-    def rasters(self):
-        col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
-        return col, col.simulate(duration_ms=600.0, dt=0.1)
 
     def test_no_population_silent(self, rasters):
         col, r = rasters

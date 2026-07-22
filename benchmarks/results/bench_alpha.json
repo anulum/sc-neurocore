@@ -276,9 +276,9 @@
     },
     "benchmarks/bench_model_alpha.py": "c7780fd9b024f61c9f926d8e7eb85cf224f788f4a666f4c87ba85642cf25b033",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
+      "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
+    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
     "engine/Cargo": {
       "toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a"
     },

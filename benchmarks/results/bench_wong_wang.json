@@ -227,9 +227,9 @@
     },
     "benchmarks/bench_wong_wang.py": "6f47527bd39906b03fdd5e8ed0a22059eef964b296d5d21be0de99505d0d7979",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
+      "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
+    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
     "engine/src/bindings/wong_wang": {
       "rs": "59d69deca4c6238c00de600a7aaa0bb3cbd2a33551a789ac25c59c7a790ba29b"
     },

@@ -202,13 +202,13 @@
     },
     "benchmarks/bench_model_coba_lif.py": "dde950ef174c07c9f15425a97f3a8ec9c5e4668717f88e9250af3174841af1d7",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
+      "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
+    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
     "engine/src/lib": {
-      "rs": "f1e0958ee9a5f2ce64272ba146c5f79697a297f757a2fb7ed425746b48bd92ae"
+      "rs": "a658d2b38fa85fe27404350a480d9dc572605c0d89ef1e478e0b6a513e578ef8"
     },
-    "engine/src/lib.rs": "f1e0958ee9a5f2ce64272ba146c5f79697a297f757a2fb7ed425746b48bd92ae",
+    "engine/src/lib.rs": "a658d2b38fa85fe27404350a480d9dc572605c0d89ef1e478e0b6a513e578ef8",
     "engine/src/neurons/simple_spiking": {
       "rs": "7992827d120e3165c0619f5ff9c21a2161354604b0aace15c534239adc89b920"
     },

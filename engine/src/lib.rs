@@ -15,7 +15,7 @@
 
 use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
-    PyReadwriteArray1, PyUntypedArrayMethods,
+    PyUntypedArrayMethods,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -51,6 +51,8 @@ pub mod cordiv;
 mod cordiv_binding;
 pub mod cortical_column;
 pub mod cortical_inject;
+#[path = "bindings/cortical_inject.rs"]
+mod cortical_inject_binding;
 #[path = "bindings/courage_nekorkin_map.rs"]
 mod courage_nekorkin_map_binding;
 #[path = "bindings/dcls.rs"]
@@ -385,9 +387,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     fault_binding::register(m)?;
     partition_binding::register(m)?;
     ping_binding::register(m)?;
-    // CorticalColumn block-CSR per-row-parallel spmv
-    m.add_function(wrap_pyfunction!(py_parallel_csr_spmv_add, m)?)?;
-    m.add_function(wrap_pyfunction!(py_parallel_csr_multi_spmv_add, m)?)?;
+    cortical_inject_binding::register(m)?;
     Ok(())
 }
 
@@ -1745,71 +1745,4 @@ impl PySCPNMetrics {
     fn consciousness_index(phases_l4: Vec<f64>, glyph_l7: [f64; 6]) -> f64 {
         scpn::SCPNMetrics::consciousness_index(&phases_l4, &glyph_l7)
     }
-}
-
-// ── CorticalColumn block-CSR spmv (per-row-parallel) ────────────────
-//
-// `y += W @ x` where `W` is a CSR matrix described by
-// `(indptr, indices, data)`. Rows are processed in parallel via
-// rayon — bit-identical to scipy single-threaded for matching
-// inputs because the per-row reduction is local. Used by
-// `CorticalColumn._inject_block(dt)` once per `(source-type, bin)`
-// pair, replacing scipy's single-threaded csr_matvec for that step.
-
-#[pyfunction]
-#[pyo3(signature = (indptr, indices, data, x, y))]
-fn py_parallel_csr_spmv_add(
-    indptr: PyReadonlyArray1<'_, i32>,
-    indices: PyReadonlyArray1<'_, i32>,
-    data: PyReadonlyArray1<'_, f64>,
-    x: PyReadonlyArray1<'_, f64>,
-    y: PyReadwriteArray1<'_, f64>,
-) -> PyResult<()> {
-    let mut y = y;
-    cortical_inject::parallel_csr_spmv_add(
-        indptr.as_slice()?,
-        indices.as_slice()?,
-        data.as_slice()?,
-        x.as_slice()?,
-        y.as_slice_mut()?,
-    );
-    Ok(())
-}
-
-// Batched multi-spmv. The Python side passes lists of numpy arrays
-// (one per block) for indptrs / indices / data / xs and a single
-// mutable output. ONE FFI call per step replaces N (= n_delay_bins
-// for E + same for I, typically 10) per-block calls. At scale=0.1
-// the per-call savings amortise over a 600 ms simulation.
-#[pyfunction]
-#[pyo3(signature = (indptrs, indices_list, data_list, xs, y))]
-fn py_parallel_csr_multi_spmv_add(
-    indptrs: Vec<PyReadonlyArray1<'_, i32>>,
-    indices_list: Vec<PyReadonlyArray1<'_, i32>>,
-    data_list: Vec<PyReadonlyArray1<'_, f64>>,
-    xs: Vec<PyReadonlyArray1<'_, f64>>,
-    y: PyReadwriteArray1<'_, f64>,
-) -> PyResult<()> {
-    let mut y = y;
-    let indptr_slices: Vec<&[i32]> = indptrs
-        .iter()
-        .map(|a| a.as_slice())
-        .collect::<Result<_, _>>()?;
-    let indices_slices: Vec<&[i32]> = indices_list
-        .iter()
-        .map(|a| a.as_slice())
-        .collect::<Result<_, _>>()?;
-    let data_slices: Vec<&[f64]> = data_list
-        .iter()
-        .map(|a| a.as_slice())
-        .collect::<Result<_, _>>()?;
-    let x_slices: Vec<&[f64]> = xs.iter().map(|a| a.as_slice()).collect::<Result<_, _>>()?;
-    cortical_inject::parallel_csr_multi_spmv_add(
-        &indptr_slices,
-        &indices_slices,
-        &data_slices,
-        &x_slices,
-        y.as_slice_mut()?,
-    );
-    Ok(())
 }
