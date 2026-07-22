@@ -2,67 +2,67 @@
   "backends": [
     {
       "backend": "python",
-      "max_ns_per_step": 9481.5169,
-      "median_ns_per_step": 7829.9174,
-      "min_ns_per_step": 7542.5742,
+      "max_ns_per_step": 12628.5481,
+      "median_ns_per_step": 11453.4342,
+      "min_ns_per_step": 10341.7566,
       "results": [
         {
           "backend": "python",
           "current": 100.0,
-          "elapsed_ns": 153669875,
+          "elapsed_ns": 252570962,
           "ending_state": [
             -46.282804702531394,
             5.853330532245139
           ],
-          "ns_per_step": 7683.49375,
+          "ns_per_step": 12628.5481,
           "spikes": 94,
           "steps": 20000
         },
         {
           "backend": "python",
           "current": 100.0,
-          "elapsed_ns": 150851484,
+          "elapsed_ns": 229068684,
           "ending_state": [
             -46.282804702531394,
             5.853330532245139
           ],
-          "ns_per_step": 7542.5742,
+          "ns_per_step": 11453.4342,
           "spikes": 94,
           "steps": 20000
         },
         {
           "backend": "python",
           "current": 100.0,
-          "elapsed_ns": 156598348,
+          "elapsed_ns": 226191040,
           "ending_state": [
             -46.282804702531394,
             5.853330532245139
           ],
-          "ns_per_step": 7829.9174,
+          "ns_per_step": 11309.552,
           "spikes": 94,
           "steps": 20000
         },
         {
           "backend": "python",
           "current": 100.0,
-          "elapsed_ns": 170849262,
+          "elapsed_ns": 230993755,
           "ending_state": [
             -46.282804702531394,
             5.853330532245139
           ],
-          "ns_per_step": 8542.4631,
+          "ns_per_step": 11549.68775,
           "spikes": 94,
           "steps": 20000
         },
         {
           "backend": "python",
           "current": 100.0,
-          "elapsed_ns": 189630338,
+          "elapsed_ns": 206835132,
           "ending_state": [
             -46.282804702531394,
             5.853330532245139
           ],
-          "ns_per_step": 9481.5169,
+          "ns_per_step": 10341.7566,
           "spikes": 94,
           "steps": 20000
         }
@@ -88,30 +88,30 @@
         -46.282804702531394,
         -46.282804702531394
       ],
-      "max_ns_per_step": 107.26855,
+      "max_ns_per_step": 127.66755,
       "measurement_context": {
         "cgroup_effective_cpuset": "unavailable",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "cpu_affinity": "0-11",
-        "cpu_frequency_mhz": "min=3391.019,max=4501.999,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=3799.558,max=3800.244,sampled_cpu_count=12",
         "cpu_governor": "powersave",
         "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
         "host_load": "workstation under concurrent load during capture",
-        "load_average_after": "10.09 8.06 9.48 2/4348 539523",
-        "load_average_before": "10.09 8.06 9.48 4/4349 539513",
+        "load_average_after": "18.50 16.61 16.81 5/8886 3905647",
+        "load_average_before": "18.50 16.61 16.81 5/8889 3905637",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
         "runtime_cpuset_shield_claimed": false,
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
       },
-      "median_ns_per_step": 106.27935,
-      "min_ns_per_step": 105.5826,
+      "median_ns_per_step": 126.51275,
+      "min_ns_per_step": 125.6885,
       "repeats": 5,
       "results_ns_per_step": [
-        106.0706,
-        106.37925,
-        105.5826,
-        106.27935,
-        107.26855
+        127.66755,
+        125.6885,
+        125.98405,
+        126.51275,
+        126.6513
       ],
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "spike_counts": [
@@ -124,22 +124,22 @@
       "steps": 20000,
       "target_arch": "x86_64",
       "target_os": "linux",
-      "timestamp_unix": 1782493068
+      "timestamp_unix": 1784733404
     },
     {
       "backend": "go",
       "command": "go test src/sc_neurocore/accel/go/services/neurogrid.go src/sc_neurocore/accel/go/services/neurogrid_test.go -run ^$ -bench BenchmarkNeuroGridRK4$ -benchtime 20000x -count 5",
       "current": 100.0,
-      "max_ns_per_step": 209.5,
-      "median_ns_per_step": 205.2,
-      "min_ns_per_step": 183.7,
+      "max_ns_per_step": 262.5,
+      "median_ns_per_step": 249.1,
+      "min_ns_per_step": 226.1,
       "repeats": 5,
       "results_ns_per_step": [
-        205.2,
-        183.7,
-        209.5,
-        207.2,
-        184.1
+        227.8,
+        226.1,
+        254.6,
+        249.1,
+        262.5
       ],
       "spike_counts": [
         94,
@@ -169,23 +169,23 @@
         -46.282804702531394,
         -46.282804702531394
       ],
-      "max_ns_per_step": 141.9465,
-      "median_ns_per_step": 139.79895,
-      "min_ns_per_step": 132.64755,
+      "max_ns_per_step": 150.0645,
+      "median_ns_per_step": 144.68605,
+      "min_ns_per_step": 141.90805,
       "repeats": 5,
       "results_ns_per_step": [
-        139.79895,
-        133.02875,
-        141.9465,
-        132.64755,
-        141.4085
+        148.4026,
+        144.3751,
+        144.68605,
+        150.0645,
+        141.90805
       ],
       "spikes": 94,
       "steps": 20000
     },
     {
       "backend": "mojo",
-      "command": "mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/neurogrid.mojo",
+      "command": "mojo run --target-cpu x86-64-v3 --disable-warnings src/sc_neurocore/accel/mojo/kernels/neurogrid.mojo",
       "current": 100.0,
       "spikes": 94,
       "steps": 20000
@@ -194,13 +194,13 @@
   "benchmark": "neurogrid_rk4",
   "current": 100.0,
   "expected_spikes": 94,
-  "generated_at_utc": "2026-06-26T16:56:58.624260+00:00",
+  "generated_at_utc": "2026-07-22T15:15:27.322678+00:00",
   "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
     "benchmarks/bench_model_neurogrid.py": "ccc3269f7b57175e195c0fe6a21f551251b6b9b43e816f5aaca9d66d966ed8d2",
-    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
+    "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_neurogrid_rk4.rs": "3c46824828ce221874ad23b243b7b837d86c3fdb87a66c5a86ff917d949f6469",
     "engine/src/neurons/hardware.rs": "e32bcc977e8c4f61ef5f541718380411a0b1da344e496cb4c3a882ba0ac490a0",
     "src/sc_neurocore/accel/go/services/neurogrid.go": "6fba972be700a31f1b9849201c6b1a95c920792dc11501d3580b32bf8d8c53dd",

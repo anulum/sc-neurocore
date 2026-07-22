@@ -8,57 +8,57 @@
     "canonical_output_equivalent": true,
     "go_process_ns": {
       "available": true,
-      "baseline_median": 1190849431.0,
-      "candidate_delta_percent": 10.540545910543408,
-      "candidate_median": 1316371462.0
+      "baseline_median": 687909931.0,
+      "candidate_delta_percent": 13.884669009088624,
+      "candidate_median": 783423948.0
     },
     "import_ns": {
       "available": true,
-      "baseline_median": 4793066234.0,
-      "candidate_delta_percent": -3.451267120545287,
-      "candidate_median": 4627644715.0
+      "baseline_median": 2655841407.0,
+      "candidate_delta_percent": 4.579796770974887,
+      "candidate_median": 2777473546.0
     },
     "julia_process_ns": {
       "available": true,
-      "baseline_median": 942785404.0,
-      "candidate_delta_percent": 5.584368274755347,
-      "candidate_median": 995434013.0
+      "baseline_median": 592998107.0,
+      "candidate_delta_percent": 4.328949906749036,
+      "candidate_median": 618668698.0
     },
     "max_rss_kib": {
       "available": true,
-      "baseline_median": 658592.0,
-      "candidate_delta_percent": 0.22472183081483355,
-      "candidate_median": 660072.0
+      "baseline_median": 338056.0,
+      "candidate_delta_percent": 0.28515985517192366,
+      "candidate_median": 339020.0
     },
     "rust_batched_ns": {
       "available": true,
-      "baseline_median": 586399.0,
-      "candidate_delta_percent": 57.52636003813103,
-      "candidate_median": 923733.0
+      "baseline_median": 160398.0,
+      "candidate_delta_percent": 123.04891582189303,
+      "candidate_median": 357766.0
     },
     "rust_layer_ns": {
       "available": true,
-      "baseline_median": 1521896.0,
-      "candidate_delta_percent": 50.84657558729375,
-      "candidate_median": 2295728.0
+      "baseline_median": 525564.0,
+      "candidate_delta_percent": 50.61914438584074,
+      "candidate_median": 791600.0
     },
     "rust_scalar_ns": {
       "available": true,
-      "baseline_median": 3538205.0,
-      "candidate_delta_percent": 206.51273739085215,
-      "candidate_median": 10845049.0
+      "baseline_median": 2551117.0,
+      "candidate_delta_percent": 74.27268133919378,
+      "candidate_median": 4445900.0
     },
     "subprocess_wall_ns": {
       "available": true,
-      "baseline_median": 10261710994.0,
-      "candidate_delta_percent": -6.058195308399272,
-      "candidate_median": 9640036500.0
+      "baseline_median": 5183446455.0,
+      "candidate_delta_percent": 10.155809239472502,
+      "candidate_median": 5709867389.0
     },
     "torch_ns": {
       "available": true,
-      "baseline_median": 380844789.0,
-      "candidate_delta_percent": 17.737474675017808,
-      "candidate_median": 448397037.0
+      "baseline_median": 181502987.0,
+      "candidate_delta_percent": 54.960647011280315,
+      "candidate_median": 281258203.0
     }
   },
   "configuration": {
@@ -73,7 +73,7 @@
     "warmups": 1
   },
   "evidence_class": "local_source_and_native_library_regression",
-  "generated_at_utc": "2026-07-13T13:02:28.941004+00:00",
+  "generated_at_utc": "2026-07-22T15:31:23.531056+00:00",
   "hardware_measurement_claimed": false,
   "measurement_context": {
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -92,8 +92,8 @@
       11
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3600.036,
-      "min_observed_mhz": 3599.927,
+      "max_observed_mhz": 3500.035,
+      "min_observed_mhz": 3499.959,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -102,14 +102,14 @@
     "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      27.87646484375,
-      28.4150390625,
-      35.54345703125
+      20.4716796875,
+      23.8193359375,
+      21.00048828125
     ],
     "load_average_before": [
-      29.1748046875,
-      29.62548828125,
-      36.99365234375
+      29.4326171875,
+      25.61572265625,
+      21.287109375
     ],
     "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
     "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
@@ -129,57 +129,57 @@
       "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
       "go_process_ns": {
         "available_samples": 5,
-        "max": 1610047816,
-        "mean": 1272531189.4,
-        "median": 1316371462,
-        "min": 984074794
+        "max": 950717514,
+        "mean": 805912298.2,
+        "median": 783423948,
+        "min": 679666343
       },
       "go_weight": 0.780652463,
       "import_ns": {
         "available_samples": 5,
-        "max": 8398285694,
-        "mean": 5050600322.8,
-        "median": 4627644715,
-        "min": 3620415709
+        "max": 3237405542,
+        "mean": 2807450662.4,
+        "median": 2777473546,
+        "min": 2559416112
       },
       "julia_process_ns": {
         "available_samples": 5,
-        "max": 1383344548,
-        "mean": 1045432775.6,
-        "median": 995434013,
-        "min": 769242363
+        "max": 942502967,
+        "mean": 680206454.0,
+        "median": 618668698,
+        "min": 539005462
       },
       "julia_weight": 0.78065246,
       "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
       "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
       "max_rss_kib": {
         "available_samples": 5,
-        "max": 660088,
-        "mean": 660049.6,
-        "median": 660072,
-        "min": 659992
+        "max": 339128,
+        "mean": 339032.8,
+        "median": 339020,
+        "min": 338984
       },
       "rust_batched_ns": {
         "available_samples": 5,
-        "max": 3056933,
-        "mean": 1295381.8,
-        "median": 923733,
-        "min": 293427
+        "max": 611859,
+        "mean": 361029.8,
+        "median": 357766,
+        "min": 215699
       },
       "rust_batched_weight": 0.7806524634361267,
       "rust_layer_ns": {
         "available_samples": 5,
-        "max": 8751128,
-        "mean": 3435590.6,
-        "median": 2295728,
-        "min": 619860
+        "max": 979971,
+        "mean": 755599.6,
+        "median": 791600,
+        "min": 534182
       },
       "rust_scalar_ns": {
         "available_samples": 5,
-        "max": 20883486,
-        "mean": 11694367.6,
-        "median": 10845049,
-        "min": 5911989
+        "max": 6008827,
+        "mean": 4555331.4,
+        "median": 4445900,
+        "min": 3186197
       },
       "rust_scalar_weight": 0.7806524634361267,
       "sample_count": 5,
@@ -187,117 +187,117 @@
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 984074794,
+          "go_process_ns": 950717514,
           "go_weight": 0.780652463,
-          "import_ns": 4890296770,
-          "julia_process_ns": 995434013,
+          "import_ns": 3237405542,
+          "julia_process_ns": 604461495,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 659992,
-          "rust_batched_ns": 293427,
+          "max_rss_kib": 338988,
+          "rust_batched_ns": 357766,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 619860,
-          "rust_scalar_ns": 6285215,
+          "rust_layer_ns": 791600,
+          "rust_scalar_ns": 4445900,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 9640036500,
-          "torch_ns": 389901233,
+          "subprocess_wall_ns": 6242383718,
+          "torch_ns": 203201940,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1610047816,
+          "go_process_ns": 679666343,
           "go_weight": 0.780652463,
-          "import_ns": 8398285694,
-          "julia_process_ns": 974131565,
+          "import_ns": 2862822910,
+          "julia_process_ns": 618668698,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 660088,
-          "rust_batched_ns": 1358866,
+          "max_rss_kib": 339044,
+          "rust_batched_ns": 380436,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 8751128,
-          "rust_scalar_ns": 20883486,
+          "rust_layer_ns": 823204,
+          "rust_scalar_ns": 3270824,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 14493549383,
-          "torch_ns": 1249010486,
+          "subprocess_wall_ns": 5697905751,
+          "torch_ns": 228126940,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1022005436,
+          "go_process_ns": 898882684,
           "go_weight": 0.780652463,
-          "import_ns": 3620415709,
-          "julia_process_ns": 769242363,
+          "import_ns": 2777473546,
+          "julia_process_ns": 942502967,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 660072,
-          "rust_batched_ns": 843950,
+          "max_rss_kib": 339128,
+          "rust_batched_ns": 215699,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 1799452,
-          "rust_scalar_ns": 5911989,
+          "rust_layer_ns": 534182,
+          "rust_scalar_ns": 6008827,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 7460320918,
-          "torch_ns": 322644919,
+          "subprocess_wall_ns": 6138235476,
+          "torch_ns": 281258203,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1430156439,
+          "go_process_ns": 783423948,
           "go_weight": 0.780652463,
-          "import_ns": 4627644715,
-          "julia_process_ns": 1383344548,
+          "import_ns": 2559416112,
+          "julia_process_ns": 696393648,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 660080,
-          "rust_batched_ns": 923733,
+          "max_rss_kib": 338984,
+          "rust_batched_ns": 611859,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 2295728,
-          "rust_scalar_ns": 14546099,
+          "rust_layer_ns": 979971,
+          "rust_scalar_ns": 5864909,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 10511525310,
-          "torch_ns": 448397037,
+          "subprocess_wall_ns": 5709867389,
+          "torch_ns": 282729069,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1316371462,
+          "go_process_ns": 716871002,
           "go_weight": 0.780652463,
-          "import_ns": 3716358726,
-          "julia_process_ns": 1105011389,
+          "import_ns": 2600135202,
+          "julia_process_ns": 539005462,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 660016,
-          "rust_batched_ns": 3056933,
+          "max_rss_kib": 339020,
+          "rust_batched_ns": 239389,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 3711785,
-          "rust_scalar_ns": 10845049,
+          "rust_layer_ns": 649041,
+          "rust_scalar_ns": 3186197,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 9520880618,
-          "torch_ns": 544000926,
+          "subprocess_wall_ns": 5345980764,
+          "torch_ns": 314116252,
           "torch_weight": 0.7806524634361267
         }
       ],
       "subprocess_wall_ns": {
         "available_samples": 5,
-        "max": 14493549383,
-        "mean": 10325262545.8,
-        "median": 9640036500,
-        "min": 7460320918
+        "max": 6242383718,
+        "mean": 5826874619.6,
+        "median": 5709867389,
+        "min": 5345980764
       },
       "torch_ns": {
         "available_samples": 5,
-        "max": 1249010486,
-        "mean": 590790920.2,
-        "median": 448397037,
-        "min": 322644919
+        "max": 314116252,
+        "mean": 261886480.8,
+        "median": 281258203,
+        "min": 203201940
       },
       "torch_weight": 0.7806524634361267
     },
@@ -306,57 +306,57 @@
       "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
       "go_process_ns": {
         "available_samples": 5,
-        "max": 1383709311,
-        "mean": 1155297474.2,
-        "median": 1190849431,
-        "min": 889824529
+        "max": 719492554,
+        "mean": 677546101.6,
+        "median": 687909931,
+        "min": 620745941
       },
       "go_weight": 0.780652463,
       "import_ns": {
         "available_samples": 5,
-        "max": 6352336932,
-        "mean": 4963632728.4,
-        "median": 4793066234,
-        "min": 3895722036
+        "max": 2915123464,
+        "mean": 2577633109.6,
+        "median": 2655841407,
+        "min": 2206904565
       },
       "julia_process_ns": {
         "available_samples": 5,
-        "max": 1244863781,
-        "mean": 1000861971.6,
-        "median": 942785404,
-        "min": 750928029
+        "max": 624724863,
+        "mean": 569759511.2,
+        "median": 592998107,
+        "min": 490719291
       },
       "julia_weight": 0.78065246,
       "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
       "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
       "max_rss_kib": {
         "available_samples": 5,
-        "max": 658704,
-        "mean": 658584.8,
-        "median": 658592,
-        "min": 658428
+        "max": 338072,
+        "mean": 338058.4,
+        "median": 338056,
+        "min": 338044
       },
       "rust_batched_ns": {
         "available_samples": 5,
-        "max": 681345,
-        "mean": 492262.8,
-        "median": 586399,
-        "min": 172669
+        "max": 254611,
+        "mean": 147219.4,
+        "median": 160398,
+        "min": 57670
       },
       "rust_batched_weight": 0.7806524634361267,
       "rust_layer_ns": {
         "available_samples": 5,
-        "max": 3930996,
-        "mean": 2310804.0,
-        "median": 1521896,
-        "min": 1171924
+        "max": 893027,
+        "mean": 557909.0,
+        "median": 525564,
+        "min": 276507
       },
       "rust_scalar_ns": {
         "available_samples": 5,
-        "max": 10264736,
-        "mean": 5573780.4,
-        "median": 3538205,
-        "min": 2761683
+        "max": 3391891,
+        "mean": 2488825.0,
+        "median": 2551117,
+        "min": 1600789
       },
       "rust_scalar_weight": 0.7806524634361267,
       "sample_count": 5,
@@ -364,117 +364,117 @@
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1190849431,
+          "go_process_ns": 687909931,
           "go_weight": 0.780652463,
-          "import_ns": 4793066234,
-          "julia_process_ns": 1214114433,
+          "import_ns": 2294455082,
+          "julia_process_ns": 520169693,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 658532,
-          "rust_batched_ns": 172669,
+          "max_rss_kib": 338068,
+          "rust_batched_ns": 254611,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 3930996,
-          "rust_scalar_ns": 2952887,
+          "rust_layer_ns": 783403,
+          "rust_scalar_ns": 3391891,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 10261710994,
-          "torch_ns": 462372867,
+          "subprocess_wall_ns": 4781299638,
+          "torch_ns": 200298662,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1383709311,
+          "go_process_ns": 719492554,
           "go_weight": 0.780652463,
-          "import_ns": 4760563901,
-          "julia_process_ns": 1244863781,
+          "import_ns": 2655841407,
+          "julia_process_ns": 592998107,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 658704,
-          "rust_batched_ns": 586399,
+          "max_rss_kib": 338056,
+          "rust_batched_ns": 76999,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 1490405,
-          "rust_scalar_ns": 10264736,
+          "rust_layer_ns": 311044,
+          "rust_scalar_ns": 2744835,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 10596237915,
-          "torch_ns": 449589290,
+          "subprocess_wall_ns": 5183446455,
+          "torch_ns": 158243170,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1095854896,
+          "go_process_ns": 647580906,
           "go_weight": 0.780652463,
-          "import_ns": 5016474539,
-          "julia_process_ns": 851618211,
+          "import_ns": 2206904565,
+          "julia_process_ns": 490719291,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 658668,
-          "rust_batched_ns": 341959,
+          "max_rss_kib": 338052,
+          "rust_batched_ns": 186419,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 1521896,
-          "rust_scalar_ns": 3538205,
+          "rust_layer_ns": 525564,
+          "rust_scalar_ns": 2155493,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 9622707233,
-          "torch_ns": 380844789,
+          "subprocess_wall_ns": 4728989148,
+          "torch_ns": 181502987,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 1216249204,
+          "go_process_ns": 620745941,
           "go_weight": 0.780652463,
-          "import_ns": 6352336932,
-          "julia_process_ns": 942785404,
+          "import_ns": 2915123464,
+          "julia_process_ns": 620185602,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 658428,
-          "rust_batched_ns": 681345,
+          "max_rss_kib": 338044,
+          "rust_batched_ns": 160398,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 1171924,
-          "rust_scalar_ns": 2761683,
+          "rust_layer_ns": 893027,
+          "rust_scalar_ns": 2551117,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 11888988575,
-          "torch_ns": 320108901,
+          "subprocess_wall_ns": 5570152350,
+          "torch_ns": 162233505,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 889824529,
+          "go_process_ns": 712001176,
           "go_weight": 0.780652463,
-          "import_ns": 3895722036,
-          "julia_process_ns": 750928029,
+          "import_ns": 2815841030,
+          "julia_process_ns": 624724863,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 658592,
-          "rust_batched_ns": 678942,
+          "max_rss_kib": 338072,
+          "rust_batched_ns": 57670,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 3438799,
-          "rust_scalar_ns": 8351391,
+          "rust_layer_ns": 276507,
+          "rust_scalar_ns": 1600789,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 7552941521,
-          "torch_ns": 260193873,
+          "subprocess_wall_ns": 5572523450,
+          "torch_ns": 182728985,
           "torch_weight": 0.7806524634361267
         }
       ],
       "subprocess_wall_ns": {
         "available_samples": 5,
-        "max": 11888988575,
-        "mean": 9984517247.6,
-        "median": 10261710994,
-        "min": 7552941521
+        "max": 5572523450,
+        "mean": 5167282208.2,
+        "median": 5183446455,
+        "min": 4728989148
       },
       "torch_ns": {
         "available_samples": 5,
-        "max": 462372867,
-        "mean": 374621944.0,
-        "median": 380844789,
-        "min": 260193873
+        "max": 200298662,
+        "mean": 177001461.8,
+        "median": 181502987,
+        "min": 158243170
       },
       "torch_weight": 0.7806524634361267
     }
@@ -503,10 +503,10 @@
   "support_sha256": "1b6bc333a52a40f5f58b0f44b1500f5295717efbb0a9c7d6186d1487891c5b2e",
   "variants": [
     {
-      "git_head": "5f3d5d254b459c7243c70e753014b571b0498779",
+      "git_head": null,
       "label": "parent-5f3d5d254",
-      "library_bytes": 96036976,
-      "library_sha256": "a236185c98cbe4333a6d34c06218733dcb11912c0e816e7cdeefb0b214d68977",
+      "library_bytes": 8010336,
+      "library_sha256": "9c654e46ea36e695ee409da29c4d7d9fc0a966a08ab5309531c2319439077676",
       "local_paths_recorded": false,
       "source_file_count": 5,
       "source_hashes": {
@@ -518,13 +518,13 @@
       },
       "source_ref": "5f3d5d254b459c7243c70e753014b571b0498779",
       "source_sha256": "fa568cd44211538a61750da896b251ce3f5357555d8aa9d3ce474cdf57ed744a",
-      "surface_dirty": false
+      "surface_dirty": null
     },
     {
-      "git_head": "0bde373e666a8d7822277b3ea60d51e66f30a5d8",
+      "git_head": "ae6e077a798d103b0f8916ced4299c4c8fb8cc33",
       "label": "learning-modular",
-      "library_bytes": 96204120,
-      "library_sha256": "dd9cff481f45026a7de441c06911bbfda8f72be66f78bd3d80213ac35075583b",
+      "library_bytes": 8017064,
+      "library_sha256": "a3178b5999dd38c29c115f5d5584b3e823376bbaa94c7f9eecfb1802941a9a68",
       "local_paths_recorded": false,
       "source_file_count": 16,
       "source_hashes": {
@@ -545,9 +545,9 @@
         "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "1468937f02fc39a6be5c2f3e6f5b43ef0dfff3f18b4984200c1f823cdccc7b97",
         "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "aaa64049ce45768d3157917ae4d6aa9a51855435c1d89c21aeefb7f17572c2ea"
       },
-      "source_ref": "working-tree-learning-bridge",
+      "source_ref": "ae6e077a7",
       "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605",
-      "surface_dirty": true
+      "surface_dirty": false
     }
   ]
 }

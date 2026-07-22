@@ -11,30 +11,30 @@
     "canonical_output_byte_identical": true,
     "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
     "import_ns": {
-      "baseline_median": 34771288.0,
-      "candidate_delta_percent": 44.559577430666366,
-      "candidate_median": 50265227.0,
-      "candidate_minus_baseline": 15493939.0
+      "baseline_median": 56075600.0,
+      "candidate_delta_percent": -23.94690382269651,
+      "candidate_median": 42647230.0,
+      "candidate_minus_baseline": -13428370.0
     },
     "max_rss_kib": {
-      "baseline_median": 37076.0,
-      "candidate_delta_percent": 0.21037868162692153,
-      "candidate_median": 37154.0,
-      "candidate_minus_baseline": 78.0
+      "baseline_median": 37120.0,
+      "candidate_delta_percent": -0.8135775862068928,
+      "candidate_median": 36818.0,
+      "candidate_minus_baseline": -302.0
     },
     "opto_pulse_count": 4,
     "pipeline_ns": {
-      "baseline_median": 2801189.5,
-      "candidate_delta_percent": 19.40802291312316,
-      "candidate_median": 3344845.0,
-      "candidate_minus_baseline": 543655.5
+      "baseline_median": 2886075.0,
+      "candidate_delta_percent": 17.418327659537614,
+      "candidate_median": 3388781.0,
+      "candidate_minus_baseline": 502706.0
     },
     "spike_count": 7,
     "subprocess_wall_ns": {
-      "baseline_median": 579936533.0,
-      "candidate_delta_percent": -7.585508671515262,
-      "candidate_median": 535945397.0,
-      "candidate_minus_baseline": -43991136.0
+      "baseline_median": 420355172.0,
+      "candidate_delta_percent": 0.5086975592154763,
+      "candidate_median": 422493508.5,
+      "candidate_minus_baseline": 2138336.5
     }
   },
   "configuration": {
@@ -56,7 +56,7 @@
   },
   "evidence_class": "local_source_refactor_regression",
   "external_eda_executed": false,
-  "generated_at_utc": "2026-07-13T07:26:07.266674+00:00",
+  "generated_at_utc": "2026-07-22T15:22:32.735221+00:00",
   "hardware_measurement_claimed": false,
   "measurement_context": {
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
@@ -75,8 +75,8 @@
       11
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3800.038,
-      "min_observed_mhz": 3799.961,
+      "max_observed_mhz": 3700.037,
+      "min_observed_mhz": 3698.45,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -85,14 +85,14 @@
     "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      30.4482421875,
-      31.02197265625,
-      36.859375
+      17.794921875,
+      18.09033203125,
+      17.39404296875
     ],
     "load_average_before": [
-      30.55517578125,
-      31.10205078125,
-      37.140625
+      18.14111328125,
+      18.171875,
+      17.39599609375
     ],
     "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
     "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
@@ -114,23 +114,23 @@
       "canonical_bytes": 6865,
       "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
       "import_ns": {
-        "max": 114864106,
-        "mean": 55140743.56666667,
-        "median": 50265227.0,
-        "min": 19606564
+        "max": 61957658,
+        "mean": 42494441.13333333,
+        "median": 42647230.0,
+        "min": 23793484
       },
       "max_rss_kib": {
-        "max": 37236,
-        "mean": 37156.53333333333,
-        "median": 37154.0,
-        "min": 37108
+        "max": 36952,
+        "mean": 36824.933333333334,
+        "median": 36818.0,
+        "min": 36732
       },
       "opto_pulse_count": 4,
       "pipeline_ns": {
-        "max": 13500742,
-        "mean": 4363457.233333333,
-        "median": 3344845.0,
-        "min": 1784850
+        "max": 4727711,
+        "mean": 3315225.9,
+        "median": 3388781.0,
+        "min": 1755887
       },
       "sample_count": 30,
       "samples": [
@@ -139,368 +139,368 @@
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 63386701,
-          "max_rss_kib": 37176,
+          "import_ns": 44410165,
+          "max_rss_kib": 36804,
           "opto_pulse_count": 4,
-          "pipeline_ns": 4297758,
+          "pipeline_ns": 3935472,
           "spike_count": 7,
-          "subprocess_wall_ns": 736306370
+          "subprocess_wall_ns": 411164838
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 64269375,
-          "max_rss_kib": 37164,
+          "import_ns": 59509389,
+          "max_rss_kib": 36748,
           "opto_pulse_count": 4,
-          "pipeline_ns": 4649067,
+          "pipeline_ns": 4727711,
           "spike_count": 7,
-          "subprocess_wall_ns": 782274597
+          "subprocess_wall_ns": 556322460
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 51520901,
-          "max_rss_kib": 37188,
+          "import_ns": 23793484,
+          "max_rss_kib": 36828,
           "opto_pulse_count": 4,
-          "pipeline_ns": 4041500,
+          "pipeline_ns": 2679302,
           "spike_count": 7,
-          "subprocess_wall_ns": 656905327
+          "subprocess_wall_ns": 447082420
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 31303858,
-          "max_rss_kib": 37176,
+          "import_ns": 41768202,
+          "max_rss_kib": 36808,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2094604,
+          "pipeline_ns": 3262170,
           "spike_count": 7,
-          "subprocess_wall_ns": 462568526
+          "subprocess_wall_ns": 425567318
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 85451191,
-          "max_rss_kib": 37236,
+          "import_ns": 48092441,
+          "max_rss_kib": 36812,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2888398,
+          "pipeline_ns": 3432823,
           "spike_count": 7,
-          "subprocess_wall_ns": 620835489
+          "subprocess_wall_ns": 429555921
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 54118431,
-          "max_rss_kib": 37120,
+          "import_ns": 51494978,
+          "max_rss_kib": 36824,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2966007,
+          "pipeline_ns": 3678345,
           "spike_count": 7,
-          "subprocess_wall_ns": 449622357
+          "subprocess_wall_ns": 526612808
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 50516414,
-          "max_rss_kib": 37156,
+          "import_ns": 46895829,
+          "max_rss_kib": 36840,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2490258,
+          "pipeline_ns": 2609972,
           "spike_count": 7,
-          "subprocess_wall_ns": 423155399
+          "subprocess_wall_ns": 441734553
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 24554122,
-          "max_rss_kib": 37148,
+          "import_ns": 35615441,
+          "max_rss_kib": 36732,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3259522,
+          "pipeline_ns": 2623982,
           "spike_count": 7,
-          "subprocess_wall_ns": 704690631
+          "subprocess_wall_ns": 413087989
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 61879779,
-          "max_rss_kib": 37136,
+          "import_ns": 48209837,
+          "max_rss_kib": 36836,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3329006,
+          "pipeline_ns": 1755887,
           "spike_count": 7,
-          "subprocess_wall_ns": 548718497
+          "subprocess_wall_ns": 407391761
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 113610042,
-          "max_rss_kib": 37152,
+          "import_ns": 39823210,
+          "max_rss_kib": 36820,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3021269,
+          "pipeline_ns": 2566422,
           "spike_count": 7,
-          "subprocess_wall_ns": 521859010
+          "subprocess_wall_ns": 333502263
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 33257673,
-          "max_rss_kib": 37148,
+          "import_ns": 53272022,
+          "max_rss_kib": 36832,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3596653,
+          "pipeline_ns": 4244422,
           "spike_count": 7,
-          "subprocess_wall_ns": 467249785
+          "subprocess_wall_ns": 479541537
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 20875145,
-          "max_rss_kib": 37168,
+          "import_ns": 47166669,
+          "max_rss_kib": 36812,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2130311,
+          "pipeline_ns": 2812923,
           "spike_count": 7,
-          "subprocess_wall_ns": 522226285
+          "subprocess_wall_ns": 442378184
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 58220345,
-          "max_rss_kib": 37124,
+          "import_ns": 46413781,
+          "max_rss_kib": 36804,
           "opto_pulse_count": 4,
-          "pipeline_ns": 4351109,
+          "pipeline_ns": 3945342,
           "spike_count": 7,
-          "subprocess_wall_ns": 625695731
+          "subprocess_wall_ns": 460155754
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 29282145,
-          "max_rss_kib": 37148,
+          "import_ns": 27343030,
+          "max_rss_kib": 36820,
           "opto_pulse_count": 4,
-          "pipeline_ns": 1867518,
+          "pipeline_ns": 3344739,
           "spike_count": 7,
-          "subprocess_wall_ns": 523172297
+          "subprocess_wall_ns": 374311941
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 62030162,
-          "max_rss_kib": 37192,
+          "import_ns": 26623914,
+          "max_rss_kib": 36940,
           "opto_pulse_count": 4,
-          "pipeline_ns": 9197204,
+          "pipeline_ns": 2925668,
           "spike_count": 7,
-          "subprocess_wall_ns": 704606594
+          "subprocess_wall_ns": 409957807
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 49001308,
-          "max_rss_kib": 37188,
+          "import_ns": 43526258,
+          "max_rss_kib": 36804,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2040495,
+          "pipeline_ns": 4248599,
           "spike_count": 7,
-          "subprocess_wall_ns": 466796545
+          "subprocess_wall_ns": 458530937
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 80289637,
-          "max_rss_kib": 37168,
+          "import_ns": 44602373,
+          "max_rss_kib": 36828,
           "opto_pulse_count": 4,
-          "pipeline_ns": 6600963,
+          "pipeline_ns": 3945169,
           "spike_count": 7,
-          "subprocess_wall_ns": 791325323
+          "subprocess_wall_ns": 447621474
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 44800244,
-          "max_rss_kib": 37144,
+          "import_ns": 61957658,
+          "max_rss_kib": 36944,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3421885,
+          "pipeline_ns": 3738365,
           "spike_count": 7,
-          "subprocess_wall_ns": 434358891
+          "subprocess_wall_ns": 477332111
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 27345471,
-          "max_rss_kib": 37164,
+          "import_ns": 39784577,
+          "max_rss_kib": 36816,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2082581,
+          "pipeline_ns": 4204534,
           "spike_count": 7,
-          "subprocess_wall_ns": 438676198
+          "subprocess_wall_ns": 389345503
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 42944745,
-          "max_rss_kib": 37120,
+          "import_ns": 35269100,
+          "max_rss_kib": 36868,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2888705,
+          "pipeline_ns": 2280563,
           "spike_count": 7,
-          "subprocess_wall_ns": 506604762
+          "subprocess_wall_ns": 338774041
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 48207814,
-          "max_rss_kib": 37160,
+          "import_ns": 52631875,
+          "max_rss_kib": 36760,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3763653,
+          "pipeline_ns": 3323807,
           "spike_count": 7,
-          "subprocess_wall_ns": 563631294
+          "subprocess_wall_ns": 423371320
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 44847092,
-          "max_rss_kib": 37136,
+          "import_ns": 31583151,
+          "max_rss_kib": 36952,
           "opto_pulse_count": 4,
-          "pipeline_ns": 1784850,
+          "pipeline_ns": 3749676,
           "spike_count": 7,
-          "subprocess_wall_ns": 490372966
+          "subprocess_wall_ns": 453448110
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 114864106,
-          "max_rss_kib": 37140,
+          "import_ns": 39127667,
+          "max_rss_kib": 36808,
           "opto_pulse_count": 4,
-          "pipeline_ns": 5079161,
+          "pipeline_ns": 4378950,
           "spike_count": 7,
-          "subprocess_wall_ns": 675505403
+          "subprocess_wall_ns": 380525122
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 19606564,
-          "max_rss_kib": 37108,
+          "import_ns": 39206826,
+          "max_rss_kib": 36876,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2648827,
+          "pipeline_ns": 3482466,
           "spike_count": 7,
-          "subprocess_wall_ns": 440640372
+          "subprocess_wall_ns": 421615697
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 64526438,
-          "max_rss_kib": 37128,
+          "import_ns": 38740389,
+          "max_rss_kib": 36824,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3119869,
+          "pipeline_ns": 2805034,
           "spike_count": 7,
-          "subprocess_wall_ns": 679208694
+          "subprocess_wall_ns": 387348855
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 44995238,
-          "max_rss_kib": 37112,
+          "import_ns": 36498279,
+          "max_rss_kib": 36820,
           "opto_pulse_count": 4,
-          "pipeline_ns": 4774974,
+          "pipeline_ns": 3585340,
           "spike_count": 7,
-          "subprocess_wall_ns": 511536508
+          "subprocess_wall_ns": 377993072
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 50014040,
-          "max_rss_kib": 37204,
+          "import_ns": 38499809,
+          "max_rss_kib": 36812,
           "opto_pulse_count": 4,
-          "pipeline_ns": 8930325,
+          "pipeline_ns": 3058626,
           "spike_count": 7,
-          "subprocess_wall_ns": 765501806
+          "subprocess_wall_ns": 351916379
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 49241410,
-          "max_rss_kib": 37160,
+          "import_ns": 44313449,
+          "max_rss_kib": 36800,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3360684,
+          "pipeline_ns": 2588492,
           "spike_count": 7,
-          "subprocess_wall_ns": 492793055
+          "subprocess_wall_ns": 375821395
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 100728630,
-          "max_rss_kib": 37184,
+          "import_ns": 54647780,
+          "max_rss_kib": 36792,
           "opto_pulse_count": 4,
-          "pipeline_ns": 13500742,
+          "pipeline_ns": 3619758,
           "spike_count": 7,
-          "subprocess_wall_ns": 716513426
+          "subprocess_wall_ns": 499778952
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 68533286,
-          "max_rss_kib": 37148,
+          "import_ns": 34011651,
+          "max_rss_kib": 36784,
           "opto_pulse_count": 4,
-          "pipeline_ns": 12725819,
+          "pipeline_ns": 1902218,
           "spike_count": 7,
-          "subprocess_wall_ns": 988201565
+          "subprocess_wall_ns": 363417631
         }
       ],
       "spike_count": 7,
       "subprocess_wall_ns": {
-        "max": 988201565,
-        "mean": 590385123.4333333,
-        "median": 535945397.0,
-        "min": 423155399
+        "max": 556322460,
+        "mean": 423506938.43333334,
+        "median": 422493508.5,
+        "min": 333502263
       }
     },
     "parent": {
@@ -509,23 +509,23 @@
       "canonical_bytes": 6865,
       "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
       "import_ns": {
-        "max": 150706982,
-        "mean": 46521617.13333333,
-        "median": 34771288.0,
-        "min": 18929442
+        "max": 70642731,
+        "mean": 55150024.36666667,
+        "median": 56075600.0,
+        "min": 29446914
       },
       "max_rss_kib": {
-        "max": 37140,
-        "mean": 37080.53333333333,
-        "median": 37076.0,
-        "min": 37032
+        "max": 37216,
+        "mean": 37126.26666666667,
+        "median": 37120.0,
+        "min": 37028
       },
       "opto_pulse_count": 4,
       "pipeline_ns": {
-        "max": 12886047,
-        "mean": 4047799.0,
-        "median": 2801189.5,
-        "min": 1477135
+        "max": 4078654,
+        "mean": 2896565.2,
+        "median": 2886075.0,
+        "min": 1737138
       },
       "sample_count": 30,
       "samples": [
@@ -534,368 +534,368 @@
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 76496699,
-          "max_rss_kib": 37092,
+          "import_ns": 62358335,
+          "max_rss_kib": 37076,
           "opto_pulse_count": 4,
-          "pipeline_ns": 4610621,
+          "pipeline_ns": 2888986,
           "spike_count": 7,
-          "subprocess_wall_ns": 598316843
+          "subprocess_wall_ns": 390250034
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 45449495,
-          "max_rss_kib": 37100,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 3729691,
-          "spike_count": 7,
-          "subprocess_wall_ns": 596113741
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 150706982,
-          "max_rss_kib": 37140,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 6116599,
-          "spike_count": 7,
-          "subprocess_wall_ns": 938506792
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 23257262,
-          "max_rss_kib": 37112,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2552534,
-          "spike_count": 7,
-          "subprocess_wall_ns": 433911541
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 26781403,
-          "max_rss_kib": 37056,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2810621,
-          "spike_count": 7,
-          "subprocess_wall_ns": 414931483
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 28974528,
-          "max_rss_kib": 37040,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2791758,
-          "spike_count": 7,
-          "subprocess_wall_ns": 376469225
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 70526231,
-          "max_rss_kib": 37048,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 5055001,
-          "spike_count": 7,
-          "subprocess_wall_ns": 591475032
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 23124802,
+          "import_ns": 69831031,
           "max_rss_kib": 37072,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2775307,
+          "pipeline_ns": 3987139,
           "spike_count": 7,
-          "subprocess_wall_ns": 380172626
+          "subprocess_wall_ns": 542957774
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 28584539,
-          "max_rss_kib": 37060,
+          "import_ns": 62821397,
+          "max_rss_kib": 37176,
           "opto_pulse_count": 4,
-          "pipeline_ns": 1477135,
+          "pipeline_ns": 3834504,
           "spike_count": 7,
-          "subprocess_wall_ns": 468429095
+          "subprocess_wall_ns": 499268602
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 38987368,
-          "max_rss_kib": 37076,
+          "import_ns": 65491865,
+          "max_rss_kib": 37164,
           "opto_pulse_count": 4,
-          "pipeline_ns": 5626887,
+          "pipeline_ns": 3241137,
           "spike_count": 7,
-          "subprocess_wall_ns": 480547673
+          "subprocess_wall_ns": 530671759
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 30692828,
-          "max_rss_kib": 37052,
+          "import_ns": 40970286,
+          "max_rss_kib": 37096,
           "opto_pulse_count": 4,
-          "pipeline_ns": 3115811,
+          "pipeline_ns": 2762347,
           "spike_count": 7,
-          "subprocess_wall_ns": 629614793
+          "subprocess_wall_ns": 371376441
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 34131278,
-          "max_rss_kib": 37108,
+          "import_ns": 65355167,
+          "max_rss_kib": 37160,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2052361,
+          "pipeline_ns": 3177091,
           "spike_count": 7,
-          "subprocess_wall_ns": 332372747
+          "subprocess_wall_ns": 438658373
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 18929442,
-          "max_rss_kib": 37132,
+          "import_ns": 51879278,
+          "max_rss_kib": 37116,
           "opto_pulse_count": 4,
-          "pipeline_ns": 1750525,
+          "pipeline_ns": 2241731,
           "spike_count": 7,
-          "subprocess_wall_ns": 585733957
+          "subprocess_wall_ns": 418816277
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 28314812,
-          "max_rss_kib": 37032,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 3734203,
-          "spike_count": 7,
-          "subprocess_wall_ns": 574139109
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 34892681,
-          "max_rss_kib": 37048,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2624213,
-          "spike_count": 7,
-          "subprocess_wall_ns": 452697175
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 34649895,
-          "max_rss_kib": 37108,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2596305,
-          "spike_count": 7,
-          "subprocess_wall_ns": 498652316
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 30005529,
-          "max_rss_kib": 37036,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2428097,
-          "spike_count": 7,
-          "subprocess_wall_ns": 242922140
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 56019295,
-          "max_rss_kib": 37044,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2238590,
-          "spike_count": 7,
-          "subprocess_wall_ns": 693584991
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 42924360,
-          "max_rss_kib": 37076,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 2585294,
-          "spike_count": 7,
-          "subprocess_wall_ns": 567799721
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 26919058,
-          "max_rss_kib": 37108,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 1957637,
-          "spike_count": 7,
-          "subprocess_wall_ns": 545306296
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 22805591,
-          "max_rss_kib": 37052,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 1859886,
-          "spike_count": 7,
-          "subprocess_wall_ns": 591895587
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 22528491,
-          "max_rss_kib": 37084,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 1537982,
-          "spike_count": 7,
-          "subprocess_wall_ns": 409583550
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 73186502,
-          "max_rss_kib": 37140,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 6124716,
-          "spike_count": 7,
-          "subprocess_wall_ns": 807035643
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 95744946,
-          "max_rss_kib": 37120,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 3313841,
-          "spike_count": 7,
-          "subprocess_wall_ns": 621465658
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 27492171,
-          "max_rss_kib": 37060,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 6005351,
-          "spike_count": 7,
-          "subprocess_wall_ns": 544336838
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 75813527,
-          "max_rss_kib": 37104,
-          "opto_pulse_count": 4,
-          "pipeline_ns": 8053298,
-          "spike_count": 7,
-          "subprocess_wall_ns": 735804285
-        },
-        {
-          "aer_event_count": 7,
-          "bitstream_count": 4,
-          "canonical_bytes": 6865,
-          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 60893777,
+          "import_ns": 60904581,
           "max_rss_kib": 37056,
           "opto_pulse_count": 4,
-          "pipeline_ns": 12886047,
+          "pipeline_ns": 2875243,
           "spike_count": 7,
-          "subprocess_wall_ns": 1033833032
+          "subprocess_wall_ns": 468209903
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 54798622,
-          "max_rss_kib": 37032,
+          "import_ns": 50264470,
+          "max_rss_kib": 37204,
           "opto_pulse_count": 4,
-          "pipeline_ns": 2563120,
+          "pipeline_ns": 3391199,
           "spike_count": 7,
-          "subprocess_wall_ns": 636113709
+          "subprocess_wall_ns": 393718126
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 59808511,
-          "max_rss_kib": 37128,
+          "import_ns": 29446914,
+          "max_rss_kib": 37160,
           "opto_pulse_count": 4,
-          "pipeline_ns": 7997754,
+          "pipeline_ns": 1764852,
           "spike_count": 7,
-          "subprocess_wall_ns": 738525974
+          "subprocess_wall_ns": 334132101
         },
         {
           "aer_event_count": 7,
           "bitstream_count": 4,
           "canonical_bytes": 6865,
           "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
-          "import_ns": 52207889,
+          "import_ns": 62614446,
+          "max_rss_kib": 37188,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3469338,
+          "spike_count": 7,
+          "subprocess_wall_ns": 441921635
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 50960990,
+          "max_rss_kib": 37188,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2927071,
+          "spike_count": 7,
+          "subprocess_wall_ns": 410908171
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 46014344,
+          "max_rss_kib": 37120,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2133096,
+          "spike_count": 7,
+          "subprocess_wall_ns": 354309306
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 65550892,
+          "max_rss_kib": 37092,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4078654,
+          "spike_count": 7,
+          "subprocess_wall_ns": 440154266
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 50633001,
+          "max_rss_kib": 37048,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2793638,
+          "spike_count": 7,
+          "subprocess_wall_ns": 326670680
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 50008234,
+          "max_rss_kib": 37084,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3634125,
+          "spike_count": 7,
+          "subprocess_wall_ns": 421894067
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 58698344,
+          "max_rss_kib": 37120,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2180423,
+          "spike_count": 7,
+          "subprocess_wall_ns": 457087832
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 47155075,
+          "max_rss_kib": 37028,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2883164,
+          "spike_count": 7,
+          "subprocess_wall_ns": 372585003
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 58955287,
+          "max_rss_kib": 37196,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3176352,
+          "spike_count": 7,
+          "subprocess_wall_ns": 437646016
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 56489045,
+          "max_rss_kib": 37164,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2426744,
+          "spike_count": 7,
+          "subprocess_wall_ns": 447029926
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 46605364,
+          "max_rss_kib": 37036,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1909647,
+          "spike_count": 7,
+          "subprocess_wall_ns": 454072985
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 64469766,
+          "max_rss_kib": 37084,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3352093,
+          "spike_count": 7,
+          "subprocess_wall_ns": 504017554
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 60597658,
+          "max_rss_kib": 37172,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2607576,
+          "spike_count": 7,
+          "subprocess_wall_ns": 492514291
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 49575763,
           "max_rss_kib": 37100,
           "opto_pulse_count": 4,
-          "pipeline_ns": 8462785,
+          "pipeline_ns": 2578520,
           "spike_count": 7,
-          "subprocess_wall_ns": 886654894
+          "subprocess_wall_ns": 364116734
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 58943647,
+          "max_rss_kib": 37156,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3208755,
+          "spike_count": 7,
+          "subprocess_wall_ns": 434834735
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 51327002,
+          "max_rss_kib": 37076,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2864896,
+          "spike_count": 7,
+          "subprocess_wall_ns": 408858074
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 37812771,
+          "max_rss_kib": 37216,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2980372,
+          "spike_count": 7,
+          "subprocess_wall_ns": 352721231
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 70642731,
+          "max_rss_kib": 37192,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3022850,
+          "spike_count": 7,
+          "subprocess_wall_ns": 412527535
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 52460892,
+          "max_rss_kib": 37168,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1737138,
+          "spike_count": 7,
+          "subprocess_wall_ns": 366339945
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 55662155,
+          "max_rss_kib": 37080,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2768275,
+          "spike_count": 7,
+          "subprocess_wall_ns": 389724199
         }
       ],
       "spike_count": 7,
       "subprocess_wall_ns": {
-        "max": 1033833032,
-        "mean": 580231548.8666667,
-        "median": 579936533.0,
-        "min": 242922140
+        "max": 542957774,
+        "mean": 422599785.8333333,
+        "median": 420355172.0,
+        "min": 326670680
       }
     }
   },
@@ -931,7 +931,7 @@
       "surface_dirty": null
     },
     {
-      "git_head": "c4e492ff5b6864153ba86286b9584e3b90b356a9",
+      "git_head": "ae6e077a798d103b0f8916ced4299c4c8fb8cc33",
       "label": "candidate",
       "local_path_recorded": false,
       "source_file_count": 12,
@@ -949,9 +949,9 @@
         "src/sc_neurocore/bioware/bioware_session.py": "95063fca14dfa5b2fe3b959e627aaaad86c25ad94f616d6b221170f703b6b14c",
         "src/sc_neurocore/bioware/bioware_validation.py": "1bfbea358cf00e05288c1e62ccddace74a83102420af3192461d29e8ad1e22ef"
       },
-      "source_ref": "working-tree",
+      "source_ref": "ae6e077a7",
       "source_sha256": "e882d00ff16cda459bbb227f33819e595d37e05051e8328eb7dae3cd8d0247e0",
-      "surface_dirty": true
+      "surface_dirty": false
     }
   ]
 }
