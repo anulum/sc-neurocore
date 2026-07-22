@@ -11,7 +11,10 @@ use pyo3::exceptions::{PyFloatingPointError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
-use crate::neurons::simple_spiking::alpha::{self, AlphaError};
+use crate::neurons::{
+    self,
+    simple_spiking::alpha::{self, AlphaError},
+};
 
 fn map_alpha_error(error: AlphaError) -> PyErr {
     match error {
@@ -22,8 +25,43 @@ fn map_alpha_error(error: AlphaError) -> PyErr {
 
 /// Register the configured exact-flow batch function.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyAlphaNeuron>()?;
     module.add_function(wrap_pyfunction!(py_alpha_simulate, module)?)?;
     Ok(())
+}
+
+// AlphaNeuron: step(exc, inh)
+#[pyclass(
+    name = "AlphaNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyAlphaNeuron {
+    inner: neurons::AlphaNeuron,
+}
+
+#[pymethods]
+impl PyAlphaNeuron {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: neurons::AlphaNeuron::new(),
+        }
+    }
+    #[pyo3(signature = (exc_current, inh_current=0.0))]
+    fn step(&mut self, exc_current: f64, inh_current: f64) -> i32 {
+        self.inner.step(exc_current, inh_current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("i_exc", self.inner.i_exc)?;
+        d.set_item("i_inh", self.inner.i_inh)?;
+        Ok(d.into_any().unbind())
+    }
 }
 
 /// Simulate one complete piecewise-constant excitatory/inhibitory drive batch.

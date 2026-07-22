@@ -502,40 +502,6 @@ py_neuron_default!("ButeraRespiratoryNeuron", PyButeraRespiratoryNeuron, neurons
 py_neuron_default!("LearnableNeuronModel", PyLearnableNeuronModel, neurons::LearnableNeuronModel, state v);
 py_neuron_default!("PernarowskiNeuron", PyPernarowskiNeuron, neurons::PernarowskiNeuron, state v, state w, state z);
 
-// AlphaNeuron: step(exc, inh)
-#[pyclass(
-    name = "AlphaNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyAlphaNeuron {
-    inner: neurons::AlphaNeuron,
-}
-
-#[pymethods]
-impl PyAlphaNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::AlphaNeuron::new(),
-        }
-    }
-    #[pyo3(signature = (exc_current, inh_current=0.0))]
-    fn step(&mut self, exc_current: f64, inh_current: f64) -> i32 {
-        self.inner.step(exc_current, inh_current)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("i_exc", self.inner.i_exc)?;
-        d.set_item("i_inh", self.inner.i_inh)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // EPropALIFNeuron: needs tau params
 #[pyclass(
     name = "EPropALIFNeuron",
@@ -1923,7 +1889,6 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyTermanWangOscillator>()?;
     m.add_class::<PyBendaHerzNeuron>()?;
     m.add_class::<PyBrunelWangNeuron>()?;
-    m.add_class::<PyAlphaNeuron>()?;
     alpha_binding::register(m)?;
     m.add_class::<PyGutkinErmentroutNeuron>()?;
     m.add_class::<PyWilsonHRNeuron>()?;
