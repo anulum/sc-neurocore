@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1497
+    "test_files": 1498
   },
   "documentation": {
     "public_pages": [
@@ -3394,6 +3394,7 @@
       "tests/test_hdl_gen/test_verilog_generator.py",
       "tests/test_hh_validation.py",
       "tests/test_hindmarsh_rose_backends.py",
+      "tests/test_hindmarsh_rose_engine_binding.py",
       "tests/test_hls_export.py",
       "tests/test_hodgkin_huxley_mojo.py",
       "tests/test_holonomic_adapter_stack_contract.py",
