@@ -87,6 +87,16 @@ def test_semgrep_overrides_remove_mcp_waivers() -> None:
     assert "mcp==1.28.1" in overrides
 
 
+def test_semgrep_hash_lock_materializes_security_overrides() -> None:
+    """The installed scanner lock must not silently ignore its safe overrides."""
+    locked = (_repo_root() / "requirements" / "semgrep.txt").read_text(encoding="utf-8")
+
+    assert "click==8.3.3" in locked
+    assert "mcp==1.28.1" in locked
+    assert "click==8.1.8" not in locked
+    assert "mcp==1.23.3" not in locked
+
+
 def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
     tool = _load_tool()
     calls: list[list[str]] = []
