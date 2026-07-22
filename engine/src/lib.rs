@@ -49,6 +49,8 @@ pub mod cordiv;
 #[path = "bindings/cordiv.rs"]
 mod cordiv_binding;
 pub mod cortical_column;
+#[path = "bindings/cortical_column.rs"]
+mod cortical_column_binding;
 pub mod cortical_inject;
 #[path = "bindings/cortical_inject.rs"]
 mod cortical_inject_binding;
@@ -291,7 +293,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     cordiv_binding::register(m)?;
     predictive_coding_binding::register(m)?;
     phi_binding::register(m)?;
-    m.add_class::<PyCorticalColumn>()?;
+    cortical_column_binding::register(m)?;
     m.add_class::<PyRallDendrite>()?;
     analysis::bindings::register(m)?;
     dna::bindings::register(m)?;
@@ -328,47 +330,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ping_binding::register(m)?;
     cortical_inject_binding::register(m)?;
     Ok(())
-}
-
-// ── Cortical column ──────────────────────────────────────────────────
-
-#[pyclass(
-    name = "CorticalColumnRust",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-pub struct PyCorticalColumn {
-    inner: cortical_column::CorticalColumnRust,
-}
-
-#[pymethods]
-impl PyCorticalColumn {
-    #[new]
-    fn new(n: usize, tau: f64, dt: f64, threshold: f64, w_exc: f64, w_inh: f64, seed: u64) -> Self {
-        Self {
-            inner: cortical_column::CorticalColumnRust::new(
-                n, tau, dt, threshold, w_exc, w_inh, seed,
-            ),
-        }
-    }
-
-    fn step<'py>(
-        &mut self,
-        py: Python<'py>,
-        thalamic_input: PyReadonlyArray1<'py, f64>,
-    ) -> PyResult<Py<PyDict>> {
-        let input = thalamic_input.as_slice()?;
-        let spikes = self.inner.step(input);
-        let dict = PyDict::new(py);
-        let names = ["l4", "l23_exc", "l23_inh", "l5", "l6"];
-        for (i, name) in names.iter().enumerate() {
-            dict.set_item(*name, spikes[i].clone().into_pyarray(py))?;
-        }
-        Ok(dict.into())
-    }
-
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
 }
 
 // ── Rall dendrite ────────────────────────────────────────────────────
