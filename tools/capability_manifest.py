@@ -42,6 +42,17 @@ DEFAULT_README = Path("README.md")
 DEFAULT_MARKER_START = "<!-- capability-snapshot:start -->"
 DEFAULT_MARKER_END = "<!-- capability-snapshot:end -->"
 
+# Engine infrastructure classes are public PyO3 bindings, but they are not
+# neuron/model wrappers and must not inflate the public model inventory when a
+# refactor relocates them into ``engine/src/bindings``.
+_RUST_PYO3_NON_MODEL_CLASSES = frozenset(
+    {
+        "BitstreamAverager",
+        "Lfsr16",
+        "NetworkRunner",
+    }
+)
+
 
 def _default_labels() -> dict[str, str]:
     """Return stable public labels for README and docs snapshots."""
@@ -568,7 +579,7 @@ def _python_model_classes(models_root: Path, *, repo: Path) -> list[dict[str, st
 
 
 def _rust_pyo3_wrapper_names(path: Path) -> list[str]:
-    """Return wrapper names from the facade and its modular binding siblings."""
+    """Return model-wrapper names from the facade and modular bindings."""
     sources = sorted(path.rglob("*.rs")) if path.is_dir() else [path]
     if path.is_file():
         bindings = path.parent / "bindings"
@@ -580,6 +591,7 @@ def _rust_pyo3_wrapper_names(path: Path) -> list[str]:
         text = source.read_text(encoding="utf-8")
         names.update(re.findall(r'py_neuron_default!\("([^"]+)"', text))
         names.update(re.findall(r'#\[pyclass\(\s*name\s*=\s*"([^"]+)"', text, flags=re.S))
+    names.difference_update(_RUST_PYO3_NON_MODEL_CLASSES)
     return sorted(names)
 
 

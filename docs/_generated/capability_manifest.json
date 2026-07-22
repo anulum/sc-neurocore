@@ -970,7 +970,7 @@
     "public_documentation_pages": 583,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
-    "rust_pyo3_model_wrappers": 177,
+    "rust_pyo3_model_wrappers": 176,
     "test_files": 1504
   },
   "documentation": {
@@ -2650,7 +2650,6 @@
       "MultiTimescaleNeuron",
       "MyelinatedAxon",
       "NMDANeuron",
-      "NetworkRunner",
       "NeuroGridNeuron",
       "Nociceptor",
       "NodeOfRanvier",
