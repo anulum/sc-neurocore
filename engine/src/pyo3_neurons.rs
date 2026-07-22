@@ -72,6 +72,8 @@ mod adaptive_threshold_moe_neuron_binding;
 mod arcane_neuron_binding;
 #[path = "bindings/attention_gated_neuron.rs"]
 mod attention_gated_neuron_binding;
+#[path = "bindings/cerebellar/mod.rs"]
+mod cerebellar_bindings;
 #[path = "bindings/compositional_binding_neuron.rs"]
 mod compositional_binding_neuron_binding;
 #[path = "bindings/continuous_attractor_neuron.rs"]
@@ -1436,14 +1438,6 @@ impl PyAmariNeuralField {
     }
 }
 
-// cerebellar.rs models
-py_neuron_default!("GranuleCell", PyGranuleCell, neurons::GranuleCell, state v, state m, state h, state n, state ca);
-py_neuron_default!("GolgiCell", PyGolgiCell, neurons::GolgiCell, state v, state m, state h, state p_na, state n, state a, state b, state w, state m_t, state s, state c_n, state r, state ca);
-py_neuron_default!("StellateCell", PyStellateCell, neurons::StellateCell, state v, state h, state n, state p);
-py_neuron_default!("LugaroCell", PyLugaroCell, neurons::LugaroCell, state v, state adapt);
-py_neuron_default!("UnipolarBrushCell", PyUnipolarBrushCell, neurons::UnipolarBrushCell, state v, state persistent);
-py_neuron_default!("DCNNeuron", PyDCNNeuron, neurons::DCNNeuron, state v, state h, state n, state p, state s, state r, state ca);
-
 // channels.rs models
 py_neuron_default!("PersistentNaNeuron", PyPersistentNaNeuron, neurons::PersistentNaNeuron, state v, state h, state n, state p);
 py_neuron_default!("IhNeuron", PyIhNeuron, neurons::IhNeuron, state v, state h, state n, state r);
@@ -1677,12 +1671,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDirectionSelectiveRGC>()?;
     m.add_class::<PyCochlearHairCell>()?;
     // cerebellar
-    m.add_class::<PyGranuleCell>()?;
-    m.add_class::<PyGolgiCell>()?;
-    m.add_class::<PyStellateCell>()?;
-    m.add_class::<PyLugaroCell>()?;
-    m.add_class::<PyUnipolarBrushCell>()?;
-    m.add_class::<PyDCNNeuron>()?;
+    cerebellar_bindings::register(m)?;
     // channels
     m.add_class::<PyPersistentNaNeuron>()?;
     m.add_class::<PyIhNeuron>()?;
