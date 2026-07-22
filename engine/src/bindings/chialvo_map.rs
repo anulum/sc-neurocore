@@ -11,11 +11,15 @@
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
 use crate::neurons::ChialvoMapNeuron;
 
-/// Register the Chialvo-map simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+py_neuron_default!("ChialvoMapNeuron", PyChialvoMapNeuron, ChialvoMapNeuron, state x, state y);
+
+/// Register the Chialvo-map class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyChialvoMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_chialvo_map_simulate, module)?)?;
     Ok(())
 }

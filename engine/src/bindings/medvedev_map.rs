@@ -11,9 +11,15 @@
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Medvedev map simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::MedvedevMapNeuron;
+
+py_neuron_default!("MedvedevMapNeuron", PyMedvedevMapNeuron, MedvedevMapNeuron, state u);
+
+/// Register the Medvedev map class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyMedvedevMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_medvedev_map_simulate, module)?)?;
     Ok(())
 }
@@ -45,7 +51,7 @@ fn py_medvedev_map_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64)> {
-    let mut neuron = crate::neurons::MedvedevMapNeuron {
+    let mut neuron = MedvedevMapNeuron {
         u: u0,
         beta_0,
         beta_hc,

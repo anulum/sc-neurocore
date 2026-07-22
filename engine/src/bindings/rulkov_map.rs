@@ -10,9 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Rulkov map simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::RulkovMapNeuron;
+
+py_neuron_default!("RulkovMapNeuron", PyRulkovMapNeuron, RulkovMapNeuron, state x, state y);
+
+/// Register the Rulkov map class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyRulkovMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_rulkov_map_simulate, module)?)?;
     Ok(())
 }
@@ -36,7 +42,7 @@ fn py_rulkov_map_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::RulkovMapNeuron {
+    let mut neuron = RulkovMapNeuron {
         x: x0,
         y: y0,
         alpha,

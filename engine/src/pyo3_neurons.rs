@@ -46,6 +46,8 @@ mod wong_wang_binding;
 
 #[path = "bindings/biophysical/mod.rs"]
 mod biophysical_bindings;
+#[path = "bindings/maps/mod.rs"]
+mod map_bindings;
 #[path = "bindings/trivial/mod.rs"]
 mod trivial_bindings;
 
@@ -314,20 +316,6 @@ impl PyBendaHerzNeuron {
 }
 
 py_neuron_default!("BrunelWangNeuron", PyBrunelWangNeuron, neurons::BrunelWangNeuron, state v, state ref_remaining);
-
-// ═══════════════════════════════════════════════════════════════════
-// maps.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("ChialvoMapNeuron", PyChialvoMapNeuron, neurons::ChialvoMapNeuron, state x, state y);
-py_neuron_default!("RulkovMapNeuron", PyRulkovMapNeuron, neurons::RulkovMapNeuron, state x, state y);
-py_neuron_default!("IbarzTanakaMapNeuron", PyIbarzTanakaMapNeuron, neurons::IbarzTanakaMapNeuron, state v, state u);
-py_neuron_default!("MedvedevMapNeuron", PyMedvedevMapNeuron, neurons::MedvedevMapNeuron, state u);
-py_neuron_default!("CazellesMapNeuron", PyCazellesMapNeuron, neurons::CazellesMapNeuron, state x, state y);
-py_neuron_default!("CourageNekorkinMapNeuron", PyCourageNekorkinMapNeuron, neurons::CourageNekorkinMapNeuron, state x, state y);
-py_neuron_default!("AiharaMapNeuron", PyAiharaMapNeuron, neurons::AiharaMapNeuron, state x, state y);
-py_neuron_default!("KilincBhattMapNeuron", PyKilincBhattMapNeuron, neurons::KilincBhattMapNeuron, state x, state theta);
-py_neuron_default!("ErmentroutKopellMapNeuron", PyErmentroutKopellMapNeuron, neurons::ErmentroutKopellMapNeuron, state theta);
 
 // ═══════════════════════════════════════════════════════════════════
 // multi_compartment.rs models
@@ -1222,16 +1210,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySuperSpikeNeuron>()?;
     m.add_class::<PyLearnableNeuronModel>()?;
     m.add_class::<PyPernarowskiNeuron>()?;
-    // maps
-    m.add_class::<PyChialvoMapNeuron>()?;
-    m.add_class::<PyRulkovMapNeuron>()?;
-    m.add_class::<PyIbarzTanakaMapNeuron>()?;
-    m.add_class::<PyMedvedevMapNeuron>()?;
-    m.add_class::<PyCazellesMapNeuron>()?;
-    m.add_class::<PyCourageNekorkinMapNeuron>()?;
-    m.add_class::<PyAiharaMapNeuron>()?;
-    m.add_class::<PyKilincBhattMapNeuron>()?;
-    m.add_class::<PyErmentroutKopellMapNeuron>()?;
+    map_bindings::register(m)?;
     biophysical_bindings::register(m)?;
     // multi_compartment
     m.add_class::<PyPinskyRinzelNeuron>()?;

@@ -11,9 +11,15 @@
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
-/// Register the Ibarz-Tanaka map simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+use crate::neurons::IbarzTanakaMapNeuron;
+
+py_neuron_default!("IbarzTanakaMapNeuron", PyIbarzTanakaMapNeuron, IbarzTanakaMapNeuron, state v, state u);
+
+/// Register the Ibarz-Tanaka map class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyIbarzTanakaMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_ibarz_tanaka_map_simulate, module)?)?;
     Ok(())
 }
@@ -35,7 +41,7 @@ fn py_ibarz_tanaka_map_simulate<'py>(
     n_steps: usize,
     current: f64,
 ) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64, f64)> {
-    let mut neuron = crate::neurons::IbarzTanakaMapNeuron {
+    let mut neuron = IbarzTanakaMapNeuron {
         v: v0,
         u: u0,
         alpha,

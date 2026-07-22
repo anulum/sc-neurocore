@@ -10,11 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
 use crate::neurons::CourageNekorkinMapNeuron;
 
-/// Register the Courbage-Nekorkin-Vdovin map simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+py_neuron_default!("CourageNekorkinMapNeuron", PyCourageNekorkinMapNeuron, CourageNekorkinMapNeuron, state x, state y);
+
+/// Register the Courbage-Nekorkin-Vdovin map class and simulator.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyCourageNekorkinMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_courage_nekorkin_map_simulate, module)?)?;
     Ok(())
 }

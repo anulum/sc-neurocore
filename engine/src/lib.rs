@@ -35,10 +35,6 @@ mod exp_if_binding;
 mod hdc_binding;
 pub use hdc_binding::PyBitStreamTensor;
 pub mod brunel;
-#[path = "bindings/cazelles_map.rs"]
-mod cazelles_map_binding;
-#[path = "bindings/chialvo_map.rs"]
-mod chialvo_map_binding;
 #[path = "bindings/coba_lif.rs"]
 mod coba_lif_binding;
 pub mod connectome;
@@ -52,8 +48,6 @@ mod cortical_column_binding;
 pub mod cortical_inject;
 #[path = "bindings/cortical_inject.rs"]
 mod cortical_inject_binding;
-#[path = "bindings/courage_nekorkin_map.rs"]
-mod courage_nekorkin_map_binding;
 #[path = "bindings/dcls.rs"]
 mod dcls_binding;
 #[path = "bindings/dense_layer.rs"]
@@ -63,8 +57,6 @@ pub mod ei_network;
 #[path = "bindings/ei_network.rs"]
 mod ei_network_binding;
 pub mod encoder;
-#[path = "bindings/ermentrout_kopell_map.rs"]
-mod ermentrout_kopell_map_binding;
 pub mod evo;
 pub mod fault;
 #[path = "bindings/fault.rs"]
@@ -82,8 +74,6 @@ pub mod grad;
 pub mod graph;
 #[path = "bindings/hindmarsh_rose.rs"]
 mod hindmarsh_rose_binding;
-#[path = "bindings/ibarz_tanaka_map.rs"]
-mod ibarz_tanaka_map_binding;
 #[path = "bindings/iqif.rs"]
 mod iqif_binding;
 pub mod ir;
@@ -102,8 +92,6 @@ mod lgssm_binding;
 mod matrix_inputs_binding;
 #[path = "bindings/mckean.rs"]
 mod mckean_binding;
-#[path = "bindings/medvedev_map.rs"]
-mod medvedev_map_binding;
 #[path = "bindings/mixed_dense.rs"]
 mod mixed_dense_binding;
 pub mod network_runner;
@@ -141,8 +129,6 @@ mod rall_dendrite_binding;
 pub mod recorder;
 pub mod recurrent;
 pub mod rk4_neurons;
-#[path = "bindings/rulkov_map.rs"]
-mod rulkov_map_binding;
 #[path = "bindings/runtime_control.rs"]
 mod runtime_control_binding;
 pub mod sc_inference;
@@ -219,9 +205,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     evolution_binding::register(m)?;
     lgssm_binding::register(m)?;
     ollivier_ricci_binding::register(m)?;
-    chialvo_map_binding::register(m)?;
-    cazelles_map_binding::register(m)?;
-    courage_nekorkin_map_binding::register(m)?;
     mckean_binding::register(m)?;
     wilson_hr_binding::register(m)?;
     pernarowski_binding::register(m)?;
@@ -230,10 +213,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     escape_rate_binding::register(m)?;
     poisson_binding::register(m)?;
     iqif_binding::register(m)?;
-    rulkov_map_binding::register(m)?;
-    ibarz_tanaka_map_binding::register(m)?;
-    medvedev_map_binding::register(m)?;
-    ermentrout_kopell_map_binding::register(m)?;
     fitzhugh_nagumo_binding::register(m)?;
     hindmarsh_rose_binding::register(m)?;
     fitzhugh_rinzel_binding::register(m)?;

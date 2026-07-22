@@ -10,11 +10,15 @@
 
 use numpy::{IntoPyArray, PyArray1};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
 use crate::neurons::CazellesMapNeuron;
 
-/// Register the Cazelles-map simulator with the extension module.
-pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+py_neuron_default!("CazellesMapNeuron", PyCazellesMapNeuron, CazellesMapNeuron, state x, state y);
+
+/// Register the Cazelles-map class and simulator with the extension module.
+pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyCazellesMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_cazelles_map_simulate, module)?)?;
     Ok(())
 }
