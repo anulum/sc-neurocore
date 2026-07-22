@@ -1,6 +1,6 @@
 # VIPNeuron
 
-**Module:** `engine/src/neurons/interneurons.rs`
+**Module:** `engine/src/neurons/interneurons/vip_neuron.rs`
 **Reference:** Porter et al., J. Neurosci. 18(20), 1998 / Bhatt et al., J. Physiol. 597(3), 2019
 **Family:** Hodgkin-Huxley variant, irregular-spiking GABAergic interneuron
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `a` (A-type K+ activation), `b` (A-type K+ inactivation)
@@ -81,7 +81,7 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call at dt=0.025).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/interneurons.rs` |
+| Rust implementation | `engine/src/neurons/interneurons/vip_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::VIP` |
 | `create_neuron("VIP")` | Yes |

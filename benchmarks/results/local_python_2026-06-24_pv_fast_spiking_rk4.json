@@ -255,10 +255,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_pv_fast_spiking_neuron.py": "05014034b8e9f3ece57469f5e9777f01bd14c6ce9c46cb553a5664ab77db283f",
+    "benchmarks/bench_model_pv_fast_spiking_neuron.py": "35a7f9d855ec2f418957a925bdcac74cb0c78162a2cc02736b6e465d6cb6f089",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_pv_fast_spiking_rk4.rs": "fa8ed7e27d4d4df9be46a09a84bdb7b48700720dfc895d929ef5830fa28d8354",
-    "engine/src/neurons/interneurons.rs": "0acd161325ff9bf35d0379df8cbd5a72402fc7fd330a0eec7bbdf1b0b6a6a093",
+    "engine/src/neurons/interneurons/pv_fast_spiking.rs": "82e08f2dc4acf93f0229e28f5dd3ca01a9b1c839fe532b2bd2a4c4ff08e5fe58",
     "src/sc_neurocore/neurons/models/pv_fast_spiking_neuron.py": "3d7312f4c5b80ed448d2d05c63e5aa791b9f1c64f7b873151a9844e004b2f191",
     "src/sc_neurocore/accel/go/services/pv_fast_spiking_neuron.go": "0a3c27dc900695506fb470333ba1aa039b6f5ddae045225dd9eedc542f03185a",
     "src/sc_neurocore/accel/go/services/pv_fast_spiking_neuron_test.go": "a516e9bebed67b38c2ee6ba0c618dc61918b664c15a7efc92078d6f0eb8e1c99",

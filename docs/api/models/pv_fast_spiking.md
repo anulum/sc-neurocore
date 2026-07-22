@@ -1,6 +1,6 @@
 # PVFastSpikingNeuron
 
-**Module:** `engine/src/neurons/interneurons.rs`
+**Module:** `engine/src/neurons/interneurons/pv_fast_spiking.rs`
 **Reference:** Wang & Buzsaki, J. Neurosci. 16(20), 1996 + Kv3.1 extension
 **Family:** Hodgkin-Huxley variant, fast-spiking GABAergic interneuron
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `p` (Kv3.1 activation)
@@ -80,7 +80,7 @@ Sub-stepping: 50 steps per call (0.5 ms real time per call).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/interneurons.rs` |
+| Rust implementation | `engine/src/neurons/interneurons/pv_fast_spiking.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::PVFastSpiking` |
 | `create_neuron("PVFastSpiking")` | Yes |

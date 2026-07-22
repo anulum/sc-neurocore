@@ -37,7 +37,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_sst_neuron_rk4.rs": REPO_ROOT
     / "engine/examples/bench_sst_neuron_rk4.rs",
-    "engine/src/neurons/interneurons.rs": REPO_ROOT / "engine/src/neurons/interneurons.rs",
+    "engine/src/neurons/interneurons/sst_neuron.rs": REPO_ROOT
+    / "engine/src/neurons/interneurons/sst_neuron.rs",
     "src/sc_neurocore/neurons/models/sst_neuron.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/sst_neuron.py",
     "src/sc_neurocore/accel/go/services/sst_neuron.go": REPO_ROOT

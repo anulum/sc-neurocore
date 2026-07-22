@@ -1,6 +1,6 @@
 # CerebellarBasketNeuron
 
-**Module:** `engine/src/neurons/interneurons.rs`
+**Module:** `engine/src/neurons/interneurons/cerebellar_basket_neuron.rs`
 **Reference:** Midtgaard, J. Physiol. 457, 1992 / Hausser & Clark, Neuron 19(3), 1997 / Wang & Buzsaki, J. Neurosci. 16(20), 1996
 **Family:** Hodgkin-Huxley variant, perisomatic-targeting cerebellar interneuron
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `a` (A-type K+ activation), `b` (A-type K+ inactivation), `ca` (intracellular Ca2+ concentration)
@@ -102,7 +102,7 @@ Sub-stepping: 50 steps per call (0.5 ms real time per call at dt=0.01).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/interneurons.rs` |
+| Rust implementation | `engine/src/neurons/interneurons/cerebellar_basket_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::CerebellarBasket` |
 | `create_neuron("CerebellarBasket")` | Yes |

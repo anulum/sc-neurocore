@@ -14,23 +14,32 @@ from pathlib import Path
 
 
 _INTERNEURON_PERFORMANCE_TESTS = (
-    "pv_performance_5k_steps",
-    "sst_performance_10k_steps",
-    "vip_performance_10k_steps",
-    "chandelier_performance_5k_steps",
-    "basket_performance_5k_steps",
-    "martinotti_performance_10k_steps",
+    ("engine/src/neurons/interneurons/pv_fast_spiking.rs", "pv_performance_5k_steps"),
+    ("engine/src/neurons/interneurons/sst_neuron.rs", "sst_performance_10k_steps"),
+    ("engine/src/neurons/interneurons/vip_neuron.rs", "vip_performance_10k_steps"),
+    (
+        "engine/src/neurons/interneurons/chandelier_neuron.rs",
+        "chandelier_performance_5k_steps",
+    ),
+    (
+        "engine/src/neurons/interneurons/cerebellar_basket_neuron.rs",
+        "basket_performance_5k_steps",
+    ),
+    (
+        "engine/src/neurons/interneurons/martinotti_neuron.rs",
+        "martinotti_performance_10k_steps",
+    ),
 )
 
 
 def test_interneuron_wall_clock_performance_tests_are_ignored() -> None:
     """Interneuron timing smoke tests are opt-in, not default cargo-test gates."""
-    source = Path("engine/src/neurons/interneurons.rs").read_text(encoding="utf-8")
     ignore_marker = (
         '#[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]'
     )
 
-    for test_name in _INTERNEURON_PERFORMANCE_TESTS:
+    for source_path, test_name in _INTERNEURON_PERFORMANCE_TESTS:
+        source = Path(source_path).read_text(encoding="utf-8")
         marker = f"fn {test_name}()"
         position = source.index(marker)
         prefix = source[max(0, position - 180) : position]

@@ -1,6 +1,6 @@
 # ChandelierNeuron
 
-**Module:** `engine/src/neurons/interneurons.rs`
+**Module:** `engine/src/neurons/interneurons/chandelier_neuron.rs`
 **Reference:** Woodruff et al., Front. Neural Circuits 5:6, 2011 / Wang & Buzsaki, J. Neurosci. 16(20), 1996
 **Family:** Hodgkin-Huxley variant, axo-axonic fast-spiking GABAergic interneuron
 **State variables:** `v` (membrane potential), `h` (Na+ inactivation), `n` (K+ activation), `d` (Kv1 D-type activation), `p` (Kv3.1 activation)
@@ -98,7 +98,7 @@ Sub-stepping: 50 steps per call (0.5 ms real time per call at dt=0.01).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/interneurons.rs` |
+| Rust implementation | `engine/src/neurons/interneurons/chandelier_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::Chandelier` |
 | `create_neuron("Chandelier")` | Yes |

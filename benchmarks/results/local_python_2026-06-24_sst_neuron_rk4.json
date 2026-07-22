@@ -255,10 +255,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_sst_neuron.py": "0e74b5abcb13cbb0e18923995c636aa8dcb6a3c2ebea86efe919c6ad737c82ae",
+    "benchmarks/bench_model_sst_neuron.py": "a6305d66ff330c1719d6cd90f5e812da8f32518f67f463a0597cfeb866bb883f",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_sst_neuron_rk4.rs": "03d8360377a169bd40414b3a1af6a71c8fed728e4fd4fa965a724923eeb77dae",
-    "engine/src/neurons/interneurons.rs": "0acd161325ff9bf35d0379df8cbd5a72402fc7fd330a0eec7bbdf1b0b6a6a093",
+    "engine/src/neurons/interneurons/sst_neuron.rs": "1d070c805c20e5d9d51cf91ce96d26b27afa1fe858f7b7a952c6ac4d9321add8",
     "src/sc_neurocore/neurons/models/sst_neuron.py": "f852ac0434df43cce6190073b76fa67bcc006334d1a8a7fe23c67b1423b91e85",
     "src/sc_neurocore/accel/go/services/sst_neuron.go": "1d9eb405c6141d17c9cb6c8528f8941f99d6e78e5fe968893dc70db53fa4825f",
     "src/sc_neurocore/accel/go/services/sst_neuron_test.go": "5e9908219b5da9f1171dae6eab468334755838a06e9169fc40a2ad69af63f0f0",

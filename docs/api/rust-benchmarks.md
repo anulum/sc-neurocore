@@ -166,7 +166,7 @@ compute cycles for the 64x32 dense contract.
 | ExpIF | 25.0 µs | 237 µs | **24 ns** |
 | AdEx | 29.1 µs | 291 µs | **29 ns** |
 
-### Interneurons (`neurons/interneurons.rs`) — Interneuron model group
+### Interneurons (`neurons/interneurons/`) — Interneuron model group
 
 | Model | 1k steps | Per step | Sub-steps | Notes |
 |-------|----------|----------|-----------|-------|

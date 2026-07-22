@@ -38,7 +38,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_pv_fast_spiking_rk4.rs": REPO_ROOT
     / "engine/examples/bench_pv_fast_spiking_rk4.rs",
-    "engine/src/neurons/interneurons.rs": REPO_ROOT / "engine/src/neurons/interneurons.rs",
+    "engine/src/neurons/interneurons/pv_fast_spiking.rs": REPO_ROOT
+    / "engine/src/neurons/interneurons/pv_fast_spiking.rs",
     "src/sc_neurocore/neurons/models/pv_fast_spiking_neuron.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/pv_fast_spiking_neuron.py",
     "src/sc_neurocore/accel/go/services/pv_fast_spiking_neuron.go": REPO_ROOT

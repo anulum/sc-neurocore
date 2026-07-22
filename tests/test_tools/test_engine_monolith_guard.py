@@ -101,6 +101,17 @@ def test_channels_facade_ceiling_matches_current_down_only_surface() -> None:
     }
 
 
+def test_interneurons_facade_ceiling_matches_current_down_only_surface() -> None:
+    tool = _load_tool()
+    repo = _repo_root()
+    ceiling = tool.load_ceiling(repo / tool.DEFAULT_CEILING)
+    target = ceiling["targets"]["engine/src/neurons/interneurons.rs"]
+    assert target == {
+        "max_lines": tool.measure_target(repo, "engine/src/neurons/interneurons.rs")["lines"],
+        "max_pyfunctions": 0,
+    }
+
+
 def test_motor_facade_ceiling_matches_current_down_only_surface() -> None:
     tool = _load_tool()
     repo = _repo_root()
@@ -245,6 +256,7 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert "engine/src/neurons/biophysical.rs" in output
     assert "engine/src/neurons/cerebellar.rs" in output
     assert "engine/src/neurons/channels.rs" in output
+    assert "engine/src/neurons/interneurons.rs" in output
     assert "engine/src/neurons/misc.rs" in output
     assert "engine/src/neurons/motor.rs" in output
     assert "engine/src/neurons/multi_compartment.rs" in output

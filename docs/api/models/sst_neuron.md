@@ -1,6 +1,6 @@
 # SSTNeuron
 
-**Module:** `engine/src/neurons/interneurons.rs`
+**Module:** `engine/src/neurons/interneurons/sst_neuron.rs`
 **Reference:** Pospischil et al., Biol. Cybern. 99(4-5), 2008 (LTS parameterisation)
 **Family:** Hodgkin-Huxley variant, low-threshold spiking GABAergic interneuron
 **State variables:** `v` (membrane potential), `m` (Na+ activation), `h` (Na+ inactivation), `n` (K+ activation), `p` (M-current activation), `s` (T-type Ca2+ inactivation), `r` (h-current activation)
@@ -101,7 +101,7 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call at dt=0.025).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/interneurons.rs` |
+| Rust implementation | `engine/src/neurons/interneurons/sst_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::SST` |
 | `create_neuron("SST")` | Yes |

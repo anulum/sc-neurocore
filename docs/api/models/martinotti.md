@@ -1,6 +1,6 @@
 # MartinottiNeuron
 
-**Module:** `engine/src/neurons/interneurons.rs`
+**Module:** `engine/src/neurons/interneurons/martinotti_neuron.rs`
 **Reference:** Silberberg & Markram, J. Physiol. 580(1), 2007 / Toledo-Rodriguez et al., Cereb. Cortex 15(7), 2005
 **Family:** Hodgkin-Huxley variant, adapting GABAergic interneuron
 **State variables:** `v` (membrane potential), `m` (Na+ activation), `h` (Na+ inactivation), `n` (K+ activation), `p` (M-current activation), `s` (T-type Ca2+ inactivation)
@@ -92,7 +92,7 @@ Sub-stepping: 4 steps per call (0.1 ms real time per call at dt=0.025).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/interneurons.rs` |
+| Rust implementation | `engine/src/neurons/interneurons/martinotti_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` macro |
 | NetworkRunner wired | `NeuronVariant::Martinotti` |
 | `create_neuron("Martinotti")` | Yes |
