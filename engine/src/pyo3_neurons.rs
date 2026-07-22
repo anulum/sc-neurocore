@@ -19,8 +19,6 @@ use pyo3::types::PyDict;
 
 use crate::neurons;
 
-#[path = "bindings/adaptive_threshold_if.rs"]
-mod adaptive_threshold_if_binding;
 #[path = "bindings/adex_neuron.rs"]
 mod adex_neuron_binding;
 #[path = "bindings/alpha.rs"]
@@ -1277,7 +1275,6 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     hybrid_linear_attention_neuron_binding::register(m)?;
     quantum_inspired_lif_neuron_binding::register(m)?;
     trivial_bindings::register(m)?;
-    adaptive_threshold_if_binding::register(m)?;
     // simple_spiking
     m.add_class::<PyFitzHughNagumoNeuron>()?;
     m.add_class::<PyMorrisLecarNeuron>()?;

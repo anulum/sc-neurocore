@@ -8,6 +8,7 @@
 
 use pyo3::prelude::*;
 
+#[path = "../adaptive_threshold_if.rs"]
 mod adaptive_threshold_if;
 mod closed_form_continuous;
 mod complementary_lif;

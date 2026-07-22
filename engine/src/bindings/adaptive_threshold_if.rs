@@ -11,7 +11,10 @@ use pyo3::exceptions::{PyFloatingPointError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+use crate::neurons;
 use crate::neurons::trivial::adaptive_threshold_if::{self, AdaptiveThresholdIFError};
+
+py_neuron_default!("AdaptiveThresholdIFNeuron", PyAdaptiveThresholdIFNeuron, neurons::AdaptiveThresholdIFNeuron, state v, state theta);
 
 fn map_adaptive_threshold_if_error(error: AdaptiveThresholdIFError) -> PyErr {
     match error {
@@ -22,8 +25,9 @@ fn map_adaptive_threshold_if_error(error: AdaptiveThresholdIFError) -> PyErr {
     }
 }
 
-/// Register the configured exact-relaxation batch function.
+/// Register the adaptive-threshold class and configured exact-relaxation batch function.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyAdaptiveThresholdIFNeuron>()?;
     module.add_function(wrap_pyfunction!(py_adaptive_threshold_if_simulate, module)?)?;
     Ok(())
 }
