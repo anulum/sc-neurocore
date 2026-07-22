@@ -197,17 +197,21 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_poisson": {
-      "py": "14ad71aeecfbbb779a20307afac3cb2400b4cd4383ced76dda1f49cbbc3d6b17"
+      "py": "c1afeec24726a103e325c247131e4c83f6ce368ad4987903eb53afd4b3440459"
     },
-    "benchmarks/bench_model_poisson.py": "14ad71aeecfbbb779a20307afac3cb2400b4cd4383ced76dda1f49cbbc3d6b17",
+    "benchmarks/bench_model_poisson.py": "c1afeec24726a103e325c247131e4c83f6ce368ad4987903eb53afd4b3440459",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
     },
     "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
-    "engine/src/lib": {
-      "rs": "6f35e899d5c698392f96ca9931e81fb3457e8f45961a22d73b7adcb7dfef0db1"
+    "engine/src/bindings/poisson": {
+      "rs": "2ffa210ae985504891bd472b65f97d24c91743bc9205a1f0fcbf03eb876415ef"
     },
-    "engine/src/lib.rs": "6f35e899d5c698392f96ca9931e81fb3457e8f45961a22d73b7adcb7dfef0db1",
+    "engine/src/bindings/poisson.rs": "2ffa210ae985504891bd472b65f97d24c91743bc9205a1f0fcbf03eb876415ef",
+    "engine/src/lib": {
+      "rs": "38d868726f9b186424fe7cc2d0ff9bb20ba75fc5dcca7732ab1fe9899bed5f84"
+    },
+    "engine/src/lib.rs": "38d868726f9b186424fe7cc2d0ff9bb20ba75fc5dcca7732ab1fe9899bed5f84",
     "engine/src/neurons/special": {
       "rs": "24472635b8b2878b96a955763dcd9934a6699204118ff8fbb71435d1f2e5e680"
     },

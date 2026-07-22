@@ -50,6 +50,7 @@ AUTO_BACKEND_ORDER = ("rust", "mojo", "go", "julia", "python")
 SOURCE_PATHS = (
     "benchmarks/bench_model_poisson.py",
     "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/poisson.rs",
     "engine/src/lib.rs",
     "engine/src/neurons/special.rs",
     "engine/src/pyo3_neurons.rs",
