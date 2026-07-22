@@ -63,95 +63,33 @@ macro_rules! py_neuron_default {
     };
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// ai_optimized.rs models
-// ═══════════════════════════════════════════════════════════════════
-
-py_neuron_default!("MultiTimescaleNeuron", PyMultiTimescaleNeuron, neurons::MultiTimescaleNeuron, state v_fast, state v_medium, state v_slow);
-py_neuron_default!("AttentionGatedNeuron", PyAttentionGatedNeuron, neurons::AttentionGatedNeuron, state v);
-py_neuron_default!("PredictiveCodingNeuron", PyPredictiveCodingNeuron, neurons::PredictiveCodingNeuron, state v, state pred);
-py_neuron_default!("SelfReferentialNeuron", PySelfReferentialNeuron, neurons::SelfReferentialNeuron, state v);
-py_neuron_default!("CompositionalBindingNeuron", PyCompositionalBindingNeuron, neurons::CompositionalBindingNeuron, state phi, state amplitude);
-py_neuron_default!("DifferentiableSurrogateNeuron", PyDifferentiableSurrogateNeuron, neurons::DifferentiableSurrogateNeuron, state v);
-py_neuron_default!("MetaPlasticNeuron", PyMetaPlasticNeuron, neurons::MetaPlasticNeuron, state v, state error_trace, state expected_reward);
-
-py_neuron_default!("ArcaneNeuron", PyArcaneNeuron, neurons::ArcaneNeuron, state v_fast, state v_work, state v_deep);
-
-// Gap models: AdaptiveThresholdMoENeuron (step returns i32 spike count, not binary)
-py_neuron_default!("RustAdaptiveThresholdMoENeuron", PyAdaptiveThresholdMoENeuron, neurons::AdaptiveThresholdMoENeuron, state v, state v_th);
+#[path = "bindings/adaptive_threshold_moe_neuron.rs"]
+mod adaptive_threshold_moe_neuron_binding;
+#[path = "bindings/arcane_neuron.rs"]
+mod arcane_neuron_binding;
+#[path = "bindings/attention_gated_neuron.rs"]
+mod attention_gated_neuron_binding;
+#[path = "bindings/compositional_binding_neuron.rs"]
+mod compositional_binding_neuron_binding;
+#[path = "bindings/continuous_attractor_neuron.rs"]
+mod continuous_attractor_neuron_binding;
+#[path = "bindings/differentiable_surrogate_neuron.rs"]
+mod differentiable_surrogate_neuron_binding;
+#[path = "bindings/hybrid_linear_attention_neuron.rs"]
+mod hybrid_linear_attention_neuron_binding;
+#[path = "bindings/meta_plastic_neuron.rs"]
+mod meta_plastic_neuron_binding;
+#[path = "bindings/multi_timescale_neuron.rs"]
+mod multi_timescale_neuron_binding;
+#[path = "bindings/predictive_coding_neuron.rs"]
+mod predictive_coding_neuron_binding;
+#[path = "bindings/quantum_inspired_lif_neuron.rs"]
+mod quantum_inspired_lif_neuron_binding;
+#[path = "bindings/self_referential_neuron.rs"]
+mod self_referential_neuron_binding;
 
 // Gap models: CochlearHairCell (step(displacement) -> i32)
 py_neuron_default!("RustCochlearHairCell", PyCochlearHairCell, neurons::CochlearHairCell, state v, state glutamate_release);
-
-// Gap models: HybridLinearAttentionNeuron (needs dim param)
-#[pyclass(
-    name = "RustHybridLinearAttentionNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyHybridLinearAttentionNeuron {
-    inner: neurons::HybridLinearAttentionNeuron,
-}
-
-#[pymethods]
-impl PyHybridLinearAttentionNeuron {
-    #[new]
-    #[pyo3(signature = (dim=16))]
-    fn new(dim: usize) -> Self {
-        Self {
-            inner: neurons::HybridLinearAttentionNeuron::new(dim),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn step_qkv(&mut self, query: f64, key: f64, value: f64) -> f64 {
-        self.inner.step_qkv(query, key, value)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap models: QuantumInspiredLIFNeuron (step_complex)
-#[pyclass(
-    name = "RustQuantumInspiredLIFNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyQuantumInspiredLIFNeuron {
-    inner: neurons::QuantumInspiredLIFNeuron,
-}
-
-#[pymethods]
-impl PyQuantumInspiredLIFNeuron {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::QuantumInspiredLIFNeuron::new(),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn step_complex(&mut self, i_re: f64, i_im: f64) -> i32 {
-        self.inner.step_complex(i_re, i_im)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("z_re", self.inner.z_re)?;
-        d.set_item("z_im", self.inner.z_im)?;
-        Ok(d.into_any().unbind())
-    }
-}
 
 // Gap models: DendriticNMDANeuron (step(i_soma, glutamate))
 #[pyclass(
@@ -421,41 +359,6 @@ impl PyDopamineStdpSynapse {
         d.set_item("dopamine", self.inner.dopamine)?;
         d.set_item("trace_pre", self.inner.trace_pre)?;
         d.set_item("trace_post", self.inner.trace_post)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// ContinuousAttractorNeuron needs n_units param
-#[pyclass(
-    name = "RustContinuousAttractorNeuron",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyContinuousAttractorNeuron {
-    inner: neurons::ContinuousAttractorNeuron,
-}
-
-#[pymethods]
-impl PyContinuousAttractorNeuron {
-    #[new]
-    #[pyo3(signature = (n_units=16))]
-    fn new(n_units: usize) -> Self {
-        Self {
-            inner: neurons::ContinuousAttractorNeuron::new(n_units),
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn bump_position(&self) -> usize {
-        self.inner.bump_position()
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("u", self.inner.u.clone().into_pyarray(py))?;
         Ok(d.into_any().unbind())
     }
 }
@@ -1727,18 +1630,18 @@ impl PyLapicqueNeuron {
 
 pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // ai_optimized
-    m.add_class::<PyMultiTimescaleNeuron>()?;
-    m.add_class::<PyAttentionGatedNeuron>()?;
-    m.add_class::<PyPredictiveCodingNeuron>()?;
-    m.add_class::<PySelfReferentialNeuron>()?;
-    m.add_class::<PyCompositionalBindingNeuron>()?;
-    m.add_class::<PyDifferentiableSurrogateNeuron>()?;
-    m.add_class::<PyContinuousAttractorNeuron>()?;
-    m.add_class::<PyMetaPlasticNeuron>()?;
+    multi_timescale_neuron_binding::register(m)?;
+    attention_gated_neuron_binding::register(m)?;
+    predictive_coding_neuron_binding::register(m)?;
+    self_referential_neuron_binding::register(m)?;
+    compositional_binding_neuron_binding::register(m)?;
+    differentiable_surrogate_neuron_binding::register(m)?;
+    continuous_attractor_neuron_binding::register(m)?;
+    meta_plastic_neuron_binding::register(m)?;
     // gap models (ai_optimized)
-    m.add_class::<PyAdaptiveThresholdMoENeuron>()?;
-    m.add_class::<PyHybridLinearAttentionNeuron>()?;
-    m.add_class::<PyQuantumInspiredLIFNeuron>()?;
+    adaptive_threshold_moe_neuron_binding::register(m)?;
+    hybrid_linear_attention_neuron_binding::register(m)?;
+    quantum_inspired_lif_neuron_binding::register(m)?;
     // trivial
     m.add_class::<PyQuadraticIFNeuron>()?;
     m.add_class::<PyThetaNeuron>()?;
@@ -1861,7 +1764,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyParallelSpikingNeuron>()?;
     m.add_class::<PyAmariNeuralField>()?;
     m.add_class::<PyLeakyCompeteFireNeuron>()?;
-    m.add_class::<PyArcaneNeuron>()?;
+    arcane_neuron_binding::register(m)?;
     // neuron.rs (legacy)
     m.add_class::<PyAdExNeuron>()?;
     m.add_class::<PyExpIfNeuron>()?;

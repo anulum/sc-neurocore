@@ -90,6 +90,17 @@ def test_live_tree_is_within_committed_ceiling() -> None:
     assert report["passed"], report["violations"]
 
 
+def test_pyo3_neuron_ceiling_matches_current_down_only_surface() -> None:
+    tool = _load_tool()
+    repo = _repo_root()
+    ceiling = tool.load_ceiling(repo / tool.DEFAULT_CEILING)
+    target = ceiling["targets"]["engine/src/pyo3_neurons.rs"]
+    assert target == {
+        "max_lines": tool.measure_target(repo, "engine/src/pyo3_neurons.rs")["lines"],
+        "max_pyfunctions": 0,
+    }
+
+
 def test_ai_optimized_facade_ceiling_matches_current_down_only_surface() -> None:
     tool = _load_tool()
     repo = _repo_root()
@@ -276,6 +287,7 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert "engine/src/neurons/sensory.rs" in output
     assert "engine/src/neurons/trivial.rs" in output
     assert "engine/src/neurons/simple_spiking.rs" in output
+    assert "engine/src/pyo3_neurons.rs" in output
 
 
 def test_script_entrypoint_exits_zero(monkeypatch: pytest.MonkeyPatch) -> None:
