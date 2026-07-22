@@ -19,6 +19,10 @@ use pyo3::types::PyDict;
 
 use crate::neurons;
 
+#[macro_use]
+#[path = "bindings/default_neuron.rs"]
+mod default_neuron_binding;
+
 #[path = "bindings/adex_neuron.rs"]
 mod adex_neuron_binding;
 #[path = "bindings/alpha.rs"]
@@ -39,30 +43,6 @@ mod sigmoid_rate_binding;
 mod threshold_linear_rate_binding;
 #[path = "bindings/wong_wang.rs"]
 mod wong_wang_binding;
-
-macro_rules! py_neuron_default {
-    ($pylit:literal, $pyname:ident, $rust:ty $(, state $sname:ident)*) => {
-        #[pyclass(name = $pylit, module = "sc_neurocore_engine.sc_neurocore_engine")]
-        #[derive(Clone)]
-        pub struct $pyname { inner: $rust }
-
-        #[pymethods]
-        impl $pyname {
-            #[new]
-            fn new() -> Self { Self { inner: <$rust>::default() } }
-
-            fn step(&mut self, current: f64) -> i32 { self.inner.step(current) }
-
-            fn reset(&mut self) { self.inner.reset(); }
-
-            fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-                let d = PyDict::new(py);
-                $(d.set_item(stringify!($sname), self.inner.$sname)?;)*
-                Ok(d.into_any().unbind())
-            }
-        }
-    };
-}
 
 #[path = "bindings/trivial/mod.rs"]
 mod trivial_bindings;
