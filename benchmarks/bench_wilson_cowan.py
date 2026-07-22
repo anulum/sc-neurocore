@@ -57,6 +57,7 @@ INITIAL_STATE = {
 SOURCE_PATHS = (
     "benchmarks/bench_wilson_cowan.py",
     "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/wilson_cowan.rs",
     "engine/src/lib.rs",
     "engine/src/wilson_cowan.rs",
     "src/sc_neurocore/accel/wilson_cowan.py",
