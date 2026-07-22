@@ -43,6 +43,14 @@ def test_exported_names_signatures_and_top_level_identities_are_stable() -> None
         assert function.__text_signature__ == signature
         assert getattr(engine, name) is function
 
+    fixed_point_lif = extension.FixedPointLif
+    assert fixed_point_lif.__name__ == "FixedPointLif"
+    assert fixed_point_lif.__module__ == "sc_neurocore_engine.sc_neurocore_engine"
+    assert fixed_point_lif.__text_signature__ == (
+        "(data_width=16, fraction=8, v_rest=0, v_reset=0, v_threshold=256, refractory_period=2)"
+    )
+    assert engine.FixedPointLif is fixed_point_lif
+
 
 def test_constant_batch_matches_stepwise_fixed_point_lif() -> None:
     reference = extension.FixedPointLif()

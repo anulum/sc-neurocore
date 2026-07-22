@@ -11,15 +11,74 @@
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 
 use crate::neuron;
 
 /// Register fixed-point LIF batch kernels with the extension module.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<FixedPointLif>()?;
     module.add_function(wrap_pyfunction!(batch_lif_run, module)?)?;
     module.add_function(wrap_pyfunction!(batch_lif_run_multi, module)?)?;
     module.add_function(wrap_pyfunction!(batch_lif_run_varying, module)?)?;
     Ok(())
+}
+
+#[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
+pub struct FixedPointLif {
+    inner: neuron::FixedPointLif,
+}
+
+#[pymethods]
+impl FixedPointLif {
+    #[new]
+    #[pyo3(signature = (
+        data_width=16,
+        fraction=8,
+        v_rest=0,
+        v_reset=0,
+        v_threshold=256,
+        refractory_period=2
+    ))]
+    fn new(
+        data_width: u32,
+        fraction: u32,
+        v_rest: i16,
+        v_reset: i16,
+        v_threshold: i16,
+        refractory_period: i32,
+    ) -> Self {
+        Self {
+            inner: neuron::FixedPointLif::new(
+                data_width,
+                fraction,
+                v_rest,
+                v_reset,
+                v_threshold,
+                refractory_period,
+            ),
+        }
+    }
+
+    #[pyo3(signature = (leak_k, gain_k, i_t, noise_in=0))]
+    fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
+        self.inner.step(leak_k, gain_k, i_t, noise_in)
+    }
+
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+
+    fn reset_state(&mut self) {
+        self.reset();
+    }
+
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let dict = PyDict::new(py);
+        dict.set_item("v", self.inner.v)?;
+        dict.set_item("refractory_counter", self.inner.refractory_counter)?;
+        Ok(dict.into_any().unbind())
+    }
 }
 
 /// Run a LIF neuron for N steps with constant inputs.

@@ -313,7 +313,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     wilson_cowan_binding::register(m)?;
     m.add_class::<Lfsr16>()?;
     m.add_class::<BitstreamEncoder>()?;
-    m.add_class::<FixedPointLif>()?;
     m.add_class::<DenseLayer>()?;
     #[cfg(feature = "gpu")]
     m.add_class::<gpu::PyGpuDenseLayer>()?;
@@ -596,63 +595,6 @@ impl BitstreamEncoder {
         self.inner.reset(Some(next));
         self.seed_init = next;
         Ok(())
-    }
-}
-
-#[pyclass(module = "sc_neurocore_engine.sc_neurocore_engine")]
-pub struct FixedPointLif {
-    inner: neuron::FixedPointLif,
-}
-
-#[pymethods]
-impl FixedPointLif {
-    #[new]
-    #[pyo3(signature = (
-        data_width=16,
-        fraction=8,
-        v_rest=0,
-        v_reset=0,
-        v_threshold=256,
-        refractory_period=2
-    ))]
-    fn new(
-        data_width: u32,
-        fraction: u32,
-        v_rest: i16,
-        v_reset: i16,
-        v_threshold: i16,
-        refractory_period: i32,
-    ) -> Self {
-        Self {
-            inner: neuron::FixedPointLif::new(
-                data_width,
-                fraction,
-                v_rest,
-                v_reset,
-                v_threshold,
-                refractory_period,
-            ),
-        }
-    }
-
-    #[pyo3(signature = (leak_k, gain_k, i_t, noise_in=0))]
-    fn step(&mut self, leak_k: i16, gain_k: i16, i_t: i16, noise_in: i16) -> (i32, i16) {
-        self.inner.step(leak_k, gain_k, i_t, noise_in)
-    }
-
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-
-    fn reset_state(&mut self) {
-        self.reset();
-    }
-
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let dict = PyDict::new(py);
-        dict.set_item("v", self.inner.v)?;
-        dict.set_item("refractory_counter", self.inner.refractory_counter)?;
-        Ok(dict.into_any().unbind())
     }
 }
 
