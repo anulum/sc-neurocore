@@ -107,9 +107,6 @@ mod sensory_bindings;
 #[path = "bindings/synapses/mod.rs"]
 mod synapse_bindings;
 
-// Gap models: CochlearHairCell (step(displacement) -> i32)
-py_neuron_default!("RustCochlearHairCell", PyCochlearHairCell, neurons::CochlearHairCell, state v, state glutamate_release);
-
 // Gap models: DendriticNMDANeuron (step(i_soma, glutamate))
 #[pyclass(
     name = "RustDendriticNMDANeuron",
@@ -209,46 +206,6 @@ impl PyAstrocyteLIFNeuron {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
         d.set_item("ca", self.inner.ca)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
-// Gap models: DirectionSelectiveRGC (step_rf(intensity, surround))
-#[pyclass(
-    name = "RustDirectionSelectiveRGC",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyDirectionSelectiveRGC {
-    inner: neurons::DirectionSelectiveRGC,
-}
-
-#[pymethods]
-impl PyDirectionSelectiveRGC {
-    #[new]
-    #[pyo3(signature = (is_on=true))]
-    fn new(is_on: bool) -> Self {
-        Self {
-            inner: if is_on {
-                neurons::DirectionSelectiveRGC::new_on()
-            } else {
-                neurons::DirectionSelectiveRGC::new_off()
-            },
-        }
-    }
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-    fn step_rf(&mut self, intensity: f64, surround_mean: f64) -> i32 {
-        self.inner.step_rf(intensity, surround_mean)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("v", self.inner.v)?;
-        d.set_item("is_on_centre", self.inner.is_on_centre)?;
         Ok(d.into_any().unbind())
     }
 }
@@ -1470,9 +1427,6 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     motor_bindings::register(m)?;
     // sensory
     sensory_bindings::register(m)?;
-    // gap models (sensory)
-    m.add_class::<PyDirectionSelectiveRGC>()?;
-    m.add_class::<PyCochlearHairCell>()?;
     // cerebellar
     cerebellar_bindings::register(m)?;
     // channels

@@ -11,7 +11,9 @@ use pyo3::prelude::*;
 #[macro_use]
 mod graded_binding;
 
+mod cochlear_hair_cell;
 mod cone_photoreceptor;
+mod direction_selective_rgc;
 mod inner_hair_cell;
 mod merkel_cell;
 mod nociceptor;
@@ -22,7 +24,7 @@ mod retinal_ganglion_cell;
 mod rod_photoreceptor;
 mod taste_receptor_cell;
 
-/// Register the ten model-owned sensory-neuron classes in stable ABI order.
+/// Register the twelve model-owned sensory-neuron classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     inner_hair_cell::register(module)?;
     outer_hair_cell::register(module)?;
@@ -34,5 +36,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     nociceptor::register(module)?;
     olfactory_receptor_neuron::register(module)?;
     taste_receptor_cell::register(module)?;
+    direction_selective_rgc::register(module)?;
+    cochlear_hair_cell::register(module)?;
     Ok(())
 }
