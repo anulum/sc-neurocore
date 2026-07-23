@@ -79,8 +79,10 @@ def _manifest_counts() -> dict[str, int]:
 
 
 def _rust_networkrunner_model_count() -> int:
-    """Count Rust NetworkRunner models advertised by the live engine source."""
-    source = (_repo_root() / "engine/src/network_runner.rs").read_text(encoding="utf-8")
+    """Count Rust NetworkRunner models advertised by the live factory source."""
+    source = (_repo_root() / "engine/src/network_runner/model_factory.rs").read_text(
+        encoding="utf-8"
+    )
     match = re.search(
         r"pub\s+fn\s+supported_models\s*\([^)]*\)\s*->\s*[^{]+\{(?P<body>.*?)\n\s*\}",
         source,
