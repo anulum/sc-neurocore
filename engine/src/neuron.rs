@@ -11,9 +11,11 @@
 //! Fixed-point LIF and Izhikevich neuron models for the v3 engine.
 
 mod bitstream_averager;
+mod dendritic_neuron;
 mod izhikevich;
 
 pub use bitstream_averager::BitstreamAverager;
+pub use dendritic_neuron::DendriticNeuron;
 pub use izhikevich::Izhikevich;
 
 /// Mask and sign-interpret an integer to `width` bits (branchless).
@@ -183,42 +185,6 @@ impl HomeostaticLif {
         self.v = self.v_rest;
         self.rate_trace = 0.0;
         self.v_threshold = self.initial_threshold;
-    }
-}
-
-/// XOR-nonlinearity dendritic neuron.
-///
-/// Koch, Biophysics of Computation, 1999, Ch. 12.
-/// Output = 1 if (d1 + d2 - 2*d1*d2) > threshold.
-#[derive(Clone, Debug)]
-pub struct DendriticNeuron {
-    pub threshold: f64,
-    last_current: f64,
-}
-
-impl DendriticNeuron {
-    pub fn new(threshold: f64) -> Self {
-        Self {
-            threshold,
-            last_current: 0.0,
-        }
-    }
-
-    pub fn with_defaults() -> Self {
-        Self::new(0.5)
-    }
-
-    pub fn step(&mut self, input_a: f64, input_b: f64) -> i32 {
-        self.last_current = input_a + input_b - 2.0 * input_a * input_b;
-        if self.last_current > self.threshold {
-            1
-        } else {
-            0
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.last_current = 0.0;
     }
 }
 
@@ -542,10 +508,7 @@ mod tests {
         );
     }
 
-    use super::{
-        mask, AdExNeuron, DendriticNeuron, ExpIfNeuron, FixedPointLif, HomeostaticLif,
-        LapicqueNeuron,
-    };
+    use super::{mask, AdExNeuron, ExpIfNeuron, FixedPointLif, HomeostaticLif, LapicqueNeuron};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -656,31 +619,6 @@ mod tests {
         }
         assert!(n.v_threshold >= 0.1);
         assert!(n.v_threshold <= 10.0);
-    }
-
-    // ── DendriticNeuron tests ─────────────────────────────────────
-
-    #[test]
-    fn dendritic_xor_truth_table() {
-        let mut n = DendriticNeuron::new(0.5);
-        assert_eq!(n.step(0.0, 0.0), 0); // 0+0-0 = 0
-        assert_eq!(n.step(1.0, 0.0), 1); // 1+0-0 = 1
-        assert_eq!(n.step(0.0, 1.0), 1); // 0+1-0 = 1
-        assert_eq!(n.step(1.0, 1.0), 0); // 1+1-2 = 0
-    }
-
-    #[test]
-    fn dendritic_subthreshold() {
-        let mut n = DendriticNeuron::new(0.5);
-        assert_eq!(n.step(0.2, 0.1), 0);
-    }
-
-    #[test]
-    fn dendritic_reset() {
-        let mut n = DendriticNeuron::with_defaults();
-        n.step(1.0, 0.0);
-        n.reset();
-        assert!((n.last_current).abs() < 1e-12);
     }
 
     // ── AdEx tests ────────────────────────────────────────────────

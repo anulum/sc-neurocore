@@ -31,11 +31,15 @@ max_lines = 553
 max_pyfunctions = 0
 
 [targets."engine/src/neuron.rs"]
-max_lines = 1041
+max_lines = 979
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/bitstream_averager.rs"]
 max_lines = 141
+max_pyfunctions = 0
+
+[targets."engine/src/neuron/dendritic_neuron.rs"]
+max_lines = 71
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/izhikevich.rs"]
