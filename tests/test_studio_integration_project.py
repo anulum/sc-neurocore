@@ -1,42 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
-# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Tests for Studio Integration (Block 6)
+# SC-NeuroCore - Studio integration project
+
+"""Focused suite: TestProjectSaveLoad from former test_studio_integration.py."""
 
 from __future__ import annotations
 
-import json
-import re
-from pathlib import Path
-from typing import Any
-
-import pytest
-
-fastapi = pytest.importorskip("fastapi")
-
-from starlette.testclient import TestClient
-
-from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.network_graph import create_population, create_projection
-from sc_neurocore.studio.project import (
-    delete_project,
-    list_projects,
-    load_project,
-    run_pipeline,
-    save_project,
-)
-
-
-@pytest.fixture(scope="module")
-def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
-
-
-# --- Project Save/Load ---
-
+from tests.studio_integration_support import *  # noqa: F403
 
 class TestProjectSaveLoad:
     def test_save_project(
@@ -226,154 +200,3 @@ class TestProjectSaveLoad:
         with pytest.raises(ValueError, match="Invalid project name"):
             delete_project(name)
 
-
-# --- Pipeline ---
-
-
-class TestPipeline:
-    def _make_graph(self) -> dict[str, object]:
-        exc = create_population(count=30, neuron_type="excitatory")
-        inh = create_population(count=10, neuron_type="inhibitory")
-        proj = create_projection(exc["id"], inh["id"])
-        return {"populations": [exc, inh], "projections": [proj], "duration": 30.0}
-
-    def test_pipeline_runs(self) -> None:
-        graph = self._make_graph()
-        result = run_pipeline(graph)
-        assert "steps" in result
-        assert "validate" in result["steps"]
-        assert "simulate" in result["steps"]
-
-    def test_pipeline_empty_graph(self) -> None:
-        result = run_pipeline({"populations": [], "projections": []})
-        assert result["success"] is False
-        assert result["step"] == "validate"
-
-    def test_pipeline_target(self) -> None:
-        graph = self._make_graph()
-        result = run_pipeline(graph, target="ecp5")
-        assert result.get("target") == "ecp5"
-
-    def test_pipeline_reports_simulation_failure(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        graph = self._make_graph()
-
-        def fail_simulation(_graph: dict[str, Any]) -> dict[str, object]:
-            return {"success": False, "errors": ["sim failed"]}
-
-        monkeypatch.setattr(
-            "sc_neurocore.studio.network_graph.simulate_graph",
-            fail_simulation,
-        )
-
-        result = run_pipeline(graph)
-
-        assert result == {
-            "success": False,
-            "step": "simulate",
-            "errors": ["sim failed"],
-        }
-
-    def test_pipeline_reports_compile_failure(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        graph = self._make_graph()
-
-        def fail_compile(*_args: object, **_kwargs: object) -> tuple[object, str]:
-            raise RuntimeError("compiler failure")
-
-        monkeypatch.setattr(
-            "sc_neurocore.compiler.equation_compiler.equation_to_fpga",
-            fail_compile,
-        )
-
-        result = run_pipeline(graph)
-
-        assert result == {
-            "success": False,
-            "step": "compile",
-            "error": "Compilation failed",
-        }
-
-
-# --- Endpoints ---
-
-
-class TestEndpoints:
-    def test_save_endpoint(self, client: TestClient) -> None:
-        r = client.post(
-            "/api/project/save",
-            json={"name": "endpoint_test", "state": {"dt": 0.1}},
-        )
-        assert r.status_code == 200
-        data = r.json()
-        assert data["name"] == "endpoint_test"
-        assert data["schema_version"] == "studio.project-save.v1"
-        assert data["evidence_classification"] == "project_workspace"
-        assert data["status"] == "completed"
-        assert re.fullmatch(r"[0-9a-f]{64}", data["state_sha256"])
-        assert re.fullmatch(r"[0-9a-f]{64}", data["project_sha256"])
-        assert "path" not in data
-
-    def test_save_requires_name(self, client: TestClient) -> None:
-        r = client.post("/api/project/save", json={"state": {}})
-        assert r.status_code == 422
-
-    def test_save_rejects_non_object_state_endpoint(
-        self,
-        client: TestClient,
-    ) -> None:
-        r = client.post(
-            "/api/project/save",
-            json={"name": "bad_state_endpoint", "state": ["not", "an", "object"]},
-        )
-        assert r.status_code == 422
-
-    def test_save_rejects_invalid_hdl_identifier_endpoint(
-        self,
-        client: TestClient,
-    ) -> None:
-        r = client.post(
-            "/api/project/save",
-            json={"name": "bad_ident_endpoint", "state": {"module_name": "bad-name"}},
-        )
-        assert r.status_code == 422
-
-    def test_list_endpoint(self, client: TestClient) -> None:
-        r = client.get("/api/project/list")
-        assert r.status_code == 200
-        assert isinstance(r.json(), list)
-
-    def test_load_nonexistent_endpoint(self, client: TestClient) -> None:
-        r = client.get("/api/project/load/nonexistent_xyz")
-        assert r.status_code == 404
-
-    def test_load_invalid_name_endpoint(self, client: TestClient) -> None:
-        r = client.get("/api/project/load/bad%5Cname")
-        assert r.status_code == 422
-
-    def test_delete_invalid_name_endpoint(self, client: TestClient) -> None:
-        r = client.delete("/api/project/bad%5Cname")
-        assert r.status_code == 422
-
-    def test_pipeline_endpoint(self, client: TestClient) -> None:
-        exc = create_population(count=20, neuron_type="excitatory")
-        inh = create_population(count=5, neuron_type="inhibitory")
-        proj = create_projection(exc["id"], inh["id"])
-        graph = {"populations": [exc, inh], "projections": [proj], "duration": 20.0}
-        r = client.post("/api/pipeline/run", json={"graph": graph, "target": "ice40"})
-        assert r.status_code == 200
-        data = r.json()
-        assert "steps" in data
-
-    def test_pipeline_endpoint_empty_graph(self, client: TestClient) -> None:
-        r = client.post(
-            "/api/pipeline/run",
-            json={"graph": {"populations": [], "projections": []}, "target": "ice40"},
-        )
-        assert r.status_code == 200
-        data = r.json()
-        assert data["success"] is False
