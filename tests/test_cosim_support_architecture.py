@@ -20,6 +20,7 @@ from tests import (
     cosim_reference_glif,
     cosim_reference_izhikevich2007,
     cosim_reference_perfect_integrator,
+    cosim_reference_pernarowski,
     cosim_reference_quadratic_if,
     cosim_reference_statistics,
     cosim_reference_theta,
@@ -67,6 +68,11 @@ _PERFECT_INTEGRATOR_NAMES = (
     "_perfect_integrator_sawtooth_features",
 )
 
+_PERNAROWSKI_NAMES = (
+    "_pernarowski_hand_spike_count",
+    "_pernarowski_rk4_features",
+)
+
 _QUADRATIC_IF_NAMES = ("_quadratic_if_zero_current_features",)
 
 _THETA_NAMES = ("_theta_constant_current_features",)
@@ -88,6 +94,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_izhikevich2007, name)
     for name in _PERFECT_INTEGRATOR_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_perfect_integrator, name)
+    for name in _PERNAROWSKI_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_pernarowski, name)
     for name in _QUADRATIC_IF_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_quadratic_if, name)
     for name in _THETA_NAMES:
@@ -139,13 +147,16 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     perfect_text = Path(cosim_reference_perfect_integrator.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in perfect_text
     assert len(perfect_text.splitlines()) <= 65
+    pernarowski_text = Path(cosim_reference_pernarowski.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in pernarowski_text
+    assert len(pernarowski_text.splitlines()) <= 100
     quadratic_if_text = Path(cosim_reference_quadratic_if.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in quadratic_if_text
     assert len(quadratic_if_text.splitlines()) <= 30
     theta_text = Path(cosim_reference_theta.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in theta_text
     assert len(theta_text.splitlines()) <= 40
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_730
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_655
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -164,6 +175,16 @@ def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> 
         node.name for node in statistics_tree.body if isinstance(node, ast.FunctionDef)
     }
     assert statistics_functions == {"_summarise"}
+
+
+def test_pernarowski_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_PERNAROWSKI_NAMES)
+
+    owner_tree = ast.parse(Path(cosim_reference_pernarowski.__file__).read_text(encoding="utf-8"))
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_PERNAROWSKI_NAMES)
 
 
 def test_glif_has_exact_definition_ownership() -> None:
