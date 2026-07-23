@@ -27,6 +27,7 @@ from tests import (
     cosim_reference_ibarz_tanaka,
     cosim_reference_izhikevich2007,
     cosim_reference_izhikevich_rs,
+    cosim_reference_lif,
     cosim_reference_mckean,
     cosim_reference_mihalas_niebur,
     cosim_reference_morris_lecar,
@@ -108,6 +109,8 @@ _IZHIKEVICH2007_NAMES = (
 
 _IZHIKEVICH_RS_NAMES = ("_izhikevich_rs_euler_features",)
 
+_LIF_NAMES = ("_lif_schema_precision_values",)
+
 _MCKEAN_NAMES = (
     "_mckean_hand_spike_count",
     "_mckean_rk4_features",
@@ -188,6 +191,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_izhikevich2007, name)
     for name in _IZHIKEVICH_RS_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_izhikevich_rs, name)
+    for name in _LIF_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_lif, name)
     assert cosim_support._MCKEAN_PARAMS is cosim_reference_mckean._MCKEAN_PARAMS
     for name in _MCKEAN_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_mckean, name)
@@ -315,6 +320,9 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     izhikevich_rs_text = Path(cosim_reference_izhikevich_rs.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in izhikevich_rs_text
     assert len(izhikevich_rs_text.splitlines()) <= 70
+    lif_text = Path(cosim_reference_lif.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in lif_text
+    assert len(lif_text.splitlines()) <= 30
     mckean_text = Path(cosim_reference_mckean.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in mckean_text
     assert len(mckean_text.splitlines()) <= 105
@@ -352,7 +360,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 395
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 385
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -491,6 +499,16 @@ def test_izhikevich_rs_has_exact_definition_ownership() -> None:
     owner_tree = ast.parse(Path(cosim_reference_izhikevich_rs.__file__).read_text(encoding="utf-8"))
     owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
     assert owner_functions == set(_IZHIKEVICH_RS_NAMES)
+
+
+def test_lif_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_LIF_NAMES)
+
+    owner_tree = ast.parse(Path(cosim_reference_lif.__file__).read_text(encoding="utf-8"))
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_LIF_NAMES)
 
 
 def test_mckean_has_exact_definition_ownership() -> None:

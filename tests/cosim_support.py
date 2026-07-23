@@ -20,7 +20,6 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Mapping, cast
 
 from sc_neurocore.compiler.equation_compiler import generate_testbench
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog as compile_to_verilog
@@ -85,6 +84,7 @@ from tests.cosim_reference_izhikevich2007 import (
 from tests.cosim_reference_izhikevich_rs import (
     _izhikevich_rs_euler_features as _izhikevich_rs_euler_features,
 )
+from tests.cosim_reference_lif import _lif_schema_precision_values as _lif_schema_precision_values
 from tests.cosim_reference_mckean import (
     _MCKEAN_PARAMS as _MCKEAN_PARAMS,
     _mckean_hand_spike_count as _mckean_hand_spike_count,
@@ -130,14 +130,6 @@ from tests.cosim_reference_wang_buzsaki import (
     _wang_buzsaki_hand_spike_count as _wang_buzsaki_hand_spike_count,
     _wang_buzsaki_macrostep_gauss_seidel_features as _wang_buzsaki_macrostep_gauss_seidel_features,
 )
-
-
-def _lif_schema_precision_values() -> dict[str, float]:
-    """Return LIF schema values checked by the public precision CLI."""
-    schema = UniversalNeuron.from_schema("lif").schema
-    parameters = cast(Mapping[str, float], schema.get("parameters", {}))
-    state = cast(Mapping[str, float], schema.get("state", {}))
-    return {**parameters, **state}
 
 
 def _verilog_spike_count_q412(model_name: str, n_steps: int, current: float) -> int:
