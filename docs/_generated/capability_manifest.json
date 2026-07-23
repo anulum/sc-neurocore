@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 1540
+    "test_files": 1541
   },
   "documentation": {
     "public_pages": [
@@ -2868,6 +2868,7 @@
       "tests/cosim_reference_glif.py",
       "tests/cosim_reference_hindmarsh_rose.py",
       "tests/cosim_reference_izhikevich2007.py",
+      "tests/cosim_reference_izhikevich_rs.py",
       "tests/cosim_reference_mckean.py",
       "tests/cosim_reference_mihalas_niebur.py",
       "tests/cosim_reference_morris_lecar.py",
