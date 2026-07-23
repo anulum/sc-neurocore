@@ -45,7 +45,7 @@ KERNEL = "lapicque_exact_constant_current_flow"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_lapicque.py",
-    "engine/src/neuron.rs",
+    "engine/src/neuron/lapicque.rs",
     "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
     "src/sc_neurocore/accel/go/services/lapicque.go",
     "src/sc_neurocore/accel/julia/neurons/lapicque.jl",

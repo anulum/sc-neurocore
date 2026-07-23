@@ -694,7 +694,7 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_lapicque.py": "source_hashes.benchmarks/bench_model_lapicque.py",
-        "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
+        "engine/src/neuron/lapicque.rs": "source_hashes.engine/src/neuron/lapicque.rs",
         "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go": "source_hashes.src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
         "src/sc_neurocore/accel/go/services/lapicque.go": "source_hashes.src/sc_neurocore/accel/go/services/lapicque.go",
         "src/sc_neurocore/accel/julia/neurons/lapicque.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/lapicque.jl",
