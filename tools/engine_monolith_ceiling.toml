@@ -14,6 +14,26 @@
 
 schema_version = 1
 
+[targets."engine/src/ir/qformat.rs"]
+max_lines = 25
+max_pyfunctions = 0
+
+[targets."engine/src/ir/qformat/block_floating.rs"]
+max_lines = 586
+max_pyfunctions = 0
+
+[targets."engine/src/ir/qformat/dense_result.rs"]
+max_lines = 148
+max_pyfunctions = 0
+
+[targets."engine/src/ir/qformat/fixed_format.rs"]
+max_lines = 170
+max_pyfunctions = 0
+
+[targets."engine/src/ir/qformat/mixed_dense.rs"]
+max_lines = 402
+max_pyfunctions = 0
+
 [targets."engine/src/learning_bindings.rs"]
 max_lines = 29
 max_pyfunctions = 0

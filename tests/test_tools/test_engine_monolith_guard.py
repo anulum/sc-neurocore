@@ -101,6 +101,17 @@ def test_pyo3_neuron_ceiling_matches_current_down_only_surface() -> None:
     }
 
 
+def test_qformat_facade_ceiling_matches_current_down_only_surface() -> None:
+    tool = _load_tool()
+    repo = _repo_root()
+    ceiling = tool.load_ceiling(repo / tool.DEFAULT_CEILING)
+    target = ceiling["targets"]["engine/src/ir/qformat.rs"]
+    assert target == {
+        "max_lines": tool.measure_target(repo, "engine/src/ir/qformat.rs")["lines"],
+        "max_pyfunctions": 0,
+    }
+
+
 def test_ai_optimized_facade_ceiling_matches_current_down_only_surface() -> None:
     tool = _load_tool()
     repo = _repo_root()
@@ -275,6 +286,11 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert tool.main(["--check", "--repo", str(_repo_root())]) == 0
     output = capsys.readouterr().out
     assert "engine/src/lib.rs" in output
+    assert "engine/src/ir/qformat.rs" in output
+    assert "engine/src/ir/qformat/block_floating.rs" in output
+    assert "engine/src/ir/qformat/dense_result.rs" in output
+    assert "engine/src/ir/qformat/fixed_format.rs" in output
+    assert "engine/src/ir/qformat/mixed_dense.rs" in output
     assert "engine/src/neurons/ai_optimized.rs" in output
     assert "engine/src/neurons/biophysical.rs" in output
     assert "engine/src/neurons/cerebellar.rs" in output
