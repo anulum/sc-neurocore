@@ -44,7 +44,7 @@ KERNEL = "perfect_integrator_candidate_first_euler"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_perfect_integrator.py",
-    "engine/src/neuron.rs",
+    "engine/src/neurons/trivial/perfect_integrator.rs",
     "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go",
     "src/sc_neurocore/accel/go/services/perfect_integrator.go",
     "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl",
