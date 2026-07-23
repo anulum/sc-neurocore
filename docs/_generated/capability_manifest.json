@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 1552
+    "test_files": 1553
   },
   "documentation": {
     "public_pages": [
@@ -3460,6 +3460,7 @@
       "tests/test_host_driver_bounds.py",
       "tests/test_hub_bundle.py",
       "tests/test_hypervisor/test_hypervisor.py",
+      "tests/test_hypervisor/test_isolation.py",
       "tests/test_hypothesis_fuzz.py",
       "tests/test_ibarz_tanaka_backends.py",
       "tests/test_ibarz_tanaka_map_engine_binding.py",

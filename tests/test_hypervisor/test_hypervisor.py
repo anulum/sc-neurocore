@@ -16,7 +16,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     AuditEventType,
     BandwidthMeter,
     BitstreamFirewall,
-    FirewallRule,
     HWRegion,
     Hypervisor,
     HypervisorConfig,
@@ -35,7 +34,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     TenantState,
     admission_check,
     select_region_multi_die,
-    verify_isolation,
 )
 
 
@@ -102,55 +100,6 @@ class TestTenantState:
         ts1 = TenantState(lfsr_state=42, timestep=100)
         ts2 = TenantState(lfsr_state=43, timestep=100)
         assert ts1.compute_checksum() != ts2.compute_checksum()
-
-
-# ── BitstreamFirewall Tests ──────────────────────────────────────────
-
-
-class TestBitstreamFirewall:
-    def test_allow_read(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
-        assert fw.check_access("t0", 0x1050) is True
-
-    def test_deny_out_of_range(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
-        assert fw.check_access("t0", 0x2000) is False
-
-    def test_deny_cross_tenant(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
-        assert fw.check_access("t1", 0x1050) is False
-
-    def test_deny_write(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100, write_allowed=False))
-        assert fw.check_access("t0", 0x1050, is_write=True) is False
-
-    def test_deny_read(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100, read_allowed=False))
-        assert fw.check_access("t0", 0x1050) is False
-
-    def test_violation_logged(self):
-        fw = BitstreamFirewall()
-        fw.check_access("t0", 0x1000)
-        assert fw.violation_count == 1
-
-    def test_remove_rules(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
-        fw.add_rule(FirewallRule("t1", 0x2000, 0x100))
-        removed = fw.remove_tenant_rules("t0")
-        assert removed == 1
-        assert fw.check_access("t0", 0x1050) is False
-
-    def test_clear_violations(self):
-        fw = BitstreamFirewall()
-        fw.check_access("t0", 0x1000)
-        fw.clear_violations()
-        assert fw.violation_count == 0
 
 
 # ── Scheduler Tests ──────────────────────────────────────────────────
@@ -811,26 +760,6 @@ class TestSecurityAuditLog:
         log.log(AuditEntry(AuditEventType.MIGRATION, "t0", "x"))
         cs = log.checksum()
         assert len(cs) == 16
-
-
-# ── Isolation Verification Tests (Gap 9) ──────────────────────────────
-
-
-class TestIsolationVerification:
-    def test_no_overlap(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x100))
-        fw.add_rule(FirewallRule("t1", 0x2000, 0x100))
-        violations = verify_isolation(fw, {})
-        assert violations == []
-
-    def test_overlap_detected(self):
-        fw = BitstreamFirewall()
-        fw.add_rule(FirewallRule("t0", 0x1000, 0x200))
-        fw.add_rule(FirewallRule("t1", 0x1100, 0x200))
-        violations = verify_isolation(fw, {})
-        assert len(violations) == 1
-        assert "overlap" in violations[0]
 
 
 # ── Migration Throttle Tests (Gap 10) ─────────────────────────────────

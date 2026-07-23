@@ -7,7 +7,7 @@ FPGA resources with resource quotas, priority preemption, and health monitoring.
 
 ```python
 from sc_neurocore.hypervisor.hypervisor import (
-    Hypervisor, Tenant, ResourceAllocator, HealthMonitor,
+    HWRegion, Hypervisor, HypervisorConfig, QoSPolicy, Tenant,
 )
 ```
 

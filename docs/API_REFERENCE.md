@@ -18139,25 +18139,6 @@ Checkpointable state for live migration.
 One SC network tenant on the hypervisor.
 
 
-### Class `FirewallRule`
-One address-range access rule.
-
-- **end_addr**()
-
-### Class `BitstreamFirewall`
-AXI address-range isolation preventing cross-tenant access.
-
-Each tenant can only access its own region's AXI address space.
-Any cross-region access is blocked and logged as a violation.
-
-- **__init__**()
-- **add_rule**(rule)
-- **remove_tenant_rules**(tenant_id)
-- **check_access**(tenant_id, addr, is_write)
-  - Check if a tenant can access an address.
-- **violation_count**()
-- **clear_violations**()
-
 ### Class `SchedulingPolicy`
 
 ### Class `ScheduleSlot`
@@ -18324,6 +18305,29 @@ Select best free region, preferring a specific die.
 
 ### Function `admission_check(tenant, regions, existing_tenants)`
 Check if a new tenant can be admitted without overcommitting.
+
+---
+
+## Module `hypervisor.isolation`
+
+### Class `FirewallRule`
+One address-range access rule.
+
+- **end_addr**()
+
+### Class `BitstreamFirewall`
+AXI address-range isolation preventing cross-tenant access.
+
+Each tenant can only access its own region's AXI address space.
+Any cross-region access is blocked and logged as a violation.
+
+- **__init__**()
+- **add_rule**(rule)
+- **remove_tenant_rules**(tenant_id)
+- **check_access**(tenant_id, addr, is_write)
+  - Check if a tenant can access an address.
+- **violation_count**()
+- **clear_violations**()
 
 ### Function `verify_isolation(firewall, regions)`
 Verify that no two tenants share address ranges.
