@@ -11,8 +11,10 @@
 //! Fixed-point LIF and Izhikevich neuron models for the v3 engine.
 
 mod bitstream_averager;
+mod izhikevich;
 
 pub use bitstream_averager::BitstreamAverager;
+pub use izhikevich::Izhikevich;
 
 /// Mask and sign-interpret an integer to `width` bits (branchless).
 ///
@@ -113,69 +115,6 @@ impl FixedPointLif {
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;
-    }
-}
-
-/// Izhikevich neuron (floating-point).
-///
-/// Standard model from IEEE TNN 14(6), 2003:
-///   v' = 0.04*v² + 5*v + 140 - u + I
-///   u' = a*(b*v - u)
-///   if v >= 30: v ← c, u ← u + d
-#[derive(Clone, Debug)]
-pub struct Izhikevich {
-    pub v: f64,
-    pub u: f64,
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
-    pub d: f64,
-    pub dt: f64,
-}
-
-impl Izhikevich {
-    /// Regular spiking defaults: a=0.02, b=0.2, c=-65, d=8, dt=1.0.
-    pub fn new(a: f64, b: f64, c: f64, d: f64, dt: f64) -> Self {
-        Self {
-            v: c,
-            u: b * c,
-            a,
-            b,
-            c,
-            d,
-            dt,
-        }
-    }
-
-    /// Regular spiking preset.
-    pub fn regular_spiking() -> Self {
-        Self::new(0.02, 0.2, -65.0, 8.0, 1.0)
-    }
-
-    /// Advance one step. Returns 1 on spike, 0 otherwise.
-    pub fn step(&mut self, current: f64) -> i32 {
-        // Two half-steps for numerical stability on 0.04v² term.
-        let half = self.dt * 0.5;
-        for _ in 0..2 {
-            let dv = (0.04 * self.v * self.v + 5.0 * self.v + 140.0 - self.u + current) * half;
-            let du = (self.a * (self.b * self.v - self.u)) * half;
-            self.v += dv;
-            self.u += du;
-        }
-
-        if self.v >= 30.0 {
-            self.v = self.c;
-            self.u += self.d;
-            1
-        } else {
-            0
-        }
-    }
-
-    /// Reset to initial state.
-    pub fn reset(&mut self) {
-        self.v = self.c;
-        self.u = self.b * self.c;
     }
 }
 
@@ -604,7 +543,7 @@ mod tests {
     }
 
     use super::{
-        mask, AdExNeuron, DendriticNeuron, ExpIfNeuron, FixedPointLif, HomeostaticLif, Izhikevich,
+        mask, AdExNeuron, DendriticNeuron, ExpIfNeuron, FixedPointLif, HomeostaticLif,
         LapicqueNeuron,
     };
 
@@ -672,56 +611,6 @@ mod tests {
             total += s;
         }
         assert!(total > 0, "neuron must fire with refractory_period=0");
-    }
-
-    // ── Izhikevich tests ──────────────────────────────────────────
-
-    #[test]
-    fn izhikevich_regular_spiking_fires() {
-        let mut n = Izhikevich::regular_spiking();
-        let mut total = 0;
-        for _ in 0..100 {
-            total += n.step(10.0);
-        }
-        assert!(total > 0, "RS neuron must fire with I=10");
-    }
-
-    #[test]
-    fn izhikevich_no_spike_without_input() {
-        let mut n = Izhikevich::regular_spiking();
-        let mut total = 0;
-        for _ in 0..100 {
-            total += n.step(0.0);
-        }
-        assert_eq!(total, 0, "no spikes without input");
-    }
-
-    #[test]
-    fn izhikevich_reset_clears_state() {
-        let mut n = Izhikevich::regular_spiking();
-        for _ in 0..50 {
-            n.step(10.0);
-        }
-        n.reset();
-        assert_eq!(n.v, n.c);
-        assert!((n.u - n.b * n.c).abs() < 1e-12);
-    }
-
-    #[test]
-    fn izhikevich_chattering_fires_more() {
-        // Chattering: a=0.02, b=0.2, c=-50, d=2
-        let mut ch = Izhikevich::new(0.02, 0.2, -50.0, 2.0, 1.0);
-        let mut rs = Izhikevich::regular_spiking();
-        let mut ch_spikes = 0;
-        let mut rs_spikes = 0;
-        for _ in 0..200 {
-            ch_spikes += ch.step(10.0);
-            rs_spikes += rs.step(10.0);
-        }
-        assert!(
-            ch_spikes > rs_spikes,
-            "chattering ({ch_spikes}) should fire more than RS ({rs_spikes})"
-        );
     }
 
     // ── HomeostaticLif tests ──────────────────────────────────────
