@@ -49,7 +49,6 @@ SOURCE_PATHS = (
     "benchmarks/bench_model_iqif.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/iqif.rs",
-    "engine/src/network_runner.rs",
     "engine/src/neurons/trivial/integer_qif.rs",
     "src/sc_neurocore/accel/iqif.py",
     "src/sc_neurocore/accel/go/neurons/iqif/iqif.go",
