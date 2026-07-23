@@ -44,7 +44,7 @@ KERNEL = "adex_baseline_euler_simulate"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_adex.py",
-    "engine/src/neuron.rs",
+    "engine/src/neuron/adex.rs",
     "src/sc_neurocore/accel/go/neurons/adex/adex.go",
     "src/sc_neurocore/accel/go/services/adex.go",
     "src/sc_neurocore/accel/julia/neurons/adex.jl",

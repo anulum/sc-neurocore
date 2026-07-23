@@ -3116,7 +3116,7 @@
       ],
       "source_hashes": {
         "benchmarks/bench_adex.py": "source_hashes.benchmarks/bench_adex.py",
-        "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
+        "engine/src/neuron/adex.rs": "source_hashes.engine/src/neuron/adex.rs",
         "src/sc_neurocore/accel/go/neurons/adex/adex.go": "source_hashes.src/sc_neurocore/accel/go/neurons/adex/adex.go",
         "src/sc_neurocore/accel/go/services/adex.go": "source_hashes.src/sc_neurocore/accel/go/services/adex.go",
         "src/sc_neurocore/accel/julia/neurons/adex.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/adex.jl",

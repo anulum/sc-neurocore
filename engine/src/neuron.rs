@@ -10,11 +10,13 @@
 //!
 //! Fixed-point LIF and Izhikevich neuron models for the v3 engine.
 
+mod adex;
 mod bitstream_averager;
 mod dendritic_neuron;
 mod homeostatic_lif;
 mod izhikevich;
 
+pub use adex::AdExNeuron;
 pub use bitstream_averager::BitstreamAverager;
 pub use dendritic_neuron::DendriticNeuron;
 pub use homeostatic_lif::HomeostaticLif;
@@ -119,111 +121,6 @@ impl FixedPointLif {
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;
-    }
-}
-
-/// Adaptive Exponential IF neuron. Brette & Gerstner 2005.
-/// PyO3 wrapper: `pyo3_neurons::PyAdExNeuron`
-#[derive(Clone, Debug)]
-pub struct AdExNeuron {
-    pub v: f64,
-    pub w: f64,
-    pub v_rest: f64,
-    pub v_reset: f64,
-    pub v_threshold: f64,
-    pub v_rh: f64,
-    pub delta_t: f64,
-    pub tau: f64,
-    pub tau_w: f64,
-    pub a: f64,
-    pub b: f64,
-    pub c_m: f64,
-    pub dt: f64,
-}
-
-impl Default for AdExNeuron {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AdExNeuron {
-    pub fn new() -> Self {
-        Self {
-            v: -65.0,
-            w: 0.0,
-            v_rest: -65.0,
-            v_reset: -68.0,
-            v_threshold: -50.0,
-            v_rh: -55.0,
-            delta_t: 2.0,
-            tau: 20.0,
-            tau_w: 100.0,
-            a: 0.5,
-            b: 7.0,
-            c_m: 200.0,
-            dt: 0.1,
-        }
-    }
-
-    pub fn step(&mut self, current: f64) -> i32 {
-        if !self.v.is_finite()
-            || !self.w.is_finite()
-            || !self.v_rest.is_finite()
-            || !self.v_reset.is_finite()
-            || !self.v_threshold.is_finite()
-            || !self.v_rh.is_finite()
-            || !self.delta_t.is_finite()
-            || !self.tau.is_finite()
-            || !self.tau_w.is_finite()
-            || !self.a.is_finite()
-            || !self.b.is_finite()
-            || !self.c_m.is_finite()
-            || !self.dt.is_finite()
-            || !current.is_finite()
-            || self.delta_t <= 0.0
-            || self.tau <= 0.0
-            || self.tau_w <= 0.0
-            || self.c_m <= 0.0
-            || self.dt <= 0.0
-        {
-            return 0;
-        }
-        // Brette & Gerstner 2005: C dV/dt = -g_L(V-E_L) + g_L ΔT exp((V-V_T)/ΔT) - w + I
-        let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
-        let exp_term = self.delta_t * exp_arg.exp();
-        let dv = ((-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m)
-            * self.dt;
-        let dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt;
-        let next_v = self.v + dv;
-        let next_w = self.w + dw;
-        if !exp_term.is_finite()
-            || !dv.is_finite()
-            || !dw.is_finite()
-            || !next_v.is_finite()
-            || !next_w.is_finite()
-        {
-            return 0;
-        }
-
-        if next_v >= self.v_threshold {
-            let spike_w = next_w + self.b;
-            if !spike_w.is_finite() {
-                return 0;
-            }
-            self.v = self.v_reset;
-            self.w = spike_w;
-            1
-        } else {
-            self.v = next_v;
-            self.w = next_w;
-            0
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.w = 0.0;
     }
 }
 
@@ -442,7 +339,7 @@ mod tests {
         );
     }
 
-    use super::{mask, AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
+    use super::{mask, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -508,56 +405,6 @@ mod tests {
             total += s;
         }
         assert!(total > 0, "neuron must fire with refractory_period=0");
-    }
-
-    // ── AdEx tests ────────────────────────────────────────────────
-
-    #[test]
-    fn adex_fires_with_input() {
-        let mut n = AdExNeuron::new();
-        let mut total = 0;
-        for _ in 0..2000 {
-            total += n.step(500.0);
-        }
-        assert!(total > 0, "AdEx must fire with strong input");
-    }
-
-    #[test]
-    fn adex_adaptation_reduces_rate() {
-        let mut n = AdExNeuron::new();
-        let first_100: i32 = (0..1000).map(|_| n.step(400.0)).sum();
-        let next_100: i32 = (0..1000).map(|_| n.step(400.0)).sum();
-        // Adaptation should reduce firing over time (w grows)
-        assert!(
-            next_100 <= first_100 + 5,
-            "adaptation should not increase rate: first={first_100}, next={next_100}"
-        );
-    }
-
-    #[test]
-    fn adex_matches_python_golden_spike_counts() {
-        for (current, expected) in [(0.0, 0), (200.0, 4), (500.0, 12)] {
-            let mut n = AdExNeuron::new();
-            let spikes: i32 = (0..1_000).map(|_| n.step(current)).sum();
-            assert_eq!(spikes, expected, "current={current}");
-        }
-    }
-
-    #[test]
-    fn adex_invalid_input_is_mutation_free() {
-        let mut n = AdExNeuron::new();
-        let before = (n.v, n.w);
-        assert_eq!(n.step(f64::INFINITY), 0);
-        assert_eq!((n.v, n.w), before);
-    }
-
-    #[test]
-    fn adex_nonfinite_candidate_is_mutation_free() {
-        let mut n = AdExNeuron::new();
-        n.dt = 1.0e308;
-        let before = (n.v, n.w);
-        assert_eq!(n.step(1.0e308), 0);
-        assert_eq!((n.v, n.w), before);
     }
 
     // ── ExpIF tests ───────────────────────────────────────────────
@@ -636,75 +483,6 @@ mod tests {
         assert_eq!(n.step(current), 0);
         assert!((n.v - expected).abs() < 1e-15);
         assert!((n.v - euler).abs() > 1e-4);
-    }
-
-    // ── AdEx coverage tests ────────────────────────────────────────
-
-    #[test]
-    fn adex_no_fire_without_input() {
-        let mut n = AdExNeuron::new();
-        let total: i32 = (0..1000).map(|_| n.step(0.0)).sum();
-        assert_eq!(total, 0);
-    }
-
-    #[test]
-    fn adex_negative_current_no_fire() {
-        let mut n = AdExNeuron::new();
-        let total: i32 = (0..500).map(|_| n.step(-100.0)).sum();
-        assert_eq!(total, 0, "negative current must not cause spikes");
-    }
-
-    #[test]
-    fn adex_reset_roundtrip() {
-        let mut n = AdExNeuron::new();
-        for _ in 0..200 {
-            n.step(500.0);
-        }
-        assert!(n.w > 0.0, "w must grow during spiking");
-        n.reset();
-        assert_eq!(n.v, n.v_rest);
-        assert_eq!(n.w, 0.0);
-        // Post-reset: should behave identically to fresh
-        let mut fresh = AdExNeuron::new();
-        let r1: i32 = (0..100).map(|_| n.step(500.0)).sum();
-        let r2: i32 = (0..100).map(|_| fresh.step(500.0)).sum();
-        assert_eq!(r1, r2, "reset neuron must match fresh neuron");
-    }
-
-    #[test]
-    fn adex_voltage_bounded() {
-        let mut n = AdExNeuron::new();
-        for _ in 0..5000 {
-            n.step(1000.0);
-        }
-        assert!(n.v.is_finite(), "voltage must stay finite");
-        assert!(n.w.is_finite(), "adaptation must stay finite");
-    }
-
-    #[test]
-    fn adex_pipeline_sustained_spiking() {
-        let mut n = AdExNeuron::new();
-        let spikes: i32 = (0..10000).map(|_| n.step(500.0)).sum();
-        assert!(
-            spikes > 100,
-            "sustained input should produce many spikes: got {spikes}"
-        );
-        assert!(n.v.is_finite());
-    }
-
-    #[test]
-    fn adex_performance_10k_steps() {
-        let mut n = AdExNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            n.step(500.0);
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 50,
-            "10k steps took too long: {:?}",
-            elapsed
-        );
     }
 
     // ── ExpIF coverage tests ───────────────────────────────────────

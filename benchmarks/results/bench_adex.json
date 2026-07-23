@@ -8,10 +8,10 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 12.807052,
-      "minimum_call_ms": 8.670217,
+      "median_call_ms": 7.369811,
+      "minimum_call_ms": 5.993087,
       "parity_max_abs_diff": 7.105427357601002e-15,
-      "speedup_vs_python": 171.94712639567638,
+      "speedup_vs_python": 145.4121367562886,
       "used": true
     },
     "julia": {
@@ -22,10 +22,10 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 5.040203,
-      "minimum_call_ms": 4.30579,
+      "median_call_ms": 3.67351,
+      "minimum_call_ms": 3.283177,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 436.91410623738767,
+      "speedup_vs_python": 291.72643194111356,
       "used": true
     },
     "mojo": {
@@ -36,10 +36,10 @@
         "v": -52.37869326736917,
         "w": 74.95731155256478
       },
-      "median_call_ms": 4.658155,
-      "minimum_call_ms": 4.217386,
+      "median_call_ms": 3.80119,
+      "minimum_call_ms": 3.49809,
       "parity_max_abs_diff": 7.389644451905042e-13,
-      "speedup_vs_python": 472.74849999624314,
+      "speedup_vs_python": 281.927492443156,
       "used": true
     },
     "python": {
@@ -50,8 +50,8 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 2202.135789,
-      "minimum_call_ms": 1992.655675,
+      "median_call_ms": 1071.659965,
+      "minimum_call_ms": 920.071988,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -64,17 +64,17 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 58.988303,
-      "minimum_call_ms": 52.222648,
+      "median_call_ms": 51.32451,
+      "minimum_call_ms": 37.115829,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 37.33173658174231,
+      "speedup_vs_python": 20.880081758208703,
       "used": true
     }
   },
   "kernel": "adex_baseline_euler_simulate",
   "measured_order": [
-    "mojo",
     "julia",
+    "mojo",
     "go",
     "rust",
     "python"
@@ -87,14 +87,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      28.337890625,
-      25.40234375,
-      26.42431640625
+      14.92041015625,
+      14.193359375,
+      13.01025390625
     ],
     "load_average_start": [
-      25.3544921875,
-      24.51318359375,
-      26.19482421875
+      15.75390625,
+      14.29248046875,
+      13.015625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -111,13 +111,13 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_adex": {
-      "py": "18cf92da7507746cdb592b7e0c6d59662cafac2ef662c76d7b47302b86d9ebb6"
+      "py": "5f9a33605c233b7d4c43d17ad86450657de929d07b24e6c3f134043eb898d45a"
     },
-    "benchmarks/bench_adex.py": "18cf92da7507746cdb592b7e0c6d59662cafac2ef662c76d7b47302b86d9ebb6",
-    "engine/src/neuron": {
-      "rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b"
+    "benchmarks/bench_adex.py": "5f9a33605c233b7d4c43d17ad86450657de929d07b24e6c3f134043eb898d45a",
+    "engine/src/neuron/adex": {
+      "rs": "8d0ab8268cc950eb3b4df061c5e82707b4fef6ed3f9096c78d4046212c7d2ef1"
     },
-    "engine/src/neuron.rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b",
+    "engine/src/neuron/adex.rs": "8d0ab8268cc950eb3b4df061c5e82707b4fef6ed3f9096c78d4046212c7d2ef1",
     "src/sc_neurocore/accel/go/neurons/adex/adex": {
       "go": "74b7afd5c8e15fda980b1b499cb0ea2b789e8d70f6fe1347514def48d52b4044"
     },
