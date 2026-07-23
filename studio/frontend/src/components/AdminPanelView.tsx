@@ -10,6 +10,11 @@ import { useState, type FormEvent } from "react";
 
 import type { AdminShellModel } from "../adminShell";
 import type { StudioEvidenceBundleRequest } from "../api/client";
+import {
+  evidenceBundleRequestFromForm,
+  identityUpdateFromForm,
+  textList,
+} from "../adminFormParsers";
 import AdminAuditArchiveSection from "./AdminAuditArchiveSection";
 import StudioReadinessPanel from "./StudioReadinessPanel";
 
@@ -77,61 +82,6 @@ export default function AdminPanelView({
 }: AdminPanelViewProps) {
   const [evidenceJobIds, setEvidenceJobIds] = useState("");
 
-  function textList(value: FormDataEntryValue | null): string[] {
-    return String(value ?? "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  function optionalText(value: FormDataEntryValue | null): string | null {
-    const text = String(value ?? "").trim();
-    return text.length > 0 ? text : null;
-  }
-
-  function boundedInteger(
-    value: FormDataEntryValue | null,
-    fallback: number,
-    minimum: number,
-    maximum: number,
-  ): number {
-    const parsed = Number(value ?? fallback);
-    if (!Number.isFinite(parsed)) {
-      return fallback;
-    }
-    return Math.min(Math.max(Math.trunc(parsed), minimum), maximum);
-  }
-
-  function jsonObjects(value: FormDataEntryValue | null): Record<string, unknown>[] {
-    const text = String(value ?? "").trim();
-    if (text.length === 0) {
-      return [];
-    }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      return [];
-    }
-    if (Array.isArray(parsed)) {
-      return parsed.filter((item): item is Record<string, unknown> =>
-        typeof item === "object" && item !== null && !Array.isArray(item),
-      );
-    }
-    if (typeof parsed === "object" && parsed !== null) {
-      return [parsed as Record<string, unknown>];
-    }
-    return [];
-  }
-
-  function identityUpdateFromForm(form: FormData) {
-    return {
-      active: form.get("active") === "on",
-      expires_at_utc: null,
-      roles: textList(form.get("roles")),
-    };
-  }
-
   function submitIdentityUpdate(event: FormEvent<HTMLFormElement>, principalId: string) {
     event.preventDefault();
     void onUpdateIdentityServiceAccount(
@@ -144,14 +94,13 @@ export default function AdminPanelView({
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const rolesText = String(form.get("roles") ?? "");
     void (async () => {
       await onCreateIdentityBrowserUser({
         active: form.get("active") === "on",
         expires_at_utc: null,
         password: String(form.get("password") ?? ""),
         principal_id: String(form.get("principalId") ?? "").trim(),
-        roles: rolesText.split(",").map((role) => role.trim()).filter(Boolean),
+        roles: textList(form.get("roles")),
         username: String(form.get("username") ?? "").trim(),
       });
       formElement.reset();
@@ -181,39 +130,7 @@ export default function AdminPanelView({
 
   function submitEvidenceBundle(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const method = optionalText(form.get("replayMethod"));
-    const route = optionalText(form.get("replayRoute"));
-    const requestSha256 = optionalText(form.get("requestSha256"));
-    const note = optionalText(form.get("operatorNote"));
-    const commandReplay: Record<string, unknown> = {};
-    if (method !== null) {
-      commandReplay.method = method;
-    }
-    if (route !== null) {
-      commandReplay.route = route;
-    }
-    if (requestSha256 !== null) {
-      commandReplay.request_sha256 = requestSha256;
-    }
-    if (note !== null) {
-      commandReplay.note = note;
-    }
-
-    void onCreateEvidenceBundle({
-      audit_limit: boundedInteger(form.get("auditLimit"), 100, 1, 1000),
-      analysis_results: jsonObjects(form.get("analysisResults")),
-      command_replay: Object.keys(commandReplay).length > 0 ? commandReplay : null,
-      default_flow_attestations: jsonObjects(form.get("defaultFlowAttestations")),
-      default_flow_runs: jsonObjects(form.get("defaultFlowRuns")),
-      include_audit: form.get("includeAudit") === "on",
-      job_ids: textList(form.get("jobIds")),
-      model_scan_results: jsonObjects(form.get("modelScanResults")),
-      project_name: optionalText(form.get("projectName")),
-      simulation_results: jsonObjects(form.get("simulationResults")),
-      weight_restore_results: jsonObjects(form.get("weightRestoreResults")),
-      weight_restore_attach_results: jsonObjects(form.get("weightRestoreAttachResults")),
-    });
+    void onCreateEvidenceBundle(evidenceBundleRequestFromForm(new FormData(event.currentTarget)));
   }
 
   function addEvidenceJobId(jobId: string) {

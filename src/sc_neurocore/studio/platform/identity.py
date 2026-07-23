@@ -14,7 +14,6 @@ import hashlib
 import hmac
 import json
 import os
-import secrets
 import tempfile
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -22,12 +21,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sc_neurocore.studio.platform.policy import Principal
+from sc_neurocore.studio.platform.identity_passwords import (
+    DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS,
+    make_browser_user_password_verifier,
+    verify_browser_user_password,
+    _parse_password_verifier,
+)
 
 IDENTITY_SCHEMA_VERSION = "sc-neurocore.studio.identity.v1"
 UTC = timezone.utc
-DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS = 390_000
-MIN_BROWSER_USER_PASSWORD_ITERATIONS = 100_000
-MIN_BROWSER_USER_PASSWORD_SALT_BYTES = 16
 _ADMIN_ROLE = "studio.admin"
 
 
@@ -642,38 +644,6 @@ def add_studio_browser_user_record(
     return record.to_public_record()
 
 
-def make_browser_user_password_verifier(password: str) -> str:
-    """Create an encoded PBKDF2-HMAC-SHA256 password verifier.
-
-    Parameters
-    ----------
-    password:
-        Raw browser-user password.
-
-    Returns
-    -------
-    str
-        Encoded verifier containing algorithm, iteration count, salt, and hash.
-    """
-
-    if not password:
-        raise ValueError("Studio browser-user password must not be empty.")
-    salt = secrets.token_hex(MIN_BROWSER_USER_PASSWORD_SALT_BYTES)
-    password_hash = _pbkdf2_sha256(password, salt, DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS)
-    return f"pbkdf2_sha256${DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS}${salt}${password_hash}"
-
-
-def verify_browser_user_password(password: str, encoded_verifier: str) -> bool:
-    """Verify a raw browser-user password against an encoded verifier."""
-
-    parsed = _parse_password_verifier(encoded_verifier)
-    if parsed is None:
-        return False
-    iterations, salt, expected_hash = parsed
-    candidate = _pbkdf2_sha256(password, salt, iterations)
-    return hmac.compare_digest(candidate, expected_hash)
-
-
 def _parse_identity_record(index: int, item: object) -> StudioIdentityRecord:
     if not isinstance(item, dict):
         raise ValueError(f"Studio identity service account {index} must be an object.")
@@ -881,36 +851,6 @@ def _browser_user_to_json(
         "roles": sorted(record.roles),
         "username": record.username,
     }
-
-
-def _pbkdf2_sha256(password: str, salt_hex: str, iterations: int) -> str:
-    return hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        bytes.fromhex(salt_hex),
-        iterations,
-    ).hex()
-
-
-def _parse_password_verifier(value: str) -> tuple[int, str, str] | None:
-    parts = value.split("$")
-    if len(parts) != 4:
-        return None
-    algorithm, raw_iterations, salt_hex, digest_hex = parts
-    if algorithm != "pbkdf2_sha256":
-        return None
-    try:
-        iterations = int(raw_iterations)
-        bytes.fromhex(salt_hex)
-    except ValueError:
-        return None
-    if iterations < MIN_BROWSER_USER_PASSWORD_ITERATIONS:
-        return None
-    if len(salt_hex) < MIN_BROWSER_USER_PASSWORD_SALT_BYTES * 2:
-        return None
-    if not _is_sha256_hex(digest_hex):
-        return None
-    return iterations, salt_hex, digest_hex
 
 
 __all__ = [

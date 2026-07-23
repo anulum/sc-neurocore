@@ -113,22 +113,25 @@ class TestRustBatchSimulate:
         assert "v" in result["states"]
 
     def test_model_simulate_returns_none_when_backend_unavailable(self, monkeypatch):
+        import sc_neurocore.studio.model_simulate as simulate_mod
         import sc_neurocore.studio.models as mod
 
         def _unavailable():
             raise mod.RustStudioBackendUnavailable("no bridge")
 
-        monkeypatch.setattr(mod, "_load_rust_batch_simulate", _unavailable)
+        # Patch the defining module — ``models`` is a thin re-export facade.
+        monkeypatch.setattr(simulate_mod, "_load_rust_batch_simulate", _unavailable)
         current = np.full(10, 1.0)
         assert mod._try_rust_simulate("AdEx", 10, current, 0.1) is None
 
     def test_model_simulate_raises_on_runtime_backend_failure(self, monkeypatch):
+        import sc_neurocore.studio.model_simulate as simulate_mod
         import sc_neurocore.studio.models as mod
 
         def _broken(_name, _n_steps, _current):
             raise RuntimeError("ffi exploded")
 
-        monkeypatch.setattr(mod, "_load_rust_batch_simulate", lambda: _broken)
+        monkeypatch.setattr(simulate_mod, "_load_rust_batch_simulate", lambda: _broken)
         current = np.full(10, 1.0)
         with pytest.raises(mod.RustStudioBackendError, match="AdEx"):
             mod._try_rust_simulate("AdEx", 10, current, 0.1)
