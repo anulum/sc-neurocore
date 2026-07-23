@@ -96,7 +96,10 @@ export function useEvidenceCartSession(): EvidenceCartSession {
   }, [applyDecision]);
 
   const runAnalysisIntoCart = useCallback(async () => {
+    // W12-G: snapshot identity before the async analysis job; re-read the store
+    // only after runFICurve resolves (store path is runStudioAnalysisJob).
     const beforeId = analysisResultIdentity(useStudioStore.getState().fiResult);
+    setError(null);
     await useStudioStore.getState().runFICurve();
     const afterState = useStudioStore.getState();
     const after = afterState.fiResult;
