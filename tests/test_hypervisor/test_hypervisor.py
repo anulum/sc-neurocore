@@ -12,8 +12,6 @@ import numpy as np
 import pytest
 
 from sc_neurocore.hypervisor.hypervisor import (
-    AuditEntry,
-    AuditEventType,
     BandwidthMeter,
     BitstreamFirewall,
     HWRegion,
@@ -28,7 +26,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     SLAMonitor,
     Scheduler,
     SchedulingPolicy,
-    SecurityAuditLog,
     Tenant,
     TenantPriority,
     TenantState,
@@ -731,35 +728,6 @@ class TestRegionHealth:
         rh = RegionHealth(region_id=0)
         rh.record_error()
         assert rh.error_count == 1
-
-
-# ── Security Audit Log Tests (Gap 8) ──────────────────────────────────
-
-
-class TestSecurityAuditLog:
-    def test_log_and_count(self):
-        log = SecurityAuditLog()
-        log.log(AuditEntry(AuditEventType.TENANT_REGISTERED, "t0", "registered"))
-        assert log.count == 1
-
-    def test_query_by_type(self):
-        log = SecurityAuditLog()
-        log.log(AuditEntry(AuditEventType.ACCESS_DENIED, "t0", "bad access"))
-        log.log(AuditEntry(AuditEventType.MIGRATION, "t0", "migrated"))
-        denied = log.query(event_type=AuditEventType.ACCESS_DENIED)
-        assert len(denied) == 1
-
-    def test_query_by_tenant(self):
-        log = SecurityAuditLog()
-        log.log(AuditEntry(AuditEventType.ACCESS_DENIED, "t0", "a"))
-        log.log(AuditEntry(AuditEventType.ACCESS_DENIED, "t1", "b"))
-        assert len(log.query(tenant_id="t0")) == 1
-
-    def test_checksum(self):
-        log = SecurityAuditLog()
-        log.log(AuditEntry(AuditEventType.MIGRATION, "t0", "x"))
-        cs = log.checksum()
-        assert len(cs) == 16
 
 
 # ── Migration Throttle Tests (Gap 10) ─────────────────────────────────

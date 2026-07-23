@@ -18113,6 +18113,24 @@ Write a local Docker Compose hub bundle and return generated paths.
 
 ---
 
+## Module `hypervisor.audit`
+
+### Class `AuditEventType`
+
+### Class `AuditEntry`
+- **__post_init__**()
+
+### Class `SecurityAuditLog`
+Structured, append-only audit trail for compliance.
+
+- **__init__**(max_entries)
+- **log**(event)
+- **query**(event_type, tenant_id)
+- **count**()
+- **checksum**()
+
+---
+
 ## Module `hypervisor.hypervisor`
 
 ### Class `RegionState`
@@ -18277,20 +18295,6 @@ Health score with degradation model.
   - 0.0 = dead, 1.0 = perfect.
 - **is_degraded**()
 - **record_error**()
-
-### Class `AuditEventType`
-
-### Class `AuditEntry`
-- **__post_init__**()
-
-### Class `SecurityAuditLog`
-Structured, append-only audit trail for compliance.
-
-- **__init__**(max_entries)
-- **log**(event)
-- **query**(event_type, tenant_id)
-- **count**()
-- **checksum**()
 
 ### Class `MigrationThrottle`
 Rate-limits migration requests to prevent storms.
