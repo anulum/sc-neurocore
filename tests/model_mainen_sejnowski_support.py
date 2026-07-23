@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore - Support for former test_model_mainen_sejnowski.py
+
+from __future__ import annotations
+
+"""Full pipeline test for MainenSejnowskiNeuron (Mainen & Sejnowski 1996).
+
+2-compartment axonal spike initiation:
+Soma (passive): C_s dV_s = -g_L(V_s-E_L) + κ(V_a-V_s) + I
+Axon (active):  C_a dV_a = -I_Na - I_K + κ(V_s-V_a)
+
+5 state vars: vs, va, m, h, n. 20 sub-steps (dt=0.005).
+g_Na=3000, g_K=1500 — very fast axonal initiation.
+Voltage clipped to [-200, 200]. ~700 steps/s.
+FULL PIPELINE WIRED + PERFORMANCE."""
+import time
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.mainen_sejnowski import MainenSejnowskiNeuron
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.analysis.spike_stats.basic import spike_count
+def _run(neuron: MainenSejnowskiNeuron, current: float, steps: int) -> list[int]:
+    return [t for t in range(steps) if neuron.step(current) == 1]
+
+__all__ = ['time', 'np', 'pytest', 'MainenSejnowskiNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run']
