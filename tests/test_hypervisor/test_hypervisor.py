@@ -13,7 +13,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     Hypervisor,
     HypervisorConfig,
     MigrationThrottle,
-    PreemptionManager,
     RegionState,
     ResourceAccounting,
     Tenant,
@@ -309,40 +308,6 @@ class TestNoFirewall:
         hv = Hypervisor(HypervisorConfig(enable_firewall=False))
         hv.add_region(_region(0))
         assert hv.check_access("anyone", 0xDEAD_BEEF) is True
-
-
-# ── Preemption Manager Tests (Gap 2) ─────────────────────────────────
-
-
-class TestPreemptionManager:
-    def test_preempt(self):
-        pm = PreemptionManager()
-        victim = _tenant("v")
-        victim.active = True
-        victim.region_id = 0
-        victim.state = TenantState(lfsr_state=42)
-        preemptor = _tenant("p")
-        region = _region(0)
-        region.tenant_id = "v"
-        evt = pm.preempt(victim, preemptor, region, cycle=1000)
-        assert evt.state_saved is True
-        assert victim.active is False
-        assert preemptor.region_id == 0
-
-    def test_restore_preempted(self):
-        pm = PreemptionManager()
-        victim = _tenant("v")
-        victim.state = TenantState(lfsr_state=99)
-        preemptor = _tenant("p")
-        region = _region(0)
-        pm.preempt(victim, preemptor, region, cycle=0)
-        assert pm.restore_preempted(victim) is True
-        assert victim.state.lfsr_state == 99
-
-    def test_restore_missing(self):
-        pm = PreemptionManager()
-        t = _tenant("x")
-        assert pm.restore_preempted(t) is False
 
 
 # ── Resource Accounting Tests (Gap 5) ─────────────────────────────────

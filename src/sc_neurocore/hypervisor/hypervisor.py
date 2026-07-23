@@ -65,6 +65,10 @@ from sc_neurocore.hypervisor.migration import (
     MigrationRequest as MigrationRequest,
     MigrationResult as MigrationResult,
 )
+from sc_neurocore.hypervisor.preemption import (
+    PreemptionEvent as PreemptionEvent,
+    PreemptionManager as PreemptionManager,
+)
 from sc_neurocore.hypervisor.qos_monitor import (
     BandwidthMeter as BandwidthMeter,
     SLAMonitor as SLAMonitor,
@@ -273,58 +277,6 @@ class Hypervisor:
         if region.tenant_id:
             self.deallocate(region.tenant_id)
         region.state = RegionState.FAULTED
-        return True
-
-
-# ── Preemption Manager (Gap 2) ──────────────────────────────────────
-
-
-@dataclass
-class PreemptionEvent:
-    """Record of a preemption event."""
-
-    victim_id: str
-    preemptor_id: str
-    cycle: int
-    state_saved: bool
-
-
-class PreemptionManager:
-    """Handles preemption with state checkpoint/restore."""
-
-    def __init__(self) -> None:
-        self.events: List[PreemptionEvent] = []
-        self.saved_states: Dict[str, TenantState] = {}
-
-    def preempt(
-        self,
-        victim: Tenant,
-        preemptor: Tenant,
-        region: HWRegion,
-        cycle: int,
-    ) -> PreemptionEvent:
-        """Preempt victim and give region to preemptor."""
-        state_saved = False
-        if victim.state is not None:
-            victim.state.compute_checksum()
-            self.saved_states[victim.tenant_id] = victim.state
-            state_saved = True
-
-        victim.active = False
-        victim.region_id = None
-        region.tenant_id = preemptor.tenant_id
-        preemptor.region_id = region.region_id
-        preemptor.active = True
-
-        evt = PreemptionEvent(victim.tenant_id, preemptor.tenant_id, cycle, state_saved)
-        self.events.append(evt)
-        return evt
-
-    def restore_preempted(self, tenant: Tenant) -> bool:
-        """Restore a previously preempted tenant's state."""
-        if tenant.tenant_id not in self.saved_states:
-            return False
-        tenant.state = self.saved_states.pop(tenant.tenant_id)
         return True
 
 

@@ -18173,19 +18173,6 @@ firewall enforcement, and live migration.
 - **mark_region_faulted**(region_id)
   - Mark a region as faulted and evict its tenant.
 
-### Class `PreemptionEvent`
-Record of a preemption event.
-
-
-### Class `PreemptionManager`
-Handles preemption with state checkpoint/restore.
-
-- **__init__**()
-- **preempt**(victim, preemptor, region, cycle)
-  - Preempt victim and give region to preemptor.
-- **restore_preempted**(tenant)
-  - Restore a previously preempted tenant's state.
-
 ### Class `UsageRecord`
 One billing record.
 
@@ -18269,6 +18256,23 @@ Migration steps:
   - Restore a sealed checkpointed state to a tenant.
 - **migrate**(tenant, source, target, firewall)
   - Execute live migration.
+
+---
+
+## Module `hypervisor.preemption`
+
+### Class `PreemptionEvent`
+Record of a preemption event.
+
+
+### Class `PreemptionManager`
+Handles preemption with state checkpoint/restore.
+
+- **__init__**()
+- **preempt**(victim, preemptor, region, cycle)
+  - Preempt victim and give region to preemptor.
+- **restore_preempted**(tenant)
+  - Restore a previously preempted tenant's state.
 
 ---
 
