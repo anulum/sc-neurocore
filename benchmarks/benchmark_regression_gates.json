@@ -315,7 +315,7 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_expif.py": "source_hashes.benchmarks/bench_model_expif.py",
-        "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
+        "engine/src/neuron/exp_if.rs": "source_hashes.engine/src/neuron/exp_if.rs",
         "src/sc_neurocore/accel/go/neurons/expif/expif.go": "source_hashes.src/sc_neurocore/accel/go/neurons/expif/expif.go",
         "src/sc_neurocore/accel/go/services/expif.go": "source_hashes.src/sc_neurocore/accel/go/services/expif.go",
         "src/sc_neurocore/accel/julia/neurons/expif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/expif.jl",

@@ -45,7 +45,7 @@ KERNEL = "expif_fourcaud_rk4_simulate"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_expif.py",
-    "engine/src/neuron.rs",
+    "engine/src/neuron/exp_if.rs",
     "src/sc_neurocore/accel/go/neurons/expif/expif.go",
     "src/sc_neurocore/accel/go/services/expif.go",
     "src/sc_neurocore/accel/julia/neurons/expif.jl",

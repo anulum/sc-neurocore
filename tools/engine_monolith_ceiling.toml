@@ -31,7 +31,7 @@ max_lines = 553
 max_pyfunctions = 0
 
 [targets."engine/src/neuron.rs"]
-max_lines = 646
+max_lines = 386
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/adex.rs"]
@@ -44,6 +44,10 @@ max_pyfunctions = 0
 
 [targets."engine/src/neuron/dendritic_neuron.rs"]
 max_lines = 71
+max_pyfunctions = 0
+
+[targets."engine/src/neuron/exp_if.rs"]
+max_lines = 241
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/homeostatic_lif.rs"]

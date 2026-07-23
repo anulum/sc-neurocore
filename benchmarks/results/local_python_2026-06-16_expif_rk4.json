@@ -8,10 +8,10 @@
         "refractory_remaining": 0.0,
         "v": -54.286669908767266
       },
-      "median_call_ms": 34.130849,
-      "minimum_call_ms": 25.877346,
+      "median_call_ms": 21.155609,
+      "minimum_call_ms": 18.420401,
       "parity_max_abs_diff": 7.105427357601002e-15,
-      "speedup_vs_python": 14.208067106681115,
+      "speedup_vs_python": 12.779061619072277,
       "used": true
     },
     "julia": {
@@ -22,10 +22,10 @@
         "refractory_remaining": 0.0,
         "v": -54.286669908767266
       },
-      "median_call_ms": 17.140944,
-      "minimum_call_ms": 15.565013,
+      "median_call_ms": 14.1428,
+      "minimum_call_ms": 12.604109,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 28.290938527072953,
+      "speedup_vs_python": 19.115651144045028,
       "used": true
     },
     "mojo": {
@@ -36,10 +36,10 @@
         "refractory_remaining": 0.0,
         "v": -54.28666990876688
       },
-      "median_call_ms": 37.054349,
-      "minimum_call_ms": 34.438194,
+      "median_call_ms": 25.434145,
+      "minimum_call_ms": 24.856985,
       "parity_max_abs_diff": 3.5626193550797325e-08,
-      "speedup_vs_python": 13.087084406745346,
+      "speedup_vs_python": 10.629365799400766,
       "used": true
     },
     "python": {
@@ -50,8 +50,8 @@
         "refractory_remaining": 0.0,
         "v": -54.286669908767266
       },
-      "median_call_ms": 484.933393,
-      "minimum_call_ms": 446.153363,
+      "median_call_ms": 270.348831,
+      "minimum_call_ms": 246.554495,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -64,10 +64,10 @@
         "refractory_remaining": 0.0,
         "v": -54.286669908767266
       },
-      "median_call_ms": 86.81541,
-      "minimum_call_ms": 83.120652,
+      "median_call_ms": 54.282659,
+      "minimum_call_ms": 46.320811,
       "parity_max_abs_diff": 2.985700575663941e-11,
-      "speedup_vs_python": 5.58579856963182,
+      "speedup_vs_python": 4.980390348969457,
       "used": true
     }
   },
@@ -87,14 +87,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      23.8701171875,
-      24.1611328125,
-      22.13671875
+      11.650390625,
+      11.1044921875,
+      11.83984375
     ],
     "load_average_start": [
-      21.2763671875,
-      23.7265625,
-      21.943359375
+      10.74169921875,
+      10.87841796875,
+      11.77880859375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -111,13 +111,13 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_expif": {
-      "py": "1ce48d2ff0f490d93d86d95550069e3c7e6b914e9f481e4a7cfe16c1e3bd5fde"
+      "py": "3b74d60b9ad3c979f4ae2d9cf9132dd51c21289e45dadba636c8381844763654"
     },
-    "benchmarks/bench_model_expif.py": "1ce48d2ff0f490d93d86d95550069e3c7e6b914e9f481e4a7cfe16c1e3bd5fde",
-    "engine/src/neuron": {
-      "rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b"
+    "benchmarks/bench_model_expif.py": "3b74d60b9ad3c979f4ae2d9cf9132dd51c21289e45dadba636c8381844763654",
+    "engine/src/neuron/exp_if": {
+      "rs": "e30633eb932821ba5097598a2e287ad1c53babfe38bb70e1e4a83e0ddacecb29"
     },
-    "engine/src/neuron.rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b",
+    "engine/src/neuron/exp_if.rs": "e30633eb932821ba5097598a2e287ad1c53babfe38bb70e1e4a83e0ddacecb29",
     "src/sc_neurocore/accel/go/neurons/expif/expif": {
       "go": "62357c3b6f0d47a00bcfcb8e3bd37e678e4097817d37c2e59a9c06d6a55abd68"
     },

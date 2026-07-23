@@ -13,12 +13,14 @@
 mod adex;
 mod bitstream_averager;
 mod dendritic_neuron;
+mod exp_if;
 mod homeostatic_lif;
 mod izhikevich;
 
 pub use adex::AdExNeuron;
 pub use bitstream_averager::BitstreamAverager;
 pub use dendritic_neuron::DendriticNeuron;
+pub use exp_if::ExpIfNeuron;
 pub use homeostatic_lif::HomeostaticLif;
 pub use izhikevich::Izhikevich;
 
@@ -124,124 +126,6 @@ impl FixedPointLif {
     }
 }
 
-/// Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003.
-#[derive(Clone, Debug)]
-pub struct ExpIfNeuron {
-    pub v: f64,
-    pub v_rest: f64,
-    pub v_reset: f64,
-    pub v_threshold: f64,
-    pub v_rh: f64,
-    pub delta_t: f64,
-    pub tau: f64,
-    pub dt: f64,
-    pub refractory_period: f64,
-    pub refractory_remaining: f64,
-    /// Precomputed 1.0 / delta_t.
-    pub inv_delta_t: f64,
-    /// Precomputed dt / tau.
-    pub dt_div_tau: f64,
-}
-
-impl Default for ExpIfNeuron {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ExpIfNeuron {
-    pub fn new() -> Self {
-        Self {
-            v: -65.0,
-            v_rest: -65.0,
-            v_reset: -68.0,
-            v_threshold: 30.0,
-            v_rh: -59.9,
-            delta_t: 3.48,
-            tau: 10.0,
-            dt: 0.02,
-            refractory_period: 0.0,
-            refractory_remaining: 0.0,
-            inv_delta_t: 1.0 / 3.48,
-            dt_div_tau: 0.02 / 10.0,
-        }
-    }
-
-    pub fn step(&mut self, current: f64) -> i32 {
-        if !self.v.is_finite()
-            || !current.is_finite()
-            || !self.v_rest.is_finite()
-            || !self.v_reset.is_finite()
-            || !self.v_threshold.is_finite()
-            || !self.v_rh.is_finite()
-            || !self.delta_t.is_finite()
-            || !self.tau.is_finite()
-            || !self.dt.is_finite()
-            || !self.refractory_period.is_finite()
-            || !self.refractory_remaining.is_finite()
-            || self.delta_t <= 0.0
-            || self.tau <= 0.0
-            || self.dt <= 0.0
-            || self.refractory_period < 0.0
-            || self.refractory_remaining < 0.0
-            || self.refractory_remaining > self.refractory_period
-            || self.v_threshold <= self.v_rh
-            || self.v >= self.v_threshold
-            || self.v_rest >= self.v_threshold
-            || self.v_reset >= self.v_threshold
-        {
-            return 0;
-        }
-
-        if self.refractory_remaining > 0.0 {
-            self.refractory_remaining = (self.refractory_remaining - self.dt).max(0.0);
-            self.v = self.v_reset;
-            return 0;
-        }
-
-        let inv_delta_t = 1.0 / self.delta_t;
-        let k1 = self.rhs(self.v, current, inv_delta_t);
-        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current, inv_delta_t);
-        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current, inv_delta_t);
-        let k4 = self.rhs(self.v + self.dt * k3, current, inv_delta_t);
-        let next_v = self.v + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
-        if !k1.is_finite()
-            || !k2.is_finite()
-            || !k3.is_finite()
-            || !k4.is_finite()
-            || !next_v.is_finite()
-        {
-            return 0;
-        }
-
-        self.inv_delta_t = inv_delta_t;
-        self.dt_div_tau = self.dt / self.tau;
-        if next_v >= self.v_threshold {
-            self.v = self.v_reset;
-            self.refractory_remaining = self.refractory_period;
-            1
-        } else {
-            self.v = next_v;
-            0
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.refractory_remaining = 0.0;
-    }
-
-    fn rhs(&self, v: f64, current: f64, inv_delta_t: f64) -> f64 {
-        if !v.is_finite() {
-            return f64::NAN;
-        }
-        let bounded_v = v.min(self.v_threshold);
-        let exp_arg = (bounded_v - self.v_rh) * inv_delta_t;
-        let exp_term = self.delta_t * exp_arg.exp();
-        (-(bounded_v - self.v_rest) + exp_term + current) / self.tau
-    }
-}
-
 /// Lapicque 1907 — classical RC integrate-and-fire.
 #[derive(Clone, Debug)]
 pub struct LapicqueNeuron {
@@ -310,36 +194,7 @@ impl LapicqueNeuron {
 #[cfg(test)]
 mod tests {
 
-    #[test]
-    fn test_exp_if_optimisation_parity() {
-        let mut n = ExpIfNeuron::new();
-        n.v = -60.0;
-        let current = 10.0;
-
-        let rhs = |v: f64| {
-            let bounded_v = v.min(n.v_threshold);
-            let exp_arg = (bounded_v - n.v_rh) / n.delta_t;
-            (-(bounded_v - n.v_rest) + n.delta_t * exp_arg.exp() + current) / n.tau
-        };
-        let k1 = rhs(n.v);
-        let k2 = rhs(n.v + 0.5 * n.dt * k1);
-        let k3 = rhs(n.v + 0.5 * n.dt * k2);
-        let k4 = rhs(n.v + n.dt * k3);
-        let expected_dv = (n.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
-
-        n.step(current);
-        let got_dv = n.v - (-60.0); // Simple check since we only did one step
-
-        // Use a small epsilon for float parity.
-        assert!(
-            (got_dv - expected_dv).abs() < 1e-12,
-            "Logic mismatch in ExpIfNeuron: got {}, expected {}",
-            got_dv,
-            expected_dv
-        );
-    }
-
-    use super::{mask, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
+    use super::{mask, FixedPointLif, LapicqueNeuron};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -407,47 +262,6 @@ mod tests {
         assert!(total > 0, "neuron must fire with refractory_period=0");
     }
 
-    // ── ExpIF tests ───────────────────────────────────────────────
-
-    #[test]
-    fn expif_fires() {
-        let mut n = ExpIfNeuron::new();
-        let mut total = 0;
-        for _ in 0..2000 {
-            total += n.step(500.0);
-        }
-        assert!(total > 0, "ExpIF must fire");
-    }
-
-    #[test]
-    fn expif_no_fire_without_input() {
-        let mut n = ExpIfNeuron::new();
-        let total: i32 = (0..500).map(|_| n.step(0.0)).sum();
-        assert_eq!(total, 0);
-    }
-
-    #[test]
-    fn expif_matches_rk4_reference() {
-        let mut n = ExpIfNeuron::new();
-        n.v = -60.0;
-        n.dt = 0.25;
-        n.tau = 20.0;
-        let rhs = |v: f64, s: &ExpIfNeuron, current: f64| {
-            let bounded_v = v.min(s.v_threshold);
-            let exp_arg = (bounded_v - s.v_rh) / s.delta_t;
-            (-(bounded_v - s.v_rest) + s.delta_t * exp_arg.exp() + current) / s.tau
-        };
-        let current = 12.0;
-        let k1 = rhs(n.v, &n, current);
-        let k2 = rhs(n.v + 0.5 * n.dt * k1, &n, current);
-        let k3 = rhs(n.v + 0.5 * n.dt * k2, &n, current);
-        let k4 = rhs(n.v + n.dt * k3, &n, current);
-        let expected = n.v + (n.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
-
-        assert_eq!(n.step(current), 0);
-        assert!((n.v - expected).abs() < 1e-12);
-    }
-
     // ── Lapicque tests ────────────────────────────────────────────
 
     #[test]
@@ -483,80 +297,6 @@ mod tests {
         assert_eq!(n.step(current), 0);
         assert!((n.v - expected).abs() < 1e-15);
         assert!((n.v - euler).abs() > 1e-4);
-    }
-
-    // ── ExpIF coverage tests ───────────────────────────────────────
-
-    #[test]
-    fn expif_negative_current_no_fire() {
-        let mut n = ExpIfNeuron::new();
-        let total: i32 = (0..500).map(|_| n.step(-100.0)).sum();
-        assert_eq!(total, 0);
-    }
-
-    #[test]
-    fn expif_reset_roundtrip() {
-        let mut n = ExpIfNeuron::new();
-        for _ in 0..200 {
-            n.step(500.0);
-        }
-        n.reset();
-        assert_eq!(n.v, n.v_rest);
-        let mut fresh = ExpIfNeuron::new();
-        let r1: i32 = (0..100).map(|_| n.step(500.0)).sum();
-        let r2: i32 = (0..100).map(|_| fresh.step(500.0)).sum();
-        assert_eq!(r1, r2);
-    }
-
-    #[test]
-    fn expif_voltage_bounded() {
-        let mut n = ExpIfNeuron::new();
-        for _ in 0..5000 {
-            n.step(1000.0);
-        }
-        assert!(n.v.is_finite());
-    }
-
-    #[test]
-    fn expif_enrolled_event_counts() {
-        for (current, expected) in [(0.0, 0), (5.0, 0), (20.0, 2)] {
-            let mut neuron = ExpIfNeuron::new();
-            let spikes: i32 = (0..1000).map(|_| neuron.step(current)).sum();
-            assert_eq!(spikes, expected, "current={current}");
-        }
-    }
-
-    #[test]
-    fn expif_refractory_hold_and_fail_closed_state() {
-        let mut neuron = ExpIfNeuron::new();
-        neuron.refractory_period = 1.7;
-        while neuron.step(50.0) == 0 {}
-        assert_eq!(neuron.refractory_remaining, 1.7);
-        for _ in 0..10 {
-            assert_eq!(neuron.step(50.0), 0);
-            assert_eq!(neuron.v, neuron.v_reset);
-        }
-        assert!((neuron.refractory_remaining - 1.5).abs() < 1.0e-12);
-
-        let before = (neuron.v, neuron.refractory_remaining);
-        neuron.refractory_remaining = 2.0;
-        assert_eq!(neuron.step(0.0), 0);
-        assert_eq!((neuron.v, neuron.refractory_remaining), (before.0, 2.0));
-    }
-
-    #[test]
-    fn expif_performance_10k_steps() {
-        let mut n = ExpIfNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            n.step(500.0);
-        }
-        let elapsed = start.elapsed();
-        assert!(
-            elapsed.as_millis() < 50,
-            "10k steps took too long: {:?}",
-            elapsed
-        );
     }
 
     // ── Lapicque coverage tests ────────────────────────────────────
