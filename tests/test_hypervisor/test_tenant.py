@@ -17,7 +17,7 @@ import numpy as np
 
 from sc_neurocore.hypervisor import hypervisor as compatibility_surface
 from sc_neurocore.hypervisor import tenant as tenant_domain
-from sc_neurocore.hypervisor.hypervisor import MigrationEngine
+from sc_neurocore.hypervisor.migration import MigrationEngine
 from sc_neurocore.hypervisor.tenant import (
     QoSPolicy,
     Tenant,

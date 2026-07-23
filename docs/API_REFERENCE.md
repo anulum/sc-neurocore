@@ -18133,33 +18133,6 @@ Structured, append-only audit trail for compliance.
 
 ## Module `hypervisor.hypervisor`
 
-### Class `MigrationRequest`
-Request to migrate a tenant between regions.
-
-
-### Class `MigrationResult`
-Result of a migration attempt.
-
-
-### Class `MigrationEngine`
-Live migration of tenants between hardware regions.
-
-Migration steps:
-1. Pause tenant on source region
-2. Checkpoint state (voltages, weights, LFSR, spike queues)
-3. Verify checkpoint integrity (SHA-256)
-4. Restore state on target region
-5. Update firewall rules
-6. Resume tenant
-
-- **__init__**()
-- **checkpoint**(tenant)
-  - Checkpoint tenant state for migration.
-- **restore**(tenant, state)
-  - Restore checkpointed state to a tenant.
-- **migrate**(tenant, source, target, firewall)
-  - Execute live migration.
-
 ### Class `HypervisorConfig`
 Hypervisor configuration.
 
@@ -18286,6 +18259,37 @@ Any cross-region access is blocked and logged as a violation.
 Verify that no two tenants share address ranges.
 
 Returns list of violation descriptions (empty = sound).
+
+---
+
+## Module `hypervisor.migration`
+
+### Class `MigrationRequest`
+Request to migrate a tenant between regions.
+
+
+### Class `MigrationResult`
+Result of a migration attempt.
+
+
+### Class `MigrationEngine`
+Live migration of tenants between hardware regions.
+
+Migration steps:
+1. Pause tenant on source region
+2. Checkpoint state (voltages, weights, LFSR, spike queues)
+3. Verify checkpoint integrity (SHA-256)
+4. Restore state on target region
+5. Update firewall rules
+6. Resume tenant
+
+- **__init__**()
+- **checkpoint**(tenant)
+  - Checkpoint tenant state for migration.
+- **restore**(tenant, state)
+  - Restore a sealed checkpointed state to a tenant.
+- **migrate**(tenant, source, target, firewall)
+  - Execute live migration.
 
 ---
 

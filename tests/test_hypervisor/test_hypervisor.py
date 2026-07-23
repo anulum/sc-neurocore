@@ -6,16 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuromorphic Hypervisor Tests
 
-import numpy as np
 import pytest
 
 from sc_neurocore.hypervisor.hypervisor import (
     BandwidthMeter,
-    BitstreamFirewall,
     HWRegion,
     Hypervisor,
     HypervisorConfig,
-    MigrationEngine,
     MigrationThrottle,
     PreemptionManager,
     RegionState,
@@ -46,90 +43,6 @@ def _tenant(
     tid: str = "t0", name: str = "test", prio: TenantPriority = TenantPriority.NORMAL
 ) -> Tenant:
     return Tenant(tenant_id=tid, name=name, priority=prio)
-
-
-# ── MigrationEngine Tests ────────────────────────────────────────────
-
-
-class TestMigrationEngine:
-    def test_checkpoint(self):
-        me = MigrationEngine()
-        t = _tenant()
-        t.state = TenantState(
-            neuron_voltages=np.array([1.0]),
-            lfsr_state=42,
-            timestep=10,
-        )
-        state = me.checkpoint(t)
-        assert state.checksum != ""
-
-    def test_restore(self):
-        me = MigrationEngine()
-        t = _tenant()
-        state = TenantState(lfsr_state=42, timestep=10)
-        state.compute_checksum()
-        assert me.restore(t, state) is True
-        assert t.state is not None
-
-    def test_checkpoint_initialises_missing_state(self):
-        # A tenant that has never run has no state; checkpointing one must
-        # materialise a fresh TenantState rather than dereference None.
-        me = MigrationEngine()
-        t = _tenant()
-        assert t.state is None
-        state = me.checkpoint(t)
-        assert isinstance(state, TenantState)
-        assert t.state is state
-
-    def test_restore_rejects_tampered_state(self):
-        # If the stored checksum no longer matches the recomputed one (the state
-        # was altered after checkpointing), restore must refuse it.
-        me = MigrationEngine()
-        t = _tenant()
-        state = TenantState(lfsr_state=42, timestep=10)
-        state.compute_checksum()
-        state.timestep = 99  # tamper after the checksum was sealed
-        assert me.restore(t, state) is False
-
-    def test_migrate_success(self):
-        me = MigrationEngine()
-        fw = BitstreamFirewall()
-        t = _tenant()
-        t.state = TenantState(lfsr_state=42, timestep=10)
-        t.region_id = 0
-        src = _region(rid=0)
-        src.state = RegionState.ALLOCATED
-        src.tenant_id = "t0"
-        dst = _region(rid=1, base=0x5000_0000)
-        result = me.migrate(t, src, dst, fw)
-        assert result.success is True
-        assert t.region_id == 1
-        assert src.is_free
-        assert dst.tenant_id == "t0"
-
-    def test_migrate_target_busy(self):
-        me = MigrationEngine()
-        fw = BitstreamFirewall()
-        t = _tenant()
-        t.state = TenantState()
-        t.region_id = 0
-        src = _region(rid=0)
-        dst = _region(rid=1)
-        dst.state = RegionState.ALLOCATED
-        result = me.migrate(t, src, dst, fw)
-        assert result.success is False
-        assert result.reason == "target_not_free"
-
-    def test_migration_history(self):
-        me = MigrationEngine()
-        fw = BitstreamFirewall()
-        t = _tenant()
-        t.state = TenantState()
-        t.region_id = 0
-        src = _region(rid=0)
-        dst = _region(rid=1, base=0x5000_0000)
-        me.migrate(t, src, dst, fw)
-        assert len(me.history) == 1
 
 
 # ── Hypervisor Tests ─────────────────────────────────────────────────
