@@ -15,6 +15,7 @@ from pathlib import Path
 
 from tests import (
     cosim_reference_dpi_neuron,
+    cosim_reference_fitzhugh_nagumo,
     cosim_reference_glif,
     cosim_reference_izhikevich2007,
     cosim_reference_perfect_integrator,
@@ -38,6 +39,11 @@ _RUNTIME_NAMES = (
 _DPI_NEURON_NAMES = (
     "_dpi_neuron_driven_euler_features",
     "_dpi_neuron_hand_spike_count",
+)
+
+_FITZHUGH_NAGUMO_NAMES = (
+    "_fitzhugh_nagumo_hand_spike_count",
+    "_fitzhugh_nagumo_rk4_features",
 )
 
 _GLIF_NAMES = (
@@ -66,6 +72,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
 
     for name in _DPI_NEURON_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_dpi_neuron, name)
+    for name in _FITZHUGH_NAGUMO_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_fitzhugh_nagumo, name)
     for name in _GLIF_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_glif, name)
     for name in _IZHIKEVICH2007_NAMES:
@@ -100,6 +108,11 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     dpi_neuron_text = Path(cosim_reference_dpi_neuron.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in dpi_neuron_text
     assert len(dpi_neuron_text.splitlines()) <= 120
+    fitzhugh_nagumo_text = Path(cosim_reference_fitzhugh_nagumo.__file__).read_text(
+        encoding="utf-8"
+    )
+    assert "cosim_support" not in fitzhugh_nagumo_text
+    assert len(fitzhugh_nagumo_text.splitlines()) <= 90
     glif_text = Path(cosim_reference_glif.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in glif_text
     assert len(glif_text.splitlines()) <= 125
@@ -119,7 +132,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     theta_text = Path(cosim_reference_theta.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in theta_text
     assert len(theta_text.splitlines()) <= 40
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_880
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_810
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -158,6 +171,18 @@ def test_dpi_neuron_has_exact_definition_ownership() -> None:
     owner_tree = ast.parse(Path(cosim_reference_dpi_neuron.__file__).read_text(encoding="utf-8"))
     owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
     assert owner_functions == set(_DPI_NEURON_NAMES)
+
+
+def test_fitzhugh_nagumo_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_FITZHUGH_NAGUMO_NAMES)
+
+    owner_tree = ast.parse(
+        Path(cosim_reference_fitzhugh_nagumo.__file__).read_text(encoding="utf-8")
+    )
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_FITZHUGH_NAGUMO_NAMES)
 
 
 def test_izhikevich2007_has_exact_definition_ownership() -> None:

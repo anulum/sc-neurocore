@@ -28,7 +28,6 @@ from sc_neurocore.compiler.equation_compiler import Q88, generate_testbench
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog as compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
-from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
@@ -55,6 +54,10 @@ from tests.cosim_reference_dpi_neuron import (
     _dpi_neuron_driven_euler_features as _dpi_neuron_driven_euler_features,
     _dpi_neuron_hand_spike_count as _dpi_neuron_hand_spike_count,
 )
+from tests.cosim_reference_fitzhugh_nagumo import (
+    _fitzhugh_nagumo_hand_spike_count as _fitzhugh_nagumo_hand_spike_count,
+    _fitzhugh_nagumo_rk4_features as _fitzhugh_nagumo_rk4_features,
+)
 from tests.cosim_reference_glif import (
     _glif_driven_rk4_features as _glif_driven_rk4_features,
     _glif_hand_spike_count as _glif_hand_spike_count,
@@ -74,14 +77,6 @@ from tests.cosim_reference_statistics import _summarise as _summarise
 from tests.cosim_reference_theta import (
     _theta_constant_current_features as _theta_constant_current_features,
 )
-
-
-def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored FitzHugh-Nagumo (RK4, rising-edge crossing) spike count."""
-    neuron = FitzHughNagumoNeuron(
-        dt=0.1, v=-1.0, w=-0.5, a=0.7, b=0.8, epsilon=0.08, v_threshold=1.0
-    )
-    return sum(neuron.step(current) for _ in range(n_steps))
 
 
 def _fitzhugh_rinzel_hand_spike_count(n_steps: int, current: float) -> int:
@@ -868,67 +863,6 @@ def _mihalas_niebur_driven_rk4_features(
     return _summarise(
         {"v": v_values, "theta": theta_values, "i1": i1_values, "i2": i2_values}, spikes
     )
-
-
-def _fitzhugh_nagumo_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return exact classical-RK4 features for the driven FitzHugh-Nagumo oscillator.
-
-    The FitzHugh (1961) cubic membrane and linear recovery equations are advanced
-    with the same four-stage RK4 step and rising-edge spike detection the faithful
-    schema runner applies, with **no reset** — the re-enrolled model is a genuine
-    relaxation oscillator whose spikes are upward ``v >= 1`` threshold crossings, not
-    integrate-and-fire resets. The cube is written ``v * v * v`` (not ``v ** 3``) so
-    it is the exact IEEE multiplication the runner and the hand model evaluate. The
-    reference is an independent re-derivation of the committed relaxation-oscillation
-    trace, not a copy of the runner.
-
-    Parameters
-    ----------
-    current:
-        Constant input current applied at every timestep.
-    dt:
-        Simulation timestep.
-    steps:
-        Number of timesteps to advance.
-
-    Returns
-    -------
-    dict of str to float
-        Reference feature map for the ``v`` and ``w`` state variables plus
-        spike-count and first-spike-step features.
-    """
-    a = 0.7
-    b = 0.8
-    epsilon = 0.08
-    threshold = 1.0
-    v = -1.0
-    w = -0.5
-    v_values: list[float] = []
-    w_values: list[float] = []
-    spikes: list[int] = []
-
-    def deriv(v_state: float, w_state: float) -> tuple[float, float]:
-        return (
-            v_state - v_state * v_state * v_state / 3.0 - w_state + current,
-            epsilon * (v_state + a - b * w_state),
-        )
-
-    for _ in range(steps):
-        v_prev = v
-        k1v, k1w = deriv(v, w)
-        k2v, k2w = deriv(v + 0.5 * dt * k1v, w + 0.5 * dt * k1w)
-        k3v, k3w = deriv(v + 0.5 * dt * k2v, w + 0.5 * dt * k2w)
-        k4v, k4w = deriv(v + dt * k3v, w + dt * k3w)
-        v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
-        w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
-        # Rising-edge crossing: fires when the post-step membrane is at/above threshold
-        # and the previous committed membrane was below it (matching the hand model's
-        # ``v >= thr and v_prev < thr`` edge test); no reset for this oscillator.
-        spikes.append(1 if (v >= threshold and v_prev < threshold) else 0)
-        v_values.append(v)
-        w_values.append(w)
-
-    return _summarise({"v": v_values, "w": w_values}, spikes)
 
 
 def _fitzhugh_rinzel_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
