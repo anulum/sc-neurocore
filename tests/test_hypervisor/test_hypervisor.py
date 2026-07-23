@@ -6,15 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuromorphic Hypervisor Tests
 
-import pytest
-
 from sc_neurocore.hypervisor.hypervisor import (
     HWRegion,
     Hypervisor,
     HypervisorConfig,
     MigrationThrottle,
     RegionState,
-    ResourceAccounting,
     Tenant,
     TenantPriority,
     TenantState,
@@ -308,27 +305,6 @@ class TestNoFirewall:
         hv = Hypervisor(HypervisorConfig(enable_firewall=False))
         hv.add_region(_region(0))
         assert hv.check_access("anyone", 0xDEAD_BEEF) is True
-
-
-# ── Resource Accounting Tests (Gap 5) ─────────────────────────────────
-
-
-class TestResourceAccounting:
-    def test_record_and_query(self):
-        ra = ResourceAccounting()
-        ra.record("t0", 10000, 500)
-        ra.record("t0", 5000, 300)
-        assert ra.total_cycles("t0") == 15000
-        assert ra.total_spikes("t0") == 800
-
-    def test_invoice(self):
-        ra = ResourceAccounting()
-        ra.record("t0", 1_000_000, 0)
-        assert ra.invoice("t0", cost_per_cycle=1e-6) == pytest.approx(1.0)
-
-    def test_unknown_tenant(self):
-        ra = ResourceAccounting()
-        assert ra.total_cycles("nobody") == 0
 
 
 # ── Admission Control Tests (Gap 6) ───────────────────────────────────

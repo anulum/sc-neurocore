@@ -18113,6 +18113,24 @@ Write a local Docker Compose hub bundle and return generated paths.
 
 ---
 
+## Module `hypervisor.accounting`
+
+### Class `UsageRecord`
+One billing record.
+
+
+### Class `ResourceAccounting`
+Tracks per-tenant resource usage for metered billing.
+
+- **__init__**()
+- **record**(tenant_id, cycles, spikes)
+- **total_cycles**(tenant_id)
+- **total_spikes**(tenant_id)
+- **invoice**(tenant_id, cost_per_cycle)
+  - Compute billing amount.
+
+---
+
 ## Module `hypervisor.audit`
 
 ### Class `AuditEventType`
@@ -18172,20 +18190,6 @@ firewall enforcement, and live migration.
   - List regions in FAULTED state.
 - **mark_region_faulted**(region_id)
   - Mark a region as faulted and evict its tenant.
-
-### Class `UsageRecord`
-One billing record.
-
-
-### Class `ResourceAccounting`
-Tracks per-tenant resource usage for metered billing.
-
-- **__init__**()
-- **record**(tenant_id, cycles, spikes)
-- **total_cycles**(tenant_id)
-- **total_spikes**(tenant_id)
-- **invoice**(tenant_id, cost_per_cycle)
-  - Compute billing amount.
 
 ### Class `MigrationThrottle`
 Rate-limits migration requests to prevent storms.

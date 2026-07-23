@@ -50,6 +50,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from sc_neurocore.hypervisor.accounting import (
+    ResourceAccounting as ResourceAccounting,
+    UsageRecord as UsageRecord,
+)
 from sc_neurocore.hypervisor.audit import (
     AuditEntry as AuditEntry,
     AuditEventType as AuditEventType,
@@ -278,45 +282,6 @@ class Hypervisor:
             self.deallocate(region.tenant_id)
         region.state = RegionState.FAULTED
         return True
-
-
-# ── Tenant Resource Accounting (Gap 5) ──────────────────────────────
-
-
-@dataclass
-class UsageRecord:
-    """One billing record."""
-
-    tenant_id: str
-    cycles_used: int
-    spikes_processed: int
-    timestamp_ns: int
-
-
-class ResourceAccounting:
-    """Tracks per-tenant resource usage for metered billing."""
-
-    def __init__(self) -> None:
-        self.records: List[UsageRecord] = []
-        self._totals: Dict[str, Dict[str, int]] = {}
-
-    def record(self, tenant_id: str, cycles: int, spikes: int) -> None:
-        r = UsageRecord(tenant_id, cycles, spikes, time.time_ns())
-        self.records.append(r)
-        if tenant_id not in self._totals:
-            self._totals[tenant_id] = {"cycles": 0, "spikes": 0}
-        self._totals[tenant_id]["cycles"] += cycles
-        self._totals[tenant_id]["spikes"] += spikes
-
-    def total_cycles(self, tenant_id: str) -> int:
-        return self._totals.get(tenant_id, {}).get("cycles", 0)
-
-    def total_spikes(self, tenant_id: str) -> int:
-        return self._totals.get(tenant_id, {}).get("spikes", 0)
-
-    def invoice(self, tenant_id: str, cost_per_cycle: float = 1e-6) -> float:
-        """Compute billing amount."""
-        return self.total_cycles(tenant_id) * cost_per_cycle
 
 
 # ── Admission Control (Gap 6) ───────────────────────────────────────
