@@ -31,6 +31,12 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
 ]
 
 
+def test_dpi_reference_rejects_empty_protocol() -> None:
+    """Reject a reference request that cannot produce a final state."""
+    with pytest.raises(ValueError, match="at least one step"):
+        _dpi_neuron_driven_euler_features(current=5.0, dt=0.1, steps=0)
+
+
 @pytest.mark.parametrize(
     ("trace_name", "schema_name", "kind", "citation", "reference"),
     _PARITY_CASES,

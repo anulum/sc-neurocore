@@ -12,17 +12,22 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ModuleNotFoundError:  # Python < 3.11
+else:  # Python 3.10
     import tomli as tomllib
 
 import numpy as np
 
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
-from tests.cosim_support import HAS_IVERILOG, _dpi_neuron_verilog_q1616_trace
+from tests.cosim_support import (
+    HAS_IVERILOG,
+    _dpi_neuron_hand_spike_count,
+    _dpi_neuron_verilog_q1616_trace,
+)
 
 _REPOSITORY = Path(__file__).resolve().parents[1]
 
@@ -64,6 +69,11 @@ def test_dpi_schema_matches_hand_model_for_all_states_and_events() -> None:
 
     assert hand_events == schema_events
     assert len(hand_events) >= 5
+
+
+def test_dpi_hand_spike_count_preserves_enrolled_tonic_response() -> None:
+    """Keep the historical hand-count helper bound to the enrolled DPI response."""
+    assert _dpi_neuron_hand_spike_count(5_000, 5.0) == 13
 
 
 def test_generated_rtl_contains_the_full_coupled_dynamics() -> None:
