@@ -18,7 +18,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     MigrationEngine,
     MigrationThrottle,
     PreemptionManager,
-    RegionHealth,
     RegionState,
     ResourceAccounting,
     SLAMonitor,
@@ -26,7 +25,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     TenantPriority,
     TenantState,
     admission_check,
-    select_region_multi_die,
 )
 
 
@@ -48,27 +46,6 @@ def _tenant(
     tid: str = "t0", name: str = "test", prio: TenantPriority = TenantPriority.NORMAL
 ) -> Tenant:
     return Tenant(tenant_id=tid, name=name, priority=prio)
-
-
-# ── HWRegion Tests ───────────────────────────────────────────────────
-
-
-class TestHWRegion:
-    def test_defaults(self):
-        r = _region()
-        assert r.is_free
-        assert r.state == RegionState.FREE
-
-    def test_axi_end_addr(self):
-        r = _region(base=0x1000)
-        assert r.axi_end_addr == 0x1000 + 0x1000
-
-    def test_contains_addr(self):
-        r = _region(base=0x1000)
-        assert r.contains_addr(0x1000) is True
-        assert r.contains_addr(0x1FFF) is True
-        assert r.contains_addr(0x2000) is False
-        assert r.contains_addr(0x0FFF) is False
 
 
 # ── MigrationEngine Tests ────────────────────────────────────────────
@@ -528,32 +505,6 @@ class TestSLAMonitor:
         assert len(mon.violations_for("t0")) == 1
 
 
-# ── Multi-Die Region Selector Tests (Gap 4) ───────────────────────────
-
-
-class TestMultiDieSelector:
-    def test_prefers_die(self):
-        regions = {
-            0: HWRegion(0, 1024, 0, 0x1000, 0x1000, die_id=0),
-            1: HWRegion(1, 1024, 0, 0x2000, 0x1000, die_id=1),
-        }
-        rid = select_region_multi_die(regions, 512, preferred_die=1)
-        assert rid == 1
-
-    def test_fallback_any_die(self):
-        regions = {
-            0: HWRegion(0, 1024, 0, 0x1000, 0x1000, die_id=0),
-        }
-        rid = select_region_multi_die(regions, 512, preferred_die=5)
-        assert rid == 0
-
-    def test_no_fit(self):
-        regions = {
-            0: HWRegion(0, 64, 0, 0x1000, 0x1000, die_id=0),
-        }
-        assert select_region_multi_die(regions, 512) is None
-
-
 # ── Resource Accounting Tests (Gap 5) ─────────────────────────────────
 
 
@@ -606,30 +557,6 @@ class TestAdmissionControl:
         ok, msg = admission_check(t, regions, {})
         assert ok is False
         assert msg == "no_single_region_large_enough"
-
-
-# ── Region Health Tests (Gap 7) ───────────────────────────────────────
-
-
-class TestRegionHealth:
-    def test_healthy_default(self):
-        rh = RegionHealth(region_id=0)
-        assert rh.health_score == pytest.approx(1.0)
-        assert not rh.is_degraded
-
-    def test_degraded_by_errors(self):
-        rh = RegionHealth(region_id=0, error_count=5)
-        assert rh.health_score < 0.8
-        assert rh.is_degraded
-
-    def test_temperature_penalty(self):
-        rh = RegionHealth(region_id=0, temperature_c=100.0)
-        assert rh.health_score < 1.0
-
-    def test_record_error(self):
-        rh = RegionHealth(region_id=0)
-        rh.record_error()
-        assert rh.error_count == 1
 
 
 # ── Migration Throttle Tests (Gap 10) ─────────────────────────────────

@@ -18133,15 +18133,6 @@ Structured, append-only audit trail for compliance.
 
 ## Module `hypervisor.hypervisor`
 
-### Class `RegionState`
-
-### Class `HWRegion`
-One isolated hardware region on the fabric.
-
-- **axi_end_addr**()
-- **is_free**()
-- **contains_addr**(addr)
-
 ### Class `MigrationRequest`
 Request to migrate a tenant between regions.
 
@@ -18257,14 +18248,6 @@ Tracks per-tenant resource usage for metered billing.
 - **invoice**(tenant_id, cost_per_cycle)
   - Compute billing amount.
 
-### Class `RegionHealth`
-Health score with degradation model.
-
-- **health_score**()
-  - 0.0 = dead, 1.0 = perfect.
-- **is_degraded**()
-- **record_error**()
-
 ### Class `MigrationThrottle`
 Rate-limits migration requests to prevent storms.
 
@@ -18272,9 +18255,6 @@ Rate-limits migration requests to prevent storms.
   - Check if a migration is allowed under the rate limit.
 - **record**()
 - **recent_count**()
-
-### Function `select_region_multi_die(regions, min_neurons, preferred_die)`
-Select best free region, preferring a specific die.
 
 ### Function `admission_check(tenant, regions, existing_tenants)`
 Check if a new tenant can be admitted without overcommitting.
@@ -18306,6 +18286,30 @@ Any cross-region access is blocked and logged as a violation.
 Verify that no two tenants share address ranges.
 
 Returns list of violation descriptions (empty = sound).
+
+---
+
+## Module `hypervisor.region`
+
+### Class `RegionState`
+
+### Class `HWRegion`
+One isolated hardware region on the fabric.
+
+- **axi_end_addr**()
+- **is_free**()
+- **contains_addr**(addr)
+
+### Class `RegionHealth`
+Health score with degradation model.
+
+- **health_score**()
+  - 0.0 = dead, 1.0 = perfect.
+- **is_degraded**()
+- **record_error**()
+
+### Function `select_region_multi_die(regions, min_neurons, preferred_die)`
+Select best free region, preferring a specific die.
 
 ---
 

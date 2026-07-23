@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
-    from sc_neurocore.hypervisor.hypervisor import HWRegion
+    from sc_neurocore.hypervisor.region import HWRegion
 
 
 @dataclass
