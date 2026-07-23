@@ -29,6 +29,7 @@ from tests import (
     cosim_reference_perfect_integrator,
     cosim_reference_pernarowski,
     cosim_reference_quadratic_if,
+    cosim_reference_rulkov_map,
     cosim_reference_statistics,
     cosim_reference_terman_wang,
     cosim_reference_theta,
@@ -110,6 +111,11 @@ _PERNAROWSKI_NAMES = (
 
 _QUADRATIC_IF_NAMES = ("_quadratic_if_zero_current_features",)
 
+_RULKOV_MAP_NAMES = (
+    "_rulkov_map_features",
+    "_rulkov_map_verilog_q1616_trace",
+)
+
 _THETA_NAMES = ("_theta_constant_current_features",)
 
 _TERMAN_WANG_NAMES = (
@@ -162,6 +168,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_pernarowski, name)
     for name in _QUADRATIC_IF_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_quadratic_if, name)
+    for name in _RULKOV_MAP_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_rulkov_map, name)
     for name in _THETA_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_theta, name)
     for name in _TERMAN_WANG_NAMES:
@@ -252,6 +260,9 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     quadratic_if_text = Path(cosim_reference_quadratic_if.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in quadratic_if_text
     assert len(quadratic_if_text.splitlines()) <= 30
+    rulkov_map_text = Path(cosim_reference_rulkov_map.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in rulkov_map_text
+    assert len(rulkov_map_text.splitlines()) <= 160
     theta_text = Path(cosim_reference_theta.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in theta_text
     assert len(theta_text.splitlines()) <= 40
@@ -261,7 +272,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_025
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 910
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -456,6 +467,16 @@ def test_quadratic_if_has_exact_definition_ownership() -> None:
         node.name for node in quadratic_if_tree.body if isinstance(node, ast.FunctionDef)
     }
     assert quadratic_if_functions == set(_QUADRATIC_IF_NAMES)
+
+
+def test_rulkov_map_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_RULKOV_MAP_NAMES)
+
+    owner_tree = ast.parse(Path(cosim_reference_rulkov_map.__file__).read_text(encoding="utf-8"))
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_RULKOV_MAP_NAMES)
 
 
 def test_theta_has_exact_definition_ownership() -> None:
