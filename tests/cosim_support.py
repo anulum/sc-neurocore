@@ -22,8 +22,6 @@ import tempfile
 from pathlib import Path
 from typing import Mapping, cast
 
-import numpy as np
-
 from sc_neurocore.compiler.equation_compiler import generate_testbench
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog as compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron
@@ -44,6 +42,10 @@ from tests.cosim_runtime import (
 
 from tests.cosim_reference_adex import (
     _adex_subthreshold_euler_features as _adex_subthreshold_euler_features,
+)
+from tests.cosim_reference_conductance_rates import (
+    _np_exp as _np_exp,
+    _reference_exprel as _reference_exprel,
 )
 from tests.cosim_reference_dpi_neuron import (
     _dpi_neuron_driven_euler_features as _dpi_neuron_driven_euler_features,
@@ -440,45 +442,6 @@ def _closed_form_features(
         "max.v": max(values),
         "mean.v": math.fsum(values) / len(values),
     }
-
-
-def _np_exp(x: float) -> float:
-    """Return ``exp(x)`` through the same numpy implementation the schema runner uses.
-
-    Parameters
-    ----------
-    x:
-        Exponent argument.
-
-    Returns
-    -------
-    float
-        ``numpy.exp(x)`` as a Python float, bit-identical to the runner's rate terms.
-    """
-    return float(np.exp(x))
-
-
-def _reference_exprel(x: float) -> float:
-    """Return ``exprel(x) = (exp(x) - 1) / x`` with the removable-singularity limit.
-
-    Mirrors ``EquationNeuron``'s vectorised ``exprel`` bit-for-bit: the ``|x| < 1e-9``
-    branch returns the ``exprel(0) = 1`` limit as ``1 + x / 2``, and the regular
-    branch uses ``numpy.expm1`` so conductance rate functions written as
-    ``a / exprel(...)`` reproduce the runner exactly.
-
-    Parameters
-    ----------
-    x:
-        Rate-function argument.
-
-    Returns
-    -------
-    float
-        The exprel value matching the schema runner.
-    """
-    if abs(x) < 1e-9:
-        return 1.0 + x / 2.0
-    return float(np.expm1(x)) / x
 
 
 def _hodgkin_huxley_macrostep_rk4_features(

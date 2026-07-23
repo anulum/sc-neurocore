@@ -15,6 +15,7 @@ from pathlib import Path
 
 from tests import (
     cosim_reference_adex,
+    cosim_reference_conductance_rates,
     cosim_reference_dpi_neuron,
     cosim_reference_exp_if,
     cosim_reference_fitzhugh_nagumo,
@@ -50,6 +51,11 @@ _RUNTIME_NAMES = (
 )
 
 _ADEX_NAMES = ("_adex_subthreshold_euler_features",)
+
+_CONDUCTANCE_RATE_NAMES = (
+    "_np_exp",
+    "_reference_exprel",
+)
 
 _DPI_NEURON_NAMES = (
     "_dpi_neuron_driven_euler_features",
@@ -139,6 +145,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
 
     for name in _ADEX_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_adex, name)
+    for name in _CONDUCTANCE_RATE_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_conductance_rates, name)
     for name in _DPI_NEURON_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_dpi_neuron, name)
     for name in _EXP_IF_NAMES:
@@ -209,6 +217,18 @@ def test_adex_has_exact_definition_ownership() -> None:
     assert owner_functions == set(_ADEX_NAMES)
 
 
+def test_conductance_rates_have_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_CONDUCTANCE_RATE_NAMES)
+
+    owner_tree = ast.parse(
+        Path(cosim_reference_conductance_rates.__file__).read_text(encoding="utf-8")
+    )
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_CONDUCTANCE_RATE_NAMES)
+
+
 def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     runtime_text = Path(cosim_runtime.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in runtime_text
@@ -216,6 +236,11 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     adex_text = Path(cosim_reference_adex.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in adex_text
     assert len(adex_text.splitlines()) <= 80
+    conductance_rate_text = Path(cosim_reference_conductance_rates.__file__).read_text(
+        encoding="utf-8"
+    )
+    assert "cosim_support" not in conductance_rate_text
+    assert len(conductance_rate_text.splitlines()) <= 60
     dpi_neuron_text = Path(cosim_reference_dpi_neuron.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in dpi_neuron_text
     assert len(dpi_neuron_text.splitlines()) <= 210
@@ -281,7 +306,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 755
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 720
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
