@@ -190,12 +190,12 @@ class TestBRFProjectWiring:
             assert "sustain" in body.lower()
             assert "b_offset" in body.lower() or "boffset" in body.lower()
             assert "gamma" in body.lower()
-        assert "PyBalancedResonateAndFireNeuron" in (
-            REPO_ROOT / "engine/src/pyo3_neurons.rs"
-        ).read_text(encoding="utf-8")
-        assert "BalancedResonateAndFire" in (REPO_ROOT / "engine/src/network_runner.rs").read_text(
-            encoding="utf-8"
+        binding_source = (
+            REPO_ROOT / "engine/src/bindings/simple_spiking/balanced_resonate_and_fire.rs"
         )
+        assert "PyBalancedResonateAndFireNeuron" in binding_source.read_text(encoding="utf-8")
+        variant_source = REPO_ROOT / "engine/src/network_runner/neuron_variant.rs"
+        assert "BalancedResonateAndFire" in variant_source.read_text(encoding="utf-8")
 
     def test_benchmark_and_documentation_are_wired(self) -> None:
         assert (REPO_ROOT / "benchmarks/bench_balanced_resonate_and_fire.py").exists()
