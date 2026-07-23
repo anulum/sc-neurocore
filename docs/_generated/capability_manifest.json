@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 1549
+    "test_files": 1550
   },
   "documentation": {
     "public_pages": [
@@ -2865,6 +2865,7 @@
       "tests/cosim_reference_connor_stevens.py",
       "tests/cosim_reference_dpi_neuron.py",
       "tests/cosim_reference_exp_if.py",
+      "tests/cosim_reference_exponential_relaxation.py",
       "tests/cosim_reference_fitzhugh_nagumo.py",
       "tests/cosim_reference_fitzhugh_rinzel.py",
       "tests/cosim_reference_glif.py",

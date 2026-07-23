@@ -19,6 +19,7 @@ from tests import (
     cosim_reference_connor_stevens,
     cosim_reference_dpi_neuron,
     cosim_reference_exp_if,
+    cosim_reference_exponential_relaxation,
     cosim_reference_fitzhugh_nagumo,
     cosim_reference_fitzhugh_rinzel,
     cosim_reference_glif,
@@ -73,6 +74,8 @@ _DPI_NEURON_NAMES = (
 )
 
 _EXP_IF_NAMES = ("_exp_if_rk4_features",)
+
+_EXPONENTIAL_RELAXATION_NAMES = ("_closed_form_features",)
 
 _FITZHUGH_NAGUMO_NAMES = (
     "_fitzhugh_nagumo_hand_spike_count",
@@ -175,6 +178,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_dpi_neuron, name)
     for name in _EXP_IF_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_exp_if, name)
+    for name in _EXPONENTIAL_RELAXATION_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_exponential_relaxation, name)
     for name in _FITZHUGH_NAGUMO_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_fitzhugh_nagumo, name)
     for name in _FITZHUGH_RINZEL_NAMES:
@@ -292,6 +297,11 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     exp_if_text = Path(cosim_reference_exp_if.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in exp_if_text
     assert len(exp_if_text.splitlines()) <= 80
+    exponential_relaxation_text = Path(cosim_reference_exponential_relaxation.__file__).read_text(
+        encoding="utf-8"
+    )
+    assert "cosim_support" not in exponential_relaxation_text
+    assert len(exponential_relaxation_text.splitlines()) <= 40
     fitzhugh_nagumo_text = Path(cosim_reference_fitzhugh_nagumo.__file__).read_text(
         encoding="utf-8"
     )
@@ -360,7 +370,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 385
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 370
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -453,6 +463,18 @@ def test_exp_if_has_exact_definition_ownership() -> None:
     owner_tree = ast.parse(Path(cosim_reference_exp_if.__file__).read_text(encoding="utf-8"))
     owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
     assert owner_functions == set(_EXP_IF_NAMES)
+
+
+def test_exponential_relaxation_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_EXPONENTIAL_RELAXATION_NAMES)
+
+    owner_tree = ast.parse(
+        Path(cosim_reference_exponential_relaxation.__file__).read_text(encoding="utf-8")
+    )
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_EXPONENTIAL_RELAXATION_NAMES)
 
 
 def test_fitzhugh_nagumo_has_exact_definition_ownership() -> None:

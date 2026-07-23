@@ -15,7 +15,6 @@ imports here while they are decomposed into one-model owners.
 
 from __future__ import annotations
 
-import math
 import re
 import subprocess
 import tempfile
@@ -53,6 +52,9 @@ from tests.cosim_reference_dpi_neuron import (
     _dpi_neuron_verilog_q1616_trace as _dpi_neuron_verilog_q1616_trace,
 )
 from tests.cosim_reference_exp_if import _exp_if_rk4_features as _exp_if_rk4_features
+from tests.cosim_reference_exponential_relaxation import (
+    _closed_form_features as _closed_form_features,
+)
 from tests.cosim_reference_fitzhugh_nagumo import (
     _fitzhugh_nagumo_hand_spike_count as _fitzhugh_nagumo_hand_spike_count,
     _fitzhugh_nagumo_rk4_features as _fitzhugh_nagumo_rk4_features,
@@ -359,24 +361,3 @@ def _verilog_compiles(model_name: str) -> bool:
             timeout=30,
         )
         return result.returncode == 0
-
-
-def _closed_form_features(
-    *,
-    initial: float,
-    steady: float,
-    tau: float,
-    dt: float,
-    steps: int,
-) -> dict[str, float]:
-    values = [
-        steady + (initial - steady) * math.exp(-(step * dt) / tau) for step in range(1, steps + 1)
-    ]
-    return {
-        "spike_count": 0.0,
-        "first_spike_step": -1.0,
-        "final.v": values[-1],
-        "min.v": min(values),
-        "max.v": max(values),
-        "mean.v": math.fsum(values) / len(values),
-    }
