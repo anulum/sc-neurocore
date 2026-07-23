@@ -18142,21 +18142,6 @@ One isolated hardware region on the fabric.
 - **is_free**()
 - **contains_addr**(addr)
 
-### Class `TenantPriority`
-
-### Class `QoSPolicy`
-Quality-of-Service policy for a tenant.
-
-
-### Class `TenantState`
-Checkpointable state for live migration.
-
-- **compute_checksum**()
-
-### Class `Tenant`
-One SC network tenant on the hypervisor.
-
-
 ### Class `SchedulingPolicy`
 
 ### Class `ScheduleSlot`
@@ -18337,6 +18322,25 @@ Any cross-region access is blocked and logged as a violation.
 Verify that no two tenants share address ranges.
 
 Returns list of violation descriptions (empty = sound).
+
+---
+
+## Module `hypervisor.tenant`
+
+### Class `TenantPriority`
+
+### Class `QoSPolicy`
+Quality-of-Service policy for a tenant.
+
+
+### Class `TenantState`
+Checkpointable state for live migration.
+
+- **compute_checksum**()
+
+### Class `Tenant`
+One SC network tenant on the hypervisor.
+
 
 ---
 

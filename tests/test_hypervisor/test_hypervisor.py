@@ -75,30 +75,6 @@ class TestHWRegion:
         assert r.contains_addr(0x0FFF) is False
 
 
-# ── TenantState Tests ────────────────────────────────────────────────
-
-
-class TestTenantState:
-    def test_checksum(self):
-        ts = TenantState(
-            neuron_voltages=np.array([1.0, 2.0]),
-            synapse_weights=np.array([0.5, 0.3]),
-            lfsr_state=42,
-            timestep=100,
-        )
-        cs = ts.compute_checksum()
-        assert len(cs) == 16
-
-    def test_checksum_deterministic(self):
-        ts = TenantState(lfsr_state=42, timestep=100)
-        assert ts.compute_checksum() == ts.compute_checksum()
-
-    def test_checksum_differs(self):
-        ts1 = TenantState(lfsr_state=42, timestep=100)
-        ts2 = TenantState(lfsr_state=43, timestep=100)
-        assert ts1.compute_checksum() != ts2.compute_checksum()
-
-
 # ── Scheduler Tests ──────────────────────────────────────────────────
 
 

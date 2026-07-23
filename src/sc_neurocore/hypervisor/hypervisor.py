@@ -46,13 +46,10 @@ Compatible with:
 
 from __future__ import annotations
 
-import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-
-import numpy as np
 
 from sc_neurocore.hypervisor.audit import (
     AuditEntry as AuditEntry,
@@ -63,6 +60,12 @@ from sc_neurocore.hypervisor.isolation import (
     BitstreamFirewall as BitstreamFirewall,
     FirewallRule as FirewallRule,
     verify_isolation as verify_isolation,
+)
+from sc_neurocore.hypervisor.tenant import (
+    QoSPolicy as QoSPolicy,
+    Tenant as Tenant,
+    TenantPriority as TenantPriority,
+    TenantState as TenantState,
 )
 
 # ── Hardware Region ──────────────────────────────────────────────────
@@ -99,68 +102,6 @@ class HWRegion:
 
     def contains_addr(self, addr: int) -> bool:
         return self.axi_base_addr <= addr < self.axi_end_addr
-
-
-# ── Tenant ───────────────────────────────────────────────────────────
-
-
-class TenantPriority(Enum):
-    REALTIME = 0
-    HIGH = 1
-    NORMAL = 2
-    BEST_EFFORT = 3
-
-
-@dataclass
-class QoSPolicy:
-    """Quality-of-Service policy for a tenant."""
-
-    max_bandwidth_mbps: float = 100.0
-    max_latency_us: float = 1000.0
-    min_compute_share: float = 0.1
-    max_neurons: int = 1024
-    max_synapses: int = 16384
-    preemptible: bool = True
-
-
-@dataclass
-class TenantState:
-    """Checkpointable state for live migration."""
-
-    neuron_voltages: Optional[np.ndarray[Any, Any]] = None
-    synapse_weights: Optional[np.ndarray[Any, Any]] = None
-    spike_queues: Optional[np.ndarray[Any, Any]] = None
-    lfsr_state: int = 0
-    timestep: int = 0
-    checksum: str = ""
-
-    def compute_checksum(self) -> str:
-        h = hashlib.sha256()
-        if self.neuron_voltages is not None:
-            h.update(self.neuron_voltages.tobytes())
-        if self.synapse_weights is not None:
-            h.update(self.synapse_weights.tobytes())
-        h.update(self.lfsr_state.to_bytes(4, "little"))
-        h.update(self.timestep.to_bytes(4, "little"))
-        self.checksum = h.hexdigest()[:16]
-        return self.checksum
-
-
-@dataclass
-class Tenant:
-    """One SC network tenant on the hypervisor."""
-
-    tenant_id: str
-    name: str
-    priority: TenantPriority = TenantPriority.NORMAL
-    qos: QoSPolicy = field(default_factory=QoSPolicy)
-    region_id: Optional[int] = None
-    state: Optional[TenantState] = None
-    active: bool = False
-    total_spikes: int = 0
-    total_cycles: int = 0
-    created_ns: int = 0
-    last_scheduled_ns: int = 0
 
 
 # ── Scheduler ────────────────────────────────────────────────────────
