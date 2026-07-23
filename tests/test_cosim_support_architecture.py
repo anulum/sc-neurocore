@@ -41,8 +41,17 @@ from tests import (
     cosim_reference_theta,
     cosim_reference_wang_buzsaki,
     cosim_reference_wilson_hr,
+    cosim_rtl_spike_execution,
     cosim_runtime,
     cosim_support,
+)
+
+_RTL_SPIKE_EXECUTION_NAMES = (
+    "_neuron_verilog_spike_count_q1616",
+    "_verilog_compiles",
+    "_verilog_spike_count_generic",
+    "_verilog_spike_count_q1616",
+    "_verilog_spike_count_q412",
 )
 
 _RUNTIME_NAMES = (
@@ -165,6 +174,9 @@ _WILSON_HR_NAMES = (
 
 
 def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
+    assert cosim_support.compile_to_verilog is cosim_rtl_spike_execution.compile_to_verilog
+    for name in _RTL_SPIKE_EXECUTION_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_rtl_spike_execution, name)
     for name in _RUNTIME_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_runtime, name)
 
@@ -242,6 +254,16 @@ def test_runtime_functions_have_one_definition_owner() -> None:
     assert runtime_functions == set(_RUNTIME_NAMES) - {"HAS_IVERILOG"}
 
 
+def test_rtl_spike_execution_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_RTL_SPIKE_EXECUTION_NAMES)
+
+    owner_tree = ast.parse(Path(cosim_rtl_spike_execution.__file__).read_text(encoding="utf-8"))
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_RTL_SPIKE_EXECUTION_NAMES)
+
+
 def test_adex_has_exact_definition_ownership() -> None:
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
@@ -277,6 +299,9 @@ def test_connor_stevens_has_exact_definition_ownership() -> None:
 
 
 def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
+    rtl_spike_execution_text = Path(cosim_rtl_spike_execution.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in rtl_spike_execution_text
+    assert len(rtl_spike_execution_text.splitlines()) <= 260
     runtime_text = Path(cosim_runtime.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in runtime_text
     assert len(runtime_text.splitlines()) <= 180
@@ -370,7 +395,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 370
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 155
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
