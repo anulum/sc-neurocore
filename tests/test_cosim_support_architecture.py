@@ -76,6 +76,7 @@ _EXP_IF_NAMES = ("_exp_if_rk4_features",)
 _FITZHUGH_NAGUMO_NAMES = (
     "_fitzhugh_nagumo_hand_spike_count",
     "_fitzhugh_nagumo_rk4_features",
+    "_fitzhugh_nagumo_substep_neuron",
 )
 
 _FITZHUGH_RINZEL_NAMES = (
@@ -290,7 +291,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
         encoding="utf-8"
     )
     assert "cosim_support" not in fitzhugh_nagumo_text
-    assert len(fitzhugh_nagumo_text.splitlines()) <= 90
+    assert len(fitzhugh_nagumo_text.splitlines()) <= 110
     fitzhugh_rinzel_text = Path(cosim_reference_fitzhugh_rinzel.__file__).read_text(
         encoding="utf-8"
     )
@@ -351,7 +352,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 415
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 395
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:

@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from tests.cosim_reference_statistics import _summarise
 
@@ -20,6 +21,28 @@ def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
         dt=0.1, v=-1.0, w=-0.5, a=0.7, b=0.8, epsilon=0.08, v_threshold=1.0
     )
     return sum(neuron.step(current) for _ in range(n_steps))
+
+
+def _fitzhugh_nagumo_substep_neuron(substeps: int) -> EquationNeuron:
+    """Build the faithful FitzHugh-Nagumo oscillator with an artificial sub-step count.
+
+    FitzHugh-Nagumo is polynomial, so its Q16.16 datapath is bit-exact against float64; giving
+    it ``substeps`` inner steps lets the macro-step lowering be validated on a model whose only
+    residual would be a logic error (no look-up-table quantisation to confound the comparison).
+    """
+    return EquationNeuron(
+        equations={
+            "v": "v - v * v * v / 3.0 - w + I",
+            "w": "epsilon * (v + a - b * w)",
+        },
+        parameters={"a": 0.7, "b": 0.8, "epsilon": 0.08, "v_threshold": 1.0},
+        state={"v": -1.0, "w": -0.5},
+        threshold="v >= v_threshold",
+        dt=0.1,
+        method="rk4",
+        detection="crossing",
+        substeps=substeps,
+    )
 
 
 def _fitzhugh_nagumo_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:

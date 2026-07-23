@@ -57,6 +57,7 @@ from tests.cosim_reference_exp_if import _exp_if_rk4_features as _exp_if_rk4_fea
 from tests.cosim_reference_fitzhugh_nagumo import (
     _fitzhugh_nagumo_hand_spike_count as _fitzhugh_nagumo_hand_spike_count,
     _fitzhugh_nagumo_rk4_features as _fitzhugh_nagumo_rk4_features,
+    _fitzhugh_nagumo_substep_neuron as _fitzhugh_nagumo_substep_neuron,
 )
 from tests.cosim_reference_fitzhugh_rinzel import (
     _fitzhugh_rinzel_hand_spike_count as _fitzhugh_rinzel_hand_spike_count,
@@ -284,28 +285,6 @@ def _neuron_verilog_spike_count_q1616(
         if not match:
             raise RuntimeError(f"Could not parse spike count from:\n{run_result.stdout}")
         return int(match.group(1))
-
-
-def _fitzhugh_nagumo_substep_neuron(substeps: int) -> EquationNeuron:
-    """Build the faithful FitzHugh-Nagumo oscillator with an artificial sub-step count.
-
-    FitzHugh-Nagumo is polynomial, so its Q16.16 datapath is bit-exact against float64; giving
-    it ``substeps`` inner steps lets the macro-step lowering be validated on a model whose only
-    residual would be a logic error (no look-up-table quantisation to confound the comparison).
-    """
-    return EquationNeuron(
-        equations={
-            "v": "v - v * v * v / 3.0 - w + I",
-            "w": "epsilon * (v + a - b * w)",
-        },
-        parameters={"a": 0.7, "b": 0.8, "epsilon": 0.08, "v_threshold": 1.0},
-        state={"v": -1.0, "w": -0.5},
-        threshold="v >= v_threshold",
-        dt=0.1,
-        method="rk4",
-        detection="crossing",
-        substeps=substeps,
-    )
 
 
 def _verilog_spike_count_generic(
