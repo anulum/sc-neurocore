@@ -11,8 +11,6 @@
 //! Replaces the Python per-neuron loop with Rayon-parallel Rust execution
 //! over CSR-stored projections and heterogeneous neuron populations.
 
-use rayon::prelude::*;
-
 use crate::neuron::*;
 use crate::neurons::*;
 
@@ -22,79 +20,8 @@ pub use input_adapters::*;
 mod neuron_variant;
 pub use neuron_variant::NeuronVariant;
 
-// ── PopulationRunner ────────────────────────────────────────────────
-
-pub struct PopulationRunner {
-    neurons: Vec<NeuronVariant>,
-    spikes: Vec<u8>,
-    currents: Vec<f64>,
-}
-
-const CHUNK_SIZE: usize = 256;
-
-impl PopulationRunner {
-    pub fn new(neurons: Vec<NeuronVariant>) -> Self {
-        let n = neurons.len();
-        Self {
-            neurons,
-            spikes: vec![0u8; n],
-            currents: vec![0.0; n],
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        self.neurons.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.neurons.is_empty()
-    }
-
-    pub fn step_all(&mut self) {
-        let neurons = &mut self.neurons;
-        let spikes = &mut self.spikes;
-        let currents = &self.currents;
-
-        neurons
-            .par_chunks_mut(CHUNK_SIZE)
-            .zip(spikes.par_chunks_mut(CHUNK_SIZE))
-            .zip(currents.par_chunks(CHUNK_SIZE))
-            .for_each(|((n_chunk, s_chunk), c_chunk)| {
-                for i in 0..n_chunk.len() {
-                    let fired = n_chunk[i].step(c_chunk[i]);
-                    s_chunk[i] = if fired != 0 { 1 } else { 0 };
-                }
-            });
-    }
-
-    pub fn reset_all(&mut self) {
-        for n in &mut self.neurons {
-            n.reset();
-        }
-        self.spikes.fill(0);
-        self.currents.fill(0.0);
-    }
-
-    pub fn reset_currents(&mut self) {
-        self.currents.fill(0.0);
-    }
-
-    pub fn set_currents(&mut self, currents: &[f64]) -> Result<(), String> {
-        if currents.len() != self.currents.len() {
-            return Err(format!(
-                "current vector length mismatch: got {}, expected {}",
-                currents.len(),
-                self.currents.len()
-            ));
-        }
-        self.currents.copy_from_slice(currents);
-        Ok(())
-    }
-
-    pub fn collect_voltages(&self) -> Vec<f64> {
-        self.neurons.iter().map(|n| n.soma_voltage()).collect()
-    }
-}
+mod population_runner;
+pub use population_runner::PopulationRunner;
 
 // ── ProjectionRunner ────────────────────────────────────────────────
 
