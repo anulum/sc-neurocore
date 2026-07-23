@@ -32,6 +32,7 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+from tests.performance_guard import assert_throughput_guard
 
 
 def _run(neuron: NeuroGridNeuron, current: float, steps: int) -> list[int]:
@@ -315,8 +316,13 @@ class TestNGPerformance:
             n.step(100.0)
         elapsed = time.process_time() - t0
         rate = N / elapsed
-        # Catastrophic-regression smoke only; exact throughput belongs to benchmarks.
-        assert rate > 20_000, f"isolation: {rate:.0f} steps/s"
+        assert np.isfinite(n.v_s) and np.isfinite(n.v_d)
+        assert_throughput_guard(
+            label="NeuroGrid isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=20_000.0,
+            smoke_minimum_per_second=100.0,
+        )
 
     def test_network_throughput(self) -> None:
         pop = Population(NeuroGridNeuron, n=20, label="bench")
@@ -328,7 +334,12 @@ class TestNGPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_throughput_guard(
+            label="NeuroGrid network",
+            observed_per_second=rate,
+            strict_minimum_per_second=2_000.0,
+            smoke_minimum_per_second=100.0,
+        )
 
 
 # ---------------------------------------------------------------------------
