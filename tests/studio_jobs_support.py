@@ -106,3 +106,17 @@ def assert_acyclic(graph: dict[str, set[str]]) -> None:
         assert roots, f"cyclic Studio jobs imports: {remaining}"
         for root in roots:
             remaining.pop(root)
+
+__all__ = [
+    "REPO_ROOT",
+    "JOBS_PACKAGE",
+    "JOBS_FACADE",
+    "JOBS_IMPLEMENTATION_MODULES",
+    "JOBS_SOURCE_PATHS",
+    "JOBS_TEST_PATHS",
+    "EXPECTED_JOBS_EXPORTS",
+    "implementation_import_graph",
+    "assert_acyclic",
+    "ast",
+    "Path",
+]
