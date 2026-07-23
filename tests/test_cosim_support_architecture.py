@@ -17,6 +17,7 @@ from tests import (
     cosim_reference_perfect_integrator,
     cosim_reference_quadratic_if,
     cosim_reference_statistics,
+    cosim_reference_theta,
     cosim_runtime,
     cosim_support,
 )
@@ -38,6 +39,8 @@ _PERFECT_INTEGRATOR_NAMES = (
 
 _QUADRATIC_IF_NAMES = ("_quadratic_if_zero_current_features",)
 
+_THETA_NAMES = ("_theta_constant_current_features",)
+
 
 def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
     for name in _RUNTIME_NAMES:
@@ -47,6 +50,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_perfect_integrator, name)
     for name in _QUADRATIC_IF_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_quadratic_if, name)
+    for name in _THETA_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_theta, name)
     assert cosim_support._summarise is cosim_reference_statistics._summarise
 
 
@@ -78,7 +83,10 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     quadratic_if_text = Path(cosim_reference_quadratic_if.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in quadratic_if_text
     assert len(quadratic_if_text.splitlines()) <= 30
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 2_150
+    theta_text = Path(cosim_reference_theta.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in theta_text
+    assert len(theta_text.splitlines()) <= 40
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 2_130
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -111,3 +119,13 @@ def test_quadratic_if_has_exact_definition_ownership() -> None:
         node.name for node in quadratic_if_tree.body if isinstance(node, ast.FunctionDef)
     }
     assert quadratic_if_functions == set(_QUADRATIC_IF_NAMES)
+
+
+def test_theta_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_THETA_NAMES)
+
+    theta_tree = ast.parse(Path(cosim_reference_theta.__file__).read_text(encoding="utf-8"))
+    theta_functions = {node.name for node in theta_tree.body if isinstance(node, ast.FunctionDef)}
+    assert theta_functions == set(_THETA_NAMES)

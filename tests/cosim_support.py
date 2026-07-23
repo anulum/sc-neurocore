@@ -62,6 +62,9 @@ from tests.cosim_reference_quadratic_if import (
     _quadratic_if_zero_current_features as _quadratic_if_zero_current_features,
 )
 from tests.cosim_reference_statistics import _summarise as _summarise
+from tests.cosim_reference_theta import (
+    _theta_constant_current_features as _theta_constant_current_features,
+)
 
 
 def _izhikevich2007_hand_euler_spike_count(n_steps: int, current: float) -> int:
@@ -717,26 +720,6 @@ def _closed_form_features(
         "min.v": min(values),
         "max.v": max(values),
         "mean.v": math.fsum(values) / len(values),
-    }
-
-
-def _theta_constant_current_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return continuous theta-neuron phase features for constant positive current."""
-    if current <= 0.0:
-        msg = "theta analytic helper requires positive current"
-        raise ValueError(msg)
-    root_current = math.sqrt(current)
-    values = [
-        2.0 * math.atan(root_current * math.tan(root_current * step * dt))
-        for step in range(1, steps + 1)
-    ]
-    return {
-        "spike_count": 0.0,
-        "first_spike_step": -1.0,
-        "final.theta": values[-1],
-        "min.theta": min(values),
-        "max.theta": max(values),
-        "mean.theta": math.fsum(values) / len(values),
     }
 
 
