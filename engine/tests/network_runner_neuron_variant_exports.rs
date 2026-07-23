@@ -36,3 +36,19 @@ fn resonate_and_fire_variant_reports_the_source_voltage_coordinate() {
         _ => panic!("factory returned the wrong neuron variant"),
     }
 }
+
+#[test]
+fn public_variant_supports_long_single_neuron_simulation() {
+    let mut neuron = create_neuron("AdEx").expect("AdEx must remain supported");
+    let mut voltages = Vec::with_capacity(1_000);
+    let mut spike_count = 0;
+
+    for _ in 0..1_000 {
+        spike_count += usize::from(neuron.step(500.0) != 0);
+        voltages.push(neuron.soma_voltage());
+    }
+
+    assert_eq!(voltages.len(), 1_000);
+    assert!(voltages.iter().all(|voltage| voltage.is_finite()));
+    assert!(spike_count > 0);
+}

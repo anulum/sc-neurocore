@@ -7,7 +7,7 @@
 // SC-NeuroCore — Network runner input-adapter public contract
 
 use sc_neurocore_engine::network_runner::{
-    WrAlpha, WrCOBALIF, WrLoihiCUBA, WrMcCullochPitts, WrSigmoidRate,
+    create_neuron, WrAlpha, WrCOBALIF, WrLoihiCUBA, WrMcCullochPitts, WrSigmoidRate,
 };
 use sc_neurocore_engine::neurons::{
     AlphaNeuron, COBALIFNeuron, LoihiCUBANeuron, SigmoidRateNeuron,
@@ -53,4 +53,19 @@ fn logical_adapter_preserves_public_signed_transport() {
     assert_eq!(adapter.step(f64::NAN), 0);
     adapter.reset();
     assert_eq!(adapter.v(), 0.0);
+}
+
+#[test]
+fn logical_adapter_preserves_factory_transport_and_reset() {
+    let mut neuron =
+        create_neuron("McCullochPittsNeuron").expect("McCulloch-Pitts must remain supported");
+
+    assert_eq!(neuron.step(0.0), 0);
+    assert_eq!(neuron.step(1.0), 1);
+    assert_eq!(neuron.step(-1.0), 0);
+    assert_eq!(neuron.step(1.5), 0);
+    assert_eq!(neuron.step(f64::NAN), 0);
+    assert_eq!(neuron.soma_voltage(), 0.0);
+    neuron.reset();
+    assert_eq!(neuron.step(1.0), 1);
 }

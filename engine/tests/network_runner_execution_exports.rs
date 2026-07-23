@@ -71,3 +71,67 @@ fn public_network_runner_rejects_out_of_range_projection_indices() {
         assert_eq!(message, expected_message);
     }
 }
+
+#[test]
+fn public_network_runner_preserves_self_projection_shapes() {
+    let mut runner = NetworkRunner::new();
+    let population = runner.add_population(
+        create_population("Izhikevich", 4).expect("Izhikevich must remain supported"),
+    );
+    let mut row_offsets = Vec::new();
+    let mut column_indices = Vec::new();
+    let mut values = Vec::new();
+    for source in 0..4 {
+        row_offsets.push(source * 4);
+        for target in 0..4 {
+            column_indices.push(target);
+            values.push(2.0);
+        }
+    }
+    row_offsets.push(16);
+    runner.add_projection(ProjectionRunner::new(
+        population,
+        population,
+        row_offsets,
+        column_indices,
+        values,
+        0,
+    ));
+
+    let results = runner.run(100);
+
+    assert_eq!(results.spike_counts.len(), 1);
+    assert_eq!(results.voltages.len(), 1);
+    assert_eq!(results.voltages[0].len(), 4);
+}
+
+#[test]
+fn public_network_runner_preserves_mixed_population_shapes() {
+    let mut runner = NetworkRunner::new();
+    let hh = runner.add_population(
+        create_population("HodgkinHuxley", 3).expect("Hodgkin-Huxley must remain supported"),
+    );
+    let adex =
+        runner.add_population(create_population("AdEx", 3).expect("AdEx must remain supported"));
+    runner
+        .step_population_with_currents(hh, &[15.0; 3])
+        .expect("matching public current vector must be accepted");
+    runner.add_projection(ProjectionRunner::new(
+        hh,
+        adex,
+        vec![0, 3, 6, 9],
+        vec![0, 1, 2, 0, 1, 2, 0, 1, 2],
+        vec![100.0; 9],
+        0,
+    ));
+
+    let results = runner.run(50);
+
+    assert_eq!(results.spike_counts.len(), 2);
+    assert_eq!(results.voltages.len(), 2);
+    assert!(results
+        .voltages
+        .iter()
+        .flatten()
+        .all(|voltage| voltage.is_finite()));
+}
