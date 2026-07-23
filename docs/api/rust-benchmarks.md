@@ -366,7 +366,7 @@ compute cycles for the 64x32 dense contract.
 | AmariNeuralField | 10k | 24.2 ms | **2.42 µs** | 32-unit neural field |
 | Siegert | 100k | 44.4 ms | **444 ns** | Transfer function with erf() |
 
-### Hardware Neuromorphic (`neurons/hardware.rs`)
+### Hardware Neuromorphic (`neurons/hardware/`)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

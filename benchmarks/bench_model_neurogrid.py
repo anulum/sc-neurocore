@@ -28,13 +28,14 @@ REPEATS = 5
 CURRENT = 100.0
 OUTPUT = Path("benchmarks/results/local_python_2026-06-26_neurogrid_rk4.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkNeuroGridRK4-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_BENCH_RE = re.compile(r"^BenchmarkNeuroGridRK4(?:-\d+)?\s+\d+\s+([0-9.]+)\s+ns/op")
 GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
 SOURCE_HASH_PATHS = {
     "benchmarks/bench_model_neurogrid.py": REPO_ROOT / "benchmarks/bench_model_neurogrid.py",
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_neurogrid_rk4.rs": REPO_ROOT / "engine/examples/bench_neurogrid_rk4.rs",
-    "engine/src/neurons/hardware.rs": REPO_ROOT / "engine/src/neurons/hardware.rs",
+    "engine/src/neurons/hardware/neurogrid.rs": REPO_ROOT
+    / "engine/src/neurons/hardware/neurogrid.rs",
     "src/sc_neurocore/neurons/models/neurogrid.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/neurogrid.py",
     "src/sc_neurocore/accel/go/services/neurogrid.go": REPO_ROOT
@@ -121,7 +122,14 @@ def _run_rust_backend() -> dict[str, object]:
     return report
 
 
-def _run_go_backend() -> dict[str, object]:
+def run_go_backend() -> dict[str, object]:
+    """Execute and parse the maintained Go NeuroGrid benchmark.
+
+    Returns
+    -------
+    dict[str, object]
+        Measured timing and spike-count evidence, or an explicit failure row.
+    """
     command = [
         "go",
         "test",
@@ -251,7 +259,7 @@ def main() -> None:
         "backends": [
             _run_python_backend(),
             _run_rust_backend(),
-            _run_go_backend(),
+            run_go_backend(),
             _run_julia_backend(),
             _run_mojo_backend(),
         ],

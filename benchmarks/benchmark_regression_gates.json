@@ -552,7 +552,7 @@
       },
       "source_hashes": {
         "benchmarks/bench_model_dpi_neuron.py": "source_hashes.benchmarks/bench_model_dpi_neuron.py",
-        "engine/src/neurons/hardware.rs": "source_hashes.engine/src/neurons/hardware.rs",
+        "engine/src/neurons/hardware/dpi_neuron.rs": "source_hashes.engine/src/neurons/hardware/dpi_neuron.rs",
         "src/sc_neurocore/accel/dpi_neuron.py": "source_hashes.src/sc_neurocore/accel/dpi_neuron.py",
         "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go": "source_hashes.src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go",
         "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h": "source_hashes.src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h",

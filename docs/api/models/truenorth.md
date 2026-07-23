@@ -486,7 +486,7 @@ for I in [1, 2, 5, 10, 20]:
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/truenorth.py` | ~33 | Python reference |
-| `engine/src/neurons/hardware.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/hardware/truenorth.rs` | 71 | Rust implementation and focused tests |
 | `tests/test_model_truenorth.py` | ~240 | 23 tests |
 
 ---

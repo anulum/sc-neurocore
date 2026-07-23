@@ -1,7 +1,7 @@
 # LoihiCUBANeuron
 
-**Module:** `engine/src/neurons/hardware.rs`
-**Rust struct:** `LoihiCUBANeuron` (line 12)
+**Module:** `engine/src/neurons/hardware/loihi_cuba.rs`
+**Rust struct:** `LoihiCUBANeuron` (line 11)
 **Reference:** Davies et al., IEEE Micro 38:82, 2018
 **Family:** Hardware neuromorphic chip emulator (Intel Loihi 1)
 **State variables:** `v` (membrane potential, i32), `u` (synaptic current, i32)
@@ -251,7 +251,7 @@ not fire at I = 5 in the current Python and Rust recurrence.
 
 ## Parameters
 
-All defaults from `LoihiCUBANeuron::new()` in `hardware.rs:22`:
+All defaults from `LoihiCUBANeuron::new()` in `loihi_cuba.rs:21`:
 
 | Parameter | Default | Type | Description |
 |-----------|---------|------|-------------|
@@ -269,7 +269,7 @@ not floating-point. This matches the Loihi hardware's native data type.
 
 ## Implementation Details
 
-### Code structure (`hardware.rs:32–41`)
+### Code structure (`loihi_cuba.rs:31–40`)
 
 ```
 step(weighted_input: i32) → i32:
@@ -430,7 +430,7 @@ tau, processing at ~20 billion neuron-steps/s.
 | Checklist | Status |
 |-----------|--------|
 | Python implementation | `src/sc_neurocore/neurons/models/loihi_cuba.py` |
-| Rust implementation | `engine/src/neurons/hardware.rs:13` |
+| Rust implementation | `engine/src/neurons/hardware/loihi_cuba.rs:11` |
 | PyO3 wrapper | `engine/src/pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::LoihiCUBA` |
 | `create_neuron("LoihiCUBANeuron")` | Yes |
@@ -600,5 +600,5 @@ v/u to 24-bit range.
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/hardware.rs:12–51`.
+*Document verified against Rust source `engine/src/neurons/hardware/loihi_cuba.rs:9–51`.
 All equations, parameters, and default values read directly from the implementation.*

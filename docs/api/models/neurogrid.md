@@ -55,7 +55,7 @@ soma to `v_reset`.
 | Surface | File |
 |---------|------|
 | Python reference | `src/sc_neurocore/neurons/models/neurogrid.py` |
-| Rust engine | `engine/src/neurons/hardware.rs` |
+| Rust engine | `engine/src/neurons/hardware/neurogrid.rs` |
 | Rust safety mirror | `src/sc_neurocore/accel/rust/safety/neurogrid.rs` |
 | Go service | `src/sc_neurocore/accel/go/services/neurogrid.go` |
 | Julia mirror | `src/sc_neurocore/accel/julia/neurons/neurogrid.jl` |
