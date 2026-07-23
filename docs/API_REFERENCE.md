@@ -18173,14 +18173,6 @@ firewall enforcement, and live migration.
 - **mark_region_faulted**(region_id)
   - Mark a region as faulted and evict its tenant.
 
-### Class `BandwidthMeter`
-Per-tenant throughput metering (spikes/cycles per window).
-
-- **record**(tenant_id, spike_count, cycle)
-- **throughput**(tenant_id)
-  - Spikes per cycle (averaged over window).
-- **exceeds_quota**(tenant_id, max_mbps)
-
 ### Class `PreemptionEvent`
 Record of a preemption event.
 
@@ -18193,19 +18185,6 @@ Handles preemption with state checkpoint/restore.
   - Preempt victim and give region to preemptor.
 - **restore_preempted**(tenant)
   - Restore a previously preempted tenant's state.
-
-### Class `SLAViolation`
-One SLA violation.
-
-
-### Class `SLAMonitor`
-Monitors per-tenant QoS compliance and detects violations.
-
-- **__init__**()
-- **check_latency**(tenant, measured_us, cycle)
-- **check_bandwidth**(tenant, measured_mbps, cycle)
-- **total_violations**()
-- **violations_for**(tenant_id)
 
 ### Class `UsageRecord`
 One billing record.
@@ -18290,6 +18269,31 @@ Migration steps:
   - Restore a sealed checkpointed state to a tenant.
 - **migrate**(tenant, source, target, firewall)
   - Execute live migration.
+
+---
+
+## Module `hypervisor.qos_monitor`
+
+### Class `BandwidthMeter`
+Per-tenant throughput metering (spikes/cycles per window).
+
+- **record**(tenant_id, spike_count, cycle)
+- **throughput**(tenant_id)
+  - Spikes per cycle (averaged over window).
+- **exceeds_quota**(tenant_id, max_mbps)
+
+### Class `SLAViolation`
+One SLA violation.
+
+
+### Class `SLAMonitor`
+Monitors per-tenant QoS compliance and detects violations.
+
+- **__init__**()
+- **check_latency**(tenant, measured_us, cycle)
+- **check_bandwidth**(tenant, measured_mbps, cycle)
+- **total_violations**()
+- **violations_for**(tenant_id)
 
 ---
 

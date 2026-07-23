@@ -9,7 +9,6 @@
 import pytest
 
 from sc_neurocore.hypervisor.hypervisor import (
-    BandwidthMeter,
     HWRegion,
     Hypervisor,
     HypervisorConfig,
@@ -17,7 +16,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     PreemptionManager,
     RegionState,
     ResourceAccounting,
-    SLAMonitor,
     Tenant,
     TenantPriority,
     TenantState,
@@ -313,34 +311,6 @@ class TestNoFirewall:
         assert hv.check_access("anyone", 0xDEAD_BEEF) is True
 
 
-# ── Bandwidth Meter Tests (Gap 1) ─────────────────────────────────────
-
-
-class TestBandwidthMeter:
-    def test_record_and_throughput(self):
-        bm = BandwidthMeter()
-        bm.record("t0", 100, 1000)
-        bm.record("t0", 200, 2000)
-        assert bm.throughput("t0") > 0
-
-    def test_zero_throughput(self):
-        bm = BandwidthMeter()
-        assert bm.throughput("t_none") == 0.0
-
-    def test_throughput_single_record_returns_raw_count(self):
-        # With only one sample there is no time span to divide by, so the
-        # throughput is reported as the raw spike count.
-        bm = BandwidthMeter()
-        bm.record("t0", 100, 1000)
-        assert bm.throughput("t0") == 100.0
-
-    def test_exceeds_quota(self):
-        bm = BandwidthMeter()
-        bm.record("t0", 1000, 100)
-        bm.record("t0", 1000, 200)
-        assert bm.exceeds_quota("t0", 0.001) is True
-
-
 # ── Preemption Manager Tests (Gap 2) ─────────────────────────────────
 
 
@@ -373,49 +343,6 @@ class TestPreemptionManager:
         pm = PreemptionManager()
         t = _tenant("x")
         assert pm.restore_preempted(t) is False
-
-
-# ── SLA Monitor Tests (Gap 3) ─────────────────────────────────────────
-
-
-class TestSLAMonitor:
-    def test_latency_ok(self):
-        mon = SLAMonitor()
-        t = _tenant("t0")
-        t.qos.max_latency_us = 1000.0
-        assert mon.check_latency(t, 500.0, 100) is None
-
-    def test_latency_violation(self):
-        mon = SLAMonitor()
-        t = _tenant("t0")
-        t.qos.max_latency_us = 1000.0
-        v = mon.check_latency(t, 1500.0, 100)
-        assert v is not None
-        assert v.metric == "latency"
-        assert mon.total_violations == 1
-
-    def test_bandwidth_ok(self):
-        mon = SLAMonitor()
-        t = _tenant("t0")
-        t.qos.max_bandwidth_mbps = 100.0
-        assert mon.check_bandwidth(t, 50.0, 10) is None
-
-    def test_bandwidth_violation(self):
-        mon = SLAMonitor()
-        t = _tenant("t0")
-        t.qos.max_bandwidth_mbps = 100.0
-        v = mon.check_bandwidth(t, 200.0, 50)
-        assert v is not None
-
-    def test_violations_for(self):
-        mon = SLAMonitor()
-        t0 = _tenant("t0")
-        t0.qos.max_latency_us = 10.0
-        t1 = _tenant("t1")
-        t1.qos.max_latency_us = 10.0
-        mon.check_latency(t0, 100.0, 1)
-        mon.check_latency(t1, 100.0, 2)
-        assert len(mon.violations_for("t0")) == 1
 
 
 # ── Resource Accounting Tests (Gap 5) ─────────────────────────────────
