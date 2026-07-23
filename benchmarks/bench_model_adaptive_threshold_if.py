@@ -60,7 +60,6 @@ SOURCE_PATHS = (
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/Cargo.toml",
     "engine/src/bindings/adaptive_threshold_if.rs",
-    "engine/src/network_runner.rs",
     "engine/src/neurons/trivial.rs",
     "engine/src/neurons/trivial/adaptive_threshold_if.rs",
     "pyproject.toml",
