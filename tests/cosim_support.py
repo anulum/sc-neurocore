@@ -38,7 +38,6 @@ from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
-from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
 from sc_neurocore.neurons.models.terman_wang import TermanWangOscillator
 from sc_neurocore.neurons.models.wang_buzsaki import WangBuzsakiNeuron
@@ -55,11 +54,11 @@ from tests.cosim_runtime import (
     verilog_spike_count_method_pipelined as verilog_spike_count_method_pipelined,
 )
 
-
-def _perfect_integrator_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored perfect-integrator spike count for comparison."""
-    neuron = PerfectIntegratorNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
+from tests.cosim_reference_perfect_integrator import (
+    _perfect_integrator_hand_spike_count as _perfect_integrator_hand_spike_count,
+    _perfect_integrator_sawtooth_features as _perfect_integrator_sawtooth_features,
+)
+from tests.cosim_reference_statistics import _summarise as _summarise
 
 
 def _izhikevich2007_hand_euler_spike_count(n_steps: int, current: float) -> int:
@@ -697,43 +696,6 @@ def _verilog_compiles(model_name: str) -> bool:
         return result.returncode == 0
 
 
-def _summarise(recorded: dict[str, list[float]], spikes: list[int]) -> dict[str, float]:
-    """Return the shared spike-count / first-spike-step / per-variable feature map.
-
-    Every reference helper that tracks a per-step ``spikes`` list and one or more
-    recorded state-variable trajectories reduces them to the same feature contract: a
-    total spike count, the 1-indexed first-spike step (``-1`` when silent), and the
-    final / minimum / maximum / mean of each recorded variable. Centralising the tail
-    keeps the independent-parity helpers byte-identical in how they summarise, so a
-    drift in one helper's reduction cannot silently diverge from the others.
-
-    Parameters
-    ----------
-    recorded:
-        Mapping from state-variable name to its per-step trajectory.
-    spikes:
-        Per-step spike indicators (``1`` on a spiking step, ``0`` otherwise).
-
-    Returns
-    -------
-    dict of str to float
-        The feature map keyed by ``spike_count``, ``first_spike_step``, and
-        ``final.<var>`` / ``min.<var>`` / ``max.<var>`` / ``mean.<var>`` per variable.
-    """
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for variable, values in recorded.items():
-        features[f"final.{variable}"] = values[-1]
-        features[f"min.{variable}"] = min(values)
-        features[f"max.{variable}"] = max(values)
-        features[f"mean.{variable}"] = math.fsum(values) / len(values)
-    return features
-
-
 def _closed_form_features(
     *,
     initial: float,
@@ -765,32 +727,6 @@ def _quadratic_if_zero_current_features(*, dt: float, steps: int) -> dict[str, f
         "max.v": max(values),
         "mean.v": math.fsum(values) / len(values),
     }
-
-
-def _perfect_integrator_sawtooth_features(
-    *,
-    current: float,
-    dt: float,
-    steps: int,
-    c_m: float = 1.0,
-    v_threshold: float = 1.0,
-    v_reset: float = 0.0,
-) -> dict[str, float]:
-    """Return exact post-reset features for constant-current perfect integration."""
-    values: list[float] = []
-    spikes: list[int] = []
-    voltage = v_reset
-    increment = current * dt / c_m
-    for _ in range(steps):
-        voltage += increment
-        if voltage >= v_threshold:
-            spikes.append(1)
-            voltage = v_reset
-        else:
-            spikes.append(0)
-        values.append(voltage)
-
-    return _summarise({"v": values}, spikes)
 
 
 def _theta_constant_current_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
