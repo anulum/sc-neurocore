@@ -23,6 +23,7 @@ from tests import (
     cosim_reference_pernarowski,
     cosim_reference_quadratic_if,
     cosim_reference_statistics,
+    cosim_reference_terman_wang,
     cosim_reference_theta,
     cosim_runtime,
     cosim_support,
@@ -77,6 +78,11 @@ _QUADRATIC_IF_NAMES = ("_quadratic_if_zero_current_features",)
 
 _THETA_NAMES = ("_theta_constant_current_features",)
 
+_TERMAN_WANG_NAMES = (
+    "_terman_wang_hand_spike_count",
+    "_terman_wang_rk4_features",
+)
+
 
 def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
     for name in _RUNTIME_NAMES:
@@ -100,6 +106,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_quadratic_if, name)
     for name in _THETA_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_theta, name)
+    for name in _TERMAN_WANG_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_terman_wang, name)
     assert cosim_support._summarise is cosim_reference_statistics._summarise
 
 
@@ -156,7 +164,10 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     theta_text = Path(cosim_reference_theta.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in theta_text
     assert len(theta_text.splitlines()) <= 40
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_655
+    terman_wang_text = Path(cosim_reference_terman_wang.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in terman_wang_text
+    assert len(terman_wang_text.splitlines()) <= 90
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_600
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -265,3 +276,13 @@ def test_theta_has_exact_definition_ownership() -> None:
     theta_tree = ast.parse(Path(cosim_reference_theta.__file__).read_text(encoding="utf-8"))
     theta_functions = {node.name for node in theta_tree.body if isinstance(node, ast.FunctionDef)}
     assert theta_functions == set(_THETA_NAMES)
+
+
+def test_terman_wang_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_TERMAN_WANG_NAMES)
+
+    owner_tree = ast.parse(Path(cosim_reference_terman_wang.__file__).read_text(encoding="utf-8"))
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_TERMAN_WANG_NAMES)
