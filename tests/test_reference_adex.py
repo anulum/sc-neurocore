@@ -61,3 +61,14 @@ def test_trace_features_match_independent_reference(
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_suprathreshold_reference_records_reset_and_adaptation_jump() -> None:
+    """A strong drive must exercise the published AdEx spike/reset contract."""
+    features = _adex_subthreshold_euler_features(current=5_000.0, dt=0.1, steps=10)
+
+    assert features["spike_count"] == 1.0
+    assert features["first_spike_step"] == 7.0
+    assert features["min.v"] == -68.0
+    assert features["max.v"] == pytest.approx(-50.13975601026277, abs=1e-12)
+    assert features["max.w"] == pytest.approx(7.0260215674765565, abs=1e-12)
