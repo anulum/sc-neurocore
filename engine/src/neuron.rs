@@ -12,10 +12,12 @@
 
 mod bitstream_averager;
 mod dendritic_neuron;
+mod homeostatic_lif;
 mod izhikevich;
 
 pub use bitstream_averager::BitstreamAverager;
 pub use dendritic_neuron::DendriticNeuron;
+pub use homeostatic_lif::HomeostaticLif;
 pub use izhikevich::Izhikevich;
 
 /// Mask and sign-interpret an integer to `width` bits (branchless).
@@ -117,74 +119,6 @@ impl FixedPointLif {
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.refractory_counter = 0;
-    }
-}
-
-/// Homeostatic LIF neuron with adaptive threshold.
-///
-/// Threshold adapts via EMA of spike rate toward a target setpoint.
-/// Turrigiano, Cold Spring Harb Perspect Biol 4:a005736, 2012.
-#[derive(Clone, Debug)]
-pub struct HomeostaticLif {
-    pub v: f64,
-    pub v_threshold: f64,
-    pub v_rest: f64,
-    pub v_reset: f64,
-    pub rate_trace: f64,
-    pub target_rate: f64,
-    pub adaptation_rate: f64,
-    pub trace_decay: f64,
-    initial_threshold: f64,
-}
-
-impl HomeostaticLif {
-    pub fn new(target_rate: f64, adaptation_rate: f64, trace_decay: f64) -> Self {
-        Self {
-            v: 0.0,
-            v_threshold: 1.0,
-            v_rest: 0.0,
-            v_reset: 0.0,
-            rate_trace: 0.0,
-            target_rate,
-            adaptation_rate,
-            trace_decay,
-            initial_threshold: 1.0,
-        }
-    }
-
-    pub fn with_defaults() -> Self {
-        Self::new(0.1, 0.01, 0.95)
-    }
-
-    /// LIF step with threshold adaptation. Returns 1 on spike.
-    pub fn step(&mut self, current: f64) -> i32 {
-        // Leak-integrate
-        let tau = 20.0;
-        self.v += (-(self.v - self.v_rest) + current) / tau;
-
-        let spike = if self.v >= self.v_threshold {
-            self.v = self.v_reset;
-            1
-        } else {
-            0
-        };
-
-        // EMA spike rate tracking
-        self.rate_trace =
-            self.rate_trace * self.trace_decay + spike as f64 * (1.0 - self.trace_decay);
-
-        // Threshold adaptation
-        let error = self.rate_trace - self.target_rate;
-        self.v_threshold += self.adaptation_rate * error;
-        self.v_threshold = self.v_threshold.clamp(0.1, self.initial_threshold * 10.0);
-
-        spike
-    }
-
-    pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.rate_trace = 0.0;
-        self.v_threshold = self.initial_threshold;
     }
 }
 
@@ -508,7 +442,7 @@ mod tests {
         );
     }
 
-    use super::{mask, AdExNeuron, ExpIfNeuron, FixedPointLif, HomeostaticLif, LapicqueNeuron};
+    use super::{mask, AdExNeuron, ExpIfNeuron, FixedPointLif, LapicqueNeuron};
 
     #[test]
     fn mask_branchless_matches_original() {
@@ -574,51 +508,6 @@ mod tests {
             total += s;
         }
         assert!(total > 0, "neuron must fire with refractory_period=0");
-    }
-
-    // ── HomeostaticLif tests ──────────────────────────────────────
-
-    #[test]
-    fn homeostatic_fires_with_strong_input() {
-        let mut n = HomeostaticLif::with_defaults();
-        let mut total = 0;
-        for _ in 0..200 {
-            total += n.step(25.0);
-        }
-        assert!(total > 0, "must fire with strong input");
-    }
-
-    #[test]
-    fn homeostatic_threshold_adapts() {
-        let mut n = HomeostaticLif::with_defaults();
-        let initial = n.v_threshold;
-        for _ in 0..500 {
-            n.step(25.0);
-        }
-        assert!(
-            (n.v_threshold - initial).abs() > 1e-6,
-            "threshold must adapt"
-        );
-    }
-
-    #[test]
-    fn homeostatic_no_fire_without_input() {
-        let mut n = HomeostaticLif::with_defaults();
-        let mut total = 0;
-        for _ in 0..100 {
-            total += n.step(0.0);
-        }
-        assert_eq!(total, 0);
-    }
-
-    #[test]
-    fn homeostatic_threshold_bounded() {
-        let mut n = HomeostaticLif::with_defaults();
-        for _ in 0..10000 {
-            n.step(50.0);
-        }
-        assert!(n.v_threshold >= 0.1);
-        assert!(n.v_threshold <= 10.0);
     }
 
     // ── AdEx tests ────────────────────────────────────────────────
