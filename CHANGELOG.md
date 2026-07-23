@@ -31,6 +31,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   five-runtime benchmark evidence.
 
 ### Fixed
+- Made the native-loading regression exercise both clean editable
+  `maturin develop` layouts and installed-wheel layouts instead of requiring
+  a stale site-packages copy of the engine package.
 - Restricted the PyPI download metrics client to the exact HTTPS pypistats API
   origin and path, encoded package names as single URL path segments, and added
   fail-closed tests for untrusted schemes, hosts, credentials, ports, and paths.

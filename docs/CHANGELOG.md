@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Native engine environment fidelity
+
+- Made the checkout-shadow loading regression exercise both clean editable
+  `maturin develop` layouts and installed-wheel layouts. A stale engine package
+  left outside the active distribution record can no longer be mistaken for a
+  required part of the supported editable installation.
+
 ### Adaptive-threshold IF source-to-co-simulation closure
 
 - Reconstructed `AdaptiveThresholdIFNeuron` as an explicitly composite

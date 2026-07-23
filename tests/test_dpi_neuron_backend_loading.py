@@ -112,8 +112,8 @@ def test_engine_loader_returns_the_extension_class() -> None:
     assert backends._load_engine_dpi().__name__ == "DPINeuron"
 
 
-def test_checkout_bridge_discovers_maturin_developed_extension(tmp_path: Path) -> None:
-    """Load the installed extension when a source checkout shadows its package."""
+def test_checkout_bridge_discovers_maturin_compiled_extensions(tmp_path: Path) -> None:
+    """Load each compiled extension when a source checkout shadows its package."""
     repository = Path(__file__).resolve().parents[1]
     source_package = repository / "bridge" / "sc_neurocore_engine"
     checkout_package = tmp_path / "sc_neurocore_engine"
@@ -126,12 +126,14 @@ def test_checkout_bridge_discovers_maturin_developed_extension(tmp_path: Path) -
     extension_suffix = sysconfig.get_config_var("EXT_SUFFIX")
     assert isinstance(extension_suffix, str) and extension_suffix
     purelib = Path(sysconfig.get_path("purelib"))
-    installed_package = purelib / "sc_neurocore_engine"
-    installed_extensions = sorted(installed_package.glob(f"sc_neurocore_engine*{extension_suffix}"))
-    assert installed_extensions, "maturin-developed engine extension is required"
+    compiled_extensions = sorted(
+        {
+            *source_package.glob(f"sc_neurocore_engine*{extension_suffix}"),
+            *(purelib / "sc_neurocore_engine").glob(f"sc_neurocore_engine*{extension_suffix}"),
+        }
+    )
+    assert compiled_extensions, "maturin-compiled engine extension is required"
 
-    environment = dict(os.environ)
-    environment["PYTHONPATH"] = os.pathsep.join((str(tmp_path), str(purelib)))
     script = (
         "import importlib, pathlib, sys; "
         "package = importlib.import_module('sc_neurocore_engine'); "
@@ -141,12 +143,17 @@ def test_checkout_bridge_discovers_maturin_developed_extension(tmp_path: Path) -
         "assert actual == expected, (actual, expected); "
         "assert package.DPINeuron is extension.DPINeuron"
     )
-    subprocess.run(
-        [sys.executable, "-S", "-c", script, str(installed_extensions[-1])],
-        cwd=tmp_path,
-        env=environment,
-        check=True,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
+    for extension in compiled_extensions:
+        environment = dict(os.environ)
+        environment["PYTHONPATH"] = os.pathsep.join(
+            (str(tmp_path), str(extension.parent.parent), str(purelib))
+        )
+        subprocess.run(
+            [sys.executable, "-S", "-c", script, str(extension)],
+            cwd=tmp_path,
+            env=environment,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
