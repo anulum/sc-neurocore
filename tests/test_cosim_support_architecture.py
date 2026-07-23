@@ -22,6 +22,7 @@ from tests import (
     cosim_reference_fitzhugh_rinzel,
     cosim_reference_glif,
     cosim_reference_hindmarsh_rose,
+    cosim_reference_hodgkin_huxley,
     cosim_reference_ibarz_tanaka,
     cosim_reference_izhikevich2007,
     cosim_reference_izhikevich_rs,
@@ -83,6 +84,11 @@ _GLIF_NAMES = (
 _HINDMARSH_ROSE_NAMES = (
     "_hindmarsh_rose_hand_spike_count",
     "_hindmarsh_rose_rk4_features",
+)
+
+_HODGKIN_HUXLEY_NAMES = (
+    "_hodgkin_huxley_hand_spike_count",
+    "_hodgkin_huxley_macrostep_rk4_features",
 )
 
 _IBARZ_TANAKA_NAMES = ("_ibarz_tanaka_verilog_q1616_trace",)
@@ -159,6 +165,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_glif, name)
     for name in _HINDMARSH_ROSE_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_hindmarsh_rose, name)
+    for name in _HODGKIN_HUXLEY_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_hodgkin_huxley, name)
     for name in _IBARZ_TANAKA_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_ibarz_tanaka, name)
     for name in _IZHIKEVICH2007_NAMES:
@@ -263,6 +271,9 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     hindmarsh_rose_text = Path(cosim_reference_hindmarsh_rose.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in hindmarsh_rose_text
     assert len(hindmarsh_rose_text.splitlines()) <= 100
+    hodgkin_huxley_text = Path(cosim_reference_hodgkin_huxley.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in hodgkin_huxley_text
+    assert len(hodgkin_huxley_text.splitlines()) <= 120
     ibarz_tanaka_text = Path(cosim_reference_ibarz_tanaka.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in ibarz_tanaka_text
     assert len(ibarz_tanaka_text.splitlines()) <= 100
@@ -306,7 +317,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 720
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 625
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -357,6 +368,18 @@ def test_hindmarsh_rose_has_exact_definition_ownership() -> None:
     )
     owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
     assert owner_functions == set(_HINDMARSH_ROSE_NAMES)
+
+
+def test_hodgkin_huxley_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_HODGKIN_HUXLEY_NAMES)
+
+    owner_tree = ast.parse(
+        Path(cosim_reference_hodgkin_huxley.__file__).read_text(encoding="utf-8")
+    )
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_HODGKIN_HUXLEY_NAMES)
 
 
 def test_ibarz_tanaka_has_exact_definition_ownership() -> None:
