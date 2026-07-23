@@ -16,15 +16,12 @@ non-AVX-512 CI leg.
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 from sc_neurocore.accel.mojo.isa_baseline import MOJO_TARGET_CPU, pin_isa
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-
-# Directory-name prefixes that hold third-party or generated code we do not author
-# (local editable venvs are ``.venv-py313`` etc., so match by prefix not equality).
-_SKIP_PREFIXES = (".venv", ".pixi", ".git", "node_modules", "__pycache__", "target", ".mypy_cache")
 
 # Adjacent-token argv shapes that name an actual Mojo build/run subprocess. The
 # optional ``)`` also catches a resolver-call executable such as
@@ -115,11 +112,14 @@ def test_pin_isa_does_not_mutate_input() -> None:
 
 
 def _tracked_python_files() -> list[Path]:
-    files: list[Path] = []
-    for path in _REPO_ROOT.rglob("*.py"):
-        if not any(part.startswith(_SKIP_PREFIXES) for part in path.parts):
-            files.append(path)
-    return files
+    result = subprocess.run(
+        ["git", "ls-files", "-z", "--", "*.py"],
+        cwd=_REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return [_REPO_ROOT / relative for relative in result.stdout.split("\0") if relative]
 
 
 def _enclosing_list(text: str, pos: int) -> tuple[int, int]:
