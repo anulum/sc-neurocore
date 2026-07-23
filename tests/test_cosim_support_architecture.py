@@ -20,6 +20,7 @@ from tests import (
     cosim_reference_glif,
     cosim_reference_hindmarsh_rose,
     cosim_reference_izhikevich2007,
+    cosim_reference_mckean,
     cosim_reference_perfect_integrator,
     cosim_reference_pernarowski,
     cosim_reference_quadratic_if,
@@ -71,6 +72,11 @@ _IZHIKEVICH2007_NAMES = (
     "_izhikevich2007_hand_euler_spike_count",
 )
 
+_MCKEAN_NAMES = (
+    "_mckean_hand_spike_count",
+    "_mckean_rk4_features",
+)
+
 _PERFECT_INTEGRATOR_NAMES = (
     "_perfect_integrator_hand_spike_count",
     "_perfect_integrator_sawtooth_features",
@@ -112,6 +118,9 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_hindmarsh_rose, name)
     for name in _IZHIKEVICH2007_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_izhikevich2007, name)
+    assert cosim_support._MCKEAN_PARAMS is cosim_reference_mckean._MCKEAN_PARAMS
+    for name in _MCKEAN_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_mckean, name)
     for name in _PERFECT_INTEGRATOR_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_perfect_integrator, name)
     for name in _PERNAROWSKI_NAMES:
@@ -167,6 +176,9 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     izhikevich2007_text = Path(cosim_reference_izhikevich2007.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in izhikevich2007_text
     assert len(izhikevich2007_text.splitlines()) <= 80
+    mckean_text = Path(cosim_reference_mckean.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in mckean_text
+    assert len(mckean_text.splitlines()) <= 105
     assert (
         len(Path(cosim_reference_statistics.__file__).read_text(encoding="utf-8").splitlines())
         <= 55
@@ -189,7 +201,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_465
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_400
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -286,6 +298,32 @@ def test_izhikevich2007_has_exact_definition_ownership() -> None:
     )
     owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
     assert owner_functions == set(_IZHIKEVICH2007_NAMES)
+
+
+def test_mckean_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_MCKEAN_NAMES)
+    facade_assignments = {
+        target.id
+        for node in facade_tree.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert "_MCKEAN_PARAMS" not in facade_assignments
+
+    owner_tree = ast.parse(Path(cosim_reference_mckean.__file__).read_text(encoding="utf-8"))
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_MCKEAN_NAMES)
+    owner_assignments = {
+        target.id
+        for node in owner_tree.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert owner_assignments == {"_MCKEAN_PARAMS"}
 
 
 def test_quadratic_if_has_exact_definition_ownership() -> None:
