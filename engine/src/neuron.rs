@@ -10,6 +10,10 @@
 //!
 //! Fixed-point LIF and Izhikevich neuron models for the v3 engine.
 
+mod bitstream_averager;
+
+pub use bitstream_averager::BitstreamAverager;
+
 /// Mask and sign-interpret an integer to `width` bits (branchless).
 ///
 /// `width` must be in 1..=32. Values outside this range trigger a
@@ -172,68 +176,6 @@ impl Izhikevich {
     pub fn reset(&mut self) {
         self.v = self.c;
         self.u = self.b * self.c;
-    }
-}
-
-/// Sliding-window bitstream probability estimator.
-///
-/// Mirrors Python's `BitstreamAverager`.
-#[derive(Clone, Debug)]
-pub struct BitstreamAverager {
-    buffer: Vec<u8>,
-    index: usize,
-    filled: bool,
-    running_sum: u64,
-}
-
-impl BitstreamAverager {
-    pub fn new(window: usize) -> Self {
-        assert!(window > 0, "window must be > 0");
-        Self {
-            buffer: vec![0; window],
-            index: 0,
-            filled: false,
-            running_sum: 0,
-        }
-    }
-
-    pub fn push(&mut self, bit: u8) {
-        debug_assert!(bit <= 1, "bit must be 0 or 1");
-        let old = self.buffer[self.index];
-        self.buffer[self.index] = bit;
-
-        if self.filled {
-            self.running_sum = self.running_sum - old as u64 + bit as u64;
-        } else {
-            self.running_sum += bit as u64;
-        }
-
-        self.index += 1;
-        if self.index == self.buffer.len() {
-            self.index = 0;
-            self.filled = true;
-        }
-    }
-
-    pub fn estimate(&self) -> f64 {
-        if !self.filled {
-            if self.index == 0 {
-                return 0.0;
-            }
-            return self.running_sum as f64 / self.index as f64;
-        }
-        self.running_sum as f64 / self.buffer.len() as f64
-    }
-
-    pub fn reset(&mut self) {
-        self.buffer.fill(0);
-        self.index = 0;
-        self.filled = false;
-        self.running_sum = 0;
-    }
-
-    pub fn window(&self) -> usize {
-        self.buffer.len()
     }
 }
 
@@ -662,8 +604,8 @@ mod tests {
     }
 
     use super::{
-        mask, AdExNeuron, BitstreamAverager, DendriticNeuron, ExpIfNeuron, FixedPointLif,
-        HomeostaticLif, Izhikevich, LapicqueNeuron,
+        mask, AdExNeuron, DendriticNeuron, ExpIfNeuron, FixedPointLif, HomeostaticLif, Izhikevich,
+        LapicqueNeuron,
     };
 
     #[test]
@@ -782,71 +724,6 @@ mod tests {
         );
     }
 
-    // ── BitstreamAverager tests ───────────────────────────────────
-
-    #[test]
-    fn averager_all_ones() {
-        let mut avg = BitstreamAverager::new(100);
-        for _ in 0..100 {
-            avg.push(1);
-        }
-        assert!((avg.estimate() - 1.0).abs() < 1e-12);
-    }
-
-    #[test]
-    fn averager_all_zeros() {
-        let mut avg = BitstreamAverager::new(50);
-        for _ in 0..50 {
-            avg.push(0);
-        }
-        assert!(avg.estimate().abs() < 1e-12);
-    }
-
-    #[test]
-    fn averager_half() {
-        let mut avg = BitstreamAverager::new(100);
-        for i in 0..100 {
-            avg.push((i % 2) as u8);
-        }
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-    }
-
-    #[test]
-    fn averager_sliding_window() {
-        let mut avg = BitstreamAverager::new(4);
-        // Fill: [1, 1, 0, 0] → 0.5
-        for &b in &[1_u8, 1, 0, 0] {
-            avg.push(b);
-        }
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-        // Push 1 → [1, 1, 0, 1] (oldest 1 replaced by 1) → wait
-        // Actually buffer is circular: index=0, push 1 replaces buffer[0]=1 with 1 → still 0.5
-        avg.push(1);
-        // Buffer: [1, 1, 0, 0] → index wraps to 0, push 1 at index 0: [1, 1, 0, 0] → [1, 1, 0, 0] no wait
-        // filled=true after first wrap. push(1) at index 0: old=1, new=1, sum stays 2 → 0.5
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-        // Push 1 at index 1: old=1, new=1 → still 0.5
-        avg.push(1);
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-        // Push 1 at index 2: old=0, new=1 → sum=3 → 0.75
-        avg.push(1);
-        assert!((avg.estimate() - 0.75).abs() < 1e-12);
-    }
-
-    #[test]
-    fn averager_partial_fill() {
-        let mut avg = BitstreamAverager::new(100);
-        avg.push(1);
-        avg.push(0);
-        assert!((avg.estimate() - 0.5).abs() < 1e-12);
-    }
-
-    #[test]
-    fn averager_empty_returns_zero() {
-        let avg = BitstreamAverager::new(10);
-        assert!(avg.estimate().abs() < 1e-12);
-    }
-
     // ── HomeostaticLif tests ──────────────────────────────────────
 
     #[test]
@@ -915,16 +792,6 @@ mod tests {
         n.step(1.0, 0.0);
         n.reset();
         assert!((n.last_current).abs() < 1e-12);
-    }
-
-    #[test]
-    fn averager_reset() {
-        let mut avg = BitstreamAverager::new(10);
-        for _ in 0..10 {
-            avg.push(1);
-        }
-        avg.reset();
-        assert!(avg.estimate().abs() < 1e-12);
     }
 
     // ── AdEx tests ────────────────────────────────────────────────

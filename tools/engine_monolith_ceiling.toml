@@ -30,6 +30,14 @@ max_pyfunctions = 0
 max_lines = 553
 max_pyfunctions = 0
 
+[targets."engine/src/neuron.rs"]
+max_lines = 1152
+max_pyfunctions = 0
+
+[targets."engine/src/neuron/bitstream_averager.rs"]
+max_lines = 141
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/ai_optimized.rs"]
 max_lines = 35
 max_pyfunctions = 0
