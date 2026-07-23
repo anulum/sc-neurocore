@@ -18,6 +18,7 @@ from tests import (
     cosim_reference_fitzhugh_nagumo,
     cosim_reference_fitzhugh_rinzel,
     cosim_reference_glif,
+    cosim_reference_hindmarsh_rose,
     cosim_reference_izhikevich2007,
     cosim_reference_perfect_integrator,
     cosim_reference_pernarowski,
@@ -58,6 +59,11 @@ _FITZHUGH_RINZEL_NAMES = (
 _GLIF_NAMES = (
     "_glif_driven_rk4_features",
     "_glif_hand_spike_count",
+)
+
+_HINDMARSH_ROSE_NAMES = (
+    "_hindmarsh_rose_hand_spike_count",
+    "_hindmarsh_rose_rk4_features",
 )
 
 _IZHIKEVICH2007_NAMES = (
@@ -102,6 +108,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
         assert getattr(cosim_support, name) is getattr(cosim_reference_fitzhugh_rinzel, name)
     for name in _GLIF_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_glif, name)
+    for name in _HINDMARSH_ROSE_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_hindmarsh_rose, name)
     for name in _IZHIKEVICH2007_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_izhikevich2007, name)
     for name in _PERFECT_INTEGRATOR_NAMES:
@@ -153,6 +161,9 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     glif_text = Path(cosim_reference_glif.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in glif_text
     assert len(glif_text.splitlines()) <= 125
+    hindmarsh_rose_text = Path(cosim_reference_hindmarsh_rose.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in hindmarsh_rose_text
+    assert len(hindmarsh_rose_text.splitlines()) <= 100
     izhikevich2007_text = Path(cosim_reference_izhikevich2007.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in izhikevich2007_text
     assert len(izhikevich2007_text.splitlines()) <= 80
@@ -178,7 +189,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_535
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_465
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -217,6 +228,18 @@ def test_glif_has_exact_definition_ownership() -> None:
     glif_tree = ast.parse(Path(cosim_reference_glif.__file__).read_text(encoding="utf-8"))
     glif_functions = {node.name for node in glif_tree.body if isinstance(node, ast.FunctionDef)}
     assert glif_functions == set(_GLIF_NAMES)
+
+
+def test_hindmarsh_rose_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_HINDMARSH_ROSE_NAMES)
+
+    owner_tree = ast.parse(
+        Path(cosim_reference_hindmarsh_rose.__file__).read_text(encoding="utf-8")
+    )
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_HINDMARSH_ROSE_NAMES)
 
 
 def test_dpi_neuron_has_exact_definition_ownership() -> None:

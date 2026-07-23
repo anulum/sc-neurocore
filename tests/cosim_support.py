@@ -29,7 +29,6 @@ from sc_neurocore.compiler.verilog_compiler import compile_to_verilog as compile
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
-from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
@@ -62,6 +61,10 @@ from tests.cosim_reference_glif import (
     _glif_driven_rk4_features as _glif_driven_rk4_features,
     _glif_hand_spike_count as _glif_hand_spike_count,
 )
+from tests.cosim_reference_hindmarsh_rose import (
+    _hindmarsh_rose_hand_spike_count as _hindmarsh_rose_hand_spike_count,
+    _hindmarsh_rose_rk4_features as _hindmarsh_rose_rk4_features,
+)
 from tests.cosim_reference_izhikevich2007 import (
     _izhikevich2007_euler_features as _izhikevich2007_euler_features,
     _izhikevich2007_hand_euler_spike_count as _izhikevich2007_hand_euler_spike_count,
@@ -89,12 +92,6 @@ from tests.cosim_reference_wilson_hr import (
     _wilson_hr_hand_spike_count as _wilson_hr_hand_spike_count,
     _wilson_hr_rk4_features as _wilson_hr_rk4_features,
 )
-
-
-def _hindmarsh_rose_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Hindmarsh-Rose RK4 upward-crossing count."""
-    neuron = HindmarshRoseNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
 
 
 # Sustained relaxation-oscillation operating point mirrored by the bundled ``mckean`` schema.
@@ -1023,77 +1020,6 @@ def _exp_if_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, 
         v_values.append(v)
 
     return _summarise({"v": v_values}, spikes)
-
-
-def _hindmarsh_rose_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return classical-RK4 features for the driven Hindmarsh-Rose flow.
-
-    The Hindmarsh-Rose (1984) cubic fast subsystem and slow adaptation variable are
-    advanced with an independently re-derived simultaneous four-stage RK4 step. The
-    maintained event is an upward ``x >= 1`` crossing and does not reset any state.
-    Repeated multiplication preserves the source polynomial's evaluation order without
-    importing either the hand model or the schema runner.
-
-    Parameters
-    ----------
-    current:
-        Constant input current applied at every timestep.
-    dt:
-        Simulation timestep.
-    steps:
-        Number of timesteps to advance.
-
-    Returns
-    -------
-    dict of str to float
-        Reference feature map for the ``x``, ``y``, and ``z`` state variables plus
-        spike-count and first-spike-step features.
-    """
-    b = 3.0
-    r = 0.001
-    s = 4.0
-    x_rest = -1.6
-    threshold = 1.0
-    x = -1.6
-    y = -10.0
-    z = 2.0
-    x_values: list[float] = []
-    y_values: list[float] = []
-    z_values: list[float] = []
-    spikes: list[int] = []
-
-    def derivatives(x_state: float, y_state: float, z_state: float) -> tuple[float, float, float]:
-        x2 = x_state * x_state
-        x3 = x2 * x_state
-        return (
-            y_state - x3 + b * x2 - z_state + current,
-            1.0 - 5.0 * x2 - y_state,
-            r * (s * (x_state - x_rest) - z_state),
-        )
-
-    for _ in range(steps):
-        x_prev = x
-        k1 = derivatives(x, y, z)
-        k2 = derivatives(
-            x + 0.5 * dt * k1[0],
-            y + 0.5 * dt * k1[1],
-            z + 0.5 * dt * k1[2],
-        )
-        k3 = derivatives(
-            x + 0.5 * dt * k2[0],
-            y + 0.5 * dt * k2[1],
-            z + 0.5 * dt * k2[2],
-        )
-        k4 = derivatives(x + dt * k3[0], y + dt * k3[1], z + dt * k3[2])
-        x = x + (dt / 6.0) * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0])
-        y = y + (dt / 6.0) * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1])
-        z = z + (dt / 6.0) * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2])
-        spikes.append(1 if (x >= threshold and x_prev < threshold) else 0)
-        x_values.append(x)
-        y_values.append(y)
-        z_values.append(z)
-
-    return _summarise({"x": x_values, "y": y_values, "z": z_values}, spikes)
 
 
 def _morris_lecar_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
