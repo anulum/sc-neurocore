@@ -23,80 +23,8 @@ pub use neuron_variant::NeuronVariant;
 mod population_runner;
 pub use population_runner::PopulationRunner;
 
-// ── ProjectionRunner ────────────────────────────────────────────────
-
-/// CSR-stored synaptic projection with optional axonal delay.
-pub struct ProjectionRunner {
-    pub src_pop: usize,
-    pub tgt_pop: usize,
-    row_offsets: Vec<usize>,
-    col_indices: Vec<usize>,
-    values: Vec<f64>,
-    delay_steps: usize,
-    delay_buffer: Vec<Vec<u8>>,
-    buf_idx: usize,
-}
-
-impl ProjectionRunner {
-    pub fn new(
-        src_pop: usize,
-        tgt_pop: usize,
-        row_offsets: Vec<usize>,
-        col_indices: Vec<usize>,
-        values: Vec<f64>,
-        delay_steps: usize,
-    ) -> Self {
-        let n_delay = if delay_steps > 0 { delay_steps } else { 0 };
-        let n_src = if row_offsets.is_empty() {
-            0
-        } else {
-            row_offsets.len() - 1
-        };
-        let delay_buffer = if n_delay > 0 {
-            vec![vec![0u8; n_src]; n_delay]
-        } else {
-            Vec::new()
-        };
-        Self {
-            src_pop,
-            tgt_pop,
-            row_offsets,
-            col_indices,
-            values,
-            delay_steps: n_delay,
-            delay_buffer,
-            buf_idx: 0,
-        }
-    }
-
-    /// Scatter spikes through CSR connectivity into target current buffer.
-    pub fn propagate(&mut self, src_spikes: &[u8], tgt_currents: &mut [f64]) {
-        let spikes = if self.delay_steps > 0 {
-            let delayed = &self.delay_buffer[self.buf_idx];
-            let out: Vec<u8> = delayed.clone();
-            self.delay_buffer[self.buf_idx] = src_spikes.to_vec();
-            self.buf_idx = (self.buf_idx + 1) % self.delay_steps;
-            out
-        } else {
-            src_spikes.to_vec()
-        };
-
-        let n_src = self.row_offsets.len().saturating_sub(1);
-        for i in 0..n_src {
-            if spikes.get(i).copied().unwrap_or(0) == 0 {
-                continue;
-            }
-            let start = self.row_offsets[i];
-            let end = self.row_offsets[i + 1];
-            for k in start..end {
-                let j = self.col_indices[k];
-                if j < tgt_currents.len() {
-                    tgt_currents[j] += self.values[k];
-                }
-            }
-        }
-    }
-}
+mod projection_runner;
+pub use projection_runner::ProjectionRunner;
 
 // ── SimResults ──────────────────────────────────────────────────────
 
@@ -778,21 +706,6 @@ mod tests {
             total_spikes > 0,
             "10 Izhikevich neurons must spike with I=10"
         );
-    }
-
-    #[test]
-    fn projection_propagates_spikes() {
-        let row_offsets = vec![0, 2, 4];
-        let col_indices = vec![0, 1, 0, 1];
-        let values = vec![5.0, 3.0, 2.0, 4.0];
-
-        let mut proj = ProjectionRunner::new(0, 1, row_offsets, col_indices, values, 0);
-        let src_spikes = vec![1u8, 0];
-        let mut tgt_currents = vec![0.0; 2];
-        proj.propagate(&src_spikes, &mut tgt_currents);
-
-        assert!((tgt_currents[0] - 5.0).abs() < 1e-10);
-        assert!((tgt_currents[1] - 3.0).abs() < 1e-10);
     }
 
     #[test]

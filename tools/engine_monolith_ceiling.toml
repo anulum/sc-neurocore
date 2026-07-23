@@ -23,7 +23,7 @@ max_lines = 204
 max_pyfunctions = 0
 
 [targets."engine/src/network_runner.rs"]
-max_lines = 1120
+max_lines = 1033
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/ai_optimized.rs"]
