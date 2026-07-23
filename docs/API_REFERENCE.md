@@ -18142,22 +18142,6 @@ One isolated hardware region on the fabric.
 - **is_free**()
 - **contains_addr**(addr)
 
-### Class `SchedulingPolicy`
-
-### Class `ScheduleSlot`
-One time slot in the schedule.
-
-- **end_cycle**()
-
-### Class `Scheduler`
-Multi-tenant temporal scheduler with preemption.
-
-Supports priority-based, round-robin, fair-share, and EDF scheduling.
-
-- **__init__**(policy)
-- **generate_schedule**(tenants, num_cycles)
-  - Generate a schedule for the given tenants.
-
 ### Class `MigrationRequest`
 Request to migrate a tenant between regions.
 
@@ -18322,6 +18306,26 @@ Any cross-region access is blocked and logged as a violation.
 Verify that no two tenants share address ranges.
 
 Returns list of violation descriptions (empty = sound).
+
+---
+
+## Module `hypervisor.scheduler`
+
+### Class `SchedulingPolicy`
+
+### Class `ScheduleSlot`
+One time slot in the schedule.
+
+- **end_cycle**()
+
+### Class `Scheduler`
+Multi-tenant temporal scheduler with preemption.
+
+Supports priority-based, round-robin, fair-share, and EDF scheduling.
+
+- **__init__**(policy)
+- **generate_schedule**(tenants, num_cycles)
+  - Generate a schedule for the given tenants.
 
 ---
 

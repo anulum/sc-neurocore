@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 1555
+    "test_files": 1556
   },
   "documentation": {
     "public_pages": [
@@ -3462,6 +3462,7 @@
       "tests/test_hypervisor/test_audit.py",
       "tests/test_hypervisor/test_hypervisor.py",
       "tests/test_hypervisor/test_isolation.py",
+      "tests/test_hypervisor/test_scheduler.py",
       "tests/test_hypervisor/test_tenant.py",
       "tests/test_hypothesis_fuzz.py",
       "tests/test_ibarz_tanaka_backends.py",

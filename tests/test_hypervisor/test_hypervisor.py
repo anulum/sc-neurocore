@@ -6,8 +6,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuromorphic Hypervisor Tests
 
-from typing import List
-
 import numpy as np
 import pytest
 
@@ -24,8 +22,6 @@ from sc_neurocore.hypervisor.hypervisor import (
     RegionState,
     ResourceAccounting,
     SLAMonitor,
-    Scheduler,
-    SchedulingPolicy,
     Tenant,
     TenantPriority,
     TenantState,
@@ -73,76 +69,6 @@ class TestHWRegion:
         assert r.contains_addr(0x1FFF) is True
         assert r.contains_addr(0x2000) is False
         assert r.contains_addr(0x0FFF) is False
-
-
-# ── Scheduler Tests ──────────────────────────────────────────────────
-
-
-class TestScheduler:
-    def _tenants(self) -> List[Tenant]:
-        t0 = _tenant("t0", prio=TenantPriority.NORMAL)
-        t0.active = True
-        t0.region_id = 0
-        t1 = _tenant("t1", prio=TenantPriority.HIGH)
-        t1.active = True
-        t1.region_id = 1
-        return [t0, t1]
-
-    def test_round_robin(self):
-        sched = Scheduler(SchedulingPolicy.ROUND_ROBIN)
-        sched.time_quantum_cycles = 100
-        slots = sched.generate_schedule(self._tenants(), 400)
-        assert len(slots) == 4
-        assert slots[0].tenant_id != slots[1].tenant_id
-
-    def test_priority(self):
-        sched = Scheduler(SchedulingPolicy.PRIORITY)
-        slots = sched.generate_schedule(self._tenants(), 1000)
-        assert len(slots) > 0
-        # Higher priority tenant should get scheduled first
-        assert slots[0].tenant_id == "t1"
-
-    def test_fair_share(self):
-        tenants = self._tenants()
-        tenants[0].qos.min_compute_share = 0.3
-        tenants[1].qos.min_compute_share = 0.7
-        sched = Scheduler(SchedulingPolicy.FAIR_SHARE)
-        slots = sched.generate_schedule(tenants, 1000)
-        total_t1 = sum(s.duration_cycles for s in slots if s.tenant_id == "t1")
-        assert total_t1 > 500
-
-    def test_edf(self):
-        tenants = self._tenants()
-        tenants[0].qos.max_latency_us = 1000
-        tenants[1].qos.max_latency_us = 100
-        sched = Scheduler(SchedulingPolicy.EDF)
-        slots = sched.generate_schedule(tenants, 1000)
-        assert slots[0].tenant_id == "t1"  # Lower latency first
-
-    def test_empty_tenants(self):
-        sched = Scheduler()
-        assert sched.generate_schedule([], 1000) == []
-
-    def test_priority_realtime_gets_half(self):
-        # A realtime tenant is granted a fixed 50% slice under priority
-        # scheduling rather than the even per-tenant share.
-        rt = _tenant("rt", prio=TenantPriority.REALTIME)
-        rt.active = True
-        rt.region_id = 0
-        normal = _tenant("nm", prio=TenantPriority.NORMAL)
-        normal.active = True
-        normal.region_id = 1
-        sched = Scheduler(SchedulingPolicy.PRIORITY)
-        slots = sched.generate_schedule([rt, normal], 1000)
-        rt_slot = next(s for s in slots if s.tenant_id == "rt")
-        assert rt_slot.duration_cycles == 500
-
-    def test_slot_continuity(self):
-        sched = Scheduler(SchedulingPolicy.ROUND_ROBIN)
-        sched.time_quantum_cycles = 100
-        slots = sched.generate_schedule(self._tenants(), 400)
-        for i in range(1, len(slots)):
-            assert slots[i].start_cycle == slots[i - 1].end_cycle
 
 
 # ── MigrationEngine Tests ────────────────────────────────────────────
