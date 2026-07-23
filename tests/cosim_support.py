@@ -58,6 +58,9 @@ from tests.cosim_reference_perfect_integrator import (
     _perfect_integrator_hand_spike_count as _perfect_integrator_hand_spike_count,
     _perfect_integrator_sawtooth_features as _perfect_integrator_sawtooth_features,
 )
+from tests.cosim_reference_quadratic_if import (
+    _quadratic_if_zero_current_features as _quadratic_if_zero_current_features,
+)
 from tests.cosim_reference_statistics import _summarise as _summarise
 
 
@@ -707,18 +710,6 @@ def _closed_form_features(
     values = [
         steady + (initial - steady) * math.exp(-(step * dt) / tau) for step in range(1, steps + 1)
     ]
-    return {
-        "spike_count": 0.0,
-        "first_spike_step": -1.0,
-        "final.v": values[-1],
-        "min.v": min(values),
-        "max.v": max(values),
-        "mean.v": math.fsum(values) / len(values),
-    }
-
-
-def _quadratic_if_zero_current_features(*, dt: float, steps: int) -> dict[str, float]:
-    values = [-1.0 / (1.0 + step * dt) for step in range(1, steps + 1)]
     return {
         "spike_count": 0.0,
         "first_spike_step": -1.0,

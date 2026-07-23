@@ -15,6 +15,7 @@ from pathlib import Path
 
 from tests import (
     cosim_reference_perfect_integrator,
+    cosim_reference_quadratic_if,
     cosim_reference_statistics,
     cosim_runtime,
     cosim_support,
@@ -35,6 +36,8 @@ _PERFECT_INTEGRATOR_NAMES = (
     "_perfect_integrator_sawtooth_features",
 )
 
+_QUADRATIC_IF_NAMES = ("_quadratic_if_zero_current_features",)
+
 
 def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
     for name in _RUNTIME_NAMES:
@@ -42,6 +45,8 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
 
     for name in _PERFECT_INTEGRATOR_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_perfect_integrator, name)
+    for name in _QUADRATIC_IF_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_quadratic_if, name)
     assert cosim_support._summarise is cosim_reference_statistics._summarise
 
 
@@ -70,7 +75,10 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     perfect_text = Path(cosim_reference_perfect_integrator.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in perfect_text
     assert len(perfect_text.splitlines()) <= 65
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 2_160
+    quadratic_if_text = Path(cosim_reference_quadratic_if.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in quadratic_if_text
+    assert len(quadratic_if_text.splitlines()) <= 30
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 2_150
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -89,3 +97,17 @@ def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> 
         node.name for node in statistics_tree.body if isinstance(node, ast.FunctionDef)
     }
     assert statistics_functions == {"_summarise"}
+
+
+def test_quadratic_if_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_QUADRATIC_IF_NAMES)
+
+    quadratic_if_tree = ast.parse(
+        Path(cosim_reference_quadratic_if.__file__).read_text(encoding="utf-8")
+    )
+    quadratic_if_functions = {
+        node.name for node in quadratic_if_tree.body if isinstance(node, ast.FunctionDef)
+    }
+    assert quadratic_if_functions == set(_QUADRATIC_IF_NAMES)
