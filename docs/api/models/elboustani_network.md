@@ -1,6 +1,6 @@
 # ElBoustaniNetwork
 
-**Module:** `engine/src/neurons/population.rs`
+**Module:** `engine/src/neurons/population/el_boustani_network.rs`
 **Reference:** El Boustani & Bhatt, *J Comput Neurosci* 26:313–333, 2009
 **Family:** E/I mean-field with NMDA-mediated bistability
 **State variables:** `r_e` (excitatory rate), `r_i` (inhibitory rate), `s` (NMDA gating)
@@ -481,7 +481,7 @@ on a single Zynq-7020 with room for inter-region coupling logic.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/population.rs:348` |
+| Rust implementation | `engine/src/neurons/population/el_boustani_network.rs:21` |
 | PyO3 wrapper | Yes (state: r_e, r_i, s) |
 | NetworkRunner wired | `NeuronVariant::ElBoustani` |
 | `create_neuron("ElBoustaniNetwork")` | Yes |

@@ -267,7 +267,7 @@ compute cycles for the 64x32 dense contract.
 | Kilinc-Bhatt map | 100k | 2.45 ms | **24.5 ns** | Adaptive threshold map |
 | Ermentrout-Kopell | 100k | 2.90 ms | **29.0 ns** | Canonical Type I (theta) |
 
-### Population / Mean-Field (`neurons/population.rs`) — Population and mean-field model group
+### Population / Mean-Field (`neurons/population/`) — Population and mean-field model group
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

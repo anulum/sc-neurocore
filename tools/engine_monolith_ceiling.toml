@@ -98,6 +98,26 @@ max_pyfunctions = 0
 max_lines = 34
 max_pyfunctions = 0
 
+[targets."engine/src/neurons/population.rs"]
+max_lines = 19
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/population/brunel_network.rs"]
+max_lines = 248
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/population/el_boustani_network.rs"]
+max_lines = 254
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/population/montbrio_mean_field.rs"]
+max_lines = 221
+max_pyfunctions = 0
+
+[targets."engine/src/neurons/population/tum_network.rs"]
+max_lines = 255
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/rate.rs"]
 max_lines = 35
 max_pyfunctions = 0

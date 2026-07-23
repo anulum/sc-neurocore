@@ -1,6 +1,6 @@
 # TUMNetwork
 
-**Module:** `engine/src/neurons/population.rs`
+**Module:** `engine/src/neurons/population/tum_network.rs`
 **Reference:** Tsodyks, Uziel & Markram, *J Neurosci* 20:RC50, 2000
 **Family:** Mean-field rate model with short-term synaptic plasticity (STP)
 **State variables:** `r` (population rate), `x` (available resources), `u` (release probability)
@@ -471,7 +471,7 @@ At 100 MHz:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/population.rs:241` |
+| Rust implementation | `engine/src/neurons/population/tum_network.rs:22` |
 | PyO3 wrapper | Yes (state: r, x, u) |
 | NetworkRunner wired | `NeuronVariant::TUM` |
 | `create_neuron("TUMNetwork")` | Yes |

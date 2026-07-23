@@ -1,6 +1,6 @@
 # MontbrioMeanField
 
-**Module:** `engine/src/neurons/population.rs`
+**Module:** `engine/src/neurons/population/montbrio_mean_field.rs`
 **Reference:** Montbrió, Pazó & Roxin, *Phys Rev X* 5:021028, 2015
 **Family:** Exact mean-field reduction of QIF neuron population
 **State variables:** `r` (population firing rate), `v` (mean membrane potential)
@@ -531,7 +531,7 @@ This validation is performed at the Python level (not in the Rust engine).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/population.rs:35` |
+| Rust implementation | `engine/src/neurons/population/montbrio_mean_field.rs:26` |
 | PyO3 wrapper | Yes (state: r, v) |
 | NetworkRunner wired | `NeuronVariant::MontbrioMPR` |
 | `create_neuron("MontbrioMeanField")` | Yes |

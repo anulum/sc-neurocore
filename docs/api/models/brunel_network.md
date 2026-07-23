@@ -1,6 +1,6 @@
 # BrunelNetwork
 
-**Module:** `engine/src/neurons/population.rs` (Rust) / `sc_neurocore_engine.BrunelNetwork` (PyO3)
+**Module:** `engine/src/neurons/population/brunel_network.rs` (Rust) / `sc_neurocore_engine.BrunelNetwork` (PyO3)
 **Reference:** Brunel, N. (2000). Dynamics of sparsely connected networks of excitatory and inhibitory spiking neurons. *J. Comput. Neurosci.* 8, 183–208.
 **Family:** Population mean-field — balanced E/I rate model
 **State variables:** `r_e` (excitatory population rate), `r_i` (inhibitory population rate)
@@ -310,7 +310,7 @@ The key simplification is the transfer function: Brunel's original paper derives
 
 ### Rust unit tests
 
-Tests in `engine/src/neurons/population.rs` and `engine/src/brunel.rs`:
+Tests in `engine/src/neurons/population/brunel_network.rs` and `engine/src/brunel.rs`:
 - Resting state stability (zero input → rates stay at initial)
 - Step response (positive input → r_e rises)
 - E/I balance (r_i tracks r_e with delay)
@@ -564,4 +564,4 @@ Brunel's contribution was to provide a complete phase diagram of all dynamical r
 
 ---
 
-*Generated from `engine/src/neurons/population.rs:126` (Rust source of truth). All equations verified against source code. Analytical fixed points computed independently and cross-checked. Benchmark from `cargo bench`.*
+*Generated from `engine/src/neurons/population/brunel_network.rs:24` (Rust source of truth). All equations verified against source code. Analytical fixed points computed independently and cross-checked. Benchmark from `cargo bench`.*
