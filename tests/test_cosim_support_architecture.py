@@ -23,6 +23,7 @@ from tests import (
     cosim_reference_hindmarsh_rose,
     cosim_reference_izhikevich2007,
     cosim_reference_mckean,
+    cosim_reference_mihalas_niebur,
     cosim_reference_morris_lecar,
     cosim_reference_perfect_integrator,
     cosim_reference_pernarowski,
@@ -84,6 +85,11 @@ _MCKEAN_NAMES = (
     "_mckean_rk4_features",
 )
 
+_MIHALAS_NIEBUR_NAMES = (
+    "_mihalas_niebur_driven_rk4_features",
+    "_mihalas_niebur_hand_spike_count",
+)
+
 _MORRIS_LECAR_NAMES = (
     "_morris_lecar_hand_spike_count",
     "_morris_lecar_rk4_features",
@@ -137,6 +143,12 @@ def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
     assert cosim_support._MCKEAN_PARAMS is cosim_reference_mckean._MCKEAN_PARAMS
     for name in _MCKEAN_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_mckean, name)
+    assert (
+        cosim_support._MIHALAS_NIEBUR_PARAMS
+        is cosim_reference_mihalas_niebur._MIHALAS_NIEBUR_PARAMS
+    )
+    for name in _MIHALAS_NIEBUR_NAMES:
+        assert getattr(cosim_support, name) is getattr(cosim_reference_mihalas_niebur, name)
     for name in _MORRIS_LECAR_NAMES:
         assert getattr(cosim_support, name) is getattr(cosim_reference_morris_lecar, name)
     for name in _PERFECT_INTEGRATOR_NAMES:
@@ -213,6 +225,9 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     mckean_text = Path(cosim_reference_mckean.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in mckean_text
     assert len(mckean_text.splitlines()) <= 105
+    mihalas_niebur_text = Path(cosim_reference_mihalas_niebur.__file__).read_text(encoding="utf-8")
+    assert "cosim_support" not in mihalas_niebur_text
+    assert len(mihalas_niebur_text.splitlines()) <= 155
     morris_lecar_text = Path(cosim_reference_morris_lecar.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in morris_lecar_text
     assert len(morris_lecar_text.splitlines()) <= 115
@@ -238,7 +253,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_200
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 1_080
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
@@ -371,6 +386,34 @@ def test_mckean_has_exact_definition_ownership() -> None:
         if isinstance(target, ast.Name)
     }
     assert owner_assignments == {"_MCKEAN_PARAMS"}
+
+
+def test_mihalas_niebur_has_exact_definition_ownership() -> None:
+    facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
+    facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
+    assert facade_functions.isdisjoint(_MIHALAS_NIEBUR_NAMES)
+    facade_assignments = {
+        target.id
+        for node in facade_tree.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert "_MIHALAS_NIEBUR_PARAMS" not in facade_assignments
+
+    owner_tree = ast.parse(
+        Path(cosim_reference_mihalas_niebur.__file__).read_text(encoding="utf-8")
+    )
+    owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
+    assert owner_functions == set(_MIHALAS_NIEBUR_NAMES)
+    owner_assignments = {
+        target.id
+        for node in owner_tree.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert owner_assignments == {"_MIHALAS_NIEBUR_PARAMS"}
 
 
 def test_morris_lecar_has_exact_definition_ownership() -> None:
