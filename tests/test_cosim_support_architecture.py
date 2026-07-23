@@ -53,6 +53,7 @@ _ADEX_NAMES = ("_adex_subthreshold_euler_features",)
 _DPI_NEURON_NAMES = (
     "_dpi_neuron_driven_euler_features",
     "_dpi_neuron_hand_spike_count",
+    "_dpi_neuron_verilog_q1616_trace",
 )
 
 _EXP_IF_NAMES = ("_exp_if_rk4_features",)
@@ -212,7 +213,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     assert len(adex_text.splitlines()) <= 80
     dpi_neuron_text = Path(cosim_reference_dpi_neuron.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in dpi_neuron_text
-    assert len(dpi_neuron_text.splitlines()) <= 120
+    assert len(dpi_neuron_text.splitlines()) <= 210
     exp_if_text = Path(cosim_reference_exp_if.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in exp_if_text
     assert len(exp_if_text.splitlines()) <= 80
@@ -272,7 +273,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     wilson_hr_text = Path(cosim_reference_wilson_hr.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
-    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 910
+    assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 825
 
 
 def test_perfect_integrator_and_statistics_have_exact_definition_ownership() -> None:
