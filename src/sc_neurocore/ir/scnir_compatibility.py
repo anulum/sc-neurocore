@@ -64,7 +64,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=(),
         source_metadata=(),
         hdl_support="external input bus",
-        audit_evidence=("tests/test_scnir_handoff_audit.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=("tests/test_scnir_handoff_audit_cli.py", "tests/test_nir_fpga_pipeline_e2_e_round_trip.py"),
         limitation="Boundary node; it does not create an SC-NIR stream by itself.",
     ),
     SCNIRCompatibilityRow(
@@ -75,7 +75,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=(),
         source_metadata=(),
         hdl_support="top-level output bus",
-        audit_evidence=("tests/test_scnir_handoff_audit.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=("tests/test_scnir_handoff_audit_cli.py", "tests/test_nir_fpga_pipeline_e2_e_round_trip.py"),
         limitation="Boundary node; output semantics come from the upstream population stream.",
     ),
     SCNIRCompatibilityRow(
@@ -88,7 +88,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         hdl_support="canonical ODE module plus direct or AER interconnect",
         audit_evidence=(
             "tests/test_nir_bridge/test_fpga_scnir_base.py",
-            "tests/test_nir_fpga_pipeline.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
         ),
         limitation="Shared RTL neuron module requires homogeneous per-neuron parameters.",
     ),
@@ -100,7 +100,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=spike", "encoding=unipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="canonical ODE module plus direct or AER interconnect",
-        audit_evidence=("tests/test_nir_fpga_pipeline.py",),
+        audit_evidence=("tests/test_nir_fpga_pipeline_e2_e_round_trip.py",),
         limitation="Shared RTL neuron module requires homogeneous per-neuron parameters.",
     ),
     SCNIRCompatibilityRow(
@@ -113,7 +113,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         hdl_support="canonical ODE module with direct analogue-state MAC routing",
         audit_evidence=(
             "tests/test_nir_bridge/test_fpga_scnir_base.py",
-            "tests/test_nir_fpga_pipeline.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
         ),
         limitation="Analogue-state streams stay on direct fixed-point MAC routes in mixed graphs.",
     ),
@@ -139,7 +139,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=spike", "encoding=unipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="canonical two-state ODE module plus direct or AER interconnect",
-        audit_evidence=("tests/test_nir_fpga_pipeline.py",),
+        audit_evidence=("tests/test_nir_fpga_pipeline_e2_e_round_trip.py",),
         limitation="Shared RTL neuron module requires homogeneous tau_syn, tau_mem, r, and w_in.",
     ),
     SCNIRCompatibilityRow(
@@ -152,7 +152,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         hdl_support="canonical two-state ODE module with direct analogue-state MAC routing",
         audit_evidence=(
             "tests/test_nir_bridge/test_fpga_scnir_base.py",
-            "tests/test_nir_fpga_pipeline.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
         ),
         limitation="Analogue-state streams stay on direct fixed-point MAC routes in mixed graphs.",
     ),
@@ -166,7 +166,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         hdl_support="weight ROM plus direct or weighted-event interconnect",
         audit_evidence=(
             "tests/test_nir_bridge/test_fpga_scnir_base.py",
-            "tests/test_nir_fpga_pipeline.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
         ),
         limitation="The downstream neuron population owns the connection stream layer.",
     ),
@@ -180,7 +180,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         hdl_support="weight ROM plus direct or weighted-event interconnect",
         audit_evidence=(
             "tests/test_nir_bridge/test_fpga_scnir_base.py",
-            "tests/test_nir_fpga_pipeline.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
         ),
         limitation="Parser-inserted recurrent unit-delay streams are represented as delay_steps=1.",
     ),
@@ -245,7 +245,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         hdl_support="direct-interconnect source register chains with per-source delay taps",
         audit_evidence=(
             "tests/test_nir_bridge/test_fpga_scnir_base.py",
-            "tests/test_nir_fpga_pipeline.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
         ),
         limitation=(
             "Delay is hardware-closed for scalar and exact source-width vector delays "
@@ -359,7 +359,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
             "tests/test_nir_bridge/test_neuron_graph_hierarchy.py",
             "tests/test_nir_bridge/test_fpga_scnir_hierarchy.py",
             "tests/test_cli_nir.py",
-            "tests/test_scnir_handoff_audit.py",
+            "tests/test_scnir_handoff_audit_cli.py",
         ),
         limitation=(
             "Single-port and exact one-edge-per-port nested graphs, including exact "
