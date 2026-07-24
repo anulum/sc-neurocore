@@ -228,3 +228,5 @@ hdl/formal/catalogue/*/
 
 # Local demo outputs (DM-01/02)
 examples/output/
+
+docs/internal/**
