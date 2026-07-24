@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_support import *  # noqa: F403
 
+
 class TestFixedPointComparison:
     def test_sc_beats_fp_at_10pct_error(self):
         """SC should degrade less than 16-bit fixed-point at 10% BER."""

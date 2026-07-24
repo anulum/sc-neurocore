@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestSearchSpace:
     def test_defaults(self) -> None:
         sp = SearchSpace(n_inputs=64, n_outputs=10)

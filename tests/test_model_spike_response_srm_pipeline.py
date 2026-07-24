@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMPipeline:
     def test_population(self):
         assert Population(SpikeResponseNeuron, n=10, label="srm").n == 10

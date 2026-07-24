@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_profiler_support import *  # noqa: F403
 
+
 class TestSpikeProfilerBasic:
     def test_empty_report(self):
         p = SpikeProfiler()

@@ -16,10 +16,14 @@ import types
 import sc_neurocore.drivers.sc_neurocore_driver as pynq_driver
 from sc_neurocore.drivers.physical_twin import PhysicalTwinBridge
 from sc_neurocore.drivers.sc_neurocore_driver import SC_NeuroCore_Driver, RealityHardwareError
-if __name__ == "__main__":
-    test_driver_emulation_mode()
-    test_driver_write_layer_params()
-    test_driver_run_step()
-    print("All driver tests passed!")
 
-__all__ = ['pytest', 'np', 'sys', 'types', 'pynq_driver', 'PhysicalTwinBridge', 'SC_NeuroCore_Driver', 'RealityHardwareError']
+__all__ = [
+    "pytest",
+    "np",
+    "sys",
+    "types",
+    "pynq_driver",
+    "PhysicalTwinBridge",
+    "SC_NeuroCore_Driver",
+    "RealityHardwareError",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_observers_support import *  # noqa: F403
 
+
 class TestMinMaxObserver:
     def test_tracks_running_range(self) -> None:
         obs = MinMaxObserver(8)

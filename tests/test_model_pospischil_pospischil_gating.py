@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilGating:
     def test_gating_bounded(self):
         """m, h, n, p should stay approximately in [0, 1]."""

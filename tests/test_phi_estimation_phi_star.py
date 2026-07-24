@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 class TestPhiStar:
     def test_independent_channels_low_phi(self) -> None:
         rng = np.random.RandomState(42)

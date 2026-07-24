@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGAnalytical:
     def test_rk4_one_step_matches_candidate(self) -> None:
         """Default path commits the finite two-state RK4 candidate."""

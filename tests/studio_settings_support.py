@@ -45,6 +45,7 @@ def _audit_event_hash(row: dict[str, Any]) -> str:
     ).encode("utf-8")
     return hashlib.sha256(canonical_row).hexdigest()
 
+
 __all__ = [
     "UTC",
     "fastapi",

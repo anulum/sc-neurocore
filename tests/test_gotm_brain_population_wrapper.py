@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestPopulationWrapper:
     def test_step_returns_int(self) -> None:
         from sc_neurocore.quantum_cognition.fisher_posner import (

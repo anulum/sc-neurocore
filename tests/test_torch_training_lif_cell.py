@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestLIFCell:
     def test_forward_shape(self):
         cell = LIFCell(beta=0.9)

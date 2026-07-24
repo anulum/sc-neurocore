@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestAlignmentEnforcement:
     def test_unaligned_ndarray_raises(self):
         """

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantisation_pipeline_support import *  # noqa: F403
 
+
 class TestFixedPointQuantizationGuards:
     """Fail-closed branches in the fixed-point quantisation backend."""
 

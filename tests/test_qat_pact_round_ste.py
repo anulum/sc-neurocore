@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_pact_support import *  # noqa: F403
 
+
 class TestRoundSTE:
     def test_forward_rounds(self) -> None:
         x = torch.tensor([0.2, 0.8, -0.4])

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestEncodingOptimizer:
     def test_profile(self):
         opt = EncodingOptimizer(T=16)

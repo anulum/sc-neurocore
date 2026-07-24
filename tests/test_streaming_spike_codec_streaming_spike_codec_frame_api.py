@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.streaming_spike_codec_support import *  # noqa: F403
 
+
 class TestStreamingSpikeCodecFrameAPI:
     def test_single_frame_roundtrip(self):
         rng = np.random.RandomState(42)

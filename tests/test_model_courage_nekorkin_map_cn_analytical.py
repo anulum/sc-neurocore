@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_courage_nekorkin_map_support import *  # noqa: F403
 
+
 class TestCNAnalytical:
     def test_breakpoints_formula(self):
         n = CourageNekorkinMapNeuron()

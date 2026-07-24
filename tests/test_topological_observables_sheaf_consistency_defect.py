@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topological_observables_support import *  # noqa: F403
 
+
 class TestSheafConsistencyDefect:
     def test_synchronised_zero(self):
         """All phases equal → defect = 0."""

@@ -24,4 +24,13 @@ from sc_neurocore.compiler.mixed_dense_kernel import (
     mixed_dense_forward_batch_q88_q1616,
 )
 
-__all__ = ['np', 'npt', 'pytest', 'kernel', 'MixedDenseBatchResult', 'available_backends', 'mixed_dense_forward_batch', 'mixed_dense_forward_batch_q88_q1616']
+__all__ = [
+    "np",
+    "npt",
+    "pytest",
+    "kernel",
+    "MixedDenseBatchResult",
+    "available_backends",
+    "mixed_dense_forward_batch",
+    "mixed_dense_forward_batch_q88_q1616",
+]

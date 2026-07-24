@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.aer_spike_codec_support import *  # noqa: F403
 
+
 class TestAERSpikeCodecEdgeCases:
     def test_invalid_magic_raises(self):
         codec = AERSpikeCodec()

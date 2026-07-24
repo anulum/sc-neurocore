@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
 
+
 class TestCSTypeI:
     def test_fires_at_sufficient_current(self):
         n = ConnorStevensNeuron()

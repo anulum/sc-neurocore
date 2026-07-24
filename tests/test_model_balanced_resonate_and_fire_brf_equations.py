@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
 
+
 class TestBRFEquations:
     def test_construction_defaults_match_paper_algorithm(self) -> None:
         neuron = BalancedResonateAndFireNeuron()

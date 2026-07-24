@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.expif_backends_support import *  # noqa: F403
 
+
 def test_every_acceleration_backend_is_executable() -> None:
     """A fidelity-closure run exposes all four real compiled lanes without skips."""
     assert expif._HAS_RUST

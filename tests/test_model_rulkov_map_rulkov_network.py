@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rulkov_map_support import *  # noqa: F403
 
+
 class TestRulkovNetwork:
     def test_population(self):
         assert Population(RulkovMapNeuron, n=10, label="rulkov").n == 10

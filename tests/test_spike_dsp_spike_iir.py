@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_dsp_support import *  # noqa: F403
 
+
 class TestSpikeIIR:
     def test_basic(self):
         iir = SpikeIIR(decay=0.9, threshold=1.0, gain=0.6)

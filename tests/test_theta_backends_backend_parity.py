@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from tests.theta_backends_support import *  # noqa: F403
 
+
 def test_every_acceleration_backend_is_executable() -> None:
     """Expose all four real compiled lanes without a skipped parity surface."""
     assert backends._HAS_RUST
     assert backends.ensure_julia_loaded()
     assert backends.ensure_go_loaded()
     assert backends.ensure_mojo_loaded()
+
 
 @pytest.mark.parametrize(("current", "expected_spikes"), _GOLDENS)
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
@@ -31,6 +33,7 @@ def test_compiled_backends_match_python_golden(
     assert spikes == reference_spikes
     _assert_phase_parity(trace, reference_trace)
     _assert_phase_parity(state, reference_state)
+
 
 def test_rust_safety_executable_matches_python_trace() -> None:
     """Run the actual accel/rust/safety Theta module against the Python trace."""
@@ -67,6 +70,7 @@ def test_rust_safety_executable_matches_python_trace() -> None:
     assert sum(rust_events) == python_spikes
     _assert_phase_parity(rust_trace, python_trace)
 
+
 @pytest.mark.parametrize("backend", ("julia", "go", "mojo"))
 def test_full_parameter_contract_matches_python(backend: str) -> None:
     """Carry phase and timestep across every full-parameter native ABI."""
@@ -78,6 +82,7 @@ def test_full_parameter_contract_matches_python(backend: str) -> None:
     assert spikes == reference_spikes
     _assert_phase_parity(trace, reference_trace)
     _assert_phase_parity(state, reference_state)
+
 
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_empty_run_preserves_state(backend: str) -> None:

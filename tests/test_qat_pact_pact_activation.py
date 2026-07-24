@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_pact_support import *  # noqa: F403
 
+
 class TestPACTActivation:
     def test_output_within_clip(self) -> None:
         act = PACTActivation(n_bits=4, alpha_init=2.0)

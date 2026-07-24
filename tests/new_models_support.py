@@ -11,4 +11,4 @@ from __future__ import annotations
 from sc_neurocore.neurons.models.brunel_wang import BrunelWangNeuron
 from sc_neurocore.neurons.models.srm0 import SRM0Neuron
 
-__all__ = ['BrunelWangNeuron', 'SRM0Neuron']
+__all__ = ["BrunelWangNeuron", "SRM0Neuron"]

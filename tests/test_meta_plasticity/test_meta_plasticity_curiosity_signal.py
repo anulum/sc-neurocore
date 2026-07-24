@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestCuriositySignal:
     def test_first_update_high_curiosity(self):
         cs = CuriositySignal()

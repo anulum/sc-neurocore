@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestTrainingCells:
     def test_expif_cell(self):
         from sc_neurocore.training.snn_modules import ExpIFCell

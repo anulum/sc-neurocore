@@ -19,4 +19,12 @@ from sc_neurocore.stochastic_doctor.diagnostics import (
     compute_scc,
 )
 
-__all__ = ['json', 'unittest', 'np', 'AuditSeverity', 'DriftDetector', 'StochasticDoctor', 'compute_scc']
+__all__ = [
+    "json",
+    "unittest",
+    "np",
+    "AuditSeverity",
+    "DriftDetector",
+    "StochasticDoctor",
+    "compute_scc",
+]

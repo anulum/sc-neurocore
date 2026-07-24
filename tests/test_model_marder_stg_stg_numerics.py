@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGNumerics:
     @pytest.mark.parametrize("dt", [0.025, 0.05])
     def test_dt_stability(self, dt: float):

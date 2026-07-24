@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bit_true_kernel_support import *  # noqa: F403
 
+
 class TestModesAndValidation:
     def test_nearest_rounding_uses_sign_aware_bias_in_c(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", rounding="nearest")

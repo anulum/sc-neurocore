@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_builder_support import *  # noqa: F403
 
+
 class TestEquationNeuron:
     def test_lif_from_dict(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron

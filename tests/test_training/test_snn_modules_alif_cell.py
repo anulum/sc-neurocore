@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestALIFCell:
     def test_adaptation_increases_threshold(self):
         alif = ALIFCell(beta=0.0, threshold=1.0, rho=0.9, beta_adapt=1.0)

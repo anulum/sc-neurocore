@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from crosstalk_support import *  # noqa: F403
 
+
 class TestAnalyzeBank:
     @pytest.fixture
     def model(self) -> CrosstalkModel:

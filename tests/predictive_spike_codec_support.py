@@ -12,4 +12,4 @@ import numpy as np
 import pytest
 from sc_neurocore.spike_codec import PredictiveSpikeCodec, PredictiveCompressionResult
 
-__all__ = ['np', 'pytest', 'PredictiveSpikeCodec', 'PredictiveCompressionResult']
+__all__ = ["np", "pytest", "PredictiveSpikeCodec", "PredictiveCompressionResult"]

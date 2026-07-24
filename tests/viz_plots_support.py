@@ -11,6 +11,7 @@ from __future__ import annotations
 """Tests for viz.plots — one per plot function, verifying Axes return."""
 import numpy as np
 import pytest
+
 matplotlib = pytest.importorskip("matplotlib")
 matplotlib.use("Agg")
 from sc_neurocore.network.population import Population
@@ -18,6 +19,8 @@ from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.monitor import SpikeMonitor, StateMonitor
 from sc_neurocore.network.network import Network
 from sc_neurocore.viz import plots
+
+
 @pytest.fixture()
 def small_network():
     """Build a small network, run it briefly, return (net, spike_mon, state_mon, proj)."""
@@ -30,4 +33,17 @@ def small_network():
     net.run(duration=0.05, dt=0.001)
     return net, sm, st, proj
 
-__all__ = ['np', 'pytest', 'matplotlib', 'Population', 'Projection', 'SpikeMonitor', 'StateMonitor', 'Network', 'plots', 'small_network', '__all__']
+
+__all__ = [
+    "np",
+    "pytest",
+    "matplotlib",
+    "Population",
+    "Projection",
+    "SpikeMonitor",
+    "StateMonitor",
+    "Network",
+    "plots",
+    "small_network",
+    "__all__",
+]

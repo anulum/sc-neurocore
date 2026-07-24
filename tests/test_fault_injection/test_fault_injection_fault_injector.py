@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fault_injection_support import *  # noqa: F403
 
+
 class TestFaultInjector(unittest.TestCase):
     def setUp(self):
         self.injector = FaultInjector(seed=42)

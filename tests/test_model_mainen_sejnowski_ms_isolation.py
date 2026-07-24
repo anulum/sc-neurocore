@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mainen_sejnowski_support import *  # noqa: F403
 
+
 class TestMSIsolation:
     def test_defaults(self):
         n = MainenSejnowskiNeuron()

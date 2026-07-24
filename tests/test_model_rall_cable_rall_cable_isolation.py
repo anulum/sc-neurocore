@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCableIsolation:
     def test_construction_defaults(self) -> None:
         n = RallCableNeuron()

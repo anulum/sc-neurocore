@@ -17,4 +17,4 @@ from sc_neurocore.spike_codec.registry import (
     CODEC_REGISTRY,
 )
 
-__all__ = ['np', 'pytest', 'get_codec', 'list_codecs', 'recommend_codec', 'CODEC_REGISTRY']
+__all__ = ["np", "pytest", "get_codec", "list_codecs", "recommend_codec", "CODEC_REGISTRY"]

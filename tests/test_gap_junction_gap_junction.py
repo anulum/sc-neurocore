@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gap_junction_support import *  # noqa: F403
 
+
 class TestGapJunction:
     @pytest.mark.parametrize(
         ("field", "value"),

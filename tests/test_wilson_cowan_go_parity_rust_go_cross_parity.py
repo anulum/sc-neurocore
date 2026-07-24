@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_go_parity_support import *  # noqa: F403
 
+
 class TestRustGoCrossParity:
     def test_rust_go_identical(self):
         rs = pytest.importorskip(

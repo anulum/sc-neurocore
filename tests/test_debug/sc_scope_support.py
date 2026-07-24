@@ -24,6 +24,8 @@ from sc_neurocore.debug.sc_scope import (
     TriggerType,
     compute_scc,
 )
+
+
 def _sample(layer: int = 0, density: float = 0.5, n_words: int = 8) -> BitstreamSample:
     rng = np.random.default_rng(42 + layer)
     threshold = int(density * 0xFFFF_FFFF)
@@ -36,4 +38,21 @@ def _sample(layer: int = 0, density: float = 0.5, n_words: int = 8) -> Bitstream
         words=packed,
     )
 
-__all__ = ['np', 'AnalysisWindow', 'BitstreamSample', 'LayerErrorBudget', 'LiveAnalyzer', 'ScopeRenderer', 'ScopeSession', 'TransportBackend', 'TransportConfig', 'TransportType', 'TriggerCondition', 'TriggerEngine', 'TriggerType', 'compute_scc', '_sample']
+
+__all__ = [
+    "np",
+    "AnalysisWindow",
+    "BitstreamSample",
+    "LayerErrorBudget",
+    "LiveAnalyzer",
+    "ScopeRenderer",
+    "ScopeSession",
+    "TransportBackend",
+    "TransportConfig",
+    "TransportType",
+    "TriggerCondition",
+    "TriggerEngine",
+    "TriggerType",
+    "compute_scc",
+    "_sample",
+]

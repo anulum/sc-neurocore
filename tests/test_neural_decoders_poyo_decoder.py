@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neural_decoders_support import *  # noqa: F403
 
+
 class TestPOYODecoder:
     def test_defaults(self) -> None:
         dec = POYODecoder()

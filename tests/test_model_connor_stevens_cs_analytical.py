@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
 
+
 class TestCSAnalytical:
     def test_100_substeps_per_call(self):
         """dt=0.01 → 1/0.01 = 100 sub-steps per step() call."""

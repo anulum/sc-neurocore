@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramDynamics:
     def test_subthreshold_silent(self):
         n = BertramPhantomBurster()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gutkin_ermentrout_support import *  # noqa: F403
 
+
 class TestGEPipeline:
     def test_population(self) -> None:
         assert Population(GutkinErmentroutNeuron, n=10, label="ge").n == 10

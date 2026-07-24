@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_booth_rinzel_support import *  # noqa: F403
 
+
 class TestBoothRinzelAnalysis:
     def _get_binary_train(self):
         n = BoothRinzelNeuron()

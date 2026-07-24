@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.network_execution_paths_support import *  # noqa: F403
 
+
 def test_auto_backend_uses_python_for_state_monitors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

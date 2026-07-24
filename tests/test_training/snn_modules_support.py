@@ -10,6 +10,7 @@ from __future__ import annotations
 
 """Tests for differentiable SNN modules."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.training.snn_modules import (
     ALIFCell,
@@ -28,4 +29,22 @@ from sc_neurocore.training.snn_modules import (
 )
 from sc_neurocore.training.surrogate import superspike
 
-__all__ = ['pytest', 'torch', 'ALIFCell', 'AdExCell', 'AlphaCell', 'ConvSpikingNet', 'ExpIFCell', 'IFCell', 'LapicqueCell', 'LIFCell', 'RecurrentLIFCell', 'SCWeightNoiseModel', 'SecondOrderLIFCell', 'SpikingNet', 'SynapticCell', 'superspike', '__all__']
+__all__ = [
+    "pytest",
+    "torch",
+    "ALIFCell",
+    "AdExCell",
+    "AlphaCell",
+    "ConvSpikingNet",
+    "ExpIFCell",
+    "IFCell",
+    "LapicqueCell",
+    "LIFCell",
+    "RecurrentLIFCell",
+    "SCWeightNoiseModel",
+    "SecondOrderLIFCell",
+    "SpikingNet",
+    "SynapticCell",
+    "superspike",
+    "__all__",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.aer_spike_codec_support import *  # noqa: F403
 
+
 class TestAERSpikeCodecRoundtrip:
     def test_roundtrip_sparse(self):
         rng = np.random.RandomState(42)

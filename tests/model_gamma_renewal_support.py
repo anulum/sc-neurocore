@@ -20,13 +20,33 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
+
+
 class FixedRng:
     def __init__(self, value: float):
         self.value = value
 
     def random(self) -> float:
         return self.value
+
+
 def _run(neuron: GammaRenewalNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['time', 'warnings', 'np', 'pytest', 'GammaRenewalNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'FixedRng', '_run']
+
+__all__ = [
+    "time",
+    "warnings",
+    "np",
+    "pytest",
+    "GammaRenewalNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "FixedRng",
+    "_run",
+]

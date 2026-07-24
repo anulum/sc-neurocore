@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ai_optimized_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("cls", ALL_CLASSES, ids=lambda c: c.__name__)
 class TestAIOptimizedCommon:
     """Tests applied to all 8 AI-optimised models."""

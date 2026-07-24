@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
 
+
 class TestArcaneIsolation:
     def test_defaults(self):
         n = ArcaneNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_reporting_support import *  # noqa: F403
 
+
 class TestCorrelationLoadBalancer:
     def test_compute_load_metrics(self) -> None:
         g = _make_chain_graph(10)

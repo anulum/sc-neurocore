@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tc_lif_support import *  # noqa: F403
 
+
 class TestTCLIFFI:
     def test_zero_input_silent(self):
         n = TwoCompartmentLIFNeuron()

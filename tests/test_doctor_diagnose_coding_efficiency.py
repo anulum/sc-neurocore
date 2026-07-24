@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnoseCodingEfficiency:
     def test_overprovisioned_coding(self):
         r = diagnose([(10, 8)], target="artix7", bitstream_length=512)

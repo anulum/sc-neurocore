@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestRecombination:
     def test_recombination_callable(self):
         phi = analytical_singlet_recombination(1.0, HF1, HF2, omega_0=0.5, k_recomb=0.1, n_t=5)

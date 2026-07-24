@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gutkin_ermentrout_support import *  # noqa: F403
 
+
 class TestGEAnalytical:
     def test_m_inf_boltzmann(self) -> None:
         """m_inf = 1/(1+exp(-(v+20)/15))."""

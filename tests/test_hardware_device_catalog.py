@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hardware_support import *  # noqa: F403
 
+
 class TestDeviceCatalog:
     def test_all_families_have_specs(self):
         for family in DeviceFamily:

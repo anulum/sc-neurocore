@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_energy_lif_support import *  # noqa: F403
 
+
 class TestEnergyLIFIsolation:
     def test_construction(self):
         n = EnergyLIFNeuron()

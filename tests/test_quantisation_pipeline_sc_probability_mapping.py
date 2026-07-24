@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantisation_pipeline_support import *  # noqa: F403
 
+
 class TestSCProbabilityMapping:
     def test_output_in_zero_one(self):
         rng = np.random.default_rng(42)

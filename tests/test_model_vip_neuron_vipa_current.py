@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_vip_neuron_support import *  # noqa: F403
 
+
 class TestVIPACurrent:
     def test_a_current_block_changes_firing(self):
         intact = _spikes(VIPNeuron(), 1.0, 40000)

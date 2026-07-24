@@ -14,4 +14,4 @@ from sc_neurocore.hdl_gen.verilog_generator import (
     emit_sources_from_ir,
 )
 
-__all__ = ['VerilogGenerator', 'emit_sources_from_ir']
+__all__ = ["VerilogGenerator", "emit_sources_from_ir"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Analysis:
     def test_spike_count(self):
         """At least 1 transient spike in a long run."""

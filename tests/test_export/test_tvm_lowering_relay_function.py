@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tvm_lowering_support import *  # noqa: F403
 
+
 class TestRelayFunction(unittest.TestCase):
     def test_to_relay_text(self):
         func = RelayFunction(

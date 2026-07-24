@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanPipeline:
     def test_population_creates(self):
         assert Population(WilsonCowanUnit, n=10, label="wc").n == 10

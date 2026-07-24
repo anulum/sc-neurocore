@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestEquationToFPGA:
     def test_one_liner(self):
         neuron, verilog = equation_to_fpga(

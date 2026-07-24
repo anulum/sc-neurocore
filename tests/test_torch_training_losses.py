@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestLosses:
     def test_spike_count_loss(self):
         counts = torch.randn(8, 10, requires_grad=True)

@@ -34,13 +34,18 @@ from sc_neurocore.quantum_cognition.gotm_brain import (
     LearningStep,
 )
 from sc_neurocore.quantum_cognition.fisher_posner import HybridFisherPosnerLIF
+
 _GOTM_MODULE = "sc_neurocore.quantum_cognition.gotm_brain"
+
+
 class _GotmBrainModule(Protocol):
     """Typed view of a dynamically reloaded GOTM brain module."""
 
     HAS_LLM: bool
     GOTMBrain: type[GOTMBrain]
     _LLMEndpoint: type[object] | None
+
+
 class _BlockingLLMFinder(importlib.abc.MetaPathFinder):
     """Import hook that makes the local ``llm`` module unavailable."""
 
@@ -54,6 +59,8 @@ class _BlockingLLMFinder(importlib.abc.MetaPathFinder):
         if fullname == "llm":
             raise ModuleNotFoundError("blocked test llm module")
         return None
+
+
 class _FixedSpikeNeuron:
     """Minimal neuron stub that returns a configured spike flag."""
 
@@ -65,6 +72,8 @@ class _FixedSpikeNeuron:
     def step(self, _current: float) -> tuple[float, bool]:
         """Return a deterministic voltage/spike pair."""
         return 0.0, self._spiked
+
+
 @pytest.fixture
 def tmp_repo(tmp_path: Path) -> Path:
     """Create a minimal fake GOTM repository for testing."""
@@ -104,4 +113,32 @@ def tmp_repo(tmp_path: Path) -> Path:
     (cache / "junk.pyc").write_bytes(b"\x00" * 100)
     return tmp_path
 
-__all__ = ['importlib', 'sys', 'types', 'Path', 'Protocol', 'cast', 'np', 'pytest', 'ContentChunk', '_chunk_text', '_extract_python_docstrings', '_extract_rust_doc_comments', '_should_skip_dir', 'embed_chunks', 'embed_tfidf', 'index_file', 'index_gotm_repo', 'GOTMBrain', 'LearningStep', 'HybridFisherPosnerLIF', '_GOTM_MODULE', '_GotmBrainModule', '_BlockingLLMFinder', '_FixedSpikeNeuron', 'tmp_repo', '__all__']
+
+__all__ = [
+    "importlib",
+    "sys",
+    "types",
+    "Path",
+    "Protocol",
+    "cast",
+    "np",
+    "pytest",
+    "ContentChunk",
+    "_chunk_text",
+    "_extract_python_docstrings",
+    "_extract_rust_doc_comments",
+    "_should_skip_dir",
+    "embed_chunks",
+    "embed_tfidf",
+    "index_file",
+    "index_gotm_repo",
+    "GOTMBrain",
+    "LearningStep",
+    "HybridFisherPosnerLIF",
+    "_GOTM_MODULE",
+    "_GotmBrainModule",
+    "_BlockingLLMFinder",
+    "_FixedSpikeNeuron",
+    "tmp_repo",
+    "__all__",
+]

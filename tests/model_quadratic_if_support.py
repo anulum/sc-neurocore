@@ -20,8 +20,12 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _run(neuron: QuadraticIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _exact_qif_candidate(neuron: QuadraticIFNeuron, current: float) -> tuple[float, bool]:
     if current > 0.0:
         root_i = np.sqrt(current)
@@ -48,7 +52,22 @@ def _exact_qif_candidate(neuron: QuadraticIFNeuron, current: float) -> tuple[flo
         return neuron.v_reset, True
     next_v = root_i * (1.0 + evolved_ratio) / denominator
     return (neuron.v_reset, True) if next_v >= neuron.v_peak else (float(next_v), False)
+
+
 def _euler_candidate(neuron: QuadraticIFNeuron, current: float) -> float:
     return neuron.v + (neuron.v * neuron.v + current) * neuron.dt
 
-__all__ = ['np', 'pytest', 'QuadraticIFNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run', '_exact_qif_candidate', '_euler_candidate']
+
+__all__ = [
+    "np",
+    "pytest",
+    "QuadraticIFNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_run",
+    "_exact_qif_candidate",
+    "_euler_candidate",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_director_support import *  # noqa: F403
 
+
 class TestReport:
     def test_report_healthy(self):
         sub = _make_substrate()

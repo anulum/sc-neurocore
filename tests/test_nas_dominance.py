@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestDominance:
     def test_dominates(self) -> None:
         a = Architecture(

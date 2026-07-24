@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
 
+
 class TestKLIFPipeline:
     def test_population(self):
         assert Population(KLIFNeuron, n=10, label="klif").n == 10

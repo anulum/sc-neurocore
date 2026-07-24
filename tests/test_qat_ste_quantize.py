@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_support import *  # noqa: F403
 
+
 class TestSteQuantize:
     def test_symmetric_roundtrip(self):
         x = np.array([0.0, 0.5, -0.5, 1.0, -1.0])

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.lds_decorrelation_support import *  # noqa: F403
 
+
 class TestGenerateDecorrelatedBitstreams:
     def test_output_shape_1d(self):
         probs = np.array([0.3, 0.5, 0.7])

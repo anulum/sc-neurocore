@@ -25,10 +25,24 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _run(
     neuron: PinskyRinzelNeuron, current_soma: float, steps: int, current_dend: float = 0.0
 ) -> list[int]:
     """Return the indices of steps on which a somatic spike was registered."""
     return [t for t in range(steps) if neuron.step(current_soma, current_dend) == 1]
 
-__all__ = ['np', 'pytest', 'PinskyRinzelNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run', '__all__']
+
+__all__ = [
+    "np",
+    "pytest",
+    "PinskyRinzelNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_run",
+    "__all__",
+]

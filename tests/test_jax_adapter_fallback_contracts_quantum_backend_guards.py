@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestQuantumBackendGuards:
     def test_aer_without_qiskit(self):
         with patch("sc_neurocore.quantum.hardware_bridge.HAS_QISKIT", False):

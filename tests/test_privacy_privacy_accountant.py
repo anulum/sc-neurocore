@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.privacy_support import *  # noqa: F403
 
+
 class TestPrivacyAccountant:
     def test_init(self):
         pa = PrivacyAccountant(target_epsilon=2.0)

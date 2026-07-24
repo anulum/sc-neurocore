@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hypervisor_support import *  # noqa: F403
 
+
 class TestNoFirewall:
     def test_firewall_disabled(self):
         hv = Hypervisor(HypervisorConfig(enable_firewall=False))

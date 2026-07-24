@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
 
+
 def test_l1_adapter_contract():
     params = L1_HolonomicParameters(n_qubits=10)
     adapter = L1_QuantumAdapter(params)
@@ -114,5 +115,3 @@ def test_l1_adapter_consumes_metabolic_drive():
     adapter = L1_QuantumAdapter(L1_HolonomicParameters(n_qubits=4))
     out = adapter.step_jax(0.1, inputs=jnp.ones((4, 8)))
     assert out.shape[0] == 4
-
-

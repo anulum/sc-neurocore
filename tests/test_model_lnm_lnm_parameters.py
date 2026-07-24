@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
 
+
 class TestLNMParameters:
     @pytest.mark.parametrize("alpha", [0.5, 0.9, 0.99])
     def test_alpha_sweep(self, alpha: float):

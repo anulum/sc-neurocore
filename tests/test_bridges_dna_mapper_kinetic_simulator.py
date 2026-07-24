@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestKineticSimulator:
     def test_simulate_produces_trajectory(self) -> None:
         compiler = StrandDisplacementCompiler()

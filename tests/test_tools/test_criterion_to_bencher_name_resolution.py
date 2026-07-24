@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from criterion_to_bencher_support import *  # noqa: F403
 
+
 class TestNameResolution:
     """The benchmark name comes from the result line or a preceding standalone line."""
 

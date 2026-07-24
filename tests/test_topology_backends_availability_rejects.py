@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.topology_backends_support import *  # noqa: F403
 
+
 def test_invalid_backend_name_raises() -> None:
     with pytest.raises(ValueError, match="backend must be"):
         ollivier_ricci_curvature(_complete(3), 0, 1, backend="cuda")

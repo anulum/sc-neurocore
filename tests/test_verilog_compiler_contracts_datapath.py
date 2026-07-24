@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.verilog_compiler_contracts_support import *  # noqa: F403
 
+
 def test_compile_to_datapath_resets_from_the_same_candidate_expression() -> None:
     """The folded PE must expose the same candidate-based post-reset next state."""
     verilog = compile_to_datapath(_candidate_reset_neuron(), module_name="sc_candidate_reset_pe")

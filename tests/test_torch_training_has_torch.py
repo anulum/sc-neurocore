@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestHasTorch:
     def test_torch_available(self):
         assert HAS_TORCH is True

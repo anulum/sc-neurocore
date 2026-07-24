@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neuroml_import_support import *  # noqa: F403
 
+
 class TestImportIAFCell:
     def test_basic_lif(self, tmp_path):
         f = _write_nml(

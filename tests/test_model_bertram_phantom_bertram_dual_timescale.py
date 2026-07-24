@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramDualTimescale:
     def test_tau_ratio(self):
         """tau_s2 / tau_s1 = 5 (ultra-slow vs slow)."""

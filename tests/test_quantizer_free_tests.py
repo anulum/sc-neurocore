@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 def test_block_floating_benchmark_contract_matches_rust_envelope() -> None:
     """The documented Python/Rust benchmark workload must share one envelope."""
     n_inputs = 64
@@ -43,6 +44,8 @@ def test_block_floating_benchmark_contract_matches_rust_envelope() -> None:
     assert int(np.sum(probe.exponents.astype(np.int64))) == 128
     assert probe_envelope.max_abs_bound_code == 1_125_865_547_104_256
     assert not probe_envelope.conservative_overflow_free
+
+
 def test_mixed_dense_benchmark_contract_matches_rust_envelope() -> None:
     """Canonical Q8.8/Q16.16 benchmark contract matches the Rust envelope."""
 

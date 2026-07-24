@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestBitstreamDecorrelator:
     def test_decorrelate_produces_different_streams(self):
         dec = BitstreamDecorrelator(seed=42)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
 
+
 class TestSigmoidRateParameters:
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.5])
     def test_dt_stability(self, dt: float):

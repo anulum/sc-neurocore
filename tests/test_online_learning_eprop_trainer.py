@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.online_learning_support import *  # noqa: F403
 
+
 class TestEpropTrainer:
     def test_init(self):
         t = EpropTrainer(n_inputs=10, n_neurons=20, n_outputs=5)

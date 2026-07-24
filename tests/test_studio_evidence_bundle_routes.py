@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_evidence_bundle_support import *  # noqa: F403
 
+
 def test_studio_evidence_bundle_route_exports_selected_state(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -171,6 +172,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert "bearer_token" not in encoded_body
     assert "token_sha256" not in encoded_body
 
+
 def test_studio_evidence_bundle_route_rejects_unknown_inputs(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -191,6 +193,7 @@ def test_studio_evidence_bundle_route_rejects_unknown_inputs(
     assert missing_project.status_code == 404
     assert missing_job.status_code == 404
     assert missing_job.json()["detail"] == "job_not_found"
+
 
 def test_studio_evidence_bundle_route_requires_configured_audit_export(
     tmp_path: Path,

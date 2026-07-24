@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestNAS:
     def test_small_search(self) -> None:
         sp = SearchSpace(n_inputs=16, n_outputs=4, min_layers=1, max_layers=2)

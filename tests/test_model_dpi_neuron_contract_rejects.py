@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_dpi_neuron_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     "overrides",
     [

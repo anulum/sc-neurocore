@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fusion_multimodal_support import *  # noqa: F403
 
+
 class TestModalityConfig:
     def test_defaults(self):
         m = ModalityConfig(name="dvs", n_channels=128, dt_us=1000.0)

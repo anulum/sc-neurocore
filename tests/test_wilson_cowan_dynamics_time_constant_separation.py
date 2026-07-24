@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestTimeConstantSeparation:
     """τ_e < τ_i: E settles before I on a step input."""
 

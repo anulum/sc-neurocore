@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_srm0_support import *  # noqa: F403
 
+
 class TestSRM0FI:
     def test_subthreshold_silent(self) -> None:
         n = SRM0Neuron()

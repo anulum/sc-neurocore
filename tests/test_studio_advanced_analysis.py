@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_advanced_support import *  # noqa: F403
 
+
 class TestAnalysisFunctions:
     def test_bifurcation_endpoint(self, client):
         r = client.post(
@@ -131,4 +132,3 @@ class TestAnalysisFunctions:
         )
         assert r.status_code == 200
         assert "from_equations" in r.json()["script"]
-

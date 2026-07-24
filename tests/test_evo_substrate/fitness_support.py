@@ -17,4 +17,4 @@ from sc_neurocore.evo_substrate.fitness import (
 )
 from sc_neurocore.evo_substrate.genome import Genome
 
-__all__ = ['FitnessEvaluator', 'FitnessResult', 'HWFitnessCollector', 'HWFitnessReport', 'Genome']
+__all__ = ["FitnessEvaluator", "FitnessResult", "HWFitnessCollector", "HWFitnessReport", "Genome"]

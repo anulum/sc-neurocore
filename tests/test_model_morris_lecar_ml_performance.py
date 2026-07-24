@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
 
+
 class TestMLPerformance:
     def test_isolation_throughput(self):
         n = MorrisLecarNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_lazarus_support import *  # noqa: F403
 
+
 class TestTraceEncoder:
     def test_encode_shape(self):
         enc = TraceEncoder(n_neurons=50, hash_dims=32, seed=42)

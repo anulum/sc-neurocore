@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from readiness_evidence_index_support import *  # noqa: F403
 
+
 def test_apply_writes_facets_and_raises_live_tiers(
     tool: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -79,6 +80,7 @@ def test_apply_writes_facets_and_raises_live_tiers(
     assert desc.silicon.compiles is True
     assert desc.silicon.cosim_validated is True
 
+
 def test_apply_preserves_stronger_rulkov_facets(
     tool: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -120,6 +122,7 @@ def test_apply_preserves_stronger_rulkov_facets(
 
     assert lines == ["PRESERVED RulkovMapNeuron: existing S5 H2 meets or exceeds h0_compile"]
     assert temporary.read_bytes() == before
+
 
 def test_apply_reports_descriptor_reload_failure(
     tool: ModuleType, monkeypatch: pytest.MonkeyPatch

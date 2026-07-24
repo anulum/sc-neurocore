@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_theta_support import *  # noqa: F403
 
+
 class TestThetaAnalyticalISI:
     """ISI = π/√I (continuous time). ISI_steps = π/(√I · dt)."""
 

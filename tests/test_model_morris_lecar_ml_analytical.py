@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
 
+
 class TestMLAnalytical:
     def test_m_inf_tanh(self):
         """m_∞(V) = 0.5·(1 + tanh((V-v1)/v2))."""

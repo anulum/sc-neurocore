@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramPipeline:
     def test_population(self):
         pop = Population(BertramPhantomBurster, n=10, label="bertram")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_identity_support import *  # noqa: F403
 
+
 def test_browser_user_authentication_rejects_empty_expired_and_unknown_users(
     tmp_path: Path,
 ) -> None:
@@ -44,6 +45,7 @@ def test_browser_user_authentication_rejects_empty_expired_and_unknown_users(
     assert empty.failure_reason == "invalid_browser_login"
     assert expired.failure_reason == "expired_browser_user"
     assert unknown.failure_reason == "invalid_browser_login"
+
 
 @pytest.mark.parametrize(
     ("browser_user", "match"),
@@ -115,6 +117,7 @@ def test_studio_identity_store_rejects_malformed_browser_users(
     with pytest.raises(ValueError, match=match):
         load_studio_identity_store(identity_path)
 
+
 def test_studio_identity_store_rejects_non_list_browser_users(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_payload(
@@ -128,6 +131,7 @@ def test_studio_identity_store_rejects_non_list_browser_users(tmp_path: Path) ->
 
     with pytest.raises(ValueError, match="browser_users"):
         load_studio_identity_store(identity_path)
+
 
 def test_browser_user_mutations_preserve_non_target_users(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -179,6 +183,7 @@ def test_browser_user_mutations_preserve_non_target_users(tmp_path: Path) -> Non
     assert authenticator.authenticate_browser_user("operator", "rotated-password").principal
     assert authenticator.authenticate_browser_user("analyst", "analyst-password").principal
 
+
 def test_add_browser_user_rejects_whitespace_username(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
@@ -191,6 +196,7 @@ def test_add_browser_user_rejects_whitespace_username(tmp_path: Path) -> None:
             roles=["studio.viewer"],
             username="bad user",
         )
+
 
 @pytest.mark.parametrize(
     "encoded_verifier",

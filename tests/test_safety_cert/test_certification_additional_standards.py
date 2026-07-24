@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.certification_support import *  # noqa: F403
 
+
 class TestAdditionalStandards:
     def _props(self) -> list[FormalProperty]:
         return [FormalProperty("P1", "sc_lif_neuron", "No overflow", "assert", "proven")]

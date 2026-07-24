@@ -23,7 +23,20 @@ from sc_neurocore.network.population import Population
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
+
+
 def _spikes(neuron: PVFastSpikingNeuron, current: float, steps: int) -> int:
     return sum(neuron.step(current) for _ in range(steps))
 
-__all__ = ['np', 'pytest', 'PVFastSpikingNeuron', '_safe_rate', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', '_spikes']
+
+__all__ = [
+    "np",
+    "pytest",
+    "PVFastSpikingNeuron",
+    "_safe_rate",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "_spikes",
+]

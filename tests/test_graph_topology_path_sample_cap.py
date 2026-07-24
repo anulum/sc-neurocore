@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.graph_topology_support import *  # noqa: F403
 
+
 class TestPathSampleCap:
     """n_path_samples constructor parameter (closes task #41)."""
 

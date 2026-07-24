@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hardware_support import *  # noqa: F403
 
+
 class TestMapper:
     def _make_adj(self, n=20, density=0.1, seed=42):
         rng = np.random.default_rng(seed)

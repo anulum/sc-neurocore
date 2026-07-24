@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_builder_adversarial_support import *  # noqa: F403
 
+
 class TestLegitimateEquationsStillWork:
     """Ensure the hardening does not break legitimate neuron equations."""
 

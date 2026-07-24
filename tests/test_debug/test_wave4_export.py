@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestExport:
     def test_csv(self):
         events = [SpikeEvent(timestamp=1, layer_id="L0", precision=0.95)]

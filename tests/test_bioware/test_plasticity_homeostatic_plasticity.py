@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.plasticity_support import *  # noqa: F403
 
+
 class TestHomeostaticPlasticity:
     def test_at_target_no_change(self) -> None:
         hp = HomeostaticPlasticity(target_rate_hz=10.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestEventSynchronization:
     def test_identical_high(self):
         train = _poisson_train(50.0, 0.5)

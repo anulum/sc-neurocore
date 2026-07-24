@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRateAnalytical:
     def test_v_steady_state(self):
         """V_ss = V_rest + R·I. Mean V should be near V_ss."""

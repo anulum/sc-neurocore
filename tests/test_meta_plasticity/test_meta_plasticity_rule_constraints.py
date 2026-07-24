@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestRuleConstraints:
     def test_valid_rules(self):
         rc = RuleConstraints()

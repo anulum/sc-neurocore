@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.acquisition_support import *  # noqa: F403
 
+
 class TestArtifactRejection:
     def test_blanking(self) -> None:
         data = np.ones((1000, 5))

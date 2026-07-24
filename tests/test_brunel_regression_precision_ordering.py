@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestPrecisionOrdering:
     """Higher fixed-point precision → more accurate leak → fewer rounding-induced spikes."""
 

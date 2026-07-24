@@ -19,4 +19,4 @@ import math
 from sc_neurocore.compiler import expr_lut_tables as tables
 from sc_neurocore.compiler.equation_compiler import Q88, _VerilogExprEmitter
 
-__all__ = ['ast', 'math', 'tables', 'Q88', '_VerilogExprEmitter']
+__all__ = ["ast", "math", "tables", "Q88", "_VerilogExprEmitter"]

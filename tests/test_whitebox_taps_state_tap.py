@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.whitebox_taps_support import *  # noqa: F403
 
+
 class TestStateTap:
     """The tap value type."""
 

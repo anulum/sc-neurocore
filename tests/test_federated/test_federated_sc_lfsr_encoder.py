@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestLFSREncoder:
     def test_encode_half(self):
         bs = lfsr_encode(0.5, 0xACE1, 1000)

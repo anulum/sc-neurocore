@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGSafety:
     @pytest.mark.parametrize(
         ("field", "value"),

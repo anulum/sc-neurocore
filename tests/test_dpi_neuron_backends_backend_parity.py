@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.dpi_neuron_backends_support import *  # noqa: F403
 
+
 def test_every_acceleration_backend_is_executable() -> None:
     """Expose all four compiled lanes without a skipped parity surface."""
     assert backends._HAS_RUST

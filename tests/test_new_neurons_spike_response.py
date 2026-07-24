@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestSpikeResponse:
     def test_fires_with_input(self):
         from sc_neurocore.neurons.models import SpikeResponseNeuron

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestLatencyEncode:
     def test_shape(self):
         s = latency_encode(np.array([0.5, 0.8, 0.2]), T=10)

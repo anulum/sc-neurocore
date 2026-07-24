@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mat_support import *  # noqa: F403
 
+
 class TestMATAdaptation:
     def test_adaptation_reduces_rate(self):
         """Adaptation → first half has more spikes than second half."""

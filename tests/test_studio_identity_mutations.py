@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_identity_support import *  # noqa: F403
 
+
 def test_identity_mutations_report_missing_records(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")

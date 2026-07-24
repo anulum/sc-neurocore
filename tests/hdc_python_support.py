@@ -10,7 +10,8 @@ from __future__ import annotations
 
 """End-to-end Python tests for HDC/VSA via the Rust BitStreamTensor backend."""
 import pytest
+
 pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 from sc_neurocore_engine import BitStreamTensor, HDCVector
 
-__all__ = ['pytest', 'BitStreamTensor', 'HDCVector']
+__all__ = ["pytest", "BitStreamTensor", "HDCVector"]

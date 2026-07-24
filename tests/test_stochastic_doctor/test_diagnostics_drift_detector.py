@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from diagnostics_support import *  # noqa: F403
 
+
 class TestDriftDetector(unittest.TestCase):
     """Drift detector tests."""
 

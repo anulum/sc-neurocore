@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanPerformance:
     def test_isolation_runtime_regression_sentinel(self):
         """Bound pathological slowdowns without making CI throughput claims."""

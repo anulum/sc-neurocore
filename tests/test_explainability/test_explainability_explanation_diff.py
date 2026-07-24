@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestExplanationDiff:
     def test_identical_nodes_no_diffs(self):
         tree = SpikeDecisionTree()

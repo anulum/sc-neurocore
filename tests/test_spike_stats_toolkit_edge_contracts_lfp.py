@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_plv_no_spikes():
     assert phase_locking_value(np.zeros(100, dtype=np.int8), np.sin(np.linspace(0, 10, 100))) == 0.0
 
@@ -17,5 +18,3 @@ def test_plv_no_spikes():
 def test_sfc_short():
     f, p = spike_field_coherence(np.array([1], dtype=np.int8), np.array([1.0]))
     assert f.size == 0
-
-

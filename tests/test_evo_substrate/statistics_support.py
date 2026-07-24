@@ -20,4 +20,13 @@ from sc_neurocore.evo_substrate.statistics import (
     genome_diff,
 )
 
-__all__ = ['pytest', 'Genome', 'Organism', 'ComplexityTracker', 'EvoStatisticsTracker', 'GenerationStats', 'genome_complexity', 'genome_diff']
+__all__ = [
+    "pytest",
+    "Genome",
+    "Organism",
+    "ComplexityTracker",
+    "EvoStatisticsTracker",
+    "GenerationStats",
+    "genome_complexity",
+    "genome_diff",
+]

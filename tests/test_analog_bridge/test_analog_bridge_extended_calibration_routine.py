@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from analog_bridge_extended_support import *  # noqa: F403
 
+
 class TestCalibrationRoutine(unittest.TestCase):
     """Calibration sweep and ENOB contract checks."""
 

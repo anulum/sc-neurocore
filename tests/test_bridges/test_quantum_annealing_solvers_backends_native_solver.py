@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from quantum_annealing_solvers_backends_support import *  # noqa: F403
 
+
 def test_native_solver_contract_and_seed_forwarding(monkeypatch: pytest.MonkeyPatch) -> None:
     """Native dispatch validates and maps arrays while forwarding the configured seed."""
     captured: tuple[object, ...] = ()

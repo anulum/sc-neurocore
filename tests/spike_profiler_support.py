@@ -17,9 +17,21 @@ from sc_neurocore.profiling.spike_profiler import (
     Pathology,
     Severity,
 )
+
+
 def _random_spikes(n_neurons, rate=0.1, rng=None):
     if rng is None:
         rng = np.random.RandomState(42)
     return (rng.random(n_neurons) < rate).astype(np.int8)
 
-__all__ = ['np', 'pytest', 'SpikeProfiler', 'LayerStats', 'ProfileReport', 'Pathology', 'Severity', '_random_spikes']
+
+__all__ = [
+    "np",
+    "pytest",
+    "SpikeProfiler",
+    "LayerStats",
+    "ProfileReport",
+    "Pathology",
+    "Severity",
+    "_random_spikes",
+]

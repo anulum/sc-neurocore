@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_destexhe_thalamic_support import *  # noqa: F403
 
+
 class TestDestPerformance:
     def test_isolation_throughput(self):
         n = DestexheThalamicNeuron()

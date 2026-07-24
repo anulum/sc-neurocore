@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMParameters:
     def test_tau_eta_controls_refractory_duration(self):
         n_fast = SpikeResponseNeuron(tau_eta=5.0)

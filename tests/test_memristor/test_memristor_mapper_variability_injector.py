@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestVariabilityInjector:
     def test_quantize_weights(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)

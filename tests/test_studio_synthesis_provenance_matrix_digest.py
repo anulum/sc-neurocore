@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_provenance_support import *  # noqa: F403
 
+
 def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
     """The target matrix has deterministic target membership and digest."""
 
@@ -52,6 +53,7 @@ def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
         ).hexdigest()
     )
 
+
 def test_matrix_provenance_grade_tool_backed_when_every_target_backed() -> None:
     matrix = build_synthesis_target_provenance_matrix(
         targets={
@@ -64,6 +66,7 @@ def test_matrix_provenance_grade_tool_backed_when_every_target_backed() -> None:
 
     assert matrix["provenance_grade"] == "tool_backed"
 
+
 def test_matrix_provenance_grade_unverified_when_any_target_unverified() -> None:
     matrix = build_synthesis_target_provenance_matrix(
         targets={
@@ -75,6 +78,7 @@ def test_matrix_provenance_grade_unverified_when_any_target_unverified() -> None
     )
 
     assert matrix["provenance_grade"] == "unverified"
+
 
 def test_matrix_provenance_grade_unverified_when_empty() -> None:
     matrix = build_synthesis_target_provenance_matrix(

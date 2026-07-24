@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.network_execution_paths_support import *  # noqa: F403
 
+
 def test_rust_backend_runs_populations_and_projection() -> None:
     source = Population(_MODEL, 3)
     target = Population(_MODEL, 3)

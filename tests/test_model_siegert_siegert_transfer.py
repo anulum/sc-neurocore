@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertTransfer:
     def test_returns_rate(self) -> None:
         from sc_neurocore.neurons.models.siegert import SiegertTransferFunction

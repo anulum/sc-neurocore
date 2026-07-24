@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestProtocolLibrary(unittest.TestCase):
     def test_six_protocols(self):
         self.assertEqual(len(PROTOCOL_REGISTRY), 6)

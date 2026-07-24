@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestConstruction:
     def test_factory_returns_instance(self):
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")

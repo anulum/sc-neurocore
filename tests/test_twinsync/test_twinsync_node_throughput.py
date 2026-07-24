@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestNodeThroughput:
     def test_throughput_initial(self):
         eng = TimeWarpEngine(3)

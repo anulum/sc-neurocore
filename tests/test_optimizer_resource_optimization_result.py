@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.optimizer_resource_support import *  # noqa: F403
 
+
 class TestOptimizationResult:
     def test_summary(self):
         r = OptimizationResult(

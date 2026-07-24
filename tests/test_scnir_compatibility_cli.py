@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_compatibility_support import *  # noqa: F403
 
+
 def test_scnir_compatibility_cli_validates_evidence_root(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -21,6 +22,7 @@ def test_scnir_compatibility_cli_validates_evidence_root(
 
     assert main() == 0
     assert "SC-NIR compatibility matrix valid" in capsys.readouterr().out
+
 
 def test_scnir_compatibility_cli_writes_matrix_report(
     monkeypatch: pytest.MonkeyPatch,
@@ -39,6 +41,7 @@ def test_scnir_compatibility_cli_writes_matrix_report(
     assert isinstance(payload, list)
     assert payload == json.loads(json.dumps(scnir_compatibility_matrix_dicts(), sort_keys=True))
     assert payload[0]["nir_primitive"] == "Input"
+
 
 def test_scnir_closure_audit_cli_writes_versioned_report(
     monkeypatch: pytest.MonkeyPatch,
@@ -68,6 +71,7 @@ def test_scnir_closure_audit_cli_writes_versioned_report(
     assert payload["matrix_sha256"]
     assert payload["audit_evidence_files"][0]["sha256"]
     assert payload["matrix"][0]["nir_primitive"] == "Input"
+
 
 def test_scnir_compatibility_cli_rejects_missing_evidence_root(
     monkeypatch: pytest.MonkeyPatch,

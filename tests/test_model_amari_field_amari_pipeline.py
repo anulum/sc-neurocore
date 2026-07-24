@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
 
+
 class TestAmariPipeline:
     def test_population(self):
         assert Population(AmariNeuralField, n=3, label="amari").n == 3

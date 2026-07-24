@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestPopulation:
     def test_create_by_string(self):
         pop = Population("LapicqueNeuron", 5)

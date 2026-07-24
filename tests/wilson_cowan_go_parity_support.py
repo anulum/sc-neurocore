@@ -17,6 +17,7 @@ from sc_neurocore.accel.go.wilson_cowan import (
     _HAS_GO_WILSON_COWAN,
     simulate_wilson_cowan,
 )
+
 if not _HAS_GO_WILSON_COWAN:
     pytest.skip(
         "libwilson_cowan.so not built (run go build in accel/go/wilson_cowan)",
@@ -33,6 +34,8 @@ DEFAULT_PARAMS = dict(
     theta=4.0,
     dt=0.1,
 )
+
+
 def _run_python(ext: np.ndarray):
     u = WilsonCowanUnit(**DEFAULT_PARAMS)
     e = np.empty(ext.size, dtype=np.float64)
@@ -41,6 +44,8 @@ def _run_python(ext: np.ndarray):
         u.step(float(ext[t]))
         e[t], i[t] = u.e, u.i
     return e, i
+
+
 def _run_go(ext: np.ndarray):
     out = simulate_wilson_cowan(
         0.1,
@@ -58,4 +63,14 @@ def _run_go(ext: np.ndarray):
     )
     return out["e"], out["i"]
 
-__all__ = ['np', 'pytest', 'WilsonCowanUnit', '_HAS_GO_WILSON_COWAN', 'simulate_wilson_cowan', 'DEFAULT_PARAMS', '_run_python', '_run_go']
+
+__all__ = [
+    "np",
+    "pytest",
+    "WilsonCowanUnit",
+    "_HAS_GO_WILSON_COWAN",
+    "simulate_wilson_cowan",
+    "DEFAULT_PARAMS",
+    "_run_python",
+    "_run_go",
+]

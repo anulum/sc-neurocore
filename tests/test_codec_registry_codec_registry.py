@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.codec_registry_support import *  # noqa: F403
 
+
 class TestCodecRegistry:
     def test_list_codecs(self):
         codecs = list_codecs()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestExplainabilityEngine:
     def test_explain_spike_records_decision(self):
         engine = ExplainabilityEngine(seed=0xACE1)

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_bayesian_single_class():
     assert bayesian_decode(np.array([3.0]), np.array([[1.0]])) == 0
-
-

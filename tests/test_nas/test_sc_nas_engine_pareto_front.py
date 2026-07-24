@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestParetoFront:
     def test_empty_input(self) -> None:
         assert pareto_front([]) == []

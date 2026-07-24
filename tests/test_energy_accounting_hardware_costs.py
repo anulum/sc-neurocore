@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.energy_accounting_support import *  # noqa: F403
 
+
 class TestHardwareCosts:
     def test_builtin_targets(self):
         assert len(HARDWARE_COSTS) >= 5

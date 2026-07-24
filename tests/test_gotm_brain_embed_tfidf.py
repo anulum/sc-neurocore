@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestEmbedTfidf:
     def test_empty_corpus_returns_empty_matrix_and_vocab(self) -> None:
         matrix, vocab = embed_tfidf([], n_dims=7)

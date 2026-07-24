@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_golomb_fs_support import *  # noqa: F403
 
+
 class TestGFSDynamics:
     def test_fires_under_drive(self):
         n = GolombFSNeuron()

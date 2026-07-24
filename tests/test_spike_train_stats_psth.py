@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestPSTH:
     def test_shape(self):
         trials = [_poisson_train(100.0, 0.5, seed=i) for i in range(10)]

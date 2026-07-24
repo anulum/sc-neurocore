@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.encoding_support import *  # noqa: F403
 
+
 class TestBitstreamRateDecoder:
     def test_full_density(self) -> None:
         bs = {0: np.ones(256, dtype=np.uint8)}

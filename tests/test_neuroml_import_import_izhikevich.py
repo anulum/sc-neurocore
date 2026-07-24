@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neuroml_import_support import *  # noqa: F403
 
+
 class TestImportIzhikevich:
     def test_2003_dimensionless(self, tmp_path):
         f = _write_nml(

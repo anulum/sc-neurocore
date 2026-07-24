@@ -33,5 +33,12 @@ from sc_neurocore.formal import validate_formal_network_report
 from tests.cli_test_support import run_cli
 
 
-__all__ = ['json', 'subprocess', 'Path', 'mock', 'pytest', 'validate_formal_network_report', 'run_cli']
-
+__all__ = [
+    "json",
+    "subprocess",
+    "Path",
+    "mock",
+    "pytest",
+    "validate_formal_network_report",
+    "run_cli",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_advanced_support import *  # noqa: F403
 
+
 class TestNetwork:
     def test_basic_ei_network(self):
         r = simulate_ei_network(n_exc=20, n_inh=5, duration=50.0, ext_rate=10.0)
@@ -62,4 +63,3 @@ class TestNetwork:
         d = r.json()
         assert d["n_total"] == 25
         assert "spike_times" in d
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.statistics_support import *  # noqa: F403
 
+
 class TestGenomeDiff:
     def test_identical(self) -> None:
         g = Genome()

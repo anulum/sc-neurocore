@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.genome_support import *  # noqa: F403
 
+
 class TestGenomeSerializer:
     def test_roundtrip(self) -> None:
         g = Genome()

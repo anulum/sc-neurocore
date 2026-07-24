@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestCrossModalAttention:
     def test_attend_preserves_shape(self):
         attn = CrossModalAttention(num_channels=8, seed=42)

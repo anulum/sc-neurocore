@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestHomeostaticParams:
     def test_adapt_increases_gain(self):
         hp = HomeostaticParams(target_rate_hz=10.0, current_gain=1.0)

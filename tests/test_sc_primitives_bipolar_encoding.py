@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_primitives_support import *  # noqa: F403
 
+
 class TestBipolarEncoding:
     def test_bipolar_encode_positive(self):
         from sc_neurocore.utils.bitstreams import generate_bipolar_bitstream, bipolar_to_value

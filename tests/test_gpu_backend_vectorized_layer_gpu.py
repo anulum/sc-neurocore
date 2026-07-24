@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpu_backend_support import *  # noqa: F403
 
+
 class TestVectorizedLayerGPU:
     """Integration test: VectorizedSCLayer with GPU path."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestTestbenchGenerator:
     def test_generates_testbench(self):
         from sc_neurocore.compiler.equation_compiler import generate_testbench

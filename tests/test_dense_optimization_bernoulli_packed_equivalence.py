@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dense_optimization_support import *  # noqa: F403
 
+
 class TestBernoulliPackedEquivalence:
     """Validate deterministic behavior for packed Bernoulli refactor."""
 

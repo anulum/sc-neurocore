@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_waveform_support import *  # noqa: F403
 
+
 class TestPtRatio:
     def test_typical(self):
         w = _typical_waveform()

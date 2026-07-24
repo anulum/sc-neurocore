@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_profiler_support import *  # noqa: F403
 
+
 class TestLayerStats:
     def test_fields(self):
         s = LayerStats(name="test", n_neurons=10, n_steps=5)

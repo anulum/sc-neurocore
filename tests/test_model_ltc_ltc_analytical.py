@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ltc_support import *  # noqa: F403
 
+
 class TestLTCAnalytical:
     def test_input_dependent_tau(self):
         """τ depends on input via sigmoid: τ = τ_base · σ(w_τ·I)."""

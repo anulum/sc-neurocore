@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.aer_spike_codec_support import *  # noqa: F403
 
+
 class TestAERSpikeCodecCompression:
     def test_sparse_high_compression(self):
         """Very sparse data (0.1% firing) should compress >30x."""

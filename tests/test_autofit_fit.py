@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestFit:
     def test_no_matching_candidates(self):
         v = np.random.randn(50)

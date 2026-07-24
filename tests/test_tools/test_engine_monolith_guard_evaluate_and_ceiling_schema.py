@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from engine_monolith_guard_support import *  # noqa: F403
 
+
 def test_evaluate_checks_every_configured_target(tmp_path: Path) -> None:
     tool = _load_tool()
     _write_fake_target(tmp_path, lines=20, pyfunctions=2)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compiler_validation_units_support import *  # noqa: F403
 
+
 class TestValidateHysteresis:
     """Hysteresis thresholds must be finite, strictly ordered inside the unit
     interval, and quantise to a usable 1 <= down < up < max_lp_code range."""

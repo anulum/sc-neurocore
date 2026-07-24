@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestArithmetic:
     def test_add_sub(self):
         expr, *_ = _c("a + b - 1.0", state={"a": "s->a", "b": "s->b"})

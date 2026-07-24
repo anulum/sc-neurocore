@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHTPipeline:
     def test_population(self):
         assert Population(HillTononiNeuron, n=10, label="ht").n == 10

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestIzhikevichNeuron:
     def test_regular_spiking(self):
         n = IzhikevichNeuron.regular_spiking()

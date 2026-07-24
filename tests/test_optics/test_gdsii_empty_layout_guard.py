@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gdsii_support import *  # noqa: F403
 
+
 class TestEmptyLayoutGuard:
     def test_zero_modulators_raises(self, tmp_path: Path) -> None:
         """Reject an empty physical layout instead of writing a silent shell."""

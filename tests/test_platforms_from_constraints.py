@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestFromConstraints:
     def test_basic(self):
         from sc_neurocore.compiler.platforms import (

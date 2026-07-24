@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_e_prop_alif_support import *  # noqa: F403
 
+
 class TestEPropALIFAdaptiveThreshold:
     """Core: θ(t) = θ_base + β·a(t). a increments on spike, decays with tau_a."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.verilog_compiler_contracts_support import *  # noqa: F403
 
+
 def test_stochastic_compilation_rejects_mutated_missing_probability() -> None:
     """Poisson compilation fails closed if its public expression is cleared."""
     neuron = EquationNeuron(

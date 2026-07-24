@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestRankOrderEncode:
     def test_shape(self):
         s = rank_order_encode(np.array([0.3, 0.9, 0.1, 0.7]), T=10)

@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from hierarchical_partitioner_runtime_cache_support import *  # noqa: F403
+
 
 class TestImportFallback:
     """Cover the module-level `try: from sc_neurocore_engine import

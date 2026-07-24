@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.physics_support import *  # noqa: F403
 
+
 class TestStochasticHeatSolver:
     def test_construction(self):
         s = _make_uniform_solver(length=100, num_walkers=500, diffusivity=0.1)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
 
+
 class TestWendlingFourPopulations:
     """4 populations: pyramidal (y0), excitatory (y1), fast inh (y2), slow inh (y3)."""
 

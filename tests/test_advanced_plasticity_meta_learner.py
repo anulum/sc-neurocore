@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestMetaLearner:
     def test_inner_loop(self, simple_net):
         net, pop_a, _, proj = simple_net

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_support import *  # noqa: F403
 
+
 class TestQuantizedSNNLayer:
     def test_forward_shape(self):
         layer = QuantizedSNNLayer(n_inputs=4, n_neurons=3, weight_bits=8)

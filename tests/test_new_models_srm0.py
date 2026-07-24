@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_models_support import *  # noqa: F403
 
+
 class TestSRM0:
     def test_fires_with_current(self):
         n = SRM0Neuron(tau_m=20.0, v_threshold=1.0, dt=0.1)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sst_neuron_support import *  # noqa: F403
 
+
 class TestSSTIsolation:
     def test_construction_defaults(self):
         n = SSTNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
 
+
 class TestSigmoidRateSchema:
     def test_descriptor_tracks_theta_as_configuration(self):
         payload = load_descriptor_payload("SigmoidRateNeuron")

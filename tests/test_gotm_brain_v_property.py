@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestVProperty:
     def test_v_reads_Vm(self) -> None:
         from sc_neurocore.quantum_cognition import SpinPoolMPS, HybridFisherPosnerLIF

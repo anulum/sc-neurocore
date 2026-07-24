@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
 
+
 def test_base_adapter_is_abstract():
     with pytest.raises(TypeError):
         BaseStochasticAdapter()
@@ -75,5 +76,3 @@ def test_chaos_init_import():
     from sc_neurocore.chaos import ChaoticRNG
 
     assert callable(ChaoticRNG)
-
-

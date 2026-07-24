@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.security_side_channel_benchmark_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("output_path", ["", "."])
 def test_write_side_channel_benchmark_report_rejects_invalid_output_path(output_path) -> None:
     with pytest.raises(SideChannelBenchmarkError, match="output_path"):

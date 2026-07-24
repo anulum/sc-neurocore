@@ -31,4 +31,21 @@ from sc_neurocore.nas.equiv import (
     EquivResult,
 )
 
-__all__ = ['np', 'Architecture', 'SearchSpace', 'NEURON_CHOICES', 'WIDTH_CHOICES', 'L_CHOICES', 'nas', 'NASResult', '_evaluate', '_dominates', '_non_dominated_sort', '_crowding_distance', 'check_equivalence', 'generate_miter', 'generate_sby', 'EquivResult']
+__all__ = [
+    "np",
+    "Architecture",
+    "SearchSpace",
+    "NEURON_CHOICES",
+    "WIDTH_CHOICES",
+    "L_CHOICES",
+    "nas",
+    "NASResult",
+    "_evaluate",
+    "_dominates",
+    "_non_dominated_sort",
+    "_crowding_distance",
+    "check_equivalence",
+    "generate_miter",
+    "generate_sby",
+    "EquivResult",
+]

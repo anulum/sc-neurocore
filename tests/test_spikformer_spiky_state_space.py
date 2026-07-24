@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spikformer_support import *  # noqa: F403
 
+
 class TestSpikyStateSpace:
     def test_step(self):
         ssm = SpikyStateSpace(d_model=8, d_state=16)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantisation_pipeline_support import *  # noqa: F403
 
+
 class TestDequantizeWeights:
     def test_known_value(self):
         # 256 in Q8.8 = 1.0

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_translator_support import *  # noqa: F403
 
+
 class TestV1DeltaPSC:
     """V1: StochasticLIF with delta-PSC wiring."""
 

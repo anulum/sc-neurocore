@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fim_symmetry_dynamics_support import *  # noqa: F403
 
+
 class TestSTDPFIMInteraction:
     def test_fim_and_stdp_coexist(self):
         """Both FIM and STDP should run without error."""

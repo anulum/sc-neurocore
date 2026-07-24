@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.scpn_integrated_support import *  # noqa: F403
 
+
 class TestLayerRegistry:
     def test_has_16_layers(self):
         assert len(LAYER_REGISTRY) == 16

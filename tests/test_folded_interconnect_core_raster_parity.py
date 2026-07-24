@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.folded_interconnect_support import *  # noqa: F403
 
+
 def test_folded_matches_direct_spike_raster() -> None:
     ng = _single_lif_graph()
     q = Q88(data_width=_DW, fraction=_FR)
@@ -116,5 +117,3 @@ def test_folded_state_is_bram_backed_and_shares_one_pe() -> None:
     assert "state_bram" in folded_top
     assert "p0_n0_inst" not in folded_top  # the direct per-neuron instance name must be absent
     assert set(pe_modules) == {"lif_pe"}  # one PE module per distinct neuron type
-
-

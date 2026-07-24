@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_app_adds_default_security_headers_to_health_response() -> None:
     client = TestClient(create_app(), base_url="http://127.0.0.1")
 
@@ -21,6 +22,7 @@ def test_studio_app_adds_default_security_headers_to_health_response() -> None:
     assert response.headers["referrer-policy"] == "no-referrer"
     assert response.headers["x-frame-options"] == "DENY"
 
+
 def test_studio_app_generates_request_id_header() -> None:
     client = TestClient(create_app(), base_url="http://127.0.0.1")
 
@@ -29,12 +31,14 @@ def test_studio_app_generates_request_id_header() -> None:
     request_id = response.headers["x-request-id"]
     assert UUID(request_id).version == 4
 
+
 def test_studio_app_preserves_valid_inbound_request_id() -> None:
     client = TestClient(create_app(), base_url="http://127.0.0.1")
 
     response = client.get("/api/health", headers={"x-request-id": "studio-run-42"})
 
     assert response.headers["x-request-id"] == "studio-run-42"
+
 
 def test_studio_app_replaces_invalid_inbound_request_id() -> None:
     client = TestClient(create_app(), base_url="http://127.0.0.1")
@@ -44,6 +48,7 @@ def test_studio_app_replaces_invalid_inbound_request_id() -> None:
     request_id = response.headers["x-request-id"]
     assert request_id != "bad request id"
     assert UUID(request_id).version == 4
+
 
 def test_studio_app_allows_configured_host() -> None:
     app = create_app(
@@ -57,6 +62,7 @@ def test_studio_app_allows_configured_host() -> None:
 
     assert response.status_code == 200
 
+
 def test_studio_app_rejects_unconfigured_host() -> None:
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
@@ -69,6 +75,7 @@ def test_studio_app_rejects_unconfigured_host() -> None:
 
     assert response.status_code == 400
 
+
 def test_studio_app_rejects_oversized_request_body() -> None:
     app = create_app(runtime_settings=StudioRuntimeSettings(max_request_body_bytes=8))
     client = TestClient(app, base_url="http://127.0.0.1")
@@ -78,6 +85,7 @@ def test_studio_app_rejects_oversized_request_body() -> None:
     assert response.status_code == 413
     assert response.json()["detail"] == "Studio request body exceeds configured limit."
 
+
 def test_studio_app_allows_request_body_within_limit() -> None:
     app = create_app(runtime_settings=StudioRuntimeSettings(max_request_body_bytes=8))
     client = TestClient(app, base_url="http://127.0.0.1")
@@ -85,6 +93,7 @@ def test_studio_app_allows_request_body_within_limit() -> None:
     response = client.post("/api/health", content=b"01234567")
 
     assert response.status_code == 405
+
 
 def test_studio_app_cors_preflight_allows_configured_origin() -> None:
     app = create_app(
@@ -105,6 +114,7 @@ def test_studio_app_cors_preflight_allows_configured_origin() -> None:
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "https://studio.example.test"
 
+
 def test_studio_app_cors_preflight_rejects_unconfigured_origin() -> None:
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
@@ -123,6 +133,7 @@ def test_studio_app_cors_preflight_rejects_unconfigured_origin() -> None:
 
     assert response.status_code == 400
     assert "access-control-allow-origin" not in response.headers
+
 
 def test_studio_app_correlates_policy_audit_with_request_id(tmp_path: Path) -> None:
     audit_path = tmp_path / "audit" / "studio.jsonl"

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestISIDistance:
     def test_same_train(self):
         train = np.zeros(1000, dtype=np.uint8)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestCrossbarEstimator:
     def test_estimate_standard(self) -> None:
         xbar = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_HFOX)

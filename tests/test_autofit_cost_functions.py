@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestCostFunctions:
     def test_rmse_identical(self):
         v = np.random.randn(100)

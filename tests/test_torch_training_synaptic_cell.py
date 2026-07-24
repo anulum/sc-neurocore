@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestSynapticCell:
     def test_forward_three_outputs(self):
         cell = SynapticCell(alpha=0.9, beta=0.8)

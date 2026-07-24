@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ilif_support import *  # noqa: F403
 
+
 class TestILIFParameters:
     @pytest.mark.parametrize("inh_strength", [0.0, 0.5, 2.0])
     def test_inh_strength_sweep(self, inh_strength: float):

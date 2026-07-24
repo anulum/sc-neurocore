@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_control_support import *  # noqa: F403
 
+
 class TestSwarmEvolver(unittest.TestCase):
     def test_init(self):
         cfg = EvolverConfig(pop_size=5, agent_config=AgentConfig(n_hidden=4))

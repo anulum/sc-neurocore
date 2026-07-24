@@ -13,4 +13,4 @@ from pathlib import Path
 import pytest
 from sc_neurocore.compiler.power_estimator import estimate_power
 
-__all__ = ['Path', 'pytest', 'estimate_power']
+__all__ = ["Path", "pytest", "estimate_power"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_e_prop_alif_support import *  # noqa: F403
 
+
 class TestEPropALIFIsolation:
     def test_defaults(self):
         n = EPropALIFNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from onnx_export_support import *  # noqa: F403
 
+
 class TestONNXExporter(unittest.TestCase):
     def test_export_produces_graph(self) -> None:
         exp = ONNXExporter()

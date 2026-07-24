@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
 
+
 class TestArcaneEffectiveThreshold:
     def test_threshold_modulated_by_deep(self):
         """eff_threshold = θ · (1 + γ·v_deep) · (1 - δ·confidence).

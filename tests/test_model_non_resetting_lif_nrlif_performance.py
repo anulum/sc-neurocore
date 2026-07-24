@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
 
+
 class TestNRLIFPerformance:
     def test_isolation_runtime_regression_sentinel(self):
         """Bound pathological slowdowns without making CI throughput claims."""

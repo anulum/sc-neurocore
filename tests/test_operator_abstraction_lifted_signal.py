@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.operator_abstraction_support import *  # noqa: F403
 
+
 class TestLiftedSignal:
     """The lifted-signal value type."""
 

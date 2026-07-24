@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaEdgeCases:
     def test_exact_threshold_crossing(self):
         """sigma exactly equals threshold → spike."""

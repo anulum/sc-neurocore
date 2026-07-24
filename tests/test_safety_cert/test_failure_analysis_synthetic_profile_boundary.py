@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
 
+
 class TestSyntheticProfileBoundary:
     def test_profile_requires_explicit_boolean_acknowledgement(self) -> None:
         fmeda = FMEDA()

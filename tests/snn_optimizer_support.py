@@ -18,6 +18,8 @@ from sc_neurocore.snn_optimizer import (
     optimize,
     OptimizationReport,
 )
+
+
 def _make_graph():
     return SNNGraph(
         layers=[
@@ -27,4 +29,15 @@ def _make_graph():
         ]
     )
 
-__all__ = ['np', 'SNNGraph', 'LayerNode', 'dead_neuron_elimination', 'layer_fusion', 'redundancy_elimination', 'optimize', 'OptimizationReport', '_make_graph']
+
+__all__ = [
+    "np",
+    "SNNGraph",
+    "LayerNode",
+    "dead_neuron_elimination",
+    "layer_fusion",
+    "redundancy_elimination",
+    "optimize",
+    "OptimizationReport",
+    "_make_graph",
+]

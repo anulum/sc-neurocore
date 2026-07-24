@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dna_mapper_support import *  # noqa: F403
 
+
 class TestSCPrecisionAnalyzer:
     """Stochastic computing precision analysis."""
 

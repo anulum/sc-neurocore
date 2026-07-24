@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonStochasticity:
     def test_different_runs_differ(self) -> None:
         """Two neurons with distinct seeds produce distinct spike trains."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gamma_oscillation_support import *  # noqa: F403
 
+
 class TestPINGCircuit:
     def test_creates_default(self):
         ping = PINGCircuit()

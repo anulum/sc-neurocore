@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_sorting_quality_support import *  # noqa: F403
 
+
 class TestSilhouetteScore:
     def test_typical(self) -> None:
         rng = _rng()

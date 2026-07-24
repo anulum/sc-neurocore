@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestSpikeFieldCoherence:
     def test_shape(self):
         train = _poisson_train(100.0, 0.5)

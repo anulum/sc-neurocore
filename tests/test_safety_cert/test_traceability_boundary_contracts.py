@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.traceability_support import *  # noqa: F403
 
+
 class TestBoundaryContracts:
     def test_traceability_unknown_verification_link_is_rejected_without_mutation(self) -> None:
         tm = TraceabilityMatrix()

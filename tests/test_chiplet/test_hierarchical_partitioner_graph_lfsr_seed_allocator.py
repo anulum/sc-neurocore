@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_graph_support import *  # noqa: F403
 
+
 class TestLFSRSeedAllocator:
     def test_allocate_unique_seeds(self) -> None:
         alloc = LFSRSeedAllocator()

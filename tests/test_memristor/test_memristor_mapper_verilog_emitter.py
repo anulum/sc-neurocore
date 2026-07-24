@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestVerilogEmitter:
     def test_emit_crossbar_module(self) -> None:
         mapper = MemristorMapper(seed=42)

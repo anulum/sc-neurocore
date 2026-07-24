@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_provenance_support import *  # noqa: F403
 
+
 def test_target_provenance_grade_tool_backed_when_tools_available_and_versioned() -> None:
     grade = build_synthesis_target_provenance(
         "gowin",
@@ -19,6 +20,7 @@ def test_target_provenance_grade_tool_backed_when_tools_available_and_versioned(
     ).provenance_grade
 
     assert grade == "tool_backed"
+
 
 def test_target_provenance_grade_unverified_when_required_tool_missing() -> None:
     provenance = build_synthesis_target_provenance(
@@ -31,6 +33,7 @@ def test_target_provenance_grade_unverified_when_required_tool_missing() -> None
     assert provenance.provenance_grade == "unverified"
     assert provenance.to_public_dict()["provenance_grade"] == "unverified"
 
+
 def test_target_provenance_grade_unverified_when_version_missing() -> None:
     tool_status = cast(ToolStatusMap, {"yosys": {"available": True, "version": None}})
     grade = build_synthesis_target_provenance(
@@ -41,6 +44,7 @@ def test_target_provenance_grade_unverified_when_version_missing() -> None:
     ).provenance_grade
 
     assert grade == "unverified"
+
 
 def test_target_provenance_grade_unverified_when_no_tools() -> None:
     provenance = StudioSynthesisTargetProvenance(

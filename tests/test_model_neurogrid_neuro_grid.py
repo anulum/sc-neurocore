@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNeuroGrid:
     def test_dynamics(self) -> None:
         from sc_neurocore.neurons.models.neurogrid import NeuroGridNeuron

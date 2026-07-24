@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_akida_neuron_support import *  # noqa: F403
 
+
 class TestAkidaParameters:
     @pytest.mark.parametrize("threshold", [50, 100, 200])
     def test_threshold_sweep(self, threshold: int):

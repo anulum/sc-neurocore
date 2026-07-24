@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_perfect_integrator_support import *  # noqa: F403
 
+
 class TestPerfectIntegratorAnalyticalFI:
     """f–I curve: firing rate = I·dt / (C·(θ - V_reset)) for constant input.
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_loihi_cuba_support import *  # noqa: F403
 
+
 class TestLoihiCUBAIsolation:
     def test_defaults(self):
         n = LoihiCUBANeuron()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 """Tests for per-tensor and per-channel quantisation observers."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.qat.observers import (
     MinMaxObserver,
@@ -18,4 +19,11 @@ from sc_neurocore.qat.observers import (
     fake_quantize,
 )
 
-__all__ = ['pytest', 'torch', 'MinMaxObserver', 'PerChannelMinMaxObserver', '_quant_bounds', 'fake_quantize']
+__all__ = [
+    "pytest",
+    "torch",
+    "MinMaxObserver",
+    "PerChannelMinMaxObserver",
+    "_quant_bounds",
+    "fake_quantize",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestFittedModelDataclass:
     def test_fields(self):
         fm = FittedModel(

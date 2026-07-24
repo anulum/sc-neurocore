@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lapicque_support import *  # noqa: F403
 
+
 class TestLapicqueNeuronSimulate:
     """Engineering-verification surface for ``LapicqueNeuron.simulate``."""
 

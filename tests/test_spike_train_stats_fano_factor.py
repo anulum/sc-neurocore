@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestFanoFactor:
     def test_poisson_near_one(self):
         train = _poisson_train(100.0, 5.0)

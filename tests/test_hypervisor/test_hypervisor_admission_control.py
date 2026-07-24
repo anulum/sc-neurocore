@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hypervisor_support import *  # noqa: F403
 
+
 class TestAdmissionControl:
     def test_admit_ok(self):
         t = _tenant("new")

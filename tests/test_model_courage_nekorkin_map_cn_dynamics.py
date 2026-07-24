@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_courage_nekorkin_map_support import *  # noqa: F403
 
+
 class TestCNDynamics:
     def test_sustained_bounded_spiking(self):
         """Default regime fires repeatedly and stays bounded (no clip-pegging)."""

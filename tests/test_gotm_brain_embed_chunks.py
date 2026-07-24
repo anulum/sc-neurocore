@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestEmbedChunks:
     def test_shape(self) -> None:
         chunks = [

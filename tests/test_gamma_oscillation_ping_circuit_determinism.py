@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gamma_oscillation_support import *  # noqa: F403
 
+
 class TestPINGCircuitDeterminism:
     """Two PINGCircuit instances built with the same seed produce identical output."""
 

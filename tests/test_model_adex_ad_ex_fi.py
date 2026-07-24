@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adex_support import *  # noqa: F403
 
+
 class TestAdExFI:
     def test_subthreshold_silent(self):
         n = AdExNeuron()

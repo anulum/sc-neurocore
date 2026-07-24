@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestCarbonModel:
     def test_eu_lower_than_cn(self):
         eu = CarbonModel(GridRegion.EU)

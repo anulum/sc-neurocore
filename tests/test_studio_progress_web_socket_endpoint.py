@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_progress_support import *  # noqa: F403
 
+
 class TestWebSocketEndpoint:
     def test_ws_unknown_op(self, client: TestClient) -> None:
         with client.websocket_connect("/ws/progress") as ws:
@@ -172,4 +173,3 @@ class TestWebSocketEndpoint:
         assert row["decision"] == "allow"
         assert row["principal_id"] == "browser-operator"
         assert row["reason"] == "authorized"
-

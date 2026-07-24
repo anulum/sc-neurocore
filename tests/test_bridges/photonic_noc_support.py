@@ -30,6 +30,8 @@ from sc_neurocore.bridges.photonic_noc import (
     export_photonic_json,
     visualize_photonic,
 )
+
+
 @pytest.fixture
 def simple_adjacency() -> np.ndarray:
     """4-node mesh network."""
@@ -41,10 +43,35 @@ def simple_adjacency() -> np.ndarray:
             [0.0, 0.8, 1.0, 0.0],
         ]
     )
+
+
 @pytest.fixture
 def simple_design(simple_adjacency: np.ndarray) -> PhotonicCircuitDesign:
     """Compiled 4-node photonic design."""
     compiler = SCToPhotonic()
     return compiler.compile(simple_adjacency, name="test_noc")
 
-__all__ = ['json', 'math', 'os', 'np', 'pytest', 'CrosstalkAnalyzer', 'MZICompiler', 'MZIGate', 'PhotonicCircuitDesign', 'PowerBudgetAnalyzer', 'SCToPhotonic', 'ThermalPhaseShifter', 'WDMAssigner', 'WDMChannel', 'WaveguideRouter', 'WaveguideSegment', 'WaveguideType', 'export_photonic_json', 'visualize_photonic', 'simple_adjacency', 'simple_design']
+
+__all__ = [
+    "json",
+    "math",
+    "os",
+    "np",
+    "pytest",
+    "CrosstalkAnalyzer",
+    "MZICompiler",
+    "MZIGate",
+    "PhotonicCircuitDesign",
+    "PowerBudgetAnalyzer",
+    "SCToPhotonic",
+    "ThermalPhaseShifter",
+    "WDMAssigner",
+    "WDMChannel",
+    "WaveguideRouter",
+    "WaveguideSegment",
+    "WaveguideType",
+    "export_photonic_json",
+    "visualize_photonic",
+    "simple_adjacency",
+    "simple_design",
+]

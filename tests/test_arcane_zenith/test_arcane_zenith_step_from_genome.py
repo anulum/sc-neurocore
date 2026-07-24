@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestStepFromGenome:
     """``step_from_genome`` seeds ``tau_fast`` and ``tau_work`` from the
     ``NeuronGene`` fields of an evo_substrate Genome, and steps the

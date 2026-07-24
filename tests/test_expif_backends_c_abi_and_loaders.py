@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.expif_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejects_non_finite_input_without_writing_output(backend: str) -> None:
     """Prove invalid input is rejected inside each C boundary before emission."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topological_observables_support import *  # noqa: F403
 
+
 class TestConnectionCurvature:
     def test_synchronised_equals_coupling(self):
         """cos(0) = 1, so F_ij = K_ij when synchronised."""

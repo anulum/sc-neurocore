@@ -11,15 +11,31 @@ from __future__ import annotations
 from typing import Protocol
 import unittest
 import pytest
+
 torch = pytest.importorskip("torch", reason="torch not installed; DARTS tests require it")
 from sc_neurocore.nas.darts_sc_nas import (  # noqa: E402
     BitstreamCandidate,
     SCMixedOp,
     SCNASNetwork,
 )
+
+
 class _Backwardable(Protocol):
     def backward(self) -> None: ...
+
+
 def _backward(value: _Backwardable) -> None:
     value.backward()
 
-__all__ = ['Protocol', 'unittest', 'pytest', 'torch', 'BitstreamCandidate', 'SCMixedOp', 'SCNASNetwork', '_Backwardable', '_backward']
+
+__all__ = [
+    "Protocol",
+    "unittest",
+    "pytest",
+    "torch",
+    "BitstreamCandidate",
+    "SCMixedOp",
+    "SCNASNetwork",
+    "_Backwardable",
+    "_backward",
+]

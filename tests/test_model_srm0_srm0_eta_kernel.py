@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_srm0_support import *  # noqa: F403
 
+
 class TestSRM0EtaKernel:
     def test_eta_set_on_spike(self) -> None:
         """After spike: eta = -eta_reset (negative = afterhyperpolarisation)."""

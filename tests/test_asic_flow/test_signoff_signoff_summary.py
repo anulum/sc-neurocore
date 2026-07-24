@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.signoff_support import *  # noqa: F403
 
+
 class TestSignoffSummary:
     def test_all_pass(self) -> None:
         s = SignoffSummary(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_booth_rinzel_support import *  # noqa: F403
 
+
 class TestBoothRinzelIsolation:
     def test_construction(self):
         n = BoothRinzelNeuron()

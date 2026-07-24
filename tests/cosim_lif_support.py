@@ -21,7 +21,21 @@ from tests.cosim_support import (
     _verilog_spike_count_q1616,
     _verilog_spike_count_q412,
 )
+
 _N_STEPS = 200
 _INPUT_CURRENT = 50.0
 
-__all__ = ['subprocess', 'sys', 'pytest', 'Q88', 'HAS_IVERILOG', '_lif_schema_precision_values', '_python_spike_count', '_verilog_spike_count', '_verilog_spike_count_q1616', '_verilog_spike_count_q412', '_N_STEPS', '_INPUT_CURRENT']
+__all__ = [
+    "subprocess",
+    "sys",
+    "pytest",
+    "Q88",
+    "HAS_IVERILOG",
+    "_lif_schema_precision_values",
+    "_python_spike_count",
+    "_verilog_spike_count",
+    "_verilog_spike_count_q1616",
+    "_verilog_spike_count_q412",
+    "_N_STEPS",
+    "_INPUT_CURRENT",
+]

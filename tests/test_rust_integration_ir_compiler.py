@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.rust_integration_support import *  # noqa: F403
 
+
 class TestIRCompiler:
     def test_build_verify_emit(self) -> None:
         b = engine.ScGraphBuilder("test_lif")

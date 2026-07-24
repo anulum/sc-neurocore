@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestWave11Integration(unittest.TestCase):
     def test_full_pipeline(self):
         """End-to-end: profile → approx → aging → timing → telemetry."""

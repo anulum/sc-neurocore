@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bit_true_kernel_support import *  # noqa: F403
 
+
 class TestTranscendentalStatements:
     """Cover the LUT-statement paths (deriv, threshold and table declarations)."""
 

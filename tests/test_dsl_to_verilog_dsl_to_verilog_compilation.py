@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dsl_to_verilog_support import *  # noqa: F403
 
+
 class TestDSLToVerilogCompilation:
     """Test that schema-loaded models compile to valid Verilog."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_quadratic_if_support import *  # noqa: F403
 
+
 class TestQIFAnalysis:
     def test_spike_count(self):
         n = QuadraticIFNeuron()

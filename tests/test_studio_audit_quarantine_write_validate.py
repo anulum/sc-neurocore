@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_audit_quarantine_support import *  # noqa: F403
 
+
 def test_write_studio_audit_quarantine_archive_writes_manifest_and_payload(
     tmp_path: Path,
 ) -> None:
@@ -46,6 +47,7 @@ def test_write_studio_audit_quarantine_archive_writes_manifest_and_payload(
     assert manifest_payload["summary"] == archive_payload["summary"]
     assert str(tmp_path) not in json.dumps(payload)
 
+
 def test_validate_studio_audit_quarantine_archive_accepts_writer_output(
     tmp_path: Path,
 ) -> None:
@@ -67,6 +69,7 @@ def test_validate_studio_audit_quarantine_archive_accepts_writer_output(
     assert validation_summary["reason_counts"] == {"legacy_or_unverifiable_rows": 1}
     assert str(tmp_path) not in json.dumps(validation)
 
+
 def test_validate_studio_audit_quarantine_archive_reports_manifest_mismatch(
     tmp_path: Path,
 ) -> None:
@@ -87,6 +90,7 @@ def test_validate_studio_audit_quarantine_archive_reports_manifest_mismatch(
         "manifest_archive_id_mismatch",
         "manifest_summary_mismatch",
     ]
+
 
 @pytest.mark.parametrize(
     ("mutation", "expected_errors"),
@@ -137,6 +141,7 @@ def test_validate_studio_audit_quarantine_archive_reports_manifest_defects(
     assert validation["valid"] is False
     assert validation["errors"] == expected_errors
 
+
 @pytest.mark.parametrize(
     "manifest_payload",
     [
@@ -161,6 +166,7 @@ def test_validate_studio_audit_quarantine_archive_rejects_non_json_manifest(
     assert validation["valid"] is False
     assert validation["errors"] == ["manifest_not_json"]
 
+
 def test_validate_studio_audit_quarantine_archive_reports_summary_mismatch(
     tmp_path: Path,
 ) -> None:
@@ -177,6 +183,7 @@ def test_validate_studio_audit_quarantine_archive_reports_summary_mismatch(
     validation_summary = cast(dict[str, object], validation["summary"])
     assert validation_summary["event_count"] == 1
 
+
 def test_write_studio_audit_quarantine_archive_rejects_malformed_export(
     tmp_path: Path,
 ) -> None:
@@ -188,6 +195,7 @@ def test_write_studio_audit_quarantine_archive_rejects_malformed_export(
             quarantine_export=_quarantine_export_payload()
             | {"schema_version": "studio.audit.export.v1"},
         )
+
 
 @pytest.mark.parametrize(
     ("mutation", "error_match"),
@@ -219,6 +227,7 @@ def test_write_studio_audit_quarantine_archive_rejects_invalid_export_shapes(
             _archive_context(tmp_path),
             quarantine_export=export_payload,
         )
+
 
 @pytest.mark.parametrize(
     ("mutation", "expected_error"),

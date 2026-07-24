@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.waveform_codec_support import *  # noqa: F403
 
+
 class TestWaveformCodec:
     def test_compress_returns_bytes(self) -> None:
         waveform = _make_waveform()

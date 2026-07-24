@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestPhaseEncode:
     def test_shape(self):
         s = phase_encode(np.array([0.5, 0.3]), T=16, n_phases=4)

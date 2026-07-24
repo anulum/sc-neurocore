@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_import_support import *  # noqa: F403
 
+
 class TestAliasesAndFallback:
     @pytest.mark.parametrize(
         "alias,canonical",

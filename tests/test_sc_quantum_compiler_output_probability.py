@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_quantum_compiler_support import *  # noqa: F403
 
+
 class TestOutputProbability:
     """Circuit output-probability helper contracts."""
 

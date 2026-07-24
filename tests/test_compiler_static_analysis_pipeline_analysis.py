@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compiler_static_analysis_support import *  # noqa: F403
 
+
 class TestPipelineAnalysis:
     """Tests for critical path depth and pipeline budget."""
 

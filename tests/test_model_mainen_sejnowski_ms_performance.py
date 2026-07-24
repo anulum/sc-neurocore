@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mainen_sejnowski_support import *  # noqa: F403
 
+
 class TestMSPerformance:
     def test_isolation_throughput(self):
         n = MainenSejnowskiNeuron()

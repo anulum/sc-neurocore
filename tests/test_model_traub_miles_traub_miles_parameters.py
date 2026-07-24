@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_traub_miles_support import *  # noqa: F403
 
+
 class TestTraubMilesParameters:
     @pytest.mark.parametrize(
         ("field", "value"),

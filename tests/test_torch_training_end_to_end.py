@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestEndToEnd:
     def test_full_pipeline_gradient(self):
         """Complete pipeline: encode → network → loss → backward."""

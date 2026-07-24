@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dispatcher_error_paths_support import *  # noqa: F403
 
+
 class TestJuliaWithoutJuliacallInstalled:
     """When juliacall is not installed, calling the dispatchers raises
     ImportError with the install-extras hint."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestReceptiveField:
     def test_spike_triggered_covariance(self, poisson_train):
         stim = np.random.default_rng(3).normal(0, 1, poisson_train.size)

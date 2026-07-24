@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestSigmoidMapping:
     """``_map_to_range`` = sigmoid(10*(w-0.5)) interpolated into [min, max]."""
 

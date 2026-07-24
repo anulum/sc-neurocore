@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFParameters:
     def test_tau_m_affects_dynamics(self):
         n_fast = StochasticIFNeuron(tau_m=5.0, sigma=0.0)

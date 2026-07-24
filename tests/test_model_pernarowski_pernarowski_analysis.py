@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiAnalysis:
     def test_spike_count(self):
         n = PernarowskiNeuron()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_compile_dense_lif_population_inactivity_sva_is_deterministic() -> None:
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
@@ -57,5 +58,3 @@ def test_population_inactivity_bound_rejects_invalid_contracts(
 
     with pytest.raises(ValueError, match=match):
         NetworkPopulationInactivityBound(**values)
-
-

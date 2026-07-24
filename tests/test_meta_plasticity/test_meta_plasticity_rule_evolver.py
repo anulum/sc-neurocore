@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestRuleEvolver:
     def test_initial_population(self):
         ev = RuleEvolver(population_size=8)

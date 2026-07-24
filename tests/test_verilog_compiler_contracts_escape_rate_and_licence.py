@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.verilog_compiler_contracts_support import *  # noqa: F403
 
+
 def test_generated_registered_and_folded_rtl_carry_licence_headers() -> None:
     """Both public emitters return HDL with the repository's seven-line header."""
     common = (

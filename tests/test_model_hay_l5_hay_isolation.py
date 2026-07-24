@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hay_l5_support import *  # noqa: F403
 
+
 class TestHayIsolation:
     def test_defaults(self) -> None:
         n = HayL5PyramidalNeuron()

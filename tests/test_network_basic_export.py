@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestExport:
     def test_export_lif_network(self, tmp_path):
         pop = Population("LapicqueNeuron", 4)

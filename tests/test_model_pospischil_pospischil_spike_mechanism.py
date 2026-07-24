@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilSpikeMechanism:
     def test_upward_crossing_only(self):
         n = PospischilNeuron()

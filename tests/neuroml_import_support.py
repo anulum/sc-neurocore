@@ -20,13 +20,18 @@ from sc_neurocore.adapters.neuroml import (
 )
 from sc_neurocore.neurons.models import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.adex import AdExNeuron
+
 FIXTURES = Path(__file__).parent / "fixtures" / "neuroml"
+
+
 @pytest.fixture(autouse=True)
 def ensure_fixtures(tmp_path):
     """Create test NeuroML files in tmp_path."""
     d = tmp_path / "neuroml"
     d.mkdir()
     yield d
+
+
 def _write_nml(path: Path, body: str) -> Path:
     header = dedent("""\
     <neuroml xmlns="http://www.neuroml.org/schema/neuroml2"
@@ -35,4 +40,19 @@ def _write_nml(path: Path, body: str) -> Path:
     path.write_text(header + body + "\n</neuroml>")
     return path
 
-__all__ = ['Path', 'dedent', 'pytest', 'ImportedCell', '_parse_current_pa', '_parse_unit_value', 'create_neuron', 'import_neuroml', 'Izhikevich2007Neuron', 'AdExNeuron', 'FIXTURES', 'ensure_fixtures', '_write_nml']
+
+__all__ = [
+    "Path",
+    "dedent",
+    "pytest",
+    "ImportedCell",
+    "_parse_current_pa",
+    "_parse_unit_value",
+    "create_neuron",
+    "import_neuroml",
+    "Izhikevich2007Neuron",
+    "AdExNeuron",
+    "FIXTURES",
+    "ensure_fixtures",
+    "_write_nml",
+]

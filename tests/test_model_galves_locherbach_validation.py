@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_galves_locherbach_support import *  # noqa: F403
 
+
 class TestValidation:
     @pytest.mark.parametrize("field", ["v", "v_rest", "threshold_rate"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

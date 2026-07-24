@@ -28,4 +28,17 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.identity.substrate import IdentitySubstrate
 from sc_neurocore.identity.checkpoint import Checkpoint
 
-__all__ = ['os', 'tempfile', 'np', 'StochasticLIFNeuron', 'BitstreamEncoder', 'bitstream_to_probability', 'Population', 'Projection', 'Network', 'PoissonInput', 'IdentitySubstrate', 'Checkpoint']
+__all__ = [
+    "os",
+    "tempfile",
+    "np",
+    "StochasticLIFNeuron",
+    "BitstreamEncoder",
+    "bitstream_to_probability",
+    "Population",
+    "Projection",
+    "Network",
+    "PoissonInput",
+    "IdentitySubstrate",
+    "Checkpoint",
+]

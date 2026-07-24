@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_director_support import *  # noqa: F403
 
+
 class TestDiagnoseConnectivity:
     def test_connectivity_too_dense(self):
         sub = _make_substrate()

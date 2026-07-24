@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnoseArchitecture:
     def test_bottleneck(self):
         r = diagnose([(256, 256), (256, 8)], target="artix7")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestBackpressure:
     def test_accept_when_empty(self):
         bp = BackpressureController(max_queue_depth=100)

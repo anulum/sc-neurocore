@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.ecology_support import *  # noqa: F403
 
+
 class TestExtinctionDetector:
     def test_no_extinction_early(self) -> None:
         ed = ExtinctionDetector(stagnation_gens=5)

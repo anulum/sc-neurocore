@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_compile_dense_lif_population_coactivation_sva_is_deterministic() -> None:
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
@@ -72,5 +73,3 @@ def test_compiler_rejects_population_coactivation_cap_above_output_width() -> No
 
     with pytest.raises(ValueError, match="max_active_outputs"):
         compile_network_population_coactivation_sva(spec, prop)
-
-

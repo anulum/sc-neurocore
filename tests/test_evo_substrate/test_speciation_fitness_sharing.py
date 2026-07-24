@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.speciation_support import *  # noqa: F403
 
+
 class TestFitnessSharing:
     def test_shared_fitness_reduces(self) -> None:
         pop = []

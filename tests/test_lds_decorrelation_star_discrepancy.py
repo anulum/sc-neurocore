@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.lds_decorrelation_support import *  # noqa: F403
 
+
 class TestStarDiscrepancy:
     def test_sobol_lower_discrepancy_than_random(self):
         """Sobol samples should have lower discrepancy than random."""

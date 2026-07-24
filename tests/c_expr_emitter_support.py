@@ -11,8 +11,11 @@ from __future__ import annotations
 """Tests for the C++ (ap_fixed) expression emitter."""
 import pytest
 from sc_neurocore.compiler.c_expr_emitter import CExprEmitter, emit_c_expr
+
+
 def _emit(expr: str, state_vars: set[str] | None = None, **kw: object) -> str:
     code, _ = emit_c_expr(expr, state_vars or set(), **kw)  # type: ignore[arg-type]
     return code
 
-__all__ = ['pytest', 'CExprEmitter', 'emit_c_expr', '_emit']
+
+__all__ = ["pytest", "CExprEmitter", "emit_c_expr", "_emit"]

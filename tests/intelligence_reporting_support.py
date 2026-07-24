@@ -12,4 +12,4 @@ import unittest
 import json
 from sc_neurocore.compiler.intelligence import explore_pareto
 
-__all__ = ['unittest', 'json', 'explore_pareto']
+__all__ = ["unittest", "json", "explore_pareto"]

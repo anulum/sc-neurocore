@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestEnergyHarvestZeroDesignPower:
     """A non-positive design power has no ratio, so the harvester budget reports
     a full duty cycle and saturated margin rather than dividing by zero."""

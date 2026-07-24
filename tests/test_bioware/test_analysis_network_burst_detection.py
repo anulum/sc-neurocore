@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.analysis_support import *  # noqa: F403
 
+
 class TestNetworkBurstDetection:
     def test_synchronised_burst(self) -> None:
         rng = np.random.default_rng(42)

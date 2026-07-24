@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestDefaults:
     def test_ccw_parameters_defaults(self):
         p = CCWParameters()

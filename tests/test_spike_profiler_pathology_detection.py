@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_profiler_support import *  # noqa: F403
 
+
 class TestPathologyDetection:
     def test_dead_neurons_critical(self):
         p = SpikeProfiler(dead_threshold=0.01)

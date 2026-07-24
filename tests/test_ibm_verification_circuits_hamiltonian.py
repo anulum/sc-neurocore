@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestHamiltonian:
     def test_hermitian(self):
         H = posner_hamiltonian(1.0, HF1, HF2)

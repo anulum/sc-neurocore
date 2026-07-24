@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestWongWang:
     def test_decision(self):
         n = WongWangUnit()

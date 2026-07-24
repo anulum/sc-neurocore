@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestThetaNeuron:
     def test_fires_above_threshold(self):
         from sc_neurocore.neurons.models import ThetaNeuron

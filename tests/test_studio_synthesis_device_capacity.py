@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestDeviceCapacity:
     def test_all_targets_have_capacity(self):
         for target in _TARGETS:
@@ -26,4 +27,3 @@ class TestDeviceCapacity:
             assert cap["ffs"] <= 100_000
             assert cap["brams"] <= 500
             assert cap["dsps"] <= 500
-

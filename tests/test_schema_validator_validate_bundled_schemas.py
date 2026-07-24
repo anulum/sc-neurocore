@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.schema_validator_support import *  # noqa: F403
 
+
 class TestValidateBundledSchemas:
     """Validate all 12 bundled schemas."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:
     settings = build_default_studio_runtime_settings(
         env={"SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true"}

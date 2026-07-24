@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.stochastic_core_properties_support import *  # noqa: F403
 
+
 @given(seed=st.integers(min_value=0, max_value=2**31 - 1))
 @settings(max_examples=20)
 def test_rng_deterministic(seed):
@@ -19,12 +20,14 @@ def test_rng_deterministic(seed):
     vb = b.random(100)
     np.testing.assert_array_equal(va, vb)
 
+
 @given(n=st.integers(min_value=1, max_value=1000))
 @settings(max_examples=20)
 def test_rng_output_shape(n):
     r = RNG(seed=42)
     out = r.random(n)
     assert out.shape == (n,)
+
 
 @given(n=st.integers(min_value=100, max_value=500))
 @settings(max_examples=10)
@@ -34,6 +37,7 @@ def test_rng_output_range(n):
     assert np.all(out >= 0.0)
     assert np.all(out <= 1.0)
 
+
 @given(n_steps=st.integers(min_value=1, max_value=100))
 @settings(max_examples=20)
 def test_recorder_accumulates(n_steps):
@@ -42,6 +46,7 @@ def test_recorder_accumulates(n_steps):
         rec.record(i % 2)
     arr = rec.as_array()
     assert len(arr) == n_steps
+
 
 @given(p=st.floats(min_value=0.0, max_value=1.0))
 @settings(max_examples=30)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hdc_python_support import *  # noqa: F403
 
+
 class TestBitStreamTensor:
     def test_create_random(self):
         t = BitStreamTensor(1000, seed=42)

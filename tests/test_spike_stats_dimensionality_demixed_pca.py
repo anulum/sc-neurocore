@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_dimensionality_support import *  # noqa: F403
 
+
 class TestDemixedPCA:
     def test_typical(self) -> None:
         proj, expl = demixed_pca(_conditions(), n_components=2)

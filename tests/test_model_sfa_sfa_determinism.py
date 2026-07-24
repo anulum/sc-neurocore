@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFADeterminism:
     def test_bit_exact(self):
         traces = []

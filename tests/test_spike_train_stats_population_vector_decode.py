@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestPopulationVectorDecode:
     def test_shape(self):
         trains = [_poisson_train(50.0, 0.5, seed=i) for i in range(4)]

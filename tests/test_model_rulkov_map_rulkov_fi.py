@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rulkov_map_support import *  # noqa: F403
 
+
 class TestRulkovFI:
     def test_no_spikes_at_zero_input(self):
         """Default params (sigma=-1.6) → no spikes at I=0."""

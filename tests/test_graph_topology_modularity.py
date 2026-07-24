@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.graph_topology_support import *  # noqa: F403
 
+
 class TestModularity:
     """TopologyReport.modularity computation (closes task #42)."""
 

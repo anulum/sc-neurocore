@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestHindmarshRose:
     def test_bursting(self):
         from sc_neurocore.neurons.models import HindmarshRoseNeuron

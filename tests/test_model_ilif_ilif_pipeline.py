@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ilif_support import *  # noqa: F403
 
+
 class TestILIFPipeline:
     def test_population(self):
         assert Population(InhibitoryLIFNeuron, n=10, label="ilif").n == 10

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hindmarsh_rose_support import *  # noqa: F403
 
+
 class TestHRIsolation:
     def test_defaults(self):
         n = HindmarshRoseNeuron()

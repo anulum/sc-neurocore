@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.adex_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_compiled_backends_reject_non_baseline_integrators(backend: str) -> None:
     """Never silently run baseline Euler for an RK4-configured instance."""

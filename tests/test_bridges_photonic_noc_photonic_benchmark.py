@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestPhotonicBenchmark:
     def test_compile_50_node_network(self):
         """End-to-end 50-node SC → photonic compile."""

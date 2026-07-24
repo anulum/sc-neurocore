@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_ann_snn_support import *  # noqa: F403
 
+
 class TestConversionPackageFacade:
     def test_lazy_facade_resolves_public_exports(self) -> None:
         import sc_neurocore.conversion as conversion

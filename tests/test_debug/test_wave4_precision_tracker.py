@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestPrecisionTracker:
     def test_ema(self):
         pt = PrecisionTracker(alpha=0.5)

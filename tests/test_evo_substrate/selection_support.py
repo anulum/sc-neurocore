@@ -22,4 +22,15 @@ from sc_neurocore.evo_substrate.selection import (
     compute_bloat,
 )
 
-__all__ = ['np', 'FitnessResult', 'Genome', 'Organism', 'AgeRegulator', 'BloatPenalizer', 'HallOfFame', 'ParetoFront', 'TournamentSelector', 'compute_bloat']
+__all__ = [
+    "np",
+    "FitnessResult",
+    "Genome",
+    "Organism",
+    "AgeRegulator",
+    "BloatPenalizer",
+    "HallOfFame",
+    "ParetoFront",
+    "TournamentSelector",
+    "compute_bloat",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.augmentation_support import *  # noqa: F403
 
+
 class TestSpikeCurriculum:
     def test_timesteps_progression(self):
         c = SpikeCurriculum(total_epochs=100, start_timesteps=10, end_timesteps=200)

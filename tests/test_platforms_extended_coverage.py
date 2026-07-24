@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestExtendedCoverage(unittest.TestCase):
     def test_profile_count_ge_183(self):
         self.assertGreaterEqual(len(list_profile_names()), 183)

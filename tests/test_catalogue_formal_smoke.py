@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.catalogue_formal_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     "sby_name",
     [

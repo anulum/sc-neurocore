@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_runtime_precision_support import *  # noqa: F403
 
+
 class TestMultiStateVariable:
     """Verify adaptive precision with multi-state-variable neurons."""
 

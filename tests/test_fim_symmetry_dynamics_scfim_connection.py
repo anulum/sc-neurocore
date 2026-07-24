@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fim_symmetry_dynamics_support import *  # noqa: F403
 
+
 class TestSCFIMConnection:
     def test_longer_bitstream_higher_precision(self):
         """Longer bitstream L should give lower SC encoding error.

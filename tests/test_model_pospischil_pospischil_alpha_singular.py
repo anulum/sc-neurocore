@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilAlphaSingular:
     def test_limit_returned_at_singularity(self):
         from sc_neurocore.neurons.models.pospischil import _alpha_singular

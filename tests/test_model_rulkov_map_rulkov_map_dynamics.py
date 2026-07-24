@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rulkov_map_support import *  # noqa: F403
 
+
 class TestRulkovMapDynamics:
     """Test the 3-branch piecewise map structure."""
 

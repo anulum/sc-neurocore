@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_firing_rate_zero_duration():
     assert firing_rate(np.array([]), dt=0.001) == 0.0
 
@@ -17,5 +18,3 @@ def test_firing_rate_zero_duration():
 def test_bin_spike_train_small():
     r = bin_spike_train(np.array([1, 0, 1]), bin_size=10)
     assert r[0] == 2
-
-

@@ -15,6 +15,8 @@ import sys
 import numpy as np
 import sc_neurocore.training as training
 from sc_neurocore.training.equilibrium_propagation import EPNetwork, _rho, _rho_prime
+
+
 class _BlockTorchFinder(importlib.abc.MetaPathFinder):
     """Import hook that forces the training package through its no-Torch branch."""
 
@@ -28,4 +30,14 @@ class _BlockTorchFinder(importlib.abc.MetaPathFinder):
             raise ImportError("forced missing torch surface")
         return None
 
-__all__ = ['importlib', 'sys', 'np', 'training', 'EPNetwork', '_rho', '_rho_prime', '_BlockTorchFinder']
+
+__all__ = [
+    "importlib",
+    "sys",
+    "np",
+    "training",
+    "EPNetwork",
+    "_rho",
+    "_rho_prime",
+    "_BlockTorchFinder",
+]

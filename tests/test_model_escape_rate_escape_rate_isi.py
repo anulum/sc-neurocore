@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRateISI:
     def test_isi_variability(self):
         """Stochastic → CV(ISI) > 0."""

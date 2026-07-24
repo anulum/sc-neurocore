@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neuron_families_support import *  # noqa: F403
 
+
 class TestNeuronFamilies:
     def test_step_returns_bool_or_int(self, model_and_current):
         name, neuron, I = model_and_current

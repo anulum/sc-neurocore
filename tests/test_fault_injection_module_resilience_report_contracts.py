@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestResilienceReportContracts:
     def test_summary_includes_core_metrics(self):
         report = ResilienceReport(

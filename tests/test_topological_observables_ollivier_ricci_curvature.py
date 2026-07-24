@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topological_observables_support import *  # noqa: F403
 
+
 class TestOllivierRicciCurvature:
     def test_complete_graph_positive(self):
         """Complete graph has positive lazy Ollivier-Ricci curvature."""

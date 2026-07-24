@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_deploy_support import *  # noqa: F403
 
+
 def test_deploy_without_model_reports_usage(capsys: pytest.CaptureFixture[str]) -> None:
     assert run_cli("deploy") == 1
     assert "deploy requires a model file" in capsys.readouterr().out
@@ -219,5 +220,3 @@ def test_deploy_rejects_non_string_state_dictionary(
         == 1
     )
     assert "state_dict-like dictionary" in capsys.readouterr().out
-
-

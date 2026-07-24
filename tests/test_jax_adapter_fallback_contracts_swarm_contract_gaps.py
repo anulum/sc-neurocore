@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestSwarmContractGaps:
     def test_fitness_cohesion_single_agent(self):
         from sc_neurocore.swarm.fitness import SwarmFitness

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_version_identity_support import *  # noqa: F403
 
+
 class TestPhase8Version:
     def test_version_is_current(self) -> None:
         _assert_engine_version_matches_core()

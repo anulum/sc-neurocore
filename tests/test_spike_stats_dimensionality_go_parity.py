@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_dimensionality_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _GO_AVAILABLE, reason="Go dimensionality library not built")
 class TestGoParity:
     def test_parity(self) -> None:

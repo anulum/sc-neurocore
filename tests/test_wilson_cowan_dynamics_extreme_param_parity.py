@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestExtremeParamParity:
     """Rust simulator must track Python primary bit-exact across
     extreme parameter regimes."""

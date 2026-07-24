@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.compliance_support import *  # noqa: F403
 
+
 class TestFailClosedEvidenceContracts:
     def test_addressed_item_requires_real_evidence(self) -> None:
         with pytest.raises(ValueError, match="require non-empty evidence"):

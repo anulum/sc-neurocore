@@ -21,6 +21,7 @@ from sc_neurocore.uvm_gen.uvm_gen import (
     UVMBenchmark,
     UVMGenerator,
 )
+
 LIF_VERILOG = """\
 module sc_lif_neuron #(
     parameter DATA_WIDTH = 16,
@@ -51,10 +52,16 @@ module sc_dense_layer_core #(
 );
 endmodule
 """
+
+
 def lif_module() -> RTLModule:
     return RTLModule.from_verilog_source(LIF_VERILOG)
+
+
 def dense_module() -> RTLModule:
     return RTLModule.from_verilog_source(DENSE_VERILOG)
+
+
 PARAMLESS_VERILOG_WITH_BLANK_PORT = """\
 module sc_paramless (
     input  wire clk,
@@ -64,4 +71,22 @@ module sc_paramless (
 endmodule
 """
 
-__all__ = ['pytest', 'CoverageSpec', 'ModulePort', 'PortDirection', 'PortType', 'RTLModule', 'ScoreboardConfig', 'StimulusConfig', 'SIM_TARGETS', 'UVMBenchmark', 'UVMGenerator', 'LIF_VERILOG', 'DENSE_VERILOG', 'lif_module', 'dense_module', 'PARAMLESS_VERILOG_WITH_BLANK_PORT', '__all__']
+__all__ = [
+    "pytest",
+    "CoverageSpec",
+    "ModulePort",
+    "PortDirection",
+    "PortType",
+    "RTLModule",
+    "ScoreboardConfig",
+    "StimulusConfig",
+    "SIM_TARGETS",
+    "UVMBenchmark",
+    "UVMGenerator",
+    "LIF_VERILOG",
+    "DENSE_VERILOG",
+    "lif_module",
+    "dense_module",
+    "PARAMLESS_VERILOG_WITH_BLANK_PORT",
+    "__all__",
+]

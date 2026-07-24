@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spade_gpfa_support import *  # noqa: F403
 
+
 class TestSpadeDetect:
     def test_planted_pattern_detected(self):
         trains = _sync_trains(n_neurons=5, n_steps=2000, sync_every=100)

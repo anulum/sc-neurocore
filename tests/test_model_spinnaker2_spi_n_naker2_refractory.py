@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker2_support import *  # noqa: F403
 
+
 class TestSpiNNaker2Refractory:
     def test_refractory_blocks(self):
         n = SpiNNaker2Neuron()

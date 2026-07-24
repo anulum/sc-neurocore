@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.behavioral_equivalence_support import *  # noqa: F403
 
+
 class TestFixedPointLIF:
     """Bit-true verification of sc_lif_neuron.v dynamics."""
 

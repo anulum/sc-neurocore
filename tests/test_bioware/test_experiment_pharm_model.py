@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.experiment_support import *  # noqa: F403
 
+
 class TestPharmModel:
     def test_no_drug(self) -> None:
         pm = PharmModel()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_observers_support import *  # noqa: F403
 
+
 class TestPerChannelMinMaxObserver:
     def test_per_channel_scale_shape(self) -> None:
         obs = PerChannelMinMaxObserver(8, ch_axis=0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.acquisition_support import *  # noqa: F403
 
+
 class TestRefractoryPeriod:
     def test_refractory_reduces_spikes(self) -> None:
         cfg = MEAConfig(num_channels=10, spike_threshold_sigma=3.0)

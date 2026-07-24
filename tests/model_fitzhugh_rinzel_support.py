@@ -25,8 +25,12 @@ from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
+
+
 def _run(neuron: FitzHughRinzelNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _rhs(
     v: float,
     w: float,
@@ -45,6 +49,8 @@ def _rhs(
         delta * (a + v - b * w),
         mu * (c - v - d * y),
     )
+
+
 def _rk4_reference(v: float, w: float, y: float, current: float, dt: float):
     k1 = _rhs(v, w, y, current)
     k2 = _rhs(v + 0.5 * dt * k1[0], w + 0.5 * dt * k1[1], y + 0.5 * dt * k1[2], current)
@@ -56,4 +62,21 @@ def _rk4_reference(v: float, w: float, y: float, current: float, dt: float):
         y + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
     )
 
-__all__ = ['math', 'time', 'np', 'pytest', 'firing_rate', 'spike_count', 'SpikeMonitor', 'Network', 'Population', 'Projection', 'PoissonInput', 'FitzHughRinzelNeuron', '_run', '_rhs', '_rk4_reference']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "firing_rate",
+    "spike_count",
+    "SpikeMonitor",
+    "Network",
+    "Population",
+    "Projection",
+    "PoissonInput",
+    "FitzHughRinzelNeuron",
+    "_run",
+    "_rhs",
+    "_rk4_reference",
+]

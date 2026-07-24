@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_deploy_support import *  # noqa: F403
 
+
 def test_deploy_replaces_existing_hdl_copy(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -59,5 +60,3 @@ def test_deploy_warns_when_hdl_tree_is_unavailable(
         assert run_cli("deploy", str(model), "--target", "artix7") == 0
 
     assert "HDL source directory not found" in capsys.readouterr().out
-
-

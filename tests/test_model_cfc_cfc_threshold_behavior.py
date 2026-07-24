@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cfc_support import *  # noqa: F403
 
+
 class TestCFCThresholdBehavior:
     """Default threshold=1.0 is unreachable since tanh < 1."""
 

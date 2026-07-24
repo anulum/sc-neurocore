@@ -16,4 +16,9 @@ from sc_neurocore.adapters.spikeinterface import (
     spike_trains_to_population_input,
 )
 
-__all__ = ['np', 'firing_rates_to_sc_probs', 'spike_trains_to_bitstreams', 'spike_trains_to_population_input']
+__all__ = [
+    "np",
+    "firing_rates_to_sc_probs",
+    "spike_trains_to_bitstreams",
+    "spike_trains_to_population_input",
+]

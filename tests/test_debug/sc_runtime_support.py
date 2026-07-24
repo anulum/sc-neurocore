@@ -24,4 +24,18 @@ from sc_neurocore.control.sc_runtime import (
     classify_activity,
 )
 
-__all__ = ['np', 'pytest', 'ActivityMonitor', 'ActivityZone', 'AdaptationPolicy', 'DecorrelatorType', 'ECCMode', 'HammingECC', 'RuntimeConfig', 'RuntimeReport', 'SCRuntimeEngine', 'SECDEC_ECC', 'classify_activity']
+__all__ = [
+    "np",
+    "pytest",
+    "ActivityMonitor",
+    "ActivityZone",
+    "AdaptationPolicy",
+    "DecorrelatorType",
+    "ECCMode",
+    "HammingECC",
+    "RuntimeConfig",
+    "RuntimeReport",
+    "SCRuntimeEngine",
+    "SECDEC_ECC",
+    "classify_activity",
+]

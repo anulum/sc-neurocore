@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
 
+
 class TestHHParameters:
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
     def test_dt_stability(self, dt: float):

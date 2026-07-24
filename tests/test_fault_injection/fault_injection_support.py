@@ -20,6 +20,7 @@ from sc_neurocore.fault_injection.fault_injection import (
     ResilienceBenchmark,
     ResilienceReport,
 )
+
 _VALID_REPORT = dict(
     fault_model="bit_flip",
     ber=0.1,
@@ -34,4 +35,16 @@ _VALID_REPORT = dict(
     wall_time_ms=1.0,
 )
 
-__all__ = ['unittest', 'MagicMock', 'np', 'pytest', 'FaultInjector', 'FaultModel', 'FaultInjectionResult', 'RadiationProfile', 'ResilienceBenchmark', 'ResilienceReport', '_VALID_REPORT']
+__all__ = [
+    "unittest",
+    "MagicMock",
+    "np",
+    "pytest",
+    "FaultInjector",
+    "FaultModel",
+    "FaultInjectionResult",
+    "RadiationProfile",
+    "ResilienceBenchmark",
+    "ResilienceReport",
+    "_VALID_REPORT",
+]

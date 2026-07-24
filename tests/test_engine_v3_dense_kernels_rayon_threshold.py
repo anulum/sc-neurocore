@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_dense_kernels_support import *  # noqa: F403
 
+
 class TestRayonThreshold:
     """Test that rayon threshold does not change forward_fast outputs."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestMuMax3ScriptGenerator:
     def test_switching_script(self):
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)

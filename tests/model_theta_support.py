@@ -24,10 +24,16 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
 def _run(neuron: ThetaNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _wrap_phase(theta: float) -> float:
     return ((theta + math.pi) % (2.0 * math.pi)) - math.pi
+
+
 def _exact_theta_candidate(theta: float, current: float, dt: float) -> tuple[float, bool]:
     y = math.tan(theta / 2.0)
     if current > 0.0:
@@ -54,4 +60,22 @@ def _exact_theta_candidate(theta: float, current: float, dt: float) -> tuple[flo
         return -math.pi, True
     return _wrap_phase(2.0 * math.atan(root_i * (1.0 + evolved) / denominator)), spiked
 
-__all__ = ['math', 'np', 'pytest', 'backends', 'ThetaNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'isi', 'firing_rate', '_run', '_wrap_phase', '_exact_theta_candidate']
+
+__all__ = [
+    "math",
+    "np",
+    "pytest",
+    "backends",
+    "ThetaNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "isi",
+    "firing_rate",
+    "_run",
+    "_wrap_phase",
+    "_exact_theta_candidate",
+]

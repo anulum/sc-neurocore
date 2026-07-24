@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestLearnableParamsAllCells:
     """Verify learn_beta/learn_threshold across all cell types (Tier 5.9)."""
 

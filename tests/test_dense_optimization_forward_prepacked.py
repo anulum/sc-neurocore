@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dense_optimization_support import *  # noqa: F403
 
+
 class TestForwardPrepacked:
     """Tests for pre-packed forward path."""
 

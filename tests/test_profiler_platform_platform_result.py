@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.profiler_platform_support import *  # noqa: F403
 
+
 class TestPlatformResult:
     def test_fields(self):
         r = PlatformResult(

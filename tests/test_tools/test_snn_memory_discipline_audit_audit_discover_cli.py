@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from snn_memory_discipline_audit_support import *  # noqa: F403
 
+
 def test_audit_memory_discipline_reports_directory_violations(tmp_path: Path) -> None:
     """The aggregate audit includes checked count and violation details."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.surrogate_python_support import *  # noqa: F403
 
+
 class TestDifferentiableDenseLayer:
     def test_train_step(self):
         layer = DifferentiableDenseLayer(

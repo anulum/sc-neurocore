@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.privacy_support import *  # noqa: F403
 
+
 class TestMembershipAudit:
     def test_basic(self):
         def model(s):

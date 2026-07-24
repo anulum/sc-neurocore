@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gdsii_support import *  # noqa: F403
 
+
 class TestLayoutArithmetic:
     def test_returns_full_layout_dict(
         self, populated_result: CompilationResult, tmp_path: Path

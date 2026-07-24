@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
 
+
 def test_silicon_defaults_are_empty() -> None:
     """An absent [silicon] section yields the below-H0 default facet."""
     descriptor = parse_model_descriptor(_minimal_payload())
@@ -68,5 +69,3 @@ def test_parse_rejects_boolean_clock() -> None:
     payload["silicon"] = {"clock_mhz": True}
     with pytest.raises(ModelDescriptorError, match="clock_mhz"):
         parse_model_descriptor(payload)
-
-

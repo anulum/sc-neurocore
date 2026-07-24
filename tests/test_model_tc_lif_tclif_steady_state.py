@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tc_lif_support import *  # noqa: F403
 
+
 class TestTCLIFSteadyState:
     def test_soma_steady_state(self):
         """At steady state (no spikes): v_s_ss depends on both i_soma and v_d."""

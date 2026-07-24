@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestISI:
     def test_regular(self):
         train = np.zeros(100, dtype=np.uint8)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_control_support import *  # noqa: F403
 
+
 class TestSwarmEnvironment(unittest.TestCase):
     def test_init(self):
         env = SwarmEnvironment(EnvConfig())

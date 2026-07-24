@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dispatcher_error_paths_support import *  # noqa: F403
 
+
 class TestCDLLOpenFailureSetsSentinelFalse:
     """Importing the dispatcher when the `.so` cannot be loaded sets the
     `_HAS_*` sentinel to False rather than crashing the interpreter."""

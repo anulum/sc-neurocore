@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_fpga_pipeline_support import *  # noqa: F403
 
+
 class TestE2ECLI:
     """Write .nir file → invoke compile-nir → verify output files."""
 

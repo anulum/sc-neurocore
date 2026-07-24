@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.adex_backends_support import *  # noqa: F403
 
+
 def test_every_acceleration_backend_is_executable() -> None:
     """A graduation run must expose all four real compiled lanes without skips."""
     assert adex._HAS_RUST

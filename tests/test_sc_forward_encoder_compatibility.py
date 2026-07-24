@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_forward_support import *  # noqa: F403
 
+
 class TestEncoderCompatibility:
     """NEU-SCPN.3 — BitstreamEncoder(length=, seed=) constructs without ranges."""
 

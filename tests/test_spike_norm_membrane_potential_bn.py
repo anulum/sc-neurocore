@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_norm_support import *  # noqa: F403
 
+
 class TestMembranePotentialBN:
     def test_forward(self):
         bn = MembranePotentialBN(n_features=8)

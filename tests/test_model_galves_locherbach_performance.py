@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_galves_locherbach_support import *  # noqa: F403
 
+
 class TestPerformance:
     def test_isolation_throughput(self):
         n = GalvesLocherbachNeuron()

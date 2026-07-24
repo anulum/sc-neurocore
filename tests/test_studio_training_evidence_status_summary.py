@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_training_evidence_support import *  # noqa: F403
 
+
 def test_training_status_includes_verified_evidence_summary(tmp_path: Path) -> None:
     """Training status exposes path-free evidence metadata after completion."""
 
@@ -103,5 +104,3 @@ def test_training_evidence_summary_returns_none_without_declared_artifact() -> N
     )
 
     assert build_training_evidence_summary(record, _training_payload_reader()) is None
-
-

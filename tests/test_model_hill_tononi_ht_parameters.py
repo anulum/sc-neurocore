@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHTParameters:
     @pytest.mark.parametrize("g_kna", [0.0, 1.33, 3.0])
     def test_g_kna_sweep(self, g_kna: float):

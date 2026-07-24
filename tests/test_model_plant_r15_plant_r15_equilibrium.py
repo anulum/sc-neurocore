@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Equilibrium:
     def test_transient_spike(self):
         """From initial conditions, model fires exactly 1 transient spike."""

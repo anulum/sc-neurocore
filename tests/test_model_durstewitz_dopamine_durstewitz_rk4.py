@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_durstewitz_dopamine_support import *  # noqa: F403
 
+
 class TestDurstewitzRK4:
     """Guards the candidate-first RK4 integrator and its cross-backend parity.
 

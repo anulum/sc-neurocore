@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from core_engine_bridge_support import *  # noqa: F403
 
+
 def test_import_time_oserror_keeps_python_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep the bridge importable when the shared object exists but cannot load."""
     real_cdll = ct.CDLL

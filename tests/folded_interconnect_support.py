@@ -366,5 +366,39 @@ def _parity_rasters(ng: NeuronGraph, currents: list[float], n_total: int) -> tup
     return direct_raster, folded_raster
 
 
-__all__ = ['re', 'shutil', 'subprocess', 'tempfile', 'Path', 'pytest', 'Q88', 'quantise_graph', '_build_neuron_module', '_build_top_direct', '_build_top_folded', '_dequantised_pop', 'ConnectionSpec', 'NeuronGraph', 'NeuronSpec', '_HAVE_IVERILOG', 'pytestmark', '_DW', '_FR', '_N', '_STEPS', '_CURRENTS', '_single_lif_graph', '_flat_current_literal', '_direct_tb', '_folded_tb', '_cosim', '_weighted_ff_graph', '_recurrent_graph', '_two_pop_ff_graph', '_two_pop_recurrent_graph', '_delayed_recurrent_graph', '_two_pop_delayed_ff_graph', '_parity_rasters']
-
+__all__ = [
+    "re",
+    "shutil",
+    "subprocess",
+    "tempfile",
+    "Path",
+    "pytest",
+    "Q88",
+    "quantise_graph",
+    "_build_neuron_module",
+    "_build_top_direct",
+    "_build_top_folded",
+    "_dequantised_pop",
+    "ConnectionSpec",
+    "NeuronGraph",
+    "NeuronSpec",
+    "_HAVE_IVERILOG",
+    "pytestmark",
+    "_DW",
+    "_FR",
+    "_N",
+    "_STEPS",
+    "_CURRENTS",
+    "_single_lif_graph",
+    "_flat_current_literal",
+    "_direct_tb",
+    "_folded_tb",
+    "_cosim",
+    "_weighted_ff_graph",
+    "_recurrent_graph",
+    "_two_pop_ff_graph",
+    "_two_pop_recurrent_graph",
+    "_delayed_recurrent_graph",
+    "_two_pop_delayed_ff_graph",
+    "_parity_rasters",
+]

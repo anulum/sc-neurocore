@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_compile_dense_lif_rate_bound_sva_is_deterministic() -> None:
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
@@ -137,5 +138,3 @@ def test_compiler_rejects_rate_bound_outside_network_output_width() -> None:
 
     with pytest.raises(ValueError, match="output_index"):
         compile_network_rate_bound_sva(spec, prop)
-
-

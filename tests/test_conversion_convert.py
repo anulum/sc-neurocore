@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_support import *  # noqa: F403
 
+
 class TestConvert:
     def test_basic_conversion(self) -> None:
         ann = _make_ann()

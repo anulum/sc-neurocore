@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_analysis_support import *  # noqa: F403
 
+
 class TestCodegen:
     def test_model_script(self):
         script = generate_model_script("COBALIFNeuron", {"c_m": 200.0}, 100, 10, 0.1)
@@ -22,4 +23,3 @@ class TestCodegen:
     def test_model_script_runs(self):
         script = generate_model_script("COBALIFNeuron")
         assert "import numpy" in script
-

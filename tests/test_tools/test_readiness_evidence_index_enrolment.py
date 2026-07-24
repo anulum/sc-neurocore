@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from readiness_evidence_index_support import *  # noqa: F403
 
+
 def test_enrolled_shortlist_excludes_peer_wang_buzsaki_from_apply(tool: ModuleType) -> None:
     """Wang-Buzsaki remains inventored but skip_apply for peer-lane isolation."""
     wb = [e for e in tool.ENROLLED if e.schema_name == "wang_buzsaki"]
     assert len(wb) == 1
     assert wb[0].skip_apply is True
     assert "peer" in wb[0].skip_reason.lower() or "Gauss" in wb[0].skip_reason
+
 
 def test_enrolled_class_names_exist_in_descriptor_corpus(tool: ModuleType) -> None:
     """Every enrolled class_name has an on-disk descriptor (except none expected)."""
@@ -24,6 +26,7 @@ def test_enrolled_class_names_exist_in_descriptor_corpus(tool: ModuleType) -> No
     missing = [e.class_name for e in tool.ENROLLED if not descriptor_path(e.class_name).is_file()]
     assert missing == [], f"missing descriptors: {missing}"
 
+
 def test_expif_is_enrolled_at_q3232_cosim_tier(tool: ModuleType) -> None:
     """ExpIF no longer inherits the obsolete compile-only schema-gap claim."""
     expif = next(e for e in tool.ENROLLED if e.class_name == "ExpIFNeuron")
@@ -31,6 +34,7 @@ def test_expif_is_enrolled_at_q3232_cosim_tier(tool: ModuleType) -> None:
     assert expif.evidence == "tests/test_cosim_exp_if.py::test_expif_q3232_spike_parity"
     assert "Q32.32" in expif.operating_point
     assert "0/0/1/2/5/9" in expif.tolerance
+
 
 def test_escape_rate_is_enrolled_with_class_correct_statistical_metric(
     tool: ModuleType,
@@ -48,6 +52,7 @@ def test_escape_rate_is_enrolled_with_class_correct_statistical_metric(
     validation = tool.validation_section(escape, has_dynamics=True)
     assert validation["metric"] == "statistical"
 
+
 def test_poisson_is_enrolled_with_full_period_statistical_cosim(tool: ModuleType) -> None:
     """Bind the stochastic event source to its registered and folded RTL evidence."""
     poisson = next(e for e in tool.ENROLLED if e.class_name == "PoissonNeuron")
@@ -62,6 +67,7 @@ def test_poisson_is_enrolled_with_full_period_statistical_cosim(tool: ModuleType
     validation = tool.validation_section(poisson, has_dynamics=True)
     assert validation["metric"] == "statistical"
 
+
 def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleType) -> None:
     """Replace the generic suite pointer with the measured Lapicque contract."""
     lapicque = next(e for e in tool.ENROLLED if e.class_name == "LapicqueNeuron")
@@ -71,6 +77,7 @@ def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleTyp
     )
     assert "I=0.333,2.3,20.25" in lapicque.operating_point
     assert "Q16.16 event vectors exact" in lapicque.tolerance
+
 
 def test_quadratic_if_is_enrolled_with_dedicated_exact_flow_evidence(
     tool: ModuleType,
@@ -83,6 +90,7 @@ def test_quadratic_if_is_enrolled_with_dedicated_exact_flow_evidence(
     )
     assert "I=0,0.333,0.5,1,2,5,20,50" in quadratic_if.operating_point
     assert "Q16.16 event vectors exact" in quadratic_if.tolerance
+
 
 def test_theta_is_enrolled_with_dedicated_exact_flow_evidence(
     tool: ModuleType,

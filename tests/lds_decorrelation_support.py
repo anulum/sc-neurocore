@@ -17,4 +17,4 @@ from sc_neurocore.utils.lds_decorrelation import (
 )
 import scipy.stats.qmc as qmc
 
-__all__ = ['np', 'pytest', 'generate_decorrelated_bitstreams', 'star_discrepancy_estimate', 'qmc']
+__all__ = ["np", "pytest", "generate_decorrelated_bitstreams", "star_discrepancy_estimate", "qmc"]

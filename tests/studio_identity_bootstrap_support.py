@@ -96,5 +96,26 @@ class _StringStdin:
         return self._text
 
 
-__all__ = ['hashlib', 'json', 'os', 'sys', 'Path', 'Any', 'Literal', 'pytest', 'bootstrap', 'main', 'DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID', 'DEFAULT_STUDIO_ADMIN_ROLES', 'MIN_BOOTSTRAP_TOKEN_BYTES', 'bootstrap_studio_admin_identity', 'StudioIdentityAuthenticator', 'add_studio_browser_user_record', 'load_studio_identity_store', '_STUDIO_PREFLIGHT_ENV_KEYS', '_fixed_token', '_configure_release_preflight_env', '_StringStdin']
-
+__all__ = [
+    "hashlib",
+    "json",
+    "os",
+    "sys",
+    "Path",
+    "Any",
+    "Literal",
+    "pytest",
+    "bootstrap",
+    "main",
+    "DEFAULT_STUDIO_ADMIN_PRINCIPAL_ID",
+    "DEFAULT_STUDIO_ADMIN_ROLES",
+    "MIN_BOOTSTRAP_TOKEN_BYTES",
+    "bootstrap_studio_admin_identity",
+    "StudioIdentityAuthenticator",
+    "add_studio_browser_user_record",
+    "load_studio_identity_store",
+    "_STUDIO_PREFLIGHT_ENV_KEYS",
+    "_fixed_token",
+    "_configure_release_preflight_env",
+    "_StringStdin",
+]

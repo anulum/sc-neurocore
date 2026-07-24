@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_network_canvas_support import *  # noqa: F403
 
+
 class TestEndpoints:
     def test_models_endpoint(self, client):
         r = client.get("/api/graph/models")
@@ -141,4 +142,3 @@ class TestEndpoints:
         assert response.status_code == 200
         assert captured == {"source_id": "a", "target_id": "b", "weight": 0.5}
         assert "private" not in response.json()
-

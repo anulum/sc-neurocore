@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestCv2Edge:
     def test_empty(self):
         result = cv2(np.zeros(50, dtype=np.int8))

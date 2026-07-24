@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_training_evidence_support import *  # noqa: F403
 
+
 def test_training_evidence_summary_rejects_unknown_classification() -> None:
     """Training evidence summaries fail closed on unknown evidence classes."""
 
@@ -118,5 +119,3 @@ def test_training_evidence_summary_rejects_non_object_artifact_entry() -> None:
     )
 
     assert summary == _unavailable_training_summary()
-
-

@@ -41,6 +41,30 @@ from sc_neurocore.quantum_cognition.kane_mapper import (
 )
 from sc_neurocore.quantum_cognition.studio_hook import QuantumStudioHook
 from sc_neurocore.quantum_cognition.dashboard import TerminalDashboard
+
 _QC_DIR = Path(__file__).resolve().parent.parent / "src" / "sc_neurocore" / "quantum_cognition"
 
-__all__ = ['json', 'math', 'os', 'subprocess', 'Path', 'np', 'pytest', 'SpinPoolMPS', 'HybridFisherPosnerLIF', 'FisherPosnerQuantumBridge', 'compute_max_qubits', '_get_available_ram', 'GOTMBrain', 'ContentChunk', 'index_gotm_repo', 'RadicalPairModel', 'RadicalPairParams', 'KaneSiliconMapper', 'QuantumStudioHook', 'TerminalDashboard', '_QC_DIR', '__all__']
+__all__ = [
+    "json",
+    "math",
+    "os",
+    "subprocess",
+    "Path",
+    "np",
+    "pytest",
+    "SpinPoolMPS",
+    "HybridFisherPosnerLIF",
+    "FisherPosnerQuantumBridge",
+    "compute_max_qubits",
+    "_get_available_ram",
+    "GOTMBrain",
+    "ContentChunk",
+    "index_gotm_repo",
+    "RadicalPairModel",
+    "RadicalPairParams",
+    "KaneSiliconMapper",
+    "QuantumStudioHook",
+    "TerminalDashboard",
+    "_QC_DIR",
+    "__all__",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestThermalSuggestion:
     def test_thermal_violation_suggestion(self):
         fpga = FPGAResourceReport(

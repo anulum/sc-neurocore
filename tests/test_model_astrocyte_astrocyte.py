@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_astrocyte_support import *  # noqa: F403
 
+
 class TestAstrocyte:
     def test_calcium_dynamics(self):
         from sc_neurocore.neurons.models.astrocyte import AstrocyteModel

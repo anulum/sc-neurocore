@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.predictive_spike_codec_support import *  # noqa: F403
 
+
 class TestLFSRPredictor:
     """SC-native LFSR predictor: bit-true with sc_bitstream_encoder.v."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_dynamics_support import *  # noqa: F403
 
+
 class TestCorticalColumnDeterminism:
     def test_same_seed_same_output(self):
         dt = 0.1

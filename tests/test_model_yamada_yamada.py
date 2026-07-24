@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_yamada_support import *  # noqa: F403
 
+
 class TestYamada:
     def test_moderate_drive_crosses_threshold_in_short_window(self):
         n = YamadaNeuron()

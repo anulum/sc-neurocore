@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_generators_support import *  # noqa: F403
 
+
 class TestSmallWorld:
     def test_csr_valid(self) -> None:
         indptr, indices, data = small_world(50, k=6, p_rewire=0.1, weight=1.0)

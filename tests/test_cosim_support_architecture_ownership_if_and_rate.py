@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cosim_support_architecture_support import *  # noqa: F403
 
+
 def test_adex_has_exact_definition_ownership() -> None:
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
@@ -124,5 +125,3 @@ def test_theta_has_exact_definition_ownership() -> None:
     theta_tree = ast.parse(Path(cosim_reference_theta.__file__).read_text(encoding="utf-8"))
     theta_functions = {node.name for node in theta_tree.body if isinstance(node, ast.FunctionDef)}
     assert theta_functions == set(_THETA_NAMES)
-
-

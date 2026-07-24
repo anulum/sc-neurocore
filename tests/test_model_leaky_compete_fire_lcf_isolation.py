@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_leaky_compete_fire_support import *  # noqa: F403
 
+
 class TestLCFIsolation:
     def test_defaults(self):
         n = LeakyCompeteFireNeuron()

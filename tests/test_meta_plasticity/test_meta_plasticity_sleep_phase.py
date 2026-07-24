@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestSleepPhase:
     def test_record_and_buffer_size(self):
         sp = SleepPhase()

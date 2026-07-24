@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.learning_advanced_support import *  # noqa: F403
 
+
 class TestTBPTTLearner:
     def test_chunked_loss_finite(self):
         net, proj = _make_small_network()

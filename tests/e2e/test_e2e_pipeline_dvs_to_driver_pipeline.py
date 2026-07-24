@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.e2e.e2e_pipeline_support import *  # noqa: F403
 
+
 @pytest.mark.e2e
 class TestDVSToDriverPipeline:
     """DVS event camera → AER bridge → RISC-V driver chain."""

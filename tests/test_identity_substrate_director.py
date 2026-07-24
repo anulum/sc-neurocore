@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_substrate_support import *  # noqa: F403
 
+
 class TestDirector:
     def test_monitor_returns_metrics(self):
         sub = _make_substrate()

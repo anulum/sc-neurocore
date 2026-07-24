@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestStep:
     @pytest.fixture
     def core(self) -> ArcaneZenithCognitiveCore:

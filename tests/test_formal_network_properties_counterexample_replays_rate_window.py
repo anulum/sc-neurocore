@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_counterexample_replay_detects_aligned_window_rate_violation() -> None:
     prop = NetworkRateBound(
         name="output0_rate_bound",

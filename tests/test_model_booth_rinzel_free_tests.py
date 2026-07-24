@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_booth_rinzel_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -38,6 +39,8 @@ def test_booth_rinzel_rejects_invalid_physical_configuration(field, value):
     kwargs = {field: value}
     with pytest.raises(ValueError):
         BoothRinzelNeuron(**kwargs)
+
+
 def test_booth_rinzel_runtime_validation_is_fail_closed():
     neuron = BoothRinzelNeuron()
     neuron.p = 1.0
@@ -45,12 +48,16 @@ def test_booth_rinzel_runtime_validation_is_fail_closed():
     with pytest.raises(ValueError):
         neuron.step(10.0)
     assert _booth_state_tuple(neuron) == before
+
+
 def test_booth_rinzel_nonfinite_input_is_fail_closed():
     neuron = BoothRinzelNeuron()
     before = _booth_state_tuple(neuron)
     with pytest.raises(ValueError):
         neuron.step(float("nan"))
     assert _booth_state_tuple(neuron) == before
+
+
 def test_booth_rinzel_drive_preserves_physical_bounds():
     neuron = BoothRinzelNeuron()
     for _ in range(100):

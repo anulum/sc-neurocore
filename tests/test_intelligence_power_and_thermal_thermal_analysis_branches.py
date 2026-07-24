@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestThermalAnalysisBranches:
     """Cover the per-process-node derating tiers, the medium/low hotspot bands,
     and the finite-input guard that the existing thermal cases leave untouched."""

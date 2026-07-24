@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_generators_support import *  # noqa: F403
 
+
 class TestGridTopology:
     def test_csr_valid(self) -> None:
         indptr, indices, data = grid_topology(5, 5, radius=1, weight=1.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cfc_support import *  # noqa: F403
 
+
 class TestClosedFormContinuous:
     def test_dynamics(self):
         from sc_neurocore.neurons.models.cfc import ClosedFormContinuousNeuron

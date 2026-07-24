@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestParallelSpikingNeuron:
     def test_dynamics(self):
         from sc_neurocore.neurons.models.psn import ParallelSpikingNeuron

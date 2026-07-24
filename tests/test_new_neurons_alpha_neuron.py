@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestAlphaNeuron:
     def test_fires_with_excitation(self):
         from sc_neurocore.neurons.models import AlphaNeuron

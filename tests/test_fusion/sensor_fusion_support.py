@@ -24,6 +24,8 @@ from sc_neurocore.fusion.sensor_fusion import (
     TactileAdapter,
     TemporalAligner,
 )
+
+
 def _make_stream(
     modality: SensorModality,
     n_events: int = 100,
@@ -37,4 +39,22 @@ def _make_stream(
         polarities=rng.choice([-1, 1], n_events),
     )
 
-__all__ = ['np', 'BitstreamDecorrelator', 'CochleaAdapter', 'CrossModalAttention', 'DVSAdapter', 'EventStream', 'FusionEnergyEstimator', 'FusionVerilogEmitter', 'HDCBinding', 'IMUAdapter', 'SensorFusionLayer', 'SensorModality', 'TactileAdapter', 'TemporalAligner', '_make_stream', '__all__']
+
+__all__ = [
+    "np",
+    "BitstreamDecorrelator",
+    "CochleaAdapter",
+    "CrossModalAttention",
+    "DVSAdapter",
+    "EventStream",
+    "FusionEnergyEstimator",
+    "FusionVerilogEmitter",
+    "HDCBinding",
+    "IMUAdapter",
+    "SensorFusionLayer",
+    "SensorModality",
+    "TactileAdapter",
+    "TemporalAligner",
+    "_make_stream",
+    "__all__",
+]

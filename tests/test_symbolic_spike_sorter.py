@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.symbolic_support import *  # noqa: F403
 
+
 class TestSpikeSorter:
     def test_sort_basic(self):
         assert spike_sort([3, 1, 4, 1, 5, 9, 2, 6]) == sorted([3, 1, 4, 1, 5, 9, 2, 6])

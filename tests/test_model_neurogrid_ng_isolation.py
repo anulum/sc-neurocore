@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGIsolation:
     def test_defaults(self) -> None:
         n = NeuroGridNeuron()

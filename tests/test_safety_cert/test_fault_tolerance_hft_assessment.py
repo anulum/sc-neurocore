@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.fault_tolerance_support import *  # noqa: F403
 
+
 class TestHFTAssessment:
     def test_high_sff_low_sil(self) -> None:
         hft = HFTAssessment(sff=0.99, target_sil=SILLevel.SIL_2)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hls_export_support import *  # noqa: F403
 
+
 class TestFreeVariables:
     def test_free_vars_become_inputs(self) -> None:
         cpp = generate_hls_cpp("sc_lif", {"v": "-v / tau + I - leak * v"})

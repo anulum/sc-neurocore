@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestCreateSessionConfig:
     def test_default_meditation_session(self):
         bridge = create_bridge()

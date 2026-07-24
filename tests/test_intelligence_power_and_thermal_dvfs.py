@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestDVFS(unittest.TestCase):
     def test_default(self):
         v = generate_dvfs_controller("sc_lif")

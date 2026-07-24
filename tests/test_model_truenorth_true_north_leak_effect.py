@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_truenorth_support import *  # noqa: F403
 
+
 class TestTrueNorthLeakEffect:
     def test_leak_reduces_effective_rate(self):
         """Higher leak → lower effective current → fewer spikes."""

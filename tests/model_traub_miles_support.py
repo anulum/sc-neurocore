@@ -22,8 +22,12 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
 def _run(neuron: TraubMilesNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _rk4_expected_after_call(
     neuron: TraubMilesNeuron, current: float
 ) -> tuple[float, float, float, float]:
@@ -68,4 +72,19 @@ def _rk4_expected_after_call(
         n += neuron.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
     return v, m, h, n
 
-__all__ = ['np', 'pytest', 'TraubMilesNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'isi', 'firing_rate', '_run', '_rk4_expected_after_call']
+
+__all__ = [
+    "np",
+    "pytest",
+    "TraubMilesNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "isi",
+    "firing_rate",
+    "_run",
+    "_rk4_expected_after_call",
+]

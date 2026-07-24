@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pipeline_stages_support import *  # noqa: F403
 
+
 class TestPipelineRegisters:
     """Verify pipeline registers appear in generated Verilog."""
 

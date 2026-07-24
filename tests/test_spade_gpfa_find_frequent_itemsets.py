@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spade_gpfa_support import *  # noqa: F403
 
+
 class TestFindFrequentItemsets:
     def test_single_coactive_pair(self):
         mat = np.array(

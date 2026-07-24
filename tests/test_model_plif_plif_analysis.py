@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFAnalysis:
     def test_spike_count(self):
         n = ParametricLIFNeuron(a=1.0)

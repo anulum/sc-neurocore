@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
 
+
 class TestConnorStevensNeuronSimulate:
     """Engineering-verification surface for ``ConnorStevensNeuron.simulate``."""
 

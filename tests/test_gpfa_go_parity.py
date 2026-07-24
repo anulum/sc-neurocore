@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _GO_AVAILABLE, reason="Go GPFA library not built")
 class TestGoParity:
     """The Go backend matches the NumPy reference up to float64 round-off."""

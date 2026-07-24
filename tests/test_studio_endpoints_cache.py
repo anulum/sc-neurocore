@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestCacheStats:
     def test_cache_stats(self, client):
         r = client.get("/api/cache/stats")
@@ -51,4 +52,3 @@ class TestCacheStats:
         assert cache.hits == 1
         assert cache.misses == 3
         assert len(cache._cache) == 1
-

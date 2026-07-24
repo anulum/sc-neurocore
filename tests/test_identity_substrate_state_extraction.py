@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_substrate_support import *  # noqa: F403
 
+
 class TestStateExtraction:
     def test_extract_state_empty(self):
         sub = _make_substrate()

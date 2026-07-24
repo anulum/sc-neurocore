@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_compiler_support import *  # noqa: F403
 
+
 class TestIRBuild:
     def test_ir_build_returns_ir_text(self, client):
         r = client.post("/api/ir/build", json=LIF_EQ)
@@ -35,4 +36,3 @@ class TestIRBuild:
         data = r.json()
         assert "params_q88" in data
         assert "E_L" in data["params_q88"]
-

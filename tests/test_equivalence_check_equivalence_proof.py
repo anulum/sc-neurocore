@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equivalence_check_support import *  # noqa: F403
 
+
 @_needs_formal
 class TestEquivalenceProof:
     """End-to-end machine-checked proofs (require the formal toolchain)."""

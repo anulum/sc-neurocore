@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker_lif_support import *  # noqa: F403
 
+
 class TestSpiNNakerLIFRefractory:
     def test_refractory_blocks_spikes(self):
         """During refractory period (tau_refrac=2), no spikes can occur."""

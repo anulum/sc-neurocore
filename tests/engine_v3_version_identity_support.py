@@ -12,6 +12,8 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError, version
 import sc_neurocore
 import sc_neurocore_engine as v3
+
+
 def _assert_engine_version_matches_core() -> None:
     """Validate source-tree and installed-wheel version surfaces."""
 
@@ -22,4 +24,11 @@ def _assert_engine_version_matches_core() -> None:
         return
     assert installed_version == sc_neurocore.__version__
 
-__all__ = ['PackageNotFoundError', 'version', 'sc_neurocore', 'v3', '_assert_engine_version_matches_core']
+
+__all__ = [
+    "PackageNotFoundError",
+    "version",
+    "sc_neurocore",
+    "v3",
+    "_assert_engine_version_matches_core",
+]

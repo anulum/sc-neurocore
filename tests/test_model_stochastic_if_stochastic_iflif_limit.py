@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFLIFLimit:
     """At sigma=0, model reduces to standard LIF. Verify LIF properties."""
 

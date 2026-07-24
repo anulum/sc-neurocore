@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_leaky_compete_fire_support import *  # noqa: F403
 
+
 class TestLCFAnalytical:
     def test_uniform_input_all_fire_together(self):
         """Equal input to all units → all spike simultaneously."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCable:
     def test_propagation(self) -> None:
         from sc_neurocore.neurons.models.rall_cable import RallCableNeuron

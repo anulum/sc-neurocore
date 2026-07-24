@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equivalence_miter_support import *  # noqa: F403
 
+
 class TestHeaderErrors:
     """Defensive parsing paths in the module-header locator."""
 

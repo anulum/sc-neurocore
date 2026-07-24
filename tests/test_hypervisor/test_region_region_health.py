@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from region_support import *  # noqa: F403
 
+
 class TestRegionHealth:
     def test_healthy_default(self) -> None:
         rh = RegionHealth(region_id=0)

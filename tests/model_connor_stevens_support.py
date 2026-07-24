@@ -29,8 +29,12 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: ConnorStevensNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _connor_reference_rate(
     scale: float, shift: float, v: float, denom: float, limit: float
 ) -> float:
@@ -39,6 +43,8 @@ def _connor_reference_rate(
     if abs(x) < 1e-9:
         return scale * denom
     return scale * delta / (1.0 - np.exp(-x))
+
+
 def _connor_reference_derivatives(
     state: tuple[float, float, float, float, float, float], current: float, params: dict[str, float]
 ) -> tuple[float, float, float, float, float, float]:
@@ -69,6 +75,8 @@ def _connor_reference_derivatives(
         (a_inf - a) / tau_a,
         (b_inf - b) / tau_b,
     )
+
+
 def _connor_reference_rk4(
     neuron: ConnorStevensNeuron, current: float
 ) -> tuple[float, float, float, float, float, float]:
@@ -102,4 +110,22 @@ def _connor_reference_rk4(
         )
     return state
 
-__all__ = ['time', 'np', 'pytest', 'ConnorStevensNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_run', '_connor_reference_rate', '_connor_reference_derivatives', '_connor_reference_rk4']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "ConnorStevensNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+    "_connor_reference_rate",
+    "_connor_reference_derivatives",
+    "_connor_reference_rk4",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestBurstEncode:
     def test_shape(self):
         s = burst_encode(np.array([0.2, 0.8]), T=10, max_burst=5)

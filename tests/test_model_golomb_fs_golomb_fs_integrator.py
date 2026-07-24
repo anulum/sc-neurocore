@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_golomb_fs_support import *  # noqa: F403
 
+
 class TestGolombFSIntegrator:
     def test_default_integrator_is_rk4(self):
         assert GolombFSNeuron().integrator == "rk4"

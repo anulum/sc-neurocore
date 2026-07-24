@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sources_and_profiling_support import *  # noqa: F403
 
+
 class TestQuantumEntropySource:
     def test_construction_default(self):
         qes = QuantumEntropySource(n_qubits=1, seed=42)

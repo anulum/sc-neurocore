@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_julia_parity_support import *  # noqa: F403
 
+
 class TestPythonJuliaParity:
     """Julia trajectory must match Python primary at machine-epsilon."""
 

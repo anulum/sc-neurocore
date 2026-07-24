@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_primitives_support import *  # noqa: F403
 
+
 class TestVecNot:
     def test_complement_probability(self):
         p = 0.7

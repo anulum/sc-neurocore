@@ -12,6 +12,7 @@ import numpy as np
 from numpy.typing import NDArray
 import pytest
 from sc_neurocore.contrastive import CSDPRule, SpikeContrastiveLoss
+
 FloatArray = NDArray[np.float64]
 
-__all__ = ['np', 'NDArray', 'pytest', 'CSDPRule', 'SpikeContrastiveLoss', 'FloatArray']
+__all__ = ["np", "NDArray", "pytest", "CSDPRule", "SpikeContrastiveLoss", "FloatArray"]

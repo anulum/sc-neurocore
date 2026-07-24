@@ -16,4 +16,4 @@ from sc_neurocore.quantum_cognition.radical_pair import (
     RadicalPairParams,
 )
 
-__all__ = ['np', 'pytest', 'RadicalPairModel', 'RadicalPairParams']
+__all__ = ["np", "pytest", "RadicalPairModel", "RadicalPairParams"]

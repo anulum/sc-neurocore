@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestCompare:
     @pytest.mark.parametrize("op,sym", [(">", ">"), (">=", ">="), ("<", "<"), ("<=", "<=")])
     def test_comparisons(self, op, sym):

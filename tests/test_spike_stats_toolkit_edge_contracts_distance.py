@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_vp_empty_b():
     r = victor_purpura_distance(np.array([0.1, 0.2]), np.array([]))
     assert r == 2.0
@@ -179,5 +180,3 @@ def test_gpfa_transform_empty():
     }
     r = gpfa_transform([], params)
     assert r.size == 0
-
-

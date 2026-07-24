@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestSpintronicVerilogGenerator:
     def test_generate(self):
         v = SpintronicVerilogGenerator.generate(

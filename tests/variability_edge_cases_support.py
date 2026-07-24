@@ -31,14 +31,44 @@ from sc_neurocore.analysis.spike_stats.variability import (
     optimal_bin_width,
     optimal_kernel_bandwidth,
 )
+
 _RUST_AVAILABLE = variability_module._HAS_RUST and variability_module._ssc is not None
+
+
 @pytest.fixture
 def force_python_fallback(monkeypatch):
     """Disable the Rust acceleration so the pure-Python reference path executes."""
     monkeypatch.setattr(variability_module, "_HAS_RUST", False)
+
+
 def _bernoulli_train(p, n, seed):
     """A reproducible Bernoulli spike train for the fallback exercises."""
     rng = np.random.default_rng(seed)
     return (rng.random(n) < p).astype(np.int8)
 
-__all__ = ['np', 'pytest', 'variability_module', 'cv_isi', 'cv2', 'local_variation', 'lvr', 'fano_factor', 'isi_entropy', 'lempel_ziv_complexity', 'approximate_entropy', 'sample_entropy', 'permutation_entropy', 'hurst_exponent', 'allan_factor', 'rescaled_range', 'complexity_pdf', 'optimal_bin_width', 'optimal_kernel_bandwidth', '_RUST_AVAILABLE', 'force_python_fallback', '_bernoulli_train', '__all__']
+
+__all__ = [
+    "np",
+    "pytest",
+    "variability_module",
+    "cv_isi",
+    "cv2",
+    "local_variation",
+    "lvr",
+    "fano_factor",
+    "isi_entropy",
+    "lempel_ziv_complexity",
+    "approximate_entropy",
+    "sample_entropy",
+    "permutation_entropy",
+    "hurst_exponent",
+    "allan_factor",
+    "rescaled_range",
+    "complexity_pdf",
+    "optimal_bin_width",
+    "optimal_kernel_bandwidth",
+    "_RUST_AVAILABLE",
+    "force_python_fallback",
+    "_bernoulli_train",
+    "__all__",
+]

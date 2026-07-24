@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestThermodynamicPlatforms(unittest.TestCase):
     def test_extropic_epu(self):
         p = get_profile("extropic_epu")

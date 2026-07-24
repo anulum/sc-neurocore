@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_timescale_partitioner_support import *  # noqa: F403
 
+
 class TestTimescalePartitioner:
     """Multi-timescale ODE partitioning."""
 

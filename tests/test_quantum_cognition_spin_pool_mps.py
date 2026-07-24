@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantum_cognition_support import *  # noqa: F403
 
+
 class TestSpinPoolMPS:
     """Tests for the Matrix Product States spin pool emulator."""
 

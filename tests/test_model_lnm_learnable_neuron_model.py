@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
 
+
 class TestLearnableNeuronModel:
     def test_fires(self):
         from sc_neurocore.neurons.models.lnm import LearnableNeuronModel

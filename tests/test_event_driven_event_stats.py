@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.event_driven_support import *  # noqa: F403
 
+
 class TestEventStats:
     def test_summary(self):
         s = EventStats(total_events_processed=100, total_spikes_generated=10, max_queue_size=50)

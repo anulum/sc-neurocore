@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_topology_support import *  # noqa: F403
 
+
 class TestChipletDie:
     """Die timing, seed, and width contracts."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sst_neuron_support import *  # noqa: F403
 
+
 class TestSSTNetwork:
     def test_population_size(self):
         assert Population(SSTNeuron, n=8, label="sst").n == 8

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestPSNCustomKernel:
     def test_custom_kernel_affects_scoring(self):
         """Non-uniform kernel weights recent inputs differently."""

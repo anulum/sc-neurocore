@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equilibrium_propagation_support import *  # noqa: F403
 
+
 class TestActivation:
     """Test hard-sigmoid activation functions."""
 

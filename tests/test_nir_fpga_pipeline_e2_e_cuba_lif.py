@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_fpga_pipeline_support import *  # noqa: F403
 
+
 class TestE2ECubaLIF:
     """Full pipeline with CubaLIF neurons (dual time constants)."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestVectorClock:
     def test_initial(self):
         vc = VectorClock(0, 3)

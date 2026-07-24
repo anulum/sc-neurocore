@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.network_execution_paths_support import *  # noqa: F403
 
+
 def test_workspace_release_profile_uses_abort_panic() -> None:
     project_root = Path(__file__).resolve().parents[1]
     manifest = _load_toml(project_root / "Cargo.toml")

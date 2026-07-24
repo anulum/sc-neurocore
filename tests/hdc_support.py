@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.hdc.base import HDCEncoder, AssociativeMemory
 
-__all__ = ['np', 'HDCEncoder', 'AssociativeMemory']
+__all__ = ["np", "HDCEncoder", "AssociativeMemory"]

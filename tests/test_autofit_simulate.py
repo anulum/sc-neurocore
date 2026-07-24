@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestSimulate:
     def test_with_mock_model(self):
         class MockNeuron:

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
 
+
 class TestWendlingParameters:
     @pytest.mark.parametrize("dt", [0.0005, 0.001, 0.002])
     def test_dt_stability(self, dt: float):

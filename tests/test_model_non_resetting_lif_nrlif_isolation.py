@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
 
+
 class TestNRLIFIsolation:
     def test_defaults(self):
         n = NonResettingLIFNeuron()

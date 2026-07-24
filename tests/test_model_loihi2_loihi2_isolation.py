@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_loihi2_support import *  # noqa: F403
 
+
 class TestLoihi2Isolation:
     def test_defaults(self):
         n = Loihi2Neuron()

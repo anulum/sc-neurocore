@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestConnectomeGenerator:
     def test_watts_strogatz_shape(self):
         adj = ConnectomeGenerator.generate_watts_strogatz(20, 4, 0.0)

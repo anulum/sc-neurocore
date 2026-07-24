@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_quadratic_if_support import *  # noqa: F403
 
+
 class TestQIFISI:
     def test_constant_isi(self):
         """Deterministic → constant ISI at steady state."""

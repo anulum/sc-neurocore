@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestTextExtraction:
     def test_python_docstrings(self) -> None:
         code = '"""Module docstring that is long enough."""\ndef f():\n    """Function docstring text here."""\n    pass\n'

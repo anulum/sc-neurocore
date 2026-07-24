@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_reporting_support import *  # noqa: F403
 
+
 class TestCompilationSummary:
     """End-to-end compilation summary generation."""
 

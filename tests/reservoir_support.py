@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.reservoir import AutoCriticalReservoir, ReservoirMetrics
 
-__all__ = ['np', 'AutoCriticalReservoir', 'ReservoirMetrics']
+__all__ = ["np", "AutoCriticalReservoir", "ReservoirMetrics"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFPipeline:
     def test_population(self):
         assert Population(StochasticIFNeuron, n=10, label="sif").n == 10

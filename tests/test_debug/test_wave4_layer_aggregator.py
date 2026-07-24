@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestLayerAggregator:
     def test_record_and_get(self):
         la = LayerAggregator()

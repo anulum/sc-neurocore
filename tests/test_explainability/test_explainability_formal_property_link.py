@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestFormalPropertyLink:
     def test_default_fields(self):
         fp = FormalPropertyLink(property_name="no_metastability")

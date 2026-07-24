@@ -32,9 +32,28 @@ from sc_neurocore.network.cortical_column import (
     K_BG,
     POPULATIONS,
 )
+
+
 @pytest.fixture(scope="class")
 def rasters():
     col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
     return col, col.simulate(duration_ms=600.0, dt=0.1)
 
-__all__ = ['importlib', 'sys', 'SimpleNamespace', 'np', 'pytest', 'sparse', 'cortical_column_module', 'restore_module_namespace', 'snapshot_module_namespace', 'CONN_PROBS', 'CorticalColumn', 'FULL_SIZES', 'K_BG', 'POPULATIONS', 'rasters']
+
+__all__ = [
+    "importlib",
+    "sys",
+    "SimpleNamespace",
+    "np",
+    "pytest",
+    "sparse",
+    "cortical_column_module",
+    "restore_module_namespace",
+    "snapshot_module_namespace",
+    "CONN_PROBS",
+    "CorticalColumn",
+    "FULL_SIZES",
+    "K_BG",
+    "POPULATIONS",
+    "rasters",
+]

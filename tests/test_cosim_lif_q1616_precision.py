@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_lif_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestQ1616Precision:
     """Q16.16 precision mode: 16 integer + 16 fractional bits (32-bit).

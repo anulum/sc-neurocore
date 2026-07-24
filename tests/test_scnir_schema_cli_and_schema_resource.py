@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_schema_support import *  # noqa: F403
 
+
 def test_scnir_json_schema_resource_is_bundled() -> None:
     schema_path = Path(__file__).resolve().parents[1] / "schemas/scnir/scnir.schema.json"
     payload = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -77,5 +78,3 @@ def test_scnir_upgrade_cli_writes_canonical_document(
     assert rc == 0
     assert json.loads(output_path.read_text(encoding="utf-8")) == scnir_to_dict(_valid_document())
     assert "SC-NIR upgraded" in capsys.readouterr().out
-
-

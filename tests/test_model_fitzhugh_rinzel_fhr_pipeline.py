@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
 
+
 class TestFHRPipeline:
     def test_population(self):
         assert Population(FitzHughRinzelNeuron, n=10, label="fhr").n == 10

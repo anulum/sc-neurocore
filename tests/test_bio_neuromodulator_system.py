@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_support import *  # noqa: F403
 
+
 class TestNeuromodulatorSystem:
     def test_defaults(self):
         nm = NeuromodulatorSystem()

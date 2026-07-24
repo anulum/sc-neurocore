@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tensor_stream_support import *  # noqa: F403
 
+
 class TestProbToQuantum:
     def test_output_shape(self):
         ts = TensorStream.from_prob(np.array([0.3, 0.7]))

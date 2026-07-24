@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestEvolutionaryNAS:
     def test_search_returns_non_empty_front(self) -> None:
         report = run_nas(population_size=10, num_generations=5, seed=42)

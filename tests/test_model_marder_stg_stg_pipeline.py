@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGPipeline:
     def test_population(self):
         assert Population(MarderSTGNeuron, n=10, label="stg").n == 10

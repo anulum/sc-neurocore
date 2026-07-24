@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.temporal_properties_support import *  # noqa: F403
 
+
 class TestCausalOrder:
     """Causal-order checks between source and target neuron spikes."""
 

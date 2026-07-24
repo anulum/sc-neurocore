@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.event_driven_support import *  # noqa: F403
 
+
 class TestSpikeEvent:
     def test_ordering(self):
         e1 = SpikeEvent(time=1.0, source_id=0, target_id=1)

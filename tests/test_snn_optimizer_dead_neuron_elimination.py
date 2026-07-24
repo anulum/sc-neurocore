@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.snn_optimizer_support import *  # noqa: F403
 
+
 class TestDeadNeuronElimination:
     def test_removes_dead(self):
         g = SNNGraph(

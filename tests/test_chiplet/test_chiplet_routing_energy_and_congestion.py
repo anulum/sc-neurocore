@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_routing_support import *  # noqa: F403
 
+
 class TestEnergyAndCongestion:
     """Package communication estimates."""
 

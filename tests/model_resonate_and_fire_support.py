@@ -47,5 +47,4 @@ def _exact_flow(
     )
 
 
-
-__all__ = ['math', 'cast', 'np', 'pytest', 'ResonateAndFireNeuron', '_exact_flow']
+__all__ = ["math", "cast", "np", "pytest", "ResonateAndFireNeuron", "_exact_flow"]

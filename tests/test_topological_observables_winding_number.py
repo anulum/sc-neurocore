@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topological_observables_support import *  # noqa: F403
 
+
 class TestWindingNumber:
     def test_zero_wraps(self):
         """Half rotation (0 to pi) = 0 wraps."""

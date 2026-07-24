@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
 
+
 def test_kuramoto_rtl_error_report_cli_writes_deterministic_gate(tmp_path: Path) -> None:
     output = tmp_path / "kuramoto_rtl_fixed_point_error.json"
 
@@ -104,5 +105,3 @@ def test_committed_kuramoto_rtl_error_report_matches_reference() -> None:
             < case["thresholds"]["rust_order_parameter_error"]
         )
         assert case["passed"] is True
-
-

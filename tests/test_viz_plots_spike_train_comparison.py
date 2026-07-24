@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.viz_plots_support import *  # noqa: F403
 
+
 class TestSpikeTrainComparison:
     def test_returns_axes(self):
         trains = [np.array([1, 5, 10]), np.array([2, 6, 11]), np.array([3, 7, 12])]

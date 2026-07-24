@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_dense_kernels_support import *  # noqa: F403
 
+
 class TestFusedAndPopcount:
     """Tests verifying fused AND+popcount produces same results as before."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.learning_advanced_support import *  # noqa: F403
 
+
 class TestRewardModulatedLearner:
     def test_positive_reward_does_not_crash(self):
         """R-STDP step with positive reward should execute without error.

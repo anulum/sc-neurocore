@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestPow:
     def test_square_is_repeated_multiply(self) -> None:
         assert _emit("v ** 2", {"v"}) == "(v * v)"

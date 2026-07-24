@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFAnalytical:
     def test_one_step_matches_independent_rk4(self) -> None:
         neuron = ExpIFNeuron(v=-62.0, dt=0.02)

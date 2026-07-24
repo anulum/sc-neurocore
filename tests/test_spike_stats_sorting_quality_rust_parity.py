@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_sorting_quality_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust engine not built")
 class TestRustParity:
     def test_parity_across_sizes(self) -> None:

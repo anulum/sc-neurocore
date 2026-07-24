@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestDriftAutoCorrector:
     def test_no_correction_within_tolerance(self):
         dac = DriftAutoCorrector(max_drift_ns=5000)

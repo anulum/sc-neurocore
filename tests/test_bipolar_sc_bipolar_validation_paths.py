@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestBipolarValidationPaths:
     """Guard clauses and default-argument paths across the bipolar primitives."""
 

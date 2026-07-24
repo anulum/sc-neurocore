@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_glm_neuron_support import *  # noqa: F403
 
+
 class TestGLMIsolation:
     def test_defaults(self):
         n = GLMNeuron()

@@ -18,4 +18,4 @@ from sc_neurocore.symbolic.spike_logic import (
     spike_sort,
 )
 
-__all__ = ['np', 'pytest', 'SpikeGate', 'SpikeRegister', 'SpikeALU', 'spike_sort']
+__all__ = ["np", "pytest", "SpikeGate", "SpikeRegister", "SpikeALU", "spike_sort"]

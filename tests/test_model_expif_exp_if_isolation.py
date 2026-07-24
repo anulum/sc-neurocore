@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFIsolation:
     def test_construction_uses_source_fitted_defaults(self) -> None:
         neuron = ExpIFNeuron()

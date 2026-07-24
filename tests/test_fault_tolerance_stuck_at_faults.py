@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_tolerance_support import *  # noqa: F403
 
+
 class TestStuckAtFaults:
     """Test stuck-at fault models."""
 

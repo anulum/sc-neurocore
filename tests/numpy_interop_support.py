@@ -11,7 +11,8 @@ from __future__ import annotations
 """Tests for NumPy zero-copy interop functions."""
 import numpy as np
 import pytest
+
 pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 import sc_neurocore_engine as v3
 
-__all__ = ['np', 'pytest', 'v3']
+__all__ = ["np", "pytest", "v3"]

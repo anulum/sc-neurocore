@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestPow:
     @pytest.mark.parametrize("exp", [2, 3, 4, 5, 8])
     def test_integer_powers_expand_to_fxmul_chain(self, exp):

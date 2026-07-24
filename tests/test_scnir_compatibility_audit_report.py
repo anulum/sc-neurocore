@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_compatibility_support import *  # noqa: F403
 
+
 def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
     from sc_neurocore.ir import build_scnir_compatibility_audit
 

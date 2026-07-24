@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRateValidation:
     @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

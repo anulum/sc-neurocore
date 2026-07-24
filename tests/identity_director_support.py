@@ -19,9 +19,22 @@ from sc_neurocore.identity.director import (
     _prune_weak,
     _grow_synapses,
 )
+
+
 def _make_substrate():
     sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)
     sub.run(duration=0.1, dt=0.001)
     return sub
 
-__all__ = ['patch', 'np', 'IdentitySubstrate', 'DirectorController', '_add_weight_noise', '_homeostatic_scale', '_prune_weak', '_grow_synapses', '_make_substrate']
+
+__all__ = [
+    "patch",
+    "np",
+    "IdentitySubstrate",
+    "DirectorController",
+    "_add_weight_noise",
+    "_homeostatic_scale",
+    "_prune_weak",
+    "_grow_synapses",
+    "_make_substrate",
+]

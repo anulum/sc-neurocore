@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestBenchmarkRunAggregateGuards:
     def test_run_outputs_finite_statistics(self):
         bench = ResilienceBenchmark(seed=5)

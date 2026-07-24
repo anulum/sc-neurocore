@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_martinotti_neuron_support import *  # noqa: F403
 
+
 class TestMartinottiValidation:
     @pytest.mark.parametrize(
         "kwargs",

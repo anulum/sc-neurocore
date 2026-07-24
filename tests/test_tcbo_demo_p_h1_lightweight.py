@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestP_h1Lightweight(unittest.TestCase):
     def test_coherent_high(self):
         history = np.tile(np.ones(16) * 1.0, (60, 1))

@@ -15,6 +15,7 @@ and spike data format. The Rust SIMD primitives are tested separately
 in the 378 Rust-native tests (cargo test).
 """
 import pytest
+
 engine = pytest.importorskip("sc_neurocore_engine")
 
-__all__ = ['pytest', 'engine']
+__all__ = ["pytest", "engine"]

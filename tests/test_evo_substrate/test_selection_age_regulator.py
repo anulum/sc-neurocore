@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.selection_support import *  # noqa: F403
 
+
 class TestAgeRegulator:
     def test_young_survive(self) -> None:
         ar = AgeRegulator(max_age=10)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_monitors_stimulus_support import *  # noqa: F403
 
+
 class TestStateMonitor:
     def test_records_voltage(self):
         pop = Population(StochasticLIFNeuron, n=5, label="test")

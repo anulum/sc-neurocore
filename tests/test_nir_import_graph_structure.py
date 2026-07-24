@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_import_support import *  # noqa: F403
 
+
 class TestGraphStructure:
     def test_edges_and_framework(self):
         g = import_nir_graph(

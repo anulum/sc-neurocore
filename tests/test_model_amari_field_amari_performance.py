@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
 
+
 class TestAmariPerformance:
     def test_isolation_throughput(self):
         n = AmariNeuralField(n=64)

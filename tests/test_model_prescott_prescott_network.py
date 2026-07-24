@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_prescott_support import *  # noqa: F403
 
+
 class TestPrescottNetwork:
     def test_population(self):
         pop = Population(PrescottNeuron, n=5, label="prescott")

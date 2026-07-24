@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pynq_driver_support import *  # noqa: F403
 
+
 class TestRunStepDeterminism:
     """Two drivers built with the same seed produce identical run_step output."""
 

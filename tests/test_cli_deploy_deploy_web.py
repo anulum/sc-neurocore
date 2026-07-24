@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_deploy_support import *  # noqa: F403
 
+
 def test_deploy_web_generates_browser_manifest(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -57,5 +58,3 @@ def test_deploy_web_reports_builder_failure(
 
     assert run_cli("deploy", str(tmp_path / "model.nir"), "--target", "web") == 1
     assert "invalid browser model" in capsys.readouterr().out
-
-

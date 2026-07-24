@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 def test_sclayer_rejects_mismatched_weight_row_length() -> None:
     # Right number of rows but a row whose word count does not match
     # words_per_input is rejected by the SCLayer weight validator.

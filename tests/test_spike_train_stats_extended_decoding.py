@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestDecoding:
     def test_bayesian_decode(self):
         tuning = np.array([[10.0, 1.0], [1.0, 10.0], [5.0, 5.0]])

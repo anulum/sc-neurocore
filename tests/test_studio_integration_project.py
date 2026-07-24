@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_integration_support import *  # noqa: F403
 
+
 class TestProjectSaveLoad:
     def test_save_project(
         self,
@@ -199,4 +200,3 @@ class TestProjectSaveLoad:
             load_project(name)
         with pytest.raises(ValueError, match="Invalid project name"):
             delete_project(name)
-

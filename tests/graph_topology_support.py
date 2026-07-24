@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.topology import TopologyAnalyzer
 
-__all__ = ['np', 'TopologyAnalyzer']
+__all__ = ["np", "TopologyAnalyzer"]

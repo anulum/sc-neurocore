@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rulkov_map_support import *  # noqa: F403
 
+
 class TestRulkovDeterminism:
     def test_bit_exact(self):
         traces = []

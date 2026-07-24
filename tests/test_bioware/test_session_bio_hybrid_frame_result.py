@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.session_support import *  # noqa: F403
 
+
 class TestBioHybridFrameResult:
     """The packet returned by ``BioHybridSession.process_frame`` must be
     both a typed dataclass (new callers) and a read-only mapping view

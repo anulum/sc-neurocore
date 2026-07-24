@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestToolDetection:
     def test_check_tools_returns_dict(self):
         result = check_tools()
@@ -32,4 +33,3 @@ class TestToolDetection:
         data = r.json()
         assert "yosys" in data
         assert isinstance(data["yosys"]["available"], bool)
-

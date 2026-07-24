@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.world_model_support import *  # noqa: F403
 
+
 class TestSpikePredictor:
     def test_construction(self):
         p = SpikePredictor(n_channels=4, history_len=8)

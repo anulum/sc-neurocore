@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.temporal_hierarchy_support import *  # noqa: F403
 
+
 class TestMultiClockSNN:
     def _make_network(self):
         l1 = HetSynLayer(n_inputs=8, n_neurons=16, tau_mean=2.0)

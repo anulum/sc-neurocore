@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestGenerateCcwMetadata:
     def test_extracts_numeric_coherence_metrics(self):
         bridge = create_bridge()

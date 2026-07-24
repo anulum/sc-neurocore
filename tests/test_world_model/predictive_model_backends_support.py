@@ -113,5 +113,23 @@ def _write_c_outputs(
     likelihood[0] = -4.0
 
 
-__all__ = ['ctypes', 'importlib', 'Callable', 'Path', 'SimpleNamespace', 'Protocol', 'cast', 'np', 'pytest', 'backends', 'ExplicitBackendName', 'FloatArray', 'LinearGaussianSSM', '_DoublePointer', '_model', '_inputs', '_native_mapping', '_write_c_outputs']
-
+__all__ = [
+    "ctypes",
+    "importlib",
+    "Callable",
+    "Path",
+    "SimpleNamespace",
+    "Protocol",
+    "cast",
+    "np",
+    "pytest",
+    "backends",
+    "ExplicitBackendName",
+    "FloatArray",
+    "LinearGaussianSSM",
+    "_DoublePointer",
+    "_model",
+    "_inputs",
+    "_native_mapping",
+    "_write_c_outputs",
+]

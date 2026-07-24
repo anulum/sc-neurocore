@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.synthesis_conjectures_support import *  # noqa: F403
 
+
 class TestSCEncodingPrecision:
     """Necessary condition for SC-FIM analogy: error ~ 1/sqrt(L)."""
 

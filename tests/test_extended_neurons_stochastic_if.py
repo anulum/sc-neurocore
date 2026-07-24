@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestStochasticIF:
     def test_fires(self):
         n = StochasticIFNeuron(mu=25.0, sigma=2.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_ann_snn_support import *  # noqa: F403
 
+
 class TestReplaceReluWithQcfs:
     def test_replaces_relu_in_sequential(self) -> None:
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3), nn.ReLU())

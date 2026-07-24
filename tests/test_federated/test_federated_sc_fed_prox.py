@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestFedProx:
     def test_proximal_no_drift(self):
         g = np.array([0.5, 0.3])

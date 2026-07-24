@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_support import *  # noqa: F403
 
+
 class TestTrainingEndpoints:
     def test_start_endpoint(self, client: TestClient) -> None:
         r = client.post(
@@ -76,4 +77,3 @@ class TestTrainingEndpoints:
 
         assert any(record.job_id == job_id and record.kind == "training" for record in records)
         assert (job_root / job_id / ".studio_process_payload.json").is_file()
-

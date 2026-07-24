@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestBipolarEncodeDecode:
     def test_encode_plus_one(self):
         bits = bipolar_encode(1.0, 10000, rng=np.random.default_rng(42))

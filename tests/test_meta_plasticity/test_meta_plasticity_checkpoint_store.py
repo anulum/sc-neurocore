@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestCheckpointStore:
     def test_save_and_count(self):
         store = CheckpointStore()

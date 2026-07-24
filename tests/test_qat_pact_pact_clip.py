@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_pact_support import *  # noqa: F403
 
+
 class TestPACTClip:
     def test_clips_to_zero_alpha(self) -> None:
         x = torch.tensor([-1.0, 0.5, 3.0])

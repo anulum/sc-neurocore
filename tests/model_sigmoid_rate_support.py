@@ -22,14 +22,30 @@ from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
 from sc_neurocore.neurons.models.sigmoid_rate import SigmoidRateNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from sc_neurocore.network.population import Population
+
+
 def _stable_sigmoid(beta: float, current: float, theta: float) -> float:
     z = beta * (current - theta)
     if z >= 0.0:
         return 1.0 / (1.0 + np.exp(-z))
     exp_z = np.exp(z)
     return exp_z / (1.0 + exp_z)
+
+
 def _exact_rate(r: float, sigma: float, dt: float, tau: float) -> float:
     decay = np.exp(-dt / tau)
     return decay * r + (1.0 - decay) * sigma
 
-__all__ = ['time', 'cast', 'np', 'pytest', 'load_descriptor_payload', 'SigmoidRateNeuron', 'UniversalNeuron', 'Population', '_stable_sigmoid', '_exact_rate']
+
+__all__ = [
+    "time",
+    "cast",
+    "np",
+    "pytest",
+    "load_descriptor_payload",
+    "SigmoidRateNeuron",
+    "UniversalNeuron",
+    "Population",
+    "_stable_sigmoid",
+    "_exact_rate",
+]

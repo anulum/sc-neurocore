@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equivalence_check_support import *  # noqa: F403
 
+
 class TestFormalToolsAvailable:
     """Availability probe."""
 

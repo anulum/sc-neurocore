@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ltc_support import *  # noqa: F403
 
+
 class TestLTCPerformance:
     def test_isolation_throughput(self):
         n = LiquidTimeConstantNeuron()

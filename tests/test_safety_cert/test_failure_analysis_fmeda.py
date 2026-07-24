@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
 
+
 class TestFMEDA:
     def test_add_failure_mode(self) -> None:
         fmeda = FMEDA()

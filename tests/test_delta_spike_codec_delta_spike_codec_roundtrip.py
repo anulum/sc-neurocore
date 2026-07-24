@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.delta_spike_codec_support import *  # noqa: F403
 
+
 class TestDeltaSpikeCodecRoundtrip:
     def test_roundtrip_random(self):
         rng = np.random.RandomState(42)

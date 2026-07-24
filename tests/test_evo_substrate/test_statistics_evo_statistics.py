@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.statistics_support import *  # noqa: F403
 
+
 class TestEvoStatistics:
     def test_record(self) -> None:
         est = EvoStatisticsTracker()

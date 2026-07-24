@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
 
+
 class TestWendlingEEGOutput:
     def test_output_is_eeg_signal(self):
         """Output = y1 - y2 - y3 (postsynaptic potential difference)."""

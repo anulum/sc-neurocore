@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spikeinterface_adapter_support import *  # noqa: F403
 
+
 class TestSpikeTrainsToBitstreams:
     def test_output_shape(self):
         spikes = {0: np.array([10.0, 20.0]), 1: np.array([15.0])}

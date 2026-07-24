@@ -39,4 +39,32 @@ from sc_neurocore.neurons.models import (
     WongWangUnit,
 )
 
-__all__ = ['BrainScaleSAdExNeuron', 'ButeraRespiratoryNeuron', 'ChayNeuron', 'CourageNekorkinMapNeuron', 'DestexheThalamicNeuron', 'EnergyLIFNeuron', 'ErmentroutKopellPopulation', 'EscapeRateNeuron', 'FitzHughRinzelNeuron', 'GatedLIFNeuron', 'GLIFNeuron', 'GutkinErmentroutNeuron', 'HuberBraunNeuron', 'InhomogeneousPoissonNeuron', 'JansenRitUnit', 'LeakyCompeteFireNeuron', 'LoihiCUBANeuron', 'MATNeuron', 'MedvedevMapNeuron', 'PrescottNeuron', 'SFANeuron', 'ShermanRinzelKeizerNeuron', 'SigmaDeltaNeuron', 'SpiNNakerLIFNeuron', 'StochasticIFNeuron', 'TrueNorthNeuron', 'WongWangUnit']
+__all__ = [
+    "BrainScaleSAdExNeuron",
+    "ButeraRespiratoryNeuron",
+    "ChayNeuron",
+    "CourageNekorkinMapNeuron",
+    "DestexheThalamicNeuron",
+    "EnergyLIFNeuron",
+    "ErmentroutKopellPopulation",
+    "EscapeRateNeuron",
+    "FitzHughRinzelNeuron",
+    "GatedLIFNeuron",
+    "GLIFNeuron",
+    "GutkinErmentroutNeuron",
+    "HuberBraunNeuron",
+    "InhomogeneousPoissonNeuron",
+    "JansenRitUnit",
+    "LeakyCompeteFireNeuron",
+    "LoihiCUBANeuron",
+    "MATNeuron",
+    "MedvedevMapNeuron",
+    "PrescottNeuron",
+    "SFANeuron",
+    "ShermanRinzelKeizerNeuron",
+    "SigmaDeltaNeuron",
+    "SpiNNakerLIFNeuron",
+    "StochasticIFNeuron",
+    "TrueNorthNeuron",
+    "WongWangUnit",
+]

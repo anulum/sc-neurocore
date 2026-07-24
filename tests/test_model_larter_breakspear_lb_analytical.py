@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_larter_breakspear_support import *  # noqa: F403
 
+
 class TestLBAnalytical:
     def test_m_ca_tanh(self):
         """m_Ca = 0.5·(1 + tanh((V+0.01)/0.15))."""

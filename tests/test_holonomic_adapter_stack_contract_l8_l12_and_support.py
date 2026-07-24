@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
 
+
 def test_l8_adapter_contract():
     adapter = L8_CosmicAdapter()
     out = adapter.step_jax(0.1, inputs=jnp.ones((12, 1024)))
@@ -127,5 +128,3 @@ def test_neuromodulator_no_matching_keys():
     params = {"some_other_param": 42}
     out = mod.modulate_neuron(params)
     assert out["some_other_param"] == 42
-
-

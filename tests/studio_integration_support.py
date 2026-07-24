@@ -34,9 +34,11 @@ from sc_neurocore.studio.project import (
     save_project,
 )
 
+
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     return TestClient(create_app(), base_url="http://127.0.0.1")
+
 
 __all__ = [
     "annotations",

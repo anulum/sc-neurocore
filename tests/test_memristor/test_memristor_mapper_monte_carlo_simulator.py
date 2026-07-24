@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestMonteCarloSimulator:
     def test_simulate_mac(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)

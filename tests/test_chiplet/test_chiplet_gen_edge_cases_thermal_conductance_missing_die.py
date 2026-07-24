@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestThermalConductanceMissingDie:
     def test_simulate_thermal_skips_link_with_missing_die(self) -> None:
         # Dies 0 and 1; link references die 99.

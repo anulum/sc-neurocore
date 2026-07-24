@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_mojo_parity_support import *  # noqa: F403
 
+
 class TestRustMojoCrossParity:
     def test_rust_mojo_within_ulp_drift(self):
         rs = pytest.importorskip(

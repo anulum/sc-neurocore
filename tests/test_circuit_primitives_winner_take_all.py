@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.circuit_primitives_support import *  # noqa: F403
 
+
 class TestWinnerTakeAll:
     def test_single_winner(self):
         wta = WinnerTakeAll(n_neurons=5, k=1)

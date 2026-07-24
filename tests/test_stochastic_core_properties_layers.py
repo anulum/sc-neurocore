@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.stochastic_core_properties_support import *  # noqa: F403
 
+
 @given(
     n_in=st.integers(min_value=2, max_value=8),
     n_out=st.integers(min_value=2, max_value=8),
@@ -33,6 +34,7 @@ def test_dense_layer_produces_spikes(n_in, n_out):
     assert len(trains) == n_out
     assert all(len(t) == 50 for t in trains)
 
+
 @given(
     n_in=st.integers(min_value=2, max_value=16),
     n_out=st.integers(min_value=2, max_value=16),
@@ -43,6 +45,7 @@ def test_vectorized_layer_output_shape(n_in, n_out):
     inp = np.random.rand(n_in)
     out = layer.forward(inp)
     assert out.shape == (n_out,)
+
 
 @given(
     n_in=st.integers(min_value=2, max_value=8),

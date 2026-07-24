@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestBipolarSCLayerBiasAndActivation:
     """The optional-bias branch and the tanh activation of the SC layer."""
 

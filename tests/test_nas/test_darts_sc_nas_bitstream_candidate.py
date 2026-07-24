@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from darts_sc_nas_support import *  # noqa: F403
 
+
 class TestBitstreamCandidate(unittest.TestCase):
     def test_eval_passthrough(self) -> None:
         op = BitstreamCandidate(256, 100.0, 1.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_srm0_support import *  # noqa: F403
 
+
 class TestSRM0Pipeline:
     def test_population(self) -> None:
         assert Population(SRM0Neuron, n=10, label="srm0").n == 10

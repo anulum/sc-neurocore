@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestThermalShift:
     def test_higher_temp_shifts(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)

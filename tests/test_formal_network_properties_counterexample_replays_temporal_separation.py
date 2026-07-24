@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_temporal_separation_replay_detects_bounded_window_violation() -> None:
     prop = NetworkOutputTemporalSeparation(
         name="motor_left_right_temporal_separation",

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mckean_support import *  # noqa: F403
 
+
 class TestMcKeanValidation:
     @pytest.mark.parametrize("field", ["v", "w", "v_peak"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

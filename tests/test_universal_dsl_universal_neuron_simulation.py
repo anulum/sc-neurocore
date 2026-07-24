@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.universal_dsl_support import *  # noqa: F403
 
+
 class TestUniversalNeuronSimulation:
     """Test that UniversalNeuron produces physically reasonable dynamics."""
 

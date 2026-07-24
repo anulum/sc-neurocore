@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sst_neuron_support import *  # noqa: F403
 
+
 class TestSSTSingularRates:
     def test_alpha_singular_returns_limit_at_singularity(self):
         from sc_neurocore.neurons.models.sst_neuron import _alpha_singular

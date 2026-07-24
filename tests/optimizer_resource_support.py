@@ -13,4 +13,4 @@ import pytest
 from sc_neurocore.optimizer import fit_to_target, OptimizationResult
 from sc_neurocore.optimizer.resource_optimizer import OptimizationStep
 
-__all__ = ['np', 'pytest', 'fit_to_target', 'OptimizationResult', 'OptimizationStep']
+__all__ = ["np", "pytest", "fit_to_target", "OptimizationResult", "OptimizationStep"]

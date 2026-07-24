@@ -19,4 +19,13 @@ from sc_neurocore.swarm.collective_fields import (
 )
 from sc_neurocore.swarm.fitness import SwarmFitness
 
-__all__ = ['np', 'pytest', 'SwarmEnvironment', 'EnvConfig', 'CollectiveFields', 'FieldConfig', '_apply_laplacian', 'SwarmFitness']
+__all__ = [
+    "np",
+    "pytest",
+    "SwarmEnvironment",
+    "EnvConfig",
+    "CollectiveFields",
+    "FieldConfig",
+    "_apply_laplacian",
+    "SwarmFitness",
+]

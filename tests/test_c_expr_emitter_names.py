@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestNames:
     def test_state_var_verbatim(self) -> None:
         assert _emit("v", {"v"}) == "v"

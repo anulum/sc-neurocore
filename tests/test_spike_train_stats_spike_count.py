@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestSpikeCount:
     def test_count(self):
         train = np.array([1, 0, 1, 1, 0, 0, 1], dtype=np.uint8)

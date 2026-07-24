@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.spike_ode import SpikingODELayer, ODELIFDynamics
 
-__all__ = ['np', 'SpikingODELayer', 'ODELIFDynamics']
+__all__ = ["np", "SpikingODELayer", "ODELIFDynamics"]

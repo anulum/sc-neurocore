@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_superspike_neuron_support import *  # noqa: F403
 
+
 class TestSuperSpikeLIFDynamics:
     def test_voltage_leaky_integration(self):
         """v = alpha_m · v + I. Standard LIF with precomputed alpha."""

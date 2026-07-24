@@ -27,9 +27,30 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _poisson_interval_probability(rate_hz: float, dt_ms: float) -> float:
     return -math.expm1(-max(0.0, rate_hz) * dt_ms / 1000.0)
+
+
 def _run(neuron: InhomogeneousPoissonNeuron, rate: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(rate) == 1]
 
-__all__ = ['math', 'time', 'np', 'pytest', 'InhomogeneousPoissonNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_poisson_interval_probability', '_run']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "InhomogeneousPoissonNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_poisson_interval_probability",
+    "_run",
+]

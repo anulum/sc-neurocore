@@ -18,11 +18,14 @@ available — that the produced GDS file is non-empty and parses back.
 from collections.abc import Iterator
 from pathlib import Path
 import pytest
+
 gf = pytest.importorskip(
     "gdsfactory",
     reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
 )
 from sc_neurocore.optics.photonic_emitter import CompilationResult  # noqa: E402
+
+
 @pytest.fixture(autouse=True)
 def _clear_gdsfactory_cache() -> Iterator[None]:
     """gdsfactory uses a process-wide KLayout layout registry — components
@@ -49,6 +52,8 @@ def _clear_gdsfactory_cache() -> Iterator[None]:
     except Exception:  # pragma: no cover - defensive global PDK reset.
         pass
     yield
+
+
 @pytest.fixture
 def populated_result() -> CompilationResult:
     return CompilationResult(
@@ -67,4 +72,13 @@ def populated_result() -> CompilationResult:
         ),
     )
 
-__all__ = ['Iterator', 'Path', 'pytest', 'gf', 'CompilationResult', '_clear_gdsfactory_cache', 'populated_result']
+
+__all__ = [
+    "Iterator",
+    "Path",
+    "pytest",
+    "gf",
+    "CompilationResult",
+    "_clear_gdsfactory_cache",
+    "populated_result",
+]

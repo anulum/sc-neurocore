@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestCircuits:
     def test_posner_8q(self):
         qc = build_posner_circuit(hf1=HF1, hf2=HF2)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_dimensionality_support import *  # noqa: F403
 
+
 class TestCanonicalSign:
     def test_empty(self) -> None:
         empty = np.empty((3, 0))

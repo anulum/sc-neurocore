@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
 
+
 class TestMLDynamics:
     @pytest.mark.parametrize("current", [50.0, 80.0, 100.0, 120.0, 150.0])
     def test_fi_sweep(self, current: float):

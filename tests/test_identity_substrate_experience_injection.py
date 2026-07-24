@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_substrate_support import *  # noqa: F403
 
+
 class TestExperienceInjection:
     def test_inject_changes_weights(self):
         sub = _make_substrate()

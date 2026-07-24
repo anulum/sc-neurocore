@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.universal_dsl_support import *  # noqa: F403
 
+
 class TestFormatParity:
     """Verify that TOML and JSON schemas produce identical simulation results."""
 

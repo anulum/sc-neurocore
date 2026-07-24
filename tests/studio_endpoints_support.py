@@ -27,10 +27,12 @@ from sc_neurocore.studio.platform import (
 
 MODEL = "AdExNeuron"
 
+
 @pytest.fixture(scope="module")
 def client():
     app = create_app()
     return TestClient(app, base_url="http://127.0.0.1")
+
 
 def _budget_client(
     *,
@@ -47,6 +49,7 @@ def _budget_client(
         max_sync_analysis_simulations=max_sync_analysis_simulations,
     )
     return TestClient(create_app(settings), base_url="http://127.0.0.1")
+
 
 __all__ = [
     "annotations",

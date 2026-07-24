@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from criterion_to_bencher_support import *  # noqa: F403
 
+
 class TestUnitBoundaryStraddle:
     """The regression the missing test let through: median paired with the wrong unit."""
 

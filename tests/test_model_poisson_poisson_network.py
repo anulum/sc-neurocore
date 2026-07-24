@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonNetwork:
     def test_population(self) -> None:
         pop = Population(PoissonNeuron, n=20, label="poisson")

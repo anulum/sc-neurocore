@@ -23,6 +23,7 @@ from pathlib import Path
 from uuid import uuid4
 import numpy as np
 import pytest
+
 nir = pytest.importorskip("nir")
 from sc_neurocore.compiler.equation_compiler import Q88
 from sc_neurocore.nir_bridge import (
@@ -32,6 +33,8 @@ from sc_neurocore.nir_bridge import (
     quantise_graph,
 )
 from sc_neurocore.nir_bridge.fpga_compiler import _AER_THRESHOLD
+
+
 @pytest.fixture
 def local_tmp_path():
     root = Path(__file__).resolve().parents[1] / ".pytest_tmp"
@@ -42,6 +45,8 @@ def local_tmp_path():
         yield path
     finally:
         shutil.rmtree(path)
+
+
 def _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2, seed=42):
     """Build: Input → Affine → LIF → Affine → LIF → Output."""
     rng = np.random.RandomState(seed)
@@ -78,6 +83,8 @@ def _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2, seed=42):
             ("lif2", "output"),
         ],
     )
+
+
 def _build_cubalif_network(n_in=3, n_out=4, seed=99):
     """Build: Input → Affine → CubaLIF → Output."""
     rng = np.random.RandomState(seed)
@@ -100,6 +107,8 @@ def _build_cubalif_network(n_in=3, n_out=4, seed=99):
         },
         edges=[("input", "aff"), ("aff", "cuba"), ("cuba", "output")],
     )
+
+
 def _build_mixed_type_network(n_in=4, seed=77):
     """Build: Input → Affine → IF → Affine → LIF → Output."""
     rng = np.random.RandomState(seed)
@@ -131,6 +140,8 @@ def _build_mixed_type_network(n_in=4, seed=77):
             ("lif_layer", "output"),
         ],
     )
+
+
 def _full_pipeline(nir_graph, dt=1.0, data_width=16, fraction=8, module_name="sc_test"):
     """Run the full NIR → FPGA pipeline and return the result."""
     net = from_nir(nir_graph, dt=dt)
@@ -142,4 +153,27 @@ def _full_pipeline(nir_graph, dt=1.0, data_width=16, fraction=8, module_name="sc
         fraction=fraction,
     )
 
-__all__ = ['os', 're', 'shutil', 'subprocess', 'sys', 'Path', 'uuid4', 'np', 'pytest', 'nir', 'Q88', 'compile_network_to_fpga', 'from_nir', 'from_scnetwork', 'quantise_graph', '_AER_THRESHOLD', 'local_tmp_path', '_build_lif_feedforward', '_build_cubalif_network', '_build_mixed_type_network', '_full_pipeline']
+
+__all__ = [
+    "os",
+    "re",
+    "shutil",
+    "subprocess",
+    "sys",
+    "Path",
+    "uuid4",
+    "np",
+    "pytest",
+    "nir",
+    "Q88",
+    "compile_network_to_fpga",
+    "from_nir",
+    "from_scnetwork",
+    "quantise_graph",
+    "_AER_THRESHOLD",
+    "local_tmp_path",
+    "_build_lif_feedforward",
+    "_build_cubalif_network",
+    "_build_mixed_type_network",
+    "_full_pipeline",
+]

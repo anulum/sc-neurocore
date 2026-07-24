@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_control_support import *  # noqa: F403
 
+
 class TestSwarmFitness(unittest.TestCase):
     def test_coverage(self):
         positions = np.random.rand(20, 2) * 100

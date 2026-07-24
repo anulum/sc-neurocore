@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestSigmaDeltaEncode:
     def test_1d(self):
         signal = np.sin(np.linspace(0, 4 * np.pi, 100))

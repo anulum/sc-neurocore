@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adaptive_threshold_moe_support import *  # noqa: F403
 
+
 class TestAdaptiveThresholdMoEBehaviour:
     def test_integer_spike_count_and_soft_reset_residual(self):
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=1.0)

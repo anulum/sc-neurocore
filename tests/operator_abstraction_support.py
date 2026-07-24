@@ -17,6 +17,7 @@ equivalence runner tests and self-skips without ``sby``.
 import pytest
 from sc_neurocore.compiler.equivalence_miter import parse_module_interface
 from sc_neurocore.compiler.operator_abstraction import LiftedSignal, abstract_to_free_inputs
+
 _MODULE = """`timescale 1ns/1ps
 module foo #(parameter integer W = 8)(
     input wire clk,
@@ -43,4 +44,11 @@ module baz #(parameter integer W = 8)(
 endmodule
 """
 
-__all__ = ['pytest', 'parse_module_interface', 'LiftedSignal', 'abstract_to_free_inputs', '_MODULE', '_MODULE_INLINE']
+__all__ = [
+    "pytest",
+    "parse_module_interface",
+    "LiftedSignal",
+    "abstract_to_free_inputs",
+    "_MODULE",
+    "_MODULE_INLINE",
+]

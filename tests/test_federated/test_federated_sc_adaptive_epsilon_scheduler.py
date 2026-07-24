@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestAdaptiveEpsilonScheduler:
     def test_initial_epsilon(self):
         sched = AdaptiveEpsilonScheduler(base_epsilon=2.0)

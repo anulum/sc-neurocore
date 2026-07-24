@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestPointProcess:
     def test_conditional_intensity(self, poisson_train):
         ci = conditional_intensity(poisson_train)

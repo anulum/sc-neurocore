@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpu_backend_support import *  # noqa: F403
 
+
 class TestGPUPopcount:
     def test_known_values(self):
         # 0xFF = 8 bits set, packed in uint64

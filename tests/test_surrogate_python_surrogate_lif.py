@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.surrogate_python_support import *  # noqa: F403
 
+
 class TestSurrogateLif:
     def test_forward_backward_cycle(self):
         lif = SurrogateLif(surrogate="fast_sigmoid", k=25.0)

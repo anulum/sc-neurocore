@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Gating:
     def test_gating_bounded(self):
         """m, h, n should stay approximately in [0, 1]."""

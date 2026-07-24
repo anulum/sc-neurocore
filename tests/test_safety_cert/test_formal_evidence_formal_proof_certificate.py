@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
 
+
 class TestFormalProofCertificate:
     def _props(self) -> list[FormalProperty]:
         return [

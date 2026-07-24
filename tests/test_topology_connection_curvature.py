@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_support import *  # noqa: F403
 
+
 class TestConnectionCurvature:
     def test_synchronized_full_coupling(self):
         phases = np.zeros(3)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cordiv_division_support import *  # noqa: F403
 
+
 class TestScDivide:
     def test_half_divided_by_one(self):
         """0.5 / 1.0 should ≈ 0.5."""

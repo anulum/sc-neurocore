@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestUtilities:
     def test_model_info(self):
         net = SpikingNet(n_input=16, n_hidden=32, n_output=5)

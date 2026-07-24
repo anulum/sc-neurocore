@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestLfsrSeedClamp:
     """The four `if seed == 0: seed = 1` guards in mesh_2d / ring /
     star / make_torus topology factories trigger when die_id=3793

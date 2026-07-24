@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestRegressionWatchdog:
     def test_no_regression(self):
         from sc_neurocore.compiler.intelligence import check_regression

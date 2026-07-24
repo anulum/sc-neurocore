@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantum_stabilisation_support import *  # noqa: F403
 
+
 class TestHeronNoiseModel:
     def test_default_params(self):
         from sc_neurocore.quantum.noise_models import HeronR2NoiseParams

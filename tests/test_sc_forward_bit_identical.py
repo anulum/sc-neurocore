@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_forward_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="rust backend not built in this environment")
 class TestBitIdentical:
     """NEU-SCPN.4 — Rust and NumPy backends agree to the last bit for a fixed seed."""

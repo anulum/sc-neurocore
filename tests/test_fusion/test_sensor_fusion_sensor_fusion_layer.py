@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestSensorFusionLayer:
     def test_fuse_two_streams(self):
         layer = SensorFusionLayer(num_channels=16, bitstream_length=128, seed=42)

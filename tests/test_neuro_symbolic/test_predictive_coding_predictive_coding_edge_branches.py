@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from predictive_coding_support import *  # noqa: F403
 
+
 class TestPredictiveCodingEdgeBranches:
     """Cover the no-op permutation, the empty-collection guards, and the
     error-history accessors before any prediction error is recorded."""

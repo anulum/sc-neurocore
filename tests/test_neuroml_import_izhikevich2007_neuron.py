@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neuroml_import_support import *  # noqa: F403
 
+
 class TestIzhikevich2007Neuron:
     def test_euler_step_matches_biophysical_equations_below_threshold(self):
         neuron = Izhikevich2007Neuron(

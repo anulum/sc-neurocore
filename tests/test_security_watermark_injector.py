@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.security_support import *  # noqa: F403
 
+
 class TestWatermarkInjector:
     """Test suite for model watermarking/fingerprinting."""
 

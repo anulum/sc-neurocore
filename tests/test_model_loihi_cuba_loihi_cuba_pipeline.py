@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_loihi_cuba_support import *  # noqa: F403
 
+
 class TestLoihiCUBAPipeline:
     def test_population(self):
         assert Population(LoihiCUBANeuron, n=10, label="cuba").n == 10

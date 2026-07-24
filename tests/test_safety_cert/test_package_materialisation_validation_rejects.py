@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     "filename",
     ("../escape", "/absolute", "nested\\windows", "a/./b", "a//b"),

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
 
+
 def test_compiler_pipeline_invokes_real_lowering(monkeypatch):
     def fake_tool(cmd, check, capture_output=False, text=False):
         assert check is True
@@ -44,5 +45,3 @@ def test_compiler_pipeline_invokes_real_lowering(monkeypatch):
     assert json_path.endswith(".json")
     asc_path = pipeline.run_pnr(json_path)
     assert asc_path.endswith(".asc")
-
-

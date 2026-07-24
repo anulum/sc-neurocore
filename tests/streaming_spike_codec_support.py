@@ -15,4 +15,4 @@ from sc_neurocore.spike_codec.streaming_codec import (
     StreamingCompressionResult,
 )
 
-__all__ = ['np', 'pytest', 'StreamingSpikeCodec', 'StreamingCompressionResult']
+__all__ = ["np", "pytest", "StreamingSpikeCodec", "StreamingCompressionResult"]

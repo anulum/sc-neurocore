@@ -28,6 +28,7 @@ import math
 import numpy as np
 import pytest
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
+
 DEFAULT_PARAMS = dict(
     w_ee=10.0,
     w_ei=6.0,
@@ -40,4 +41,4 @@ DEFAULT_PARAMS = dict(
     dt=0.1,
 )
 
-__all__ = ['math', 'np', 'pytest', 'WilsonCowanUnit', 'DEFAULT_PARAMS', '__all__']
+__all__ = ["math", "np", "pytest", "WilsonCowanUnit", "DEFAULT_PARAMS", "__all__"]

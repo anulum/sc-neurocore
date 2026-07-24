@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_optimizer_support import *  # noqa: F403
 
+
 class TestCandidateGeneration(unittest.TestCase):
     def setUp(self):
         self.opt = SCOptimizer(HardwareBudget(max_luts=100000, max_power_mw=1000.0))

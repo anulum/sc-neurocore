@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.catalogue_formal_support import *  # noqa: F403
 
+
 def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
     import importlib.util

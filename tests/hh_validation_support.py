@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import numpy as np
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+
+
 def simulate_hh(current: float, duration_ms: float = 50, dt: float = 0.01):
     """Reference HH integration returning (V, m, h, n) arrays."""
     g_Na, g_K, g_L = 120.0, 36.0, 0.3
@@ -51,4 +53,5 @@ def simulate_hh(current: float, duration_ms: float = 50, dt: float = 0.01):
 
     return V, M, H, N
 
-__all__ = ['np', 'HodgkinHuxleyNeuron', 'simulate_hh']
+
+__all__ = ["np", "HodgkinHuxleyNeuron", "simulate_hh"]

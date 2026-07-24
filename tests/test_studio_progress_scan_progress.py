@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_progress_support import *  # noqa: F403
 
+
 class TestScanProgress:
     def test_scan_produces_results(self) -> None:
         q: queue.Queue[dict[str, Any]] = queue.Queue()
@@ -29,4 +30,3 @@ class TestScanProgress:
         assert isinstance(complete["result"], list)
         assert len(complete["result"]) > 0
         assert "name" in complete["result"][0]
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hindmarsh_rose_support import *  # noqa: F403
 
+
 class TestHRBursting:
     def test_fires_at_moderate_current(self):
         n = HindmarshRoseNeuron()

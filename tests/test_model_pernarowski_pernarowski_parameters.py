@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiParameters:
     def test_custom_threshold(self):
         """Lower threshold → more spikes detected."""

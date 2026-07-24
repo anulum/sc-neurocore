@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.symbolic_support import *  # noqa: F403
 
+
 class TestSpikeGate:
     @pytest.mark.parametrize(
         "gate,inputs,expected",

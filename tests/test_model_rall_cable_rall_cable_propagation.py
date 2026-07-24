@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCablePropagation:
     def test_distal_depolarises_more(self) -> None:
         """Current at distal end → distal compartment most depolarised."""

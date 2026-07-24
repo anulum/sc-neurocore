@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestExpIFCell:
     def test_exponential_upstroke(self):
         cell = ExpIFCell(beta=0.9, delta_t=0.5, v_rh=0.8, threshold=2.0)

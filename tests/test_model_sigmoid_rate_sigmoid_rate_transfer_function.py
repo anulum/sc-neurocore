@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
 
+
 class TestSigmoidRateTransferFunction:
     def test_single_step_matches_exact_relaxation(self):
         """The rate state follows the closed-form first-order relaxation."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_monitors_stimulus_support import *  # noqa: F403
 
+
 class TestPoissonInput:
     def test_creation(self):
         pi = PoissonInput(n=20, rate_hz=100.0, weight=1.0, dt=0.001, seed=42)

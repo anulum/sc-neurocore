@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestTransport:
     def test_simulated_connect(self):
         cfg = TransportConfig(TransportType.SIMULATED)

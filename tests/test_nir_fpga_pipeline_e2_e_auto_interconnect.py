@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_fpga_pipeline_support import *  # noqa: F403
 
+
 class TestE2EAutoInterconnect:
     """Verify direct and weighted event interconnect selection."""
 

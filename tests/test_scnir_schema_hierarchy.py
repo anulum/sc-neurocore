@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_schema_support import *  # noqa: F403
 
+
 def test_scnir_records_hierarchy_instance_port_metadata() -> None:
     base = _valid_document()
     doc = SCNIRDocument(
@@ -132,5 +133,3 @@ def test_scnir_rejects_invalid_hierarchy_metadata(mutator: object, message: str)
 
     with pytest.raises(SCNIRValidationError, match=message):
         validate_scnir_dict(payload)
-
-

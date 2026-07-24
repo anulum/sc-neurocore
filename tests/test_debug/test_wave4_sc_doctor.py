@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestScDoctor:
     def test_new_defaults(self):
         d = ScDoctor(512, 0.90)

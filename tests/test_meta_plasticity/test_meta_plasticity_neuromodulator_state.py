@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestNeuromodulatorState:
     def test_initial_levels(self):
         ns = NeuromodulatorState()

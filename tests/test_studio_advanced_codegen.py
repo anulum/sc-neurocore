@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_advanced_support import *  # noqa: F403
 
+
 class TestCodegenAdvanced:
     def test_ode_script(self):
         script = generate_ode_script(
@@ -49,4 +50,3 @@ class TestCodegenAdvanced:
                 spikes.append(burst_start + i * 5)
         r = classify_firing_pattern(spikes, 1200, 0.1)
         assert r["pattern"] in ("bursting", "irregular", "chaotic")
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_nlif_support import *  # noqa: F403
 
+
 class TestNLIFParameters:
     @pytest.mark.parametrize("a", [0.02, 0.04, 0.08])
     def test_a_nonlinearity(self, a: float):

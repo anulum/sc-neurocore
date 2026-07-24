@@ -20,10 +20,13 @@ from sc_neurocore.compiler.intelligence.nir_import import (
     NEURON_TEMPLATES,
     import_nir_graph,
 )
+
+
 def _one(node_type=None, **params):
     spec = dict(params)
     if node_type is not None:
         spec["type"] = node_type
     return import_nir_graph({"nodes": {"n0": spec}, "edges": []})
 
-__all__ = ['pytest', 'NEURON_TEMPLATES', 'import_nir_graph', '_one']
+
+__all__ = ["pytest", "NEURON_TEMPLATES", "import_nir_graph", "_one"]

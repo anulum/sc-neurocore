@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_translator_support import *  # noqa: F403
 
+
 class TestV2RateMatched:
     """V2: VectorizedSCLayer probability domain."""
 

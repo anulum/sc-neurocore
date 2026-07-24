@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestTimingClosure(unittest.TestCase):
     def test_simple_passes(self):
         r = verify_timing_closure({"v": "-(v)/tau + I"}, target_freq_mhz=100.0)

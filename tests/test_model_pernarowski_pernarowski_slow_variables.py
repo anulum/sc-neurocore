@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiSlowVariables:
     def test_z_evolves_slowly(self):
         """z (eps2=0.001) should change much more slowly than w (eps1=0.1)."""

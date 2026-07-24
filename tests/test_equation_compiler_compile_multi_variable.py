@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestCompileMultiVariable:
     def test_fitzhugh_nagumo(self):
         neuron = EquationNeuron(

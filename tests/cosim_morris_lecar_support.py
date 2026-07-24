@@ -18,6 +18,16 @@ from tests.cosim_support import (
     _verilog_compiles,
     _verilog_spike_count_q1616,
 )
+
 _TRANSCENDENTAL_COMPILE_MODELS = ["morris_lecar"]
 
-__all__ = ['pytest', 'UniversalNeuron', 'HAS_IVERILOG', '_morris_lecar_hand_spike_count', '_python_spike_count', '_verilog_compiles', '_verilog_spike_count_q1616', '_TRANSCENDENTAL_COMPILE_MODELS']
+__all__ = [
+    "pytest",
+    "UniversalNeuron",
+    "HAS_IVERILOG",
+    "_morris_lecar_hand_spike_count",
+    "_python_spike_count",
+    "_verilog_compiles",
+    "_verilog_spike_count_q1616",
+    "_TRANSCENDENTAL_COMPILE_MODELS",
+]

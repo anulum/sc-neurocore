@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker2_support import *  # noqa: F403
 
+
 class TestSpiNNaker2Performance:
     def test_isolation_throughput(self):
         n = SpiNNaker2Neuron()

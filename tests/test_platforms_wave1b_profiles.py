@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestWave1bProfiles:
     """Verify the 7 additional profiles from §1C/1D."""
 

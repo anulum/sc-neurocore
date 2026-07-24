@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
 
+
 class TestKLIFParameters:
     @pytest.mark.parametrize("k", [0.5, 1.0, 2.0])
     def test_k_sweep(self, k: float):

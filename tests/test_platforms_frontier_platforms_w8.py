@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestFrontierPlatformsW8:
     @pytest.mark.parametrize(
         "name",

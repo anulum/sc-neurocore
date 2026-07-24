@@ -10,4 +10,4 @@ from __future__ import annotations
 
 import numpy as np
 
-__all__ = ['np']
+__all__ = ["np"]

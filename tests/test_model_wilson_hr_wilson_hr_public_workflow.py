@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
 
+
 class TestWilsonHRPublicWorkflow:
     """Named workflow contract: Wilson-HR public surface inside the Python simulator."""
 

@@ -19,6 +19,8 @@ from sc_neurocore.hypervisor.hypervisor import (
     TenantState,
     admission_check,
 )
+
+
 def _region(rid: int = 0, neurons: int = 1024, base: int = 0x4000_0000) -> HWRegion:
     return HWRegion(
         region_id=rid,
@@ -28,9 +30,24 @@ def _region(rid: int = 0, neurons: int = 1024, base: int = 0x4000_0000) -> HWReg
         axi_size=0x1000,
         die_id=0,
     )
+
+
 def _tenant(
     tid: str = "t0", name: str = "test", prio: TenantPriority = TenantPriority.NORMAL
 ) -> Tenant:
     return Tenant(tenant_id=tid, name=name, priority=prio)
 
-__all__ = ['HWRegion', 'Hypervisor', 'HypervisorConfig', 'MigrationThrottle', 'RegionState', 'Tenant', 'TenantPriority', 'TenantState', 'admission_check', '_region', '_tenant']
+
+__all__ = [
+    "HWRegion",
+    "Hypervisor",
+    "HypervisorConfig",
+    "MigrationThrottle",
+    "RegionState",
+    "Tenant",
+    "TenantPriority",
+    "TenantState",
+    "admission_check",
+    "_region",
+    "_tenant",
+]

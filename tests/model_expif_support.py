@@ -26,14 +26,20 @@ from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.neurons.models.expif import ExpIFNeuron
+
+
 def _run(neuron: ExpIFNeuron, current: float, steps: int) -> list[int]:
     """Return the step indices at which the neuron emits a spike."""
     return [index for index in range(steps) if neuron.step(current) == 1]
+
+
 def _rhs(neuron: ExpIFNeuron, v: float, current: float) -> float:
     """Independent source-equation derivative with the event-surface bound."""
     bounded_v = min(v, neuron.v_threshold)
     exponential = neuron.delta_t * math.exp((bounded_v - neuron.v_rh) / neuron.delta_t)
     return (-(bounded_v - neuron.v_rest) + exponential + current) / neuron.tau
+
+
 def _rk4_candidate(neuron: ExpIFNeuron, current: float) -> float:
     """Independent candidate-first classical RK4 update."""
     v0 = neuron.v
@@ -42,8 +48,30 @@ def _rk4_candidate(neuron: ExpIFNeuron, current: float) -> float:
     k3 = _rhs(neuron, v0 + 0.5 * neuron.dt * k2, current)
     k4 = _rhs(neuron, v0 + neuron.dt * k3, current)
     return v0 + (neuron.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+
+
 def _euler_candidate(neuron: ExpIFNeuron, current: float) -> float:
     """Return raw Euler solely to prove the maintained method is not Euler."""
     return neuron.v + neuron.dt * _rhs(neuron, neuron.v, current)
 
-__all__ = ['math', 'os', 'time', 'np', 'pytest', 'firing_rate', 'isi', 'spike_count', 'SpikeMonitor', 'Network', 'Population', 'Projection', 'PoissonInput', 'ExpIFNeuron', '_run', '_rhs', '_rk4_candidate', '_euler_candidate']
+
+__all__ = [
+    "math",
+    "os",
+    "time",
+    "np",
+    "pytest",
+    "firing_rate",
+    "isi",
+    "spike_count",
+    "SpikeMonitor",
+    "Network",
+    "Population",
+    "Projection",
+    "PoissonInput",
+    "ExpIFNeuron",
+    "_run",
+    "_rhs",
+    "_rk4_candidate",
+    "_euler_candidate",
+]

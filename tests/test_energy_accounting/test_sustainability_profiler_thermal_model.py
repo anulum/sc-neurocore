@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestThermalModel:
     def test_junction_temp(self):
         tm = ThermalModel(ambient_c=25.0, r_theta_ja=15.0)

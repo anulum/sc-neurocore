@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestSleepOptimizerBranchCoverage(unittest.TestCase):
     """Inactive-session guards, the None-stage fallback, and re-induction logic."""
 

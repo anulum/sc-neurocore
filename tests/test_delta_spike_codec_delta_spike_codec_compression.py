@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.delta_spike_codec_support import *  # noqa: F403
 
+
 class TestDeltaSpikeCodecCompression:
     def test_correlated_beats_uncorrelated(self):
         """Correlated data should compress better with delta codec."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestTOMLLoader:
     def test_load(self, tmp_path):
         from sc_neurocore.compiler.platforms import load_profiles_from_toml

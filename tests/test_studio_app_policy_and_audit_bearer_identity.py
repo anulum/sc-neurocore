@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_app_accepts_bearer_identity_file_principal(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "audit" / "studio.jsonl"

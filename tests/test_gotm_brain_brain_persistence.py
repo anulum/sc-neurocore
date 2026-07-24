@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestBrainPersistence:
     def test_save_load_round_trip(self, tmp_path: Path) -> None:
         """save_state → load_state preserves full brain state."""

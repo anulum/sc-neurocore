@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_perfect_integrator_support import *  # noqa: F403
 
+
 class TestPerfectIntegratorNetwork:
     def test_population_construction(self):
         pop = Population(PerfectIntegratorNeuron, n=10, label="pi")

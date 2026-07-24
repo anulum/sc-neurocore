@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.distillation_support import *  # noqa: F403
 
+
 class TestTemporalDistillationLoss:
     def test_compute(self):
         loss_fn = TemporalDistillationLoss(temperature=3.0, alpha=0.5)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_truenorth_support import *  # noqa: F403
 
+
 class TestTrueNorthIsolation:
     def test_construction_defaults(self):
         n = TrueNorthNeuron()

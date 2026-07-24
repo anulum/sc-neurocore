@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFValidation:
     @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold", "mu"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mckean_support import *  # noqa: F403
 
+
 class TestMcKeanParameters:
     @pytest.mark.parametrize("epsilon", [0.005, 0.01, 0.05])
     def test_epsilon_timescale(self, epsilon: float):

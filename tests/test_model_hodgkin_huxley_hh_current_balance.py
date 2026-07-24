@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
 
+
 class TestHHCurrentBalance:
     def test_i_na_inward_at_rest(self):
         """I_Na at rest: g_Na·m³·h·(V-E_Na). V=-65 < E_Na=50 → negative (inward)."""

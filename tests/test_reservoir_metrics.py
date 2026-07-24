@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.reservoir_support import *  # noqa: F403
 
+
 class TestMetrics:
     def test_metrics_returns_all_fields(self):
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=50, seed=0)

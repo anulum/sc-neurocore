@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_analysis_support import *  # noqa: F403
 
+
 class TestFiringClassifier:
     def test_silent(self):
         r = classify_firing_pattern([], 1000, 0.1)
@@ -25,4 +26,3 @@ class TestFiringClassifier:
     def test_single_spike(self):
         r = classify_firing_pattern([500], 1000, 0.1)
         assert r["pattern"] == "single_spike"
-

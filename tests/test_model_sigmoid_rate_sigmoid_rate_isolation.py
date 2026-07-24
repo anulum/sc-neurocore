@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
 
+
 class TestSigmoidRateIsolation:
     def test_defaults(self):
         n = SigmoidRateNeuron()

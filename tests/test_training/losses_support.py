@@ -10,7 +10,8 @@ from __future__ import annotations
 
 """Behavioural contracts for spike-training regularisation losses."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.training.losses import spike_l1_loss, spike_l2_loss
 
-__all__ = ['pytest', 'torch', 'spike_l1_loss', 'spike_l2_loss']
+__all__ = ["pytest", "torch", "spike_l1_loss", "spike_l2_loss"]

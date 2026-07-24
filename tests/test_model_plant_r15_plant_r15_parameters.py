@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Parameters:
     def test_g_kca_controls_burst_termination(self):
         """Reducing g_KCa should allow more spikes (less Ca-K inhibition)."""

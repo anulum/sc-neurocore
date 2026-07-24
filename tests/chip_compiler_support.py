@@ -18,4 +18,12 @@ from sc_neurocore.chip_compiler import (
     CompilationResult,
 )
 
-__all__ = ['np', 'pytest', 'ChipSpec', 'CoreSpec', 'BUILTIN_CHIPS', 'compile_for_chip', 'CompilationResult']
+__all__ = [
+    "np",
+    "pytest",
+    "ChipSpec",
+    "CoreSpec",
+    "BUILTIN_CHIPS",
+    "compile_for_chip",
+    "CompilationResult",
+]

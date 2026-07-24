@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestIRDropModel:
     def test_corner_no_drop(self) -> None:
         ir = IRDropModel()

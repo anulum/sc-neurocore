@@ -17,7 +17,16 @@ from sc_neurocore.bci_studio.bci_studio import (
     LatencyProfiler,
     BCIStudio,
 )
+
 if __name__ == "__main__":
     unittest.main()
 
-__all__ = ['unittest', 'np', 'SpikeCodec', 'OnlineLearner', 'FPGAFeedbackController', 'LatencyProfiler', 'BCIStudio']
+__all__ = [
+    "unittest",
+    "np",
+    "SpikeCodec",
+    "OnlineLearner",
+    "FPGAFeedbackController",
+    "LatencyProfiler",
+    "BCIStudio",
+]

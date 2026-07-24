@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestParameterSweeps:
     def test_w_ei_scales_inhibition(self):
         finals = []

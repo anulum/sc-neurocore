@@ -14,4 +14,4 @@ import pytest
 from sc_neurocore.benchmarks import compute_metrics, BenchmarkResult, TASKS
 from sc_neurocore.benchmarks.tasks import BenchmarkTask
 
-__all__ = ['json', 'np', 'pytest', 'compute_metrics', 'BenchmarkResult', 'TASKS', 'BenchmarkTask']
+__all__ = ["json", "np", "pytest", "compute_metrics", "BenchmarkResult", "TASKS", "BenchmarkTask"]

@@ -22,9 +22,11 @@ from sc_neurocore.studio.analysis import frequency_response, heatmap_2d
 
 from sc_neurocore.studio.simulation import _make_current_trace, simulate
 
+
 @pytest.fixture
 def client():
     return TestClient(create_app(), base_url="http://127.0.0.1")
+
 
 __all__ = [
     "annotations",

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from snn_memory_discipline_audit_support import *  # noqa: F403
 
+
 def test_validate_stimulus_file_accepts_canonical_payload(tmp_path: Path) -> None:
     """A record with exactly the fleet schema has no violations."""
 

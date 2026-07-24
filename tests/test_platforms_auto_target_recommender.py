@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestAutoTargetRecommender:
     def test_basic_recommendation(self):
         from sc_neurocore.compiler.intelligence import recommend_target

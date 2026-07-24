@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFIsolation:
     def test_construction_defaults(self):
         n = StochasticIFNeuron()

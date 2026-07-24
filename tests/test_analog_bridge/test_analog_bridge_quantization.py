@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from analog_bridge_support import *  # noqa: F403
+
 
 class TestQuantization(unittest.TestCase):
     """DAC quantization checks for conductance ranges."""

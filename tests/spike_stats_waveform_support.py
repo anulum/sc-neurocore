@@ -18,6 +18,8 @@ from sc_neurocore.analysis.spike_stats.waveform import (
     waveform_halfwidth,
     waveform_pt_ratio,
 )
+
+
 def _typical_waveform():
     """Synthetic spike waveform: depolarisation → trough → repolarisation → overshoot → baseline."""
     # Realistic extracellular spike: brief negative trough then positive peak
@@ -25,4 +27,14 @@ def _typical_waveform():
     w = -np.exp(-((t - 0.4) ** 2) / 0.02) + 0.6 * np.exp(-((t - 0.8) ** 2) / 0.04)
     return w
 
-__all__ = ['np', 'waveform_width', 'waveform_amplitude', 'waveform_repolarization_slope', 'waveform_recovery_slope', 'waveform_halfwidth', 'waveform_pt_ratio', '_typical_waveform']
+
+__all__ = [
+    "np",
+    "waveform_width",
+    "waveform_amplitude",
+    "waveform_repolarization_slope",
+    "waveform_recovery_slope",
+    "waveform_halfwidth",
+    "waveform_pt_ratio",
+    "_typical_waveform",
+]

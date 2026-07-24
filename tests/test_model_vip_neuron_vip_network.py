@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_vip_neuron_support import *  # noqa: F403
 
+
 class TestVIPNetwork:
     def test_population_size(self):
         assert Population(VIPNeuron, n=8, label="vip").n == 8

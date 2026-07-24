@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.debug_toolkit_support import *  # noqa: F403
 
+
 class TestSpikeTracer:
     def test_run(self):
         from sc_neurocore.debug.tracer import SpikeTracer

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from engine_monolith_guard_support import *  # noqa: F403
 
+
 def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> None:
     tool = _load_tool()
     assert tool.main(["--check", "--repo", str(_repo_root())]) == 0

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+
 try:
     from sc_neurocore._native.learning_bridge import (
         is_available,
@@ -29,4 +30,20 @@ except ImportError:
     FFI_AVAILABLE = False
 from sc_neurocore.meta_plasticity.meta_plasticity import MetaPlasticityEngine, EngineConfig
 
-__all__ = ['FFI_AVAILABLE', 'np', 'pytest', 'is_available', 'RustPlasticityRule', 'RustEligentLearner', 'RustRuleLayer', 'RustOnlineO1Synapse', 'RULE_ELIGENT', 'RULE_STDP', 'RULE_REWARD_STDP', 'RULE_BCM', 'create_plasticity_layer', 'MetaPlasticityEngine', 'EngineConfig']
+__all__ = [
+    "FFI_AVAILABLE",
+    "np",
+    "pytest",
+    "is_available",
+    "RustPlasticityRule",
+    "RustEligentLearner",
+    "RustRuleLayer",
+    "RustOnlineO1Synapse",
+    "RULE_ELIGENT",
+    "RULE_STDP",
+    "RULE_REWARD_STDP",
+    "RULE_BCM",
+    "create_plasticity_layer",
+    "MetaPlasticityEngine",
+    "EngineConfig",
+]

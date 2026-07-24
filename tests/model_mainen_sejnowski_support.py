@@ -28,7 +28,22 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _run(neuron: MainenSejnowskiNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['time', 'np', 'pytest', 'MainenSejnowskiNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "MainenSejnowskiNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_run",
+]

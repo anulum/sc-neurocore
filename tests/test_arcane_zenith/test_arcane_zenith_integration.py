@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestIntegration:
     def test_long_run_keeps_all_meta_parameters_bounded(self):
         """Across 1000 steps of varied input, the four meta-parameters must

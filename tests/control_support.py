@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.control import SpikingPID, SpikingKalmanFilter, SpikingLQR
 
-__all__ = ['np', 'SpikingPID', 'SpikingKalmanFilter', 'SpikingLQR']
+__all__ = ["np", "SpikingPID", "SpikingKalmanFilter", "SpikingLQR"]

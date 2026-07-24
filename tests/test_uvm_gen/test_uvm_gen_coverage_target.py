@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestCoverageTarget:
     def test_target_percent_in_coverage(self):
         gen = UVMGenerator()

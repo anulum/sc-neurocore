@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_benda_herz_support import *  # noqa: F403
 
+
 class TestBendaHerzValidation:
     @pytest.mark.parametrize("a", [-1.0, np.nan, np.inf, -np.inf])
     def test_rejects_negative_or_non_finite_adaptation_state(self, a: float):

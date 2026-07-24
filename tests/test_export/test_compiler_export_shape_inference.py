@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from compiler_export_support import *  # noqa: F403
 
+
 class TestShapeInference(unittest.TestCase):
     """Verify shape propagation for supported SC-IR node types."""
 

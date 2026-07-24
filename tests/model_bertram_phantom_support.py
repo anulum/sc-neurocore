@@ -32,11 +32,32 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: BertramPhantomBurster, current: float, steps: int) -> list[int]:
     """Collect spike times from isolated neuron."""
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _boltz(v: float, vh: float, k: float) -> float:
     """Reference Boltzmann sigmoid for analytical cross-checks."""
     return 1.0 / (1.0 + np.exp((vh - v) / k))
 
-__all__ = ['math', 'time', 'np', 'pytest', 'BertramPhantomBurster', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_run', '_boltz']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "BertramPhantomBurster",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+    "_boltz",
+]

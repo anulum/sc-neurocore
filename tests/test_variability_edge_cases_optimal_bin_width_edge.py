@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestOptimalBinWidthEdge:
     def test_empty(self):
         result = optimal_bin_width(np.zeros(50, dtype=np.int8))

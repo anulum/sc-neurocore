@@ -18,4 +18,4 @@ from sc_neurocore.evo_substrate.genome import (
     TopologyGene,
 )
 
-__all__ = ['np', 'Genome', 'GenomeSerializer', 'NeuronGene', 'PlasticityGene', 'TopologyGene']
+__all__ = ["np", "Genome", "GenomeSerializer", "NeuronGene", "PlasticityGene", "TopologyGene"]

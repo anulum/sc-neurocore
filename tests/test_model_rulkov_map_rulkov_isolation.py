@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rulkov_map_support import *  # noqa: F403
 
+
 class TestRulkovIsolation:
     def test_construction_defaults(self):
         n = RulkovMapNeuron()

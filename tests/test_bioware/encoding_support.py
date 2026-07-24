@@ -20,4 +20,13 @@ from sc_neurocore.bioware.bioware import (
     decode_bitstream_rate,
 )
 
-__all__ = ['np', 'pytest', 'AEREvent', 'AERToSCConverter', 'DetectedSpike', 'MEAToAERTranscoder', 'SCToOptoEncoder', 'decode_bitstream_rate']
+__all__ = [
+    "np",
+    "pytest",
+    "AEREvent",
+    "AERToSCConverter",
+    "DetectedSpike",
+    "MEAToAERTranscoder",
+    "SCToOptoEncoder",
+    "decode_bitstream_rate",
+]

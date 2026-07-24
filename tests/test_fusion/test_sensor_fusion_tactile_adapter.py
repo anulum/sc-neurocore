@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestTactileAdapter:
     def test_encode_pressure(self):
         ts = np.arange(4, dtype=np.float64) * 100

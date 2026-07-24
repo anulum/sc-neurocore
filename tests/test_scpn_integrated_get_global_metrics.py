@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.scpn_integrated_support import *  # noqa: F403
 
+
 class TestGetGlobalMetrics:
     def test_returns_dict(self):
         stack = create_full_stack()

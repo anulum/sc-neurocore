@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dispatcher_error_paths_support import *  # noqa: F403
 
+
 class TestJuliaMissingKernelFile:
     """Julia loader helpers fail closed when a maintained kernel is absent."""
 

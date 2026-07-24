@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestVariabilityModel:
     def test_apply(self):
         rng = np.random.default_rng(42)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
 
+
 class TestUCIePartitioning:
     """Chiplet die-to-die neuron array partitioning."""
 

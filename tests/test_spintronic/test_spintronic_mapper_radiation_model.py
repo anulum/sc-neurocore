@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestRadiationModel:
     def test_is_rad_hard(self):
         rm = RadiationModel()

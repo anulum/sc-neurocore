@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bit_true_kernel_support import *  # noqa: F403
 
+
 class TestTypeHelpers:
     @pytest.mark.parametrize(
         "dw,expected", [(8, "int8_t"), (16, "int16_t"), (32, "int32_t"), (64, "int64_t")]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestAnalysisMetadataConsistency:
     def test_characterize_attaches_analysis_metadata(self, client: TestClient) -> None:
         r = client.post(
@@ -38,4 +39,3 @@ class TestAnalysisMetadataConsistency:
         for result in results:
             assert result["run_metadata"]["schema_version"] == "studio.simulation-run.v1"
             assert result["run_metadata"]["source"] == "model"
-

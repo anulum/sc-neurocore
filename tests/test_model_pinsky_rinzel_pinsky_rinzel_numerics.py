@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelNumerics:
     def test_bit_exact_reproducibility(self):
         def trace() -> list[tuple[int, float]]:

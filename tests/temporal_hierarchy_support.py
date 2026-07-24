@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.temporal_hierarchy import MultiClockSNN, HetSynLayer
 
-__all__ = ['np', 'MultiClockSNN', 'HetSynLayer']
+__all__ = ["np", "MultiClockSNN", "HetSynLayer"]

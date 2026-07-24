@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestNonstationarity:
     def test_change_point_detection(self):
         t = np.zeros(2000)

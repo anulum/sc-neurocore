@@ -37,11 +37,13 @@ from sc_neurocore.studio.synthesis_provenance import (
     build_synthesis_target_provenance_matrix,
 )
 
+
 @pytest.fixture
 def client() -> TestClient:
     """Return a Studio test client."""
 
     return TestClient(create_app(), base_url="http://127.0.0.1")
+
 
 def _tool_status() -> ToolStatusMap:
     """Return deterministic path-free EDA tool status."""
@@ -57,4 +59,23 @@ def _tool_status() -> ToolStatusMap:
     )
 
 
-__all__ = ['hashlib', 'json', 're', 'cast', 'pytest', 'TestClient', 'create_app', 'run_synthesis', 'STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION', 'STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION', 'JsonValue', 'StudioSynthesisTargetProvenance', 'StudioSynthesisToolProvenance', 'ToolStatusMap', 'build_synthesis_target_provenance', 'build_synthesis_target_provenance_matrix', 'client', '_tool_status']
+__all__ = [
+    "hashlib",
+    "json",
+    "re",
+    "cast",
+    "pytest",
+    "TestClient",
+    "create_app",
+    "run_synthesis",
+    "STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION",
+    "STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION",
+    "JsonValue",
+    "StudioSynthesisTargetProvenance",
+    "StudioSynthesisToolProvenance",
+    "ToolStatusMap",
+    "build_synthesis_target_provenance",
+    "build_synthesis_target_provenance_matrix",
+    "client",
+    "_tool_status",
+]

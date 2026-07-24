@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestGradientClipping:
     def test_clips_large_gradient(self):
         g = np.array([3.0, 4.0])  # norm=5

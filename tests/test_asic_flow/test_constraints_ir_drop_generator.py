@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.constraints_support import *  # noqa: F403
 
+
 class TestIRDropGenerator:
     def test_generates_script(self) -> None:
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestNames:
     def test_state_variable(self):
         expr, *_ = _c("v", state={"v": "s->v"})

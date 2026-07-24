@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
 
+
 class TestMLParameters:
     @pytest.mark.parametrize("g_ca", [2.0, 4.0, 6.0])
     def test_g_ca_sweep(self, g_ca: float):

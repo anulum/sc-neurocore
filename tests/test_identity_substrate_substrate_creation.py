@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_substrate_support import *  # noqa: F403
 
+
 class TestSubstrateCreation:
     def test_populations_created(self):
         sub = _make_substrate()

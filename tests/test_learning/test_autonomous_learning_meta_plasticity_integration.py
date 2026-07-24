@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from autonomous_learning_support import *  # noqa: F403
 
+
 class TestMetaPlasticityIntegration:
     def test_meta_plasticity_engine_step(self):
         engine = MetaPlasticityEngine(config=EngineConfig(enable_evolution=False))

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.symbolic_support import *  # noqa: F403
 
+
 class TestSpikeRegister:
     def test_write_read_roundtrip(self):
         reg = SpikeRegister(8)

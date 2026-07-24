@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_hodgkin_huxley_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestQ1616Precision:
     """Q16.16 Hodgkin-Huxley co-simulation fidelity."""

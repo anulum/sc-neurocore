@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestMonitors:
     def test_spike_monitor_count(self):
         pop = Population("LapicqueNeuron", 3)

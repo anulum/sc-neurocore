@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.benchmarks_neurobench_support import *  # noqa: F403
 
+
 class TestTasks:
     def test_task_registry(self):
         assert len(TASKS) >= 5

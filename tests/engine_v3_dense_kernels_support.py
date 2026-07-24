@@ -13,4 +13,4 @@ import numpy as np
 import pytest
 import sc_neurocore_engine as v3
 
-__all__ = ['np', 'pytest', 'v3']
+__all__ = ["np", "pytest", "v3"]

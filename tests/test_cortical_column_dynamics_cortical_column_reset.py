@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_dynamics_support import *  # noqa: F403
 
+
 class TestCorticalColumnReset:
     def test_reset_clears_state(self):
         col = CorticalColumn(scale=0.02, seed=42)

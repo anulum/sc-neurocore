@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestSCCandidate:
     def test_evaluate_resources(self) -> None:
         c = SCCandidate(

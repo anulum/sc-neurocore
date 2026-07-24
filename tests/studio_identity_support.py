@@ -29,6 +29,7 @@ from sc_neurocore.studio.platform.identity import (
     verify_browser_user_password,
 )
 
+
 def _write_identity_file(path: Path, token: str, *, expires_at_utc: str | None = None) -> None:
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     payload: dict[str, object] = {
@@ -49,8 +50,10 @@ def _write_identity_file(path: Path, token: str, *, expires_at_utc: str | None =
         account["expires_at_utc"] = expires_at_utc
     path.write_text(json.dumps(payload), encoding="utf-8")
 
+
 def _write_payload(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
+
 
 __all__ = [
     "annotations",

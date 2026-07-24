@@ -41,6 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 TOOL_PATH = REPO_ROOT / "tools" / "readiness_evidence_index.py"
 
+
 def _load_tool() -> ModuleType:
     """Load the readiness evidence index tool as a real module from disk."""
     import sys
@@ -54,10 +55,26 @@ def _load_tool() -> ModuleType:
     spec.loader.exec_module(module)
     return module
 
+
 @pytest.fixture(scope="module")
 def tool() -> ModuleType:
     """Shared loaded tool module."""
     return _load_tool()
 
 
-__all__ = ['importlib', 'json', 'sys', 'Path', 'ModuleType', 'Any', 'tomllib', 'pytest', 'tomli_w', 'ModelDescriptor', 'REPO_ROOT', 'TOOL_PATH', '_load_tool', 'tool']
+__all__ = [
+    "importlib",
+    "json",
+    "sys",
+    "Path",
+    "ModuleType",
+    "Any",
+    "tomllib",
+    "pytest",
+    "tomli_w",
+    "ModelDescriptor",
+    "REPO_ROOT",
+    "TOOL_PATH",
+    "_load_tool",
+    "tool",
+]

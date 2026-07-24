@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_torch_support import *  # noqa: F403
 
+
 class TestSTEQuantize:
     def test_output_is_quantized(self):
         x = torch.randn(10)

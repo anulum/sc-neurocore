@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_aer_router_support import *  # noqa: F403
 
+
 class TestSpikePacket:
     """Packet encode / decode round-trip and edge cases."""
 

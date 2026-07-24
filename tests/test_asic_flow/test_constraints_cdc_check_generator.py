@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.constraints_support import *  # noqa: F403
 
+
 class TestCDCCheckGenerator:
     def test_single_domain(self) -> None:
         design = DesignParams(clock_name="clk")

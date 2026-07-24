@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestSpintronicCell:
     def test_resistance_p(self):
         dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)

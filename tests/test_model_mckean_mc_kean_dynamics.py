@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mckean_support import *  # noqa: F403
 
+
 class TestMcKeanDynamics:
     def test_silent_at_zero_input(self):
         n = McKeanNeuron()

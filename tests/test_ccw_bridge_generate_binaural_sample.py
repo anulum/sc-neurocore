@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestGenerateBinauralSample:
     def test_shapes_match_requested_duration(self):
         bridge = create_bridge()

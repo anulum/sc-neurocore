@@ -23,6 +23,7 @@ from sc_neurocore.compiler.equation_compiler import (
     generate_testbench,
 )
 import shutil
+
 HAS_IVERILOG = shutil.which("iverilog") is not None
 _SIMPLE_MODELS = [
     "lif",
@@ -34,4 +35,15 @@ _SIMPLE_MODELS = [
 ]
 _TRANSCENDENTAL_MODELS = ["adex", "hindmarsh_rose"]
 
-__all__ = ['subprocess', 'tempfile', 'Path', 'pytest', 'UniversalNeuron', 'generate_testbench', 'shutil', 'HAS_IVERILOG', '_SIMPLE_MODELS', '_TRANSCENDENTAL_MODELS']
+__all__ = [
+    "subprocess",
+    "tempfile",
+    "Path",
+    "pytest",
+    "UniversalNeuron",
+    "generate_testbench",
+    "shutil",
+    "HAS_IVERILOG",
+    "_SIMPLE_MODELS",
+    "_TRANSCENDENTAL_MODELS",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestNdarrayDtypeCoercion:
     def test_wrong_dtype_triggers_astype(self):
         arr = np.arange(8, dtype=np.int64)

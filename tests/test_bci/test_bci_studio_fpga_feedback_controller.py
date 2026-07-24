@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from bci_studio_support import *  # noqa: F403
 
+
 class TestFPGAFeedbackController(unittest.TestCase):
     def setUp(self):
         self.ctrl = FPGAFeedbackController()

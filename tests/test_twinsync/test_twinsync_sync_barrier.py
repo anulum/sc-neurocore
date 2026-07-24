@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestSyncBarrier:
     def test_barrier_injects_to_all_nodes(self):
         eng = TimeWarpEngine(4)

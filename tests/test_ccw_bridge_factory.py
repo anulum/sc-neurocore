@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestFactory:
     def test_create_bridge_without_params(self):
         bridge = create_bridge()

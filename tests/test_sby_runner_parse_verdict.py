@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sby_runner_support import *  # noqa: F403
 
+
 class TestParseVerdict:
     """Verdict extraction from ``sby`` output."""
 

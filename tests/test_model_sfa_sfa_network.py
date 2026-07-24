@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFANetwork:
     def test_population(self):
         assert Population(SFANeuron, n=10, label="sfa").n == 10

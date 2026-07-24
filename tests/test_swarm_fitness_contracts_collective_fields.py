@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_fitness_contracts_support import *  # noqa: F403
 
+
 class TestCollectiveFields:
     @pytest.fixture()
     def fields(self):

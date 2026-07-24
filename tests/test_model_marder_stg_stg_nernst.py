@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGNernst:
     def test_e_ca_positive_at_rest(self):
         assert MarderSTGNeuron()._nernst_e_ca(0.05) > 100.0

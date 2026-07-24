@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tensor_stream_support import *  # noqa: F403
 
+
 class TestQuantumToProb:
     def test_roundtrip_exact(self):
         """prob → quantum → prob should be exact."""

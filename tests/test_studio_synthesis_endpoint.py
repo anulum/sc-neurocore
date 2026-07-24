@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestSynthesisEndpoint:
     def test_synth_requires_verilog(self, client):
         r = client.post("/api/synth/run", json={"target": "ice40"})
@@ -51,4 +52,3 @@ class TestSynthesisEndpoint:
             assert r.status_code == 200
             data = r.json()
             assert data["target"] == target
-

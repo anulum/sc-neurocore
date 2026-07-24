@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestGlyphVectorToVibrana:
     def _full(self, phi=0.0, fib=0.0, metatron=0.0, platonic=0.0, e8=0.0, health=0.0):
         return np.array([phi, fib, metatron, platonic, e8, health])

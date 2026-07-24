@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestSingleton(unittest.TestCase):
     def test_singleton(self):
         reset_tcbo_demo_engine()

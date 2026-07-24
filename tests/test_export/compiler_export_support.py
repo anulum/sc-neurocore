@@ -12,7 +12,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import unittest
 from sc_neurocore.export.compiler_export import CompilerExporter, SSAEnvironment, ShapeInference
+
 ShapeMap = dict[str, tuple[int, ...]]
+
+
 @dataclass(frozen=True)
 class MockNode:
     """Typed SC-IR node fixture for compiler export tests."""
@@ -23,12 +26,25 @@ class MockNode:
     output: str
     threshold: float = 1.0
     leak: float = 0.9
+
+
 @dataclass(frozen=True)
 class MockGraph:
     """Typed SC-IR graph fixture exposing the public ``nodes`` contract."""
 
     nodes: tuple[MockNode, ...]
+
+
 if __name__ == "__main__":
     unittest.main()
 
-__all__ = ['dataclass', 'unittest', 'CompilerExporter', 'SSAEnvironment', 'ShapeInference', 'ShapeMap', 'MockNode', 'MockGraph']
+__all__ = [
+    "dataclass",
+    "unittest",
+    "CompilerExporter",
+    "SSAEnvironment",
+    "ShapeInference",
+    "ShapeMap",
+    "MockNode",
+    "MockGraph",
+]

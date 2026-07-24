@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_audit_quarantine_support import *  # noqa: F403
 
+
 def test_write_studio_audit_quarantine_restore_writes_jsonl_and_manifest(
     tmp_path: Path,
 ) -> None:
@@ -44,6 +45,7 @@ def test_write_studio_audit_quarantine_restore_writes_jsonl_and_manifest(
     assert restore_manifest["summary"]["event_count"] == 1
     assert restore_manifest["summary"]["restored_at_utc"] == "2026-06-22T00:00:00Z"
     assert str(tmp_path) not in json.dumps(payload)
+
 
 def test_write_studio_audit_quarantine_restore_rejects_invalid_archive(
     tmp_path: Path,

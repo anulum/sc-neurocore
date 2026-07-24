@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_srm0_support import *  # noqa: F403
 
+
 class TestSRM0Dynamics:
     def test_voltage_integrates(self) -> None:
         """Unlike SpikeResponseNeuron, SRM0 accumulates V over steps."""

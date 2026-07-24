@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_brunel_wang_support import *  # noqa: F403
 
+
 class TestBrunelWangPerformance:
     def test_isolation_throughput(self):
         n = BrunelWangNeuron()

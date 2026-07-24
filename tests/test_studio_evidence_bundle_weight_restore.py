@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_evidence_bundle_support import *  # noqa: F403
 
+
 def test_write_studio_evidence_bundle_includes_weight_restore(tmp_path: Path) -> None:
     context = StudioJobContext(
         job_id="sj_restore",
@@ -33,6 +34,7 @@ def test_write_studio_evidence_bundle_includes_weight_restore(tmp_path: Path) ->
     assert "evidence/training-weight-restores/000.json" in result.artifact_paths
     assert entry_type_counts["training_weight_restore_result"] == 1
     assert classification_counts["training"] == 1
+
 
 @pytest.mark.parametrize(
     ("mutate", "match"),
@@ -69,6 +71,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_weight_restore(
     with pytest.raises(ValueError, match=match):
         write_studio_evidence_bundle(context, weight_restore_payloads=(payload,))
 
+
 def test_write_studio_evidence_bundle_includes_weight_restore_attach(tmp_path: Path) -> None:
     context = StudioJobContext(
         job_id="sj_attach",
@@ -90,6 +93,7 @@ def test_write_studio_evidence_bundle_includes_weight_restore_attach(tmp_path: P
     assert "evidence/training-weight-restore-attaches/000.json" in result.artifact_paths
     assert entry_type_counts["training_weight_restore_attach_result"] == 1
     assert classification_counts["training"] == 1
+
 
 @pytest.mark.parametrize(
     ("mutate", "match"),

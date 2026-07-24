@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_compatibility_support import *  # noqa: F403
 
+
 def test_validate_matrix_flags_missing_parser_primitive(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -17,15 +18,18 @@ def test_validate_matrix_flags_missing_parser_primitive(
     with pytest.raises(ValueError, match="misses parser primitives"):
         validate_scnir_compatibility_matrix()
 
+
 def test_validate_matrix_flags_stale_primitive(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_matrix(monkeypatch, (_row("_Foo"), _row("Ghost")))
     with pytest.raises(ValueError, match="stale primitives"):
         validate_scnir_compatibility_matrix()
 
+
 def test_validate_matrix_flags_duplicate_row(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_matrix(monkeypatch, (_row("_Foo"), _row("_Foo")))
     with pytest.raises(ValueError, match="duplicate SC-NIR compatibility row"):
         validate_scnir_compatibility_matrix()
+
 
 def test_validate_matrix_flags_hdl_support_without_metadata(
     monkeypatch: pytest.MonkeyPatch,
@@ -35,6 +39,7 @@ def test_validate_matrix_flags_hdl_support_without_metadata(
     )
     with pytest.raises(ValueError, match="claims HDL support without stream metadata"):
         validate_scnir_compatibility_matrix()
+
 
 def test_validate_matrix_flags_missing_audit_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_matrix(monkeypatch, (_row("_Foo", audit_evidence=()),))

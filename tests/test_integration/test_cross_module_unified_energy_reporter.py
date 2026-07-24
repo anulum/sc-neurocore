@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from cross_module_support import *  # noqa: F403
 
+
 class TestUnifiedEnergyReporter:
     """Verify Sustainability ↔ Profiling integration."""
 

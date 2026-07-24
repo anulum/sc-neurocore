@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestLavaBridge:
     def test_export_weights(self):
         import numpy as np

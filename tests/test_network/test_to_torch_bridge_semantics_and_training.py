@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from to_torch_bridge_support import *  # noqa: F403
 
+
 def test_network_to_torch_matches_manual_numpy_semantics_for_lapicque_chain() -> None:
     src = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     hid = Population("LapicqueNeuron", 3, params={"tau": 5.0, "dt": 1.0}, label="hid")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestWave8Integration:
     def test_nir_to_stability(self):
         from sc_neurocore.compiler.intelligence import (

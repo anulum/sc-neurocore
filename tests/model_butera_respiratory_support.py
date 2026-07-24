@@ -21,6 +21,8 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count, isi
+
+
 def _butera_rates(v: float) -> tuple[float, float, float, float, float, float]:
     m_na_inf = 1.0 / (1.0 + np.exp(-(v + 34.0) / 5.0))
     m_nap_inf = 1.0 / (1.0 + np.exp(-(v + 40.0) / 6.0))
@@ -29,6 +31,8 @@ def _butera_rates(v: float) -> tuple[float, float, float, float, float, float]:
     tau_n = max(10.0 / max(np.cosh((v + 29.0) / 8.0), 1e-12), 0.01)
     tau_h = max(10000.0 / max(np.cosh((v + 48.0) / 12.0), 1e-12), 0.1)
     return m_na_inf, m_nap_inf, h_nap_inf, n_inf, tau_n, tau_h
+
+
 def _butera_derivatives(
     state: tuple[float, float, float], current: float, params: dict[str, float]
 ) -> tuple[float, float, float]:
@@ -43,6 +47,8 @@ def _butera_derivatives(
         (n_inf - n) / tau_n,
         (h_nap_inf - h_nap) / tau_h,
     )
+
+
 def _butera_reference_rk4(
     neuron: ButeraRespiratoryNeuron, current: float
 ) -> tuple[float, float, float]:
@@ -65,4 +71,20 @@ def _butera_reference_rk4(
         s + dt * (a + 2.0 * b + 2.0 * c + d) / 6.0 for s, a, b, c, d in zip(state, k1, k2, k3, k4)
     )
 
-__all__ = ['np', 'pytest', 'ButeraRespiratoryNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'firing_rate', 'spike_count', 'isi', '_butera_rates', '_butera_derivatives', '_butera_reference_rk4']
+
+__all__ = [
+    "np",
+    "pytest",
+    "ButeraRespiratoryNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "firing_rate",
+    "spike_count",
+    "isi",
+    "_butera_rates",
+    "_butera_derivatives",
+    "_butera_reference_rk4",
+]

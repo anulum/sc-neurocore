@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_benda_herz_support import *  # noqa: F403
 
+
 class TestBendaHerzAnalysis:
     def _get_binary_train(self):
         n = BendaHerzNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.comm_aer_support import *  # noqa: F403
 
+
 class TestProtocolConstants:
     def test_magic(self):
         assert MAGIC == 0xAE01

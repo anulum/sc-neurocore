@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestSCNetworkBridge:
     def test_from_adjacency(self) -> None:
         adj = np.array([[0, 1, 0.5], [0, 0, 1], [0, 0, 0]], dtype=float)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_convergence_support import *  # noqa: F403
 
+
 class TestCorrelationViolation:
     """Using the SAME RNG for both bitstreams violates independence
     and should produce biased multiplication results."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_parity_support import *  # noqa: F403
 
+
 class TestBitExactParity:
     """Wilson-Cowan is noise-free; Python and Rust traces must match within
     a small last-ulp envelope across compiler and Python-version math paths."""

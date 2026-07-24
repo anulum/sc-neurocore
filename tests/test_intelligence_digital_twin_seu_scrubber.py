@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_digital_twin_support import *  # noqa: F403
 
+
 class TestSEUScrubber:
     def test_leo(self):
         from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing

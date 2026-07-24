@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCableParameters:
     @pytest.mark.parametrize("n_comp", [2, 3, 5, 10])
     def test_n_comp_variations(self, n_comp: int) -> None:

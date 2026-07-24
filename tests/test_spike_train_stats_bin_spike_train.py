@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestBinSpikeTrain:
     def test_basic(self):
         train = np.array([1, 0, 1, 0, 0, 1, 1, 1, 0, 0], dtype=np.uint8)

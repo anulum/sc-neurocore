@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bit_true_kernel_support import *  # noqa: F403
 
+
 class TestNeuronKernelC:
     def test_reset_and_step(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")

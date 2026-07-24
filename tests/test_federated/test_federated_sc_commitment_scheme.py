@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestCommitmentScheme:
     def test_commit_deterministic(self):
         data = np.array([1, 0, 1, 1], dtype=np.uint8)

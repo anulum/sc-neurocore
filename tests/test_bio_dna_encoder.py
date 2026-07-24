@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_support import *  # noqa: F403
 
+
 class TestDNAEncoder:
     def test_encode_basic(self):
         enc = DNAEncoder(mutation_rate=0.0)

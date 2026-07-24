@@ -18,10 +18,12 @@ last few IEEE-754 ulps for any external-input sequence.
 import numpy as np
 import pytest
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
+
 pytest.importorskip(
     "sc_neurocore_engine", reason="Rust engine wheel not installed (maturin develop)"
 )
 from sc_neurocore_engine import py_wilson_cowan_simulate  # noqa: E402
+
 DEFAULT_PARAMS = dict(
     w_ee=10.0,
     w_ei=6.0,
@@ -33,6 +35,8 @@ DEFAULT_PARAMS = dict(
     theta=4.0,
     dt=0.1,
 )
+
+
 def _run_python(ext: np.ndarray):
     u = WilsonCowanUnit(**DEFAULT_PARAMS)
     e = np.empty(ext.size, dtype=np.float64)
@@ -41,6 +45,8 @@ def _run_python(ext: np.ndarray):
         u.step(float(ext[t]))
         e[t], i[t] = u.e, u.i
     return e, i
+
+
 def _run_rust(ext: np.ndarray):
     out = py_wilson_cowan_simulate(
         0.1,
@@ -58,4 +64,13 @@ def _run_rust(ext: np.ndarray):
     )
     return out["e"], out["i"]
 
-__all__ = ['np', 'pytest', 'WilsonCowanUnit', 'py_wilson_cowan_simulate', 'DEFAULT_PARAMS', '_run_python', '_run_rust']
+
+__all__ = [
+    "np",
+    "pytest",
+    "WilsonCowanUnit",
+    "py_wilson_cowan_simulate",
+    "DEFAULT_PARAMS",
+    "_run_python",
+    "_run_rust",
+]

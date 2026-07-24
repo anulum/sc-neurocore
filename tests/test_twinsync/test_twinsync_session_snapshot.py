@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestSessionSnapshot:
     def test_from_session(self):
         ts = TwinSession(2)

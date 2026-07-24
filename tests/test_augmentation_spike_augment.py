@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.augmentation_support import *  # noqa: F403
 
+
 class TestSpikeAugment:
     def test_identity(self):
         aug = SpikeAugment()

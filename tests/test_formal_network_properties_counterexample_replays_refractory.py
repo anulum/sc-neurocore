@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_refractory_replay_detects_spike_inside_refractory_window() -> None:
     prop = NetworkRefractoryInvariant(
         name="output0_refractory",

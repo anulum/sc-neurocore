@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.overflow_proof_support import *  # noqa: F403
 
+
 class TestOverflowProofEdgeBranches:
     def test_unary_plus_preserves_operand_interval(self) -> None:
         result = prove_no_overflow("+x", {"x": (1.0, 2.0)})

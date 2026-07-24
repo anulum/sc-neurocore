@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_topology_support import *  # noqa: F403
 
+
 class TestVerticalStacking:
     """TSV metadata and reciprocal topology insertion."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestAging(unittest.TestCase):
     def test_degradation_increases(self):
         r5 = predict_aging(250.0, years=5.0, temperature_c=25.0)

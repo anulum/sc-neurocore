@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaValidation:
     @pytest.mark.parametrize("sigma", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_accumulator(self, sigma: float):

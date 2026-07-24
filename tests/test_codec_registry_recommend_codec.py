@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.codec_registry_support import *  # noqa: F403
 
+
 class TestRecommendCodec:
     def test_neuromorphic_gets_aer(self):
         assert recommend_codec(64, 5.0, neuromorphic=True) == "aer"

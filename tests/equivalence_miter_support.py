@@ -16,6 +16,7 @@ from sc_neurocore.compiler.equivalence_miter import (
     build_equivalence_miter,
     parse_module_interface,
 )
+
 _LIF_REFERENCE = """
 module sc_lif_reference #(
     parameter integer DATA_WIDTH = 16,
@@ -31,6 +32,8 @@ module sc_lif_reference #(
 );
 endmodule
 """
+
+
 def _lif_ports() -> list[MiterPort]:
     return [
         MiterPort("clk", 1, False, "input"),
@@ -40,4 +43,13 @@ def _lif_ports() -> list[MiterPort]:
         MiterPort("v_out", 16, True, "output"),
     ]
 
-__all__ = ['pytest', 'MiterPort', '_eval_width_expr', 'build_equivalence_miter', 'parse_module_interface', '_LIF_REFERENCE', '_lif_ports']
+
+__all__ = [
+    "pytest",
+    "MiterPort",
+    "_eval_width_expr",
+    "build_equivalence_miter",
+    "parse_module_interface",
+    "_LIF_REFERENCE",
+    "_lif_ports",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMEdgeCases:
     def test_zero_input_silent(self):
         n = SpikeResponseNeuron()

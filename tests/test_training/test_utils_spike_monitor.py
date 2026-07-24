@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.utils_support import *  # noqa: F403
 
+
 class TestSpikeMonitor:
     """Tests for recording and hook lifecycle behaviour."""
 

@@ -20,8 +20,22 @@ from sc_neurocore.verification.temporal_properties import (
     rate_bound,
     refractory_guarantee,
 )
+
+
 def _make_spikes(T: int = 50, N: int = 5) -> npt.NDArray[np.int8]:
     """Create an empty binary spike raster with shape ``(T, N)``."""
     return np.zeros((T, N), dtype=np.int8)
 
-__all__ = ['np', 'npt', 'PropertyResult', 'bounded_activity', 'causal_order', 'fires_within', 'mutual_exclusion', 'rate_bound', 'refractory_guarantee', '_make_spikes']
+
+__all__ = [
+    "np",
+    "npt",
+    "PropertyResult",
+    "bounded_activity",
+    "causal_order",
+    "fires_within",
+    "mutual_exclusion",
+    "rate_bound",
+    "refractory_guarantee",
+    "_make_spikes",
+]

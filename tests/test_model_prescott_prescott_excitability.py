@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_prescott_support import *  # noqa: F403
 
+
 class TestPrescottExcitability:
     def test_beta_w_modulates_firing(self):
         """Higher beta_w (more positive) recruits more slow K feedback."""

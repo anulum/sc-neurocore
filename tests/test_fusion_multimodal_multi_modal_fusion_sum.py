@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fusion_multimodal_support import *  # noqa: F403
 
+
 class TestMultiModalFusionSum:
     def test_sum_mode(self):
         mods = [

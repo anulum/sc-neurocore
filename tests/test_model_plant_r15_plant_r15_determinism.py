@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Determinism:
     def test_bit_exact_reproducibility(self):
         traces = []

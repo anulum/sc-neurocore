@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestBandwidthAwareRoute:
     def test_visited_skip_and_queue_extension(self) -> None:
         # 4-die mesh 0↔1↔2↔3 + 1↔3 short-cut, all links 50 Gbps.

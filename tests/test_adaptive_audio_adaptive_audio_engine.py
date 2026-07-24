@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_audio_support import *  # noqa: F403
 
+
 class TestAdaptiveAudioEngine(unittest.TestCase):
     def test_init(self) -> None:
         ssgf = SSGFEngine()

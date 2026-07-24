@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_dendrify_support import *  # noqa: F403
 
+
 class TestDendrifyDynamics:
     def test_subthreshold_silent(self):
         n = DendrifyNeuron()

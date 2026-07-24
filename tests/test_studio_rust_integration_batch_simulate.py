@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_rust_integration_support import *  # noqa: F403
 
+
 class TestRustBatchSimulate:
     def test_batch_adex(self):
         sce = _inner_engine()
@@ -75,4 +76,3 @@ class TestRustBatchSimulate:
         current = np.full(10, 1.0)
         with pytest.raises(mod.RustStudioBackendError, match="AdEx"):
             mod._try_rust_simulate("AdEx", 10, current, 0.1)
-

@@ -11,7 +11,8 @@ from __future__ import annotations
 """Tests for the LSQ weight quantiser (Esser et al. 2020)."""
 import math
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.qat.lsq import LSQLinear, LSQQuantizer, _LSQQuantize, _sum_to
 
-__all__ = ['math', 'pytest', 'torch', 'LSQLinear', 'LSQQuantizer', '_LSQQuantize', '_sum_to']
+__all__ = ["math", "pytest", "torch", "LSQLinear", "LSQQuantizer", "_LSQQuantize", "_sum_to"]

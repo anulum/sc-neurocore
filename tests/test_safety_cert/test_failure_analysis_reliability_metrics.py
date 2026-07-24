@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
 
+
 class TestReliabilityMetrics:
     def test_mtbf(self) -> None:
         rm = ReliabilityMetrics(total_fit=100.0, dangerous_undetected_fit=5.0)

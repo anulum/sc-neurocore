@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_handoff_audit_support import *  # noqa: F403
 
+
 def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path) -> None:
     handoff = tmp_path / "handoff"
     _write_valid_handoff(handoff)
@@ -115,5 +116,3 @@ def test_audit_scnir_hdl_handoff_accepts_real_compile_nir_output(tmp_path: Path)
     assert report.source_module_count == 2
     assert report.hierarchy_instance_count == 0
     assert report.hierarchy_port_count == 0
-
-

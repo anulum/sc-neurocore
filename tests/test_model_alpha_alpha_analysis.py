@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_alpha_support import *  # noqa: F403
 
+
 class TestAlphaAnalysis:
     """Analysis toolkit works on spikes from this model."""
 

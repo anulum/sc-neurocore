@@ -15,4 +15,4 @@ import pytest
 from sc_neurocore.chiplet import HierarchicalPartitioner
 from tests.test_chiplet.hierarchical_partitioner_support import build_graph as _build_graph
 
-__all__ = ['Callable', 'time', 'pytest', 'HierarchicalPartitioner', '_build_graph']
+__all__ = ["Callable", "time", "pytest", "HierarchicalPartitioner", "_build_graph"]

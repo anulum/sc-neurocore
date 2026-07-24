@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_import_support import *  # noqa: F403
 
+
 class TestNodeTypes:
     def test_default_type_is_lif(self):
         g = _one()  # no "type" key

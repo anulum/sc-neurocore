@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
 
+
 class TestIPDynamics:
     def test_fires_at_positive_rate(self):
         n = InhomogeneousPoissonNeuron()

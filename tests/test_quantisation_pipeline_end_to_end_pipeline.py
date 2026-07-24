@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantisation_pipeline_support import *  # noqa: F403
 
+
 class TestEndToEndPipeline:
     def test_dot_product_fidelity(self):
         """Q8.8 dot product should be close to float dot product."""

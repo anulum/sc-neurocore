@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wang_buzsaki_support import *  # noqa: F403
 
+
 class TestWBPipeline:
     def test_population(self):
         assert Population(WangBuzsakiNeuron, n=10, label="wb").n == 10

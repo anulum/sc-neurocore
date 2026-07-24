@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestDVFS:
     def test_scale_reduces_power(self):
         r = FPGAResourceReport(luts=10000, clock_mhz=200, voltage_v=1.0)

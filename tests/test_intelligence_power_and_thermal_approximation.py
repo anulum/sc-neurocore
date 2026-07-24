@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestApproximation(unittest.TestCase):
     def test_basic(self):
         r = configure_approximation({"v": "-(v)/tau + I"})

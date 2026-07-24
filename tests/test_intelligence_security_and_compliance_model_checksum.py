@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_security_and_compliance_support import *  # noqa: F403
 
+
 class TestModelChecksum:
     """SHA-256 model checksum embedding."""
 

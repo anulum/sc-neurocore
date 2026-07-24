@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestLifNeuron:
     def test_quiescent(self):
         n = LifNeuron(threshold=100)

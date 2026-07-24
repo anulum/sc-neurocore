@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestIsiEntropyZeroRange:
     """A perfectly regular train has a single ISI value; the zero-range check
     must short-circuit to 0.0 before np.histogram, which rejects a zero range."""

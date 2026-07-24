@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from model_zoo_support import *  # noqa: F403
 
+
 class TestLIFPlugin:
     def test_meta_name(self):
         plugin = LIFPlugin()

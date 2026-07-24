@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_builder_adversarial_support import *  # noqa: F403
 
+
 class TestBuiltinIntrospection:
     """Attempts to use introspection builtins."""
 

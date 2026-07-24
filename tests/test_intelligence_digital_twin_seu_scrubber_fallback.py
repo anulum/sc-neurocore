@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_digital_twin_support import *  # noqa: F403
 
+
 class TestSeuScrubberFallback:
     """No configuration bits means no expected upsets, so the scrub interval
     falls back to the daily cadence rather than dividing by zero."""

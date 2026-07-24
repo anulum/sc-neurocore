@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compression_toolkit_support import *  # noqa: F403
 
+
 class TestPruneNeurons:
     def test_structural_pruning_by_weight_norm(self):
         w1 = np.array([[1.0, 0.5], [0.0001, 0.0001], [0.8, 0.3]])

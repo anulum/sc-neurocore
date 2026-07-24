@@ -11,4 +11,4 @@ from __future__ import annotations
 from sc_neurocore.profiler import compare, PlatformResult
 from sc_neurocore.profiler.platform_profiler import format_table
 
-__all__ = ['compare', 'PlatformResult', 'format_table']
+__all__ = ["compare", "PlatformResult", "format_table"]

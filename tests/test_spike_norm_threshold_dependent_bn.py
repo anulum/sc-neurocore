@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_norm_support import *  # noqa: F403
 
+
 class TestThresholdDependentBN:
     def test_forward(self):
         bn = ThresholdDependentBN(n_features=8, threshold=1.0)

@@ -12,4 +12,4 @@ from __future__ import annotations
 import numpy as np
 import sc_neurocore_engine as v3
 
-__all__ = ['np', 'v3']
+__all__ = ["np", "v3"]

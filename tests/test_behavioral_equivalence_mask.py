@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.behavioral_equivalence_support import *  # noqa: F403
 
+
 class TestMask:
     def test_positive(self):
         assert _mask(100, 16) == 100

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_torch_support import *  # noqa: F403
 
+
 class TestQuantizedLIFNet:
     def test_forward_shape(self):
         net = QuantizedLIFNet(784, 128, 10, n_bits=8)

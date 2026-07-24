@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestWeightNoise:
     """Device-variation noise injection for analog robustness."""
 

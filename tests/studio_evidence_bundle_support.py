@@ -52,6 +52,7 @@ from sc_neurocore.studio.project import save_project
 
 UTC = timezone.utc
 
+
 def _simulation_payload() -> dict[str, object]:
     """Return a minimal Studio simulation response carrying run metadata."""
 
@@ -78,6 +79,7 @@ def _simulation_payload() -> dict[str, object]:
         "time": [0.0, 0.1],
     }
 
+
 def _analysis_payload() -> dict[str, object]:
     """Return a minimal Studio analysis response carrying analysis metadata."""
 
@@ -96,6 +98,7 @@ def _analysis_payload() -> dict[str, object]:
         "rates": [0.0, 10.0],
     }
 
+
 def _project_payload() -> dict[str, object]:
     """Return a minimal saved Studio project payload."""
 
@@ -105,6 +108,7 @@ def _project_payload() -> dict[str, object]:
         "state": {"duration": 10},
         "version": "0.3.0",
     }
+
 
 def _action_evidence_payload(job_id: str) -> dict[str, object]:
     """Return a minimal worker action-evidence manifest payload."""
@@ -129,6 +133,7 @@ def _action_evidence_payload(job_id: str) -> dict[str, object]:
         "status": "completed",
     }
 
+
 def _default_flow_run_payload() -> dict[str, object]:
     """Return a minimal default-flow run response with reproducibility hashes."""
 
@@ -149,6 +154,7 @@ def _default_flow_run_payload() -> dict[str, object]:
         "status": "completed",
     }
 
+
 def _default_flow_attestation_payload() -> dict[str, object]:
     """Return a minimal default-flow attestation for the test run payload."""
 
@@ -163,6 +169,7 @@ def _default_flow_attestation_payload() -> dict[str, object]:
         "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
         "status": "completed",
     }
+
 
 def _client_with_evidence_state(
     tmp_path: Path,
@@ -193,10 +200,12 @@ def _client_with_evidence_state(
     )
     return app, TestClient(app, base_url="http://127.0.0.1")
 
+
 def _job_manager(app: FastAPI) -> StudioJobManager:
     """Return the app-local Studio job manager."""
 
     return cast(StudioJobManager, app.state.studio_job_manager)
+
 
 def _json_artifact(
     manager: StudioJobManager,
@@ -209,6 +218,7 @@ def _json_artifact(
     decoded = json.loads(payload.payload.decode("utf-8"))
     assert isinstance(decoded, dict)
     return cast(dict[str, object], decoded)
+
 
 def _model_scan_response() -> dict[str, object]:
     """Return a minimal Studio model-scan response carrying scan metadata."""
@@ -229,6 +239,7 @@ def _model_scan_response() -> dict[str, object]:
         "scan_metadata": scan_metadata,
         "schema_version": "studio.model-scan.v1",
     }
+
 
 def _weight_restore_response() -> dict[str, object]:
     """Return a minimal Studio training weight-restore evidence response."""
@@ -252,6 +263,7 @@ def _weight_restore_response() -> dict[str, object]:
             "weights_sha256": "9" * 64,
         },
     }
+
 
 def _weight_restore_attach_response() -> dict[str, object]:
     """Return a minimal Studio training weight-restore attach evidence response."""
@@ -279,6 +291,7 @@ def _weight_restore_attach_response() -> dict[str, object]:
             "weights_sha256": "9" * 64,
         },
     }
+
 
 __all__ = [
     "annotations",

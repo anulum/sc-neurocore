@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qc_e2e_support import *  # noqa: F403
 
+
 class TestCrossBackendParity:
     """Verify Python and Rust produce identical numerical results."""
 

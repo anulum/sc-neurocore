@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_reporting_support import *  # noqa: F403
 
+
 class TestIncrementalRepartition:
     def test_repartition_no_improvement(self) -> None:
         g = _make_chain_graph(4)

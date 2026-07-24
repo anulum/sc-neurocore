@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestFreqResponseEndpoint:
     def test_freq_response(self, client):
         r = client.post(
@@ -30,4 +31,3 @@ class TestFreqResponseEndpoint:
         data = r.json()
         assert "frequencies_hz" in data
         assert "rates" in data
-

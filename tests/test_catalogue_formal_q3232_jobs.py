@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.catalogue_formal_support import *  # noqa: F403
 
+
 def test_expif_formal_job_uses_enrolled_q3232_precision() -> None:
     """Keep the formal job aligned with the proven ExpIF fixed-point envelope."""
     import importlib.util

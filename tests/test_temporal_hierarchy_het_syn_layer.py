@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.temporal_hierarchy_support import *  # noqa: F403
 
+
 class TestHetSynLayer:
     def test_init(self):
         layer = HetSynLayer(n_inputs=8, n_neurons=4)

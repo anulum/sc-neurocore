@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tvm_lowering_support import *  # noqa: F403
 
+
 class TestTVMLowering(unittest.TestCase):
     def test_lower_produces_relay_text(self):
         lowering = TVMLowering()

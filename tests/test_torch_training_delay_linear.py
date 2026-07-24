@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestDelayLinear:
     def test_forward_shape(self):
         dl = DelayLinear(in_features=16, out_features=8, max_delay=4)

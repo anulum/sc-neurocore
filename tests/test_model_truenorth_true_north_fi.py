@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_truenorth_support import *  # noqa: F403
 
+
 class TestTrueNorthFI:
     def test_zero_input_silent(self):
         n = TrueNorthNeuron()

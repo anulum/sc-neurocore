@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from predictive_coding_support import *  # noqa: F403
 
+
 class TestReasoningTrace:
     def test_empty_trace(self):
         trace = ReasoningTrace()

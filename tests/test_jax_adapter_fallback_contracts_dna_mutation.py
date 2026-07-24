@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestDNAMutation:
     def test_decode_triggers_mutation(self):
         from sc_neurocore.adapters.holonomic.dna_storage import DNAEncoder

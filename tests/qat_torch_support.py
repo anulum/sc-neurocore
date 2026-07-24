@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.qat.torch_qat import (
     LSQPACTLIFNet,
@@ -19,4 +20,13 @@ from sc_neurocore.qat.torch_qat import (
     ste_quantize,
 )
 
-__all__ = ['pytest', 'torch', 'LSQPACTLIFNet', 'QuantizedLIFNet', 'QuantizedLinear', 'SCAwareLIFNet', 'SCAwareLinear', 'ste_quantize']
+__all__ = [
+    "pytest",
+    "torch",
+    "LSQPACTLIFNet",
+    "QuantizedLIFNet",
+    "QuantizedLinear",
+    "SCAwareLIFNet",
+    "SCAwareLinear",
+    "ste_quantize",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestWeights:
     def test_header_roundtrip(self):
         h = WeightHeader(n_layers=3)

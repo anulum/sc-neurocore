@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compression_toolkit_support import *  # noqa: F403
 
+
 class TestQuantizeWeights:
     def test_8bit_symmetric(self):
         w = [np.array([[0.123456, -0.789012, 0.5]])]

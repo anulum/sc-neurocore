@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestMultiSimulate:
     def test_multi_simulate(self, client):
         r = client.post(
@@ -33,4 +34,3 @@ class TestMultiSimulate:
 
         assert response.status_code == 200
         assert response.json() == []
-

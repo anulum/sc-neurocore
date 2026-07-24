@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from hierarchical_partitioner_backends_support import *  # noqa: F403
+
 
 class TestRustRefineParityAndPerf:
     """The Rust KL refine kernel must produce the same partition

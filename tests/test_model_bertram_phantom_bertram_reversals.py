@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramReversals:
     def test_reversal_ordering(self):
         """e_k < e_l < e_ca (standard ionic ordering)."""

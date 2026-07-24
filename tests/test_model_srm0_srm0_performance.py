@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_srm0_support import *  # noqa: F403
 
+
 class TestSRM0Performance:
     def test_isolation_throughput(self) -> None:
         n = SRM0Neuron()

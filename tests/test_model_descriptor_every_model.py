@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("class_name", sorted(_CLASS_TO_MODULE))
 def test_every_model_generates_a_valid_descriptor(class_name: str) -> None:
     """Gate: every registered model yields a schema-valid descriptor whose
@@ -37,5 +38,3 @@ def test_every_model_generates_a_valid_descriptor(class_name: str) -> None:
     # The synthetic fallback state "v" is allowed when a model declares none.
     invented = declared - real_fields - {"v"}
     assert invented == set(), f"{class_name}: descriptor names not in the model: {sorted(invented)}"
-
-

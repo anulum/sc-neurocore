@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestLamportClock:
     def test_initial(self):
         lc = LamportClock()

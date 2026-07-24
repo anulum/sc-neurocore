@@ -12,4 +12,4 @@ import numpy as np
 from sc_neurocore.world_model.predictive_model import PredictiveWorldModel
 from sc_neurocore.world_model.planner import SCPlanner
 
-__all__ = ['np', 'PredictiveWorldModel', 'SCPlanner']
+__all__ = ["np", "PredictiveWorldModel", "SCPlanner"]

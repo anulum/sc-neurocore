@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestFactory:
     @pytest.mark.parametrize("name", ["euler", "heun", "rk4"])
     def test_get_solver(self, name):

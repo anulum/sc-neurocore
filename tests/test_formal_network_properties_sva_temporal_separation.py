@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_compile_dense_lif_temporal_separation_sva_is_deterministic() -> None:
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
@@ -102,5 +103,3 @@ def test_temporal_separation_rejects_output_index_beyond_width() -> None:
 
     with pytest.raises(ValueError, match="output_a must refer to an existing"):
         compile_network_temporal_separation_sva(spec, separation)
-
-

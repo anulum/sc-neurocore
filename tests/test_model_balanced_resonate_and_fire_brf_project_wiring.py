@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
 
+
 class TestBRFProjectWiring:
     def test_polyglot_mirror_files_exist_with_brf_equations(self) -> None:
         equation_paths = [

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_support import *  # noqa: F403
 
+
 class TestBitFlipInjection:
     def test_zero_rate_no_change(self):
         bits = generate_bernoulli_bitstream(0.5, 1000, rng=RNG(42))

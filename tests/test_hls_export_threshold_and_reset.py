@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hls_export_support import *  # noqa: F403
 
+
 class TestThresholdAndReset:
     def test_threshold_is_configurable(self) -> None:
         cpp = generate_hls_cpp("sc_lif", {"v": "I"}, threshold=2.5)

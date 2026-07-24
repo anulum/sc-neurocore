@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_graph_support import *  # noqa: F403
 
+
 class TestEdgeCacheLifecycle:
     """The cache should be built once and reused, but rebuild after
     a manual edges-list mutation."""

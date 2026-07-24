@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestStimulus:
     def test_timed_array(self):
         ta = TimedArray([0.0, 1.0, 2.0, 3.0], dt=0.001)

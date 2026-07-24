@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestExchangeProtection:
     def test_weak_exchange_allows_mixing(self):
         p = analytical_singlet_thermal(0.5, HF1, HF2, omega_0=0.5, t=math.pi)

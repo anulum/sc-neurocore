@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pipeline_stages_support import *  # noqa: F403
 
+
 class TestOutputConsistency:
     """Verify pipelined vs non-pipelined Verilog is structurally consistent."""
 

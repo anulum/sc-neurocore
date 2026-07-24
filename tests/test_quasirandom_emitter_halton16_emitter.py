@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quasirandom_emitter_support import *  # noqa: F403
 
+
 class TestHalton16Emitter:
     """Test Halton-16 RTL generation."""
 

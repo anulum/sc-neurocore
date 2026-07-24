@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.encoding_support import *  # noqa: F403
 
+
 class TestLatencyEncode:
     def test_output_shape_is_time_major(self):
         values = torch.rand(8, 4)

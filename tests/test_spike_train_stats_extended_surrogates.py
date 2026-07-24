@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestSurrogates:
     def test_homogeneous_poisson(self):
         t = homogeneous_poisson(20.0, 1.0)

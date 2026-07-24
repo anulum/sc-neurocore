@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_dsp_support import *  # noqa: F403
 
+
 class TestSpikeFIR:
     def test_basic(self):
         fir = SpikeFIR(coefficients=np.array([0.5, 0.3, 0.2]), threshold=0.5)

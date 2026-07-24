@@ -52,5 +52,25 @@ def _broken_shadow_route():
     )
 
 
-__all__ = ['np', 'pytest', 'solver_routes', 'AlternativePathCase', 'AlternativePathConfig', 'AlternativePathMode', 'AlternativePathRegistry', 'AlternativePathRoute', 'build_builtin_registry', 'build_demo_registry', 'default_report_path', 'make_delayed_recall_shared_state_route', 'make_harmonic_symplectic_route', 'make_heat_cosine_mode_route', 'make_kuramoto_noiseless_symplectic_lift_route', 'make_lif_subthreshold_exact_route', 'write_batch_report', 'compare_outputs', 'builtin_cases_for_route', '_broken_shadow_route']
-
+__all__ = [
+    "np",
+    "pytest",
+    "solver_routes",
+    "AlternativePathCase",
+    "AlternativePathConfig",
+    "AlternativePathMode",
+    "AlternativePathRegistry",
+    "AlternativePathRoute",
+    "build_builtin_registry",
+    "build_demo_registry",
+    "default_report_path",
+    "make_delayed_recall_shared_state_route",
+    "make_harmonic_symplectic_route",
+    "make_heat_cosine_mode_route",
+    "make_kuramoto_noiseless_symplectic_lift_route",
+    "make_lif_subthreshold_exact_route",
+    "write_batch_report",
+    "compare_outputs",
+    "builtin_cases_for_route",
+    "_broken_shadow_route",
+]

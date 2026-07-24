@@ -12,4 +12,4 @@ import numpy as np
 import pytest
 from sc_neurocore.spike_codec.delta_codec import DeltaSpikeCodec, DeltaCompressionResult
 
-__all__ = ['np', 'pytest', 'DeltaSpikeCodec', 'DeltaCompressionResult']
+__all__ = ["np", "pytest", "DeltaSpikeCodec", "DeltaCompressionResult"]

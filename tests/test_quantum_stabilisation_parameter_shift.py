@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantum_stabilisation_support import *  # noqa: F403
 
+
 class TestParameterShift:
     def test_sin_gradient(self):
         from sc_neurocore.quantum.param_shift import parameter_shift_gradient

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_sorting_quality_support import *  # noqa: F403
 
+
 class TestDispatch:
     def test_python_matches_reference(self) -> None:
         cluster, noise = _cluster_noise(20, 30, 3)

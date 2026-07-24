@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_codec_support import *  # noqa: F403
 
+
 class TestSpikeCodecModuleExports:
     def test_lazy_predictive_exports_are_available(self):
         assert spike_codec_module.PredictiveSpikeCodec is not None

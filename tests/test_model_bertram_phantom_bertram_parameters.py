@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramParameters:
     @pytest.mark.parametrize("g_ca", [2.0, 3.6, 5.0])
     def test_g_ca_sweep(self, g_ca: float):

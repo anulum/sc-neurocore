@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_deploy_support import *  # noqa: F403
 
+
 def test_deploy_reports_successful_open_source_synthesis(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -249,5 +250,3 @@ def test_find_hdl_source_returns_none_outside_source_tree(
 
     monkeypatch.setattr(deploy_command, "Path", lambda _value: tmp_path / "orphan" / "cli.py")
     assert deploy_command._find_hdl_source() is None
-
-

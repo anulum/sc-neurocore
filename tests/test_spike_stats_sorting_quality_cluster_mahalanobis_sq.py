@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_sorting_quality_support import *  # noqa: F403
 
+
 class TestClusterMahalanobisSq:
     def test_matches_closed_form_inverse(self) -> None:
         # The Cholesky-solve kernel must equal diffᵀ Σ⁻¹ diff with the dense

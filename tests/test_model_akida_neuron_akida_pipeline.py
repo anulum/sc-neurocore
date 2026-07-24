@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_akida_neuron_support import *  # noqa: F403
 
+
 class TestAkidaPipeline:
     def test_population(self):
         assert Population(AkidaNeuron, n=10, label="akida").n == 10

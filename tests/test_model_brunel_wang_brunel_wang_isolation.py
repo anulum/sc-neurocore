@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_brunel_wang_support import *  # noqa: F403
 
+
 class TestBrunelWangIsolation:
     def test_step_returns_binary(self):
         assert BrunelWangNeuron().step(0.0) in (0, 1)

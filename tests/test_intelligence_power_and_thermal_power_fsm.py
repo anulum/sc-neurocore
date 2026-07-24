@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestPowerFSM:
     def test_default(self):
         from sc_neurocore.compiler.intelligence import generate_power_state_machine

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestLFSRRegenDecorrelator:
     def test_preserves_approximate_probability(self):
         """Regenerated stream should have approximately the same probability."""

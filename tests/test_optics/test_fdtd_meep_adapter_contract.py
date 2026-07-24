@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fdtd_support import *  # noqa: F403
 
+
 class TestMeepAdapterContract:
     def test_available_meep_path_builds_simulation_and_reports_flux(self, monkeypatch):
         calls: dict[str, object] = {}

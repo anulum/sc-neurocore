@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
 
+
 class TestFHRThreeTimescales:
     def test_y_ultra_slow(self):
         """mu=0.0001 keeps y much slower than w over short horizons."""

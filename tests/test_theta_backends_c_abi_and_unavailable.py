@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.theta_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejects_invalid_run_without_writing_output(backend: str) -> None:
     """Reject invalid work before emitting any caller-visible phase."""
@@ -31,6 +32,7 @@ def test_c_abi_rejects_invalid_run_without_writing_output(backend: str) -> None:
     assert result == -1
     np.testing.assert_array_equal(output, np.full(2, -999.0, dtype=np.float64))
 
+
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejection_does_not_commit_instance_state(backend: str) -> None:
     """Translate a native non-finite candidate into mutation-free failure."""
@@ -39,6 +41,7 @@ def test_c_abi_rejection_does_not_commit_instance_state(backend: str) -> None:
     with pytest.raises(FloatingPointError, match="kernel rejected"):
         neuron.simulate(1, -1.0e308, backend=backend)
     assert neuron.theta == before
+
 
 @pytest.mark.parametrize("backend", ("julia", "go", "mojo"))
 def test_requested_backend_reports_unavailable(
@@ -49,6 +52,7 @@ def test_requested_backend_reports_unavailable(
     monkeypatch.setattr(backends, f"ensure_{backend}_loaded", lambda: False)
     with pytest.raises(RuntimeError, match=backend.title()):
         ThetaNeuron().simulate(1, 0.0, backend=backend)
+
 
 def test_requested_rust_backend_reports_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep explicit Rust requests fail-closed when the engine is absent."""

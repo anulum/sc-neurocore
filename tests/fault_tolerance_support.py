@@ -24,4 +24,11 @@ from sc_neurocore.utils.bitstreams import (
 from sc_neurocore.utils.fault_injection import FaultInjector
 from sc_neurocore.layers.hardware_aware import HardwareAwareSCLayer
 
-__all__ = ['np', 'pytest', 'generate_bernoulli_bitstream', 'bitstream_to_probability', 'FaultInjector', 'HardwareAwareSCLayer']
+__all__ = [
+    "np",
+    "pytest",
+    "generate_bernoulli_bitstream",
+    "bitstream_to_probability",
+    "FaultInjector",
+    "HardwareAwareSCLayer",
+]

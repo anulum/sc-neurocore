@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.contrastive_support import *  # noqa: F403
 
+
 class TestCSDPRule:
     def test_positive_update_matches_hebbian_rule(self) -> None:
         weights = np.array([[0.2, 0.4, 0.6], [0.1, 0.3, 0.5]], dtype=np.float64)

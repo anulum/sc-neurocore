@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_security_and_compliance_support import *  # noqa: F403
 
+
 class TestIPObfuscation:
     def test_basic(self):
         from sc_neurocore.compiler.intelligence import obfuscate_ip

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestCompileNoThreshold:
     def test_integrator_no_spike(self):
         neuron = EquationNeuron(

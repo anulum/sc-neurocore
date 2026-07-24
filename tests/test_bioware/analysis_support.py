@@ -20,6 +20,8 @@ from sc_neurocore.bioware.bioware import (
     detect_network_bursts,
     extract_lfp_power,
 )
+
+
 def _synth_voltage(
     n_samples: int,
     n_channels: int,
@@ -28,4 +30,16 @@ def _synth_voltage(
     """Generate deterministic finite voltage data for spectral tests."""
     return np.random.default_rng(seed).normal(0.0, 5.0, size=(n_samples, n_channels))
 
-__all__ = ['Any', 'np', 'pytest', 'CultureHealth', 'DetectedSpike', 'LatencyBudget', 'LFPBand', 'detect_network_bursts', 'extract_lfp_power', '_synth_voltage']
+
+__all__ = [
+    "Any",
+    "np",
+    "pytest",
+    "CultureHealth",
+    "DetectedSpike",
+    "LatencyBudget",
+    "LFPBand",
+    "detect_network_bursts",
+    "extract_lfp_power",
+    "_synth_voltage",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.speciation_support import *  # noqa: F403
 
+
 class TestDiversity:
     def test_clones_zero_diversity(self) -> None:
         orgs = [Organism(genome=Genome()) for _ in range(5)]

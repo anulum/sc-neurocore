@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_alpha_support import *  # noqa: F403
 
+
 class TestExactFlowDynamics:
     """Each step is the exact constant-input flow, never an Euler step."""
 

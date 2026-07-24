@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_gnn_support import *  # noqa: F403
 
+
 class TestSpikeGNNLayer:
     def test_forward(self) -> None:
         features, adj = _triangle_graph()

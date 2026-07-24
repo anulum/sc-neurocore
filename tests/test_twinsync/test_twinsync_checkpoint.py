@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestCheckpoint:
     def test_checksum(self):
         cp = Checkpoint(0, 1000, 0, neuron_state=np.array([1.0, 2.0]))

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hardware_support import *  # noqa: F403
 
+
 class TestConstraintChecker:
     def test_no_violations_small_network(self):
         adj = np.zeros((5, 5))

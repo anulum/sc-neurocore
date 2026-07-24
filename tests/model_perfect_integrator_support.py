@@ -20,9 +20,13 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _collect_spike_times(neuron: PerfectIntegratorNeuron, current: float, steps: int) -> list[int]:
     """Run neuron and return list of step indices where spikes occurred."""
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _analytical_isi_steps(
     current: float, c_m: float, threshold: float, v_reset: float, dt: float
 ) -> float:
@@ -35,4 +39,17 @@ def _analytical_isi_steps(
         return float("inf")
     return (threshold - v_reset) / dv_per_step
 
-__all__ = ['np', 'pytest', 'PerfectIntegratorNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_collect_spike_times', '_analytical_isi_steps', '__all__']
+
+__all__ = [
+    "np",
+    "pytest",
+    "PerfectIntegratorNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_collect_spike_times",
+    "_analytical_isi_steps",
+    "__all__",
+]

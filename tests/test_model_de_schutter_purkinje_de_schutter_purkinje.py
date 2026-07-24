@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
 
+
 class TestDeSchutterPurkinje:
     def test_dynamics(self) -> None:
         from sc_neurocore.neurons.models.de_schutter_purkinje import DeSchutterPurkinjeNeuron

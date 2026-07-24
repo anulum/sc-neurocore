@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestSpintronicMapper:
     def test_map_network(self):
         mapper = SpintronicMapper()

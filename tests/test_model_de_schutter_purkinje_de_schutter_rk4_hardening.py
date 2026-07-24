@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
 
+
 class TestDeSchutterRK4Hardening:
     def test_default_integrator_is_rk4(self) -> None:
         assert DeSchutterPurkinjeNeuron().integrator == "rk4"

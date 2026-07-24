@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sst_neuron_support import *  # noqa: F403
 
+
 class TestSSTIntegrator:
     def test_default_integrator_is_rk4(self):
         assert SSTNeuron().integrator == "rk4"

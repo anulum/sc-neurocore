@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_e_prop_alif_support import *  # noqa: F403
 
+
 class TestEPropALIF:
     def test_fires(self):
         from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron

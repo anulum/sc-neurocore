@@ -27,6 +27,8 @@ from sc_neurocore.sleep import (
 from sc_neurocore.sleep.sleep_stage_detector import DetectorConfig, STAGE_SIGNATURES, EEG_BANDS
 from sc_neurocore.sleep.protocol_library import StageAudioParams, PROTOCOL_REGISTRY
 from sc_neurocore.sleep.sleep_optimizer import SleepTick
+
+
 def generate_stage_eeg(stage, sample_rate=256, n_samples=512, seed=42):
     t = np.arange(n_samples) / sample_rate
     rng = np.random.RandomState(seed)
@@ -43,7 +45,30 @@ def generate_stage_eeg(stage, sample_rate=256, n_samples=512, seed=42):
     else:
         signal = np.zeros(n_samples)
     return signal + rng.normal(0, 0.15, n_samples)
+
+
 if __name__ == "__main__":
     unittest.main()
 
-__all__ = ['unittest', 'mock', 'np', 'SleepStageDetector', 'SleepStage', 'CircadianOptimizer', 'Chronotype', 'get_protocol', 'list_protocols', 'SleepOptimizer', 'SleepOptimizerConfig', 'SleepReportGenerator', 'SleepReport', 'DetectorConfig', 'STAGE_SIGNATURES', 'EEG_BANDS', 'StageAudioParams', 'PROTOCOL_REGISTRY', 'SleepTick', 'generate_stage_eeg']
+__all__ = [
+    "unittest",
+    "mock",
+    "np",
+    "SleepStageDetector",
+    "SleepStage",
+    "CircadianOptimizer",
+    "Chronotype",
+    "get_protocol",
+    "list_protocols",
+    "SleepOptimizer",
+    "SleepOptimizerConfig",
+    "SleepReportGenerator",
+    "SleepReport",
+    "DetectorConfig",
+    "STAGE_SIGNATURES",
+    "EEG_BANDS",
+    "StageAudioParams",
+    "PROTOCOL_REGISTRY",
+    "SleepTick",
+    "generate_stage_eeg",
+]

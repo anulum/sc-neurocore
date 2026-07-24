@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanOscillation:
     def test_can_oscillate(self):
         """The enrolled feedback regime sustains a non-trivial E limit cycle."""

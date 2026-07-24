@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestWDMAssigner:
     def test_assign_no_conflicts(self):
         assigner = WDMAssigner(max_channels=8)

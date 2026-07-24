@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_predictor_support import *  # noqa: F403
 
+
 class TestPredictAndXorWorldModel:
     def test_roundtrip(self):
         rng = np.random.RandomState(42)

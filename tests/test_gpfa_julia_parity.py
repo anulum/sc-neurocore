@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _JULIA_AVAILABLE, reason="juliacall not installed")
 class TestJuliaParity:
     """The Julia backend matches the NumPy reference up to float64 round-off."""

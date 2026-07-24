@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
 
+
 def test_parse_minimal_descriptor() -> None:
     """A minimal valid payload parses into a Tier-0 descriptor."""
 
@@ -199,5 +200,3 @@ def test_parse_accepts_legacy_scalar_and_mapping_forms() -> None:
     assert [(backend.name, backend.status, backend.parity) for backend in descriptor.backends] == [
         ("python", "implemented", "n/a")
     ]
-
-

@@ -17,4 +17,4 @@ from sc_neurocore.utils.bitstreams import (
 )
 from sc_neurocore.utils.rng import RNG
 
-__all__ = ['np', 'generate_bernoulli_bitstream', 'sc_divide', 'adaptive_length', 'RNG']
+__all__ = ["np", "generate_bernoulli_bitstream", "sc_divide", "adaptive_length", "RNG"]

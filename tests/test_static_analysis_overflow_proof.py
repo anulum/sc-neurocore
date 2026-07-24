@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.static_analysis_support import *  # noqa: F403
 
+
 class TestOverflowProof:
     """Test formal overflow proofs via interval arithmetic."""
 

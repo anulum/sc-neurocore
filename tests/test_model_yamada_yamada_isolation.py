@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_yamada_support import *  # noqa: F403
 
+
 class TestYamadaIsolation:
     def test_construction_defaults(self):
         n = YamadaNeuron()

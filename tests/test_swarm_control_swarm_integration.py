@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_control_support import *  # noqa: F403
 
+
 class TestSwarmIntegration(unittest.TestCase):
     def test_agents_with_fields(self):
         acfg = AgentConfig(n_hidden=8)

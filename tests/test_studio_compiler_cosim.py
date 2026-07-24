@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_compiler_support import *  # noqa: F403
 
+
 class TestCosim:
     def test_cosim_returns_traces(self, client):
         r = client.post("/api/ir/cosim", json=LIF_EQ)
@@ -21,4 +22,3 @@ class TestCosim:
         assert "fixed_result" in data
         assert "error" in data
         assert data["error"]["max_error"] >= 0
-

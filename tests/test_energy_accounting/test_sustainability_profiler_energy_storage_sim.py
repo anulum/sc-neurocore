@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestEnergyStorageSim:
     def test_initial_soc(self):
         es = EnergyStorageSim(capacity_mwh=10, initial_soc=0.5)

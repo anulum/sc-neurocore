@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_runtime_settings_disables_audit_log_by_default() -> None:
     settings = build_default_studio_runtime_settings(env={})
 

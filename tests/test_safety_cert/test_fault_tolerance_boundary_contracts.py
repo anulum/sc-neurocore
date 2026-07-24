@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.fault_tolerance_support import *  # noqa: F403
 
+
 class TestBoundaryContracts:
     def test_common_cause_default_defence_contracts(self, monkeypatch: Any) -> None:
         original = CCFAnalysis.DEFAULT_DEFENCES

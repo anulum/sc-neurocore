@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
 
+
 class TestSigmoidRateValidation:
     @pytest.mark.parametrize("field", ["r", "beta", "theta"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

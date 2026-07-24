@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ir_type_checker_support import *  # noqa: F403
 
+
 class TestCheckIRTypes:
     """Coverage for IR graph validation and fail-closed diagnostics."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_cell_assembly_with_strong_corr():
     # network.py:89-91 — eigval > mp_upper, members >= 2
     rng = np.random.default_rng(0)

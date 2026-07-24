@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestPresetsEndpoint:
     def test_preset_actions_catalog(self, client):
         response = client.get("/api/presets/actions/catalog")
@@ -228,4 +229,3 @@ class TestPresetsEndpoint:
         verify_payload = verify.json()
         assert verify_payload["verified"] is False
         assert verify_payload["checks"]["attestation_fingerprint_match"] is False
-

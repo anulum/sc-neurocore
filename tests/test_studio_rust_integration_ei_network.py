@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_rust_integration_support import *  # noqa: F403
 
+
 class TestRustEINetwork:
     def test_rust_ei_network_direct(self):
         _bridge_engine()
@@ -54,4 +55,3 @@ class TestRustEINetwork:
         )
         assert r["n_total"] == 15
         assert isinstance(r["spike_times"], list)
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_glm_neuron_support import *  # noqa: F403
 
+
 class TestGLMPipeline:
     def test_population(self):
         assert Population(GLMNeuron, n=10, label="glm").n == 10

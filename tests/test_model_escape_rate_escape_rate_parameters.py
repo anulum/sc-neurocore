@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRateParameters:
     def test_tau_m_controls_v_dynamics(self):
         n_fast = EscapeRateNeuron(tau_m=2.0)

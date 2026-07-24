@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.waveform_codec_support import *  # noqa: F403
 
+
 class TestWaveformCodecMode:
     """Tests for the mode parameter — full / waveform / spike."""
 

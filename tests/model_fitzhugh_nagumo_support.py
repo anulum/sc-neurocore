@@ -27,12 +27,18 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
 def _run(neuron: FitzHughNagumoNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _rhs(
     v: float, w: float, current: float, *, a: float = 0.7, b: float = 0.8, epsilon: float = 0.08
 ):
     return v - v**3 / 3.0 - w + current, epsilon * (v + a - b * w)
+
+
 def _rk4_reference(
     v: float,
     w: float,
@@ -52,4 +58,24 @@ def _rk4_reference(
         w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
     )
 
-__all__ = ['os', 'math', 'time', 'np', 'pytest', 'assert_throughput_guard', 'FitzHughNagumoNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'isi', 'firing_rate', '_run', '_rhs', '_rk4_reference']
+
+__all__ = [
+    "os",
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "assert_throughput_guard",
+    "FitzHughNagumoNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "isi",
+    "firing_rate",
+    "_run",
+    "_rhs",
+    "_rk4_reference",
+]

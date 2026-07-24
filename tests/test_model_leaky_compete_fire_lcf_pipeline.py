@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_leaky_compete_fire_support import *  # noqa: F403
 
+
 class TestLCFPipeline:
     def test_population_incompatible(self):
         """v is list (multi-unit WTA) → Population._sync_voltages fails."""

@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.distillation import TemporalDistillationLoss, SelfDistiller
 
-__all__ = ['np', 'TemporalDistillationLoss', 'SelfDistiller']
+__all__ = ["np", "TemporalDistillationLoss", "SelfDistiller"]

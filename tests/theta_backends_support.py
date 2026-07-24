@@ -54,6 +54,7 @@ _COMPILED_BACKENDS = ("rust", "julia", "go", "mojo")
 
 _PHASE_ATOL = 2.0e-12
 
+
 def _run(
     backend: str,
     *,
@@ -66,9 +67,11 @@ def _run(
     trace, spikes = neuron.simulate(n_steps, current, backend=backend)
     return trace, spikes, neuron.theta
 
+
 def _configured() -> ThetaNeuron:
     """Return a non-default state exercising the complete native ABI."""
     return ThetaNeuron(theta=0.37, dt=0.037)
+
 
 def _phase_delta(
     actual: npt.ArrayLike,
@@ -79,10 +82,32 @@ def _phase_delta(
     expected_array = np.asarray(expected, dtype=np.float64)
     return (actual_array - expected_array + math.pi) % (2.0 * math.pi) - math.pi
 
+
 def _assert_phase_parity(actual: npt.ArrayLike, expected: npt.ArrayLike) -> None:
     """Enforce the measured cross-libm phase envelope modulo two pi."""
     delta = _phase_delta(actual, expected)
     np.testing.assert_allclose(delta, np.zeros_like(delta), rtol=0.0, atol=_PHASE_ATOL)
 
 
-__all__ = ['ctypes', 'math', 'subprocess', 'Callable', 'Path', 'cast', 'patch', 'np', 'npt', 'pytest', 'backends', 'ThetaNeuron', '_REPOSITORY', '_GOLDENS', '_COMPILED_BACKENDS', '_PHASE_ATOL', '_run', '_configured', '_phase_delta', '_assert_phase_parity']
+__all__ = [
+    "ctypes",
+    "math",
+    "subprocess",
+    "Callable",
+    "Path",
+    "cast",
+    "patch",
+    "np",
+    "npt",
+    "pytest",
+    "backends",
+    "ThetaNeuron",
+    "_REPOSITORY",
+    "_GOLDENS",
+    "_COMPILED_BACKENDS",
+    "_PHASE_ATOL",
+    "_run",
+    "_configured",
+    "_phase_delta",
+    "_assert_phase_parity",
+]

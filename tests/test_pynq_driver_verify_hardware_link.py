@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pynq_driver_support import *  # noqa: F403
 
+
 class TestVerifyHardwareLink:
     """verify_link CLI smoke tests (closes task #31)."""
 

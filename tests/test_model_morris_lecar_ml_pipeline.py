@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
 
+
 class TestMLPipeline:
     def test_population(self):
         assert Population(MorrisLecarNeuron, n=10, label="ml").n == 10

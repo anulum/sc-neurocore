@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hay_l5_support import *  # noqa: F403
 
+
 class TestHayParameters:
     @pytest.mark.parametrize("g_na", [150.0, 300.0, 500.0])
     def test_g_na_sweep(self, g_na: float) -> None:

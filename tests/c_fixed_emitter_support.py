@@ -22,8 +22,12 @@ from sc_neurocore.compiler.c_fixed_emitter import (
     signed_q,
 )
 from sc_neurocore.compiler.verilog_compiler_config import Q88
+
 Q = Q88(data_width=16, fraction=8)
+
+
 def _c(expr, state=None, params=None, **kw):
     return emit_c_fixed_expr(expr, state or {}, params or {}, Q, **kw)
 
-__all__ = ['pytest', '_CFixedExprEmitter', 'emit_c_fixed_expr', 'signed_q', 'Q88', 'Q', '_c']
+
+__all__ = ["pytest", "_CFixedExprEmitter", "emit_c_fixed_expr", "signed_q", "Q88", "Q", "_c"]

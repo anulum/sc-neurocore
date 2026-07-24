@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramAnalytical:
     def test_boltzmann_midpoint(self):
         """At v=vh: σ(vh, vh, k) = 0.5 exactly."""

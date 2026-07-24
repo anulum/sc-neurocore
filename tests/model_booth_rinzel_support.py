@@ -21,7 +21,23 @@ from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count, isi
 import pytest
+
+
 def _booth_state_tuple(neuron):
     return (neuron.vs, neuron.vd, neuron.h, neuron.n, neuron.q, neuron.ca)
 
-__all__ = ['np', 'BoothRinzelNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'firing_rate', 'spike_count', 'isi', 'pytest', '_booth_state_tuple']
+
+__all__ = [
+    "np",
+    "BoothRinzelNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "firing_rate",
+    "spike_count",
+    "isi",
+    "pytest",
+    "_booth_state_tuple",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adex_support import *  # noqa: F403
 
+
 class TestAdExParameters:
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
     def test_dt_stability(self, dt: float):

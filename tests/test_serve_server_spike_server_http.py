@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.serve_server_support import *  # noqa: F403
 
+
 class TestSpikeServerHTTP:
     def test_health(self, running_server):
         result = _get("/health")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_durstewitz_dopamine_support import *  # noqa: F403
 
+
 class TestDurstewitzPerformance:
     def test_isolation_throughput(self):
         n = DurstewitzDopamineNeuron()

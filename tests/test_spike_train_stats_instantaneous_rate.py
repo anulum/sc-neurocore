@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestInstantaneousRate:
     def test_gaussian(self):
         train = _poisson_train(100.0, 1.0)

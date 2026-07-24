@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestEquivChecker:
     def test_check_no_run(self) -> None:
         r = check_equivalence(run=False)

@@ -30,6 +30,7 @@ from sc_neurocore.accel.go import wong_wang as go_wong
 from sc_neurocore.accel.mojo import jansen_rit as mojo_jansen
 from sc_neurocore.accel.mojo import wilson_cowan as mojo_wilson
 from sc_neurocore.accel.mojo import wong_wang as mojo_wong
+
 CTYPES_DISPATCHERS = [
     (go_jansen, "simulate_jansen_rit", "Jansen–Rit"),
     (go_wilson, "simulate_wilson_cowan", "Wilson-Cowan"),
@@ -39,4 +40,17 @@ CTYPES_DISPATCHERS = [
     (mojo_wong, "simulate_wong_wang", "Wong-Wang"),
 ]
 
-__all__ = ['ctypes', 'Path', 'ModuleType', 'np', 'pytest', 'go_jansen', 'go_wilson', 'go_wong', 'mojo_jansen', 'mojo_wilson', 'mojo_wong', 'CTYPES_DISPATCHERS']
+__all__ = [
+    "ctypes",
+    "Path",
+    "ModuleType",
+    "np",
+    "pytest",
+    "go_jansen",
+    "go_wilson",
+    "go_wong",
+    "mojo_jansen",
+    "mojo_wilson",
+    "mojo_wong",
+    "CTYPES_DISPATCHERS",
+]

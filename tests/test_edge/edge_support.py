@@ -13,4 +13,11 @@ from sc_neurocore.edge import Board, SobolGenerator
 from sc_neurocore.edge.power_estimator import PowerProfile, MemoryFootprint
 from sc_neurocore.edge.deploy import generate_cargo_config, generate_memory_x
 
-__all__ = ['Board', 'SobolGenerator', 'PowerProfile', 'MemoryFootprint', 'generate_cargo_config', 'generate_memory_x']
+__all__ = [
+    "Board",
+    "SobolGenerator",
+    "PowerProfile",
+    "MemoryFootprint",
+    "generate_cargo_config",
+    "generate_memory_x",
+]

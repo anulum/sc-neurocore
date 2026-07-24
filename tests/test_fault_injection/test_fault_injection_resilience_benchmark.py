@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fault_injection_support import *  # noqa: F403
 
+
 class TestResilienceBenchmark(unittest.TestCase):
     def setUp(self):
         self.bench = ResilienceBenchmark(seed=0)

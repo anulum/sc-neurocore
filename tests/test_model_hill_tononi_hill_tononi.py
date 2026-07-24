@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHillTononi:
     def test_fires(self):
         from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron

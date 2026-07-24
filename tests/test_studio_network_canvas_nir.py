@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_network_canvas_support import *  # noqa: F403
 
+
 class TestNIR:
     def test_export_nir(self):
         exc = create_population(label="E", count=80)
@@ -47,4 +48,3 @@ class TestNIR:
         restored = nir_to_graph(nir)
         assert len(restored["populations"]) == 2
         assert len(restored["projections"]) == 1
-

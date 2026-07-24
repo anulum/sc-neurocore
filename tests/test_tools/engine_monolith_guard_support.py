@@ -74,5 +74,15 @@ def _write_ceiling(path: Path, rel: str, *, max_lines: int, max_pyfunctions: int
     )
 
 
-
-__all__ = ['importlib', 'runpy', 'sys', 'Path', 'Any', 'pytest', '_repo_root', '_load_tool', '_write_fake_target', '_write_ceiling']
+__all__ = [
+    "importlib",
+    "runpy",
+    "sys",
+    "Path",
+    "Any",
+    "pytest",
+    "_repo_root",
+    "_load_tool",
+    "_write_fake_target",
+    "_write_ceiling",
+]

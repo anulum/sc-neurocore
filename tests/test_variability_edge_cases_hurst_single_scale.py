@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestHurstSingleScale:
     """When only one DFA scale fits the train length, the log-log fit has too
     few points and the Hurst exponent is undefined."""

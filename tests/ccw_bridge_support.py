@@ -27,4 +27,13 @@ from sc_neurocore.interfaces.ccw_bridge import (
     create_bridge,
 )
 
-__all__ = ['json', 'np', 'pytest', 'CCWBridge', 'CCWMode', 'CCWParameters', 'VIBRANAState', 'create_bridge']
+__all__ = [
+    "json",
+    "np",
+    "pytest",
+    "CCWBridge",
+    "CCWMode",
+    "CCWParameters",
+    "VIBRANAState",
+    "create_bridge",
+]

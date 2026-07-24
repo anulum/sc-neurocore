@@ -37,11 +37,31 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: CourageNekorkinMapNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _breakpoints(m0=0.0864, m1=0.65, a=0.2):
     am1 = a * m1
     den = m0 + m1
     return am1 / den, (m0 + am1) / den
 
-__all__ = ['time', 'np', 'pytest', 'CourageNekorkinMapNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_run', '_breakpoints']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "CourageNekorkinMapNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+    "_breakpoints",
+]

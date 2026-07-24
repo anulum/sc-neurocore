@@ -101,5 +101,23 @@ def _require_adex_backend(name: str) -> None:
         pytest.skip(f"{name} AdEx backend is not built in this environment")
 
 
-
-__all__ = ['ctypes', 'importlib', 'math', 'os', 'Callable', 'Literal', 'cast', 'np', 'npt', 'pytest', 'adex', 'AdExNeuron', '_TRACE_ATOL', '_GOLDENS', '_COMPILED_BACKENDS', '_run', '_c_arguments', '_require_adex_backend']
+__all__ = [
+    "ctypes",
+    "importlib",
+    "math",
+    "os",
+    "Callable",
+    "Literal",
+    "cast",
+    "np",
+    "npt",
+    "pytest",
+    "adex",
+    "AdExNeuron",
+    "_TRACE_ATOL",
+    "_GOLDENS",
+    "_COMPILED_BACKENDS",
+    "_run",
+    "_c_arguments",
+    "_require_adex_backend",
+]

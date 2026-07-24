@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGRK4Hardening:
     def test_default_integrator_is_rk4(self) -> None:
         n = NeuroGridNeuron()

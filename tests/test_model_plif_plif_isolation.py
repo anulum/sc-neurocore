@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFIsolation:
     def test_construction_defaults(self):
         n = ParametricLIFNeuron()

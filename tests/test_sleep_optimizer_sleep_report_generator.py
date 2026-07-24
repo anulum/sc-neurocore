@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestSleepReportGenerator(unittest.TestCase):
     def _run_session(self, protocol="insomnia_relief", n_epochs=50):
         cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)

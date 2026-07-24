@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_energy_lif_support import *  # noqa: F403
 
+
 class TestEnergyLIFNetwork:
     def test_population(self):
         assert Population(EnergyLIFNeuron, n=10, label="elif").n == 10

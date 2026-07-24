@@ -11,4 +11,4 @@ from __future__ import annotations
 import unittest
 from sc_neurocore.compiler.intelligence import protect_ip_pqc
 
-__all__ = ['unittest', 'protect_ip_pqc']
+__all__ = ["unittest", "protect_ip_pqc"]

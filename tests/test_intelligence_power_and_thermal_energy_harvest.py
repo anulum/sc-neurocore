@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestEnergyHarvest(unittest.TestCase):
     def test_solar_outdoor(self):
         r = model_energy_harvest(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.compliance_support import *  # noqa: F403
 
+
 class TestIEC62304:
     def test_from_sil_1(self) -> None:
         a = IEC62304Assessment.from_sil(SILLevel.SIL_1)

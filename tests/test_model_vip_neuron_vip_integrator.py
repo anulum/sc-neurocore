@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_vip_neuron_support import *  # noqa: F403
 
+
 class TestVIPIntegrator:
     def test_default_integrator_is_rk4(self):
         assert VIPNeuron().integrator == "rk4"

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestReset:
     def test_reset_clears_fast_and_working_compartments(self):
         core = ArcaneZenithCognitiveCore(backend="torch")

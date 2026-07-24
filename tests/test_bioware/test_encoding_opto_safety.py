@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.encoding_support import *  # noqa: F403
 
+
 class TestOptoSafety:
     def test_power_cap(self) -> None:
         # Create many active neurons exceeding total cap

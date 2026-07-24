@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_compiler_support import *  # noqa: F403
 
+
 class TestSVEmit:
     def test_emit_sv_from_ir(self, client):
         build = client.post("/api/ir/build", json=LIF_EQ).json()
@@ -29,4 +30,3 @@ class TestSVEmit:
         assert "verilog" in data
         assert "module" in data["verilog"]
         assert data["module_name"] == "sc_ode_neuron"
-

@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.residual import MembraneShortcutBlock, SEWBlock, DeepSNNStack
 
-__all__ = ['np', 'MembraneShortcutBlock', 'SEWBlock', 'DeepSNNStack']
+__all__ = ["np", "MembraneShortcutBlock", "SEWBlock", "DeepSNNStack"]

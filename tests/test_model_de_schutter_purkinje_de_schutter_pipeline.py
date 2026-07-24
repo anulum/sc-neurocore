@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
 
+
 class TestDeSchutterPipeline:
     def test_population(self) -> None:
         assert Population(DeSchutterPurkinjeNeuron, n=3, label="dsp").n == 3

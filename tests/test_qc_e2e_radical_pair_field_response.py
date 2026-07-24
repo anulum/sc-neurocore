@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qc_e2e_support import *  # noqa: F403
 
+
 class TestRadicalPairFieldResponse:
     """Sweep B from 0 to 100 µT, verify monotonic physics response."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.decks_support import *  # noqa: F403
 
+
 class TestSDCGenerator:
     def test_generates_sdc(self) -> None:
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)

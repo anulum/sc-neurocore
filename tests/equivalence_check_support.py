@@ -22,6 +22,7 @@ from sc_neurocore.compiler.equivalence_check import (
     prove_equivalence,
 )
 from sc_neurocore.compiler.equivalence_miter import MiterPort
+
 _HAS_FORMAL = formal_tools_available()
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _TINY_DUT = """
@@ -161,4 +162,24 @@ module sc_izh_dut #(
 endmodule
 """
 
-__all__ = ['Path', 'pytest', '_sby_runner', 'equivalence_check', 'EquivalenceResult', 'formal_tools_available', 'prove_equivalence', 'MiterPort', '_HAS_FORMAL', '_REPO_ROOT', '_TINY_DUT', '_TINY_REF', '_TINY_REF_BAD', '_TINY_PORTS', '_needs_formal', '_QIF_REF', '_QIF_DUT', '_IZH_REF', '_IZH_DUT']
+__all__ = [
+    "Path",
+    "pytest",
+    "_sby_runner",
+    "equivalence_check",
+    "EquivalenceResult",
+    "formal_tools_available",
+    "prove_equivalence",
+    "MiterPort",
+    "_HAS_FORMAL",
+    "_REPO_ROOT",
+    "_TINY_DUT",
+    "_TINY_REF",
+    "_TINY_REF_BAD",
+    "_TINY_PORTS",
+    "_needs_formal",
+    "_QIF_REF",
+    "_QIF_DUT",
+    "_IZH_REF",
+    "_IZH_DUT",
+]

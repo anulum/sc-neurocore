@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.expr_lut_tables_support import *  # noqa: F403
 
+
 class TestEmitterDelegationParity:
     """The Verilog emitter must return byte-identical tables after delegation."""
 

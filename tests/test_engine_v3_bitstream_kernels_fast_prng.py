@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_bitstream_kernels_support import *  # noqa: F403
 
+
 class TestFastPRNG:
     """Verify xoshiro-backed fast paths remain deterministic and statistically sane."""
 

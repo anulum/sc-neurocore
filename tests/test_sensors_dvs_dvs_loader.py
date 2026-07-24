@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sensors_dvs_support import *  # noqa: F403
 
+
 class TestDVSLoader:
     def test_n_pixels(self) -> None:
         loader = DVSLoader(width=8, height=6)

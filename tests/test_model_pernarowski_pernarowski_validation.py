@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiValidation:
     @pytest.mark.parametrize("field", ["v", "w", "z", "alpha", "beta", "v_threshold"])
     def test_rejects_non_numeric_state_offsets_and_threshold(self, field: str):

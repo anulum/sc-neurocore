@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.digital_twin_support import *  # noqa: F403
 
+
 class TestNetworkApplication:
     def test_apply_to_network_weights(self):
         model = FPGAMismatchModel(seed=0)

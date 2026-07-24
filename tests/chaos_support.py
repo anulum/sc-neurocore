@@ -12,4 +12,4 @@ import numpy as np
 import pytest
 from sc_neurocore.chaos import ChaoticRNG, TentMapRNG
 
-__all__ = ['np', 'pytest', 'ChaoticRNG', 'TentMapRNG']
+__all__ = ["np", "pytest", "ChaoticRNG", "TentMapRNG"]

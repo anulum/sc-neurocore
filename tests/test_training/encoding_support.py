@@ -10,7 +10,8 @@ from __future__ import annotations
 
 """Behavioural contracts for training spike encoders."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.training.encoding import delta_encode, latency_encode, rate_encode
 
-__all__ = ['pytest', 'torch', 'delta_encode', 'latency_encode', 'rate_encode']
+__all__ = ["pytest", "torch", "delta_encode", "latency_encode", "rate_encode"]

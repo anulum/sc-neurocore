@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_optimizer_extended_support import *  # noqa: F403
 
+
 class TestParetoExtraction(unittest.TestCase):
     def test_empty_input(self):
         result = SCOptimizer._extract_pareto([])

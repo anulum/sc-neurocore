@@ -16,6 +16,8 @@ from sc_neurocore.optimizer.sc_optimizer import (
     LayerProfile,
     LayerConfig,
 )
+
+
 def _fake_sa_result(n, *, feasible=True, with_pareto=True):
     return {
         "feasible": feasible,
@@ -26,6 +28,8 @@ def _fake_sa_result(n, *, feasible=True, with_pareto=True):
         "pareto_power": [1.0, 2.0] if with_pareto else [],
         "pareto_score": [0.9, 0.95] if with_pareto else [],
     }
+
+
 def _install_fake_rust(monkeypatch, sa_result):
     import sc_neurocore.optimizer.sc_optimizer as mod
 
@@ -38,4 +42,13 @@ def _install_fake_rust(monkeypatch, sa_result):
         raising=False,
     )
 
-__all__ = ['unittest', 'SCOptimizer', 'HardwareBudget', 'LayerProfile', 'LayerConfig', '_fake_sa_result', '_install_fake_rust']
+
+__all__ = [
+    "unittest",
+    "SCOptimizer",
+    "HardwareBudget",
+    "LayerProfile",
+    "LayerConfig",
+    "_fake_sa_result",
+    "_install_fake_rust",
+]

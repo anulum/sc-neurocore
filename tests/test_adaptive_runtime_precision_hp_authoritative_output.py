@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_runtime_precision_support import *  # noqa: F403
 
+
 class TestHPAuthoritativeOutput:
     """Verify outputs are taken from HP, never LP-converted state."""
 

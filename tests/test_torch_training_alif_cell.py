@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestALIFCell:
     def test_adaptive_threshold(self):
         cell = ALIFCell(beta=0.9, threshold=1.0, beta_adapt=1.8)

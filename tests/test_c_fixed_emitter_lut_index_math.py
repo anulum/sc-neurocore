@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestLutIndexMath:
     def test_symmetric_offset_and_shift(self):
         # exp uses [-16,16) step 0.125 → offset 16<<8=4096, shift 8-3=5

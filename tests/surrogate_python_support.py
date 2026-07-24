@@ -11,7 +11,8 @@ from __future__ import annotations
 """Tests for surrogate gradient engine (Python bridge)."""
 import numpy as np
 import pytest
+
 pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 from sc_neurocore_engine import DifferentiableDenseLayer, SurrogateLif
 
-__all__ = ['np', 'pytest', 'DifferentiableDenseLayer', 'SurrogateLif']
+__all__ = ["np", "pytest", "DifferentiableDenseLayer", "SurrogateLif"]

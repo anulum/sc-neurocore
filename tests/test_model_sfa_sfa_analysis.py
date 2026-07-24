@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFAAnalysis:
     def test_spike_count(self):
         n = SFANeuron()

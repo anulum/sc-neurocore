@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.ecology_support import *  # noqa: F403
 
+
 class TestCoevolution:
     def test_arena(self) -> None:
         arena = CoevolutionArena()

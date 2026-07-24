@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestTelemetryRing:
     def test_empty_ring_defaults(self):
         ring = TelemetryRing(0)

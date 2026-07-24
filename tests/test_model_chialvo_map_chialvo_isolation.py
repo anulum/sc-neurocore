@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_chialvo_map_support import *  # noqa: F403
 
+
 class TestChialvoIsolation:
     def test_construction(self):
         n = ChialvoMapNeuron()

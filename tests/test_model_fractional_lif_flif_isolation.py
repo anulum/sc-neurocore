@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fractional_lif_support import *  # noqa: F403
 
+
 class TestFLIFIsolation:
     def test_defaults(self):
         n = FractionalLIFNeuron()

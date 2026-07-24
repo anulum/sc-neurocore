@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_dendrify_support import *  # noqa: F403
 
+
 class TestDendrifyPipeline:
     def test_population(self):
         assert Population(DendrifyNeuron, n=10, label="dend").n == 10

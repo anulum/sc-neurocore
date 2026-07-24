@@ -41,4 +41,27 @@ from sc_neurocore.constants import (
 )
 
 
-__all__ = ['np', 'given', 'settings', 'st', 'BitstreamEncoder', 'generate_bernoulli_bitstream', 'bitstream_to_probability', 'StochasticLIFNeuron', 'FixedPointLIFNeuron', 'FixedPointLFSR', 'FixedPointBitstreamEncoder', 'SCDenseLayer', 'VectorizedSCLayer', 'RNG', 'BitstreamSpikeRecorder', 'HomeostaticLIFNeuron', 'SCIzhikevichNeuron', 'StochasticSTDPSynapse', 'RewardModulatedSTDPSynapse', 'LIF_V_REST', 'LIF_V_THRESHOLD', 'FP_DATA_WIDTH']
+__all__ = [
+    "np",
+    "given",
+    "settings",
+    "st",
+    "BitstreamEncoder",
+    "generate_bernoulli_bitstream",
+    "bitstream_to_probability",
+    "StochasticLIFNeuron",
+    "FixedPointLIFNeuron",
+    "FixedPointLFSR",
+    "FixedPointBitstreamEncoder",
+    "SCDenseLayer",
+    "VectorizedSCLayer",
+    "RNG",
+    "BitstreamSpikeRecorder",
+    "HomeostaticLIFNeuron",
+    "SCIzhikevichNeuron",
+    "StochasticSTDPSynapse",
+    "RewardModulatedSTDPSynapse",
+    "LIF_V_REST",
+    "LIF_V_THRESHOLD",
+    "FP_DATA_WIDTH",
+]

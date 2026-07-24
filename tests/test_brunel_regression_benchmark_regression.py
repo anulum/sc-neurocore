@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestBenchmarkRegression:
     """Validate invariants from the 20-variant benchmark run."""
 

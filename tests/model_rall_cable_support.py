@@ -18,7 +18,20 @@ from typing import Any
 from sc_neurocore.neurons.models.rall_cable import RallCableNeuron
 from sc_neurocore.network.population import Population
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: RallCableNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['np', 'pytest', 'Any', 'RallCableNeuron', 'Population', 'spike_count', 'firing_rate', 'isi', '_run']
+
+__all__ = [
+    "np",
+    "pytest",
+    "Any",
+    "RallCableNeuron",
+    "Population",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+]

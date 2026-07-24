@@ -23,12 +23,18 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _run(neuron: TermanWangOscillator, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _rhs(neuron: TermanWangOscillator, v: float, w: float, current: float) -> tuple[float, float]:
     f = 3.0 * v - v * v * v + 2.0
     g = neuron.alpha * (1.0 + np.tanh(v / neuron.beta))
     return f - w + current + neuron.rho, neuron.epsilon * (g - w)
+
+
 def _rk4_reference(
     neuron: TermanWangOscillator, v: float, w: float, current: float
 ) -> tuple[float, float]:
@@ -42,4 +48,19 @@ def _rk4_reference(
         w + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
     )
 
-__all__ = ['time', 'np', 'pytest', 'TermanWangOscillator', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run', '_rhs', '_rk4_reference']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "TermanWangOscillator",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_run",
+    "_rhs",
+    "_rk4_reference",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
 
+
 class TestHHPerformance:
     def test_isolation_throughput(self):
         """HH is slow due to 100 sub-steps + exp() per step."""

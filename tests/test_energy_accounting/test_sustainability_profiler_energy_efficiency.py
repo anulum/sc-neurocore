@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestEnergyEfficiency:
     def test_metrics(self):
         fpga = FPGAResourceReport(luts=10000, static_power_mw=50)

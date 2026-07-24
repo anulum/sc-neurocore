@@ -20,6 +20,8 @@ from sc_neurocore.export.onnx_export import (
     ONNXTensorType,
     SCPN_DOMAIN,
 )
+
+
 class MockNode:
     def __init__(
         self,
@@ -32,9 +34,13 @@ class MockNode:
         self.type, self.id, self.inputs, self.output = t, i, ins, out
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+
 class MockGraph:
     def __init__(self, nodes: list[MockNode]) -> None:
         self.nodes = nodes
+
+
 def simple_graph() -> MockGraph:
     return MockGraph(
         [
@@ -43,4 +49,19 @@ def simple_graph() -> MockGraph:
         ]
     )
 
-__all__ = ['json', 'unittest', 'Any', 'pytest', 'onnx_export', 'ONNXExporter', 'ONNXGraph', 'ONNXNode', 'ONNXTensorType', 'SCPN_DOMAIN', 'MockNode', 'MockGraph', 'simple_graph']
+
+__all__ = [
+    "json",
+    "unittest",
+    "Any",
+    "pytest",
+    "onnx_export",
+    "ONNXExporter",
+    "ONNXGraph",
+    "ONNXNode",
+    "ONNXTensorType",
+    "SCPN_DOMAIN",
+    "MockNode",
+    "MockGraph",
+    "simple_graph",
+]

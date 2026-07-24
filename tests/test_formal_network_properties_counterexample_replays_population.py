@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_population_coactivation_replay_detects_too_many_simultaneous_outputs() -> None:
     prop = NetworkPopulationCoactivationCap(
         name="population_coactivation_cap",

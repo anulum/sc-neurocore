@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_training_evidence_support import *  # noqa: F403
 
+
 def test_validate_training_evidence_summary_accepts_verified_summary() -> None:
     """Evidence summary validator accepts verified Training Monitor summaries."""
 
@@ -151,5 +152,3 @@ def test_validate_training_evidence_summary_rejects_non_portable_json(
 
     with pytest.raises(ValueError, match=error_match):
         validate_training_evidence_summary(cast(Mapping[str, object], payload))
-
-

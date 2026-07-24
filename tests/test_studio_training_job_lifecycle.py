@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_support import *  # noqa: F403
 
+
 class TestJobLifecycle:
     def test_create_job(self) -> None:
         job = TrainingJob({"epochs": 1, "dataset": "synthetic"})
@@ -140,4 +141,3 @@ class TestJobLifecycle:
 
         evidence = json.loads((tmp_path / "training" / "evidence.json").read_text())
         assert evidence["status"] == "cancelled"
-

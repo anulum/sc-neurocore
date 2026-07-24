@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.replication_support import *  # noqa: F403
 
+
 class TestElitism:
     def test_best_survives_cull(self) -> None:
         re = ReplicationEngine(max_population=20, elitism=1)

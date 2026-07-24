@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.quadratic_if_backends_support import *  # noqa: F403
 
+
 def test_auto_prefers_go_without_initialising_julia() -> None:
     """Route through Go without paying Julia runtime initialisation."""
     with patch.object(backends, "ensure_julia_loaded") as ensure_julia:

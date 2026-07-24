@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_superspike_neuron_support import *  # noqa: F403
 
+
 class TestSuperSpikePerformance:
     def test_isolation_throughput(self):
         n = SuperSpikeNeuron()

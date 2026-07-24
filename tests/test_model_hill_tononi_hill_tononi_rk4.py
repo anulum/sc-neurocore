@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHillTononiRK4:
     """Guards the candidate-first RK4 integrator and its cross-backend parity.
 

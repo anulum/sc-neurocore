@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ilif_support import *  # noqa: F403
 
+
 class TestILIFDynamics:
     def test_fires_under_drive(self):
         n = InhibitoryLIFNeuron()

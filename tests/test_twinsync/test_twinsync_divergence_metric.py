@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestDivergenceMetric:
     def test_zero_divergence(self):
         dm = DivergenceMetric()

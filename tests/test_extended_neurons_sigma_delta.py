@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestSigmaDelta:
     def test_positive_spike(self):
         n = SigmaDeltaNeuron(v_threshold=1.0)

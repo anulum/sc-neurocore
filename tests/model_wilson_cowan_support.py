@@ -19,6 +19,7 @@ import json
 import math
 from pathlib import Path
 import time
+
 try:
     import tomllib
 except ModuleNotFoundError:  # Python < 3.11
@@ -27,7 +28,10 @@ import numpy as np
 import pytest
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
 from sc_neurocore.network.population import Population
+
 _REPOSITORY = Path(__file__).resolve().parents[1]
+
+
 def _rk4_expected_state(unit: WilsonCowanUnit, drive: float) -> tuple[float, float]:
     e0, i0 = unit.e, unit.i
 
@@ -45,4 +49,17 @@ def _rk4_expected_state(unit: WilsonCowanUnit, drive: float) -> tuple[float, flo
         i0 + unit.dt * (k1_i + 2.0 * k2_i + 2.0 * k3_i + k4_i) / 6.0,
     )
 
-__all__ = ['json', 'math', 'Path', 'time', 'tomllib', 'np', 'pytest', 'WilsonCowanUnit', 'Population', '_REPOSITORY', '_rk4_expected_state']
+
+__all__ = [
+    "json",
+    "math",
+    "Path",
+    "time",
+    "tomllib",
+    "np",
+    "pytest",
+    "WilsonCowanUnit",
+    "Population",
+    "_REPOSITORY",
+    "_rk4_expected_state",
+]

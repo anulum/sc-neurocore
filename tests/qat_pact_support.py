@@ -10,7 +10,8 @@ from __future__ import annotations
 
 """Tests for the PACT activation quantiser (Choi et al. 2018)."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.qat.pact import PACTActivation, _PACTClip, _round_ste
 
-__all__ = ['pytest', 'torch', 'PACTActivation', '_PACTClip', '_round_ste']
+__all__ = ["pytest", "torch", "PACTActivation", "_PACTClip", "_round_ste"]

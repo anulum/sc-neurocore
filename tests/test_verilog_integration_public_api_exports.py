@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.verilog_integration_support import *  # noqa: F403
 
+
 class TestPublicAPIExports:
     """Test that new modules are accessible from public API."""
 

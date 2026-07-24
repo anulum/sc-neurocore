@@ -11,4 +11,4 @@ from __future__ import annotations
 """Cache and import-fallback contracts for backend discovery."""
 import pytest
 
-__all__ = ['pytest']
+__all__ = ["pytest"]

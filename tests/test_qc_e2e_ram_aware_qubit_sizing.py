@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qc_e2e_support import *  # noqa: F403
 
+
 class TestRAMAwareQubitSizing:
     """Verify compute_max_qubits respects system RAM."""
 

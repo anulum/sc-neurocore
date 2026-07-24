@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
 
+
 class TestWendlingSigmoid:
     def test_sigmoid_formula(self):
         """S(x) = 2·e0 / (1 + exp(r·(v0 - x)))."""

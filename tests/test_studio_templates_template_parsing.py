@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_templates_support import *  # noqa: F403
 
+
 class TestTemplateParsing:
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
     def test_template_creates_valid_neuron(self, name):
@@ -28,4 +29,3 @@ class TestTemplateParsing:
         )
         assert neuron is not None
         assert len(neuron.state) == len(t["init"])
-

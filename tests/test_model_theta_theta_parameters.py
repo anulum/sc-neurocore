@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_theta_support import *  # noqa: F403
 
+
 class TestThetaParameters:
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
     def test_dt_stability(self, dt: float) -> None:

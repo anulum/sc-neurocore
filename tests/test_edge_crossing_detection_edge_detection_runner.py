@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.edge_crossing_detection_support import *  # noqa: F403
 
+
 class TestEdgeDetectionRunner:
     """The Python runner's ``crossing`` vs ``level`` spike-decision semantics."""
 

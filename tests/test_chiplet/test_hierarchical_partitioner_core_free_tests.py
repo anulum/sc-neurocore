@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_core_support import *  # noqa: F403
 
+
 def test_historical_flat_buffer_wrappers_cover_invalid_partition_ids() -> None:
     """The historical private ABI wrappers retain their filtering contract."""
     graph = _build_graph(4, avg_degree=2, seed=9)

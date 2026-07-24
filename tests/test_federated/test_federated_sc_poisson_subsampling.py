@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestPoissonSubsampling:
     def test_always_returns_at_least_one(self):
         enc = SCGradientEncoder(bitstream_length=64)

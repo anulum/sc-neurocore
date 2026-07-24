@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiDeterminism:
     def test_bit_exact_reproducibility(self):
         """Identical runs produce identical traces (no RNG)."""

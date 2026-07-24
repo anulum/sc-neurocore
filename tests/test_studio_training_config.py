@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_support import *  # noqa: F403
 
+
 class TestTrainingConfig:
     def test_default_config_runs(self) -> None:
         result = start_training({"epochs": 2, "batch_size": 32, "dataset": "synthetic"})
@@ -36,4 +37,3 @@ class TestTrainingConfig:
         }
         actual = {s["name"] for s in list_surrogates()}
         assert expected == actual
-

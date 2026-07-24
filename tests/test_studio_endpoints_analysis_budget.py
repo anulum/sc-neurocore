@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestAnalysisBudgetEnforcement:
     def test_heatmap_rejected_over_step_budget(self) -> None:
         client = _budget_client(
@@ -108,4 +109,3 @@ class TestAnalysisBudgetEnforcement:
         )
         assert r.status_code == 200
         assert "sensitivities" in r.json()
-

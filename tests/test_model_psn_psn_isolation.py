@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestPSNIsolation:
     def test_construction_defaults(self):
         n = ParallelSpikingNeuron()

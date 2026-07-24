@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compression_toolkit_support import *  # noqa: F403
 
+
 class TestPruneWeights:
     def test_magnitude_pruning(self):
         w = [np.array([[0.5, 0.001, -0.8], [-0.002, 0.3, 0.0]])]

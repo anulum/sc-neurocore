@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.serve_server_support import *  # noqa: F403
 
+
 class TestSpikeServerStep:
     def test_step_with_sc_network(self):
         net = MockNetwork()

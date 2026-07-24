@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_akida_neuron_support import *  # noqa: F403
 
+
 class TestAkidaDynamics:
     def test_fires_with_large_weight(self):
         n = AkidaNeuron()

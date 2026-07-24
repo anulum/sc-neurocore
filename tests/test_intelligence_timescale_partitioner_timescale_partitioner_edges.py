@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_timescale_partitioner_support import *  # noqa: F403
 
+
 class TestTimescalePartitionerEdges:
     """Cover the op-count timescale heuristic and the empty-model short-circuit."""
 

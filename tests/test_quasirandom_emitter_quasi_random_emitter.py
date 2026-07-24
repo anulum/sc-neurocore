@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quasirandom_emitter_support import *  # noqa: F403
 
+
 class TestQuasiRandomEmitter:
     """Test the unified factory interface."""
 

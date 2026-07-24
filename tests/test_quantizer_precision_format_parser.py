@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestPrecisionFormatParser:
     """Test format parsing for fixed and block-floating modes."""
 

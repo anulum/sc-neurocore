@@ -15,10 +15,14 @@ The encoder uses compare-before-advance semantics matching the Verilog RTL
 the LFSR state *before* the advance that happens in the same clock edge.
 """
 import pytest
+
 pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
 from sc_neurocore_engine import BitstreamEncoder, Lfsr16
+
+
 def _lfsr_step(reg: int) -> int:
     feedback = ((reg >> 15) ^ (reg >> 13) ^ (reg >> 12) ^ (reg >> 10)) & 1
     return ((reg << 1) & 0xFFFF) | feedback
 
-__all__ = ['pytest', 'BitstreamEncoder', 'Lfsr16', '_lfsr_step']
+
+__all__ = ["pytest", "BitstreamEncoder", "Lfsr16", "_lfsr_step"]

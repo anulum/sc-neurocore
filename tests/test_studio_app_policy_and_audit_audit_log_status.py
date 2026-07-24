@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_app_records_policy_events_to_configured_audit_log(tmp_path: Path) -> None:
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(

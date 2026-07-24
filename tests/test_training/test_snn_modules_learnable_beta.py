@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestLearnableBeta:
     def test_beta_is_parameter(self):
         lif = LIFCell(beta=0.9, learn_beta=True)

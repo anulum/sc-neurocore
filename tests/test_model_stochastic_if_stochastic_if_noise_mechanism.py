@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFNoiseMechanism:
     """Core: OU noise with amplitude sigma·sqrt(dt/tau_m)."""
 

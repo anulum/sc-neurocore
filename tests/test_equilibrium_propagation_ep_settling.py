@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equilibrium_propagation_support import *  # noqa: F403
 
+
 class TestEPSettling:
     """Test the free-phase settling process."""
 

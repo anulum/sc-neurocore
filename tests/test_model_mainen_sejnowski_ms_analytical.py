@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mainen_sejnowski_support import *  # noqa: F403
 
+
 class TestMSAnalytical:
     def test_20_substeps(self):
         n = MainenSejnowskiNeuron()

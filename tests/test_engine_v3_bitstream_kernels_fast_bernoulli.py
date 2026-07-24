@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_bitstream_kernels_support import *  # noqa: F403
 
+
 class TestFastBernoulli:
     """Tests for byte-threshold Bernoulli in forward_fast and batch_encode_numpy."""
 

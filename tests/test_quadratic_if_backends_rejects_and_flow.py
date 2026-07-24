@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.quadratic_if_backends_support import *  # noqa: F403
 
+
 def test_rust_rejects_non_default_contract() -> None:
     """Keep the Rust engine class's factory-only parameter boundary explicit."""
     neuron = _configured()

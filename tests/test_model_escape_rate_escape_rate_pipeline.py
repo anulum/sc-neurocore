@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRatePipeline:
     def test_population(self):
         assert Population(EscapeRateNeuron, n=10, label="esc").n == 10

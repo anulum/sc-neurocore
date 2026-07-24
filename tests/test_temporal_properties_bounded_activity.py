@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.temporal_properties_support import *  # noqa: F403
 
+
 class TestBoundedActivity:
     """Bounded total activity checks over neuron subsets."""
 

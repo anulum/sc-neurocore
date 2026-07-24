@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ltc_support import *  # noqa: F403
 
+
 class TestLTCParameters:
     @pytest.mark.parametrize("tau_base", [5.0, 10.0, 20.0])
     def test_tau_base_sweep(self, tau_base: float):

@@ -21,6 +21,7 @@ The bit-exact co-simulation against the direct path lives in ``test_folded_inter
 """
 import numpy as np
 import pytest
+
 pytest.importorskip("nir")
 import nir
 from sc_neurocore.compiler.equation_compiler import Q88
@@ -36,7 +37,10 @@ from sc_neurocore.nir_bridge.fpga_compiler import (
     _heterogeneous_param_names,
     _population_params_are_uniform,
 )
+
 _Q = Q88(data_width=16, fraction=8)
+
+
 def _neuron_graph(taus, *, v_leak=None):
     """Build a quantisable LIF network with the given per-neuron ``tau`` values."""
     n = len(taus)
@@ -56,11 +60,33 @@ def _neuron_graph(taus, *, v_leak=None):
         edges=[("input", "aff"), ("aff", "lif"), ("lif", "output")],
     )
     return from_scnetwork(from_nir(graph, dt=1.0), dt=1.0)
+
+
 def _qgraph(taus, *, v_leak=None):
     return quantise_graph(_neuron_graph(taus, v_leak=v_leak), _Q)
+
+
 def _compile(taus, interconnect, *, v_leak=None):
     return compile_network_to_fpga(
         _neuron_graph(taus, v_leak=v_leak), module_name="m", interconnect=interconnect
     )
 
-__all__ = ['np', 'pytest', 'nir', 'Q88', 'compile_network_to_fpga', 'from_nir', 'from_scnetwork', 'quantise_graph', '_can_fold', '_dequantised_pop', '_heterogeneous_param_names', '_population_params_are_uniform', '_Q', '_neuron_graph', '_qgraph', '_compile']
+
+__all__ = [
+    "np",
+    "pytest",
+    "nir",
+    "Q88",
+    "compile_network_to_fpga",
+    "from_nir",
+    "from_scnetwork",
+    "quantise_graph",
+    "_can_fold",
+    "_dequantised_pop",
+    "_heterogeneous_param_names",
+    "_population_params_are_uniform",
+    "_Q",
+    "_neuron_graph",
+    "_qgraph",
+    "_compile",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestDeltaCheckpoint:
     def test_compute_delta(self):
         base = np.array([1.0, 2.0, 3.0, 4.0])

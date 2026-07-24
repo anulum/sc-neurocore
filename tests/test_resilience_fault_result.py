@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.resilience_support import *  # noqa: F403
 
+
 class TestFaultResult:
     def test_degradation(self):
         r = FaultResult(

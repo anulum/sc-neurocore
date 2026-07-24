@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_digital_twin_support import *  # noqa: F403
 
+
 class TestDigitalTwin:
     def test_basic(self):
         from sc_neurocore.compiler.intelligence import generate_digital_twin

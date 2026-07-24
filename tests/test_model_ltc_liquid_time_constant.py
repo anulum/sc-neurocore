@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ltc_support import *  # noqa: F403
 
+
 class TestLiquidTimeConstant:
     def test_dynamics(self):
         from sc_neurocore.neurons.models.ltc import LiquidTimeConstantNeuron

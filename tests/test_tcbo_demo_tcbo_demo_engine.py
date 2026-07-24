@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestTCBODemoEngine(unittest.TestCase):
     def test_init(self):
         engine = TCBODemoEngine(N=16)

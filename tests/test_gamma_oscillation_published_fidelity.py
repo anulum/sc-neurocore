@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gamma_oscillation_support import *  # noqa: F403
 
+
 class TestPublishedFidelity:
     """Pin the qualitative features the publication highlights."""
 

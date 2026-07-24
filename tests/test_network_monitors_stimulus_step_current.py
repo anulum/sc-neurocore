@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_monitors_stimulus_support import *  # noqa: F403
 
+
 class TestStepCurrent:
     def test_zero_outside_window(self):
         sc = StepCurrent(onset=100, offset=200, amplitude=5.0)

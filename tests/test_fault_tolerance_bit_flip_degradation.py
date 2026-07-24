@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_tolerance_support import *  # noqa: F403
 
+
 class TestBitFlipDegradation:
     """Sweep bit-flip rates and verify graceful degradation."""
 

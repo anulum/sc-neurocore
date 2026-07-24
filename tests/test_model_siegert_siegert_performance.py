@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertPerformance:
     def test_isolation_throughput(self) -> None:
         """Slow due to Gauss-Legendre quadrature (40 points)."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wang_buzsaki_support import *  # noqa: F403
 
+
 class TestWBFI:
     def test_subthreshold_silent(self):
         n = WangBuzsakiNeuron()

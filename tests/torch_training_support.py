@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import pytest
+
 torch = pytest.importorskip("torch")
 import sc_neurocore.training.loops as training_loops
 from sc_neurocore.training import (
@@ -57,4 +58,44 @@ from sc_neurocore.training import (
     DelayLinear,
 )
 
-__all__ = ['pytest', 'torch', 'training_loops', 'HAS_TORCH', 'IFCell', 'LIFCell', 'ALIFCell', 'SynapticCell', 'RecurrentLIFCell', 'ExpIFCell', 'AdExCell', 'LapicqueCell', 'AlphaCell', 'SecondOrderLIFCell', 'SpikingNet', 'ConvSpikingNet', 'fast_sigmoid', 'superspike', 'atan_surrogate', 'sigmoid_surrogate', 'straight_through', 'triangular', 'rate_encode', 'latency_encode', 'delta_encode', 'spike_count_loss', 'membrane_loss', 'spike_rate_loss', 'spike_l1_loss', 'spike_l2_loss', 'auto_device', 'train_epoch', 'evaluate', 'SpikeMonitor', 'model_info', 'population_decode', 'reset_states', 'DelayLinear', '__all__']
+__all__ = [
+    "pytest",
+    "torch",
+    "training_loops",
+    "HAS_TORCH",
+    "IFCell",
+    "LIFCell",
+    "ALIFCell",
+    "SynapticCell",
+    "RecurrentLIFCell",
+    "ExpIFCell",
+    "AdExCell",
+    "LapicqueCell",
+    "AlphaCell",
+    "SecondOrderLIFCell",
+    "SpikingNet",
+    "ConvSpikingNet",
+    "fast_sigmoid",
+    "superspike",
+    "atan_surrogate",
+    "sigmoid_surrogate",
+    "straight_through",
+    "triangular",
+    "rate_encode",
+    "latency_encode",
+    "delta_encode",
+    "spike_count_loss",
+    "membrane_loss",
+    "spike_rate_loss",
+    "spike_l1_loss",
+    "spike_l2_loss",
+    "auto_device",
+    "train_epoch",
+    "evaluate",
+    "SpikeMonitor",
+    "model_info",
+    "population_decode",
+    "reset_states",
+    "DelayLinear",
+    "__all__",
+]

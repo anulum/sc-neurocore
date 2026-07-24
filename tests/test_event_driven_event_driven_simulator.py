@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.event_driven_support import *  # noqa: F403
 
+
 class TestEventDrivenSimulator:
     def test_no_events(self):
         sim = _simple_chain()

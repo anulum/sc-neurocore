@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 def test_wave12_hardware_profiles_exist():
     """Verify Wave 12 platforms are loaded properly."""
     wetware1 = get_profile("cortical_labs_dishbrain")

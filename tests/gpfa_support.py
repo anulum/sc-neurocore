@@ -18,6 +18,7 @@ import importlib
 import numpy as np
 import numpy.testing as npt
 import pytest
+
 _GPFA_MODULE = importlib.import_module("sc_neurocore.analysis.spike_stats.gpfa")
 from sc_neurocore.analysis.spike_stats.gpfa import (
     _gp_kernel,
@@ -30,12 +31,17 @@ from sc_neurocore.analysis.spike_stats.gpfa import (
     gpfa_pca_init,
     gpfa_transform,
 )
+
 _RUST_AVAILABLE = _rust_gpfa_em is not None
 _JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _GPFA_MODULE._ensure_go_gpfa()
 _MOJO_AVAILABLE = _GPFA_MODULE._ensure_mojo_gpfa()
+
+
 def _raise_oserror(_path: str) -> object:
     raise OSError("library load failed")
+
+
 def _synthetic_trains(n_neurons: int = 8, n_samples: int = 600, seed: int = 0) -> list[np.ndarray]:
     """Deterministic parallel spike trains with neuron-specific slow modulation."""
     rng = np.random.default_rng(seed)
@@ -45,4 +51,27 @@ def _synthetic_trains(n_neurons: int = 8, n_samples: int = 600, seed: int = 0) -
         trains.append((rng.random(n_samples) < rate).astype(np.int32))
     return trains
 
-__all__ = ['importlib', 'np', 'npt', 'pytest', '_GPFA_MODULE', '_gp_kernel', '_gpfa_em_dispatch', '_gpfa_log_likelihood', '_load_rust_gpfa_em', '_rust_gpfa_em', 'gpfa', 'gpfa_em', 'gpfa_pca_init', 'gpfa_transform', '_RUST_AVAILABLE', '_JULIA_AVAILABLE', '_GO_AVAILABLE', '_MOJO_AVAILABLE', '_raise_oserror', '_synthetic_trains', '__all__']
+
+__all__ = [
+    "importlib",
+    "np",
+    "npt",
+    "pytest",
+    "_GPFA_MODULE",
+    "_gp_kernel",
+    "_gpfa_em_dispatch",
+    "_gpfa_log_likelihood",
+    "_load_rust_gpfa_em",
+    "_rust_gpfa_em",
+    "gpfa",
+    "gpfa_em",
+    "gpfa_pca_init",
+    "gpfa_transform",
+    "_RUST_AVAILABLE",
+    "_JULIA_AVAILABLE",
+    "_GO_AVAILABLE",
+    "_MOJO_AVAILABLE",
+    "_raise_oserror",
+    "_synthetic_trains",
+    "__all__",
+]

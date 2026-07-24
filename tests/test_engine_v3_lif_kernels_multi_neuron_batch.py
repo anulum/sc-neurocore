@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_lif_kernels_support import *  # noqa: F403
 
+
 class TestMultiNeuronBatch:
     """Test parallel multi-neuron LIF batch."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestReLKFSM:
     def test_initial_state_zero(self):
         fsm = ReLKFSM(states=16)

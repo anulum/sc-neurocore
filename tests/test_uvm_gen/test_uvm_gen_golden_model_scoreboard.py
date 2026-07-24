@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestGoldenModelScoreboard:
     def test_golden_comparison_enabled_with_explicit_reference(self):
         sb = ScoreboardConfig(

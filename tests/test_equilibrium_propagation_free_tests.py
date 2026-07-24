@@ -12,10 +12,13 @@ from __future__ import annotations
 
 from tests.equilibrium_propagation_support import *  # noqa: F403
 
+
 def test_training_package_exports_equilibrium_propagation_surface() -> None:
     """The training package facade exposes the documented EP research surface."""
     assert "EPNetwork" in training.__all__
     assert training.EPNetwork is EPNetwork
+
+
 def test_training_package_exports_ep_without_torch() -> None:
     """The NumPy EP surface remains selectable when Torch is unavailable."""
     finder = _BlockTorchFinder()

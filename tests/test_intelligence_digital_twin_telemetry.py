@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_digital_twin_support import *  # noqa: F403
 
+
 class TestTelemetry(unittest.TestCase):
     def test_healthy(self):
         hw = [{"v": 1.0}, {"v": 1.01}]

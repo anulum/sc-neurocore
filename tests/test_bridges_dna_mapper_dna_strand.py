@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestDNAStrand:
     def test_gc_content_all_gc(self) -> None:
         s = DNAStrand(name="s1", sequence="GCGC")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.statistics_support import *  # noqa: F403
 
+
 class TestComplexityMetric:
     def test_complexity_positive(self) -> None:
         g = Genome()

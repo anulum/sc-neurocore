@@ -15,7 +15,8 @@ from sc_neurocore.neurons.fixed_point_lif import (
     FixedPointBitstreamEncoder,
     _mask,
 )
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
-__all__ = ['pytest', 'FixedPointLIFNeuron', 'FixedPointLFSR', 'FixedPointBitstreamEncoder', '_mask']
+__all__ = ["pytest", "FixedPointLIFNeuron", "FixedPointLFSR", "FixedPointBitstreamEncoder", "_mask"]

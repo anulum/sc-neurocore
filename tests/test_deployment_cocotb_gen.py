@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.deployment_support import *  # noqa: F403
 
+
 class TestCocotbGen:
     """Test Cocotb testbench generation."""
 

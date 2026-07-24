@@ -16,4 +16,12 @@ from sc_neurocore.energy_accounting.unified_reporter import (
     UnifiedEnergyReporter,
 )
 
-__all__ = ['pytest', 'EnergyAccountant', 'HardwareCostModel', 'HARDWARE_COSTS', 'EnergyReport', 'UnifiedEnergyReport', 'UnifiedEnergyReporter']
+__all__ = [
+    "pytest",
+    "EnergyAccountant",
+    "HardwareCostModel",
+    "HARDWARE_COSTS",
+    "EnergyReport",
+    "UnifiedEnergyReport",
+    "UnifiedEnergyReporter",
+]

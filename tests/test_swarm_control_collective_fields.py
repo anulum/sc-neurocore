@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_control_support import *  # noqa: F403
 
+
 class TestCollectiveFields(unittest.TestCase):
     def test_init(self):
         f = CollectiveFields(FieldConfig(grid_size=50), n_agents=5)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Calcium:
     def test_calcium_non_negative(self):
         """Ca concentration is clamped ≥ 0."""

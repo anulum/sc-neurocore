@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanIsolation:
     def test_defaults(self):
         n = WilsonCowanUnit()

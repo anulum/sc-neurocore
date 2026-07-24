@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_prescott_support import *  # noqa: F403
 
+
 class TestPrescottDeterminism:
     def test_bit_exact(self):
         traces = []

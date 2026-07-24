@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestFixedPointRoundtrip:
     def test_q88_encode_decode(self):
         """Q8.8: encode then decode recovers floor quantisation."""

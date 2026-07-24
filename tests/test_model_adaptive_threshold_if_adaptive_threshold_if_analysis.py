@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adaptive_threshold_if_support import *  # noqa: F403
 
+
 class TestAdaptiveThresholdIFAnalysis:
     """Analysis toolkit works on spikes from this model."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from build_accel_backends_support import *  # noqa: F403
 
+
 def test_main_all_ok(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     monkeypatch.setattr(MOD, "discover_targets", lambda lang, **k: _stub_targets(MOD, ["theta"]))
     monkeypatch.setattr(MOD, "build_target", lambda t, **k: MOD.BuildResult(t, True, "ok"))

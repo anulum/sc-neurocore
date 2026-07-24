@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_weights_support import *  # noqa: F403
 
+
 def test_write_training_weight_checkpoint_publishes_binary_and_metadata(
     tmp_path: Path,
 ) -> None:
@@ -46,6 +47,7 @@ def test_write_training_weight_checkpoint_publishes_binary_and_metadata(
     assert metadata["schema_version"] == STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION
     assert metadata["weights_artifact"] == summary["weights_artifact"]
 
+
 def test_write_training_weight_checkpoint_rejects_invalid_payload(
     tmp_path: Path,
 ) -> None:
@@ -72,6 +74,7 @@ def test_write_training_weight_checkpoint_rejects_invalid_payload(
             final_metrics={"bad": float("nan")},
         )
 
+
 def test_validate_training_weight_checkpoint_metadata_accepts_writer_output(
     tmp_path: Path,
 ) -> None:
@@ -93,6 +96,7 @@ def test_validate_training_weight_checkpoint_metadata_accepts_writer_output(
     )
 
     assert validated == summary
+
 
 def test_build_training_weight_restore_plan_returns_digest_bound_route(
     tmp_path: Path,
@@ -125,6 +129,7 @@ def test_build_training_weight_restore_plan_returns_digest_bound_route(
     assert plan["weights_artifact"] == summary["weights_artifact"]
     assert plan["metadata_artifact"] == summary["metadata_artifact"]
 
+
 def test_validate_training_weight_checkpoint_metadata_rejects_forged_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -155,6 +160,7 @@ def test_validate_training_weight_checkpoint_metadata_rejects_forged_artifacts(
             forged_digest,
             expected_config_sha256=str(summary["config_sha256"]),
         )
+
 
 def test_build_training_weight_restore_plan_rejects_missing_source_metadata(
     tmp_path: Path,

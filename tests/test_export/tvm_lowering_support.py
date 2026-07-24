@@ -15,14 +15,20 @@ from sc_neurocore.export.tvm_lowering import (
     TargetDevice,
     RelayFunction,
 )
+
+
 class MockNode:
     def __init__(self, t, i, ins, out, **kwargs):
         self.type, self.id, self.inputs, self.output = t, i, ins, out
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+
 class MockGraph:
     def __init__(self, nodes):
         self.nodes = nodes
+
+
 def simple_graph():
     return MockGraph(
         [
@@ -31,4 +37,14 @@ def simple_graph():
         ]
     )
 
-__all__ = ['unittest', 'TVMLowering', 'TargetSchedule', 'TargetDevice', 'RelayFunction', 'MockNode', 'MockGraph', 'simple_graph']
+
+__all__ = [
+    "unittest",
+    "TVMLowering",
+    "TargetSchedule",
+    "TargetDevice",
+    "RelayFunction",
+    "MockNode",
+    "MockGraph",
+    "simple_graph",
+]

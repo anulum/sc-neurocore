@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from extract_orca_params_support import *  # noqa: F403
 
+
 def test_cli_writes_deterministic_json_file(tmp_path: Path) -> None:
     out = _write_output(tmp_path / "run.out", _full_output())
     target = tmp_path / "nested" / "params.json"

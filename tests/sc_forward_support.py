@@ -29,7 +29,10 @@ from sc_neurocore.accel import (
 from sc_neurocore.accel.backend import NumpyBackend, RustBackend
 from sc_neurocore.accel.sc_inference import _lfsr_encode_bits
 from sc_neurocore.accel.vector_ops import pack_bitstream
+
 _RUST_AVAILABLE = available_backends()["rust"]
+
+
 def _pack_weights(
     weights: nptyp.NDArray[np.float64], length: int, seed: int
 ) -> nptyp.NDArray[np.uint64]:
@@ -41,4 +44,22 @@ def _pack_weights(
     packed = np.stack([pack_bitstream(bits[k]) for k in range(n_out * n_in)])
     return packed.reshape(n_out, n_in, -1).astype(np.uint64)
 
-__all__ = ['np', 'npt', 'nptyp', 'pytest', 'BitstreamEncoder', 'backend_mod', 'available_backends', 'get_backend', 'sc_forward', 'sc_forward_numpy', 'NumpyBackend', 'RustBackend', '_lfsr_encode_bits', 'pack_bitstream', '_RUST_AVAILABLE', '_pack_weights']
+
+__all__ = [
+    "np",
+    "npt",
+    "nptyp",
+    "pytest",
+    "BitstreamEncoder",
+    "backend_mod",
+    "available_backends",
+    "get_backend",
+    "sc_forward",
+    "sc_forward_numpy",
+    "NumpyBackend",
+    "RustBackend",
+    "_lfsr_encode_bits",
+    "pack_bitstream",
+    "_RUST_AVAILABLE",
+    "_pack_weights",
+]

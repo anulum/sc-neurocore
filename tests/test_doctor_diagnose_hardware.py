@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnoseHardware:
     def test_small_network_fits(self):
         r = diagnose([(4, 2)], target="artix7")

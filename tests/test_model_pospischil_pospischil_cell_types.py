@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilCellTypes:
     @pytest.mark.parametrize(
         "g_m,label",

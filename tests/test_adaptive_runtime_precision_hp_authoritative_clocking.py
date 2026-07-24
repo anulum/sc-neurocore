@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_runtime_precision_support import *  # noqa: F403
 
+
 class TestHPAuthoritativeClocking:
     """Verify the HP datapath remains clocked and authoritative."""
 

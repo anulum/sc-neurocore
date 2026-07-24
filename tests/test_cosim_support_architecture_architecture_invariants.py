@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cosim_support_architecture_support import *  # noqa: F403
 
+
 def test_legacy_surface_reexports_runtime_objects_without_wrappers() -> None:
     assert cosim_support.compile_to_verilog is cosim_rtl_spike_execution.compile_to_verilog
     for name in _RTL_SPIKE_EXECUTION_NAMES:
@@ -199,5 +200,3 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     assert "cosim_support" not in wilson_hr_text
     assert len(wilson_hr_text.splitlines()) <= 90
     assert len(Path(cosim_support.__file__).read_text(encoding="utf-8").splitlines()) <= 155
-
-

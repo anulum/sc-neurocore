@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dcls_tent_kernel_support import *  # noqa: F403
 
+
 class TestTentGate:
     """Triangular gate evaluation in Q8.8."""
 

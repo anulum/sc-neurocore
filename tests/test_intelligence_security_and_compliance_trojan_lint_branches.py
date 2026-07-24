@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_security_and_compliance_support import *  # noqa: F403
 
+
 class TestTrojanLintBranches:
     """Cover the payload cross-reference accounting and the high-risk verdict
     that the single-equation lint cases never reach."""

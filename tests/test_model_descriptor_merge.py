@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
 
+
 def test_merge_descriptor_payloads_preserves_curation_without_structural_drift() -> None:
     """The corpus merge keeps human curation without accepting stale structure."""
 
@@ -88,5 +89,3 @@ def test_merge_descriptor_payloads_preserves_curation_without_structural_drift()
     assert merged["silicon"]["compiles"] is True
     assert merged["silicon"]["cosim_validated"] is True
     assert merged["silicon"]["target_tier"] == "H1"
-
-

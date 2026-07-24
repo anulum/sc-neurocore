@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
 
+
 class TestArcaneThreeTimescales:
     def test_fast_fastest(self):
         """v_fast (τ=5) changes fastest."""

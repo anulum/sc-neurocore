@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertAnalytical:
     def test_refractory_period_sets_max_rate(self) -> None:
         """τ_rp = 2 → max = 500 Hz. τ_rp = 5 → max = 200 Hz."""

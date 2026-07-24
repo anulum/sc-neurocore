@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonISI:
     def test_isi_exponentially_distributed(self) -> None:
         """For Poisson process, ISI follows geometric distribution.

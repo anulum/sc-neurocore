@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilIntegrator:
     def test_default_integrator_is_rk4(self):
         assert PospischilNeuron().integrator == "rk4"

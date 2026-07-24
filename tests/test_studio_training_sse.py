@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_support import *  # noqa: F403
 
+
 class TestSSEStream:
     def test_stream_nonexistent_job(self, client: TestClient) -> None:
         r = client.get("/api/training/stream/nonexistent")
@@ -77,4 +78,3 @@ class TestSSEStream:
             "event": "epoch",
             "timestamp": 1.0,
         }
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.viz_plots_support import *  # noqa: F403
 
+
 class TestNetworkGraph:
     def test_returns_axes(self, small_network):
         net, _, _, _ = small_network

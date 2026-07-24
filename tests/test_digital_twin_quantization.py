@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.digital_twin_support import *  # noqa: F403
 
+
 class TestQuantization:
     def test_q88_quantization(self):
         model = FPGAMismatchModel(quantization_bits=16)

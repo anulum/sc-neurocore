@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_provenance_support import *  # noqa: F403
 
+
 def test_build_synthesis_target_provenance_for_pnr_target() -> None:
     """Target provenance records synthesis and PnR tool state without paths."""
 
@@ -46,6 +47,7 @@ def test_build_synthesis_target_provenance_for_pnr_target() -> None:
         },
     ]
 
+
 def test_build_synthesis_target_provenance_for_synthesis_only_target() -> None:
     """Targets without PnR still record synthesis readiness."""
 
@@ -60,6 +62,7 @@ def test_build_synthesis_target_provenance_for_synthesis_only_target() -> None:
     assert provenance["pnr_ready"] is True
     assert cast(list[dict[str, JsonValue]], provenance["tools"])[0]["version"] == "Yosys 0.test"
 
+
 def test_build_synthesis_target_provenance_rejects_missing_command() -> None:
     """Target provenance fails closed when synthesis command metadata is absent."""
 
@@ -70,6 +73,7 @@ def test_build_synthesis_target_provenance_rejects_missing_command() -> None:
             capacity={},
             tool_status=_tool_status(),
         )
+
 
 def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -> None:
     """Synthesis provenance uses the shared Studio evidence-class contract."""
@@ -94,6 +98,7 @@ def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -
 
     with pytest.raises(ValueError, match="classification"):
         provenance.to_public_dict()
+
 
 def test_synthesis_target_provenance_rejects_unknown_status() -> None:
     """Synthesis provenance uses the shared terminal-status contract."""

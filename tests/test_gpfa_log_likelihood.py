@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 class TestLogLikelihood:
     def test_finite_for_valid_model(self) -> None:
         Y = np.asarray(_synthetic_trains(5, 200), dtype=np.float64)[:, :20]

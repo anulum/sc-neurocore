@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_parity_support import *  # noqa: F403
 
+
 class TestFinalStateParity:
     def test_rust_e_final_matches_trace_last(self):
         n = 2_000

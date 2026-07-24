@@ -30,10 +30,30 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: NonResettingLIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _exact_relaxation(state: float, steady_state: float, dt: float, tau: float) -> float:
     decay = np.exp(-dt / tau)
     return decay * state + (1.0 - decay) * steady_state
 
-__all__ = ['time', 'np', 'pytest', 'NonResettingLIFNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_run', '_exact_relaxation']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "NonResettingLIFNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+    "_exact_relaxation",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestQFormat:
     def test_parse_q88(self):
         q = QFormat.from_string("Q8.8")

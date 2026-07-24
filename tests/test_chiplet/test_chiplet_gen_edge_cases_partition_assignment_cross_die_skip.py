@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestPartitionAssignmentCrossDieSkip:
     def test_connectivity_with_unmapped_neuron_skipped(self) -> None:
         # Dies 0+1, neurons 0/1 → die 0; neurons 2/3 → die 1.

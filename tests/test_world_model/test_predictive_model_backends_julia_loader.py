@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
 
+
 def test_julia_loader_handles_cache_dependency_file_and_module_failures(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -77,5 +78,3 @@ def test_julia_loader_includes_module_and_caches_export(
     assert backends._julia_module is loaded_module
     assert Main.included == str(module_path)
     assert backends._HAS_JULIA_LGSSM is True
-
-

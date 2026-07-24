@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bit_true_kernel_support import *  # noqa: F403
 
+
 class TestSimpleKernelRust:
     def test_substrings(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"}, language="rust")

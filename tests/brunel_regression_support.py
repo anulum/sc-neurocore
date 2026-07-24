@@ -19,6 +19,7 @@ import os
 import sys
 import numpy as np
 import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "benchmarks"))
 from brunel_translator import (
     BrunelParams,
@@ -32,9 +33,12 @@ from brunel_translator import (
     translate_v20_vectorized_numpy,
 )
 from sc_neurocore import StochasticLIFNeuron, FixedPointLIFNeuron
+
 RESULTS_PATH = os.path.join(
     os.path.dirname(__file__), "..", "benchmarks", "results", "snn_translator_20v.json"
 )
+
+
 def _load_results() -> dict[str, dict]:
     if not os.path.exists(RESULTS_PATH):
         pytest.skip("benchmark results JSON not found")
@@ -42,4 +46,24 @@ def _load_results() -> dict[str, dict]:
         data = json.load(f)
     return {r["variant"]: r for r in data}
 
-__all__ = ['json', 'os', 'sys', 'np', 'pytest', 'BrunelParams', 'translate_v1_stochastic_lif', 'translate_v3_fixed_point', 'translate_v7_noisy', 'translate_v8_refractory', 'translate_v9_post_kick', 'translate_v10_exact_leak', 'translate_v11_q16', 'translate_v20_vectorized_numpy', 'StochasticLIFNeuron', 'FixedPointLIFNeuron', 'RESULTS_PATH', '_load_results']
+
+__all__ = [
+    "json",
+    "os",
+    "sys",
+    "np",
+    "pytest",
+    "BrunelParams",
+    "translate_v1_stochastic_lif",
+    "translate_v3_fixed_point",
+    "translate_v7_noisy",
+    "translate_v8_refractory",
+    "translate_v9_post_kick",
+    "translate_v10_exact_leak",
+    "translate_v11_q16",
+    "translate_v20_vectorized_numpy",
+    "StochasticLIFNeuron",
+    "FixedPointLIFNeuron",
+    "RESULTS_PATH",
+    "_load_results",
+]

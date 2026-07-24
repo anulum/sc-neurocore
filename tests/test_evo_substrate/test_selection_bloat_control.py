@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.selection_support import *  # noqa: F403
 
+
 class TestBloatControl:
     def test_compute_bloat(self) -> None:
         g = Genome()

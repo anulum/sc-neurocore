@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestCrowdingDistance:
     def _make_arch(self, acc: float, energy: float) -> Architecture:
         return Architecture(

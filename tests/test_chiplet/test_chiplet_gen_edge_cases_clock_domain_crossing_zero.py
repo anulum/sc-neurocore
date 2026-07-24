@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestClockDomainCrossingZero:
     def test_ratio_returns_one_when_dst_clock_zero(self) -> None:
         cdc = CDCConfig(src_clk_mhz=200.0, dst_clk_mhz=0.0)

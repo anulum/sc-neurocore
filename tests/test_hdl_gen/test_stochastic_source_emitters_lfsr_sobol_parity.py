@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_hdl_gen.stochastic_source_emitters_support import *  # noqa: F403
 
+
 def test_lfsr16_emitter_generates_software_parity_module():
     verilog = Lfsr16Emitter(module_name="lfsr16_source", seed=0xBEEF).generate()
 

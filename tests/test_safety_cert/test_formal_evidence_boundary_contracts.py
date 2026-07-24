@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
 
+
 class TestBoundaryContracts:
     def test_formal_certificate_add_property_and_report_validation(self) -> None:
         cert = FormalProofCertificate()

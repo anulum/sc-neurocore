@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mat_support import *  # noqa: F403
 
+
 class TestMATIsolation:
     def test_defaults(self):
         n = MATNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.replication_support import *  # noqa: F403
 
+
 class TestReplicationEngine:
     def _metrics_fn(self, genome: Genome) -> dict[str, float]:
         return {"accuracy": 0.5 + 0.01 * genome.topology.num_neurons}

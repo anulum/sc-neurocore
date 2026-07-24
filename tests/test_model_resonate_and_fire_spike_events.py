@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_resonate_and_fire_support import *  # noqa: F403
 
+
 def test_spike_is_upward_y_crossing_and_installs_source_reset() -> None:
     neuron = ResonateAndFireNeuron(
         x=0.0,

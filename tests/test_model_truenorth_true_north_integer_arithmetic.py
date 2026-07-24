@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_truenorth_support import *  # noqa: F403
 
+
 class TestTrueNorthIntegerArithmetic:
     """Core: v += input - leak. All integer. No floating point."""
 

@@ -36,6 +36,7 @@ from sc_neurocore.studio.platform.identity import (
 
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
+
 def _write_identity_file(path: Path, *, active: bool = True) -> str:
     token = "admin-token"
     path.write_text(
@@ -75,6 +76,7 @@ def _write_identity_file(path: Path, *, active: bool = True) -> str:
     )
     return token
 
+
 def _write_single_service_admin_identity_file(path: Path) -> str:
     token = "sole-admin-token"
     path.write_text(
@@ -96,6 +98,7 @@ def _write_single_service_admin_identity_file(path: Path) -> str:
         encoding="utf-8",
     )
     return token
+
 
 def _write_single_browser_admin_identity_file(path: Path) -> None:
     path.write_text(
@@ -127,6 +130,7 @@ def _write_single_browser_admin_identity_file(path: Path) -> None:
         encoding="utf-8",
     )
 
+
 def _client(identity_path: Path, audit_path: Path) -> TestClient:
     app = create_app(
         StudioRuntimeSettings(
@@ -138,11 +142,14 @@ def _client(identity_path: Path, audit_path: Path) -> TestClient:
     )
     return TestClient(app, base_url="http://127.0.0.1")
 
+
 def _admin_headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}", "x-request-id": "identity-admin-test"}
 
+
 def _audit_rows(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
 
 __all__ = [
     "annotations",

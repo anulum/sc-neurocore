@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_yamada_support import *  # noqa: F403
 
+
 class TestYamadaValidation:
     @pytest.mark.parametrize(
         "field",

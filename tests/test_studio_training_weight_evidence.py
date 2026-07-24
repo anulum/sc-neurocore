@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_weights_support import *  # noqa: F403
 
+
 def test_build_training_weight_restore_evidence_wraps_materialization(
     tmp_path: Path,
 ) -> None:
@@ -34,6 +35,7 @@ def test_build_training_weight_restore_evidence_wraps_materialization(
     assert "state_dict" not in materialization_summary
     assert validate_training_weight_restore_evidence(evidence) == evidence
 
+
 def test_build_training_weight_restore_evidence_requires_source_status(
     tmp_path: Path,
 ) -> None:
@@ -43,6 +45,7 @@ def test_build_training_weight_restore_evidence_requires_source_status(
 
     with pytest.raises(ValueError, match="source_status"):
         build_training_weight_restore_evidence(materialization, source_status="")
+
 
 def test_validate_training_weight_restore_evidence_rejects_forged(
     tmp_path: Path,
@@ -82,6 +85,7 @@ def test_validate_training_weight_restore_evidence_rejects_forged(
     with pytest.raises(ValueError, match="weights_sha256 is invalid"):
         validate_training_weight_restore_evidence(forged_digest)
 
+
 def test_training_architecture_fingerprint_ignores_non_architecture_fields() -> None:
     """The fingerprint covers only fields that change the model state-dict shape."""
 
@@ -98,6 +102,7 @@ def test_training_architecture_fingerprint_ignores_non_architecture_fields() -> 
     assert training_architecture_fingerprint(same_arch) == fingerprint
     assert training_architecture_fingerprint(base) == training_architecture_fingerprint({})
 
+
 def test_training_architecture_fingerprint_changes_with_architecture() -> None:
     """Architecture-determining changes produce a different fingerprint."""
 
@@ -112,6 +117,7 @@ def test_training_architecture_fingerprint_changes_with_architecture() -> None:
     assert training_architecture_fingerprint({**base, "learn_beta": True}) != (
         training_architecture_fingerprint(base)
     )
+
 
 def test_build_training_weight_restore_attach_evidence_wraps_materialization(
     tmp_path: Path,
@@ -138,6 +144,7 @@ def test_build_training_weight_restore_attach_evidence_wraps_materialization(
     assert evidence["target_job_id"] == "sj_attach"
     assert evidence["architecture_fingerprint"] == fingerprint
     assert validate_training_weight_restore_attach_evidence(evidence) == evidence
+
 
 def test_build_training_weight_restore_attach_evidence_rejects_invalid_inputs(
     tmp_path: Path,
@@ -174,6 +181,7 @@ def test_build_training_weight_restore_attach_evidence_rejects_invalid_inputs(
             target_parameter_count=650,
             architecture_fingerprint="not-a-digest",
         )
+
 
 def test_validate_training_weight_restore_attach_evidence_rejects_forged(
     tmp_path: Path,

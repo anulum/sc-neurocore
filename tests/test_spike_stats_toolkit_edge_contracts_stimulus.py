@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_stc_few_spikes():
     stim = np.random.randn(100)
     train = np.zeros(100, dtype=np.int8)
@@ -32,5 +33,3 @@ def test_place_field_tail():
 def test_tuning_curve_few():
     f, p = tuning_curve(np.zeros(3, dtype=np.int8), np.zeros(3))
     assert f.size == 0
-
-

@@ -13,4 +13,4 @@ import pytest
 from sc_neurocore.spike_codec import SpikeCodec, CompressionResult
 import sc_neurocore.spike_codec as spike_codec_module
 
-__all__ = ['np', 'pytest', 'SpikeCodec', 'CompressionResult', 'spike_codec_module']
+__all__ = ["np", "pytest", "SpikeCodec", "CompressionResult", "spike_codec_module"]

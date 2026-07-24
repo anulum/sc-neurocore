@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.distillation_support import *  # noqa: F403
 
+
 class TestSelfDistiller:
     def test_generate_targets(self):
         sd = SelfDistiller(T_teacher=16, T_student=4)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestDPMechanism:
     def test_flip_probability_range(self):
         dp = DPMechanism(epsilon=1.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from crosstalk_support import *  # noqa: F403
 
+
 class TestWaveguidePairPhysics:
     def test_isolation_grows_with_gap(self):
         narrow = WaveguidePair(gap_nm=100.0, coupling_length_um=10.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestPnREndpoint:
     def test_pnr_requires_json_path(self, client):
         r = client.post("/api/synth/pnr", json={"target": "ice40"})
@@ -91,4 +92,3 @@ class TestPnREndpoint:
         data = r.json()
         assert data["success"] is False
         assert "must not be a symlink" in data["error"]
-

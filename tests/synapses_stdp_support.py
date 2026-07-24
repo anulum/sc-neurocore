@@ -17,4 +17,4 @@ import numpy as np
 from sc_neurocore.synapses.stochastic_stdp import StochasticSTDPSynapse
 from sc_neurocore.synapses.r_stdp import RewardModulatedSTDPSynapse
 
-__all__ = ['pytest', 'np', 'StochasticSTDPSynapse', 'RewardModulatedSTDPSynapse']
+__all__ = ["pytest", "np", "StochasticSTDPSynapse", "RewardModulatedSTDPSynapse"]

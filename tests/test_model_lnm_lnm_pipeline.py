@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
 
+
 class TestLNMPipeline:
     def test_population(self):
         assert Population(LearnableNeuronModel, n=10, label="lnm").n == 10

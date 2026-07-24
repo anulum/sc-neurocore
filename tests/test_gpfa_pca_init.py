@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 class TestPcaInit:
     def test_deterministic_and_shapes(self) -> None:
         Y = np.asarray(_synthetic_trains(6, 200), dtype=np.float64)[:, :30]

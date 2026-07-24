@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_support import *  # noqa: F403
 
+
 class TestConnectivity:
     def test_populations_constant_matches_table5(self):
         # Order is significant — many tests / docs rely on it.

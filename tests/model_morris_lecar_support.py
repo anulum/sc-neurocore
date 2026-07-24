@@ -33,13 +33,41 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: MorrisLecarNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _m_inf(v: float, v1: float, v2: float) -> float:
     return 0.5 * (1.0 + np.tanh((v - v1) / v2))
+
+
 def _w_inf(v: float, v3: float, v4: float) -> float:
     return 0.5 * (1.0 + np.tanh((v - v3) / v4))
+
+
 def _lam(v: float, v3: float, v4: float, phi: float) -> float:
     return phi * np.cosh((v - v3) / (2.0 * v4))
 
-__all__ = ['math', 'time', 'np', 'pytest', 'assert_throughput_guard', 'MorrisLecarNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_run', '_m_inf', '_w_inf', '_lam']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "assert_throughput_guard",
+    "MorrisLecarNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+    "_m_inf",
+    "_w_inf",
+    "_lam",
+]

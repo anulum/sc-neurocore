@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.plasticity_support import *  # noqa: F403
 
+
 class TestBiologicalSTDP:
     def test_potentiation(self) -> None:
         stdp = BiologicalSTDP()

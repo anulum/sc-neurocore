@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestVivadoParser:
     def test_from_vivado_dict(self):
         d = {

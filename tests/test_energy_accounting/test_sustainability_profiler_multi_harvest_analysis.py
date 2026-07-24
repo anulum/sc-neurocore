@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestMultiHarvestAnalysis:
     def test_stacked_net_zero(self):
         fpga = FPGAResourceReport(luts=10, static_power_mw=0.01)

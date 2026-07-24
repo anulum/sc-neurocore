@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestDNAMapperBenchmark:
     def test_sequence_generation_throughput(self) -> None:
         """Generate 500 random 20nt sequences."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiOscillations:
     def test_derivative_formula(self):
         """Derivative helper matches the documented three-state ODE."""

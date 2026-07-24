@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_security_and_compliance_support import *  # noqa: F403
 
+
 class TestWave10Integration:
     def test_from_constraints_to_report(self):
         from sc_neurocore.compiler.platforms import HardwareProfile

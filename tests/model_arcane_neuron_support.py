@@ -24,11 +24,17 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
+
+
 def _run(neuron: ArcaneNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _exact_relaxation(state: float, steady_state: float, dt: float, tau: float) -> float:
     decay = np.exp(-dt / tau)
     return decay * state + (1.0 - decay) * steady_state
+
+
 def _stable_sigmoid(x: float) -> float:
     if x >= 0.0:
         z = np.exp(-x)
@@ -36,4 +42,20 @@ def _stable_sigmoid(x: float) -> float:
     z = np.exp(x)
     return z / (1.0 + z)
 
-__all__ = ['time', 'np', 'pytest', 'ArcaneNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', '_run', '_exact_relaxation', '_stable_sigmoid']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "ArcaneNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "_run",
+    "_exact_relaxation",
+    "_stable_sigmoid",
+]

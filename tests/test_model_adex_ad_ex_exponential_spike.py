@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adex_support import *  # noqa: F403
 
+
 class TestAdExExponentialSpike:
     def test_exponential_upstroke(self):
         """delta_T controls spike sharpness. Larger delta_T → softer spike."""

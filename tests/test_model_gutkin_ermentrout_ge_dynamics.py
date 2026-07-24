@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gutkin_ermentrout_support import *  # noqa: F403
 
+
 class TestGEDynamics:
     def test_fires_under_drive(self) -> None:
         n = GutkinErmentroutNeuron()

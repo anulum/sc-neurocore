@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.datasets_support import *  # noqa: F403
 
+
 class TestNMNISTRealLoader:
     """Test N-MNIST real-data path with synthetic .bin files."""
 

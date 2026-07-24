@@ -11,4 +11,4 @@ from __future__ import annotations
 """Tests for biological and homeostatic plasticity adapters."""
 from sc_neurocore.bioware.bioware import BCMPlasticity, BiologicalSTDP, HomeostaticPlasticity
 
-__all__ = ['BCMPlasticity', 'BiologicalSTDP', 'HomeostaticPlasticity']
+__all__ = ["BCMPlasticity", "BiologicalSTDP", "HomeostaticPlasticity"]

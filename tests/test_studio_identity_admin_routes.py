@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_identity_admin_support import *  # noqa: F403
 
+
 def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -57,6 +58,7 @@ def test_identity_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> No
     assert "studio.identity.service_accounts.update" in actions
     assert "studio.identity.service_account.update" in actions
 
+
 def test_identity_admin_route_rejects_last_admin_removal(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     audit_path = tmp_path / "studio-audit.jsonl"
@@ -81,6 +83,7 @@ def test_identity_admin_route_rejects_last_admin_removal(tmp_path: Path) -> None
     actions = [row["action"] for row in _audit_rows(audit_path)]
     assert "studio.identity.service_accounts.update" in actions
     assert "studio.identity.service_account.update" not in actions
+
 
 def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -135,6 +138,7 @@ def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -
     assert "studio.identity.browser_users.detail" in actions
     assert "studio.identity.browser_users.update" in actions
     assert "studio.identity.browser_user.update" in actions
+
 
 def test_browser_user_create_route_is_admin_gated_password_free_and_audited(
     tmp_path: Path,
@@ -193,6 +197,7 @@ def test_browser_user_create_route_is_admin_gated_password_free_and_audited(
     assert "studio.identity.browser_users.create" in actions
     assert "studio.identity.browser_user.create" in actions
 
+
 def test_browser_user_password_rotation_revokes_sessions_and_is_audited(
     tmp_path: Path,
 ) -> None:
@@ -245,6 +250,7 @@ def test_browser_user_password_rotation_revokes_sessions_and_is_audited(
     actions = [row["action"] for row in _audit_rows(audit_path)]
     assert "studio.identity.browser_users.password.rotate" in actions
     assert "studio.identity.browser_user.password.rotate" in actions
+
 
 def test_identity_admin_routes_reject_unconfigured_store(tmp_path: Path) -> None:
     app = create_app(

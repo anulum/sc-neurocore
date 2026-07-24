@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
 
+
 class TestFHNOscillatoryBand:
     """Hopf bifurcation: oscillation in I ∈ [~0.3, ~1.2]."""
 

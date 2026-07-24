@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestWave9Integration:
     def test_toml_to_report(self, tmp_path):
         from sc_neurocore.compiler.intelligence import (

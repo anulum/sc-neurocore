@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestBuildKnm(unittest.TestCase):
     def test_symmetric(self):
         K = _build_knm(16)

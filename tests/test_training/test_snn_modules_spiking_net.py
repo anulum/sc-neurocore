@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestSpikingNet:
     def test_forward_shape(self):
         net = SpikingNet(n_input=10, n_hidden=32, n_output=3, n_layers=2)

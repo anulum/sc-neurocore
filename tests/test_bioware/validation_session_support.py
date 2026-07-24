@@ -28,6 +28,8 @@ from sc_neurocore.bioware.bioware import (
     SpikeDetector,
     SpikeSorter,
 )
+
+
 def _parts() -> dict[str, Any]:
     config = MEAConfig(num_channels=2)
     return {
@@ -38,4 +40,25 @@ def _parts() -> dict[str, Any]:
         "opto_encoder": SCToOptoEncoder(),
     }
 
-__all__ = ['Any', 'cast', 'np', 'pytest', 'AERToSCConverter', 'ArtifactRejector', 'BioHybridSession', 'BiologicalSTDP', 'CultureHealth', 'DetectedSpike', 'HomeostaticPlasticity', 'LatencyBudget', 'MEAConfig', 'MEAToAERTranscoder', 'PharmModel', 'SCToOptoEncoder', 'SpikeDetector', 'SpikeSorter', '_parts']
+
+__all__ = [
+    "Any",
+    "cast",
+    "np",
+    "pytest",
+    "AERToSCConverter",
+    "ArtifactRejector",
+    "BioHybridSession",
+    "BiologicalSTDP",
+    "CultureHealth",
+    "DetectedSpike",
+    "HomeostaticPlasticity",
+    "LatencyBudget",
+    "MEAConfig",
+    "MEAToAERTranscoder",
+    "PharmModel",
+    "SCToOptoEncoder",
+    "SpikeDetector",
+    "SpikeSorter",
+    "_parts",
+]

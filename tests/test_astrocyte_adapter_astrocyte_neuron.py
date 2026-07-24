@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.astrocyte_adapter_support import *  # noqa: F403
 
+
 class TestAstrocyteNeuron:
     """Unit tests for the population-compatible astrocyte adapter."""
 

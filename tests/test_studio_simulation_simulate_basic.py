@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_simulation_support import *  # noqa: F403
 
+
 class TestSimulateBasic:
     def test_lif_produces_spikes(self):
         t = TEMPLATES["lif"]
@@ -73,4 +74,3 @@ class TestSimulateBasic:
             current=0.0,
         )
         assert result["n_steps"] == 20
-

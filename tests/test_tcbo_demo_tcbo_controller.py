@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestTCBOController(unittest.TestCase):
     def test_deficit_increases_kappa(self):
         ctrl = TCBOController(tau_h1=0.72)

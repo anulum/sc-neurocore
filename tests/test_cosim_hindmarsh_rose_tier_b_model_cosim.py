@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_hindmarsh_rose_support import *  # noqa: F403
 
+
 class TestTierBModelCosim:
     """WC-A5 Tier-B Hindmarsh-Rose schema enrolment."""
 

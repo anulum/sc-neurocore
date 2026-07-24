@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_yamada_support import *  # noqa: F403
 
+
 class TestYamadaSlowDynamics:
     def test_q_evolves_slowly(self):
         """q (tau_q=300) evolves much slower than n."""

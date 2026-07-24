@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from encoder_equiv_support import *  # noqa: F403
+
 
 class TestLFSRBlueprintSemantics:
     def test_full_cycle_matches_blueprint_formula(self):

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.compiler_live_control_support import *  # noqa: F403
 
+
 def test_trap_spec_offset_aligned_validation() -> None:
     with pytest.raises(ValueError, match="4-byte aligned"):
         TrapSpec(flag_register_offset=3)
@@ -80,5 +81,3 @@ def test_mmio_selective_trap_clear_sequence_preserves_unselected_faults() -> Non
         spec.build_selective_trap_clear_sequence(True)
     with pytest.raises(ValueError, match="host-visible trap bits"):
         spec.build_selective_trap_clear_sequence(spec.trap_clear_mask + 1)
-
-

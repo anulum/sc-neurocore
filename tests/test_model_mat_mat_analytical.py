@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mat_support import *  # noqa: F403
 
+
 class TestMATAnalytical:
     def test_rk4_candidate_one_step(self):
         """The public step commits the candidate-first RK4 state."""

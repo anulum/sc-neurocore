@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_compile_dense_lif_population_silence_sva_is_deterministic() -> None:
     spec = DenseLIFNetworkSpec(
         name="dense_lif_frontier_fixture",
@@ -77,5 +78,3 @@ def test_compiler_rejects_population_silence_trigger_above_output_width() -> Non
 
     with pytest.raises(ValueError, match="trigger_active_outputs"):
         compile_network_population_silence_sva(spec, prop)
-
-

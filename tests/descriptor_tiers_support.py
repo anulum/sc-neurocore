@@ -121,5 +121,21 @@ def _perfect_payload(target_tier: str = "H2") -> dict[str, Any]:
     return payload
 
 
-
-__all__ = ['Any', 'pytest', 'SILICON_RUNGS', 'CompletenessTiers', 'completeness_tiers', 'is_perfect', 'science_tier', 'silicon_tier', 'descriptor_completeness_tier', 'parse_model_descriptor', '_metadata', '_s0_payload', '_s3_payload', '_validated_payload', '_silicon', '_perfect_payload']
+__all__ = [
+    "Any",
+    "pytest",
+    "SILICON_RUNGS",
+    "CompletenessTiers",
+    "completeness_tiers",
+    "is_perfect",
+    "science_tier",
+    "silicon_tier",
+    "descriptor_completeness_tier",
+    "parse_model_descriptor",
+    "_metadata",
+    "_s0_payload",
+    "_s3_payload",
+    "_validated_payload",
+    "_silicon",
+    "_perfect_payload",
+]

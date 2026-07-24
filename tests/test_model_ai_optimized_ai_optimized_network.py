@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ai_optimized_support import *  # noqa: F403
 
+
 class TestAIOptimizedNetwork:
     """Pipeline wiring for representative models."""
 

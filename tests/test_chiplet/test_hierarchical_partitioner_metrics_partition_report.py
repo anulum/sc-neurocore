@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_metrics_support import *  # noqa: F403
 
+
 class TestPartitionReport:
     def test_summary(self) -> None:
         r = PartitionReport(

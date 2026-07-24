@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cfc_support import *  # noqa: F403
 
+
 class TestCFCValidation:
     @pytest.mark.parametrize("field", ["x", "w_tau", "w_x", "w_in", "bias"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

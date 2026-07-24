@@ -19,8 +19,19 @@ import numpy as np
 import pytest
 from sc_neurocore.neurons.models.leaky_compete_fire import LeakyCompeteFireNeuron
 from sc_neurocore.network.population import Population
+
+
 def _exact_lcf_candidates(neuron: LeakyCompeteFireNeuron, currents: list[float]) -> list[float]:
     decay = math.exp(-neuron.dt / neuron.tau)
     return [current + (voltage - current) * decay for voltage, current in zip(neuron.v, currents)]
 
-__all__ = ['math', 'time', 'np', 'pytest', 'LeakyCompeteFireNeuron', 'Population', '_exact_lcf_candidates']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "LeakyCompeteFireNeuron",
+    "Population",
+    "_exact_lcf_candidates",
+]

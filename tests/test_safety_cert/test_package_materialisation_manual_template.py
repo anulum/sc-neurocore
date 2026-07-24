@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
 
+
 def test_manual_template_is_deterministic_and_non_certifying() -> None:
     """Manual output must state its limits and use a non-normative crosswalk."""
     report = SafetyManualGenerator.generate(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_substrate_support import *  # noqa: F403
 
+
 class TestCheckpoint:
     def test_round_trip(self, tmp_path):
         sub = _make_substrate()

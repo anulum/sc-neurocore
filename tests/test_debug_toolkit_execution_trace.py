@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.debug_toolkit_support import *  # noqa: F403
 
+
 class TestExecutionTrace:
     def test_spike_count_zero(self):
         trace = _make_trace()

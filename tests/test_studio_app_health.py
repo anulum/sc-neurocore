@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from tests.studio_app_support import *  # noqa: F403
 
+
 class TestHealth:
     def test_health(self, client):
         r = client.get("/api/health")
         assert r.status_code == 200
         assert r.json() == {"status": "ok"}
-

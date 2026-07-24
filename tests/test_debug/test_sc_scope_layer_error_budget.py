@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestLayerErrorBudget:
     def test_within_tolerance(self):
         eb = LayerErrorBudget(0, expected_density=0.5, tolerance=0.1)

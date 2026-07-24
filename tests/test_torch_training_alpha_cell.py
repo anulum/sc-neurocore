@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestAlphaCell:
     def test_excitatory_inhibitory(self):
         cell = AlphaCell()

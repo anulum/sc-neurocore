@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestRewardModulatedLearner:
     def test_step_runs(self, simple_net):
         net, _, _, proj = simple_net

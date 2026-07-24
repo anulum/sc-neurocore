@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestSNNGeneticEvolver:
     def test_population_size(self):
         evo = SNNGeneticEvolver(lambda: _Individual(), lambda ind: float(np.sum(ind.weights)))

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hypothesis_fuzz_support import *  # noqa: F403
 
+
 class TestSanitizeIdentFuzz:
     """Property: sanitize_ident always produces a valid Verilog identifier
     or raises ValueError for empty/wholly-invalid input."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestSecondOrderLIFCell:
     def test_inertial_dynamics(self):
         cell = SecondOrderLIFCell(alpha=0.95, beta=0.9)

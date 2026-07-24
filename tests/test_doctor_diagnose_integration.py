@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnoseIntegration:
     def test_full_diagnosis(self):
         layers = [(64, 32), (32, 10)]

@@ -21,6 +21,8 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _run(neuron: PlantR15Neuron, current: float, steps: int) -> tuple[list[int], list[float]]:
     """Return (spike_times, voltage_trace)."""
     spike_times: list[int] = []
@@ -32,4 +34,15 @@ def _run(neuron: PlantR15Neuron, current: float, steps: int) -> tuple[list[int],
         voltages.append(neuron.v)
     return spike_times, voltages
 
-__all__ = ['np', 'pytest', 'PlantR15Neuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run']
+
+__all__ = [
+    "np",
+    "pytest",
+    "PlantR15Neuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_run",
+]

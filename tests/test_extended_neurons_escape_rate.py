@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestEscapeRate:
     def test_fires(self):
         n = EscapeRateNeuron(rho_0=0.1, delta_u=2.0)

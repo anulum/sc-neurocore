@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qc_e2e_support import *  # noqa: F403
 
+
 class TestRustCompilation:
     """Verify all Rust files compile and pass tests."""
 

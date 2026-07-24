@@ -11,11 +11,16 @@ from __future__ import annotations
 """Tests for the photonic emitter module."""
 import unittest
 from sc_neurocore.optics.photonic_emitter import PhotonicEmitter
+
+
 class MockNode:
     def __init__(self, t, i, ins, out):
         self.type, self.id, self.inputs, self.output = t, i, ins, out
+
+
 class MockGraph:
     def __init__(self, nodes):
         self.nodes = nodes
 
-__all__ = ['unittest', 'PhotonicEmitter', 'MockNode', 'MockGraph']
+
+__all__ = ["unittest", "PhotonicEmitter", "MockNode", "MockGraph"]

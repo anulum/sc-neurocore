@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.verify_dois_support import *  # noqa: F403
 
+
 class TestResolveDoiRouting:
     def test_arxiv_doi_routes_to_datacite(self, monkeypatch: pytest.MonkeyPatch) -> None:
         seen: dict[str, str] = {}

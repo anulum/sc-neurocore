@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestRetentionFailure:
     def test_high_stability_no_fail(self):
         assert retention_failure_probability(101.0, 3.15e8) == 0.0  # Δ>100 → 0

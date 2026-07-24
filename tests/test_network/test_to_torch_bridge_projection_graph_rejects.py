@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from to_torch_bridge_support import *  # noqa: F403
 
+
 def test_network_to_torch_rejects_projection_endpoint_outside_network() -> None:
     src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")

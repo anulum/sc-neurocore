@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_formal_network_verification_docs_cover_cli_and_report_contract() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     doc = repo_root / "docs" / "api" / "formal_network_verification.md"
@@ -32,5 +33,3 @@ def test_formal_network_verification_docs_cover_cli_and_report_contract() -> Non
     assert "temporal_separation" in text
     assert "population_coactivation" in text
     assert "population_silence" in text
-
-

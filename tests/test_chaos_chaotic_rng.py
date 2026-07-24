@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.chaos_support import *  # noqa: F403
 
+
 class TestChaoticRNG:
     def test_output_range(self):
         rng = ChaoticRNG(r=4.0, x=0.37)

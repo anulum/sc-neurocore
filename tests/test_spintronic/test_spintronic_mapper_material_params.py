@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestMaterialParams:
     def test_cofeb_mgo(self):
         m = MaterialParams.cofeb_mgo()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestSCBridge:
     def _make_mock_layer(self, shape):
         """Create a simple mock layer with weights attribute."""

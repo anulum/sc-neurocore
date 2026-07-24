@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hls_export_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(shutil.which("g++") is None, reason="g++ not available")
 class TestCompiles:
     """The generated HLS C++ must actually compile (with ap_fixed/hls_math stubs)."""

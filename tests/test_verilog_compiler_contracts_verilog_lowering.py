@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.verilog_compiler_contracts_support import *  # noqa: F403
 
+
 def test_compile_to_verilog_resets_from_candidate_and_exposes_post_reset_state() -> None:
     """Registered RTL must match EquationNeuron's integrate-detect-reset sequence.
 

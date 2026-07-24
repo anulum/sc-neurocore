@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_reporting_support import *  # noqa: F403
 
+
 class TestModelComplexity:
     def test_compute_bound(self):
         from sc_neurocore.compiler.intelligence import (

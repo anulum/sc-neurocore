@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
 
+
 class TestKLIFPerformance:
     def test_isolation_throughput(self):
         n = KLIFNeuron()

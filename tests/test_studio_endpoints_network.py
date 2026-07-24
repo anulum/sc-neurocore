@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestNetworkEndpoint:
     def test_network_default(self, client):
         r = client.post("/api/network/ei", json={})
@@ -38,4 +39,3 @@ class TestNetworkEndpoint:
         assert data["n_exc"] == 40
         assert data["n_inh"] == 10
         assert data["n_total"] == 50
-

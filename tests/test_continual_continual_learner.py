@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.continual_support import *  # noqa: F403
 
+
 class TestContinualLearner:
     def _make_learner(self):
         weights = [np.random.randn(16, 8) * 0.3, np.random.randn(4, 16) * 0.3]

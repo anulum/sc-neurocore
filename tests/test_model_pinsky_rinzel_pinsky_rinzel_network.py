@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelNetwork:
     def test_population(self):
         pop = Population(PinskyRinzelNeuron, n=5, label="pr")

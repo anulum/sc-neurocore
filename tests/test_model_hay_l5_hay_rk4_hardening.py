@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hay_l5_support import *  # noqa: F403
 
+
 class TestHayRK4Hardening:
     def test_default_integrator_is_rk4(self) -> None:
         n = HayL5PyramidalNeuron()

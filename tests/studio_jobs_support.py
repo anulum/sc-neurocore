@@ -107,6 +107,7 @@ def assert_acyclic(graph: dict[str, set[str]]) -> None:
         for root in roots:
             remaining.pop(root)
 
+
 __all__ = [
     "REPO_ROOT",
     "JOBS_PACKAGE",

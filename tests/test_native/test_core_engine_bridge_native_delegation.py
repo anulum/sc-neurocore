@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from core_engine_bridge_support import *  # noqa: F403
 
+
 def test_native_paths_delegate_to_loaded_library() -> None:
     """Delegate scalar, packed, and NumPy operations to a loaded core engine."""
     ceb._HAS_CORE_ENGINE = True

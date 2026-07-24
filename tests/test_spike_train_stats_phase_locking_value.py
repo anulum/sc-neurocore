@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestPhaseLockingValue:
     def test_locked(self):
         lfp = np.sin(2 * np.pi * 10 * np.arange(10000) * 0.001)

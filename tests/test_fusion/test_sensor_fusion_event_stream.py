@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestEventStream:
     def test_num_events(self):
         s = _make_stream(SensorModality.DVS, n_events=50)

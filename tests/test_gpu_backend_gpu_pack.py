@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpu_backend_support import *  # noqa: F403
 
+
 class TestGPUPack:
     def test_1d_roundtrip(self):
         bits = np.array([1, 0, 1, 1] + [0] * 60, dtype=np.uint8)

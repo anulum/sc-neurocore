@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestSimulateThermalCustomDieState:
     def test_uses_provided_die_state_dict(self) -> None:
         topo = ChipletTopology()

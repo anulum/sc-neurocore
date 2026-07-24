@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
 
+
 class TestNRLIFThresholdAdaptation:
     def test_threshold_elevation_creates_refractoriness(self):
         """After spike, elevated θ prevents immediate re-firing."""

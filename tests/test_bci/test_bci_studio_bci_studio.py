@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from bci_studio_support import *  # noqa: F403
 
+
 class TestBCIStudio(unittest.TestCase):
     def setUp(self):
         self.studio = BCIStudio(channels=64, lr=0.01)

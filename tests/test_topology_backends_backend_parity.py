@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.topology_backends_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _rust_available(), reason="Rust topology backend unavailable")
 @pytest.mark.parametrize("name,graph,i,j", _CASES, ids=_CASE_IDS)
 def test_rust_parity(name: str, graph: np.ndarray, i: int, j: int) -> None:

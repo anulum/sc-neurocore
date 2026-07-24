@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gap_junction_support import *  # noqa: F403
 
+
 class TestGapJunctionPopulation:
     def test_current_matrix_two_neurons(self):
         gj = GapJunction(conductance=0.1)

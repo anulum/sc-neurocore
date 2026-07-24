@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_lsq_support import *  # noqa: F403
 
+
 class TestLSQLinear:
     def test_forward_shape(self) -> None:
         layer = LSQLinear(8, 5, n_bits=4)

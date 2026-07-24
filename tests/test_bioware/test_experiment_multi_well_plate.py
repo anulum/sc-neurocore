@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.experiment_support import *  # noqa: F403
 
+
 class TestMultiWellPlate:
     def test_standard_6_well(self) -> None:
         plate = MultiWellPlate.standard_6_well()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_theta_support import *  # noqa: F403
 
+
 class TestThetaPipeline:
     def test_population(self) -> None:
         assert Population(ThetaNeuron, n=10, label="theta").n == 10

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_loihi_cuba_support import *  # noqa: F403
 
+
 class TestLoihiCUBADynamics:
     def test_fires(self):
         assert len(_run(LoihiCUBANeuron(), 200, 5000)) >= 50

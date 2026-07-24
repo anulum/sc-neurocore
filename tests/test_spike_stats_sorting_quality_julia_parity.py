@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_sorting_quality_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _JULIA_AVAILABLE, reason="juliacall not installed")
 class TestJuliaParity:
     def test_parity(self) -> None:

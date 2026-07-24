@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.utils_support import *  # noqa: F403
 
+
 class TestResetStates:
     """Tests for the reset_states convenience helper."""
 

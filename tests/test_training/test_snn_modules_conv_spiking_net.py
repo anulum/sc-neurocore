@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestConvSpikingNet:
     def test_forward_shape(self):
         net = ConvSpikingNet(n_output=10)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lapicque_support import *  # noqa: F403
 
+
 class TestLapicqueParameters:
     @pytest.mark.parametrize("tau", [5.0, 20.0, 50.0])
     def test_tau_sweep(self, tau: float):

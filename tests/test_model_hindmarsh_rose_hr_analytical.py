@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hindmarsh_rose_support import *  # noqa: F403
 
+
 class TestHRAnalytical:
     def test_dx_formula_one_step(self):
         """dx = (y - x³ + b·x² - z + I) · dt."""

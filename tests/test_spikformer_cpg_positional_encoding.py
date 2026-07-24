@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spikformer_support import *  # noqa: F403
 
+
 class TestCPGPositionalEncoding:
     def test_encode_shape(self):
         cpe = CPGPositionalEncoding(d_model=16)

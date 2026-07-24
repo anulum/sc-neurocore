@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.biophysical_neurons_support import *  # noqa: F403
 
+
 class TestWangBuzsaki:
     def test_fires(self):
         from sc_neurocore.neurons.models import WangBuzsakiNeuron

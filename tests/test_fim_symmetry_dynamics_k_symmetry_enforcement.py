@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fim_symmetry_dynamics_support import *  # noqa: F403
 
+
 class TestKSymmetryEnforcement:
     def test_enforce_symmetry_method_exists(self):
         """Projection should have _enforce_symmetry method."""

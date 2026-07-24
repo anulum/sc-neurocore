@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_analysis_support import *  # noqa: F403
 
+
 class TestSimulationProtocols:
     def test_step_protocol(self):
         r = simulate(
@@ -140,4 +141,3 @@ class TestSimulationProtocols:
         if r["spike_count"] >= 3:
             assert r["stats"]["isi_histogram"] is not None
             assert "counts" in r["stats"]["isi_histogram"]
-

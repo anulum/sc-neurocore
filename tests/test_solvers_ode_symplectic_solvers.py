@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestSymplecticSolvers:
     def _run_oscillator(self, solver, n_steps=10000, dt=0.01):
         y = np.array([1.0, 0.0])  # q=1, p=0

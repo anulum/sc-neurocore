@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qc_e2e_support import *  # noqa: F403
 
+
 class TestLargeScalePopulation:
     """256 neurons, 1000 steps — no NaN, no Inf, memory bounded."""
 

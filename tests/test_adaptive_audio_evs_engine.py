@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_audio_support import *  # noqa: F403
 
+
 class TestEVSEngine(unittest.TestCase):
     def test_init(self) -> None:
         eng = EVSEngine()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
 
+
 def test_l3_adapter_contract():
     params = L3_HolonomicParameters(n_genes=10)
     adapter = L3_GenomicAdapter(params)
@@ -119,5 +120,3 @@ def test_l7_rejects_invalid_routing_parameters():
         L7_SymbolicAdapter(L7_HolonomicParameters(g_geometric_gain=0.0))
     with pytest.raises(ValueError, match="coupling_leak"):
         L7_SymbolicAdapter(L7_HolonomicParameters(coupling_leak=1.0))
-
-

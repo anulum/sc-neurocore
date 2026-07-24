@@ -12,4 +12,4 @@ import unittest
 import pytest
 from sc_neurocore.compiler.intelligence import ingest_telemetry
 
-__all__ = ['unittest', 'pytest', 'ingest_telemetry']
+__all__ = ["unittest", "pytest", "ingest_telemetry"]

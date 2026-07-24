@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_huber_braun_support import *  # noqa: F403
 
+
 class TestHBAnalytical:
     def test_sd_inf_sr_inf_complementary(self):
         """sd_inf + sr_inf = 1 at any V (complementary sigmoids)."""

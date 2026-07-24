@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestTanhFSM:
     def test_initial_state(self):
         fsm = TanhFSM(states=16)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestBitstreamGenerationContracts:
     def test_generated_stream_is_binary_and_length_preserved(self):
         bench = ResilienceBenchmark(seed=3)

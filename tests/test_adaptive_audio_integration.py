@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_audio_support import *  # noqa: F403
 
+
 class TestIntegration(unittest.TestCase):
     def test_full_pipeline(self) -> None:
         profile = UserProfile(chronotype=Chronotype.BEAR)

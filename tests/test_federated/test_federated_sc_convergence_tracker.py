@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestConvergenceTracker:
     def test_not_converged_initially(self):
         ct = ConvergenceTracker()

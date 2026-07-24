@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_go_parity_support import *  # noqa: F403
 
+
 class TestPythonGoParity:
     def test_parity_zero_input(self):
         n = 3_000

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_dpi_neuron_support import *  # noqa: F403
 
+
 def test_rust_compatibility_boundary_is_exact_factory_contract() -> None:
     """Use the fixed-constructor PyO3 engine only for an exact field match."""
     neuron = DPINeuron()

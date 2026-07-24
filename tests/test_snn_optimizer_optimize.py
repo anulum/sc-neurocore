@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.snn_optimizer_support import *  # noqa: F403
 
+
 class TestOptimize:
     def test_full_pipeline(self):
         g = SNNGraph(

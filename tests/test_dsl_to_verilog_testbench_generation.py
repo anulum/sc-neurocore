@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dsl_to_verilog_support import *  # noqa: F403
 
+
 class TestTestbenchGeneration:
     """Test automatic testbench generation."""
 

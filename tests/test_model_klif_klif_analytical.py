@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
 
+
 class TestKLIFAnalytical:
     def test_v_update_formula(self):
         """V = α·V + k·I."""

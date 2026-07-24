@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
 
+
 def test_generate_descriptor_reads_real_fields_and_provenance() -> None:
     """The generator reads code fields and carries over curated provenance."""
 
@@ -182,5 +183,3 @@ def test_generator_handles_source_without_class_definition(
 
     assert list(payload["state"]) == ["v", "w"]
     assert "b" in payload["parameters"]
-
-

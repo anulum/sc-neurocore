@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestCodegenEndpoint:
     def test_codegen_model(self, client):
         r = client.post(
@@ -47,4 +48,3 @@ class TestCodegenEndpoint:
         assert r.status_code == 200
         data = r.json()
         assert "script" in data
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_experiment_support import *  # noqa: F403
 
+
 class TestExperimentValidation:
     def test_pharmacology_rejects_invalid_configuration_and_time_travel(self) -> None:
         with pytest.raises(ValueError, match="agent_name"):

@@ -35,4 +35,16 @@ from sc_neurocore.neurons.universal_dsl import (
     schema_to_toml,
 )
 
-__all__ = ['json', 'sys', 'Path', 'Any', 'np', 'pytest', 'MonkeyPatch', 'UniversalNeuron', 'list_bundled_schemas', 'load_schema', 'schema_to_toml']
+__all__ = [
+    "json",
+    "sys",
+    "Path",
+    "Any",
+    "np",
+    "pytest",
+    "MonkeyPatch",
+    "UniversalNeuron",
+    "list_bundled_schemas",
+    "load_schema",
+    "schema_to_toml",
+]

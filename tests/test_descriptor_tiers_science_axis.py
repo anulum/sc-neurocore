@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.descriptor_tiers_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("expected", [0, 1, 2, 3])
 def test_science_axis_matches_kernel_through_s3(expected: int) -> None:
     """S0-S3 track the curation kernel exactly, with no validation evidence."""

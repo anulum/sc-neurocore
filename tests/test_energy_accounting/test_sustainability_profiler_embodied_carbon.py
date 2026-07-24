@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestEmbodiedCarbon:
     def test_total_embodied(self):
         ec = EmbodiedCarbon()

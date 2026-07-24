@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestFederatedClient:
     def test_local_train(self):
         enc = SCGradientEncoder(bitstream_length=128, dp=DPMechanism(epsilon=2.0))

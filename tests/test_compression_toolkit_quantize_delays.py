@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compression_toolkit_support import *  # noqa: F403
 
+
 class TestQuantizeDelays:
     def test_basic(self):
         d = np.array([0.5, 1.7, 3.2, 5.0])

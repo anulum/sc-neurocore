@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.datasets_support import *  # noqa: F403
 
+
 class TestSyntheticLoaders:
     def test_nmnist_synthetic_shapes(self):
         samples, labels = load_nmnist(synthetic=True, n_samples=10, seed=42)

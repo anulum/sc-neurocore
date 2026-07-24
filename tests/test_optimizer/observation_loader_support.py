@@ -48,5 +48,17 @@ def _design() -> dict[str, object]:
     }
 
 
-
-__all__ = ['json', 'pytest', 'load_observations', 'load_synthesis_observation', 'observation_from_synthesis_reports', 'observations_from_payload', 'ObservationLoadError', 'HardwareBudget', 'LayerProfile', 'SurrogateSCOptimizer', 'TargetHardwareProfile', '_design']
+__all__ = [
+    "json",
+    "pytest",
+    "load_observations",
+    "load_synthesis_observation",
+    "observation_from_synthesis_reports",
+    "observations_from_payload",
+    "ObservationLoadError",
+    "HardwareBudget",
+    "LayerProfile",
+    "SurrogateSCOptimizer",
+    "TargetHardwareProfile",
+    "_design",
+]

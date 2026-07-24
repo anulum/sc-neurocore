@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestConfiguration:
     def test_custom_stimulus(self):
         stim = StimulusConfig(num_transactions=500, bitstream_density_range=(0.2, 0.8))

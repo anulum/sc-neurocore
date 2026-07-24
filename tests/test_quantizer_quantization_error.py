@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestQuantizationError:
     def test_error_stats(self):
         w = np.random.randn(100)

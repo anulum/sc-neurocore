@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.chip_compiler_support import *  # noqa: F403
 
+
 class TestChipSpec:
     def test_loihi2(self):
         chip = BUILTIN_CHIPS["loihi2"]

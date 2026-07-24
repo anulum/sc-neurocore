@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.edge_crossing_detection_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestEdgeDetectionCosim:
     """End-to-end Python-runner vs emitted-RTL parity for edge-crossing oscillators."""

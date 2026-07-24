@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neural_decoders_support import *  # noqa: F403
 
+
 class TestScaledDotProductAttention:
     def test_identity_keys(self) -> None:
         n, d = 4, 8

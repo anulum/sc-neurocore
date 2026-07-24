@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_reporting_support import *  # noqa: F403
 
+
 class TestRankMapper:
     def test_basic_assignment(self) -> None:
         mapper = RankMapper(num_ranks=2)

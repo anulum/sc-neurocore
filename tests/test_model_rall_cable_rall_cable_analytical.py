@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCableAnalytical:
     def test_cable_equation_one_step(self) -> None:
         """Implicit step solves the sealed passive cable tridiagonal system."""

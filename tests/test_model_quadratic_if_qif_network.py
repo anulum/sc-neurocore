@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_quadratic_if_support import *  # noqa: F403
 
+
 class TestQIFNetwork:
     def test_population(self):
         assert Population(QuadraticIFNeuron, n=10, label="qif").n == 10

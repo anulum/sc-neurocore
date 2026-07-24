@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _MOJO_AVAILABLE, reason="Mojo Phi library not built")
 class TestMojoParity:
     def test_parity(self) -> None:

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestFaultInjectorInjectContracts:
     def test_rejects_invalid_inputs(self):
         import numpy as np

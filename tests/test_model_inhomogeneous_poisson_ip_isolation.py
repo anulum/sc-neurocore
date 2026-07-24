@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
 
+
 class TestIPIsolation:
     def test_defaults(self):
         n = InhomogeneousPoissonNeuron()

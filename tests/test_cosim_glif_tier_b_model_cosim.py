@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_glif_support import *  # noqa: F403
 
+
 class TestTierBModelCosim:
     """WC-A5 Tier-B GLIF schema enrolment."""
 

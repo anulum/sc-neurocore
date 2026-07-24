@@ -10,6 +10,7 @@ from __future__ import annotations
 
 """Tests for surrogate gradient functions."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.training.surrogate import (
     atan_surrogate,
@@ -20,4 +21,13 @@ from sc_neurocore.training.surrogate import (
     triangular,
 )
 
-__all__ = ['pytest', 'torch', 'atan_surrogate', 'fast_sigmoid', 'sigmoid_surrogate', 'superspike', 'straight_through', 'triangular']
+__all__ = [
+    "pytest",
+    "torch",
+    "atan_surrogate",
+    "fast_sigmoid",
+    "sigmoid_surrogate",
+    "superspike",
+    "straight_through",
+    "triangular",
+]

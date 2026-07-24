@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_support import *  # noqa: F403
 
+
 class TestWindingNumber:
     def test_one_full_rotation(self):
         phases = np.linspace(0, 2 * np.pi, 100, endpoint=False)

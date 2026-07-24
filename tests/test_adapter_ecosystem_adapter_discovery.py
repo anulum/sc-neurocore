@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adapter_ecosystem_support import *  # noqa: F403
 
+
 class TestAdapterDiscovery:
     def test_first_party_entry_points_declared_in_pyproject(self) -> None:
         from sc_neurocore.utils.adapter_discovery import (

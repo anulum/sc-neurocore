@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFPerformance:
     def test_isolation_throughput(self) -> None:
         neuron = ExpIFNeuron()

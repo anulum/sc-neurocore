@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_norm_support import *  # noqa: F403
 
+
 class TestTemporalEffectiveBN:
     def test_forward(self):
         bn = TemporalEffectiveBN(n_features=8, T=10)

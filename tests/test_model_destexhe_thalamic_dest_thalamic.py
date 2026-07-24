@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_destexhe_thalamic_support import *  # noqa: F403
 
+
 class TestDestThalamic:
     def test_fires_under_drive(self):
         n = DestexheThalamicNeuron()

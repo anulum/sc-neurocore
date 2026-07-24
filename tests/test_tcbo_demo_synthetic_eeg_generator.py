@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestSyntheticEEGGenerator(unittest.TestCase):
     def test_init(self):
         gen = SyntheticEEGGenerator(N=16)

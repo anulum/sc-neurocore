@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestPowerBudgetAnalyzer:
     def test_analyze_returns_dict(self):
         compiler = SCToPhotonic()

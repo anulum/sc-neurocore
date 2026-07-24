@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from compiler_export_support import *  # noqa: F403
 
+
 class TestTopologicalSort(unittest.TestCase):
     """Verify graph ordering rejects malformed dataflow contracts."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_resonate_and_fire_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("current", (np.nan, np.inf, -np.inf, object()))
 def test_invalid_current_is_atomic(current: object) -> None:
     neuron = ResonateAndFireNeuron(x=0.25, y=-0.5)

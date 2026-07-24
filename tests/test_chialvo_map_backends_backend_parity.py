@@ -10,21 +10,26 @@ from __future__ import annotations
 
 from tests.chialvo_map_backends_support import *  # noqa: F403
 
+
 def test_rust_backend_contract() -> None:
     """Rust must satisfy the complete checked Chialvo contract."""
     _assert_backend_contract("rust", _rust_available)
+
 
 def test_julia_backend_contract() -> None:
     """Julia must satisfy the complete checked Chialvo contract."""
     _assert_backend_contract("julia", _julia_available)
 
+
 def test_go_backend_contract() -> None:
     """Go must satisfy the complete checked Chialvo contract."""
     _assert_backend_contract("go", _go_available)
 
+
 def test_mojo_backend_contract() -> None:
     """Mojo must satisfy the complete checked Chialvo contract."""
     _assert_backend_contract("mojo", _mojo_available)
+
 
 def test_python_batch_matches_repeated_step() -> None:
     """The reference batch loop must retain the public step semantics."""

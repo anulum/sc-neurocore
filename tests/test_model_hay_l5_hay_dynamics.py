@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hay_l5_support import *  # noqa: F403
 
+
 class TestHayDynamics:
     def test_fires_under_somatic_drive(self) -> None:
         n = HayL5PyramidalNeuron()

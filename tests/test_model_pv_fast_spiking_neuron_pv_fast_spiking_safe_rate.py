@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
 
+
 class TestPVFastSpikingSafeRate:
     def test_fallback_returned_at_singularity(self):
         # v + vhalf = 0 -> the L'Hôpital limit a*k is returned.

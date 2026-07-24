@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
 
+
 class TestWilsonHRCurrentResponse:
     def test_low_current_regime_is_subthreshold(self):
         for current in [0.0, 0.3, 1.0]:

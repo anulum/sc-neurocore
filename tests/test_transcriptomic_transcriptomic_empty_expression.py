@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transcriptomic_support import *  # noqa: F403
 
+
 class TestTranscriptomicEmptyExpression:
     def test_kgbert_returns_zero_embeddings_for_silent_expression(self) -> None:
         enc = ScKGBERTInterface(d_model=8, n_genes=10)

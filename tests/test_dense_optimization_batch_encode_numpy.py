@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dense_optimization_support import *  # noqa: F403
 
+
 class TestBatchEncodeNumpy:
     """Tests for batch_encode_numpy returning 2-D numpy array."""
 

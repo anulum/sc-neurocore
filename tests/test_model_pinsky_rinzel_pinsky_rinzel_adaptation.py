@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelAdaptation:
     def test_isis_lengthen_with_adaptation(self):
         spike_times = _run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000)

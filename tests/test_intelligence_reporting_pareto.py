@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_reporting_support import *  # noqa: F403
 
+
 class TestPareto(unittest.TestCase):
     def test_non_empty(self):
         pts = explore_pareto({"v": "-(v)/tau + I"})

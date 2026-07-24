@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestFaultInjectionResultContracts:
     def test_probability_properties_follow_popcount_ratio(self):
         result = FaultInjectionResult(

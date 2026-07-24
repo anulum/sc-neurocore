@@ -133,5 +133,18 @@ def _stub_targets(mod: Any, names: list[str]) -> list[Any]:
     ]
 
 
-
-__all__ = ['importlib', 'subprocess', 'sys', 'Path', 'Any', 'pytest', '_repo_root', '_load_tool', 'MOD', '_make_tree', '_target', '_fake_completed', '_stub_targets']
+__all__ = [
+    "importlib",
+    "subprocess",
+    "sys",
+    "Path",
+    "Any",
+    "pytest",
+    "_repo_root",
+    "_load_tool",
+    "MOD",
+    "_make_tree",
+    "_target",
+    "_fake_completed",
+    "_stub_targets",
+]

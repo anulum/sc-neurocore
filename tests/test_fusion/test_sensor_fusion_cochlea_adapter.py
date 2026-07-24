@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestCochleaAdapter:
     def test_freq_to_channel_boundaries(self):
         coch = CochleaAdapter(num_channels=64)

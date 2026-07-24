@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.speciation_support import *  # noqa: F403
 
+
 class TestSpeciation:
     def test_identical_genomes_same_species(self) -> None:
         orgs = [Organism(genome=Genome()) for _ in range(5)]

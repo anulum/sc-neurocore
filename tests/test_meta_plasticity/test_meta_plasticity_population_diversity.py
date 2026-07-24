@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestPopulationDiversity:
     def test_identical_population_zero(self):
         ev = RuleEvolver(population_size=4)

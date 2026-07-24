@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_support import *  # noqa: F403
 
+
 class TestGeneticRegulatoryLayer:
     def test_initial_protein_zero(self):
         grn = GeneticRegulatoryLayer(n_neurons=10)

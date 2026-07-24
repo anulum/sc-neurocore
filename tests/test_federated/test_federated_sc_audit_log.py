@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestAuditLog:
     def test_empty_log(self):
         log = AuditLog()

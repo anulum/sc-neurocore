@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestEmitterState:
     def test_free_vars_attribute(self) -> None:
         e = CExprEmitter({"v"})

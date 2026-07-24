@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.chialvo_map_backends_support import *  # noqa: F403
 
+
 def test_auto_uses_measured_first_available_backend(monkeypatch: pytest.MonkeyPatch) -> None:
     """Auto dispatch must honour the data-driven order without hidden fallback."""
     visited: list[str] = []
@@ -35,6 +36,7 @@ def test_auto_uses_measured_first_available_backend(monkeypatch: pytest.MonkeyPa
     assert spikes == 0
     assert visited == ["go", "mojo", "rust", "rust"]
 
+
 def test_auto_python_floor_matches_explicit_python(monkeypatch: pytest.MonkeyPatch) -> None:
     """The guaranteed auto floor must be the checked Python recurrence."""
     monkeypatch.setattr(chialvo_map, "_auto_backend", lambda: "python")
@@ -42,6 +44,7 @@ def test_auto_python_floor_matches_explicit_python(monkeypatch: pytest.MonkeyPat
     automatic = _run("auto", n_steps=100, current=0.01)
     np.testing.assert_array_equal(automatic[0], explicit[0])
     assert automatic[1:] == explicit[1:]
+
 
 def test_auto_empty_order_and_loaded_backend_loss_keep_fail_closed(
     monkeypatch: pytest.MonkeyPatch,

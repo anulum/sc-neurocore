@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.acquisition_support import *  # noqa: F403
 
+
 class TestSpikeDetector:
     def test_estimate_noise(self) -> None:
         cfg = MEAConfig(num_channels=10)

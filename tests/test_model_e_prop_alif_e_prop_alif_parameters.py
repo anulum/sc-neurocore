@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_e_prop_alif_support import *  # noqa: F403
 
+
 class TestEPropALIFParameters:
     def test_tau_a_controls_adaptation_speed(self):
         n_fast = EPropALIFNeuron(tau_a=50.0)

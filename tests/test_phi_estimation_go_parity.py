@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _GO_AVAILABLE, reason="Go Phi library not built")
 class TestGoParity:
     def test_parity(self) -> None:

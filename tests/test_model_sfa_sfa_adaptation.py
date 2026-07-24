@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFAAdaptation:
     """Core property: ISI lengthens due to g_sfa build-up."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.folded_interconnect_support import *  # noqa: F403
 
+
 def test_folded_delayed_recurrent_matches_direct() -> None:
     ng, currents, n_dst = _delayed_recurrent_graph()
     q = Q88(data_width=_DW, fraction=_FR)
@@ -78,5 +79,3 @@ def test_folded_delayed_analogue_source_matches_direct() -> None:
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row for row in direct_raster), "delayed analogue-fed lif should spike"
-
-

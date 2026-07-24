@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_isi_shuffle_short():
     r = surrogate_isi_shuffle(np.array([1], dtype=np.int8))
     assert r.shape[0] == 1
@@ -33,5 +34,3 @@ def test_joint_isi_few():
 def test_response_onset_short():
     r = response_onset(np.array([1, 0], dtype=np.int8), baseline_steps=5)
     assert np.isnan(r)
-
-

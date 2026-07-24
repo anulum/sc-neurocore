@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestCompiledBlockFloatingDense:
     """Validate dense block-floating weights with fixed-point inputs."""
 

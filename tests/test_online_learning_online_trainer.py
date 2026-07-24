@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.online_learning_support import *  # noqa: F403
 
+
 class TestOnlineTrainer:
     def test_init(self):
         ot = OnlineTrainer(layer_sizes=[10, 20, 5])

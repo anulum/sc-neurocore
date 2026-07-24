@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
 
+
 class TestNRLIFAnalytical:
     def test_subthreshold_step_matches_exact_relaxation(self):
         """Linear membrane and threshold ODEs follow the closed-form solution."""

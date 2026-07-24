@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from autonomous_learning_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not FFI_AVAILABLE, reason="Rust autonomous_learning shared library not built.")
 class TestAutonomousLearning:
     def test_stdp_rule_potentiation(self):

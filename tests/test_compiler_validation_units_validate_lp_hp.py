@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compiler_validation_units_support import *  # noqa: F403
 
+
 class TestValidateLpHp:
     """The low/high-precision pair must order widths, keep both fractions
     positive, and leave the LP datapath at least two bits wide."""

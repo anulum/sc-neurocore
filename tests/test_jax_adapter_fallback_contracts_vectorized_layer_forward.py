@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestVectorizedLayerForward:
     def test_forward_correct_shape(self):
         from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer

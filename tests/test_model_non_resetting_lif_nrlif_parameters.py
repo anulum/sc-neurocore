@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
 
+
 class TestNRLIFParameters:
     @pytest.mark.parametrize("delta_theta", [2.0, 5.0, 10.0])
     def test_delta_theta_sweep(self, delta_theta: float):

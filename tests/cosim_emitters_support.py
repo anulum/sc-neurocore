@@ -24,6 +24,7 @@ from tests.cosim_support import (
     spike_count_method as _spike_count_method,
     verilog_spike_count_method as _verilog_spike_count_method,
 )
+
 _N_STEPS = 200
 _INPUT_CURRENT = 50.0  # Higher than Python needs — overcomes Q8.8 precision loss
 _COSIM_MODELS = [
@@ -68,6 +69,8 @@ _EXP_EULER_Q_FORMATS = [
     ("Q18.18", 36, 18),
     ("Q20.12", 32, 12),
 ]
+
+
 def _linear_oscillator(method: str) -> EquationNeuron:
     """Return a synthetic two-state oscillator for generic integrator tests."""
     return EquationNeuron(
@@ -79,10 +82,14 @@ def _linear_oscillator(method: str) -> EquationNeuron:
         method=method,
         detection="crossing",
     )
+
+
 def _linear_oscillator_spike_count(method: str, n_steps: int, current: float) -> int:
     """Return the Python spike count for the synthetic linear oscillator."""
     neuron = _linear_oscillator(method)
     return sum(neuron.step(I=current) for _ in range(n_steps))
+
+
 def _linear_oscillator_verilog_spike_count(
     method: str,
     n_steps: int,
@@ -107,4 +114,32 @@ def _linear_oscillator_verilog_spike_count(
     )
     return _simulate(verilog, testbench, module_name)
 
-__all__ = ['pytest', 'generate_testbench', 'EquationNeuron', 'HAS_IVERILOG', '_fitzhugh_nagumo_substep_neuron', '_neuron_verilog_spike_count_q1616', '_python_spike_count', '_verilog_spike_count', '_verilog_spike_count_generic', 'compile_to_verilog', '_simulate', '_spike_count_method', '_verilog_spike_count_method', '_N_STEPS', '_INPUT_CURRENT', '_COSIM_MODELS', '_ALL_MODES', '_MV_RANGE_MODES', '_MV_ACCURACY_MODELS', '_RK4_EXACT_MODELS', '_RK4_Q_FORMATS', '_EXP_EULER_EXACT_MODELS', '_EXP_EULER_Q_FORMATS', '_linear_oscillator', '_linear_oscillator_spike_count', '_linear_oscillator_verilog_spike_count']
+
+__all__ = [
+    "pytest",
+    "generate_testbench",
+    "EquationNeuron",
+    "HAS_IVERILOG",
+    "_fitzhugh_nagumo_substep_neuron",
+    "_neuron_verilog_spike_count_q1616",
+    "_python_spike_count",
+    "_verilog_spike_count",
+    "_verilog_spike_count_generic",
+    "compile_to_verilog",
+    "_simulate",
+    "_spike_count_method",
+    "_verilog_spike_count_method",
+    "_N_STEPS",
+    "_INPUT_CURRENT",
+    "_COSIM_MODELS",
+    "_ALL_MODES",
+    "_MV_RANGE_MODES",
+    "_MV_ACCURACY_MODELS",
+    "_RK4_EXACT_MODELS",
+    "_RK4_Q_FORMATS",
+    "_EXP_EULER_EXACT_MODELS",
+    "_EXP_EULER_Q_FORMATS",
+    "_linear_oscillator",
+    "_linear_oscillator_spike_count",
+    "_linear_oscillator_verilog_spike_count",
+]

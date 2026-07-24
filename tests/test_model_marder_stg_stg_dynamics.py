@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGDynamics:
     def test_rate_increases_with_drive(self):
         low = len(_run(MarderSTGNeuron(), current=0.0, steps=50_000))

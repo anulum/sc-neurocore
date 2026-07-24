@@ -38,14 +38,19 @@ from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 from sc_neurocore.neurons.models.ermentrout_kopell_map_neuron import (
     ErmentroutKopellMapNeuron,
 )
+
 HAS_COSIM = shutil.which("iverilog") is not None and shutil.which("gcc") is not None
 HAS_RUST = shutil.which("rustc") is not None
+
+
 def _q_input(current: float, dw: int, frac: int) -> int:
     q = Q88(data_width=dw, fraction=frac)
     raw = q.encode(current)
     if raw >= (1 << (dw - 1)):
         raw -= 1 << dw
     return raw
+
+
 def _testbench(
     neuron: EquationNeuron,
     module: str,
@@ -95,6 +100,8 @@ def _testbench(
             "endmodule",
         ]
     )
+
+
 def _c_main(neuron: EquationNeuron, module: str, i_q: int, n_steps: int, dw: int) -> str:
     svs = list(neuron.equations)
     fmt = " ".join(["%d", *("%d" for _ in svs)])
@@ -105,6 +112,8 @@ def _c_main(neuron: EquationNeuron, module: str, i_q: int, n_steps: int, dw: int
         f'  for (int k = 0; k < {n_steps}; k++) {{ int spike = {module}_step(&st, I); printf("{fmt}\\n", {args}); }}\n'
         "  return 0; }\n"
     )
+
+
 def _rust_main(neuron: EquationNeuron, module: str, i_q: int, n_steps: int, dw: int) -> str:
     struct = f"{module.capitalize()}State"
     svs = list(neuron.equations)
@@ -119,6 +128,8 @@ def _rust_main(neuron: EquationNeuron, module: str, i_q: int, n_steps: int, dw: 
         f'    for _ in 0..{n_steps} {{ let spike = st.step(i); println!("{fmt}", {outs}); }}\n'
         "}\n"
     )
+
+
 def _rows(text: str) -> list[list[str]]:
     rows = []
     for line in text.strip().splitlines():
@@ -126,6 +137,8 @@ def _rows(text: str) -> list[list[str]]:
         if toks and all(t.lstrip("-").isdigit() for t in toks):
             rows.append(toks)
     return rows
+
+
 def _verilog_trace(
     neuron: EquationNeuron,
     module: str,
@@ -148,6 +161,8 @@ def _verilog_trace(
     )
     out = subprocess.run(["vvp", str(tmp / "sim")], capture_output=True, text=True, timeout=60)
     return _rows(out.stdout)
+
+
 def _c_trace(
     neuron: EquationNeuron,
     module: str,
@@ -175,6 +190,8 @@ def _c_trace(
     return _rows(
         subprocess.run([str(tmp / "cker")], capture_output=True, text=True, timeout=60).stdout
     )
+
+
 def _rust_trace(
     neuron: EquationNeuron,
     module: str,
@@ -204,6 +221,8 @@ def _rust_trace(
     return _rows(
         subprocess.run([str(tmp / "rker")], capture_output=True, text=True, timeout=60).stdout
     )
+
+
 def _lif(dt: float = 1.0) -> EquationNeuron:
     return from_equations(
         "dv/dt = -(v - E_L)/tau_m + I/C",
@@ -213,6 +232,8 @@ def _lif(dt: float = 1.0) -> EquationNeuron:
         init=dict(v=-65),
         dt=dt,
     )
+
+
 def _izhikevich() -> EquationNeuron:
     return from_equations(
         "dv/dt = 0.04*v**2 + 5*v + 140 - u + I",
@@ -223,8 +244,12 @@ def _izhikevich() -> EquationNeuron:
         init=dict(v=-70, u=-14),
         dt=1.0,
     )
+
+
 def _tanh_cell() -> EquationNeuron:
     return from_equations("dv/dt = 0.2*(tanh(v) - v) + I", init=dict(v=0.0), dt=0.5)
+
+
 def _fhn() -> EquationNeuron:
     return from_equations(
         "dv/dt = v - v**3 - w + I",
@@ -232,10 +257,14 @@ def _fhn() -> EquationNeuron:
         init=dict(v=0.1, w=0.0),
         dt=0.1,
     )
+
+
 def _fire() -> EquationNeuron:
     # A ramp integrate-and-fire that reliably crosses threshold and resets in
     # fixed point, so the threshold / reset / spike sequencing is co-simulated.
     return from_equations("dv/dt = I", threshold="v > 5", reset="v = 0", init=dict(v=0.0), dt=1.0)
+
+
 def _sqrt_map() -> EquationNeuron:
     """Return a one-state map that exercises the square-root LUT geometry."""
     return EquationNeuron(
@@ -244,6 +273,8 @@ def _sqrt_map() -> EquationNeuron:
         dt=1.0,
         method="map",
     )
+
+
 def _nearest_negative_half_tie_map() -> EquationNeuron:
     """Return a map whose first product is exactly negative half an output LSB."""
     return EquationNeuron(
@@ -252,6 +283,8 @@ def _nearest_negative_half_tie_map() -> EquationNeuron:
         dt=1.0,
         method="map",
     )
+
+
 def _ermentrout_kopell_map() -> EquationNeuron:
     """Return the maintained theta-Euler recurrence as one explicit map step."""
     candidate = "theta + dt * ((1.0 - cos(theta)) + (1.0 + cos(theta)) * gain * I)"
@@ -270,6 +303,8 @@ def _ermentrout_kopell_map() -> EquationNeuron:
         dt=1.0,
         method="map",
     )
+
+
 NeuronFactory = Callable[[], EquationNeuron]
 _CASES: list[tuple[str, NeuronFactory, float, int, int, int]] = [
     ("lif_q88", _lif, 10.0, 60, 16, 8),
@@ -285,4 +320,37 @@ _CASES: list[tuple[str, NeuronFactory, float, int, int, int]] = [
     ("ermentrout_kopell_positive_q1616", _ermentrout_kopell_map, 1.0, 240, 32, 16),
 ]
 
-__all__ = ['shutil', 'subprocess', 'tempfile', 'Callable', 'Path', 'pytest', 'generate_bittrue_kernel_from_neuron', 'compile_to_verilog', 'Q88', 'EquationNeuron', 'from_equations', 'ErmentroutKopellMapNeuron', 'HAS_COSIM', 'HAS_RUST', '_q_input', '_testbench', '_c_main', '_rust_main', '_rows', '_verilog_trace', '_c_trace', '_rust_trace', '_lif', '_izhikevich', '_tanh_cell', '_fhn', '_fire', '_sqrt_map', '_nearest_negative_half_tie_map', '_ermentrout_kopell_map', 'NeuronFactory', '_CASES']
+__all__ = [
+    "shutil",
+    "subprocess",
+    "tempfile",
+    "Callable",
+    "Path",
+    "pytest",
+    "generate_bittrue_kernel_from_neuron",
+    "compile_to_verilog",
+    "Q88",
+    "EquationNeuron",
+    "from_equations",
+    "ErmentroutKopellMapNeuron",
+    "HAS_COSIM",
+    "HAS_RUST",
+    "_q_input",
+    "_testbench",
+    "_c_main",
+    "_rust_main",
+    "_rows",
+    "_verilog_trace",
+    "_c_trace",
+    "_rust_trace",
+    "_lif",
+    "_izhikevich",
+    "_tanh_cell",
+    "_fhn",
+    "_fire",
+    "_sqrt_map",
+    "_nearest_negative_half_tie_map",
+    "_ermentrout_kopell_map",
+    "NeuronFactory",
+    "_CASES",
+]

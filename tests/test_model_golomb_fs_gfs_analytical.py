@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_golomb_fs_support import *  # noqa: F403
 
+
 class TestGFSAnalytical:
     def test_10_substeps(self):
         """10 sub-steps per step() call (dt=0.01)."""

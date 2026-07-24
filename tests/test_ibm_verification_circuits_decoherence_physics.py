@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestDecoherencePhysics:
     def test_zero_delay_preserves(self):
         qc = build_posner_decoherence_circuit(delay_dt=0, hf1=HF1, hf2=HF2)

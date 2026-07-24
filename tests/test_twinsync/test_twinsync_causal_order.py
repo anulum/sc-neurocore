@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestCausalOrder:
     def test_ordered_events_no_violations(self):
         eng = TimeWarpEngine(1)

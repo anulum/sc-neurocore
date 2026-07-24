@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMRefractoryKernel:
     def test_eta_at_tss_zero(self):
         """After spike, tss=0. Next step: η uses tss=0 → η = eta_reset exactly."""

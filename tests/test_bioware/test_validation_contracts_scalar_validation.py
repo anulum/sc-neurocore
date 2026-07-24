@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_contracts_support import *  # noqa: F403
 
+
 class TestScalarValidation:
     @pytest.mark.parametrize("value", [float("nan"), float("inf")])
     def test_require_finite_rejects_non_finite(self, value: float) -> None:

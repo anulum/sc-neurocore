@@ -22,4 +22,15 @@ from sc_neurocore.evo_substrate.speciation import (
     shared_fitness,
 )
 
-__all__ = ['np', 'pytest', 'speciation_mod', 'FitnessResult', 'Genome', 'Organism', 'assign_species', 'genomic_distance', 'population_diversity', 'shared_fitness']
+__all__ = [
+    "np",
+    "pytest",
+    "speciation_mod",
+    "FitnessResult",
+    "Genome",
+    "Organism",
+    "assign_species",
+    "genomic_distance",
+    "population_diversity",
+    "shared_fitness",
+]

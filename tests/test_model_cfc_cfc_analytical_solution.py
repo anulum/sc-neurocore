@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cfc_support import *  # noqa: F403
 
+
 class TestCFCAnalyticalSolution:
     """x(t+dt) = x·exp(-dt/τ_eff) + f_target·(1 - exp(-dt/τ_eff))."""
 

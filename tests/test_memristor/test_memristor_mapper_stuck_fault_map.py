@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestStuckFaultMap:
     def test_generate_faults(self) -> None:
         fm = StuckFaultMap.generate(100, 100, fault_rate=0.01, seed=42)

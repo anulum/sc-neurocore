@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_progress_support import *  # noqa: F403
 
+
 class TestCharacteriseProgress:
     def test_produces_progress_and_complete(self) -> None:
         q: queue.Queue[dict[str, Any]] = queue.Queue()
@@ -77,4 +78,3 @@ class TestCharacteriseProgress:
             assert "pct" in m
             assert 0 <= m["pct"] <= 100
             assert "msg" in m
-

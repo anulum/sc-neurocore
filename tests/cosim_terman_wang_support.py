@@ -20,6 +20,18 @@ from tests.cosim_support import (
     _verilog_compiles,
     _verilog_spike_count_q1616,
 )
+
 _TRANSCENDENTAL_COMPILE_MODELS = ["terman_wang"]
 
-__all__ = ['Path', 'pytest', 'TermanWangOscillator', 'UniversalNeuron', 'HAS_IVERILOG', '_terman_wang_hand_spike_count', '_python_spike_count', '_verilog_compiles', '_verilog_spike_count_q1616', '_TRANSCENDENTAL_COMPILE_MODELS']
+__all__ = [
+    "Path",
+    "pytest",
+    "TermanWangOscillator",
+    "UniversalNeuron",
+    "HAS_IVERILOG",
+    "_terman_wang_hand_spike_count",
+    "_python_spike_count",
+    "_verilog_compiles",
+    "_verilog_spike_count_q1616",
+    "_TRANSCENDENTAL_COMPILE_MODELS",
+]

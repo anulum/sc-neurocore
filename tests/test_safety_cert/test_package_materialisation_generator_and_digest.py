@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
 
+
 def test_default_generator_is_fail_closed() -> None:
     """Missing evidence must remain visible rather than being fabricated."""
     package = _package(explicit_evidence=False)

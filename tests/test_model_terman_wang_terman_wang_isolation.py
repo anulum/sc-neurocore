@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_terman_wang_support import *  # noqa: F403
 
+
 class TestTermanWangIsolation:
     def test_defaults(self):
         n = TermanWangOscillator()

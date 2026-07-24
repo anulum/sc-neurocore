@@ -54,5 +54,4 @@ def _events(neuron: DPINeuron, current: float, steps: int) -> list[int]:
     return [index for index in range(steps) if neuron.step(current) == 1]
 
 
-
-__all__ = ['math', 'Any', 'cast', 'np', 'pytest', 'DPINeuron', '_configured', '_events']
+__all__ = ["math", "Any", "cast", "np", "pytest", "DPINeuron", "_configured", "_events"]

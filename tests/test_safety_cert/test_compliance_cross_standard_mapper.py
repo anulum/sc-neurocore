@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.compliance_support import *  # noqa: F403
 
+
 class TestCrossStandardMapper:
     def test_equivalent_clauses(self) -> None:
         equiv = CrossStandardMapper.equivalent_clauses("IEC 61508", "7.4.2")

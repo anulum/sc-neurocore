@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_resonate_and_fire_support import *  # noqa: F403
 
+
 def test_long_varied_run_is_finite_and_deterministic() -> None:
     drive = 4.0 + 1.2 * np.sin(np.arange(20_000, dtype=np.float64) * 0.013)
     first = ResonateAndFireNeuron()

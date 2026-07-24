@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestFaultCampaign(unittest.TestCase):
     def test_basic(self):
         r = run_fault_campaign({"v": "a", "u": "b"})

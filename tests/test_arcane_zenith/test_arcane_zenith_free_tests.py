@@ -12,10 +12,13 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 def test_level_band_classifies_below_and_above_thresholds() -> None:
     assert ArcaneZenithCognitiveCore._level(0.0, low=0.33, high=0.66) == "low"
     assert ArcaneZenithCognitiveCore._level(1.0, low=0.33, high=0.66) == "high"
     assert ArcaneZenithCognitiveCore._level(0.5, low=0.33, high=0.66) == "medium"
+
+
 def test_pathway_bitstreams_are_all_zero_for_silent_rates() -> None:
     # When no channel carries a positive rate the maximum is zero, so every
     # pathway probability collapses to zero rather than dividing by it.

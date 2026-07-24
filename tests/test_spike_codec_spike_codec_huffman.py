@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_codec_support import *  # noqa: F403
 
+
 class TestSpikeCodecHuffman:
     def test_huffman_roundtrip_sparse(self):
         rng = np.random.RandomState(42)

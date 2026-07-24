@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.snn_optimizer_support import *  # noqa: F403
 
+
 class TestRedundancyElimination:
     def test_merges_identical(self):
         w = np.random.randn(1, 4)

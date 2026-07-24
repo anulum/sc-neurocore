@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestLayerConfig:
     def test_lut_cost_increases_with_neurons(self) -> None:
         a = LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)

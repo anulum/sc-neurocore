@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_isi_distance_zero_timestep_collapses_intervals():
     # distance.py:97 — a zero timestep maps every spike to t=0, so both ISI
     # sequences are all-zero and the matched ratio is exactly 0.0.

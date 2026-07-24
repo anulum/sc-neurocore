@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_lazarus_support import *  # noqa: F403
 
+
 class TestStateDecoder:
     def test_dominant_patterns_shape(self):
         sub = IdentitySubstrate(n_cortical=50, n_inhibitory=20, n_memory=10, seed=42)

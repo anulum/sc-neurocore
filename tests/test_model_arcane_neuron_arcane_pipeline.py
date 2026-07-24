@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
 
+
 class TestArcanePipeline:
     def test_population(self):
         assert Population(ArcaneNeuron, n=10, label="arcane").n == 10

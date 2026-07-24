@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transfer_support import *  # noqa: F403
 
+
 class TestSNNCheckpoint:
     def test_fields(self) -> None:
         c = _make_checkpoint()

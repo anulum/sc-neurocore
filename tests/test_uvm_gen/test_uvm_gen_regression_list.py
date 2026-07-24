@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestRegressionList:
     def test_regression_list_generated(self):
         gen = UVMGenerator()

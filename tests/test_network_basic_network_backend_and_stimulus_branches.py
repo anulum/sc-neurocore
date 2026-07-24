@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestNetworkBackendAndStimulusBranches:
     """Backend dispatch and stimulus-application edge branches.
 

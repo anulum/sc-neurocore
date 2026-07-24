@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_quadratic_if_support import *  # noqa: F403
 
+
 class TestQIFValidation:
     @pytest.mark.parametrize(
         ("field", "value"),

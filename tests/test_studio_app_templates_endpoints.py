@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_app_support import *  # noqa: F403
 
+
 class TestTemplatesEndpoints:
     def test_list_templates(self, client):
         r = client.get("/api/templates")
@@ -49,4 +50,3 @@ class TestTemplatesEndpoints:
         assert r.status_code == 500
         assert r.json()["detail"] == "Internal error"
         assert "catalog exploded" in caplog.text
-

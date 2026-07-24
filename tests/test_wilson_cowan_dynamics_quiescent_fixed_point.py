@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestQuiescentFixedPoint:
     def test_zero_drive_converges_low(self):
         u = WilsonCowanUnit()

@@ -12,4 +12,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.layers.circuit_primitives import LateralInhibition, WinnerTakeAll
 
-__all__ = ['np', 'LateralInhibition', 'WinnerTakeAll']
+__all__ = ["np", "LateralInhibition", "WinnerTakeAll"]

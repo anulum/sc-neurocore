@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestSymbolicReasoningLog:
     def test_reasoning_log_has_stable_schema_and_fields(self):
         core = create_arcane_neuron_with_zenith_plasticity(backend="torch")

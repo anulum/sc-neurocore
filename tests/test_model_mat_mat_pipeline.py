@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mat_support import *  # noqa: F403
 
+
 class TestMATPipeline:
     def test_population(self):
         assert Population(MATNeuron, n=10, label="mat").n == 10

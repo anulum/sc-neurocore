@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
 
+
 class TestDeSchutterPerformance:
     def test_isolation_throughput(self) -> None:
         n = DeSchutterPurkinjeNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_graph_support import *  # noqa: F403
 
+
 class TestPerPartitionCostMatchesBoundaryCost:
     """The new vector API `_per_partition_cost(v, P)` must agree
     with calling the legacy single-target `_boundary_cost(v, p)` for

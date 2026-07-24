@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestSleepStageDetector(unittest.TestCase):
     def test_default_construction(self):
         det = SleepStageDetector()

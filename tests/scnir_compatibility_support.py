@@ -35,8 +35,10 @@ from sc_neurocore.nir_bridge.node_map import NODE_MAP
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+
 class _Foo:  # parser primitive stand-in; __name__ drives the matrix comparison
     pass
+
 
 def _row(
     primitive: str,
@@ -57,6 +59,7 @@ def _row(
         limitation="",
     )
 
+
 def _patch_matrix(
     monkeypatch: pytest.MonkeyPatch,
     rows: tuple[SCNIRCompatibilityRow, ...],
@@ -65,4 +68,20 @@ def _patch_matrix(
     monkeypatch.setattr("sc_neurocore.ir.scnir_compatibility._MATRIX", rows)
 
 
-__all__ = ['json', 'hashlib', 'Path', 'cast', 'pytest', 'SCNIRCompatibilityRow', 'scnir_compatibility_matrix', 'scnir_compatibility_matrix_dicts', 'validate_scnir_compatibility_matrix', 'main', 'NODE_MAP', 'REPO_ROOT', '_Foo', '_row', '_patch_matrix']
+__all__ = [
+    "json",
+    "hashlib",
+    "Path",
+    "cast",
+    "pytest",
+    "SCNIRCompatibilityRow",
+    "scnir_compatibility_matrix",
+    "scnir_compatibility_matrix_dicts",
+    "validate_scnir_compatibility_matrix",
+    "main",
+    "NODE_MAP",
+    "REPO_ROOT",
+    "_Foo",
+    "_row",
+    "_patch_matrix",
+]

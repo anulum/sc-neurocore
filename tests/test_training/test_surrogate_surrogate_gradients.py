@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.surrogate_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("fn", [fast_sigmoid, superspike, atan_surrogate])
 class TestSurrogateGradients:
     def test_forward_is_heaviside(self, fn):

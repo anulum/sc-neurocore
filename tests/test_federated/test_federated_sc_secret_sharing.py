@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestSecretSharing:
     def test_split_and_reconstruct(self):
         ss = SecretShare(num_parties=3)

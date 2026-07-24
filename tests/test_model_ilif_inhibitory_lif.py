@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ilif_support import *  # noqa: F403
 
+
 class TestInhibitoryLIF:
     def test_fires(self):
         from sc_neurocore.neurons.models.ilif import InhibitoryLIFNeuron

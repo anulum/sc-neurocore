@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_resonate_and_fire_support import *  # noqa: F403
 
+
 def test_exact_flow_rejects_zero_denominator() -> None:
     with pytest.raises(ValueError, match="denominator"):
         ResonateAndFireNeuron._exact_linear_flow(

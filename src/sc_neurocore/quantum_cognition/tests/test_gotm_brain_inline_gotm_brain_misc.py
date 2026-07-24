@@ -12,9 +12,11 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
 from gotm_brain_inline_support import *  # noqa: F403
+
 
 class TestGOTMBrainMisc:
     def test_reset(self) -> None:

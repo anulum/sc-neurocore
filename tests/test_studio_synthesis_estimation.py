@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestEstimation:
     def test_estimate_returns_structure(self):
         result = estimate_resources(10, "ice40")
@@ -60,4 +61,3 @@ class TestEstimation:
     def test_estimate_endpoint_rejects_unknown_target(self, client):
         r = client.post("/api/synth/estimate", json={"ir_op_count": 10, "target": "unknown"})
         assert r.status_code == 422
-

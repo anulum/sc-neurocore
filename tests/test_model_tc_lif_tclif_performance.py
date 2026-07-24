@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tc_lif_support import *  # noqa: F403
 
+
 class TestTCLIFPerformance:
     def test_isolation_throughput(self):
         n = TwoCompartmentLIFNeuron()

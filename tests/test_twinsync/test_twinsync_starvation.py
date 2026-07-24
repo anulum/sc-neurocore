@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestStarvation:
     def test_no_starvation_initially(self):
         eng = TimeWarpEngine(4)

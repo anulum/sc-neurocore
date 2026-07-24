@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.synapses_stdp_support import *  # noqa: F403
 
+
 class TestStochasticSTDPSynapse:
     def _make(self, w=0.5, lr=0.01, seed=42):
         return StochasticSTDPSynapse(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_courage_nekorkin_map_support import *  # noqa: F403
 
+
 class TestCNParameters:
     @pytest.mark.parametrize("m1", [0.5, 0.65, 0.8])
     def test_m1_sweep(self, m1: float):

@@ -35,4 +35,29 @@ from sc_neurocore.edge.weights import (
     WEIGHT_MAGIC,
 )
 
-__all__ = ['pytest', 'popcount32', 'popcount_slice', 'sc_and', 'sc_or', 'sc_xor', 'sc_sub', 'sc_mux', 'and_packed', 'mux_packed', 'probability', 'scc', 'MASK32', 'Lfsr16', 'LifNeuron', 'IzhikevichNeuron', 'SCLayer', 'SCNetwork', 'TelemetryRing', 'DeviceTelemetry', 'serialize_weights', 'deserialize_weights', 'WeightHeader', 'WEIGHT_MAGIC']
+__all__ = [
+    "pytest",
+    "popcount32",
+    "popcount_slice",
+    "sc_and",
+    "sc_or",
+    "sc_xor",
+    "sc_sub",
+    "sc_mux",
+    "and_packed",
+    "mux_packed",
+    "probability",
+    "scc",
+    "MASK32",
+    "Lfsr16",
+    "LifNeuron",
+    "IzhikevichNeuron",
+    "SCLayer",
+    "SCNetwork",
+    "TelemetryRing",
+    "DeviceTelemetry",
+    "serialize_weights",
+    "deserialize_weights",
+    "WeightHeader",
+    "WEIGHT_MAGIC",
+]

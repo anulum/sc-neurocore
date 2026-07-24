@@ -20,4 +20,4 @@ import pytest
 from sc_neurocore.neurons.models.wendling import WendlingNeuron
 from sc_neurocore.network.population import Population
 
-__all__ = ['math', 'time', 'np', 'pytest', 'WendlingNeuron', 'Population']
+__all__ = ["math", "time", "np", "pytest", "WendlingNeuron", "Population"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tc_lif_support import *  # noqa: F403
 
+
 class TestTCLIFParameters:
     @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
     def test_dt_stability(self, dt: float):

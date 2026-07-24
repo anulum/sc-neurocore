@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.expr_lut_tables_support import *  # noqa: F403
 
+
 class TestLutEntries:
     def test_symmetric_luts_have_256_entries(self) -> None:
         assert len(tables.exp_lut_entries(16, 8)) == 256

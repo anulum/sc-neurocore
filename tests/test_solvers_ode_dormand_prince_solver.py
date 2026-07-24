@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestDormandPrinceSolver:
     def test_adaptive_reaches_solution(self):
         solver = DormandPrinceSolver(atol=1e-8, rtol=1e-6)

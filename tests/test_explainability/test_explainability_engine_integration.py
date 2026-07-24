@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestEngineIntegration:
     def test_temporal_tracking(self):
         engine = ExplainabilityEngine(seed=0xACE1)

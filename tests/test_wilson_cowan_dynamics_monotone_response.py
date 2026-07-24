@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestMonotoneResponse:
     def test_stronger_drive_higher_e(self):
         finals = []

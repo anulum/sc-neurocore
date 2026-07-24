@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.bio import DNAEncoder, GeneticRegulatoryLayer, NeuromodulatorSystem
 
-__all__ = ['np', 'DNAEncoder', 'GeneticRegulatoryLayer', 'NeuromodulatorSystem']
+__all__ = ["np", "DNAEncoder", "GeneticRegulatoryLayer", "NeuromodulatorSystem"]

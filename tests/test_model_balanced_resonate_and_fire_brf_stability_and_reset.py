@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
 
+
 class TestBRFStabilityAndReset:
     def test_invalid_boundary_fails_fast(self) -> None:
         with pytest.raises(ValueError, match=r"dt \* omega"):

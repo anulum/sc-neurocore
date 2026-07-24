@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
 
+
 class TestAmariIsolation:
     def test_defaults(self):
         n = AmariNeuralField()

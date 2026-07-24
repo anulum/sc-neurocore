@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_akida_neuron_support import *  # noqa: F403
 
+
 class TestAkidaPerformance:
     def test_isolation_throughput(self):
         n = AkidaNeuron(threshold=1_000_000)  # prevent spike to measure raw perf

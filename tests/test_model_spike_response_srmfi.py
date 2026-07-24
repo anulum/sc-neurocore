@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMFI:
     def test_subthreshold_silent(self):
         n = SpikeResponseNeuron()

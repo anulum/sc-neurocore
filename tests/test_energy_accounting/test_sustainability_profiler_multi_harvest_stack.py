@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestMultiHarvestStack:
     def test_add_and_count(self):
         stack = MultiHarvestStack()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("backend_name", "relative_path"),
     [
@@ -88,5 +89,3 @@ def test_c_abi_loader_requires_symbol_and_configures_signature(
     assert function.restype is None
     assert getattr(backends, library_attr) is library
     assert getattr(backends, flag_attr) is True
-
-

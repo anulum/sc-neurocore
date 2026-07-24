@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.signoff_support import *  # noqa: F403
 
+
 class TestMultiCornerAnalysis:
     def test_generates_all_corners(self) -> None:
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestTopology:
     def test_random_connectivity(self):
         indptr, indices, data = topology.random_connectivity(5, 5, 0.5, 1.0, seed=0)

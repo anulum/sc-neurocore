@@ -24,7 +24,24 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _poisson_step_probability(rate_hz: float, dt_ms: float) -> float:
     return -math.expm1(-rate_hz * dt_ms / 1000.0)
 
-__all__ = ['Callable', 'math', 'cast', 'np', 'npt', 'pytest', 'PoissonNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_poisson_step_probability']
+
+__all__ = [
+    "Callable",
+    "math",
+    "cast",
+    "np",
+    "npt",
+    "pytest",
+    "PoissonNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_poisson_step_probability",
+]

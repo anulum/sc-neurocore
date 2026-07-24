@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestSurrogateGradient:
     def test_peak_at_threshold(self):
         grad = _fast_sigmoid_surrogate(np.array([1.0]))

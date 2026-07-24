@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_larter_breakspear_support import *  # noqa: F403
 
+
 class TestLBDynamics:
     def test_v_oscillates(self):
         n = LarterBreakspearNeuron()

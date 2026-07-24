@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hypothesis_fuzz_support import *  # noqa: F403
 
+
 class TestEquationBuilderFuzz:
     """Property: the EquationNeuron sandbox never executes arbitrary code."""
 

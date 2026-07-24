@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.fitness_support import *  # noqa: F403
 
+
 class TestFitnessEvaluator:
     def test_evaluate(self) -> None:
         ev = FitnessEvaluator()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_primitives_support import *  # noqa: F403
 
+
 class TestVecXnor:
     def test_bipolar_multiply(self):
         # XNOR on unipolar streams gives P(A)*P(B) + (1-P(A))*(1-P(B))

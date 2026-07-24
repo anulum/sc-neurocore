@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestRateLimiter:
     def test_allow(self):
         rl = RateLimiter(3)

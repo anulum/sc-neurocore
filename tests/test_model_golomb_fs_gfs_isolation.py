@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_golomb_fs_support import *  # noqa: F403
 
+
 class TestGFSIsolation:
     def test_defaults(self):
         n = GolombFSNeuron()

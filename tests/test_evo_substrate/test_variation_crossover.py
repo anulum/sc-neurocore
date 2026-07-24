@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.variation_support import *  # noqa: F403
 
+
 class TestCrossover:
     def test_crossover_produces_child(self) -> None:
         cx = CrossoverEngine(rng_seed=42)

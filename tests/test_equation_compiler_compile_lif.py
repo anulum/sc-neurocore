@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestCompileLIF:
     def test_basic_lif_generates_verilog(self):
         neuron = from_equations(

@@ -28,6 +28,7 @@ from hypothesis import strategies as st
 from sc_neurocore.hdl_gen._ident import sanitize_ident
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
 _OPERATORS = st.sampled_from(["+", "-", "*", "/", "**"])
 _NUMBERS = st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False)
 _SAFE_VARS = st.sampled_from(["v", "w", "u", "x", "y", "z", "I", "theta"])
@@ -67,4 +68,25 @@ _IDENT_STRINGS = st.text(
     max_size=100,
 )
 
-__all__ = ['math', 'string', 'np', 'pytest', 'given', 'settings', 'HealthCheck', 'st', 'sanitize_ident', 'EquationNeuron', 'UniversalNeuron', '_OPERATORS', '_NUMBERS', '_SAFE_VARS', '_SAFE_FUNCS', '_SIMPLE_EXPR', '_FUNC_EXPR', '_EXPR', '_HOSTILE_STRINGS', '_IDENT_STRINGS']
+__all__ = [
+    "math",
+    "string",
+    "np",
+    "pytest",
+    "given",
+    "settings",
+    "HealthCheck",
+    "st",
+    "sanitize_ident",
+    "EquationNeuron",
+    "UniversalNeuron",
+    "_OPERATORS",
+    "_NUMBERS",
+    "_SAFE_VARS",
+    "_SAFE_FUNCS",
+    "_SIMPLE_EXPR",
+    "_FUNC_EXPR",
+    "_EXPR",
+    "_HOSTILE_STRINGS",
+    "_IDENT_STRINGS",
+]

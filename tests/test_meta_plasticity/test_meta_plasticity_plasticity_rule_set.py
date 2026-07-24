@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestPlasticityRuleSet:
     def test_to_vector(self):
         rs = PlasticityRuleSet()

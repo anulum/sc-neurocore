@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_dpi_neuron_support import *  # noqa: F403
 
+
 def test_defaults_and_one_step_match_published_coupled_equations() -> None:
     """Anchor Eq. (2) feedback and both Eq. (3) Euler increments."""
     neuron = DPINeuron()

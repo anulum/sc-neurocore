@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestSCOps:
     def test_sc_and(self):
         assert sc_and(0b1010, 0b1100) == 0b1000

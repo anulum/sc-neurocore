@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.bench_iqif_support import *  # noqa: F403
 
+
 def test_real_benchmark_writes_five_backend_integer_parity_evidence(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

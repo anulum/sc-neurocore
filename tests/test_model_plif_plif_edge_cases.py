@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFEdgeCases:
     def test_zero_input(self):
         """Zero input from rest → V stays at 0, no spikes."""

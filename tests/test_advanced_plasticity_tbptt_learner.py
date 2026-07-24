@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestTBPTTLearner:
     def test_train_step_returns_loss(self, simple_net):
         net, pop_a, pop_b, _ = simple_net

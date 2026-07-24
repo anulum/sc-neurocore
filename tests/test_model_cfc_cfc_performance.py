@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cfc_support import *  # noqa: F403
 
+
 class TestCFCPerformance:
     def test_isolation_throughput(self):
         n = ClosedFormContinuousNeuron()

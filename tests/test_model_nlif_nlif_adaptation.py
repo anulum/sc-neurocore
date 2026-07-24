@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_nlif_support import *  # noqa: F403
 
+
 class TestNLIFAdaptation:
     def test_w_accumulates_during_spiking(self):
         n = NonlinearLIFNeuron()

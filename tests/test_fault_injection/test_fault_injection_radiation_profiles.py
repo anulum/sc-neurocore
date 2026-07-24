@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fault_injection_support import *  # noqa: F403
 
+
 class TestRadiationProfiles(unittest.TestCase):
     def test_leo(self):
         p = RadiationProfile.leo()

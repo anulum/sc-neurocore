@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_theta_support import *  # noqa: F403
 
+
 class TestThetaValidation:
     @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
     def test_rejects_non_finite_initial_phase(self, theta: float) -> None:

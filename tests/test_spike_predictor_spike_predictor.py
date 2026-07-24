@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_predictor_support import *  # noqa: F403
 
+
 class TestSpikePredictor:
     def test_predict_shape(self):
         p = SpikePredictor(n_channels=8, history_len=4)

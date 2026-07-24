@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.comm_aer_support import *  # noqa: F403
 
+
 class TestAERSenderReceiver:
     def test_send_receive_roundtrip(self):
         port = 19876

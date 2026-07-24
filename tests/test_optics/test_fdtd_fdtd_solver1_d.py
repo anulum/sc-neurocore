@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fdtd_support import *  # noqa: F403
 
+
 class TestFDTDSolver1D:
     @pytest.fixture
     def solver(self) -> FDTDSolver:

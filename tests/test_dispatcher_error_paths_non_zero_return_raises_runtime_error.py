@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dispatcher_error_paths_support import *  # noqa: F403
 
+
 class TestNonZeroReturnRaisesRuntimeError:
     """When the C shim returns non-zero, the dispatcher raises
     ``RuntimeError`` with the offending return code in the message."""

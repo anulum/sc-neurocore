@@ -17,4 +17,11 @@ from sc_neurocore.spike_norm import (
     TemporalAccumulatedBN,
 )
 
-__all__ = ['np', 'ThresholdDependentBN', 'PerTimestepBN', 'TemporalEffectiveBN', 'MembranePotentialBN', 'TemporalAccumulatedBN']
+__all__ = [
+    "np",
+    "ThresholdDependentBN",
+    "PerTimestepBN",
+    "TemporalEffectiveBN",
+    "MembranePotentialBN",
+    "TemporalAccumulatedBN",
+]

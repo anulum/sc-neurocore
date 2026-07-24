@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGIsolation:
     def test_defaults(self):
         n = MarderSTGNeuron()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from engine_monolith_guard_support import *  # noqa: F403
 
+
 def test_pyfunction_pattern_matches_plain_and_arg_forms() -> None:
     tool = _load_tool()
     text = "#[pyfunction]\n#[pyfunction(signature = (x))]\n#[pyfunctions]\nfn pyfunction_x() {}"

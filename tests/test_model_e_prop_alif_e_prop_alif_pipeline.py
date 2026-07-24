@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_e_prop_alif_support import *  # noqa: F403
 
+
 class TestEPropALIFPipeline:
     def test_population(self):
         assert Population(EPropALIFNeuron, n=10, label="eprop").n == 10

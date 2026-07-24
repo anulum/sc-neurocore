@@ -17,10 +17,25 @@ from sc_neurocore.identity import (
     Checkpoint,
     DirectorController,
 )
+
 N_CORTICAL = 20
 N_INHIBITORY = 8
 N_MEMORY = 5
+
+
 def _make_substrate(seed=42):
     return IdentitySubstrate(N_CORTICAL, N_INHIBITORY, N_MEMORY, seed=seed)
 
-__all__ = ['np', 'IdentitySubstrate', 'TraceEncoder', 'StateDecoder', 'Checkpoint', 'DirectorController', 'N_CORTICAL', 'N_INHIBITORY', 'N_MEMORY', '_make_substrate']
+
+__all__ = [
+    "np",
+    "IdentitySubstrate",
+    "TraceEncoder",
+    "StateDecoder",
+    "Checkpoint",
+    "DirectorController",
+    "N_CORTICAL",
+    "N_INHIBITORY",
+    "N_MEMORY",
+    "_make_substrate",
+]

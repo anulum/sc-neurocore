@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.residual_support import *  # noqa: F403
 
+
 class TestDeepSNNStack:
     def test_ms_stack(self) -> None:
         s = DeepSNNStack(n_features=8, n_blocks=5, block_type="ms")

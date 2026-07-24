@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestCdcConfigsMissingDie:
     def test_continues_when_link_references_unknown_die(self) -> None:
         # Topology has dies 0, 1; link references die 99 (missing).

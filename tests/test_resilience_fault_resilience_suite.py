@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.resilience_support import *  # noqa: F403
 
+
 class TestFaultResilienceSuite:
     def _make_suite(self):
         weights = [np.random.randn(8, 4) * 0.5, np.random.randn(2, 8) * 0.5]

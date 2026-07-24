@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.encoding_support import *  # noqa: F403
 
+
 class TestSCToOptoEncoder:
     def test_encode(self) -> None:
         bs = {0: np.ones(128, dtype=np.uint8), 1: np.zeros(128, dtype=np.uint8)}

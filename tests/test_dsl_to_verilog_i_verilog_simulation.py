@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dsl_to_verilog_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestIVerilogSimulation:
     """End-to-end: schema → Verilog → Icarus compile → simulation.

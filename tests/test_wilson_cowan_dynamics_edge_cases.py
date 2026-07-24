@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestEdgeCases:
     rust = pytest.importorskip(
         "sc_neurocore_engine", reason="Rust engine required"

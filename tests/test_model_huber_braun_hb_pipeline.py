@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_huber_braun_support import *  # noqa: F403
 
+
 class TestHBPipeline:
     def test_population(self):
         assert Population(HuberBraunNeuron, n=10, label="hb").n == 10

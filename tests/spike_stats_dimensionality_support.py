@@ -20,21 +20,30 @@ from sc_neurocore.analysis.spike_stats.dimensionality import (
     demixed_pca,
     factor_analysis,
 )
+
 _DIM = importlib.import_module("sc_neurocore.analysis.spike_stats.dimensionality")
 _RUST_AVAILABLE = _DIM._rust_pca is not None
 _JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _DIM._ensure_go_dim()
 _MOJO_AVAILABLE = _DIM._ensure_mojo_dim()
+
+
 def _raise_oserror(_path: str) -> object:
     raise OSError("library load failed")
+
+
 def _trains(n: int = 6, length: int = 400, seed: int = 3) -> list[np.ndarray]:
     rng = np.random.default_rng(seed)
     return [(rng.random(length) < (0.1 + 0.04 * i)).astype(np.int8) for i in range(n)]
+
+
 def _conditions(seed: int = 3) -> dict[int, list[np.ndarray]]:
     t = _trains(6, 400, seed)
     rng = np.random.default_rng(seed + 1)
     extra = [(rng.random(400) < 0.2).astype(np.int8) for _ in range(3)]
     return {0: t[:3], 1: t[3:], 2: extra}
+
+
 def _parity(backend: str, atol: float = 1e-6) -> None:
     trains = _trains()
     conds = _conditions()
@@ -49,4 +58,22 @@ def _parity(backend: str, atol: float = 1e-6) -> None:
         npt.assert_allclose(b0, p0, atol=atol)
         npt.assert_allclose(b1, p1, atol=atol)
 
-__all__ = ['importlib', 'np', 'npt', 'pytest', 'spike_train_pca', 'demixed_pca', 'factor_analysis', '_DIM', '_RUST_AVAILABLE', '_JULIA_AVAILABLE', '_GO_AVAILABLE', '_MOJO_AVAILABLE', '_raise_oserror', '_trains', '_conditions', '_parity']
+
+__all__ = [
+    "importlib",
+    "np",
+    "npt",
+    "pytest",
+    "spike_train_pca",
+    "demixed_pca",
+    "factor_analysis",
+    "_DIM",
+    "_RUST_AVAILABLE",
+    "_JULIA_AVAILABLE",
+    "_GO_AVAILABLE",
+    "_MOJO_AVAILABLE",
+    "_raise_oserror",
+    "_trains",
+    "_conditions",
+    "_parity",
+]

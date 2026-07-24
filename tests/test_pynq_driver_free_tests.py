@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pynq_driver_support import *  # noqa: F403
 
+
 def test_driver_emulation_mode():
     """Verify driver works in emulation mode."""
     driver = SC_NeuroCore_Driver(mode="EMULATION")
@@ -20,6 +21,8 @@ def test_driver_emulation_mode():
     assert driver.overlay is None
 
     print("Driver emulation mode verified.")
+
+
 def test_driver_write_layer_params():
     """Verify driver can write layer parameters in emulation mode."""
     driver = SC_NeuroCore_Driver(mode="EMULATION")
@@ -29,6 +32,8 @@ def test_driver_write_layer_params():
     driver.write_layer_params(layer_id=2, params={"gain": 2.0})
 
     print("Driver write_layer_params verified.")
+
+
 def test_driver_write_layer_params_hardware_q16_16_encoding():
     """HARDWARE mode writes gain/threshold as Q16.16 AXI-Lite registers."""
 
@@ -53,6 +58,8 @@ def test_driver_write_layer_params_hardware_q16_16_encoding():
         (0x10, 32768),
         (0x14, 81920),
     ]
+
+
 def test_driver_write_layer_params_hardware_rejects_missing_layer():
     """HARDWARE mode fails closed when the target layer IP is absent."""
     driver = SC_NeuroCore_Driver(mode="EMULATION")
@@ -61,6 +68,8 @@ def test_driver_write_layer_params_hardware_rejects_missing_layer():
 
     with pytest.raises(ValueError, match="Layer 9 not found in hardware"):
         driver.write_layer_params(layer_id=9, params={"gain": 1.0})
+
+
 def test_driver_run_step():
     """Verify run_step returns output in emulation mode."""
     driver = SC_NeuroCore_Driver(mode="EMULATION")
@@ -73,10 +82,14 @@ def test_driver_run_step():
     assert np.all(np.isfinite(output))
 
     print("Driver run_step verified.")
+
+
 def test_driver_hardware_mode_fails_without_fpga():
     """Verify hardware mode fails gracefully without FPGA."""
     with pytest.raises(RealityHardwareError):
         driver = SC_NeuroCore_Driver(mode="HARDWARE")
+
+
 def test_driver_hardware_mode_uses_install_fallback_bitstream(monkeypatch):
     """HARDWARE mode resolves the installed overlay path when local bitstream is absent."""
     loaded_paths: list[str] = []
@@ -102,6 +115,8 @@ def test_driver_hardware_mode_uses_install_fallback_bitstream(monkeypatch):
 
     assert driver.bitstream_path == fallback
     assert loaded_paths == [fallback]
+
+
 def test_driver_hardware_mode_rejects_overlay_without_expected_ip(monkeypatch):
     """Loaded overlays must expose the expected SCPN layer IP."""
 
@@ -117,6 +132,8 @@ def test_driver_hardware_mode_rejects_overlay_without_expected_ip(monkeypatch):
 
     with pytest.raises(RealityHardwareError, match="does not contain SCPN Layer 1 IP"):
         SC_NeuroCore_Driver(bitstream_path="wrong.bit", mode="HARDWARE")
+
+
 def test_driver_hardware_mode_wraps_overlay_runtime_errors(monkeypatch):
     """Overlay loader runtime failures are reported as RealityHardwareError."""
 
@@ -132,6 +149,8 @@ def test_driver_hardware_mode_wraps_overlay_runtime_errors(monkeypatch):
 
     with pytest.raises(RealityHardwareError, match="cannot load broken.bit"):
         SC_NeuroCore_Driver(bitstream_path="broken.bit", mode="HARDWARE")
+
+
 def test_driver_hardware_mode_wraps_missing_bitstream(monkeypatch):
     """A bitstream absent both locally and in the install path fails closed."""
     fake_pynq = types.ModuleType("pynq")
@@ -143,6 +162,8 @@ def test_driver_hardware_mode_wraps_missing_bitstream(monkeypatch):
 
     with pytest.raises(RealityHardwareError, match="Hardware initialization failed"):
         SC_NeuroCore_Driver(bitstream_path="missing.bit", mode="HARDWARE")
+
+
 def test_driver_invalid_mode():
     """Verify invalid mode raises error."""
     with pytest.raises(ValueError):

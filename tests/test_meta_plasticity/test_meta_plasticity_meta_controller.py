@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestMetaController:
     def _feed_observations(self, mc, n=20, novelty=0.8, surprise=0.5, gci=0.5):
         for _ in range(n):

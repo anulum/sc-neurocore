@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from crosstalk_support import *  # noqa: F403
 
+
 class TestBackendParity:
     """The Rust and Python code paths solve the same coupled-mode equations
     — their outputs must agree to within floating-point tolerance. Any drift

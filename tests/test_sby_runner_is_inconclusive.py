@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sby_runner_support import *  # noqa: F403
 
+
 class TestIsInconclusive:
     """The inconclusive k-induction signature (UNKNOWN, rc == 4)."""
 

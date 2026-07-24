@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
 
+
 class TestCSParameters:
     @pytest.mark.parametrize("g_a", [0.0, 47.7, 100.0])
     def test_g_a_sweep(self, g_a: float):

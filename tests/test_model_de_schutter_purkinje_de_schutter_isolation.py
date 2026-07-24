@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
 
+
 class TestDeSchutterIsolation:
     def test_step_returns_binary(self) -> None:
         assert DeSchutterPurkinjeNeuron().step(0.0) in (0, 1)

@@ -15,11 +15,14 @@ from textwrap import dedent
 from typing import cast
 import numpy as np
 import pytest
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
 def _pyproject_adapter_entry_points(group: str) -> dict[str, str]:
     pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     entry_points = pyproject["project"]["entry-points"][group]
@@ -30,6 +33,8 @@ def _pyproject_adapter_entry_points(group: str) -> dict[str, str]:
         assert isinstance(target, str)
         result[name] = target
     return result
+
+
 def _resolve_entry_point_target(target: str) -> type:
     module_name, separator, attribute_path = target.partition(":")
     assert module_name
@@ -41,4 +46,16 @@ def _resolve_entry_point_target(target: str) -> type:
     assert isinstance(resolved, type)
     return resolved
 
-__all__ = ['importlib', 'Path', 'sys', 'dedent', 'cast', 'np', 'pytest', 'REPO_ROOT', '_pyproject_adapter_entry_points', '_resolve_entry_point_target']
+
+__all__ = [
+    "importlib",
+    "Path",
+    "sys",
+    "dedent",
+    "cast",
+    "np",
+    "pytest",
+    "REPO_ROOT",
+    "_pyproject_adapter_entry_points",
+    "_resolve_entry_point_target",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestTotalCoverage:
     def test_min_profiles(self):
         from sc_neurocore.compiler.platforms import list_profile_names

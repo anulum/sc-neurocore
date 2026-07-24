@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.e2e.e2e_pipeline_support import *  # noqa: F403
 
+
 @pytest.mark.e2e
 class TestAnalysisChain:
     """Pipeline depth → power → thermal → multi-target: all consistent."""

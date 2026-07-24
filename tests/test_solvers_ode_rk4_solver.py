@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestRK4Solver:
     def test_convergence_order_4(self):
         y0 = np.array([1.0])

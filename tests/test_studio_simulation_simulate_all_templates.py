@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_simulation_support import *  # noqa: F403
 
+
 class TestSimulateAllTemplates:
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
     def test_template_runs_without_error(self, name):
@@ -28,4 +29,3 @@ class TestSimulateAllTemplates:
         )
         assert len(result["time"]) > 0
         assert all(isinstance(v, list) for v in result["states"].values())
-

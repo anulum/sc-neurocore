@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestCrosstalkAnalyzer:
     def test_analyze_returns_result(self):
         analyzer = CrosstalkAnalyzer()

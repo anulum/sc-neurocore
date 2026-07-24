@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_nlif_support import *  # noqa: F403
 
+
 class TestNLIFIsolation:
     def test_defaults(self):
         n = NonlinearLIFNeuron()

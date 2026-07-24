@@ -16,6 +16,14 @@ from sc_neurocore.hdl_gen.bus_interface import (
     generate_bus_wrapper,
     generate_register_map,
 )
+
 LIF_PARAMS = {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16}
 
-__all__ = ['cast', 'pytest', 'BusProtocol', 'generate_bus_wrapper', 'generate_register_map', 'LIF_PARAMS']
+__all__ = [
+    "cast",
+    "pytest",
+    "BusProtocol",
+    "generate_bus_wrapper",
+    "generate_register_map",
+    "LIF_PARAMS",
+]

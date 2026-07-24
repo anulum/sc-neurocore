@@ -21,4 +21,4 @@ import numpy as np
 import pytest
 from sc_neurocore._native.array_guards import require_c_contiguous
 
-__all__ = ['np', 'pytest', 'require_c_contiguous']
+__all__ = ["np", "pytest", "require_c_contiguous"]

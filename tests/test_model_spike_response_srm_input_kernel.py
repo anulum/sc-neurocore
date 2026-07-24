@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMInputKernel:
     def test_kappa_formula_exact(self):
         """κ = I·(1 - exp(-dt/tau_kappa))."""

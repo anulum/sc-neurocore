@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCableNetwork:
     def test_population_incompatible(self) -> None:
         """RallCableNeuron has array-valued v — Population._sync_voltages

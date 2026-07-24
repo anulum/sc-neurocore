@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hls_export_support import *  # noqa: F403
 
+
 class TestEulerIntegration:
     def test_derivative_is_euler_integrated(self) -> None:
         cpp = generate_hls_cpp("sc_lif", {"v": "-v / tau + I"})

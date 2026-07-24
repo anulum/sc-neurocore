@@ -19,4 +19,12 @@ from sc_neurocore.evo_substrate.ecology import (
 from sc_neurocore.evo_substrate.genome import Genome
 from sc_neurocore.evo_substrate.organism import Organism
 
-__all__ = ['np', 'CoevolutionArena', 'ExtinctionDetector', 'IslandModel', 'NoveltyArchive', 'Genome', 'Organism']
+__all__ = [
+    "np",
+    "CoevolutionArena",
+    "ExtinctionDetector",
+    "IslandModel",
+    "NoveltyArchive",
+    "Genome",
+    "Organism",
+]

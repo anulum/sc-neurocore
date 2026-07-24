@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from compiler_export_support import *  # noqa: F403
 
+
 class TestMlirTypeFormatting(unittest.TestCase):
     """Verify MLIR type rendering for scalar and tensor shapes."""
 

@@ -20,4 +20,14 @@ from sc_neurocore.model_zoo.model_zoo import (
     VerilogGenerator,
 )
 
-__all__ = ['np', 'AdExPlugin', 'DocGenerator', 'HodgkinHuxleyPlugin', 'IzhikevichPlugin', 'LIFPlugin', 'NeuronState', 'PluginRegistry', 'VerilogGenerator']
+__all__ = [
+    "np",
+    "AdExPlugin",
+    "DocGenerator",
+    "HodgkinHuxleyPlugin",
+    "IzhikevichPlugin",
+    "LIFPlugin",
+    "NeuronState",
+    "PluginRegistry",
+    "VerilogGenerator",
+]

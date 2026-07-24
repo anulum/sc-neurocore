@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bit_true_cosim_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_COSIM, reason="Icarus Verilog / gcc not available")
 class TestBitTrueCosim:
     @pytest.mark.parametrize(

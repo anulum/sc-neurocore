@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestIndexRepo:
     def test_index_repo(self, tmp_repo: Path) -> None:
         chunks = index_gotm_repo(tmp_repo, "TEST-REPO")

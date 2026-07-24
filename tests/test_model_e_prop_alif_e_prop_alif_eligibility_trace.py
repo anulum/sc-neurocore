@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_e_prop_alif_support import *  # noqa: F403
 
+
 class TestEPropALIFEligibilityTrace:
     """e_trace tracks how weight changes affect future spiking."""
 

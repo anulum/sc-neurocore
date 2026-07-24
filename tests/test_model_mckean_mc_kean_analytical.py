@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mckean_support import *  # noqa: F403
 
+
 class TestMcKeanAnalytical:
     def test_f_left_piece(self):
         n = McKeanNeuron()

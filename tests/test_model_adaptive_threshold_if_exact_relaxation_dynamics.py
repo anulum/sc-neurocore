@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adaptive_threshold_if_support import *  # noqa: F403
 
+
 class TestExactRelaxationDynamics:
     """Each step is the exact constant-input relaxation, never an Euler step."""
 

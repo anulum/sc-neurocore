@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_kernel_bandwidth_zero():
     assert np.isnan(optimal_kernel_bandwidth(np.ones(5, dtype=np.int8) * 3))
 

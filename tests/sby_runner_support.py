@@ -27,10 +27,13 @@ from sc_neurocore.compiler._sby_runner import (
     raise_for_incomplete,
     run_sby_task,
 )
+
 _HAS_FORMAL = formal_tools_available()
 _needs_formal = pytest.mark.skipif(
     not _HAS_FORMAL, reason="SymbiYosys / Yosys / solver not available"
 )
+
+
 class _FakeProc:
     """Stand-in for a finished ``subprocess.run`` result."""
 
@@ -38,4 +41,19 @@ class _FakeProc:
         self.stdout = stdout
         self.returncode = returncode
 
-__all__ = ['subprocess', 'Path', 'pytest', '_sby_runner', 'SbyRun', 'formal_tools_available', 'is_inconclusive', 'parse_verdict', 'raise_for_incomplete', 'run_sby_task', '_HAS_FORMAL', '_needs_formal', '_FakeProc']
+
+__all__ = [
+    "subprocess",
+    "Path",
+    "pytest",
+    "_sby_runner",
+    "SbyRun",
+    "formal_tools_available",
+    "is_inconclusive",
+    "parse_verdict",
+    "raise_for_incomplete",
+    "run_sby_task",
+    "_HAS_FORMAL",
+    "_needs_formal",
+    "_FakeProc",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestExtractSpikeTimesBasic:
     def test_no_spikes_subthreshold(self):
         v = np.array([0.0, 0.0, 0.0, 0.0])

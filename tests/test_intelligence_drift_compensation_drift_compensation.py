@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_drift_compensation_support import *  # noqa: F403
 
+
 class TestDriftCompensation:
     """Analog drift compensation controller."""
 

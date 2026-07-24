@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_leaky_compete_fire_support import *  # noqa: F403
 
+
 class TestLCFParameters:
     @pytest.mark.parametrize("w_inh", [0.0, 0.5, 2.0])
     def test_w_inh_sweep(self, w_inh: float):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestImplicitSolvers:
     def test_rosenbrock_euler_stable_for_stiff(self):
         solver = RosenbrockEuler()

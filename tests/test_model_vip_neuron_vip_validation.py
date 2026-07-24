@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_vip_neuron_support import *  # noqa: F403
 
+
 class TestVIPValidation:
     @pytest.mark.parametrize(
         "kwargs",

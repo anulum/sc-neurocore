@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantisation_pipeline_support import *  # noqa: F403
 
+
 class TestQuantizeWeights:
     def test_output_is_integer(self):
         w = np.array([0.5, -0.5, 1.0, -1.0])

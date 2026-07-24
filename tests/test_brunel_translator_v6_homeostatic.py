@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_translator_support import *  # noqa: F403
 
+
 class TestV6Homeostatic:
     """V6: HomeostaticLIFNeuron threshold adaptation."""
 

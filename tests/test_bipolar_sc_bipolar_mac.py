@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestBipolarMAC:
     def test_single_input(self):
         # 1 input: dot product = 0.5 * 0.8 = 0.4

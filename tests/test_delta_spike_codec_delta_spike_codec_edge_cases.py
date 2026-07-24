@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.delta_spike_codec_support import *  # noqa: F403
 
+
 class TestDeltaSpikeCodecEdgeCases:
     def test_invalid_magic_raises(self):
         codec = DeltaSpikeCodec()

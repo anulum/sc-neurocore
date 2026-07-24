@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestNonNdarrayNonContiguousRejected:
     """Cover the defensive branch after ``np.asarray`` coercion.
 

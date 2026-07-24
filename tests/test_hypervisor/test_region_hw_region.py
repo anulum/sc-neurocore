@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from region_support import *  # noqa: F403
 
+
 class TestHWRegion:
     def test_defaults(self) -> None:
         r = _region()

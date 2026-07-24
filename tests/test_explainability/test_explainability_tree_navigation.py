@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestTreeNavigation:
     def test_get_node(self):
         tree = SpikeDecisionTree()

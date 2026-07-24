@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_astrocyte_support import *  # noqa: F403
 
+
 class TestAstrocytePipeline:
     def test_population_creates(self):
         assert Population(AstrocyteModel, n=5, label="astro").n == 5

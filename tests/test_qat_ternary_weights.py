@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_support import *  # noqa: F403
 
+
 class TestTernaryWeights:
     def test_ternary_values(self):
         tw = TernaryWeights()

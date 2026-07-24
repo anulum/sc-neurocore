@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from onnx_export_support import *  # noqa: F403
 
+
 class TestONNXNode(unittest.TestCase):
     def test_to_dict_no_attrs(self) -> None:
         n = ONNXNode("ScAnd", SCPN_DOMAIN, ["a", "b"], ["c"], "and_1")

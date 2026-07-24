@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestMultiDieAndRegressionEdges:
     """Cover the floorplan overflow placement and the zero-baseline regression
     delta that the nominal cases leave untouched."""

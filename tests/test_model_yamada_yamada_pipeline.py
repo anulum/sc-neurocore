@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_yamada_support import *  # noqa: F403
 
+
 class TestYamadaPipeline:
     def test_population(self):
         assert Population(YamadaNeuron, n=5, label="yam").n == 5

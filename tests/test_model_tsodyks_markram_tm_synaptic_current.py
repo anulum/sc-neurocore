@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tsodyks_markram_support import *  # noqa: F403
 
+
 class TestTMSynapticCurrent:
     def test_isyn_on_presyn_spike(self):
         """I_syn = A · u · x when presynaptic spike occurs."""

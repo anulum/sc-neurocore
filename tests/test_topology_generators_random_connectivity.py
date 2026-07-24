@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_generators_support import *  # noqa: F403
 
+
 class TestRandomConnectivity:
     def test_csr_valid(self) -> None:
         indptr, indices, data = random_connectivity(50, 50, p=0.1, weight=1.0)

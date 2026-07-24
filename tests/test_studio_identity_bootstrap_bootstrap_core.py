@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_identity_bootstrap_support import *  # noqa: F403
 
+
 def test_bootstrap_studio_admin_identity_creates_authenticating_store(tmp_path: Path) -> None:
     identity_path = tmp_path / "private" / "studio-identities.json"
 
@@ -195,5 +196,3 @@ def test_bootstrap_permission_hardening_reports_false_without_posix(
     hardened = bootstrap._chmod_owner_only(identity_path, directory=False)
 
     assert hardened is False
-
-

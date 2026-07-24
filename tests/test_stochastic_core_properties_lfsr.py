@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from tests.stochastic_core_properties_support import *  # noqa: F403
 
+
 @given(seed=st.integers(min_value=1, max_value=0xFFFF))
 @settings(max_examples=30)
 def test_lfsr_nonzero_output(seed):
     lfsr = FixedPointLFSR(seed=seed)
     vals = [lfsr.step() for _ in range(100)]
     assert any(v != 0 for v in vals)
+
 
 @given(seed=st.integers(min_value=1, max_value=0xFFFF))
 @settings(max_examples=20)

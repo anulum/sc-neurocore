@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_core_support import *  # noqa: F403
 
+
 class TestPreExistingEdgeCases:
     """Two pre-existing edge-case lines (calculate_imbalance_ratio
     `ideal == 0` and MigrationPlanner `recs >= max_recommendations`)

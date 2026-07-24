@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.continual import ContinualLearner, PlasticityConfig, ContinualReport
 
-__all__ = ['np', 'ContinualLearner', 'PlasticityConfig', 'ContinualReport']
+__all__ = ["np", "ContinualLearner", "PlasticityConfig", "ContinualReport"]

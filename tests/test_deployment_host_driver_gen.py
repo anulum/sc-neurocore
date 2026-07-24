@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.deployment_support import *  # noqa: F403
 
+
 class TestHostDriverGen:
     """Test Python and C driver generation."""
 

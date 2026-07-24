@@ -53,5 +53,15 @@ def _actor_detail() -> str:
     return f"actor must be one of {sorted(audit_tool.CONTROLLED_ACTORS)}"
 
 
-
-__all__ = ['json', 'runpy', 'subprocess', 'sys', 'Path', 'pytest', 'audit_tool', '_canonical_payload', '_write_json', '_actor_detail']
+__all__ = [
+    "json",
+    "runpy",
+    "subprocess",
+    "sys",
+    "Path",
+    "pytest",
+    "audit_tool",
+    "_canonical_payload",
+    "_write_json",
+    "_actor_detail",
+]

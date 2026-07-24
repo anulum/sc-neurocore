@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adex_support import *  # noqa: F403
 
+
 class TestAdExPipeline:
     def test_population(self):
         assert Population(AdExNeuron, n=10, label="adex").n == 10

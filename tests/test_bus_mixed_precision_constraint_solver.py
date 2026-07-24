@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bus_mixed_precision_support import *  # noqa: F403
 
+
 class TestConstraintSolver:
     """Test the automatic precision constraint solver."""
 

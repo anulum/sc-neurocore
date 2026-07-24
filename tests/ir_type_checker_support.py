@@ -17,4 +17,4 @@ from sc_neurocore.compiler.ir_type_checker import (
     types_compatible,
 )
 
-__all__ = ['IREdge', 'IRNode', 'SignalType', 'check_ir_types', 'types_compatible']
+__all__ = ["IREdge", "IRNode", "SignalType", "check_ir_types", "types_compatible"]

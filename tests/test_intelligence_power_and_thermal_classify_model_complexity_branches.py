@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestClassifyModelComplexityBranches:
     """Each compute-profile class is reached by its own op-density / coupling
     signature, distinct from the default compute-bound fall-through."""

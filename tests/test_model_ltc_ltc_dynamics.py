@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ltc_support import *  # noqa: F403
 
+
 class TestLTCDynamics:
     def test_fires(self):
         assert len(_run(LiquidTimeConstantNeuron(), 5.0, 5000)) >= 10

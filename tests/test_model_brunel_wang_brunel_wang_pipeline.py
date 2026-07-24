@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_brunel_wang_support import *  # noqa: F403
 
+
 class TestBrunelWangPipeline:
     def test_population(self):
         assert Population(BrunelWangNeuron, n=10, label="bw").n == 10

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sst_neuron_support import *  # noqa: F403
 
+
 class TestSSTAdaptation:
     def test_m_current_block_changes_firing(self):
         intact = _spikes(SSTNeuron(), 2.0, 40000)

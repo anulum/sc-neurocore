@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestRadiationProfileContracts:
     def test_presets_construct_valid_profiles(self):
         for profile in (

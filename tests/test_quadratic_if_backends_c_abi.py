@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.quadratic_if_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejects_invalid_run_without_writing_output(backend: str) -> None:
     """Reject invalid work before emitting any caller-visible row."""

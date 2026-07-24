@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_wilson_hr_support import *  # noqa: F403
 
+
 class TestTierBModelCosim:
     """WC-A5 Tier-B Wilson-HR schema enrolment."""
 

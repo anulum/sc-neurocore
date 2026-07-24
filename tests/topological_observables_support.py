@@ -18,4 +18,10 @@ from sc_neurocore.math.topology import (
     connection_curvature,
 )
 
-__all__ = ['np', 'winding_number', 'ollivier_ricci_curvature', 'sheaf_consistency_defect', 'connection_curvature']
+__all__ = [
+    "np",
+    "winding_number",
+    "ollivier_ricci_curvature",
+    "sheaf_consistency_defect",
+    "connection_curvature",
+]

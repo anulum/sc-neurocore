@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestISIEntropy:
     def test_regular_low_entropy(self):
         train = np.zeros(2000, dtype=np.uint8)

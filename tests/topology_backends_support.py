@@ -118,5 +118,25 @@ _CASES = _parametrised_cases()
 _CASE_IDS = [f"{name}-{i}-{j}" for name, _g, i, j in _CASES]
 
 
-
-__all__ = ['np', 'pytest', 'topology', 'ollivier_ricci_curvature', 'ATOL', '_complete', '_ring', '_star', '_path', '_weighted_random', '_GRAPHS', '_node_pairs', '_reference', '_rust_available', '_julia_available', '_go_available', '_mojo_available', '_parametrised_cases', '_CASES', '_CASE_IDS']
+__all__ = [
+    "np",
+    "pytest",
+    "topology",
+    "ollivier_ricci_curvature",
+    "ATOL",
+    "_complete",
+    "_ring",
+    "_star",
+    "_path",
+    "_weighted_random",
+    "_GRAPHS",
+    "_node_pairs",
+    "_reference",
+    "_rust_available",
+    "_julia_available",
+    "_go_available",
+    "_mojo_available",
+    "_parametrised_cases",
+    "_CASES",
+    "_CASE_IDS",
+]

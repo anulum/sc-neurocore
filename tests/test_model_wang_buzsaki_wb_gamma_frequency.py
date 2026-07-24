@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wang_buzsaki_support import *  # noqa: F403
 
+
 class TestWBGammaFrequency:
     """The model is designed for gamma-band (30–80 Hz) firing."""
 

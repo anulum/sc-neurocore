@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.digital_twin_support import *  # noqa: F403
 
+
 class TestPerturbations:
     def test_perturb_weights_changes_values(self):
         model = FPGAMismatchModel(weight_cv=0.1, seed=0)

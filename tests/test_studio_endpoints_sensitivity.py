@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestSensitivityEndpoint:
     def test_sensitivity_model(self, client):
         r = client.post(
@@ -26,4 +27,3 @@ class TestSensitivityEndpoint:
         data = r.json()
         assert "base_rate" in data
         assert "sensitivities" in data
-

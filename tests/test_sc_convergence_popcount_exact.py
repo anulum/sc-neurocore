@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_convergence_support import *  # noqa: F403
 
+
 class TestPopcountExact:
     """Popcount should return the exact number of 1-bits."""
 

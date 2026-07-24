@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mat_support import *  # noqa: F403
 
+
 class TestMATParameters:
     @pytest.mark.parametrize("tau_1", [5.0, 10.0, 50.0])
     def test_tau_1_sweep(self, tau_1: float):

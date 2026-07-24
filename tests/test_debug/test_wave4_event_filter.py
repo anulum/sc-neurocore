@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestEventFilter:
     def test_layer_filter(self):
         f = EventFilter(layer_id="L1")

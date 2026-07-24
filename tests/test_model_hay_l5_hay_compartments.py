@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hay_l5_support import *  # noqa: F403
 
+
 class TestHayCompartments:
     def test_somatic_input_drives_spiking(self) -> None:
         """Somatic drive produces spikes (soma may hyperpolarise post-spike)."""

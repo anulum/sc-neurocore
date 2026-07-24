@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestMetaLearningRate:
     def test_positive_delta_increases(self):
         mlr = MetaLearningRate(meta_lr=0.01)

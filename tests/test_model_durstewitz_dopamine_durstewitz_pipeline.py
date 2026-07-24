@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_durstewitz_dopamine_support import *  # noqa: F403
 
+
 class TestDurstewitzPipeline:
     def test_population(self):
         assert Population(DurstewitzDopamineNeuron, n=5, label="dd").n == 5

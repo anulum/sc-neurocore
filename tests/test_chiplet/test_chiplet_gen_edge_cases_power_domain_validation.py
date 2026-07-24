@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestPowerDomainValidation:
     def test_duplicate_die_ids_are_rejected(self) -> None:
         with pytest.raises(ValueError, match="duplicates"):

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.compiler_live_control_support import *  # noqa: F403
 
+
 def test_mmio_readback_sequence_selects_committed_q16_entry() -> None:
     bank = ParameterBankSpec(
         bank_name="weights",
@@ -84,5 +85,3 @@ def test_mmio_readback_sequence_rejects_unknown_entries() -> None:
 
     with pytest.raises(ValueError, match="unknown parameter"):
         spec.build_readback_sequence("weights", "w_1")
-
-

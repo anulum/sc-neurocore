@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_runtime_support import *  # noqa: F403
 
+
 class TestAdaptationPolicy:
     def test_high_scc_doubles_length(self):
         policy = AdaptationPolicy(scc_high=0.15)

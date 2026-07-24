@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from bci_studio_support import *  # noqa: F403
 
+
 class TestLatencyProfiler(unittest.TestCase):
     def test_empty_profiler(self):
         p = LatencyProfiler()

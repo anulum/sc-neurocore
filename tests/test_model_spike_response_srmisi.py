@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSRMISI:
     def test_constant_isi(self):
         """At constant suprathreshold input, ISI is perfectly constant."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_import_support import *  # noqa: F403
 
+
 class TestSharedTemplates:
     def test_equations_come_from_the_authoritative_bridge_table(self):
         # The importer must not carry its own divergent LIF dynamics: the leak

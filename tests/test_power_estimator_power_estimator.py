@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.power_estimator_support import *  # noqa: F403
 
+
 class TestPowerEstimator:
     """Test power estimation from Verilog structural analysis and VCD."""
 

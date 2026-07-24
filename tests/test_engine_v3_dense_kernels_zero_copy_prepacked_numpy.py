@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.engine_v3_dense_kernels_support import *  # noqa: F403
 
+
 class TestZeroCopyPrepackedNumpy:
     """Tests for forward_prepacked_numpy (true zero-copy path)."""
 

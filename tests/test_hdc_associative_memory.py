@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hdc_support import *  # noqa: F403
 
+
 class TestAssociativeMemory:
     def test_store_and_query(self):
         np.random.seed(42)

@@ -19,4 +19,13 @@ from sc_neurocore.compression import (
     quantize_weights,
 )
 
-__all__ = ['np', 'pytest', 'prune_weights', 'prune_neurons', 'prune_stochastic', 'PruningReport', 'quantize_delays', 'quantize_weights']
+__all__ = [
+    "np",
+    "pytest",
+    "prune_weights",
+    "prune_neurons",
+    "prune_stochastic",
+    "PruningReport",
+    "quantize_delays",
+    "quantize_weights",
+]

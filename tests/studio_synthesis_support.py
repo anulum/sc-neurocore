@@ -30,14 +30,17 @@ from sc_neurocore.studio.synthesis import (
     run_synthesis,
 )
 
+
 @pytest.fixture(scope="module")
 def client():
     return TestClient(create_app(), base_url="http://127.0.0.1")
+
 
 @pytest.fixture(scope="module")
 def large_body_client():
     settings = StudioRuntimeSettings(max_request_body_bytes=4 * 1024 * 1024)
     return TestClient(create_app(runtime_settings=settings), base_url="http://127.0.0.1")
+
 
 __all__ = [
     "annotations",

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.session_support import *  # noqa: F403
 
+
 class TestBioHybridSession:
     def _make_session(self) -> BioHybridSession:
         cfg = MEAConfig(num_channels=10)

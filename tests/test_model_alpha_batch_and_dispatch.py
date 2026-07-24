@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_alpha_support import *  # noqa: F403
 
+
 class TestBatchAndDispatch:
     """The maintained batch lane matches the scalar golden loop."""
 

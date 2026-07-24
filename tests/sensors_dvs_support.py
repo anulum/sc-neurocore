@@ -12,6 +12,8 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 from sc_neurocore.sensors import DVSLoader, events_to_spike_trains, events_to_frames
+
+
 def _make_events(
     n: int = 100, width: int = 8, height: int = 6, seed: int = 42
 ) -> npt.NDArray[np.void]:
@@ -24,4 +26,13 @@ def _make_events(
     events["p"] = rng.choice([0, 1], n)
     return events
 
-__all__ = ['np', 'npt', 'pytest', 'DVSLoader', 'events_to_spike_trains', 'events_to_frames', '_make_events']
+
+__all__ = [
+    "np",
+    "npt",
+    "pytest",
+    "DVSLoader",
+    "events_to_spike_trains",
+    "events_to_frames",
+    "_make_events",
+]

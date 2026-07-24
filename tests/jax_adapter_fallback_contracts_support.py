@@ -13,4 +13,4 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-__all__ = ['patch', 'np', 'pytest']
+__all__ = ["patch", "np", "pytest"]

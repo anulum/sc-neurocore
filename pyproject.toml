@@ -278,6 +278,12 @@ ignore = [
   "B007",   # unused loop control variable
   "B017", "B018", "B023", "B028", "B904", "B905",  # minor bugbear rules
 ]
+
+# Free-test / multi-class bucket splits use `from …support import *` plus focused
+# suites. F403/F405 are intentional for that layout (complete support __all__).
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["F403", "F405"]
+"src/sc_neurocore/quantum_cognition/tests/**/*.py" = ["F403", "F405"]
 # NumPy-convention docstrings (BROADCAST_2026-06-17). `D` is not yet in the global
 # `select` because the legacy tree still carries ~4.6k D violations; instead the
 # scoped public-docstring gate (tests/test_public_docstring_policy.py) enforces

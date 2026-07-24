@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import numpy as np
 from sc_neurocore.augmentation import SpikeAugment, SpikeCurriculum
+
+
 def _make_spikes(T=20, N=10, rate=0.2, seed=42):
     rng = np.random.RandomState(seed)
     return (rng.random((T, N)) < rate).astype(np.int8)
 
-__all__ = ['np', 'SpikeAugment', 'SpikeCurriculum', '_make_spikes']
+
+__all__ = ["np", "SpikeAugment", "SpikeCurriculum", "_make_spikes"]

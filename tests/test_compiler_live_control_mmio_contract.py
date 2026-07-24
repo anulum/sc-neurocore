@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.compiler_live_control_support import *  # noqa: F403
 
+
 def test_mmio_rejects_invalid_bus_protocol() -> None:
     bank = ParameterBankSpec(
         bank_name="weights",
@@ -37,5 +38,3 @@ def test_mmio_rejects_duplicate_bank_name() -> None:
 
     with pytest.raises(ValueError, match="bank names"):
         MMIOUpdateSpec(bus_protocol="pcie", banks=(a, b))
-
-

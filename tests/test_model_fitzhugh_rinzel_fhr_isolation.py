@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
 
+
 class TestFHRIsolation:
     def test_defaults(self):
         n = FitzHughRinzelNeuron()

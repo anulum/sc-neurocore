@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sensors_dvs_support import *  # noqa: F403
 
+
 class TestEventsToSpikeTrains:
     def test_basic_shape(self) -> None:
         events = _make_events(n=50, width=4, height=3)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gamma_renewal_support import *  # noqa: F403
 
+
 class TestValidation:
     @pytest.mark.parametrize("rate_hz", [-1.0, np.nan, np.inf, -np.inf])
     def test_rejects_negative_or_non_finite_baseline_rate(self, rate_hz: float):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_observers_support import *  # noqa: F403
 
+
 class TestFakeQuantize:
     def test_broadcasts_scalar(self) -> None:
         x = torch.tensor([0.0, 1.0, 2.0])

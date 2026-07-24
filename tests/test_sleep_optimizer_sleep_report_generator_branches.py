@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestSleepReportGeneratorBranches(unittest.TestCase):
     """Grade bands, sleep-onset scoring, wakeup counting, and recommendations.
 

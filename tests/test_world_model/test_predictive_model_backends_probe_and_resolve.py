@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
 
+
 def test_probe_and_resolve_backend_follow_fastest_first_order(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -51,5 +52,3 @@ def test_auto_resolution_fails_closed_if_even_python_is_unavailable(
     )
     with pytest.raises(RuntimeError, match="no executable LGSSM backend"):
         backends.resolve_backend("auto")
-
-

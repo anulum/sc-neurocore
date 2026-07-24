@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.encoding_support import *  # noqa: F403
 
+
 class TestDeltaEncode:
     def test_output_shape_matches_input_trace(self):
         values = torch.randn(10, 4)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestSymbolicPath:
     def test_add_and_length(self):
         sp = SymbolicPath()

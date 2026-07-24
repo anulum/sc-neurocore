@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestLFSRReplay:
     def test_deterministic_output(self):
         a = LFSRReplay(0xACE1)

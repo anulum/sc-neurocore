@@ -12,4 +12,4 @@ import numpy as np
 import pytest
 from sc_neurocore.fusion.multimodal import MultiModalFusion, ModalityConfig
 
-__all__ = ['np', 'pytest', 'MultiModalFusion', 'ModalityConfig']
+__all__ = ["np", "pytest", "MultiModalFusion", "ModalityConfig"]

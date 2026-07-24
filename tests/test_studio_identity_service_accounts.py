@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_identity_support import *  # noqa: F403
 
+
 def test_studio_identity_store_authenticates_service_account_token(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
@@ -24,6 +25,7 @@ def test_studio_identity_store_authenticates_service_account_token(tmp_path: Pat
     assert result.principal.roles == frozenset({"studio.admin", "studio.viewer"})
     assert result.failure_reason is None
 
+
 def test_studio_identity_store_rejects_invalid_bearer_token(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
@@ -33,6 +35,7 @@ def test_studio_identity_store_rejects_invalid_bearer_token(tmp_path: Path) -> N
 
     assert result.principal is None
     assert result.failure_reason == "invalid_identity_token"
+
 
 def test_studio_identity_store_treats_missing_authorization_as_neutral(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -44,6 +47,7 @@ def test_studio_identity_store_treats_missing_authorization_as_neutral(tmp_path:
     assert result.principal is None
     assert result.failure_reason is None
 
+
 def test_studio_identity_store_rejects_malformed_authorization_header(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path, "admin-token")
@@ -53,6 +57,7 @@ def test_studio_identity_store_rejects_malformed_authorization_header(tmp_path: 
 
     assert result.principal is None
     assert result.failure_reason == "invalid_identity_token"
+
 
 def test_studio_identity_store_rejects_disabled_service_account_token(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -78,6 +83,7 @@ def test_studio_identity_store_rejects_disabled_service_account_token(tmp_path: 
     assert result.principal is None
     assert result.failure_reason == "disabled_identity_token"
 
+
 def test_studio_identity_store_rejects_expired_service_account_token(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(
@@ -91,6 +97,7 @@ def test_studio_identity_store_rejects_expired_service_account_token(tmp_path: P
 
     assert result.principal is None
     assert result.failure_reason == "expired_identity_token"
+
 
 def test_studio_identity_store_accepts_future_expiry_without_z_suffix(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -108,6 +115,7 @@ def test_studio_identity_store_accepts_future_expiry_without_z_suffix(tmp_path: 
 
     assert result.principal is not None
     assert result.failure_reason is None
+
 
 def test_studio_identity_store_rejects_malformed_service_account_role(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -129,6 +137,7 @@ def test_studio_identity_store_rejects_malformed_service_account_role(tmp_path: 
 
     with pytest.raises(ValueError, match="roles"):
         load_studio_identity_store(identity_path)
+
 
 @pytest.mark.parametrize(
     ("payload", "match"),
@@ -245,9 +254,11 @@ def test_studio_identity_store_rejects_malformed_payloads(
     with pytest.raises(ValueError, match=match):
         load_studio_identity_store(identity_path)
 
+
 def test_studio_identity_store_rejects_unreadable_identity_path(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="cannot be read"):
         load_studio_identity_store(tmp_path)
+
 
 def test_studio_identity_store_rejects_invalid_json(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -255,6 +266,7 @@ def test_studio_identity_store_rejects_invalid_json(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="valid JSON"):
         load_studio_identity_store(identity_path)
+
 
 def test_studio_identity_store_rejects_unsupported_schema(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"

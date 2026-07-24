@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_reporting_support import *  # noqa: F403
 
+
 class TestPortability:
     def test_simple_model(self):
         from sc_neurocore.compiler.intelligence import score_portability

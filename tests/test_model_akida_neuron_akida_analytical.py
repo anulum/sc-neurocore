@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_akida_neuron_support import *  # noqa: F403
 
+
 class TestAkidaAnalytical:
     def test_rank_order_decay_formula(self):
         """V += int(weight · modulation^rank). Rank increments per event."""

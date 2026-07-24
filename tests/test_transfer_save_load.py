@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transfer_support import *  # noqa: F403
 
+
 class TestSaveLoad:
     def test_roundtrip(self, tmp_path: Path) -> None:
         c = _make_checkpoint()

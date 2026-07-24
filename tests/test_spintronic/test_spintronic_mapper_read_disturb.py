@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestReadDisturb:
     def test_read_disturb_low(self):
         cfg = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)

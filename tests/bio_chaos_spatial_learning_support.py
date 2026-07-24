@@ -20,8 +20,25 @@ from sc_neurocore.learning.neuroevolution import SNNGeneticEvolver
 from sc_neurocore.spatial.representations import VoxelGrid, PointCloud
 from sc_neurocore.spatial.transformer_3d import SpatialTransformer3D
 from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
+
+
 class _Individual:
     def __init__(self):
         self.weights = np.random.rand(4, 4)
 
-__all__ = ['np', 'pytest', 'NeuromodulatorSystem', 'ChaoticRNG', 'SpikeToConceptMapper', 'WolframHypergraph', 'SwarmCoupling', 'SNNGeneticEvolver', 'VoxelGrid', 'PointCloud', 'SpatialTransformer3D', 'SCLearningLayer', '_Individual']
+
+__all__ = [
+    "np",
+    "pytest",
+    "NeuromodulatorSystem",
+    "ChaoticRNG",
+    "SpikeToConceptMapper",
+    "WolframHypergraph",
+    "SwarmCoupling",
+    "SNNGeneticEvolver",
+    "VoxelGrid",
+    "PointCloud",
+    "SpatialTransformer3D",
+    "SCLearningLayer",
+    "_Individual",
+]

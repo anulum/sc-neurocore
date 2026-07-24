@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_runtime_support import *  # noqa: F403
 
+
 class TestRuntimeReport:
     def test_adaptation_rate(self):
         report = RuntimeReport(total_observations=100)

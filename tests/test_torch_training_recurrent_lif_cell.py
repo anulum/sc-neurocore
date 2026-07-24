@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestRecurrentLIFCell:
     def test_recurrent_connection(self):
         cell = RecurrentLIFCell(n_neurons=16, beta=0.9)

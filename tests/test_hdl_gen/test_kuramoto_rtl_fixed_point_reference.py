@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
 
+
 def test_kuramoto_emitter_fixed_point_reference_matches_known_coupled_step() -> None:
     emitter = KuramotoEmitter(
         n_oscillators=2,
@@ -283,5 +284,3 @@ endmodule
         check=False,
     )
     assert sim_result.returncode == 0, sim_result.stdout + sim_result.stderr
-
-

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from observation_loader_support import *  # noqa: F403
 
+
 def test_loaded_observation_feeds_surrogate_optimizer() -> None:
     observations = observations_from_payload(
         {

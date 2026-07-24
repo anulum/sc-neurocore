@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_torch_support import *  # noqa: F403
 
+
 class TestLSQPACTLIFNet:
     def test_forward_shape(self):
         net = LSQPACTLIFNet(784, 128, 10, weight_bits=4, act_bits=4)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.theta_backends_support import *  # noqa: F403
 
+
 def test_rust_rejects_non_default_contract() -> None:
     """Keep the Rust engine class's factory-only parameter boundary explicit."""
     neuron = _configured()
@@ -17,6 +18,7 @@ def test_rust_rejects_non_default_contract() -> None:
     with pytest.raises(RuntimeError, match="factory-default"):
         neuron.simulate(1, 0.0, backend="rust")
     assert neuron.theta == before
+
 
 @pytest.mark.parametrize("n_steps", [-1, 1.0, True])
 def test_invalid_step_count_fails_before_mutation(n_steps: object) -> None:
@@ -27,12 +29,14 @@ def test_invalid_step_count_fails_before_mutation(n_steps: object) -> None:
         neuron.simulate(cast(int, n_steps), 0.0)
     assert neuron.theta == before
 
+
 def test_invalid_backend_fails_before_mutation() -> None:
     """Reject unknown dispatch selectors instead of silently using Python."""
     neuron = ThetaNeuron(theta=0.25)
     with pytest.raises(ValueError, match="backend"):
         neuron.simulate(1, 0.0, backend="cuda")
     assert neuron.theta == 0.25
+
 
 def test_non_finite_current_fails_before_mutation() -> None:
     """Apply the finite-input boundary to every dispatcher path."""
@@ -43,6 +47,7 @@ def test_non_finite_current_fails_before_mutation() -> None:
         neuron.step(math.nan)
     assert neuron.theta == 0.25
 
+
 def test_exact_flow_rejects_overflow_without_mutation() -> None:
     """Translate a non-finite analytic candidate into mutation-free failure."""
     neuron = ThetaNeuron(theta=0.25, dt=1.0e308)
@@ -50,6 +55,7 @@ def test_exact_flow_rejects_overflow_without_mutation() -> None:
     with pytest.raises(ValueError, match="candidate"):
         neuron.step(-1.0e308)
     assert neuron.theta == before
+
 
 def test_reset_restores_only_the_runtime_state() -> None:
     """Restore phase while retaining the configured integration step."""

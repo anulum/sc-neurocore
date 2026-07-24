@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_cv_isi_zero():
     assert np.isnan(cv_isi(np.zeros(10, dtype=np.int8)))
 

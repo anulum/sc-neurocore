@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_director_support import *  # noqa: F403
 
+
 class TestHelperFunctions:
     def test_add_weight_noise(self):
         data = np.array([0.0, 0.5, 0.3, 0.0, 0.8])

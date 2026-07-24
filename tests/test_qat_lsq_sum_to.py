@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_lsq_support import *  # noqa: F403
 
+
 class TestSumTo:
     def test_reduces_to_scalar(self) -> None:
         g = torch.ones(4, 5)

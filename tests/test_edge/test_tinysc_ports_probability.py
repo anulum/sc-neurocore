@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestProbability:
     def test_all_ones(self):
         assert abs(probability([MASK32], 32) - 1.0) < 1e-6

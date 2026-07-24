@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnosticReport:
     def test_empty(self):
         r = DiagnosticReport(target="ice40")

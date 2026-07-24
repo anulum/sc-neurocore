@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_antagonistic_replay_detects_simultaneous_outputs() -> None:
     prop = NetworkAntagonisticOutputExclusion(
         name="motor_left_right_exclusion",

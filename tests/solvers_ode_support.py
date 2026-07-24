@@ -26,16 +26,44 @@ from sc_neurocore.solvers import (
     TrapezoidalRule,
     get_solver,
 )
+
+
 def decay_ode(t, y):
     """dy/dt = -y. Solution: y(t) = y0 * exp(-t)."""
     return -y
+
+
 def stiff_ode(t, y):
     """dy/dt = -1000*y. Very stiff decay."""
     return -1000.0 * y
+
+
 def harmonic_oscillator(t, y):
     """Simple harmonic oscillator: dq/dt = p, dp/dt = -q.
     State: [q, p]. Conserves H = (q^2 + p^2) / 2.
     """
     return np.array([y[1], -y[0]])
 
-__all__ = ['math', 'time', 'np', 'pytest', 'EulerSolver', 'HeunSolver', 'RK4Solver', 'DormandPrinceSolver', 'ExponentialEuler', 'ExactLIFSolver', 'StormerVerlet', 'LeapfrogSolver', 'RosenbrockEuler', 'ImplicitEuler', 'TrapezoidalRule', 'get_solver', 'decay_ode', 'stiff_ode', 'harmonic_oscillator', '__all__']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "EulerSolver",
+    "HeunSolver",
+    "RK4Solver",
+    "DormandPrinceSolver",
+    "ExponentialEuler",
+    "ExactLIFSolver",
+    "StormerVerlet",
+    "LeapfrogSolver",
+    "RosenbrockEuler",
+    "ImplicitEuler",
+    "TrapezoidalRule",
+    "get_solver",
+    "decay_ode",
+    "stiff_ode",
+    "harmonic_oscillator",
+    "__all__",
+]

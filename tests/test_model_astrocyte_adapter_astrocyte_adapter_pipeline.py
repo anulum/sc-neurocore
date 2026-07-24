@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_astrocyte_adapter_support import *  # noqa: F403
 
+
 class TestAstrocyteAdapterPipeline:
     """Pipeline tests for population, network, projection, and analysis wiring."""
 

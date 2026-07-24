@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestLongRunStability:
     """No NaN, no inf, no drift outside the published envelope over very
     long simulations. `feedback_module_standard_attnres` requires

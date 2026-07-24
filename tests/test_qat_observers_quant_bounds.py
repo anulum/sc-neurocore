@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_observers_support import *  # noqa: F403
 
+
 class TestQuantBounds:
     def test_signed_bounds(self) -> None:
         assert _quant_bounds(8, unsigned=False) == (-128, 127)

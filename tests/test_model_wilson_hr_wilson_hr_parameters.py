@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
 
+
 class TestWilsonHRParameters:
     @pytest.mark.parametrize("field", ["v", "r", "v_peak"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

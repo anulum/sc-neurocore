@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFDynamics:
     def test_voltage_accumulation(self):
         """V(t) = sum_{k=0}^{t-1} alpha^k · I = I · (1 - alpha^t) / (1 - alpha).

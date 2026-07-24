@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestThermalStability:
     def test_thermal_stability_positive(self):
         for tech in SpintronicTech:

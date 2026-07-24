@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestLfsr16:
     def test_nonzero_seed(self):
         lfsr = Lfsr16(0xACE1)

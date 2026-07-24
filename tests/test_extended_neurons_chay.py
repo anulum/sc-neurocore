@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestChay:
     def test_drive_changes_state_without_leaving_physical_bounds(self):
         rest = ChayNeuron()

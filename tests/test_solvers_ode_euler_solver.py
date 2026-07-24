@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestEulerSolver:
     def test_decay_direction(self):
         solver = EulerSolver()

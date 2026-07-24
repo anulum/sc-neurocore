@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_pairwise_empty():
     assert pairwise_correlation([]).size == 0
 
@@ -44,5 +45,3 @@ def test_event_sync_empty_b():
     assert (
         event_synchronization(np.array([1, 0], dtype=np.int8), np.array([], dtype=np.int8)) == 0.0
     )
-
-

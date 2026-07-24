@@ -20,4 +20,4 @@ from sc_neurocore.bio.transcriptomic import (
     rank_value_encode,
 )
 
-__all__ = ['np', 'pytest', 'GeneformerInterface', 'ScKGBERTInterface', 'rank_value_encode']
+__all__ = ["np", "pytest", "GeneformerInterface", "ScKGBERTInterface", "rank_value_encode"]

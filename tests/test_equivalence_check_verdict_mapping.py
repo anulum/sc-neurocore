@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equivalence_check_support import *  # noqa: F403
 
+
 class TestVerdictMapping:
     """Map a raw ``sby`` run onto an :class:`EquivalenceResult` without a solver."""
 

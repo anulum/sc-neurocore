@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from readiness_evidence_index_support import *  # noqa: F403
 
+
 def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     """Inventory length matches the curated enrolment table."""
     rows = tool.build_rows()
@@ -19,6 +20,7 @@ def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     assert "EscapeRateNeuron" in names
     assert "PoissonNeuron" in names
     assert "WangBuzsakiNeuron" in names
+
 
 def test_validation_and_silicon_sections_are_honest_for_h1(tool: ModuleType) -> None:
     """H1 entries claim parity metric and cosim anchors; H0 does not claim cosim."""
@@ -42,6 +44,7 @@ def test_validation_and_silicon_sections_are_honest_for_h1(tool: ModuleType) -> 
     v0_empty = tool.validation_section(h0, has_dynamics=False)
     assert v0_empty["dynamics_faithful"] is False
 
+
 def test_index_payload_schema_and_json_roundtrip(tool: ModuleType, tmp_path: Path) -> None:
     """JSON export is valid and carries the schema version marker."""
     rows = tool.build_rows()
@@ -53,6 +56,7 @@ def test_index_payload_schema_and_json_roundtrip(tool: ModuleType, tmp_path: Pat
     loaded = json.loads(out.read_text(encoding="utf-8"))
     assert loaded["schema_version"] == tool.SCHEMA_VERSION
     assert len(loaded["rows"]) == len(rows)
+
 
 def test_main_report_exits_zero(tool: ModuleType, capsys: pytest.CaptureFixture[str]) -> None:
     """CLI --report runs against the live corpus without error."""

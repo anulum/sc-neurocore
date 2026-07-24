@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from compiler_export_support import *  # noqa: F403
 
+
 class TestMLIRExport(unittest.TestCase):
     """Verify public MLIR export behavior for valid and invalid graphs."""
 

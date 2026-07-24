@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sonata_import_support import *  # noqa: F403
 
+
 class TestImportNodes:
     def test_basic(self, tmp_path):
         f = _create_nodes_h5(tmp_path / "nodes.h5", n=5)

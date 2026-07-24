@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.temporal_properties_support import *  # noqa: F403
 
+
 class TestRefractoryGuarantee:
     """Minimum inter-spike interval checks for one neuron."""
 

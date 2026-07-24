@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.scpn_integrated_support import *  # noqa: F403
 
+
 class TestOmegaN:
     def test_length(self):
         assert len(OMEGA_N) == 16

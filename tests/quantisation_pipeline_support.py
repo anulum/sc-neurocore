@@ -17,4 +17,10 @@ from sc_neurocore.compiler.quantizer import (
     q_weights_to_sc_probabilities,
 )
 
-__all__ = ['np', 'pytest', 'quantize_weights', 'dequantize_weights', 'q_weights_to_sc_probabilities']
+__all__ = [
+    "np",
+    "pytest",
+    "quantize_weights",
+    "dequantize_weights",
+    "q_weights_to_sc_probabilities",
+]

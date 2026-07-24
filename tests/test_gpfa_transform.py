@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 class TestTransform:
     def test_projects_new_trains(self) -> None:
         trains = _synthetic_trains()

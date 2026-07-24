@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.learning_advanced_support import *  # noqa: F403
 
+
 class TestHomeostaticPlasticity:
     def test_class_exists(self):
         """HomeostaticPlasticity should be importable."""

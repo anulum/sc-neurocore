@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.bench_iqif_support import *  # noqa: F403
 
+
 def test_backend_probes_report_each_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     """Bind every backend name to its real availability probe."""
     monkeypatch.setattr(backends, "_HAS_RUST", True)

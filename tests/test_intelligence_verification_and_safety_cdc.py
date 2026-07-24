@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestCDC:
     def test_same_domain(self):
         from sc_neurocore.compiler.intelligence import analyze_cdc

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestNetwork:
     def test_run_basic(self):
         pop = Population("LapicqueNeuron", 5)

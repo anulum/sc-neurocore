@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_durstewitz_dopamine_support import *  # noqa: F403
 
+
 class TestDurstewitzDynamics:
     def test_spontaneous_firing(self):
         """Fires at I=0 (dopaminergic tonic activity)."""

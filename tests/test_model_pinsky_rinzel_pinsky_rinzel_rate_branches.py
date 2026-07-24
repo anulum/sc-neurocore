@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelRateBranches:
     @pytest.mark.parametrize("v_s", [-46.9, -19.9, -24.9])
     def test_somatic_rate_singularities_are_finite(self, v_s: float):

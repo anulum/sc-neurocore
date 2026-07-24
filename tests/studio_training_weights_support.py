@@ -46,6 +46,7 @@ from sc_neurocore.studio.platform.training_weights import (
     write_training_weight_checkpoint,
 )
 
+
 def _context(tmp_path: Path) -> StudioJobContext:
     """Return a confined Studio job context for weight checkpoint tests."""
 
@@ -55,6 +56,7 @@ def _context(tmp_path: Path) -> StudioJobContext:
         cancel_event=threading.Event(),
         max_artifact_bytes=4096,
     )
+
 
 def _torch_checkpoint_bytes(
     *,
@@ -84,6 +86,7 @@ def _torch_checkpoint_bytes(
     torch.save(payload, buffer)
     return buffer.getvalue()
 
+
 def _materialization(tmp_path: Path):
     """Return a verified materialization for restore-evidence tests."""
 
@@ -108,6 +111,7 @@ def _materialization(tmp_path: Path):
         weights_payload=(tmp_path / TRAINING_WEIGHT_ARTIFACT_PATH).read_bytes(),
         trusted_loader=lambda payload: {"layer.weight": payload},
     )
+
 
 __all__ = [
     "annotations",

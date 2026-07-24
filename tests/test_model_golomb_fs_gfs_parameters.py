@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_golomb_fs_support import *  # noqa: F403
 
+
 class TestGFSParameters:
     @pytest.mark.parametrize("g_kv3", [0.0, 150.0, 300.0])
     def test_g_kv3_sweep(self, g_kv3: float):

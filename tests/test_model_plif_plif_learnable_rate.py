@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFLearnableRate:
     def test_higher_alpha_more_spikes(self):
         """Higher alpha (more memory) → easier to reach threshold → more spikes."""

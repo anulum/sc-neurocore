@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestEndToEnd:
     def test_inference_telemetry_pipeline(self):
         net = SCNetwork(bit_length=256)

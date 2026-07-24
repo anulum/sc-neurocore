@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestSustainabilityEdgeBranches:
     def test_storage_step_returns_soc_when_capacity_non_positive(self):
         storage = EnergyStorageSim(capacity_mwh=0.0, initial_soc=0.5)

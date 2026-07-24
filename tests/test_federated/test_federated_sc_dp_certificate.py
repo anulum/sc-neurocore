@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestDPCertificate:
     def test_from_accountant(self):
         acc = PrivacyAccountant(target_epsilon=10.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_runtime_support import *  # noqa: F403
 
+
 class TestHammingECC:
     def test_roundtrip_all_patterns(self):
         ecc = HammingECC()

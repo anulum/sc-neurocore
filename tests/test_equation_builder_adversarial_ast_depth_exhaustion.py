@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_builder_adversarial_support import *  # noqa: F403
 
+
 class TestASTDepthExhaustion:
     """Attempts to exhaust the parser with deeply nested expressions."""
 

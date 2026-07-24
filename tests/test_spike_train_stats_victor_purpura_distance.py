@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestVictorPurpuraDistance:
     def test_identical_zero(self):
         t = np.array([0.1, 0.2, 0.3])

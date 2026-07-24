@@ -21,13 +21,19 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
+
+
 def _sigmoid(x: float) -> float:
     return 1.0 / (1.0 + np.exp(-x))
+
+
 def _tau_n(v: float) -> float:
     x = (v + 40.0) / 12.0
     if x > 709.0:
         return 1.0
     return 1.0 + 7.5 / (1.0 + np.exp(x))
+
+
 def _rhs(
     neuron: YamadaNeuron, v: float, n_gate: float, q_gate: float, current: float
 ) -> tuple[float, float, float]:
@@ -43,6 +49,8 @@ def _rhs(
         (n_inf - n_gate) / _tau_n(v),
         (q_inf - q_gate) / neuron.tau_q,
     )
+
+
 def _rk4_reference(neuron: YamadaNeuron, current: float) -> tuple[float, float, float]:
     v0, n0, q0 = neuron.v, neuron.n, neuron.q
     dt = neuron.dt
@@ -55,7 +63,26 @@ def _rk4_reference(neuron: YamadaNeuron, current: float) -> tuple[float, float, 
         n0 + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
         q0 + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
     )
+
+
 def _run(neuron: YamadaNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['np', 'pytest', 'YamadaNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', '_sigmoid', '_tau_n', '_rhs', '_rk4_reference', '_run']
+
+__all__ = [
+    "np",
+    "pytest",
+    "YamadaNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "_sigmoid",
+    "_tau_n",
+    "_rhs",
+    "_rk4_reference",
+    "_run",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_power_and_thermal_support import *  # noqa: F403
 
+
 class TestPowerIntent:
     def test_upf_output(self):
         from sc_neurocore.compiler.intelligence import generate_power_intent

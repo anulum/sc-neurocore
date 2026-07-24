@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_experiment_support import *  # noqa: F403
 
+
 class TestPlasticityAndFitnessValidation:
     def test_plasticity_rejects_inverted_bounds_and_outside_state(self) -> None:
         with pytest.raises(ValueError, match="w_max_q88"):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestGOTMBrain:
     def test_init(self) -> None:
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")

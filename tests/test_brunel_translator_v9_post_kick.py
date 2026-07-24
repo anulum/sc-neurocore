@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_translator_support import *  # noqa: F403
 
+
 class TestV9PostKick:
     """V9: Post-kick timing differs from V1."""
 

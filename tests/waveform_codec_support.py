@@ -14,6 +14,8 @@ from typing import Any
 import numpy as np
 import pytest
 from sc_neurocore.spike_codec.waveform_codec import WaveformCodec
+
+
 def _make_waveform(
     T: int = 2000,
     N: int = 16,
@@ -36,4 +38,5 @@ def _make_waveform(
             waveform[s:e, ch] += template[: e - s]
     return waveform
 
-__all__ = ['struct', 'sys', 'Any', 'np', 'pytest', 'WaveformCodec', '_make_waveform']
+
+__all__ = ["struct", "sys", "Any", "np", "pytest", "WaveformCodec", "_make_waveform"]

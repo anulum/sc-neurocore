@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_codec_support import *  # noqa: F403
 
+
 class TestSpikeCodec:
     def test_roundtrip_lossless(self):
         rng = np.random.RandomState(42)

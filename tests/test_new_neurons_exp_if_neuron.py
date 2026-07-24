@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestExpIFNeuron:
     def test_fires(self):
         from sc_neurocore.neurons.models import ExpIFNeuron

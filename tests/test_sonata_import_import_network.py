@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sonata_import_support import *  # noqa: F403
 
+
 class TestImportNetwork:
     def test_full_network(self, tmp_path):
         nf = _create_nodes_h5(tmp_path / "nodes.h5", n=5)

@@ -27,9 +27,11 @@ LIF_EQ = {
     "current": 30.0,
 }
 
+
 @pytest.fixture(scope="module")
 def client():
     return TestClient(create_app(), base_url="http://127.0.0.1")
+
 
 __all__ = [
     "annotations",

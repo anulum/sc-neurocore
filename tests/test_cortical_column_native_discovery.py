@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_support import *  # noqa: F403
 
+
 class TestNativeDiscovery:
     def test_rust_discovery_uses_root_package_fallback(self, monkeypatch):
         real_import_module = cortical_column_module._importlib.import_module

@@ -14,6 +14,8 @@ import urllib.request
 import numpy as np
 import pytest
 from sc_neurocore.serve import SpikeServer
+
+
 class MockNetwork:
     """Mock network with step() interface."""
 
@@ -26,6 +28,8 @@ class MockNetwork:
 
     def reset(self):
         self.call_count = 0
+
+
 class MockPopulation:
     def __init__(self, label, n):
         self.label = label
@@ -34,12 +38,18 @@ class MockPopulation:
 
     def step_all(self, currents):
         return (currents > 0.5).astype(np.int8)
+
+
 class MockPopNetwork:
     """Mock network with populations interface."""
 
     def __init__(self):
         self.populations = [MockPopulation("exc", 3), MockPopulation("inh", 2)]
+
+
 _HTTP_PORT = 18901
+
+
 @pytest.fixture(scope="module")
 def running_server():
     net = MockNetwork()
@@ -48,6 +58,8 @@ def running_server():
     time.sleep(0.5)
     yield server
     server.stop()
+
+
 def _post(path, data):
     body = json.dumps(data).encode("utf-8")
     for attempt in range(3):
@@ -64,6 +76,8 @@ def _post(path, data):
             if attempt == 2:
                 raise
             time.sleep(0.2)
+
+
 def _get(path):
     for attempt in range(3):
         try:
@@ -78,4 +92,19 @@ def _get(path):
                 raise
             time.sleep(0.2)
 
-__all__ = ['json', 'time', 'urllib', 'np', 'pytest', 'SpikeServer', 'MockNetwork', 'MockPopulation', 'MockPopNetwork', '_HTTP_PORT', 'running_server', '_post', '_get']
+
+__all__ = [
+    "json",
+    "time",
+    "urllib",
+    "np",
+    "pytest",
+    "SpikeServer",
+    "MockNetwork",
+    "MockPopulation",
+    "MockPopNetwork",
+    "_HTTP_PORT",
+    "running_server",
+    "_post",
+    "_get",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dna_mapper_support import *  # noqa: F403
 
+
 class TestGF4ErrorCorrection:
     """Reed-Solomon over GF(4) for DNA error correction."""
 

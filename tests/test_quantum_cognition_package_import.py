@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantum_cognition_support import *  # noqa: F403
 
+
 class TestPackageImport:
     """Verify the package-level imports work correctly."""
 

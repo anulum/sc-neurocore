@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHTIntrinsic:
     def test_fires_at_zero_current(self):
         """Intrinsic oscillator — fires without external input."""

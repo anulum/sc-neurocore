@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from region_support import *  # noqa: F403
 
+
 class TestMultiDieSelector:
     def test_prefers_die(self) -> None:
         regions = {

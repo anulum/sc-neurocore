@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_zoo_support import *  # noqa: F403
 
+
 class TestMNISTClassifier:
     """784-128-10 feedforward SNN for digit classification."""
 

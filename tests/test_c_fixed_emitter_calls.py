@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestCalls:
     @pytest.mark.parametrize(
         "fn", ["exp", "log", "sqrt", "tanh", "cosh", "exprel", "sigmoid", "sin", "cos"]

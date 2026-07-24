@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestBifurcationEndpoint:
     def test_bifurcation_model(self, client):
         r = client.post(
@@ -31,4 +32,3 @@ class TestBifurcationEndpoint:
         data = r.json()
         assert "param_values" in data
         assert "attractors" in data
-

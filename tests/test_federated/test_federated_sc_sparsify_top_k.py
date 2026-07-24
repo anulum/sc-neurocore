@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestSparsifyTopK:
     def test_top_k_selects_largest(self):
         g = np.array([0.1, -0.5, 0.3, -0.8, 0.2])

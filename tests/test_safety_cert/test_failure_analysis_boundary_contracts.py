@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
 
+
 class TestBoundaryContracts:
     def test_fmeda_rejects_nonfinite_aggregate_total(self) -> None:
         fmeda = FMEDA()

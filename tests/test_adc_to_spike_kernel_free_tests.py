@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adc_to_spike_kernel_support import *  # noqa: F403
 
+
 def test_sensors_package_exports_adc_to_spike_kernel_surface() -> None:
     """The sensors package facade exposes the ADC-to-spike kernel surface."""
     expected_names = {

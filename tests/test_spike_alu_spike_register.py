@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_alu_support import *  # noqa: F403
 
+
 class TestSpikeRegister:
     def test_write_read_roundtrip(self):
         reg = SpikeRegister(n_bits=8)

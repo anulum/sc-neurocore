@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_arcane_zenith.arcane_zenith_support import *  # noqa: F403
 
+
 class TestSerialization:
     def test_get_state_contains_neuron_and_four_weights(self):
         core = ArcaneZenithCognitiveCore(backend="torch")

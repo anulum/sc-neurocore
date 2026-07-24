@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_terman_wang_support import *  # noqa: F403
 
+
 class TestTermanWangDynamics:
     def test_cubic_nullcline(self):
         """f(v) = 3v - v³ + 2. At v=0: f=2. At v=1: f=4. At v=-1: f=0."""

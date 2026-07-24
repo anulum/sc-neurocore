@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestArithmetic:
     def test_add_sub_mul_div(self) -> None:
         assert _emit("a + b") == "(a + b)"

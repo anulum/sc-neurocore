@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGGating:
     def test_gates_bounded(self):
         n = MarderSTGNeuron()

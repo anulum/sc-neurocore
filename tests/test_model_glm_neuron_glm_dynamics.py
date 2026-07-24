@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_glm_neuron_support import *  # noqa: F403
 
+
 class TestGLMDynamics:
     def test_fires_with_strong_stimulus(self):
         n = GLMNeuron()

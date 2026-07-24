@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hay_l5_support import *  # noqa: F403
 
+
 class TestHayPipeline:
     def test_population(self) -> None:
         assert Population(HayL5PyramidalNeuron, n=5, label="hay").n == 5

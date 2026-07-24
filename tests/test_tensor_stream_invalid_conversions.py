@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tensor_stream_support import *  # noqa: F403
 
+
 class TestInvalidConversions:
     def test_spike_to_bitstream_raises(self):
         ts = TensorStream(data=np.array([1]), domain="spike")

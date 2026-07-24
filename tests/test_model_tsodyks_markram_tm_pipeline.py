@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tsodyks_markram_support import *  # noqa: F403
 
+
 class TestTMPipeline:
     def test_population(self):
         assert Population(TsodyksMarkramNeuron, n=10, label="tm").n == 10

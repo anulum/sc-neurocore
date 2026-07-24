@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.acquisition_support import *  # noqa: F403
 
+
 class TestSpikeSorter:
     def test_fit_without_sklearn_raises_actionable_error(
         self, monkeypatch: pytest.MonkeyPatch

@@ -23,6 +23,8 @@ from sc_neurocore.audio import (
 from sc_neurocore.audio.ssgf_engine import SSGFConfig
 from sc_neurocore.audio.evs_engine import EVSConfig
 from sc_neurocore.audio.adaptive_engine import SessionPhase
+
+
 def _snapshot(
     *,
     evs_score: float = 60.0,
@@ -44,10 +46,29 @@ def _snapshot(
         band_powers={"alpha": 0.5},
         timestamp=0,
     )
+
+
 def _small_adaptive_engine() -> AdaptiveAudioEngine:
     ssgf = SSGFEngine(SSGFConfig(N=4, z_dim=6, micro_steps=1, seed=7))
     return AdaptiveAudioEngine(ssgf, EVSEngine(), UserProfile())
+
+
 if __name__ == "__main__":
     unittest.main()
 
-__all__ = ['unittest', 'np', 'SSGFEngine', 'EVSEngine', 'EVSSnapshot', 'AdaptiveAudioEngine', 'AdaptiveSessionReport', 'UserProfile', 'Chronotype', 'SSGFConfig', 'EVSConfig', 'SessionPhase', '_snapshot', '_small_adaptive_engine']
+__all__ = [
+    "unittest",
+    "np",
+    "SSGFEngine",
+    "EVSEngine",
+    "EVSSnapshot",
+    "AdaptiveAudioEngine",
+    "AdaptiveSessionReport",
+    "UserProfile",
+    "Chronotype",
+    "SSGFConfig",
+    "EVSConfig",
+    "SessionPhase",
+    "_snapshot",
+    "_small_adaptive_engine",
+]

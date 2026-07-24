@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_astrocyte_support import *  # noqa: F403
 
+
 class TestAstrocyteIP3Dynamics:
     def test_ip3_increases_with_input(self):
         n = AstrocyteModel()

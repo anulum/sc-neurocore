@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adapter_ecosystem_support import *  # noqa: F403
 
+
 class TestRegistryWiring:
     @pytest.fixture(autouse=True)
     def _ensure_registered(self) -> None:

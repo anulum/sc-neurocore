@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_monitors_stimulus_support import *  # noqa: F403
 
+
 class TestTimedArray:
     def test_returns_value_at_step(self):
         ta = TimedArray([0.0, 1.0, 2.0, 3.0], dt=0.001)

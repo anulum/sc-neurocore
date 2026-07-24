@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestTransferEntropy:
     def test_nonnegative(self):
         a = _poisson_train(100.0, 1.0, seed=1)

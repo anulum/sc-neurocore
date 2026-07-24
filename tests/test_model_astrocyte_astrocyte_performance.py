@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_astrocyte_support import *  # noqa: F403
 
+
 class TestAstrocytePerformance:
     def test_isolation_throughput(self):
         n = AstrocyteModel()

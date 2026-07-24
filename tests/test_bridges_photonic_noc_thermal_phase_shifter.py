@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestThermalPhaseShifter:
     def test_power_for_pi_phase_positive(self):
         shifter = ThermalPhaseShifter()

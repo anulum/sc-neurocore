@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestIFCell:
     def test_no_leak(self):
         cell = IFCell(threshold=10.0)

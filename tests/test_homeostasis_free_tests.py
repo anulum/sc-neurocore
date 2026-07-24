@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.homeostasis_support import *  # noqa: F403
 
+
 def test_regulate_rejects_non_finite_thresholds() -> None:
     reg = NetworkRegulator(target_rate=0.1)
     rates = np.full(4, 0.1)

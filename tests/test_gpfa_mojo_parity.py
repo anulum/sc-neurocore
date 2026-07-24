@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _MOJO_AVAILABLE, reason="Mojo GPFA library not built")
 class TestMojoParity:
     """The Mojo backend matches the NumPy reference up to float64 round-off."""

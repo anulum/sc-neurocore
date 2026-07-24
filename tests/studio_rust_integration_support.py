@@ -16,6 +16,7 @@ import pytest
 
 from sc_neurocore_engine.studio import get_ei_network_simulator
 
+
 def _bridge_engine():
     """Shared fixtures for Studio Rust EI network and batch-simulate tests."""
     mod = pytest.importorskip("sc_neurocore_engine")
@@ -23,9 +24,11 @@ def _bridge_engine():
         pytest.skip("Rust engine bridge missing Studio functions")
     return mod
 
+
 def _inner_engine():
     """Import the inner extension module without bypassing the package bridge."""
     return importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+
 
 __all__ = [
     "annotations",

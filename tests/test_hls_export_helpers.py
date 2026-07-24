@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hls_export_support import *  # noqa: F403
 
+
 class TestHelpers:
     def test_sigmoid_helper_emitted_when_used(self) -> None:
         cpp = generate_hls_cpp("sc_x", {"v": "sigmoid(v)"})

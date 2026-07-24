@@ -35,8 +35,12 @@ from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
+
+
 def _rhs(neuron: McKeanNeuron, v: float, w: float, current: float) -> tuple[float, float]:
     return neuron._f(v) - w + current, neuron.epsilon * (v - neuron.gamma * w)
+
+
 def _rk4_reference(neuron: McKeanNeuron, current: float) -> tuple[float, float]:
     v0, w0 = neuron.v, neuron.w
     dt = neuron.dt
@@ -48,7 +52,26 @@ def _rk4_reference(neuron: McKeanNeuron, current: float) -> tuple[float, float]:
         v0 + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
         w0 + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
     )
+
+
 def _run(neuron: McKeanNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['time', 'np', 'pytest', 'firing_rate', 'isi', 'spike_count', 'SpikeMonitor', 'Network', 'Population', 'Projection', 'PoissonInput', 'McKeanNeuron', '_rhs', '_rk4_reference', '_run']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "firing_rate",
+    "isi",
+    "spike_count",
+    "SpikeMonitor",
+    "Network",
+    "Population",
+    "Projection",
+    "PoissonInput",
+    "McKeanNeuron",
+    "_rhs",
+    "_rk4_reference",
+    "_run",
+]

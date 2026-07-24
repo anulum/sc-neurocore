@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from edge_support import *  # noqa: F403
 
+
 class TestMemoryFootprint:
     def test_fits_in_ram(self):
         fp = MemoryFootprint.estimate(2, 16, 8, Board.ESP32_C6)

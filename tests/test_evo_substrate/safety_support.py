@@ -12,4 +12,4 @@ from __future__ import annotations
 from sc_neurocore.evo_substrate.genome import Genome
 from sc_neurocore.evo_substrate.safety import FormalSafetyGuard, ResourceBudget, SafetyBounds
 
-__all__ = ['Genome', 'FormalSafetyGuard', 'ResourceBudget', 'SafetyBounds']
+__all__ = ["Genome", "FormalSafetyGuard", "ResourceBudget", "SafetyBounds"]

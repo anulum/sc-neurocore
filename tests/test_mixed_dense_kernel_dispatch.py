@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.mixed_dense_kernel_support import *  # noqa: F403
 
+
 class TestDispatch:
     """Backend dispatch and availability."""
 

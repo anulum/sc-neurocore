@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mainen_sejnowski_support import *  # noqa: F403
 
+
 class TestMSDynamics:
     def test_fires(self):
         n = MainenSejnowskiNeuron()

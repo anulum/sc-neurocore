@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.numpy_interop_support import *  # noqa: F403
 
+
 class TestPackBitstreamNumpy:
     """Zero-copy pack_bitstream_numpy tests."""
 

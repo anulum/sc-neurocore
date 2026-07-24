@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bus_mixed_precision_support import *  # noqa: F403
 
+
 class TestFromPreset:
     """Test preset-based mixed-precision creation."""
 

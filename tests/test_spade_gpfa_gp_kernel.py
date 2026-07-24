@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spade_gpfa_support import *  # noqa: F403
 
+
 class TestGPKernel:
     def test_shape_and_symmetry(self):
         K = _gp_kernel(50, tau=10.0)

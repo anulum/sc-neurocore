@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFPipeline:
     def test_population(self) -> None:
         assert Population(ExpIFNeuron, n=10, label="expif").n == 10

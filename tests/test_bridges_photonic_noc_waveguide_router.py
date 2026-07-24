@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestWaveguideRouter:
     def test_route_two_nodes(self):
         router = WaveguideRouter()

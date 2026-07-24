@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_marder_stg_support import *  # noqa: F403
 
+
 class TestSTGBursting:
     def test_fires_at_zero_current(self):
         assert len(_run(MarderSTGNeuron(), current=0.0, steps=50_000)) >= 10

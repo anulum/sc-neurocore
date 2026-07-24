@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestODEStability:
     def test_stable(self):
         from sc_neurocore.compiler.intelligence import verify_ode_stability

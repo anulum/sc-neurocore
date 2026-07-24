@@ -17,4 +17,11 @@ from sc_neurocore.world_model.spike_predictor import (
 )
 import sc_neurocore.world_model as world_model_module
 
-__all__ = ['np', 'pytest', 'SpikePredictor', 'predict_and_xor_world_model', 'xor_and_recover_world_model', 'world_model_module']
+__all__ = [
+    "np",
+    "pytest",
+    "SpikePredictor",
+    "predict_and_xor_world_model",
+    "xor_and_recover_world_model",
+    "world_model_module",
+]

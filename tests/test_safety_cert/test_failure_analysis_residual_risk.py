@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.failure_analysis_support import *  # noqa: F403
 
+
 class TestResidualRisk:
     def test_residual_risk_all_safe(self) -> None:
         fmeda = FMEDA()

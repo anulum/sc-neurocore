@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 class TestLogdetSpd:
     def test_diagonal(self) -> None:
         m = np.diag([2.0, 8.0])

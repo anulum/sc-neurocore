@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.homeostasis_support import *  # noqa: F403
 
+
 class TestSleepConsolidation:
     @pytest.mark.parametrize(
         ("field", "value"),

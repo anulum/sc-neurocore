@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.schema_validator_support import *  # noqa: F403
 
+
 class TestValidateNonexistent:
     """Test error handling for missing schemas."""
 

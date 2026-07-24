@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_sorting_quality_support import *  # noqa: F403
 
+
 class TestPresenceRatio:
     def test_full_presence(self) -> None:
         train = np.zeros(1000, dtype=np.int8)

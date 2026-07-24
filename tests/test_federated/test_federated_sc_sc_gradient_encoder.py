@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestSCGradientEncoder:
     def test_encode_decode_roundtrip(self):
         enc = SCGradientEncoder(bitstream_length=1024, dp=DPMechanism(epsilon=10.0))

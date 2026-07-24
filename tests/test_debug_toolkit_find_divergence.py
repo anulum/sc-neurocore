@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.debug_toolkit_support import *  # noqa: F403
 
+
 class TestFindDivergence:
     def test_identical_traces(self):
         spikes = np.zeros((10, 5), dtype=np.int8)

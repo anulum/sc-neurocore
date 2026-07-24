@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFNetwork:
     def test_population(self):
         pop = Population(ParametricLIFNeuron, n=10, label="plif")

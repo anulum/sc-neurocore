@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compiler_static_analysis_support import *  # noqa: F403
 
+
 class TestPowerEstimation:
     """Tests for compile-time power estimation."""
 

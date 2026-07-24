@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.datasets_support import *  # noqa: F403
 
+
 class TestSHDRealLoader:
     """Test SHD real-data path with mocked h5py."""
 

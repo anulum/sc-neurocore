@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_parity_support import *  # noqa: F403
 
+
 class TestEdgeCases:
     def test_zero_length_workload(self):
         out = py_wilson_cowan_simulate(

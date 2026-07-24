@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestSignedQ:
     def test_positive_within_range(self):
         assert signed_q(Q, 1.0) == 256

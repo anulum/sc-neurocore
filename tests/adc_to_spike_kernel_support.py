@@ -29,4 +29,18 @@ from sc_neurocore.sensors.adc_to_spike_kernel import (
     quantise_adc,
 )
 
-__all__ = ['Callable', 'np', 'npt', 'nptyping', 'pytest', 'sensors', 'kernel', 'ADCSpikeWindowConfig', 'ADCSpikeWindowResult', 'adc_to_spike_windows', 'adc_to_spike_windows_q', 'available_backends', 'quantise_adc']
+__all__ = [
+    "Callable",
+    "np",
+    "npt",
+    "nptyping",
+    "pytest",
+    "sensors",
+    "kernel",
+    "ADCSpikeWindowConfig",
+    "ADCSpikeWindowResult",
+    "adc_to_spike_windows",
+    "adc_to_spike_windows_q",
+    "available_backends",
+    "quantise_adc",
+]

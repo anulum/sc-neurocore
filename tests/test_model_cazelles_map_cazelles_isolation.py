@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cazelles_map_support import *  # noqa: F403
 
+
 class TestCazellesIsolation:
     def test_construction(self):
         n = CazellesMapNeuron()

@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+
 h5py = pytest.importorskip("h5py")
 from sc_neurocore.adapters.sonata import (
     import_sonata,
     import_sonata_edges,
     import_sonata_nodes,
 )
+
+
 def _create_nodes_h5(path, n=10, pop_name="exc"):
     """Create a minimal SONATA nodes HDF5 file."""
     with h5py.File(path, "w") as f:
@@ -23,6 +26,8 @@ def _create_nodes_h5(path, n=10, pop_name="exc"):
         grp.create_dataset("node_id", data=np.arange(n))
         grp.create_dataset("node_type_id", data=np.zeros(n, dtype=int))
     return path
+
+
 def _create_edges_h5(path, src_ids, tgt_ids, weights=None, pop_name="exc_exc"):
     """Create a minimal SONATA edges HDF5 file."""
     with h5py.File(path, "w") as f:
@@ -35,4 +40,14 @@ def _create_edges_h5(path, src_ids, tgt_ids, weights=None, pop_name="exc_exc"):
             g0.create_dataset("syn_weight", data=np.array(weights))
     return path
 
-__all__ = ['np', 'pytest', 'h5py', 'import_sonata', 'import_sonata_edges', 'import_sonata_nodes', '_create_nodes_h5', '_create_edges_h5']
+
+__all__ = [
+    "np",
+    "pytest",
+    "h5py",
+    "import_sonata",
+    "import_sonata_edges",
+    "import_sonata_nodes",
+    "_create_nodes_h5",
+    "_create_edges_h5",
+]

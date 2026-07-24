@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestPurePythonFallbacks:
     """Exercise the reference Python implementations that shadow the Rust core,
     and confirm they agree with the Rust path when it is available."""

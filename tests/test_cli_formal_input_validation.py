@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_formal_support import *  # noqa: F403
 
+
 def test_formal_verify_network_rejects_missing_action(capsys: pytest.CaptureFixture[str]) -> None:
     rc = run_cli("formal")
 
@@ -276,5 +277,3 @@ def test_formal_verify_network_reports_schema_validation_failure(
 
     assert run_cli("formal", "verify-network", "--output", str(tmp_path / "formal")) == 1
     assert "invalid generated report" in capsys.readouterr().out
-
-

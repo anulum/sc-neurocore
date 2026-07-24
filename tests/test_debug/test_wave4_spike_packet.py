@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestSpikePacket:
     def test_encode_decode(self):
         p = SpikePacket(source_id=100, target_id=200, timestamp=12345, spike_len=64, sequence=42)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestSpikeDecisionTree:
     def test_add_root_decision(self):
         tree = SpikeDecisionTree()

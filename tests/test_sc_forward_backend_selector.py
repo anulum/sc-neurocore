@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_forward_support import *  # noqa: F403
 
+
 class TestBackendSelector:
     """NEU-SCPN.1 — get_backend / available_backends."""
 

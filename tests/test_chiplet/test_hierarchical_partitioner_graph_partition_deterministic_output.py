@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_graph_support import *  # noqa: F403
 
+
 class TestPartitionDeterministicOutput:
     """The perf fix must NOT change algorithm output — the partitioner
     is deterministic for a fixed graph + seed."""

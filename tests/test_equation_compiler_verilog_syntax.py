@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestVerilogSyntax:
     def test_module_structure(self):
         _, verilog = equation_to_fpga(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestJaxBackendFallback:
     def test_surrogate_paths_declared_without_jax(self):
         from sc_neurocore.accel.jax_backend import JAX_SURROGATE_PATHS

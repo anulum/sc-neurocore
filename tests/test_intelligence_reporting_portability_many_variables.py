@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_reporting_support import *  # noqa: F403
 
+
 class TestPortabilityManyVariables:
     """A model with more than four state variables raises the register-file
     blocker that the single-variable portability cases never trigger."""

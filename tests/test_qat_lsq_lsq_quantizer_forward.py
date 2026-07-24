@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_lsq_support import *  # noqa: F403
 
+
 class TestLSQQuantizerForward:
     def test_output_on_integer_grid(self) -> None:
         q = LSQQuantizer(3)  # signed 3-bit: grid [-4, 3]

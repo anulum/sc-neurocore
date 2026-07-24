@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestIMUAdapter:
     def test_encode_angular_rate(self):
         ts = np.arange(10, dtype=np.float64) * 100

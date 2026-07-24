@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestBenchmarkSweepContracts:
     def test_sweep_returns_reports_for_each_ber(self):
         bench = ResilienceBenchmark(seed=2)

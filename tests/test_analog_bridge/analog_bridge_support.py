@@ -12,6 +12,8 @@ from __future__ import annotations
 import unittest
 from dataclasses import dataclass
 from sc_neurocore.analog_bridge import AnalogBridge
+
+
 @dataclass
 class MockNode:
     """Node descriptor matching the bridge's public configuration contract."""
@@ -21,4 +23,5 @@ class MockNode:
     probability: float = 0.0
     threshold: float = 0.0
 
-__all__ = ['unittest', 'dataclass', 'AnalogBridge', 'MockNode']
+
+__all__ = ["unittest", "dataclass", "AnalogBridge", "MockNode"]

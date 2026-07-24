@@ -13,4 +13,4 @@ import numpy as np
 import pytest
 from sc_neurocore.core.tensor_stream import TensorStream
 
-__all__ = ['np', 'pytest', 'TensorStream']
+__all__ = ["np", "pytest", "TensorStream"]

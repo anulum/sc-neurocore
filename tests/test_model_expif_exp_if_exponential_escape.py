@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFExponentialEscape:
     def test_exponential_term_at_soft_threshold_equals_delta_t(self) -> None:
         neuron = ExpIFNeuron()

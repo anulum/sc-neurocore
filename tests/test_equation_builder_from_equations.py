@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_builder_support import *  # noqa: F403
 
+
 class TestFromEquations:
     def test_brian2_style_lif(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations

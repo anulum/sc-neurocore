@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_verification_and_safety_support import *  # noqa: F403
 
+
 class TestReliability(unittest.TestCase):
     def test_predict_reliability_rejects_invalid_inputs(self):
         invalid_cases = [

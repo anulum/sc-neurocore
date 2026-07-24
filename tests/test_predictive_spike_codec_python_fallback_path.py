@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.predictive_spike_codec_support import *  # noqa: F403
 
+
 class TestPythonFallbackPath:
     """Force Python path through the class by monkeypatching _HAS_RUST."""
 

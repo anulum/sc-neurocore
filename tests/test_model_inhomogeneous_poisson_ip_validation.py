@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
 
+
 class TestIPValidation:
     @pytest.mark.parametrize("dt_ms", [0.0, -1.0, np.nan, np.inf])
     def test_rejects_non_positive_or_non_finite_dt(self, dt_ms: float):

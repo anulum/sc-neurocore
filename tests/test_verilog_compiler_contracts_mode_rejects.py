@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.verilog_compiler_contracts_support import *  # noqa: F403
 
+
 def test_compile_to_verilog_rejects_unknown_overflow_mode() -> None:
     """The registered compiler rejects unsupported overflow policies."""
     neuron = _lif_without_threshold()

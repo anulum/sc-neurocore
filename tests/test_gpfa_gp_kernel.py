@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 class TestGpKernel:
     def test_shape_diagonal_and_symmetry(self) -> None:
         k = _gp_kernel(10, 5.0, 1.0)

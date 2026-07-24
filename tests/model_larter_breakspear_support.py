@@ -28,4 +28,14 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 
-__all__ = ['time', 'np', 'pytest', 'LarterBreakspearNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput']
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "LarterBreakspearNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+]

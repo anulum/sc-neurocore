@@ -13,4 +13,4 @@ import numpy as np
 from sc_neurocore.neurons.models.astrocyte_adapter import AstrocyteNeuron
 from sc_neurocore.network.population import Population
 
-__all__ = ['np', 'AstrocyteNeuron', 'Population']
+__all__ = ["np", "AstrocyteNeuron", "Population"]

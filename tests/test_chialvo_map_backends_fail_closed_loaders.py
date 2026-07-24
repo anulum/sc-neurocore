@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from tests.chialvo_map_backends_support import *  # noqa: F403
 
+
 def test_explicit_unavailable_backend_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     """An explicit lane request must never fall through to Python silently."""
     monkeypatch.setattr(chialvo_map, "_backend_available", lambda _name: False)
     for backend in ("rust", "julia", "go", "mojo"):
         with pytest.raises(RuntimeError, match="unavailable"):
             ChialvoMapNeuron().simulate(1, backend=backend)
+
 
 def test_import_without_rust_extension_keeps_python_floor(
     monkeypatch: pytest.MonkeyPatch,
@@ -38,6 +40,7 @@ def test_import_without_rust_extension_keeps_python_floor(
             reloaded.ChialvoMapNeuron().simulate(1, backend="rust")
     importlib.reload(chialvo_map)
 
+
 def test_julia_loader_reports_missing_runtime_and_source(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -54,6 +57,7 @@ def test_julia_loader_reports_missing_runtime_and_source(
         context.setattr(os.path, "isfile", lambda _path: False)
         with pytest.raises(RuntimeError, match="unavailable"):
             ChialvoMapNeuron().simulate(1, backend="julia")
+
 
 def test_c_loader_reports_missing_file_load_failure_and_symbol(
     monkeypatch: pytest.MonkeyPatch,
@@ -81,6 +85,7 @@ def test_c_loader_reports_missing_file_load_failure_and_symbol(
         context.setattr(ctypes, "CDLL", lambda _path: object())
         with pytest.raises(RuntimeError, match="Go Chialvo backend unavailable"):
             ChialvoMapNeuron().simulate(1, backend="go")
+
 
 def test_compiled_error_sentinel_becomes_floating_point_error(
     monkeypatch: pytest.MonkeyPatch,

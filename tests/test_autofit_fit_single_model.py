@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestFitSingleModel:
     def test_fit_returns_fitted_model(self):
         class GoodNeuron:

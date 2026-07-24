@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestGF4ErrorCorrection:
     def test_encode_decode_roundtrip(self) -> None:
         ecc = GF4ErrorCorrection(n_parity=4)

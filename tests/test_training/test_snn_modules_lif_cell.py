@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestLIFCell:
     def test_above_threshold_spikes(self):
         lif = LIFCell(beta=0.0, threshold=0.5)

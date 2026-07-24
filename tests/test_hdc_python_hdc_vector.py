@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hdc_python_support import *  # noqa: F403
 
+
 class TestHDCVector:
     def test_create_default_dimension(self):
         v = HDCVector()

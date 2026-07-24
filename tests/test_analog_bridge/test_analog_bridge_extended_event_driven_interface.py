@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from analog_bridge_extended_support import *  # noqa: F403
 
+
 class TestEventDrivenInterface(unittest.TestCase):
     """AER conversion and rate-coding contract checks."""
 

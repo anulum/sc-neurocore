@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.surrogate_support import *  # noqa: F403
 
+
 def test_fast_sigmoid_slope_effect():
     """Steeper slope -> higher peak gradient at threshold (x=0)."""
     x = torch.tensor([0.001], requires_grad=True)
@@ -23,6 +24,8 @@ def test_fast_sigmoid_slope_effect():
     grad_gentle = x2.grad.item()
 
     assert grad_steep > grad_gentle
+
+
 def test_sigmoid_surrogate_slope_controls_threshold_gradient() -> None:
     x_steep = torch.tensor([0.01], requires_grad=True)
     sigmoid_surrogate(x_steep, slope=20.0).backward()
@@ -30,6 +33,8 @@ def test_sigmoid_surrogate_slope_controls_threshold_gradient() -> None:
     sigmoid_surrogate(x_gentle, slope=2.0).backward()
 
     assert x_steep.grad.abs().item() > x_gentle.grad.abs().item()
+
+
 def test_triangular_surrogate_width_controls_gradient_support() -> None:
     x_narrow = torch.tensor([0.8], requires_grad=True)
     triangular(x_narrow, width=0.5).backward()

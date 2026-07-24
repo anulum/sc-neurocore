@@ -33,6 +33,7 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
 ALL_CLASSES = [
     MultiTimescaleNeuron,
     AttentionGatedNeuron,
@@ -44,4 +45,23 @@ ALL_CLASSES = [
     MetaPlasticNeuron,
 ]
 
-__all__ = ['time', 'np', 'pytest', 'assert_throughput_guard', 'AttentionGatedNeuron', 'CompositionalBindingNeuron', 'ContinuousAttractorNeuron', 'DifferentiableSurrogateNeuron', 'MetaPlasticNeuron', 'MultiTimescaleNeuron', 'PredictiveCodingNeuron', 'SelfReferentialNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'ALL_CLASSES']
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "assert_throughput_guard",
+    "AttentionGatedNeuron",
+    "CompositionalBindingNeuron",
+    "ContinuousAttractorNeuron",
+    "DifferentiableSurrogateNeuron",
+    "MetaPlasticNeuron",
+    "MultiTimescaleNeuron",
+    "PredictiveCodingNeuron",
+    "SelfReferentialNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "ALL_CLASSES",
+]

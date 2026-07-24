@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestBipolarSCLayer:
     def test_output_shape(self):
         inputs = np.array([0.5, -0.3, 0.1])

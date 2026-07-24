@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.verify_dois_support import *  # noqa: F403
 
+
 class TestClassifyMatch:
     @staticmethod
     def _outcome(**over: Any) -> dict[str, Any]:

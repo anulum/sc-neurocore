@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestCheckpointAuditChain:
     def test_append_and_verify(self):
         chain = CheckpointAuditChain()

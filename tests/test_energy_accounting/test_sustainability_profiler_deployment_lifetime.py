@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestDeploymentLifetime:
     def test_battery_only(self):
         fpga = FPGAResourceReport(luts=1000, static_power_mw=10)

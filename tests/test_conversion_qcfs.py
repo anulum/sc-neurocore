@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_support import *  # noqa: F403
 
+
 class TestQCFS:
     def test_output_range(self) -> None:
         qcfs = QCFSActivation(T=8, theta=1.0)

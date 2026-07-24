@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_codec_support import *  # noqa: F403
 
+
 class TestHuffmanEncoder:
     def test_encode_decode_roundtrip(self):
         from sc_neurocore.spike_codec.entropy import HuffmanEncoder

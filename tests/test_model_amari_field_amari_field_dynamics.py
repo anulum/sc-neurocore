@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
 
+
 class TestAmariFieldDynamics:
     def test_bump_stimulus_activates_field(self):
         """Gaussian bump input should create localised activation."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestEvaluate:
     def test_default_proxy(self) -> None:
         arch = Architecture(

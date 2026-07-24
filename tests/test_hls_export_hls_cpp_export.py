@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hls_export_support import *  # noqa: F403
 
+
 class TestHLSCppExport:
     """Vitis/Catapult HLS C++ translation."""
 

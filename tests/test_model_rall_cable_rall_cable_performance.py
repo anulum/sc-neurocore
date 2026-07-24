@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCablePerformance:
     def test_isolation_throughput(self) -> None:
         import time

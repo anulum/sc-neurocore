@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.losses_support import *  # noqa: F403
 
+
 class TestSpikeL1Loss:
     def test_loss_is_nonnegative(self):
         spikes = torch.randn(8, 10).abs()

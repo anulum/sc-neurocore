@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanEIDynamics:
     """E/I population interaction — the core of Wilson-Cowan."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_martinotti_neuron_support import *  # noqa: F403
 
+
 class TestMartinottiNetwork:
     def test_population_size(self):
         assert Population(MartinottiNeuron, n=8, label="martinotti").n == 8

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_martinotti_neuron_support import *  # noqa: F403
 
+
 class TestMartinottiBetaMRegression:
     """Guards the corrected β_m offset against the depolarisation-block bug."""
 

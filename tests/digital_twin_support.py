@@ -11,4 +11,4 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.digital_twin import FPGAMismatchModel
 
-__all__ = ['np', 'FPGAMismatchModel']
+__all__ = ["np", "FPGAMismatchModel"]

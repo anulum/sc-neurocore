@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestTriggerEngine:
     def test_density_above(self):
         te = TriggerEngine()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hh_validation_support import *  # noqa: F403
 
+
 class TestHodgkinHuxleyValidation:
     """Validate HH model against 1952 paper expectations."""
 

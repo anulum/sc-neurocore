@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestSpikeTriggeredAverage:
     def test_shape(self):
         stim = np.sin(np.linspace(0, 10 * np.pi, 1000))

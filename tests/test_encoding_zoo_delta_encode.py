@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestDeltaEncode:
     def test_1d(self):
         signal = np.array([0.0, 0.0, 0.5, 0.5, 1.0])

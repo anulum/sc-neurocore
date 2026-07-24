@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fusion_multimodal_support import *  # noqa: F403
 
+
 class TestMultiModalFusionAttention:
     def test_attention_mode(self):
         mods = [

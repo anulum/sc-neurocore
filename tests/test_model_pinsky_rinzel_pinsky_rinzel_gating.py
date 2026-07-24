@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelGating:
     def test_gating_variables_bounded(self):
         n = PinskyRinzelNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_import_support import *  # noqa: F403
 
+
 class TestIzhikevichExtension:
     def test_izhikevich_full_model(self):
         g = _one("Izhikevich")

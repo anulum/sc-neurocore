@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_core_support import *  # noqa: F403
 
+
 class TestCsrGraphAccessors:
     """`CSRGraph.edge_conn` and `LFSRSeedAllocator` zero-seed clamp
     are used by external callers but were uncovered by the existing

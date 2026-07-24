@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestSpikeRingBuffer:
     def test_push_and_snapshot(self):
         rb = SpikeRingBuffer(4)

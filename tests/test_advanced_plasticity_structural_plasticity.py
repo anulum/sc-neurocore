@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestStructuralPlasticity:
     def test_prune(self, simple_net):
         _, _, _, proj = simple_net

@@ -22,4 +22,18 @@ from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
-__all__ = ['math', 'cast', 'np', 'npt', 'pytest', 'AlphaNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate']
+__all__ = [
+    "math",
+    "cast",
+    "np",
+    "npt",
+    "pytest",
+    "AlphaNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+]

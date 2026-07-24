@@ -15,4 +15,4 @@ from sc_neurocore.neurons.schema_validator import (
     validate_schema_dict,
 )
 
-__all__ = ['validate_all_bundled', 'validate_schema', 'validate_schema_dict']
+__all__ = ["validate_all_bundled", "validate_schema", "validate_schema_dict"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from edge_support import *  # noqa: F403
 
+
 class TestPowerProfile:
     def test_creation(self):
         pp = PowerProfile.for_board(Board.ESP32_C6, 160)

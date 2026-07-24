@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_session_support import *  # noqa: F403
 
+
 class TestSessionConstructionValidation:
     @pytest.mark.parametrize(
         "field",

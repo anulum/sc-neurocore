@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestFederatedAggregator:
     def test_majority_vote(self):
         agg = FederatedAggregator(num_clients=3, bitstream_length=8)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_session_support import *  # noqa: F403
 
+
 class TestSessionFrameValidation:
     def test_frame_must_fit_aer_epoch_without_advancing_round(self) -> None:
         session = BioHybridSession(**_parts())

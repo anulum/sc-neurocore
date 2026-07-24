@@ -19,4 +19,15 @@ from sc_neurocore.datasets.loaders import (
 )
 from sc_neurocore.datasets.encoding import poisson_encode, latency_encode
 
-__all__ = ['MagicMock', 'patch', 'np', 'pytest', '_check_root', 'load_nmnist', 'load_shd', 'load_dvs_cifar10', 'poisson_encode', 'latency_encode']
+__all__ = [
+    "MagicMock",
+    "patch",
+    "np",
+    "pytest",
+    "_check_root",
+    "load_nmnist",
+    "load_shd",
+    "load_dvs_cifar10",
+    "poisson_encode",
+    "latency_encode",
+]

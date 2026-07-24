@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
 
+
 def test_connor_stevens_matches_independent_rk4_contract() -> None:
     """Connor-Stevens step follows the module RK4 integration contract."""
     neuron = ConnorStevensNeuron(v=-62.0, m=0.05, h=0.84, n=0.22, a=0.41, b=0.27, dt=0.02)
@@ -23,6 +24,8 @@ def test_connor_stevens_matches_independent_rk4_contract() -> None:
     assert (neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b) == pytest.approx(
         expected, rel=1e-10, abs=1e-10
     )
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -40,6 +43,8 @@ def test_connor_stevens_rejects_invalid_parameters(field: str, value: float) -> 
     """Invalid physical parameters are rejected before simulation begins."""
     with pytest.raises((TypeError, ValueError)):
         ConnorStevensNeuron(**{field: value})
+
+
 def test_connor_stevens_rejects_non_finite_current_without_mutation() -> None:
     """Adapter-visible invalid drive fails closed and preserves biological state."""
     neuron = ConnorStevensNeuron(v=-63.0, m=0.04, h=0.91, n=0.18, a=0.36, b=0.31)
@@ -49,6 +54,8 @@ def test_connor_stevens_rejects_non_finite_current_without_mutation() -> None:
         neuron.step(float("nan"))
 
     assert (neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b) == before
+
+
 def test_connor_stevens_rejects_corrupted_runtime_state_without_mutation() -> None:
     """Runtime state corruption cannot be amplified into a partially committed step."""
     neuron = ConnorStevensNeuron()

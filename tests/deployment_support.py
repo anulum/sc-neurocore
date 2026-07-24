@@ -22,6 +22,7 @@ from sc_neurocore.compiler.deployment import (
     generate_host_driver,
 )
 from sc_neurocore.compiler.live_control import MMIOUpdateSpec, ParameterBankSpec
+
 STUB_VERILOG = """
 module sc_lif (input wire clk, input wire rst, input wire en,
                input wire signed [15:0] I_t, output wire spike_out);
@@ -39,6 +40,8 @@ module sc_lif (input wire clk, input wire rst, input wire en,
 endmodule
 """
 LIF_PARAMS = {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16}
+
+
 class _GeneratedUnsafeHostDriver(Protocol):
     """Protocol for the dynamically generated unsafe-name test driver."""
 
@@ -47,6 +50,8 @@ class _GeneratedUnsafeHostDriver(Protocol):
 
     def set_v_thresh(self, value: float) -> None:
         """Set the generated voltage-threshold parameter register."""
+
+
 class _GeneratedUnsafeHostDriverFactory(Protocol):
     """Constructor protocol for the dynamically executed test driver class."""
 
@@ -56,6 +61,8 @@ class _GeneratedUnsafeHostDriverFactory(Protocol):
         write_fn: Callable[[int, int], None],
     ) -> _GeneratedUnsafeHostDriver:
         """Create a generated driver instance."""
+
+
 class _GeneratedLiveHostDriver(Protocol):
     """Protocol for generated live-control host driver methods under test."""
 
@@ -79,6 +86,8 @@ class _GeneratedLiveHostDriver(Protocol):
 
     def clear_live_traps(self) -> None:
         """Clear all generated live-control traps."""
+
+
 class _GeneratedLiveHostDriverFactory(Protocol):
     """Constructor protocol for the dynamically executed live-control class."""
 
@@ -89,4 +98,25 @@ class _GeneratedLiveHostDriverFactory(Protocol):
     ) -> _GeneratedLiveHostDriver:
         """Create a generated live-control driver instance."""
 
-__all__ = ['Callable', 'Path', 'shutil', 'subprocess', 'Protocol', 'cast', 'pytest', 'estimate_resources', 'generate_cocotb_testbench', 'generate_constraints', 'generate_host_driver', 'MMIOUpdateSpec', 'ParameterBankSpec', 'STUB_VERILOG', 'LIF_PARAMS', '_GeneratedUnsafeHostDriver', '_GeneratedUnsafeHostDriverFactory', '_GeneratedLiveHostDriver', '_GeneratedLiveHostDriverFactory']
+
+__all__ = [
+    "Callable",
+    "Path",
+    "shutil",
+    "subprocess",
+    "Protocol",
+    "cast",
+    "pytest",
+    "estimate_resources",
+    "generate_cocotb_testbench",
+    "generate_constraints",
+    "generate_host_driver",
+    "MMIOUpdateSpec",
+    "ParameterBankSpec",
+    "STUB_VERILOG",
+    "LIF_PARAMS",
+    "_GeneratedUnsafeHostDriver",
+    "_GeneratedUnsafeHostDriverFactory",
+    "_GeneratedLiveHostDriver",
+    "_GeneratedLiveHostDriverFactory",
+]

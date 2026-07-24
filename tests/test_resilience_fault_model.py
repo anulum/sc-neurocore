@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.resilience_support import *  # noqa: F403
 
+
 class TestFaultModel:
     def test_fields(self):
         fm = FaultModel(fault_type=FaultType.STUCK_AT_ZERO, rate=0.1)

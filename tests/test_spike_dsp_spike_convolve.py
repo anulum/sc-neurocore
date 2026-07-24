@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_dsp_support import *  # noqa: F403
 
+
 class TestSpikeConvolve:
     def test_basic(self):
         spikes = np.zeros(30, dtype=np.int8)

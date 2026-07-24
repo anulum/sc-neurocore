@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.planner_support import *  # noqa: F403
 
+
 class TestSCPlanner:
     def test_propose_action_shape(self):
         np.random.seed(42)

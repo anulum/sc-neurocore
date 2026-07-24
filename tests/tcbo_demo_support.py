@@ -27,7 +27,21 @@ from sc_neurocore.experiments.tcbo_demo_engine import (
     reset_tcbo_demo_engine,
 )
 from sc_neurocore.scpn.params import build_knm_matrix as _build_knm
+
 if __name__ == "__main__":
     unittest.main()
 
-__all__ = ['unittest', 'np', 'SyntheticEEGGenerator', 'TCBODemoEngine', 'TCBODemoSnapshot', 'TCBOController', 'ScenarioName', '_compute_order_parameter', '_compute_p_h1_lightweight', 'get_tcbo_demo_engine', 'reset_tcbo_demo_engine', '_build_knm']
+__all__ = [
+    "unittest",
+    "np",
+    "SyntheticEEGGenerator",
+    "TCBODemoEngine",
+    "TCBODemoSnapshot",
+    "TCBOController",
+    "ScenarioName",
+    "_compute_order_parameter",
+    "_compute_p_h1_lightweight",
+    "get_tcbo_demo_engine",
+    "reset_tcbo_demo_engine",
+    "_build_knm",
+]

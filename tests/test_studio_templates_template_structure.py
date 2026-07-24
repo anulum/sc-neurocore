@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_templates_support import *  # noqa: F403
 
+
 class TestTemplateStructure:
     def test_five_templates_exist(self):
         assert len(TEMPLATES) == 5
@@ -42,4 +43,3 @@ class TestTemplateStructure:
     @pytest.mark.parametrize("name", list(TEMPLATES.keys()))
     def test_duration_positive(self, name):
         assert TEMPLATES[name]["duration"] > 0
-

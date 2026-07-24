@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_neurons_support import *  # noqa: F403
 
+
 class TestPoissonNeuron:
     def test_fires_at_rate(self):
         from sc_neurocore.neurons.models import PoissonNeuron

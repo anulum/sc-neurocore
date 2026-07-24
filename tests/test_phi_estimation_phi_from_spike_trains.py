@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 class TestPhiFromSpikeTrains:
     def test_spike_trains_integration(self) -> None:
         rng = np.random.RandomState(42)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestPrivacyAccountant:
     def test_initial_state(self):
         acc = PrivacyAccountant(target_epsilon=10.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestQuantizeWeights:
     def test_roundtrip_identity(self):
         w = np.array([0.0, 0.5, 1.0, -1.0, -0.5])

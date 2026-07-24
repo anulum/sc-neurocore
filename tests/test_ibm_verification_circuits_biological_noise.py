@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestBiologicalNoise:
     def test_noise_params(self):
         ext = pytest.importorskip("posner_extended")

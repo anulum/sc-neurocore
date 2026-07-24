@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestOrcaPipeline:
     def test_pp_distances(self):
         """P-P distances from S₆ geometry must be ≥ 4.9 Å."""

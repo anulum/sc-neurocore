@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_monitors_stimulus_support import *  # noqa: F403
 
+
 class TestRateMonitor:
     def test_empty_after_init(self):
         pop = Population(StochasticLIFNeuron, n=10, label="test")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equivalence_miter_support import *  # noqa: F403
 
+
 class TestParseModuleInterface:
     """Parsing the ANSI port interface, resolving parameter-dependent widths."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_chialvo_map_support import *  # noqa: F403
 
+
 class TestChialvoNetwork:
     def test_population(self):
         pop = Population(ChialvoMapNeuron, n=10, label="chialvo")

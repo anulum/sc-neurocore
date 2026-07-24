@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_deploy_support import *  # noqa: F403
 
+
 def test_deploy_nir_writes_hardware_project(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -40,5 +41,3 @@ def test_deploy_nir_writes_hardware_project(
         )
 
     assert (tmp_path / "project" / "project.tcl").is_file()
-
-

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
 
+
 def test_verilog_generator_can_emit_kuramoto_phase() -> None:
     gen = VerilogGenerator(module_name="kuramoto_wrap")
     code = gen.emit_kuramoto_phase(
@@ -69,5 +70,3 @@ def test_kuramoto_emitter_large_lut_compiles_without_index_truncation(tmp_path: 
     )
     assert result.returncode == 0, result.stderr
     assert "Numeric constant truncated" not in result.stderr
-
-

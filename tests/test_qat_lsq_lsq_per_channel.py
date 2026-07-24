@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_lsq_support import *  # noqa: F403
 
+
 class TestLSQPerChannel:
     def test_per_channel_step_shape(self) -> None:
         q = LSQQuantizer(4, per_channel=True, num_channels=5)

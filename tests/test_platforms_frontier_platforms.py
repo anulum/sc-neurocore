@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestFrontierPlatforms:
     """Verify 4 new platform classes and 10 new profiles."""
 

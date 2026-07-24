@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestToggleCoverage:
     def test_activity_bins(self):
         gen = UVMGenerator()

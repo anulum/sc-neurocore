@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.synthesis_conjectures_support import *  # noqa: F403
 
+
 class TestCoherenceRestoration:
     """After checkpoint restore, network should recover activity.
     This tests the engineering fact, not the consciousness claim."""

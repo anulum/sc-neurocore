@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_advanced_support import *  # noqa: F403
 
+
 class TestCharacterize:
     def test_characterize_lif(self):
         from sc_neurocore.studio.models import simulate_model
@@ -54,4 +55,3 @@ class TestCharacterize:
             "silent",
             "single_spike",
         )
-

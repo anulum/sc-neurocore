@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestScpnMetricsToCcw:
     def test_no_metrics_returns_defaults(self):
         bridge = create_bridge()

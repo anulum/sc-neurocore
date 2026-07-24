@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compression_toolkit_support import *  # noqa: F403
 
+
 class TestPruneStochastic:
     def test_near_zero_pruned(self):
         """Weights near 0 produce deterministic 0-bitstreams → pruned."""

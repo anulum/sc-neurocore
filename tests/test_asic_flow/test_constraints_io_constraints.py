@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.constraints_support import *  # noqa: F403
 
+
 class TestIOConstraints:
     def test_generate(self) -> None:
         pins = [IOPin("clk", "input", "N"), IOPin("data_out", "output", "S")]

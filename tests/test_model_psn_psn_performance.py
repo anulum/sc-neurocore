@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestPSNPerformance:
     def test_isolation_throughput(self):
         import time

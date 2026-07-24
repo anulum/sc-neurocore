@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from observation_loader_support import *  # noqa: F403
 
+
 def test_rejects_incomplete_synthesis_reports_without_fabricating_metrics() -> None:
     with pytest.raises(ObservationLoadError, match="missing power_mw"):
         observation_from_synthesis_reports(

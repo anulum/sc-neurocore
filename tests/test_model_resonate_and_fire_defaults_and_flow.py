@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_resonate_and_fire_support import *  # noqa: F403
 
+
 def test_defaults_match_the_source_illustration_and_engineering_step() -> None:
     neuron = ResonateAndFireNeuron()
     assert (neuron.x, neuron.y) == (0.0, 0.0)

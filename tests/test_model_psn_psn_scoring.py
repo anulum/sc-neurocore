@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestPSNScoring:
     def test_spike_at_threshold(self):
         """With uniform kernel: score = mean(buffer). Spike when mean >= θ."""

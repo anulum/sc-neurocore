@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_compiler_support import *  # noqa: F403
 
+
 class TestIRVerify:
     def test_verify_valid_ir(self, client):
         build = client.post("/api/ir/build", json=LIF_EQ).json()
@@ -24,4 +25,3 @@ class TestIRVerify:
     def test_verify_empty_ir_fails(self, client):
         r = client.post("/api/ir/verify", json={"ir_text": ""})
         assert r.status_code == 422
-

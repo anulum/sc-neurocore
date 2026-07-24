@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.analysis_support import *  # noqa: F403
 
+
 class TestCultureHealth:
     def test_healthy_culture(self) -> None:
         ch = CultureHealth(min_active_channels=3)

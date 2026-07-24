@@ -206,5 +206,37 @@ def _materialise_formal_report_artifacts(payload: dict[str, object], artifact_ro
         artifacts[key] = str(materialized)
 
 
-__all__ = ['Path', 'Any', 'cast', 'pytest', 'DenseLIFNetworkSpec', 'NetworkAntagonisticOutputExclusion', 'NetworkOutputTemporalSeparation', 'NetworkPopulationCoactivationCap', 'NetworkPopulationInactivityBound', 'NetworkPopulationSilenceAfterCoactivation', 'NetworkRefractoryInvariant', 'NetworkRateBound', 'compile_dense_lif_fixture_rtl', 'compile_network_antagonistic_exclusion_sva', 'compile_network_population_coactivation_sva', 'compile_network_population_inactivity_sva', 'compile_network_population_silence_sva', 'compile_network_temporal_separation_sva', 'compile_network_rate_bound_sva', 'compile_network_refractory_sva', 'replay_antagonistic_counterexample', 'replay_population_coactivation_counterexample', 'replay_population_inactivity_counterexample', 'replay_population_silence_counterexample', 'replay_temporal_separation_counterexample', 'replay_rate_bound_counterexample', 'replay_refractory_counterexample', 'FORMAL_NETWORK_REPORT_SCHEMA_VERSION', 'FormalReportValidationError', 'validate_formal_network_report', '_valid_formal_report_payload', '_materialise_formal_report_artifacts']
-
+__all__ = [
+    "Path",
+    "Any",
+    "cast",
+    "pytest",
+    "DenseLIFNetworkSpec",
+    "NetworkAntagonisticOutputExclusion",
+    "NetworkOutputTemporalSeparation",
+    "NetworkPopulationCoactivationCap",
+    "NetworkPopulationInactivityBound",
+    "NetworkPopulationSilenceAfterCoactivation",
+    "NetworkRefractoryInvariant",
+    "NetworkRateBound",
+    "compile_dense_lif_fixture_rtl",
+    "compile_network_antagonistic_exclusion_sva",
+    "compile_network_population_coactivation_sva",
+    "compile_network_population_inactivity_sva",
+    "compile_network_population_silence_sva",
+    "compile_network_temporal_separation_sva",
+    "compile_network_rate_bound_sva",
+    "compile_network_refractory_sva",
+    "replay_antagonistic_counterexample",
+    "replay_population_coactivation_counterexample",
+    "replay_population_inactivity_counterexample",
+    "replay_population_silence_counterexample",
+    "replay_temporal_separation_counterexample",
+    "replay_rate_bound_counterexample",
+    "replay_refractory_counterexample",
+    "FORMAL_NETWORK_REPORT_SCHEMA_VERSION",
+    "FormalReportValidationError",
+    "validate_formal_network_report",
+    "_valid_formal_report_payload",
+    "_materialise_formal_report_artifacts",
+]

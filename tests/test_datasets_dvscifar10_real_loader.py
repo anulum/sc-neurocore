@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.datasets_support import *  # noqa: F403
 
+
 class TestDVSCIFAR10RealLoader:
     """Test DVS-CIFAR10 real-data path with mock .npy files."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_ann_snn_support import *  # noqa: F403
 
+
 class TestConvert:
     def test_convert_simple_model(self) -> None:
         from sc_neurocore.conversion.ann_to_snn import convert

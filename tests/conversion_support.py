@@ -11,12 +11,25 @@ from __future__ import annotations
 """Tests for the ANN-to-SNN conversion engine."""
 import numpy as np
 import pytest
+
 torch = pytest.importorskip("torch")
 nn = torch.nn
 from sc_neurocore.conversion.ann_to_snn import convert, _extract_layers
 from sc_neurocore.conversion.qcfs import QCFSActivation
+
+
 def _make_ann(in_f: int = 4, hidden: int = 8, out_f: int = 3) -> object:
     torch.manual_seed(42)
     return nn.Sequential(nn.Linear(in_f, hidden), nn.ReLU(), nn.Linear(hidden, out_f))
 
-__all__ = ['np', 'pytest', 'torch', 'nn', 'convert', '_extract_layers', 'QCFSActivation', '_make_ann']
+
+__all__ = [
+    "np",
+    "pytest",
+    "torch",
+    "nn",
+    "convert",
+    "_extract_layers",
+    "QCFSActivation",
+    "_make_ann",
+]

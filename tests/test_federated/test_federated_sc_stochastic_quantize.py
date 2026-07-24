@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestStochasticQuantize:
     def test_unbiased(self):
         g = np.array([0.3, 0.7, 0.5])

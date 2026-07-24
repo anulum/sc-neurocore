@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hypervisor_support import *  # noqa: F403
 
+
 class TestMigrationThrottle:
     def test_initial_allow(self):
         mt = MigrationThrottle(max_per_window=3)

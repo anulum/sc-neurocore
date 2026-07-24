@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
 
+
 class TestPipelineWrapper:
     """Pipeline register insertion for high-frequency targets."""
 

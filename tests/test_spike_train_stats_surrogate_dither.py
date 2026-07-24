@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestSurrogateDither:
     def test_preserves_count(self):
         train = _poisson_train(50.0, 0.5)

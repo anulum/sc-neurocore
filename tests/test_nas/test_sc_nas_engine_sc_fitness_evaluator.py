@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestSCFitnessEvaluator:
     def test_longer_bitstreams_higher_accuracy(self) -> None:
         ev = SCFitnessEvaluator(seed=42)

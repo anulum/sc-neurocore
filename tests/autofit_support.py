@@ -21,4 +21,16 @@ from sc_neurocore.autofit.fitter import (
     fit,
 )
 
-__all__ = ['np', 'pytest', 'extract_spike_times', 'extract_features', 'FittedModel', '_cost_rmse', '_cost_features', '_simulate', '_fit_single_model', '_get_model_class', 'fit']
+__all__ = [
+    "np",
+    "pytest",
+    "extract_spike_times",
+    "extract_features",
+    "FittedModel",
+    "_cost_rmse",
+    "_cost_features",
+    "_simulate",
+    "_fit_single_model",
+    "_get_model_class",
+    "fit",
+]

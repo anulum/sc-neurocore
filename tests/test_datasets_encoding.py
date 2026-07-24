@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.datasets_support import *  # noqa: F403
 
+
 class TestEncoding:
     def test_poisson_encode_shape(self):
         rates = np.array([0.5, 0.8, 0.1])

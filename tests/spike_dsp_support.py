@@ -18,4 +18,12 @@ from sc_neurocore.spike_dsp import (
     spike_wavelet_decompose,
 )
 
-__all__ = ['np', 'SpikeFIR', 'SpikeIIR', 'spike_convolve', 'spike_fft', 'spike_power_spectrum', 'spike_wavelet_decompose']
+__all__ = [
+    "np",
+    "SpikeFIR",
+    "SpikeIIR",
+    "spike_convolve",
+    "spike_fft",
+    "spike_power_spectrum",
+    "spike_wavelet_decompose",
+]

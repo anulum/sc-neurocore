@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_hdl_gen.stochastic_source_emitters_support import *  # noqa: F403
 
+
 def test_stochastic_source_emitters_reject_invalid_module_names():
     with pytest.raises(ValueError, match="Invalid module name"):
         Lfsr16Emitter(module_name="lfsr-16 source")

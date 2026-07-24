@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_dsp_support import *  # noqa: F403
 
+
 class TestSpikeWavelet:
     def test_basic(self):
         rng = np.random.RandomState(42)

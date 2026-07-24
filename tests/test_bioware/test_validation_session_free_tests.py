@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_session_support import *  # noqa: F403
 
+
 def test_type_casts_do_not_weaken_runtime_checks() -> None:
     """Keep wrong-type construction explicit under strict static typing."""
     parts = _parts()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanSigmoid:
     """Published two-term form, Wilson-Cowan 1972:
         S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))

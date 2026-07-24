@@ -12,4 +12,4 @@ import numpy as np
 from sc_neurocore.online_learning.eprop import EpropTrainer
 from sc_neurocore.online_learning.online_trainer import OnlineLIFLayer, OnlineTrainer
 
-__all__ = ['np', 'EpropTrainer', 'OnlineLIFLayer', 'OnlineTrainer']
+__all__ = ["np", "EpropTrainer", "OnlineLIFLayer", "OnlineTrainer"]

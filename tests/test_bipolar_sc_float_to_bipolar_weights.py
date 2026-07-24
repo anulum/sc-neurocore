@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestFloatToBipolarWeights:
     def test_normalises_to_minus_one_one(self):
         w = np.array([[-2.0, 1.0], [0.5, -0.3]])

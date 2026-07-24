@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestDecisionMargin:
     def test_spike_margin_positive(self):
         tree = SpikeDecisionTree()

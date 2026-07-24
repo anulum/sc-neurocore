@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cosim_support_architecture_support import *  # noqa: F403
 
+
 def test_ibarz_tanaka_has_exact_definition_ownership() -> None:
     facade_tree = ast.parse(Path(cosim_support.__file__).read_text(encoding="utf-8"))
     facade_functions = {node.name for node in facade_tree.body if isinstance(node, ast.FunctionDef)}
@@ -50,5 +51,3 @@ def test_rulkov_map_has_exact_definition_ownership() -> None:
     owner_tree = ast.parse(Path(cosim_reference_rulkov_map.__file__).read_text(encoding="utf-8"))
     owner_functions = {node.name for node in owner_tree.body if isinstance(node, ast.FunctionDef)}
     assert owner_functions == set(_RULKOV_MAP_NAMES)
-
-

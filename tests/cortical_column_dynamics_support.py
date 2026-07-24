@@ -20,6 +20,7 @@ Population keys: L23e, L23i, L4e, L4i, L5e, L5i, L6e, L6i.
 """
 import numpy as np
 from sc_neurocore.network.cortical_column import CorticalColumn
+
 EXPECTED_POPULATIONS = {"L23e", "L23i", "L4e", "L4i", "L5e", "L5i", "L6e", "L6i"}
 
-__all__ = ['np', 'CorticalColumn', 'EXPECTED_POPULATIONS']
+__all__ = ["np", "CorticalColumn", "EXPECTED_POPULATIONS"]

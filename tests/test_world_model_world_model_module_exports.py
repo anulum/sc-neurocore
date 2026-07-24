@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.world_model_support import *  # noqa: F403
 
+
 class TestWorldModelModuleExports:
     def test_lazy_exports_are_available(self):
         assert world_model_module.SCPlanner is not None

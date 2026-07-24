@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestZeroTimestepGuards:
     """A zero timestep collapses every inter-spike interval to zero, the only
     way to reach the mean/sum==0 guards that strictly-positive ISIs never hit."""

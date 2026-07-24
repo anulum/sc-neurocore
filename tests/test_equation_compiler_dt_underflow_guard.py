@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestDtUnderflowGuard:
     """Q8.8 fixed-point dt underflow detection (issue: silent dead Verilog)."""
 

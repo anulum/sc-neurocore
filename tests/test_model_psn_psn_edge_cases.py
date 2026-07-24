@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestPSNEdgeCases:
     @pytest.mark.parametrize("ks", [2, 4, 8, 16])
     def test_kernel_size_variations(self, ks: int):

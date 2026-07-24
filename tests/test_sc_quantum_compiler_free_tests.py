@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_quantum_compiler_support import *  # noqa: F403
 
+
 def test_quantum_package_exports_sc_compiler_surface() -> None:
     """The quantum package facade exposes the documented SC compiler surface."""
     expected_names = {

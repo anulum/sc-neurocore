@@ -28,4 +28,16 @@ from sc_neurocore.scpn.dcls_tent_kernel import (
     tent_gate_q88,
 )
 
-__all__ = ['np', 'npt', 'pytest', 'kernel', 'DclsBatchResult', 'DclsForwardResult', 'available_backends', 'dcls_max_forward_batch', 'dcls_max_forward_batch_q88', 'dcls_max_forward_q88', 'tent_gate_q88']
+__all__ = [
+    "np",
+    "npt",
+    "pytest",
+    "kernel",
+    "DclsBatchResult",
+    "DclsForwardResult",
+    "available_backends",
+    "dcls_max_forward_batch",
+    "dcls_max_forward_batch_q88",
+    "dcls_max_forward_q88",
+    "tent_gate_q88",
+]

@@ -15,4 +15,4 @@ from sc_neurocore.transformers.spikformer import (
     CPGPositionalEncoding,
 )
 
-__all__ = ['np', 'SpikeDrivenAttention', 'SpikyStateSpace', 'CPGPositionalEncoding']
+__all__ = ["np", "SpikeDrivenAttention", "SpikyStateSpace", "CPGPositionalEncoding"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gutkin_ermentrout_support import *  # noqa: F403
 
+
 class TestGEIsolation:
     def test_defaults(self) -> None:
         n = GutkinErmentroutNeuron()

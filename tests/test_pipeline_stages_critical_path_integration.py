@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pipeline_stages_support import *  # noqa: F403
 
+
 class TestCriticalPathIntegration:
     """Verify static analysis functions work with pipeline insertion."""
 

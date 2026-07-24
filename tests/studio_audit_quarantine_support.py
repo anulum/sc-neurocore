@@ -178,6 +178,7 @@ def _archive_result_for_job(tmp_path: Path, job_id: str) -> dict[str, object]:
     ).to_public_dict()
     return cast(dict[str, object], result)
 
+
 __all__ = [
     "UTC",
     "_quarantine_export_payload",

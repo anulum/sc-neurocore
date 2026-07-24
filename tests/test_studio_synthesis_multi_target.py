@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestMultiTarget:
     def test_multi_target_returns_all(self):
         verilog = "module test(); endmodule"
@@ -44,4 +45,3 @@ class TestMultiTarget:
         huge = "module x;\n" + ("wire a;\n" * 400_000) + "endmodule\n"
         r = large_body_client.post("/api/synth/multi-target", json={"verilog": huge})
         assert r.status_code == 422
-

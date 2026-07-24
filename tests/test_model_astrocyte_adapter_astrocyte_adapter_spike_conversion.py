@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_astrocyte_adapter_support import *  # noqa: F403
 
+
 class TestAstrocyteAdapterSpikeConversion:
     """Tests for calcium-to-spike conversion semantics."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestRegulatoryMetadata:
     def test_default_fields(self):
         rm = RegulatoryMetadata()

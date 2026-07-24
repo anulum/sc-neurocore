@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.scpn_integrated_support import *  # noqa: F403
 
+
 class TestKnmMatrix:
     def test_shape(self):
         K = build_knm_matrix(16)

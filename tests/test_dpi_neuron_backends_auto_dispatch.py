@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.dpi_neuron_backends_support import *  # noqa: F403
 
+
 def test_rust_rejects_non_default_contract_without_mutation() -> None:
     """Fail closed outside the engine's fixed-constructor compatibility boundary."""
     neuron = _configured()

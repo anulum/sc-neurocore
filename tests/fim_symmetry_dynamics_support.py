@@ -23,6 +23,8 @@ from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
+
+
 def _make_self_connected_network(n=30, w=0.3, p=0.3, fim_lambda=0.0):
     """Build a recurrent excitatory population with self-projection."""
     pop = Population(StochasticLIFNeuron, n=n, label="exc")
@@ -31,6 +33,8 @@ def _make_self_connected_network(n=30, w=0.3, p=0.3, fim_lambda=0.0):
     mon = SpikeMonitor(pop, label="spk")
     net = Network(pop, proj, drive, mon, fim_lambda=fim_lambda)
     return net, proj, mon
+
+
 def _symmetry_measure(proj):
     """Measure weight matrix asymmetry: ||W - W^T|| / ||W||."""
     n = proj.source.n
@@ -46,4 +50,15 @@ def _symmetry_measure(proj):
         return 0.0
     return float(asym / total)
 
-__all__ = ['np', 'StochasticLIFNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', '_make_self_connected_network', '_symmetry_measure']
+
+__all__ = [
+    "np",
+    "StochasticLIFNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "_make_self_connected_network",
+    "_symmetry_measure",
+]

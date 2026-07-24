@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Network:
     def test_population(self):
         pop = Population(PlantR15Neuron, n=5, label="r15")

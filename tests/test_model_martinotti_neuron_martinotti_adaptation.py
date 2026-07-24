@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_martinotti_neuron_support import *  # noqa: F403
 
+
 class TestMartinottiAdaptation:
     def test_m_current_block_changes_firing(self):
         intact = _spikes(MartinottiNeuron(), 5.0, 40000)

@@ -25,6 +25,8 @@ from sc_neurocore.learning.advanced import (
     StructuralPlasticity,
     _fast_sigmoid_surrogate,
 )
+
+
 @pytest.fixture()
 def simple_net():
     """Two-population network with one projection."""
@@ -34,4 +36,21 @@ def simple_net():
     net = Network(pop_a, pop_b, proj)
     return net, pop_a, pop_b, proj
 
-__all__ = ['np', 'pytest', 'Population', 'Projection', 'Network', 'BPTTLearner', 'TBPTTLearner', 'EligibilityTrace', 'HomeostaticPlasticity', 'MetaLearner', 'RewardModulatedLearner', 'ShortTermPlasticity', 'StructuralPlasticity', '_fast_sigmoid_surrogate', 'simple_net']
+
+__all__ = [
+    "np",
+    "pytest",
+    "Population",
+    "Projection",
+    "Network",
+    "BPTTLearner",
+    "TBPTTLearner",
+    "EligibilityTrace",
+    "HomeostaticPlasticity",
+    "MetaLearner",
+    "RewardModulatedLearner",
+    "ShortTermPlasticity",
+    "StructuralPlasticity",
+    "_fast_sigmoid_surrogate",
+    "simple_net",
+]

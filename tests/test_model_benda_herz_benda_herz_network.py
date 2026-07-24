@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_benda_herz_support import *  # noqa: F403
 
+
 class TestBendaHerzNetwork:
     def test_population(self):
         pop = Population(BendaHerzNeuron, n=10, label="bh")

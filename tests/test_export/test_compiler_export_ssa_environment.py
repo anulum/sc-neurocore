@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from compiler_export_support import *  # noqa: F403
 
+
 class TestSSAEnvironment(unittest.TestCase):
     """Verify SSA register allocation and external input lookup."""
 

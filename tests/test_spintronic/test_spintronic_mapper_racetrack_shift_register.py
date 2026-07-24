@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestRacetrackShiftRegister:
     def test_load_and_shift(self):
         rt = RacetrackShiftRegister(n_positions=8)

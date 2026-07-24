@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gdsii_support import *  # noqa: F403
 
+
 class TestGDSFileRoundtrip:
     def test_file_created_and_nonempty(
         self, populated_result: CompilationResult, tmp_path: Path

@@ -28,4 +28,4 @@ from sc_neurocore.optics.photonic_emitter import (
     WaveguidePair,
 )
 
-__all__ = ['math', 'np', 'pytest', 'CrosstalkModel', 'WaveguidePair']
+__all__ = ["math", "np", "pytest", "CrosstalkModel", "WaveguidePair"]

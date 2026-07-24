@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_network_canvas_support import *  # noqa: F403
 
+
 class TestCreation:
     def test_create_population_defaults(self):
         pop = create_population()
@@ -55,4 +56,3 @@ class TestCreation:
         monkeypatch.setattr(mod, "list_models", _boom)
         with pytest.raises(RuntimeError, match="catalog failed"):
             mod.available_models()
-

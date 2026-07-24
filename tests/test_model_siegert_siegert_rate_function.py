@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertRateFunction:
     def test_zero_rate_below_threshold(self) -> None:
         """mu = V_rest + I. I<15 → mu < threshold → rate ≈ 0."""

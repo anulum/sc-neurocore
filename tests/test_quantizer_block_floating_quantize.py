@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestBlockFloatingQuantize:
     """Validate block-floating quantization contracts."""
 

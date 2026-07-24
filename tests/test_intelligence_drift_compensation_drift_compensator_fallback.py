@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_drift_compensation_support import *  # noqa: F403
 
+
 class TestDriftCompensatorFallback:
     """A non-positive drift rate has no tolerance horizon, so the refresh
     interval falls back to the fixed ceiling instead of dividing by zero."""

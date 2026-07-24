@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_destexhe_thalamic_support import *  # noqa: F403
 
+
 class TestDestParameters:
     @pytest.mark.parametrize("g_t", [0.0, 2.0, 5.0])
     def test_g_t_sweep(self, g_t: float):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.network_basic_support import *  # noqa: F403
 
+
 class TestProjection:
     def test_propagate_basic(self):
         src = Population("LapicqueNeuron", 3)

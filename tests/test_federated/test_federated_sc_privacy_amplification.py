@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestPrivacyAmplification:
     def test_full_sampling_no_amplification(self):
         assert amplified_epsilon(1.0, 1.0) == 1.0

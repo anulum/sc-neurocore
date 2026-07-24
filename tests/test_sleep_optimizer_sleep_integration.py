@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestSleepIntegration(unittest.TestCase):
     def test_full_flow(self):
         circ = CircadianOptimizer(Chronotype.DOLPHIN)

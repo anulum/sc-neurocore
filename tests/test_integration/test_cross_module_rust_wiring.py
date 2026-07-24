@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from cross_module_support import *  # noqa: F403
 
+
 class TestRustWiring:
     """Verify Rust backends are importable and callable from Python."""
 

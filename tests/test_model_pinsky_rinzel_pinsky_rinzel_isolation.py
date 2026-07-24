@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelIsolation:
     def test_construction_defaults(self):
         n = PinskyRinzelNeuron()

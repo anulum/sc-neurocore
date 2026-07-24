@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from edge_support import *  # noqa: F403
 
+
 class TestDeploy:
     def test_cargo_config_contains_target(self):
         for board in [Board.ESP32_C6, Board.K210, Board.GD32VF103]:

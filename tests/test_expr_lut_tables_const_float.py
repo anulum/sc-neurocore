@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.expr_lut_tables_support import *  # noqa: F403
 
+
 class TestConstFloat:
     def _fold(self, expr: str) -> float | None:
         return tables.const_float(ast.parse(expr, mode="eval").body)

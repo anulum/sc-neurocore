@@ -20,4 +20,4 @@ import pytest
 from sc_neurocore.neurons.models.astrocyte import AstrocyteModel
 from sc_neurocore.network.population import Population
 
-__all__ = ['time', 'np', 'pytest', 'AstrocyteModel', 'Population']
+__all__ = ["time", "np", "pytest", "AstrocyteModel", "Population"]

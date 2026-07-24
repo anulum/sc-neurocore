@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestFusionEnergyEstimator:
     def test_basic_estimate(self):
         est = FusionEnergyEstimator(tech_node_nm=28)

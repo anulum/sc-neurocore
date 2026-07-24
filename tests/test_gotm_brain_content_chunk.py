@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestContentChunk:
     def test_create(self) -> None:
         c = ContentChunk(

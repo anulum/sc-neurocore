@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fractional_lif_support import *  # noqa: F403
 
+
 class TestFLIFGLCoefficients:
     """Grünwald-Letnikov coefficients: c[0]=1, c[k] = c[k-1]·(k-1-α)/k."""
 

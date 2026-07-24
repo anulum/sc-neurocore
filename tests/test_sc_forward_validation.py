@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_forward_support import *  # noqa: F403
 
+
 class TestValidation:
     """Shape and range validation of the NumPy reference."""
 

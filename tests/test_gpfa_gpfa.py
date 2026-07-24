@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpfa_support import *  # noqa: F403
 
+
 class TestGpfa:
     def test_deterministic_and_seed_independent(self) -> None:
         trains = _synthetic_trains()

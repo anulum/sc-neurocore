@@ -22,7 +22,20 @@ from sc_neurocore.swarm import (
     SwarmEvolver,
     EvolverConfig,
 )
+
 if __name__ == "__main__":
     unittest.main()
 
-__all__ = ['unittest', 'np', 'SwarmAgent', 'AgentConfig', 'SwarmEnvironment', 'EnvConfig', 'CollectiveFields', 'FieldConfig', 'SwarmFitness', 'SwarmEvolver', 'EvolverConfig']
+__all__ = [
+    "unittest",
+    "np",
+    "SwarmAgent",
+    "AgentConfig",
+    "SwarmEnvironment",
+    "EnvConfig",
+    "CollectiveFields",
+    "FieldConfig",
+    "SwarmFitness",
+    "SwarmEvolver",
+    "EvolverConfig",
+]

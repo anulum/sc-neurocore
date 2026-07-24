@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_compatibility_support import *  # noqa: F403
 
+
 def test_scnir_compatibility_matrix_covers_parser_primitives() -> None:
     validate_scnir_compatibility_matrix()
 
@@ -17,12 +18,15 @@ def test_scnir_compatibility_matrix_covers_parser_primitives() -> None:
     assert {primitive.__name__ for primitive in NODE_MAP}.issubset(primitives)
     assert "NIRGraph" in primitives
 
+
 def test_scnir_compatibility_matrix_evidence_paths_exist() -> None:
     validate_scnir_compatibility_matrix(evidence_root=REPO_ROOT)
+
 
 def test_scnir_compatibility_matrix_rejects_missing_evidence_root(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="missing audit evidence paths"):
         validate_scnir_compatibility_matrix(evidence_root=tmp_path)
+
 
 def test_scnir_compatibility_matrix_is_deterministic_json() -> None:
     left = scnir_compatibility_matrix_dicts()
@@ -30,6 +34,7 @@ def test_scnir_compatibility_matrix_is_deterministic_json() -> None:
 
     assert left == right
     assert json.loads(json.dumps(left, sort_keys=True))[0]["nir_primitive"] == "Input"
+
 
 def test_scnir_compatibility_matrix_marks_closed_hdl_population_rows() -> None:
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}
@@ -45,6 +50,7 @@ def test_scnir_compatibility_matrix_marks_closed_hdl_population_rows() -> None:
     assert li.support_level == "metadata_and_hdl"
     assert "signal_kind=analogue_state" in li.scnir_stream_metadata
     assert "direct analogue-state MAC" in li.hdl_support
+
 
 def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> None:
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}
@@ -114,6 +120,7 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
         "Ambiguous multi-port nested NIRGraph boundary mappings still fail closed"
         in nested.limitation
     )
+
 
 def test_scnir_compatibility_matrix_records_weight_and_recurrent_delay_semantics() -> None:
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}

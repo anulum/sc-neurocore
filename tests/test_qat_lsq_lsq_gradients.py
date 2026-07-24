@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_lsq_support import *  # noqa: F403
 
+
 class TestLSQGradients:
     def test_value_gradient_is_ste_in_range(self) -> None:
         q = LSQQuantizer(4)

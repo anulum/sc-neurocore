@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plant_r15_support import *  # noqa: F403
 
+
 class TestPlantR15Stability:
     def test_moderate_current_finite(self):
         """Moderate current (I≤10) keeps all state finite."""

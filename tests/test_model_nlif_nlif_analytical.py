@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_nlif_support import *  # noqa: F403
 
+
 class TestNLIFAnalytical:
     def test_cubic_term_at_rest(self):
         """At V=V_rest: a·(V_rest-V_rest)·(V_rest-V_crit) = 0."""

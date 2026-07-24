@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.encoding_zoo_support import *  # noqa: F403
 
+
 class TestRateEncode:
     def test_shape(self):
         s = rate_encode(np.array([0.5, 0.3, 0.8]), T=20)

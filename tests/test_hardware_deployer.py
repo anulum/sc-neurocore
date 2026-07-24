@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hardware_support import *  # noqa: F403
 
+
 class TestDeployer:
     def _pipeline(self, n=20, family=DeviceFamily.LOIHI):
         rng = np.random.default_rng(42)

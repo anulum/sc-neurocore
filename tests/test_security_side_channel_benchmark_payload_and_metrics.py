@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.security_side_channel_benchmark_support import *  # noqa: F403
 
+
 def test_deploy_manifest_payload_rejects_invalid_manifest() -> None:
     with pytest.raises(SideChannelBenchmarkError, match="manifest"):
         _deploy_manifest_payload("bad")  # type: ignore[arg-type]

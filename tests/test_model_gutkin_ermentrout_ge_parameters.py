@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gutkin_ermentrout_support import *  # noqa: F403
 
+
 class TestGEParameters:
     @pytest.mark.parametrize("g_na", [10.0, 20.0, 40.0])
     def test_g_na_sweep(self, g_na: float) -> None:

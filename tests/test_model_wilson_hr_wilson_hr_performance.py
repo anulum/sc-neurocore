@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
 
+
 class TestWilsonHRPerformance:
     def test_isolation_throughput(self):
         n = WilsonHRNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestGutkinErmentrout:
     def test_fires(self):
         n = GutkinErmentroutNeuron()

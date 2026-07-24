@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
 
+
 class TestFHNDynamicsEquations:
     def test_rhs_formula(self):
         """The derivative matches the FitzHugh-Nagumo two-state ODE."""

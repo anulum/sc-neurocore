@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fim_symmetry_dynamics_support import *  # noqa: F403
 
+
 class TestLazarusPhaseGap:
     def test_activity_after_reset(self):
         """After resetting all populations, network should still produce

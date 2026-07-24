@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from build_accel_backends_support import *  # noqa: F403
 
+
 def test_discover_go_pairs_convention_recipe_and_pathlib(tmp_path: Path) -> None:
     accel, _ = _make_tree(tmp_path)
     targets = MOD.discover_targets("go", accel_root=accel)

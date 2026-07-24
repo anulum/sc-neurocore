@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_formal_support import *  # noqa: F403
 
+
 def test_formal_verify_network_records_missing_symbiyosys(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -143,5 +144,3 @@ def test_formal_verify_network_returns_nonzero_on_symbiyosys_failure(
     assert report["symbiyosys"]["returncode"] == 1
     assert report["symbiyosys"]["stderr"] == "assert failed\n"
     assert "SymbiYosys failed" in capsys.readouterr().out
-
-

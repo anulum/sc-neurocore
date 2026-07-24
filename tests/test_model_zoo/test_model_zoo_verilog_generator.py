@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from model_zoo_support import *  # noqa: F403
 
+
 class TestVerilogGenerator:
     def test_generates_valid_module(self):
         gen = VerilogGenerator()

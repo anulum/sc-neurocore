@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestProbabilisticPlatforms(unittest.TestCase):
     def test_purdue_pbit(self):
         p = get_profile("purdue_pbit")

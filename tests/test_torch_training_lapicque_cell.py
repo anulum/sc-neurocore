@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestLapicqueCell:
     def test_decay_and_gain(self):
         cell = LapicqueCell(tau=20.0, r=1.0, dt=1.0, threshold=5.0)

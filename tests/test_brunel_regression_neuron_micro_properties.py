@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestNeuronMicroProperties:
     """Fast single-neuron tests verifying biophysical properties."""
 

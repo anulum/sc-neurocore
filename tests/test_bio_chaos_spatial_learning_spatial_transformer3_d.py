@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestSpatialTransformer3D:
     def test_output_shape(self):
         grid = np.random.rand(3, 3, 3)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.physics_support import *  # noqa: F403
 
+
 class TestWolframHypergraph:
     def test_construction(self):
         wh = WolframHypergraph(edges=[(0, 1), (1, 2)], max_node_id=2)

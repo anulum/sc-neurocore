@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.learning_advanced_support import *  # noqa: F403
 
+
 class TestShortTermPlasticity:
     def test_class_exists(self):
         """ShortTermPlasticity should be importable."""

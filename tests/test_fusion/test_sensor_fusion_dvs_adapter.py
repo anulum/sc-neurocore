@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestDVSAdapter:
     def test_encode_events(self):
         ts = np.arange(10, dtype=np.float64) * 1000

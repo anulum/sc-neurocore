@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.catalogue_formal_support import *  # noqa: F403
 
+
 def test_emitter_lists_every_perfect_model() -> None:
     """Emitter CLASS_TO_SCHEMA must cover every live dual-axis perfect class."""
     import importlib.util

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
 
+
 class TestCrossFeatureIntegration:
     """End-to-end tests chaining multiple features together."""
 

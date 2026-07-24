@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from to_torch_bridge_support import *  # noqa: F403
 
+
 def test_network_to_torch_rejects_stochastic_lif_with_noise() -> None:
     pop = Population(
         StochasticLIFNeuron,

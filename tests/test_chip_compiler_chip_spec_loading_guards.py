@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.chip_compiler_support import *  # noqa: F403
 
+
 class TestChipSpecLoadingGuards:
     def test_load_chip_spec_rejects_invalid_json(self, tmp_path):
         from sc_neurocore.chip_compiler.chip_spec import load_chip_spec

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_convergence_support import *  # noqa: F403
 
+
 class TestSobolConvergence:
     """Sobol quasi-random should converge faster than Bernoulli."""
 

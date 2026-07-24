@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGPipeline:
     def test_population(self) -> None:
         assert Population(NeuroGridNeuron, n=10, label="ng").n == 10

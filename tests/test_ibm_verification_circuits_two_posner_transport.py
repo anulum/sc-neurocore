@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestTwoPosnerTransport:
     def test_circuit_16q(self):
         ext = pytest.importorskip("posner_extended")

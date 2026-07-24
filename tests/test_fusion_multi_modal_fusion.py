@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fusion_support import *  # noqa: F403
 
+
 class TestMultiModalFusion:
     def _make_modalities(self):
         return [

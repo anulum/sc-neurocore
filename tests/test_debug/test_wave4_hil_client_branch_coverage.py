@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestHilClientBranchCoverage:
     """Edge and accessor branches across the HIL telemetry components."""
 

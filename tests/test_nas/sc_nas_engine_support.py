@@ -33,7 +33,10 @@ from sc_neurocore.optimizer.surrogate_sc_optimizer import (
     SurrogateLayerConfig,
     SurrogateOptimizerReport,
 )
+
 RustTournament = Callable[[list[float], int, int, int], list[int]]
+
+
 def _surrogate_cfg(length: int) -> SurrogateLayerConfig:
     return SurrogateLayerConfig(
         bitstream_length=length,
@@ -47,6 +50,8 @@ def _surrogate_cfg(length: int) -> SurrogateLayerConfig:
         accuracy_score=0.99,
         utility_score=0.95,
     )
+
+
 class _FakeSurrogateOptimiser:
     def __init__(self) -> None:
         self.calls: list[list[LayerProfile]] = []
@@ -66,4 +71,30 @@ class _FakeSurrogateOptimiser:
             target_name="unit-fpga",
         )
 
-__all__ = ['importlib', 'sys', 'Callable', 'ModuleType', 'pytest', 'nas_module', 'DecorrelationStrategy', 'EvolutionaryNAS', 'FPGAResourceBudget', 'LayerConfig', 'NASObjective', 'NASReport', 'NASVerilogEmitter', 'NeuronType', 'SCCandidate', 'SCFitnessEvaluator', 'pareto_front', 'run_nas', 'LayerProfile', 'SurrogateLayerConfig', 'SurrogateOptimizerReport', 'RustTournament', '_surrogate_cfg', '_FakeSurrogateOptimiser']
+
+__all__ = [
+    "importlib",
+    "sys",
+    "Callable",
+    "ModuleType",
+    "pytest",
+    "nas_module",
+    "DecorrelationStrategy",
+    "EvolutionaryNAS",
+    "FPGAResourceBudget",
+    "LayerConfig",
+    "NASObjective",
+    "NASReport",
+    "NASVerilogEmitter",
+    "NeuronType",
+    "SCCandidate",
+    "SCFitnessEvaluator",
+    "pareto_front",
+    "run_nas",
+    "LayerProfile",
+    "SurrogateLayerConfig",
+    "SurrogateOptimizerReport",
+    "RustTournament",
+    "_surrogate_cfg",
+    "_FakeSurrogateOptimiser",
+]

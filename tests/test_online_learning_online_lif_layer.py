@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.online_learning_support import *  # noqa: F403
 
+
 class TestOnlineLIFLayer:
     def test_step(self):
         layer = OnlineLIFLayer(n_inputs=4, n_neurons=8)

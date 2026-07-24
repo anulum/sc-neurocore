@@ -21,4 +21,14 @@ from sc_neurocore.analog_bridge import (
     EventDrivenInterface,
 )
 
-__all__ = ['unittest', 'patch', 'np', 'analog_bridge', 'AEREvent', 'AnalogBridge', 'AnalogSubstrateProfile', 'CalibrationRoutine', 'EventDrivenInterface']
+__all__ = [
+    "unittest",
+    "patch",
+    "np",
+    "analog_bridge",
+    "AEREvent",
+    "AnalogBridge",
+    "AnalogSubstrateProfile",
+    "CalibrationRoutine",
+    "EventDrivenInterface",
+]

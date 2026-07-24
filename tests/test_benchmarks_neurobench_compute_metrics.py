@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.benchmarks_neurobench_support import *  # noqa: F403
 
+
 class TestComputeMetrics:
     def test_perfect_accuracy(self):
         preds = np.array([0, 1, 2, 3])

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestMemristorMapper:
     def test_map_small_matrix(self) -> None:
         mapper = MemristorMapper(seed=42)

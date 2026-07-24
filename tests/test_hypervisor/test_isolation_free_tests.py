@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from isolation_support import *  # noqa: F403
+
 
 def test_violation_log_capacity_is_bounded() -> None:
     firewall = BitstreamFirewall()
@@ -22,10 +24,14 @@ def test_violation_log_capacity_is_bounded() -> None:
     assert firewall.check_access("tenant", 0x1000) is False
     assert firewall.check_access("tenant", 0x2000) is False
     assert firewall.violation_count == 1
+
+
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
     assert compatibility_surface.FirewallRule is isolation.FirewallRule
     assert compatibility_surface.BitstreamFirewall is isolation.BitstreamFirewall
     assert compatibility_surface.verify_isolation is isolation.verify_isolation
+
+
 def test_address_isolation_definitions_have_one_owner() -> None:
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(isolation.__file__).read_text(encoding="utf-8"))

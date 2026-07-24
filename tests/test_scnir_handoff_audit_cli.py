@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_handoff_audit_support import *  # noqa: F403
 
+
 def test_scnir_audit_hdl_cli_writes_report(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -47,5 +48,3 @@ def test_scnir_audit_hdl_cli_reports_invalid_handoff(
 
     assert rc == 1
     assert "SC-NIR HDL handoff invalid" in capsys.readouterr().out
-
-

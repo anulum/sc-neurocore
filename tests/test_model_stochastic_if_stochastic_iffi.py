@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_stochastic_if_support import *  # noqa: F403
 
+
 class TestStochasticIFFI:
     def test_subthreshold_deterministic_silent(self):
         """I=10 with sigma=0 → no spikes (V_ss = V_rest + I = -60 < -50)."""

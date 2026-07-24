@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
 
+
 class TestLNMPerformance:
     def test_isolation_throughput(self):
         n = LearnableNeuronModel()

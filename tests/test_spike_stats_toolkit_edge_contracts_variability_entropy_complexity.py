@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_isi_entropy_silent():
     r = isi_entropy(np.zeros(10, dtype=np.int8))
     # Silent train → no ISIs → 0 entropy or nan

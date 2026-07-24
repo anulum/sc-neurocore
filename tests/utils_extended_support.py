@@ -29,4 +29,16 @@ from sc_neurocore.utils.fault_injection import FaultInjector
 from sc_neurocore.utils.fsm_activations import TanhFSM, ReLKFSM
 from sc_neurocore.utils.model_bridge import normalize_weights, SCBridge
 
-__all__ = ['pytest', 'np', 'AdaptiveInference', 'ConnectomeGenerator', 'ShufflingDecorrelator', 'LFSRRegenDecorrelator', 'FaultInjector', 'TanhFSM', 'ReLKFSM', 'normalize_weights', 'SCBridge']
+__all__ = [
+    "pytest",
+    "np",
+    "AdaptiveInference",
+    "ConnectomeGenerator",
+    "ShufflingDecorrelator",
+    "LFSRRegenDecorrelator",
+    "FaultInjector",
+    "TanhFSM",
+    "ReLKFSM",
+    "normalize_weights",
+    "SCBridge",
+]

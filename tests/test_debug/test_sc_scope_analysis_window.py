@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestAnalysisWindow:
     def test_push_and_count(self):
         w = AnalysisWindow(window_size=10)

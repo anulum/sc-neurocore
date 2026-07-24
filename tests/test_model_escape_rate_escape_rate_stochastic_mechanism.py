@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRateStochasticMechanism:
     """Core: P(spike) = ρ₀·exp((V-θ)/Δu)·dt. Bernoulli trial each step."""
 

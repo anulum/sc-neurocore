@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
 
+
 class TestFHNParameters:
     def test_epsilon_controls_timescale(self):
         n_fast = FitzHughNagumoNeuron(epsilon=0.2)

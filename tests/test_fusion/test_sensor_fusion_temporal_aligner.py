@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sensor_fusion_support import *  # noqa: F403
 
+
 class TestTemporalAligner:
     def test_align_overlapping(self):
         aligner = TemporalAligner(window_us=1000.0)

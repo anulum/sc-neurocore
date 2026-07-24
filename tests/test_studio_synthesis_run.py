@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestRunSynthesis:
     def test_unknown_target_raises(self):
         with pytest.raises(ValueError, match="Unknown target"):
@@ -28,4 +29,3 @@ class TestRunSynthesis:
     def test_returns_target_field(self):
         result = run_synthesis("module t(); endmodule", "ice40")
         assert result["target"] == "ice40"
-

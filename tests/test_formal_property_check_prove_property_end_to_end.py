@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.formal_property_check_support import *  # noqa: F403
 
+
 @_needs_formal
 class TestProvePropertyEndToEnd:
     """Real machine-checked property proofs (require the formal toolchain)."""

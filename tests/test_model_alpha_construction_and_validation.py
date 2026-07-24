@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_alpha_support import *  # noqa: F403
 
+
 class TestConstructionAndValidation:
     """Construction normalises fields and rejects invalid configurations."""
 

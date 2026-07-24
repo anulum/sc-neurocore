@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_metrics_support import *  # noqa: F403
 
+
 class TestCommVolume:
     def test_basic(self) -> None:
         g = _make_chain_graph(6, scc=0.1)

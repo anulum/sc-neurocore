@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestRecurrentLIFCell:
     def test_recurrent_connection(self):
         cell = RecurrentLIFCell(n_neurons=4)

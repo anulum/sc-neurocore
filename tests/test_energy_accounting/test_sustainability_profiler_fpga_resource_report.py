@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestFPGAResourceReport:
     def test_dynamic_power_positive(self):
         r = FPGAResourceReport(luts=10000, ffs=5000, clock_mhz=100)

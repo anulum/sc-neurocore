@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestNeuromodulatorSystem:
     def test_update_levels(self):
         nm = NeuromodulatorSystem()

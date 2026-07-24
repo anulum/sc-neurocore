@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestWaveform:
     def test_waveform_width(self, waveform_fixture):
         w = waveform_width(waveform_fixture, dt=1.0 / 60)

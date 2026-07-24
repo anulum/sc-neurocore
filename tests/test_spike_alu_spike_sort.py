@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_alu_support import *  # noqa: F403
 
+
 class TestSpikeSort:
     def test_empty(self):
         assert spike_sort([]) == []

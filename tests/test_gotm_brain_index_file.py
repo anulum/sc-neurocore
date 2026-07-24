@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gotm_brain_support import *  # noqa: F403
 
+
 class TestIndexFile:
     def test_index_python(self, tmp_repo: Path) -> None:
         py_file = tmp_repo / "src" / "example" / "core.py"

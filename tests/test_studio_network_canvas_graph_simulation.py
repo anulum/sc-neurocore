@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_network_canvas_support import *  # noqa: F403
 
+
 class TestGraphSimulation:
     def test_simulate_valid_graph(self):
         exc = create_population(count=40, neuron_type="excitatory")
@@ -43,4 +44,3 @@ class TestGraphSimulation:
 
         assert result["success"] is False
         assert any("exactly one excitatory and one inhibitory" in e for e in result["errors"])
-

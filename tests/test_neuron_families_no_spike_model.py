@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neuron_families_support import *  # noqa: F403
 
+
 class TestNoSpikeModel:
     def test_subthreshold_never_spikes(self):
         neuron = _make_leaky_no_spike()

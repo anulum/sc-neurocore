@@ -26,8 +26,12 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
 def _run(neuron: SRM0Neuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _exact_reference(neuron: SRM0Neuron, current: float) -> tuple[float, float]:
     membrane_decay = math.exp(-neuron.dt / neuron.tau_m)
     eta_decay = math.exp(-neuron.dt / neuron.tau_eta)
@@ -42,4 +46,21 @@ def _exact_reference(neuron: SRM0Neuron, current: float) -> tuple[float, float]:
         neuron._eta * eta_decay,
     )
 
-__all__ = ['math', 'time', 'np', 'pytest', 'SRM0Neuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'isi', 'firing_rate', '_run', '_exact_reference']
+
+__all__ = [
+    "math",
+    "time",
+    "np",
+    "pytest",
+    "SRM0Neuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "isi",
+    "firing_rate",
+    "_run",
+    "_exact_reference",
+]

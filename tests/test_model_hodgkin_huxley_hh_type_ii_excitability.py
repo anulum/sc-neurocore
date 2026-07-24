@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
 
+
 class TestHHTypeIIExcitability:
     """HH is the canonical Type-II excitable model."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tc_lif_support import *  # noqa: F403
 
+
 class TestTCLIFPipeline:
     def test_population(self):
         assert Population(TwoCompartmentLIFNeuron, n=10, label="tc").n == 10

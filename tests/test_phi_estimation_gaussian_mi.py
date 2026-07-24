@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 class TestGaussianMI:
     def test_nonnegative_and_symmetric(self) -> None:
         rng = np.random.RandomState(1)

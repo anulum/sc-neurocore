@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGParameters:
     @pytest.mark.parametrize("g_c", [0.1, 0.5, 1.0])
     def test_coupling_sweep(self, g_c: float) -> None:

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_evidence_bundle_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("payload_factory", "error_match"),
     [
@@ -137,6 +138,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_action_evidence(
             job_records=(completed_source,),
             artifact_reader=manager.read_artifact,
         )
+
 
 def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
     tmp_path: Path,

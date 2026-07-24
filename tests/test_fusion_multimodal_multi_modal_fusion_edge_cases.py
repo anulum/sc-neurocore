@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fusion_multimodal_support import *  # noqa: F403
 
+
 class TestMultiModalFusionEdgeCases:
     def test_unknown_mode_raises(self):
         mods = [ModalityConfig(name="x", n_channels=1, dt_us=1000.0)]

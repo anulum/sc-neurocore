@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestCrossbarArray:
     def test_num_devices_standard(self) -> None:
         xbar = CrossbarArray(64, 64)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestOrganicBioelectronic:
     @pytest.mark.parametrize("name", ["cambridge_oect", "linkoping_organic"])
     def test_organic(self, name):

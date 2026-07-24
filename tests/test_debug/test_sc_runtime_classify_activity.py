@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_runtime_support import *  # noqa: F403
 
+
 class TestClassifyActivity:
     def test_idle(self):
         assert classify_activity(0.005) == ActivityZone.IDLE

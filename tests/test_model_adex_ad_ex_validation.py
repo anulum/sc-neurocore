@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adex_support import *  # noqa: F403
 
+
 class TestAdExValidation:
     @pytest.mark.parametrize(
         ("field", "value"),

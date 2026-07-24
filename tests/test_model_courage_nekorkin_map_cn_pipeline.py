@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_courage_nekorkin_map_support import *  # noqa: F403
 
+
 class TestCNPipeline:
     def test_population(self):
         assert Population(CourageNekorkinMapNeuron, n=10, label="cn").n == 10

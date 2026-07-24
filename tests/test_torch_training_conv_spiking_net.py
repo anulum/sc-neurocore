@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestConvSpikingNet:
     def test_forward(self):
         net = ConvSpikingNet(n_output=10)

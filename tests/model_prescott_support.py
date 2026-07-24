@@ -21,8 +21,12 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
+
+
 def _run(neuron: PrescottNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _prescott_rhs(
     neuron: PrescottNeuron, v: float, w: float, current: float
 ) -> tuple[float, float]:
@@ -35,6 +39,8 @@ def _prescott_rhs(
         -i_fast - i_slow - i_l + current,
         neuron.phi * (w_inf - w) / neuron.tau_w,
     )
+
+
 def _prescott_rk4_after_call(neuron: PrescottNeuron, current: float) -> tuple[float, float]:
     v0, w0, dt = neuron.v, neuron.w, neuron.dt
     k1_v, k1_w = _prescott_rhs(neuron, v0, w0, current)
@@ -46,4 +52,18 @@ def _prescott_rk4_after_call(neuron: PrescottNeuron, current: float) -> tuple[fl
         w0 + dt * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w) / 6.0,
     )
 
-__all__ = ['math', 'np', 'pytest', 'PrescottNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', '_run', '_prescott_rhs', '_prescott_rk4_after_call']
+
+__all__ = [
+    "math",
+    "np",
+    "pytest",
+    "PrescottNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "_run",
+    "_prescott_rhs",
+    "_prescott_rk4_after_call",
+]

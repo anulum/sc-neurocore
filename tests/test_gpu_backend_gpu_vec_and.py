@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpu_backend_support import *  # noqa: F403
 
+
 class TestGPUVecAnd:
     def test_identity(self):
         a = xp.array([0xFFFFFFFFFFFFFFFF], dtype=xp.uint64)

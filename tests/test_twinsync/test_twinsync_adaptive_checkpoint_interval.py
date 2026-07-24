@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestAdaptiveCheckpointInterval:
     def test_default(self):
         aci = AdaptiveCheckpointInterval(base_interval=1000)

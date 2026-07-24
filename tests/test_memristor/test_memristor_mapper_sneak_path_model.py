@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestSneakPathModel:
     def test_worst_case_sneak(self) -> None:
         sneak = SneakPathModel.worst_case_sneak(64, 64, 1e-6, 0.2)

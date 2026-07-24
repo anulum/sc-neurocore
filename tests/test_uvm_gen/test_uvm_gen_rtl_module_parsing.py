@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestRTLModuleParsing:
     def test_parse_module_name(self):
         rtl = lif_module()

@@ -19,4 +19,13 @@ from sc_neurocore.bridges.aer_router import (
     PACKET_SIZE,
 )
 
-__all__ = ['os', 'struct', 'time', 'pytest', 'AERRouter', 'SpikePacket', 'RouteStats', 'PACKET_SIZE']
+__all__ = [
+    "os",
+    "struct",
+    "time",
+    "pytest",
+    "AERRouter",
+    "SpikePacket",
+    "RouteStats",
+    "PACKET_SIZE",
+]

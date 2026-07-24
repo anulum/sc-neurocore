@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_alu_support import *  # noqa: F403
 
+
 class TestSpikeGate:
     @pytest.mark.parametrize("a,b,expected", [(0, 0, 0), (0, 1, 0), (1, 0, 0), (1, 1, 1)])
     def test_and_truth_table(self, a, b, expected):

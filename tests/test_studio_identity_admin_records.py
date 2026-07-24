@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_identity_admin_support import *  # noqa: F403
 
+
 def test_identity_public_records_never_expose_token_hashes(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
@@ -26,6 +27,7 @@ def test_identity_public_records_never_expose_token_hashes(tmp_path: Path) -> No
         "roles": ["studio.admin", "studio.viewer"],
     }
     assert "token_sha256" not in json.dumps([record.to_public_dict() for record in records])
+
 
 def test_identity_record_update_preserves_token_hash_and_reloads_auth(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
@@ -54,6 +56,7 @@ def test_identity_record_update_preserves_token_hash_and_reloads_auth(tmp_path: 
     assert auth_result.principal is None
     assert auth_result.failure_reason == "disabled_identity_token"
 
+
 def test_browser_user_public_records_never_expose_password_verifiers(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)
@@ -69,6 +72,7 @@ def test_browser_user_public_records_never_expose_password_verifiers(tmp_path: P
         "username": "operator",
     }
     assert "password" not in json.dumps([record.to_public_dict() for record in records])
+
 
 def test_browser_user_update_preserves_password_verifier_and_reloads_auth(
     tmp_path: Path,
@@ -100,6 +104,7 @@ def test_browser_user_update_preserves_password_verifier_and_reloads_auth(
     assert auth_result.principal is None
     assert auth_result.failure_reason == "disabled_browser_user"
 
+
 def test_service_account_update_refuses_to_remove_last_admin(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_single_service_admin_identity_file(identity_path)
@@ -116,6 +121,7 @@ def test_service_account_update_refuses_to_remove_last_admin(tmp_path: Path) -> 
 
     assert identity_path.read_text(encoding="utf-8") == before
 
+
 def test_browser_user_update_refuses_to_remove_last_admin(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_single_browser_admin_identity_file(identity_path)
@@ -131,6 +137,7 @@ def test_browser_user_update_refuses_to_remove_last_admin(tmp_path: Path) -> Non
         )
 
     assert identity_path.read_text(encoding="utf-8") == before
+
 
 def test_rotate_browser_user_password_preserves_public_metadata(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"

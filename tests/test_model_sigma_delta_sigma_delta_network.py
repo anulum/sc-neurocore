@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaNetwork:
     def test_population(self):
         pop = Population(SigmaDeltaNeuron, n=10, label="sd")

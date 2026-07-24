@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gamma_oscillation_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(
     not _HAS_RUST_PING_STEP,
     reason="Rust kernel sc_neurocore_engine.py_ping_step not built",

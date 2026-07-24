@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
 
+
 class TestArcaneAttentionGate:
     def test_gate_sigmoid(self):
         """gate = sigmoid(w_g · [I, v_fast, v_work, confidence]). Bounded (0, 1)."""

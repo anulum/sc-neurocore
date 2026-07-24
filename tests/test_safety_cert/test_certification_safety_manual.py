@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.certification_support import *  # noqa: F403
 
+
 class TestSafetyManual:
     def test_generates(self) -> None:
         manual = SafetyManualGenerator.generate(

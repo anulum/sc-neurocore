@@ -22,4 +22,16 @@ from sc_neurocore.comm.aer_udp import (
     MAX_EVENTS_PER_PACKET,
 )
 
-__all__ = ['struct', 'np', 'AEREvent', 'AERSender', 'AERReceiver', 'MAGIC', 'HEADER_FMT', 'EVENT_FMT', 'HEADER_SIZE', 'EVENT_SIZE', 'MAX_EVENTS_PER_PACKET']
+__all__ = [
+    "struct",
+    "np",
+    "AEREvent",
+    "AERSender",
+    "AERReceiver",
+    "MAGIC",
+    "HEADER_FMT",
+    "EVENT_FMT",
+    "HEADER_SIZE",
+    "EVENT_SIZE",
+    "MAX_EVENTS_PER_PACKET",
+]

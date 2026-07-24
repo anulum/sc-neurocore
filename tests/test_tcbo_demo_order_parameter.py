@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestOrderParameter(unittest.TestCase):
     def test_synchronized(self):
         theta = np.ones(16) * 1.5

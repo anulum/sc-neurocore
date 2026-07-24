@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestMixedDenseEdgeBranches:
     """Validation guards on direct construction and compilation, the 2-D input
     rejection, and the per-tensor-scaled envelope rounding path."""

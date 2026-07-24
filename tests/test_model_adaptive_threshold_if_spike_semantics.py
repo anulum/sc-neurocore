@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adaptive_threshold_if_support import *  # noqa: F403
 
+
 class TestSpikeSemantics:
     """Candidate crossing, reset, fixed shift, and adaptation."""
 

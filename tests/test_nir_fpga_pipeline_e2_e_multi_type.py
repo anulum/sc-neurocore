@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_fpga_pipeline_support import *  # noqa: F403
 
+
 class TestE2EMultiType:
     """Network mixing IF and LIF neurons → two distinct Verilog modules."""
 

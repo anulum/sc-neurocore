@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_descriptor_support import *  # noqa: F403
 
+
 def test_completeness_tier_zero_for_descriptor_without_structure() -> None:
     """Descriptors with no parameters and no state remain at tier zero."""
 
@@ -97,5 +98,3 @@ def test_parse_rejects_non_boolean_evidence_flag() -> None:
     payload["validation"] = {"dynamics_faithful": "yes"}
     with pytest.raises(ModelDescriptorError, match="dynamics_faithful"):
         parse_model_descriptor(payload)
-
-

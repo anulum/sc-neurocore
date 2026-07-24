@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fim_symmetry_dynamics_support import *  # noqa: F403
 
+
 class TestFIMFeedback:
     def test_fim_zero_lambda_no_effect(self):
         """fim_lambda=0 should not modify weights."""

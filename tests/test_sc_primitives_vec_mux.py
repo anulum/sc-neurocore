@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_primitives_support import *  # noqa: F403
 
+
 class TestVecMux:
     def test_half_addition(self):
         # MUX with sel=0.5 gives (A + B) / 2

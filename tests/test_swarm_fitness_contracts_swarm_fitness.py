@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.swarm_fitness_contracts_support import *  # noqa: F403
 
+
 class TestSwarmFitness:
     def test_coverage_score(self):
         pos = np.array([[10, 10], [50, 50], [90, 90]], dtype=float)

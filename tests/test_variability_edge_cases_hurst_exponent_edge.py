@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestHurstExponentEdge:
     def test_short(self):
         result = hurst_exponent(np.zeros(5, dtype=np.int8))

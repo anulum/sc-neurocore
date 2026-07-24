@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nas_support import *  # noqa: F403
 
+
 class TestEquivResult:
     def test_summary_pass(self) -> None:
         r = EquivResult(module="sc_lif_neuron", passed=True, depth=30, engine="z3", log="ok")

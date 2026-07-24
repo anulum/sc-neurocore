@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestChaoticRNG:
     def test_burn_in_changes_state(self):
         rng = ChaoticRNG()

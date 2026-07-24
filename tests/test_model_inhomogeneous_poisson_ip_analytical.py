@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
 
+
 class TestIPAnalytical:
     def test_probability_formula(self):
         """P(spike) = 1 - exp(-rate_hz · dt_ms / 1000)."""

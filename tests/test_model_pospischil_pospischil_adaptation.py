@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilAdaptation:
     def test_adaptation_lengthens_later_isis(self):
         """I_M activates slowly → later ISIs should be longer than early ISIs.

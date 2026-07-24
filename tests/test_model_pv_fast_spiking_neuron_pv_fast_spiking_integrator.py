@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
 
+
 class TestPVFastSpikingIntegrator:
     def test_default_integrator_is_rk4(self):
         assert PVFastSpikingNeuron().integrator == "rk4"

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.learning_advanced_support import *  # noqa: F403
 
+
 class TestEligibilityTrace:
     def test_trace_starts_zero(self):
         et = EligibilityTrace(tau_e=20.0, dt=1.0)

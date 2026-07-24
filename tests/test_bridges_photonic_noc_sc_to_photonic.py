@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
 
+
 class TestSCToPhotonic:
     def test_compile_simple_network(self):
         compiler = SCToPhotonic()

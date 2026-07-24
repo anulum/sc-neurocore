@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transcriptomic_support import *  # noqa: F403
 
+
 class TestRankValueEncode:
     """Theodoris et al. (2023) rank-value tokenisation."""
 

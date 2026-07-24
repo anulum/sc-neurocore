@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adex_support import *  # noqa: F403
 
+
 class TestAdExAdaptation:
     def test_w_increments_on_spike(self):
         """Each spike adds b to w."""

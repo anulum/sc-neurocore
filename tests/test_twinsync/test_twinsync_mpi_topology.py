@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestMPITopology:
     def test_add_and_lookup(self):
         topo = MPITopology()

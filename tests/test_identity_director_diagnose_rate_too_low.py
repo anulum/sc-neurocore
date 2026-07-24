@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_director_support import *  # noqa: F403
 
+
 class TestDiagnoseRateTooLow:
     def test_rate_too_low(self):
         sub = _make_substrate()

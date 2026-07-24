@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from region_support import *  # noqa: F403
 
+
 def test_selector_ignores_busy_regions_and_chooses_smallest_fit() -> None:
     busy = _region(0, neurons=512)
     busy.state = RegionState.ALLOCATED
@@ -22,16 +23,22 @@ def test_selector_ignores_busy_regions_and_chooses_smallest_fit() -> None:
     }
 
     assert select_region_multi_die(regions, 512) == 2
+
+
 def test_health_score_clamps_at_zero() -> None:
     health = RegionHealth(region_id=0, error_count=20, temperature_c=200.0, age_hours=200_000)
 
     assert health.health_score == 0.0
     assert health.is_degraded
+
+
 def test_historical_surface_reexports_owner_objects_without_wrappers() -> None:
     assert compatibility_surface.RegionState is region_owner.RegionState
     assert compatibility_surface.HWRegion is region_owner.HWRegion
     assert compatibility_surface.RegionHealth is region_owner.RegionHealth
     assert compatibility_surface.select_region_multi_die is region_owner.select_region_multi_die
+
+
 def test_region_definitions_have_one_owner() -> None:
     facade_tree = ast.parse(Path(compatibility_surface.__file__).read_text(encoding="utf-8"))
     owner_tree = ast.parse(Path(region_owner.__file__).read_text(encoding="utf-8"))

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestSeedContracts:
     def test_fault_injector_reproducible_with_same_seed(self):
         bits = [0, 1, 1, 0, 1, 0, 1, 1]

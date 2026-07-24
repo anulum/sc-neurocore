@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestAdaptiveInference:
     def test_converges_early(self):
         """Stable step_func should trigger early exit before max_length."""

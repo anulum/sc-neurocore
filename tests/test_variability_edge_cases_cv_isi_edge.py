@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestCvIsiEdge:
     def test_empty_train(self):
         assert np.isnan(cv_isi(np.zeros(100, dtype=np.int8)))

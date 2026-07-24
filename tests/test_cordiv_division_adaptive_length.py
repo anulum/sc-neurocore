@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cordiv_division_support import *  # noqa: F403
 
+
 class TestAdaptiveLength:
     def test_returns_positive_int(self):
         L = adaptive_length(0.5, epsilon=0.01, confidence=0.95)

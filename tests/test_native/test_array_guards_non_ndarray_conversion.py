@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestNonNdarrayConversion:
     def test_python_list_converted_and_contiguous(self):
         out = require_c_contiguous([1, 2, 3, 4], "x", np.uint8)

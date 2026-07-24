@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wang_buzsaki_support import *  # noqa: F403
 
+
 class TestWBParameters:
     @pytest.mark.parametrize(
         ("kwargs", "match"),

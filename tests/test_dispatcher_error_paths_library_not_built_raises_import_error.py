@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dispatcher_error_paths_support import *  # noqa: F403
 
+
 class TestLibraryNotBuiltRaisesImportError:
     """When ``_lib`` is absent, calling the dispatcher raises ImportError
     with a helpful message telling the caller how to rebuild."""

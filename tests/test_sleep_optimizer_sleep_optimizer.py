@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestSleepOptimizer(unittest.TestCase):
     def setUp(self):
         self.cfg = SleepOptimizerConfig(sample_rate=256, fft_window=256, stage_check_interval=256)

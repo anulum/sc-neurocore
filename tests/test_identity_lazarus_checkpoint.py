@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_lazarus_support import *  # noqa: F403
 
+
 class TestCheckpoint:
     def test_save_load_roundtrip(self):
         sub = IdentitySubstrate(n_cortical=30, n_inhibitory=10, n_memory=5, seed=42)

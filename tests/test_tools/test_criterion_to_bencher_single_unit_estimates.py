@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from criterion_to_bencher_support import *  # noqa: F403
 
+
 class TestSingleUnitEstimates:
     """Non-straddle triplets in each unit convert on the median."""
 

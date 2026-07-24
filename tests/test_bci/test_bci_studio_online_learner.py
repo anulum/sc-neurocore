@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from bci_studio_support import *  # noqa: F403
 
+
 class TestOnlineLearner(unittest.TestCase):
     def setUp(self):
         self.learner = OnlineLearner(num_weights=64, lr=0.1)

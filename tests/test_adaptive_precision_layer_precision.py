@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_precision_support import *  # noqa: F403
 
+
 class TestLayerPrecision:
     """LayerPrecision data-contract checks."""
 

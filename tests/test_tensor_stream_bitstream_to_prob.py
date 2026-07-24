@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tensor_stream_support import *  # noqa: F403
 
+
 class TestBitstreamToProb:
     def test_all_ones(self):
         bits = np.ones((1, 100), dtype=np.uint8)

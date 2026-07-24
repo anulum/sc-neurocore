@@ -40,17 +40,22 @@ Availability = Callable[[], bool]
 
 RunResult = tuple[npt.NDArray[np.float64], int, float, float]
 
+
 def _rust_available() -> bool:
     return bool(chialvo_map._HAS_RUST)
+
 
 def _julia_available() -> bool:
     return bool(chialvo_map._ensure_julia_loaded())
 
+
 def _go_available() -> bool:
     return bool(chialvo_map._ensure_go_loaded())
 
+
 def _mojo_available() -> bool:
     return bool(chialvo_map._ensure_mojo_loaded())
+
 
 _TRACE_TOLERANCE = {"rust": 5e-14, "julia": 5e-14, "go": 5e-14, "mojo": 2e-9}
 
@@ -58,9 +63,11 @@ _STEP_TOLERANCE = {"rust": 5e-15, "julia": 5e-15, "go": 5e-15, "mojo": 5e-11}
 
 _OPERATING_CURRENTS = (-0.05, 0.0, 0.01, 0.05, 0.1, 1.0)
 
+
 def _require(backend: str, available: Availability) -> None:
     if not available():
         pytest.skip(f"{backend} Chialvo backend is not built in this environment")
+
 
 def _run(
     backend: str,
@@ -73,6 +80,7 @@ def _run(
     neuron = ChialvoMapNeuron(x=x, y=y)
     trace, spikes = neuron.simulate(n_steps, current, backend=backend)
     return trace, spikes, neuron.x, neuron.y
+
 
 def _assert_source_equation_one_step_envelope(backend: str) -> None:
     rng = np.random.default_rng(20260711)
@@ -88,6 +96,7 @@ def _assert_source_equation_one_step_envelope(backend: str) -> None:
         assert observed[2] == pytest.approx(reference[2], abs=tolerance)
         assert observed[3] == pytest.approx(reference[3], abs=tolerance)
 
+
 def _assert_enrolled_event_counts_and_trace_envelope(backend: str) -> None:
     for current in _OPERATING_CURRENTS:
         reference = _run("python", current=current)
@@ -97,6 +106,7 @@ def _assert_enrolled_event_counts_and_trace_envelope(backend: str) -> None:
         np.testing.assert_allclose(observed[0], reference[0], atol=tolerance, rtol=0.0)
         assert observed[2] == pytest.approx(reference[2], abs=tolerance)
         assert observed[3] == pytest.approx(reference[3], abs=tolerance)
+
 
 def _assert_empty_and_single_step_preserve_state_contract(backend: str) -> None:
     for n_steps in (0, 1):
@@ -108,6 +118,7 @@ def _assert_empty_and_single_step_preserve_state_contract(backend: str) -> None:
         assert observed[2] == pytest.approx(reference[2], abs=tolerance)
         assert observed[3] == pytest.approx(reference[3], abs=tolerance)
 
+
 def _assert_backend_contract(backend: str, available: Availability) -> None:
     _require(backend, available)
     _assert_source_equation_one_step_envelope(backend)
@@ -115,4 +126,29 @@ def _assert_backend_contract(backend: str, available: Availability) -> None:
     _assert_empty_and_single_step_preserve_state_contract(backend)
 
 
-__all__ = ['ctypes', 'importlib', 'os', 'Callable', 'np', 'npt', 'pytest', 'chialvo_map', 'ChialvoMapNeuron', 'Availability', 'RunResult', '_rust_available', '_julia_available', '_go_available', '_mojo_available', '_TRACE_TOLERANCE', '_STEP_TOLERANCE', '_OPERATING_CURRENTS', '_require', '_run', '_assert_source_equation_one_step_envelope', '_assert_enrolled_event_counts_and_trace_envelope', '_assert_empty_and_single_step_preserve_state_contract', '_assert_backend_contract']
+__all__ = [
+    "ctypes",
+    "importlib",
+    "os",
+    "Callable",
+    "np",
+    "npt",
+    "pytest",
+    "chialvo_map",
+    "ChialvoMapNeuron",
+    "Availability",
+    "RunResult",
+    "_rust_available",
+    "_julia_available",
+    "_go_available",
+    "_mojo_available",
+    "_TRACE_TOLERANCE",
+    "_STEP_TOLERANCE",
+    "_OPERATING_CURRENTS",
+    "_require",
+    "_run",
+    "_assert_source_equation_one_step_envelope",
+    "_assert_enrolled_event_counts_and_trace_envelope",
+    "_assert_empty_and_single_step_preserve_state_contract",
+    "_assert_backend_contract",
+]

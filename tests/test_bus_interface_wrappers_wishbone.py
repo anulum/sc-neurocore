@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bus_interface_wrappers_support import *  # noqa: F403
 
+
 class TestWishbone:
     """Test Wishbone B4 wrapper generation."""
 

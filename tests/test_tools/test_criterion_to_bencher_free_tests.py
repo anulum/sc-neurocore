@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from criterion_to_bencher_support import *  # noqa: F403
 
+
 def test_main_reads_stdin(monkeypatch, capsys) -> None:
     """The CLI entry point converts stdin to stdout."""
     import io

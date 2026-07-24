@@ -17,7 +17,19 @@ from sc_neurocore.optimizer.sc_optimizer import (
     DecorrelationStrategy,
     ComputeMode,
 )
+
+
 def make_network(n: int = 5, mac: int = 100) -> list[LayerProfile]:
     return [LayerProfile(id=f"L{i}", mac_count=mac, is_critical_path=(i == 0)) for i in range(n)]
 
-__all__ = ['unittest', 'SCOptimizer', 'HardwareBudget', 'LayerProfile', 'OptimizerReport', 'DecorrelationStrategy', 'ComputeMode', 'make_network']
+
+__all__ = [
+    "unittest",
+    "SCOptimizer",
+    "HardwareBudget",
+    "LayerProfile",
+    "OptimizerReport",
+    "DecorrelationStrategy",
+    "ComputeMode",
+    "make_network",
+]

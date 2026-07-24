@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 def test_from_verilog_source_handles_paramless_module_and_blank_port_entries():
     # No `#(...)` block exercises the parameter-less port-section branch, and the
     # stray comma yields a blank port entry that must be skipped, not parsed.

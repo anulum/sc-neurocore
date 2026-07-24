@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.stochastic_core_properties_support import *  # noqa: F403
 
+
 @given(
     current=st.floats(min_value=-2.0, max_value=2.0),
     dt=st.floats(min_value=0.1, max_value=2.0),
@@ -20,6 +21,7 @@ def test_lif_step_returns_binary(current, dt):
     spike = n.step(current)
     assert spike in (0, 1, True, False)
 
+
 @given(current_int=st.integers(min_value=-128, max_value=127))
 @settings(max_examples=30)
 def test_fixed_point_lif_no_crash(current_int):
@@ -27,12 +29,14 @@ def test_fixed_point_lif_no_crash(current_int):
     for _ in range(10):
         n.step(leak_k=240, gain_k=16, I_t=current_int)
 
+
 @given(rate=st.floats(min_value=0.0, max_value=1.0))
 @settings(max_examples=20)
 def test_homeostatic_lif_adapts(rate):
     n = HomeostaticLIFNeuron(target_rate=rate)
     for _ in range(50):
         n.step(1.5)
+
 
 @given(
     steps=st.integers(min_value=10, max_value=100),
@@ -45,6 +49,7 @@ def test_lif_voltage_resets_on_spike(steps, current):
         spike = n.step(current)
         if spike:
             assert n.v == LIF_V_REST
+
 
 @given(target=st.floats(min_value=0.01, max_value=0.5))
 @settings(max_examples=20)

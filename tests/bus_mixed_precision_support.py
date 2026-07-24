@@ -19,4 +19,12 @@ from sc_neurocore.compiler.mixed_precision import (
     solve_precision,
 )
 
-__all__ = ['pytest', 'BlockFloatingPrecisionConfig', 'MixedPrecisionSpec', 'PRECISION_PRESETS', 'PrecisionConfig', 'from_preset', 'solve_precision']
+__all__ = [
+    "pytest",
+    "BlockFloatingPrecisionConfig",
+    "MixedPrecisionSpec",
+    "PRECISION_PRESETS",
+    "PrecisionConfig",
+    "from_preset",
+    "solve_precision",
+]

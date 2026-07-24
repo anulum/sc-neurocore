@@ -19,7 +19,8 @@ import sys
 from pathlib import Path
 from typing import Any
 import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools" / "provenance"))
 import verify_dois  # noqa: E402
 
-__all__ = ['sys', 'Path', 'Any', 'pytest', 'verify_dois']
+__all__ = ["sys", "Path", "Any", "pytest", "verify_dois"]

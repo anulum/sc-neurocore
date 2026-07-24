@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from onnx_export_support import *  # noqa: F403
 
+
 class TestONNXTensorType(unittest.TestCase):
     def test_to_dict(self) -> None:
         tt = ONNXTensorType(elem_type=9, shape=(128, 1024))

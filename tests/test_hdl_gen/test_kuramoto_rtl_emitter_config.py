@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_hdl_gen.kuramoto_rtl_support import *  # noqa: F403
 
+
 def test_kuramoto_emitter_has_expected_ports_and_helpers() -> None:
     emitter = KuramotoEmitter(
         module_name="kuramoto_top",
@@ -96,5 +97,3 @@ def test_kuramoto_emitter_rejects_fixed_point_format_that_cannot_hold_phase_modu
 def test_kuramoto_emitter_rejects_configuration_that_requires_multi_wrap_step() -> None:
     with pytest.raises(ValueError, match="single-step phase advance must stay below 2pi"):
         KuramotoEmitter(n_oscillators=1, omegas=[100.0], dt=0.1)
-
-

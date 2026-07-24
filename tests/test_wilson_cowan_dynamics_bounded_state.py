@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestBoundedState:
     """Published 2-term sigmoid range is [-β, 1-β] where β = 1/(1+exp(aθ));
     dynamics inherit that envelope so the physically meaningful state

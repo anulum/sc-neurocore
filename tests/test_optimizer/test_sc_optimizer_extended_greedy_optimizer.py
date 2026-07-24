@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_optimizer_extended_support import *  # noqa: F403
 
+
 class TestGreedyOptimizer(unittest.TestCase):
     def test_feasible_optimization(self):
         budget = HardwareBudget(max_luts=500_000, max_power_mw=5000.0)

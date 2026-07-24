@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_terman_wang_support import *  # noqa: F403
 
+
 class TestTermanWangPipeline:
     def test_population(self):
         assert Population(TermanWangOscillator, n=10, label="tw").n == 10

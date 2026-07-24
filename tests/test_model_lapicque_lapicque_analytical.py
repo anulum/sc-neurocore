@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lapicque_support import *  # noqa: F403
 
+
 class TestLapicqueAnalytical:
     def test_exact_flow_formula(self):
         """V_next = V_ss + (V - V_ss) · exp(-dt / τ)."""

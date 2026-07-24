@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.viz_plots_support import *  # noqa: F403
 
+
 class TestRasterPlot:
     def test_returns_axes(self, small_network):
         _, sm, _, _ = small_network

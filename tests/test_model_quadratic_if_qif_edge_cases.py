@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_quadratic_if_support import *  # noqa: F403
 
+
 class TestQIFEdgeCases:
     def test_quadratic_divergence(self):
         """At I>0, the exact flow follows the quadratic positive feedback."""

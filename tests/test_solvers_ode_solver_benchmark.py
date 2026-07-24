@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestSolverBenchmark:
     def test_rk4_throughput(self):
         """100k RK4 steps in < 5s."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_theta_support import *  # noqa: F403
 
+
 class TestThetaEdgeCases:
     def test_theta_wrapping_correct(self) -> None:
         """After large positive dtheta, theta stays in [-π, π]."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_larter_breakspear_support import *  # noqa: F403
 
+
 class TestLBIsolation:
     def test_defaults(self):
         n = LarterBreakspearNeuron()

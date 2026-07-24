@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_integration_support import *  # noqa: F403
 
+
 class TestEndpoints:
     def test_save_endpoint(self, client: TestClient) -> None:
         r = client.post(
@@ -87,4 +88,3 @@ class TestEndpoints:
         assert r.status_code == 200
         data = r.json()
         assert data["success"] is False
-

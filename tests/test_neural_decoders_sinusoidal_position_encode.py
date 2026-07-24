@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neural_decoders_support import *  # noqa: F403
 
+
 class TestSinusoidalPositionEncode:
     def test_shape(self) -> None:
         timestamps = np.array([0.0, 1.0, 2.0])

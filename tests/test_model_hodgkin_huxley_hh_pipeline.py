@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
 
+
 class TestHHPipeline:
     def test_population(self):
         assert Population(HodgkinHuxleyNeuron, n=5, label="hh").n == 5

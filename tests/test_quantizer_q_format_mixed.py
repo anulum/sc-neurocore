@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantizer_support import *  # noqa: F403
 
+
 class TestQFormatMixed:
     """Validate the Q8.8-weight/Q16.16-accumulator contract."""
 

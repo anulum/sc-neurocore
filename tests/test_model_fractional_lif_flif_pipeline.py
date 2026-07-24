@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fractional_lif_support import *  # noqa: F403
 
+
 class TestFLIFPipeline:
     def test_population(self):
         assert Population(FractionalLIFNeuron, n=10, label="flif").n == 10

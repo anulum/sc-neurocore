@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestLvrEdge:
     def test_empty(self):
         result = lvr(np.zeros(50, dtype=np.int8))

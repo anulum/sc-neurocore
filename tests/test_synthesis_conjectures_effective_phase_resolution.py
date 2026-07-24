@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.synthesis_conjectures_support import *  # noqa: F403
 
+
 class TestEffectivePhaseResolution:
     """Test that LIF phase resolution depends on dt/period, not voltage precision."""
 

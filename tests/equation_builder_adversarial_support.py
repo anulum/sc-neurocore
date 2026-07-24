@@ -24,4 +24,4 @@ Categories covered:
 import pytest
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 
-__all__ = ['pytest', 'EquationNeuron', 'from_equations']
+__all__ = ["pytest", "EquationNeuron", "from_equations"]

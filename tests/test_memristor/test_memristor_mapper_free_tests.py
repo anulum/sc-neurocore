@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 def test_memristor_package_exports_mapper_surface() -> None:
     """The memristor package facade exposes the documented mapper surface."""
     expected_symbols = {
@@ -43,6 +44,8 @@ def test_memristor_package_exports_mapper_surface() -> None:
     assert expected_symbols == set(memristor.__all__)
     for name in expected_symbols:
         assert getattr(memristor, name).__name__ == name
+
+
 def test_signal_to_sneak_ratio_is_infinite_without_sneak_current() -> None:
     # A zero off-conductance gives zero worst-case sneak current, so the
     # signal-to-sneak ratio is infinite rather than dividing by zero.

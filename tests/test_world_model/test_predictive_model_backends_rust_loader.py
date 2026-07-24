@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
 
+
 def test_missing_rust_filter_raises() -> None:
     with pytest.raises(RuntimeError, match="not available"):
         backends._missing_rust_kalman_filter()
@@ -107,5 +108,3 @@ def test_ensure_rust_loaded_caches_success_and_reports_failure(
     monkeypatch.setattr(backends, "_load_rust_kalman_filter", lambda: sentinel)
     assert backends._ensure_rust_loaded() is True
     assert backends._HAS_RUST_LGSSM is True
-
-

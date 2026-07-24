@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.circuit_primitives_support import *  # noqa: F403
 
+
 class TestLateralInhibition:
     def test_suppresses_neighbors(self):
         li = LateralInhibition(n_neurons=5, inhibition_strength=0.5, radius=1)

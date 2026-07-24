@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_truenorth_support import *  # noqa: F403
 
+
 class TestTrueNorthPipeline:
     def test_population(self):
         assert Population(TrueNorthNeuron, n=10, label="tn").n == 10

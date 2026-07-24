@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestSynapticTagging:
     def test_create_tag(self):
         tm = TaggingModel()

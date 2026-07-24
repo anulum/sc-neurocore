@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_experiment_support import *  # noqa: F403
 
+
 class TestAuditValidation:
     def test_entry_rejects_invalid_metadata(self) -> None:
         with pytest.raises(ValueError, match="timestamp_iso must not be empty"):

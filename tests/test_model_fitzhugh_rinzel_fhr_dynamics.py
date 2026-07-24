@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
 
+
 class TestFHRDynamics:
     def test_derivative_formula(self):
         """The derivative matches the three-state FitzHugh-Rinzel ODE."""

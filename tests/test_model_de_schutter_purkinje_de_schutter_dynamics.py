@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
 
+
 class TestDeSchutterDynamics:
     def test_converges_to_fixed_point(self) -> None:
         """V converges to stable FP at I=0."""

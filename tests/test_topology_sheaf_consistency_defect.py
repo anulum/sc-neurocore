@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_support import *  # noqa: F403
 
+
 class TestSheafConsistencyDefect:
     def test_synchronized_is_zero(self):
         phases = np.zeros(5)

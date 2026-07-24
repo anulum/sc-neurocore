@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_durstewitz_dopamine_support import *  # noqa: F403
 
+
 class TestDurstewitzDopamine:
     def test_fires(self):
         from sc_neurocore.neurons.models.durstewitz_dopamine import DurstewitzDopamineNeuron

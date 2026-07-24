@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestBenchmarkRunContracts:
     def test_run_returns_report_with_expected_fault_model(self):
         bench = ResilienceBenchmark(seed=2)

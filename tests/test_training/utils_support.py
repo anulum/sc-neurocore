@@ -10,8 +10,9 @@ from __future__ import annotations
 
 """Tests for SpikeMonitor, population_decode, reset_states."""
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.training.snn_modules import SpikingNet
 from sc_neurocore.training.utils import SpikeMonitor, population_decode, reset_states
 
-__all__ = ['pytest', 'torch', 'SpikingNet', 'SpikeMonitor', 'population_decode', 'reset_states']
+__all__ = ["pytest", "torch", "SpikingNet", "SpikeMonitor", "population_decode", "reset_states"]

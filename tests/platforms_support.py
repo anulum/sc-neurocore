@@ -12,4 +12,4 @@ import unittest
 import pytest
 from sc_neurocore.compiler.platforms import get_profile, list_profile_names
 
-__all__ = ['unittest', 'pytest', 'get_profile', 'list_profile_names']
+__all__ = ["unittest", "pytest", "get_profile", "list_profile_names"]

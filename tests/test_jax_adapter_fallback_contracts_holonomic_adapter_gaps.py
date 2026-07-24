@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestHolonomicAdapterGaps:
     def test_l2_step_no_inputs(self):
         from sc_neurocore.adapters.holonomic.l2_chem import L2_NeurochemicalAdapter

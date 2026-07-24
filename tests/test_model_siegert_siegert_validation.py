@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertValidation:
     @pytest.mark.parametrize("field", ["v_threshold", "v_reset", "v_rest"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

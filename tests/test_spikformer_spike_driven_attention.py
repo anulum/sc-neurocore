@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spikformer_support import *  # noqa: F403
 
+
 class TestSpikeDrivenAttention:
     def test_basic_forward(self):
         ssa = SpikeDrivenAttention(embed_dim=16, num_heads=1, T=4)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker2_support import *  # noqa: F403
 
+
 class TestSpiNNaker2Pipeline:
     def test_population_creates(self):
         assert Population(SpiNNaker2Neuron, n=10, label="sn2").n == 10

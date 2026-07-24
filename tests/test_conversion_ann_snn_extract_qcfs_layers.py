@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_ann_snn_support import *  # noqa: F403
 
+
 class TestExtractQcfsLayers:
     def test_returns_theta_and_t_in_order(self) -> None:
         model = nn.Sequential(

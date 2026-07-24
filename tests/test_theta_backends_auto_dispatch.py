@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.theta_backends_support import *  # noqa: F403
 
+
 def test_auto_prefers_go_without_initialising_other_runtimes() -> None:
     """Route through Go without initialising Julia or probing Mojo."""
     with (
@@ -25,6 +26,7 @@ def test_auto_prefers_go_without_initialising_other_runtimes() -> None:
     np.testing.assert_array_equal(auto_trace, expected_trace)
     assert (auto_spikes, auto.theta) == (expected_spikes, expected.theta)
 
+
 def test_auto_falls_through_to_julia(monkeypatch: pytest.MonkeyPatch) -> None:
     """Use Julia when the Go shared library is unavailable."""
     monkeypatch.setattr(backends, "ensure_go_loaded", lambda: False)
@@ -34,6 +36,7 @@ def test_auto_falls_through_to_julia(monkeypatch: pytest.MonkeyPatch) -> None:
     expected_trace, expected_spikes = expected.simulate(100, 2.2, backend="julia")
     np.testing.assert_array_equal(auto_trace, expected_trace)
     assert (auto_spikes, auto.theta) == (expected_spikes, expected.theta)
+
 
 def test_auto_falls_through_to_mojo(monkeypatch: pytest.MonkeyPatch) -> None:
     """Continue to Mojo when Go and Julia are unavailable."""
@@ -46,6 +49,7 @@ def test_auto_falls_through_to_mojo(monkeypatch: pytest.MonkeyPatch) -> None:
     np.testing.assert_array_equal(auto_trace, expected_trace)
     assert (auto_spikes, auto.theta) == (expected_spikes, expected.theta)
 
+
 def test_auto_falls_through_to_factory_rust(monkeypatch: pytest.MonkeyPatch) -> None:
     """Use Rust when every full-parameter compiled lane is unavailable."""
     monkeypatch.setattr(backends, "ensure_mojo_loaded", lambda: False)
@@ -57,6 +61,7 @@ def test_auto_falls_through_to_factory_rust(monkeypatch: pytest.MonkeyPatch) -> 
     expected_trace, expected_spikes = expected.simulate(100, 5.0, backend="rust")
     np.testing.assert_array_equal(auto_trace, expected_trace)
     assert (auto_spikes, auto.theta) == (expected_spikes, expected.theta)
+
 
 def test_auto_falls_back_to_python(monkeypatch: pytest.MonkeyPatch) -> None:
     """Retain the Python floor when no compatible compiled lane is available."""

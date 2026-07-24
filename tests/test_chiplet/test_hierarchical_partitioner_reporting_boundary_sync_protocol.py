@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_reporting_support import *  # noqa: F403
 
+
 class TestBoundarySyncProtocol:
     def test_init_buffers(self) -> None:
         g = _make_chain_graph(6, scc=0.2)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.folded_heterogeneous_params_support import *  # noqa: F403
 
+
 class TestCanFoldHeterogeneity:
     """``_can_fold`` accepts heterogeneous datapath parameters."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_ode_support import *  # noqa: F403
 
+
 class TestODELIFDynamics:
     def test_dvdt(self):
         d = ODELIFDynamics(tau_mem=20.0, v_rest=0.0)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.residual_support import *  # noqa: F403
 
+
 class TestMembraneShortcutBlock:
     def test_forward(self) -> None:
         b = MembraneShortcutBlock(n_features=8)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestExactLIFSolver:
     def test_spike_time_matches_analytical(self):
         solver = ExactLIFSolver(tau=10.0, v_rest=-65.0, v_thresh=-50.0, r_m=1.0)

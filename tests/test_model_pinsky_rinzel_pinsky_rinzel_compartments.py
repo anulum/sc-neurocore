@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelCompartments:
     def test_soma_dendrite_coupling(self):
         coupled = PinskyRinzelNeuron(gc=2.1)

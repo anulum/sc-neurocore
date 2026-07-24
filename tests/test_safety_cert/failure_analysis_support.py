@@ -18,8 +18,20 @@ from sc_neurocore.safety_cert.safety_cert import (
     ReliabilityMetrics,
     SILLevel,
 )
+
+
 def _unsafe(value: object) -> Any:
     """Return a deliberately invalid runtime value for boundary tests."""
     return value
 
-__all__ = ['Any', 'pytest', 'FMEDA', 'FailureCategory', 'FailureMode', 'ReliabilityMetrics', 'SILLevel', '_unsafe']
+
+__all__ = [
+    "Any",
+    "pytest",
+    "FMEDA",
+    "FailureCategory",
+    "FailureMode",
+    "ReliabilityMetrics",
+    "SILLevel",
+    "_unsafe",
+]

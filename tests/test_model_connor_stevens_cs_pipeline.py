@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
 
+
 class TestCSPipeline:
     def test_population(self):
         assert Population(ConnorStevensNeuron, n=5, label="cs").n == 5

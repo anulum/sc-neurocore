@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tcbo_demo_support import *  # noqa: F403
 
+
 class TestScenarioValidations(unittest.TestCase):
     def test_healthy_awake_coherence(self):
         engine = TCBODemoEngine(seed=42)

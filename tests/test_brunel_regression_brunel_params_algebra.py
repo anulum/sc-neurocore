@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestBrunelParamsAlgebra:
     def test_n_total(self):
         bp = BrunelParams(n_exc=800, n_inh=200)

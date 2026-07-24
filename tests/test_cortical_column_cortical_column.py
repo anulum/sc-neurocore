@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_support import *  # noqa: F403
 
+
 class TestCorticalColumn:
     def test_creates_with_defaults(self):
         col = CorticalColumn(scale=0.02, scale_correction=False, delay_distribution=False, seed=42)

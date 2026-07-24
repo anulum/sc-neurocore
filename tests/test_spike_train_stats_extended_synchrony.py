@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestSynchrony:
     def test_sttc_identical(self, poisson_train):
         val = spike_time_tiling_coefficient(poisson_train, poisson_train)

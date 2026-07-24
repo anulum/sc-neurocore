@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_zoo_support import *  # noqa: F403
 
+
 class TestAuditoryProcessing:
     """Cochlear→onset→integration spectro-temporal SNN."""
 

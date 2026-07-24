@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.new_models_support import *  # noqa: F403
 
+
 class TestBrunelWang:
     def test_fires_with_ampa(self):
         n = BrunelWangNeuron(dt=0.1)

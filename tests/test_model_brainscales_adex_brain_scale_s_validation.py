@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_brainscales_adex_support import *  # noqa: F403
 
+
 class TestBrainScaleSValidation:
     @pytest.mark.parametrize(
         ("field", "value"),

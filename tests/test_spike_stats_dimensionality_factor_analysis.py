@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_dimensionality_support import *  # noqa: F403
 
+
 class TestFactorAnalysis:
     def test_typical(self) -> None:
         loadings, psi = factor_analysis(_trains(5), n_factors=2)

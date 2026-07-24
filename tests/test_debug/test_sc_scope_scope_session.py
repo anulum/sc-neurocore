@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestScopeSession:
     def _make_session(self, num_layers=2):
         cfg = TransportConfig(TransportType.SIMULATED)

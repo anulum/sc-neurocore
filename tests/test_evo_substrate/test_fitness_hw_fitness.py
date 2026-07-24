@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.fitness_support import *  # noqa: F403
 
+
 class TestHWFitness:
     def test_report(self) -> None:
         r = HWFitnessReport("test_id", fpga_accuracy=0.9, fmax_mhz=200.0)

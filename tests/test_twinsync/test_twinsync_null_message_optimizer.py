@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from twinsync_support import *  # noqa: F403
 
+
 class TestNullMessageOptimizer:
     def test_safe_advance(self):
         nmo = NullMessageOptimizer(3)

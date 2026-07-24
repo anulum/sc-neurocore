@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.formal_network_properties_support import *  # noqa: F403
 
+
 def test_validate_formal_network_report_accepts_complete_payload() -> None:
     payload = _valid_formal_report_payload()
 
@@ -498,5 +499,3 @@ def test_validate_formal_network_report_rejects_artifact_outside_root(tmp_path: 
 
     with pytest.raises(FormalReportValidationError, match="is outside artifact_root"):
         validate_formal_network_report(payload, artifact_root=root)
-
-

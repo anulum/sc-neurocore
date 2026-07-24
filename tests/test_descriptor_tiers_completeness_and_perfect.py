@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.descriptor_tiers_support import *  # noqa: F403
 
+
 def test_completeness_tiers_reports_both_axes_and_labels() -> None:
     """The combined view pairs the two axes and formats honest labels."""
     tiers = completeness_tiers(parse_model_descriptor(_validated_payload()))

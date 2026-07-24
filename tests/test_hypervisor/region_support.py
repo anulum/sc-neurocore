@@ -20,6 +20,8 @@ from sc_neurocore.hypervisor.region import (
     RegionState,
     select_region_multi_die,
 )
+
+
 def _region(rid: int = 0, neurons: int = 1024, base: int = 0x4000_0000) -> HWRegion:
     return HWRegion(
         region_id=rid,
@@ -30,4 +32,16 @@ def _region(rid: int = 0, neurons: int = 1024, base: int = 0x4000_0000) -> HWReg
         die_id=0,
     )
 
-__all__ = ['ast', 'Path', 'pytest', 'compatibility_surface', 'region_owner', 'HWRegion', 'RegionHealth', 'RegionState', 'select_region_multi_die', '_region']
+
+__all__ = [
+    "ast",
+    "Path",
+    "pytest",
+    "compatibility_surface",
+    "region_owner",
+    "HWRegion",
+    "RegionHealth",
+    "RegionState",
+    "select_region_multi_die",
+    "_region",
+]

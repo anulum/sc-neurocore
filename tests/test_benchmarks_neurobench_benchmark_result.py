@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.benchmarks_neurobench_support import *  # noqa: F403
 
+
 class TestBenchmarkResult:
     def test_to_json(self):
         r = BenchmarkResult(

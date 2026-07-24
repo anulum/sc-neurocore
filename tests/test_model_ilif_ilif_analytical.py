@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ilif_support import *  # noqa: F403
 
+
 class TestILIFAnalytical:
     def test_v_update_formula(self):
         """V = alpha_m·V + I - inh_strength·inh_trace (after trace decay)."""

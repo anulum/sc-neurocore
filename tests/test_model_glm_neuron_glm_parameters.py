@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_glm_neuron_support import *  # noqa: F403
 
+
 class TestGLMParameters:
     @pytest.mark.parametrize("mu", [-5.0, -3.0, 0.0])
     def test_mu_sweep(self, mu: float):

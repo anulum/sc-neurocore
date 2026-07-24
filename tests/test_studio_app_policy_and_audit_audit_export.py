@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_app_exports_audit_events_for_admin_without_paths(tmp_path: Path) -> None:
     from sc_neurocore.studio.platform import AuditEvent, JsonlAuditSink
 

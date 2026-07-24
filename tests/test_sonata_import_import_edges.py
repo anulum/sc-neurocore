@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sonata_import_support import *  # noqa: F403
 
+
 class TestImportEdges:
     def test_basic(self, tmp_path):
         f = _create_edges_h5(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFAParameters:
     def test_tau_sfa_controls_adaptation_timescale(self):
         """Shorter tau_sfa → faster g_sfa decay → less sustained adaptation."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_benda_herz_support import *  # noqa: F403
 
+
 class TestBendaHerzIsolation:
     def test_construction(self):
         n = BendaHerzNeuron()

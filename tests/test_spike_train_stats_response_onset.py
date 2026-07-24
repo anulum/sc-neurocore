@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestResponseOnset:
     def test_detects(self):
         train = np.zeros(500, dtype=np.uint8)

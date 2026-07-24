@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bipolar_sc_support import *  # noqa: F403
 
+
 class TestBipolarMultiply:
     def test_xnor_same_inputs(self):
         a = np.array([1, 0, 1, 1, 0], dtype=np.uint8)

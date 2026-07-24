@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFAFI:
     def test_subthreshold_no_spikes(self):
         """Low current → no spikes."""

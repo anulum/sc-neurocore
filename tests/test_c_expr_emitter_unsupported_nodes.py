@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestUnsupportedNodes:
     def test_list_node_raises(self) -> None:
         with pytest.raises(ValueError, match="Unsupported AST node"):

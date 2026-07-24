@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.security_support import *  # noqa: F403
 
+
 class TestAsimovGovernor:
     """Test suite for the Three Laws of Robotics enforcement."""
 

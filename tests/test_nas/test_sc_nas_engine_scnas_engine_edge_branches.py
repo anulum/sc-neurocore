@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestSCNASEngineEdgeBranches:
     """Resource-utilisation ratios, empty-front report accessors, and the
     Rust-evolution tournament path (flag + import branch)."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from model_zoo_support import *  # noqa: F403
 
+
 class TestNeuronState:
     def test_get_set(self):
         s = NeuronState({"V": -65.0})

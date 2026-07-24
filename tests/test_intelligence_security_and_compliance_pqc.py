@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_security_and_compliance_support import *  # noqa: F403
 
+
 class TestPQC(unittest.TestCase):
     def test_basic(self):
         r = protect_ip_pqc("sc_lif", {"v": "a"})

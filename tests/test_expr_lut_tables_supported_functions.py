@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.expr_lut_tables_support import *  # noqa: F403
 
+
 class TestSupportedFunctions:
     def test_contains_transcendentals_and_helpers(self) -> None:
         assert {"exp", "log", "sqrt", "tanh", "cosh", "exprel", "sin", "cos"} <= (

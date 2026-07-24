@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
 
+
 class TestHHIsolation:
     def test_defaults(self):
         n = HodgkinHuxleyNeuron()

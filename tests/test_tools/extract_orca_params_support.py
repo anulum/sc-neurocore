@@ -143,5 +143,21 @@ def _write_output(path: Path, text: str) -> Path:
     return path
 
 
-
-__all__ = ['hashlib', 'importlib', 'json', 'subprocess', 'sys', 'Path', 'ModuleType', 'pytest', 'REPO', 'TOOL', '_load_tool', '_G_MATRIX_BLOCK', '_P_BLOCK', '_CA_BLOCK', '_full_output', '_write_output']
+__all__ = [
+    "hashlib",
+    "importlib",
+    "json",
+    "subprocess",
+    "sys",
+    "Path",
+    "ModuleType",
+    "pytest",
+    "REPO",
+    "TOOL",
+    "_load_tool",
+    "_G_MATRIX_BLOCK",
+    "_P_BLOCK",
+    "_CA_BLOCK",
+    "_full_output",
+    "_write_output",
+]

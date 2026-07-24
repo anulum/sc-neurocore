@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestCrossHybridizationChecker:
     def test_check_returns_list(self) -> None:
         compiler = StrandDisplacementCompiler()

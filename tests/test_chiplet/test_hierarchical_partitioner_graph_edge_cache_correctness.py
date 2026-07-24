@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_graph_support import *  # noqa: F403
 
+
 class TestEdgeCacheCorrectness:
     """The cached lookup must agree with a linear scan, on every edge
     AND on absent vertex pairs."""

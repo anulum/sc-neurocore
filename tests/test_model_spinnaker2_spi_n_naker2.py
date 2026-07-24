@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker2_support import *  # noqa: F403
 
+
 class TestSpiNNaker2:
     def test_fires(self):
         from sc_neurocore.neurons.models.spinnaker2 import SpiNNaker2Neuron

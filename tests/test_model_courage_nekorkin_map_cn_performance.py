@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_courage_nekorkin_map_support import *  # noqa: F403
 
+
 class TestCNPerformance:
     def test_isolation_throughput(self):
         n = CourageNekorkinMapNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestLiveAnalyzer:
     def test_ingest(self):
         la = LiveAnalyzer(num_layers=2)

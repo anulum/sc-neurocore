@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_support import *  # noqa: F403
 
+
 class TestYosysJsonParser:
     def test_parse_empty_design(self, tmp_path):
         data = {"modules": {}}
@@ -96,4 +97,3 @@ class TestYosysJsonParser:
             json.dump(data, f)
         with pytest.raises(ValueError, match="cells' must be an object"):
             _parse_yosys_json(json_path)
-

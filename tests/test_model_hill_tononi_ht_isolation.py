@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHTIsolation:
     def test_defaults(self):
         n = HillTononiNeuron()

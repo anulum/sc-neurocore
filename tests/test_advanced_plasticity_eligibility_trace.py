@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestEligibilityTrace:
     def test_output_shape(self):
         et = EligibilityTrace(tau_e=20.0)

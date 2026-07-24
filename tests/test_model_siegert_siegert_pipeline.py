@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertPipeline:
     def test_population_creates(self) -> None:
         assert Population(SiegertTransferFunction, n=5, label="sieg").n == 5

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
 
+
 def test_rust_marshalling_returns_validated_result(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, object] = {}
 
@@ -160,5 +161,3 @@ def test_go_pointer_marshalling(monkeypatch: pytest.MonkeyPatch) -> None:
     result = backends.filter_native("go", _model(), observations, controls)
     assert result.pred_covariances.shape == (3, 2, 2)
     assert result.log_likelihood == -4.0
-
-

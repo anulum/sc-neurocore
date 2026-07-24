@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestTranslatorConsistency:
     """Variants that share StochasticLIFNeuron base must produce identical neuron_kwargs
     except for the specific parameter they modify."""

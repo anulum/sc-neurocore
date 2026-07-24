@@ -19,8 +19,23 @@ from sc_neurocore.neurons.models.balanced_resonate_and_fire import (
     sustain_oscillation_boundary,
 )
 from sc_neurocore.network.population import Population
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
 def _run(neuron: BalancedResonateAndFireNeuron, current: float, steps: int) -> list[int]:
     return [step for step in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['math', 'Path', 'np', 'pytest', 'PublicBRF', 'BalancedResonateAndFireNeuron', 'sustain_oscillation_boundary', 'Population', 'REPO_ROOT', '_run']
+
+__all__ = [
+    "math",
+    "Path",
+    "np",
+    "pytest",
+    "PublicBRF",
+    "BalancedResonateAndFireNeuron",
+    "sustain_oscillation_boundary",
+    "Population",
+    "REPO_ROOT",
+    "_run",
+]

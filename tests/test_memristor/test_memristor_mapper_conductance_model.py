@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestConductanceModel:
     def test_defaults_from_technology(self) -> None:
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)

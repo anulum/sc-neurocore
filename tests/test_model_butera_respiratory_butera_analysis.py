@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_butera_respiratory_support import *  # noqa: F403
 
+
 class TestButeraAnalysis:
     def _get_train(self):
         n = ButeraRespiratoryNeuron()

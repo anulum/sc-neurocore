@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestWolframHypergraph:
     def test_evolve_changes_edges(self):
         hg = WolframHypergraph(edges=[(0, 1), (1, 2)], max_node_id=2)

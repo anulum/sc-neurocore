@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_soc_and_chiplet_support import *  # noqa: F403
 
+
 class TestMemoryMap:
     def test_basic(self):
         from sc_neurocore.compiler.intelligence import generate_memory_map

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.streaming_spike_codec_support import *  # noqa: F403
 
+
 class TestStreamingSpikeCodecCompression:
     def test_silent_frames_small(self):
         """Silent frames should be very compact."""

@@ -88,5 +88,19 @@ def _projection_edge_values_from_bridge(
     return np.asarray(values, dtype=np.float64)
 
 
-
-__all__ = ['Any', 'cast', 'np', 'pytest', 'torch', 'NetworkTorchBridge', 'Network', 'Population', 'Projection', 'StochasticLIFNeuron', 'atan_surrogate_custom_op', '_all_to_all_topology', '_manual_counts', '_projection_edge_values_from_bridge']
+__all__ = [
+    "Any",
+    "cast",
+    "np",
+    "pytest",
+    "torch",
+    "NetworkTorchBridge",
+    "Network",
+    "Population",
+    "Projection",
+    "StochasticLIFNeuron",
+    "atan_surrogate_custom_op",
+    "_all_to_all_topology",
+    "_manual_counts",
+    "_projection_edge_values_from_bridge",
+]

@@ -48,5 +48,27 @@ from sc_neurocore.security.side_channel_metrics import (
 from sc_neurocore.security.thermal_sc_encoding import ThermalSCEncodingConfig
 
 
-
-__all__ = ['json', 'pytest', 'benchmark_mod', 'SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION', 'SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION', 'SideChannelBenchmarkArm', 'SideChannelBenchmarkError', 'SideChannelBenchmarkRecord', 'SideChannelDeployManifest', 'SideChannelBenchmarkReport', '_correlated_activity_fixture_stream', '_arm_payload', '_class_proxy_payload', '_deploy_manifest_payload', '_report_payload', '_with_artifact_path', 'run_side_channel_leakage_benchmark', 'write_side_channel_benchmark_report', 'SideChannelMetricError', 'compute_class_activity_proxy', 'compute_switching_activity', 'ThermalSCEncodingConfig']
+__all__ = [
+    "json",
+    "pytest",
+    "benchmark_mod",
+    "SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION",
+    "SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION",
+    "SideChannelBenchmarkArm",
+    "SideChannelBenchmarkError",
+    "SideChannelBenchmarkRecord",
+    "SideChannelDeployManifest",
+    "SideChannelBenchmarkReport",
+    "_correlated_activity_fixture_stream",
+    "_arm_payload",
+    "_class_proxy_payload",
+    "_deploy_manifest_payload",
+    "_report_payload",
+    "_with_artifact_path",
+    "run_side_channel_leakage_benchmark",
+    "write_side_channel_benchmark_report",
+    "SideChannelMetricError",
+    "compute_class_activity_proxy",
+    "compute_switching_activity",
+    "ThermalSCEncodingConfig",
+]

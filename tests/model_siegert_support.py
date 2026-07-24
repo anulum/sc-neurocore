@@ -20,4 +20,12 @@ from scipy.special import erf as scipy_erf
 from sc_neurocore.neurons.models.siegert import SiegertTransferFunction, _erf_approx
 from sc_neurocore.network.population import Population
 
-__all__ = ['time', 'np', 'pytest', 'scipy_erf', 'SiegertTransferFunction', '_erf_approx', 'Population']
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "scipy_erf",
+    "SiegertTransferFunction",
+    "_erf_approx",
+    "Population",
+]

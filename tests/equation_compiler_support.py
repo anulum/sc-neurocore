@@ -15,6 +15,14 @@ from sc_neurocore.compiler.equation_compiler import (
     compile_to_verilog,
     equation_to_fpga,
 )
+
 UNIT_REGISTRY = pint.UnitRegistry()
 
-__all__ = ['pint', 'EquationNeuron', 'from_equations', 'compile_to_verilog', 'equation_to_fpga', 'UNIT_REGISTRY']
+__all__ = [
+    "pint",
+    "EquationNeuron",
+    "from_equations",
+    "compile_to_verilog",
+    "equation_to_fpga",
+    "UNIT_REGISTRY",
+]

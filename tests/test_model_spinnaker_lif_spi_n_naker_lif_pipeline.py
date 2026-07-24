@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker_lif_support import *  # noqa: F403
 
+
 class TestSpiNNakerLIFPipeline:
     def test_population(self):
         assert Population(SpiNNakerLIFNeuron, n=10, label="snlif").n == 10

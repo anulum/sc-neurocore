@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonIsolation:
     def test_construction_defaults(self) -> None:
         n = PoissonNeuron()

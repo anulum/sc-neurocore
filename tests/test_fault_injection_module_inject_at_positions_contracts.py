@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_module_support import *  # noqa: F403
 
+
 class TestInjectAtPositionsContracts:
     def test_flips_requested_positions(self):
         import numpy as np

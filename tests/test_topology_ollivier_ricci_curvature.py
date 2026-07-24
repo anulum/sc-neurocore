@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_support import *  # noqa: F403
 
+
 class TestOllivierRicciCurvature:
     def test_identical_neighborhoods(self):
         knm = np.ones((4, 4))

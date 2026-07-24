@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.model_resonate_and_fire_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize("field", ("x", "y", "b", "omega", "threshold", "dt"))
 @pytest.mark.parametrize("value", (np.nan, np.inf, -np.inf))
 def test_constructor_rejects_nonfinite_values(field: str, value: float) -> None:

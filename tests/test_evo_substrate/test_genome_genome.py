@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.genome_support import *  # noqa: F403
 
+
 class TestGenome:
     def test_to_vector(self) -> None:
         g = Genome()

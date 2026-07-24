@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestBitstreamToFrequency:
     def test_all_ones_maps_to_max(self):
         bridge = create_bridge()

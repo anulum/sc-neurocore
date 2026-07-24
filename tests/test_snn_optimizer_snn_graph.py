@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.snn_optimizer_support import *  # noqa: F403
 
+
 class TestSNNGraph:
     def test_total_params(self):
         g = _make_graph()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_schema_support import *  # noqa: F403
 
+
 def test_scnir_round_trip_is_deterministic(tmp_path: Path) -> None:
     doc = _valid_document()
     payload = scnir_to_dict(doc)
@@ -108,5 +109,3 @@ def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
 
     with pytest.raises(SCNIRValidationError, match="unsupported SC-NIR schema_version"):
         upgrade_scnir_dict(payload)
-
-

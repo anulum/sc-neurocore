@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_substrate_support import *  # noqa: F403
 
+
 class TestTraceEncoder:
     def test_encode_shape(self):
         enc = TraceEncoder(n_neurons=N_CORTICAL, hash_dims=16, seed=42)

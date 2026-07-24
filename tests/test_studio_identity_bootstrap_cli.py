@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_identity_bootstrap_support import *  # noqa: F403
 
+
 def test_studio_bootstrap_admin_cli_writes_identity_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -195,5 +196,3 @@ def test_studio_add_browser_user_cli_requires_operational_inputs(
 
     assert exit_code == 1
     assert match in capsys.readouterr().out
-
-

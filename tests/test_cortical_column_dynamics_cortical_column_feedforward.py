@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_dynamics_support import *  # noqa: F403
 
+
 class TestCorticalColumnFeedforward:
     def test_excitatory_populations_present(self):
         """Excitatory populations should exist and produce spikes."""

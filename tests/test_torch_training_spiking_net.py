@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestSpikingNet:
     def test_forward(self):
         net = SpikingNet(n_input=784, n_hidden=128, n_output=10, n_layers=2)

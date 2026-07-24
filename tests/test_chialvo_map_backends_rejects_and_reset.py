@@ -10,10 +10,12 @@ from __future__ import annotations
 
 from tests.chialvo_map_backends_support import *  # noqa: F403
 
+
 def test_invalid_backend_rejected() -> None:
     for backend in ("cuda", "", "RUST"):
         with pytest.raises(ValueError, match="backend must be"):
             ChialvoMapNeuron().simulate(1, backend=backend)
+
 
 def test_invalid_batch_arguments_and_mutable_configuration_rejected() -> None:
     neuron = ChialvoMapNeuron()
@@ -24,6 +26,7 @@ def test_invalid_batch_arguments_and_mutable_configuration_rejected() -> None:
     neuron.k = np.nan
     with pytest.raises(ValueError, match="k"):
         neuron.simulate(1)
+
 
 def test_reset_preserves_configuration() -> None:
     neuron = ChialvoMapNeuron(a=0.8, b=0.4, c=0.2, k=0.03, x_threshold=0.75)

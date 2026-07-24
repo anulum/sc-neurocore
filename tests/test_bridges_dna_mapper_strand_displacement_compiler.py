@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestStrandDisplacementCompiler:
     def test_compile_and_gate(self) -> None:
         compiler = StrandDisplacementCompiler()

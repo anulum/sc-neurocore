@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_evidence_bundle_support import *  # noqa: F403
 
+
 def test_write_studio_evidence_bundle_includes_model_scan(tmp_path: Path) -> None:
     context = StudioJobContext(
         job_id="sj_scan",
@@ -34,6 +35,7 @@ def test_write_studio_evidence_bundle_includes_model_scan(tmp_path: Path) -> Non
     assert "model_scan_result" in json.dumps(payload)
     assert entry_type_counts["model_scan_result"] == 1
     assert classification_counts["analysis"] == 1
+
 
 @pytest.mark.parametrize(
     ("mutate", "match"),

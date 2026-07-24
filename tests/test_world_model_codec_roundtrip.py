@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.world_model_support import *  # noqa: F403
 
+
 class TestCodecRoundtrip:
     def test_lossless_roundtrip(self):
         n_ch = 4

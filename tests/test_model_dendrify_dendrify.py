@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_dendrify_support import *  # noqa: F403
 
+
 class TestDendrify:
     def test_dynamics(self):
         from sc_neurocore.neurons.models.dendrify import DendrifyNeuron

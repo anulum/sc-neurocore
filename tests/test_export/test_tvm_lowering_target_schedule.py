@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tvm_lowering_support import *  # noqa: F403
 
+
 class TestTargetSchedule(unittest.TestCase):
     def test_cpu_defaults(self):
         s = TargetSchedule.for_cpu()

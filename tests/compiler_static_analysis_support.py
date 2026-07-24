@@ -11,4 +11,4 @@ from __future__ import annotations
 """Contracts for compiler pipeline and power static analysis."""
 import pytest
 
-__all__ = ['pytest']
+__all__ = ["pytest"]

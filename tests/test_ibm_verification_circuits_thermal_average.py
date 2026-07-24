@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestThermalAverage:
     def test_64_configs_differ_from_single(self):
         from scipy.linalg import expm

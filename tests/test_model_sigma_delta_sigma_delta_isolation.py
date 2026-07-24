@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaIsolation:
     def test_construction_defaults(self):
         n = SigmaDeltaNeuron()

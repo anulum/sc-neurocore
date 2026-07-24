@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_app_support import *  # noqa: F403
 
+
 class TestSimulateEndpoint:
     def test_simulate_lif(self, client):
         t = TEMPLATES["lif"]
@@ -109,4 +110,3 @@ class TestSimulateEndpoint:
             json={"name": "AdExNeuron", "current": 50.0, "duration": 50.0, "dt": 0.1},
         )
         assert by_name.status_code == 200, by_name.text
-

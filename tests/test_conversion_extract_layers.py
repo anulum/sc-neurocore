@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_support import *  # noqa: F403
 
+
 class TestExtractLayers:
     def test_extracts_linear(self) -> None:
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3))

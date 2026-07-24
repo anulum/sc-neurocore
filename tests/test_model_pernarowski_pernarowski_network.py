@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiNetwork:
     def test_population(self):
         pop = Population(PernarowskiNeuron, n=10, label="pern")

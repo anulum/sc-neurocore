@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantum_stabilisation_support import *  # noqa: F403
 
+
 class TestHybridPipeline:
     def test_circuit_returns_scalar(self):
         from sc_neurocore.quantum.hybrid_pipeline import HybridQuantumClassicalPipeline

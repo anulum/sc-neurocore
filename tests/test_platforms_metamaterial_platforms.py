@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestMetamaterialPlatforms(unittest.TestCase):
     def test_mit_metamaterial(self):
         p = get_profile("mit_metamaterial")

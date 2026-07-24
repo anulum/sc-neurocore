@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gamma_renewal_support import *  # noqa: F403
 
+
 class TestPipeline:
     def test_population(self):
         assert Population(GammaRenewalNeuron, n=10, label="test").n == 10

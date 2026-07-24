@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_runtime_settings_default_security_headers_are_fail_closed() -> None:
     settings = build_default_studio_runtime_settings(env={})
 

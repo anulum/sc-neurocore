@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
 
+
 class TestPSNPipeline:
     def test_population(self):
         assert Population(ParallelSpikingNeuron, n=10, label="psn").n == 10

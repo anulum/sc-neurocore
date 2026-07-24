@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_primitives_support import *  # noqa: F403
 
+
 class TestVecAnd:
     def test_multiply(self):
         pa, pb = 0.6, 0.4

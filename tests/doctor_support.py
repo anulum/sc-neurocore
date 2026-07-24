@@ -12,4 +12,4 @@ import numpy as np
 from sc_neurocore.doctor import diagnose, Diagnosis, DiagnosticReport
 from sc_neurocore.doctor.diagnose import Severity
 
-__all__ = ['np', 'diagnose', 'Diagnosis', 'DiagnosticReport', 'Severity']
+__all__ = ["np", "diagnose", "Diagnosis", "DiagnosticReport", "Severity"]

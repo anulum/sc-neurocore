@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_digital_twin_support import *  # noqa: F403
 
+
 class TestHILCalibrationContractEdges:
     """The remaining validation branches of the HIL contract: each guards a
     distinct malformed sweep specification that the happy-path tests never reach."""

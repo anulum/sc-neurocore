@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestRegularity:
     def test_lvr_regular(self, regular_train):
         val = lvr(regular_train)

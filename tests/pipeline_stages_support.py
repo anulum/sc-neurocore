@@ -26,6 +26,8 @@ from sc_neurocore.compiler.static_analysis import (
     pipeline_stages_needed,
 )
 from sc_neurocore.neurons.equation_builder import from_equations
+
+
 @pytest.fixture
 def lif_neuron():
     """Standard LIF neuron with one multiply chain."""
@@ -36,6 +38,8 @@ def lif_neuron():
         params=dict(E_L=-65, tau_m=10, C=1),
         init=dict(v=-65),
     )
+
+
 @pytest.fixture
 def hh_style_neuron():
     """Multi-multiply neuron (3 multiplies in sequence)."""
@@ -46,6 +50,8 @@ def hh_style_neuron():
         params=dict(E_L=-65, tau_m=10, R=1, C=1),
         init=dict(v=-65),
     )
+
+
 @pytest.fixture
 def izhikevich_neuron():
     """Two-state-variable neuron (Izhikevich)."""
@@ -58,4 +64,15 @@ def izhikevich_neuron():
         init=dict(v=-65, u=-14),
     )
 
-__all__ = ['pytest', 'compile_to_verilog', 'critical_path_depth', 'pipeline_analysis', 'pipeline_stages_needed', 'from_equations', 'lif_neuron', 'hh_style_neuron', 'izhikevich_neuron']
+
+__all__ = [
+    "pytest",
+    "compile_to_verilog",
+    "critical_path_depth",
+    "pipeline_analysis",
+    "pipeline_stages_needed",
+    "from_equations",
+    "lif_neuron",
+    "hh_style_neuron",
+    "izhikevich_neuron",
+]

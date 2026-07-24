@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestModelEndpoints:
     def test_list_models(self, client):
         r = client.get("/api/models")
@@ -56,4 +57,3 @@ class TestModelEndpoints:
         data = r.json()
         assert "time" in data
         assert "states" in data
-

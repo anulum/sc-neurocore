@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestSigmoid:
     """Published Wilson-Cowan 1972 two-term sigmoid:
         S(x) = 1/(1+exp(-a(x-θ))) − 1/(1+exp(aθ))

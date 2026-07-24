@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.network_execution_paths_support import *  # noqa: F403
 
+
 def test_engine_detection_helpers_after_cache_reset() -> None:
     # Reset the cached engine so the loader runs under the tracer.
     network_module._RUST_ENGINE = None

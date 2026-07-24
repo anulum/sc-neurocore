@@ -27,4 +27,15 @@ from sc_neurocore.accel.gpu_backend import (
     gpu_vec_mac,
 )
 
-__all__ = ['np', 'pytest', 'gb', 'xp', 'to_device', 'to_host', 'gpu_pack_bitstream', 'gpu_vec_and', 'gpu_popcount', 'gpu_vec_mac']
+__all__ = [
+    "np",
+    "pytest",
+    "gb",
+    "xp",
+    "to_device",
+    "to_host",
+    "gpu_pack_bitstream",
+    "gpu_vec_and",
+    "gpu_popcount",
+    "gpu_vec_mac",
+]

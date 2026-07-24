@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
 
+
 class TestWilsonCowanParameters:
     def test_accepts_normalised_saturation_boundary(self):
         n = WilsonCowanUnit(e=1.0, i=1.0)

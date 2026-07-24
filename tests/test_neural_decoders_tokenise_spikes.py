@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neural_decoders_support import *  # noqa: F403
 
+
 class TestTokeniseSpikes:
     """Spike tokenisation used by POYO+ and POSSM."""
 

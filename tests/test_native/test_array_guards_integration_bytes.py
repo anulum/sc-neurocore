@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestIntegrationBytes:
     def test_guarded_output_accepts_ctypes_style_access(self):
         arr = np.arange(64, dtype=np.uint8)

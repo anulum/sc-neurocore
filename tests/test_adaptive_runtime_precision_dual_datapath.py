@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.adaptive_runtime_precision_support import *  # noqa: F403
 
+
 class TestDualDatapath:
     """Verify that both LP and HP datapaths are generated."""
 

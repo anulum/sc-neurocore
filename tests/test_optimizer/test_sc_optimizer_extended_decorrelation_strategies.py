@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_optimizer_extended_support import *  # noqa: F403
 
+
 class TestDecorrelationStrategies(unittest.TestCase):
     def test_all_strategies_exist(self):
         strategies = [s.value for s in DecorrelationStrategy]

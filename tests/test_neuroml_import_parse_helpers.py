@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.neuroml_import_support import *  # noqa: F403
 
+
 class TestParseHelpers:
     def test_parse_unit_value_none_is_zero(self):
         assert _parse_unit_value(None) == 0.0

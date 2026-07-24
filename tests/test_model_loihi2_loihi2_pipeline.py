@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_loihi2_support import *  # noqa: F403
 
+
 class TestLoihi2Pipeline:
     def test_population(self):
         assert Population(Loihi2Neuron, n=10, label="l2").n == 10

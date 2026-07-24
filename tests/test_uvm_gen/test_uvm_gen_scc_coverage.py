@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from uvm_gen_support import *  # noqa: F403
 
+
 class TestSCCCoverage:
     def test_scc_bins_generated(self):
         gen = UVMGenerator()

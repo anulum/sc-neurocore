@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestSCCInfluence:
     def test_influence_computed(self):
         tree = SpikeDecisionTree()

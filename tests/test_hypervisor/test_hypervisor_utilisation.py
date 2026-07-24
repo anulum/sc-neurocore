@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hypervisor_support import *  # noqa: F403
 
+
 class TestUtilisation:
     def _setup(self) -> Hypervisor:
         hv = Hypervisor()

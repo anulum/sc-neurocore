@@ -35,4 +35,29 @@ from sc_neurocore.compiler.quantizer import (
     quantization_error,
 )
 
-__all__ = ['np', 'pytest', 'given', 'settings', 'st', 'prove_fixed_point_envelope', 'QFormat', 'QFormatMixed', 'Q8_8', 'Q16_16', 'BlockFloatingMode', 'CompiledMixedDense', 'PrecisionEnvelopeReport', 'PrecisionTrapReport', 'compile_dense_block_floating', 'compile_dense_mixed_precision', 'parse_precision_format', 'quantize_block_floating', 'dequantize', 'dequantize_block_floating', 'quantize_weights', 'dequantize_weights', 'q_weights_to_sc_probabilities', 'quantization_error']
+__all__ = [
+    "np",
+    "pytest",
+    "given",
+    "settings",
+    "st",
+    "prove_fixed_point_envelope",
+    "QFormat",
+    "QFormatMixed",
+    "Q8_8",
+    "Q16_16",
+    "BlockFloatingMode",
+    "CompiledMixedDense",
+    "PrecisionEnvelopeReport",
+    "PrecisionTrapReport",
+    "compile_dense_block_floating",
+    "compile_dense_mixed_precision",
+    "parse_precision_format",
+    "quantize_block_floating",
+    "dequantize",
+    "dequantize_block_floating",
+    "quantize_weights",
+    "dequantize_weights",
+    "q_weights_to_sc_probabilities",
+    "quantization_error",
+]

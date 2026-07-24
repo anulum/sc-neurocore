@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_ode_support import *  # noqa: F403
 
+
 class TestSpikingODELayer:
     def test_step(self):
         layer = SpikingODELayer(n_inputs=4, n_neurons=3)

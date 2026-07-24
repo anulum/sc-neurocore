@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from diagnostics_support import *  # noqa: F403
 
+
 class TestSCC(unittest.TestCase):
     """SCC computation tests."""
 

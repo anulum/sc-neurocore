@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ir_type_checker_support import *  # noqa: F403
 
+
 class TestTypesCompatible:
     """Coverage for direct and wildcard signal-type compatibility."""
 

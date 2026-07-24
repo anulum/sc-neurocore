@@ -17,4 +17,4 @@ from sc_neurocore.evo_substrate.variation import (
     MutationType,
 )
 
-__all__ = ['Genome', 'CrossoverEngine', 'MutationConfig', 'MutationEngine', 'MutationType']
+__all__ = ["Genome", "CrossoverEngine", "MutationConfig", "MutationEngine", "MutationType"]

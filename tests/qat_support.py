@@ -12,4 +12,10 @@ import numpy as np
 from sc_neurocore.qat import QuantizedSNNLayer, quantize_aware_train_step, TernaryWeights
 from sc_neurocore.qat.quantize import _ste_quantize
 
-__all__ = ['np', 'QuantizedSNNLayer', 'quantize_aware_train_step', 'TernaryWeights', '_ste_quantize']
+__all__ = [
+    "np",
+    "QuantizedSNNLayer",
+    "quantize_aware_train_step",
+    "TernaryWeights",
+    "_ste_quantize",
+]

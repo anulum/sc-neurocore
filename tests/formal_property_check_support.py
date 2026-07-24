@@ -23,6 +23,7 @@ from sc_neurocore.compiler.formal_property_check import (
     formal_tools_available,
     prove_property,
 )
+
 _HAS_FORMAL = formal_tools_available()
 _needs_formal = pytest.mark.skipif(
     not _HAS_FORMAL, reason="SymbiYosys / Yosys / solver not available"
@@ -78,9 +79,30 @@ module acc_sva(input logic clk, input logic [9:0] step, input logic [9:0] acc, i
     end
 endmodule
 """
+
+
 def _fake_run(**fields: object) -> SbyRun:
     base = {"verdict": "PASS", "rc": 0, "returncode": 0}
     base.update(fields)
     return SbyRun(**base)  # type: ignore[arg-type]
 
-__all__ = ['Path', 'pytest', 'formal_property_check', 'SbyRun', 'PropertyProofResult', 'formal_tools_available', 'prove_property', '_HAS_FORMAL', '_needs_formal', '_CAP_RTL', '_CAP_SVA', '_BAD_RTL', '_BAD_SVA', '_ACC_RTL', '_ACC_SVA_STRONG', '_ACC_SVA_WEAK', '_fake_run']
+
+__all__ = [
+    "Path",
+    "pytest",
+    "formal_property_check",
+    "SbyRun",
+    "PropertyProofResult",
+    "formal_tools_available",
+    "prove_property",
+    "_HAS_FORMAL",
+    "_needs_formal",
+    "_CAP_RTL",
+    "_CAP_SVA",
+    "_BAD_RTL",
+    "_BAD_SVA",
+    "_ACC_RTL",
+    "_ACC_SVA_STRONG",
+    "_ACC_SVA_WEAK",
+    "_fake_run",
+]

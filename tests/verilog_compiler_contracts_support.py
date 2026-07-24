@@ -62,5 +62,18 @@ def _escape_rate_neuron() -> EquationNeuron:
     return UniversalNeuron.from_schema("escape_rate").to_equation_neuron()
 
 
-
-__all__ = ['Path', 'shutil', 'subprocess', 'cast', 'pytest', 'compile_to_datapath', 'compile_to_verilog', 'EquationNeuron', 'from_equations', 'UniversalNeuron', '_lif_without_threshold', '_candidate_reset_neuron', '_escape_rate_neuron']
+__all__ = [
+    "Path",
+    "shutil",
+    "subprocess",
+    "cast",
+    "pytest",
+    "compile_to_datapath",
+    "compile_to_verilog",
+    "EquationNeuron",
+    "from_equations",
+    "UniversalNeuron",
+    "_lif_without_threshold",
+    "_candidate_reset_neuron",
+    "_escape_rate_neuron",
+]

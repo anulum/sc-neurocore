@@ -18,13 +18,28 @@ from sc_neurocore.accel.vector_ops import (
     vec_mux,
     vec_popcount,
 )
+
+
 def _prob(packed, length):
     """Estimate probability from packed bitstream."""
     return vec_popcount(packed) / length
+
+
 def _bernoulli_packed(p, length, seed):
     """Generate a packed Bernoulli bitstream."""
     rng = np.random.RandomState(seed)
     bits = (rng.random(length) < p).astype(np.uint8)
     return pack_bitstream(bits), length
 
-__all__ = ['np', 'pack_bitstream', 'vec_and', 'vec_xnor', 'vec_not', 'vec_mux', 'vec_popcount', '_prob', '_bernoulli_packed']
+
+__all__ = [
+    "np",
+    "pack_bitstream",
+    "vec_and",
+    "vec_xnor",
+    "vec_not",
+    "vec_mux",
+    "vec_popcount",
+    "_prob",
+    "_bernoulli_packed",
+]

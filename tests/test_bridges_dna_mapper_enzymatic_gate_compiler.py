@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestEnzymaticGateCompiler:
     def test_compile_nand(self) -> None:
         compiler = EnzymaticGateCompiler()

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_hurst_short():
     assert np.isnan(hurst_exponent(np.zeros(5, dtype=np.int8)))
 

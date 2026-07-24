@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from extract_orca_params_support import *  # noqa: F403
 
+
 def test_extract_parses_every_section(tmp_path: Path) -> None:
     tool = _load_tool()
     out = _write_output(tmp_path / "run.out", _full_output())

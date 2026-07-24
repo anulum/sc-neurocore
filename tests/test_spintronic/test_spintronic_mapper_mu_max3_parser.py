@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestMuMax3Parser:
     def test_parse_table(self):
         table = "# t mx my mz\n5e-9\t0.01\t0.02\t-0.99"

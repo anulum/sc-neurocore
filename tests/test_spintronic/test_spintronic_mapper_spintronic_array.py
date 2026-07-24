@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestSpintronicArray:
     def test_creation(self):
         arr = SpintronicArray(4, 8)

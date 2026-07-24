@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_contracts_support import *  # noqa: F403
 
+
 class TestDataContractValidation:
     def test_mea_layout_type_is_explicit(self) -> None:
         with pytest.raises(TypeError, match="layout must be a MEALayout"):

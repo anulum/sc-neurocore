@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pv_fast_spiking_neuron_support import *  # noqa: F403
 
+
 class TestPVFastSpikingKv3:
     def test_kv3_block_changes_firing(self):
         intact = _spikes(PVFastSpikingNeuron(), 2.0, 40000)

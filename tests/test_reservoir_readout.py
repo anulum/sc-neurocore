@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.reservoir_support import *  # noqa: F403
 
+
 class TestReadout:
     def test_fit_and_predict_shape(self):
         res = AutoCriticalReservoir(n_inputs=1, n_neurons=50, n_outputs=1, seed=0)

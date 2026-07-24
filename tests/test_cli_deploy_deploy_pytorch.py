@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_deploy_support import *  # noqa: F403
 
+
 def test_deploy_pytorch_writes_yosys_project(tmp_path: Path) -> None:
     torch = pytest.importorskip("torch")
     model = torch.nn.Sequential(
@@ -82,5 +83,3 @@ def test_deploy_pytorch_rejects_invalid_digest(
 
     assert _run_checkpoint_deploy(checkpoint, tmp_path / "out", digest=digest) == 1
     assert "64 hexadecimal characters" in capsys.readouterr().out
-
-

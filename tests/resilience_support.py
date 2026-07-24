@@ -11,8 +11,11 @@ from __future__ import annotations
 import numpy as np
 from sc_neurocore.resilience import FaultResilienceSuite, FaultModel
 from sc_neurocore.resilience.fault_suite import FaultType, FaultResult
+
+
 def _eval_fn(weights):
     """Deterministic test evaluator: accuracy ~ mean absolute weight."""
     return float(np.clip(np.mean([np.abs(w).mean() for w in weights]), 0, 1))
 
-__all__ = ['np', 'FaultResilienceSuite', 'FaultModel', 'FaultType', 'FaultResult', '_eval_fn']
+
+__all__ = ["np", "FaultResilienceSuite", "FaultModel", "FaultType", "FaultResult", "_eval_fn"]

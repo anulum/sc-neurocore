@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.quantum_cognition_support import *  # noqa: F403
 
+
 class TestHybridFisherPosnerLIF:
     """Tests for the quantum-metabolic LIF neuron."""
 

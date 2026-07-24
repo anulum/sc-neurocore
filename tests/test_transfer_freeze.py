@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transfer_support import *  # noqa: F403
 
+
 class TestFreeze:
     def test_freeze_by_name(self) -> None:
         c = _make_checkpoint()

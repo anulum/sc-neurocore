@@ -23,6 +23,8 @@ from sc_neurocore.transfer import (
     save_checkpoint,
     unfreeze_layers,
 )
+
+
 def _make_checkpoint() -> SNNCheckpoint:
     rng = np.random.default_rng(42)
     return SNNCheckpoint(
@@ -35,6 +37,8 @@ def _make_checkpoint() -> SNNCheckpoint:
         neuron_types=["LIF", "LIF"],
         metadata={"task": "mnist", "accuracy": 0.95},
     )
+
+
 def _write_minimal_checkpoint(
     path: Path,
     weight: NDArray[np.float64] | None = None,
@@ -54,4 +58,22 @@ def _write_minimal_checkpoint(
     }
     Path(str(path) + ".json").write_text(json.dumps(meta), encoding="utf-8")
 
-__all__ = ['json', 'Path', 'Sequence', 'cast', 'np', 'NDArray', 'pytest', 'TransferConfig', 'SNNCheckpoint', 'apply_transfer_config', 'freeze_layers', 'load_checkpoint', 'save_checkpoint', 'unfreeze_layers', '_make_checkpoint', '_write_minimal_checkpoint']
+
+__all__ = [
+    "json",
+    "Path",
+    "Sequence",
+    "cast",
+    "np",
+    "NDArray",
+    "pytest",
+    "TransferConfig",
+    "SNNCheckpoint",
+    "apply_transfer_config",
+    "freeze_layers",
+    "load_checkpoint",
+    "save_checkpoint",
+    "unfreeze_layers",
+    "_make_checkpoint",
+    "_write_minimal_checkpoint",
+]

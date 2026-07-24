@@ -25,13 +25,35 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
 def _kappa(I: float, dt: float, tau_kappa: float) -> float:
     return I * (1.0 - np.exp(-dt / tau_kappa))
+
+
 def _eta(tss: float, eta_reset: float, tau_eta: float) -> float:
     if tss >= 100.0:
         return 0.0
     return eta_reset * np.exp(-tss / tau_eta)
+
+
 def _run(neuron: SpikeResponseNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['np', 'pytest', 'SpikeResponseNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'isi', 'firing_rate', '_kappa', '_eta', '_run']
+
+__all__ = [
+    "np",
+    "pytest",
+    "SpikeResponseNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "isi",
+    "firing_rate",
+    "_kappa",
+    "_eta",
+    "_run",
+]

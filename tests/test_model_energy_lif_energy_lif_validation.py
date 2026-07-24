@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_energy_lif_support import *  # noqa: F403
 
+
 class TestEnergyLIFValidation:
     @pytest.mark.parametrize("field", ["v", "v_rest", "v_reset", "v_threshold"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

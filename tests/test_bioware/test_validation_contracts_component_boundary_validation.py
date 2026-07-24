@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.validation_contracts_support import *  # noqa: F403
 
+
 class TestComponentBoundaryValidation:
     def test_acquisition_rejects_invalid_configuration_and_frames(self) -> None:
         with pytest.raises(TypeError, match="config must be an MEAConfig"):

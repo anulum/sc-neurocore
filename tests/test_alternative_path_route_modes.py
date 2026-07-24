@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.alternative_path_support import *  # noqa: F403
 
+
 def test_baseline_mode_does_not_call_candidate():
     calls = {"candidate": 0}
 
@@ -129,5 +130,3 @@ def test_shadow_mode_records_candidate_error_without_comparison():
     assert result.comparison is None
     assert result.candidate_error is not None
     assert "shadow boom" in result.candidate_error
-
-

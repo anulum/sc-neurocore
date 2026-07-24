@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.package_materialisation_support import *  # noqa: F403
 
+
 def test_atomic_write_emits_verified_manifest_and_private_files(tmp_path: Path) -> None:
     """Materialisation must emit the complete hash-bound six-file bundle."""
     package = _package()

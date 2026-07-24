@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonAnalysis:
     def test_spike_count(self) -> None:
         n = PoissonNeuron(rate_hz=200.0)

@@ -19,4 +19,4 @@ from sc_neurocore.quantum_cognition.gotm_brain import (
     LearningStep,
 )
 
-__all__ = ['Path', 'np', 'pytest', 'ContentChunk', 'HAS_LLM', 'GOTMBrain', 'LearningStep']
+__all__ = ["Path", "np", "pytest", "ContentChunk", "HAS_LLM", "GOTMBrain", "LearningStep"]

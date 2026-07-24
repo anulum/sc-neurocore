@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.explain_support import *  # noqa: F403
 
+
 class TestTemporalSaliency:
     def _run_fn(self, spikes):
         return spikes.sum(axis=0).astype(np.float64)

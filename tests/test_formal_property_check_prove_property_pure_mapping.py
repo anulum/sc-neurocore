@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.formal_property_check_support import *  # noqa: F403
 
+
 class TestProvePropertyPureMapping:
     """Verdict-to-result mapping, exercised with a fake run."""
 

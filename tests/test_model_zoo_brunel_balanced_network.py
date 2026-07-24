@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_zoo_support import *  # noqa: F403
 
+
 class TestBrunelBalancedNetwork:
     """E/I balanced network with 4:1 exc:inh ratio."""
 

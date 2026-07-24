@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestCharacterizeEndpoint:
     def test_characterize_model(self, client):
         r = client.post(
@@ -28,4 +29,3 @@ class TestCharacterizeEndpoint:
         assert "pattern" in data
         assert "fi_curve" in data
         assert "top_sensitivities" in data
-

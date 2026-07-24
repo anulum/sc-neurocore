@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestShufflingDecorrelator:
     def test_preserves_bit_count(self):
         """Shuffling must keep exact same number of ones."""

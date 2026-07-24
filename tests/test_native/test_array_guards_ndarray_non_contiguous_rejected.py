@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestNdarrayNonContiguousRejected:
     def test_strided_slice_raises(self):
         base = np.arange(20, dtype=np.uint8)

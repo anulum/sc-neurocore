@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnoseWeights:
     def test_sparse_weights(self):
         w = [np.zeros((10, 10))]

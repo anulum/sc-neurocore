@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tsodyks_markram_support import *  # noqa: F403
 
+
 class TestTMIsolation:
     def test_defaults(self):
         n = TsodyksMarkramNeuron()

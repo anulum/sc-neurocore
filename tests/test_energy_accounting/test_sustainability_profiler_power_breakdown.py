@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestPowerBreakdown:
     def test_breakdown_components(self):
         r = FPGAResourceReport(luts=10000, ffs=5000, bram_kb=10, dsp_slices=5)

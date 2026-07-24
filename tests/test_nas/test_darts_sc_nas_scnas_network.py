@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from darts_sc_nas_support import *  # noqa: F403
 
+
 class TestSCNASNetwork(unittest.TestCase):
     def test_forward_shape(self) -> None:
         net = SCNASNetwork()

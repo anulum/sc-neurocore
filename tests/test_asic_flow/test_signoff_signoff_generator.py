@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_asic_flow.signoff_support import *  # noqa: F403
 
+
 class TestSignoffGenerator:
     def test_sta_script(self) -> None:
         pdk = PDKConfig.from_pdk_type(PDKType.SKY130)

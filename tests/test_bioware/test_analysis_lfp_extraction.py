@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.analysis_support import *  # noqa: F403
 
+
 class TestLFPExtraction:
     def test_default_bands(self) -> None:
         data = _synth_voltage(n_samples=2000, n_channels=5)

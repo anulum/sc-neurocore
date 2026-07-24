@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.graph_topology_support import *  # noqa: F403
 
+
 class TestTopologyAnalyzer:
     def test_triangle(self):
         adj = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]], dtype=np.float64)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.folded_interconnect_support import *  # noqa: F403
 
+
 def test_folded_external_source_threshold_matches_direct() -> None:
     import numpy as np
 
@@ -271,5 +272,3 @@ def test_folded_heterogeneous_tau_matches_direct() -> None:
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row for row in direct_raster), "the tau workload should spike"
-
-

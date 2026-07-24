@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestDistanceMetrics:
     def test_spike_distance_identical(self):
         t = np.array([0.1, 0.3, 0.5, 0.7])

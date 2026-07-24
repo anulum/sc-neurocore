@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_handoff_audit_support import *  # noqa: F403
 
+
 def test_audit_scnir_hdl_handoff_rejects_missing_source_module(tmp_path: Path) -> None:
     handoff = tmp_path / "handoff"
     _write_valid_handoff(handoff)
@@ -315,5 +316,3 @@ def test_audit_rejects_source_row_key_mismatch(tmp_path: Path) -> None:
 
     with pytest.raises(SCNIRHDLHandoffAuditError, match=r"sources\[0\] keys mismatch"):
         audit_scnir_hdl_handoff(handoff)
-
-

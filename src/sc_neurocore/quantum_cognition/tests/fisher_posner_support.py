@@ -15,11 +15,22 @@ from sc_neurocore.quantum_cognition.fisher_posner import (
     HybridFisherPosnerLIFNeuron,
 )
 from sc_neurocore.quantum_cognition.spin_pool import SpinPoolMPS
+
 PoolAndNeuron = tuple[SpinPoolMPS, HybridFisherPosnerLIF]
+
+
 @pytest.fixture
 def pool_and_neuron() -> PoolAndNeuron:
     pool = SpinPoolMPS(n_sites=8)
     neuron = HybridFisherPosnerLIF(neuron_id=0, spin_pool=pool)
     return pool, neuron
 
-__all__ = ['pytest', 'HybridFisherPosnerLIF', 'HybridFisherPosnerLIFNeuron', 'SpinPoolMPS', 'PoolAndNeuron', 'pool_and_neuron']
+
+__all__ = [
+    "pytest",
+    "HybridFisherPosnerLIF",
+    "HybridFisherPosnerLIFNeuron",
+    "SpinPoolMPS",
+    "PoolAndNeuron",
+    "pool_and_neuron",
+]

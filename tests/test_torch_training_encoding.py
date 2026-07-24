@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestEncoding:
     def test_rate_encode_shape(self):
         x = torch.rand(8, 784)

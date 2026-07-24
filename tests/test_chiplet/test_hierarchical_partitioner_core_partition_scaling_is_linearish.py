@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_core_support import *  # noqa: F403
 
+
 class TestPartitionScalingIsLinearish:
     """The wall-clock should NOT grow quadratically with V any more.
     We accept a generous slack — exact ms differs by hardware — but

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestPolaritonPlatforms(unittest.TestCase):
     def test_marvell_polariton(self):
         p = get_profile("marvell_polariton")

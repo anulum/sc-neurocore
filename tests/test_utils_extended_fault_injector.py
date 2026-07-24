@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.utils_extended_support import *  # noqa: F403
 
+
 class TestFaultInjector:
     def test_bit_flip_zero_rate(self):
         """Error rate 0 should return unchanged bitstream."""

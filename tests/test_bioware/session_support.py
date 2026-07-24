@@ -26,7 +26,10 @@ from sc_neurocore.bioware.bioware import (
     SpikeDetector,
     SpikeSorter,
 )
+
 FloatArray = npt.NDArray[np.float64]
+
+
 def _synth_voltage(
     n_samples: int = 1000,
     n_channels: int = 10,
@@ -41,4 +44,24 @@ def _synth_voltage(
             data[i + 50, 3] = -60.0
     return data
 
-__all__ = ['Any', 'cast', 'np', 'npt', 'pytest', 'AERToSCConverter', 'ArtifactRejector', 'BioHybridFrameResult', 'BioHybridSession', 'LatencyBudget', 'MEAConfig', 'MEAToAERTranscoder', 'PharmModel', 'SCToOptoEncoder', 'SpikeDetector', 'SpikeSorter', 'FloatArray', '_synth_voltage']
+
+__all__ = [
+    "Any",
+    "cast",
+    "np",
+    "npt",
+    "pytest",
+    "AERToSCConverter",
+    "ArtifactRejector",
+    "BioHybridFrameResult",
+    "BioHybridSession",
+    "LatencyBudget",
+    "MEAConfig",
+    "MEAToAERTranscoder",
+    "PharmModel",
+    "SCToOptoEncoder",
+    "SpikeDetector",
+    "SpikeSorter",
+    "FloatArray",
+    "_synth_voltage",
+]

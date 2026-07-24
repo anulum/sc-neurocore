@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_balanced_resonate_and_fire_support import *  # noqa: F403
 
+
 class TestBRFResponse:
     def test_frequency_timed_excitation_produces_more_spikes_than_off_phase(self) -> None:
         omega = 10.0

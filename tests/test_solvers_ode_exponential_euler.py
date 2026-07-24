@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
 
+
 class TestExponentialEuler:
     def test_exact_for_constant_current(self):
         """ExponentialEuler is exact for linear LIF with constant I."""

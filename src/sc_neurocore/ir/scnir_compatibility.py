@@ -64,7 +64,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=(),
         source_metadata=(),
         hdl_support="external input bus",
-        audit_evidence=("tests/test_scnir_handoff_audit_cli.py", "tests/test_nir_fpga_pipeline_e2_e_round_trip.py"),
+        audit_evidence=(
+            "tests/test_scnir_handoff_audit_cli.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
+        ),
         limitation="Boundary node; it does not create an SC-NIR stream by itself.",
     ),
     SCNIRCompatibilityRow(
@@ -75,7 +78,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=(),
         source_metadata=(),
         hdl_support="top-level output bus",
-        audit_evidence=("tests/test_scnir_handoff_audit_cli.py", "tests/test_nir_fpga_pipeline_e2_e_round_trip.py"),
+        audit_evidence=(
+            "tests/test_scnir_handoff_audit_cli.py",
+            "tests/test_nir_fpga_pipeline_e2_e_round_trip.py",
+        ),
         limitation="Boundary node; output semantics come from the upstream population stream.",
     ),
     SCNIRCompatibilityRow(

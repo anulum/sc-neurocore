@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.wilson_cowan_dynamics_support import *  # noqa: F403
 
+
 class TestOscillatorRegime:
     """With strong recurrent coupling + cross-inhibition, Wilson-Cowan
     supports limit cycles. Detecting them via zero-crossings of

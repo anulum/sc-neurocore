@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_adaptive_threshold_moe_support import *  # noqa: F403
 
+
 class TestAdaptiveThresholdMoEValidation:
     @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, 0.0, -1.0])
     def test_rejects_non_positive_or_non_finite_k(self, value: float):

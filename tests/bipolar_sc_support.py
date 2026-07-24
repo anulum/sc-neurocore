@@ -19,4 +19,13 @@ from sc_neurocore.core.bipolar import (
     float_to_bipolar_weights,
 )
 
-__all__ = ['np', 'pytest', 'bipolar_decode', 'bipolar_encode', 'bipolar_mac', 'bipolar_multiply', 'bipolar_sc_layer', 'float_to_bipolar_weights']
+__all__ = [
+    "np",
+    "pytest",
+    "bipolar_decode",
+    "bipolar_encode",
+    "bipolar_mac",
+    "bipolar_multiply",
+    "bipolar_sc_layer",
+    "float_to_bipolar_weights",
+]

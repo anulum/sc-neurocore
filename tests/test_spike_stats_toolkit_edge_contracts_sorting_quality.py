@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_isolation_dist_small():
     rng = np.random.default_rng(42)
     r = isolation_distance(rng.standard_normal((5, 2)), rng.standard_normal((10, 2)))
@@ -21,5 +22,3 @@ def test_amplitude_cutoff_symmetric():
     amps = rng.standard_normal(200)
     r = amplitude_cutoff(amps)
     assert np.isfinite(r)
-
-

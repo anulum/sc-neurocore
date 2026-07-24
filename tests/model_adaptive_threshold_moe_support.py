@@ -12,4 +12,4 @@ import math
 import pytest
 from sc_neurocore.neurons.models.adaptive_threshold_moe import AdaptiveThresholdMoENeuron
 
-__all__ = ['math', 'pytest', 'AdaptiveThresholdMoENeuron']
+__all__ = ["math", "pytest", "AdaptiveThresholdMoENeuron"]

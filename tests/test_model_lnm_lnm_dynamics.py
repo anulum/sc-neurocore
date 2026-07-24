@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
 
+
 class TestLNMDynamics:
     def test_fires(self):
         assert len(_run(LearnableNeuronModel(), 5.0, 5000)) >= 50

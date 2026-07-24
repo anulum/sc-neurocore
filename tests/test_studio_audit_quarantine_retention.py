@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_audit_quarantine_support import *  # noqa: F403
 
+
 def test_build_studio_audit_quarantine_archive_retention_plan_marks_old_archives(
     tmp_path: Path,
 ) -> None:
@@ -65,6 +66,7 @@ def test_build_studio_audit_quarantine_archive_retention_plan_marks_old_archives
     assert entries[1]["disposition"] == "prune_candidate"
     assert str(tmp_path) not in json.dumps(plan)
 
+
 def test_build_studio_audit_quarantine_archive_retention_plan_rejects_zero_retain(
     tmp_path: Path,
 ) -> None:
@@ -82,6 +84,7 @@ def test_build_studio_audit_quarantine_archive_retention_plan_rejects_zero_retai
             ),
             retain_latest=0,
         )
+
 
 @pytest.mark.parametrize(
     "mutation",
@@ -121,6 +124,7 @@ def test_build_studio_audit_quarantine_archive_retention_plan_skips_malformed_jo
     assert plan["archive_count"] == 0
     assert plan["skipped_record_count"] == 1
     assert plan["entries"] == []
+
 
 def test_purge_studio_audit_quarantine_archive_prune_candidates_purges_old_jobs(
     tmp_path: Path,

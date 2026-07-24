@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.chaos_support import *  # noqa: F403
 
+
 class TestTentMapRNG:
     def test_output_range(self):
         rng = TentMapRNG(x=0.37)

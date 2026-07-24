@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.equation_compiler_support import *  # noqa: F403
 
+
 class TestEdgeCaseCoverage:
     """Tests for error branches and edge cases."""
 

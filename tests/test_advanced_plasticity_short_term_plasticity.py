@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestShortTermPlasticity:
     def test_returns_scaling(self):
         stp = ShortTermPlasticity(tau_d=200.0, tau_f=600.0, u_se=0.2)

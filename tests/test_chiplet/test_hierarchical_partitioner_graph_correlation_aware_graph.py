@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_graph_support import *  # noqa: F403
 
+
 class TestCorrelationAwareGraph:
     def test_adjacency(self) -> None:
         g = _make_chain_graph(5)

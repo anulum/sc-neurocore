@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertIsolation:
     def test_defaults(self) -> None:
         n = SiegertTransferFunction()

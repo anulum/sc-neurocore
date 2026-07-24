@@ -23,6 +23,8 @@ from sc_neurocore.learning.advanced import (
     HomeostaticPlasticity,
     ShortTermPlasticity,
 )
+
+
 def _make_small_network(n_in=10, n_out=5, w=0.3, p=0.5):
     pop_in = Population(StochasticLIFNeuron, n=n_in, label="in")
     pop_out = Population(StochasticLIFNeuron, n=n_out, label="out")
@@ -31,4 +33,19 @@ def _make_small_network(n_in=10, n_out=5, w=0.3, p=0.5):
     net = Network(pop_in, pop_out, proj, drive)
     return net, proj
 
-__all__ = ['np', 'StochasticLIFNeuron', 'Population', 'Projection', 'Network', 'PoissonInput', 'BPTTLearner', 'TBPTTLearner', 'EligibilityTrace', 'RewardModulatedLearner', 'HomeostaticPlasticity', 'ShortTermPlasticity', '_make_small_network']
+
+__all__ = [
+    "np",
+    "StochasticLIFNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "PoissonInput",
+    "BPTTLearner",
+    "TBPTTLearner",
+    "EligibilityTrace",
+    "RewardModulatedLearner",
+    "HomeostaticPlasticity",
+    "ShortTermPlasticity",
+    "_make_small_network",
+]

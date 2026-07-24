@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_metrics_support import *  # noqa: F403
 
+
 class TestImbalanceRatio:
     def test_perfect_balance(self) -> None:
         parts = [[0, 1], [2, 3], [4, 5]]

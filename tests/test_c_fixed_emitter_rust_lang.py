@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_fixed_emitter_support import *  # noqa: F403
 
+
 class TestRustLang:
     def test_rust_cast_syntax(self):
         expr, *_ = emit_c_fixed_expr("a + 1.0", {"a": "self.a"}, {}, Q, lang="rust")

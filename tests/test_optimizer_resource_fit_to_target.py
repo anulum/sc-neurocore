@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.optimizer_resource_support import *  # noqa: F403
 
+
 class TestFitToTarget:
     def test_small_network_fits(self):
         layers = [(4, 2)]

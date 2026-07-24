@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 class TestFICurveEndpoint:
     def test_fi_curve_model(self, client):
         r = client.post(
@@ -29,4 +30,3 @@ class TestFICurveEndpoint:
         assert "currents" in data
         assert "rates" in data
         assert len(data["currents"]) == 3
-

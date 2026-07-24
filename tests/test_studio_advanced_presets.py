@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_advanced_support import *  # noqa: F403
 
+
 class TestPresets:
     def test_list_presets(self, client):
         r = client.get("/api/presets")
@@ -255,4 +256,3 @@ class TestPresets:
     def test_preset_not_found(self, client):
         r = client.get("/api/presets/nonexistent")
         assert r.status_code == 404
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_superspike_neuron_support import *  # noqa: F403
 
+
 class TestSuperSpikePipeline:
     def test_population(self):
         assert Population(SuperSpikeNeuron, n=10, label="ss").n == 10

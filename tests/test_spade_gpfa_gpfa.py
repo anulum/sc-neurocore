@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spade_gpfa_support import *  # noqa: F403
 
+
 class TestGPFA:
     def test_log_likelihood_includes_gaussian_normalisation(self):
         y = np.array([[0.0, 1.0, 0.0]], dtype=np.float64)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_templates_support import *  # noqa: F403
 
+
 class TestListAndGet:
     def test_list_returns_all(self):
         result = list_templates()
@@ -25,4 +26,3 @@ class TestListAndGet:
 
     def test_get_nonexistent(self):
         assert get_template("nonexistent") is None
-

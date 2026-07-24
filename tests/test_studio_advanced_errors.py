@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_advanced_support import *  # noqa: F403
 
+
 class TestErrorHandling:
     def test_bad_model_name(self, client):
         r = client.post(
@@ -45,4 +46,3 @@ class TestErrorHandling:
             },
         )
         assert r.status_code == 422
-

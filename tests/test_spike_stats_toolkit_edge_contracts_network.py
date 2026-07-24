@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_unitary_events_significant():
     rng = np.random.default_rng(42)
     trains = [rng.integers(0, 2, size=200, dtype=np.int8) for _ in range(10)]
@@ -22,5 +23,3 @@ def test_cell_assembly():
     trains = [rng.integers(0, 2, size=500, dtype=np.int8) for _ in range(20)]
     r = cell_assembly_detection(trains, bin_size=10)
     assert isinstance(r, list)
-
-

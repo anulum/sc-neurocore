@@ -13,4 +13,4 @@ import numpy as np
 import pytest
 from sc_neurocore.synapses.gap_junction import GapJunction
 
-__all__ = ['np', 'pytest', 'GapJunction']
+__all__ = ["np", "pytest", "GapJunction"]

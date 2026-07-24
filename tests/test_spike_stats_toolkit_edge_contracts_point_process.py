@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_hazard_few():
     h, e = isi_hazard_function(np.array([1, 0], dtype=np.int8))
     assert h.size == 0
@@ -23,5 +24,3 @@ def test_survivor_few():
 def test_renewal_few():
     r, e = renewal_density(np.array([1, 0], dtype=np.int8))
     assert r.size == 0
-
-

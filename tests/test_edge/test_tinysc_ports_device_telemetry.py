@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestDeviceTelemetry:
     def test_record(self):
         dt = DeviceTelemetry()

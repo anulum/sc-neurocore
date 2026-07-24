@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestSurrogates:
     @pytest.mark.parametrize(
         "fn", [fast_sigmoid, superspike, atan_surrogate, sigmoid_surrogate, triangular]

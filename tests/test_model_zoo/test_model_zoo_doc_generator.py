@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from model_zoo_support import *  # noqa: F403
 
+
 class TestDocGenerator:
     def test_generates_markdown(self):
         doc = DocGenerator()

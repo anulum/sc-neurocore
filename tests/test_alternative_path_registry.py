@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.alternative_path_support import *  # noqa: F403
 
+
 def test_registry_register_get_and_run():
     registry = AlternativePathRegistry()
     route = AlternativePathRoute(
@@ -96,5 +97,3 @@ def test_registry_get_unknown_route_raises_keyerror():
     registry = AlternativePathRegistry()
     with pytest.raises(KeyError, match="Unknown alternative path"):
         registry.get("missing")
-
-

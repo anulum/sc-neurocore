@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaSubtract:
     def test_positive_spike_subtracts_threshold(self):
         """On +1 spike: sigma -= threshold (not reset to 0)."""

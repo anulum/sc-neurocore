@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.control_support import *  # noqa: F403
 
+
 class TestSpikingPID:
     def test_step(self):
         assert SpikingPID(Kp=1.0).step(1.0) != 0

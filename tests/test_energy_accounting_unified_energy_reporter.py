@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.energy_accounting_support import *  # noqa: F403
 
+
 class TestUnifiedEnergyReporter:
     def test_summary_includes_asic_line_conditionally(self):
         no_asic = UnifiedEnergyReport(total_power_mw=5.0, carbon_g_co2=0.01, junction_temp_c=30.0)

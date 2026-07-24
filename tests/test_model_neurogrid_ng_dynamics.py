@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGDynamics:
     def test_subthreshold_silent(self) -> None:
         n = NeuroGridNeuron()

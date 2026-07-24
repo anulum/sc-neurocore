@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_network_canvas_support import *  # noqa: F403
 
+
 class TestValidation:
     def _make_graph(self, n_exc=80, n_inh=20):
         exc = create_population(count=n_exc, neuron_type="excitatory")
@@ -50,4 +51,3 @@ class TestValidation:
         graph["projections"][0]["probability"] = 1.5
         errors = validate_graph(graph)
         assert any("probability" in e.lower() for e in errors)
-

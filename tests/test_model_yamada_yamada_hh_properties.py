@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_yamada_support import *  # noqa: F403
 
+
 class TestYamadaHHProperties:
     def test_gating_bounded(self):
         n = YamadaNeuron()

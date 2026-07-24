@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_core_support import *  # noqa: F403
 
+
 class TestPartitionEarlyReturns:
     """`partition()` and `_recursive_bisect` have early-return paths
     for tiny inputs that pytest --cov flagged uncovered."""

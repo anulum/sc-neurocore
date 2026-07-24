@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
 
+
 class TestAmariMexicanHatKernel:
     """w(x) = A·exp(-a|x|) - B·exp(-b|x|). Centre excitatory, surround inhibitory."""
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_handoff_audit_support import *  # noqa: F403
 
+
 def test_source_row_match_accepts_lfsr_fields() -> None:
     """A matching LFSR source row carries seed, polynomial and tap-mask expectations."""
     _verify_source_row_matches_stream(_lfsr_row(), _lfsr_stream(), 0)
@@ -57,5 +58,3 @@ def test_write_audit_report_emits_valid_json(tmp_path: Path) -> None:
     assert written["status"] == "valid"
     assert written["module_name"] == report.module_name
     assert written == report.as_dict()
-
-

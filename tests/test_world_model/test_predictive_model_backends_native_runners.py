@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.test_world_model.predictive_model_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("backend", "attribute", "message"),
     [
@@ -35,5 +36,3 @@ def test_filter_native_rejects_python_backend() -> None:
     observations, controls = _inputs()
     with pytest.raises(ValueError, match="cannot execute the Python backend"):
         backends.filter_native("python", _model(), observations, controls)
-
-

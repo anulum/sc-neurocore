@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_akida_neuron_support import *  # noqa: F403
 
+
 class TestAkidaIsolation:
     def test_defaults(self):
         n = AkidaNeuron()

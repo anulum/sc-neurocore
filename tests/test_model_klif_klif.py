@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
 
+
 class TestKLIF:
     def test_fires(self):
         from sc_neurocore.neurons.models.klif import KLIFNeuron

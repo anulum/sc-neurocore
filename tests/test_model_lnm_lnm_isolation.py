@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
 
+
 class TestLNMIsolation:
     def test_defaults(self):
         n = LearnableNeuronModel()

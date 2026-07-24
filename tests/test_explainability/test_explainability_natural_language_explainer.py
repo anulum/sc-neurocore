@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestNaturalLanguageExplainer:
     def test_explain_spike(self):
         tree = SpikeDecisionTree()

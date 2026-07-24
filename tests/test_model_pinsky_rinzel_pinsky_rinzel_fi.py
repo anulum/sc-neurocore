@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelFI:
     def test_quiescent_near_rest(self):
         assert len(_run(PinskyRinzelNeuron(), current_soma=0.0, steps=50000)) <= 5

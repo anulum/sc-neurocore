@@ -36,12 +36,14 @@ from sc_neurocore.studio.progress import (
     _scan_with_progress,
 )
 
+
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     return TestClient(
         create_app(runtime_settings=StudioRuntimeSettings(allowed_hosts=("testserver",))),
         headers={"origin": "http://127.0.0.1:8001"},
     )
+
 
 __all__ = [
     "annotations",

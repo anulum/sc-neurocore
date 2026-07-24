@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ccw_bridge_support import *  # noqa: F403
 
+
 class TestExportGlyphStream:
     def test_full_vector_serialises_all_components(self):
         bridge = create_bridge()

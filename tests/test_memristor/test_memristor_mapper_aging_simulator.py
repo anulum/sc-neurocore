@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from memristor_mapper_support import *  # noqa: F403
 
+
 class TestAgingSimulator:
     def test_drift_reduces_conductance(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)

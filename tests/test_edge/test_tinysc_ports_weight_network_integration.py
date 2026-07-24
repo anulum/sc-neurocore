@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestWeightNetworkIntegration:
     def test_export_import_roundtrip(self):
         net = SCNetwork(bit_length=256)

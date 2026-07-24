@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.safety_support import *  # noqa: F403
 
+
 class TestFormalSafetyGuard:
     def test_passes_valid(self) -> None:
         guard = FormalSafetyGuard()

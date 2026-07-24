@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_analysis_support import *  # noqa: F403
 
+
 class TestAnalysisEndpoints:
     def test_characterize(self, client):
         r = client.post(
@@ -168,4 +169,3 @@ class TestAnalysisEndpoints:
             json={"layer_weights": [[[[0.2]]]]},
         )
         assert response.status_code == 422
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from array_guards_support import *  # noqa: F403
 
+
 class TestNdarrayHappyPath:
     def test_contiguous_matching_dtype_returns_same_object(self):
         arr = np.zeros(16, dtype=np.uint8)

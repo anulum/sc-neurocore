@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_theta_support import *  # noqa: F403
 
+
 class TestThetaSimulate:
     """Engineering-verification surface for ``ThetaNeuron.simulate``."""
 

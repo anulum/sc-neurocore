@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_runtime_support import *  # noqa: F403
 
+
 class TestRuntimeConfig:
     def test_default_values(self):
         c = RuntimeConfig()

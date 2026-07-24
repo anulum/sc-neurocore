@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_support import *  # noqa: F403
 
+
 class TestStuckAtInjection:
     def test_stuck_at_zero_decreases_probability(self):
         L = 5000

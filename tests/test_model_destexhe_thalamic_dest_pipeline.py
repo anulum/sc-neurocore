@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_destexhe_thalamic_support import *  # noqa: F403
 
+
 class TestDestPipeline:
     def test_population(self):
         assert Population(DestexheThalamicNeuron, n=5, label="dest").n == 5

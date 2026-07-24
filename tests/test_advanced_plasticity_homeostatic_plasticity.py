@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.advanced_plasticity_support import *  # noqa: F403
 
+
 class TestHomeostaticPlasticity:
     def test_update_runs(self, simple_net):
         _, pop_a, _, _ = simple_net

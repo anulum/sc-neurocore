@@ -13,4 +13,4 @@ import numpy as np
 import pytest
 from sc_neurocore.interfaces.bci import BCIDecoder, BCIEncoder
 
-__all__ = ['np', 'pytest', 'BCIDecoder', 'BCIEncoder']
+__all__ = ["np", "pytest", "BCIDecoder", "BCIEncoder"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_gen_edge_cases_support import *  # noqa: F403
 
+
 class TestAdaptiveRouteCongestionFallback:
     def test_falls_back_when_all_routes_congested(self) -> None:
         # 3-die ring 0–1–2–0, every link saturated → primary BFS fails,

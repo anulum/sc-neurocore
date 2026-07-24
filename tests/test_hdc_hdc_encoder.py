@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hdc_support import *  # noqa: F403
 
+
 class TestHDCEncoder:
     def test_random_vector_shape(self):
         enc = HDCEncoder(dim=1000)

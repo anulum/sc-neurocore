@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.intelligence_reporting_support import *  # noqa: F403
 
+
 class TestCompilationReport:
     def test_basic(self):
         from sc_neurocore.compiler.intelligence import generate_compilation_report

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
 
+
 class TestBertramIsolation:
     def test_defaults(self):
         n = BertramPhantomBurster()

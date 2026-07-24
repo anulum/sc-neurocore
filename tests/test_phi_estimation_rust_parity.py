@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.phi_estimation_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust Phi backend not built")
 class TestRustParity:
     def test_parity_across_sizes(self) -> None:

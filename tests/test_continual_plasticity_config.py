@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.continual_support import *  # noqa: F403
 
+
 class TestPlasticityConfig:
     def test_defaults(self):
         c = PlasticityConfig(layer_name="h")

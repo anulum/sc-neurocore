@@ -14,6 +14,7 @@ import subprocess
 from pathlib import Path
 import pytest
 from sc_neurocore.compiler.intelligence.hls_export import generate_hls_cpp
+
 _AP_FIXED_STUB = """#pragma once
 #include <cmath>
 template <int W, int I> using ap_fixed = double;
@@ -33,4 +34,12 @@ inline double abs(double x) { return std::fabs(x); }
 }
 """
 
-__all__ = ['shutil', 'subprocess', 'Path', 'pytest', 'generate_hls_cpp', '_AP_FIXED_STUB', '_HLS_MATH_STUB']
+__all__ = [
+    "shutil",
+    "subprocess",
+    "Path",
+    "pytest",
+    "generate_hls_cpp",
+    "_AP_FIXED_STUB",
+    "_HLS_MATH_STUB",
+]

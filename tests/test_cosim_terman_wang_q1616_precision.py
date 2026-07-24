@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_terman_wang_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestQ1616Precision:
     """Q16.16 Terman-Wang co-simulation fidelity."""

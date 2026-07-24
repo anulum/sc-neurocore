@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_zoo_support import *  # noqa: F403
 
+
 class TestSHDSpeechClassifier:
     """700-256-20 recurrent SNN for spiking Heidelberg digits."""
 

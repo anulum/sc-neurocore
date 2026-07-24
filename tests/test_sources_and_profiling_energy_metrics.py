@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sources_and_profiling_support import *  # noqa: F403
 
+
 class TestEnergyMetrics:
     def test_defaults(self):
         em = EnergyMetrics()

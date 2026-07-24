@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_formal_support import *  # noqa: F403
 
+
 def test_formal_verify_network_writes_sva_and_report(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -54,5 +55,3 @@ def test_formal_verify_network_writes_sva_and_report(
     assert "dense_lif_frontier_fixture.v" in (out_dir / "dense_lif_frontier_fixture.sby").read_text(
         encoding="utf-8"
     )
-
-

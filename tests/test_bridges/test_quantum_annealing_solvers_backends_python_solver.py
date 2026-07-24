@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from quantum_annealing_solvers_backends_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [

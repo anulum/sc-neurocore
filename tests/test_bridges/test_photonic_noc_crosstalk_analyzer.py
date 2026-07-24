@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from photonic_noc_support import *  # noqa: F403
 
+
 class TestCrosstalkAnalyzer:
     """WDM crosstalk tests."""
 

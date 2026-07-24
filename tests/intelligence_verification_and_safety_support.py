@@ -23,4 +23,17 @@ from sc_neurocore.compiler.intelligence import (
 )
 from sc_neurocore.compiler.platforms import get_profile
 
-__all__ = ['unittest', 'configure_approximation', 'explore_pareto', 'generate_dvfs_controller', 'ingest_telemetry', 'model_energy_harvest', 'predict_aging', 'predict_reliability', 'protect_ip_pqc', 'run_fault_campaign', 'verify_timing_closure', 'get_profile']
+__all__ = [
+    "unittest",
+    "configure_approximation",
+    "explore_pareto",
+    "generate_dvfs_controller",
+    "ingest_telemetry",
+    "model_energy_harvest",
+    "predict_aging",
+    "predict_reliability",
+    "protect_ip_pqc",
+    "run_fault_campaign",
+    "verify_timing_closure",
+    "get_profile",
+]

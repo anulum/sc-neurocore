@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_glm_neuron_support import *  # noqa: F403
 
+
 class TestGLMAnalytical:
     def test_stimulus_filter_shape(self):
         """k = 0.5·exp(-arange(n_k)/3). Exponential decay."""

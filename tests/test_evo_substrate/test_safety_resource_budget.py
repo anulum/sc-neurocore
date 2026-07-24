@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.safety_support import *  # noqa: F403
 
+
 class TestResourceBudget:
     def test_within_budget(self) -> None:
         rb = ResourceBudget(max_neurons=1024)

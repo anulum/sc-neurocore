@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_pca_empty():
     s, e = spike_train_pca([])
     assert s.size == 0
@@ -23,5 +24,3 @@ def test_pca_1d():
 def test_demixed_insufficient():
     s, e = demixed_pca({0: [np.array([1, 0], dtype=np.int8)]})
     assert s.size == 0
-
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mainen_sejnowski_support import *  # noqa: F403
 
+
 class TestMSPipeline:
     def test_population(self):
         assert Population(MainenSejnowskiNeuron, n=5, label="ms").n == 5

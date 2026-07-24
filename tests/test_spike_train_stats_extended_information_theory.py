@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestInformationTheory:
     def test_spike_train_entropy(self, poisson_train):
         h = spike_train_entropy(poisson_train)

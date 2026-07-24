@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_prescott_support import *  # noqa: F403
 
+
 class TestPrescottOscillations:
     def test_spontaneous_oscillation(self):
         """Model oscillates even at I=0 (slow relaxation oscillation)."""

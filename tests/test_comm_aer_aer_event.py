@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.comm_aer_support import *  # noqa: F403
 
+
 class TestAEREvent:
     def test_default_data(self):
         e = AEREvent(timestamp=100, neuron_id=5)

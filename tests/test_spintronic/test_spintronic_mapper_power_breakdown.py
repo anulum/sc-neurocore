@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestPowerBreakdown:
     def test_power_breakdown_keys(self):
         arr = SpintronicArray(2, 2)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+
 def test_import_trace_rejects_empty_voltage(client: TestClient) -> None:
     """Trace import requires a non-empty voltage vector."""
 
@@ -19,4 +20,3 @@ def test_import_trace_rejects_empty_voltage(client: TestClient) -> None:
 
     assert response.status_code == 422
     assert response.json()["detail"] == "Expected {voltage: [...], dt: float}"
-

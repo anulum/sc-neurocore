@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestBitstreamSample:
     def test_bit_length(self):
         s = _sample(n_words=4)

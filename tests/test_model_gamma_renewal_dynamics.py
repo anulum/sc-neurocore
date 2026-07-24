@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gamma_renewal_support import *  # noqa: F403
 
+
 class TestDynamics:
     def test_fires_at_test_current(self):
         n = GammaRenewalNeuron()

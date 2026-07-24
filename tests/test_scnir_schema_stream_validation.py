@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.scnir_schema_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
@@ -176,5 +177,3 @@ def test_scnir_rejects_duplicate_stream_ids() -> None:
 
     with pytest.raises(SCNIRValidationError, match="duplicate"):
         validate_scnir_dict(payload)
-
-

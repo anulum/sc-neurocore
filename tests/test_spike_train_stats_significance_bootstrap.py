@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestSignificanceBootstrap:
     def test_returns_pvalue(self):
         a = _poisson_train(100.0, 0.5, seed=1)

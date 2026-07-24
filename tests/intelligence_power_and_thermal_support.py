@@ -16,4 +16,10 @@ from sc_neurocore.compiler.intelligence import (
     model_energy_harvest,
 )
 
-__all__ = ['unittest', 'pytest', 'configure_approximation', 'generate_dvfs_controller', 'model_energy_harvest']
+__all__ = [
+    "unittest",
+    "pytest",
+    "configure_approximation",
+    "generate_dvfs_controller",
+    "model_energy_harvest",
+]

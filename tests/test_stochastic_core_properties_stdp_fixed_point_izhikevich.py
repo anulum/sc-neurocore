@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.stochastic_core_properties_support import *  # noqa: F403
 
+
 @given(
     w=st.floats(min_value=-1.0, max_value=2.0),
     lr=st.floats(min_value=0.001, max_value=0.1),
@@ -22,6 +23,7 @@ def test_stdp_weight_stays_bounded(w, lr):
         syn.process_step(pre_bit=1, post_bit=1)
     assert 0.0 <= syn.w <= 1.0
 
+
 @given(reward=st.floats(min_value=-5.0, max_value=5.0))
 @settings(max_examples=30)
 def test_rstdp_weight_bounded_after_reward(reward):
@@ -30,6 +32,7 @@ def test_rstdp_weight_bounded_after_reward(reward):
         syn.process_step(pre_bit=1, post_bit=1)
     syn.apply_reward(reward)
     assert 0.0 <= syn.w <= 1.0
+
 
 @given(
     I_t=st.integers(min_value=-(1 << 15), max_value=(1 << 15) - 1),
@@ -45,12 +48,14 @@ def test_fixed_point_lif_no_overflow(I_t, leak_k, gain_k):
         W = FP_DATA_WIDTH
         assert -(1 << (W - 1)) <= v < (1 << (W - 1))
 
+
 @given(seed=st.integers(min_value=1, max_value=0xFFFF))
 @settings(max_examples=20)
 def test_fixed_point_encoder_output_binary(seed):
     enc = FixedPointBitstreamEncoder(seed_init=seed)
     bits = [enc.step(x_value=128) for _ in range(100)]
     assert all(b in (0, 1) for b in bits)
+
 
 @given(
     steps=st.integers(min_value=10, max_value=50),

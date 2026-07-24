@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_perfect_integrator_support import *  # noqa: F403
 
+
 class TestPerfectIntegratorParameterSweep:
     """Systematic parameter sweeps verifying scaling laws."""
 

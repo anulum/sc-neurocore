@@ -20,6 +20,8 @@ from sc_neurocore.network.topology import (
     grid_topology,
     all_to_all,
 )
+
+
 def _csr_to_dense(
     indptr: np.ndarray[Any, Any],
     indices: np.ndarray[Any, Any],
@@ -33,6 +35,8 @@ def _csr_to_dense(
         for k in range(indptr[i], indptr[i + 1]):
             mat[i, indices[k]] = data[k]
     return mat
+
+
 def _validate_csr(
     indptr: np.ndarray[Any, Any],
     indices: np.ndarray[Any, Any],
@@ -50,4 +54,18 @@ def _validate_csr(
     assert np.all(indices >= 0), "negative index"
     assert np.all(indices < n_cols), f"index >= {n_cols}"
 
-__all__ = ['Any', 'cast', 'np', 'pytest', 'random_connectivity', 'small_world', 'scale_free', 'ring_topology', 'grid_topology', 'all_to_all', '_csr_to_dense', '_validate_csr']
+
+__all__ = [
+    "Any",
+    "cast",
+    "np",
+    "pytest",
+    "random_connectivity",
+    "small_world",
+    "scale_free",
+    "ring_topology",
+    "grid_topology",
+    "all_to_all",
+    "_csr_to_dense",
+    "_validate_csr",
+]

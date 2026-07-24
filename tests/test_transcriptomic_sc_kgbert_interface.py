@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transcriptomic_support import *  # noqa: F403
 
+
 class TestScKGBERTInterface:
     def test_defaults(self) -> None:
         iface = ScKGBERTInterface(n_genes=50)

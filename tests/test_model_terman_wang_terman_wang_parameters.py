@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_terman_wang_support import *  # noqa: F403
 
+
 class TestTermanWangParameters:
     @pytest.mark.parametrize("field", ["v", "w", "alpha", "rho", "v_peak"])
     def test_rejects_non_numeric_state_offsets_and_threshold(self, field: str):

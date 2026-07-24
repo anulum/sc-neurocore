@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestHarvestProfile:
     def test_default_peak_from_type(self):
         h = HarvestProfile(harvester=EnergyHarvester.SOLAR)

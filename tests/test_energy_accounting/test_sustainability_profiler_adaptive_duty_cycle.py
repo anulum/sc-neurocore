@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sustainability_profiler_support import *  # noqa: F403
 
+
 class TestAdaptiveDutyCycle:
     def test_profile_length(self):
         fpga = FPGAResourceReport(luts=10000, static_power_mw=50)

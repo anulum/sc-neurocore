@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
 
+
 class TestWilsonHRISI:
     def test_isi_variability_at_peak(self):
         n = WilsonHRNeuron()

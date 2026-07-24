@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.experiment_support import *  # noqa: F403
 
+
 class TestBioAuditLog:
     def test_log_entry(self) -> None:
         log = BioAuditLog(experiment_id="EXP001")

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.descriptor_tiers_support import *  # noqa: F403
 
+
 def test_silicon_tier_none_without_compile_clean_rtl() -> None:
     """No compile-clean RTL means no silicon evidence at all."""
     assert silicon_tier(parse_model_descriptor(_validated_payload())) is None

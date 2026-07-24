@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.expr_lut_tables_support import *  # noqa: F403
 
+
 class TestSamplePoints:
     def test_length_and_endpoints(self) -> None:
         pts = tables.symmetric_sample_points()

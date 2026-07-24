@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.selection_support import *  # noqa: F403
 
+
 class TestHallOfFame:
     def test_update(self) -> None:
         hof = HallOfFame(max_size=3)

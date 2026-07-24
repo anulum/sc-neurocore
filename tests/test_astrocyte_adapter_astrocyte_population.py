@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.astrocyte_adapter_support import *  # noqa: F403
 
+
 class TestAstrocytePopulation:
     """Integration tests for adapter wiring through Population."""
 

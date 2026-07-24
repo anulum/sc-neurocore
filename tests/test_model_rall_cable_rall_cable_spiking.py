@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCableSpiking:
     def test_fewer_compartments_easier_to_spike(self) -> None:
         """Shorter cable (fewer compartments) → less attenuation → more spikes."""

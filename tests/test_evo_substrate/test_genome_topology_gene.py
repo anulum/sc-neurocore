@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.genome_support import *  # noqa: F403
 
+
 class TestTopologyGene:
     def test_from_vector_clamps(self) -> None:
         v = np.array([0.0, 0.0, -1.0, -1.0, 0.0])

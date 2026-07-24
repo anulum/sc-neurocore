@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestApproxEntropyEdge:
     def test_short_train(self):
         result = approximate_entropy(np.zeros(3, dtype=np.int8))

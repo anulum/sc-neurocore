@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
 
+
 class TestNRLIFPipeline:
     def test_population(self):
         assert Population(NonResettingLIFNeuron, n=10, label="nrlif").n == 10

@@ -34,4 +34,28 @@ from sc_neurocore.spintronic.spintronic_mapper import (
     write_verify,
 )
 
-__all__ = ['np', 'pytest', 'AgingModel', 'DefectMap', 'MLCConfig', 'MaterialParams', 'MuMax3OutputParser', 'MuMax3Result', 'MuMax3ScriptGenerator', 'RacetrackShiftRegister', 'RadiationModel', 'SkyrmionHallCorrector', 'SpintronicArray', 'SpintronicCell', 'SpintronicDeviceConfig', 'SpintronicMapper', 'SpintronicTech', 'SpintronicVerilogGenerator', 'VariabilityModel', 'retention_failure_probability', 'switching_current_vs_temperature', 'switching_time_vs_temperature', 'write_verify']
+__all__ = [
+    "np",
+    "pytest",
+    "AgingModel",
+    "DefectMap",
+    "MLCConfig",
+    "MaterialParams",
+    "MuMax3OutputParser",
+    "MuMax3Result",
+    "MuMax3ScriptGenerator",
+    "RacetrackShiftRegister",
+    "RadiationModel",
+    "SkyrmionHallCorrector",
+    "SpintronicArray",
+    "SpintronicCell",
+    "SpintronicDeviceConfig",
+    "SpintronicMapper",
+    "SpintronicTech",
+    "SpintronicVerilogGenerator",
+    "VariabilityModel",
+    "retention_failure_probability",
+    "switching_current_vs_temperature",
+    "switching_time_vs_temperature",
+    "write_verify",
+]

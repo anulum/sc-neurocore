@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from predictive_coding_support import *  # noqa: F403
 
+
 class TestVerifiableInference:
     def _make_engine(self, symbols=("cat", "dog", "bird")):
         enc = SymbolEncoder(42)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestTrimmedMean:
     def test_removes_extremes(self):
         vecs = [

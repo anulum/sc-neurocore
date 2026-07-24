@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_superspike_neuron_support import *  # noqa: F403
 
+
 class TestSuperSpikeSurrogateGradient:
     """Core: σ'(V) = 1/(β|V-θ|+1)². Peaks at V=θ, decays with distance."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_generators_support import *  # noqa: F403
 
+
 class TestScaleFree:
     def test_csr_valid(self) -> None:
         indptr, indices, data = scale_free(50, m=3, weight=1.0)

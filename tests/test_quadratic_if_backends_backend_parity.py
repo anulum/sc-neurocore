@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.quadratic_if_backends_support import *  # noqa: F403
 
+
 def test_every_acceleration_backend_is_executable() -> None:
     """Expose all four real compiled lanes without a skipped parity surface."""
     assert backends._HAS_RUST

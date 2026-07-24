@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.nir_import_support import *  # noqa: F403
 
+
 class TestParameterResolution:
     def test_defaults_are_applied(self):
         g = _one("LIF")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pospischil_support import *  # noqa: F403
 
+
 class TestPospischilFI:
     def test_subthreshold_no_spikes(self):
         """Low current (I<2) → no sustained spiking."""

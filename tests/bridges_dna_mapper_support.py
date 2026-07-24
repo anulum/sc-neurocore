@@ -29,4 +29,23 @@ from sc_neurocore.bridges.dna_mapper import (
     SCNetworkBridge,
 )
 
-__all__ = ['os', 'time', 'np', 'pytest', 'DNAStrand', 'DNAGate', 'DNACircuitDesign', 'GateType', 'SequenceDesigner', 'StrandDisplacementCompiler', 'EnzymaticGateCompiler', 'KineticSimulator', 'BitstreamToDNA', 'GF4ErrorCorrection', 'CrossHybridizationChecker', 'HairpinChecker', 'DegradationModel', 'SCNetworkBridge']
+__all__ = [
+    "os",
+    "time",
+    "np",
+    "pytest",
+    "DNAStrand",
+    "DNAGate",
+    "DNACircuitDesign",
+    "GateType",
+    "SequenceDesigner",
+    "StrandDisplacementCompiler",
+    "EnzymaticGateCompiler",
+    "KineticSimulator",
+    "BitstreamToDNA",
+    "GF4ErrorCorrection",
+    "CrossHybridizationChecker",
+    "HairpinChecker",
+    "DegradationModel",
+    "SCNetworkBridge",
+]

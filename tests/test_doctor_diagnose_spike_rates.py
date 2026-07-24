@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.doctor_support import *  # noqa: F403
 
+
 class TestDiagnoseSpikeRates:
     def test_dead_neurons(self):
         rates = [np.zeros(20)]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_huber_braun_support import *  # noqa: F403
 
+
 class TestHBDynamics:
     def test_fires_under_drive(self):
         n = HuberBraunNeuron()

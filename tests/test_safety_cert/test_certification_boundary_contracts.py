@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.certification_support import *  # noqa: F403
 
+
 class TestBoundaryContracts:
     def test_empty_checklist_package_reports_zero_fraction(self) -> None:
         pkg = CertificationPackage(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sc_forward_support import *  # noqa: F403
 
+
 class TestAccuracy:
     """NEU-SCPN.4 — sc_forward estimates W @ probs within stochastic tolerance."""
 

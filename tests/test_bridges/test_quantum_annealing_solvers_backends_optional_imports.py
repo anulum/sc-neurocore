@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from quantum_annealing_solvers_backends_support import *  # noqa: F403
 
+
 def test_optional_import_fallbacks(monkeypatch: pytest.MonkeyPatch) -> None:
     """Missing dimod and D-Wave imports leave explicit unavailable state."""
     real_import = builtins.__import__

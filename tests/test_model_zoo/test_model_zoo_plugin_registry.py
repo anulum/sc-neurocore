@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from model_zoo_support import *  # noqa: F403
 
+
 class TestPluginRegistry:
     def test_register_and_get(self):
         reg = PluginRegistry()

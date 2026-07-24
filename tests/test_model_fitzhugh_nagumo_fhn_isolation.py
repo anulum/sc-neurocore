@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
 
+
 class TestFHNIsolation:
     def test_defaults(self):
         n = FitzHughNagumoNeuron()

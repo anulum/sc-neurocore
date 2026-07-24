@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sources_and_profiling_support import *  # noqa: F403
 
+
 class TestTrackEnergyDecorator:
     def test_decorator_accumulates_ops(self):
         """track_energy should add AND ops for a layer-like object."""

@@ -20,4 +20,14 @@ from sc_neurocore.encoding import (
     EncodingOptimizer,
 )
 
-__all__ = ['np', 'rate_encode', 'latency_encode', 'delta_encode', 'phase_encode', 'burst_encode', 'rank_order_encode', 'sigma_delta_encode', 'EncodingOptimizer']
+__all__ = [
+    "np",
+    "rate_encode",
+    "latency_encode",
+    "delta_encode",
+    "phase_encode",
+    "burst_encode",
+    "rank_order_encode",
+    "sigma_delta_encode",
+    "EncodingOptimizer",
+]

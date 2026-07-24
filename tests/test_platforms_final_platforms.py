@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.platforms_support import *  # noqa: F403
 
+
 class TestFinalPlatforms:
     @pytest.mark.parametrize("name", ["ayar_teraphy", "intel_cpo"])
     def test_optical_io(self, name):

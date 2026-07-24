@@ -21,6 +21,8 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count
+
+
 def _rk4_reference(neuron: BendaHerzNeuron, current: float) -> tuple[float, float]:
     def rhs(a: float) -> tuple[float, float]:
         rate = neuron._f_onset(current - a)
@@ -35,4 +37,17 @@ def _rk4_reference(neuron: BendaHerzNeuron, current: float) -> tuple[float, floa
     probability = -np.expm1(-(average_rate * neuron.dt / 1000.0))
     return next_a, probability
 
-__all__ = ['np', 'pytest', 'BendaHerzNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'firing_rate', 'spike_count', '_rk4_reference']
+
+__all__ = [
+    "np",
+    "pytest",
+    "BendaHerzNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "firing_rate",
+    "spike_count",
+    "_rk4_reference",
+]

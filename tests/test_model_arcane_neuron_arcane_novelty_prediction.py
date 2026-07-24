@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
 
+
 class TestArcaneNoveltyPrediction:
     """Self-referential: predict own state → surprise → novelty."""
 

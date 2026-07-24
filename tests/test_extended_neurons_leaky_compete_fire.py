@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.extended_neurons_support import *  # noqa: F403
 
+
 class TestLeakyCompeteFire:
     def test_wta(self):
         n = LeakyCompeteFireNeuron(n_units=3)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.power_estimator_support import *  # noqa: F403
 
+
 class TestPowerEstimatorVcdBranches:
     """Branch coverage for the VCD loader/parser and the zero-spike-rate
     energy fallback in ``estimate_power``."""

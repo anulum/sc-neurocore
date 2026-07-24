@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_mckean_support import *  # noqa: F403
 
+
 class TestMcKeanIsolation:
     def test_defaults(self):
         n = McKeanNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.profiler_platform_support import *  # noqa: F403
 
+
 class TestFormatTable:
     def test_table_format(self):
         results = compare(layer_sizes=[(16, 8)], platforms=["python"])

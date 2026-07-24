@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFValidation:
     @pytest.mark.parametrize(
         ("field", "value"),

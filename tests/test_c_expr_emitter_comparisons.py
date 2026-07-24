@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestComparisons:
     def test_all_comparisons(self) -> None:
         assert _emit("v > 1.0", {"v"}) == "(v > fp_t(1.0))"

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from darts_sc_nas_support import *  # noqa: F403
 
+
 class TestSCMixedOp(unittest.TestCase):
     def test_forward_shape(self) -> None:
         op = SCMixedOp(1, 16, 3, 1, 1)

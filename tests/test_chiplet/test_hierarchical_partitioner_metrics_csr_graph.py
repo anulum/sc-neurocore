@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_metrics_support import *  # noqa: F403
 
+
 class TestCSRGraph:
     def test_from_edge_list(self) -> None:
         g = _make_chain_graph(5)

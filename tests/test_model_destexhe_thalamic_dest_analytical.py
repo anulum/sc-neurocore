@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_destexhe_thalamic_support import *  # noqa: F403
 
+
 class TestDestAnalytical:
     def test_5_substeps_per_call(self):
         """5 sub-steps per step() call."""

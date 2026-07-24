@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_leaky_compete_fire_support import *  # noqa: F403
 
+
 class TestLCFPerformance:
     def test_isolation_throughput(self):
         n = LeakyCompeteFireNeuron()

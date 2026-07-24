@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_identity_bootstrap_support import *  # noqa: F403
 
+
 def test_add_studio_browser_user_record_preserves_service_account(
     tmp_path: Path,
 ) -> None:
@@ -89,5 +90,3 @@ def test_add_studio_browser_user_rejects_duplicate_username(tmp_path: Path) -> N
             roles=("studio.viewer",),
             password="browser-secret-2",
         )
-
-

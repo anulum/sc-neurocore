@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pernarowski_support import *  # noqa: F403
 
+
 class TestPernarowskiFI:
     def test_moderate_current_sustains_oscillation(self):
         """I ∈ [0, 1.0] should sustain oscillatory spiking."""

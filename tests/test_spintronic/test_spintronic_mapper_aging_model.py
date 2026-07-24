@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from spintronic_mapper_support import *  # noqa: F403
 
+
 class TestAgingModel:
     def test_no_degradation_initially(self):
         am = AgingModel()

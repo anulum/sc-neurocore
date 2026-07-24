@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_butera_respiratory_support import *  # noqa: F403
 
+
 class TestButeraNetwork:
     def test_population(self):
         pop = Population(ButeraRespiratoryNeuron, n=5, label="butera")

@@ -19,4 +19,12 @@ from sc_neurocore.math.topology import (
     _minimum_transport_cost,
 )
 
-__all__ = ['np', 'winding_number', 'ollivier_ricci_curvature', 'sheaf_consistency_defect', 'connection_curvature', '_lazy_random_walk', '_minimum_transport_cost']
+__all__ = [
+    "np",
+    "winding_number",
+    "ollivier_ricci_curvature",
+    "sheaf_consistency_defect",
+    "connection_curvature",
+    "_lazy_random_walk",
+    "_minimum_transport_cost",
+]

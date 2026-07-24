@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_gamma_renewal_support import *  # noqa: F403
 
+
 class TestPerformance:
     def test_isolation_throughput(self):
         n = GammaRenewalNeuron()

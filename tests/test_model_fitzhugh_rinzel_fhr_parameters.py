@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
 
+
 class TestFHRParameters:
     def test_mu_controls_y_speed(self):
         n_fast = FitzHughRinzelNeuron(mu=0.01)

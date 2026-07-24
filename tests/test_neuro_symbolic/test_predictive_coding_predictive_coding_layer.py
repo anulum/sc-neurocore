@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from predictive_coding_support import *  # noqa: F403
 
+
 class TestPredictiveCodingLayer:
     def test_predict_shape(self):
         layer = PredictiveCodingLayer(input_dim=16, hidden_dim=8)

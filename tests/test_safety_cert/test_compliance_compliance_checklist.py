@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.compliance_support import *  # noqa: F403
 
+
 class TestComplianceChecklist:
     def test_iec_61508(self) -> None:
         items = ComplianceChecklist.generate(SafetyStandard.IEC_61508)

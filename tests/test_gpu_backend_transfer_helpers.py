@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpu_backend_support import *  # noqa: F403
 
+
 class TestTransferHelpers:
     def test_to_device_and_back(self):
         a = np.array([1, 2, 3], dtype=np.float32)

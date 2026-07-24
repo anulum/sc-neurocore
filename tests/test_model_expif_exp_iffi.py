@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFFI:
     @pytest.mark.parametrize(
         ("current", "expected"),

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_simulation_support import *  # noqa: F403
 
+
 class TestSimulateEdgeCases:
     def test_max_steps_cap(self):
         result = simulate(
@@ -71,4 +72,3 @@ class TestSimulateEdgeCases:
         assert "v" in result["states"]
         assert "u" in result["states"]
         assert len(result["states"]["v"]) == len(result["states"]["u"])
-

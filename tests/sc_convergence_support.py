@@ -28,6 +28,17 @@ from sc_neurocore import (
 )
 from sc_neurocore.utils.bitstreams import sc_divide
 from sc_neurocore.utils.rng import RNG
+
 N_TRIALS = 100
 
-__all__ = ['np', 'pytest', 'BitstreamEncoder', 'bitstream_to_probability', 'generate_bernoulli_bitstream', 'generate_sobol_bitstream', 'sc_divide', 'RNG', 'N_TRIALS']
+__all__ = [
+    "np",
+    "pytest",
+    "BitstreamEncoder",
+    "bitstream_to_probability",
+    "generate_bernoulli_bitstream",
+    "generate_sobol_bitstream",
+    "sc_divide",
+    "RNG",
+    "N_TRIALS",
+]

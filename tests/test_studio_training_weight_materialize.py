@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_weights_support import *  # noqa: F403
 
+
 def test_materialize_training_weight_payload_verifies_artifacts_before_loading(
     tmp_path: Path,
 ) -> None:
@@ -53,6 +54,7 @@ def test_materialize_training_weight_payload_verifies_artifacts_before_loading(
     assert public["metadata_sha256"] == metadata_artifact["sha256"]
     assert materialization.state_dict == {"layer.weight": weights_payload}
 
+
 def test_materialize_training_weight_payload_rejects_tampered_payloads(
     tmp_path: Path,
 ) -> None:
@@ -80,6 +82,7 @@ def test_materialize_training_weight_payload_rejects_tampered_payloads(
             weights_payload=b"tamper!",
             trusted_loader=lambda payload: {"layer.weight": payload},
         )
+
 
 def test_materialize_training_weight_payload_rejects_invalid_loader_output(
     tmp_path: Path,
@@ -109,6 +112,7 @@ def test_materialize_training_weight_payload_rejects_invalid_loader_output(
             trusted_loader=lambda payload: {"": payload},
         )
 
+
 def test_load_training_weight_state_dict_extracts_model_state() -> None:
     """Trusted loader returns only the string-keyed model state dictionary."""
 
@@ -116,6 +120,7 @@ def test_load_training_weight_state_dict_extracts_model_state() -> None:
     state_dict = load_training_weight_state_dict(_torch_checkpoint_bytes())
 
     assert sorted(state_dict.keys()) == ["fc.bias", "fc.weight"]
+
 
 def test_load_training_weight_state_dict_rejects_non_checkpoint() -> None:
     """Trusted loader rejects payloads that are not checkpoint objects."""
@@ -129,6 +134,7 @@ def test_load_training_weight_state_dict_rejects_non_checkpoint() -> None:
     with pytest.raises(ValueError, match="not a checkpoint object"):
         load_training_weight_state_dict(buffer.getvalue())
 
+
 def test_load_training_weight_state_dict_rejects_unsupported_schema() -> None:
     """Trusted loader rejects checkpoints with an unexpected payload schema."""
 
@@ -137,6 +143,7 @@ def test_load_training_weight_state_dict_rejects_unsupported_schema() -> None:
 
     with pytest.raises(ValueError, match="schema is unsupported"):
         load_training_weight_state_dict(payload)
+
 
 def test_load_training_weight_state_dict_rejects_missing_state_dict() -> None:
     """Trusted loader rejects checkpoints without a model state dictionary."""
@@ -147,6 +154,7 @@ def test_load_training_weight_state_dict_rejects_missing_state_dict() -> None:
     with pytest.raises(ValueError, match="missing a model state dict"):
         load_training_weight_state_dict(payload)
 
+
 def test_load_training_weight_state_dict_rejects_invalid_state_key() -> None:
     """Trusted loader rejects model state dictionaries with empty keys."""
 
@@ -156,12 +164,14 @@ def test_load_training_weight_state_dict_rejects_invalid_state_key() -> None:
     with pytest.raises(ValueError, match="invalid state key"):
         load_training_weight_state_dict(payload)
 
+
 def test_load_training_weight_state_dict_rejects_undeserializable() -> None:
     """Trusted loader fails closed on payloads torch cannot deserialize."""
 
     pytest.importorskip("torch")
     with pytest.raises(ValueError, match="could not be deserialized"):
         load_training_weight_state_dict(b"not a torch payload")
+
 
 def test_materialize_with_real_torch_loader_roundtrips(tmp_path: Path) -> None:
     """End-to-end materialization loads real torch weights after verification."""

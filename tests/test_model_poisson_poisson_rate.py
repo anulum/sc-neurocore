@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonRate:
     def test_mean_rate_matches_lambda(self) -> None:
         """Over many trials, spike rate ≈ 1 - exp(-λ·dt/1000).

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.bench_iqif_support import *  # noqa: F403
 
+
 def test_real_rust_safety_gate_executes_enrolled_module() -> None:
     """Compile and execute the benchmark's real Rust-safety module."""
     result = benchmark._verify_rust_safety()

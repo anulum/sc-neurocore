@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sleep_optimizer_support import *  # noqa: F403
 
+
 class TestCircadianOptimizer(unittest.TestCase):
     def test_all_chronotypes_work(self):
         for ct in Chronotype:

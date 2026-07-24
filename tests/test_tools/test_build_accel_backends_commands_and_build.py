@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from build_accel_backends_support import *  # noqa: F403
 
+
 def test_go_command(tmp_path: Path) -> None:
     target = _target(tmp_path, "go")
     assert MOD._go_command(target) == [

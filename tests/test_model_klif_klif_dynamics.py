@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
 
+
 class TestKLIFDynamics:
     def test_fires_under_drive(self):
         n = KLIFNeuron()

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_extended_support import *  # noqa: F403
 
+
 class TestCausality:
     def test_pairwise_granger(self, two_trains):
         a, b = two_trains

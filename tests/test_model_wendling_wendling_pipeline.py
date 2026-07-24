@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
 
+
 class TestWendlingPipeline:
     def test_population_creates(self):
         assert Population(WendlingNeuron, n=5, label="wend").n == 5

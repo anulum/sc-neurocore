@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.formal_evidence_support import *  # noqa: F403
 
+
 class TestFormalGapDetector:
     def test_fully_covered(self) -> None:
         props = [

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.security_side_channel_benchmark_support import *  # noqa: F403
 
+
 def test_side_channel_benchmark_reports_protected_reduction_and_overhead() -> None:
     report = run_side_channel_leakage_benchmark(
         probabilities=(0.25, 0.5),

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cortical_column_support import *  # noqa: F403
 
+
 class TestPublishedFidelity:
     """Pin the qualitative features of the asynchronous-irregular state.
 

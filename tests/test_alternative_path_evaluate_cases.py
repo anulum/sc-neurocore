@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.alternative_path_support import *  # noqa: F403
 
+
 def test_route_evaluate_cases_aggregates_reports():
     route = AlternativePathRoute(
         name="safe.batch",
@@ -58,5 +59,3 @@ def test_evaluate_cases_without_benchmark_yields_no_median_runtimes():
     )
     assert summary.median_baseline_runtime_ns is None
     assert summary.median_candidate_runtime_ns is None
-
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.chip_compiler_support import *  # noqa: F403
 
+
 class TestCompileForChip:
     def test_small_network_loihi2(self):
         r = compile_for_chip([(64, 32), (32, 10)], target="loihi2")

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.alternative_path_support import *  # noqa: F403
 
+
 def test_compare_numeric_shape_mismatch_is_reported_as_diverged():
     stats = compare_outputs(
         np.array([1.0, 2.0]), np.array([1.0, 2.0, 3.0]), AlternativePathConfig()
@@ -53,5 +54,3 @@ def test_compare_mixed_sequences_combine_per_element_matches():
     stats = compare_outputs([1, "tag"], [1, "tag"], AlternativePathConfig())
     assert stats.matched
     assert stats.comparable_leaf_count == 2
-
-

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.encoding_support import *  # noqa: F403
 
+
 class TestAERToSCConverter:
     def test_convert(self) -> None:
         events = [

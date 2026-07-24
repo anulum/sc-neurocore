@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
+
 class TestChainPhysics:
     def test_exponential_superexchange(self):
         J = _posner_chain_couplings(10)

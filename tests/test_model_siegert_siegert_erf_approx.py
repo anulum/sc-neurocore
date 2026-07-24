@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
 
+
 class TestSiegertErfApprox:
     """Abramowitz & Stegun 7.1.26 rational approximation."""
 

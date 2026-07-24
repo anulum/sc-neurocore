@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_evidence_bundle_support import *  # noqa: F403
 
+
 def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     tmp_path: Path,
 ) -> None:
@@ -134,6 +135,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     manifest_entries = cast(list[dict[str, object]], manifest["entries"])
     project_entry = next(entry for entry in manifest_entries if entry["type"] == "project")
     assert project_entry["evidence_classification"] == "project_workspace"
+
 
 def test_write_studio_evidence_bundle_classifies_suffixed_action_evidence(
     tmp_path: Path,

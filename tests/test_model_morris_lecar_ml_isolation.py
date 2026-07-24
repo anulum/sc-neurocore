@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
 
+
 class TestMLIsolation:
     def test_defaults(self):
         n = MorrisLecarNeuron()

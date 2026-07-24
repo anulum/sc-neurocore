@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hh_validation_support import *  # noqa: F403
 
+
 class TestNativeHodgkinHuxley:
     """Cross-validate the sc_neurocore HodgkinHuxleyNeuron."""
 

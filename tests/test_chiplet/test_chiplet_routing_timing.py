@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from chiplet_routing_support import *  # noqa: F403
 
+
 class TestTiming:
     """Lowest-latency path aggregation."""
 

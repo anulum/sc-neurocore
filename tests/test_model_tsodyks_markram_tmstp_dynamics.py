@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_tsodyks_markram_support import *  # noqa: F403
 
+
 class TestTMSTPDynamics:
     """Short-term plasticity: x (depression) and u (facilitation)."""
 

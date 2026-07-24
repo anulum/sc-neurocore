@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.datasets_support import *  # noqa: F403
 
+
 class TestCheckRoot:
     def test_valid_root_returns_path(self, tmp_path):
         p = _check_root(tmp_path, "test", "http://test")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gamma_oscillation_support import *  # noqa: F403
 
+
 class TestNativeBackendDispatch:
     """Explicit native backends expose the same public step contract."""
 

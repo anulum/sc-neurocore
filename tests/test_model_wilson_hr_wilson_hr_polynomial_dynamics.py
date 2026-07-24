@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
 
+
 class TestWilsonHRPolynomialDynamics:
     def test_polynomial_formula(self):
         n = WilsonHRNeuron(v=-0.4, r=0.08)

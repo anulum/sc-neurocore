@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestHealthCheck:
     def test_healthy(self):
         h = check_health(100, 10, 50, 1000)

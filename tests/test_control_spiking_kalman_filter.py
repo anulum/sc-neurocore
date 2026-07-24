@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.control_support import *  # noqa: F403
 
+
 class TestSpikingKalmanFilter:
     def test_step(self):
         kf = SpikingKalmanFilter(n_states=2, n_measurements=2)

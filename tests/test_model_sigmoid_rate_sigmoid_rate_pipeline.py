@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
 
+
 class TestSigmoidRatePipeline:
     def test_population_creates(self):
         assert Population(SigmoidRateNeuron, n=10, label="sr").n == 10

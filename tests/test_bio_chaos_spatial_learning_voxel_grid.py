@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestVoxelGrid:
     def test_init_zeros(self):
         vg = VoxelGrid(resolution=4)

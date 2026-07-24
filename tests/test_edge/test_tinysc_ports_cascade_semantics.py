@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestCascadeSemantics:
     def test_two_layer_cascade_output_size(self):
         net = SCNetwork(bit_length=256)

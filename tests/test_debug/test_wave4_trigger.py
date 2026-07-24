@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestTrigger:
     def test_armed_trigger(self):
         tc = TriggerCondition(min_correlation=0.5, armed=True)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.cli_formal_support import *  # noqa: F403
 
+
 def test_formal_verify_network_replays_safe_trace(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -425,5 +426,3 @@ def test_formal_verify_network_replays_all_constraints_without_violation(
         "Population inactivity replay passed",
     ):
         assert message in output
-
-

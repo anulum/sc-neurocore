@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_pinsky_rinzel_support import *  # noqa: F403
 
+
 class TestPinskyRinzelAnalysis:
     def test_spike_count_matches_train_sum(self):
         n = PinskyRinzelNeuron()

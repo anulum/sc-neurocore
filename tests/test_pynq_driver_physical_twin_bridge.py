@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.pynq_driver_support import *  # noqa: F403
 
+
 class TestPhysicalTwinBridge:
     """PhysicalTwinBridge exposes honest emulation and explicit TCP modes."""
 

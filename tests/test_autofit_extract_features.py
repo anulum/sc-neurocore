@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.autofit_support import *  # noqa: F403
 
+
 class TestExtractFeatures:
     def test_silent_trace(self):
         v = np.full(100, -1.0)

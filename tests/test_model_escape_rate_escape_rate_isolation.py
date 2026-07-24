@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
 
+
 class TestEscapeRateIsolation:
     def test_construction_all_defaults(self):
         n = EscapeRateNeuron()

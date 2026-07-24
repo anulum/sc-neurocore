@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_fractional_lif_support import *  # noqa: F403
 
+
 class TestFLIFParameters:
     @pytest.mark.parametrize("alpha", [0.5, 0.8, 1.0])
     def test_alpha_variations(self, alpha: float):

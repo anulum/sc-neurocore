@@ -30,12 +30,20 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
+
 def _run(neuron: GutkinErmentroutNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _m_inf(v: float) -> float:
     return 1.0 / (1.0 + math.exp(-(v + 20.0) / 15.0))
+
+
 def _n_inf(v: float) -> float:
     return 1.0 / (1.0 + math.exp(-(v + 25.0) / 5.0))
+
+
 def _rhs(
     neuron: GutkinErmentroutNeuron, v: float, n_gate: float, current: float
 ) -> tuple[float, float]:
@@ -45,6 +53,8 @@ def _rhs(
     i_k = neuron.g_k * n_gate * (v - neuron.e_k)
     i_l = neuron.g_l * (v - neuron.e_l)
     return -i_na - i_k - i_l + current, n_inf - n_gate
+
+
 def _rk4_reference(neuron: GutkinErmentroutNeuron, current: float) -> tuple[float, float]:
     v0, n0 = neuron.v, neuron.n
     k1_v, k1_n = _rhs(neuron, v0, n0, current)
@@ -55,4 +65,25 @@ def _rk4_reference(neuron: GutkinErmentroutNeuron, current: float) -> tuple[floa
     next_n = n0 + neuron.dt * (k1_n + 2.0 * k2_n + 2.0 * k3_n + k4_n) / 6.0
     return next_v, next_n
 
-__all__ = ['time', 'math', 'np', 'pytest', 'assert_throughput_guard', 'GutkinErmentroutNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_run', '_m_inf', '_n_inf', '_rhs', '_rk4_reference']
+
+__all__ = [
+    "time",
+    "math",
+    "np",
+    "pytest",
+    "assert_throughput_guard",
+    "GutkinErmentroutNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_run",
+    "_m_inf",
+    "_n_inf",
+    "_rhs",
+    "_rk4_reference",
+]

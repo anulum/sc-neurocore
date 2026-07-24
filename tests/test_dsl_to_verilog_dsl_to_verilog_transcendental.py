@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dsl_to_verilog_support import *  # noqa: F403
 
+
 class TestDSLToVerilogTranscendental:
     """Test models with transcendental functions (exp, tanh via LUT)."""
 

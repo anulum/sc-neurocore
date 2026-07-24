@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.hardware_support import *  # noqa: F403
 
+
 class TestHardwareBenchmark:
     def test_map_10k_neurons(self):
         """Map 10,000 neurons to Loihi in < 2 seconds."""

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from observation_loader_support import *  # noqa: F403
 
+
 def test_loads_generic_benchmark_records() -> None:
     payload = {
         "observations": [

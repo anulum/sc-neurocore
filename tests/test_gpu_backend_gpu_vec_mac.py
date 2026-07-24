@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.gpu_backend_support import *  # noqa: F403
 
+
 class TestGPUVecMAC:
     def test_simple_mac(self):
         # 2 neurons, 1 input, 1 word

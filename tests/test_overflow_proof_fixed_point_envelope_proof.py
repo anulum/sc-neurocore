@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.overflow_proof_support import *  # noqa: F403
 
+
 class TestFixedPointEnvelopeProof:
     """Test static Q-format envelope proofs used by precision deployment paths."""
 

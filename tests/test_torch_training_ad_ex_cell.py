@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.torch_training_support import *  # noqa: F403
 
+
 class TestAdExCell:
     def test_adaptation_current(self):
         cell = AdExCell(beta=0.9, a=0.01, b=0.1)

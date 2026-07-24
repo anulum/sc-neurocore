@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.compiler_live_control_support import *  # noqa: F403
 
+
 def test_mmio_update_serialization_roundtrip() -> None:
     bank = ParameterBankSpec(
         bank_name="control",
@@ -205,5 +206,3 @@ def test_mmio_update_sequence_rejects_read_only_and_unknown_entries() -> None:
         spec.build_update_sequence("coefficients", "k_mag", 0x10)
     with pytest.raises(ValueError, match="unknown parameter bank"):
         spec.build_update_sequence("weights", 0, 0x10)
-
-

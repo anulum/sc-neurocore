@@ -51,9 +51,11 @@ from sc_neurocore.studio.training import (
     stream_metrics,
 )
 
+
 @pytest.fixture(scope="module")
 def client() -> TestClient:
     return TestClient(create_app(), base_url="http://127.0.0.1")
+
 
 __all__ = [
     "annotations",

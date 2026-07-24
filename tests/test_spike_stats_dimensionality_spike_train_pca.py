@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_stats_dimensionality_support import *  # noqa: F403
 
+
 class TestSpikeTrainPCA:
     def test_typical(self) -> None:
         proj, expl = spike_train_pca(_trains(), n_components=3)

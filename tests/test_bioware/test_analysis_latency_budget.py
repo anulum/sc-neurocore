@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.analysis_support import *  # noqa: F403
 
+
 class TestLatencyBudget:
     def test_within_budget(self) -> None:
         lb = LatencyBudget(max_latency_us=1000.0)

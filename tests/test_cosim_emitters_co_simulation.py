@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.cosim_emitters_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestCoSimulation:
     """Python ↔ Verilog co-simulation: validate spike behaviour equivalence."""

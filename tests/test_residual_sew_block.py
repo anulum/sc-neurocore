@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.residual_support import *  # noqa: F403
 
+
 class TestSEWBlock:
     def test_forward(self) -> None:
         b = SEWBlock(n_features=8)

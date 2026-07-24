@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
 
+
 class TestRallCableAnalysis:
     def test_spike_count(self) -> None:
         n = RallCableNeuron(n_comp=2, g_ratio=5.0)

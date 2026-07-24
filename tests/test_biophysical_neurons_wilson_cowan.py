@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.biophysical_neurons_support import *  # noqa: F403
 
+
 class TestWilsonCowan:
     def test_oscillation(self):
         from sc_neurocore.neurons.models import WilsonCowanUnit

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.dense_optimization_support import *  # noqa: F403
 
+
 class TestForwardFast:
     """Tests for parallel-encoded forward_fast method."""
 

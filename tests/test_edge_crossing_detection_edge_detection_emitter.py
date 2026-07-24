@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.edge_crossing_detection_support import *  # noqa: F403
 
+
 class TestEdgeDetectionEmitter:
     """The emitted RTL mirrors the runner's edge/level decision."""
 

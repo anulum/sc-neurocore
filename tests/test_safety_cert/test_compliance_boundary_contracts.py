@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.compliance_support import *  # noqa: F403
 
+
 class TestBoundaryContracts:
     def test_cross_standard_overlap_rejects_empty_clauses_on_each_side(self) -> None:
         left = ChecklistItem("IEC 61508_7.4.2", "7.4.2", "desc", "formal/", "partial")

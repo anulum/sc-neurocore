@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spike_response_support import *  # noqa: F403
 
+
 class TestSpikeResponseValidation:
     @pytest.mark.parametrize("field", ["v", "v_threshold", "eta_reset"])
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_dendrify_support import *  # noqa: F403
 
+
 class TestDendrifyIsolation:
     def test_step_returns_binary(self):
         assert DendrifyNeuron().step(0.0) in (0, 1)

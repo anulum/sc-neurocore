@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_ann_snn_support import *  # noqa: F403
 
+
 class TestQcfsConversionRoute:
     def _qcfs_model(self, theta: float = 1.0, qcfs_t: int = 4) -> nn.Module:
         torch.manual_seed(7)

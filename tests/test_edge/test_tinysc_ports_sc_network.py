@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tinysc_ports_support import *  # noqa: F403
 
+
 class TestSCNetwork:
     @pytest.mark.parametrize(
         "kwargs",

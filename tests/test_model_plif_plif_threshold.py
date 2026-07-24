@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_plif_support import *  # noqa: F403
 
+
 class TestPLIFThreshold:
     def test_spike_on_updated_voltage(self):
         """Returned spike is based on updated V, not pre-step V.

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
 
+
 def test_te_short():
     assert transfer_entropy(np.zeros(3, dtype=np.int8), np.zeros(3, dtype=np.int8), lag=5) == 0.0
 
@@ -102,5 +103,3 @@ def test_information_rust_acceleration_delegation(monkeypatch):
         spike_train_entropy(np.array([1, 0, 1, 0], dtype=np.int8), bin_size=1, word_length=2) == 1.5
     )
     assert kozachenko_leonenko_mi(np.arange(8.0), np.arange(8.0), k=2) == 0.25
-
-

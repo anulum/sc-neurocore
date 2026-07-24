@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.symbolic_support import *  # noqa: F403
 
+
 class TestSpikeALU:
     def test_add_basic(self):
         alu = SpikeALU(8)

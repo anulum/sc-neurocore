@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from meta_plasticity_support import *  # noqa: F403
 
+
 class TestContextRuleBank:
     def test_store_and_switch(self):
         bank = ContextRuleBank()

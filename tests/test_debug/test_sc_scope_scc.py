@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestSCC:
     def test_identical_bitstreams(self):
         words = np.array([0xAAAA_AAAA] * 4, dtype=np.uint32)

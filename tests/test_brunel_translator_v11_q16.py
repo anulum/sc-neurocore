@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_translator_support import *  # noqa: F403
 
+
 class TestV11Q16:
     """V11: Q4.12 fixed-point — no overflow."""
 

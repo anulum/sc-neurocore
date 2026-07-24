@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.contrastive_support import *  # noqa: F403
 
+
 class TestSpikeContrastiveLoss:
     def test_compute_matches_manual_infonce(self) -> None:
         loss_fn = SpikeContrastiveLoss(temperature=0.5)

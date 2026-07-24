@@ -13,7 +13,10 @@ import numpy as np
 from sc_neurocore.utils.bitstreams import generate_bernoulli_bitstream
 from sc_neurocore.utils.fault_injection import FaultInjector
 from sc_neurocore.utils.rng import RNG
+
+
 def _majority_vote(a, b, c):
     return ((a & b) | (a & c) | (b & c)).astype(np.uint8)
 
-__all__ = ['np', 'generate_bernoulli_bitstream', 'FaultInjector', 'RNG', '_majority_vote']
+
+__all__ = ["np", "generate_bernoulli_bitstream", "FaultInjector", "RNG", "_majority_vote"]

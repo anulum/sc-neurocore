@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transfer_support import *  # noqa: F403
 
+
 class TestTransferConfig:
     def test_default_config_is_valid(self) -> None:
         config = TransferConfig()

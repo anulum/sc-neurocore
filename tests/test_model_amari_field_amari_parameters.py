@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
 
+
 class TestAmariParameters:
     def test_custom_n(self):
         n = AmariNeuralField(n=128)

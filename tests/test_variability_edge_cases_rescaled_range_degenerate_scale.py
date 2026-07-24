@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.variability_edge_cases_support import *  # noqa: F403
 
+
 class TestRescaledRangeDegenerateScale:
     """min_window == 1 makes the first 1.5x step stall at 1; the unit-step guard
     must force progress so the analysis terminates instead of looping forever."""

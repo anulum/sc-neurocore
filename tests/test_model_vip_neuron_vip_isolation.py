@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_vip_neuron_support import *  # noqa: F403
 
+
 class TestVIPIsolation:
     def test_construction_defaults(self):
         n = VIPNeuron()

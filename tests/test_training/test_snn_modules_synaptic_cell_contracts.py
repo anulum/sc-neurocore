@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestSynapticCellContracts:
     def test_dual_exponential_state_update(self):
         cell = SynapticCell(alpha=0.5, beta=0.5, threshold=100.0)

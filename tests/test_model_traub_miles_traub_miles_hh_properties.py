@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_traub_miles_support import *  # noqa: F403
 
+
 class TestTraubMilesHHProperties:
     """Verify HH-specific properties: gating bounds, Na inactivation, refractory."""
 

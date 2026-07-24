@@ -18,7 +18,10 @@ from sc_neurocore.chiplet import (
     HierarchicalPartitioner,
 )
 from tests.test_chiplet.hierarchical_partitioner_support import build_graph as _build_graph
+
 _TIMING_REPEATS = 5
+
+
 def _min_partition_ms(n_vertices: int) -> float:
     """Return the minimum ``HierarchicalPartitioner.partition`` wall-clock in ms.
 
@@ -38,4 +41,15 @@ def _min_partition_ms(n_vertices: int) -> float:
         best_ms = min(best_ms, (time.perf_counter() - start) * 1000.0)
     return best_ms
 
-__all__ = ['time', 'np', 'pytest', 'CorrelationAwareGraph', 'CorrelationEdge', 'HierarchicalPartitioner', '_build_graph', '_TIMING_REPEATS', '_min_partition_ms']
+
+__all__ = [
+    "time",
+    "np",
+    "pytest",
+    "CorrelationAwareGraph",
+    "CorrelationEdge",
+    "HierarchicalPartitioner",
+    "_build_graph",
+    "_TIMING_REPEATS",
+    "_min_partition_ms",
+]

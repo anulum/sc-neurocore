@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.tensor_stream_support import *  # noqa: F403
 
+
 class TestDomainPassthrough:
     def test_prob_to_prob(self):
         ts = TensorStream.from_prob(np.array([0.42]))

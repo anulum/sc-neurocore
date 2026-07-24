@@ -27,6 +27,7 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+
 _GATES = (
     "m_na",
     "h_na",
@@ -40,7 +41,24 @@ _GATES = (
     "m_kd",
     "m_h",
 )
+
+
 def _run(neuron: MarderSTGNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
-__all__ = ['math', 'np', 'pytest', 'MarderSTGNeuron', 'Population', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'firing_rate', 'isi', '_GATES', '_run']
+
+__all__ = [
+    "math",
+    "np",
+    "pytest",
+    "MarderSTGNeuron",
+    "Population",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "firing_rate",
+    "isi",
+    "_GATES",
+    "_run",
+]

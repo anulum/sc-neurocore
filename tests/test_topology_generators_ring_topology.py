@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_generators_support import *  # noqa: F403
 
+
 class TestRingTopology:
     def test_csr_valid(self) -> None:
         indptr, indices, data = ring_topology(50, k=3, weight=1.0)

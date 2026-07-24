@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.explain_support import *  # noqa: F403
 
+
 class TestSpikeAttributor:
     def test_basic(self):
         spikes = _make_spikes()

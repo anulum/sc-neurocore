@@ -73,5 +73,26 @@ def _minimal_payload() -> dict[str, Any]:
     }
 
 
-__all__ = ['dataclasses', 'importlib', 'inspect', 'Path', 'sys', 'types', 'Any', 'Callable', 'pytest', 'universal_dsl', 'generate_descriptor', 'generate_descriptor_payload', 'merge_descriptor_payloads', 'MODEL_DESCRIPTOR_SCHEMA_VERSION', 'ModelDescriptorError', 'Silicon', 'Validation', 'descriptor_completeness_tier', 'parse_model_descriptor', '_CLASS_TO_MODULE', '_minimal_payload']
-
+__all__ = [
+    "dataclasses",
+    "importlib",
+    "inspect",
+    "Path",
+    "sys",
+    "types",
+    "Any",
+    "Callable",
+    "pytest",
+    "universal_dsl",
+    "generate_descriptor",
+    "generate_descriptor_payload",
+    "merge_descriptor_payloads",
+    "MODEL_DESCRIPTOR_SCHEMA_VERSION",
+    "ModelDescriptorError",
+    "Silicon",
+    "Validation",
+    "descriptor_completeness_tier",
+    "parse_model_descriptor",
+    "_CLASS_TO_MODULE",
+    "_minimal_payload",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_superspike_neuron_support import *  # noqa: F403
 
+
 class TestSuperSpikeFI:
     def test_zero_silent(self):
         n = SuperSpikeNeuron()

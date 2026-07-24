@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestIFCellContracts:
     def test_no_leak_preserves_subthreshold_voltage(self):
         cell = IFCell(threshold=10.0)

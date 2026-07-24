@@ -13,6 +13,7 @@ from collections.abc import Callable
 import numpy as np
 import numpy.typing as npt
 import pytest
+
 torch = pytest.importorskip("torch")
 import torch.nn as nn  # noqa: E402
 from sc_neurocore.conversion.ann_to_snn import (  # noqa: E402
@@ -23,4 +24,17 @@ from sc_neurocore.conversion.ann_to_snn import (  # noqa: E402
 )
 from sc_neurocore.conversion.qcfs import QCFSActivation  # noqa: E402
 
-__all__ = ['builtins', 'Callable', 'np', 'npt', 'pytest', 'torch', 'nn', 'ConvertedSNN', '_extract_qcfs_layers', 'convert', 'replace_relu_with_qcfs', 'QCFSActivation']
+__all__ = [
+    "builtins",
+    "Callable",
+    "np",
+    "npt",
+    "pytest",
+    "torch",
+    "nn",
+    "ConvertedSNN",
+    "_extract_qcfs_layers",
+    "convert",
+    "replace_relu_with_qcfs",
+    "QCFSActivation",
+]

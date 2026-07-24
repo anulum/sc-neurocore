@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.privacy_support import *  # noqa: F403
 
+
 class TestSpikeLevelDP:
     def test_randomized_response(self):
         dp = SpikeLevelDP(epsilon=1.0, mechanism="randomized_response", seed=42)

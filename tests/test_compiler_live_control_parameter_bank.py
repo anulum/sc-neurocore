@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.compiler_live_control_support import *  # noqa: F403
 
+
 def test_parameter_bank_q88_bounds_and_widths() -> None:
     bank = ParameterBankSpec(
         bank_name="weights",
@@ -120,5 +121,3 @@ def test_mmio_control_window_must_not_overlap_parameter_banks() -> None:
             banks=(bank,),
             control_base_address_bytes=0x0,
         )
-
-

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from core_engine_bridge_support import *  # noqa: F403
 
+
 def test_lfsr_encode_bits_rejects_invalid_contract_values() -> None:
     """Reject invalid public LFSR bitstream contract values."""
     with pytest.raises(ValueError, match="seed"):

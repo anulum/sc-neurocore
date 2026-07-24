@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaEncoding:
     def test_spike_rate_equals_input_over_threshold(self):
         """For constant I ∈ (0, θ): rate = I/θ spikes per step."""

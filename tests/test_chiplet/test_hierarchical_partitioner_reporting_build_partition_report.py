@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_reporting_support import *  # noqa: F403
 
+
 class TestBuildPartitionReport:
     def test_full_report(self) -> None:
         g = _make_chain_graph(10, scc=0.3)

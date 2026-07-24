@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.topology_backends_support import *  # noqa: F403
 
+
 def test_julia_loader_returns_false_without_juliacall(monkeypatch) -> None:
     import importlib.util as importlib_util
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.qat_torch_support import *  # noqa: F403
 
+
 class TestSCAwareLIFNet:
     def test_forward_shape(self):
         net = SCAwareLIFNet(784, 128, 10, bitstream_length=256)

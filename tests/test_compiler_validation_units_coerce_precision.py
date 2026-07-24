@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.compiler_validation_units_support import *  # noqa: F403
 
+
 class TestCoercePrecision:
     """Each precision input resolves the expected datapath parameters and tags
     its manifest with the matching provenance and kind."""

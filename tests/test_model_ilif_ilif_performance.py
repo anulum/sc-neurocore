@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ilif_support import *  # noqa: F403
 
+
 class TestILIFPerformance:
     def test_isolation_throughput(self):
         n = InhibitoryLIFNeuron()

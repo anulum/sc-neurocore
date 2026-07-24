@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dna_mapper_support import *  # noqa: F403
 
+
 class TestRK4Integrator:
     """RK4 vs Euler integrator comparison."""
 

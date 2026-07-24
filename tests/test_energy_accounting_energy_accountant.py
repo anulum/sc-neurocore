@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.energy_accounting_support import *  # noqa: F403
 
+
 class TestEnergyAccountant:
     def test_basic(self):
         acc = EnergyAccountant("loihi2")

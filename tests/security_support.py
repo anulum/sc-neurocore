@@ -21,11 +21,14 @@ import pytest
 import numpy as np
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from sc_neurocore.security.ethics import AsimovGovernor, ActionRequest
 from sc_neurocore.security.immune import DigitalImmuneSystem
 from sc_neurocore.security.watermark import WatermarkInjector
 from sc_neurocore.security.zkp import ZKPVerifier
+
+
 class MockLayer:
     """Mock layer with weights for watermark testing."""
 
@@ -35,11 +38,27 @@ class MockLayer:
 
     def _refresh_packed_weights(self):
         self._refresh_called = True
+
+
 class MockLayerNoWeights:
     """Mock layer without weights attribute."""
 
     pass
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
-__all__ = ['pytest', 'np', 'sys', 'os', 'AsimovGovernor', 'ActionRequest', 'DigitalImmuneSystem', 'WatermarkInjector', 'ZKPVerifier', 'MockLayer', 'MockLayerNoWeights']
+__all__ = [
+    "pytest",
+    "np",
+    "sys",
+    "os",
+    "AsimovGovernor",
+    "ActionRequest",
+    "DigitalImmuneSystem",
+    "WatermarkInjector",
+    "ZKPVerifier",
+    "MockLayer",
+    "MockLayerNoWeights",
+]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bio_chaos_spatial_learning_support import *  # noqa: F403
 
+
 class TestSpikeToConceptMapper:
     def test_active_spikes(self):
         mapper = SpikeToConceptMapper({0: "Motor", 2: "Vision"})

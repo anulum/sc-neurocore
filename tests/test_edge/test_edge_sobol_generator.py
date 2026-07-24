@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from edge_support import *  # noqa: F403
 
+
 class TestSobolGenerator:
     def test_deterministic(self):
         a = SobolGenerator(seed=0)

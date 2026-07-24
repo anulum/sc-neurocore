@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.biophysical_neurons_support import *  # noqa: F403
 
+
 class TestChialvoMap:
     def test_dynamics(self):
         from sc_neurocore.neurons.models import ChialvoMapNeuron

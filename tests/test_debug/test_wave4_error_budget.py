@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from wave4_support import *  # noqa: F403
 
+
 class TestErrorBudget:
     def test_no_violation(self):
         eb = ErrorBudget(min_precision=0.90, max_correlation=0.20)

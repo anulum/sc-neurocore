@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_runtime_support import *  # noqa: F403
 
+
 class TestActivityMonitor:
     def test_observe_returns_metrics(self):
         mon = ActivityMonitor()

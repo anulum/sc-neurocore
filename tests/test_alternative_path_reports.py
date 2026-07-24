@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.alternative_path_support import *  # noqa: F403
 
+
 def test_write_batch_report_writes_json_file(tmp_path):
     registry = build_demo_registry()
     summary = registry.evaluate(
@@ -63,5 +64,3 @@ def test_result_report_is_json_friendly():
     assert report["route_name"] == "safe.report"
     assert report["returned_path"] == "shadow-baseline"
     assert report["comparison"]["matched"] is True
-
-

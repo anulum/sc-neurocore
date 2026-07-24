@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_audit_quarantine_support import *  # noqa: F403
 
+
 def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -67,6 +68,7 @@ def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
     assert manifest_payload["summary"] == body["summary"]
     assert str(tmp_path) not in json.dumps(body)
 
+
 def test_studio_audit_quarantine_archive_retention_route_lists_archive_jobs(
     tmp_path: Path,
 ) -> None:
@@ -117,6 +119,7 @@ def test_studio_audit_quarantine_archive_retention_route_lists_archive_jobs(
     entries = cast(list[dict[str, object]], body["entries"])
     assert {entry["disposition"] for entry in entries} == {"retain", "prune_candidate"}
     assert str(tmp_path) not in json.dumps(body)
+
 
 def test_studio_audit_quarantine_archive_purge_route_removes_prune_candidates(
     tmp_path: Path,
@@ -174,6 +177,7 @@ def test_studio_audit_quarantine_archive_purge_route_removes_prune_candidates(
         manager.record(archive_job_ids[0])
     assert str(tmp_path) not in json.dumps(body)
 
+
 def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     tmp_path: Path,
 ) -> None:
@@ -195,6 +199,7 @@ def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     assert body["valid"] is True
     assert body["errors"] == []
     assert str(tmp_path) not in json.dumps(body)
+
 
 def test_studio_audit_quarantine_archive_restore_route_writes_job_artifacts(
     tmp_path: Path,
@@ -237,6 +242,7 @@ def test_studio_audit_quarantine_archive_restore_route_writes_job_artifacts(
     assert restore_manifest["summary"] == body["summary"]
     assert str(tmp_path) not in json.dumps(body)
 
+
 def test_studio_audit_quarantine_archive_restore_route_rejects_invalid_archive(
     tmp_path: Path,
 ) -> None:
@@ -257,6 +263,7 @@ def test_studio_audit_quarantine_archive_restore_route_rejects_invalid_archive(
     assert response.status_code == 422
     assert body["detail"]["errors"] == ["manifest_archive_id_mismatch"]
     assert _job_manager(app).list_records() == ()
+
 
 def test_studio_audit_quarantine_archive_routes_require_admin(
     tmp_path: Path,

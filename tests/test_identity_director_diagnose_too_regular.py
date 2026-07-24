@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.identity_director_support import *  # noqa: F403
 
+
 class TestDiagnoseTooRegular:
     def test_too_regular(self):
         sub = _make_substrate()

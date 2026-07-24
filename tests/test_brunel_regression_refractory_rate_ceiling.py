@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.brunel_regression_support import *  # noqa: F403
 
+
 class TestRefractoryRateCeiling:
     def test_refractory_limits_rate(self):
         """With 5-step refractory at dt=0.1ms, max rate = 1/(5*0.1ms) = 2000 Hz."""

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from explainability_support import *  # noqa: F403
 
+
 class TestSensitivityAnalyzer:
     def test_basic_sensitivity(self):
         tree = SpikeDecisionTree()

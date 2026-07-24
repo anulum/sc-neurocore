@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_settings_support import *  # noqa: F403
 
+
 def test_studio_app_route_policy_enforcement_allows_public_route() -> None:
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
     client = TestClient(app, base_url="http://127.0.0.1")

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_poisson_support import *  # noqa: F403
 
+
 class TestPoissonDtScaling:
     def test_dt_scales_probability(self) -> None:
         """P(spike) = λ·dt/1000. Doubling dt doubles spike probability."""

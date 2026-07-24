@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_cfc_support import *  # noqa: F403
 
+
 class TestCFCPipeline:
     def test_population(self):
         assert Population(ClosedFormContinuousNeuron, n=10, label="cfc").n == 10

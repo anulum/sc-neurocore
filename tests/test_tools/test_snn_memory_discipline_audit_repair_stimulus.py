@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from snn_memory_discipline_audit_support import *  # noqa: F403
 
+
 def test_repair_stimulus_file_normalises_legacy_payload(tmp_path: Path) -> None:
     """The repair path preserves legacy facts in canonical fields."""
 

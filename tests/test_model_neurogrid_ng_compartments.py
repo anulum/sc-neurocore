@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_neurogrid_support import *  # noqa: F403
 
+
 class TestNGCompartments:
     def test_dendrite_slower_than_soma(self) -> None:
         """tau_d > tau_s → dendrite integrates slower."""

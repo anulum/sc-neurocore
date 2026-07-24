@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.sby_runner_support import *  # noqa: F403
 
+
 @_needs_formal
 class TestRunSbyTaskEndToEnd:
     """A real ``sby`` task with the toolchain present."""

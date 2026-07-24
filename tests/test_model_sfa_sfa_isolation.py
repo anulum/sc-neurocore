@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sfa_support import *  # noqa: F403
 
+
 class TestSFAIsolation:
     def test_construction_defaults(self):
         n = SFANeuron()

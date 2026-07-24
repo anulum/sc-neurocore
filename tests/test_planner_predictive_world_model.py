@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.planner_support import *  # noqa: F403
 
+
 class TestPredictiveWorldModel:
     """Tests against the new sophisticated LGSSM-backed wrapper.
 

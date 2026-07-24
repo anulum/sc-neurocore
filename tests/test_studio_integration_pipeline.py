@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_integration_support import *  # noqa: F403
 
+
 class TestPipeline:
     def _make_graph(self) -> dict[str, object]:
         exc = create_population(count=30, neuron_type="excitatory")
@@ -79,4 +80,3 @@ class TestPipeline:
             "step": "compile",
             "error": "Compilation failed",
         }
-

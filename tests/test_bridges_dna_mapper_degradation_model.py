@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
 
+
 class TestDegradationModel:
     def test_predict_concentration_decays(self) -> None:
         model = DegradationModel(half_life_hr=2.0)

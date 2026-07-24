@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.topology_generators_support import *  # noqa: F403
 
+
 class TestAllToAll:
     def test_csr_valid(self) -> None:
         indptr, indices, data = all_to_all(10, 10, weight=0.5)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_bioware.encoding_support import *  # noqa: F403
 
+
 class TestMEAToAERTranscoder:
     def test_transcode(self) -> None:
         spikes = [

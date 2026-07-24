@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.security_side_channel_benchmark_support import *  # noqa: F403
 
+
 @pytest.mark.parametrize(
     ("probabilities", "labels"),
     [

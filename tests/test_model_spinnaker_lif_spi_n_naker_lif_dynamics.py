@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker_lif_support import *  # noqa: F403
 
+
 class TestSpiNNakerLIFDynamics:
     def test_membrane_equation(self):
         """Exact LIF flow solves constant-current membrane dynamics."""

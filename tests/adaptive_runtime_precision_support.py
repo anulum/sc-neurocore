@@ -26,6 +26,8 @@ from sc_neurocore.compiler.adaptive_runtime_precision import (
 )
 from sc_neurocore.neurons.equation_builder import from_equations
 import json
+
+
 @pytest.fixture
 def lif_neuron():
     """Standard LIF neuron for adaptive precision tests."""
@@ -36,6 +38,8 @@ def lif_neuron():
         params=dict(E_L=-65, tau_m=10, C=1),
         init=dict(v=-65),
     )
+
+
 @pytest.fixture
 def izhikevich_neuron():
     """Two-state-variable neuron (Izhikevich)."""
@@ -47,6 +51,8 @@ def izhikevich_neuron():
         params=dict(a=0.02, b=0.2, c=-65, d=8),
         init=dict(v=-65, u=-14),
     )
+
+
 def _extract_manifest(verilog: str) -> dict:
     """Extract adaptive precision manifest JSON from generated RTL comments."""
     prefix = "// SC-NeuroCore Adaptive Precision Manifest: "
@@ -55,4 +61,14 @@ def _extract_manifest(verilog: str) -> dict:
             return json.loads(line[len(prefix) :])
     raise AssertionError("Adaptive precision manifest comment not found")
 
-__all__ = ['pytest', 'PRECISION_PAIRS', 'compile_adaptive_precision', 'from_equations', 'json', 'lif_neuron', 'izhikevich_neuron', '_extract_manifest']
+
+__all__ = [
+    "pytest",
+    "PRECISION_PAIRS",
+    "compile_adaptive_precision",
+    "from_equations",
+    "json",
+    "lif_neuron",
+    "izhikevich_neuron",
+    "_extract_manifest",
+]

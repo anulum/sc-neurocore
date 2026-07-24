@@ -16,4 +16,4 @@ from sc_neurocore.compiler.overflow_proof import (
     prove_no_overflow,
 )
 
-__all__ = ['FixedPointEnvelopeProof', 'Interval', 'prove_fixed_point_envelope', 'prove_no_overflow']
+__all__ = ["FixedPointEnvelopeProof", "Interval", "prove_fixed_point_envelope", "prove_no_overflow"]

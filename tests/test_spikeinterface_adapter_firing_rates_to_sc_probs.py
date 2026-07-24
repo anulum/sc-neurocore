@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spikeinterface_adapter_support import *  # noqa: F403
 
+
 class TestFiringRatesToSCProbs:
     def test_output_shape(self):
         spikes = {0: np.array([1.0, 2.0]), 1: np.array([3.0])}

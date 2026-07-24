@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_training.snn_modules_support import *  # noqa: F403
 
+
 class TestLearnableThreshold:
     def test_threshold_is_parameter(self):
         lif = LIFCell(threshold=1.0, learn_threshold=True)

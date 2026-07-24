@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hierarchical_partitioner_core_support import *  # noqa: F403
 
+
 class TestRefineBackendValidation:
     """The constructor must reject unknown backend names cleanly,
     and missing-tool errors at dispatch time must be informative."""

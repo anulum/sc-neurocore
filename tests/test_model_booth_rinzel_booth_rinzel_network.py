@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_booth_rinzel_support import *  # noqa: F403
 
+
 class TestBoothRinzelNetwork:
     def test_population(self):
         pop = Population(BoothRinzelNeuron, n=5, label="br")

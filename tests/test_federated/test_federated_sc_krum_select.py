@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from federated_sc_support import *  # noqa: F403
 
+
 class TestKrumSelect:
     def test_selects_central(self):
         vecs = [

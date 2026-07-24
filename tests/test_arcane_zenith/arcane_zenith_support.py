@@ -34,6 +34,7 @@ machines without ``libautonomous_learning``.
 import math
 import numpy as np
 import pytest
+
 torch = pytest.importorskip("torch")
 from sc_neurocore.arcane_zenith import (
     ArcaneZenithCognitiveCore,
@@ -42,4 +43,14 @@ from sc_neurocore.arcane_zenith import (
 from sc_neurocore.fault_injection import RadiationProfile
 from sc_neurocore.neurons.models.arcane_neuron import ArcaneNeuron
 
-__all__ = ['math', 'np', 'pytest', 'torch', 'ArcaneZenithCognitiveCore', 'create_arcane_neuron_with_zenith_plasticity', 'RadiationProfile', 'ArcaneNeuron', '__all__']
+__all__ = [
+    "math",
+    "np",
+    "pytest",
+    "torch",
+    "ArcaneZenithCognitiveCore",
+    "create_arcane_neuron_with_zenith_plasticity",
+    "RadiationProfile",
+    "ArcaneNeuron",
+    "__all__",
+]

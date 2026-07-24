@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_sigma_delta_support import *  # noqa: F403
 
+
 class TestSigmaDeltaThreshold:
     def test_lower_threshold_higher_rate(self):
         n_low = SigmaDeltaNeuron(v_threshold=0.5)

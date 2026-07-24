@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_hill_tononi_support import *  # noqa: F403
 
+
 class TestHTAnalytical:
     def test_six_ionic_currents(self):
         n = HillTononiNeuron()

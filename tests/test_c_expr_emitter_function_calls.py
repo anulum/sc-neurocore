@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.c_expr_emitter_support import *  # noqa: F403
 
+
 class TestFunctionCalls:
     def test_direct_math_functions(self) -> None:
         assert _emit("exp(v)", {"v"}) == "hls::exp(v)"

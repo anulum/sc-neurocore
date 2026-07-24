@@ -90,5 +90,24 @@ def _c_arguments(neuron: QuadraticIFNeuron) -> tuple[float, ...]:
     return (neuron.v, neuron.v_reset, neuron.v_peak, neuron.dt)
 
 
-
-__all__ = ['ctypes', 'math', 'subprocess', 'Callable', 'Path', 'cast', 'patch', 'np', 'npt', 'pytest', 'backends', 'QuadraticIFNeuron', '_REPOSITORY', '_GOLDENS', '_COMPILED_BACKENDS', '_TRACE_ATOL', '_run', '_configured', '_c_arguments']
+__all__ = [
+    "ctypes",
+    "math",
+    "subprocess",
+    "Callable",
+    "Path",
+    "cast",
+    "patch",
+    "np",
+    "npt",
+    "pytest",
+    "backends",
+    "QuadraticIFNeuron",
+    "_REPOSITORY",
+    "_GOLDENS",
+    "_COMPILED_BACKENDS",
+    "_TRACE_ATOL",
+    "_run",
+    "_configured",
+    "_c_arguments",
+]

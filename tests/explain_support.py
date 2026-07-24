@@ -15,8 +15,18 @@ from sc_neurocore.explain import (
     CausalImportance,
     ExplanationResult,
 )
+
+
 def _make_spikes(T=20, N=8, rate=0.2, seed=42):
     rng = np.random.RandomState(seed)
     return (rng.random((T, N)) < rate).astype(np.int8)
 
-__all__ = ['np', 'SpikeAttributor', 'TemporalSaliency', 'CausalImportance', 'ExplanationResult', '_make_spikes']
+
+__all__ = [
+    "np",
+    "SpikeAttributor",
+    "TemporalSaliency",
+    "CausalImportance",
+    "ExplanationResult",
+    "_make_spikes",
+]

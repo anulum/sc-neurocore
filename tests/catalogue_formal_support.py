@@ -55,5 +55,14 @@ def _perfect_class_names() -> set[str]:
     return names
 
 
-
-__all__ = ['shutil', 'subprocess', 'sys', 'Path', 'pytest', 'ROOT', 'CATALOGUE', 'EMITTER', '_perfect_class_names']
+__all__ = [
+    "shutil",
+    "subprocess",
+    "sys",
+    "Path",
+    "pytest",
+    "ROOT",
+    "CATALOGUE",
+    "EMITTER",
+    "_perfect_class_names",
+]

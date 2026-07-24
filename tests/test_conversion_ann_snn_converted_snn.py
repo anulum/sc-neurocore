@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.conversion_ann_snn_support import *  # noqa: F403
 
+
 class TestConvertedSNN:
     def _make_snn(self) -> ConvertedSNN:
         rng = np.random.default_rng(11)

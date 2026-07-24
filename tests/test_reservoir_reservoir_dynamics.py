@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.reservoir_support import *  # noqa: F403
 
+
 class TestReservoirDynamics:
     def test_step_output_shape(self):
         res = AutoCriticalReservoir(n_inputs=3, n_neurons=50, seed=0)

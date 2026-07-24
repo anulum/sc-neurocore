@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_nas_engine_support import *  # noqa: F403
 
+
 class TestNASVerilogEmitter:
     def _make_candidate(self) -> SCCandidate:
         c = SCCandidate(

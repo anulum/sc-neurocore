@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
 
+
 class TestWendlingPerformance:
     def test_isolation_throughput(self):
         n = WendlingNeuron()

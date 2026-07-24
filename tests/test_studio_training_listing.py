@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.studio_training_support import *  # noqa: F403
 
+
 class TestListing:
     def test_list_surrogates(self) -> None:
         result = list_surrogates()
@@ -40,4 +41,3 @@ class TestListing:
         assert r.status_code == 200
         data = r.json()
         assert len(data) == len(_CELL_TYPES)
-

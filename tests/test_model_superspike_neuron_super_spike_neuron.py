@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_superspike_neuron_support import *  # noqa: F403
 
+
 class TestSuperSpikeNeuron:
     def test_fires(self):
         from sc_neurocore.neurons.models.superspike_neuron import SuperSpikeNeuron

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
 
+
 class TestExpIFParameters:
     def test_tau_affects_rate(self) -> None:
         fast = len(_run(ExpIFNeuron(tau=5.0), current=20.0, steps=10_000))

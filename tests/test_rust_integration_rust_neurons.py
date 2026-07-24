@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.rust_integration_support import *  # noqa: F403
 
+
 class TestRustNeurons:
     @pytest.mark.parametrize(
         ("model", "current"),

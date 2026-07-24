@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
 
+
 class TestIPPipeline:
     def test_population(self):
         assert Population(InhomogeneousPoissonNeuron, n=10, label="ip").n == 10

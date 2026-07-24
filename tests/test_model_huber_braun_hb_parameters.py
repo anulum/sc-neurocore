@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_huber_braun_support import *  # noqa: F403
 
+
 class TestHBParameters:
     @pytest.mark.parametrize("g_sd", [0.5, 1.5, 3.0])
     def test_g_sd_sweep(self, g_sd: float):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_evo_substrate.variation_support import *  # noqa: F403
 
+
 class TestMutationEngine:
     def test_point_mutation(self) -> None:
         me = MutationEngine(

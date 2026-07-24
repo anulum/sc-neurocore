@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.test_safety_cert.fault_tolerance_support import *  # noqa: F403
 
+
 class TestCCFAnalysis:
     def test_default_beta(self) -> None:
         ccf = CCFAnalysis()

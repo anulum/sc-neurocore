@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from sc_scope_support import *  # noqa: F403
 
+
 class TestScopeRenderer:
     def test_density_bar(self):
         bar = ScopeRenderer.render_density_bar(0.5)

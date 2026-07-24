@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.studio_synthesis_provenance_support import *  # noqa: F403
 
+
 def test_run_synthesis_includes_target_provenance_when_yosys_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -35,6 +36,7 @@ def test_run_synthesis_includes_target_provenance_when_yosys_is_missing(
     assert provenance["status"] == "completed"
     assert provenance["synthesis_ready"] is True
     assert provenance["pnr_ready"] is False
+
 
 def test_synthesis_endpoint_returns_target_provenance(client: TestClient) -> None:
     """The public synthesis endpoint returns path-free target provenance."""

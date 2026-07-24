@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.synthesis_conjectures_support import *  # noqa: F403
 
+
 class TestSTDPFIMCompetition:
     """STDP asymmetric updates and FIM symmetric corrections should
     produce measurably different weight trajectories."""

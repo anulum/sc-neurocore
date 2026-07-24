@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.alternative_path_support import *  # noqa: F403
 
+
 def test_heat_cosine_mode_route_matches_exact_candidate_within_sampling_tolerance():
     route = make_heat_cosine_mode_route()
 
@@ -325,5 +326,3 @@ def test_lif_rk4_baseline_rejects_nonfinite_numerical_candidate():
             r_m=1.0,
             dt=1.0,
         )
-
-

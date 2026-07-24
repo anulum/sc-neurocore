@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fusion_support import *  # noqa: F403
 
+
 class TestModalityConfig:
     def test_fields(self):
         m = ModalityConfig(name="dvs", n_channels=128, dt_us=100.0)

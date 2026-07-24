@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestCrossCorrelation:
     def test_autocorrelation_peak_at_zero(self):
         train = _poisson_train(100.0, 1.0)

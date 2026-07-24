@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_spinnaker2_support import *  # noqa: F403
 
+
 class TestSpiNNaker2FixedPointDecay:
     """Core: v = ((v - v_rest) * decay_mult >> decay_shift) + v_rest + I.
 

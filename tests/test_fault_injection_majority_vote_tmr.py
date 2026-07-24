@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.fault_injection_support import *  # noqa: F403
 
+
 class TestMajorityVoteTMR:
     def test_clean_signal_preserved(self):
         bits = generate_bernoulli_bitstream(0.7, 2000, rng=RNG(42))

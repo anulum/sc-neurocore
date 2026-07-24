@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.transcriptomic_support import *  # noqa: F403
 
+
 class TestGeneformerInterface:
     def test_defaults(self) -> None:
         iface = GeneformerInterface(n_genes=100)

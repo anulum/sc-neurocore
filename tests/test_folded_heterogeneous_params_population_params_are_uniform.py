@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.folded_heterogeneous_params_support import *  # noqa: F403
 
+
 class TestPopulationParamsAreUniform:
     """The per-population parameter-uniformity predicate."""
 

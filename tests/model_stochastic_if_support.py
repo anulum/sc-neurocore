@@ -22,8 +22,12 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, isi, firing_rate
+
+
 def _run(neuron: StochasticIFNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
+
+
 def _measure_cv(neuron: StochasticIFNeuron, current: float, steps: int) -> float | None:
     spikes = _run(neuron, current=current, steps=steps)
     if len(spikes) < 20:
@@ -31,4 +35,19 @@ def _measure_cv(neuron: StochasticIFNeuron, current: float, steps: int) -> float
     isis = np.diff(spikes).astype(float)
     return float(np.std(isis) / np.mean(isis))
 
-__all__ = ['np', 'pytest', 'StochasticIFNeuron', 'Population', 'Projection', 'Network', 'SpikeMonitor', 'PoissonInput', 'spike_count', 'isi', 'firing_rate', '_run', '_measure_cv']
+
+__all__ = [
+    "np",
+    "pytest",
+    "StochasticIFNeuron",
+    "Population",
+    "Projection",
+    "Network",
+    "SpikeMonitor",
+    "PoissonInput",
+    "spike_count",
+    "isi",
+    "firing_rate",
+    "_run",
+    "_measure_cv",
+]

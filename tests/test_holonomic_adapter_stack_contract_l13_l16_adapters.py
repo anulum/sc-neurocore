@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from tests.holonomic_adapter_stack_contract_support import *  # noqa: F403
 
+
 def test_l13_adapter_init_and_step():
     params = L13_HolonomicParameters(n_vacuum_nodes=8, bitstream_length=64)
     adapter = L13_SourceAdapter(params)
@@ -207,5 +208,3 @@ def test_l16_veto_activation():
     adapter.entropy_proxy = 0.9
     adapter.step_jax(0.1)
     assert float(jnp.mean(adapter.veto_active)) > 0.0
-
-

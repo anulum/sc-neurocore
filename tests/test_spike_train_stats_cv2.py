@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.spike_train_stats_support import *  # noqa: F403
 
+
 class TestCV2:
     def test_regular_low(self):
         train = np.zeros(1000, dtype=np.uint8)

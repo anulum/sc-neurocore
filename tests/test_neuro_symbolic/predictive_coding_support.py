@@ -21,4 +21,15 @@ from sc_neurocore.neuro_symbolic.predictive_coding import (
     _unpack,
 )
 
-__all__ = ['np', 'pytest', 'HYPERVECTOR_DIM', 'Hypervector', 'PredictiveCodingLayer', 'ReasoningTrace', 'SymbolEncoder', 'VerifiableInference', '_pack', '_unpack']
+__all__ = [
+    "np",
+    "pytest",
+    "HYPERVECTOR_DIM",
+    "Hypervector",
+    "PredictiveCodingLayer",
+    "ReasoningTrace",
+    "SymbolEncoder",
+    "VerifiableInference",
+    "_pack",
+    "_unpack",
+]

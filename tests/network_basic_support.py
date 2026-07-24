@@ -21,4 +21,20 @@ from sc_neurocore.network import topology
 from sc_neurocore.network.export import export_verilog
 from sc_neurocore.exceptions import SCHardwareError
 
-__all__ = ['dataclass', 'np', 'pytest', 'Population', 'Projection', 'SpikeMonitor', 'StateMonitor', 'RateMonitor', 'Network', 'TimedArray', 'PoissonInput', 'StepCurrent', 'topology', 'export_verilog', 'SCHardwareError']
+__all__ = [
+    "dataclass",
+    "np",
+    "pytest",
+    "Population",
+    "Projection",
+    "SpikeMonitor",
+    "StateMonitor",
+    "RateMonitor",
+    "Network",
+    "TimedArray",
+    "PoissonInput",
+    "StepCurrent",
+    "topology",
+    "export_verilog",
+    "SCHardwareError",
+]

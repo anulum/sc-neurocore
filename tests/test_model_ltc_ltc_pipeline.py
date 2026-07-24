@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.model_ltc_support import *  # noqa: F403
 
+
 class TestLTCPipeline:
     def test_population(self):
         assert Population(LiquidTimeConstantNeuron, n=10, label="ltc").n == 10

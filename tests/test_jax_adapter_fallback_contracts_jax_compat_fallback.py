@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from tests.jax_adapter_fallback_contracts_support import *  # noqa: F403
 
+
 class TestJaxCompatFallback:
     def test_make_rng_no_jax(self):
         with patch("sc_neurocore.adapters.holonomic._jax_compat.HAS_JAX", False):
