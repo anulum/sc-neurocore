@@ -28,4 +28,3 @@ export const fetchSynthEstimate = (irOpCount: number, target: string) =>
 
 export const runPnR = (jsonPath: string, target: string) =>
   post<PnRResult>("/synth/pnr", { json_path: jsonPath, target });
-

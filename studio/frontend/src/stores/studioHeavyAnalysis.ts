@@ -61,4 +61,3 @@ export async function runStoreHeavyAnalysis(
     set(studioAnalysisFailureState(outcome.error));
   }
 }
-

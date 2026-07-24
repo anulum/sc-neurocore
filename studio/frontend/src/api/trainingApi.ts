@@ -71,4 +71,3 @@ export const attachTrainingWeightsLive = (
     source_job_id: sourceJobId,
     ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
   });
-

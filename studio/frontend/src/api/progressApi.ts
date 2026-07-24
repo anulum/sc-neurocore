@@ -30,4 +30,3 @@ export function connectProgress(
   ws.onerror = () => onMessage({ type: "error", msg: "WebSocket connection failed" });
   return ws;
 }
-

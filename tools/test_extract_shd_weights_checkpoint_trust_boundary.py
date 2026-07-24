@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from extract_shd_weights_support import *  # noqa: F403
 
+
 class TestCheckpointTrustBoundary:
     def test_extract_requires_matching_checkpoint_sha256(self, tmp_path: Path) -> None:
         checkpoint = tmp_path / "shd_metadata.pth"

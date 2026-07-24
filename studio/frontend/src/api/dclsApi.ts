@@ -20,4 +20,3 @@ export const fetchDclsBenchmark = () => get<DclsBenchmark>("/dcls/benchmark");
 
 export const evaluateDcls = (body: DclsEvaluateBody) =>
   post<DclsEvaluation>("/dcls/evaluate", body);
-

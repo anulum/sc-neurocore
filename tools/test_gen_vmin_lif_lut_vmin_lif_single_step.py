@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestVminLifSingleStep:
     def test_zero_input_zero_state(self) -> None:
         cfg = VminLifConfig()

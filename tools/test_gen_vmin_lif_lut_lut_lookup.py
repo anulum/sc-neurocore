@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestLUTLookup:
     def test_lookup_zero(self) -> None:
         lut = gen_softplus_lut(beta=1.0, size=LUT_SIZE, z_max=LUT_RANGE)

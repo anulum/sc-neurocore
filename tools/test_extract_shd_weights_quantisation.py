@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from extract_shd_weights_support import *  # noqa: F403
 
+
 class TestQuantisation:
     def test_zero_tensor(self) -> None:
         w = torch.zeros(10, 5)

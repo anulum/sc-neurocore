@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from neuro_symbolic_predictive_coding_support import *  # noqa: F403
 
+
 class TestSymbolEncoder:
     def test_deterministic(self):
         enc1 = SymbolEncoder(42)

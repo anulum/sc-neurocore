@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestCli:
     def test_print_lut_outputs_table(self, capsys: pytest.CaptureFixture[str]) -> None:
         assert main(["--print-lut"]) == 0

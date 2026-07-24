@@ -29,7 +29,28 @@ from tools.gen_vmin_lif_lut import (
     vmin_lif_step_float,
     vmin_lif_step_q88,
 )
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
 
-__all__ = ['math', 'sys', 'Path', 'pytest', 'LUT_RANGE', 'LUT_SIZE', 'Q88_MAX', 'Q88_MIN', 'Q88_SCALE', 'VminLifConfig', 'decode_q88', 'encode_q88', 'emit_lut_verilog_header', 'gen_softplus_lut', 'lut_lookup', 'main', 'softplus_float', 'vmin_lif_step_float', 'vmin_lif_step_q88']
+__all__ = [
+    "math",
+    "sys",
+    "Path",
+    "pytest",
+    "LUT_RANGE",
+    "LUT_SIZE",
+    "Q88_MAX",
+    "Q88_MIN",
+    "Q88_SCALE",
+    "VminLifConfig",
+    "decode_q88",
+    "encode_q88",
+    "emit_lut_verilog_header",
+    "gen_softplus_lut",
+    "lut_lookup",
+    "main",
+    "softplus_float",
+    "vmin_lif_step_float",
+    "vmin_lif_step_q88",
+]

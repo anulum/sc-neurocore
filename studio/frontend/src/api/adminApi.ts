@@ -163,4 +163,3 @@ export const fetchStudioAuthSession = () =>
 
 export const logoutStudioBrowserUser = () =>
   post<StudioLogoutResponse>("/studio/auth/logout", {});
-

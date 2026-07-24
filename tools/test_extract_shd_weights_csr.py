@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from extract_shd_weights_support import *  # noqa: F403
 
+
 class TestCsr:
     def test_dense_matrix(self) -> None:
         # 90% sparse: 1 nz out of 10

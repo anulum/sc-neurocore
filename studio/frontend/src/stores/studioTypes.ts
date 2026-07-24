@@ -269,4 +269,3 @@ export interface StudioState {
   sweepParamY: string;
   setSweepParamY: (p: string) => void;
 }
-

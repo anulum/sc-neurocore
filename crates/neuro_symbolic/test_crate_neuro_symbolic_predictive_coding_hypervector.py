@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from neuro_symbolic_predictive_coding_support import *  # noqa: F403
 
+
 class TestHypervector:
     def test_zeros_popcount(self):
         hv = Hypervector.zeros()

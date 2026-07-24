@@ -19,4 +19,3 @@ export const contributeBenchmark = (submission: BenchmarkSubmission, handle: str
   post<{ stored: boolean }>("/benchmarks/contribute", { submission, handle });
 
 export const fetchDatabank = () => get<DatabankLeaderboard>("/benchmarks/databank");
-

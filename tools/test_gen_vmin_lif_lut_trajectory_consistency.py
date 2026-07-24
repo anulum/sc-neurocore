@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestTrajectoryConsistency:
     def test_constant_input_trajectory(self) -> None:
         cfg = VminLifConfig()

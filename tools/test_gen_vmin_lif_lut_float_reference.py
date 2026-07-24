@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestFloatReference:
     def test_float_step_matches_pytorch_dynamics(self) -> None:
         # Manual computation of one Vmin_LIF step:

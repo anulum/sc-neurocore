@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from extract_shd_weights_support import *  # noqa: F403
 
+
 class TestHexIO:
     def test_write_signed_int8_hex_round_trip(self, tmp_path: Path) -> None:
         w = torch.tensor([[-128, -1, 0, 1, 127]], dtype=torch.int8)

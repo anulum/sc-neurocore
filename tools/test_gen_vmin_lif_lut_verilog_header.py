@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestVerilogHeader:
     def test_header_contains_size_define(self) -> None:
         lut = gen_softplus_lut(1.0, LUT_SIZE, LUT_RANGE)

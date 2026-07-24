@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestQ88:
     def test_encode_zero(self) -> None:
         assert encode_q88(0.0) == 0

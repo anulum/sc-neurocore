@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from extract_shd_weights_support import *  # noqa: F403
 
+
 class TestLayerSpec:
     def test_three_layers_defined(self) -> None:
         assert len(SHD_LAYERS) == 3

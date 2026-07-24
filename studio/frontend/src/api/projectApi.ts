@@ -28,4 +28,3 @@ export const deleteProject = (name: string) =>
 
 export const runPipeline = (graph: NetworkGraph, target: string) =>
   post<PipelineResult>("/pipeline/run", { graph, target });
-

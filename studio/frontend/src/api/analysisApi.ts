@@ -28,4 +28,3 @@ export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unkno
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
 
 export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
-

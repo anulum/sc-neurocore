@@ -25,4 +25,3 @@ export const fetchCharacterize = (req: Record<string, unknown>) => post<Characte
 export const fetchMultiSimulate = (configs: Record<string, unknown>[]) => post<SimulateResponse[]>("/multi-simulate", configs);
 
 export const importTrace = (data: { voltage: number[]; dt: number }) => post<ImportedTrace>("/import-trace", data);
-

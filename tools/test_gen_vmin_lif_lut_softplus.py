@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from gen_vmin_lif_lut_support import *  # noqa: F403
 
+
 class TestSoftplus:
     def test_softplus_zero(self) -> None:
         assert softplus_float(0.0, 1.0) == pytest.approx(math.log(2), abs=1e-9)

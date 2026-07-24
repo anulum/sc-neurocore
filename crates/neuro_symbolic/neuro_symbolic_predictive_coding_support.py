@@ -20,4 +20,14 @@ from predictive_coding import (
     _unpack,
 )
 
-__all__ = ['np', 'HYPERVECTOR_DIM', 'Hypervector', 'PredictiveCodingLayer', 'ReasoningTrace', 'SymbolEncoder', 'VerifiableInference', '_pack', '_unpack']
+__all__ = [
+    "np",
+    "HYPERVECTOR_DIM",
+    "Hypervector",
+    "PredictiveCodingLayer",
+    "ReasoningTrace",
+    "SymbolEncoder",
+    "VerifiableInference",
+    "_pack",
+    "_unpack",
+]

@@ -281,9 +281,13 @@ ignore = [
 
 # Free-test / multi-class bucket splits use `from …support import *` plus focused
 # suites. F403/F405 are intentional for that layout (complete support __all__).
+# Same layout exists for tools/ and crates/ focused suites that share a support
+# module (pre-commit ruff hook covers the whole tree, not only tests/).
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["F403", "F405"]
 "src/sc_neurocore/quantum_cognition/tests/**/*.py" = ["F403", "F405"]
+"tools/test_*.py" = ["F403", "F405"]
+"crates/**/test_*.py" = ["F403", "F405"]
 # NumPy-convention docstrings (BROADCAST_2026-06-17). `D` is not yet in the global
 # `select` because the legacy tree still carries ~4.6k D violations; instead the
 # scoped public-docstring gate (tests/test_public_docstring_policy.py) enforces

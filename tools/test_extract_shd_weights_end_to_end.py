@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from extract_shd_weights_support import *  # noqa: F403
 
+
 @pytest.mark.skipif(not os.path.exists(CKPT), reason="dcls_max checkpoint not present")
 class TestEndToEnd:
     def test_extraction_produces_all_files(self, tmp_path: Path) -> None:

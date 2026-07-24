@@ -34,4 +34,3 @@ export const exportNIR = (graph: NetworkGraph) =>
 
 export const importNIR = (nir: NIRFormat) =>
   post<NetworkGraph>("/graph/import-nir", nir);
-

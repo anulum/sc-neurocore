@@ -27,4 +27,3 @@ export const emitSV = (irText: string) => post<SVEmitResponse>("/ir/emit-sv", { 
 export const emitSVDirect = (req: Record<string, unknown>) => post<SVDirectResponse>("/ir/emit-sv-direct", req);
 
 export const fetchCosimDetail = (req: Record<string, unknown>) => post<PrecisionResponse>("/ir/cosim", req);
-

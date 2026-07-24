@@ -37,4 +37,3 @@ export const fetchModelScan = () => get<ModelScanResponse>("/models/scan");
 
 export const submitModelScanJob = () =>
   post<ModelScanJobReceipt>("/models/scan/jobs", {});
-
