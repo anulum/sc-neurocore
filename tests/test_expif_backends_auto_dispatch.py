@@ -10,8 +10,10 @@ from __future__ import annotations
 
 from tests.expif_backends_support import *  # noqa: F403
 
+
 def test_auto_prefers_first_full_parameter_backend() -> None:
     """Route a non-default instance through measured-first Julia."""
+    _require_expif_backend("julia")
     auto = _configured()
     expected = _configured()
     auto_trace, auto_spikes = auto.simulate(100, 50.0, backend="auto")
@@ -26,8 +28,8 @@ def test_auto_prefers_first_full_parameter_backend() -> None:
 
 def test_auto_falls_through_to_go(monkeypatch: pytest.MonkeyPatch) -> None:
     """Use Go when the measured-first Julia lane is unavailable."""
+    _require_expif_backend("go")
     monkeypatch.setattr(expif, "_ensure_julia_loaded", lambda: False)
-    monkeypatch.setattr(expif, "_ensure_go_loaded", lambda: True)
     auto = _configured()
     expected = _configured()
     auto_trace, auto_spikes = auto.simulate(100, 50.0, backend="auto")
@@ -42,9 +44,9 @@ def test_auto_falls_through_to_go(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_auto_falls_through_to_mojo(monkeypatch: pytest.MonkeyPatch) -> None:
     """Continue to Mojo when Julia and Go are unavailable."""
+    _require_expif_backend("mojo")
     monkeypatch.setattr(expif, "_ensure_julia_loaded", lambda: False)
     monkeypatch.setattr(expif, "_ensure_go_loaded", lambda: False)
-    monkeypatch.setattr(expif, "_ensure_mojo_loaded", lambda: True)
     auto = _configured()
     expected = _configured()
     auto_trace, auto_spikes = auto.simulate(100, 50.0, backend="auto")

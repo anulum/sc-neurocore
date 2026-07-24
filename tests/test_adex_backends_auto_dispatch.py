@@ -10,8 +10,10 @@ from __future__ import annotations
 
 from tests.adex_backends_support import *  # noqa: F403
 
+
 def test_auto_prefers_measured_fastest_backend() -> None:
     """Route baseline Euler through Mojo before slower compiled lanes."""
+    _require_adex_backend("mojo")
     auto = AdExNeuron(v=-60.0, w=3.0)
     expected = AdExNeuron(v=-60.0, w=3.0)
     auto_trace, auto_spikes = auto.simulate(100, 250.0, backend="auto")
@@ -24,9 +26,9 @@ def test_auto_falls_through_to_go_backend(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Continue through measured order when Mojo and Julia are unavailable."""
+    _require_adex_backend("go")
     monkeypatch.setattr(adex, "_ensure_mojo_loaded", lambda: False)
     monkeypatch.setattr(adex, "_ensure_julia_loaded", lambda: False)
-    monkeypatch.setattr(adex, "_ensure_go_loaded", lambda: True)
     auto = AdExNeuron(v=-60.0, w=3.0)
     expected = AdExNeuron(v=-60.0, w=3.0)
     auto_trace, auto_spikes = auto.simulate(100, 250.0, backend="auto")
@@ -37,8 +39,8 @@ def test_auto_falls_through_to_go_backend(
 
 def test_auto_falls_through_to_julia(monkeypatch: pytest.MonkeyPatch) -> None:
     """Use Julia when the measured Mojo lane is unavailable."""
+    _require_adex_backend("julia")
     monkeypatch.setattr(adex, "_ensure_mojo_loaded", lambda: False)
-    monkeypatch.setattr(adex, "_ensure_julia_loaded", lambda: True)
     auto = AdExNeuron(v=-60.0, w=3.0)
     expected = AdExNeuron(v=-60.0, w=3.0)
     auto_trace, auto_spikes = auto.simulate(100, 250.0, backend="auto")

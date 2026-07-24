@@ -97,5 +97,23 @@ def _c_arguments(neuron: ExpIFNeuron) -> tuple[float, ...]:
     )
 
 
+def _require_expif_backend(name: str) -> None:
+    """Load a real compiled ExpIF lane or skip when it is not built.
 
-__all__ = ['ctypes', 'importlib', 'math', 'os', 'Callable', 'cast', 'np', 'npt', 'pytest', 'expif', 'ExpIFNeuron', '_TRACE_ATOL', '_GOLDENS', '_COMPILED_BACKENDS', '_run', '_configured', '_c_arguments']
+    Fall-through auto tests must load the selected backend for real before
+    disabling higher-priority ``_ensure_*`` helpers; otherwise
+    ``simulate`` asserts on a still-empty module/library handle.
+    """
+    loaders = {
+        "julia": expif._ensure_julia_loaded,
+        "go": expif._ensure_go_loaded,
+        "mojo": expif._ensure_mojo_loaded,
+    }
+    if name not in loaders:
+        raise ValueError(f"unsupported ExpIF backend name: {name!r}")
+    if not loaders[name]():
+        pytest.skip(f"{name} ExpIF backend is not built in this environment")
+
+
+
+__all__ = ['ctypes', 'importlib', 'math', 'os', 'Callable', 'cast', 'np', 'npt', 'pytest', 'expif', 'ExpIFNeuron', '_TRACE_ATOL', '_GOLDENS', '_COMPILED_BACKENDS', '_run', '_configured', '_c_arguments', '_require_expif_backend']

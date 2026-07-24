@@ -82,5 +82,24 @@ def _c_arguments(neuron: AdExNeuron) -> tuple[float, ...]:
     )
 
 
+def _require_adex_backend(name: str) -> None:
+    """Load a real compiled AdEx lane or skip when it is not built.
 
-__all__ = ['ctypes', 'importlib', 'math', 'os', 'Callable', 'Literal', 'cast', 'np', 'npt', 'pytest', 'adex', 'AdExNeuron', '_TRACE_ATOL', '_GOLDENS', '_COMPILED_BACKENDS', '_run', '_c_arguments']
+    Auto-dispatch fall-through tests must not monkeypatch ``_ensure_*`` to
+    return ``True`` without a loaded handle: ``simulate`` then hits
+    ``assert _julia_module is not None`` (and the Go/Mojo equivalents) and
+    fails when the suite runs without a prior parity load.
+    """
+    loaders = {
+        "julia": adex._ensure_julia_loaded,
+        "go": adex._ensure_go_loaded,
+        "mojo": adex._ensure_mojo_loaded,
+    }
+    if name not in loaders:
+        raise ValueError(f"unsupported AdEx backend name: {name!r}")
+    if not loaders[name]():
+        pytest.skip(f"{name} AdEx backend is not built in this environment")
+
+
+
+__all__ = ['ctypes', 'importlib', 'math', 'os', 'Callable', 'Literal', 'cast', 'np', 'npt', 'pytest', 'adex', 'AdExNeuron', '_TRACE_ATOL', '_GOLDENS', '_COMPILED_BACKENDS', '_run', '_c_arguments', '_require_adex_backend']
