@@ -236,7 +236,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 98  # Ratcheted to the measured 98.52% floor; target remains 100.
+fail_under = 99  # Ratcheted to the measured 99.37% floor (tip aec337d11); target remains 100.
 exclude_lines = [
     "pragma: no cover",
     "if __name__",

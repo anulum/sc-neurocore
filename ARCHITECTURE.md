@@ -85,7 +85,7 @@ sc-neurocore/
 │   ├── cli/                Command-line interface (info, deploy, benchmark)
 │   └── ...                 Additional research modules
 │
-├── tests/                  Python test suite (976 .py files; 21 940 collected tests; 98% CI gate)
+├── tests/                  Python test suite (976 .py files; 21 940 collected tests; 99% CI gate)
 │
 ├── hdl/                    Verilog RTL — 43 top-level non-testbench modules, 5 431 lines
 │   ├── sc_neurocore_top.v  AXI-Lite top-level wrapper (generic SC network)

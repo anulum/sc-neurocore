@@ -4,6 +4,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Changed
+- Raised the Python coverage gate from 98% to 99% in `pyproject.toml`
+  (`tool.coverage.report.fail_under`) and the primary CI matrix leg
+  (`--cov-fail-under=99`). Measured floor at tip `aec337d11` was 99.37%;
+  100% remains the programme target. Preflight continues to read the gate
+  from `pyproject.toml`.
+
 ### Added
 - Reconstructed `AdaptiveThresholdIFNeuron` as an explicitly composite
   reduced adaptive-threshold leaky integrate-and-fire: exact constant-input

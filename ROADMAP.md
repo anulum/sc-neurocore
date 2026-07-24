@@ -14,7 +14,7 @@
 - Dependabot, code-scanning, and secret-scanning alert surfaces were rechecked
   on 2026-05-25 and reported zero open alerts.
 - Coverage is being recovered in staged slices. The current CI configuration
-  enforces a Python coverage gate of 98%; 100% remains the target, not the
+  enforces a Python coverage gate of 99%; 100% remains the target, not the
   current release claim.
 - Open production blockers are tracked in internal audit and roadmap files.
   Do not use public docs as the source of truth for detailed task queues.
@@ -274,7 +274,7 @@ dependabot PRs merged.
   20 GitHub Actions workflows.
 - Current HDL static inventory: 43 top-level non-testbench Verilog RTL modules
   and 16 `tb_sc_*.v` simulation testbenches.
-- Current CI coverage gate is 98%; 100% remains the programme target.
+- Current CI coverage gate is 99%; 100% remains the programme target.
 
 ## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
 
