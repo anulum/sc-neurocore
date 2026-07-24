@@ -10,8 +10,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   (`--cov-fail-under=99`). Measured floor at tip `aec337d11` was 99.37%;
   100% remains the programme target. Preflight continues to read the gate
   from `pyproject.toml`.
+- Regenerated polyglot benchmark evidence for alpha, adaptive-threshold-IF,
+  Ermentrout–Kopell population, and resonate-and-fire after the coverage-gate
+  hash surface changed; refreshed `docs/API_REFERENCE.md`.
+- Isolation throughput floors for Hindmarsh–Rose and NLIF now use the CI floor
+  under active coverage tracing (as well as under `CI=`), so full-suite
+  preflight with pytest-cov does not flake while uninstrumented local floors
+  stay strict.
+- Mojo ISA pin allowlist includes the split
+  `test_build_accel_backends_commands_and_build` suite; DPI checkout bridge
+  discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Exact MPS / Heisenberg TEBD contracts for `SpinPoolMPS` and topology +
+  Kane-exchange contracts for `KaneSiliconMapper` (worst-offender coverage
+  debt closure for quantum_cognition + ONNX protobuf path via installed
+  `onnx`).
 - Reconstructed `AdaptiveThresholdIFNeuron` as an explicitly composite
   reduced adaptive-threshold leaky integrate-and-fire: exact constant-input
   LIF membrane relaxation, the Mihalas–Niebur (2009) threshold equation at

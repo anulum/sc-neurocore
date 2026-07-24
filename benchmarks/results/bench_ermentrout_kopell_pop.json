@@ -1,8 +1,8 @@
 {
   "auto_backend_order": [
     "rust",
-    "mojo",
     "julia",
+    "mojo",
     "go",
     "python"
   ],
@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 34823883,
-      "median_call_ms": 22.075545,
-      "median_call_ns": 22075545.0,
-      "median_ns_per_step": 441.5109,
-      "min_call_ns": 4407771,
+      "max_call_ns": 5760847,
+      "median_call_ms": 5.360503,
+      "median_call_ns": 5360503.0,
+      "median_ns_per_step": 107.21006,
+      "min_call_ns": 4386561,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        34823883,
-        22075545,
-        27140974,
-        4449852,
-        4407771
+        4386561,
+        5760847,
+        4779296,
+        5621152,
+        5360503
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -43,19 +43,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 42520447,
-      "median_call_ms": 21.923861,
-      "median_call_ns": 21923861.0,
-      "median_ns_per_step": 438.47722,
-      "min_call_ns": 5277716,
+      "max_call_ns": 7468572,
+      "median_call_ms": 4.069883,
+      "median_call_ns": 4069883.0,
+      "median_ns_per_step": 81.39766,
+      "min_call_ns": 2667038,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        42520447,
-        16436630,
-        25338992,
-        21923861,
-        5277716
+        2667038,
+        7468572,
+        4069883,
+        5756248,
+        3941503
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -70,19 +70,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.220446049250313e-16,
-      "max_call_ns": 28861688,
-      "median_call_ms": 14.767043,
-      "median_call_ns": 14767043.0,
-      "median_ns_per_step": 295.34086,
-      "min_call_ns": 5330744,
+      "max_call_ns": 6075866,
+      "median_call_ms": 4.290047,
+      "median_call_ns": 4290047.0,
+      "median_ns_per_step": 85.80094,
+      "min_call_ns": 2911209,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 2.220446049250313e-16,
       "samples_ns": [
-        5330744,
-        5899559,
-        17846355,
-        28861688,
-        14767043
+        4326295,
+        6075866,
+        4290047,
+        3229725,
+        2911209
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -97,19 +97,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 432828400,
-      "median_call_ms": 390.119045,
-      "median_call_ns": 390119045.0,
-      "median_ns_per_step": 7802.3809,
-      "min_call_ns": 296308533,
+      "max_call_ns": 128169433,
+      "median_call_ms": 121.501798,
+      "median_call_ns": 121501798.0,
+      "median_ns_per_step": 2430.03596,
+      "min_call_ns": 115441801,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        390119045,
-        296308533,
-        414963515,
-        375331128,
-        432828400
+        128169433,
+        121501798,
+        124582087,
+        115441801,
+        119722439
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -124,19 +124,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 7644355,
-      "median_call_ms": 5.832072,
-      "median_call_ns": 5832072.0,
-      "median_ns_per_step": 116.64144,
-      "min_call_ns": 4791749,
+      "max_call_ns": 3382964,
+      "median_call_ms": 3.249218,
+      "median_call_ns": 3249218.0,
+      "median_ns_per_step": 64.98436,
+      "min_call_ns": 2604751,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4791749,
-        5832072,
-        6709171,
-        7644355,
-        5640765
+        3249218,
+        3382964,
+        2819508,
+        3339448,
+        2604751
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -158,14 +158,14 @@
     },
     "rust_extension": {
       "path": "$WHEEL_SITE/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "277650d10eb391d393f7b54f2f539208d9af6ca244083c8daac5e57a1923ec61",
-      "size_bytes": 33928633
+      "sha256": "5128ca1c72ac38b9f2ca4782bd3988427ef9ae6f423a6bd279607b624ed4016a",
+      "size_bytes": 33932729
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. .venv/bin/python benchmarks/bench_ermentrout_kopell_pop.py --json benchmarks/results/bench_ermentrout_kopell_pop.json",
   "environment": {
     "affinity": [
-      8
+      0
     ],
     "go_binary": {
       "binary": "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop.so",
@@ -194,9 +194,9 @@
     "julia_cli": "julia version 1.12.6",
     "julia_runtime": "1.11.9",
     "load_average": [
-      42.07763671875,
-      36.60205078125,
-      32.10986328125
+      10.73095703125,
+      9.38623046875,
+      10.5498046875
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
     "mojo_pixi": "Mojo 0.26.2.0 (d627decc)",
@@ -271,9 +271,9 @@
     },
     "engine/src/neurons/special.rs": "24472635b8b2878b96a955763dcd9934a6699204118ff8fbb71435d1f2e5e680",
     "pyproject": {
-      "toml": "340f8d10a8f29937a396eac5d7b5dd05a893dd4533d72be35f992699f0d73287"
+      "toml": "9aa44846a2f38608579b1635a5ae4fcc81f01275692c4686d717f7f7163b45eb"
     },
-    "pyproject.toml": "340f8d10a8f29937a396eac5d7b5dd05a893dd4533d72be35f992699f0d73287",
+    "pyproject.toml": "9aa44846a2f38608579b1635a5ae4fcc81f01275692c4686d717f7f7163b45eb",
     "src/sc_neurocore/accel/ermentrout_kopell_pop": {
       "py": "6a4bf4259c981c65d085a179d4147bdefdae710915ecff80ad08d0aad75ead2a"
     },
@@ -355,7 +355,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-07-22T13:54:26+00:00",
+  "timestamp_utc": "2026-07-24T18:02:43+00:00",
   "verification": {
     "rust_safety": {
       "command": [

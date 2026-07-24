@@ -29008,6 +29008,11 @@ bridge : FisherPosnerQuantumBridge
 
 ---
 
+## Module `quantum_cognition.tests.fisher_posner_support`
+
+### Function `pool_and_neuron()`
+---
+
 ## Module `quantum_cognition.tests.test_dashboard`
 
 ### Class `FakeNeuron`
@@ -29044,7 +29049,7 @@ The dashboard repr includes the configured raster window.
 
 ---
 
-## Module `quantum_cognition.tests.test_fisher_posner`
+## Module `quantum_cognition.tests.test_fisher_posner_hybrid_fisher_posner_lif`
 
 ### Class `TestHybridFisherPosnerLIF`
 - **test_resting_state**(pool_and_neuron)
@@ -29065,21 +29070,18 @@ The dashboard repr includes the configured raster window.
 - **test_invalid_neuron_id**()
 - **test_invalid_type**()
 
+---
+
+## Module `quantum_cognition.tests.test_fisher_posner_hybrid_fisher_posner_lif_neuron`
+
 ### Class `TestHybridFisherPosnerLIFNeuron`
 - **test_wrapper_step**()
   - Wrapper step should return int (0 or 1).
 - **test_wrapper_v_property**()
 
-### Function `pool_and_neuron()`
 ---
 
-## Module `quantum_cognition.tests.test_gotm_brain_inline`
-
-### Class `TestGOTMBrainPersistence`
-- **test_save_load_roundtrip**(tmp_path)
-  - State should survive save → load cycle.
-- **test_load_mismatched_neurons**(tmp_path)
-  - Loading state with wrong neuron count should raise.
+## Module `quantum_cognition.tests.test_gotm_brain_inline_gotm_brain_llm`
 
 ### Class `TestGOTMBrainLLM`
 - **test_fallback_directive**()
@@ -29087,11 +29089,25 @@ The dashboard repr includes the configured raster window.
 - **test_process_content**()
   - process_content should return list of spike indices.
 
+---
+
+## Module `quantum_cognition.tests.test_gotm_brain_inline_gotm_brain_misc`
+
 ### Class `TestGOTMBrainMisc`
 - **test_reset**()
 - **test_get_learning_state**()
 - **test_repr**()
 - **test_learning_step_to_dict**()
+
+---
+
+## Module `quantum_cognition.tests.test_gotm_brain_inline_gotm_brain_persistence`
+
+### Class `TestGOTMBrainPersistence`
+- **test_save_load_roundtrip**(tmp_path)
+  - State should survive save → load cycle.
+- **test_load_mismatched_neurons**(tmp_path)
+  - Loading state with wrong neuron count should raise.
 
 ---
 
@@ -29150,11 +29166,29 @@ Contract tests for the Kane silicon register mapper.
 
 ---
 
-## Module `quantum_cognition.tests.test_radical_pair`
+## Module `quantum_cognition.tests.test_radical_pair_contracts`
 
-### Class `TestRadicalPairParams`
-- **test_defaults**()
-- **test_custom**()
+### Function `test_rejects_invalid_quadrature_order()`
+Constructor rejects quadrature rules that cannot integrate an interval.
+
+### Function `test_explicit_hyperfine_tensor_state_counts()`
+Explicit tensor construction records nuclei on both radicals.
+
+### Function `test_invalid_hyperfine_tensor_shape_is_rejected()`
+Tensor validation reports the exact radical-side tensor index.
+
+### Function `test_zero_nucleus_singlet_density_has_electron_dimension()`
+The no-bath helper returns pure electron singlet density matrices.
+
+### Function `test_dense_hamiltonian_rejects_oversized_nuclear_bath()`
+Dense exact evolution fail-closes before allocating huge spin operators.
+
+### Function `test_singlet_yield_rejects_non_positive_rates(params, message)`
+Singlet-yield validation rejects non-positive kinetic parameters.
+
+---
+
+## Module `quantum_cognition.tests.test_radical_pair_radical_pair_model`
 
 ### Class `TestRadicalPairModel`
 - **test_singlet_yield_zero_field**()
@@ -29177,25 +29211,11 @@ Contract tests for the Kane silicon register mapper.
 
 ---
 
-## Module `quantum_cognition.tests.test_radical_pair_contracts`
+## Module `quantum_cognition.tests.test_radical_pair_radical_pair_params`
 
-### Function `test_rejects_invalid_quadrature_order()`
-Constructor rejects quadrature rules that cannot integrate an interval.
-
-### Function `test_explicit_hyperfine_tensor_state_counts()`
-Explicit tensor construction records nuclei on both radicals.
-
-### Function `test_invalid_hyperfine_tensor_shape_is_rejected()`
-Tensor validation reports the exact radical-side tensor index.
-
-### Function `test_zero_nucleus_singlet_density_has_electron_dimension()`
-The no-bath helper returns pure electron singlet density matrices.
-
-### Function `test_dense_hamiltonian_rejects_oversized_nuclear_bath()`
-Dense exact evolution fail-closes before allocating huge spin operators.
-
-### Function `test_singlet_yield_rejects_non_positive_rates(params, message)`
-Singlet-yield validation rejects non-positive kinetic parameters.
+### Class `TestRadicalPairParams`
+- **test_defaults**()
+- **test_custom**()
 
 ---
 
@@ -32936,6 +32956,35 @@ ValueError
 
 ---
 
+## Module `studio.model_catalogue`
+
+### Class `ModelMetadataError`
+Raised when Studio model metadata loading fails for a known model.
+
+
+### Function `list_models()`
+Return declared metadata for every registered neuron model.
+
+Each entry is built from the model's committed descriptor (family, category,
+maturity, provenance, parameter and state counts). Models without a descriptor
+fall back to code introspection with an ``inferred`` category. Results are
+cached after the first call.
+
+### Function `get_model_detail(name)`
+Return the full declared metadata view for a single model.
+
+### Function `model_facets()`
+Return the catalogue facet taxonomy and counts for discovery UX.
+
+### Function `model_documentation(name)`
+Return the rendered reference documentation for a model, or ``None``.
+
+The per-model reference page lives at ``docs/api/models/<module>.md``; the
+Studio serves its Markdown so the documentation is browsable inline next to
+the live model rather than only in the built docs site.
+
+---
+
 ## Module `studio.model_scan`
 
 ### Class `ModelScanEntry`
@@ -32983,7 +33032,7 @@ configuration cannot be served as evidence for another configuration.
 
 ---
 
-## Module `studio.models`
+## Module `studio.model_simulate`
 
 ### Class `RustStudioBackendUnavailable`
 Raised when the Studio Rust batch-simulation path is unavailable.
@@ -32992,31 +33041,6 @@ Raised when the Studio Rust batch-simulation path is unavailable.
 ### Class `RustStudioBackendError`
 Raised when the Studio Rust batch-simulation path fails at runtime.
 
-
-### Class `ModelMetadataError`
-Raised when Studio model metadata loading fails for a known model.
-
-
-### Function `list_models()`
-Return declared metadata for every registered neuron model.
-
-Each entry is built from the model's committed descriptor (family, category,
-maturity, provenance, parameter and state counts). Models without a descriptor
-fall back to code introspection with an ``inferred`` category. Results are
-cached after the first call.
-
-### Function `get_model_detail(name)`
-Return the full declared metadata view for a single model.
-
-### Function `model_facets()`
-Return the catalogue facet taxonomy and counts for discovery UX.
-
-### Function `model_documentation(name)`
-Return the rendered reference documentation for a model, or ``None``.
-
-The per-model reference page lives at ``docs/api/models/<module>.md``; the
-Studio serves its Markdown so the documentation is browsable inline next to
-the live model rather than only in the built docs site.
 
 ### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path)`
 Simulate a named model. Uses Rust engine when model has default params.
@@ -34218,6 +34242,10 @@ Raises
 ValueError
     If the new user metadata is malformed or conflicts with an existing
     browser username.
+
+---
+
+## Module `studio.platform.identity_passwords`
 
 ### Function `make_browser_user_password_verifier(password)`
 Create an encoded PBKDF2-HMAC-SHA256 password verifier.

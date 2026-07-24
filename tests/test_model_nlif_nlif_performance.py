@@ -13,6 +13,20 @@ from __future__ import annotations
 from tests.model_nlif_support import *  # noqa: F403
 
 
+def _isolation_min_rate(*, ci_rate: int, local_rate: int) -> int:
+    """Floor under CI / coverage tracing vs uninstrumented local runs."""
+    if os.environ.get("CI"):
+        return ci_rate
+    try:
+        from coverage import Coverage
+
+        if Coverage.current() is not None:
+            return ci_rate
+    except Exception:
+        pass
+    return local_rate
+
+
 class TestNLIFPerformance:
     def test_isolation_throughput(self):
         n = NonlinearLIFNeuron()
@@ -22,8 +36,8 @@ class TestNLIFPerformance:
             n.step(20.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        min_rate = 50_000 if os.environ.get("CI") else 100_000
-        assert rate > min_rate, f"isolation: {rate:.0f} steps/s"
+        min_rate = _isolation_min_rate(ci_rate=50_000, local_rate=100_000)
+        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 
     def test_network_throughput(self):
         pop = Population(NonlinearLIFNeuron, n=20, label="bench")

@@ -13,6 +13,26 @@ from __future__ import annotations
 from tests.model_hindmarsh_rose_support import *  # noqa: F403
 
 
+def _isolation_min_rate(*, ci_rate: int, local_rate: int) -> int:
+    """Return the floor that is meaningful for the current instrumentation.
+
+    Full-suite preflight runs under ``pytest-cov`` line tracing, which multiplies
+    per-step cost. Local uninstrumented floors remain strict; CI and coverage
+    tracing use the published CI floor so the gate still fails on real
+    regressions without flaking under instrumentation.
+    """
+    if os.getenv("CI"):
+        return ci_rate
+    try:
+        from coverage import Coverage
+
+        if Coverage.current() is not None:
+            return ci_rate
+    except Exception:
+        pass
+    return local_rate
+
+
 class TestHRPerformance:
     def test_isolation_throughput(self):
         n = HindmarshRoseNeuron()
@@ -22,7 +42,7 @@ class TestHRPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        min_rate = 60_000 if os.getenv("CI") else 200_000
+        min_rate = _isolation_min_rate(ci_rate=60_000, local_rate=200_000)
         assert np.isfinite(n.x) and np.isfinite(n.y) and np.isfinite(n.z)
         assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
 

@@ -32,8 +32,12 @@ _MOJO_ARGV = re.compile(r'"mojo"\)?,\s*"(?:build|run)"|"run",\s*"mojo",\s*"(?:bu
 
 # Call sites where the token pair is a monkeypatched stub, not a real invocation:
 # ``_default_runner`` never launches Mojo (subprocess.run is patched) and the real
-# tools/build_accel_backends.py pins --target-cpu itself.
-_ALLOWLIST = {"tests/test_tools/test_build_accel_backends.py"}
+# tools/build_accel_backends.py pins --target-cpu itself. The focused suite split
+# of the build-accel tests keeps the same monkeypatched shape.
+_ALLOWLIST = {
+    "tests/test_tools/test_build_accel_backends.py",
+    "tests/test_tools/test_build_accel_backends_commands_and_build.py",
+}
 
 
 def test_pin_isa_inserts_baseline_after_build() -> None:

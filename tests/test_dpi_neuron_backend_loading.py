@@ -15,6 +15,7 @@ import importlib
 import os
 from pathlib import Path
 import shutil
+import site
 import subprocess
 import sys
 import sysconfig
@@ -143,17 +144,29 @@ def test_checkout_bridge_discovers_maturin_compiled_extensions(tmp_path: Path) -
         "assert actual == expected, (actual, expected); "
         "assert package.DPINeuron is extension.DPINeuron"
     )
+    # ``python -S`` disables the site module (so purelib / usersite are not
+    # auto-appended). Dependencies such as NumPy often live only in the user
+    # site on developer workstations; purelib alone is insufficient.
+    dependency_roots = [str(purelib)]
+    user_site = site.getusersitepackages()
+    if user_site and user_site not in dependency_roots:
+        dependency_roots.append(user_site)
+
     for extension in compiled_extensions:
         environment = dict(os.environ)
         environment["PYTHONPATH"] = os.pathsep.join(
-            (str(tmp_path), str(extension.parent.parent), str(purelib))
+            (str(tmp_path), str(extension.parent.parent), *dependency_roots)
         )
-        subprocess.run(
+        completed = subprocess.run(
             [sys.executable, "-S", "-c", script, str(extension)],
             cwd=tmp_path,
             env=environment,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=30,
+        )
+        assert completed.returncode == 0, (
+            f"checkout bridge failed for {extension}\n"
+            f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
         )
