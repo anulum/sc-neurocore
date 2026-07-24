@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4319
+    "test_files": 4321
   },
   "documentation": {
     "public_pages": [
@@ -6092,9 +6092,11 @@
       "tests/test_quantum_cognition_docs.py",
       "tests/test_quantum_cognition_fisher_posner_quantum_bridge.py",
       "tests/test_quantum_cognition_hybrid_fisher_posner_lif.py",
+      "tests/test_quantum_cognition_kane_mapper_topologies.py",
       "tests/test_quantum_cognition_non_locality.py",
       "tests/test_quantum_cognition_package_import.py",
       "tests/test_quantum_cognition_quantum_studio_hook.py",
+      "tests/test_quantum_cognition_spin_pool_exact_mps.py",
       "tests/test_quantum_cognition_spin_pool_mps.py",
       "tests/test_quantum_hybrid.py",
       "tests/test_quantum_qec_contracts.py",
