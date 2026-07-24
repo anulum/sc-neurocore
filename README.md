@@ -12,6 +12,7 @@
 </p>
 
 [![CI](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/anulum/sc-neurocore/branch/main/graph/badge.svg)](https://codecov.io/gh/anulum/sc-neurocore)
 [![CodeQL](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml/badge.svg)](https://github.com/anulum/sc-neurocore/actions/workflows/codeql.yml)
 [![PyPI](https://img.shields.io/pypi/v/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/sc-neurocore.svg)](https://pypi.org/project/sc-neurocore/)

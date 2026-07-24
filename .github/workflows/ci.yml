@@ -304,6 +304,7 @@ jobs:
               --cov=sc_neurocore \
               --cov-report=term-missing \
               --cov-report=html:htmlcov \
+              --cov-report=xml:coverage.xml \
               --cov-fail-under=98 \
               --junitxml=test-results.xml
           else
@@ -402,7 +403,23 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-report
-          path: htmlcov/
+          path: |
+            htmlcov/
+            coverage.xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.primary
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: coverage.xml
+          flags: python
+          name: sc-neurocore-python-${{ matrix.python-minor }}
+          disable_search: true
+          # Do not fail the primary leg if the Codecov token/app is missing;
+          # local and CI coverage gates above remain authoritative.
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   test-training:
     runs-on: ubuntu-latest
