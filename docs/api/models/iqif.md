@@ -137,13 +137,17 @@ speedup.
 
 ```bash
 PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
-  tests/test_model_iqif.py \
+  tests/test_model_iqif_source_dynamics.py \
+  tests/test_model_iqif_validation.py \
+  tests/test_model_iqif_batch.py \
   tests/test_iqif_schema_dsl.py \
   tests/test_reference_iqif.py \
   tests/test_iqif_backend_loading.py \
   tests/test_iqif_backends.py \
   tests/test_cosim_iqif.py \
-  tests/test_bench_iqif.py
+  tests/test_bench_iqif_evidence_and_hashes.py \
+  tests/test_bench_iqif_gates_and_rejects.py \
+  tests/test_bench_iqif_probes_and_metadata.py
 
 taskset -c 4 env PYTHONPATH=bridge:src:. .venv/bin/python \
   benchmarks/bench_model_iqif.py \
