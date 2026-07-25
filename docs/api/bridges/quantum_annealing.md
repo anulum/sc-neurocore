@@ -301,7 +301,11 @@ with no misses or partial branches.
 
 ```bash
 PYTHONPATH=src:. python -m pytest \
-  tests/test_bridges/test_quantum_annealing_models_compilers.py \
+  tests/test_bridges/test_quantum_annealing_value_specs.py \
+  tests/test_bridges/test_quantum_annealing_ising_model.py \
+  tests/test_bridges/test_quantum_annealing_qubo_model.py \
+  tests/test_bridges/test_quantum_annealing_network_compilers.py \
+  tests/test_bridges/test_quantum_annealing_bitstream_qubo.py \
   tests/test_bridges/test_quantum_annealing_solvers_backends.py \
   tests/test_bridges/test_quantum_annealing_analysis_hardware.py \
   tests/test_bridges/test_quantum_annealing_transforms_io.py \

@@ -85,7 +85,7 @@ states) matches at `1e-12` absolute.
 | Julia (juliacall) | `tests/test_adaptive_threshold_if_julia_parity.py` | within `1e-12`; typed buffer failures atomic |
 | Go (C ABI) | `tests/test_adaptive_threshold_if_go_parity.py`, `tests/test_adaptive_threshold_if_native_abi.py` | within `1e-12`; all overlap/null/status classes rejected without writes |
 | Mojo (C ABI) | `tests/test_adaptive_threshold_if_mojo_parity.py`, `tests/test_adaptive_threshold_if_native_abi.py` | within `1e-10`; identical ABI classes |
-| Dispatch contracts | `tests/test_adaptive_threshold_if_accel_dispatch_contracts.py` | selection, validation, reload, malformed-result boundaries |
+| Dispatch contracts | `tests/test_adaptive_threshold_if_{input_validation,backend_selection,result_validation,c_facade}.py` | input bounds, selection/reload, result validation, C-facade status boundaries |
 
 ## Paired schema and Q32.32 co-simulation
 
@@ -145,7 +145,10 @@ python -m pytest \
   tests/test_adaptive_threshold_if_go_parity.py \
   tests/test_adaptive_threshold_if_mojo_parity.py \
   tests/test_adaptive_threshold_if_native_abi.py \
-  tests/test_adaptive_threshold_if_accel_dispatch_contracts.py \
+  tests/test_adaptive_threshold_if_input_validation.py \
+  tests/test_adaptive_threshold_if_backend_selection.py \
+  tests/test_adaptive_threshold_if_result_validation.py \
+  tests/test_adaptive_threshold_if_c_facade.py \
   tests/test_cosim_adaptive_threshold_if.py \
   tests/test_reference_adaptive_threshold_if.py \
   tests/test_bench_adaptive_threshold_if.py -q
