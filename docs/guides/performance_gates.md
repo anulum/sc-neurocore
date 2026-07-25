@@ -37,7 +37,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
   tests/test_optics/test_photonic_layer.py \
   tests/test_quantum/test_hybrid.py \
   tests/test_interfaces/test_dvs_input.py \
-  tests/test_sources/test_bitstream_current_source.py \
+  tests/sources/test_bitstream_current_source_performance.py \
   tests/test_hdl_gen/test_verilog_generator.py \
   tests/test_hdl_gen/test_spice_generator.py \
   tests/test_bio/test_dna_storage.py \
@@ -66,7 +66,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 | Photonic layer | `tests/test_optics/test_photonic_layer.py` |
 | Quantum hybrid layer | `tests/test_quantum/test_hybrid.py` |
 | DVS input layer | `tests/test_interfaces/test_dvs_input.py` |
-| Bitstream current source | `tests/test_sources/test_bitstream_current_source.py` |
+| Bitstream current source | `tests/sources/test_bitstream_current_source_performance.py` |
 | Verilog generator | `tests/test_hdl_gen/test_verilog_generator.py` |
 | SPICE generator | `tests/test_hdl_gen/test_spice_generator.py` |
 | DNA storage | `tests/test_bio/test_dna_storage.py` |

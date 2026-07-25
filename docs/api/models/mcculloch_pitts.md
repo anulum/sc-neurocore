@@ -133,7 +133,11 @@ claim exclusive isolation.
 
 ```bash
 PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
-  tests/test_model_mcculloch_pitts.py \
+  tests/test_model_mcculloch_pitts_logic.py \
+  tests/test_model_mcculloch_pitts_validation.py \
+  tests/test_model_mcculloch_pitts_hardware_encoding.py \
+  tests/test_model_mcculloch_pitts_batch_dispatch.py \
+  tests/test_model_mcculloch_pitts_network.py \
   tests/test_mcculloch_pitts_schema_dsl.py \
   tests/test_reference_mcculloch_pitts.py \
   tests/test_mcculloch_pitts_backend_loading.py \
