@@ -14,6 +14,7 @@ from tests.quadratic_if_backends_support import *  # noqa: F403
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejects_invalid_run_without_writing_output(backend: str) -> None:
     """Reject invalid work before emitting any caller-visible row."""
+    _require_qif_backend(backend)
     neuron = QuadraticIFNeuron(v=-0.25)
     output = np.full(2, -999.0, dtype=np.float64)
     if backend == "go":

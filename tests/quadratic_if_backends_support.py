@@ -90,6 +90,19 @@ def _c_arguments(neuron: QuadraticIFNeuron) -> tuple[float, ...]:
     return (neuron.v, neuron.v_reset, neuron.v_peak, neuron.dt)
 
 
+def _require_qif_backend(name: str) -> None:
+    """Load a real compiled QIF lane or skip when it is not built."""
+    loaders = {
+        "julia": backends.ensure_julia_loaded,
+        "go": backends.ensure_go_loaded,
+        "mojo": backends.ensure_mojo_loaded,
+    }
+    if name not in loaders:
+        raise ValueError(f"unsupported QIF backend name: {name!r}")
+    if not loaders[name]():
+        pytest.skip(f"{name} QIF backend is not built in this environment")
+
+
 __all__ = [
     "ctypes",
     "math",
@@ -110,4 +123,5 @@ __all__ = [
     "_run",
     "_configured",
     "_c_arguments",
+    "_require_qif_backend",
 ]

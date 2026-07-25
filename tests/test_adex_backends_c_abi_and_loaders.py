@@ -14,6 +14,7 @@ from tests.adex_backends_support import *  # noqa: F403
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejects_non_finite_input_without_writing_output(backend: str) -> None:
     """Prove invalid input is rejected inside each C boundary, not only in Python."""
+    _require_adex_backend(backend)
     neuron = AdExNeuron()
     output = np.full(3, -999.0, dtype=np.float64)
     if backend == "go":

@@ -137,7 +137,12 @@ jobs:
           tests/test_jax_layer.py
           tests/test_quantum_bridge.py
           tests/test_mlir_emitter.py
-          tests/test_holonomic_adapter_stack_contract.py
+          tests/test_holonomic_adapter_stack_contract_compiler_pipeline.py
+          tests/test_holonomic_adapter_stack_contract_l1_l2_adapters.py
+          tests/test_holonomic_adapter_stack_contract_l3_l7_adapters.py
+          tests/test_holonomic_adapter_stack_contract_l8_l12_and_support.py
+          tests/test_holonomic_adapter_stack_contract_l13_l16_adapters.py
+          tests/test_holonomic_adapter_stack_contract_user_profile_and_meta.py
           tests/test_scpn_l1_basic.py
           tests/test_scpn_l1_quantum_contracts.py
           tests/test_scpn_l2_neurochemical_contracts.py
