@@ -57,9 +57,11 @@ Current measured evidence:
 | Elapsed time | 12.942 s |
 | Installed packages | `defusedxml`, `numpy`, `pip`, `sc-neurocore`, `scipy` |
 | Heavy optional packages installed | None |
-| Public import smoke | `sc_neurocore.__version__ == "3.16.0"` and 44 public exports |
+| Public import smoke | `sc_neurocore.__version__ == "3.16.0"` and 45 public exports |
 
-The root package import contract is enforced by `tests/test_public_api.py`.
+The root package import and distribution contracts are enforced by
+`tests/test_public_api_lazy_facades.py`, `tests/test_public_api_install_profiles.py`,
+and `tests/test_public_api_packaged_resources.py`.
 The 2026-06-27 scoped verification passed Ruff, Ruff docstring checks, strict
 mypy, `11 passed` public API tests, and 100% isolated coverage for
 `src/sc_neurocore/__init__.py`. That test surface covers the lazy public symbol

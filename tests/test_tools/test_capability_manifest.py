@@ -47,7 +47,12 @@ def test_manifest_scans_core_capability_surfaces() -> None:
     )
     assert "full" in manifest["packaging"]["optional_extras"]
     assert ".github/workflows/ci.yml" in manifest["quality_gates"]["github_workflows"]
-    assert "tests/test_public_api.py" in manifest["quality_gates"]["test_files"]
+    test_files = set(manifest["quality_gates"]["test_files"])
+    assert {
+        "tests/test_public_api_install_profiles.py",
+        "tests/test_public_api_lazy_facades.py",
+        "tests/test_public_api_packaged_resources.py",
+    } <= test_files
     assert "adex.md" in manifest["models"]["documentation_pages"]
 
 
