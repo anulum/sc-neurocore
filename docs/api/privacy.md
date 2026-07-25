@@ -59,8 +59,9 @@ signed_manifest = contract.to_dict()
 ```
 
 The governance surface is intentionally dependency-free and does not have a
-polyglot compute counterpart. It is covered by `tests/test_privacy_governance.py`
-with 100% isolated module coverage and strict type checking.
+polyglot compute counterpart. It is covered by the responsibility-specific
+`tests/test_privacy_governance_*.py` suites with 100% statement coverage,
+99.36% branch-aware isolated coverage, and strict type checking.
 
 ## Usage
 

@@ -2784,7 +2784,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Unified XorShift64 PRNG across all four backends (shift constants 13/7/17, `0xDEADBEEFCAFEBABE` fallback for zero seeds) so the uniform-random sequence is byte-identical cross-language. Rust↔Julia full bit-exact parity on final genomes / lineage / Pareto; Rust↔Go & Rust↔Mojo agree on structural counters but drift ~1e-3 on `best_fitness` because Go + Mojo `libm` `cos()` / `log()` differ from Rust's libm at ~1 ULP and Box-Muller compounds that.
 - Hamming(7,4) encode / decode + `ScDoctor.adapt` control law added to `crates/stochastic_doctor_core` with PyO3 bridge (`py_hamming74_encode`, `py_hamming74_decode`, `py_sc_doctor_adapt`); `src/sc_neurocore/debug/sc_doctor.py` now dispatches to Rust when the extension is importable (1.7× / 3.1× speedup on encode / decode; `adapt` slower via FFI at 276 ns due to dominant PyO3 overhead). Pure-Python fallback preserved bit-exact.
 - `sc_scope.compute_scc` now dispatches to `stochastic_doctor_core.py_scc_packed` (174× speedup over pure Python; bit-exact parity with fallback).
-- Cross-language parity test harness `tests/test_evo_substrate/test_multilang_parity.py` (18 assertions) asserts Rust↔Julia byte-exact, Rust↔Go counter match + fitness tolerance, Rust↔Mojo schema match.
+- Cross-language parity suites `tests/test_evo_substrate/test_multilang_parity_*.py` (18 assertions) assert Rust↔Julia byte-exact, Rust↔Go counter match + fitness tolerance, Rust↔Mojo schema match.
 - Per-backend unit tests: Julia 17 tests (`test_evo_runner.jl`), Go 8 tests (`runner_test.go`), Mojo 7 side-validated tests (`tests/test_evo_substrate/test_mojo_runner.py`).
 
 #### Documentation

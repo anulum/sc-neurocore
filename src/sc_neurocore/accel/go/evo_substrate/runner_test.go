@@ -15,8 +15,8 @@ import (
 
 func TestXorShift64Determinism(t *testing.T) {
 	r := newXorShift64(7)
-	// Reference values from the Python XorShift64 reference (see
-	// tests/test_evo_substrate/test_multilang_parity.py commentary).
+	// Reference values from the Python XorShift64 fixed-seed configuration in
+	// tests/test_evo_substrate/multilang_parity_support.py.
 	if v := r.nextU64(); v != 7575888327 {
 		t.Fatalf("first state = %d, want 7575888327", v)
 	}

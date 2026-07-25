@@ -629,8 +629,8 @@ noise in the SHA-256 hashing path. Mojo's Pareto size is larger (3 vs 1)
 because the compounding drift leaves a few more non-dominated organisms
 standing.
 
-The cross-language parity suite in
-`tests/test_evo_substrate/test_multilang_parity.py` asserts these four-way
+The responsibility-specific suites matching
+`tests/test_evo_substrate/test_multilang_parity_*.py` assert these four-way
 relationships. The benchmark producer fails closed when a required backend is
 missing; test environments may skip an unavailable optional toolchain.
 
@@ -699,7 +699,7 @@ shape only and must not be used as release, regression, or publication evidence.
 * Mojo: `pytest tests/test_evo_substrate/test_mojo_runner.py` — 7
   side-validated unit tests driven from Python.
 * Cross-language parity: `JULIA_DEPOT_PATH=build/julia-depot pytest
-  tests/test_evo_substrate/test_multilang_parity.py` — 18 tests (schema,
+  tests/test_evo_substrate/test_multilang_parity_*.py` — 18 tests (schema,
   Rust↔Julia bit-exact, Rust↔Go tolerance, Rust↔Mojo structure, determinism).
 
 **Interpretation.** In the current loaded-host artefact, safety checks and
@@ -749,8 +749,8 @@ on reserved isolated cores.
 - Implementation: 14 responsibility modules under
   `src/sc_neurocore/evo_substrate/`; the largest is `replication.py`
   (304 LOC).
-- Tests: 18 focused modules under `tests/test_evo_substrate/`; the largest is
-  `test_multilang_parity.py` (312 LOC).
+- Tests: 54 focused test and support modules under `tests/test_evo_substrate/`;
+  the largest is `test_replication_replication_engine.py` (265 LOC).
 - Demo: `examples/16_evo_substrate_demo.py`.
 - Benchmarks: `benchmarks/bench_evo_substrate.py` and
   `benchmarks/bench_evo_substrate_multilang.py`.
