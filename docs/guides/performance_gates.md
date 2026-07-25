@@ -27,7 +27,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
   tests/test_layers/test_recurrent.py \
   tests/test_layers/test_vectorized_layer_packed_forward.py \
   tests/test_layers/test_sc_conv_layer.py \
-  tests/test_layers/test_sc_dense_layer.py \
+  tests/test_layers/test_sc_dense_layer_performance.py \
   tests/test_layers/test_memristive.py \
   tests/test_layers/test_sc_learning_layer.py \
   tests/test_layers/test_fusion.py \
@@ -56,7 +56,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 | Recurrent layer | `tests/test_layers/test_recurrent.py` |
 | Vectorized layer | `tests/test_layers/test_vectorized_layer_packed_forward.py` |
 | Convolution layer | `tests/test_layers/test_sc_conv_layer.py` |
-| Dense layer | `tests/test_layers/test_sc_dense_layer.py` |
+| Dense layer | `tests/test_layers/test_sc_dense_layer_performance.py` |
 | Memristive layer | `tests/test_layers/test_memristive.py` |
 | Learning layer | `tests/test_layers/test_sc_learning_layer.py` |
 | Fusion layer | `tests/test_layers/test_fusion.py` |
