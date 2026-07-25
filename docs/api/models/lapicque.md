@@ -79,7 +79,7 @@ LapicqueNeuron
 | Surface | Evidence | Contract |
 |---------|----------|----------|
 | Python model | `tests/test_model_lapicque.py` | exact flow, rheobase, reset, validation, analysis, network use, and timing guard |
-| Public native dispatch | `tests/test_lapicque_backends.py` | executable Rust/Julia/Go/Mojo paths, complete parity, measured fall-through order, and mutation-free rejection |
+| Public native dispatch | `tests/test_lapicque_backend_parity.py`, `tests/test_lapicque_backend_auto_dispatch.py`, `tests/test_lapicque_backend_validation.py`, `tests/test_lapicque_backend_c_abi.py`, `tests/test_lapicque_backend_unavailability.py` | executable Rust/Julia/Go/Mojo paths, complete parity, measured fall-through order, and mutation-free rejection |
 | Native loading | `tests/test_lapicque_backend_loading.py` | build/load separation, ABI declarations, cache behaviour, and actionable failures |
 | Reference | `tests/test_reference_lapicque.py` | independent closed-form feature re-derivation at `1e-12` absolute tolerance |
 | Python-to-Verilog | `tests/test_cosim_lapicque.py` | paired-schema event exactness, `2e-15` state envelope, and Q16.16 event-vector parity |
