@@ -22,10 +22,10 @@ from typing import Any
 OSV_SCANNER_SCHEMA_VERSION = "sc-neurocore.osv-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 SleepCommand = Callable[[float], None]
-# Only real lockfiles. The root requirements.txt is a short unpinned pointer
-# (canonical pins live in pyproject / requirements/*.txt); scanning it as a
-# lockfile triggers remote resolution RPCs that flake as "service unavailable"
-# and fails the lane even when vulnerability_count is zero.
+# Only lockfiles OSV's lockfile plugin can extract. Root requirements.txt is an
+# unpinned pointer (remote resolve flakes). Hashed requirements/*.txt are not
+# supported extractors ("could not determine extractor suitable") and fail the
+# lane with returncode 127 even when vulnerability_count is zero.
 OSV_LOCKFILE_INPUTS = (
     "Cargo.lock",
     "fuzz/Cargo.lock",
@@ -37,8 +37,6 @@ OSV_LOCKFILE_INPUTS = (
     "crates/neuro_symbolic/Cargo.lock",
     "src/sc_neurocore/accel/rust/Cargo.lock",
     "studio/frontend/package-lock.json",
-    "requirements/docs.txt",
-    "requirements/runtime.txt",
 )
 
 

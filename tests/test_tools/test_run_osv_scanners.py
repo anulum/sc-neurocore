@@ -173,10 +173,6 @@ def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:
             "src/sc_neurocore/accel/rust/Cargo.lock",
             "--lockfile",
             "studio/frontend/package-lock.json",
-            "--lockfile",
-            "requirements/docs.txt",
-            "--lockfile",
-            "requirements/runtime.txt",
         ]
     ]
     assert summary["passed"] is True
