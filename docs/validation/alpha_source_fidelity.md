@@ -73,7 +73,7 @@ all five states) matches at `1e-12` absolute.
 | Julia (juliacall) | `tests/test_alpha_julia_parity.py` | within `1e-12`; typed buffer failures atomic |
 | Go (C ABI) | `tests/test_alpha_go_parity.py`, `tests/test_alpha_native_abi.py` | within `1e-12`; all overlap/null/status classes rejected without writes |
 | Mojo (C ABI) | `tests/test_alpha_mojo_parity.py`, `tests/test_alpha_native_abi.py` | within `1e-10`; identical ABI classes |
-| Dispatch contracts | `tests/test_alpha_accel_dispatch_contracts.py` | selection, validation, reload, malformed-result boundaries |
+| Dispatch contracts | `tests/test_alpha_accel_input_validation.py`, `tests/test_alpha_accel_backend_selection.py`, `tests/test_alpha_accel_result_validation.py`, `tests/test_alpha_accel_c_facade.py` | selection, validation, reload, malformed-result boundaries |
 
 ## Paired schema and Q32.32 co-simulation
 
@@ -138,7 +138,10 @@ python -m pytest \
   tests/test_alpha_go_parity.py \
   tests/test_alpha_mojo_parity.py \
   tests/test_alpha_native_abi.py \
-  tests/test_alpha_accel_dispatch_contracts.py \
+  tests/test_alpha_accel_input_validation.py \
+  tests/test_alpha_accel_backend_selection.py \
+  tests/test_alpha_accel_result_validation.py \
+  tests/test_alpha_accel_c_facade.py \
   tests/test_cosim_alpha.py \
   tests/test_reference_alpha.py \
   tests/test_bench_alpha.py -q

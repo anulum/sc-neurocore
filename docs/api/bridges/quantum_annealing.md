@@ -307,7 +307,12 @@ PYTHONPATH=src:. python -m pytest \
   tests/test_bridges/test_quantum_annealing_network_compilers.py \
   tests/test_bridges/test_quantum_annealing_bitstream_qubo.py \
   tests/test_bridges/test_quantum_annealing_solvers_backends.py \
-  tests/test_bridges/test_quantum_annealing_analysis_hardware.py \
+  tests/test_bridges/test_quantum_annealing_energy_landscape.py \
+  tests/test_bridges/test_quantum_annealing_embedding_analysis.py \
+  tests/test_bridges/test_quantum_annealing_sample_aggregation.py \
+  tests/test_bridges/test_quantum_annealing_time_to_solution.py \
+  tests/test_bridges/test_quantum_annealing_hardware_graph.py \
+  tests/test_bridges/test_quantum_annealing_chain_break_resolution.py \
   tests/test_bridges/test_quantum_annealing_transforms_io.py \
   tests/test_bridges/test_quantum_annealing_decomposition_architecture.py \
   tests/test_bridges/test_quantum_annealing_neal_parity.py \
