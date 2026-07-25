@@ -102,7 +102,7 @@ dynamics_faithful = true
 metric = "parity"
 operating_point = "candidate-first Euler; accel I=0/0.333/0.7/2/3/5/20 for 1000 steps; hand/schema/Q8.8 RTL at I=0.7 for 1000 steps"
 tolerance = "accel bit-exact; hand/schema/Q8.8 event-exact at I=0.7; declared Q8.8 boundary 32/32/31 at I=0.333"
-evidence = "tests/test_perfect_integrator_backends.py::test_compiled_backends_match_python_golden"
+evidence = "tests/test_perfect_integrator_backend_parity.py::test_compiled_backends_match_python_golden"
 
 [silicon]
 compiles = true

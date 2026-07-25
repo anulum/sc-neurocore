@@ -150,7 +150,10 @@ jobs:
           tests/test_scpn_l4_cellular_contracts.py
           tests/test_scpn_l5_organismal_contracts.py
           tests/test_scpn_l6_ecological_contracts.py
-          tests/test_scpn_l7_symbolic_contracts.py
+          tests/test_scpn_l7_symbolic_determinism.py
+          tests/test_scpn_l7_symbolic_l6_inputs.py
+          tests/test_scpn_l7_symbolic_step.py
+          tests/test_scpn_l7_symbolic_validation.py
           tests/test_scpn_l8_phase_field.py
           tests/test_scpn_l9_holographic_contracts.py
           tests/test_scpn_l10_boundary.py

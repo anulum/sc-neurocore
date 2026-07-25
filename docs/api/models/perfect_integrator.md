@@ -89,7 +89,7 @@ PerfectIntegratorNeuron
 | Surface | Evidence | Contract |
 |---------|----------|----------|
 | Python model | `tests/test_model_perfect_integrator.py` | dynamics, f–I/ISI laws, reset, validation, analysis, and network use |
-| Public native dispatch | `tests/test_perfect_integrator_backends.py` | executable Rust/Julia/Go/Mojo paths, bit-exact parity, full numeric contract, and mutation-free rejection |
+| Public native dispatch | `tests/test_perfect_integrator_backend_parity.py`, `tests/test_perfect_integrator_backend_auto_dispatch.py`, `tests/test_perfect_integrator_backend_validation.py`, `tests/test_perfect_integrator_backend_c_abi.py`, `tests/test_perfect_integrator_backend_unavailability.py` | executable Rust/Julia/Go/Mojo paths, bit-exact parity, full numeric contract, and mutation-free rejection |
 | Native loading | `tests/test_perfect_integrator_backend_loading.py` | fail-closed optional-runtime and C-symbol boundaries |
 | Analytic reference | `tests/test_reference_perfect_integrator.py` | independent reset-sawtooth feature re-derivation |
 | Python-to-Verilog | `tests/test_cosim_perfect_integrator.py` | hand/schema/Q8.8 parity plus an explicit fractional-current boundary |
