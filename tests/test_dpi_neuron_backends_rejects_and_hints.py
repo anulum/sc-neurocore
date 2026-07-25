@@ -14,6 +14,7 @@ from tests.dpi_neuron_backends_support import *  # noqa: F403
 @pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejects_invalid_run_without_writing_output(backend: str) -> None:
     """Reject invalid work before emitting any caller-visible state."""
+    assert getattr(backends, f"ensure_{backend}_loaded")()
     output = np.full(4, -999.0, dtype=np.float64)
     values = (*_factory_values(), 1, math.nan)
     if backend == "go":

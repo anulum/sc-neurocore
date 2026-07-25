@@ -451,7 +451,7 @@ jobs:
              src/sc_neurocore/_native/libautonomous_learning.so
 
       - name: Run training tests
-        run: pytest tests/test_torch_training.py -v
+        run: pytest tests/test_torch_training_*.py -v
 
   test-optics-extra:
     runs-on: ubuntu-latest
