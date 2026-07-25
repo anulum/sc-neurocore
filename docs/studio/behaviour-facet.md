@@ -87,7 +87,7 @@ The facet is guarded by two cheap gates and one reproducibility gate:
   `behavior_evidence.json` (`tests/test_behavior_tags.py`), compared without
   re-running a simulation.
 - The probe's own reproducibility is proven on a sample of deterministic models
-  (`tests/test_behavior_probe.py`).
+  (`tests/test_behavior_probe_models.py`).
 
 The recorded measurement is regenerated with:
 

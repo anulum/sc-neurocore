@@ -36,7 +36,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
   tests/test_solvers/test_ising.py \
   tests/test_optics/test_photonic_layer.py \
   tests/test_quantum/test_hybrid.py \
-  tests/test_interfaces/test_dvs_input.py \
+  tests/interfaces/test_dvs_input_performance.py \
   tests/sources/test_bitstream_current_source_performance.py \
   tests/test_hdl_gen/test_verilog_generator.py \
   tests/test_hdl_gen/test_spice_generator.py \
@@ -65,7 +65,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 | Ising solver | `tests/test_solvers/test_ising.py` |
 | Photonic layer | `tests/test_optics/test_photonic_layer.py` |
 | Quantum hybrid layer | `tests/test_quantum/test_hybrid.py` |
-| DVS input layer | `tests/test_interfaces/test_dvs_input.py` |
+| DVS input layer | `tests/interfaces/test_dvs_input_performance.py` |
 | Bitstream current source | `tests/sources/test_bitstream_current_source_performance.py` |
 | Verilog generator | `tests/test_hdl_gen/test_verilog_generator.py` |
 | SPICE generator | `tests/test_hdl_gen/test_spice_generator.py` |

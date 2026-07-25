@@ -4,49 +4,11 @@
 # Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Behaviour probe tests
+# SC-NeuroCore - Behaviour probe derivation contracts
 
-"""Tests for the measured behaviour probe.
+"""Focused behavior-probe derivation contracts."""
 
-The tag-derivation predicates are exercised purely on synthetic observations
-(no simulation); a small sample of fast, deterministic models is probed live to
-prove the sweep reproduces; the manifest shape and digests are checked directly.
-"""
-
-from __future__ import annotations
-
-import pytest
-
-from sc_neurocore.neurons.behavior_taxonomy import BEHAVIOR_TAGS
-from sc_neurocore.studio.behavior_probe import (
-    BEHAVIOR_SWEEP_CURRENTS,
-    BehaviorObservation,
-    behavior_tags_for,
-    derive_behavior_tags,
-    probe_all_models,
-    probe_model_behavior,
-)
-
-
-def _obs(
-    current: float,
-    pattern: str,
-    *,
-    rate_hz: float = 0.0,
-    spike_count: int = 0,
-    reproducible: bool = True,
-    error: str | None = None,
-) -> BehaviorObservation:
-    """Construct a synthetic observation."""
-
-    return BehaviorObservation(
-        current=current,
-        pattern=pattern,
-        rate_hz=rate_hz,
-        spike_count=spike_count,
-        reproducible=reproducible,
-        error=error,
-    )
+from .behavior_probe_support import *
 
 
 def test_derive_empty_when_all_drives_error() -> None:
@@ -157,62 +119,3 @@ def test_derive_ignores_error_observations_for_excitability() -> None:
     tags = derive_behavior_tags(observations, stochastic=False)
     assert "excitable" in tags
     assert "quiescent" not in tags
-
-
-def test_probe_undrivable_model_is_resilient() -> None:
-    """A model needing synaptic input records errors and is not drivable."""
-
-    profile = probe_model_behavior("DendriticNMDANeuron")
-    assert profile.drivable is False
-    assert profile.behavior_tags == ()
-    assert all(obs.error is not None for obs in profile.observations)
-
-
-def test_probe_deterministic_model_reproduces() -> None:
-    """A deterministic model yields a stable, non-empty, valid tag set."""
-
-    first = probe_model_behavior("ThetaNeuron")
-    second = probe_model_behavior("ThetaNeuron")
-    assert first.behavior_tags == second.behavior_tags
-    assert first.result_sha256 == second.result_sha256
-    assert first.behavior_tags
-    assert set(first.behavior_tags) <= BEHAVIOR_TAGS
-    assert first.stochastic is False
-
-
-def test_probe_strong_drive_reveals_tonic_firing() -> None:
-    """The wide sweep reaches the strong-drive tonic regime of AdEx."""
-
-    profile = probe_model_behavior("AdExNeuron")
-    assert "excitable" in profile.behavior_tags
-    assert "tonic" in profile.behavior_tags
-
-
-def test_probe_records_seeded_poisson_default_as_reproducible() -> None:
-    """The fixed replay seed keeps the measured default Poisson trace stable."""
-
-    profile = probe_model_behavior("PoissonNeuron")
-    assert profile.stochastic is False
-    assert "stochastic" not in profile.behavior_tags
-    assert "excitable" in profile.behavior_tags
-    assert all(observation.reproducible for observation in profile.observations)
-
-
-def test_probe_all_models_manifest_shape() -> None:
-    """The manifest carries the sweep config, digests and per-model entries."""
-
-    manifest = probe_all_models(names=["ThetaNeuron", "DendriticNMDANeuron"])
-    assert manifest["schema_version"] == "studio.behavior-probe.v1"
-    assert tuple(manifest["sweep"]["currents"]) == BEHAVIOR_SWEEP_CURRENTS
-    assert len(manifest["sweep_sha256"]) == 64
-    assert len(manifest["result_sha256"]) == 64
-    assert set(manifest["models"]) == {"ThetaNeuron", "DendriticNMDANeuron"}
-    assert manifest["models"]["DendriticNMDANeuron"]["drivable"] is False
-
-
-def test_behavior_tags_for_reads_manifest_entry() -> None:
-    """The helper extracts a model's recorded tags and is empty for unknowns."""
-
-    manifest = probe_all_models(names=["ThetaNeuron"])
-    assert behavior_tags_for("ThetaNeuron", manifest)
-    assert behavior_tags_for("NoSuchModel", manifest) == ()
