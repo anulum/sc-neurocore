@@ -189,9 +189,7 @@ def run_osv_scanner(
     # resolution errors. When the JSON report validates with zero vulns, treat
     # residual service-unavailable noise as non-blocking (already retried).
     clean_report = not validation_errors and vulnerability_count == 0
-    process_ok = result.returncode == 0 or (
-        clean_report and _is_transient_osv_failure(result)
-    )
+    process_ok = result.returncode == 0 or (clean_report and _is_transient_osv_failure(result))
     summary = {
         "schema_version": OSV_SCANNER_SCHEMA_VERSION,
         "passed": process_ok and clean_report,
