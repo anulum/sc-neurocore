@@ -251,7 +251,10 @@ dispersion remains visible rather than being discarded.
 
 ## Verification surfaces
 
-- `test_linear_gaussian_ssm.py`: parameter, covariance, and result contracts.
+- `test_linear_gaussian_ssm_parameters.py`: parameter and covariance contracts.
+- `test_linear_gaussian_ssm_random.py`: random-model dimension and stability contracts.
+- `test_linear_gaussian_filter_result.py`: filtering-result contracts.
+- `test_linear_gaussian_smooth_result.py`: smoothing-result contracts.
 - `test_kalman_filter.py`: analytic updates, controls, covariance stability,
   validation, and installed-backend parity.
 - `test_rts_smoother.py`: exact multivariate batch conditioning and lag

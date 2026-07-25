@@ -20,7 +20,7 @@ Run the same selector locally when changing a perf-gated file:
 
 ```bash
 SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
-  tests/test_export/test_onnx_exporter.py \
+  tests/test_export/test_onnx_exporter_performance.py \
   tests/test_learning/test_lifelong.py \
   tests/test_learning/test_federated.py \
   tests/test_transformers/test_block.py \
@@ -49,7 +49,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 
 | Surface | Test file |
 | --- | --- |
-| ONNX export | `tests/test_export/test_onnx_exporter.py` |
+| ONNX export | `tests/test_export/test_onnx_exporter_performance.py` |
 | Lifelong learning | `tests/test_learning/test_lifelong.py` |
 | Federated learning | `tests/test_learning/test_federated.py` |
 | Transformer block | `tests/test_transformers/test_block.py` |

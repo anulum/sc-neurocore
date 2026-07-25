@@ -37,7 +37,7 @@ OPTIONAL_CI_LANES = (
         install_extra=".[dev]",
         requirements="requirements/ci-dev.txt",
         apt_packages="",
-        test_selector="tests/test_export/test_onnx_exporter.py",
+        test_selector="tests/test_export/test_onnx_exporter_protobuf_graph.py",
     ),
     OptionalCiLane(
         name="mpi",

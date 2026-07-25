@@ -51,7 +51,7 @@ EXPECTED_ROWS = (
         distribution="onnx",
         declared_extra="dev",
         test_paths=(
-            "tests/test_export/test_onnx_exporter.py",
+            "tests/test_export/test_onnx_exporter_protobuf_graph.py",
             "tests/test_export/test_onnx_export.py",
             ".github/workflows/ci.yml",
         ),

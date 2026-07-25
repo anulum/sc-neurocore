@@ -239,7 +239,7 @@ firing-pattern contract:
 Scoped verification used for the latest update:
 
 ```bash
-python -m pytest tests/test_neuron_integrator_paths.py
+python -m pytest tests/test_izhikevich_integrator_paths.py
 python -m pytest tests/test_rust_rk4_neuron_parity.py
 python -m pytest tests/test_go_rk4_neuron_parity.py
 python -m pytest tests/test_julia_rk4_neuron_parity.py
@@ -338,7 +338,7 @@ The maintained pipeline touchpoints for this neuron are:
 |---|---|---|
 | Public Python neuron | `src/sc_neurocore/neurons/sc_izhikevich.py` | primary user-facing class |
 | Pattern validation | `tests/test_izhikevich_20_patterns.py` | qualitative model-regime checks |
-| Integrator validation | `tests/test_neuron_integrator_paths.py` | baseline/RK4 contract and guards |
+| Integrator validation | `tests/test_izhikevich_integrator_paths.py` | baseline/RK4 contract and guards |
 | Rust RK4 bridge | `engine/src/rk4_neurons.rs` | PyO3-backed RK4 parity simulator |
 | Go RK4 wrapper | `src/sc_neurocore/accel/go/rk4_neurons/__init__.py` | maintained Go parity entry point |
 | Julia RK4 wrapper | `src/sc_neurocore/accel/julia/neurons/__init__.py` | maintained Julia parity entry point |
@@ -527,7 +527,7 @@ Izhikevich rows only; the guide-level page reports the broader benchmark set.
 | RK4 E2E benchmark | `bench_neuron_integrators_2026-05-09T1848.json` | 2026-05-09 |
 | Rust wheel build | `target/wheels/sc_neurocore-3.14.0-cp312-cp312-manylinux_2_34_x86_64.whl` | 2026-05-09 |
 | Pattern validation doc | `docs/validation/izhikevich_patterns.md` | 2026-03-28 record |
-| Integrator guard tests | `tests/test_neuron_integrator_paths.py` | current tree |
+| Integrator guard tests | `tests/test_izhikevich_integrator_paths.py` | current tree |
 | Backend parity tests | `tests/test_*_rk4_neuron_parity.py` | current tree |
 | Docs strict build | `PYTHONPATH=src python -m mkdocs build --strict` | rerun after edits |
 

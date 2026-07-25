@@ -135,7 +135,7 @@ jobs:
       - name: Run perf-gated pytest selector
         run: |
           python -m pytest \
-            tests/test_export/test_onnx_exporter.py \
+            tests/test_export/test_onnx_exporter_performance.py \
             tests/test_learning/test_lifelong.py \
             tests/test_learning/test_federated.py \
             tests/test_transformers/test_block.py \
