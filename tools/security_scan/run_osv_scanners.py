@@ -22,8 +22,11 @@ from typing import Any
 OSV_SCANNER_SCHEMA_VERSION = "sc-neurocore.osv-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
 SleepCommand = Callable[[float], None]
+# Only real lockfiles. The root requirements.txt is a short unpinned pointer
+# (canonical pins live in pyproject / requirements/*.txt); scanning it as a
+# lockfile triggers remote resolution RPCs that flake as "service unavailable"
+# and fails the lane even when vulnerability_count is zero.
 OSV_LOCKFILE_INPUTS = (
-    "requirements.txt",
     "Cargo.lock",
     "fuzz/Cargo.lock",
     "crates/tinysc_riscv/Cargo.lock",
@@ -34,6 +37,8 @@ OSV_LOCKFILE_INPUTS = (
     "crates/neuro_symbolic/Cargo.lock",
     "src/sc_neurocore/accel/rust/Cargo.lock",
     "studio/frontend/package-lock.json",
+    "requirements/docs.txt",
+    "requirements/runtime.txt",
 )
 
 
@@ -180,9 +185,16 @@ def run_osv_scanner(
     validation_errors, package_count, vulnerability_count, vulnerability_ids = _validate_osv_report(
         report_path
     )
+    # osv-scanner returns non-zero for both real findings and transient RPC
+    # resolution errors. When the JSON report validates with zero vulns, treat
+    # residual service-unavailable noise as non-blocking (already retried).
+    clean_report = not validation_errors and vulnerability_count == 0
+    process_ok = result.returncode == 0 or (
+        clean_report and _is_transient_osv_failure(result)
+    )
     summary = {
         "schema_version": OSV_SCANNER_SCHEMA_VERSION,
-        "passed": result.returncode == 0 and not validation_errors and vulnerability_count == 0,
+        "passed": process_ok and clean_report,
         "command": command,
         "attempts": attempts,
         "artifact": str(report_path),
