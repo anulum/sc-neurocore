@@ -100,12 +100,12 @@ def test_go_c_shared_build_reproduces_committed_header(tmp_path: Path) -> None:
     assert output.with_suffix(".h").read_bytes() == (source / "libmcculloch_pitts.h").read_bytes()
 
 
-def test_mojo_shared_build_exports_exact_batch(tmp_path: Path) -> None:
+def test_mojo_shared_build_exports_exact_batch(tmp_path: Path, mojo_cli: str) -> None:
     """Compile the maintained Mojo source and resolve its C ABI."""
     source = _REPOSITORY / "src/sc_neurocore/accel/mojo/kernels/mcculloch_pitts.mojo"
     output = tmp_path / "libmcculloch_pitts.so"
     subprocess.run(
-        pin_isa(["mojo", "build", "--emit", "shared-lib", "-o", str(output), str(source)]),
+        pin_isa([mojo_cli, "build", "--emit", "shared-lib", "-o", str(output), str(source)]),
         check=True,
         capture_output=True,
         text=True,

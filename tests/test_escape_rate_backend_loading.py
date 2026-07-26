@@ -79,12 +79,12 @@ def test_go_c_shared_build_reproduces_the_committed_header(tmp_path: Path) -> No
     assert output.with_suffix(".h").read_bytes() == (source / "libescape_rate.h").read_bytes()
 
 
-def test_mojo_shared_build_exports_the_real_batch_symbol(tmp_path: Path) -> None:
+def test_mojo_shared_build_exports_the_real_batch_symbol(tmp_path: Path, mojo_cli: str) -> None:
     """Compile the maintained Mojo source and resolve its exported C ABI."""
     source = _REPOSITORY / "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo"
     output = tmp_path / "libescape_rate.so"
     subprocess.run(
-        pin_isa(["mojo", "build", "--emit", "shared-lib", "-o", str(output), str(source)]),
+        pin_isa([mojo_cli, "build", "--emit", "shared-lib", "-o", str(output), str(source)]),
         check=True,
         capture_output=True,
         text=True,

@@ -102,6 +102,15 @@ def pixi_cli() -> str:
     return executable
 
 
+@pytest.fixture
+def mojo_cli() -> str:
+    """Resolve Mojo for tests that compile an optional native backend."""
+    executable = shutil.which("mojo")
+    if executable is None:
+        pytest.skip("Mojo CLI is unavailable; skipping native backend build contract")
+    return executable
+
+
 @pytest.fixture(autouse=True)
 def restore_repo_cwd() -> Iterator[None]:
     """Keep process-wide CWD changes from leaking across tests."""
