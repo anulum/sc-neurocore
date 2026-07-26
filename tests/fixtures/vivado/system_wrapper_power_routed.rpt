@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Minimal Vivado power-report parser fixture
+
+| Tool Version     : Vivado v.2025.2 (fixture)
+| Date             : Mon Apr 13 05:39:21 2026
+| Design           : system_wrapper
+| Device           : xc7z020clg400-1
+| Total On-Chip Power (W)  | 1.674  |
+| Dynamic (W)              | 1.538  |
+| Device Static (W)        | 0.136  |
+| Effective TJA (C/W)      | 11.5   |
+| Max Ambient (C)          | 65.7   |
+| Junction Temperature (C) | 44.3   |
+| Confidence Level         | Medium |

@@ -415,8 +415,8 @@ from sc_neurocore.edge import (
 )
 
 write_power_thermal_model_from_vivado_reports(
-    "sc_shd_pynq/sc_shd_pynq.runs/impl_1",
-    "sc_shd_pynq/deployable_artifacts",
+    "vivado_project/sc_shd_pynq.runs/impl_1",
+    "build/deployable_artifacts",
     PowerThermalConfig(
         target="zynq",
         layer_sizes=((700, 128), (128, 128), (128, 20)),
@@ -429,6 +429,11 @@ write_power_thermal_model_from_vivado_reports(
 The emitted JSON uses `source_mode = "vivado_report_derived"`. It is still not
 a substitute for physical PYNQ board measurement; it is the reproducible bridge
 between routed Vivado reports and the deployment artefact directory.
+
+Vivado project, cache, generated-IP, and run directories are intentionally
+untracked. Regenerate them from the maintained HDL inputs with
+`hdl/pynq/create_block_design.tcl`; publish deployable outputs as release
+artefacts rather than committing AMD/Xilinx generated files to the source tree.
 
 ### 6.5 Launch the AER router
 

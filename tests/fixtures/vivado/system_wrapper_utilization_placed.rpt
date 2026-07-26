@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Minimal Vivado utilization-report parser fixture
+
+| Tool Version : Vivado v.2025.2 (fixture)
+| Date         : Mon Apr 13 05:38:43 2026
+| Design       : system_wrapper
+| Device       : xc7z020clg400-1
+| Slice LUTs      | 1452 | 0 | 0 | 53200  | 2.73 |
+| Slice Registers | 1453 | 0 | 0 | 106400 | 1.37 |
+| Block RAM Tile  | 0    | 0 | 0 | 140    | 0.00 |
+| DSPs            | 0    | 0 | 0 | 220    | 0.00 |

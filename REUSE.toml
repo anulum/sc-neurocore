@@ -9,16 +9,93 @@
 version = 1
 
 [[annotations]]
-path = ["*.md", "*.txt", "*.json", ".anulum/project-card.json", "*.yaml", "*.yml", "*.toml", "*.cfg", "*.ini", "*.lock"]
+path = [
+  "*.md",
+  "*.txt",
+  "*.json",
+  "*.yaml",
+  "*.yml",
+  "*.toml",
+  "*.cfg",
+  "*.ini",
+  "*.lock",
+  ".dockerignore",
+  ".editorconfig",
+  ".gitattributes",
+  ".gitignore",
+  ".anulum/project-card.json",
+  "CITATION.cff",
+  "COPYRIGHT",
+  "Makefile",
+]
 SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
-path = ["docs/**", "*.png", "*.svg", "*.jpg"]
+path = [
+  ".githooks/**",
+  ".github/**",
+  "benchmarks/**",
+  "conda/**",
+  "crates/**",
+  "data/**",
+  "deploy/**",
+  "docs/**",
+  "engine/**",
+  "examples/**",
+  "experiments/**",
+  "hdl/**",
+  "notebooks/**",
+  "paper/**",
+  "profiling/**",
+  "requirements/**",
+  "research/**",
+  "results/**",
+  "schemas/**",
+  "security/**",
+  "src/**",
+  "studio/**",
+  "tests/**",
+  "tools/**",
+  "weights/**",
+  "fuzz/Cargo.lock",
+  "fuzz/README.md",
+  "*.png",
+  "*.svg",
+  "*.jpg",
+]
 SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
-path = ["hdl/**/*.v"]
+path = [
+  "CONTRIBUTING.md",
+  "notebooks/29_golden_path_evidence.ipynb",
+  "notebooks/30_shd_vertex_deployable_evidence.ipynb",
+  "notebooks/31_balanced_resonate_and_fire_evidence.ipynb",
+  "src/sc_neurocore/compiler/_verilog_folded_datapath.py",
+  "src/sc_neurocore/compiler/_verilog_registered_module.py",
+  "src/sc_neurocore/compiler/equivalence_miter.py",
+  "src/sc_neurocore/hub/bundle.py",
+  "src/sc_neurocore/training/stochastic_backprop_export.py",
+  "tests/test_chiplet/test_hierarchical_partitioner_architecture.py",
+  "tests/test_native/test_learning_bridge_architecture.py",
+  "tests/test_spdx_header_policy.py",
+  "tests/test_tools/test_generate_model_descriptors.py",
+  "tests/test_tools/test_schema_gap_report.py",
+  "tests/test_tools/test_spdx_header_audit.py",
+  "tests/test_verilog_compiler_contracts_escape_rate_and_licence.py",
+  "tools/capability_manifest.py",
+  "tools/emit_catalogue_formal.py",
+  "tools/gen_vivado_project.py",
+  "tools/gen_vmin_lif_lut.py",
+  "tools/generate_model_descriptors.py",
+  "tools/readiness_evidence_index.py",
+  "tools/schema_gap_report.py",
+  "tools/spdx_header_audit.py",
+  "tools/test_gen_vmin_lif_lut_cli.py",
+  "tools/test_gen_vmin_lif_lut_verilog_header.py",
+]
+precedence = "override"
 SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"

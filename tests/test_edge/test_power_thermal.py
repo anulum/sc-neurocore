@@ -28,7 +28,7 @@ from sc_neurocore.edge.power_thermal import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PYNQ_IMPL_DIR = REPO_ROOT / "sc_shd_pynq" / "sc_shd_pynq.runs" / "impl_1"
+PYNQ_IMPL_DIR = REPO_ROOT / "tests" / "fixtures" / "vivado"
 
 
 def test_power_thermal_model_is_deterministic_pre_silicon_estimate() -> None:
