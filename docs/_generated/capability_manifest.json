@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4568
+    "test_files": 4571
   },
   "documentation": {
     "public_pages": [
@@ -4491,10 +4491,13 @@
       "tests/test_fault_injection/fault_injection_support.py",
       "tests/test_fault_injection/test_fault_injection_fault_injection_result.py",
       "tests/test_fault_injection/test_fault_injection_fault_injector.py",
-      "tests/test_fault_injection/test_fault_injection_free_tests.py",
       "tests/test_fault_injection/test_fault_injection_public_api.py",
       "tests/test_fault_injection/test_fault_injection_radiation_profiles.py",
       "tests/test_fault_injection/test_fault_injection_resilience_benchmark.py",
+      "tests/test_fault_injection/test_fault_injection_validation_benchmark.py",
+      "tests/test_fault_injection/test_fault_injection_validation_injector.py",
+      "tests/test_fault_injection/test_fault_injection_validation_models.py",
+      "tests/test_fault_injection/test_fault_injection_validation_sweep.py",
       "tests/test_fault_injection/test_resilience_mode.py",
       "tests/test_fault_injection/test_resilience_mode_invariants.py",
       "tests/test_fault_injection/test_resilience_policy.py",
