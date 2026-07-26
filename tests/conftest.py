@@ -93,6 +93,15 @@ def cargo_lib_test() -> Callable[[str], subprocess.CompletedProcess[str]]:
     return _run_cargo_lib_test
 
 
+@pytest.fixture
+def pixi_cli() -> str:
+    """Resolve Pixi for tests that execute an optional Mojo toolchain."""
+    executable = shutil.which("pixi")
+    if executable is None:
+        pytest.skip("Pixi CLI is unavailable; skipping Mojo toolchain contract")
+    return executable
+
+
 @pytest.fixture(autouse=True)
 def restore_repo_cwd() -> Iterator[None]:
     """Keep process-wide CWD changes from leaking across tests."""

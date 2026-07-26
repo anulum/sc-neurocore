@@ -13,7 +13,6 @@ from __future__ import annotations
 import importlib.util
 import itertools
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -259,14 +258,13 @@ def test_go_header_uses_signed_32_bit_count_and_status() -> None:
     assert signature is not None
 
 
-def test_mojo_llvm_uses_signed_32_bit_count_and_status(tmp_path: Path) -> None:
-    assert shutil.which("pixi") is not None
+def test_mojo_llvm_uses_signed_32_bit_count_and_status(tmp_path: Path, pixi_cli: str) -> None:
     manifest = _ROOT / "src/sc_neurocore/accel/mojo/pixi.toml"
     source = _ROOT / "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/ermentrout_kopell_pop.mojo"
     llvm_path = tmp_path / "ermentrout_kopell_pop.ll"
     subprocess.run(
         [
-            "pixi",
+            pixi_cli,
             "run",
             "--manifest-path",
             str(manifest),
