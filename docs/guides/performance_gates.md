@@ -30,9 +30,9 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
   tests/test_layers/test_sc_dense_layer_performance.py \
   tests/test_layers/test_memristive.py \
   tests/test_layers/test_sc_learning_layer.py \
-  tests/test_layers/test_fusion.py \
+  tests/layers/test_fusion_performance.py \
   tests/test_hdc/test_base.py \
-  tests/test_accel/test_vector_ops.py \
+  tests/accel/test_vector_ops_validation_performance.py \
   tests/test_solvers/test_ising.py \
   tests/test_optics/test_photonic_layer.py \
   tests/test_quantum/test_hybrid.py \
@@ -59,9 +59,9 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 | Dense layer | `tests/test_layers/test_sc_dense_layer_performance.py` |
 | Memristive layer | `tests/test_layers/test_memristive.py` |
 | Learning layer | `tests/test_layers/test_sc_learning_layer.py` |
-| Fusion layer | `tests/test_layers/test_fusion.py` |
+| Fusion layer | `tests/layers/test_fusion_performance.py` |
 | HDC encoder | `tests/test_hdc/test_base.py` |
-| Vector operations | `tests/test_accel/test_vector_ops.py` |
+| Vector operations | `tests/accel/test_vector_ops_validation_performance.py` |
 | Ising solver | `tests/test_solvers/test_ising.py` |
 | Photonic layer | `tests/test_optics/test_photonic_layer.py` |
 | Quantum hybrid layer | `tests/test_quantum/test_hybrid.py` |

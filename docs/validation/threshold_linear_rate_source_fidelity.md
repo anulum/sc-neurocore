@@ -117,7 +117,10 @@ rustc --edition 2021 --test \
 /tmp/threshold_linear_rate_tests
 
 PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
-  tests/test_model_threshold_linear_rate.py \
+  tests/test_model_threshold_linear_rate_dynamics.py \
+  tests/test_model_threshold_linear_rate_batch.py \
+  tests/test_model_threshold_linear_rate_descriptor_schema.py \
+  tests/test_model_threshold_linear_rate_validation.py \
   tests/test_cosim_threshold_linear_rate.py \
   tests/test_threshold_linear_rate_backend_loading.py \
   tests/test_threshold_linear_rate_backends.py \

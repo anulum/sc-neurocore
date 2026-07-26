@@ -53,11 +53,13 @@ weighted modalities, matching the Rust `FusionLayer` fallback. Inputs must be
 one-dimensional arrays with their declared feature length, and unweighted
 modalities are ignored rather than mixed into the output.
 *   **Use Case**: Implementing the "Consilium" (L15) optimisation logic.
-*   **Verification**: `tests/test_layers/test_fusion.py` covers normalisation,
-    equal-weight fallback, validation failures, output dtype/shape, and Rust
-    weighted-sum parity semantics. Local pytest-cov reports 100% line coverage
-    for `src/sc_neurocore/layers/fusion.py`. The opt-in non-isolated perf smoke
-    `SC_NEUROCORE_PERF=1 ... test_fusion_perf_small` passed on 2026-06-27
+*   **Verification**: `tests/layers/test_fusion_configuration.py`,
+    `tests/layers/test_fusion_forward.py`, and
+    `tests/layers/test_fusion_validation.py` cover normalisation, equal-weight
+    fallback, validation failures, output dtype/shape, and Rust weighted-sum
+    parity semantics. Local pytest-cov reports 100% line coverage for
+    `src/sc_neurocore/layers/fusion.py`. The opt-in non-isolated perf smoke in
+    `tests/layers/test_fusion_performance.py` passed on 2026-06-27
     (`1 passed in 1.92s`); no formal isolated benchmark artefact exists for this
     layer yet.
 
