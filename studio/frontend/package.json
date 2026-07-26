@@ -6,24 +6,29 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest run",
-    "test:e2e": "playwright test",
-    "build": "tsc -b && vite build",
+    "test:e2e": "playwright test && npm run test:federation",
+    "test:federation": "npm run build && playwright test --config playwright.federation.config.ts",
+    "build": "tsc -b && vite build && npm run verify:federation",
+    "verify:federation": "node scripts/verify-federation-build.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@xyflow/react": "^12.10.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "zustand": "^5.0.0"
   },
   "overrides": {
+    "adm-zip": "0.6.0",
     "dompurify": "^3.4.12"
   },
   "devDependencies": {
+    "@module-federation/runtime": "2.6.0",
+    "@module-federation/vite": "1.16.13",
     "@playwright/test": "^1.61.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "happy-dom": "^20.11.0",
     "typescript": "~5.8.0",

@@ -283,6 +283,31 @@ cd studio/frontend
 npm run build   # → studio/frontend/dist/
 ```
 
+The production build serves two entry surfaces from the same source tree:
+
+- the standalone application at `/studios/sc-neurocore/`;
+- the Module Federation 2.x remote at
+  `/studios/sc-neurocore/remoteEntry.js`, with federation identity
+  `sc_neurocore` and expose `./SnnStudioPanel`.
+
+The remote and the SCPN Studio host share `react` and `react-dom` as singleton
+dependencies pinned to `19.2.7`. Keep the object-form share declaration in
+`vite.config.ts`; array shorthand permits an independent React fallback and can
+produce invalid hook calls when the host renders the panel. The corresponding
+schema-A `ui_module` contract is:
+
+```json
+{
+  "remote_entry": "/studios/sc-neurocore/remoteEntry.js",
+  "exposes": ["./SnnStudioPanel"],
+  "federation": "module-federation-2"
+}
+```
+
+`npm run build` fails unless the emitted remote exports the `get`/`init`
+container contract, retains the own identity and expose, contains no
+`demo_studio` reference, and resolves its entry imports inside `dist/`.
+
 Frontend contract tests:
 
 ```bash
@@ -295,10 +320,13 @@ The frontend capability shell is fail-closed for registered panels. If the
 backend capability registry omits a panel contract, that panel is disabled
 instead of assuming the underlying API or external tool is available.
 
-The Playwright e2e suite starts the Vite dev server, mocks backend API
-contracts at the browser boundary, and verifies the Admin operator status,
-audit status, audit export, and worker-status workflows against the rendered
-React application.
+The Playwright e2e suite first exercises the standalone Vite application and
+its backend contracts. It then builds the deployable output, serves the real
+`remoteEntry.js`, and loads `./SnnStudioPanel` through a separate Module
+Federation host with the production singleton-share contract. This second
+browser test fails on missing chunks, incorrect public paths, federation-name
+drift, expose drift, duplicate-React hook failures, or a panel that cannot
+render through the host boundary.
 
 The Admin panel loads path-free audit health at startup and can request the
 admin-gated audit export endpoint. Development-preview policy mode can still

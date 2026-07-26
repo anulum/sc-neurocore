@@ -6,11 +6,39 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { defineConfig } from "vite";
+import { federation } from "@module-federation/vite";
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+const reactSharedContract = {
+  react: { singleton: true, requiredVersion: "19.2.7" },
+  "react-dom": { singleton: true, requiredVersion: "19.2.7" },
+} as const;
 
 export default defineConfig({
-  plugins: [react()],
+  base: "/studios/sc-neurocore/",
+  plugins: [
+    react(),
+    federation({
+      name: "sc_neurocore",
+      filename: "remoteEntry.js",
+      dev: {
+        disableDynamicRemoteTypeHints: true,
+        disableHotTypesReload: true,
+      },
+      dts: {
+        consumeTypes: false,
+        generateTypes: true,
+      },
+      exposes: {
+        "./SnnStudioPanel": "./src/SnnStudioPanel.tsx",
+      },
+      shared: reactSharedContract,
+    }),
+  ],
+  build: {
+    target: "esnext",
+  },
   server: {
     proxy: {
       "/api": {
@@ -18,5 +46,8 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    cors: true,
   },
 });
