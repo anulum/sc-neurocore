@@ -41,12 +41,12 @@ class TestAERRouterBenchmark:
         assert elapsed < 2.0, f"100k encode/decode took {elapsed:.2f}s ({throughput:.0f}/s)"
 
     def test_route_registration_throughput(self):
-        """Register 10,000 routes in < 0.5 seconds."""
+        """Register 10,000 routes within the local or instrumented-CI budget."""
         router = AERRouter()
         t0 = time.perf_counter()
         for i in range(10_000):
             router.register_route(neuron_id=i, addr=f"h:{5000 + i}")
         elapsed = time.perf_counter() - t0
         assert router.route_count == 10_000
-        max_elapsed = 1.0 if os.environ.get("CI") else 0.5
+        max_elapsed = 2.0 if os.environ.get("CI") else 0.5
         assert elapsed < max_elapsed, f"10k registrations took {elapsed:.2f}s"

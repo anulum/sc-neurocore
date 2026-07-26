@@ -18,7 +18,7 @@ import platform
 import statistics
 import subprocess
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +27,7 @@ from numpy.typing import NDArray
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+UTC = timezone.utc
 DEFAULT_BIT_SIZES = (1 << 20, 1 << 26, 1 << 30)
 POPCOUNT_LUT = np.array([value.bit_count() for value in range(256)], dtype=np.uint8)
 
