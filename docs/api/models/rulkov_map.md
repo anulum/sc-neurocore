@@ -269,9 +269,12 @@ refreshed artefact reports 34 spikes for every backend.
 | Silicon evidence | 2 | Q16.16 Yosys synthesis report and Q8.8 depth-4 formal safety job |
 
 The step-level categories above are listed by intent; parametrisation expands
-them at collection time. The two files collect **67 tests** in total (34 in
-`tests/test_model_rulkov_map.py`, 33 in `tests/test_rulkov_map_backends.py`),
-all passing.
+them at collection time. The twelve files collect **67 tests** in total (34
+across the eight `tests/test_model_rulkov_map_rulkov_*.py` suites, 33 across
+`tests/test_rulkov_map_backends_bit_exact.py`,
+`tests/test_rulkov_map_backends_mojo.py`,
+`tests/test_rulkov_map_backends_dispatch_validation.py`, and
+`tests/test_rulkov_map_backends_dynamics.py`), all passing.
 
 ---
 
