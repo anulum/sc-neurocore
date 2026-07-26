@@ -26,7 +26,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
   tests/test_transformers/test_block.py \
   tests/test_layers/test_recurrent.py \
   tests/test_layers/test_vectorized_layer_packed_forward.py \
-  tests/test_layers/test_sc_conv_layer.py \
+  tests/layers/test_sc_conv_layer_configuration.py \
   tests/test_layers/test_sc_dense_layer_performance.py \
   tests/test_layers/test_memristive.py \
   tests/test_layers/test_sc_learning_layer.py \
@@ -38,7 +38,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
   tests/test_quantum/test_hybrid.py \
   tests/interfaces/test_dvs_input_performance.py \
   tests/sources/test_bitstream_current_source_performance.py \
-  tests/test_hdl_gen/test_verilog_generator.py \
+  tests/hdl_gen/test_verilog_generator_io_perf.py \
   tests/test_hdl_gen/test_spice_generator.py \
   tests/test_bio/test_dna_storage.py \
   tests/test_bio/test_grn.py \
@@ -55,7 +55,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 | Transformer block | `tests/test_transformers/test_block.py` |
 | Recurrent layer | `tests/test_layers/test_recurrent.py` |
 | Vectorized layer | `tests/test_layers/test_vectorized_layer_packed_forward.py` |
-| Convolution layer | `tests/test_layers/test_sc_conv_layer.py` |
+| Convolution layer | `tests/layers/test_sc_conv_layer_configuration.py` |
 | Dense layer | `tests/test_layers/test_sc_dense_layer_performance.py` |
 | Memristive layer | `tests/test_layers/test_memristive.py` |
 | Learning layer | `tests/test_layers/test_sc_learning_layer.py` |
@@ -67,7 +67,7 @@ SC_NEUROCORE_PERF=1 PYTHONPATH=src:. python -m pytest \
 | Quantum hybrid layer | `tests/test_quantum/test_hybrid.py` |
 | DVS input layer | `tests/interfaces/test_dvs_input_performance.py` |
 | Bitstream current source | `tests/sources/test_bitstream_current_source_performance.py` |
-| Verilog generator | `tests/test_hdl_gen/test_verilog_generator.py` |
+| Verilog generator | `tests/hdl_gen/test_verilog_generator_io_perf.py` |
 | SPICE generator | `tests/test_hdl_gen/test_spice_generator.py` |
 | DNA storage | `tests/test_bio/test_dna_storage.py` |
 | Gene-regulatory network | `tests/test_bio/test_grn.py` |

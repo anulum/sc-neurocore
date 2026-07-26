@@ -149,8 +149,14 @@ fidelity evidence.
 
 ## Focused verification
 
-- `tests/test_model_ibarz_tanaka.py`: source branches, simultaneous state,
-  event semantics, goldens, validation, and population integration.
+- `tests/test_model_ibarz_tanaka_descriptor.py`: published defaults and
+  descriptor topology.
+- `tests/test_model_ibarz_tanaka_dynamics.py`: source branches, simultaneous
+  state, event semantics, protocol counts, and finite operating envelope.
+- `tests/test_model_ibarz_tanaka_reproducibility.py`: trace goldens,
+  repeated-step parity, and population integration.
+- `tests/test_model_ibarz_tanaka_validation.py`: validation, atomic failure,
+  request bounds, and reset semantics.
 - `tests/test_ibarz_tanaka_backends.py`: five-backend parity, final state,
   zero-step contract, and explicit fail-closed dispatch.
 - `tests/test_reference_ibarz_tanaka_map.py`: independent DOI contract.
