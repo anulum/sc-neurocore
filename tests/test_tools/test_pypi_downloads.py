@@ -166,7 +166,7 @@ def test_metrics_workflows_share_one_serialized_branch_writer() -> None:
     assert download_text.count("group: metrics-branch-writer") == 1
     assert "gh-pages-branch: metrics" in benchmark_text
     assert "benchmark-data-dir-path: benchmarks/criterion" in benchmark_text
-    assert "git push origin metrics" in download_text
+    assert "git push origin HEAD:refs/heads/metrics" in download_text
 
 
 def test_download_workflow_uses_pinned_actions_and_write_is_job_scoped() -> None:
@@ -177,3 +177,11 @@ def test_download_workflow_uses_pinned_actions_and_write_is_job_scoped() -> None
     assert all("@" in action and len(action.rsplit("@", 1)[1].split()[0]) == 40 for action in uses)
     assert workflow["permissions"] == {"contents": "read"}
     assert workflow["jobs"]["snapshot"]["permissions"] == {"contents": "write"}
+    assert workflow["jobs"]["snapshot"]["if"] == "github.ref == 'refs/heads/main'"
+    assert workflow["jobs"]["snapshot"]["runs-on"] == "ubuntu-24.04"
+    assert workflow["jobs"]["snapshot"]["timeout-minutes"] == 10
+    assert "ref: ${{ github.sha }}" in text
+    assert "persist-credentials: false" in text
+    assert 'readonly csv_path="downloads/sc-neurocore.csv"' in text
+    assert 'test "${staged_paths[0]}" = "$csv_path"' in text
+    assert "git push origin HEAD:refs/heads/metrics" in text

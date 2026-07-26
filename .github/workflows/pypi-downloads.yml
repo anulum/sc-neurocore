@@ -21,43 +21,71 @@ concurrency:
 
 jobs:
   snapshot:
-    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
-      - name: Check out the default branch
+      - name: Check out the exact source revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
 
       - name: Snapshot downloads onto the metrics branch
         env:
           GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
+          METRICS_DIR: ${{ runner.temp }}/sc-neurocore-metrics
         run: |
           set -euo pipefail
-          package="$(python tools/pypi_downloads.py --print-package)"
-          remote="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
-          if git ls-remote --exit-code --heads "$remote" metrics >/dev/null 2>&1; then
-            git clone --depth 1 --branch metrics "$remote" metrics-branch
+          readonly package="sc-neurocore"
+          readonly csv_path="downloads/sc-neurocore.csv"
+          detected="$(python tools/pypi_downloads.py \
+            --pyproject pyproject.toml --print-package)"
+          test "$detected" = "$package"
+          remote="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+
+          if git ls-remote --exit-code --heads origin metrics >/dev/null 2>&1; then
+            git clone --depth 1 --branch metrics "$remote" "$METRICS_DIR"
           else
-            git clone --depth 1 "$remote" metrics-branch
-            git -C metrics-branch switch --orphan metrics
-            git -C metrics-branch rm -rf . >/dev/null 2>&1 || true
+            mkdir -p "$METRICS_DIR"
+            git -C "$METRICS_DIR" init --initial-branch=metrics
+            git -C "$METRICS_DIR" remote add origin "$remote"
           fi
-          python tools/pypi_downloads.py \
+
+          cd "$METRICS_DIR"
+          python "$GITHUB_WORKSPACE/tools/pypi_downloads.py" \
             --package "$package" \
-            --csv "metrics-branch/downloads/${package}.csv"
-          cd metrics-branch
+            --csv "$csv_path"
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "downloads/${package}.csv"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$csv_path"
+
+          mapfile -t staged_paths < <(git diff --cached --name-only)
+          test "${#staged_paths[@]}" -le 1
+          if [[ "${#staged_paths[@]}" -eq 1 ]]; then
+            test "${staged_paths[0]}" = "$csv_path"
+          fi
           if git diff --cached --quiet; then
             echo "No download changes to record."
             exit 0
           fi
-          git commit -m "metrics: pypi download snapshot for ${package}"
-          git push origin metrics
+          git commit \
+            --message "metrics: pypi download snapshot for ${package}"
+          askpass_path="$RUNNER_TEMP/sc-neurocore-git-askpass"
+          printf '%s\n' \
+            '#!/bin/sh' \
+            "case \"\$1\" in" \
+            "*Username*) printf '%s\\n' git ;;" \
+            "*) printf '%s\\n' \"\$GH_TOKEN\" ;;" \
+            'esac' > "$askpass_path"
+          chmod 700 "$askpass_path"
+          GIT_ASKPASS="$askpass_path" GIT_TERMINAL_PROMPT=0 \
+            git push origin HEAD:refs/heads/metrics
