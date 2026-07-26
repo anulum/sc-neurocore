@@ -12,6 +12,7 @@ Shared test configuration and fixtures for SC-NeuroCore.
 
 import os
 import shlex
+import shutil
 import subprocess
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -55,9 +56,13 @@ def _run_cargo_lib_test(test_filter: str) -> subprocess.CompletedProcess[str]:
         If ``cargo test`` exits with a non-zero status. The exception includes
         the complete captured standard output and standard error.
     """
+    cargo = shutil.which("cargo")
+    if cargo is None:
+        pytest.skip("Cargo CLI is unavailable; skipping Rust library contract")
+
     _CARGO_LIB_LOCK.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(_CARGO_LIB_LOCK)):
-        command = [*_CARGO_LIB_TEST_PREFIX, test_filter, "--lib"]
+        command = [cargo, *_CARGO_LIB_TEST_PREFIX[1:], test_filter, "--lib"]
         completed = subprocess.run(
             command,
             cwd=_REPO_ROOT / "engine",

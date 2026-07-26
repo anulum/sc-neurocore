@@ -18,9 +18,15 @@ import pytest
 
 def test_cargo_lib_fixture_surfaces_real_cargo_failure(
     cargo_lib_test: Callable[[str], subprocess.CompletedProcess[str]],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Preserve Cargo command and stream diagnostics on a real CLI failure."""
+    """Skip a missing CLI but preserve diagnostics from a real Cargo failure."""
     invalid_filter = "--sc-neurocore-invalid-test-option"
+
+    with monkeypatch.context() as missing_cargo:
+        missing_cargo.setattr("shutil.which", lambda _executable: None)
+        with pytest.raises(pytest.skip.Exception, match="Cargo CLI is unavailable"):
+            cargo_lib_test("dense_fold")
 
     with pytest.raises(AssertionError) as captured:
         cargo_lib_test(invalid_filter)
