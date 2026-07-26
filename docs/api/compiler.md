@@ -318,7 +318,10 @@ PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null \
     tests/test_edge_crossing_detection.py \
     tests/test_universal_dsl.py \
     tests/test_equation_namespace.py \
-    tests/test_equation_safety.py \
+    tests/test_equation_safety_acceptance.py \
+    tests/test_equation_safety_structure.py \
+    tests/test_equation_safety_capabilities.py \
+    tests/test_equation_safety_numeric_limits.py \
     tests/test_equation_units_runtime.py -q
 PYTHONPATH=src .venv/bin/python -m coverage report --rcfile=/dev/null \
     --include='src/sc_neurocore/neurons/equation_builder.py,src/sc_neurocore/neurons/equation_namespace.py,src/sc_neurocore/neurons/equation_safety.py,src/sc_neurocore/neurons/equation_units_runtime.py' \
@@ -330,7 +333,10 @@ PYTHONPATH=src .venv/bin/python -m mypy --strict \
     src/sc_neurocore/neurons/equation_units_runtime.py \
     tests/test_equation_builder_coverage_contracts.py \
     tests/test_equation_namespace.py \
-    tests/test_equation_safety.py \
+    tests/test_equation_safety_acceptance.py \
+    tests/test_equation_safety_structure.py \
+    tests/test_equation_safety_capabilities.py \
+    tests/test_equation_safety_numeric_limits.py \
     tests/test_equation_units_runtime.py
 ```
 
