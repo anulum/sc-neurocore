@@ -1,0 +1,21 @@
+{
+  "schema": "studio.project-card.v1",
+  "tagline": "Stochastic computing and neuromorphic hardware co-design toolkit",
+  "summary": "SC-NeuroCore is a research-to-hardware software stack for designing spiking and stochastic neural systems, validating their numerical behaviour, and moving selected models toward FPGA, ASIC, and embedded neuromorphic deployment. It combines a Python public API, an optional Rust acceleration engine, SystemVerilog generation paths, benchmark evidence, and polyglot research mirrors for selected kernels.",
+  "highlights": [
+    "Stochastic bitstream encoders, probabilistic arithmetic, Sobol and LFSR sources, and bounded-error reasoning are first-class components.",
+    "Selected workflows generate Verilog and SystemVerilog artefacts, synthesis reports, and hardware-readiness evidence.",
+    "Public benchmark claims are tied to committed benchmark or hardware-report artefacts.",
+    "Python-first public surfaces are separated from opt-in polyglot and source-checkout research paths."
+  ],
+  "links": [
+    {
+      "label": "Documentation",
+      "url": "https://anulum.github.io/sc-neurocore/"
+    },
+    {
+      "label": "Quickstart notebook",
+      "url": "https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb"
+    }
+  ]
+}

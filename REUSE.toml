@@ -9,7 +9,7 @@
 version = 1
 
 [[annotations]]
-path = ["*.md", "*.txt", "*.json", "*.yaml", "*.yml", "*.toml", "*.cfg", "*.ini", "*.lock"]
+path = ["*.md", "*.txt", "*.json", ".anulum/project-card.json", "*.yaml", "*.yml", "*.toml", "*.cfg", "*.ini", "*.lock"]
 SPDX-FileCopyrightText = "1998-2026 Miroslav Šotek <protoscience@anulum.li>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
