@@ -147,18 +147,22 @@ jobs:
             tests/test_layers/test_recurrent.py \
             tests/test_layers/test_vectorized_layer_packed_forward.py \
             tests/test_layers/test_sc_conv_layer.py \
+            tests/layers/test_sc_conv_layer_configuration.py \
             tests/test_layers/test_sc_dense_layer_performance.py \
             tests/test_layers/test_memristive.py \
             tests/test_layers/test_sc_learning_layer.py \
             tests/test_layers/test_fusion.py \
+            tests/layers/test_fusion_performance.py \
             tests/test_hdc/test_base.py \
             tests/test_accel/test_vector_ops.py \
+            tests/accel/test_vector_ops_validation_performance.py \
             tests/test_solvers/test_ising.py \
             tests/test_optics/test_photonic_layer.py \
             tests/test_quantum/test_hybrid.py \
             tests/interfaces/test_dvs_input_performance.py \
             tests/sources/test_bitstream_current_source_performance.py \
             tests/test_hdl_gen/test_verilog_generator.py \
+            tests/hdl_gen/test_verilog_generator_io_perf.py \
             tests/test_hdl_gen/test_spice_generator.py \
             tests/test_bio/test_dna_storage.py \
             tests/test_bio/test_grn.py \

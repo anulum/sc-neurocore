@@ -242,12 +242,17 @@ def _go() -> Samples | None:
 
 
 def _mojo() -> Samples | None:
+    mojo = shutil.which("mojo")
     pixi = shutil.which("pixi")
     directory = _REPO_ROOT / "src" / "sc_neurocore" / "accel" / "mojo"
-    if pixi is None or not (directory / "pixi.toml").is_file():
+    if mojo is not None:
+        command = [mojo, "run", "kernels/evo_substrate_bench.mojo"]
+    elif pixi is not None and (directory / "pixi.toml").is_file():
+        command = [pixi, "run", "mojo", "run", "kernels/evo_substrate_bench.mojo"]
+    else:
         return None
     completed = subprocess.run(
-        pin_isa([pixi, "run", "mojo", "run", "kernels/evo_substrate_bench.mojo"]),
+        pin_isa(command),
         cwd=directory,
         capture_output=True,
         text=True,

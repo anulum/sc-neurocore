@@ -33,6 +33,8 @@ def test_c_abi_rejects_invalid_run_without_writing_output(
     )
     output = np.full(2, -999.0, dtype=np.float64)
     if backend == "go":
+        if not backends.ensure_go_loaded():
+            pytest.skip("Go Lapicque backend is not built in this environment")
         assert backends._go_lib is not None
         result = backends._go_lib.lapicque_simulate_c(
             *c_arguments(neuron),
@@ -41,6 +43,8 @@ def test_c_abi_rejects_invalid_run_without_writing_output(
             output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
         )
     else:
+        if not backends.ensure_mojo_loaded():
+            pytest.skip("Mojo Lapicque backend is not built in this environment")
         assert backends._mojo_lib is not None
         result = backends._mojo_lib.lapicque_simulate_c(
             *c_arguments(neuron), 1, current, int(output.ctypes.data)
