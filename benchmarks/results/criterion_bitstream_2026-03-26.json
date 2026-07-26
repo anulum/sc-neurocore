@@ -7,7 +7,9 @@
     "rust_profile": "release (opt-level=3, lto=fat, codegen-units=1)"
   },
   "benchmark_tool": "Criterion 0.8",
-  "workload": "1,048,576 bits (1M)",
+  "workload": "1,048,576 logical bits represented as one unpacked u8 per bit for pack, then 16,384 packed u64 words for popcount",
+  "evidence_class": "historical local single-size result; retained for provenance, not headline authority",
+  "methodology_notice": "This cache-resident record predates the count_ones, NumPy LUT, 64M-bit, and 1G-bit baselines in the current benchmark harness.",
   "results": [
     {
       "name": "pack_bitstream_1m",
@@ -15,7 +17,7 @@
       "time_low_us": 1212.9,
       "time_high_us": 1412.3,
       "throughput_gbit_s": 0.8,
-      "note": "Packs u8 array into packed u64 words. SIMD dispatch path."
+      "note": "Scalar conversion from one u8 per logical bit into packed u64 words. This is not a SIMD popcount path."
     },
     {
       "name": "popcount_portable_1m",
@@ -23,7 +25,7 @@
       "time_low_us": 9.21,
       "time_high_us": 10.15,
       "throughput_gbit_s": 108.4,
-      "note": "Portable popcount on packed u64 words (no SIMD intrinsics)."
+      "note": "Hand-written SWAR popcount on packed u64 words; this is not the u64::count_ones baseline."
     },
     {
       "name": "popcount_simd_dispatch_1m",
@@ -39,6 +41,6 @@
     "readme_source": "docs/benchmarks/BENCHMARKS.md — measured at 25.4 us on unknown cloud instance",
     "local_pack_result": "0.8 Gbit/s (1.31 ms) — 51x slower than claimed",
     "local_popcount_result": "190 Gbit/s (5.52 us) — 4.6x faster than claimed, but different operation",
-    "conclusion": "The 41.3 Gbit/s claim likely measured popcount throughput, not pack throughput, or was measured on a significantly faster CPU. Either way the claim needs clarification."
+    "conclusion": "Pack and popcount are different operations and this historical single-size record cannot support a ratio between them. Use the current equal-operation, multi-size count_ones/SIMD/NumPy-LUT harness for comparisons."
   }
 }

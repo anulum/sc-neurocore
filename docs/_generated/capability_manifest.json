@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4571
+    "test_files": 4572
   },
   "documentation": {
     "public_pages": [
@@ -3647,6 +3647,7 @@
       "tests/test_bit_true_kernel_simple_kernel_rust.py",
       "tests/test_bit_true_kernel_transcendental_statements.py",
       "tests/test_bit_true_kernel_type_helpers.py",
+      "tests/test_bitstream_benchmark_contract.py",
       "tests/test_bitstream_engine_binding.py",
       "tests/test_block_floating_dense_hdl.py",
       "tests/test_bridges/dna_mapper_support.py",
