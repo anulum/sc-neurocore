@@ -324,11 +324,11 @@ ignore_missing_imports = true
 # was `sc_neurocore.bci_studio`). No general per-module strictness relaxations remain.
 # Newly written or modified code must be strict-clean from the first commit; do NOT
 # reintroduce a burn-down override to silence new code.
-# History: docs/internal/MASTER_TODO_2026-04-20.md §1.4.
+# History: docs/internal/archive/todos/2026-07-26/MASTER_TODO_2026-04-20.md §1.4.
 
 # Hard external-binding modules (torch / jax / Rust FFI) — relax untyped
 # call/decorator/subclassing checks only, since these bindings have no upstream type stubs.
-# TODO(gh-strict-mypy): docs/internal/MASTER_TODO_2026-04-20.md §1.4.
+# Exception rationale: the archived §1.4 closeout documents the missing upstream stubs.
 [[tool.mypy.overrides]]
 module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*', 'sc_neurocore.quantum_cognition.fs_watcher']
 disallow_subclassing_any = false
