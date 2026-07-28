@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ModelDetail } from "./api/client";
-import { modelCompileRequest } from "./modelCompileConfig";
+import { modelCompileRequest, modelCosimRequest } from "./modelCompileConfig";
 
 function detail(overrides: Partial<ModelDetail> = {}): ModelDetail {
   return {
@@ -23,6 +23,7 @@ function detail(overrides: Partial<ModelDetail> = {}): ModelDetail {
       schema_name: "lapicque",
       default_integrator: "exp_euler",
       integrators: ["exp_euler"],
+      cosim_integrators: [],
       default_q_format: "Q8.8",
       q_formats: ["Q8.8", "Q16.16"],
     },
@@ -46,6 +47,45 @@ describe("modelCompileRequest", () => {
       params: { tau: 15 },
       q_format: "Q16.16",
     });
+  });
+
+  it("builds co-simulation stimulus over the exact compile configuration", () => {
+    const mapDetail = detail({
+      compile_configuration: {
+        schema_name: "adaptive_threshold_if",
+        default_integrator: "map",
+        integrators: ["map"],
+        cosim_integrators: ["map"],
+        default_q_format: "Q8.8",
+        q_formats: ["Q8.8", "Q16.16"],
+      },
+    });
+
+    expect(modelCosimRequest({
+      dt: 0.1,
+      integrator: "map",
+      modelDetail: mapDetail,
+      modelParams: { tau: 20, v: 0 },
+      qFormat: "Q8.8",
+      selectedModelName: "AdaptiveThresholdIFNeuron",
+    }, { current: 7.5, nSteps: 64 })).toEqual({
+      current: 7.5,
+      dt: 0.1,
+      integrator: "map",
+      model_name: "AdaptiveThresholdIFNeuron",
+      n_steps: 64,
+      params: { tau: 20 },
+      q_format: "Q8.8",
+    });
+
+    expect(() => modelCosimRequest({
+      dt: 1,
+      integrator: "exp_euler",
+      modelDetail: detail(),
+      modelParams: { tau: 20 },
+      qFormat: "Q8.8",
+      selectedModelName: "LapicqueNeuron",
+    }, { current: 10 })).toThrow("no bit-exact selected-model co-simulation path");
   });
 
   it("fails closed for an unsupported model or configuration", () => {

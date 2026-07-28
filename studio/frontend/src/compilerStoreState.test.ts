@@ -10,12 +10,16 @@ import { describe, expect, it } from "vitest";
 import type {
   CompileResponse,
   CompileTraceability,
+  ModelCosimReport,
   IRBuildResponse,
   SVDirectResponse,
   SVEmitResponse,
 } from "./api/client";
 import {
   compilerErrorState,
+  compilerConfigurationInvalidatedState,
+  compilerCosimInvalidatedState,
+  compilerCosimLoadedState,
   compilerFailureState,
   compilerIRLoadedState,
   compilerRunStartState,
@@ -56,6 +60,38 @@ function compileResponse(overrides: Partial<CompileResponse> = {}): CompileRespo
     compile_traceability: overrides.compile_traceability ?? compileTraceability(),
     module_name: overrides.module_name ?? "lif_neuron",
     verilog: overrides.verilog ?? "module lif_neuron; endmodule",
+  };
+}
+
+function cosimReport(): ModelCosimReport {
+  return {
+    bit_exact: true,
+    configuration: {
+      dt: 0.1,
+      integrator: "map",
+      model_name: "AdaptiveThresholdIFNeuron",
+      q_format: "Q8.8",
+      schema_name: "adaptive_threshold_if",
+      schema_sha256: "4".repeat(64),
+    },
+    first_mismatch: null,
+    module_name: "sc_adaptive_threshold_if_neuron",
+    reference: {
+      kind: "generated_bit_true_c",
+      source_sha256: "5".repeat(64),
+      trace_sha256: "6".repeat(64),
+    },
+    rtl: {
+      kind: "iverilog_vvp",
+      source_sha256: "7".repeat(64),
+      trace_sha256: "6".repeat(64),
+    },
+    sample_count: 128,
+    schema_version: "studio.cosim-parity.v1",
+    signals: ["spike_out", "v_out", "theta_out"],
+    status: "completed",
+    stimulus: { current: 10, current_q: 2560, n_steps: 128 },
+    tools: { gcc: "gcc 13", iverilog: "Icarus 12", vvp: "VVP 12" },
   };
 }
 
@@ -117,6 +153,23 @@ describe("compiler store state helpers", () => {
       compileTraceability: response.compile_traceability,
       isSimulating: false,
       verilogSrc: "module lif_neuron; endmodule",
+    });
+  });
+
+  it("loads co-simulation parity and invalidates stale hardware evidence", () => {
+    const report = cosimReport();
+
+    expect(compilerCosimLoadedState(report)).toEqual({
+      cosimResult: report,
+      isSimulating: false,
+    });
+    expect(compilerCosimInvalidatedState()).toEqual({ cosimResult: null });
+    expect(compilerConfigurationInvalidatedState()).toEqual({
+      compileTraceability: null,
+      cosimResult: null,
+      multiTargetResult: null,
+      synthResult: null,
+      verilogSrc: "",
     });
   });
 

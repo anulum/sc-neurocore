@@ -12,6 +12,7 @@ export type GuidedFlowStepKey =
   | "analyse"
   | "train"
   | "compile"
+  | "cosim"
   | "synthesise"
   | "export";
 
@@ -25,6 +26,8 @@ export interface GuidedFlowInputs {
   trainingComplete: boolean;
   trainingSkipped: boolean;
   compileComplete: boolean;
+  cosimApplicable: boolean;
+  cosimComplete: boolean;
   synthesisComplete: boolean;
   evidenceExported: boolean;
 }
@@ -61,7 +64,8 @@ const GUIDED_FLOW_STEPS: readonly GuidedFlowStepDefinition[] = [
   { key: "analyse", title: "Analyse", optional: false, requires: "simulate" },
   { key: "train", title: "Train", optional: true, requires: "analyse" },
   { key: "compile", title: "Compile", optional: false, requires: "analyse" },
-  { key: "synthesise", title: "Synthesise", optional: false, requires: "compile" },
+  { key: "cosim", title: "Co-sim parity", optional: false, requires: "compile" },
+  { key: "synthesise", title: "Synthesise", optional: false, requires: "cosim" },
   { key: "export", title: "Export evidence", optional: false, requires: "synthesise" },
 ];
 
@@ -72,6 +76,7 @@ function allCapabilitiesAvailable(): GuidedFlowCapabilityMap {
     analyse: true,
     train: true,
     compile: true,
+    cosim: true,
     synthesise: true,
     export: true,
   };
@@ -89,6 +94,8 @@ function isStepComplete(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boole
       return inputs.trainingComplete || inputs.trainingSkipped;
     case "compile":
       return inputs.compileComplete;
+    case "cosim":
+      return inputs.cosimComplete;
     case "synthesise":
       return inputs.synthesisComplete;
     case "export":
@@ -117,7 +124,13 @@ export function computeGuidedFlowState(
   capabilities: GuidedFlowCapabilityMap = allCapabilitiesAvailable(),
 ): GuidedFlowState {
   let currentAssigned = false;
-  const steps: GuidedFlowStep[] = GUIDED_FLOW_STEPS.map((definition) => {
+  const definitions = GUIDED_FLOW_STEPS.filter(
+    (definition) => definition.key !== "cosim" || inputs.cosimApplicable,
+  );
+  const steps: GuidedFlowStep[] = definitions.map((definition) => {
+    const requiredStep = definition.key === "synthesise" && !inputs.cosimApplicable
+      ? "compile"
+      : definition.requires;
     const completed = isStepComplete(definition.key, inputs);
     if (completed) {
       return { ...stepBase(definition), status: "completed", blockedReason: null };
@@ -129,11 +142,11 @@ export function computeGuidedFlowState(
         blockedReason: `${definition.title} capability is unavailable`,
       };
     }
-    if (definition.requires !== null && !isStepComplete(definition.requires, inputs)) {
+    if (requiredStep !== null && !isStepComplete(requiredStep, inputs)) {
       return {
         ...stepBase(definition),
         status: "blocked",
-        blockedReason: `Requires ${titleOf(definition.requires)}`,
+        blockedReason: `Requires ${titleOf(requiredStep)}`,
       };
     }
     if (!currentAssigned) {

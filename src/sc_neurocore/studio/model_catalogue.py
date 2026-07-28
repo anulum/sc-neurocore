@@ -167,6 +167,11 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
         "schema_name": schema_name,
         "default_integrator": default_integrator,
         "integrators": list(dict.fromkeys(integrators)),
+        "cosim_integrators": [
+            integrator
+            for integrator in dict.fromkeys(integrators)
+            if integrator in {"euler", "map"}
+        ],
         "default_q_format": "Q8.8",
         "q_formats": ["Q8.8", "Q16.16"],
     }

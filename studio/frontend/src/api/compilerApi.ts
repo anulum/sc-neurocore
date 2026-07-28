@@ -11,6 +11,8 @@ import type {
   PrecisionResponse,
   CompileResponse,
   ModelCompileRequest,
+  ModelCosimReport,
+  ModelCosimRequest,
   IRBuildResponse,
   IRVerifyResponse,
   SVEmitResponse,
@@ -21,6 +23,10 @@ export const compileVerilog = (req: Record<string, unknown>) => post<CompileResp
 
 export const compileModelVerilog = (req: ModelCompileRequest) => (
   post<CompileResponse>("/models/compile", req)
+);
+
+export const cosimModelVerilog = (req: ModelCosimRequest) => (
+  post<ModelCosimReport>("/models/cosim", req)
 );
 
 export const buildIR = (req: Record<string, unknown>) => post<IRBuildResponse>("/ir/build", req);

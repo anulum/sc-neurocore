@@ -98,6 +98,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     (
         "POST",
+        "/api/models/cosim",
+        RouteVisibility.AUTHENTICATED,
+        "studio.compiler.model_cosim",
+    ),
+    (
+        "POST",
         "/api/nir/compile",
         RouteVisibility.AUTHENTICATED,
         "studio.compiler.nir_compile",

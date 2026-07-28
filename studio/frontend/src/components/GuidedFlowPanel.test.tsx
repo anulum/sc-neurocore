@@ -20,6 +20,8 @@ describe("GuidedFlowPanel", () => {
       trainingComplete: false,
       trainingSkipped: false,
       compileComplete: false,
+      cosimApplicable: false,
+      cosimComplete: false,
       synthesisComplete: false,
       evidenceExported: false,
     });
@@ -46,6 +48,8 @@ describe("GuidedFlowPanel", () => {
       trainingComplete: true,
       trainingSkipped: false,
       compileComplete: true,
+      cosimApplicable: false,
+      cosimComplete: false,
       synthesisComplete: true,
       evidenceExported: true,
     });

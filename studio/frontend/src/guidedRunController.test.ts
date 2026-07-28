@@ -21,6 +21,7 @@ import {
 const allCapabilities: GuidedFlowCapabilityMap = {
   analyse: true,
   compile: true,
+  cosim: true,
   design: true,
   export: true,
   simulate: true,
@@ -33,6 +34,8 @@ function flow(overrides: Partial<GuidedFlowInputs> = {}, capabilities = allCapab
     {
       analysisComplete: false,
       compileComplete: false,
+      cosimApplicable: false,
+      cosimComplete: false,
       evidenceExported: false,
       modelSelected: true,
       simulationComplete: false,
@@ -55,6 +58,9 @@ function actions(calls: GuidedRunActionKey[] = []): GuidedRunActions {
     },
     runCompile: async () => {
       calls.push("run-compile");
+    },
+    runCosim: async () => {
+      calls.push("run-cosim");
     },
     runSimulation: async () => {
       calls.push("run-simulation");
@@ -197,6 +203,27 @@ describe("buildGuidedRunController", () => {
     expect(afterAnalysis.completedEvidence).toEqual(
       expect.arrayContaining(["Design", "Simulate", "Analyse", "Train"]),
     );
+  });
+
+  it("runs bit-exact co-simulation after model compile and before synthesis", async () => {
+    const calls: GuidedRunActionKey[] = [];
+    const controller = buildGuidedRunController({
+      cosimConfigured: true,
+      exportReady: false,
+      flow: flow({
+        analysisComplete: true,
+        compileComplete: true,
+        cosimApplicable: true,
+        modelSelected: true,
+        simulationComplete: true,
+        trainingSkipped: true,
+      }),
+      sourceMode: "model",
+    }, actions(calls));
+
+    expect(controller.nextActionKey).toBe("run-cosim");
+    await expect(controller.runNextStep()).resolves.toEqual({ ok: true });
+    expect(calls).toEqual(["run-cosim"]);
   });
 
   it("blocks a catalogue model without a canonical schema-backed RTL path", () => {

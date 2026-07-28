@@ -137,6 +137,7 @@ export interface ModelCompileConfiguration {
   schema_name: string;
   default_integrator: string;
   integrators: string[];
+  cosim_integrators: string[];
   default_q_format: string;
   q_formats: string[];
 }
@@ -747,6 +748,11 @@ export interface ModelCompileRequest {
   module_name?: string;
 }
 
+export interface ModelCosimRequest extends ModelCompileRequest {
+  current: number;
+  n_steps: number;
+}
+
 export interface ModelCompileResultConfiguration {
   dt: number;
   integrator: string;
@@ -780,6 +786,28 @@ export interface CompileResponse {
   compile_traceability: CompileTraceability;
   module_name: string;
   verilog: string;
+}
+
+export interface ModelCosimMismatch {
+  cycle: number;
+  reference: Record<string, number>;
+  rtl: Record<string, number>;
+  signals: string[];
+}
+
+export interface ModelCosimReport {
+  bit_exact: boolean;
+  configuration: ModelCompileResultConfiguration;
+  first_mismatch: ModelCosimMismatch | null;
+  module_name: string;
+  reference: { kind: "generated_bit_true_c"; source_sha256: string; trace_sha256: string };
+  rtl: { kind: "iverilog_vvp"; source_sha256: string; trace_sha256: string };
+  sample_count: number;
+  schema_version: "studio.cosim-parity.v1";
+  signals: string[];
+  status: "completed";
+  stimulus: { current: number; current_q: number; n_steps: number };
+  tools: Record<"gcc" | "iverilog" | "vvp", string>;
 }
 
 export interface IRBuildResponse {

@@ -23,6 +23,8 @@ function inputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInputs {
     trainingComplete: false,
     trainingSkipped: false,
     compileComplete: false,
+    cosimApplicable: false,
+    cosimComplete: false,
     synthesisComplete: false,
     evidenceExported: false,
     ...overrides,
@@ -95,6 +97,7 @@ describe("computeGuidedFlowState", () => {
       analyse: true,
       train: true,
       compile: true,
+      cosim: true,
       synthesise: true,
       export: true,
     };
@@ -105,6 +108,23 @@ describe("computeGuidedFlowState", () => {
     expect(simulate?.blockedReason).toBe("Simulate capability is unavailable");
     // Design is done, simulate is capability-blocked, so nothing is current.
     expect(state.currentStepKey).toBeNull();
+  });
+
+  it("requires model RTL co-simulation parity between compile and synthesis", () => {
+    const state = computeGuidedFlowState(inputs({
+      analysisComplete: true,
+      compileComplete: true,
+      cosimApplicable: true,
+      modelSelected: true,
+      simulationComplete: true,
+      trainingSkipped: true,
+    }));
+
+    expect(state.totalCount).toBe(8);
+    expect(statusOf(state, "cosim")).toBe("current");
+    expect(statusOf(state, "synthesise")).toBe("blocked");
+    expect(state.steps.find((step) => step.key === "synthesise")?.blockedReason)
+      .toBe("Requires Co-sim parity");
   });
 
   it("reports a fully completed flow with no current step", () => {

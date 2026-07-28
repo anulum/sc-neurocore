@@ -17,6 +17,8 @@ describe("GuidedFlowPanel guided run actions", () => {
     const state = computeGuidedFlowState({
       analysisComplete: true,
       compileComplete: true,
+      cosimApplicable: false,
+      cosimComplete: false,
       evidenceExported: false,
       modelSelected: true,
       simulationComplete: true,
@@ -32,6 +34,7 @@ describe("GuidedFlowPanel guided run actions", () => {
       exportEvidence: async () => undefined,
       runAnalysis: async () => undefined,
       runCompile: async () => undefined,
+      runCosim: async () => undefined,
       runSimulation: async () => undefined,
       runSynthesis: async () => undefined,
       skipTraining: async () => undefined,
@@ -50,6 +53,8 @@ describe("GuidedFlowPanel guided run actions", () => {
     const state = computeGuidedFlowState({
       analysisComplete: true,
       compileComplete: true,
+      cosimApplicable: false,
+      cosimComplete: false,
       evidenceExported: false,
       modelSelected: true,
       simulationComplete: true,
@@ -59,6 +64,7 @@ describe("GuidedFlowPanel guided run actions", () => {
     }, {
       analyse: true,
       compile: true,
+      cosim: true,
       design: true,
       export: true,
       simulate: true,
@@ -74,6 +80,7 @@ describe("GuidedFlowPanel guided run actions", () => {
       exportEvidence: async () => undefined,
       runAnalysis: async () => undefined,
       runCompile: async () => undefined,
+      runCosim: async () => undefined,
       runSimulation: async () => undefined,
       runSynthesis: async () => undefined,
       skipTraining: async () => undefined,

@@ -106,6 +106,13 @@ class ModelCompileRequest(BaseModel):
     module_name: str | None = Field(default=None, min_length=1)
 
 
+class ModelCosimRequest(ModelCompileRequest):
+    """Request body for real selected-model RTL co-simulation."""
+
+    current: float = Field(default=10.0, allow_inf_nan=False)
+    n_steps: int = Field(default=128, ge=1, le=2048)
+
+
 class BifurcationRequest(BaseModel):
     """Request body for one-parameter bifurcation sweeps."""
 

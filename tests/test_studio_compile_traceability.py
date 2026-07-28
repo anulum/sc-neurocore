@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from typing import cast
 
 import pytest
@@ -253,6 +254,47 @@ def test_model_compile_route_is_authenticated_when_policy_is_enforced() -> None:
     response = protected_client.post(
         "/api/models/compile",
         json={"model_name": "LapicqueNeuron", "q_format": "Q8.8"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "missing_principal"
+
+
+@pytest.mark.skipif(
+    not all(shutil.which(tool) is not None for tool in ("gcc", "iverilog", "vvp")),
+    reason="GCC and Icarus Verilog are required",
+)
+def test_model_cosim_route_returns_real_bit_exact_selected_configuration(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/models/cosim",
+        json={
+            "model_name": "AdaptiveThresholdIFNeuron",
+            "integrator": "map",
+            "q_format": "Q8.8",
+            "current": 10.0,
+            "n_steps": 12,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["schema_version"] == "studio.cosim-parity.v1"
+    assert payload["bit_exact"] is True
+    assert payload["configuration"]["model_name"] == "AdaptiveThresholdIFNeuron"
+    assert payload["rtl"]["trace_sha256"] == payload["reference"]["trace_sha256"]
+    assert "path" not in json.dumps(payload, sort_keys=True).lower()
+
+
+def test_model_cosim_route_is_authenticated_when_policy_is_enforced() -> None:
+    protected_client = TestClient(
+        create_app(StudioRuntimeSettings(enforce_route_policies=True)),
+        base_url="http://127.0.0.1",
+    )
+    response = protected_client.post(
+        "/api/models/cosim",
+        json={"model_name": "AdaptiveThresholdIFNeuron", "current": 1.0, "n_steps": 4},
     )
 
     assert response.status_code == 401

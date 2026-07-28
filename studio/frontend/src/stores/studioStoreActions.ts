@@ -35,6 +35,7 @@ import {
   simulateModel,
   compileVerilog,
   compileModelVerilog,
+  cosimModelVerilog,
   fetchPrecision,
   fetchCodegen,
   fetchCompare,
@@ -242,6 +243,9 @@ import {
 import {
   compilerErrorState,
   compilerFailureState,
+  compilerCosimLoadedState,
+  compilerConfigurationInvalidatedState,
+  compilerCosimInvalidatedState,
   compilerIRLoadedState,
   compilerRunStartState,
   compilerSVDirectLoadedState,
@@ -290,7 +294,7 @@ import {
   scheduleStudioAutoSimulation,
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
-import { modelCompileRequest } from "../modelCompileConfig";
+import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
 
 let debounceTimer: StudioAutoSimulationTimer | null = null;
 
@@ -299,27 +303,57 @@ export function createStudioStoreActions(
   get: () => StudioState,
 ): Partial<StudioState> {
   return {
-  setSourceMode: (m) => set(sourceModeState(m)),
-  setEquations: (eqs) => { set(equationsState(eqs)); get().autoSimulate(); },
-  setThreshold: (t) => { set(thresholdState(t)); get().autoSimulate(); },
-  setReset: (r) => { set(resetState(r)); get().autoSimulate(); },
+  setSourceMode: (m) => set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() }),
+  setEquations: (eqs) => {
+    set({ ...equationsState(eqs), ...compilerConfigurationInvalidatedState() });
+    get().autoSimulate();
+  },
+  setThreshold: (t) => {
+    set({ ...thresholdState(t), ...compilerConfigurationInvalidatedState() });
+    get().autoSimulate();
+  },
+  setReset: (r) => {
+    set({ ...resetState(r), ...compilerConfigurationInvalidatedState() });
+    get().autoSimulate();
+  },
   setOdeParam: (key, value) => {
-    set((s) => numberRecordEntryState("odeParams", s.odeParams, key, value));
+    set((s) => ({
+      ...numberRecordEntryState("odeParams", s.odeParams, key, value),
+      ...compilerConfigurationInvalidatedState(),
+    }));
     get().autoSimulate();
   },
   setOdeInit: (key, value) => {
-    set((s) => numberRecordEntryState("odeInit", s.odeInit, key, value));
+    set((s) => ({
+      ...numberRecordEntryState("odeInit", s.odeInit, key, value),
+      ...compilerConfigurationInvalidatedState(),
+    }));
     get().autoSimulate();
   },
   setModelParam: (key, value) => {
-    set((s) => numberRecordEntryState("modelParams", s.modelParams, key, value));
+    set((s) => ({
+      ...numberRecordEntryState("modelParams", s.modelParams, key, value),
+      ...compilerConfigurationInvalidatedState(),
+    }));
     get().autoSimulate();
   },
-  setModelIntegrator: (modelIntegrator) => set({ modelIntegrator }),
-  setModelQFormat: (modelQFormat) => set({ modelQFormat }),
-  setDt: (dt) => { set(dtState(dt)); get().autoSimulate(); },
+  setModelIntegrator: (modelIntegrator) => set({
+    modelIntegrator,
+    ...compilerConfigurationInvalidatedState(),
+  }),
+  setModelQFormat: (modelQFormat) => set({
+    modelQFormat,
+    ...compilerConfigurationInvalidatedState(),
+  }),
+  setDt: (dt) => {
+    set({ ...dtState(dt), ...compilerConfigurationInvalidatedState() });
+    get().autoSimulate();
+  },
   setDuration: (d) => { set(durationState(d)); get().autoSimulate(); },
-  setCurrent: (c) => { set(currentState(c)); get().autoSimulate(); },
+  setCurrent: (c) => {
+    set({ ...currentState(c), ...compilerCosimInvalidatedState() });
+    get().autoSimulate();
+  },
   setProtocol: (p) => { set(protocolState(p)); get().autoSimulate(); },
   setActiveTab: (tab) => set(activeTabState(tab)),
   setModelFilter: (f) => set(modelFilterState(f)),
@@ -610,12 +644,12 @@ export function createStudioStoreActions(
   selectTemplate: (name) => {
     const template = get().templates.find((candidate) => candidate.name === name);
     if (template === undefined) return;
-    set(templateSelectedState(template));
+    set({ ...templateSelectedState(template), ...compilerConfigurationInvalidatedState() });
     get().runSimulation();
   },
 
   selectModel: async (name) => {
-    set(modelSelectionStartedState(name));
+    set({ ...modelSelectionStartedState(name), ...compilerConfigurationInvalidatedState() });
     const detail = await fetchModelDetail(name);
     if (detail === null) return;
     set(modelDetailLoadedState(detail));
@@ -629,7 +663,7 @@ export function createStudioStoreActions(
       await get().selectModel(selection.modelName);
       if (selection.modelRuntimeState !== null) set(selection.modelRuntimeState);
     } else if (selection.odeState !== null) {
-      set(selection.odeState);
+      set({ ...selection.odeState, ...compilerConfigurationInvalidatedState() });
     }
     if (selection.action.kind === "fi-curve") get().runFICurve();
     else if (selection.action.kind === "precision") get().runPrecision();
@@ -693,6 +727,25 @@ export function createStudioStoreActions(
           equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
         });
       set(compilerVerilogLoadedState(res));
+    } catch (e) { set(compilerFailureState(e)); }
+  },
+
+  runCosim: async () => {
+    const s = get();
+    set(compilerRunStartState("verilog"));
+    try {
+      if (s.sourceMode !== "model") {
+        throw new Error("Bit-exact selected-model co-simulation requires catalogue model mode.");
+      }
+      const res = await cosimModelVerilog(modelCosimRequest({
+        dt: s.dt,
+        integrator: s.modelIntegrator,
+        modelDetail: s.modelDetail,
+        modelParams: s.modelParams,
+        qFormat: s.modelQFormat,
+        selectedModelName: s.selectedModelName,
+      }, { current: s.current }));
+      set(compilerCosimLoadedState(res));
     } catch (e) { set(compilerFailureState(e)); }
   },
 
@@ -941,7 +994,10 @@ export function createStudioStoreActions(
     try {
       const data = await apiLoadProject(name);
       const projectState = studioProjectStateFromLoadResponse(data, get().trainingConfig);
-      set(studioProjectRestoreState(projectState));
+      set({
+        ...studioProjectRestoreState(projectState),
+        ...compilerConfigurationInvalidatedState(),
+      });
       get().runSimulation();
     } catch (e) { set(studioProjectFailureState(e, "Project load failed")); }
   },
@@ -1214,7 +1270,10 @@ export function createStudioStoreActions(
   loadSession: (name) => {
     const session = get().savedSessions.find((ss) => ss.name === name);
     if (!session) return;
-    set(studioSavedSessionRestoreState(session.state));
+    set({
+      ...studioSavedSessionRestoreState(session.state),
+      ...compilerConfigurationInvalidatedState(),
+    });
     get().runSimulation();
   },
 

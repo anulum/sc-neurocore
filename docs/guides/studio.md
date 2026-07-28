@@ -61,6 +61,19 @@ configuration used, including the canonical schema digest. Models without a
 canonical schema fail closed: Studio does not infer a fuzzy schema match or
 silently substitute an ODE.
 
+For `euler` and `map` configurations, **Run RTL co-sim** advances the guided
+workflow through a real bit-exact parity gate before synthesis. The isolated
+job generates the maintained bit-true C reference and the same configured RTL,
+compiles them with GCC and Icarus Verilog, executes the RTL with VVP, and
+compares `spike_out` plus every state output as signed integers on every cycle.
+The path-free `studio.cosim-parity.v1` report records the exact model/schema
+configuration, bounded stimulus, signal set, source and trace digests, tool
+versions, and the first mismatch when parity fails. Complete sources and traces
+remain path-confined job artifacts. `exp_euler`, `rk4`, and `gauss_seidel` are
+compile-only until a maintained bit-true reference lowerer exists; Studio
+disables the parity action and blocks model-mode guided synthesis rather than
+claiming an approximate pass.
+
 **Pattern filter:** click a pattern badge in the model list to filter.
 
 ### ODE Mode (custom equations)
@@ -225,6 +238,7 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/codegen` | Generate Python script |
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
 | POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
+| POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity |
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 
@@ -535,7 +549,8 @@ full checkpoint digest before restoring the training configuration.
 Compile, synthesis, PnR, and full-pipeline routes also submit through the
 bounded worker manager. Their HTTP responses remain synchronous for existing UI
 flows, and the Admin queue records path-free artifacts at
-`compiler/result.json`, `synthesis/result.json`,
+`compiler/result.json`, `cosim/report.json`, `cosim/traces.json`,
+`synthesis/result.json`,
 `synthesis/multi-target-result.json`, `synthesis/pnr-result.json`, and
 `pipeline/result.json`. The Network Canvas also surfaces the pipeline
 action-evidence contract beside the terminal result, including evidence
@@ -568,9 +583,10 @@ bundle includes the worker record plus the validated `synthesis/evidence.json`
 or `synthesis/multi-target-evidence.json` artifact, and the panel downloads
 bundle artefacts through the authenticated job-artifact route.
 
-Each worker-backed compile, synthesis, PnR, and pipeline action also writes a
+Each worker-backed compile, model co-simulation, synthesis, PnR, and pipeline
+action also writes a
 normalized `studio.action-evidence.v1` manifest next to the result artifact:
-`compiler/evidence.json`, `synthesis/evidence.json`,
+`compiler/evidence.json`, `cosim/evidence.json`, `synthesis/evidence.json`,
 `synthesis/multi-target-evidence.json`, `synthesis/pnr-evidence.json`, or
 `pipeline/evidence.json`. The manifest records the action kind, replay route,
 job ID, evidence classification, result payload SHA-256, and result artifact
@@ -643,11 +659,13 @@ JSON-serializable payload and result. Process jobs use the same path-confined
 artifact context and public manifest shape as thread-backed jobs, but they run
 in a separate Python process so timeout or cancellation can terminate the
 worker instead of leaving a long-running Python callable alive in the backend
-process. `/api/training/start`, `/api/compile`, `/api/synth/run`,
+process. `/api/training/start`, `/api/compile`, `/api/models/compile`,
+`/api/models/cosim`, `/api/synth/run`,
 `/api/synth/multi-target`, `/api/synth/pnr`, and `/api/pipeline/run` use this
-process-backed path for training, ODE-to-RTL compilation, synthesis, PnR,
-target comparison, and graph-to-synthesis execution while preserving their
-response contracts and evidence artifacts. Remaining route closures stay on
+process-backed path for training, ODE/model-to-RTL compilation, selected-model
+real RTL parity, synthesis, PnR, target comparison, and graph-to-synthesis
+execution while preserving their response contracts and evidence artifacts.
+Remaining route closures stay on
 the thread-backed path until each workflow is migrated to importable process
 tasks with explicit payload contracts.
 

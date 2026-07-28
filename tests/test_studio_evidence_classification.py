@@ -31,6 +31,7 @@ def test_studio_evidence_classification_contract_lists_all_manifest_classes() ->
             {
                 "analysis",
                 "compile",
+                "cosim_parity",
                 "default_flow",
                 "local_regression",
                 "project_workspace",
@@ -54,6 +55,7 @@ def test_studio_evidence_classification_validators_return_controlled_values() ->
 
     assert validate_studio_evidence_classification("analysis") == "analysis"
     assert validate_studio_evidence_classification("compile") == "compile"
+    assert validate_studio_evidence_classification("cosim_parity") == "cosim_parity"
     assert validate_studio_evidence_classification("default_flow") == "default_flow"
     assert validate_studio_evidence_classification("project_workspace") == "project_workspace"
     assert validate_studio_evidence_status("completed") == "completed"

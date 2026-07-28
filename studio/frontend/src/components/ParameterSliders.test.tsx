@@ -21,6 +21,7 @@ vi.mock("../stores/studio", () => ({
         schema_name: "adex",
         default_integrator: "euler",
         integrators: ["euler", "rk4"],
+        cosim_integrators: ["euler"],
         default_q_format: "Q8.8",
         q_formats: ["Q8.8", "Q16.16"],
       },

@@ -32465,6 +32465,10 @@ Request body for equation-to-SystemVerilog compilation.
 Request body for schema-backed catalogue-model RTL compilation.
 
 
+### Class `ModelCosimRequest`
+Request body for real selected-model RTL co-simulation.
+
+
 ### Class `BifurcationRequest`
 Request body for one-parameter bifurcation sweeps.
 
@@ -32991,6 +32995,32 @@ Return the rendered reference documentation for a model, or ``None``.
 The per-model reference page lives at ``docs/api/models/<module>.md``; the
 Studio serves its Markdown so the documentation is browsable inline next to
 the live model rather than only in the built docs site.
+
+---
+
+## Module `studio.model_compile_configuration`
+
+### Class `ResolvedModelCompileConfiguration`
+Validated schema, compiler options and instantiated universal neuron.
+
+- **to_public_dict**()
+  - Return the path-free configuration attached to Studio evidence.
+- **to_verilog**()
+  - Compile the resolved neuron with the exact selected fixed-point geometry.
+
+### Function `resolve_model_compile_configuration(payload)`
+Validate a model-mode compiler payload and instantiate its canonical schema.
+
+---
+
+## Module `studio.model_cosim`
+
+### Class `ModelCosimExecution`
+Public parity report plus complete private artifacts for job custody.
+
+
+### Function `run_model_cosim(configuration)`
+Compile and compare real C-reference and RTL state traces cycle by cycle.
 
 ---
 
@@ -34390,6 +34420,13 @@ Verified payload for one declared Studio job artifact.
 
 ### Function `run_model_compile_process_task(context, payload)`
 Resolve and compile one catalogue model through its canonical schema.
+
+---
+
+## Module `studio.platform.model_cosim_process`
+
+### Function `run_model_cosim_process_task(context, payload)`
+Resolve one selected model and emit real external-tool parity evidence.
 
 ---
 

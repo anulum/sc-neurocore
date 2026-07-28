@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio selected-model compile configuration
 
-import type { ModelCompileRequest, ModelDetail } from "./api/client";
+import type { ModelCompileRequest, ModelCosimRequest, ModelDetail } from "./api/client";
 
 export interface StudioModelCompileInput {
   dt: number;
@@ -46,5 +46,24 @@ export function modelCompileRequest(input: StudioModelCompileInput): ModelCompil
     model_name: input.selectedModelName,
     params,
     q_format: qFormat,
+  };
+}
+
+/** Build a co-simulation request over the exact same selected compiler configuration. */
+export function modelCosimRequest(
+  input: StudioModelCompileInput,
+  stimulus: { current: number; nSteps?: number },
+): ModelCosimRequest {
+  const compileRequest = modelCompileRequest(input);
+  const supported = input.modelDetail?.compile_configuration?.cosim_integrators ?? [];
+  if (!supported.includes(compileRequest.integrator)) {
+    throw new Error(
+      `Integrator ${compileRequest.integrator} has no bit-exact selected-model co-simulation path.`,
+    );
+  }
+  return {
+    ...compileRequest,
+    current: stimulus.current,
+    n_steps: stimulus.nSteps ?? 128,
   };
 }

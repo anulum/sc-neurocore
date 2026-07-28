@@ -124,3 +124,31 @@ def test_model_compile_process_rejects_corrupt_catalogue_configuration(
         run_model_compile_process_task(context, {"model_name": "LapicqueNeuron"})
 
     assert context.artifacts == ()
+
+
+@pytest.mark.parametrize(
+    "schema, message",
+    [
+        ({"integration": [], "parameters": {}}, "invalid integration"),
+        (
+            {"integration": {"method": "exp_euler", "dt": 1.0}, "parameters": []},
+            "invalid parameters",
+        ),
+    ],
+)
+def test_model_compile_process_rejects_corrupt_schema_sections(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    schema: dict[str, object],
+    message: str,
+) -> None:
+    context = _context(tmp_path)
+    monkeypatch.setattr(
+        "sc_neurocore.studio.model_compile_configuration.load_schema",
+        lambda _name: schema,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        run_model_compile_process_task(context, {"model_name": "LapicqueNeuron"})
+
+    assert context.artifacts == ()

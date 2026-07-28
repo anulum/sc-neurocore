@@ -11,6 +11,7 @@ import type {
   IRBuildResponse,
   SVDirectResponse,
   SVEmitResponse,
+  ModelCosimReport,
 } from "./api/client";
 
 export interface CompilerErrorStatePatch {
@@ -32,6 +33,23 @@ export interface CompilerVerilogLoadedStatePatch {
   compileTraceability: CompileTraceability;
   isSimulating: false;
   verilogSrc: string;
+}
+
+export interface CompilerCosimLoadedStatePatch {
+  cosimResult: ModelCosimReport;
+  isSimulating: false;
+}
+
+export interface CompilerConfigurationInvalidatedStatePatch {
+  compileTraceability: null;
+  cosimResult: null;
+  multiTargetResult: null;
+  synthResult: null;
+  verilogSrc: "";
+}
+
+export interface CompilerCosimInvalidatedStatePatch {
+  cosimResult: null;
 }
 
 export interface CompilerIRLoadedStatePatch {
@@ -76,6 +94,26 @@ export function compilerVerilogLoadedState(
     isSimulating: false,
     verilogSrc: response.verilog,
   };
+}
+
+export function compilerCosimLoadedState(
+  response: ModelCosimReport,
+): CompilerCosimLoadedStatePatch {
+  return { cosimResult: response, isSimulating: false };
+}
+
+export function compilerConfigurationInvalidatedState(): CompilerConfigurationInvalidatedStatePatch {
+  return {
+    compileTraceability: null,
+    cosimResult: null,
+    multiTargetResult: null,
+    synthResult: null,
+    verilogSrc: "",
+  };
+}
+
+export function compilerCosimInvalidatedState(): CompilerCosimInvalidatedStatePatch {
+  return { cosimResult: null };
 }
 
 export function compilerIRLoadedState(

@@ -8,7 +8,7 @@
 // Studio store state shape and view-mode types.
 
 import type {
-  CharacterizeResponse, CompileTraceability, FICurveResponse, BifurcationResponse,
+  CharacterizeResponse, CompileTraceability, ModelCosimReport, FICurveResponse, BifurcationResponse,
   SensitivityResponse, PrecisionResponse, HeatmapResponse, CompareResponse,
   NullclineResponse, FreqResponse, ImportedTrace, NetworkResult, NeuronTemplate,
   ModelSummary, ModelDetail, PresetSummary, SimulateResponse, SynthResult,
@@ -106,6 +106,7 @@ export interface StudioState {
   svSource: string;
   irErrors: string[];
   compileTraceability: CompileTraceability | null;
+  cosimResult: ModelCosimReport | null;
   synthTarget: string;
   synthResult: SynthResult | null;
   synthEstimate: SynthEstimate | null;
@@ -213,6 +214,7 @@ export interface StudioState {
   runHeatmap: () => Promise<void>;
   runCodegen: () => Promise<void>;
   runCompile: () => Promise<void>;
+  runCosim: () => Promise<void>;
   runCharacterize: () => Promise<void>;
   runMultiSimulate: (modelNames: string[]) => Promise<void>;
   runNetwork: () => Promise<void>;

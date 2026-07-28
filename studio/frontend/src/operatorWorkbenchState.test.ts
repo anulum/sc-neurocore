@@ -15,6 +15,8 @@ function guidedInputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInpu
   return {
     analysisComplete: false,
     compileComplete: false,
+    cosimApplicable: false,
+    cosimComplete: false,
     evidenceExported: false,
     modelSelected: false,
     simulationComplete: false,

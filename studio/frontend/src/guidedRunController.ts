@@ -13,6 +13,7 @@ export type GuidedRunActionKey =
   | "export-evidence"
   | "run-analysis"
   | "run-compile"
+  | "run-cosim"
   | "run-simulation"
   | "run-synthesis"
   | "skip-training";
@@ -21,6 +22,7 @@ export interface GuidedRunActions {
   exportEvidence: () => Promise<void>;
   runAnalysis: () => Promise<void>;
   runCompile: () => Promise<void>;
+  runCosim: () => Promise<void>;
   runSimulation: () => Promise<void>;
   runSynthesis: () => Promise<void>;
   skipTraining: () => Promise<void>;
@@ -29,6 +31,7 @@ export interface GuidedRunActions {
 export interface GuidedRunControllerInputs {
   capabilityMessages?: Partial<Record<GuidedFlowStepKey, string>>;
   compileConfigured?: boolean;
+  cosimConfigured?: boolean;
   exportReady: boolean;
   flow: GuidedFlowState;
   sourceMode: "model" | "ode";
@@ -57,6 +60,7 @@ interface GuidedRunPlan {
 const STEP_EVIDENCE_LABELS: Record<GuidedFlowStepKey, string> = {
   analyse: "Analyse",
   compile: "Compile",
+  cosim: "Co-sim parity",
   design: "Design",
   export: "Export evidence",
   simulate: "Simulate",
@@ -115,6 +119,15 @@ function currentStepPlan(
         };
       }
       return { blockerReason: null, key: "run-compile", label: "Compile RTL" };
+    case "cosim":
+      if (inputs.cosimConfigured === false) {
+        return {
+          blockerReason: "Selected integrator has no bit-exact co-simulation path.",
+          key: "blocked",
+          label: "Resolve blocker",
+        };
+      }
+      return { blockerReason: null, key: "run-cosim", label: "Run RTL co-sim" };
     case "synthesise":
       return { blockerReason: null, key: "run-synthesis", label: "Run synthesis" };
     case "export":
@@ -153,6 +166,9 @@ async function runPlannedAction(
         return { ok: true };
       case "run-compile":
         await actions.runCompile();
+        return { ok: true };
+      case "run-cosim":
+        await actions.runCosim();
         return { ok: true };
       case "run-simulation":
         await actions.runSimulation();

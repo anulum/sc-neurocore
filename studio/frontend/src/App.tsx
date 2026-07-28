@@ -80,6 +80,9 @@ export default function App() {
   }, { disabled: s.isSimulating, capabilityEnabled: !panelUnavailable(analysisPanel),
     applyPatch: (patch) => useStudioStore.setState(patch) });
 
+  const cosimMatchesCompile = s.cosimResult?.bit_exact === true
+    && s.compileTraceability !== null
+    && s.cosimResult.rtl.source_sha256 === s.compileTraceability.output.rtl_sha256;
   const guidedFlowInputs: GuidedFlowInputs = {
     modelSelected: s.sourceMode === "ode" ? s.equations.length > 0 : s.selectedModelName.length > 0,
     simulationComplete: s.result !== null,
@@ -97,6 +100,8 @@ export default function App() {
     trainingComplete: s.trainingEpochs.length > 0,
     trainingSkipped: guidedTrainingSkipped,
     compileComplete: s.compileTraceability !== null,
+    cosimApplicable: s.sourceMode === "model",
+    cosimComplete: cosimMatchesCompile,
     synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
     evidenceExported: s.evidenceBundle !== null
       || s.projectEvidenceBundle !== null
@@ -104,12 +109,16 @@ export default function App() {
       || s.synthesisEvidenceBundle !== null
       || evidenceSession.exportSatisfiesGuided,
   };
+  const selectedCosimConfigured = s.sourceMode === "model"
+    && (s.modelDetail?.compile_configuration?.cosim_integrators ?? [])
+      .includes(s.modelIntegrator);
   const guidedFlowCapabilities: GuidedFlowCapabilityMap = {
     design: true,
     simulate: !panelUnavailable("trace"),
     analyse: !panelUnavailable("fi-curve"),
     train: !panelUnavailable("train"),
     compile: !panelUnavailable("verilog"),
+    cosim: !panelUnavailable("verilog") && selectedCosimConfigured,
     synthesise: !panelUnavailable("synth"),
     export: true,
   };
@@ -246,6 +255,9 @@ export default function App() {
     capabilityMessages: {
       analyse: panelState("fi-curve").message,
       compile: panelState("verilog").message,
+      cosim: selectedCosimConfigured
+        ? panelState("verilog").message
+        : "Bit-exact co-simulation is available only for euler or map integrators.",
       simulate: panelState("trace").message,
       synthesise: panelState("synth").message,
       train: panelState("train").message,
@@ -253,6 +265,7 @@ export default function App() {
     exportReady: operatorWorkbench.evidenceActionEnabled || evidenceSession.cart.items.length > 0,
     flow: guidedFlow,
     compileConfigured: s.sourceMode === "ode" || s.modelDetail?.compile_configuration != null,
+    cosimConfigured: selectedCosimConfigured,
     sourceMode: s.sourceMode,
   }, {
     exportEvidence: async () => {
@@ -268,6 +281,16 @@ export default function App() {
     runAnalysis: evidenceSession.runAnalysisIntoCart,
     runCompile: async () => {
       await s.runCompile();
+    },
+    runCosim: async () => {
+      await s.runCosim();
+      const latest = useStudioStore.getState();
+      if (latest.cosimResult?.bit_exact !== true) {
+        throw new Error(latest.error ?? "RTL co-simulation did not produce bit-exact parity.");
+      }
+      if (latest.cosimResult.rtl.source_sha256 !== latest.compileTraceability?.output.rtl_sha256) {
+        throw new Error("RTL co-simulation source does not match the current compiled artifact.");
+      }
     },
     runSimulation: evidenceSession.runSimulationIntoCart,
     runSynthesis: async () => {
