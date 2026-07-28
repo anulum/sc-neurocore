@@ -85,6 +85,7 @@ export {
 
 export {
   compileVerilog,
+  compileModelVerilog,
   buildIR,
   verifyIR,
   emitSV,

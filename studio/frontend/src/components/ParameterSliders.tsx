@@ -63,6 +63,7 @@ function Slider({ label, value, onChange, min, max, step, unit, title }: {
 export default function ParameterSliders() {
   const {
     sourceMode, modelDetail, modelParams, setModelParam,
+    modelIntegrator, modelQFormat, setModelIntegrator, setModelQFormat,
     odeParams, odeInit, setOdeParam, setOdeInit,
     current, dt, duration, protocol,
     setCurrent, setDt, setDuration, setProtocol,
@@ -103,6 +104,31 @@ export default function ParameterSliders() {
               ))}
             </div>
           )}
+          <div className="panel-section" data-testid="model-compile-configuration">
+            <div className="panel-header">RTL Configuration</div>
+            {modelDetail.compile_configuration ? (
+              <>
+                <div className="slider-row">
+                  <span className="slider-label">integrator</span>
+                  <select value={modelIntegrator} onChange={(event) => setModelIntegrator(event.target.value)}>
+                    {modelDetail.compile_configuration.integrators.map((integrator) => (
+                      <option key={integrator} value={integrator}>{integrator}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="slider-row">
+                  <span className="slider-label">Q-format</span>
+                  <select value={modelQFormat} onChange={(event) => setModelQFormat(event.target.value)}>
+                    {modelDetail.compile_configuration.q_formats.map((qFormat) => (
+                      <option key={qFormat} value={qFormat}>{qFormat}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <span className="slider-value">No canonical schema-backed RTL path</span>
+            )}
+          </div>
         </>
       )}
 

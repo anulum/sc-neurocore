@@ -37,3 +37,10 @@ def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None
     detail = response.json()
     assert detail["category_slug"] == "integrate-and-fire"
     assert "dynamics" in detail
+    assert detail["compile_configuration"] == {
+        "schema_name": "adex",
+        "default_integrator": "euler",
+        "integrators": ["euler", "rk4"],
+        "default_q_format": "Q8.8",
+        "q_formats": ["Q8.8", "Q16.16"],
+    }

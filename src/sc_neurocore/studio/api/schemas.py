@@ -95,6 +95,17 @@ class CompileRequest(BaseModel):
     module_name: str = "sc_neuron"
 
 
+class ModelCompileRequest(BaseModel):
+    """Request body for schema-backed catalogue-model RTL compilation."""
+
+    model_name: str = Field(min_length=1)
+    params: dict[str, float] = Field(default_factory=dict)
+    dt: float | None = Field(default=None, gt=0)
+    integrator: str | None = Field(default=None, min_length=1)
+    q_format: str = Field(default="Q8.8", pattern=r"^Q\d+\.\d+$")
+    module_name: str | None = Field(default=None, min_length=1)
+
+
 class BifurcationRequest(BaseModel):
     """Request body for one-parameter bifurcation sweeps."""
 

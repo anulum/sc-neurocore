@@ -4,11 +4,36 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Source/config provenance header
+// SC-NeuroCore — Studio parameter and RTL configuration rendering tests
 
-import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
 import { sliderBounds } from "./ParameterSliders";
+
+vi.mock("../stores/studio", () => ({
+  useStudioStore: () => ({
+    sourceMode: "model",
+    modelDetail: {
+      params: [],
+      state_vars: [],
+      compile_configuration: {
+        schema_name: "adex",
+        default_integrator: "euler",
+        integrators: ["euler", "rk4"],
+        default_q_format: "Q8.8",
+        q_formats: ["Q8.8", "Q16.16"],
+      },
+    },
+    modelParams: {}, modelIntegrator: "rk4", modelQFormat: "Q16.16",
+    setModelParam: () => undefined, setModelIntegrator: () => undefined,
+    setModelQFormat: () => undefined, odeParams: {}, odeInit: {},
+    setOdeParam: () => undefined, setOdeInit: () => undefined,
+    current: 10, dt: 0.1, duration: 100, protocol: "constant",
+    setCurrent: () => undefined, setDt: () => undefined,
+    setDuration: () => undefined, setProtocol: () => undefined,
+  }),
+}));
 
 describe("sliderBounds", () => {
   it("uses the curated range when it is a valid interval", () => {
@@ -33,5 +58,18 @@ describe("sliderBounds", () => {
   it("keeps a positive step for a zero-width admissible interval guard", () => {
     const [, , step] = sliderBounds(0, [0, 0.000001]);
     expect(step).toBeGreaterThan(0);
+  });
+});
+
+describe("ParameterSliders model compile configuration", () => {
+  it("surfaces descriptor/schema-backed integrator and Q-format choices", async () => {
+    const { default: ParameterSliders } = await import("./ParameterSliders");
+    const html = renderToStaticMarkup(<ParameterSliders />);
+
+    expect(html).toContain("data-testid=\"model-compile-configuration\"");
+    expect(html).toContain("integrator");
+    expect(html).toContain("rk4");
+    expect(html).toContain("Q-format");
+    expect(html).toContain("Q16.16");
   });
 });

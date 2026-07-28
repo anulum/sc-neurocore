@@ -17,6 +17,7 @@ export const studioInitialData = {
   odeParams: { E_L: -65, tau_m: 10, C: 1 },
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
+  modelIntegrator: "", modelQFormat: "Q8.8",
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
   authSession: null, authLoading: false, authError: null,
   auditStatus: null, auditExport: null,

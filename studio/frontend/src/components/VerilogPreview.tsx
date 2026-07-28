@@ -12,25 +12,13 @@ import { useStudioStore } from "../stores/studio";
 export default function VerilogPreview() {
   const { verilogSrc, sourceMode } = useStudioStore();
 
-  if (sourceMode !== "ode") {
-    return (
-      <div style={{
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        color: "var(--text-muted)", fontSize: 13,
-      }}>
-        Verilog compilation is available in Custom ODE mode.
-        <br />Switch to ODE mode and click Compile.
-      </div>
-    );
-  }
-
   if (!verilogSrc) {
     return (
       <div style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
         color: "var(--text-muted)", fontSize: 13,
       }}>
-        Click "Compile" to generate Verilog RTL from your ODE.
+        Click "Compile" to generate Verilog RTL from your {sourceMode === "model" ? "selected model" : "ODE"}.
       </div>
     );
   }

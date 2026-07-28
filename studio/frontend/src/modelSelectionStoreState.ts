@@ -57,6 +57,8 @@ export interface ModelDetailLoadedStatePatch {
   dt: number;
   modelDetail: ModelDetail;
   modelParams: Record<string, number>;
+  modelIntegrator: string;
+  modelQFormat: string;
   sourceMode: "model";
 }
 
@@ -122,10 +124,13 @@ export function modelSelectionStartedState(
 }
 
 export function modelDetailLoadedState(detail: ModelDetail): ModelDetailLoadedStatePatch {
+  const compileConfiguration = detail.compile_configuration;
   return {
     dt: detail.dt,
     modelDetail: detail,
     modelParams: modelDefaultParameters(detail),
+    modelIntegrator: compileConfiguration?.default_integrator ?? detail.integration_method,
+    modelQFormat: compileConfiguration?.default_q_format ?? "Q8.8",
     sourceMode: "model",
   };
 }

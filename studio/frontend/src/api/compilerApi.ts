@@ -10,6 +10,7 @@ import { post } from "./http";
 import type {
   PrecisionResponse,
   CompileResponse,
+  ModelCompileRequest,
   IRBuildResponse,
   IRVerifyResponse,
   SVEmitResponse,
@@ -17,6 +18,10 @@ import type {
 } from "./types";
 
 export const compileVerilog = (req: Record<string, unknown>) => post<CompileResponse>("/compile", req);
+
+export const compileModelVerilog = (req: ModelCompileRequest) => (
+  post<CompileResponse>("/models/compile", req)
+);
 
 export const buildIR = (req: Record<string, unknown>) => post<IRBuildResponse>("/ir/build", req);
 

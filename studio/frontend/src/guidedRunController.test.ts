@@ -147,18 +147,22 @@ describe("buildGuidedRunController", () => {
     expect(controller.exportReady).toBe(false);
   });
 
-  it("blocks compile honestly when the guided run is still in model mode", () => {
+  it("routes catalogue model mode through the same compile action", async () => {
+    const calls: GuidedRunActionKey[] = [];
     const controller = buildGuidedRunController({
       exportReady: false,
       flow: flow({ analysisComplete: true, simulationComplete: true, trainingSkipped: true }),
+      compileConfigured: true,
       sourceMode: "model",
-    }, actions());
+    }, actions(calls));
 
-    expect(controller.nextActionKey).toBe("blocked");
-    expect(controller.blockerReason).toBe("Guided compile requires ODE source mode.");
+    expect(controller.nextActionKey).toBe("run-compile");
+    expect(controller.blockerReason).toBeNull();
+    await expect(controller.runNextStep()).resolves.toEqual({ ok: true });
+    expect(calls).toEqual(["run-compile"]);
   });
 
-  it("supports the catalogue model path through sim and analysis before the ODE compile gate", async () => {
+  it("supports the catalogue model path through simulation, analysis, and compile", async () => {
     const calls: GuidedRunActionKey[] = [];
     const runActions = actions(calls);
 
@@ -183,12 +187,29 @@ describe("buildGuidedRunController", () => {
         simulationComplete: true,
         trainingSkipped: true,
       }),
+      compileConfigured: true,
       sourceMode: "model",
     }, runActions);
-    expect(afterAnalysis.nextActionKey).toBe("blocked");
-    expect(afterAnalysis.blockerReason).toBe("Guided compile requires ODE source mode.");
+    expect(afterAnalysis.nextActionKey).toBe("run-compile");
+    expect(afterAnalysis.blockerReason).toBeNull();
+    await afterAnalysis.runNextStep();
+    expect(calls).toEqual(["run-simulation", "run-analysis", "run-compile"]);
     expect(afterAnalysis.completedEvidence).toEqual(
       expect.arrayContaining(["Design", "Simulate", "Analyse", "Train"]),
+    );
+  });
+
+  it("blocks a catalogue model without a canonical schema-backed RTL path", () => {
+    const controller = buildGuidedRunController({
+      compileConfigured: false,
+      exportReady: false,
+      flow: flow({ analysisComplete: true, simulationComplete: true, trainingSkipped: true }),
+      sourceMode: "model",
+    }, actions());
+
+    expect(controller.nextActionKey).toBe("blocked");
+    expect(controller.blockerReason).toBe(
+      "Selected model has no canonical schema-backed RTL path.",
     );
   });
 

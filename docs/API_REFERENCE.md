@@ -32461,6 +32461,10 @@ Request body for benchmark-databank contribution uploads.
 Request body for equation-to-SystemVerilog compilation.
 
 
+### Class `ModelCompileRequest`
+Request body for schema-backed catalogue-model RTL compilation.
+
+
 ### Class `BifurcationRequest`
 Request body for one-parameter bifurcation sweeps.
 
@@ -32820,6 +32824,8 @@ evidence_classification:
     Evidence lane label consumed by Studio evidence bundles.
 status:
     Terminal status for this compile traceability object.
+source_payload_override:
+    Optional path-free payload for non-ODE sources such as catalogue models.
 
 - **to_public_dict**()
   - Return the public, path-free traceability payload.
@@ -32853,6 +32859,9 @@ Raises
 ------
 ValueError
     If no equations are supplied.
+
+### Function `build_model_compile_traceability()`
+Build path-free traceability for catalogue-model RTL compilation.
 
 ---
 
@@ -34374,6 +34383,13 @@ Path-free list payload for Studio job operator views.
 ### Class `StudioJobArtifactPayload`
 Verified payload for one declared Studio job artifact.
 
+
+---
+
+## Module `studio.platform.model_compile_process`
+
+### Function `run_model_compile_process_task(context, payload)`
+Resolve and compile one catalogue model through its canonical schema.
 
 ---
 

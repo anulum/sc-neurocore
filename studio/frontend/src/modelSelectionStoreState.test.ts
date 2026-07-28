@@ -82,6 +82,13 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
     backends: [],
     reproducibility: { reference_config: "", golden_trace_sha256: "", reproducible: false },
     documentation_slug: "",
+    compile_configuration: {
+      schema_name: "lif",
+      default_integrator: "euler",
+      integrators: ["euler", "rk4"],
+      default_q_format: "Q8.8",
+      q_formats: ["Q8.8", "Q16.16"],
+    },
     ...overrides,
   };
 }
@@ -147,6 +154,8 @@ describe("model selection store state helpers", () => {
       dt: 0.05,
       modelDetail: detail,
       modelParams: { E_L: -65, tau_m: 10, v: -65 },
+      modelIntegrator: "euler",
+      modelQFormat: "Q8.8",
       sourceMode: "model",
     });
   });

@@ -14,12 +14,15 @@ from pathlib import Path
 from typing import Any
 
 from sc_neurocore.neurons.descriptor_tiers import completeness_tiers, is_perfect
+from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     descriptor_completeness_tier,
 )
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.schema_module_aliases import schema_for_module
+from sc_neurocore.neurons.universal_dsl import load_schema
 from sc_neurocore.studio.model_introspection import (
     _categorize,
     _classify_fields,
@@ -133,9 +136,40 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
             },
             "readiness": _readiness_detail(descriptor),
             "documentation_slug": descriptor.documentation_slug,
+            "compile_configuration": _compile_configuration(descriptor),
         }
     )
     return detail
+
+
+def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None:
+    """Return the canonical schema-backed Studio compile choices, if available."""
+
+    module_stem = descriptor.module.rsplit(".", 1)[-1]
+    schema_name = schema_for_module(module_stem)
+    try:
+        schema = load_schema(schema_name)
+    except (FileNotFoundError, ValueError):
+        return None
+
+    integration = schema.get("integration", {})
+    default_integrator = str(integration.get("method", "euler"))
+    if default_integrator not in SUPPORTED_METHODS:
+        return None
+    extensions = schema.get("extensions", {})
+    declared = extensions.get("integrator_options", [default_integrator])
+    integrators = [
+        str(value) for value in declared if isinstance(value, str) and value in SUPPORTED_METHODS
+    ]
+    if default_integrator not in integrators:
+        integrators.insert(0, default_integrator)
+    return {
+        "schema_name": schema_name,
+        "default_integrator": default_integrator,
+        "integrators": list(dict.fromkeys(integrators)),
+        "default_q_format": "Q8.8",
+        "q_formats": ["Q8.8", "Q16.16"],
+    }
 
 
 def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:

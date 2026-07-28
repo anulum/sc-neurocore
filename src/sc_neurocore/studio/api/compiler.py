@@ -16,7 +16,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
-from sc_neurocore.studio.api.schemas import CompileRequest, SimulateRequest
+from sc_neurocore.studio.api.schemas import CompileRequest, ModelCompileRequest, SimulateRequest
 from sc_neurocore.studio.compiler import (
     build_ir_from_equation,
     emit_sv_from_equation,
@@ -25,6 +25,7 @@ from sc_neurocore.studio.compiler import (
 )
 from sc_neurocore.studio.nir_compile import compile_nir_file_bytes
 from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
+from sc_neurocore.studio.platform.model_compile_process import MODEL_COMPILE_PROCESS_TASK
 
 
 def build_compiler_router(context: StudioApiContext) -> APIRouter:
@@ -39,6 +40,17 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
                 kind="compiler",
                 owner="studio-compiler",
                 task_path=COMPILE_PROCESS_TASK,
+                payload=req.model_dump(),
+            )
+        )
+
+    @router.post("/api/models/compile")
+    def api_model_compile(req: ModelCompileRequest) -> Any:
+        return _safe(
+            lambda: run_studio_process_job_sync(
+                kind="compiler",
+                owner="studio-model-compiler",
+                task_path=MODEL_COMPILE_PROCESS_TASK,
                 payload=req.model_dump(),
             )
         )

@@ -51,6 +51,16 @@ parameters appear as sliders. Models are auto-classified by firing pattern
 (tonic, bursting, adapting, irregular, chaotic, silent) with colour-coded
 badges.
 
+When a model has a canonical bundled schema, the sidebar also exposes its
+schema-declared, compiler-supported integrator choices and supported signed
+Q-formats. **RTL** compiles the current selected model, parameter overrides,
+timestep, integrator and Q-format through the isolated schema-backed compiler
+job. The response includes
+`studio.compile-traceability.v1` provenance with the exact model/schema and
+configuration used, including the canonical schema digest. Models without a
+canonical schema fail closed: Studio does not infer a fuzzy schema match or
+silently substitute an ODE.
+
 **Pattern filter:** click a pattern badge in the model list to filter.
 
 ### ODE Mode (custom equations)
@@ -88,7 +98,7 @@ current simulation:
 | E-I Network | E-I | Excitatory-inhibitory network raster + population rates |
 | Code generator | Code | Python script + one-liner for notebooks |
 | Q8.8 Precision | Q8.8 | Float64 vs fixed-point comparison + error trace |
-| Verilog RTL | RTL | Generated Verilog module from ODE (ODE mode only) |
+| Verilog RTL | RTL | Generated Verilog from the selected schema-backed model or custom ODE |
 
 ### Trace View
 
@@ -214,6 +224,7 @@ current protocol for each frequency. The injected trace is
 | GET | `/api/presets/{id}` | Get preset detail |
 | POST | `/api/codegen` | Generate Python script |
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
+| POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 

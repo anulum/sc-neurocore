@@ -46,6 +46,8 @@ export interface StudioState {
   selectedModelName: string;
   modelDetail: ModelDetail | null;
   modelParams: Record<string, number>;
+  modelIntegrator: string;
+  modelQFormat: string;
   capabilities: StudioCapability[];
   capabilitiesLoading: boolean;
   capabilitiesError: string | null;
@@ -147,6 +149,8 @@ export interface StudioState {
   setOdeParam: (key: string, value: number) => void;
   setOdeInit: (key: string, value: number) => void;
   setModelParam: (key: string, value: number) => void;
+  setModelIntegrator: (integrator: string) => void;
+  setModelQFormat: (qFormat: string) => void;
   setDt: (dt: number) => void;
   setDuration: (d: number) => void;
   setCurrent: (c: number) => void;

@@ -1014,6 +1014,70 @@
         "title": "HeatmapRequest",
         "type": "object"
       },
+      "ModelCompileRequest": {
+        "description": "Request body for schema-backed catalogue-model RTL compilation.",
+        "properties": {
+          "dt": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dt"
+          },
+          "integrator": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Integrator"
+          },
+          "model_name": {
+            "minLength": 1,
+            "title": "Model Name",
+            "type": "string"
+          },
+          "module_name": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Name"
+          },
+          "params": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "q_format": {
+            "default": "Q8.8",
+            "pattern": "^Q\\d+\\.\\d+$",
+            "title": "Q Format",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_name"
+        ],
+        "title": "ModelCompileRequest",
+        "type": "object"
+      },
       "ModelSimulateRequest": {
         "description": "Request body for model-catalogue simulation in Studio.",
         "properties": {
@@ -3370,6 +3434,44 @@
           }
         },
         "summary": "Api Models"
+      }
+    },
+    "/api/models/compile": {
+      "post": {
+        "operationId": "api_model_compile_api_models_compile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelCompileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Compile Api Models Compile Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model Compile"
       }
     },
     "/api/models/facets": {

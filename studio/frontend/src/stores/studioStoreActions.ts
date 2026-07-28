@@ -34,6 +34,7 @@ import {
   simulateODE,
   simulateModel,
   compileVerilog,
+  compileModelVerilog,
   fetchPrecision,
   fetchCodegen,
   fetchCompare,
@@ -289,6 +290,7 @@ import {
   scheduleStudioAutoSimulation,
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
+import { modelCompileRequest } from "../modelCompileConfig";
 
 let debounceTimer: StudioAutoSimulationTimer | null = null;
 
@@ -313,6 +315,8 @@ export function createStudioStoreActions(
     set((s) => numberRecordEntryState("modelParams", s.modelParams, key, value));
     get().autoSimulate();
   },
+  setModelIntegrator: (modelIntegrator) => set({ modelIntegrator }),
+  setModelQFormat: (modelQFormat) => set({ modelQFormat }),
   setDt: (dt) => { set(dtState(dt)); get().autoSimulate(); },
   setDuration: (d) => { set(durationState(d)); get().autoSimulate(); },
   setCurrent: (c) => { set(currentState(c)); get().autoSimulate(); },
@@ -674,12 +678,20 @@ export function createStudioStoreActions(
 
   runCompile: async () => {
     const s = get();
-    if (s.sourceMode !== "ode") { set(compilerErrorState("Verilog compile only for ODE mode")); return; }
     set(compilerRunStartState("verilog"));
     try {
-      const res = await compileVerilog({
-        equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
-      });
+      const res = s.sourceMode === "model"
+        ? await compileModelVerilog(modelCompileRequest({
+          dt: s.dt,
+          integrator: s.modelIntegrator,
+          modelDetail: s.modelDetail,
+          modelParams: s.modelParams,
+          qFormat: s.modelQFormat,
+          selectedModelName: s.selectedModelName,
+        }))
+        : await compileVerilog({
+          equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
+        });
       set(compilerVerilogLoadedState(res));
     } catch (e) { set(compilerFailureState(e)); }
   },

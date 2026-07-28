@@ -252,6 +252,7 @@ export default function App() {
     },
     exportReady: operatorWorkbench.evidenceActionEnabled || evidenceSession.cart.items.length > 0,
     flow: guidedFlow,
+    compileConfigured: s.sourceMode === "ode" || s.modelDetail?.compile_configuration != null,
     sourceMode: s.sourceMode,
   }, {
     exportEvidence: async () => {
@@ -266,7 +267,7 @@ export default function App() {
     },
     runAnalysis: evidenceSession.runAnalysisIntoCart,
     runCompile: async () => {
-      await s.runEmitSV();
+      await s.runCompile();
     },
     runSimulation: evidenceSession.runSimulationIntoCart,
     runSynthesis: async () => {
@@ -361,16 +362,20 @@ export default function App() {
             request={analysisJob.request} startJob={analysisJob.startJob} state={analysisJob.state}
             selectedAnalysisLabel={analysisJob.selectedAnalysisLabel ?? "analysis"} /></div>
 
+        <Btn label="RTL" onClick={s.runCompile}
+          disabled={s.isSimulating || panelUnavailable("verilog") || (
+            s.sourceMode === "model" && s.modelDetail?.compile_configuration == null
+          )}
+          title={s.sourceMode === "model" && s.modelDetail?.compile_configuration == null
+            ? "Selected model has no canonical schema-backed RTL path."
+            : panelState("verilog").message}
+          color="#a5d6a7" />
         {s.sourceMode === "ode" && (
           <>
             <Btn label="Q8.8" onClick={s.runPrecision}
               disabled={s.isSimulating || panelUnavailable("precision")}
               title={panelState("precision").message}
               color="#80deea" />
-            <Btn label="RTL" onClick={s.runCompile}
-              disabled={s.isSimulating || panelUnavailable("verilog")}
-              title={panelState("verilog").message}
-              color="#a5d6a7" />
             <Btn label="IR" onClick={s.runBuildIR}
               disabled={s.isSimulating || panelUnavailable("ir")}
               title={panelState("ir").message}
@@ -512,7 +517,7 @@ export default function App() {
             <OperatorWorkbenchPanel
               onExportEvidence={operateWorkbenchEvidenceBundle}
               onOpenAdmin={() => activatePanel("admin")}
-              onOpenCompiler={() => activatePanel(s.sourceMode === "ode" ? "verilog" : "canvas")}
+              onOpenCompiler={() => activatePanel("verilog")}
               onOpenProjects={() => activatePanel(s.sourceMode === "model" ? "trace" : "ir")}
               onRunSimulation={() => {
                 if (s.isSimulating || panelUnavailable("trace")) {

@@ -92,6 +92,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ("POST", "/api/compile", RouteVisibility.AUTHENTICATED, "studio.compiler.compile"),
     (
         "POST",
+        "/api/models/compile",
+        RouteVisibility.AUTHENTICATED,
+        "studio.compiler.model_compile",
+    ),
+    (
+        "POST",
         "/api/nir/compile",
         RouteVisibility.AUTHENTICATED,
         "studio.compiler.nir_compile",

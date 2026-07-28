@@ -28,6 +28,7 @@ export interface GuidedRunActions {
 
 export interface GuidedRunControllerInputs {
   capabilityMessages?: Partial<Record<GuidedFlowStepKey, string>>;
+  compileConfigured?: boolean;
   exportReady: boolean;
   flow: GuidedFlowState;
   sourceMode: "model" | "ode";
@@ -106,9 +107,9 @@ function currentStepPlan(
     case "train":
       return { blockerReason: null, key: "skip-training", label: "Skip training" };
     case "compile":
-      if (inputs.sourceMode !== "ode") {
+      if (inputs.compileConfigured === false) {
         return {
-          blockerReason: "Guided compile requires ODE source mode.",
+          blockerReason: "Selected model has no canonical schema-backed RTL path.",
           key: "blocked",
           label: "Resolve blocker",
         };

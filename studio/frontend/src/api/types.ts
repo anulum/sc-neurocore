@@ -133,6 +133,14 @@ export interface ModelReadiness {
   terminal_reason?: string;
 }
 
+export interface ModelCompileConfiguration {
+  schema_name: string;
+  default_integrator: string;
+  integrators: string[];
+  default_q_format: string;
+  q_formats: string[];
+}
+
 export interface ModelDetail extends ModelSummary {
   docstring: string; display_name: string;
   state_vars: ModelStateVariable[];
@@ -147,6 +155,7 @@ export interface ModelDetail extends ModelSummary {
     reproducible: boolean;
   };
   documentation_slug: string;
+  compile_configuration?: ModelCompileConfiguration | null;
 }
 
 export interface ModelFacets {
@@ -719,6 +728,34 @@ export interface CompileSourcePayload {
   threshold: string | null;
 }
 
+export interface ModelCompileSourcePayload {
+  dt: number;
+  integrator: string;
+  model_name: string;
+  params: Record<string, number>;
+  q_format: string;
+  schema_name: string;
+  schema_sha256: string;
+}
+
+export interface ModelCompileRequest {
+  model_name: string;
+  params: Record<string, number>;
+  dt: number;
+  integrator: string;
+  q_format: string;
+  module_name?: string;
+}
+
+export interface ModelCompileResultConfiguration {
+  dt: number;
+  integrator: string;
+  model_name: string;
+  q_format: string;
+  schema_name: string;
+  schema_sha256: string;
+}
+
 export interface CompileTraceabilityOutput {
   language: "verilog" | "systemverilog";
   module_name: string;
@@ -731,14 +768,15 @@ export interface CompileTraceability {
   input_sha256: string;
   output: CompileTraceabilityOutput;
   schema_version: "studio.compile-traceability.v1";
-  source: "ode";
-  source_payload: CompileSourcePayload;
+  source: "ode" | "model";
+  source_payload: CompileSourcePayload | ModelCompileSourcePayload;
   status: "completed";
   traceability_sha256: string;
 }
 
 export interface CompileResponse {
   chars: number;
+  compile_configuration?: ModelCompileResultConfiguration;
   compile_traceability: CompileTraceability;
   module_name: string;
   verilog: string;

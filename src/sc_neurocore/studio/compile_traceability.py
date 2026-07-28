@@ -58,6 +58,8 @@ class StudioCompileTraceability:
         Evidence lane label consumed by Studio evidence bundles.
     status:
         Terminal status for this compile traceability object.
+    source_payload_override:
+        Optional path-free payload for non-ODE sources such as catalogue models.
     """
 
     equations: tuple[str, ...]
@@ -71,11 +73,12 @@ class StudioCompileTraceability:
     output_language: str = "verilog"
     evidence_classification: StudioEvidenceClassification = "compile"
     status: StudioEvidenceStatus = "completed"
+    source_payload_override: dict[str, JsonValue] | None = None
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free traceability payload."""
 
-        source_payload: dict[str, JsonValue] = {
+        source_payload = self.source_payload_override or {
             "equations": list(self.equations),
             "init": cast(dict[str, JsonValue], self.init),
             "params": cast(dict[str, JsonValue], self.params),
@@ -153,6 +156,44 @@ def build_compile_traceability(
         init=dict(init or {}),
         module_name=module_name,
         verilog=verilog,
+    )
+
+
+def build_model_compile_traceability(
+    *,
+    model_name: str,
+    schema_name: str,
+    schema_sha256: str,
+    params: FloatMap | None,
+    dt: float,
+    integrator: str,
+    q_format: str,
+    module_name: str,
+    verilog: str,
+) -> StudioCompileTraceability:
+    """Build path-free traceability for catalogue-model RTL compilation."""
+
+    if not model_name or not schema_name or len(schema_sha256) != 64:
+        raise ValueError("Model, schema, and schema digest are required for compile traceability.")
+    source_payload: dict[str, JsonValue] = {
+        "dt": dt,
+        "integrator": integrator,
+        "model_name": model_name,
+        "params": cast(dict[str, JsonValue], dict(params or {})),
+        "q_format": q_format,
+        "schema_name": schema_name,
+        "schema_sha256": schema_sha256,
+    }
+    return StudioCompileTraceability(
+        equations=(),
+        threshold=None,
+        reset=None,
+        params=dict(params or {}),
+        init={},
+        module_name=module_name,
+        verilog=verilog,
+        source="model",
+        source_payload_override=source_payload,
     )
 
 
