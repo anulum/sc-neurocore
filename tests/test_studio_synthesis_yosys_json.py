@@ -48,6 +48,27 @@ class TestYosysJsonParser:
         assert result["cells"] == 4
         assert result["wires"] == 3
 
+    def test_parse_ecp5_and_xilinx_flip_flops(self, tmp_path):
+        data = {
+            "modules": {
+                "top": {
+                    "cells": {
+                        "ecp5_ff": {"type": "TRELLIS_FF"},
+                        "generic_ff": {"type": "$dff"},
+                        "xilinx_ff": {"type": "FDRE"},
+                    },
+                    "netnames": {},
+                }
+            }
+        }
+        json_path = str(tmp_path / "target_ffs.json")
+        with open(json_path, "w") as f:
+            json.dump(data, f)
+
+        result = _parse_yosys_json(json_path)
+
+        assert result["ffs"] == 3
+
     def test_parse_bram_detection(self, tmp_path):
         data = {
             "modules": {

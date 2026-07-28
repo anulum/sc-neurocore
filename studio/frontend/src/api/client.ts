@@ -97,6 +97,7 @@ export {
 export {
   fetchSynthTools,
   runSynthesis,
+  runSynthesisTerminal,
   runMultiTargetSynthesis,
   fetchSynthEstimate,
   runPnR,

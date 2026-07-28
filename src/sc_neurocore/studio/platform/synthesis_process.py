@@ -22,6 +22,7 @@ from sc_neurocore.studio.synthesis import (
     multi_target_synthesis,
     run_pnr,
     run_synthesis,
+    run_synthesis_terminal,
     supported_targets,
 )
 
@@ -32,6 +33,9 @@ SYNTHESIS_MULTI_TARGET_PROCESS_TASK = (
     "sc_neurocore.studio.platform.synthesis_process:run_multi_target_synthesis_process_task"
 )
 SYNTHESIS_PNR_PROCESS_TASK = "sc_neurocore.studio.platform.synthesis_process:run_pnr_process_task"
+SYNTHESIS_TERMINAL_PROCESS_TASK = (
+    "sc_neurocore.studio.platform.synthesis_process:run_synthesis_terminal_process_task"
+)
 
 
 def run_synthesis_process_task(
@@ -150,6 +154,40 @@ def run_pnr_process_task(
     )
 
 
+def run_synthesis_terminal_process_task(
+    context: StudioJobContext,
+    payload: Mapping[str, object],
+) -> dict[str, object]:
+    """Run digest-bound selected-model synthesis and PnR in one isolated job."""
+
+    request = _terminal_request_from_payload(payload)
+    execution = run_synthesis_terminal(
+        request.verilog,
+        request.target,
+        compile_traceability=request.compile_traceability,
+        cosim_parity=request.cosim_parity,
+        process_limits=request.process_limits,
+    )
+    if execution.netlist_json is not None:
+        context.write_artifact("synthesis/terminal-netlist.json", execution.netlist_json)
+    if execution.routed_design is not None:
+        context.write_artifact("synthesis/terminal-routed.config", execution.routed_design)
+    result_artifact = context.write_artifact(
+        "synthesis/terminal-result.json",
+        _serialize_worker_result(execution.report),
+    )
+    write_studio_action_evidence_manifest(
+        context,
+        action_kind="studio.synthesis.terminal",
+        result=execution.report,
+        result_artifact=result_artifact,
+        evidence_artifact_path="synthesis/terminal-evidence.json",
+        evidence_classification="synthesis",
+        replay_route="POST /api/synth/terminal",
+    )
+    return execution.report
+
+
 class _SynthesisProcessRequest:
     """Validated JSON payload for isolated synthesis tasks."""
 
@@ -188,6 +226,25 @@ class _PnrProcessRequest:
         self.process_limits = process_limits
 
 
+class _SynthesisTerminalProcessRequest:
+    """Validated JSON payload for selected-model synthesis and PnR."""
+
+    def __init__(
+        self,
+        *,
+        compile_traceability: Mapping[str, object],
+        cosim_parity: Mapping[str, object],
+        verilog: str,
+        target: str,
+        process_limits: EdaProcessLimits | None,
+    ) -> None:
+        self.compile_traceability = compile_traceability
+        self.cosim_parity = cosim_parity
+        self.verilog = verilog
+        self.target = target
+        self.process_limits = process_limits
+
+
 def _synthesis_request_from_payload(payload: Mapping[str, object]) -> _SynthesisProcessRequest:
     return _SynthesisProcessRequest(
         verilog=_verilog_field(payload, "verilog"),
@@ -213,6 +270,18 @@ def _pnr_request_from_payload(payload: Mapping[str, object]) -> _PnrProcessReque
     )
 
 
+def _terminal_request_from_payload(
+    payload: Mapping[str, object],
+) -> _SynthesisTerminalProcessRequest:
+    return _SynthesisTerminalProcessRequest(
+        compile_traceability=_mapping_field(payload, "compile_traceability"),
+        cosim_parity=_mapping_field(payload, "cosim_parity"),
+        verilog=_verilog_field(payload, "verilog"),
+        target=_target_field(payload, "target"),
+        process_limits=_process_limits_from_payload(payload),
+    )
+
+
 def _verilog_field(payload: Mapping[str, object], key: str) -> str:
     value = _string_field(payload, key)
     if len(value.encode("utf-8")) > 2 * 1024 * 1024:
@@ -224,6 +293,13 @@ def _string_field(payload: Mapping[str, object], key: str) -> str:
     value = payload.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"Studio synthesis payload field {key!r} must be a non-empty string.")
+    return value
+
+
+def _mapping_field(payload: Mapping[str, object], key: str) -> Mapping[str, object]:
+    value = payload.get(key)
+    if not isinstance(value, Mapping):
+        raise ValueError(f"Studio synthesis payload field {key!r} must be an object.")
     return value
 
 
@@ -300,7 +376,9 @@ __all__ = [
     "SYNTHESIS_MULTI_TARGET_PROCESS_TASK",
     "SYNTHESIS_PNR_PROCESS_TASK",
     "SYNTHESIS_RUN_PROCESS_TASK",
+    "SYNTHESIS_TERMINAL_PROCESS_TASK",
     "run_multi_target_synthesis_process_task",
     "run_pnr_process_task",
     "run_synthesis_process_task",
+    "run_synthesis_terminal_process_task",
 ]

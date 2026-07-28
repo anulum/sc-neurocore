@@ -41,10 +41,17 @@ export interface CompilerCosimLoadedStatePatch {
 }
 
 export interface CompilerConfigurationInvalidatedStatePatch {
+  compileEvidenceBundle: null;
+  compileEvidenceBundleError: null;
   compileTraceability: null;
   cosimResult: null;
+  latestMultiTargetSynthesisJobId: null;
+  latestSynthesisJobId: null;
   multiTargetResult: null;
+  synthEstimate: null;
   synthResult: null;
+  synthesisEvidenceBundle: null;
+  synthesisEvidenceBundleError: null;
   verilogSrc: "";
 }
 
@@ -104,10 +111,17 @@ export function compilerCosimLoadedState(
 
 export function compilerConfigurationInvalidatedState(): CompilerConfigurationInvalidatedStatePatch {
   return {
+    compileEvidenceBundle: null,
+    compileEvidenceBundleError: null,
     compileTraceability: null,
     cosimResult: null,
+    latestMultiTargetSynthesisJobId: null,
+    latestSynthesisJobId: null,
     multiTargetResult: null,
+    synthEstimate: null,
     synthResult: null,
+    synthesisEvidenceBundle: null,
+    synthesisEvidenceBundleError: null,
     verilogSrc: "",
   };
 }

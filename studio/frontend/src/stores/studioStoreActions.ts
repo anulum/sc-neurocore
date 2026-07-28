@@ -50,6 +50,7 @@ import {
   emitSVDirect,
   fetchSynthTools,
   runSynthesis as apiRunSynthesis,
+  runSynthesisTerminal as apiRunSynthesisTerminal,
   runMultiTargetSynthesis,
   fetchSynthEstimate,
   fetchSurrogates as apiFetchSurrogates,
@@ -934,17 +935,51 @@ export function createStudioStoreActions(
     set(synthesisRunStartState());
     try {
       const verilog = s.svSource || s.verilogSrc;
-      const synthResult = await apiRunSynthesis(verilog, s.synthTarget);
+      let resultArtifactPath = "synthesis/result.json";
+      let synthResult: NonNullable<StudioState["synthResult"]>;
+      if (s.sourceMode === "model") {
+        if (s.compileTraceability === null || s.cosimResult === null) {
+          throw new Error("Compile and bit-exact co-simulate the selected model before routing.");
+        }
+        if (s.cosimResult.bit_exact !== true
+          || s.cosimResult.rtl.source_sha256 !== s.compileTraceability.output.rtl_sha256) {
+          throw new Error("Selected RTL does not have current bit-exact co-simulation parity.");
+        }
+        if (!new Set(["ice40", "ecp5"]).has(s.synthTarget)) {
+          throw new Error(`Target ${s.synthTarget} has no selected-RTL place-and-route terminal.`);
+        }
+        const terminal = await apiRunSynthesisTerminal(
+          verilog,
+          s.synthTarget,
+          s.compileTraceability,
+          s.cosimResult,
+        );
+        synthResult = { ...terminal.synthesis, silicon_terminal: terminal };
+        resultArtifactPath = "synthesis/terminal-result.json";
+      } else {
+        synthResult = await apiRunSynthesis(verilog, s.synthTarget);
+      }
       const [operatorStatus, jobList] = await Promise.all([
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set(synthesisRunCompletedState(synthResult, operatorStatus, jobList));
+      set(synthesisRunCompletedState(
+        synthResult,
+        operatorStatus,
+        jobList,
+        resultArtifactPath,
+      ));
     } catch (e) { set(synthesisFailureState(e)); }
   },
 
   runMultiTargetSynthesis: async () => {
     const s = get();
+    if (s.sourceMode === "model") {
+      set(synthesisErrorMessageState(
+        "Selected models use the digest-bound single-target synthesis/PnR terminal.",
+      ));
+      return;
+    }
     if (!s.svSource && !s.verilogSrc) {
       set(synthesisErrorMessageState("Generate Verilog first"));
       return;

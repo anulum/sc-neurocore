@@ -34,7 +34,7 @@ exists in the checkout.
 | Catalogue and presets | `/api/models*`, `/api/templates*`, `/api/presets*` |
 | Simulation and analysis | simulation, analysis, characterisation, network routes |
 | Compile and co-simulate | `/api/compile`, `/api/nir/compile`, `/api/ir/*` |
-| Synthesis and deploy | `/api/synth*`, `/api/pipeline/run` |
+| Synthesis and hardware handoff | `/api/synth*`, `/api/pipeline/run` |
 | Design and training | project, graph, training, export, and progress routes |
 
 Regenerate after an intentional API change:

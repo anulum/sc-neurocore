@@ -113,6 +113,15 @@ class ModelCosimRequest(ModelCompileRequest):
     n_steps: int = Field(default=128, ge=1, le=2048)
 
 
+class SynthesisTerminalRequest(BaseModel):
+    """Request body for digest-bound selected-model synthesis and PnR."""
+
+    compile_traceability: dict[str, Any]
+    cosim_parity: dict[str, Any]
+    target: Literal["ice40", "ecp5"] = "ecp5"
+    verilog: str = Field(min_length=1, max_length=2 * 1024 * 1024)
+
+
 class BifurcationRequest(BaseModel):
     """Request body for one-parameter bifurcation sweeps."""
 

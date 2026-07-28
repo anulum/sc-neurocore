@@ -8,8 +8,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+import hashlib
 from math import ceil
 from typing import Any
 import json
@@ -26,6 +27,7 @@ from sc_neurocore.studio.synthesis_provenance import (
 )
 
 _EDA_TOOL_ALLOWLIST = frozenset({"yosys", "nextpnr-ice40", "nextpnr-ecp5", "firtool"})
+_MAX_TERMINAL_ARTIFACT_BYTES = 16 * 1024 * 1024
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +56,15 @@ class EdaProcessLimits:
             raise ValueError("EDA process CPU limit must be positive.")
         if self.address_space_bytes is not None and self.address_space_bytes <= 0:
             raise ValueError("EDA process memory limit must be positive.")
+
+
+@dataclass(frozen=True, slots=True)
+class SynthesisTerminalExecution:
+    """Public terminal report plus private implementation artifacts."""
+
+    netlist_json: bytes | None
+    report: dict[str, Any]
+    routed_design: bytes | None
 
 
 def _resolve_eda_tool(name: str) -> str | None:
@@ -94,6 +105,7 @@ def _build_limit_preexec(limits: EdaProcessLimits | None) -> Callable[[], None] 
 def _run_eda_command(
     command: Sequence[str],
     *,
+    cwd: Path | None = None,
     timeout_seconds: float,
     process_limits: EdaProcessLimits | None = None,
 ) -> subprocess.CompletedProcess[str]:
@@ -104,6 +116,7 @@ def _run_eda_command(
         return subprocess.run(  # nosec B603
             list(command),
             capture_output=True,
+            cwd=cwd,
             shell=False,
             text=True,
             timeout=timeout_seconds,
@@ -111,6 +124,7 @@ def _run_eda_command(
     return subprocess.run(  # nosec B603
         list(command),
         capture_output=True,
+        cwd=cwd,
         preexec_fn=limit_preexec,
         shell=False,
         text=True,
@@ -133,7 +147,8 @@ def check_tools() -> dict[str, Any]:
                 tools[name] = {"available": False, "version": None}
                 continue
             r = _run_eda_command([executable, *cmd[1:]], timeout_seconds=5)
-            version = r.stdout.strip().split("\n")[0] if r.returncode == 0 else None
+            version_lines = (r.stdout + "\n" + r.stderr).strip().splitlines()
+            version = version_lines[0] if r.returncode == 0 and version_lines else None
             tools[name] = {"available": r.returncode == 0, "version": version}
         except (FileNotFoundError, subprocess.TimeoutExpired):
             tools[name] = {"available": False, "version": None}
@@ -142,7 +157,12 @@ def check_tools() -> dict[str, Any]:
 
 _TARGETS: dict[str, dict[str, str | None]] = {
     "ice40": {"synth_cmd": "synth_ice40", "pnr": "nextpnr-ice40", "device": "up5k"},
-    "ecp5": {"synth_cmd": "synth_ecp5", "pnr": "nextpnr-ecp5", "device": "25k"},
+    "ecp5": {
+        "synth_cmd": "synth_ecp5",
+        "pnr": "nextpnr-ecp5",
+        "device": "25k",
+        "package": "CABGA381",
+    },
     "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
     "xilinx": {"synth_cmd": "synth_xilinx", "pnr": None, "device": None},
 }
@@ -206,75 +226,304 @@ def run_synthesis(
     ).to_public_dict()
 
     with tempfile.TemporaryDirectory(prefix="sc_synth_") as tmpdir:
-        v_path = os.path.join(tmpdir, "design.v")
-        json_path = os.path.join(tmpdir, "design.json")
-        log_path = os.path.join(tmpdir, "yosys.log")
+        result, _json_path = _run_synthesis_in_directory(
+            verilog_source,
+            target,
+            root=Path(tmpdir),
+            process_limits=process_limits,
+            target_provenance=target_provenance,
+        )
+        return result
 
-        with open(v_path, "w") as f:
-            f.write(verilog_source)
 
-        synth_cmd = _TARGETS[target]["synth_cmd"]
-        script = f"read_verilog {v_path}; {synth_cmd} -json {json_path}"
-        script_path = os.path.join(tmpdir, "synth.ys")
-        with open(script_path, "w") as f:
-            f.write(script)
+def run_synthesis_terminal(
+    verilog_source: str,
+    target: str,
+    *,
+    compile_traceability: Mapping[str, object],
+    cosim_parity: Mapping[str, object],
+    process_limits: EdaProcessLimits | None = None,
+) -> SynthesisTerminalExecution:
+    """Run digest-bound synthesis and PnR for one parity-verified model RTL source."""
 
-        yosys_executable = _resolve_eda_tool("yosys")
-        if yosys_executable is None:
-            return {
+    if not isinstance(verilog_source, str) or not verilog_source.strip():
+        raise ValueError("verilog_source must be a non-empty string")
+    if len(verilog_source.encode("utf-8")) > 2 * 1024 * 1024:
+        raise ValueError("verilog_source exceeds 2 MiB size limit")
+    if target not in _TARGETS:
+        raise ValueError(f"Unknown target: {target}. Supported: {list(_TARGETS.keys())}")
+    if _TARGETS[target]["pnr"] is None:
+        raise ValueError(f"Target {target!r} has no place-and-route terminal.")
+
+    source_chain = _validate_selected_rtl_chain(
+        verilog_source,
+        compile_traceability=compile_traceability,
+        cosim_parity=cosim_parity,
+    )
+    tool_status = check_tools()
+    target_provenance = build_synthesis_target_provenance(
+        target,
+        target_config=_TARGETS[target],
+        capacity=_DEVICE_CAPACITY.get(target, {}),
+        tool_status=tool_status,
+    ).to_public_dict()
+
+    with tempfile.TemporaryDirectory(prefix="sc_silicon_terminal_") as tmpdir:
+        root = Path(tmpdir)
+        synthesis, json_path = _run_synthesis_in_directory(
+            verilog_source,
+            target,
+            root=root,
+            process_limits=process_limits,
+            target_provenance=target_provenance,
+        )
+        if not synthesis["success"] or json_path is None:
+            return SynthesisTerminalExecution(
+                netlist_json=None,
+                report=_terminal_report(
+                    source_chain=source_chain,
+                    target=target,
+                    target_provenance=target_provenance,
+                    synthesis=synthesis,
+                    pnr=None,
+                    netlist_sha256=None,
+                    routed_design_sha256=None,
+                ),
+                routed_design=None,
+            )
+
+        pnr = run_pnr(str(json_path), target, process_limits=process_limits)
+        netlist_json = json_path.read_bytes()
+        routed_path = _pnr_output_path(json_path, target)
+        routed_design = None
+        if routed_path.is_file():
+            if routed_path.stat().st_size > _MAX_TERMINAL_ARTIFACT_BYTES:
+                pnr = {
+                    "success": False,
+                    "error": "Routed design exceeds 16 MiB artifact limit",
+                }
+            else:
+                routed_design = routed_path.read_bytes()
+        elif pnr.get("success") is True:
+            pnr = {
+                "success": False,
+                "error": "Place-and-route completed without a routed-design artifact",
+            }
+        return SynthesisTerminalExecution(
+            netlist_json=netlist_json,
+            report=_terminal_report(
+                source_chain=source_chain,
+                target=target,
+                target_provenance=target_provenance,
+                synthesis=synthesis,
+                pnr=pnr,
+                netlist_sha256=_sha256_bytes(netlist_json),
+                routed_design_sha256=(
+                    _sha256_bytes(routed_design) if routed_design is not None else None
+                ),
+            ),
+            routed_design=routed_design,
+        )
+
+
+def _run_synthesis_in_directory(
+    verilog_source: str,
+    target: str,
+    *,
+    root: Path,
+    process_limits: EdaProcessLimits | None,
+    target_provenance: Mapping[str, object],
+) -> tuple[dict[str, Any], Path | None]:
+    """Run Yosys in one trusted directory and retain its netlist for a caller."""
+
+    v_path = root / "design.v"
+    json_path = root / "design.json"
+    log_path = root / "yosys.log"
+    script_path = root / "synth.ys"
+    v_path.write_text(verilog_source, encoding="utf-8")
+    synth_cmd = _TARGETS[target]["synth_cmd"]
+    script_path.write_text(
+        f"read_verilog {v_path.name}; {synth_cmd} -json {json_path.name}",
+        encoding="utf-8",
+    )
+
+    yosys_executable = _resolve_eda_tool("yosys")
+    if yosys_executable is None:
+        return (
+            {
                 "success": False,
                 "error": "yosys not found. Install: https://github.com/YosysHQ/yosys",
                 "target": target,
-                "target_provenance": target_provenance,
-            }
-
-        try:
-            result = _run_eda_command(
-                [yosys_executable, "-s", script_path],
-                timeout_seconds=60,
-                process_limits=process_limits,
-            )
-            log = result.stdout + result.stderr
-            with open(log_path, "w") as f:
-                f.write(log)
-        except FileNotFoundError:
-            return {
+                "target_provenance": dict(target_provenance),
+            },
+            None,
+        )
+    try:
+        completed = _run_eda_command(
+            [yosys_executable, "-s", str(script_path)],
+            cwd=root,
+            timeout_seconds=60,
+            process_limits=process_limits,
+        )
+        log = completed.stdout + completed.stderr
+        log_path.write_text(log, encoding="utf-8")
+    except FileNotFoundError:
+        return (
+            {
                 "success": False,
                 "error": "yosys not found",
                 "target": target,
-                "target_provenance": target_provenance,
-            }
-        except subprocess.TimeoutExpired:
-            return {
+                "target_provenance": dict(target_provenance),
+            },
+            None,
+        )
+    except subprocess.TimeoutExpired:
+        return (
+            {
                 "success": False,
                 "error": "Synthesis timed out (60s)",
                 "target": target,
-                "target_provenance": target_provenance,
-            }
-
-        if not os.path.exists(json_path):
-            return {
+                "target_provenance": dict(target_provenance),
+            },
+            None,
+        )
+    if not json_path.exists():
+        return (
+            {
                 "success": False,
                 "error": f"Synthesis failed. Log:\n{log[-500:]}",
                 "target": target,
-                "target_provenance": target_provenance,
-            }
+                "target_provenance": dict(target_provenance),
+            },
+            None,
+        )
 
-        resources = _parse_yosys_json(json_path)
-        capacity = _DEVICE_CAPACITY.get(target, {})
-
-        return {
+    resources = _parse_yosys_json(str(json_path))
+    capacity = _DEVICE_CAPACITY.get(target, {})
+    return (
+        {
             "success": True,
             "target": target,
             "resources": resources,
             "capacity": capacity,
             "utilisation": {
-                k: round(resources.get(k, 0) / max(capacity.get(k, 1), 1) * 100, 1)
-                for k in ["luts", "ffs", "brams", "dsps"]
+                key: round(resources.get(key, 0) / max(capacity.get(key, 1), 1) * 100, 1)
+                for key in ["luts", "ffs", "brams", "dsps"]
             },
             "log_excerpt": log[-300:] if log else "",
-            "target_provenance": target_provenance,
-        }
+            "target_provenance": dict(target_provenance),
+        },
+        json_path,
+    )
+
+
+def _validate_selected_rtl_chain(
+    verilog_source: str,
+    *,
+    compile_traceability: Mapping[str, object],
+    cosim_parity: Mapping[str, object],
+) -> dict[str, object]:
+    """Validate selected-model compile and bit-exact parity evidence against RTL bytes."""
+
+    actual_rtl_sha256 = _sha256_bytes(verilog_source.encode("utf-8"))
+    if compile_traceability.get("schema_version") != "studio.compile-traceability.v1":
+        raise ValueError("Selected RTL terminal requires studio.compile-traceability.v1 evidence.")
+    if compile_traceability.get("source") != "model":
+        raise ValueError("Selected RTL terminal requires catalogue-model compile evidence.")
+    if compile_traceability.get("status") != "completed":
+        raise ValueError("Selected RTL compile evidence is not completed.")
+    output = compile_traceability.get("output")
+    source_payload = compile_traceability.get("source_payload")
+    if not isinstance(output, Mapping) or not isinstance(source_payload, Mapping):
+        raise ValueError("Selected RTL compile evidence is malformed.")
+    if output.get("rtl_sha256") != actual_rtl_sha256:
+        raise ValueError("Selected RTL does not match the compile output digest.")
+    if compile_traceability.get("input_sha256") != _sha256_json(source_payload):
+        raise ValueError("Selected RTL compile input digest is invalid.")
+    trace_payload = dict(compile_traceability)
+    claimed_trace_sha256 = trace_payload.pop("traceability_sha256", None)
+    if claimed_trace_sha256 != _sha256_json(trace_payload):
+        raise ValueError("Selected RTL compile traceability digest is invalid.")
+
+    if cosim_parity.get("schema_version") != "studio.cosim-parity.v1":
+        raise ValueError("Selected RTL terminal requires studio.cosim-parity.v1 evidence.")
+    if cosim_parity.get("status") != "completed" or cosim_parity.get("bit_exact") is not True:
+        raise ValueError("Selected RTL co-simulation is not bit-exact and completed.")
+    rtl = cosim_parity.get("rtl")
+    configuration = cosim_parity.get("configuration")
+    if not isinstance(rtl, Mapping) or not isinstance(configuration, Mapping):
+        raise ValueError("Selected RTL co-simulation evidence is malformed.")
+    if rtl.get("source_sha256") != actual_rtl_sha256:
+        raise ValueError("Selected RTL does not match the co-simulated source digest.")
+    for key in ("dt", "integrator", "model_name", "q_format", "schema_name", "schema_sha256"):
+        if configuration.get(key) != source_payload.get(key):
+            raise ValueError(f"Selected RTL compile/co-simulation field {key!r} does not match.")
+    if cosim_parity.get("module_name") != output.get("module_name"):
+        raise ValueError("Selected RTL compile/co-simulation module does not match.")
+
+    return {
+        "compile_input_sha256": compile_traceability["input_sha256"],
+        "compile_traceability_sha256": claimed_trace_sha256,
+        "cosim_reference_trace_sha256": _nested_string(cosim_parity, "reference", "trace_sha256"),
+        "cosim_rtl_trace_sha256": _nested_string(cosim_parity, "rtl", "trace_sha256"),
+        "model_name": source_payload.get("model_name"),
+        "module_name": output.get("module_name"),
+        "rtl_sha256": actual_rtl_sha256,
+    }
+
+
+def _nested_string(payload: Mapping[str, object], outer: str, inner: str) -> str:
+    nested = payload.get(outer)
+    value = nested.get(inner) if isinstance(nested, Mapping) else None
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise ValueError(f"Selected RTL evidence digest {outer}.{inner} is invalid.")
+    return value
+
+
+def _terminal_report(
+    *,
+    source_chain: Mapping[str, object],
+    target: str,
+    target_provenance: Mapping[str, object],
+    synthesis: Mapping[str, object],
+    pnr: Mapping[str, object] | None,
+    netlist_sha256: str | None,
+    routed_design_sha256: str | None,
+) -> dict[str, Any]:
+    success = bool(synthesis.get("success")) and pnr is not None and bool(pnr.get("success"))
+    return {
+        "artifacts": {
+            "netlist_sha256": netlist_sha256,
+            "routed_design_sha256": routed_design_sha256,
+        },
+        "evidence_classification": "synthesis",
+        "place_and_route": dict(pnr) if pnr is not None else None,
+        "schema_version": "studio.silicon-terminal.v1",
+        "source_chain": dict(source_chain),
+        "status": "completed" if success else "failed",
+        "success": success,
+        "synthesis": dict(synthesis),
+        "target": target,
+        "target_provenance": dict(target_provenance),
+    }
+
+
+def _sha256_json(payload: Mapping[str, object]) -> str:
+    encoded = json.dumps(
+        dict(payload),
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return _sha256_bytes(encoded)
+
+
+def _sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _parse_yosys_json(json_path: str) -> dict[str, Any]:
@@ -303,12 +552,12 @@ def _parse_yosys_json(json_path: str) -> dict[str, Any]:
                 raise ValueError(
                     f"Invalid Yosys JSON payload: module '{mod_name}.cells.{cell_name}' must be an object"
                 )
-            ctype = cell.get("type", "")
-            if "LUT" in ctype or "SB_LUT" in ctype:
+            ctype = str(cell.get("type", "")).upper()
+            if "LUT" in ctype:
                 resources["luts"] += 1
-            elif "DFF" in ctype or "SB_DFF" in ctype:
+            elif _is_flip_flop_cell(ctype):
                 resources["ffs"] += 1
-            elif "RAM" in ctype or "BRAM" in ctype or "SB_RAM" in ctype:
+            elif "RAM" in ctype:
                 resources["brams"] += 1
             elif "DSP" in ctype or "MUL" in ctype:
                 resources["dsps"] += 1
@@ -320,6 +569,16 @@ def _parse_yosys_json(json_path: str) -> dict[str, Any]:
         resources["wires"] += len(netnames)
 
     return resources
+
+
+def _is_flip_flop_cell(cell_type: str) -> bool:
+    """Recognise Yosys flip-flop cells across supported target libraries."""
+
+    return (
+        "DFF" in cell_type
+        or cell_type.endswith("_FF")
+        or cell_type in {"FDCE", "FDPE", "FDRE", "FDSE"}
+    )
 
 
 def estimate_resources(ir_op_count: int, target: str = "ice40") -> dict[str, Any]:
@@ -433,7 +692,7 @@ def run_pnr(
         return {"success": False, "error": f"PnR input does not exist: {resolved_json}"}
     if not resolved_json.is_file():
         return {"success": False, "error": f"PnR input is not a regular file: {resolved_json}"}
-    if resolved_json.stat().st_size > 16 * 1024 * 1024:
+    if resolved_json.stat().st_size > _MAX_TERMINAL_ARTIFACT_BYTES:
         return {"success": False, "error": "PnR input exceeds 16 MiB size limit"}
     try:
         with resolved_json.open(encoding="utf-8") as handle:
@@ -443,7 +702,7 @@ def run_pnr(
     if not isinstance(payload, dict):
         return {"success": False, "error": "PnR input JSON must be an object"}
 
-    asc_path = str(resolved_json.with_suffix(".asc"))
+    output_path = _pnr_output_path(resolved_json, target)
     pnr_tool = cfg["pnr"]
     if pnr_tool is None:
         return {"success": False, "error": f"No PnR tool for target {target}"}
@@ -453,7 +712,12 @@ def run_pnr(
 
     try:
         result = _run_eda_command(
-            [pnr_executable, f"--{cfg['device']}", "--json", str(resolved_json), "--asc", asc_path],
+            _pnr_command(
+                executable=pnr_executable,
+                config=cfg,
+                json_path=resolved_json,
+                output_path=output_path,
+            ),
             timeout_seconds=120,
             process_limits=process_limits,
         )
@@ -482,3 +746,31 @@ def run_pnr(
         return {"success": False, "error": f"{pnr_tool} not found"}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": "PnR timed out (120s)"}
+
+
+def _pnr_output_path(json_path: Path, target: str) -> Path:
+    """Return the target-native routed-design artifact path."""
+
+    suffix = ".config" if target == "ecp5" else ".asc"
+    return json_path.with_suffix(suffix)
+
+
+def _pnr_command(
+    *,
+    executable: str,
+    config: Mapping[str, str | None],
+    json_path: Path,
+    output_path: Path,
+) -> list[str]:
+    """Build a target-correct nextpnr command without accepting client flags."""
+
+    device = config.get("device")
+    if device is None:
+        raise ValueError("PnR target device is not configured.")
+    command = [executable, f"--{device}", "--json", str(json_path)]
+    package = config.get("package")
+    if package is not None:
+        command.extend(["--package", package])
+    output_flag = "--textcfg" if config.get("pnr") == "nextpnr-ecp5" else "--asc"
+    command.extend([output_flag, str(output_path)])
+    return command

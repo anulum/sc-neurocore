@@ -47,6 +47,7 @@ def test_run_synthesis_passes_posix_preexec_when_limits_are_configured(
         args: list[str],
         *,
         capture_output: bool,
+        cwd: Path | None,
         shell: bool,
         text: bool,
         timeout: float,
@@ -58,6 +59,7 @@ def test_run_synthesis_passes_posix_preexec_when_limits_are_configured(
         assert timeout == 60
         captured_preexec.append(preexec_fn)
         script_path = Path(args[2])
+        assert cwd == script_path.parent
         (script_path.parent / "design.json").write_text('{"modules": {}}', encoding="utf-8")
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
 
@@ -103,6 +105,7 @@ def test_run_pnr_passes_posix_preexec_when_limits_are_configured(
         args: list[str],
         *,
         capture_output: bool,
+        cwd: Path | None,
         shell: bool,
         text: bool,
         timeout: float,
@@ -113,6 +116,7 @@ def test_run_pnr_passes_posix_preexec_when_limits_are_configured(
         assert shell is False
         assert text is True
         assert timeout == 120
+        assert cwd is None
         captured_preexec.append(preexec_fn)
         return subprocess.CompletedProcess(
             args=args,

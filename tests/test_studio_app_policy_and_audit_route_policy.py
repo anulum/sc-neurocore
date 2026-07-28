@@ -65,3 +65,22 @@ def test_studio_app_route_policy_enforcement_rejects_missing_admin_role() -> Non
 
     assert response.status_code == 403
     assert response.json()["detail"] == "missing_admin_role"
+
+
+def test_studio_terminal_route_policy_rejects_missing_admin_role() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/synth/terminal",
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+        json={
+            "compile_traceability": {},
+            "cosim_parity": {},
+            "target": "ecp5",
+            "verilog": "module top; endmodule",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "missing_admin_role"

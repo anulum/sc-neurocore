@@ -9,8 +9,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { SynthesisTargetProvenanceMatrix } from "../api/client";
-import { ProvenanceMatrixSummary } from "./SynthesisDashboard";
+import type { SiliconTerminalResult, SynthesisTargetProvenanceMatrix } from "../api/client";
+import { ProvenanceMatrixSummary, SiliconTerminalSummary } from "./SynthesisDashboard";
 import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
 
 const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
@@ -137,5 +137,57 @@ describe("SynthesisEvidenceControls", () => {
     expect(html).toContain(
       "Download synthesis evidence artefact evidence/jobs/sj_synth/artifacts/synthesis/multi-target-evidence.json",
     );
+  });
+});
+
+describe("SiliconTerminalSummary", () => {
+  it("renders digest-bound route and timing evidence", () => {
+    const synthesis = {
+      capacity: { brams: 56, dsps: 28, ffs: 24576, luts: 24576 },
+      log_excerpt: "complete",
+      resources: { brams: 0, cells: 20, dsps: 0, ffs: 8, luts: 12, wires: 30 },
+      success: true,
+      target: "ecp5",
+      target_provenance: provenanceMatrix.targets.ice40,
+      utilisation: { brams: 0, dsps: 0, ffs: 0.1, luts: 0.1 },
+    };
+    const terminal: SiliconTerminalResult = {
+      artifacts: {
+        netlist_sha256: "c".repeat(64),
+        routed_design_sha256: "d".repeat(64),
+      },
+      evidence_classification: "synthesis",
+      place_and_route: {
+        critical_path: "clk to q",
+        log_excerpt: "routed",
+        max_freq_mhz: 37.08,
+        success: true,
+      },
+      schema_version: "studio.silicon-terminal.v1",
+      source_chain: {
+        compile_input_sha256: "1".repeat(64),
+        compile_traceability_sha256: "2".repeat(64),
+        cosim_reference_trace_sha256: "3".repeat(64),
+        cosim_rtl_trace_sha256: "3".repeat(64),
+        model_name: "AdaptiveThresholdIFNeuron",
+        module_name: "sc_adaptive_threshold_if_neuron",
+        rtl_sha256: "b".repeat(64),
+      },
+      status: "completed",
+      success: true,
+      synthesis,
+      target: "ecp5",
+      target_provenance: synthesis.target_provenance,
+    };
+
+    const html = renderToStaticMarkup(<SiliconTerminalSummary terminal={terminal} />);
+
+    expect(html).toContain("Selected RTL synthesis/PnR terminal");
+    expect(html).toContain("AdaptiveThresholdIFNeuron");
+    expect(html).toContain("sc_adaptive_threshold_if_neuron");
+    expect(html).toContain("bbbbbbbbbbbb");
+    expect(html).toContain("cccccccccccc");
+    expect(html).toContain("dddddddddddd");
+    expect(html).toContain("37.08 MHz");
   });
 });

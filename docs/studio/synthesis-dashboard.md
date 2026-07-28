@@ -23,6 +23,14 @@ Select a target from the dropdown, click **Synthesise**. Yosys runs the
 target-specific synthesis pass and returns resource counts with utilisation
 bars.
 
+In catalogue-model mode the same button is labelled **Synthesise + Route**.
+Studio requires the current `studio.compile-traceability.v1` object and a
+bit-exact `studio.cosim-parity.v1` report for the same RTL bytes, then runs
+Yosys and nextpnr in one isolated job. The browser does not submit a host
+filesystem path. This terminal is available for iCE40 and ECP5; a wide design
+can still exceed the selected device/package I/O or logic capacity and fails
+with the real tool result.
+
 ### Multi-Target Comparison
 
 Click **All Targets** to run Yosys synthesis on all four supported targets
@@ -46,8 +54,8 @@ This gives a rough sizing before committing to a full synthesis run.
 ODE equation
   → [IR button] SC Intermediate Representation
   → [SV button] SystemVerilog
-  → [FPGA tab → Synthesise] Yosys resource report
-  → [PnR] nextpnr timing report (ice40/ECP5 only)
+  → [FPGA tab → Synthesise + Route] Yosys resource report
+  → [same isolated job] nextpnr routed-design and timing report (ice40/ECP5 only)
 ```
 
 From differential equation to FPGA resource estimate in seconds, from a
@@ -134,15 +142,20 @@ status, and shortened matrix digest without exposing host-local paths.
 |--------|----------|-------------|
 | GET | `/api/synth/tools-status` | Detect installed EDA tools |
 | POST | `/api/synth/run` | Verilog + target → Yosys synthesis |
+| POST | `/api/synth/terminal` | Selected RTL + compile/co-sim evidence → same-job Yosys + nextpnr |
 | POST | `/api/synth/multi-target` | Verilog → all targets comparison |
 | POST | `/api/synth/estimate` | IR op count → heuristic estimate |
 | POST | `/api/synth/pnr` | JSON netlist → nextpnr place & route |
 
-`/api/synth/run`, `/api/synth/multi-target`, and `/api/synth/pnr` execute
+`/api/synth/run`, `/api/synth/terminal`, `/api/synth/multi-target`, and
+`/api/synth/pnr` execute
 through the Studio local worker manager. They preserve the synchronous response
 payloads shown below and additionally create Admin queue records with result
 artifacts at `synthesis/result.json`,
-`synthesis/multi-target-result.json`, and `synthesis/pnr-result.json`.
+`synthesis/terminal-result.json`, `synthesis/multi-target-result.json`, and
+`synthesis/pnr-result.json`. A successful terminal job also retains
+`synthesis/terminal-netlist.json` and `synthesis/terminal-routed.config`; the
+result identifies both artifacts by SHA-256 rather than returning host paths.
 On POSIX hosts, Yosys and nextpnr child processes receive configured CPU and
 address-space ceilings from `SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS` and
 `SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES`; unsupported hosts keep the
@@ -225,6 +238,33 @@ Returns synthesis results for all supported targets:
   "supported": ["ice40", "ecp5", "gowin", "xilinx"]
 }
 ```
+
+### POST /api/synth/terminal
+
+The Admin-only selected-model terminal accepts the generated RTL plus the
+complete compile traceability and co-simulation parity objects returned by the
+Studio compiler routes:
+
+```json
+{
+  "verilog": "module sc_adaptive_threshold_if_neuron(...); ... endmodule",
+  "target": "ecp5",
+  "compile_traceability": {"schema_version": "studio.compile-traceability.v1", "...": "..."},
+  "cosim_parity": {"schema_version": "studio.cosim-parity.v1", "bit_exact": true, "...": "..."}
+}
+```
+
+The backend recomputes the RTL, compile-input, and compile-traceability digests;
+requires model source, completed status, bit-exact parity, matching module and
+configuration fields; and verifies the co-simulated RTL digest before invoking
+EDA tools. The path-free `studio.silicon-terminal.v1` response contains the
+validated source-chain digests, exact Yosys resource result, nextpnr timing
+result, target/tool provenance, and SHA-256 digests for the retained Yosys JSON
+netlist and routed design.
+
+This report is pre-bitstream FPGA implementation evidence. It does not claim a
+board-ready bitstream, pin-constrained board integration, hardware deployment,
+power, GDSII, or ASIC physical closure.
 
 ### POST /api/synth/estimate
 

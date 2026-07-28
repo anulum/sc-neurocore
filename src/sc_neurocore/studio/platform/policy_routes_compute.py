@@ -139,6 +139,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ("POST", "/api/synth/run", RouteVisibility.ADMIN, "studio.synth.run"),
     (
         "POST",
+        "/api/synth/terminal",
+        RouteVisibility.ADMIN,
+        "studio.synth.terminal",
+    ),
+    (
+        "POST",
         "/api/synth/multi-target",
         RouteVisibility.ADMIN,
         "studio.synth.multi_target",

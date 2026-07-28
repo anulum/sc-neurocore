@@ -165,10 +165,17 @@ describe("compiler store state helpers", () => {
     });
     expect(compilerCosimInvalidatedState()).toEqual({ cosimResult: null });
     expect(compilerConfigurationInvalidatedState()).toEqual({
+      compileEvidenceBundle: null,
+      compileEvidenceBundleError: null,
       compileTraceability: null,
       cosimResult: null,
+      latestMultiTargetSynthesisJobId: null,
+      latestSynthesisJobId: null,
       multiTargetResult: null,
+      synthEstimate: null,
       synthResult: null,
+      synthesisEvidenceBundle: null,
+      synthesisEvidenceBundleError: null,
       verilogSrc: "",
     });
   });

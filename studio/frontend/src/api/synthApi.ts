@@ -13,12 +13,27 @@ import type {
   SynthEstimate,
   MultiTargetResult,
   PnRResult,
+  CompileTraceability,
+  ModelCosimReport,
+  SiliconTerminalResult,
 } from "./types";
 
 export const fetchSynthTools = () => get<Record<string, SynthToolInfo>>("/synth/tools-status");
 
 export const runSynthesis = (verilog: string, target: string) =>
   post<SynthResult>("/synth/run", { verilog, target });
+
+export const runSynthesisTerminal = (
+  verilog: string,
+  target: string,
+  compileTraceability: CompileTraceability,
+  cosimParity: ModelCosimReport,
+) => post<SiliconTerminalResult>("/synth/terminal", {
+  compile_traceability: compileTraceability,
+  cosim_parity: cosimParity,
+  target,
+  verilog,
+});
 
 export const runMultiTargetSynthesis = (verilog: string) =>
   post<MultiTargetResult>("/synth/multi-target", { verilog });

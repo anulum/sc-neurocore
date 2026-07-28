@@ -2228,6 +2228,43 @@
         "title": "StudioTrainingWeightRestoreRequest",
         "type": "object"
       },
+      "SynthesisTerminalRequest": {
+        "description": "Request body for digest-bound selected-model synthesis and PnR.",
+        "properties": {
+          "compile_traceability": {
+            "additionalProperties": true,
+            "title": "Compile Traceability",
+            "type": "object"
+          },
+          "cosim_parity": {
+            "additionalProperties": true,
+            "title": "Cosim Parity",
+            "type": "object"
+          },
+          "target": {
+            "default": "ecp5",
+            "enum": [
+              "ice40",
+              "ecp5"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "verilog": {
+            "maxLength": 2097152,
+            "minLength": 1,
+            "title": "Verilog",
+            "type": "string"
+          }
+        },
+        "required": [
+          "compile_traceability",
+          "cosim_parity",
+          "verilog"
+        ],
+        "title": "SynthesisTerminalRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -6345,6 +6382,44 @@
           }
         },
         "summary": "Api Synth Run"
+      }
+    },
+    "/api/synth/terminal": {
+      "post": {
+        "operationId": "api_synth_terminal_api_synth_terminal_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SynthesisTerminalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Synth Terminal Api Synth Terminal Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Synth Terminal"
       }
     },
     "/api/synth/tools-status": {

@@ -9,6 +9,7 @@
 import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
 import type {
+  SiliconTerminalResult,
   SynthesisTargetProvenance,
   SynthesisTargetProvenanceMatrix,
 } from "../api/client";
@@ -89,6 +90,32 @@ function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenan
   );
 }
 
+export function SiliconTerminalSummary({ terminal }: { terminal: SiliconTerminalResult }) {
+  return (
+    <div style={{
+      marginTop: 10, padding: 8, background: "var(--bg-secondary)",
+      borderRadius: 4, fontSize: 10, color: "var(--text-secondary)",
+    }}>
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>
+        Selected RTL synthesis/PnR terminal
+      </div>
+      <div>Status: {terminal.status}</div>
+      <div>Model: {terminal.source_chain.model_name} / module {terminal.source_chain.module_name}</div>
+      <div>RTL: {terminal.source_chain.rtl_sha256.slice(0, 12)}</div>
+      <div>Netlist: {terminal.artifacts.netlist_sha256?.slice(0, 12) ?? "not produced"}</div>
+      <div>
+        Routed design: {terminal.artifacts.routed_design_sha256?.slice(0, 12) ?? "not produced"}
+      </div>
+      <div>Max frequency: {terminal.place_and_route?.max_freq_mhz ?? "unreported"} MHz</div>
+      {!terminal.success && (
+        <div style={{ color: "#ff5252", marginTop: 4 }}>
+          {terminal.place_and_route?.error ?? "Terminal did not complete."}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function readinessLabel(isReady: boolean): "ready" | "missing" {
   return isReady ? "ready" : "missing";
 }
@@ -159,6 +186,7 @@ export default function SynthesisDashboard() {
     synthesisEvidenceBundle, synthesisEvidenceBundleError, synthesisEvidenceBundleLoading,
     latestSynthesisJobId, latestMultiTargetSynthesisJobId,
     synthTarget, toolsAvailable, svSource, verilogSrc,
+    sourceMode, compileTraceability, cosimResult,
     irText,
     createEvidenceBundleForSurface, downloadEvidenceBundleArtifactForSurface,
     setSynthTarget, runSynthesis, runMultiTargetSynthesis, runSynthEstimate,
@@ -170,6 +198,13 @@ export default function SynthesisDashboard() {
   const targets = ["ice40", "ecp5", "gowin", "xilinx"];
   const hasSV = svSource.length > 0 || verilogSrc.length > 0;
   const hasIR = irText.length > 0;
+  const selectedTerminalTarget = synthTarget === "ice40" || synthTarget === "ecp5";
+  const selectedTerminalReady = sourceMode !== "model" || (
+    selectedTerminalTarget
+    && cosimResult?.bit_exact === true
+    && compileTraceability !== null
+    && cosimResult.rtl.source_sha256 === compileTraceability.output.rtl_sha256
+  );
   const activeSynthesisJobId = multiTargetResult
     ? latestMultiTargetSynthesisJobId
     : latestSynthesisJobId;
@@ -211,24 +246,30 @@ export default function SynthesisDashboard() {
           style={{ fontSize: 10, padding: "2px 6px" }}
         >
           {targets.map((t) => (
-            <option key={t} value={t}>{t.toUpperCase()}</option>
+            <option
+              key={t}
+              value={t}
+              disabled={sourceMode === "model" && t !== "ice40" && t !== "ecp5"}
+            >
+              {t.toUpperCase()}
+            </option>
           ))}
         </select>
         <button
           className="btn-simulate"
           onClick={runSynthesis}
-          disabled={isSimulating || !hasSV}
+          disabled={isSimulating || !hasSV || !selectedTerminalReady}
           style={{
             background: "#a5d6a7", color: "#0d1117", border: "none",
             padding: "3px 10px", fontSize: 10,
           }}
         >
-          {isSimulating ? "..." : "Synthesise"}
+          {isSimulating ? "..." : sourceMode === "model" ? "Synthesise + Route" : "Synthesise"}
         </button>
         <button
           className="btn-simulate"
           onClick={runMultiTargetSynthesis}
-          disabled={isSimulating || !hasSV}
+          disabled={isSimulating || !hasSV || sourceMode === "model"}
           style={{
             background: "#80cbc4", color: "#0d1117", border: "none",
             padding: "3px 10px", fontSize: 10,
@@ -252,6 +293,11 @@ export default function SynthesisDashboard() {
         {!hasSV && (
           <span style={{ fontSize: 9, color: "var(--text-muted)" }}>
             Generate Verilog first (RTL or SV button)
+          </span>
+        )}
+        {hasSV && sourceMode === "model" && !selectedTerminalReady && (
+          <span style={{ fontSize: 9, color: "var(--text-muted)" }}>
+            Compile and bit-exact co-simulate this RTL, then choose ICE40 or ECP5
           </span>
         )}
       </div>
@@ -388,6 +434,9 @@ export default function SynthesisDashboard() {
                   )}
                 </div>
                 <ProvenanceSummary provenance={synthResult.target_provenance} />
+                {synthResult.silicon_terminal && (
+                  <SiliconTerminalSummary terminal={synthResult.silicon_terminal} />
+                )}
               </>
             )}
             <SynthesisEvidenceControls

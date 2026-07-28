@@ -252,6 +252,28 @@ describe("synthesis store state helpers", () => {
     });
   });
 
+  it("selects the newest same-job terminal result artifact", () => {
+    const result = synthResult();
+    const operator = operatorStatus();
+    const jobs = jobList({
+      jobs: [
+        jobRecord("sj_generic", "2026-06-21T09:00:00Z", "synthesis/result.json"),
+        jobRecord(
+          "sj_terminal",
+          "2026-06-21T09:01:00Z",
+          "synthesis/terminal-result.json",
+        ),
+      ],
+    });
+
+    expect(synthesisRunCompletedState(
+      result,
+      operator,
+      jobs,
+      "synthesis/terminal-result.json",
+    ).latestSynthesisJobId).toBe("sj_terminal");
+  });
+
   it("builds the multi-target completion patch with the newest artifact job", () => {
     const result = multiTargetResult();
     const operator = operatorStatus();
@@ -292,7 +314,16 @@ describe("synthesis store state helpers", () => {
       error: "Generate Verilog first",
     });
     expect(synthesisEstimateLoadedState(estimate)).toEqual({ synthEstimate: estimate });
-    expect(synthesisTargetState("ecp5")).toEqual({ synthTarget: "ecp5" });
+    expect(synthesisTargetState("ecp5")).toEqual({
+      latestMultiTargetSynthesisJobId: null,
+      latestSynthesisJobId: null,
+      multiTargetResult: null,
+      synthEstimate: null,
+      synthResult: null,
+      synthTarget: "ecp5",
+      synthesisEvidenceBundle: null,
+      synthesisEvidenceBundleError: null,
+    });
     expect(synthesisToolStatusLoadedState({ yosys: { available: true, version: "0.50" } }))
       .toEqual({ toolsAvailable: { yosys: { available: true, version: "0.50" } } });
   });

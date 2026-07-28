@@ -32469,6 +32469,10 @@ Request body for schema-backed catalogue-model RTL compilation.
 Request body for real selected-model RTL co-simulation.
 
 
+### Class `SynthesisTerminalRequest`
+Request body for digest-bound selected-model synthesis and PnR.
+
+
 ### Class `BifurcationRequest`
 Request body for one-parameter bifurcation sweeps.
 
@@ -34818,6 +34822,9 @@ Raises
 ValueError
     If the payload does not match the JSON-serializable PnR contract.
 
+### Function `run_synthesis_terminal_process_task(context, payload)`
+Run digest-bound selected-model synthesis and PnR in one isolated job.
+
 ---
 
 ## Module `studio.platform.training_checkpoint`
@@ -35574,6 +35581,10 @@ address_space_bytes:
 - **__post_init__**()
   - Validate positive resource ceilings when they are configured.
 
+### Class `SynthesisTerminalExecution`
+Public terminal report plus private implementation artifacts.
+
+
 ### Function `check_tools()`
 Detect which EDA tools are installed.
 
@@ -35601,6 +35612,9 @@ Returns
 dict&#91;str, Any&#93;
     Path-free synthesis result with success state, target, resource counts,
     capacity metadata, utilisation, or a bounded error message.
+
+### Function `run_synthesis_terminal(verilog_source, target)`
+Run digest-bound synthesis and PnR for one parity-verified model RTL source.
 
 ### Function `estimate_resources(ir_op_count, target)`
 Quick resource estimate from IR operation count, no Yosys needed.

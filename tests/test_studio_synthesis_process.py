@@ -22,7 +22,9 @@ from sc_neurocore.studio.platform.synthesis_process import (
     run_multi_target_synthesis_process_task,
     run_pnr_process_task,
     run_synthesis_process_task,
+    run_synthesis_terminal_process_task,
 )
+from sc_neurocore.studio.synthesis import SynthesisTerminalExecution
 
 
 def _context(tmp_path: Path, job_id: str) -> StudioJobContext:
@@ -167,6 +169,63 @@ def test_pnr_process_task_writes_result_and_action_evidence(tmp_path: Path) -> N
     )
 
 
+def test_terminal_process_task_custodies_routed_artifacts_and_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Terminal task retains implementation artifacts without returning host paths."""
+
+    context = _context(tmp_path, "sj_terminal_test")
+    report = {
+        "artifacts": {
+            "netlist_sha256": "a" * 64,
+            "routed_design_sha256": "b" * 64,
+        },
+        "evidence_classification": "synthesis",
+        "place_and_route": {"success": True},
+        "schema_version": "studio.silicon-terminal.v1",
+        "source_chain": {"rtl_sha256": "c" * 64},
+        "status": "completed",
+        "success": True,
+        "synthesis": {"success": True},
+        "target": "ecp5",
+        "target_provenance": {},
+    }
+    monkeypatch.setattr(
+        "sc_neurocore.studio.platform.synthesis_process.run_synthesis_terminal",
+        lambda *_args, **_kwargs: SynthesisTerminalExecution(
+            netlist_json=b'{"modules": {}}',
+            report=report,
+            routed_design=b"routed",
+        ),
+    )
+
+    result = run_synthesis_terminal_process_task(
+        context,
+        {
+            "compile_traceability": {},
+            "cosim_parity": {},
+            "target": "ecp5",
+            "verilog": "module test(); endmodule",
+        },
+    )
+
+    assert result == report
+    assert [artifact.relative_path for artifact in context.artifacts] == [
+        "synthesis/terminal-netlist.json",
+        "synthesis/terminal-routed.config",
+        "synthesis/terminal-result.json",
+        "synthesis/terminal-evidence.json",
+    ]
+    _assert_evidence(
+        tmp_path,
+        job_id="sj_terminal_test",
+        evidence_path="synthesis/terminal-evidence.json",
+        action_kind="studio.synthesis.terminal",
+        replay_route="POST /api/synth/terminal",
+    )
+
+
 @pytest.mark.parametrize(
     ("task_name", "payload"),
     [
@@ -179,6 +238,7 @@ def test_pnr_process_task_writes_result_and_action_evidence(tmp_path: Path) -> N
         ("pnr", {"target": "ice40"}),
         ("pnr", {"json_path": "", "target": "ice40"}),
         ("pnr", {"json_path": "design.json", "target": "unknown"}),
+        ("terminal", {"verilog": "module t; endmodule", "target": "ecp5"}),
     ],
 )
 def test_synthesis_process_tasks_reject_invalid_payloads(
@@ -193,6 +253,7 @@ def test_synthesis_process_tasks_reject_invalid_payloads(
         "multi": run_multi_target_synthesis_process_task,
         "pnr": run_pnr_process_task,
         "synthesis": run_synthesis_process_task,
+        "terminal": run_synthesis_terminal_process_task,
     }
 
     with pytest.raises(ValueError, match="Studio synthesis payload"):

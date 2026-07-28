@@ -83,6 +83,9 @@ export default function App() {
   const cosimMatchesCompile = s.cosimResult?.bit_exact === true
     && s.compileTraceability !== null
     && s.cosimResult.rtl.source_sha256 === s.compileTraceability.output.rtl_sha256;
+  const synthesisComplete = s.sourceMode === "model"
+    ? s.synthResult?.silicon_terminal?.success === true
+    : s.synthResult !== null || s.multiTargetResult !== null;
   const guidedFlowInputs: GuidedFlowInputs = {
     modelSelected: s.sourceMode === "ode" ? s.equations.length > 0 : s.selectedModelName.length > 0,
     simulationComplete: s.result !== null,
@@ -102,7 +105,7 @@ export default function App() {
     compileComplete: s.compileTraceability !== null,
     cosimApplicable: s.sourceMode === "model",
     cosimComplete: cosimMatchesCompile,
-    synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
+    synthesisComplete,
     evidenceExported: s.evidenceBundle !== null
       || s.projectEvidenceBundle !== null
       || s.compileEvidenceBundle !== null
@@ -140,7 +143,7 @@ export default function App() {
     simulationResult: s.result,
     sourceMode: s.sourceMode,
     synthesisBundleExported: s.synthesisEvidenceBundle !== null,
-    synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
+    synthesisComplete,
   });
   const panelControl = (panelKey: PanelKey) => {
     const capabilityState = panelState(panelKey);
@@ -295,6 +298,19 @@ export default function App() {
     runSimulation: evidenceSession.runSimulationIntoCart,
     runSynthesis: async () => {
       await s.runSynthesis();
+      const latest = useStudioStore.getState();
+      if (latest.sourceMode === "model") {
+        const terminal = latest.synthResult?.silicon_terminal;
+        if (terminal?.success !== true) {
+          throw new Error(
+            terminal?.place_and_route?.error
+              ?? latest.error
+              ?? "Selected RTL synthesis/PnR terminal did not complete.",
+          );
+        }
+      } else if (latest.synthResult?.success !== true) {
+        throw new Error(latest.synthResult?.error ?? latest.error ?? "Synthesis did not complete.");
+      }
     },
     skipTraining: async () => {
       setGuidedTrainingSkipped(true);

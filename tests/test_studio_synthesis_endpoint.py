@@ -45,6 +45,33 @@ class TestSynthesisEndpoint:
         r = client.post("/api/synth/run", json={"verilog": verilog, "target": "invalid"})
         assert r.status_code == 422
 
+    @pytest.mark.parametrize("missing", ["compile_traceability", "cosim_parity"])
+    def test_terminal_requires_selected_rtl_evidence(self, client, missing):
+        payload = {
+            "compile_traceability": {},
+            "cosim_parity": {},
+            "target": "ecp5",
+            "verilog": "module test(); endmodule",
+        }
+        payload.pop(missing)
+
+        response = client.post("/api/synth/terminal", json=payload)
+
+        assert response.status_code == 422
+
+    def test_terminal_rejects_target_without_pnr(self, client):
+        response = client.post(
+            "/api/synth/terminal",
+            json={
+                "compile_traceability": {},
+                "cosim_parity": {},
+                "target": "gowin",
+                "verilog": "module test(); endmodule",
+            },
+        )
+
+        assert response.status_code == 422
+
     def test_synth_all_valid_targets(self, client):
         verilog = "module test(); endmodule"
         for target in _TARGETS:

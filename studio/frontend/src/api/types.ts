@@ -903,6 +903,7 @@ export interface SynthResult {
   utilisation: Record<string, number>;
   log_excerpt: string;
   target_provenance: SynthesisTargetProvenance;
+  silicon_terminal?: SiliconTerminalResult;
 }
 
 export interface SynthEstimate {
@@ -922,9 +923,35 @@ export interface MultiTargetResult {
 export interface PnRResult {
   success: boolean;
   error?: string;
-  max_freq_mhz: number | null;
-  critical_path: string | null;
-  log_excerpt: string;
+  max_freq_mhz?: number | null;
+  critical_path?: string | null;
+  log_excerpt?: string;
+}
+
+export interface SiliconTerminalSourceChain {
+  compile_input_sha256: string;
+  compile_traceability_sha256: string;
+  cosim_reference_trace_sha256: string;
+  cosim_rtl_trace_sha256: string;
+  model_name: string;
+  module_name: string;
+  rtl_sha256: string;
+}
+
+export interface SiliconTerminalResult {
+  artifacts: {
+    netlist_sha256: string | null;
+    routed_design_sha256: string | null;
+  };
+  evidence_classification: "synthesis";
+  place_and_route: PnRResult | null;
+  schema_version: "studio.silicon-terminal.v1";
+  source_chain: SiliconTerminalSourceChain;
+  status: "completed" | "failed";
+  success: boolean;
+  synthesis: SynthResult;
+  target: string;
+  target_provenance: SynthesisTargetProvenance;
 }
 
 export interface SurrogateInfo {

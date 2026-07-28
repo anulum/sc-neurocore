@@ -73,7 +73,14 @@ export interface SynthesisEstimateLoadedStatePatch {
 }
 
 export interface SynthesisTargetStatePatch {
+  latestMultiTargetSynthesisJobId: null;
+  latestSynthesisJobId: null;
+  multiTargetResult: null;
+  synthEstimate: null;
+  synthResult: null;
   synthTarget: string;
+  synthesisEvidenceBundle: null;
+  synthesisEvidenceBundleError: null;
 }
 
 export interface SynthesisToolStatusLoadedStatePatch {
@@ -108,13 +115,14 @@ export function synthesisRunCompletedState(
   synthResult: SynthResult,
   operatorStatus: StudioOperatorStatus,
   jobList: StudioJobListResponse,
+  resultArtifactPath = "synthesis/result.json",
 ): SynthesisRunCompletedStatePatch {
   return {
     ...synthesisOperatorRefreshState(operatorStatus, jobList),
     isSimulating: false,
     latestSynthesisJobId: latestSynthesisJobIdWithArtefact(
       jobList.jobs,
-      "synthesis/result.json",
+      resultArtifactPath,
     ),
     synthResult,
   };
@@ -161,7 +169,16 @@ export function synthesisEstimateLoadedState(
 }
 
 export function synthesisTargetState(synthTarget: string): SynthesisTargetStatePatch {
-  return { synthTarget };
+  return {
+    latestMultiTargetSynthesisJobId: null,
+    latestSynthesisJobId: null,
+    multiTargetResult: null,
+    synthEstimate: null,
+    synthResult: null,
+    synthTarget,
+    synthesisEvidenceBundle: null,
+    synthesisEvidenceBundleError: null,
+  };
 }
 
 export function synthesisToolStatusLoadedState(

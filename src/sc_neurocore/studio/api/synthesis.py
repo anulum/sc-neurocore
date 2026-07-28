@@ -16,10 +16,12 @@ from fastapi import APIRouter, HTTPException
 
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
+from sc_neurocore.studio.api.schemas import SynthesisTerminalRequest
 from sc_neurocore.studio.platform.synthesis_process import (
     SYNTHESIS_MULTI_TARGET_PROCESS_TASK,
     SYNTHESIS_PNR_PROCESS_TASK,
     SYNTHESIS_RUN_PROCESS_TASK,
+    SYNTHESIS_TERMINAL_PROCESS_TASK,
 )
 from sc_neurocore.studio.synthesis import (
     check_tools,
@@ -86,6 +88,26 @@ def build_synthesis_router(context: StudioApiContext) -> APIRouter:
                 payload={
                     "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
                     "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
+                    "verilog": verilog,
+                },
+            )
+        )
+
+    @router.post("/api/synth/terminal")
+    def api_synth_terminal(req: SynthesisTerminalRequest) -> Any:
+        verilog = _validate_synthesis_verilog(req.verilog)
+        target = _validate_synthesis_target(req.target)
+        return _safe(
+            lambda: run_studio_process_job_sync(
+                kind="synthesis",
+                owner="studio-synthesis-terminal",
+                task_path=SYNTHESIS_TERMINAL_PROCESS_TASK,
+                payload={
+                    "compile_traceability": req.compile_traceability,
+                    "cosim_parity": req.cosim_parity,
+                    "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
+                    "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
+                    "target": target,
                     "verilog": verilog,
                 },
             )
