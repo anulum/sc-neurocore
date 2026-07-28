@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import ast
+import shlex
 from pathlib import Path
 from typing import Any, cast
 
@@ -117,3 +118,23 @@ def test_perf_gated_selector_stays_narrow() -> None:
     assert "python -m pytest tests" not in run_text
     assert "--cov" not in run_text
     assert "benchmarks/benchmark_suite.py --full" not in run_text
+
+
+def test_perf_gated_selector_paths_exist() -> None:
+    """Reject stale test paths before the scheduled workflow reaches pytest."""
+
+    workflow = _load_benchmark_workflow()
+    run_text = "\n".join(
+        step["run"]
+        for step in workflow["jobs"]["perf-gated-pytest"]["steps"]
+        if isinstance(step, dict) and "run" in step
+    )
+    selected_paths = sorted(
+        token
+        for token in shlex.split(run_text)
+        if token.startswith("tests/") and token.endswith(".py")
+    )
+    missing_paths = [path for path in selected_paths if not (_repo_root() / path).is_file()]
+
+    assert selected_paths
+    assert not missing_paths, f"perf-gated pytest selector has stale paths: {missing_paths}"
