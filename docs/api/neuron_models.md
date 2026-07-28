@@ -165,8 +165,12 @@ The descriptor corpus lives under
 `src/sc_neurocore/neurons/model_descriptors/<ClassName>.toml`. Public catalogue
 helpers accept only public Python class identifiers such as `AdExNeuron`; dotted,
 empty, private, and path-like names fail before filesystem access. Studio uses
-the same `load_descriptor()` surface when it renders model detail pages, so the
-descriptor guard protects the browser-facing catalogue and maintenance tools.
+the same `load_descriptor()` surface for both browse entries and model detail
+pages. Each Studio view visibly reports the science tier, silicon tier,
+validation metric, integration method, and terminal silicon reason from that
+single descriptor; it does not maintain a parallel hand-curated model list. The
+descriptor guard therefore protects the browser-facing catalogue and maintenance
+tools alike.
 
 `tools/generate_model_descriptors.py` refreshes the corpus through
 `generate_descriptor_payload()` and `merge_descriptor_payloads()`. The generator

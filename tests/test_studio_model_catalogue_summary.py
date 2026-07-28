@@ -50,6 +50,26 @@ def test_summary_exposes_dual_readiness_axes() -> None:
     assert adex["silicon_label"] == "H1"
 
 
+def test_summary_exposes_studio_consumption_contract() -> None:
+    """Every browse entry carries the descriptor facts required by Studio."""
+    models = list_models()
+    required = {
+        "validation_metric",
+        "integration_method",
+        "terminal_silicon_tier",
+        "terminal_reason",
+    }
+    assert all(required <= set(model) for model in models)
+
+    adex = _adex_summary()
+    assert adex["validation_metric"] == "parity"
+    assert adex["integration_method"] == "euler"
+    assert adex["terminal_silicon_tier"] == "H1"
+    assert adex["terminal_reason"] == (
+        "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+    )
+
+
 def test_introspected_summary_defaults_to_below_readiness() -> None:
     """A descriptor-less catalogue entry reports S0 and no silicon tier."""
     summary = _introspected_summary("AdExNeuron")
@@ -57,6 +77,10 @@ def test_introspected_summary_defaults_to_below_readiness() -> None:
     assert summary["science_label"] == "S0"
     assert summary["silicon_tier"] is None
     assert summary["silicon_label"] == "none"
+    assert summary["validation_metric"] == "none"
+    assert summary["integration_method"] == "unknown"
+    assert summary["terminal_silicon_tier"] == ""
+    assert "Descriptor unavailable" in cast(str, summary["terminal_reason"])
 
 
 def test_detail_readiness_block_is_auditable() -> None:

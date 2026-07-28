@@ -121,6 +121,21 @@ export default function ModelInfo() {
             <span className="info-label">dt:</span>
             <span className="info-value">{modelDetail.dt}</span>
           </div>
+          <div className="info-item" data-testid="model-validation-metric">
+            <span className="info-label">validation:</span>
+            <span className="info-value">{modelDetail.validation_metric}</span>
+          </div>
+          <div className="info-item" data-testid="model-integration-method">
+            <span className="info-label">integrator:</span>
+            <span className="info-value">{modelDetail.integration_method}</span>
+          </div>
+          <div className="info-item" data-testid="model-terminal-reason">
+            <span className="info-label">terminal:</span>
+            <span className="info-value">
+              {modelDetail.terminal_silicon_tier || "none"} —{" "}
+              {modelDetail.terminal_reason || "no terminal silicon target declared"}
+            </span>
+          </div>
           <div className="info-item">
             <span className="info-label">steps:</span>
             <span className="info-value">{nSteps.toLocaleString()}</span>

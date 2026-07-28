@@ -44,6 +44,10 @@ vi.mock("../stores/studio", () => ({
         silicon_tier: null,
         science_label: "S3",
         silicon_label: "none",
+        validation_metric: "parity",
+        integration_method: "euler",
+        terminal_silicon_tier: "H1",
+        terminal_reason: "RTL parity target met.",
         behavior_tags: ["tonic"],
         description: "LIF",
         maturity: "validated",
@@ -51,6 +55,27 @@ vi.mock("../stores/studio", () => ({
         provenance: {},
         state_var_names: ["v"],
         n_params: 2,
+      },
+      {
+        name: "ThetaNeuron",
+        category: "IF",
+        family: "IF",
+        tier: 2,
+        science_tier: 2,
+        silicon_tier: null,
+        science_label: "S2",
+        silicon_label: "none",
+        validation_metric: "none",
+        integration_method: "exact",
+        terminal_silicon_tier: "",
+        terminal_reason: "",
+        behavior_tags: [],
+        description: "Theta",
+        maturity: "experimental",
+        evidence_kind: "curated",
+        provenance: null,
+        state_var_names: ["theta"],
+        n_params: 1,
       },
     ],
     selectedModelName: "",
@@ -157,6 +182,14 @@ describe("ModelBrowser", () => {
     const idle = renderToStaticMarkup(<ModelBrowser />);
     expect(idle).toContain("data-testid=\"model-scan-job-button\"");
     expect(idle).toContain("Scan");
+    expect(idle).toContain("data-testid=\"model-contract-LIFNeuron\"");
+    expect(idle).toContain("validation parity");
+    expect(idle).toContain("integrator");
+    expect(idle).toContain("euler");
+    expect(idle).toContain("terminal");
+    expect(idle).toContain("RTL parity target met.");
+    expect(idle).toContain("data-testid=\"model-contract-ThetaNeuron\"");
+    expect(idle).toContain("terminal none: no terminal silicon target declared");
     expect(idle).not.toContain("data-testid=\"model-scan-job-error\"");
 
     mockScan.busy = true;

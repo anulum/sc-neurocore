@@ -619,10 +619,31 @@ export default function ModelBrowser() {
                                             alignItems: "center",
                                         }}
                                     >
-                                        <span>
-                                            {m.name
-                                                .replace("Neuron", "")
-                                                .replace("Model", "")}
+                                        <span style={{ flex: 1, minWidth: 0 }}>
+                                            <span>
+                                                {m.name
+                                                    .replace("Neuron", "")
+                                                    .replace("Model", "")}
+                                            </span>
+                                            <span
+                                                data-testid={`model-contract-${m.name}`}
+                                                style={{
+                                                    display: "block",
+                                                    maxWidth: 330,
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    whiteSpace: "nowrap",
+                                                    color: "var(--text-muted)",
+                                                    fontSize: 8,
+                                                }}
+                                                title={`validation ${m.validation_metric}; integrator ${m.integration_method}; terminal ${m.terminal_silicon_tier || "none"}: ${m.terminal_reason || "no terminal silicon target declared"}`}
+                                            >
+                                                validation {m.validation_metric} · integrator{" "}
+                                                {m.integration_method} · terminal{" "}
+                                                {m.terminal_silicon_tier || "none"}:{" "}
+                                                {m.terminal_reason ||
+                                                    "no terminal silicon target declared"}
+                                            </span>
                                         </span>
                                         <span
                                             style={{

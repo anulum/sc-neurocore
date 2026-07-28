@@ -72,6 +72,10 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
         "science_label": tiers.science_label,
         "silicon_tier": tiers.silicon,
         "silicon_label": tiers.silicon_label,
+        "validation_metric": descriptor.validation.metric,
+        "integration_method": descriptor.integration_method,
+        "terminal_silicon_tier": descriptor.silicon.target_tier,
+        "terminal_reason": descriptor.silicon.terminal_reason,
         # ``category`` carries the family display name so existing clients group
         # by the curated family; the fine slug is exposed separately.
         "category": descriptor.family,
@@ -115,7 +119,6 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
                 for p in descriptor.parameters
             ],
             "dynamics": dict(descriptor.dynamics),
-            "integration_method": descriptor.integration_method,
             "backends": [
                 {"name": b.name, "status": b.status, "parity": b.parity}
                 for b in descriptor.backends
@@ -184,6 +187,10 @@ def _introspected_summary(name: str) -> dict[str, Any]:
         "science_label": "S0",
         "silicon_tier": None,
         "silicon_label": "none",
+        "validation_metric": "none",
+        "integration_method": "unknown",
+        "terminal_silicon_tier": "",
+        "terminal_reason": "Descriptor unavailable; no terminal silicon target declared.",
         "category": _categorize(name),
         "category_slug": "",
         "category_source": "inferred",

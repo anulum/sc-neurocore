@@ -25,6 +25,10 @@ def test_api_models_endpoint_serves_family(client: TestClient) -> None:
     models = response.json()
     adex = next(m for m in models if m["name"] == "AdExNeuron")
     assert adex["family"] == "Integrate-and-Fire"
+    assert adex["validation_metric"] == "parity"
+    assert adex["integration_method"] == "euler"
+    assert adex["terminal_silicon_tier"] == "H1"
+    assert adex["terminal_reason"].startswith("Point-neuron schema")
 
 
 def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None:

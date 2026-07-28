@@ -94,6 +94,11 @@ export interface ModelSummary {
   /** Dual-axis silicon readiness H0–H5, or null when not enrolled. */
   silicon_tier: number | null;
   silicon_label: string;
+  /** Descriptor-backed validation, solver, and terminal silicon contract. */
+  validation_metric: string;
+  integration_method: string;
+  terminal_silicon_tier: string;
+  terminal_reason: string;
   category_slug: string; category_source: string; family: string;
   maturity: string; biophysical_detail: string;
   n_state_vars: number; n_params: number; state_var_names: string[];
@@ -124,8 +129,8 @@ export interface ModelReadiness {
   is_perfect?: boolean;
   validation?: Record<string, unknown>;
   silicon?: Record<string, unknown>;
-  terminal_silicon_tier?: number | null;
-  terminal_reason?: string | null;
+  terminal_silicon_tier?: string;
+  terminal_reason?: string;
 }
 
 export interface ModelDetail extends ModelSummary {
@@ -133,7 +138,6 @@ export interface ModelDetail extends ModelSummary {
   state_vars: ModelStateVariable[];
   params: ModelParameter[];
   dynamics: Record<string, string>;
-  integration_method: string;
   backends: ModelBackendSupport[];
   readiness?: ModelReadiness;
   reproducibility: {
