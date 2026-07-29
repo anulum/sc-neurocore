@@ -129,6 +129,26 @@ def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
     assert "security/ci-security-packet/security/osv_scanner_summary.json" in run_text
 
 
+def test_security_scanner_workflow_retries_every_go_scanner_install() -> None:
+    workflow = _load_workflow()
+    steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
+    install_step = next(
+        step
+        for step in steps
+        if isinstance(step, dict) and step.get("name") == "Install lightweight scanner tools"
+    )
+    run_text = cast(str, install_step["run"])
+
+    assert "retry_go_install()" in run_text
+    assert "local max_attempts=3" in run_text
+    assert "for attempt in 1 2 3" in run_text
+    assert 'sleep "$((attempt * 10))"' in run_text
+    assert "return 1" in run_text
+    assert re.findall(r"(?m)^\s*go install ", run_text) == []
+    retry_installs = re.findall(r"(?m)^\s*retry_go_install go install ", run_text)
+    assert len(retry_installs) == 5
+
+
 def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
