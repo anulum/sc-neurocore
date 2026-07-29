@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4582
+    "test_files": 4583
   },
   "documentation": {
     "public_pages": [
@@ -6296,6 +6296,7 @@
       "tests/test_quantizer_sc_probabilities.py",
       "tests/test_quantum/test_hybrid.py",
       "tests/test_quantum_bridge.py",
+      "tests/test_quantum_codec_coverage_closure.py",
       "tests/test_quantum_cognition_cli_memory_discipline.py",
       "tests/test_quantum_cognition_docs.py",
       "tests/test_quantum_cognition_fisher_posner_quantum_bridge.py",
