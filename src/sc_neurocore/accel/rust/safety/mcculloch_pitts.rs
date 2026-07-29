@@ -57,9 +57,8 @@ impl McCullochPittsNeuron {
 
         let mut validated = Vec::with_capacity(excitatory_counts.len());
         for (&count, &flag) in excitatory_counts.iter().zip(inhibitory_flags) {
-            let count = i32::try_from(count).map_err(|_| {
-                "excitatory counts must be non-negative signed 32-bit integers"
-            })?;
+            let count = i32::try_from(count)
+                .map_err(|_| "excitatory counts must be non-negative signed 32-bit integers")?;
             if count < 0 {
                 return Err("excitatory counts must be non-negative signed 32-bit integers");
             }
@@ -73,8 +72,7 @@ impl McCullochPittsNeuron {
             .into_iter()
             .map(|(count, inhibited)| {
                 self.step(count, inhibited)
-                    .expect("all rows and the fixed threshold were validated")
-                    as u8
+                    .expect("all rows and the fixed threshold were validated") as u8
             })
             .collect();
         let event_count = events.iter().map(|&event| usize::from(event)).sum();

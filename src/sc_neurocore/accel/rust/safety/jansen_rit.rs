@@ -147,7 +147,9 @@ pub fn validate_jansen_rit(state: &JansenRitUnit) -> Result<(), String> {
         || state.r <= 0.0
         || state.dt <= 0.0
     {
-        return Err("Jansen–Rit gains, rates, sigmoid scale, slope, and dt must be positive".into());
+        return Err(
+            "Jansen–Rit gains, rates, sigmoid scale, slope, and dt must be positive".into(),
+        );
     }
     if state.c < 0.0 {
         return Err("Jansen–Rit connectivity must be non-negative".into());

@@ -120,7 +120,10 @@ mod tests {
     fn source_defaults_are_valid() {
         let state = ResonateAndFireNeuron::new();
         assert!(validate_resonate_and_fire(&state));
-        assert_eq!((state.b, state.omega, state.threshold, state.dt), (-1.0, 10.0, 1.0, 0.01));
+        assert_eq!(
+            (state.b, state.omega, state.threshold, state.dt),
+            (-1.0, 10.0, 1.0, 0.01)
+        );
     }
 
     #[test]
@@ -202,6 +205,9 @@ mod tests {
         };
         state.reset();
         assert_eq!((state.x, state.y), (0.0, 0.0));
-        assert_eq!((state.b, state.omega, state.threshold, state.dt), (-0.5, 2.0, 3.0, 0.02));
+        assert_eq!(
+            (state.b, state.omega, state.threshold, state.dt),
+            (-0.5, 2.0, 3.0, 0.02)
+        );
     }
 }

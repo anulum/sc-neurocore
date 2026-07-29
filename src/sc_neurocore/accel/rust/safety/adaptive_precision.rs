@@ -144,32 +144,12 @@ mod tests {
 
     #[test]
     fn test_synapse_precision_contract() {
-        let row = SynapsePrecision::new(
-            0,
-            "fc1".to_string(),
-            1,
-            2,
-            8,
-            128,
-            0.5,
-            0.01,
-            0.02,
-            0.03,
-        )
-        .unwrap();
+        let row = SynapsePrecision::new(0, "fc1".to_string(), 1, 2, 8, 128, 0.5, 0.01, 0.02, 0.03)
+            .unwrap();
         assert!(validate_synapse_precision(&row));
-        assert!(SynapsePrecision::new(
-            0,
-            "fc1".to_string(),
-            1,
-            2,
-            8,
-            128,
-            0.5,
-            0.02,
-            0.02,
-            0.03,
-        )
-        .is_err());
+        assert!(
+            SynapsePrecision::new(0, "fc1".to_string(), 1, 2, 8, 128, 0.5, 0.02, 0.02, 0.03,)
+                .is_err()
+        );
     }
 }

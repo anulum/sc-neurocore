@@ -102,7 +102,14 @@ mod tests {
         let state = AdaptiveThresholdIFNeuron::new();
         assert!(validate_adaptive_threshold_if(&state));
         assert_eq!(
-            (state.v, state.theta, state.delta_theta, state.tau_m, state.tau_theta, state.dt),
+            (
+                state.v,
+                state.theta,
+                state.delta_theta,
+                state.tau_m,
+                state.tau_theta,
+                state.dt
+            ),
             (-65.0, -50.0, 5.0, 10.0, 50.0, 0.1)
         );
     }
@@ -206,7 +213,15 @@ mod tests {
         state.reset();
         assert_eq!((state.v, state.theta), (-70.0, -48.0));
         assert_eq!(
-            (state.v_rest, state.v_reset, state.theta_rest, state.delta_theta, state.tau_m, state.tau_theta, state.dt),
+            (
+                state.v_rest,
+                state.v_reset,
+                state.theta_rest,
+                state.delta_theta,
+                state.tau_m,
+                state.tau_theta,
+                state.dt
+            ),
             (-70.0, -68.0, -48.0, 3.0, 8.0, 40.0, 0.05)
         );
     }

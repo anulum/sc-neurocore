@@ -40,9 +40,18 @@ impl IntegerQIFNeuron {
 
     pub fn valid(&self) -> bool {
         let in_i32 = |value: i64| i64::from(i32::MIN) <= value && value <= i64::from(i32::MAX);
-        [self.v, self.v_rest, self.v_threshold, self.v_reset, self.a, self.b, self.v_max, self.v_min]
-            .into_iter()
-            .all(in_i32)
+        [
+            self.v,
+            self.v_rest,
+            self.v_threshold,
+            self.v_reset,
+            self.a,
+            self.b,
+            self.v_max,
+            self.v_min,
+        ]
+        .into_iter()
+        .all(in_i32)
             && self.a >= 0
             && self.b >= 0
             && self.a + self.b > 0
@@ -98,7 +107,10 @@ mod tests {
     fn defaults_match_pinned_source_tutorial() {
         let state = IntegerQIFNeuron::new();
         assert_eq!((state.v, state.v_rest, state.v_threshold), (128, 128, 200));
-        assert_eq!((state.v_reset, state.a, state.b, state.v_max, state.v_min), (128, 1, 1, 255, 0));
+        assert_eq!(
+            (state.v_reset, state.a, state.b, state.v_max, state.v_min),
+            (128, 1, 1, 255, 0)
+        );
         assert_eq!(state.branch_point(), 164);
         assert!(validate_iqif(&state));
     }
@@ -112,7 +124,10 @@ mod tests {
             spikes += state.step(10).unwrap();
             trace.push(state.v);
         }
-        assert_eq!(&trace[..15], &[138, 146, 153, 159, 165, 170, 176, 183, 190, 198, 207, 217, 229, 242, 128]);
+        assert_eq!(
+            &trace[..15],
+            &[138, 146, 153, 159, 165, 170, 176, 183, 190, 198, 207, 217, 229, 242, 128]
+        );
         assert_eq!(spikes, 26);
         assert_eq!(state.v, 198);
     }
@@ -137,10 +152,22 @@ mod tests {
 
     #[test]
     fn reset_preserves_parameters() {
-        let mut state = IntegerQIFNeuron { v: 140, v_rest: 100, v_threshold: 180, v_reset: 150, a: 2, b: 7, v_max: 250, v_min: 3 };
+        let mut state = IntegerQIFNeuron {
+            v: 140,
+            v_rest: 100,
+            v_threshold: 180,
+            v_reset: 150,
+            a: 2,
+            b: 7,
+            v_max: 250,
+            v_min: 3,
+        };
         state.reset();
         assert_eq!(state.v, 100);
-        assert_eq!((state.v_reset, state.a, state.b, state.v_max), (150, 2, 7, 250));
+        assert_eq!(
+            (state.v_reset, state.a, state.b, state.v_max),
+            (150, 2, 7, 250)
+        );
     }
 
     #[test]
@@ -154,7 +181,11 @@ mod tests {
 
     #[test]
     fn zero_coefficient_profile_is_supported() {
-        let mut state = IntegerQIFNeuron { a: 0, b: 3, ..IntegerQIFNeuron::new() };
+        let mut state = IntegerQIFNeuron {
+            a: 0,
+            b: 3,
+            ..IntegerQIFNeuron::new()
+        };
         assert!(state.valid());
         assert_eq!(state.step(10), Ok(0));
     }

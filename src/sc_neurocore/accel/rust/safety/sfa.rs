@@ -73,7 +73,13 @@ impl SFANeuron {
     }
 
     fn validate(&self) -> Result<(), &'static str> {
-        for value in [self.v, self.v_rest, self.v_reset, self.v_threshold, self.e_k] {
+        for value in [
+            self.v,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.e_k,
+        ] {
             if !value.is_finite() {
                 return Err("finite SFA voltage parameter invalid");
             }
@@ -96,23 +102,17 @@ impl SFANeuron {
     }
 
     fn derivatives(&self, v: f64, g_sfa: f64, i_ext: f64) -> (f64, f64) {
-        let dv = (-(v - self.v_rest) - g_sfa * (v - self.e_k) + self.resistance * i_ext)
-            / self.tau_m;
+        let dv =
+            (-(v - self.v_rest) - g_sfa * (v - self.e_k) + self.resistance * i_ext) / self.tau_m;
         (dv, -g_sfa / self.tau_sfa)
     }
 
     fn rk4_candidate(&self, v: f64, g_sfa: f64, i_ext: f64) -> (f64, f64) {
         let (k1v, k1g) = self.derivatives(v, g_sfa, i_ext);
-        let (k2v, k2g) = self.derivatives(
-            v + 0.5 * self.dt * k1v,
-            g_sfa + 0.5 * self.dt * k1g,
-            i_ext,
-        );
-        let (k3v, k3g) = self.derivatives(
-            v + 0.5 * self.dt * k2v,
-            g_sfa + 0.5 * self.dt * k2g,
-            i_ext,
-        );
+        let (k2v, k2g) =
+            self.derivatives(v + 0.5 * self.dt * k1v, g_sfa + 0.5 * self.dt * k1g, i_ext);
+        let (k3v, k3g) =
+            self.derivatives(v + 0.5 * self.dt * k2v, g_sfa + 0.5 * self.dt * k2g, i_ext);
         let (k4v, k4g) = self.derivatives(v + self.dt * k3v, g_sfa + self.dt * k3g, i_ext);
         (
             v + (self.dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v),

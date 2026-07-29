@@ -69,11 +69,15 @@ impl SNNCheckpoint {
         for (idx, layer) in self.weights.iter().enumerate() {
             let (inputs, outputs) = self.layer_sizes[idx];
             if layer.len() != outputs {
-                return Err(format!("layer_{idx} row count must match layer output size"));
+                return Err(format!(
+                    "layer_{idx} row count must match layer output size"
+                ));
             }
             for row in layer {
                 if row.len() != inputs {
-                    return Err(format!("layer_{idx} column count must match layer input size"));
+                    return Err(format!(
+                        "layer_{idx} column count must match layer input size"
+                    ));
                 }
                 if row.iter().any(|value| !value.is_finite()) {
                     return Err(format!("layer_{idx} weights must be finite"));

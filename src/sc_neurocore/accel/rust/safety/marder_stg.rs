@@ -257,14 +257,28 @@ pub fn validate_marder_stg(state: &MarderSTGNeuron) -> bool {
         && state.dt.is_finite()
         && state.dt > 0.0
         && [
-            state.g_na, state.g_cat, state.g_cas, state.g_a, state.g_kca, state.g_kd, state.g_h,
+            state.g_na,
+            state.g_cat,
+            state.g_cas,
+            state.g_a,
+            state.g_kca,
+            state.g_kd,
+            state.g_h,
             state.g_l,
         ]
         .iter()
         .all(|g| g.is_finite() && *g >= 0.0)
-        && [state.e_na, state.e_k, state.e_h, state.e_l, state.f_ca, state.celsius, state.v_threshold]
-            .iter()
-            .all(|x| x.is_finite())
+        && [
+            state.e_na,
+            state.e_k,
+            state.e_h,
+            state.e_l,
+            state.f_ca,
+            state.celsius,
+            state.v_threshold,
+        ]
+        .iter()
+        .all(|x| x.is_finite())
 }
 
 #[cfg(test)]

@@ -171,11 +171,7 @@ mod tests {
     use super::*;
 
     fn fixture() -> TransferCheckpoint {
-        TransferCheckpoint::new(
-            vec!["hidden".to_string(), "output".to_string()],
-            vec![],
-        )
-        .unwrap()
+        TransferCheckpoint::new(vec!["hidden".to_string(), "output".to_string()], vec![]).unwrap()
     }
 
     #[test]

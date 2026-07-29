@@ -76,7 +76,8 @@ impl PinskyRinzelNeuron {
     }
 
     fn derivatives(&self, st: &[f64; 8], i_s: f64, i_d: f64) -> [f64; 8] {
-        let (v_s, v_d, h, n, s, c, q, ca) = (st[0], st[1], st[2], st[3], st[4], st[5], st[6], st[7]);
+        let (v_s, v_d, h, n, s, c, q, ca) =
+            (st[0], st[1], st[2], st[3], st[4], st[5], st[6], st[7]);
 
         let am = exprel_minus(0.32, v_s + 46.9, 4.0);
         let bm = exprel_plus(0.28, v_s + 19.9, 5.0);
@@ -266,7 +267,10 @@ mod tests {
         for _ in 0..50_000 {
             spikes += state.step(0.75).max(0);
         }
-        assert!(spikes > 0, "PR1994 must spike under sustained somatic drive");
+        assert!(
+            spikes > 0,
+            "PR1994 must spike under sustained somatic drive"
+        );
     }
 
     #[test]

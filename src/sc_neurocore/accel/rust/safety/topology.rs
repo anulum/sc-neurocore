@@ -74,7 +74,11 @@ fn lazy_random_walk(knm: &[Vec<f64>], node: usize, idleness: f64) -> Vec<f64> {
     distribution
 }
 
-fn minimum_transport_cost(source: &[f64], target: &[f64], distances: &[Vec<f64>]) -> Result<f64, &'static str> {
+fn minimum_transport_cost(
+    source: &[f64],
+    target: &[f64],
+    distances: &[Vec<f64>],
+) -> Result<f64, &'static str> {
     let source_nodes: Vec<usize> = source
         .iter()
         .enumerate()
@@ -221,7 +225,10 @@ pub fn sheaf_consistency_defect(phases: &[f64], knm: &[Vec<f64>]) -> Result<f64,
     Ok(cost / ((n * n) as f64))
 }
 
-pub fn connection_curvature(phases: &[f64], knm: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, &'static str> {
+pub fn connection_curvature(
+    phases: &[f64],
+    knm: &[Vec<f64>],
+) -> Result<Vec<Vec<f64>>, &'static str> {
     let n = validate_graph(knm)?;
     if phases.len() != n || phases.iter().any(|value| !value.is_finite()) {
         return Err("phases must be finite and match knm size");
