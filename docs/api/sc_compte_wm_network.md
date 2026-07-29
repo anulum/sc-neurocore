@@ -65,15 +65,35 @@ focused executable parity test isolates one network pyramidal cell and proves
 its external-AMPA midpoint step agrees with that original model. Another test
 compares the FFT ring path against an independently reduced dense target sum.
 
+## Native Rust lane
+
+`engine::sc_compte_wm_network` is the documented modular Rust runtime for the
+same fixed state transition. It owns the complete 2,560-cell state, preplans
+its `rustfft` circular reductions, supports control/modulated and optional
+structured E-to-I modes, accepts explicit event arrays for co-simulation, and
+fails atomically on invalid state or input. Its counter-Poisson fixture has the
+same active cells as Python, its isolated external-AMPA step agrees with the
+preserved Rust scalar cell, and a non-trivial recurrent-NMDA FFT step agrees
+with the Python dense-oracle fixture within `3e-13 mV`.
+
+The separately compiled dependency-free Rust safety file validates all nine
+state arrays, reproduces the counter stream, and supplies an O(N²) dense
+no-autapse E-to-E oracle without sharing the production FFT. Public structs,
+fields, constants, functions, and methods have rustdoc. A normal no-default-
+features Cargo documentation build succeeds; promoting crate-wide
+`RUSTDOCFLAGS=-D warnings` remains blocked by pre-existing broken links in
+unrelated legacy modules and is not represented as a clean project-wide gate.
+
 ## Claim boundary
 
 The Python executor and committed benchmark are deterministic simulator
 receipts, not behavioral validation. The benchmark exercises 1,000 full
 network steps and binds its result to source hashes, but records local loaded-
 host regression timing only. Persistent-bump formation, delay stability,
-random drift, response reset, distractor resistance, native-network parity,
-and silicon behavior remain open until demonstrated by separately committed
-ensemble and backend evidence. The network therefore does not increment the
+random drift, response reset, distractor resistance, complete all-runtime
+parity, and silicon behavior remain open until demonstrated by separately
+committed ensemble and backend evidence. The current native claim is
+Python/Rust short-trace parity. The network therefore does not increment the
 49/155 neuron-model fidelity count.
 
 ## Example

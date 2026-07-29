@@ -121,6 +121,7 @@ pub mod recurrent;
 pub mod rk4_neurons;
 #[path = "bindings/runtime_control.rs"]
 mod runtime_control_binding;
+pub mod sc_compte_wm_network;
 pub mod sc_inference;
 #[path = "bindings/sc_inference.rs"]
 mod sc_inference_binding;

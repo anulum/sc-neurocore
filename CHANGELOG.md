@@ -79,6 +79,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Added the documented modular Rust runtime for `SC-COMPTE-WM-NETWORK`, with
+  the full fixed population state, preplanned FFT ring coupling,
+  counter-addressed Poisson input, explicit-event co-simulation boundary,
+  control/modulated modes, and atomic validation. Native tests bind its input
+  fixture and isolated cell to Python/original-cell evidence and bind a
+  non-trivial recurrent step to the Python dense oracle. A separately compiled
+  dependency-free Rust safety surface validates complete state, input, and
+  dense no-autapse connectivity. This is Python/Rust short-trace parity, not
+  yet behavioral or all-runtime closure.
 - Added the first executable `SC-COMPTE-WM-NETWORK` layer without conflating it
   with the preserved scalar `CompteWMNeuron`: deterministic counter-addressed
   1,800 Hz Poisson input receipts, all 2,048+512 membrane/channel states,
