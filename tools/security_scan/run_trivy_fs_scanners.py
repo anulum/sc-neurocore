@@ -20,6 +20,16 @@ from typing import Any
 
 TRIVY_FS_SCANNER_SCHEMA_VERSION = "sc-neurocore.trivy-fs-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
+TRIVY_SKIP_DIR_GLOBS = (
+    "**/.git",
+    "**/.cache",
+    "**/.venv",
+    "**/.venv-*",
+    "**/.pixi",
+    "**/build",
+    "**/node_modules",
+    "**/target",
+)
 
 
 def _project_root() -> Path:
@@ -142,8 +152,10 @@ def run_trivy_fs_scanner(
         "--ignore-unfixed",
         "--scanners",
         "vuln",
-        str(repo_root),
     ]
+    for pattern in TRIVY_SKIP_DIR_GLOBS:
+        command.extend(("--skip-dirs", pattern))
+    command.append(str(repo_root))
     result = _run(command, repo_root=repo_root, run_command=run_command, timeout=900)
     validation_errors, vulnerability_count, vulnerability_ids = _validate_trivy_report(report_path)
     summary = {
