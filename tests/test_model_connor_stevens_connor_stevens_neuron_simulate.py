@@ -35,16 +35,6 @@ class TestConnorStevensNeuronSimulate:
 
     def test_simulate_rust_rejects_non_default(self) -> None:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
-        # force non-default via a constructor override that every model accepts
-        try:
-            n = (
-                ConnorStevensNeuron(dt=0.02)
-                if "dt" in ConnorStevensNeuron.__dataclass_fields__
-                else ConnorStevensNeuron()
-            )
-            if "dt" not in ConnorStevensNeuron.__dataclass_fields__:
-                pytest.skip("no dt field")
-        except TypeError:
-            pytest.skip("cannot override defaults")
+        n = ConnorStevensNeuron(dt=0.02)
         with pytest.raises(RuntimeError, match="factory-default"):
             n.simulate(10, current=0.0, backend="rust")

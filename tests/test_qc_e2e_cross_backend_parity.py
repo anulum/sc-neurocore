@@ -19,8 +19,7 @@ class TestCrossBackendParity:
     def test_spin_pool_measurement_parity(self) -> None:
         """Run identical measurement sequence through Python and Rust, compare."""
         rs_file = _QC_DIR / "spin_pool.rs"
-        if not rs_file.exists():
-            pytest.skip("spin_pool.rs not found")
+        assert rs_file.is_file(), f"committed Rust spin-pool source missing: {rs_file}"
 
         # Python reference
         pool = SpinPoolMPS(n_sites=8, bond_dim=16)

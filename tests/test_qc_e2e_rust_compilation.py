@@ -19,8 +19,7 @@ class TestRustCompilation:
     @pytest.mark.parametrize("rs_file", ["spin_pool.rs", "radical_pair.rs", "kane_mapper.rs"])
     def test_rust_compiles_and_tests_pass(self, rs_file: str) -> None:
         rs_path = _QC_DIR / rs_file
-        if not rs_path.exists():
-            pytest.skip(f"{rs_file} not found")
+        assert rs_path.is_file(), f"committed Rust quantum-cognition source missing: {rs_path}"
 
         bin_name = rs_file.replace(".rs", "_test")
         out_path = f"/tmp/{bin_name}"
