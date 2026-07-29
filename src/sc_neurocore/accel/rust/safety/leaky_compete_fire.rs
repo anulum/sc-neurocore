@@ -48,9 +48,9 @@ impl LeakyCompeteFireNeuron {
             next_v.push(candidate);
         }
         let mut spikes = vec![0_i32; self.n_units];
-        for i in 0..self.n_units {
+        for (i, spike) in spikes.iter_mut().enumerate() {
             if next_v[i] >= self.v_threshold {
-                spikes[i] = 1;
+                *spike = 1;
                 next_v[i] = 0.0;
                 for j in 0..self.n_units {
                     if j != i {
