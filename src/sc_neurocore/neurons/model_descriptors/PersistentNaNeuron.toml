@@ -31,7 +31,9 @@ authors = [
     "Crill, W.E.",
 ]
 year = 1996
-doi = "10.1146/annurev.physiol.58.1.349"
+doi = "10.1146/annurev.ph.58.030196.002025"
+paper_title = "Persistent Sodium Current in Mammalian Central Neurons"
+derivation_note = "The implemented recurrence is an SC-NeuroCore experimental composite: the Wang-Buzsaki sodium/potassium base plus a repository-specific INaP gate. Crill 1996 is a review and French et al. 1990 (10.1085/jgp.95.6.1139) establishes physiological INaP, but neither defines this exact parameterisation."
 
 [state.v]
 init = -65.0
@@ -147,14 +149,52 @@ range = [
 [integration]
 dt = 0.5
 method = "euler"
+sub_steps = 50
 
 [dynamics]
+alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"
+beta_m = "4 * exp(-(v + 60) / 18)"
+m_inf = "alpha_m / (alpha_m + beta_m)"
+dh_dt = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - h / (1 + exp(-(v + 28) / 10)))"
+dn_dt = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+dp_dt = "(1 / (1 + exp(-(v + 48) / 5)) - p) / (10 + 40 / (1 + ((v + 48) / 10)^2))"
+dv_dt = "(-g_na * m_inf^3 * h * (v - e_na) - g_nap * p * (v - e_na) - g_k * n^4 * (v - e_k) - g_l * (v - e_l) + gain * I) / c_m"
+event = "v_next >= v_threshold; reset v to -65 while preserving h, n, and p"
 
 [backends.python]
 status = "implemented"
+parity = "reference"
+
+[backends.rust]
+status = "implemented"
+parity = "float64-1e-12"
+
+[backends.go]
+status = "implemented"
+parity = "float64-1e-12"
+
+[backends.julia]
+status = "implemented"
+parity = "float64-1e-12"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "006dbe26735718a9db0f6f0c8fa4b18fa7e883aaac4c744776607786b2ee8354"
+event_count = 192
+final_state = "{\"v\":-47.10006085426508,\"h\":0.42580153415012734,\"n\":0.19451617841811397,\"p\":0.2438674108845956}"
 
 [documentation]
 slug = "models/persistent_na_neuron"
-notes = ""
+notes = "Experimental WB+INaP composite. Crill 1996 is a biological review and French et al. 1990 is physiological evidence, not an exact recurrence source. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "complete four-state trajectory and event vector"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"
+tolerance = "Python/Rust/Go/Julia complete state within 1e-12"
+evidence = "tests/test_persistent_na_neuron_backends.py"
+
+[silicon]
+compiles = false
+cosim_validated = false
+terminal_reason = "No model-specific Mojo or RTL implementation and no synthesis evidence."

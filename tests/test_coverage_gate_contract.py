@@ -73,3 +73,19 @@ def test_ih_exact_coverage_and_backend_parity_is_hosted() -> None:
     assert "tests/test_model_ih_neuron.py" in step
     assert "tests/test_ih_neuron_backends.py" in step
     assert "--fail-under=100 --show-missing" in step
+
+
+def test_persistent_na_exact_coverage_and_backend_parity_is_hosted() -> None:
+    """The omitted INaP model needs an explicit branch gate and backend custody."""
+
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    start = workflow.index("- name: PersistentNa exact coverage and backend parity")
+    end = workflow.index("\n      - name:", start + 1)
+    step = workflow[start:end]
+
+    assert "if: matrix.primary" in step
+    assert "--rcfile=/dev/null --branch" in step
+    assert "--include='src/sc_neurocore/neurons/models/persistent_na_neuron.py'" in step
+    assert "tests/test_model_persistent_na_neuron.py" in step
+    assert "tests/test_persistent_na_neuron_backends.py" in step
+    assert "--fail-under=100 --show-missing" in step

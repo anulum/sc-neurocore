@@ -419,6 +419,20 @@ jobs:
             --include='src/sc_neurocore/neurons/models/ih_neuron.py' \
             --fail-under=100 --show-missing
 
+      - name: PersistentNa exact coverage and backend parity
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-persistent-na python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/neurons/models/persistent_na_neuron.py' \
+            -m pytest tests/test_model_persistent_na_neuron.py \
+              tests/test_persistent_na_neuron_backends.py -q
+          COVERAGE_FILE=.coverage-persistent-na python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/neurons/models/persistent_na_neuron.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
