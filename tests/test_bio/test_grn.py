@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.bio.grn import GeneticRegulatoryLayer
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -92,4 +93,6 @@ def test_grn_perf_small():
     start = time.perf_counter()
     layer.step(spikes)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="GRN update run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )

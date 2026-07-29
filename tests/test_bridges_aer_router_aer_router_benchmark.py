@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.bridges_aer_router_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestAERRouterBenchmark:
@@ -27,7 +28,9 @@ class TestAERRouterBenchmark:
             router.dispatch_spike(pkt)
         elapsed = time.perf_counter() - t0
         throughput = 10_000 / max(elapsed, 1e-9)
-        assert elapsed < 1.0, f"10k dispatches took {elapsed:.2f}s ({throughput:.0f}/s)"
+        assert_load_tolerant_throughput(
+            label="AER dispatch", observed_per_second=throughput, strict_minimum_per_second=10_000.0
+        )
 
     def test_encode_decode_throughput_100k(self):
         """100,000 encode+decode cycles must complete in < 2 seconds."""
@@ -38,7 +41,11 @@ class TestAERRouterBenchmark:
             SpikePacket.decode(raw)
         elapsed = time.perf_counter() - t0
         throughput = 100_000 / max(elapsed, 1e-9)
-        assert elapsed < 2.0, f"100k encode/decode took {elapsed:.2f}s ({throughput:.0f}/s)"
+        assert_load_tolerant_throughput(
+            label="AER encode/decode",
+            observed_per_second=throughput,
+            strict_minimum_per_second=50_000.0,
+        )
 
     def test_route_registration_throughput(self):
         """Register 10,000 routes within the local or instrumented-CI budget."""
@@ -49,4 +56,8 @@ class TestAERRouterBenchmark:
         elapsed = time.perf_counter() - t0
         assert router.route_count == 10_000
         max_elapsed = 2.0 if os.environ.get("CI") else 0.5
-        assert elapsed < max_elapsed, f"10k registrations took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="AER route registration",
+            observed_per_second=10_000 / elapsed,
+            strict_minimum_per_second=10_000 / max_elapsed,
+        )

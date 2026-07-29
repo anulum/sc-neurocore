@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.bridges_photonic_noc_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestPhotonicBenchmark:
@@ -24,7 +25,11 @@ class TestPhotonicBenchmark:
         design = compiler.compile(adj)
         elapsed = time.perf_counter() - t0
         assert design.n_nodes == 50
-        assert elapsed < 10.0, f"50-node photonic compile took {elapsed:.1f}s"
+        assert_load_tolerant_throughput(
+            label="photonic network compilation",
+            observed_per_second=50 / elapsed,
+            strict_minimum_per_second=5.0,
+        )
 
     def test_wdm_assignment_throughput(self):
         """WDM assignment for 100 signals."""
@@ -34,4 +39,8 @@ class TestPhotonicBenchmark:
         channels = assigner.assign(signals)
         elapsed = time.perf_counter() - t0
         assert len(channels) == 100
-        assert elapsed < 1.0, f"100-signal WDM took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="WDM assignment",
+            observed_per_second=100 / elapsed,
+            strict_minimum_per_second=100.0,
+        )

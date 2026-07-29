@@ -15,6 +15,7 @@ import pytest
 
 from sc_neurocore.layers.fusion import SCFusionLayer
 from tests.layers.fusion_support import _perf_enabled
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
@@ -25,4 +26,8 @@ def test_fusion_perf_small() -> None:
     start = time.perf_counter()
     _ = layer.forward(data)
     elapsed = time.perf_counter() - start
-    assert elapsed < 1.5
+    assert_load_tolerant_throughput(
+        label="fusion forward run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 1.5,
+    )

@@ -16,6 +16,7 @@ import pytest
 
 from sc_neurocore.layers.sc_conv_layer import SCConv2DLayer
 from tests.layers.sc_conv_layer_support import _perf_enabled
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def test_conv_kernel_shape() -> None:
@@ -60,4 +61,6 @@ def test_conv_layer_perf_small() -> None:
     start = time.perf_counter()
     _ = layer.forward(inp)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="SC convolution run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )

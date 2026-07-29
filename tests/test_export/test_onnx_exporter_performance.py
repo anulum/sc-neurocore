@@ -15,6 +15,7 @@ import pytest
 
 from sc_neurocore.export.onnx_exporter import SCOnnxExporter
 from tests.test_export.onnx_exporter_support import make_layers, perf_enabled
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 @pytest.mark.skipif(not perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
@@ -24,4 +25,7 @@ def test_onnx_export_perf_small(tmp_path: Path) -> None:
     path = tmp_path / "model.json"
     start = time.perf_counter()
     SCOnnxExporter.export(make_layers(), str(path))
-    assert time.perf_counter() - start < 2.0
+    elapsed = time.perf_counter() - start
+    assert_load_tolerant_throughput(
+        label="ONNX export run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )

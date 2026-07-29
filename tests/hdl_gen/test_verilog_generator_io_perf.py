@@ -14,6 +14,7 @@ import pytest
 
 from sc_neurocore.hdl_gen.verilog_generator import VerilogGenerator
 from tests.hdl_gen.verilog_generator_support import _perf_enabled
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def test_verilog_generator_save_to_file(tmp_path):  # type: ignore[no-untyped-def] # Preserved legacy test AST
@@ -36,7 +37,11 @@ def test_verilog_generator_perf_small():  # type: ignore[no-untyped-def] # Prese
     start = time.perf_counter()
     _ = gen.generate()
     elapsed = time.perf_counter() - start
-    assert elapsed < 1.0
+    assert_load_tolerant_throughput(
+        label="Verilog generation run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0,
+    )
 
 
 def test_save_to_file_reraises_oserror(tmp_path):  # type: ignore[no-untyped-def] # Preserved legacy test AST

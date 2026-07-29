@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.bridges_dna_mapper_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestDNAMapperBenchmark:
@@ -22,7 +23,11 @@ class TestDNAMapperBenchmark:
             designer.generate(length=20)
         elapsed = time.perf_counter() - t0
         max_elapsed = 10.0 if os.environ.get("CI") else 5.0
-        assert elapsed < max_elapsed, f"500 sequences took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="DNA sequence generation",
+            observed_per_second=500 / elapsed,
+            strict_minimum_per_second=500 / max_elapsed,
+        )
 
     def test_gate_compilation_throughput(self) -> None:
         """Compile 100 AND gates."""
@@ -32,4 +37,8 @@ class TestDNAMapperBenchmark:
             compiler.compile_and(f"a_{i}", f"b_{i}", f"out_{i}")
         elapsed = time.perf_counter() - t0
         max_elapsed = 20.0 if os.environ.get("CI") else 10.0
-        assert elapsed < max_elapsed, f"100 AND gates took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="DNA gate compilation",
+            observed_per_second=100 / elapsed,
+            strict_minimum_per_second=100 / max_elapsed,
+        )

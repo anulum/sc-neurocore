@@ -9,6 +9,7 @@
 """Opt-in stepping performance gate for BitstreamCurrentSource."""
 
 from tests.sources.bitstream_current_source_support import *
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
@@ -19,4 +20,8 @@ def test_source_perf_small():  # type: ignore[no-untyped-def] # Preserved legacy
     for _ in range(256):
         _ = source.step()
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="bitstream current-source run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=0.5,
+    )

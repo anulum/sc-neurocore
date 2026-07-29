@@ -9,6 +9,7 @@
 """Focused DVS input performance contracts."""
 
 from tests.interfaces.dvs_input_support import *
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
@@ -19,4 +20,6 @@ def test_dvs_perf_small() -> None:
     start = time.perf_counter()
     _ = layer.process_events(events)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="DVS batch run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )

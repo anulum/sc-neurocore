@@ -15,6 +15,7 @@ import pytest
 
 from sc_neurocore.accel.vector_ops import pack_bitstream, unpack_bitstream
 from tests.accel.vector_ops_support import _perf_enabled
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def test_pack_bitstream_rejects_3d_input() -> None:
@@ -36,4 +37,8 @@ def test_vector_ops_perf_pack() -> None:
     start = time.perf_counter()
     _ = pack_bitstream(bits)
     elapsed = time.perf_counter() - start
-    assert elapsed < 3.0
+    assert_load_tolerant_throughput(
+        label="vector packing run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 3.0,
+    )

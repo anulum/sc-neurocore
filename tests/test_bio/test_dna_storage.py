@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.bio.dna_storage import DNAEncoder
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -101,4 +102,6 @@ def test_dna_perf_small():
     start = time.perf_counter()
     _ = enc.encode(bits)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="DNA encoding run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )
