@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_hodgkin_huxley_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestHHPerformance:
@@ -24,4 +25,8 @@ class TestHHPerformance:
         elapsed = time.perf_counter() - t0
         steps_per_s = N / elapsed
         # Expected ~670 steps/s; just verify it's > 100
-        assert steps_per_s > 100, f"{steps_per_s:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Hodgkin-Huxley isolation",
+            observed_per_second=steps_per_s,
+            strict_minimum_per_second=100.0,
+        )

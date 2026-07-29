@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_escape_rate_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestEscapeRatePerformance:
@@ -25,7 +26,11 @@ class TestEscapeRatePerformance:
         elapsed = time.perf_counter() - t0
         # Coarse regression smoke only: CI runs this concurrently under xdist;
         # controlled performance claims live in bench_model_escape_rate.py.
-        assert N / elapsed > 10000
+        assert_load_tolerant_throughput(
+            label="Escape-rate isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=10_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(EscapeRateNeuron, n=50, label="bench")
@@ -35,4 +40,8 @@ class TestEscapeRatePerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 50 * 500 / elapsed > 5000
+        assert_load_tolerant_throughput(
+            label="Escape-rate network",
+            observed_per_second=50 * 500 / elapsed,
+            strict_minimum_per_second=5_000.0,
+        )

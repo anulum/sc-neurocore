@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_golomb_fs_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestGFSPerformance:
@@ -23,7 +24,9 @@ class TestGFSPerformance:
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
         # 10 sub-steps × HH
-        assert rate > 500, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Golomb FS isolation", observed_per_second=rate, strict_minimum_per_second=500.0
+        )
 
     def test_network_throughput(self):
         pop = Population(GolombFSNeuron, n=10, label="bench")
@@ -35,4 +38,6 @@ class TestGFSPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 10 * 200
         rate = neuron_steps / elapsed
-        assert rate > 100, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Golomb FS network", observed_per_second=rate, strict_minimum_per_second=100.0
+        )

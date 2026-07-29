@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_galves_locherbach_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestPerformance:
@@ -21,7 +22,11 @@ class TestPerformance:
         for _ in range(N):
             n.step(10.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 50000
+        assert_load_tolerant_throughput(
+            label="Galves-Locherbach isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=50_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(GalvesLocherbachNeuron, n=50, label="bench")
@@ -31,4 +36,8 @@ class TestPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 50 * 500 / elapsed > 5000
+        assert_load_tolerant_throughput(
+            label="Galves-Locherbach network",
+            observed_per_second=50 * 500 / elapsed,
+            strict_minimum_per_second=5_000.0,
+        )

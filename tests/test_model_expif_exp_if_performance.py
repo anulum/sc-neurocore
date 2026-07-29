@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_expif_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestExpIFPerformance:
@@ -22,7 +23,11 @@ class TestExpIFPerformance:
             neuron.step(20.0)
         rate = steps / (time.perf_counter() - started)
         minimum = 10_000 if os.getenv("CI") else 12_000
-        assert rate > minimum, f"local RK4 regression: {rate:.0f} steps/s, minimum={minimum}"
+        assert_load_tolerant_throughput(
+            label="ExpIF isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=float(minimum),
+        )
 
     def test_network_throughput(self) -> None:
         population = Population(ExpIFNeuron, n=50, label="bench")
@@ -32,4 +37,8 @@ class TestExpIFPerformance:
         started = time.perf_counter()
         network.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - started
-        assert 50 * 500 / elapsed > 5000
+        assert_load_tolerant_throughput(
+            label="ExpIF network",
+            observed_per_second=50 * 500 / elapsed,
+            strict_minimum_per_second=5_000.0,
+        )

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_fitzhugh_rinzel_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestFHRPerformance:
@@ -24,8 +25,12 @@ class TestFHRPerformance:
                 n.step(0.5)
             samples.append(time.perf_counter() - t0)
 
-        best_seconds_per_step = min(samples) / steps
-        assert best_seconds_per_step < 100e-6
+        best_steps_per_second = steps / min(samples)
+        assert_load_tolerant_throughput(
+            label="FitzHugh-Rinzel isolation",
+            observed_per_second=best_steps_per_second,
+            strict_minimum_per_second=10_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(FitzHughRinzelNeuron, n=50, label="bench")
@@ -35,4 +40,8 @@ class TestFHRPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 50 * 500 / elapsed > 3000
+        assert_load_tolerant_throughput(
+            label="FitzHugh-Rinzel network",
+            observed_per_second=50 * 500 / elapsed,
+            strict_minimum_per_second=3_000.0,
+        )

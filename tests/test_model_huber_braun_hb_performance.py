@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_huber_braun_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestHBPerformance:
@@ -22,7 +23,11 @@ class TestHBPerformance:
             n.step(50.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 20_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Huber-Braun isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=20_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(HuberBraunNeuron, n=20, label="bench")
@@ -34,4 +39,6 @@ class TestHBPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 1_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Huber-Braun network", observed_per_second=rate, strict_minimum_per_second=1_000.0
+        )
