@@ -158,12 +158,9 @@ fn mat_candidate_valid(v: f64, theta1: f64, theta2: f64) -> bool {
     v.is_finite()
         && theta1.is_finite()
         && theta2.is_finite()
-        && v >= MAT_V_MIN
-        && v <= MAT_V_MAX
-        && theta1 >= 0.0_f64
-        && theta1 <= MAT_THETA_MAX
-        && theta2 >= 0.0_f64
-        && theta2 <= MAT_THETA_MAX
+        && (MAT_V_MIN..=MAT_V_MAX).contains(&v)
+        && (0.0_f64..=MAT_THETA_MAX).contains(&theta1)
+        && (0.0_f64..=MAT_THETA_MAX).contains(&theta2)
 }
 
 #[cfg(test)]

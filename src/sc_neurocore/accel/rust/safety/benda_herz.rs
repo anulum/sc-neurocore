@@ -74,7 +74,7 @@ impl BendaHerzNeuron {
             return None;
         }
         let probability = -(-hazard).exp_m1();
-        if !probability.is_finite() || probability < 0.0 || probability > 1.0 {
+        if !probability.is_finite() || !(0.0..=1.0).contains(&probability) {
             return None;
         }
         Some((next_a, probability))

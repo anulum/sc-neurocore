@@ -50,10 +50,7 @@ impl SFANeuron {
         if !v_candidate.is_finite() || !g_candidate.is_finite() {
             return -1;
         }
-        if !(V_MIN..=V_MAX).contains(&v_candidate)
-            || g_candidate < 0.0
-            || g_candidate > G_MAX
-        {
+        if !(V_MIN..=V_MAX).contains(&v_candidate) || !(0.0..=G_MAX).contains(&g_candidate) {
             return -1;
         }
         if v_candidate >= self.v_threshold {

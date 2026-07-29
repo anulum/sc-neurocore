@@ -179,7 +179,7 @@ impl CompteWMNeuron {
             x_nmda_candidate,
             s_gaba_candidate,
         ] {
-            if !value.is_finite() || value < 0.0 || value > GATE_MAX {
+            if !value.is_finite() || !(0.0..=GATE_MAX).contains(&value) {
                 return Err("gate candidate outside Compte safety envelope");
             }
         }

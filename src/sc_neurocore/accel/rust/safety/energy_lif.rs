@@ -122,8 +122,7 @@ pub fn validate_energy_lif(state: &EnergyLIFNeuron) -> bool {
 
 fn energy_lif_candidate_valid(v: f64, epsilon: f64, epsilon_0: f64) -> bool {
     v.is_finite()
-        && v >= ENERGY_LIF_V_MIN
-        && v <= ENERGY_LIF_V_MAX
+        && (ENERGY_LIF_V_MIN..=ENERGY_LIF_V_MAX).contains(&v)
         && epsilon.is_finite()
         && epsilon >= 0.0_f64
         && epsilon <= epsilon_0
