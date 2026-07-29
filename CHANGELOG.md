@@ -79,6 +79,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Added the complete documented Julia runtime for `SC-COMPTE-WM-NETWORK`,
+  including all 2,560 cells, repository-local pinned FFTW dependencies,
+  counter Poisson drive, structured FFT recurrence, explicit-event
+  co-simulation, stimuli, bounded activity receipts, and atomic validation.
+  Native tests bind the counter, preserved scalar cell, and recurrent fixture
+  to Python/Rust evidence; a source-bound three-repeat 1,000-step benchmark is
+  local regression evidence only and does not claim bump persistence or
+  distractor resistance.
 - Added the documented modular Rust runtime for `SC-COMPTE-WM-NETWORK`, with
   the full fixed population state, preplanned FFT ring coupling,
   counter-addressed Poisson input, explicit-event co-simulation boundary,

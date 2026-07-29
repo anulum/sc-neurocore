@@ -84,6 +84,29 @@ features Cargo documentation build succeeds; promoting crate-wide
 `RUSTDOCFLAGS=-D warnings` remains blocked by pre-existing broken links in
 unrelated legacy modules and is not represented as a clean project-wide gate.
 
+## Native Julia lane
+
+`accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl` is the complete Julia
+runtime for the same separately named network. It owns all nine state arrays,
+uses the declared `FFTW.jl` dependency for circular E-to-E and optional tuned
+E-to-I reductions, implements the counter-addressed Poisson streams, supports
+explicit event-count co-simulation, and returns step/window/run receipts. Its
+native suite binds Julia to the Python/Rust counter fixture, the preserved
+Julia scalar Compte cell, and the non-trivial recurrent dense-oracle anchor;
+it also exercises deterministic seed separation, full-population stimulus and
+refractory behavior, atomic invalid-input rejection, and native docstrings.
+
+The dedicated `Project.toml` and `Manifest.toml` freeze the Julia dependency
+surface. Dependencies and compiled caches are instantiated with
+`JULIA_DEPOT_PATH=.venv/julia_depot`, keeping them inside the repository venv
+boundary. The committed Julia benchmark receipt measures three fresh 1,000-
+step FFT runs and hashes its project, manifest, runtime, and benchmark source.
+The full 1,000-step input digest, spike digest, and population spike counts are
+exactly equal to the committed Python receipt; binary64 state digests are not
+claimed bit-identical across FFT libraries. It is local regression evidence
+only: it makes no production-throughput, persistent-bump,
+distractor-resistance, hardware, or all-runtime claim.
+
 ## Claim boundary
 
 The Python executor and committed benchmark are deterministic simulator
@@ -93,8 +116,8 @@ host regression timing only. Persistent-bump formation, delay stability,
 random drift, response reset, distractor resistance, complete all-runtime
 parity, and silicon behavior remain open until demonstrated by separately
 committed ensemble and backend evidence. The current native claim is
-Python/Rust short-trace parity. The network therefore does not increment the
-49/155 neuron-model fidelity count.
+Python/Rust/Julia short-trace parity. The network therefore does not increment
+the 49/155 neuron-model fidelity count.
 
 ## Example
 
