@@ -131,6 +131,7 @@ class SCCompteWMNetworkSpec:
     ei_j_plus: float = 1.25
     ei_sigma_deg: float = 18.0
     structured_ei: bool = False
+    allow_recurrent_autapses: bool = False
     modulated: bool = False
     tau_ampa_ms: float = 2.0
     tau_nmda_ms: float = 100.0
@@ -149,8 +150,8 @@ class SCCompteWMNetworkSpec:
             raise ValueError(
                 "the v1 network size is fixed to 2048 excitatory and 512 inhibitory cells"
             )
-        if self.seed < 0:
-            raise ValueError("seed must be non-negative")
+        if self.seed < 0 or self.seed > (1 << 64) - 1:
+            raise ValueError("seed must fit an unsigned 64-bit integer")
         for name in (
             "dt_ms",
             "external_rate_hz",

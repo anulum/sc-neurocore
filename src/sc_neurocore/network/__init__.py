@@ -36,6 +36,15 @@ from .sc_compte_wm import (
     circular_distance_deg,
     summarize_activity,
 )
+from .sc_compte_wm_drive import CounterPoissonDrive, CounterPoissonReceipt
+from .sc_compte_wm_network import (
+    SCCompteWMNetwork,
+    SCCompteWMNetworkState,
+    SCCompteWMRunReceipt,
+    SCCompteWMStepReceipt,
+    SCCompteWMStimulus,
+    SCCompteWMWindowReceipt,
+)
 
 __all__ = [
     "Population",
@@ -65,4 +74,12 @@ __all__ = [
     "circular_displacement_deg",
     "circular_distance_deg",
     "summarize_activity",
+    "CounterPoissonDrive",
+    "CounterPoissonReceipt",
+    "SCCompteWMNetwork",
+    "SCCompteWMNetworkState",
+    "SCCompteWMRunReceipt",
+    "SCCompteWMStepReceipt",
+    "SCCompteWMStimulus",
+    "SCCompteWMWindowReceipt",
 ]

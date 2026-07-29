@@ -971,7 +971,7 @@
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4621
+    "test_files": 4624
   },
   "documentation": {
     "public_pages": [
@@ -3579,6 +3579,7 @@
       "tests/test_bench_quantum_annealing_modularisation.py",
       "tests/test_bench_resonate_and_fire.py",
       "tests/test_bench_safety_certification.py",
+      "tests/test_bench_sc_compte_wm_network.py",
       "tests/test_bench_sigmoid_rate.py",
       "tests/test_bench_theta.py",
       "tests/test_bench_threshold_linear_rate.py",
@@ -6510,6 +6511,8 @@
       "tests/test_sby_runner_run_sby_task_end_to_end.py",
       "tests/test_sc_adaptive_threshold_map_backends.py",
       "tests/test_sc_chaotic_map_backends.py",
+      "tests/test_sc_compte_wm_drive.py",
+      "tests/test_sc_compte_wm_network.py",
       "tests/test_sc_compte_wm_network_spec.py",
       "tests/test_sc_convergence_and_multiplication_convergence.py",
       "tests/test_sc_convergence_bitstream_encoder_roundtrip.py",

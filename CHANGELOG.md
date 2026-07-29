@@ -79,6 +79,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Added the first executable `SC-COMPTE-WM-NETWORK` layer without conflating it
+  with the preserved scalar `CompteWMNeuron`: deterministic counter-addressed
+  1,800 Hz Poisson input receipts, all 2,048+512 membrane/channel states,
+  midpoint RK2, no-autapse circular E-to-E and optional structured E-to-I
+  coupling, protocol currents, atomic validation, window statistics, and
+  canonical input/spike/state digests. Focused tests bind an isolated
+  pyramidal impulse to the original cell model and independently check the FFT
+  reduction against a dense target oracle. The source-bound 1,000-step Python
+  benchmark is local regression evidence only; behavioral ensembles and
+  native-network parity remain open and the neuron-model count is unchanged.
 - Established `SC-COMPTE-WM-NETWORK` as the explicit SC project-model identity
   for the retained 2,560-cell working-memory ring. The public
   `SCCompteWMNetworkSpec` freezes the 2,048+512 population split, source-derived

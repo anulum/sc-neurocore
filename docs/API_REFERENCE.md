@@ -21104,6 +21104,69 @@ Compute rates and circular bump observables from one spike-count window.
 
 ---
 
+## Module `network.sc_compte_wm_drive`
+
+### Class `CounterPoissonReceipt`
+Auditable receipt for one population input sample.
+
+
+### Class `CounterPoissonDrive`
+Deterministic per-cell Poisson counts from a counter-addressed stream.
+
+``rate_hz * dt_ms / 1000`` is the Poisson mean for one cell and timestep.
+The inverse CDF is built once through a residual tail below ``1e-15``.
+Counts are returned as signed 64-bit integers for portable FFI transport.
+
+- **__post_init__**()
+- **mean_events**()
+  - Return the expected event count per cell and timestep.
+- **sample**(step_index)
+  - Return all cell counts and their canonical little-endian digest.
+
+---
+
+## Module `network.sc_compte_wm_network`
+
+### Class `SCCompteWMNetworkState`
+Complete mutable state of the 2,560-cell network.
+
+- **copy**()
+  - Return a deep state copy suitable for checkpointing.
+- **sha256**()
+  - Return a canonical digest of every state scalar and array.
+
+### Class `SCCompteWMStimulus`
+One bounded excitatory-population current epoch in source pA units.
+
+- **__post_init__**()
+
+### Class `SCCompteWMStepReceipt`
+Events and provenance emitted by one atomic network step.
+
+
+### Class `SCCompteWMWindowReceipt`
+Population statistics for one explicit run window.
+
+
+### Class `SCCompteWMRunReceipt`
+Bounded aggregate evidence from one network execution.
+
+
+### Class `SCCompteWMNetwork`
+Execute the frozen SC 2,560-cell network with deterministic receipts.
+
+- **__init__**(spec)
+- **state**()
+  - Return a deep copy of the complete current state.
+- **reset**()
+  - Reset dynamic state while preserving the specification and streams.
+- **step**(direct_exc_current_pa)
+  - Advance one atomic midpoint-RK2 step and return complete event receipts.
+- **run**(duration_ms)
+  - Execute an integral number of steps and return bounded run evidence.
+
+---
+
 ## Module `network.stimulus`
 
 ### Class `TimedArray`
