@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess  # nosec B404 - shell-free local argument vectors.
+
+# Process workers receive shell-free local argument vectors.
+import subprocess  # nosec B404
 import sys
 import threading
 import time

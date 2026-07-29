@@ -142,7 +142,7 @@ def nullclines_2d(
             env[v1] = float(Y[i, j])
             env["I"] = 0.0
             try:
-                # nosec B307: `compiled_eq0/1` come from
+                # Bandit B307 justification: `compiled_eq0/1` come from
                 # `EquationNeuron._compiled_eqs`, which has already
                 # passed the AST whitelist in `_validate_expr` (no
                 # imports, no attribute escapes). Empty `__builtins__`

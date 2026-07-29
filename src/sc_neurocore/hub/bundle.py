@@ -34,6 +34,11 @@ from sc_neurocore.model_zoo.pretrained import _REGISTRY as _PRETRAINED_REGISTRY
 
 SCHEMA_VERSION = "sc-neurocore.self-hosted-hub.v1"
 
+# Declared container tmpfs path, not a host tempfile.
+_CONTAINER_TMPFS_PATH = "/tmp"  # nosec B108
+# Explicit operator-selected all-interface bind is allowed and recorded.
+_ALL_INTERFACES_IPV4 = "0.0.0.0"  # nosec B104
+
 _NETWORK_BUILDERS = (
     mnist_classifier,
     dvs_gesture_classifier,
@@ -171,8 +176,7 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
                 "healthcheck": f"http://127.0.0.1:{cfg.studio_port}/api/health",
                 "writable_paths": [
                     "/var/lib/sc-neurocore/cache",
-                    # Declared container tmpfs path, not a host tempfile.
-                    "/tmp",  # nosec B108
+                    _CONTAINER_TMPFS_PATH,
                 ],
             },
             "benchmark_runner": {
@@ -183,8 +187,7 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
                 "writable_paths": [
                     "/workspace/benchmarks/results",
                     "/var/lib/sc-neurocore/cache",
-                    # Declared container tmpfs path, not a host tempfile.
-                    "/tmp",  # nosec B108
+                    _CONTAINER_TMPFS_PATH,
                 ],
             },
         },
@@ -238,8 +241,7 @@ def build_hub_manifest(config: HubBundleConfig | None = None) -> dict[str, Any]:
             "read_only_root_filesystem": True,
             "no_new_privileges": True,
             "tmpfs_paths": [
-                # Explicit Docker tmpfs mount inside the container.
-                "/tmp",  # nosec B108
+                _CONTAINER_TMPFS_PATH,
             ],
             "restart_policy": "unless-stopped",
         },
@@ -467,8 +469,7 @@ def _validate_bind_host(value: str) -> None:
         raise ValueError("bind_host must not contain whitespace")
     if "/" in value:
         raise ValueError("bind_host must be a host name or IP address, not a CIDR")
-    # Explicit user-selected all-interface bind is allowed and recorded in the manifest.
-    if value in {"localhost", "0.0.0.0", "::", "::1"}:  # nosec B104
+    if value in {"localhost", _ALL_INTERFACES_IPV4, "::", "::1"}:
         return
     try:
         ipaddress.ip_address(value)

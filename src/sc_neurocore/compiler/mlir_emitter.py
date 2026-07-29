@@ -219,7 +219,8 @@ def _lower_with_circt(circt_opt: str, mlir_path: Path, verilog_path: Path) -> No
     is discarded). Raises :class:`SCCompilerError` if either step fails, so a
     bundle never records a lowering that did not actually succeed.
     """
-    verify = subprocess.run(  # nosec B603 - circt_opt from shutil.which, literal flags
+    # circt_opt comes from shutil.which and every argument is literal or a local path.
+    verify = subprocess.run(  # nosec B603
         [circt_opt, "--verify-diagnostics", str(mlir_path)],
         capture_output=True,
         text=True,
@@ -229,7 +230,8 @@ def _lower_with_circt(circt_opt: str, mlir_path: Path, verilog_path: Path) -> No
         raise SCCompilerError(
             f"circt-opt --verify-diagnostics rejected the emitted MLIR:\n{verify.stderr}"
         )
-    export = subprocess.run(  # nosec B603 - circt_opt from shutil.which, literal flags
+    # The same resolved binary receives only literal flags and the local MLIR path.
+    export = subprocess.run(  # nosec B603
         [circt_opt, "--export-verilog", str(mlir_path), "-o", os.devnull],
         capture_output=True,
         text=True,

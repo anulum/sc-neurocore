@@ -280,7 +280,7 @@ class EquationNeuron:
         env.update(self.initial_state)
         env.update(_previous_state_aliases(self.initial_state))
         env["I"] = 0.0
-        # nosec B307: AST-whitelisted compiled threshold expression (see step()).
+        # Bandit B307 justification: AST-whitelisted threshold expression (see step()).
         return bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env))  # nosec B307
 
     def _build_jacobian(self) -> dict[str, Any]:
@@ -320,7 +320,7 @@ class EquationNeuron:
         return compiled
 
     # The compiled-expression ``eval`` sites below run with this empty-builtins
-    # sandbox; the AST allowlist that makes every ``# nosec B307`` sound lives in
+    # sandbox; the AST allowlist that makes every targeted B307 suppression sound lives in
     # :class:`~sc_neurocore.neurons.equation_safety.ExpressionSafetyValidator`.
     _EVAL_GLOBALS = EVAL_GLOBALS
 
@@ -416,7 +416,7 @@ class EquationNeuron:
                     reset_env = self._build_env(**kwargs)
                     reset_env.update(_previous_state_aliases(previous_state))
                     for var, code in self._compiled_reset.items():
-                        # nosec B307: AST-whitelisted compiled reset rule.
+                        # Bandit B307 justification: AST-whitelisted compiled reset rule.
                         self.state[var] = float(  # nosec B307
                             eval(code, self._EVAL_GLOBALS, reset_env)  # nosec B307
                         )
@@ -427,7 +427,7 @@ class EquationNeuron:
         elif self._compiled_threshold:
             env_post = self._build_env(**kwargs)
             env_post.update(_previous_state_aliases(previous_state))
-            # nosec B307: AST-whitelisted compiled threshold expression.
+            # Bandit B307 justification: AST-whitelisted compiled threshold expression.
             active = bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post))  # nosec B307
             # ``crossing`` fires once on the inactive -> active transition (a rising
             # threshold crossing, matching the hand oscillator models' ``v >= thr and
@@ -446,7 +446,7 @@ class EquationNeuron:
                 reset_env = self._build_env(**kwargs)
                 reset_env.update(_previous_state_aliases(previous_state))
                 for var, code in self._compiled_reset.items():
-                    # nosec B307: AST-whitelisted compiled reset rule.
+                    # Bandit B307 justification: AST-whitelisted compiled reset rule.
                     self.state[var] = float(eval(code, self._EVAL_GLOBALS, reset_env))  # nosec B307
 
         return spike
@@ -464,7 +464,7 @@ class EquationNeuron:
         if self.method == "euler":
             derivatives = {}
             for var, code in self._compiled_eqs.items():
-                # nosec B307: `code` is a compiled expression that has
+                # Bandit B307 justification: `code` is a compiled expression that has
                 # already passed `ExpressionSafetyValidator.validate`'s AST
                 # whitelist (no imports, no attribute access into builtins, only
                 # the whitelisted maths/comparison nodes). The `eval` env has
@@ -483,7 +483,7 @@ class EquationNeuron:
             # is applied simultaneously, matching the published recurrence.
             updates = {}
             for var, code in self._compiled_eqs.items():
-                # nosec B307: `code` is a compiled expression that already passed
+                # Bandit B307 justification: `code` is a compiled expression that already passed
                 # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
                 # with empty `__builtins__` (see the euler branch comment for full rationale).
                 updates[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
@@ -504,7 +504,7 @@ class EquationNeuron:
                 e.update(kwargs)
                 e["xi"] = xi_sample
                 return {
-                    # nosec B307: AST-whitelisted compiled equation
+                    # Bandit B307 justification: AST-whitelisted compiled equation
                     # (see euler branch comment above for full sandbox
                     # rationale).
                     var: float(eval(code, self._EVAL_GLOBALS, e))  # nosec B307
@@ -534,7 +534,7 @@ class EquationNeuron:
             # and a single ``xi`` draw (one per sub-step, matching euler); committing the
             # variable in place makes the next derivative in the loop read the new value.
             for var, code in self._compiled_eqs.items():
-                # nosec B307: `code` is a compiled expression that already passed
+                # Bandit B307 justification: `code` is a compiled expression that already passed
                 # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
                 # with empty `__builtins__` (see the euler branch comment for full rationale).
                 derivative = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
@@ -551,7 +551,7 @@ class EquationNeuron:
             exprel = self._namespace["exprel"]
             increments = {}
             for var in self.equations:
-                # nosec B307: AST-whitelisted compiled equation / Jacobian
+                # Bandit B307 justification: AST-whitelisted compiled equation / Jacobian
                 # (see the euler branch comment for the full sandbox rationale).
                 f_val = float(eval(self._compiled_eqs[var], self._EVAL_GLOBALS, env))  # nosec B307
                 a_val = float(eval(self._compiled_jacobian[var], self._EVAL_GLOBALS, env))  # nosec B307
