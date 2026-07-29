@@ -101,6 +101,8 @@ fn valid_state(vs: f64, vd: f64, h: f64, n: f64, q: f64, ca: f64) -> bool {
         && (-200.0..=100.0).contains(&vd)
 }
 
+// Keep the ordered compartment state explicit to mirror the reference integrator.
+#[allow(clippy::too_many_arguments)]
 fn substep(
     s: &BoothRinzelState,
     mut vs: f64,

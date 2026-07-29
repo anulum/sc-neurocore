@@ -113,6 +113,8 @@ impl UpperMotorNeuron {
             && (0.0..=1.0).contains(&self.s)
     }
 
+    // Keep the ordered gating state explicit to mirror the reference equations.
+    #[allow(clippy::too_many_arguments)]
     fn step_candidate(
         &self,
         v: f64,

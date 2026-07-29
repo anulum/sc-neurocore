@@ -70,6 +70,8 @@ impl L6_PlanetaryAdapter {
         out
     }
 
+    // Preserve the scalar kernel signature shared with schema and backend callers.
+    #[allow(clippy::too_many_arguments)]
     pub fn gaia_kernel(
         phi: &[f64],
         sync_inputs: &[f64],
@@ -191,6 +193,8 @@ fn validate_params(
     Ok(())
 }
 
+// Mirror `gaia_kernel` one-to-one so validation cannot reorder model parameters.
+#[allow(clippy::too_many_arguments)]
 fn validate_kernel_inputs(
     phi: &[f64],
     sync_inputs: &[f64],
