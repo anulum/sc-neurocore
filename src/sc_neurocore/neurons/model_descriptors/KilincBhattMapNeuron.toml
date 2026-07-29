@@ -12,7 +12,7 @@ name = "KilincBhattMapNeuron"
 class_name = "KilincBhattMapNeuron"
 module = "kilinc_bhatt_map_neuron"
 display_name = ""
-summary = "Nagumo-Sato / Aihara sigmoid map neuron with a dynamic threshold."
+summary = "Experimental Nagumo-Sato/Aihara-derived sigmoid map with a dynamic threshold."
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
@@ -34,6 +34,7 @@ authors = [
 year = 1990
 doi = "10.1016/0375-9601(90)90136-c"
 paper_title = "Chaotic neural networks"
+derivation_note = "The implemented two-state adaptive-threshold recurrence is an SC-NeuroCore experimental derivative. It is not publication-exact and is not attributable to a Kilinc-Bhatt 2023 paper."
 
 [state.x]
 init = 0.0
@@ -87,16 +88,48 @@ range = [
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+x = "clamp(-x + k / (1 + exp(-4 * (x - theta))) + I, -5, 5)"
+theta = "clamp(beta * theta + gamma * H(x - theta_spike), -5, 5)"
+event = "x_next >= x_threshold and x < x_threshold"
 
 [backends.python]
 status = "implemented"
+parity = "reference"
+
+[backends.rust]
+status = "implemented"
+parity = "float64-2e-15"
+
+[backends.go]
+status = "implemented"
+parity = "float64-2e-15"
+
+[backends.julia]
+status = "implemented"
+parity = "float64-2e-15"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":0.6,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "e979a6cff86be008d8cff1ffdc9f333007c7826a045cf811cb522f36fa021e0e"
+event_count = 68
+final_state = "{\"x\":0.4038531661502207,\"theta\":0.8877927528402929}"
 
 [documentation]
-slug = "models/kilinc_bhatt_map_neuron"
-notes = ""
+slug = "models/kilinc_bhatt_map"
+notes = "Experimental derivative of the Nagumo-Sato/Aihara sigmoid-map lineage; no Kilinc-Bhatt 2023 source was found. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "complete trajectory and upward-crossing event vector"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=0.6"
+tolerance = "Python/Rust/Go/Julia complete state within 2e-15"
+evidence = "tests/test_kilinc_bhatt_map_backends.py"
+
+[silicon]
+compiles = false
+cosim_validated = false
+terminal_reason = "No model-specific Mojo or RTL implementation and no synthesis evidence."

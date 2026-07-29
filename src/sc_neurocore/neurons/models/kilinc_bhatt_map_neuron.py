@@ -41,20 +41,53 @@ class KilincBhattMapNeuron:
     theta_spike: float = 0.8
     x_threshold: float = 0.8
 
+    def __post_init__(self) -> None:
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        for name in ("x", "theta", "k", "beta", "gamma", "theta_spike", "x_threshold"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+            setattr(self, name, value)
+
+        for name in ("x", "theta"):
+            if not -5.0 <= getattr(self, name) <= 5.0:
+                raise ValueError(f"{name} must be within [-5, 5]")
+        if not 0.0 <= self.k <= 5.0:
+            raise ValueError("k must be within [0, 5]")
+        if not 0.0 <= self.beta <= 1.0:
+            raise ValueError("beta must be within [0, 1]")
+        if not 0.0 <= self.gamma <= 2.0:
+            raise ValueError("gamma must be within [0, 2]")
+        for name in ("theta_spike", "x_threshold"):
+            if not 0.0 <= getattr(self, name) <= 2.0:
+                raise ValueError(f"{name} must be within [0, 2]")
+
+    @staticmethod
+    def _sigmoid(z: float) -> float:
+        if z >= 0.0:
+            return 1.0 / (1.0 + math.exp(-z))
+        exp_z = math.exp(z)
+        return exp_z / (1.0 + exp_z)
+
     def step(self, current: float = 0.0) -> int:
+        drive = float(current)
+        if not math.isfinite(drive):
+            raise ValueError("current must be finite")
+        self._validate_configuration()
+
         x_prev = self.x
-        sig = 1.0 / (1.0 + math.exp(-(self.x - self.theta) * 4.0))
-        x_new = -self.x + self.k * sig + current
+        sig = self._sigmoid((self.x - self.theta) * 4.0)
+        x_new = -self.x + self.k * sig + drive
         spiked = 1.0 if self.x >= self.theta_spike else 0.0
         theta_new = self.beta * self.theta + self.gamma * spiked
 
+        if not math.isfinite(x_new) or not math.isfinite(theta_new):
+            raise FloatingPointError("Kilinc-Bhatt candidate state became non-finite")
+
         self.x = max(-5.0, min(5.0, x_new))
         self.theta = max(-5.0, min(5.0, theta_new))
-
-        if not math.isfinite(self.x):
-            self.x = 0.0
-        if not math.isfinite(self.theta):
-            self.theta = 0.0
 
         return 1 if self.x >= self.x_threshold and x_prev < self.x_threshold else 0
 

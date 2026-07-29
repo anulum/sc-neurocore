@@ -8,13 +8,13 @@
 
 //! Kilinc-Bhatt adaptive-threshold map neuron.
 
-/// Kilinc-Bhatt 2023 — sigmoid map with adaptive threshold.
+/// Experimental Nagumo-Sato/Aihara-derived sigmoid map with adaptive threshold.
 ///
 /// Minimal 2D map with built-in spike frequency adaptation via
 /// a slow threshold variable. Designed for efficient hardware
 /// implementation while retaining biologically relevant dynamics.
 ///
-/// x(n+1) = k * sigmoid(x(n) - theta(n)) + I
+/// x(n+1) = -x(n) + k * sigmoid(4 * (x(n) - theta(n))) + I
 /// theta(n+1) = beta * theta(n) + gamma * H(x(n) - theta_spike)
 ///
 /// H() is the Heaviside step function (spike-triggered increment).
@@ -48,32 +48,67 @@ impl KilincBhattMapNeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn valid(&self) -> bool {
+        self.x.is_finite()
+            && (-5.0..=5.0).contains(&self.x)
+            && self.theta.is_finite()
+            && (-5.0..=5.0).contains(&self.theta)
+            && self.k.is_finite()
+            && (0.0..=5.0).contains(&self.k)
+            && self.beta.is_finite()
+            && (0.0..=1.0).contains(&self.beta)
+            && self.gamma.is_finite()
+            && (0.0..=2.0).contains(&self.gamma)
+            && self.theta_spike.is_finite()
+            && (0.0..=2.0).contains(&self.theta_spike)
+            && self.x_threshold.is_finite()
+            && (0.0..=2.0).contains(&self.x_threshold)
+    }
+
+    fn sigmoid(z: f64) -> f64 {
+        if z >= 0.0 {
+            1.0 / (1.0 + (-z).exp())
+        } else {
+            let exp_z = z.exp();
+            exp_z / (1.0 + exp_z)
+        }
+    }
+
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !current.is_finite() {
+            return Err("current must be finite");
+        }
+        if !self.valid() {
+            return Err("Kilinc-Bhatt state and parameters must satisfy the public bounds");
+        }
+
         let x_prev = self.x;
-        let sig = 1.0 / (1.0 + (-(self.x - self.theta) * 4.0).exp());
+        let sig = Self::sigmoid((self.x - self.theta) * 4.0);
         let x_new = -self.x + self.k * sig + current;
         let spiked = if self.x >= self.theta_spike { 1.0 } else { 0.0 };
         let theta_new = self.beta * self.theta + self.gamma * spiked;
 
+        if !x_new.is_finite() || !theta_new.is_finite() {
+            return Err("Kilinc-Bhatt candidate state became non-finite");
+        }
+
         self.x = x_new.clamp(-5.0, 5.0);
         self.theta = theta_new.clamp(-5.0, 5.0);
 
-        if !self.x.is_finite() {
-            self.x = 0.0;
-        }
-        if !self.theta.is_finite() {
-            self.theta = 0.0;
-        }
-
-        if self.x >= self.x_threshold && x_prev < self.x_threshold {
+        Ok(if self.x >= self.x_threshold && x_prev < self.x_threshold {
             1
         } else {
             0
-        }
+        })
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.x = 0.0;
+        self.theta = 0.0;
     }
 }
 
@@ -131,10 +166,11 @@ mod tests {
     }
 
     #[test]
-    fn kb_nan_input_stays_finite() {
+    fn kb_nan_input_is_rejected_atomically() {
         let mut n = KilincBhattMapNeuron::new();
-        n.step(f64::NAN);
-        assert!(n.x.is_finite());
+        let before = (n.x, n.theta);
+        assert_eq!(n.try_step(f64::NAN), Err("current must be finite"));
+        assert_eq!((n.x, n.theta), before);
     }
 
     #[test]
@@ -149,12 +185,31 @@ mod tests {
     #[test]
     fn kb_reset_clears_state() {
         let mut n = KilincBhattMapNeuron::new();
+        n.k = 2.0;
+        n.beta = 0.8;
         for _ in 0..100 {
             n.step(1.0);
         }
         n.reset();
         assert_eq!(n.x, 0.0);
         assert_eq!(n.theta, 0.0);
+        assert_eq!(n.k, 2.0);
+        assert_eq!(n.beta, 0.8);
+    }
+
+    #[test]
+    fn kb_invalid_state_is_rejected_atomically() {
+        let mut n = KilincBhattMapNeuron::new();
+        n.theta = f64::INFINITY;
+        let before = (n.x, n.theta);
+        assert!(n.try_step(1.0).is_err());
+        assert_eq!((n.x, n.theta), before);
+    }
+
+    #[test]
+    fn kb_sigmoid_is_stable_at_finite_extremes() {
+        assert_eq!(KilincBhattMapNeuron::sigmoid(f64::MAX), 1.0);
+        assert_eq!(KilincBhattMapNeuron::sigmoid(-f64::MAX), 0.0);
     }
 
     #[test]

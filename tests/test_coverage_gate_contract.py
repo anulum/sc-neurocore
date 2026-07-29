@@ -41,3 +41,19 @@ def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
 
     assert _cov_thresholds(_ROOT / "Makefile") == (100,)
     assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100,)
+
+
+def test_kilinc_bhatt_exact_coverage_and_backend_parity_is_hosted() -> None:
+    """The omitted model needs an explicit branch gate plus backend custody."""
+
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    start = workflow.index("- name: Kilinc-Bhatt exact coverage and backend parity")
+    end = workflow.index("\n      - name:", start + 1)
+    step = workflow[start:end]
+
+    assert "if: matrix.primary" in step
+    assert "--rcfile=/dev/null --branch" in step
+    assert "--include='src/sc_neurocore/neurons/models/kilinc_bhatt_map_neuron.py'" in step
+    assert "tests/test_model_kilinc_bhatt_map_neuron.py" in step
+    assert "tests/test_kilinc_bhatt_map_backends.py" in step
+    assert "--fail-under=100 --show-missing" in step
