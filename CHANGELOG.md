@@ -79,6 +79,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Established `SC-COMPTE-WM-NETWORK` as the explicit SC project-model identity
+  for the retained 2,560-cell working-memory ring. The public
+  `SCCompteWMNetworkSpec` freezes the 2,048+512 population split, source-derived
+  control/modulated conductances and synaptic constants, exactly normalized
+  circular footprints, reproducible compact cue contract, circular distractor
+  displacement, and population activity statistics. This specification does
+  not yet claim persistent-bump behavior, distractor resistance, runtime
+  parity, or another neuron-model completion.
 - Exact MPS / Heisenberg TEBD contracts for `SpinPoolMPS` and topology +
   Kane-exchange contracts for `KaneSiliconMapper` (worst-offender coverage
   debt closure for quantum_cognition + ONNX protobuf path via installed

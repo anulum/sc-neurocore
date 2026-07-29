@@ -288,6 +288,7 @@ nav:
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Model Fidelity &amp; Polyglot Status: api/model_fidelity_status.md
+          - SC Compte Working-Memory Network: api/sc_compte_wm_network.md
           - Neurons: api/neurons.md
           - Synapses: api/synapses.md
           - Layers: api/layers.md

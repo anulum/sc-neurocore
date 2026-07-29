@@ -967,11 +967,11 @@
     "model_documentation_pages": 178,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 586,
+    "public_documentation_pages": 587,
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4620
+    "test_files": 4621
   },
   "documentation": {
     "public_pages": [
@@ -1285,6 +1285,7 @@
       "docs/api/rust-benchmarks.md",
       "docs/api/rust-engine.md",
       "docs/api/safety_cert.md",
+      "docs/api/sc_compte_wm_network.md",
       "docs/api/sc_inference.md",
       "docs/api/scnir.md",
       "docs/api/scpn.md",
@@ -6509,6 +6510,7 @@
       "tests/test_sby_runner_run_sby_task_end_to_end.py",
       "tests/test_sc_adaptive_threshold_map_backends.py",
       "tests/test_sc_chaotic_map_backends.py",
+      "tests/test_sc_compte_wm_network_spec.py",
       "tests/test_sc_convergence_and_multiplication_convergence.py",
       "tests/test_sc_convergence_bitstream_encoder_roundtrip.py",
       "tests/test_sc_convergence_cordiv_monotonicity.py",

@@ -21057,6 +21057,53 @@ Validate and normalize CSR connectivity arrays.
 
 ---
 
+## Module `network.sc_compte_wm`
+
+### Class `SCCompteCellSpec`
+Intrinsic LIF parameters for one population in source units.
+
+- **__post_init__**()
+
+### Class `SCCompteProtocolSpec`
+Reproducible SC protocol choices for cue, delay, and response epochs.
+
+- **__post_init__**()
+
+### Class `SCCompteWMNetworkSpec`
+Exact public specification of the SC 2,560-cell working-memory ring.
+
+The default is the paper-derived control parameter set.  ``modulated=True``
+applies the reported 20 percent NMDA and 40 percent GABAA recurrent
+conductance increases.  ``structured_ei=True`` selects the separately
+reported tuned E-to-I footprint; the default E-to-I projection is uniform.
+
+- **__post_init__**()
+- **n_cells**()
+  - Return the fixed total population size (2,560).
+- **preferred_angles_deg**(population)
+  - Return uniformly spaced preferred cues for one ring population.
+- **recurrent_conductance_ns**(projection)
+  - Return the selected control or modulated recurrent conductance.
+- **connectivity_footprint**(projection, source_angle_deg, target_angles_deg)
+  - Return an exactly unit-mean footprint over the supplied targets.
+- **cue_current_pa**(center_deg, target_angles_deg)
+  - Return the SC compact raised-cosine cue current on the ring.
+
+### Class `SCCompteWMActivityStatistics`
+Frozen population observables for one explicitly bounded time window.
+
+
+### Function `circular_distance_deg(angles_deg, center_deg)`
+Return shortest signed distances from *center_deg* in ``&#91;-180, 180)``.
+
+### Function `circular_displacement_deg(before_deg, after_deg)`
+Return the signed shortest displacement from *before_deg* to *after_deg*.
+
+### Function `summarize_activity(spec, excitatory_spike_counts, inhibitory_spike_counts, window_ms)`
+Compute rates and circular bump observables from one spike-count window.
+
+---
+
 ## Module `network.stimulus`
 
 ### Class `TimedArray`

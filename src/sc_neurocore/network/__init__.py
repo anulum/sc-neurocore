@@ -27,6 +27,15 @@ from .export import export_verilog
 from .mpi_runner import HAS_MPI, MPIRunner
 from .cortical_column import CorticalColumn
 from .gamma_oscillation import PINGCircuit
+from .sc_compte_wm import (
+    SCCompteCellSpec,
+    SCCompteProtocolSpec,
+    SCCompteWMActivityStatistics,
+    SCCompteWMNetworkSpec,
+    circular_displacement_deg,
+    circular_distance_deg,
+    summarize_activity,
+)
 
 __all__ = [
     "Population",
@@ -49,4 +58,11 @@ __all__ = [
     "HAS_MPI",
     "CorticalColumn",
     "PINGCircuit",
+    "SCCompteCellSpec",
+    "SCCompteProtocolSpec",
+    "SCCompteWMActivityStatistics",
+    "SCCompteWMNetworkSpec",
+    "circular_displacement_deg",
+    "circular_distance_deg",
+    "summarize_activity",
 ]
