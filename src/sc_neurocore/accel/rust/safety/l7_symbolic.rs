@@ -376,8 +376,8 @@ impl L7_SymbolicLayer {
         let mut bitstreams = vec![vec![0u8; self.params.bitstream_length]; self.params.n_symbols];
         for channel in 0..self.params.n_symbols {
             let probability = clamp01(output_probs[channel]);
-            for bit in 0..self.params.bitstream_length {
-                bitstreams[channel][bit] = u8::from(self.next_unit_interval() < probability);
+            for bit in &mut bitstreams[channel] {
+                *bit = u8::from(self.next_unit_interval() < probability);
             }
         }
         bitstreams
