@@ -52,9 +52,9 @@ impl LeakyCompeteFireNeuron {
             if next_v[i] >= self.v_threshold {
                 *spike = 1;
                 next_v[i] = 0.0;
-                for j in 0..self.n_units {
+                for (j, voltage) in next_v.iter_mut().enumerate() {
                     if j != i {
-                        next_v[j] = (next_v[j] - self.w_inh).max(0.0);
+                        *voltage = (*voltage - self.w_inh).max(0.0);
                     }
                 }
             }
