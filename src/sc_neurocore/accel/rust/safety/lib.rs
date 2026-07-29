@@ -6,6 +6,10 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore Rust safety library
 
+// Source-parity safety mirrors retain their canonical `new()` constructors;
+// blanket `Default` impls would create 359 public contracts absent upstream.
+#![allow(clippy::new_without_default)]
+
 pub mod accountant;
 pub mod adaptive;
 pub mod adaptive_engine;
