@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Brunel-Wang Neuron Model
 
-//! Brunel-Wang conductance-based LIF dynamics.
+//! Brunel-Wang (2001) pyramidal-cell LIF dynamics.
 
 // ═══════════════════════════════════════════════════════════════════
 // Brunel-Wang LIF with NMDA/AMPA/GABA
@@ -47,6 +47,7 @@ pub struct BrunelWangNeuron {
 }
 
 impl BrunelWangNeuron {
+    /// Construct the paper's pyramidal-cell defaults.
     pub fn new() -> Self {
         Self {
             v: -70.0,
@@ -55,10 +56,10 @@ impl BrunelWangNeuron {
             v_threshold: -50.0,
             tau_m: 20.0,
             tau_ref: 2.0,
-            g_ampa_ext: 2.1,
-            g_ampa_rec: 0.05,
-            g_nmda: 0.165,
-            g_gaba: 1.3,
+            g_ampa_ext: 2.08,
+            g_ampa_rec: 0.104,
+            g_nmda: 0.327,
+            g_gaba: 1.25,
             v_ampa: 0.0,
             v_nmda: 0.0,
             v_gaba: -70.0,
@@ -76,7 +77,50 @@ impl BrunelWangNeuron {
         1.0 / (1.0 + self.mg_conc / 3.57 * (-0.062 * v).exp())
     }
 
-    /// Full step with all 4 synaptic inputs (for network simulations).
+    /// Advance one midpoint-RK2 step with four pre-aggregated channel gates.
+    ///
+    /// The operation is fail-closed: invalid configuration, input, or an
+    /// intermediate leaves membrane and refractory state unchanged.
+    pub fn try_step_full(
+        &mut self,
+        i_ampa_ext: f64,
+        s_ampa_rec: f64,
+        s_nmda_rec: f64,
+        s_gaba: f64,
+    ) -> Result<i32, String> {
+        if !self.valid()
+            || ![i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba]
+                .iter()
+                .all(|value| value.is_finite() && *value >= 0.0)
+        {
+            return Err("invalid Brunel-Wang configuration or aggregate gate".into());
+        }
+        if self.ref_remaining > 0.0 {
+            self.v = self.v_reset;
+            self.ref_remaining = (self.ref_remaining - self.dt).max(0.0);
+            return Ok(0);
+        }
+
+        let v = self.v;
+        let k1 = self.derivative(v, i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba);
+        let midpoint = v + 0.5 * self.dt * k1;
+        let k2 = self.derivative(midpoint, i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba);
+        let candidate = v + self.dt * k2;
+        if !k1.is_finite() || !midpoint.is_finite() || !k2.is_finite() || !candidate.is_finite() {
+            return Err("non-finite Brunel-Wang RK2 candidate".into());
+        }
+        self.v = candidate;
+
+        if candidate >= self.v_threshold {
+            self.v = self.v_reset;
+            self.ref_remaining = self.tau_ref;
+            Ok(1)
+        } else {
+            Ok(0)
+        }
+    }
+
+    /// Compatibility wrapper for callers that cannot transport recoverable errors.
     pub fn step_full(
         &mut self,
         i_ampa_ext: f64,
@@ -84,31 +128,51 @@ impl BrunelWangNeuron {
         s_nmda_rec: f64,
         s_gaba: f64,
     ) -> i32 {
-        if self.ref_remaining > 0.0 {
-            self.ref_remaining -= self.dt;
-            return 0;
-        }
+        self.try_step_full(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
+            .unwrap_or(0)
+    }
 
-        let v = self.v;
+    fn derivative(&self, v: f64, ext: f64, ampa: f64, nmda: f64, gaba: f64) -> f64 {
+        let i_ampa =
+            -self.g_ampa_ext * (v - self.v_ampa) * ext - self.g_ampa_rec * (v - self.v_ampa) * ampa;
+        let i_nmda = -self.g_nmda * self.nmda_mg_block(v) * (v - self.v_nmda) * nmda;
+        let i_gaba = -self.g_gaba * (v - self.v_gaba) * gaba;
+        -(v - self.v_rest) / self.tau_m + (i_ampa + i_nmda + i_gaba) / self.c_m
+    }
 
-        // Synaptic currents (conductance-based)
-        let i_ampa = -self.g_ampa_ext * (v - self.v_ampa) * i_ampa_ext
-            - self.g_ampa_rec * (v - self.v_ampa) * s_ampa_rec;
-        let i_nmda = -self.g_nmda * self.nmda_mg_block(v) * (v - self.v_nmda) * s_nmda_rec;
-        let i_gaba = -self.g_gaba * (v - self.v_gaba) * s_gaba;
-
-        // Membrane dynamics (LIF)
-        let i_leak = -(v - self.v_rest) / self.tau_m;
-        let dv = (i_leak + (i_ampa + i_nmda + i_gaba) / self.c_m) * self.dt;
-        self.v += dv;
-
-        if self.v >= self.v_threshold {
-            self.v = self.v_reset;
-            self.ref_remaining = self.tau_ref;
-            1
-        } else {
-            0
-        }
+    fn valid(&self) -> bool {
+        [
+            self.v,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau_m,
+            self.tau_ref,
+            self.g_ampa_ext,
+            self.g_ampa_rec,
+            self.g_nmda,
+            self.g_gaba,
+            self.v_ampa,
+            self.v_nmda,
+            self.v_gaba,
+            self.c_m,
+            self.mg_conc,
+            self.dt,
+            self.ref_remaining,
+            self.gain,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && self.tau_m > 0.0
+            && self.tau_ref > 0.0
+            && self.c_m > 0.0
+            && self.dt > 0.0
+            && self.g_ampa_ext >= 0.0
+            && self.g_ampa_rec >= 0.0
+            && self.g_nmda >= 0.0
+            && self.g_gaba >= 0.0
+            && self.mg_conc >= 0.0
+            && self.ref_remaining >= 0.0
     }
 
     /// Single-current interface: routes input to external AMPA drive.
@@ -119,6 +183,12 @@ impl BrunelWangNeuron {
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.ref_remaining = 0.0;
+    }
+
+    /// Return the complete dynamic state.
+    #[must_use]
+    pub fn state(&self) -> (f64, f64) {
+        (self.v, self.ref_remaining)
     }
 }
 

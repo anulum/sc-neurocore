@@ -1,0 +1,77 @@
+{
+  "metadata": {
+    "schema_version": 2,
+    "name": "BrunelWangNeuron",
+    "author": "Brunel, N. & Wang, X.-J.",
+    "year": 2001,
+    "doi": "10.1023/A:1011204814320",
+    "description": "Excitatory pyramidal LIF cell with pre-aggregated AMPA, NMDA, and GABA gates"
+  },
+  "state": {
+    "v": -70,
+    "refractory_time": 0,
+    "spike_flag": 0,
+    "phase": 0,
+    "ext_latched": 0,
+    "ampa_latched": 0,
+    "nmda_latched": 0,
+    "gaba_latched": 0,
+    "k1": 0,
+    "midpoint": -70,
+    "k2": 0
+  },
+  "parameters": {
+    "v_rest": -70,
+    "v_reset": -55,
+    "v_threshold": -50,
+    "tau_m": 20,
+    "tau_ref": 2,
+    "tau_ampa": 2,
+    "tau_nmda_rise": 2,
+    "tau_nmda_decay": 100,
+    "tau_gaba": 10,
+    "g_ampa_ext": 2.08,
+    "g_ampa_rec": 0.104,
+    "g_nmda": 0.327,
+    "g_gaba": 1.25,
+    "v_ampa": 0,
+    "v_nmda": 0,
+    "v_gaba": -70,
+    "c_m": 0.5,
+    "mg_conc": 1,
+    "mg_divisor": 3.57,
+    "mg_slope": 0.062,
+    "dt": 0.1
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "map",
+    "substeps": 1
+  },
+  "dynamics": {
+    "v": "(v_reset if refractory_time > 0.0 else (v_reset if (v + dt * k2) >= v_threshold else (v + dt * k2))) if phase > 5.5 else v",
+    "refractory_time": "((max(0.0, refractory_time - dt)) if refractory_time > 0.0 else (tau_ref if (v + dt * k2) >= v_threshold else 0.0)) if phase > 5.5 else refractory_time",
+    "spike_flag": "(0.0 if refractory_time > 0.0 else (1.0 if (v + dt * k2) >= v_threshold else 0.0)) if phase > 5.5 else spike_flag",
+    "phase": "(phase + 1.0) % 7.0",
+    "ext_latched": "I if phase < 0.5 else ext_latched",
+    "ampa_latched": "I if abs(phase - 1.0) < 0.5 else ampa_latched",
+    "nmda_latched": "I if abs(phase - 2.0) < 0.5 else nmda_latched",
+    "gaba_latched": "I if abs(phase - 3.0) < 0.5 else gaba_latched",
+    "k1": "(-(v - v_rest) / tau_m + ((-g_ampa_ext * (v - v_ampa) * ext_latched - g_ampa_rec * (v - v_ampa) * ampa_latched - g_nmda * (1.0 / (1.0 + mg_conc / mg_divisor * exp(-mg_slope * v))) * (v - v_nmda) * nmda_latched - g_gaba * (v - v_gaba) * I) / c_m)) if abs(phase - 3.0) < 0.5 else k1",
+    "midpoint": "v + 0.5 * dt * k1 if abs(phase - 4.0) < 0.5 else midpoint",
+    "k2": "(-(midpoint - v_rest) / tau_m + ((-g_ampa_ext * (midpoint - v_ampa) * ext_latched - g_ampa_rec * (midpoint - v_ampa) * ampa_latched - g_nmda * (1.0 / (1.0 + mg_conc / mg_divisor * exp(-mg_slope * midpoint))) * (midpoint - v_nmda) * nmda_latched - g_gaba * (midpoint - v_gaba) * gaba_latched) / c_m)) if abs(phase - 5.0) < 0.5 else k2"
+  },
+  "threshold": {
+    "condition": "spike_flag >= 0.5",
+    "detection": "crossing"
+  },
+  "extensions": {
+    "family": "rate-mean-field",
+    "model_type": "conductance_lif_external_aggregate_gates",
+    "source_equations": "Brunel and Wang 2001 Methods 2.2-2.3, DOI 10.1023/A:1011204814320",
+    "discretisation": "One explicit midpoint RK2 membrane step at dt=0.1 ms with four aggregate gates held constant",
+    "serial_input_protocol": "Seven rising edges form one physical step: latch external AMPA, recurrent AMPA, recurrent NMDA, and recurrent GABA; evaluate k1; form midpoint; evaluate k2; then commit sampled threshold/reset and refractory state.",
+    "state_scope_note": "v and refractory_time are physical state; spike_flag is the sampled event observable; phase, gate latches, k1, midpoint, and k2 are deterministic lowering registers.",
+    "synaptic_boundary": "The four inputs are pre-aggregated gating sums. Synaptic ODEs, presynaptic spikes, latency, network connectivity, and Poisson generation remain outside this single-cell schema."
+  }
+}

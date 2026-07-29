@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-4 Brunel-Wang bounded safety proof
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_brunel_wang_formal.v
+read -formal sc_brunel_wang.v
+prep -top sc_brunel_wang_formal
+
+[files]
+sc_brunel_wang_formal.v
+sc_brunel_wang.v

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "model": "BrunelWangNeuron",
+  "source": {
+    "authors": [
+      "Nicolas Brunel",
+      "Xiao-Jing Wang"
+    ],
+    "title": "Effects of Neuromodulation in a Cortical Network Model of Object Working Memory Dominated by Recurrent Inhibition",
+    "journal": "Journal of Computational Neuroscience",
+    "year": 2001,
+    "doi": "10.1023/A:1011204814320",
+    "pdf_sha256": "dea3a8debf667ab1d195d7cc93150d0f3aca0d6b44a2f8f8869212a1fbf39038",
+    "scope": [
+      "Methods 2.2 pyramidal cell",
+      "Methods 2.3 aggregate synaptic currents",
+      "Methods 2.7 modified second-order Runge-Kutta at 0.1 ms"
+    ]
+  },
+  "specialization": {
+    "cell_type": "excitatory pyramidal",
+    "input_boundary": "pre-aggregated external AMPA, recurrent AMPA, recurrent NMDA, and recurrent GABA gates held constant per step",
+    "excluded": [
+      "network connectivity",
+      "Poisson spike generation",
+      "synaptic latency",
+      "presynaptic channel-state integration",
+      "persistent-activity and mean-field claims"
+    ]
+  },
+  "parameters": {
+    "v_init": -70,
+    "v_rest": -70,
+    "v_reset": -55,
+    "v_threshold": -50,
+    "tau_m_ms": 20,
+    "tau_ref_ms": 2,
+    "g_ampa_ext_ns": 2.08,
+    "g_ampa_rec_ns": 0.104,
+    "g_nmda_ns": 0.327,
+    "g_gaba_ns": 1.25,
+    "v_exc_mv": 0,
+    "v_gaba_mv": -70,
+    "c_m_nf": 0.5,
+    "mg_mm": 1,
+    "dt_ms": 0.1
+  },
+  "stimulus": {
+    "steps": 256,
+    "external_ampa": "0.035 + 0.018 * (1 + sin(i * 0.071))",
+    "recurrent_ampa": "0.12 + 0.05 * (1 + cos(i * 0.053))",
+    "recurrent_nmda": "0.08 + 0.04 * (1 + sin(i * 0.037 + 0.2))",
+    "recurrent_gaba": "0.03 + 0.02 * (1 + cos(i * 0.089))"
+  },
+  "oracle": {
+    "canonical_row_format": "little-endian float64 (voltage, refractory_remaining_ms, event_as_float64)",
+    "trace_sha256": "4ccef2945dc6b01a9dbd7c3c9111b05ab632964707e728e775462c7eb67d4527",
+    "event_indices": [
+      12,
+      36,
+      64,
+      89,
+      113,
+      139,
+      166,
+      190,
+      214,
+      240
+    ],
+    "final_voltage_mv": -55,
+    "final_refractory_ms": 0.49999999999999933,
+    "first_eight_voltage_mv": [
+      -68.15556140164556,
+      -66.36217183432271,
+      -64.619200732023,
+      -62.92592287226834,
+      -61.281525005875785,
+      -59.68511478351886,
+      -58.13573153732988,
+      -56.63235848508392
+    ]
+  }
+}

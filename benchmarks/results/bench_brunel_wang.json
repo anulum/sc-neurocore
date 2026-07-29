@@ -1,0 +1,182 @@
+{
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 7867,
+      "events_exact": true,
+      "median_ns": 53133870,
+      "ns_per_step": 265.66935,
+      "parity_max_abs_diff": 7.105427357601002e-15,
+      "parity_tolerance": 2e-12,
+      "samples_ns": [
+        60742406,
+        48804283,
+        53133870
+      ],
+      "trace_matches_python": true,
+      "trace_sha256": "84559b1fc2b86926687824e5e6c74995d9940587b82f2800625aeb74b3fbd95e",
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "event_count": 7867,
+      "events_exact": true,
+      "median_ns": 48374919,
+      "ns_per_step": 241.874595,
+      "parity_max_abs_diff": 0.0,
+      "parity_tolerance": 2e-12,
+      "samples_ns": [
+        48374919,
+        38989983,
+        53164164
+      ],
+      "trace_matches_python": true,
+      "trace_sha256": "7ae4322ecfa86569397307b9ed02383111315376442047b96db77e38fa175990",
+      "used": true
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 7867,
+      "events_exact": true,
+      "median_ns": 43777523,
+      "ns_per_step": 218.887615,
+      "parity_max_abs_diff": 5.826450433232822e-13,
+      "parity_tolerance": 2e-10,
+      "samples_ns": [
+        43777523,
+        48066259,
+        31569810
+      ],
+      "trace_matches_python": true,
+      "trace_sha256": "0e7a7971a6b024ef250491340d10ae6306086c76840e83c5969b18a405a66d1f",
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 7867,
+      "events_exact": true,
+      "median_ns": 2081826959,
+      "ns_per_step": 10409.134795,
+      "parity_max_abs_diff": 0.0,
+      "parity_tolerance": 0.0,
+      "samples_ns": [
+        2691777495,
+        2081826959,
+        1279638445
+      ],
+      "trace_matches_python": true,
+      "trace_sha256": "7ae4322ecfa86569397307b9ed02383111315376442047b96db77e38fa175990",
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 7867,
+      "events_exact": true,
+      "median_ns": 176538771,
+      "ns_per_step": 882.693855,
+      "parity_max_abs_diff": 0.0,
+      "parity_tolerance": 2e-12,
+      "samples_ns": [
+        185659234,
+        170615803,
+        176538771
+      ],
+      "trace_matches_python": true,
+      "trace_sha256": "7ae4322ecfa86569397307b9ed02383111315376442047b96db77e38fa175990",
+      "used": true
+    }
+  },
+  "binary_hashes": {
+    "go_shared_library": {
+      "path": "src/sc_neurocore/accel/go/brunel_wang/libbrunel_wang.so",
+      "sha256": "cfffe821e59f00b014f782e50aa55b9cb3647baff8f0ca333575dbb50c13f56b",
+      "size_bytes": 2016912
+    },
+    "mojo_shared_library": {
+      "path": "src/sc_neurocore/accel/mojo/brunel_wang/libbrunel_wang.so",
+      "sha256": "782914ebf2dad4c61aadc82b0549103e98d1dd307424407f7172afd70f1bec95",
+      "size_bytes": 15000
+    },
+    "rust_extension": {
+      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "33a30bdc3384186dcde77c960ed0f9e55c187e598e3ab59893149fce03a2fa10",
+      "size_bytes": 33997985
+    }
+  },
+  "configuration": {
+    "dt_ms": 0.1,
+    "repeats": 3,
+    "steps": 200000
+  },
+  "environment": {
+    "affinity": [
+      0
+    ],
+    "go": "go version go1.26.2 linux/amd64",
+    "julia": "julia version 1.12.6",
+    "load_average": [
+      28.9765625,
+      26.8583984375,
+      32.3212890625
+    ],
+    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "python": "3.12.3",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "evidence_class": "local_regression",
+  "generated_at": "2026-07-29T20:43:34.197868+00:00",
+  "hardware_measurement_claimed": false,
+  "kernel": "brunel_wang_midpoint_rk2_batch",
+  "measured_order": [
+    "mojo",
+    "julia",
+    "go",
+    "rust",
+    "python"
+  ],
+  "meta": {
+    "exclusive_cpu_isolation_claimed": false,
+    "single_cpu_pinned": true
+  },
+  "model": "BrunelWangNeuron",
+  "network_behavior_claimed": false,
+  "passed": true,
+  "production_speed_claim": false,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_brunel_wang.py": "f1497406e23497b2b6d7c14a8e0b58b45b756cd68ecff5c0d1c66d264d2cfa2f",
+    "bridge/sc_neurocore_engine/__init__.py": "57059de11dd908219aa99fc184dd467bdb3bacc92356c4f097954ee6284c6050",
+    "engine/src/bindings/population/brunel_wang.rs": "9d6ba36ff2a8a107a9c26f21e97605c2b88a8ba6ccaaa04f580d2091425a82b2",
+    "engine/src/neurons/simple_spiking/brunel_wang.rs": "358eae43bf7fb59338f05f1993fd1d4ae98d982c0c4016036d259a9fa599b214",
+    "hdl/formal/catalogue/sc_brunel_wang.v": "bbe1e193f0b3486cc8d3a42aef94b77d47205ade4bc6a54f7d642dd844a00fbd",
+    "src/sc_neurocore/accel/brunel_wang.py": "915961af0e285ff964878bcbeef4b743e128a6cd0de3d31ec82297fa5c9d7fb9",
+    "src/sc_neurocore/accel/go/brunel_wang/brunel_wang.go": "dc2de7a13924a66db96944eeec491facc51b9634d99634890a52c67aa07e6c42",
+    "src/sc_neurocore/accel/go/services/brunel_wang.go": "31e8bceb71aaaeb3be153b4a2e4c6320abbffae03c93440fd98c9534d9569d67",
+    "src/sc_neurocore/accel/julia/neurons/brunel_wang.jl": "29e8f3fc9f619af5a83a5ab04af417422b5964ffc18aa835e550d998daf7cb07",
+    "src/sc_neurocore/accel/mojo/brunel_wang/brunel_wang.mojo": "0920820eb2d244d498226d279f67d06d75933c0361e4e0a05fbd4788de1b0035",
+    "src/sc_neurocore/accel/rust/safety/brunel_wang.rs": "b0f9220caad4701f3458372960f42b45d34a095d8cefbd83dee2aa16582bf603",
+    "src/sc_neurocore/neurons/model_descriptors/BrunelWangNeuron.toml": "b518cb01f0d55476372bbc200e4624886927a2bdb7bed86ff5182a73207f033f",
+    "src/sc_neurocore/neurons/model_schemas/brunel_wang.json": "6edc5daf2c8db3064ffa3468f2de61af4d7e34840c3a72a0d8a10e2f830146e8",
+    "src/sc_neurocore/neurons/model_schemas/brunel_wang.toml": "827a404f27655f71424c33892887bd772c93cf7f831bfa32be50631a78c9196e",
+    "src/sc_neurocore/neurons/models/brunel_wang.py": "3da41b8ca1c826182fee9a1ae5212c0855b041e2383edf7836ceee74519f067d",
+    "src/sc_neurocore/neurons/reference_trace_data/brunel_wang_2001_pyramidal.json": "48dd8793a70b91d5477ff62e57b4571a3bfeb2848a89a336d4073bd8bb318fe1"
+  },
+  "verification": {
+    "rust_safety": {
+      "output_tail": [
+        "",
+        "running 3 tests",
+        "test tests::defaults_are_source_values ... ok",
+        "test tests::failure_is_atomic ... ok",
+        "test tests::reset_preserves_configuration ... ok",
+        "",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        ""
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  }
+}

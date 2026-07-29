@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for brunel_wang
+// SC-NeuroCore — Brunel-Wang 2001 midpoint-RK2 Go service
 
 package services
 
@@ -13,161 +13,86 @@ import (
 	"math"
 )
 
-// BrunelWangNeuronState holds the neuron state
+// BrunelWangNeuronState holds the complete source cell state and configuration.
 type BrunelWangNeuronState struct {
-	V            float64
-	VRest        float64
-	VReset       float64
-	VThreshold   float64
-	TauM         float64
-	TauRef       float64
-	TauAmpa      float64
-	TauNmdaRise  float64
-	TauNmdaDecay float64
-	TauGaba      float64
-	GAmpaExt     float64
-	GAmpaRec     float64
-	GNmda        float64
-	GGaba        float64
-	VAmpa        float64
-	VNmda        float64
-	VGaba        float64
-	CM           float64
-	MgConc       float64
-	Dt           float64
-	RefRemaining float64
+	V, VRest, VReset, VThreshold float64
+	TauM, TauRef                 float64
+	GAmpaExt, GAmpaRec           float64
+	GNmda, GGaba                 float64
+	VAmpa, VNmda, VGaba          float64
+	CM, MgConc, Dt, RefRemaining float64
 }
 
-// NewBrunelWangNeuron creates a new BrunelWangNeuron neuron with default parameters
+// NewBrunelWangNeuron constructs Brunel and Wang's pyramidal-cell defaults.
 func NewBrunelWangNeuron() *BrunelWangNeuronState {
 	return &BrunelWangNeuronState{
-		V:            -70.0,
-		VRest:        -70.0,
-		VReset:       -55.0,
-		VThreshold:   -50.0,
-		TauM:         20.0,
-		TauRef:       2.0,
-		TauAmpa:      2.0,
-		TauNmdaRise:  2.0,
-		TauNmdaDecay: 100.0,
-		TauGaba:      5.0,
-		GAmpaExt:     2.1,
-		GAmpaRec:     0.05,
-		GNmda:        0.165,
-		GGaba:        1.3,
-		VAmpa:        0.0,
-		VNmda:        0.0,
-		VGaba:        -70.0,
-		CM:           0.5,
-		MgConc:       1.0,
-		Dt:           0.1,
-		RefRemaining: 0.0,
+		V: -70, VRest: -70, VReset: -55, VThreshold: -50,
+		TauM: 20, TauRef: 2, GAmpaExt: 2.08, GAmpaRec: 0.104,
+		GNmda: 0.327, GGaba: 1.25, VAmpa: 0, VNmda: 0, VGaba: -70,
+		CM: 0.5, MgConc: 1, Dt: 0.1, RefRemaining: 0,
 	}
 }
 
-func finiteBrunelWang(value float64) bool {
-	return !math.IsNaN(value) && !math.IsInf(value, 0)
-}
+func finiteBrunelWang(value float64) bool      { return !math.IsNaN(value) && !math.IsInf(value, 0) }
+func nonnegativeBrunelWang(value float64) bool { return finiteBrunelWang(value) && value >= 0 }
 
-func positiveBrunelWang(value float64) bool {
-	return finiteBrunelWang(value) && value > 0.0
-}
-
-func nonnegativeBrunelWang(value float64) bool {
-	return finiteBrunelWang(value) && value >= 0.0
-}
-
-func gateBrunelWang(value float64) bool {
-	return finiteBrunelWang(value) && value >= 0.0 && value <= 1.0
-}
-
-// ValidateBrunelWang checks membrane, refractory, and synaptic parameters.
+// ValidateBrunelWang checks every mutable state/configuration invariant.
 func ValidateBrunelWang(s *BrunelWangNeuronState) bool {
 	if s == nil {
 		return false
 	}
-	return finiteBrunelWang(s.V) &&
-		finiteBrunelWang(s.VRest) &&
-		finiteBrunelWang(s.VReset) &&
-		finiteBrunelWang(s.VThreshold) &&
-		positiveBrunelWang(s.TauM) &&
-		positiveBrunelWang(s.TauRef) &&
-		positiveBrunelWang(s.TauAmpa) &&
-		positiveBrunelWang(s.TauNmdaRise) &&
-		positiveBrunelWang(s.TauNmdaDecay) &&
-		positiveBrunelWang(s.TauGaba) &&
-		nonnegativeBrunelWang(s.GAmpaExt) &&
-		nonnegativeBrunelWang(s.GAmpaRec) &&
-		nonnegativeBrunelWang(s.GNmda) &&
-		nonnegativeBrunelWang(s.GGaba) &&
-		finiteBrunelWang(s.VAmpa) &&
-		finiteBrunelWang(s.VNmda) &&
-		finiteBrunelWang(s.VGaba) &&
-		positiveBrunelWang(s.CM) &&
-		nonnegativeBrunelWang(s.MgConc) &&
-		positiveBrunelWang(s.Dt) &&
-		nonnegativeBrunelWang(s.RefRemaining)
+	values := []float64{s.V, s.VRest, s.VReset, s.VThreshold, s.TauM, s.TauRef,
+		s.GAmpaExt, s.GAmpaRec, s.GNmda, s.GGaba, s.VAmpa, s.VNmda,
+		s.VGaba, s.CM, s.MgConc, s.Dt, s.RefRemaining}
+	for _, value := range values {
+		if !finiteBrunelWang(value) {
+			return false
+		}
+	}
+	return s.TauM > 0 && s.TauRef > 0 && s.CM > 0 && s.Dt > 0 &&
+		s.GAmpaExt >= 0 && s.GAmpaRec >= 0 && s.GNmda >= 0 && s.GGaba >= 0 &&
+		s.MgConc >= 0 && s.RefRemaining >= 0
 }
 
-func nmdaVoltageDepBrunelWang(s *BrunelWangNeuronState, v float64) (float64, error) {
-	if !finiteBrunelWang(v) {
-		return 0, errors.New("invalid Brunel-Wang voltage")
-	}
-	exponent := -0.062 * v
-	if exponent > 700.0 {
-		return 0.0, nil
-	}
-	factor := 1.0 / (1.0 + s.MgConc/3.57*math.Exp(exponent))
-	if !finiteBrunelWang(factor) || factor < 0.0 || factor > 1.0 {
-		return 0, errors.New("invalid Brunel-Wang NMDA voltage factor")
-	}
-	return factor, nil
+func (s *BrunelWangNeuronState) derivative(v, ext, ampa, nmda, gaba float64) float64 {
+	block := 1 / (1 + s.MgConc/3.57*math.Exp(-0.062*v))
+	iAmpa := -s.GAmpaExt*(v-s.VAmpa)*ext - s.GAmpaRec*(v-s.VAmpa)*ampa
+	iNmda := -s.GNmda * block * (v - s.VNmda) * nmda
+	iGaba := -s.GGaba * (v - s.VGaba) * gaba
+	return -(v-s.VRest)/s.TauM + (iAmpa+iNmda+iGaba)/s.CM
 }
 
-// Step advances the neuron by one timestep
-func (s *BrunelWangNeuronState) Step(iAmpaExt float64, syn ...float64) (int, error) {
-	sAmpaRec := 0.0
-	sNmdaRec := 0.0
-	sGaba := 0.0
+// Step advances one atomic midpoint-RK2 step over four aggregate gates.
+func (s *BrunelWangNeuronState) Step(ext float64, syn ...float64) (int, error) {
+	ampa, nmda, gaba := 0.0, 0.0, 0.0
 	if len(syn) > 0 {
-		sAmpaRec = syn[0]
+		ampa = syn[0]
 	}
 	if len(syn) > 1 {
-		sNmdaRec = syn[1]
+		nmda = syn[1]
 	}
 	if len(syn) > 2 {
-		sGaba = syn[2]
+		gaba = syn[2]
 	}
-	if !ValidateBrunelWang(s) {
-		return 0, errors.New("invalid Brunel-Wang runtime state")
+	if !ValidateBrunelWang(s) || !nonnegativeBrunelWang(ext) || !nonnegativeBrunelWang(ampa) ||
+		!nonnegativeBrunelWang(nmda) || !nonnegativeBrunelWang(gaba) {
+		return 0, errors.New("invalid Brunel-Wang configuration or aggregate gate")
 	}
-	if !nonnegativeBrunelWang(iAmpaExt) || !gateBrunelWang(sAmpaRec) || !gateBrunelWang(sNmdaRec) || !gateBrunelWang(sGaba) {
-		return 0, errors.New("invalid Brunel-Wang synaptic input")
-	}
-
-	if s.RefRemaining > 0.0 {
-		s.RefRemaining = math.Max(0.0, s.RefRemaining-s.Dt)
+	if s.RefRemaining > 0 {
+		s.V = s.VReset
+		s.RefRemaining = math.Max(0, s.RefRemaining-s.Dt)
 		return 0, nil
 	}
-
-	nmdaFactor, err := nmdaVoltageDepBrunelWang(s, s.V)
-	if err != nil {
-		return 0, err
+	v := s.V
+	k1 := s.derivative(v, ext, ampa, nmda, gaba)
+	midpoint := v + 0.5*s.Dt*k1
+	k2 := s.derivative(midpoint, ext, ampa, nmda, gaba)
+	candidate := v + s.Dt*k2
+	if !finiteBrunelWang(k1) || !finiteBrunelWang(midpoint) || !finiteBrunelWang(k2) || !finiteBrunelWang(candidate) {
+		return 0, errors.New("non-finite Brunel-Wang RK2 candidate")
 	}
-	iAmpa := -s.GAmpaExt*(s.V-s.VAmpa)*iAmpaExt - s.GAmpaRec*(s.V-s.VAmpa)*sAmpaRec
-	iNmda := -s.GNmda * nmdaFactor * (s.V - s.VNmda) * sNmdaRec
-	iGaba := -s.GGaba * (s.V - s.VGaba) * sGaba
-	iLeak := -(s.V - s.VRest) / s.TauM
-	dv := (iLeak + (iAmpa+iNmda+iGaba)/s.CM) * s.Dt
-	nextV := s.V + dv
-	if !finiteBrunelWang(iAmpa) || !finiteBrunelWang(iNmda) ||
-		!finiteBrunelWang(iGaba) || !finiteBrunelWang(iLeak) ||
-		!finiteBrunelWang(dv) || !finiteBrunelWang(nextV) {
-		return 0, errors.New("invalid Brunel-Wang membrane candidate")
-	}
-
-	s.V = nextV
-	if s.V >= s.VThreshold {
+	s.V = candidate
+	if candidate >= s.VThreshold {
 		s.V = s.VReset
 		s.RefRemaining = s.TauRef
 		return 1, nil
@@ -175,21 +100,20 @@ func (s *BrunelWangNeuronState) Step(iAmpaExt float64, syn ...float64) (int, err
 	return 0, nil
 }
 
-// SimulateBrunelWangNeuron runs the neuron for n steps
+// Reset clears only dynamic state and preserves configuration.
+func (s *BrunelWangNeuronState) Reset() { s.V, s.RefRemaining = s.VRest, 0 }
+
+// SimulateBrunelWangNeuron retains the one-drive service compatibility path.
 func SimulateBrunelWangNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewBrunelWangNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
+	trace, spikes := make([]float64, nSteps), 0
+	for index := range trace {
+		event, err := s.Step(iExt)
 		if err != nil {
-			trace[t] = math.NaN()
+			trace[index] = math.NaN()
 			continue
 		}
-		trace[t] = s.V
-		if result > 0 {
-			spikes++
-		}
+		trace[index], spikes = s.V, spikes+event
 	}
 	return trace, spikes
 }

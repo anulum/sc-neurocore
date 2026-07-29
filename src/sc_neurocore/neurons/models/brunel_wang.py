@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Brunel-Wang LIF with NMDA/AMPA/GABA synapses
+# SC-NeuroCore — Brunel-Wang 2001 pyramidal LIF cell
 
 from __future__ import annotations
 
@@ -14,14 +14,23 @@ from dataclasses import dataclass
 
 @dataclass
 class BrunelWangNeuron:
-    """LIF neuron with NMDA, AMPA, and GABA synaptic currents.
+    """Brunel-Wang pyramidal LIF cell with four aggregate synaptic gates.
 
     Reference: Brunel, N. & Wang, X.J. (2001). Effects of neuromodulation in a
     cortical network model of object working memory dominated by
     recurrent inhibition. J Comput Neurosci 11:63-85.
 
-    Used in decision-making and working memory models. The key feature
-    is the voltage-dependent NMDA conductance with Mg2+ block.
+    This is the excitatory-cell specialization from Methods 2.2--2.3.  The
+    four values supplied to :meth:`step` are already-summed channel gating
+    variables, not spike counts and not internally integrated synapses.  One
+    public step holds those gates constant and applies explicit midpoint RK2,
+    matching the paper's stated second-order integration class at ``0.1 ms``.
+
+    Notes
+    -----
+    The retained ``tau_*`` synaptic parameters document the source boundary
+    and remain configurable metadata for network adapters.  They do not imply
+    that this single-cell object owns presynaptic channel states.
     """
 
     v: float = -70.0
@@ -33,11 +42,11 @@ class BrunelWangNeuron:
     tau_ampa: float = 2.0
     tau_nmda_rise: float = 2.0
     tau_nmda_decay: float = 100.0
-    tau_gaba: float = 5.0
-    g_ampa_ext: float = 2.1
-    g_ampa_rec: float = 0.05
-    g_nmda: float = 0.165
-    g_gaba: float = 1.3
+    tau_gaba: float = 10.0
+    g_ampa_ext: float = 2.08
+    g_ampa_rec: float = 0.104
+    g_nmda: float = 0.327
+    g_gaba: float = 1.25
     v_ampa: float = 0.0
     v_nmda: float = 0.0
     v_gaba: float = -70.0
@@ -88,10 +97,6 @@ class BrunelWangNeuron:
             if getattr(self, name) < 0.0:
                 raise ValueError(f"{name} must be non-negative")
         self._validate_voltage(self.v)
-        self._s_ampa = 0.0
-        self._s_nmda = 0.0
-        self._x_nmda = 0.0
-        self._s_gaba = 0.0
         self._ref_remaining = 0.0
 
     @staticmethod
@@ -109,10 +114,10 @@ class BrunelWangNeuron:
         return scalar
 
     @staticmethod
-    def _validate_gate(name: str, value: float) -> float:
+    def _validate_aggregate_gate(name: str, value: float) -> float:
         gate = float(value)
-        if not math.isfinite(gate) or gate < 0.0 or gate > 1.0:
-            raise ValueError(f"{name} must be finite and in [0, 1]")
+        if not math.isfinite(gate) or gate < 0.0:
+            raise ValueError(f"{name} must be finite and non-negative")
         return gate
 
     def _nmda_voltage_dep(self, v: float) -> float:
@@ -133,38 +138,49 @@ class BrunelWangNeuron:
         s_nmda_rec: float = 0.0,
         s_gaba: float = 0.0,
     ) -> int:
-        """Advance one timestep.
+        """Advance one source-level midpoint-RK2 timestep atomically.
 
         Parameters
         ----------
-        i_ampa_ext : external AMPA current (from Poisson input)
-        s_ampa_rec : recurrent AMPA synaptic variable [0, 1]
-        s_nmda_rec : recurrent NMDA synaptic variable [0, 1]
-        s_gaba : inhibitory GABA synaptic variable [0, 1]
+        i_ampa_ext : legacy name for the summed external AMPA gate
+        s_ampa_rec : summed recurrent AMPA gate
+        s_nmda_rec : weighted summed recurrent NMDA gate
+        s_gaba : summed recurrent GABA gate
+
+        Returns
+        -------
+        int
+            One when the sampled candidate reaches threshold, otherwise zero.
+
+        Raises
+        ------
+        ValueError
+            If configuration or an input gate is invalid.  Failure leaves the
+            voltage and refractory state unchanged.
+        FloatingPointError
+            If either RK2 stage is non-finite.  Failure is atomic.
         """
-        ampa_ext = self._validate_nonnegative("i_ampa_ext", i_ampa_ext)
-        ampa_rec = self._validate_gate("s_ampa_rec", s_ampa_rec)
-        nmda_rec = self._validate_gate("s_nmda_rec", s_nmda_rec)
-        gaba = self._validate_gate("s_gaba", s_gaba)
+        self.__post_init_runtime()
+        ampa_ext = self._validate_aggregate_gate("i_ampa_ext", i_ampa_ext)
+        ampa_rec = self._validate_aggregate_gate("s_ampa_rec", s_ampa_rec)
+        nmda_rec = self._validate_aggregate_gate("s_nmda_rec", s_nmda_rec)
+        gaba = self._validate_aggregate_gate("s_gaba", s_gaba)
         v = self._validate_voltage(self.v)
         ref_remaining = self._validate_nonnegative("_ref_remaining", self._ref_remaining)
 
         if ref_remaining > 0:
+            self.v = self.v_reset
             self._ref_remaining = max(0.0, ref_remaining - self.dt)
             return 0
 
-        # Synaptic currents
-        i_ampa = -self.g_ampa_ext * (v - self.v_ampa) * ampa_ext
-        i_ampa += -self.g_ampa_rec * (v - self.v_ampa) * ampa_rec
-        i_nmda = -self.g_nmda * self._nmda_voltage_dep(v) * (v - self.v_nmda) * nmda_rec
-        i_gaba = -self.g_gaba * (v - self.v_gaba) * gaba
-
-        # Membrane dynamics
-        i_leak = -(v - self.v_rest) / self.tau_m
-        dv = (i_leak + (i_ampa + i_nmda + i_gaba) / self.C_m) * self.dt
-        next_v = v + dv
-        if not all(math.isfinite(term) for term in (i_ampa, i_nmda, i_gaba, i_leak, dv, next_v)):
-            raise FloatingPointError("Brunel-Wang membrane candidate became non-finite")
+        k1 = self._dv_dt(v, ampa_ext, ampa_rec, nmda_rec, gaba)
+        midpoint = v + 0.5 * self.dt * k1
+        if not math.isfinite(midpoint):
+            raise FloatingPointError("Brunel-Wang RK2 midpoint became non-finite")
+        k2 = self._dv_dt(midpoint, ampa_ext, ampa_rec, nmda_rec, gaba)
+        next_v = v + self.dt * k2
+        if not math.isfinite(next_v):
+            raise FloatingPointError("Brunel-Wang RK2 candidate became non-finite")
 
         self.v = next_v
 
@@ -174,13 +190,87 @@ class BrunelWangNeuron:
             return 1
         return 0
 
+    def _dv_dt(
+        self,
+        voltage: float,
+        ampa_ext: float,
+        ampa_rec: float,
+        nmda_rec: float,
+        gaba: float,
+    ) -> float:
+        """Return the source membrane derivative for fixed aggregate gates."""
+        i_ampa = -self.g_ampa_ext * (voltage - self.v_ampa) * ampa_ext
+        i_ampa -= self.g_ampa_rec * (voltage - self.v_ampa) * ampa_rec
+        i_nmda = -self.g_nmda * self._nmda_voltage_dep(voltage) * (voltage - self.v_nmda) * nmda_rec
+        i_gaba = -self.g_gaba * (voltage - self.v_gaba) * gaba
+        derivative = -(voltage - self.v_rest) / self.tau_m
+        derivative += (i_ampa + i_nmda + i_gaba) / self.C_m
+        if not math.isfinite(derivative):
+            raise FloatingPointError("Brunel-Wang membrane derivative became non-finite")
+        return derivative
+
+    def __post_init_runtime(self) -> None:
+        """Validate mutated public parameters without resetting dynamic state."""
+        # Dynamic-state failures retain their public boundary exception types;
+        # parameter revalidation below must not obscure a corrupted voltage.
+        self._validate_voltage(self.v)
+        self._validate_nonnegative("_ref_remaining", self._ref_remaining)
+        dynamic = (self.v, self._ref_remaining)
+        try:
+            self.__post_init__()
+        except ValueError as exc:
+            self.v, self._ref_remaining = dynamic
+            raise ValueError(f"Brunel-Wang runtime parameters invalid: {exc}") from exc
+        self.v, self._ref_remaining = dynamic
+
+    def simulate(
+        self,
+        i_ampa_ext: object,
+        s_ampa_rec: object,
+        s_nmda_rec: object,
+        s_gaba: object,
+        *,
+        backend: str = "auto",
+    ) -> dict[str, object]:
+        """Run a complete four-gate batch through one maintained backend."""
+        from sc_neurocore.accel.brunel_wang import simulate_brunel_wang
+
+        result = simulate_brunel_wang(
+            self.v,
+            self._ref_remaining,
+            self.v_rest,
+            self.v_reset,
+            self.v_threshold,
+            self.tau_m,
+            self.tau_ref,
+            self.g_ampa_ext,
+            self.g_ampa_rec,
+            self.g_nmda,
+            self.g_gaba,
+            self.v_ampa,
+            self.v_nmda,
+            self.v_gaba,
+            self.C_m,
+            self.mg_conc,
+            self.dt,
+            i_ampa_ext,
+            s_ampa_rec,
+            s_nmda_rec,
+            s_gaba,
+            backend=backend,
+        )
+        self.v = float(result["v_final"])
+        self._ref_remaining = float(result["ref_final"])
+        return result
+
     def reset(self) -> None:
+        """Reset dynamic state while preserving every configuration field."""
         self.v = self.v_rest
-        self._s_ampa = 0.0
-        self._s_nmda = 0.0
-        self._x_nmda = 0.0
-        self._s_gaba = 0.0
         self._ref_remaining = 0.0
 
     def get_state(self) -> dict[str, float]:
+        """Return the complete dynamic membrane/refractory state."""
         return {"v": self.v, "ref_remaining": self._ref_remaining}
+
+
+__all__ = ["BrunelWangNeuron"]

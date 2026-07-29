@@ -4,170 +4,176 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for brunel_wang
+// SC-NeuroCore — dependency-free Brunel-Wang 2001 safety mirror
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
+/// Complete dynamic/configuration state for the source pyramidal-cell boundary.
 #[derive(Debug, Clone)]
 pub struct BrunelWangNeuron {
+    /// Membrane potential in mV.
     pub v: f64,
+    /// Leak reversal potential in mV.
     pub v_rest: f64,
+    /// Post-event reset potential in mV.
     pub v_reset: f64,
+    /// Sampled firing threshold in mV.
     pub v_threshold: f64,
+    /// Membrane time constant in ms.
     pub tau_m: f64,
+    /// Absolute refractory interval in ms.
     pub tau_ref: f64,
-    pub tau_ampa: f64,
-    pub tau_nmda_rise: f64,
-    pub tau_nmda_decay: f64,
-    pub tau_gaba: f64,
+    /// External AMPA conductance in nS.
     pub g_ampa_ext: f64,
+    /// Recurrent AMPA conductance in nS.
     pub g_ampa_rec: f64,
+    /// Recurrent NMDA conductance in nS.
     pub g_nmda: f64,
+    /// Recurrent GABA conductance in nS.
     pub g_gaba: f64,
+    /// Excitatory reversal potential in mV.
     pub v_ampa: f64,
+    /// NMDA reversal potential in mV.
     pub v_nmda: f64,
+    /// Inhibitory reversal potential in mV.
     pub v_gaba: f64,
-    pub C_m: f64,
+    /// Membrane capacitance in nF.
+    pub c_m: f64,
+    /// Extracellular magnesium concentration in mM.
     pub mg_conc: f64,
+    /// Integration interval in ms.
     pub dt: f64,
+    /// Remaining refractory interval in ms.
     pub ref_remaining: f64,
 }
 
 impl BrunelWangNeuron {
+    /// Construct Brunel and Wang's pyramidal-cell defaults.
+    #[must_use]
     pub fn new() -> Self {
         Self {
-            v: -70.0_f64,
-            v_rest: -70.0_f64,
-            v_reset: -55.0_f64,
-            v_threshold: -50.0_f64,
-            tau_m: 20.0_f64,
-            tau_ref: 2.0_f64,
-            tau_ampa: 2.0_f64,
-            tau_nmda_rise: 2.0_f64,
-            tau_nmda_decay: 100.0_f64,
-            tau_gaba: 5.0_f64,
-            g_ampa_ext: 2.1_f64,
-            g_ampa_rec: 0.05_f64,
-            g_nmda: 0.165_f64,
-            g_gaba: 1.3_f64,
-            v_ampa: 0.0_f64,
-            v_nmda: 0.0_f64,
-            v_gaba: -70.0_f64,
-            C_m: 0.5_f64,
-            mg_conc: 1.0_f64,
-            dt: 0.1_f64,
-            ref_remaining: 0.0_f64,
+            v: -70.0,
+            v_rest: -70.0,
+            v_reset: -55.0,
+            v_threshold: -50.0,
+            tau_m: 20.0,
+            tau_ref: 2.0,
+            g_ampa_ext: 2.08,
+            g_ampa_rec: 0.104,
+            g_nmda: 0.327,
+            g_gaba: 1.25,
+            v_ampa: 0.0,
+            v_nmda: 0.0,
+            v_gaba: -70.0,
+            c_m: 0.5,
+            mg_conc: 1.0,
+            dt: 0.1,
+            ref_remaining: 0.0,
         }
     }
 
-    pub fn _nmda_voltage_dep(&self, v: f64) -> f64 {
-        let exponent = -0.062 * v;
-        if exponent > 700.0 {
-            return 0.0;
-        }
-        1.0 / (1.0 + self.mg_conc / 3.57 * exponent.exp())
-    }
-
+    /// Advance one atomic midpoint-RK2 step over aggregate channel gates.
     pub fn step(
         &mut self,
-        i_ampa_ext: f64,
+        s_ampa_ext: f64,
         s_ampa_rec: f64,
         s_nmda_rec: f64,
         s_gaba: f64,
     ) -> Result<i32, &'static str> {
-        if !validate_brunel_wang(self) {
-            return Err("invalid Brunel-Wang runtime state");
+        if !validate_brunel_wang(self)
+            || ![s_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba]
+                .iter()
+                .all(|value| nonnegative(*value))
+        {
+            return Err("invalid Brunel-Wang configuration or aggregate gate");
         }
-        if !nonnegative(i_ampa_ext) || !gate(s_ampa_rec) || !gate(s_nmda_rec) || !gate(s_gaba) {
-            return Err("invalid Brunel-Wang synaptic input");
-        }
-
         if self.ref_remaining > 0.0 {
+            self.v = self.v_reset;
             self.ref_remaining = (self.ref_remaining - self.dt).max(0.0);
             return Ok(0);
         }
-
-        let i_ampa = -self.g_ampa_ext * (self.v - self.v_ampa) * i_ampa_ext
-            - self.g_ampa_rec * (self.v - self.v_ampa) * s_ampa_rec;
-        let i_nmda =
-            -self.g_nmda * self._nmda_voltage_dep(self.v) * (self.v - self.v_nmda) * s_nmda_rec;
-        let i_gaba = -self.g_gaba * (self.v - self.v_gaba) * s_gaba;
-        let i_leak = -(self.v - self.v_rest) / self.tau_m;
-        let dv = (i_leak + (i_ampa + i_nmda + i_gaba) / self.C_m) * self.dt;
-        let next_v = self.v + dv;
-        if !i_ampa.is_finite()
-            || !i_nmda.is_finite()
-            || !i_gaba.is_finite()
-            || !i_leak.is_finite()
-            || !dv.is_finite()
-            || !next_v.is_finite()
-        {
-            return Err("invalid Brunel-Wang membrane candidate");
+        let v = self.v;
+        let k1 = self.derivative(v, s_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba);
+        let midpoint = v + 0.5 * self.dt * k1;
+        let k2 = self.derivative(midpoint, s_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba);
+        let candidate = v + self.dt * k2;
+        if !k1.is_finite() || !midpoint.is_finite() || !k2.is_finite() || !candidate.is_finite() {
+            return Err("non-finite Brunel-Wang RK2 candidate");
         }
-
-        self.v = next_v;
-        if self.v >= self.v_threshold {
+        self.v = candidate;
+        if candidate >= self.v_threshold {
             self.v = self.v_reset;
             self.ref_remaining = self.tau_ref;
-            return Ok(1);
+            Ok(1)
+        } else {
+            Ok(0)
         }
-        Ok(0)
     }
 
+    fn derivative(&self, v: f64, ext: f64, ampa: f64, nmda: f64, gaba: f64) -> f64 {
+        let i_ampa =
+            -self.g_ampa_ext * (v - self.v_ampa) * ext - self.g_ampa_rec * (v - self.v_ampa) * ampa;
+        let block = 1.0 / (1.0 + self.mg_conc / 3.57 * (-0.062 * v).exp());
+        let i_nmda = -self.g_nmda * block * (v - self.v_nmda) * nmda;
+        let i_gaba = -self.g_gaba * (v - self.v_gaba) * gaba;
+        -(v - self.v_rest) / self.tau_m + (i_ampa + i_nmda + i_gaba) / self.c_m
+    }
+
+    /// Reset only dynamic state; configuration is preserved.
     pub fn reset(&mut self) {
-        // self.v = self.v_rest
-        // self._s_ampa = 0.0
-        // self._s_nmda = 0.0
-        // self._x_nmda = 0.0
-        // self._s_gaba = 0.0
-        // self._ref_remaining = 0.0
-        self.v = -70.0_f64;
-        self.v_rest = -70.0_f64;
-        self.v_reset = -55.0_f64;
-        self.v_threshold = -50.0_f64;
-        self.tau_m = 20.0_f64;
-        self.ref_remaining = 0.0_f64;
+        self.v = self.v_rest;
+        self.ref_remaining = 0.0;
     }
 
+    /// Return the complete dynamic state.
+    #[must_use]
     pub fn get_state(&self) -> (f64, f64) {
         (self.v, self.ref_remaining)
     }
 }
 
-pub fn validate_brunel_wang(state: &BrunelWangNeuron) -> bool {
-    state.v.is_finite()
-        && state.v_rest.is_finite()
-        && state.v_reset.is_finite()
-        && state.v_threshold.is_finite()
-        && positive(state.tau_m)
-        && positive(state.tau_ref)
-        && positive(state.tau_ampa)
-        && positive(state.tau_nmda_rise)
-        && positive(state.tau_nmda_decay)
-        && positive(state.tau_gaba)
-        && nonnegative(state.g_ampa_ext)
-        && nonnegative(state.g_ampa_rec)
-        && nonnegative(state.g_nmda)
-        && nonnegative(state.g_gaba)
-        && state.v_ampa.is_finite()
-        && state.v_nmda.is_finite()
-        && state.v_gaba.is_finite()
-        && positive(state.C_m)
-        && nonnegative(state.mg_conc)
-        && positive(state.dt)
-        && nonnegative(state.ref_remaining)
+impl Default for BrunelWangNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
-fn positive(value: f64) -> bool {
-    value.is_finite() && value > 0.0
+/// Validate all mutable configuration and dynamic state fields.
+#[must_use]
+pub fn validate_brunel_wang(state: &BrunelWangNeuron) -> bool {
+    [
+        state.v,
+        state.v_rest,
+        state.v_reset,
+        state.v_threshold,
+        state.tau_m,
+        state.tau_ref,
+        state.g_ampa_ext,
+        state.g_ampa_rec,
+        state.g_nmda,
+        state.g_gaba,
+        state.v_ampa,
+        state.v_nmda,
+        state.v_gaba,
+        state.c_m,
+        state.mg_conc,
+        state.dt,
+        state.ref_remaining,
+    ]
+    .iter()
+    .all(|value| value.is_finite())
+        && state.tau_m > 0.0
+        && state.tau_ref > 0.0
+        && state.c_m > 0.0
+        && state.dt > 0.0
+        && state.g_ampa_ext >= 0.0
+        && state.g_ampa_rec >= 0.0
+        && state.g_nmda >= 0.0
+        && state.g_gaba >= 0.0
+        && state.mg_conc >= 0.0
+        && state.ref_remaining >= 0.0
 }
 
 fn nonnegative(value: f64) -> bool {
     value.is_finite() && value >= 0.0
-}
-
-fn gate(value: f64) -> bool {
-    value.is_finite() && (0.0..=1.0).contains(&value)
 }
 
 #[cfg(test)]
@@ -175,23 +181,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_brunel_wang_new() {
+    fn defaults_are_source_values() {
         let state = BrunelWangNeuron::new();
-        assert!(state.v.is_finite());
-        assert!(validate_brunel_wang(&state));
+        assert_eq!((state.g_ampa_ext, state.g_ampa_rec), (2.08, 0.104));
+        assert_eq!((state.g_nmda, state.g_gaba), (0.327, 1.25));
     }
 
     #[test]
-    fn test_brunel_wang_step() {
+    fn failure_is_atomic() {
         let mut state = BrunelWangNeuron::new();
-        let spike = state.step(1.0, 0.0, 0.0, 0.0).unwrap();
-        assert!(spike == 0 || spike == 1);
+        let before = state.get_state();
+        assert!(state.step(f64::NAN, 0.0, 0.0, 0.0).is_err());
+        assert_eq!(state.get_state(), before);
     }
 
     #[test]
-    fn test_brunel_wang_rejects_invalid_runtime_state() {
+    fn reset_preserves_configuration() {
         let mut state = BrunelWangNeuron::new();
-        state.v = f64::INFINITY;
-        assert!(state.step(1.0, 0.0, 0.0, 0.0).is_err());
+        state.g_nmda = 0.4;
+        state.step(0.2, 0.1, 0.3, 0.0).unwrap();
+        state.reset();
+        assert_eq!(state.g_nmda, 0.4);
+        assert_eq!(state.get_state(), (-70.0, 0.0));
     }
 }

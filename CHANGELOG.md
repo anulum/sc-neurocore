@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `BrunelWangNeuron` to the Brunel-Wang (2001) excitatory
+  pyramidal-cell defaults and midpoint-RK2 membrane equation at 0.1 ms. Python,
+  modular Rust, independent Rust safety, Julia, Go, and Mojo now preserve the
+  complete configured four-gate voltage/refractory/event receipt; an independent
+  primary-equation oracle, paired schemas, hand Q16.16 RTL co-simulation, Yosys
+  and bounded formal collateral, a source/binary-bound 200,000-step benchmark,
+  and language-native documentation define the evidence boundary. The distinct
+  `BrunelNetwork` is unchanged, and network connectivity, Poisson input,
+  synaptic-state kinetics, persistent activity, timing, PPA, device results,
+  and binary64 formal equivalence remain unclaimed.
 - Corrected `AmariNeuralField` to the source-level Heaviside activity in Amari
   (1977), restored a genuinely local-excitation/distal-inhibition default
   kernel, and promoted the finite periodic-grid specialization across the

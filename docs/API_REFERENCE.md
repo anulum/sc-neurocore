@@ -610,6 +610,19 @@ order is returned verbatim.
 
 ---
 
+## Module `accel.brunel_wang`
+
+### Function `backend_available(backend)`
+Return whether one named Brunel-Wang runtime is executable.
+
+### Function `auto_backend()`
+Return the first available measured lane, with Python as floor.
+
+### Function `simulate_brunel_wang(v, ref_remaining, v_rest, v_reset, v_threshold, tau_m, tau_ref, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc, dt, i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)`
+Run the complete configured four-gate contract on one real backend.
+
+---
+
 ## Module `accel.coba_lif`
 
 ### Function `ensure_julia_loaded()`
@@ -22752,20 +22765,33 @@ Reference: Schemmel, J. et al. (2010). Proc. ISCAS 2010: 1947–1950.
 ## Module `neurons.models.brunel_wang`
 
 ### Class `BrunelWangNeuron`
-LIF neuron with NMDA, AMPA, and GABA synaptic currents.
+Brunel-Wang pyramidal LIF cell with four aggregate synaptic gates.
 
 Reference: Brunel, N. & Wang, X.J. (2001). Effects of neuromodulation in a
 cortical network model of object working memory dominated by
 recurrent inhibition. J Comput Neurosci 11:63-85.
 
-Used in decision-making and working memory models. The key feature
-is the voltage-dependent NMDA conductance with Mg2+ block.
+This is the excitatory-cell specialization from Methods 2.2--2.3.  The
+four values supplied to :meth:`step` are already-summed channel gating
+variables, not spike counts and not internally integrated synapses.  One
+public step holds those gates constant and applies explicit midpoint RK2,
+matching the paper's stated second-order integration class at ``0.1 ms``.
+
+Notes
+-----
+The retained ``tau_*`` synaptic parameters document the source boundary
+and remain configurable metadata for network adapters.  They do not imply
+that this single-cell object owns presynaptic channel states.
 
 - **__post_init__**()
 - **step**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
-  - Advance one timestep.
+  - Advance one source-level midpoint-RK2 timestep atomically.
+- **simulate**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
+  - Run a complete four-gate batch through one maintained backend.
 - **reset**()
+  - Reset dynamic state while preserving every configuration field.
 - **get_state**()
+  - Return the complete dynamic membrane/refractory state.
 
 ---
 
