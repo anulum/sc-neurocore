@@ -33,17 +33,17 @@ fn validate_graph(knm: &[Vec<f64>]) -> Result<usize, &'static str> {
 fn shortest_path_distances(knm: &[Vec<f64>]) -> Vec<Vec<f64>> {
     let n = knm.len();
     let mut distances = vec![vec![f64::INFINITY; n]; n];
-    for source in 0..n {
-        distances[source][source] = 0.0;
+    for (source, source_distances) in distances.iter_mut().enumerate() {
+        source_distances[source] = 0.0;
         let mut queue = VecDeque::from([source]);
         while let Some(current) = queue.pop_front() {
-            let next_distance = distances[source][current] + 1.0;
+            let next_distance = source_distances[current] + 1.0;
             for target in 0..n {
                 if target == current || knm[current][target] <= 0.0 {
                     continue;
                 }
-                if next_distance < distances[source][target] {
-                    distances[source][target] = next_distance;
+                if next_distance < source_distances[target] {
+                    source_distances[target] = next_distance;
                     queue.push_back(target);
                 }
             }
