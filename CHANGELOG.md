@@ -5,11 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
-- Raised the Python coverage gate from 98% to 99% in `pyproject.toml`
-  (`tool.coverage.report.fail_under`) and the primary CI matrix leg
-  (`--cov-fail-under=99`). Measured floor at tip `aec337d11` was 99.37%;
-  100% remains the programme target. Preflight continues to read the gate
-  from `pyproject.toml`.
+- Raised the Python coverage gate from 98% through the intermediate 99% ratchet
+  to 100% in `pyproject.toml`, the primary CI matrix leg, and local preflight.
+  The retained aggregate at tip `2e6118ba5` is 65,373/65,373 statements; the
+  Makefile and hosted gate now reject any regression below that closure.
 - Regenerated polyglot benchmark evidence for alpha, adaptive-threshold-IF,
   Ermentrout–Kopell population, and resonate-and-fire after the coverage-gate
   hash surface changed; refreshed `docs/API_REFERENCE.md`.

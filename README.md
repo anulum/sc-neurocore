@@ -344,7 +344,7 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 
 | Tier | Modules | Ships in wheel | Status |
 |------|---------|:--------------:|--------|
-| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 99%, with 100% retained as the target. |
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 100%. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
 | **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
 | **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |

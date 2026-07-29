@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Python coverage threshold cross-surface contract
+
+"""Keep local, preflight, and hosted Python coverage gates at exact closure."""
+
+from __future__ import annotations
+
+from pathlib import Path
+import re
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
+    import tomli as tomllib
+
+
+_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _cov_thresholds(path: Path) -> tuple[int, ...]:
+    """Return explicit pytest-cov thresholds from one owned command surface."""
+
+    text = path.read_text(encoding="utf-8")
+    return tuple(int(value) for value in re.findall(r"--cov-fail-under(?:=|\s+)(\d+)", text))
+
+
+def test_python_coverage_threshold_is_exact_closure() -> None:
+    """The canonical config drives preflight and must reject any missing statement."""
+
+    data = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert data["tool"]["coverage"]["report"]["fail_under"] == 100
+
+
+def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
+    """Makefile and primary hosted CI must not weaken the canonical threshold."""
+
+    assert _cov_thresholds(_ROOT / "Makefile") == (100,)
+    assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100,)

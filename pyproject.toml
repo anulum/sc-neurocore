@@ -242,7 +242,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 99  # Ratcheted to the measured 99.37% floor (tip aec337d11); target remains 100.
+fail_under = 100  # Exact retained aggregate: 65,373/65,373 statements at tip 2e6118ba5.
 exclude_lines = [
     "pragma: no cover",
     "if __name__",

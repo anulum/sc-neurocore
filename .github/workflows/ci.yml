@@ -305,7 +305,7 @@ jobs:
               --cov-report=term-missing \
               --cov-report=html:htmlcov \
               --cov-report=xml:coverage.xml \
-              --cov-fail-under=99 \
+              --cov-fail-under=100 \
               --junitxml=test-results.xml
           else
             # Full behavioral compatibility matrix, without repeating
