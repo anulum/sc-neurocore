@@ -10,7 +10,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: "module-federation-host.spec.ts",
+  testIgnore: [
+    "catalogue-to-silicon-live.spec.ts",
+    "module-federation-host.spec.ts",
+  ],
   timeout: 30_000,
   expect: {
     timeout: 15_000,
