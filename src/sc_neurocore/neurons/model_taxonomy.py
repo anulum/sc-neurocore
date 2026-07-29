@@ -174,6 +174,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "NagumoSatoMapNeuron",
             "RulkovMapNeuron",
             "SCAdaptiveThresholdMapNeuron",
+            "SCChaoticMapNeuron",
         ),
     ),
     "Rate / mean-field": (

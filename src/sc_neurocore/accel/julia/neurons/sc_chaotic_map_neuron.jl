@@ -6,10 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Julia mirror for the SC two-state chaotic map
 
+"""Bounded two-state SC engineering map with no publication attribution."""
 module SCChaoticMapNeuronAccel
 
 export step!, simulate, simulate_sc_chaotic_map, validate, SCChaoticMapNeuronState
 
+"""Mutable project-model state and its numerical parameters."""
 mutable struct SCChaoticMapNeuronState
     x::Float64
     y::Float64
@@ -20,10 +22,12 @@ mutable struct SCChaoticMapNeuronState
     x_threshold::Float64
 end
 
+"""Construct the frozen project reference configuration."""
 function SCChaoticMapNeuronState()
     SCChaoticMapNeuronState(0.0, 0.0, 0.7, 0.95, 2.0, 0.05, 0.5)
 end
 
+"""Return whether state and parameters satisfy the project contract."""
 function validate(s::SCChaoticMapNeuronState)::Bool
     return isfinite(s.x) &&
         isfinite(s.y) &&
@@ -44,6 +48,7 @@ function logistic(z::Float64)::Float64
     return exp_z / (1.0 + exp_z)
 end
 
+"""Advance both states simultaneously and return an upward crossing."""
 function step!(s::SCChaoticMapNeuronState, current::Float64=0.0; dt::Float64=0.1)
     if !validate(s) || !isfinite(current) || !isfinite(dt)
         return -1
@@ -60,6 +65,7 @@ function step!(s::SCChaoticMapNeuronState, current::Float64=0.0; dt::Float64=0.1
     return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
 end
 
+"""Run the default map for a constant current and return fast trace/events."""
 function simulate(n_steps::Int=1000; current::Float64=10.0, dt::Float64=0.1)
     s = SCChaoticMapNeuronState()
     trace = zeros(n_steps)
@@ -74,6 +80,7 @@ function simulate(n_steps::Int=1000; current::Float64=10.0, dt::Float64=0.1)
     return trace, spikes
 end
 
+"""Return complete two-state and event receipts for one validated batch."""
 function simulate_sc_chaotic_map(
     x::Real,
     y::Real,

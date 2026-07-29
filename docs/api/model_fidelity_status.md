@@ -87,6 +87,7 @@ parity note.
 | Aihara map | ✅ | ✅ | ✅ | ✅ shared-lib | Aihara (1989) Eqs. 10–12: one internal state, logistic graded output, and source level waveform shaper; all lanes are within `5e-11` over the 64-step equation window, the measured 512-step Mojo chaotic envelope is below `2e-4` with exact events, and the source Figure 4 periodic benchmark records 120,000 exact events in all lanes; paired schemas and the primary-equation oracle agree, Q8.24 RTL preserves the first 12 events with state error below `0.01`, and the depth-6 Z3 event-consistency job passes | `this commit` |
 | Nagumo–Sato map | ✅ | ✅ | ✅ | ✅ shared-lib | Nagumo and Sato's source one-state refractory map as reproduced by Aihara (1989): Python/Rust/Julia/Go complete traces are binary64-exact, Mojo stays within `5e-15`, and all source level events are exact; the independent primary-equation receipt and paired schemas agree; Q16.16 RTL preserves the enrolled event vector with bounded state error; Yosys synthesis and the depth-12 Z3 induction job pass; the source-bound 200,000-step five-lane benchmark is local diagnostic evidence only | `this commit` |
 | SC adaptive-threshold map | ✅ | ✅ | ✅ | ✅ shared-lib | the retained two-state SC project recurrence, explicitly separated from publication identities: all five runtimes preserve complete `x`/`theta` receipts within `1e-10` and exact upward-crossing events; the independent project-spec receipt and paired schemas agree; Q8.24 sigmoid-LUT RTL preserves the 32-step I=0.4 event vector with `x`/`theta` error below `0.07`/`2e-6`; Yosys synthesis and the depth-12 Z3 induction job pass; `KilincBhattMapNeuron` is a deprecated alias and is not counted separately | `this commit` |
+| SC chaotic map | ✅ | ✅ | ✅ | ✅ shared-lib | the preserved two-state SC engineering recurrence, with no Aihara or other publication attribution: five-runtime 512-step state parity stays within `1e-10` with exact events; the independent project-spec receipt and paired schemas agree; Q8.24 sigmoid-LUT RTL is bit-exact to its quantized 32-step alternating-drive oracle, preserves all 16 events, and stays within `0.009`/`0.0016` of binary64 `x`/`y`; Yosys synthesis and depth-12 Z3 safety induction pass; the source/binary-bound 200,000-step benchmark records 100,000 exact events in every lane | `this commit` |
 | Courbage-Nekorkin map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: Rust/Julia/Go bit-exact, Mojo per-step ULP-bounded, 157/193/168 @ I=-0.3/0/0.3 over 1000 iterations; co-sim: hand/TOML/JSON exact, Q16.16 event-exact at I=-0.3/0/0.3 over bounded 30/20/30-iteration windows, and Q32.32 event-exact at all three inputs over 30 iterations with state error below 0.00003; autonomous Q16.16 30-iteration trace is an explicit 4/6-event boundary; formal Q8.8 BMC depth 4 | `63826b513` |
 | Izhikevich 2007 | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/3/14 @ I=0/100/400 over 2000 steps (RK4, quadratic v-nullcline, spike reset v→c / u+=d; Mojo ULP-bounded but the per-spike reset re-synchronises the trace so its counts always match) | `75b32d935` |
 | Ibarz-Tanaka map | ✅ | ✅ | ✅ | ✅ shared-lib | Ibarz et al. (2007), Eqs. 2–3: source four-branch fast map plus simultaneous slow update; accel reset events 9/33/195 @ I=0/0.2/1 over 1000 iterations, Rust/Julia/Go bit-exact and Mojo within `1.5e-8`; hand/TOML/JSON exact, Q16.16 event-vector exact over the bounded 30-step `I=0.2` co-sim with v/u errors below 0.003/0.0001; formal Q16.16 BMC depth 4 | corrected source implementation |
@@ -101,7 +102,7 @@ Montbrió–Pazó–Roxin, Resonate-and-Fire, and Wong-Wang,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
-Chialvo map, Aihara map, Ibarz-Tanaka map, and Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
+Chialvo map, Aihara map, SC chaotic map, Ibarz-Tanaka map, and Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
 `accel/rust/safety` crate remains a tracked open lane item.
 
 ## In progress
@@ -116,8 +117,8 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **forty-five polyglot-complete models** out of the 155-model catalogue;
-the remaining **110** source-model units are Python-faithful with an acceleration chain still under
+the latest landed commit that is **forty-six polyglot-complete models** out of the 155-model catalogue;
+the remaining **109** source-model units are Python-faithful with an acceleration chain still under
 remediation.
 
 ## How a model graduates onto this page

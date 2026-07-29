@@ -1318,6 +1318,16 @@
       "result_sha256": "a45bc3fee7f6159be66477e928a88b495e8a0b686da0f752e53370491b5b876b",
       "stochastic": false
     },
+    "SCChaoticMapNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
+    },
     "SFANeuron": {
       "behavior_tags": [
         "adapting",
@@ -1652,7 +1662,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "0cf8a6fa7d14fdbbf9ebcf7cab3d1e41f296fa04bb8a69a79198272bc4d9abed",
+  "result_sha256": "861dba057e574e18d89ce35f6d19f866ab8617c59d8f8fdf9ded87b6224a606b",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

@@ -13,7 +13,8 @@ import (
 	"math"
 )
 
-// SCChaoticMapNeuronState holds the two project-defined map states.
+// SCChaoticMapNeuronState holds the two project-defined map states and parameters.
+// Both candidate states read the previous X and Y and commit simultaneously.
 type SCChaoticMapNeuronState struct {
 	X          float64
 	Y          float64
@@ -78,7 +79,7 @@ func (s *SCChaoticMapNeuronState) Step(current float64) (int, error) {
 	return 0, nil
 }
 
-// SimulateSCChaoticMapNeuron runs the map for n steps.
+// SimulateSCChaoticMapNeuron runs the frozen default map for n constant-current steps.
 func SimulateSCChaoticMapNeuron(nSteps int, current float64) ([]float64, int) {
 	s := NewSCChaoticMapNeuron()
 	trace := make([]float64, nSteps)

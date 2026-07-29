@@ -971,7 +971,7 @@
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4604
+    "test_files": 4606
   },
   "documentation": {
     "public_pages": [
@@ -4081,6 +4081,7 @@
       "tests/test_cosim_rtl_spike_execution.py",
       "tests/test_cosim_rulkov_map.py",
       "tests/test_cosim_sc_adaptive_threshold_map.py",
+      "tests/test_cosim_sc_chaotic_map.py",
       "tests/test_cosim_sigmoid_rate.py",
       "tests/test_cosim_support_architecture_architecture_invariants.py",
       "tests/test_cosim_support_architecture_ownership_biophysical.py",
@@ -6393,6 +6394,7 @@
       "tests/test_reference_resonate_fire.py",
       "tests/test_reference_rulkov_map.py",
       "tests/test_reference_sc_adaptive_threshold_map.py",
+      "tests/test_reference_sc_chaotic_map.py",
       "tests/test_reference_terman_wang.py",
       "tests/test_reference_theta.py",
       "tests/test_reference_trace_payloads.py",

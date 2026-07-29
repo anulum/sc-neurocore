@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Graduated `SCChaoticMapNeuron` as its own project-specified high-fidelity
+  model without restoring the removed Aihara attribution. The preserved
+  Python/Rust/Julia/Go/Mojo recurrence is now bound to an independent project
+  receipt, paired TOML/JSON schemas, measured behavior taxonomy, Q8.24
+  schema-to-RTL co-simulation, Yosys/depth-12 safety evidence, a source- and
+  binary-bound 200,000-step benchmark, and native-language API documentation.
 - Split the misidentified `KilincBhattMapNeuron` into the source-faithful
   one-state `NagumoSatoMapNeuron` and the retained project-designed two-state
   `SCAdaptiveThresholdMapNeuron`; the historical name is now a deprecated

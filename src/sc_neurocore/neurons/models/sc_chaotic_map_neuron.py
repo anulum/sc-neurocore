@@ -27,7 +27,14 @@ SCChaoticMapResult = dict[str, npt.NDArray[np.float64] | float | int]
 
 @dataclass
 class SCChaoticMapNeuron:
-    """Two-state sigmoid-gated SC chaotic map with bounded state."""
+    """Run the bounded two-state SC engineering map.
+
+    Both candidates read the previous ``x`` and ``y`` and commit
+    simultaneously. The returned event is an upward crossing of
+    ``x_threshold``. This project-defined recurrence has no publication or
+    biological-model attribution; :class:`AiharaMapNeuron` is the distinct
+    source-faithful paper model.
+    """
 
     x: float = 0.0
     y: float = 0.0
@@ -77,9 +84,7 @@ class SCChaoticMapNeuron:
         self.y = max(-10.0, min(10.0, y_candidate))
         return int(x_previous < self.x_threshold <= self.x)
 
-    def simulate(
-        self, current: npt.ArrayLike, *, backend: str = "auto"
-    ) -> SCChaoticMapResult:
+    def simulate(self, current: npt.ArrayLike, *, backend: str = "auto") -> SCChaoticMapResult:
         """Run an atomic batch on a parity-checked maintained backend."""
         from sc_neurocore.accel.sc_chaotic_map import simulate_sc_chaotic_map
 

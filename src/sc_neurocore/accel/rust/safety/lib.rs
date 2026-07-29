@@ -357,6 +357,7 @@ pub mod safety;
 pub mod safety_monitor;
 /// Retained SC adaptive-threshold-map safety mirror.
 pub mod sc_adaptive_threshold_map_neuron;
+/// Project SC chaotic-map safety mirror.
 pub mod sc_chaotic_map_neuron;
 pub mod sc_conv_layer;
 pub mod sc_dense_layer;

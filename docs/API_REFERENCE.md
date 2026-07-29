@@ -25168,7 +25168,13 @@ The returned event is an upward crossing of ``x_threshold`` by ``x'``.
 ## Module `neurons.models.sc_chaotic_map_neuron`
 
 ### Class `SCChaoticMapNeuron`
-Two-state sigmoid-gated SC chaotic map with bounded state.
+Run the bounded two-state SC engineering map.
+
+Both candidates read the previous ``x`` and ``y`` and commit
+simultaneously. The returned event is an upward crossing of
+``x_threshold``. This project-defined recurrence has no publication or
+biological-model attribution; :class:`AiharaMapNeuron` is the distinct
+source-faithful paper model.
 
 - **__post_init__**()
 - **step**(current)

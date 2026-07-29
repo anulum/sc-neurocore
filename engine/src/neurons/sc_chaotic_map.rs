@@ -8,14 +8,24 @@
 
 //! Project-designed map retained separately from the source Aihara model.
 
+#![warn(missing_docs)]
+
+/// State and parameters of the bounded two-state SC engineering map.
 #[derive(Clone, Debug)]
 pub struct SCChaoticMapNeuron {
+    /// Current fast map state.
     pub x: f64,
+    /// Current slow recovery state.
     pub y: f64,
+    /// Fast-state gain.
     pub k_f: f64,
+    /// Slow-state retention.
     pub k_s: f64,
+    /// Sigmoid offset.
     pub alpha: f64,
+    /// Fast-to-slow coupling.
     pub delta: f64,
+    /// Upward-crossing output threshold.
     pub x_threshold: f64,
 }
 
@@ -26,6 +36,7 @@ impl Default for SCChaoticMapNeuron {
 }
 
 impl SCChaoticMapNeuron {
+    /// Construct the frozen project reference configuration.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -63,6 +74,7 @@ impl SCChaoticMapNeuron {
             && self.delta >= 0.0
     }
 
+    /// Advance both states simultaneously, leaving state unchanged on error.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.valid() || !current.is_finite() {
             return Err("invalid SC chaotic map state, parameters, or current");
@@ -80,26 +92,36 @@ impl SCChaoticMapNeuron {
         ))
     }
 
+    /// Advance one step and fail closed for the network-runner interface.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Clear both states while preserving all configured parameters.
     pub fn reset(&mut self) {
         self.x = 0.0;
         self.y = 0.0;
     }
 }
 
+/// Complete two-state trajectory and final receipts for one atomic batch.
 #[derive(Clone, Debug)]
 pub struct SCChaoticMapBatchResult {
+    /// Fast state after every step.
     pub x: Vec<f64>,
+    /// Slow state after every step.
     pub y: Vec<f64>,
+    /// Upward-crossing output events.
     pub spikes: Vec<u8>,
+    /// Final fast state, or the initial state for an empty batch.
     pub x_final: f64,
+    /// Final slow state, or the initial state for an empty batch.
     pub y_final: f64,
+    /// Number of upward-crossing events in the batch.
     pub spike_count: usize,
 }
 
+/// Run an atomically validated complete SC chaotic-map batch.
 pub fn simulate_sc_chaotic_map(
     x: f64,
     y: f64,

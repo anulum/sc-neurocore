@@ -7,19 +7,29 @@
 // SC-NeuroCore — Rust safety mirror for the SC two-state chaotic map
 
 #![allow(unused_variables, dead_code, non_snake_case)]
+#![warn(missing_docs)]
 
+/// Standalone safety mirror of the project SC chaotic map.
 #[derive(Debug, Clone)]
 pub struct SCChaoticMapNeuron {
+    /// Current fast map state.
     pub x: f64,
+    /// Current slow recovery state.
     pub y: f64,
+    /// Fast-state gain.
     pub k_f: f64,
+    /// Slow-state retention.
     pub k_s: f64,
+    /// Sigmoid offset.
     pub alpha: f64,
+    /// Fast-to-slow coupling.
     pub delta: f64,
+    /// Upward-crossing event threshold.
     pub x_threshold: f64,
 }
 
 impl SCChaoticMapNeuron {
+    /// Construct the frozen project reference configuration.
     pub fn new() -> Self {
         Self {
             x: 0.0,
@@ -32,6 +42,7 @@ impl SCChaoticMapNeuron {
         }
     }
 
+    /// Advance one simultaneous step atomically.
     pub fn step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !validate_sc_chaotic_map_neuron(self) || !current.is_finite() {
             return Err("invalid SC chaotic map state, parameters, or current");
@@ -49,12 +60,14 @@ impl SCChaoticMapNeuron {
         ))
     }
 
+    /// Clear both states while preserving configured parameters.
     pub fn reset(&mut self) {
         self.x = 0.0;
         self.y = 0.0;
     }
 }
 
+/// Return whether state and parameters satisfy the project contract.
 pub fn validate_sc_chaotic_map_neuron(state: &SCChaoticMapNeuron) -> bool {
     state.x.is_finite()
         && state.y.is_finite()

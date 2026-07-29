@@ -6,6 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo C ABI for the SC two-state chaotic map
 
+# Public contract: simultaneous bounded x/y updates, edge-event trace, atomic failure.
+# Project model only: no paper attribution. Build with `mojo build --emit shared-lib`.
+
 from std.math import exp, isfinite
 from std.memory import UnsafePointer
 
@@ -79,6 +82,7 @@ def _run(
     return 0
 
 
+# Exported C ABI for complete SC chaotic-map batch receipts.
 @export
 def sc_chaotic_map_simulate_c(
     n: Int32, x_init: Float64, y_init: Float64, k_f: Float64, k_s: Float64,

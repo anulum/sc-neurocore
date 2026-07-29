@@ -18,13 +18,15 @@ category = "map-based"
 biophysical_detail = "point"
 maturity = "experimental"
 intended_use = ["engineering experiments", "bounded chaotic-map studies"]
-hardware_fit = []
-behavior_tags = ["chaotic", "two-state", "project-designed"]
+hardware_fit = ["fixed-point sigmoid-LUT co-simulation"]
+behavior_tags = ["excitable", "phasic", "rate-coded"]
 
 [provenance]
 authors = ["SC-NeuroCore project"]
 year = 2026
 doi = ""
+paper_title = ""
+derivation_note = "Historical SC-NeuroCore engineering recurrence preserved after its unsupported Aihara attribution was removed; the project specification is authoritative."
 
 [state.x]
 init = 0.0
@@ -64,6 +66,7 @@ method = "map"
 [dynamics]
 x = "clamp(k_f * x * sigmoid(x + alpha) - y + I, -10, 10)"
 y = "clamp(k_s * y + delta * x, -10, 10)"
+event = "x_next >= x_threshold and x < x_threshold"
 
 [backends.python]
 status = "implemented"
@@ -83,18 +86,22 @@ parity = "ulp-bounded"
 
 [documentation]
 slug = "models/sc_chaotic_map"
-notes = "This recurrence is not attributed to Aihara 1990 and is not yet polyglot-complete."
+notes = "Project-specified recurrence with no external publication attribution; AiharaMapNeuron remains the distinct source-faithful paper model."
+
+[reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/sc_chaotic_map_spec.json"
+golden_trace_sha256 = "bef0b0758071a544b3cb612e9286fd377581bde66b774b52f3c85dfe97724173"
 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "historical SC-NeuroCore defaults"
-tolerance = "binary64 unit checks"
-evidence = "tests/test_model_sc_chaotic_map_neuron.py; tests/test_sc_chaotic_map_backends.py; engine/src/neurons/sc_chaotic_map.rs; src/sc_neurocore/accel/go/services/sc_chaotic_map_neuron_test.go"
+operating_point = "frozen project-spec receipt plus 512-step deterministic mixed drive"
+tolerance = "binary64 state <=1e-10 with exact events; Q8.24 32-step alternating-drive state <=0.009/0.0016 with exact events"
+evidence = "tests/test_reference_sc_chaotic_map.py; tests/test_sc_chaotic_map_backends.py; tests/test_cosim_sc_chaotic_map.py"
 
 [silicon]
-compiles = false
-cosim_validated = false
-cosim_evidence = ""
-target_tier = "H0"
-terminal_reason = "Preserved as a distinct project model; full high-fidelity closure remains future work."
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_chaotic_map.py::test_q824_is_bit_exact_to_quantized_project_specification"
+target_tier = "H1"
+terminal_reason = "Q8.24 sigmoid-LUT RTL preserves the complete 32-step alternating-drive event vector with bounded x/y state error; Yosys and depth-12 safety induction are enrolled separately."

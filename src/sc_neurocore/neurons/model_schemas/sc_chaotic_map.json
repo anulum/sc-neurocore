@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "SC Chaotic Map",
+    "author": "SC-NeuroCore project",
+    "year": 2026,
+    "doi": "",
+    "description": "Project-designed bounded two-state sigmoid-gated map"
+  },
+  "state": {"x": 0.0, "y": 0.0},
+  "parameters": {
+    "k_f": 0.7,
+    "k_s": 0.95,
+    "alpha": 2.0,
+    "delta": 0.05,
+    "x_threshold": 0.5
+  },
+  "integration": {"dt": 1.0, "method": "map"},
+  "dynamics": {
+    "x": "clip(k_f * x * sigmoid(x + alpha) - y + I, -10.0, 10.0)",
+    "y": "clip(k_s * y + delta * x, -10.0, 10.0)"
+  },
+  "threshold": {"condition": "x >= x_threshold", "detection": "crossing"},
+  "extensions": {
+    "model_type": "map",
+    "discrete_time": true,
+    "source_equation_note": "SC-NeuroCore project specification; no external paper attribution.",
+    "identity_note": "Preserved historical SC recurrence separated from the source-faithful Aihara map.",
+    "update_note": "Both right-hand sides read the previous x and y and commit simultaneously."
+  }
+}

@@ -1,0 +1,17 @@
+# SymbiYosys proof for the project SC chaotic-map Q8.24 RTL
+
+[options]
+mode prove
+depth 12
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_chaotic_map_formal.v
+read -formal sc_chaotic_map.v
+prep -top sc_chaotic_map_formal
+
+[files]
+sc_chaotic_map_formal.v
+sc_chaotic_map.v
