@@ -11,7 +11,7 @@
       "include(\"src/sc_neurocore/accel/julia/few_shot/haam.jl\"); using .HaamAccel; @assert validate_haam(); net = SpikePrototypeNetState(3, \"hamming\"); @assert classify!(net, [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]], [0, 1], [[0.8, 0.1, 0.0]]) == [0]"
     ],
     "returncode": 0,
-    "seconds": 2.819732,
+    "seconds": 2.649371,
     "status": "pass"
   },
   "mojo_validation": {
@@ -20,20 +20,20 @@
       "src/sc_neurocore/accel/mojo/kernels/haam.mojo"
     ],
     "returncode": 0,
-    "seconds": 1.354235,
+    "seconds": 1.119371,
     "status": "pass"
   },
   "production_benchmark_claim": false,
   "python": {
     "hebbian_episode": {
       "calls": 1000,
-      "calls_per_second": 3581.011,
-      "seconds": 0.279251
+      "calls_per_second": 6533.12,
+      "seconds": 0.153066
     },
     "prototype_classify": {
       "calls": 1000,
-      "calls_per_second": 4770.742,
-      "seconds": 0.209611
+      "calls_per_second": 6026.375,
+      "seconds": 0.165937
     }
   },
   "rust_compile": {
@@ -46,7 +46,7 @@
       "/tmp/sc_neurocore_haam_rust_tests"
     ],
     "returncode": 0,
-    "seconds": 1.839309,
+    "seconds": 0.168375,
     "status": "pass"
   },
   "rust_tests": {
@@ -54,7 +54,7 @@
       "/tmp/sc_neurocore_haam_rust_tests"
     ],
     "returncode": 0,
-    "seconds": 0.002158,
+    "seconds": 0.000971,
     "status": "pass"
   },
   "status": "pass"

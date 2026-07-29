@@ -59,13 +59,13 @@ impl HebbianFewShot {
         validate_pattern(pattern, self.n_features, "spike_pattern")?;
         let mut scores = vec![0.0; self.n_classes];
 
-        for class_idx in 0..self.n_classes {
+        for (class_idx, score) in scores.iter_mut().enumerate() {
             if self.counts[class_idx] == 0 {
                 continue;
             }
             let row_start = class_idx * self.n_features;
             let memory = &self.memory[row_start..row_start + self.n_features];
-            scores[class_idx] = cosine_score(memory, pattern);
+            *score = cosine_score(memory, pattern);
         }
         Ok(scores)
     }
