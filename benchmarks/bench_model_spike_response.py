@@ -30,7 +30,7 @@ REPEATS = 5
 CURRENT = 10.0
 OUTPUT = Path("benchmarks/results/local_python_2026-06-18_spike_response_kernel.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkSpikeResponseKernel-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_BENCH_RE = re.compile(r"^BenchmarkSpikeResponseKernel(?:-\d+)?\s+\d+\s+([0-9.]+)\s+ns/op")
 GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
 SOURCE_HASH_PATHS = {
     "benchmarks/bench_model_spike_response.py": REPO_ROOT

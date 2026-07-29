@@ -2,72 +2,72 @@
   "backends": [
     {
       "backend": "python",
-      "max_ns_per_step": 5618.827,
-      "median_ns_per_step": 5530.5326,
-      "min_ns_per_step": 4931.07365,
+      "max_ns_per_step": 3541.7123,
+      "median_ns_per_step": 3368.0559,
+      "min_ns_per_step": 3097.8742,
       "results": [
         {
           "backend": "python",
-          "elapsed_ns": 98621473,
+          "elapsed_ns": 64122553,
           "ending_state": [
             -63.763047918322876,
             -64.19580115938746
           ],
           "glutamate": 0.5,
           "i_soma": 50.0,
-          "ns_per_step": 4931.07365,
+          "ns_per_step": 3206.12765,
           "spikes": 253,
           "steps": 20000
         },
         {
           "backend": "python",
-          "elapsed_ns": 110610652,
+          "elapsed_ns": 61957484,
           "ending_state": [
             -63.763047918322876,
             -64.19580115938746
           ],
           "glutamate": 0.5,
           "i_soma": 50.0,
-          "ns_per_step": 5530.5326,
+          "ns_per_step": 3097.8742,
           "spikes": 253,
           "steps": 20000
         },
         {
           "backend": "python",
-          "elapsed_ns": 103712991,
+          "elapsed_ns": 68027613,
           "ending_state": [
             -63.763047918322876,
             -64.19580115938746
           ],
           "glutamate": 0.5,
           "i_soma": 50.0,
-          "ns_per_step": 5185.64955,
+          "ns_per_step": 3401.38065,
           "spikes": 253,
           "steps": 20000
         },
         {
           "backend": "python",
-          "elapsed_ns": 112376540,
+          "elapsed_ns": 67361118,
           "ending_state": [
             -63.763047918322876,
             -64.19580115938746
           ],
           "glutamate": 0.5,
           "i_soma": 50.0,
-          "ns_per_step": 5618.827,
+          "ns_per_step": 3368.0559,
           "spikes": 253,
           "steps": 20000
         },
         {
           "backend": "python",
-          "elapsed_ns": 110984849,
+          "elapsed_ns": 70834246,
           "ending_state": [
             -63.763047918322876,
             -64.19580115938746
           ],
           "glutamate": 0.5,
           "i_soma": 50.0,
-          "ns_per_step": 5549.24245,
+          "ns_per_step": 3541.7123,
           "spikes": 253,
           "steps": 20000
         }
@@ -94,30 +94,30 @@
       ],
       "glutamate": 0.5,
       "i_soma": 50,
-      "max_ns_per_step": 131.49765,
+      "max_ns_per_step": 115.3856,
       "measurement_context": {
         "cgroup_effective_cpuset": "unavailable",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
-        "cpu_affinity": "0-11",
-        "cpu_frequency_mhz": "min=3699.925,max=3700.044,sampled_cpu_count=12",
+        "cpu_affinity": "8",
+        "cpu_frequency_mhz": "min=4013.522,max=4073.101,sampled_cpu_count=12",
         "cpu_governor": "powersave",
         "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
         "host_load": "workstation under concurrent load during capture",
-        "load_average_after": "14.09 14.17 16.52 27/8785 3891919",
-        "load_average_before": "14.09 14.17 16.52 8/8787 3891905",
+        "load_average_after": "6.58 6.37 6.96 4/3644 2447019",
+        "load_average_before": "6.58 6.37 6.96 8/3659 2447015",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
         "runtime_cpuset_shield_claimed": false,
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
       },
-      "median_ns_per_step": 123.2968,
-      "min_ns_per_step": 118.87,
+      "median_ns_per_step": 105.33555,
+      "min_ns_per_step": 99.57605,
       "repeats": 5,
       "results_ns_per_step": [
-        121.3773,
-        127.908,
-        123.2968,
-        131.49765,
-        118.87
+        105.76985,
+        99.57605,
+        102.44755,
+        105.33555,
+        115.3856
       ],
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "spike_counts": [
@@ -131,23 +131,23 @@
       "steps": 20000,
       "target_arch": "x86_64",
       "target_os": "linux",
-      "timestamp_unix": 1784733105
+      "timestamp_unix": 1785293010
     },
     {
       "backend": "go",
       "command": "go test src/sc_neurocore/accel/go/services/dendritic_nmda.go src/sc_neurocore/accel/go/services/dendritic_nmda_test.go -run ^$ -bench BenchmarkDendriticNMDARK4$ -benchtime 20000x -count 5",
       "glutamate": 0.5,
       "i_soma": 50.0,
-      "max_ns_per_step": 227.7,
-      "median_ns_per_step": 218.4,
-      "min_ns_per_step": 211.5,
+      "max_ns_per_step": 184.9,
+      "median_ns_per_step": 171.1,
+      "min_ns_per_step": 165.4,
       "repeats": 5,
       "results_ns_per_step": [
-        218.4,
-        211.5,
-        221.3,
-        227.7,
-        213.8
+        169.1,
+        171.1,
+        184.9,
+        175.4,
+        165.4
       ],
       "spike_counts": [
         253,
@@ -178,16 +178,16 @@
       ],
       "glutamate": 0.5,
       "i_soma": 50.0,
-      "max_ns_per_step": 157.4692,
-      "median_ns_per_step": 134.4849,
-      "min_ns_per_step": 132.3016,
+      "max_ns_per_step": 106.70955,
+      "median_ns_per_step": 104.69875,
+      "min_ns_per_step": 102.1288,
       "repeats": 5,
       "results_ns_per_step": [
-        157.4692,
-        132.3016,
-        134.4849,
-        135.21715,
-        133.2225
+        102.4396,
+        105.7069,
+        102.1288,
+        104.69875,
+        106.70955
       ],
       "spikes": 253,
       "steps": 20000
@@ -204,18 +204,18 @@
   "benchmark": "dendritic_nmda_rk4",
   "evidence_class": "local_regression_non_isolated",
   "expected_spikes": 253,
-  "generated_at_utc": "2026-07-22T15:10:29.850607+00:00",
+  "generated_at_utc": "2026-07-29T02:42:59.818659+00:00",
   "glutamate": 0.5,
   "i_soma": 50.0,
   "notes": [
     "Functional parity and local regression timing only; this is not isolated CPU benchmark evidence.",
     "All available backends are expected to produce 253 spikes for the 20,000-step anchor."
   ],
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
-    "benchmarks/bench_model_dendritic_nmda.py": "2211e58eecb664d8c69028ecc7b30050ca74db364437440704c31a59010dd8a9",
+    "benchmarks/bench_model_dendritic_nmda.py": "b323502fd5cf5a5d9ed4fdafd09281addaba6563fa4e89926f51c96ed8cc8773",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_dendritic_nmda_rk4.rs": "d95126ac3e1a4be74cec5d39175569f812439bc95e081a18ffea643d69fdae05",
     "engine/src/neurons/multi_compartment/dendritic_nmda.rs": "2d81678b4768bc912eb20bcdb33b7ba0e7d3bc17ad84d83bf8d1fb043f274288",

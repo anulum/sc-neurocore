@@ -22,10 +22,26 @@ import pytest
 @pytest.mark.parametrize(
     ("module_name", "benchmark_name"),
     [
+        ("bench_model_de_schutter_purkinje", "BenchmarkDeSchutterPurkinjeRK4"),
+        ("bench_model_dendritic_nmda", "BenchmarkDendriticNMDARK4"),
+        ("bench_model_durstewitz_dopamine", "BenchmarkDurstewitzRK4"),
+        ("bench_model_golomb_fs", "BenchmarkGolombFSRK4"),
+        ("bench_model_hay_l5", "BenchmarkHayL5RK4"),
+        ("bench_model_hill_tononi", "BenchmarkHillTononiRK4"),
+        ("bench_model_martinotti_neuron", "BenchmarkMartinottiRK4"),
+        ("bench_model_multicompartment_mcn", "BenchmarkMulticompartmentMCNRK4"),
         ("bench_model_nlif", "BenchmarkNonlinearLIFRK4"),
+        ("bench_model_pospischil", "BenchmarkPospischilRK4"),
+        ("bench_model_pv_fast_spiking_neuron", "BenchmarkPVFastSpikingRK4"),
         ("bench_model_sfa", "BenchmarkSFARK4"),
         ("bench_model_mat", "BenchmarkMATRK4"),
         ("bench_model_energy_lif", "BenchmarkEnergyLIFExactFlow"),
+        ("bench_model_spike_response", "BenchmarkSpikeResponseKernel"),
+        ("bench_model_spinnaker_lif", "BenchmarkSpiNNakerLIFExactFlow"),
+        ("bench_model_srm0", "BenchmarkSRM0ExactFlow"),
+        ("bench_model_sst_neuron", "BenchmarkSSTRK4"),
+        ("bench_model_upper_motor_neuron", "BenchmarkUpperMotorExpEuler"),
+        ("bench_model_vip_neuron", "BenchmarkVIPRK4"),
     ],
 )
 def test_go_benchmark_parser_accepts_optional_cpu_suffix(

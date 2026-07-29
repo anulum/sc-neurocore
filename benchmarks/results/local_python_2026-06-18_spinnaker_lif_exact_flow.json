@@ -4,16 +4,16 @@
       "backend": "go",
       "command": "go test src/sc_neurocore/accel/go/services/spinnaker_lif.go src/sc_neurocore/accel/go/services/spinnaker_lif_test.go -run ^$ -bench BenchmarkSpiNNakerLIFExactFlow$ -benchtime 200000x -count 5",
       "current": 30.0,
-      "max_ns_per_step": 25.73,
-      "median_ns_per_step": 20.07,
-      "min_ns_per_step": 19.61,
+      "max_ns_per_step": 24.19,
+      "median_ns_per_step": 22.22,
+      "min_ns_per_step": 21.79,
       "repeats": 5,
       "results_ns_per_step": [
-        25.73,
-        20.65,
-        19.96,
-        20.07,
-        19.61
+        21.79,
+        21.83,
+        24.19,
+        23.09,
+        22.22
       ],
       "spike_counts": [
         8333,
@@ -43,16 +43,16 @@
         -60.10960138106918,
         -60.10960138106918
       ],
-      "max_ns_per_step": 9.183395,
-      "median_ns_per_step": 9.16662,
-      "min_ns_per_step": 9.069005,
+      "max_ns_per_step": 9.50444,
+      "median_ns_per_step": 8.820355,
+      "min_ns_per_step": 8.76447,
       "repeats": 5,
       "results_ns_per_step": [
-        9.183395,
-        9.17902,
-        9.16662,
-        9.162515,
-        9.069005
+        9.096065,
+        8.79233,
+        8.76447,
+        8.820355,
+        9.50444
       ],
       "spike_counts": [
         8333,
@@ -66,67 +66,67 @@
     },
     "python": {
       "backend": "python",
-      "max_ns_per_step": 1115.113275,
-      "median_ns_per_step": 946.15891,
-      "min_ns_per_step": 903.234855,
+      "max_ns_per_step": 988.895855,
+      "median_ns_per_step": 916.40333,
+      "min_ns_per_step": 898.0686,
       "results": [
         {
           "backend": "python",
           "current": 30.0,
-          "elapsed_ns": 195306894,
+          "elapsed_ns": 181051986,
           "ending_state": [
             -60.10960138106918,
             0.0
           ],
-          "ns_per_step": 976.53447,
+          "ns_per_step": 905.25993,
           "spikes": 8333,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 30.0,
-          "elapsed_ns": 223022655,
+          "elapsed_ns": 197779171,
           "ending_state": [
             -60.10960138106918,
             0.0
           ],
-          "ns_per_step": 1115.113275,
+          "ns_per_step": 988.895855,
           "spikes": 8333,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 30.0,
-          "elapsed_ns": 180646971,
+          "elapsed_ns": 179613720,
           "ending_state": [
             -60.10960138106918,
             0.0
           ],
-          "ns_per_step": 903.234855,
+          "ns_per_step": 898.0686,
           "spikes": 8333,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 30.0,
-          "elapsed_ns": 189231782,
+          "elapsed_ns": 183280666,
           "ending_state": [
             -60.10960138106918,
             0.0
           ],
-          "ns_per_step": 946.15891,
+          "ns_per_step": 916.40333,
           "spikes": 8333,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 30.0,
-          "elapsed_ns": 188151631,
+          "elapsed_ns": 188526579,
           "ending_state": [
             -60.10960138106918,
             0.0
           ],
-          "ns_per_step": 940.758155,
+          "ns_per_step": 942.632895,
           "spikes": 8333,
           "steps": 200000
         }
@@ -151,16 +151,16 @@
         -60.10960138106918,
         -60.10960138106918
       ],
-      "max_ns_per_step": 3.95263,
-      "median_ns_per_step": 3.94326,
-      "min_ns_per_step": 3.93048,
+      "max_ns_per_step": 4.069425,
+      "median_ns_per_step": 3.956065,
+      "min_ns_per_step": 3.76353,
       "repeats": 5,
       "results_ns_per_step": [
-        3.94326,
-        3.95263,
-        3.94144,
-        3.946055,
-        3.93048
+        3.76353,
+        3.956065,
+        3.941575,
+        4.025465,
+        4.069425
       ],
       "spike_counts": [
         8333,
@@ -178,15 +178,15 @@
   "evidence_class": "local_regression_non_isolated",
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
   "production_speed_claim": false,
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
     "benchmarks/bench_model_spinnaker_lif": {
-      "py": "b4afcedb683529ebbd7f46eb32c2fda9097bd7c601ad1e2c71873eb7d0333483"
+      "py": "0c3f02fdad3a950d78851747a6df9eb15bc6793c5050b83fd73ea58bf7cdb460"
     },
-    "benchmarks/bench_model_spinnaker_lif.py": "b4afcedb683529ebbd7f46eb32c2fda9097bd7c601ad1e2c71873eb7d0333483",
+    "benchmarks/bench_model_spinnaker_lif.py": "0c3f02fdad3a950d78851747a6df9eb15bc6793c5050b83fd73ea58bf7cdb460",
     "src/sc_neurocore/accel/go/services/spinnaker_lif": {
       "go": "be6dd8edba81a83f30eb8c224756e64fe7b14169f4c06cedeeda69925bdc1080"
     },
@@ -210,5 +210,5 @@
   },
   "spdx_license": "AGPL-3.0-or-later",
   "steps": 200000,
-  "timestamp_utc": "2026-06-18T18:26:09.869505+00:00"
+  "timestamp_utc": "2026-07-29T02:59:44.059712+00:00"
 }

@@ -1,63 +1,63 @@
 {
   "spdx_license": "AGPL-3.0-or-later",
   "benchmark": "MulticompartmentMCNNeuron candidate-first RK4 three-compartment step",
-  "timestamp_utc": "2026-07-22T15:15:25+00:00",
+  "timestamp_utc": "2026-07-29T02:50:09+00:00",
   "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_multicompartment_mcn.py",
   "evidence_class": "local_regression_non_isolated",
   "production_speed_claim": false,
   "hardware_measurement_claimed": false,
   "python": "3.12.3",
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
   "processor": "x86_64",
   "steps": 200000,
   "repeats": 5,
   "current": 3.2,
   "backend_summary": {
     "python": {
-      "median_ns_per_step": 15427.22086,
-      "min_ns_per_step": 14325.781415,
-      "max_ns_per_step": 18681.322705,
+      "median_ns_per_step": 8998.99183,
+      "min_ns_per_step": 8786.03538,
+      "max_ns_per_step": 9064.10317,
       "spikes": 49999
     },
     "rust": {
-      "median_ns_per_step": 75.199165,
-      "min_ns_per_step": 74.692985,
-      "max_ns_per_step": 87.9746,
+      "median_ns_per_step": 61.03822,
+      "min_ns_per_step": 52.54041,
+      "max_ns_per_step": 66.145895,
       "spikes": 49999
     },
     "go": {
-      "median_ns_per_step": 118.8,
-      "min_ns_per_step": 111.6,
-      "max_ns_per_step": 157.2,
+      "median_ns_per_step": 87.93,
+      "min_ns_per_step": 85.49,
+      "max_ns_per_step": 89.64,
       "spikes": 49999
     },
     "julia": {
-      "median_ns_per_step": 88.261855,
-      "min_ns_per_step": 85.930445,
-      "max_ns_per_step": 118.16189,
+      "median_ns_per_step": 74.153225,
+      "min_ns_per_step": 65.467995,
+      "max_ns_per_step": 79.133715,
       "spikes": 49999
     },
     "mojo": {
-      "median_ns_per_step": 139.93229949846864,
-      "min_ns_per_step": 138.86446482501924,
-      "max_ns_per_step": 143.16215994767845,
+      "median_ns_per_step": 108.54976000700844,
+      "min_ns_per_step": 106.35904500304606,
+      "max_ns_per_step": 110.43625499951303,
       "spikes": 49999
     }
   },
   "results": [
     {
       "backend": "python",
-      "median_ns_per_step": 15427.22086,
-      "min_ns_per_step": 14325.781415,
-      "max_ns_per_step": 18681.322705,
+      "median_ns_per_step": 8998.99183,
+      "min_ns_per_step": 8786.03538,
+      "max_ns_per_step": 9064.10317,
       "spikes": 49999,
       "results": [
         {
           "backend": "python",
           "steps": 200000,
           "current": 3.2,
-          "elapsed_ns": 3736264541,
-          "ns_per_step": 18681.322705,
+          "elapsed_ns": 1779434792,
+          "ns_per_step": 8897.17396,
           "spikes": 49999,
           "ending_state": [
             0.0,
@@ -69,8 +69,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 3.2,
-          "elapsed_ns": 3085444172,
-          "ns_per_step": 15427.22086,
+          "elapsed_ns": 1757207076,
+          "ns_per_step": 8786.03538,
           "spikes": 49999,
           "ending_state": [
             0.0,
@@ -82,8 +82,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 3.2,
-          "elapsed_ns": 3151501985,
-          "ns_per_step": 15757.509925,
+          "elapsed_ns": 1799798366,
+          "ns_per_step": 8998.99183,
           "spikes": 49999,
           "ending_state": [
             0.0,
@@ -95,8 +95,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 3.2,
-          "elapsed_ns": 3042997505,
-          "ns_per_step": 15214.987525,
+          "elapsed_ns": 1812820634,
+          "ns_per_step": 9064.10317,
           "spikes": 49999,
           "ending_state": [
             0.0,
@@ -108,8 +108,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 3.2,
-          "elapsed_ns": 2865156283,
-          "ns_per_step": 14325.781415,
+          "elapsed_ns": 1808211915,
+          "ns_per_step": 9041.059575,
           "spikes": 49999,
           "ending_state": [
             0.0,
@@ -121,7 +121,7 @@
     },
     {
       "backend": "rust",
-      "timestamp_unix": 1784733310,
+      "timestamp_unix": 1785293403,
       "command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_multicompartment_mcn_rk4",
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "target_os": "linux",
@@ -129,13 +129,13 @@
       "measurement_context": {
         "host_load": "workstation under concurrent load during capture",
         "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
-        "cpu_affinity": "0-11",
+        "cpu_affinity": "8",
         "cgroup_effective_cpuset": "unavailable",
         "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "19.12 15.44 16.47 6/8917 3900613",
-        "load_average_after": "19.12 15.44 16.47 10/8914 3900639",
+        "load_average_before": "6.60 6.70 6.90 1/3689 2463187",
+        "load_average_after": "6.60 6.70 6.90 3/3691 2463193",
         "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=3596.864,max=3600.036,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=4018.211,max=4606.990,sampled_cpu_count=12",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
@@ -143,15 +143,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 3.2,
-      "median_ns_per_step": 75.199165,
-      "min_ns_per_step": 74.692985,
-      "max_ns_per_step": 87.9746,
+      "median_ns_per_step": 61.03822,
+      "min_ns_per_step": 52.54041,
+      "max_ns_per_step": 66.145895,
       "results_ns_per_step": [
-        76.104775,
-        74.692985,
-        75.13501,
-        75.199165,
-        87.9746
+        54.53823,
+        52.54041,
+        61.03822,
+        66.145895,
+        65.716055
       ],
       "spike_counts": [
         49999,
@@ -189,15 +189,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 3.2,
-      "median_ns_per_step": 118.8,
-      "min_ns_per_step": 111.6,
-      "max_ns_per_step": 157.2,
+      "median_ns_per_step": 87.93,
+      "min_ns_per_step": 85.49,
+      "max_ns_per_step": 89.64,
       "results_ns_per_step": [
-        118.8,
-        111.6,
-        129.2,
-        115.3,
-        157.2
+        86.99,
+        87.93,
+        89.64,
+        88.6,
+        85.49
       ],
       "spikes": 49999,
       "spike_counts": [
@@ -214,15 +214,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 3.2,
-      "median_ns_per_step": 88.261855,
-      "min_ns_per_step": 85.930445,
-      "max_ns_per_step": 118.16189,
+      "median_ns_per_step": 74.153225,
+      "min_ns_per_step": 65.467995,
+      "max_ns_per_step": 79.133715,
       "results_ns_per_step": [
-        118.16189,
-        88.261855,
-        86.87717,
-        90.02592,
-        85.930445
+        73.935045,
+        74.153225,
+        74.646745,
+        65.467995,
+        79.133715
       ],
       "spikes": 49999,
       "final_us": [
@@ -253,15 +253,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 3.2,
-      "median_ns_per_step": 139.93229949846864,
-      "min_ns_per_step": 138.86446482501924,
-      "max_ns_per_step": 143.16215994767845,
+      "median_ns_per_step": 108.54976000700844,
+      "min_ns_per_step": 106.35904500304606,
+      "max_ns_per_step": 110.43625499951303,
       "results_ns_per_step": [
-        141.0823652986437,
-        139.93229949846864,
-        138.86446482501924,
-        138.95167503505945,
-        143.16215994767845
+        108.54976000700844,
+        106.35904500304606,
+        106.53676499714494,
+        110.43625499951303,
+        109.55429501336766
       ],
       "spikes": 49999,
       "spike_counts": [
@@ -274,7 +274,7 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_multicompartment_mcn.py": "30b482660dd0071fe3970515e32645bfce720e9db904c0eaf86fbcd3d6793e67",
+    "benchmarks/bench_model_multicompartment_mcn.py": "7ef96770af88e198c4955768e53046e791af48ab280428c63f9a43ff4e4dccca",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_multicompartment_mcn_rk4.rs": "1e8c496f2cd816d0b8398045402b267a92f9b59b6be3e712bc0f4f336b69f98f",
     "engine/src/neurons/multi_compartment/multicompartment_mcn.rs": "5c03bc6ecca82429c18ea8d1cbba33bef5d8ebb6f44ef3269d48fb66d056cfc9",

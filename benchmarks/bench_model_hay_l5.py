@@ -29,7 +29,7 @@ CURRENT_SOMA = 10.0
 CURRENT_TUFT = 0.0
 OUTPUT = Path("benchmarks/results/local_python_2026-06-26_hay_l5_rk4.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkHayL5RK4-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_BENCH_RE = re.compile(r"^BenchmarkHayL5RK4(?:-\d+)?\s+\d+\s+([0-9.]+)\s+ns/op")
 GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
 SOURCE_HASH_PATHS = {
     "benchmarks/bench_model_hay_l5.py": REPO_ROOT / "benchmarks/bench_model_hay_l5.py",

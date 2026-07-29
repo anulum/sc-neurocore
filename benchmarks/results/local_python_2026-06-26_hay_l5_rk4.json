@@ -2,20 +2,20 @@
   "backends": [
     {
       "backend": "python",
-      "max_ns_per_step": 128894.6325,
-      "median_ns_per_step": 113404.29735,
-      "min_ns_per_step": 106824.1033,
+      "max_ns_per_step": 71125.54025,
+      "median_ns_per_step": 67678.81285,
+      "min_ns_per_step": 67157.8822,
       "results": [
         {
           "backend": "python",
           "current_soma": 10.0,
           "current_tuft": 0.0,
-          "elapsed_ns": 2268085947,
+          "elapsed_ns": 1422510805,
           "ending_state": [
             -25.077849252181313,
             8.623773249014352
           ],
-          "ns_per_step": 113404.29735,
+          "ns_per_step": 71125.54025,
           "spikes": 1,
           "steps": 20000
         },
@@ -23,12 +23,12 @@
           "backend": "python",
           "current_soma": 10.0,
           "current_tuft": 0.0,
-          "elapsed_ns": 2199638391,
+          "elapsed_ns": 1346708401,
           "ending_state": [
             -25.077849252181313,
             8.623773249014352
           ],
-          "ns_per_step": 109981.91955,
+          "ns_per_step": 67335.42005,
           "spikes": 1,
           "steps": 20000
         },
@@ -36,12 +36,12 @@
           "backend": "python",
           "current_soma": 10.0,
           "current_tuft": 0.0,
-          "elapsed_ns": 2136482066,
+          "elapsed_ns": 1343157644,
           "ending_state": [
             -25.077849252181313,
             8.623773249014352
           ],
-          "ns_per_step": 106824.1033,
+          "ns_per_step": 67157.8822,
           "spikes": 1,
           "steps": 20000
         },
@@ -49,12 +49,12 @@
           "backend": "python",
           "current_soma": 10.0,
           "current_tuft": 0.0,
-          "elapsed_ns": 2577892650,
+          "elapsed_ns": 1355331316,
           "ending_state": [
             -25.077849252181313,
             8.623773249014352
           ],
-          "ns_per_step": 128894.6325,
+          "ns_per_step": 67766.5658,
           "spikes": 1,
           "steps": 20000
         },
@@ -62,12 +62,12 @@
           "backend": "python",
           "current_soma": 10.0,
           "current_tuft": 0.0,
-          "elapsed_ns": 2516779895,
+          "elapsed_ns": 1353576257,
           "ending_state": [
             -25.077849252181313,
             8.623773249014352
           ],
-          "ns_per_step": 125838.99475,
+          "ns_per_step": 67678.81285,
           "spikes": 1,
           "steps": 20000
         }
@@ -94,30 +94,30 @@
         -25.077849252181313,
         -25.077849252181313
       ],
-      "max_ns_per_step": 1983.1244,
+      "max_ns_per_step": 1130.0997,
       "measurement_context": {
         "cgroup_effective_cpuset": "unavailable",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
-        "cpu_affinity": "0-11",
-        "cpu_frequency_mhz": "min=3699.962,max=3700.037,sampled_cpu_count=12",
+        "cpu_affinity": "8",
+        "cpu_frequency_mhz": "min=4155.646,max=4348.442,sampled_cpu_count=12",
         "cpu_governor": "powersave",
         "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
         "host_load": "workstation under concurrent load during capture",
-        "load_average_after": "12.17 13.68 16.12 35/8895 3895775",
-        "load_average_before": "12.17 13.68 16.12 4/8893 3895760",
+        "load_average_after": "6.92 6.55 6.91 5/3685 2454725",
+        "load_average_before": "6.92 6.55 6.91 4/3683 2454719",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
         "runtime_cpuset_shield_claimed": false,
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
       },
-      "median_ns_per_step": 1929.13625,
-      "min_ns_per_step": 1545.86585,
+      "median_ns_per_step": 1076.4548,
+      "min_ns_per_step": 1016.22645,
       "repeats": 5,
       "results_ns_per_step": [
-        1545.86585,
-        1834.55835,
-        1929.13625,
-        1954.02295,
-        1983.1244
+        1130.0997,
+        1016.22645,
+        1076.4548,
+        1096.40765,
+        1041.7208
       ],
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "spike_counts": [
@@ -130,23 +130,23 @@
       "steps": 20000,
       "target_arch": "x86_64",
       "target_os": "linux",
-      "timestamp_unix": 1784733200
+      "timestamp_unix": 1785293213
     },
     {
       "backend": "go",
       "command": "go test src/sc_neurocore/accel/go/services/hay_l5.go src/sc_neurocore/accel/go/services/hay_l5_test.go -run ^$ -bench BenchmarkHayL5RK4$ -benchtime 20000x -count 5",
       "current_soma": 10.0,
       "current_tuft": 0.0,
-      "max_ns_per_step": 3374.0,
-      "median_ns_per_step": 2899.0,
-      "min_ns_per_step": 2505.0,
+      "max_ns_per_step": 2721.0,
+      "median_ns_per_step": 2110.0,
+      "min_ns_per_step": 1901.0,
       "repeats": 5,
       "results_ns_per_step": [
-        2899.0,
-        3374.0,
-        2505.0,
-        2976.0,
-        2606.0
+        2080.0,
+        1901.0,
+        2258.0,
+        2110.0,
+        2721.0
       ],
       "spike_counts": [
         1,
@@ -177,16 +177,16 @@
         -25.077849252181313,
         -25.077849252181313
       ],
-      "max_ns_per_step": 1549.69415,
-      "median_ns_per_step": 1470.522,
-      "min_ns_per_step": 1383.5434,
+      "max_ns_per_step": 1172.4463,
+      "median_ns_per_step": 1002.41525,
+      "min_ns_per_step": 938.05035,
       "repeats": 5,
       "results_ns_per_step": [
-        1429.3702,
-        1540.85075,
-        1470.522,
-        1383.5434,
-        1549.69415
+        938.05035,
+        979.11535,
+        1065.01735,
+        1002.41525,
+        1172.4463
       ],
       "spikes": 1,
       "steps": 20000
@@ -204,12 +204,12 @@
   "current_soma": 10.0,
   "current_tuft": 0.0,
   "expected_spikes": 1,
-  "generated_at_utc": "2026-07-22T15:11:57.780875+00:00",
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "generated_at_utc": "2026-07-29T02:46:16.287136+00:00",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
-    "benchmarks/bench_model_hay_l5.py": "07721bb198f088c77c829ee3c84f767b21eb5009096d915b1be0e4ac7a53ec3d",
+    "benchmarks/bench_model_hay_l5.py": "39f91392067958c259dcbfc0cb20e4a779b619777a5b0ac2e2bc41cc33ce8648",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_hay_l5_rk4.rs": "03b5d278e5a25c44dca633546bff20e23de2519084e85df5a6141ee595836627",
     "engine/src/neurons/multi_compartment/hay_l5.rs": "43a95dc8e1ec8531aa50669044c673905e9d77b16852d32da6522aaebdd95ac7",
