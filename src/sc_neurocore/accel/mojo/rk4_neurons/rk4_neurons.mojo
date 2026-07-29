@@ -15,17 +15,17 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _izh_rhs_v(v: Float64, u: Float64, current: Float64) -> Float64:
+def _izh_rhs_v(v: Float64, u: Float64, current: Float64) -> Float64:
     return 0.04 * v * v + 5.0 * v + 140.0 - u + current
 
 
 @always_inline
-fn _izh_rhs_u(v: Float64, u: Float64) -> Float64:
+def _izh_rhs_u(v: Float64, u: Float64) -> Float64:
     return 0.02 * (0.2 * v - u)
 
 
 @export
-fn simulate_izhikevich_rk4_c(
+def simulate_izhikevich_rk4_c(
     n: Int,
     dt: Float64,
     current_addr: Int,
@@ -75,7 +75,7 @@ fn simulate_izhikevich_rk4_c(
 
 
 @always_inline
-fn _clamp_exp_arg(x: Float64) -> Float64:
+def _clamp_exp_arg(x: Float64) -> Float64:
     if x < -20.0:
         return -20.0
     if x > 20.0:
@@ -84,19 +84,19 @@ fn _clamp_exp_arg(x: Float64) -> Float64:
 
 
 @always_inline
-fn _adex_rhs_v(v: Float64, w: Float64, current: Float64) -> Float64:
+def _adex_rhs_v(v: Float64, w: Float64, current: Float64) -> Float64:
     var exp_arg = _clamp_exp_arg((v + 55.0) / 2.0)
     var exp_term = 2.0 * exp(exp_arg)
     return (-(v + 65.0) + exp_term) / 20.0 + (-w + current) / 200.0
 
 
 @always_inline
-fn _adex_rhs_w(v: Float64, w: Float64) -> Float64:
+def _adex_rhs_w(v: Float64, w: Float64) -> Float64:
     return (0.5 * (v + 65.0) - w) / 100.0
 
 
 @export
-fn simulate_adex_rk4_c(
+def simulate_adex_rk4_c(
     n: Int,
     dt: Float64,
     current_addr: Int,
@@ -146,7 +146,7 @@ fn simulate_adex_rk4_c(
 
 
 @always_inline
-fn _alpha_m(v: Float64) -> Float64:
+def _alpha_m(v: Float64) -> Float64:
     var d = v + 40.0
     if abs(d) < 1e-7:
         return 1.0
@@ -154,22 +154,22 @@ fn _alpha_m(v: Float64) -> Float64:
 
 
 @always_inline
-fn _beta_m(v: Float64) -> Float64:
+def _beta_m(v: Float64) -> Float64:
     return 4.0 * exp(-(v + 65.0) / 18.0)
 
 
 @always_inline
-fn _alpha_h(v: Float64) -> Float64:
+def _alpha_h(v: Float64) -> Float64:
     return 0.07 * exp(-(v + 65.0) / 20.0)
 
 
 @always_inline
-fn _beta_h(v: Float64) -> Float64:
+def _beta_h(v: Float64) -> Float64:
     return 1.0 / (1.0 + exp(-(v + 35.0) / 10.0))
 
 
 @always_inline
-fn _alpha_n(v: Float64) -> Float64:
+def _alpha_n(v: Float64) -> Float64:
     var d = v + 55.0
     if abs(d) < 1e-7:
         return 0.1
@@ -177,12 +177,12 @@ fn _alpha_n(v: Float64) -> Float64:
 
 
 @always_inline
-fn _beta_n(v: Float64) -> Float64:
+def _beta_n(v: Float64) -> Float64:
     return 0.125 * exp(-(v + 65.0) / 80.0)
 
 
 @always_inline
-fn _hh_rhs_v(v: Float64, m: Float64, h: Float64, ng: Float64, current: Float64) -> Float64:
+def _hh_rhs_v(v: Float64, m: Float64, h: Float64, ng: Float64, current: Float64) -> Float64:
     var i_na = 120.0 * m * m * m * h * (v - 50.0)
     var i_k = 36.0 * ng * ng * ng * ng * (v + 77.0)
     var i_l = 0.3 * (v + 54.4)
@@ -190,22 +190,22 @@ fn _hh_rhs_v(v: Float64, m: Float64, h: Float64, ng: Float64, current: Float64) 
 
 
 @always_inline
-fn _hh_rhs_m(v: Float64, m: Float64) -> Float64:
+def _hh_rhs_m(v: Float64, m: Float64) -> Float64:
     return _alpha_m(v) * (1.0 - m) - _beta_m(v) * m
 
 
 @always_inline
-fn _hh_rhs_h(v: Float64, h: Float64) -> Float64:
+def _hh_rhs_h(v: Float64, h: Float64) -> Float64:
     return _alpha_h(v) * (1.0 - h) - _beta_h(v) * h
 
 
 @always_inline
-fn _hh_rhs_n(v: Float64, ng: Float64) -> Float64:
+def _hh_rhs_n(v: Float64, ng: Float64) -> Float64:
     return _alpha_n(v) * (1.0 - ng) - _beta_n(v) * ng
 
 
 @export
-fn simulate_hodgkin_huxley_rk4_c(
+def simulate_hodgkin_huxley_rk4_c(
     n: Int,
     dt: Float64,
     current_addr: Int,
