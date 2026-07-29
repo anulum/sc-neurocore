@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 99036429,
-      "median_call_ms": 38.040315,
-      "median_call_ns": 38040315.0,
-      "median_ns_per_step": 190.201575,
-      "min_call_ns": 26882791,
+      "max_call_ns": 21378608,
+      "median_call_ms": 11.700475,
+      "median_call_ns": 11700475.0,
+      "median_ns_per_step": 58.502375,
+      "min_call_ns": 11029949,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        99036429,
-        90258482,
-        30823308,
-        38040315,
-        26882791
+        11029949,
+        15029605,
+        21378608,
+        11700475,
+        11096906
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -45,19 +45,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 1003132038,
-      "median_call_ms": 81.946629,
-      "median_call_ns": 81946629.0,
-      "median_ns_per_step": 409.733145,
-      "min_call_ns": 73712507,
+      "max_call_ns": 16113162,
+      "median_call_ms": 13.079535,
+      "median_call_ns": 13079535.0,
+      "median_ns_per_step": 65.397675,
+      "min_call_ns": 11105388,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1003132038,
-        81946629,
-        119615467,
-        73712507,
-        79763301
+        11195090,
+        11105388,
+        13079535,
+        16113162,
+        15303041
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -74,19 +74,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.4210854715202004e-14,
-      "max_call_ns": 45801990,
-      "median_call_ms": 23.266383,
-      "median_call_ns": 23266383.0,
-      "median_ns_per_step": 116.331915,
-      "min_call_ns": 22056786,
+      "max_call_ns": 14150408,
+      "median_call_ms": 8.896704,
+      "median_call_ns": 8896704.0,
+      "median_ns_per_step": 44.48352,
+      "min_call_ns": 7490736,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 1.1368683772161603e-13,
       "samples_ns": [
-        22056786,
-        45801990,
-        22120960,
-        24841515,
-        23266383
+        8896704,
+        7490736,
+        7569318,
+        14150408,
+        10884215
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -103,19 +103,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 800667710,
-      "median_call_ms": 768.235413,
-      "median_call_ns": 768235413.0,
-      "median_ns_per_step": 3841.177065,
-      "min_call_ns": 717989157,
+      "max_call_ns": 313509375,
+      "median_call_ms": 305.727062,
+      "median_call_ns": 305727062.0,
+      "median_ns_per_step": 1528.63531,
+      "min_call_ns": 300392747,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        800667710,
-        790193438,
-        717989157,
-        735639099,
-        768235413
+        313509375,
+        307585658,
+        305727062,
+        304228265,
+        300392747
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -132,19 +132,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 101470226,
-      "median_call_ms": 22.501885,
-      "median_call_ns": 22501885.0,
-      "median_ns_per_step": 112.509425,
-      "min_call_ns": 11280975,
+      "max_call_ns": 15533019,
+      "median_call_ms": 8.692527,
+      "median_call_ns": 8692527.0,
+      "median_ns_per_step": 43.462635,
+      "min_call_ns": 8279957,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        101470226,
-        82700364,
-        22501885,
-        11769814,
-        11280975
+        15533019,
+        10854962,
+        8279957,
+        8692527,
+        8523161
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -163,7 +163,7 @@
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/adaptive_threshold_if/libadaptive_threshold_if.so",
-      "sha256": "ecf26ce6479d4c84f941f5f15070bf8ee7dae20c7aacd4536ed42968dc60c188",
+      "sha256": "a1b14e2f82c6bf959bd6603389e573614bd83c32c089b9fb440891d2bc456c7f",
       "size_bytes": 15496
     },
     "rust_extension": {
@@ -175,7 +175,7 @@
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. python benchmarks/bench_model_adaptive_threshold_if.py --json benchmarks/results/bench_adaptive_threshold_if.json",
   "environment": {
     "affinity": [
-      10
+      8
     ],
     "go_binary": {
       "binary": "src/sc_neurocore/accel/go/adaptive_threshold_if/libadaptive_threshold_if.so",
@@ -204,9 +204,9 @@
     "julia_cli": "julia version 1.12.6",
     "julia_runtime": "1.11.9",
     "load_average": [
-      30.5087890625,
-      27.162109375,
-      19.45703125
+      7.91552734375,
+      7.5703125,
+      7.87890625
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
     "mojo_pixi": "Mojo 0.26.2.0 (d627decc)",
@@ -281,9 +281,9 @@
     },
     "engine/src/neurons/trivial/adaptive_threshold_if.rs": "4bf449334c7e811f4447e6007f49bfdad5e2295d4f4bba0123de34ea504a36eb",
     "pyproject": {
-      "toml": "a9e704c3bbf04bb5a0e5dafa4cbf90eaff65a2343e1a1a6e1849840c36b614a7"
+      "toml": "470dbd6a7dfe41c7c5ddd4456eec2a52450ada82f93e7addb4f0726e39b9a224"
     },
-    "pyproject.toml": "a9e704c3bbf04bb5a0e5dafa4cbf90eaff65a2343e1a1a6e1849840c36b614a7",
+    "pyproject.toml": "470dbd6a7dfe41c7c5ddd4456eec2a52450ada82f93e7addb4f0726e39b9a224",
     "src/sc_neurocore/accel/adaptive_threshold_if": {
       "py": "a00e75a261c5877e2dbc9255da17826c3b97cdcf4fc1da87ab76c5979a24fe46"
     },
@@ -329,15 +329,15 @@
     },
     "src/sc_neurocore/accel/mojo/kernels/adaptive_threshold_if.mojo": "b21969ac1ad1da417069ffdf9ad8872ee427b83a1f794df14bad980f94d23371",
     "src/sc_neurocore/accel/mojo/pixi": {
-      "lock": "3afe7c06237ffff3bc5f516f90b7a43cd2559439d9f703645bd52c9876ad345a",
+      "lock": "9d12493eb7c1f74743881d3ab1a4473be4f22d0227beccad162008e4e405d492",
       "toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a"
     },
-    "src/sc_neurocore/accel/mojo/pixi.lock": "3afe7c06237ffff3bc5f516f90b7a43cd2559439d9f703645bd52c9876ad345a",
+    "src/sc_neurocore/accel/mojo/pixi.lock": "9d12493eb7c1f74743881d3ab1a4473be4f22d0227beccad162008e4e405d492",
     "src/sc_neurocore/accel/mojo/pixi.toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a",
     "src/sc_neurocore/accel/rust/safety/adaptive_threshold_if": {
-      "rs": "c1f6adc0b9019db62fe3e41c8d57793befa1d8a515a5cc2224b07466302732e1"
+      "rs": "9fefdac874e75031e04a18342b731bcb43a0aaca0508f921e3cee712e520c9a3"
     },
-    "src/sc_neurocore/accel/rust/safety/adaptive_threshold_if.rs": "c1f6adc0b9019db62fe3e41c8d57793befa1d8a515a5cc2224b07466302732e1",
+    "src/sc_neurocore/accel/rust/safety/adaptive_threshold_if.rs": "9fefdac874e75031e04a18342b731bcb43a0aaca0508f921e3cee712e520c9a3",
     "src/sc_neurocore/neurons/model_descriptors/AdaptiveThresholdIFNeuron": {
       "toml": "5bec99125f0297a0ab67fc824c69141613174a8b8d84f63ca9907b3fafc394c5"
     },
@@ -365,7 +365,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-07-26T04:56:16+00:00",
+  "timestamp_utc": "2026-07-29T05:52:13+00:00",
   "verification": {
     "rust_safety": {
       "command": [

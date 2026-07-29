@@ -1,9 +1,9 @@
 {
   "auto_backend_order": [
-    "mojo",
-    "go",
-    "rust",
     "julia",
+    "mojo",
+    "rust",
+    "go",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -20,19 +20,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.9203306439740118e-12,
-      "max_call_ns": 62352865,
-      "median_call_ms": 17.877114,
-      "median_call_ns": 17877114.0,
-      "median_ns_per_step": 357.54228,
-      "min_call_ns": 13535653,
+      "max_call_ns": 10310201,
+      "median_call_ms": 7.691672,
+      "median_call_ns": 7691672.0,
+      "median_ns_per_step": 153.83344,
+      "min_call_ns": 5922271,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 6.188827228470473e-12,
       "samples_ns": [
-        62352865,
-        24383330,
-        13535653,
-        16856898,
-        17877114
+        5922271,
+        7691672,
+        7245569,
+        7694911,
+        10310201
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -51,19 +51,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 3.552713678800501e-15,
-      "max_call_ns": 55008658,
-      "median_call_ms": 43.767125,
-      "median_call_ns": 43767125.0,
-      "median_ns_per_step": 875.3425,
-      "min_call_ns": 26064215,
+      "max_call_ns": 3709820,
+      "median_call_ms": 3.442266,
+      "median_call_ns": 3442266.0,
+      "median_ns_per_step": 68.84532,
+      "min_call_ns": 2953767,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 1.4210854715202004e-14,
       "samples_ns": [
-        53256157,
-        55008658,
-        36060109,
-        43767125,
-        26064215
+        2953767,
+        3442266,
+        3396609,
+        3564810,
+        3709820
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -82,19 +82,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.0981437981172348e-11,
-      "max_call_ns": 15975632,
-      "median_call_ms": 11.961734,
-      "median_call_ns": 11961734.0,
-      "median_ns_per_step": 239.23468,
-      "min_call_ns": 10912580,
+      "max_call_ns": 3695587,
+      "median_call_ms": 3.474487,
+      "median_call_ns": 3474487.0,
+      "median_ns_per_step": 69.48974,
+      "min_call_ns": 2951580,
       "parity_atol": 1e-08,
       "parity_max_abs_diff": 2.660414111232967e-10,
       "samples_ns": [
-        15775287,
-        15975632,
-        11731599,
-        10912580,
-        11961734
+        3695587,
+        3676448,
+        2951580,
+        3474487,
+        3065154
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -113,19 +113,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 2545514601,
-      "median_call_ms": 1118.017018,
-      "median_call_ns": 1118017018.0,
-      "median_ns_per_step": 22360.34036,
-      "min_call_ns": 924293568,
+      "max_call_ns": 310409199,
+      "median_call_ms": 304.090259,
+      "median_call_ns": 304090259.0,
+      "median_ns_per_step": 6081.80518,
+      "min_call_ns": 293904092,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        924293568,
-        2545514601,
-        1277892677,
-        1118017018,
-        1112506129
+        307414996,
+        304090259,
+        310409199,
+        294500570,
+        293904092
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -144,19 +144,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 103468560,
-      "median_call_ms": 42.566883,
-      "median_call_ns": 42566883.0,
-      "median_ns_per_step": 851.33766,
-      "min_call_ns": 18850176,
+      "max_call_ns": 6635513,
+      "median_call_ms": 3.858941,
+      "median_call_ns": 3858941.0,
+      "median_ns_per_step": 77.17882,
+      "min_call_ns": 2748366,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        42566883,
-        71833475,
-        103468560,
-        22315682,
-        18850176
+        6635513,
+        5797616,
+        3477182,
+        3858941,
+        2748366
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -173,13 +173,13 @@
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/jansen_rit/libjansen_rit.so",
-      "sha256": "3a948e451a9ba9829f59259303aec03921a788a54e590b618dab284a74249b6e",
+      "sha256": "260265c0a0e3a7ee9a5ca3cdc134896f851eb22bb6ac70967a87eda2e207a8cc",
       "size_bytes": 15000
     },
     "rust_extension": {
-      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "277650d10eb391d393f7b54f2f539208d9af6ca244083c8daac5e57a1923ec61",
-      "size_bytes": 33928633
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "5128ca1c72ac38b9f2ca4782bd3988427ef9ae6f423a6bd279607b624ed4016a",
+      "size_bytes": 33932729
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_jansen_rit.py --json benchmarks/results/bench_jansen_rit.json",
@@ -187,15 +187,15 @@
     "affinity": [
       8
     ],
-    "go": "go version go1.24.0 linux/amd64",
+    "go": "go version go1.26.2 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      39.95703125,
-      36.9306640625,
-      32.501953125
+      7.8974609375,
+      7.60205078125,
+      7.87451171875
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
     "python": "3.12.3",
     "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
@@ -203,7 +203,7 @@
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
   "hardware_measurement_claimed": false,
   "kernel": "jansen_rit_euler_batch",
-  "lowest_median_native_backend": "mojo",
+  "lowest_median_native_backend": "julia",
   "measured_order": [
     "python",
     "rust",
@@ -229,7 +229,7 @@
     "reason": "transcendental library implementations may differ by bounded ulps"
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "mojo",
+  "recommended_auto_backend": "julia",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_jansen_rit": {
@@ -297,9 +297,9 @@
     },
     "src/sc_neurocore/accel/mojo/jansen_rit/jansen_rit.mojo": "737c19ea982e811292670473e075006735fa6c21908cdba2b0eec5c27530fd4c",
     "src/sc_neurocore/accel/rust/safety/jansen_rit": {
-      "rs": "018ecb6f311b50221c7681e523f6e676846292e3f0ea03d31be01465dfdeee04"
+      "rs": "e9375879962a3b2a93593b701089a90d0d0523d8854613b353ceea2d44f070bc"
     },
-    "src/sc_neurocore/accel/rust/safety/jansen_rit.rs": "018ecb6f311b50221c7681e523f6e676846292e3f0ea03d31be01465dfdeee04",
+    "src/sc_neurocore/accel/rust/safety/jansen_rit.rs": "e9375879962a3b2a93593b701089a90d0d0523d8854613b353ceea2d44f070bc",
     "src/sc_neurocore/neurons/model_descriptors/JansenRitUnit": {
       "toml": "497d7160ea346309843d3f6f3b03fbcb39282f30d08ff013c49c5ba48fa10e21"
     },
@@ -319,7 +319,7 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/jansen_rit_eq6_euler_brian2.json": "6a5895a51159ea469a8109a9984e03e6aa55a4c7a19657f6c9a945b80883a464"
   },
-  "timestamp_utc": "2026-07-22T13:55:25+00:00",
+  "timestamp_utc": "2026-07-29T05:52:59+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -329,7 +329,7 @@
         "--test",
         "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/src/sc_neurocore/accel/rust/safety/jansen_rit.rs",
         "-o",
-        "/tmp/jansen-rit-rust-rwzs02yb/jansen_rit_tests"
+        "/tmp/jansen-rit-rust-ln25vjg_/jansen_rit_tests"
       ],
       "output_tail": [
         "",

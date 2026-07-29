@@ -1,9 +1,9 @@
 {
   "auto_backend_order": [
-    "rust",
     "mojo",
-    "julia",
+    "rust",
     "go",
+    "julia",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 12620273,
-      "median_call_ms": 10.927815,
-      "median_call_ns": 10927815.0,
-      "median_ns_per_step": 218.5563,
-      "min_call_ns": 7250291,
+      "max_call_ns": 4547185,
+      "median_call_ms": 3.272818,
+      "median_call_ns": 3272818.0,
+      "median_ns_per_step": 65.45636,
+      "min_call_ns": 3193465,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        10927815,
-        12262825,
-        12620273,
-        10504682,
-        7250291
+        3193465,
+        3272818,
+        4547185,
+        3581743,
+        3264572
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -45,19 +45,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 10054993,
-      "median_call_ms": 9.029823,
-      "median_call_ns": 9029823.0,
-      "median_ns_per_step": 180.59646,
-      "min_call_ns": 6684944,
+      "max_call_ns": 4074457,
+      "median_call_ms": 3.686728,
+      "median_call_ns": 3686728.0,
+      "median_ns_per_step": 73.73456,
+      "min_call_ns": 3537505,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        10054993,
-        9029823,
-        9432401,
-        8954063,
-        6684944
+        4024023,
+        3686728,
+        3547888,
+        3537505,
+        4074457
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -70,29 +70,29 @@
       "available": true,
       "final_state": {
         "x": -0.12694720935988085,
-        "y": 0.7130088368248867
+        "y": 0.7130088368248868
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.7755575615628914e-16,
-      "max_call_ns": 7941739,
-      "median_call_ms": 5.855927,
-      "median_call_ns": 5855927.0,
-      "median_ns_per_step": 117.11854,
-      "min_call_ns": 5345009,
+      "max_call_ns": 2481389,
+      "median_call_ms": 1.988718,
+      "median_call_ns": 1988718.0,
+      "median_ns_per_step": 39.77436,
+      "min_call_ns": 1793307,
       "parity_atol": 1e-10,
-      "parity_max_abs_diff": 8.881784197001252e-16,
+      "parity_max_abs_diff": 9.992007221626409e-16,
       "samples_ns": [
-        5345009,
-        6933007,
-        7941739,
-        5855927,
-        5405011
+        1988718,
+        2481389,
+        2075782,
+        1915189,
+        1793307
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
-      "trace_sha256": "b0c4e9a594d793e10cbb218b74a7c18e4e1f5105a9cde96726981d45d127c606",
+      "trace_sha256": "80ef96bfc7558e8522c7e98341e38e16ba4eaf830f13c527dc62df9e47c8f8c8",
       "used": true
     },
     "python": {
@@ -103,19 +103,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 244954807,
-      "median_call_ms": 194.384962,
-      "median_call_ns": 194384962.0,
-      "median_ns_per_step": 3887.69924,
-      "min_call_ns": 186787055,
+      "max_call_ns": 109621102,
+      "median_call_ms": 90.796291,
+      "median_call_ns": 90796291.0,
+      "median_ns_per_step": 1815.92582,
+      "min_call_ns": 89063906,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        244954807,
-        186787055,
-        194384962,
-        225815868,
-        190989593
+        109621102,
+        105597603,
+        90796291,
+        89542599,
+        89063906
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -132,19 +132,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 6041469,
-      "median_call_ms": 5.372751,
-      "median_call_ns": 5372751.0,
-      "median_ns_per_step": 107.45502,
-      "min_call_ns": 3742566,
+      "max_call_ns": 2462972,
+      "median_call_ms": 2.005184,
+      "median_call_ns": 2005184.0,
+      "median_ns_per_step": 40.10368,
+      "min_call_ns": 1938860,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        6041469,
-        4346630,
-        3742566,
-        5372751,
-        5923324
+        2123268,
+        2462972,
+        1988635,
+        2005184,
+        1938860
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -163,7 +163,7 @@
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/resonate_and_fire/libresonate_and_fire.so",
-      "sha256": "b95b964687f99f22c6063ce975b18562057557096a7ecb0a75fd71cbcb6f84ab",
+      "sha256": "bbb881d2e828c8c6e150f997e06281a68fcf716608887d06325a702b36b8ca73",
       "size_bytes": 15488
     },
     "rust_extension": {
@@ -175,7 +175,7 @@
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. python benchmarks/bench_model_resonate_and_fire.py --json benchmarks/results/bench_resonate_and_fire.json",
   "environment": {
     "affinity": [
-      10
+      8
     ],
     "go_binary": {
       "binary": "src/sc_neurocore/accel/go/resonate_and_fire/libresonate_and_fire.so",
@@ -204,9 +204,9 @@
     "julia_cli": "julia version 1.12.6",
     "julia_runtime": "1.11.9",
     "load_average": [
-      33.1513671875,
-      29.8603515625,
-      21.26123046875
+      7.69873046875,
+      7.56640625,
+      7.85986328125
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
     "mojo_pixi": "Mojo 0.26.2.0 (d627decc)",
@@ -219,7 +219,7 @@
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
   "hardware_measurement_claimed": false,
   "kernel": "resonate_and_fire_exact_flow_batch",
-  "lowest_median_native_backend": "rust",
+  "lowest_median_native_backend": "mojo",
   "measured_order": [
     "python",
     "rust",
@@ -245,7 +245,7 @@
     "reason": "independent compiler transcendental evaluation may differ by bounded ulps"
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "rust",
+  "recommended_auto_backend": "mojo",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     ".github/workflows/ci": {
@@ -281,9 +281,9 @@
     },
     "engine/src/neurons/simple_spiking/resonate_and_fire.rs": "bfccff5508c95fcde4a5848fb17cd18f2293b127fd1ea80286bf7e08993eb5fc",
     "pyproject": {
-      "toml": "a9e704c3bbf04bb5a0e5dafa4cbf90eaff65a2343e1a1a6e1849840c36b614a7"
+      "toml": "470dbd6a7dfe41c7c5ddd4456eec2a52450ada82f93e7addb4f0726e39b9a224"
     },
-    "pyproject.toml": "a9e704c3bbf04bb5a0e5dafa4cbf90eaff65a2343e1a1a6e1849840c36b614a7",
+    "pyproject.toml": "470dbd6a7dfe41c7c5ddd4456eec2a52450ada82f93e7addb4f0726e39b9a224",
     "src/sc_neurocore/accel/go/go": {
       "mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097"
     },
@@ -317,10 +317,10 @@
     },
     "src/sc_neurocore/accel/mojo/kernels/resonate_and_fire.mojo": "b2bdb7c20368fd4bc0b5846559d32dded3178c4f0ac213c73f1916665134569b",
     "src/sc_neurocore/accel/mojo/pixi": {
-      "lock": "3afe7c06237ffff3bc5f516f90b7a43cd2559439d9f703645bd52c9876ad345a",
+      "lock": "9d12493eb7c1f74743881d3ab1a4473be4f22d0227beccad162008e4e405d492",
       "toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a"
     },
-    "src/sc_neurocore/accel/mojo/pixi.lock": "3afe7c06237ffff3bc5f516f90b7a43cd2559439d9f703645bd52c9876ad345a",
+    "src/sc_neurocore/accel/mojo/pixi.lock": "9d12493eb7c1f74743881d3ab1a4473be4f22d0227beccad162008e4e405d492",
     "src/sc_neurocore/accel/mojo/pixi.toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a",
     "src/sc_neurocore/accel/mojo/resonate_and_fire/__init__": {
       "py": "d5009a0296b1174204727b9c2b9944fe43574bd9427833ef68da6633191c92cc"
@@ -335,9 +335,9 @@
     },
     "src/sc_neurocore/accel/resonate_and_fire.py": "d4bea5fcd695e2326eec05120d6bbe0bb6e94c4fddb4ad85ce92da03001b8589",
     "src/sc_neurocore/accel/rust/safety/resonate_and_fire": {
-      "rs": "7f23e55f0fbd364efe2451b7c0b20e25bc346d78630675c71c18f36de250ef6c"
+      "rs": "796c0135af5816b08a60243af64fd3db32a3834ae7577bf8b8dee8b8d3054ef2"
     },
-    "src/sc_neurocore/accel/rust/safety/resonate_and_fire.rs": "7f23e55f0fbd364efe2451b7c0b20e25bc346d78630675c71c18f36de250ef6c",
+    "src/sc_neurocore/accel/rust/safety/resonate_and_fire.rs": "796c0135af5816b08a60243af64fd3db32a3834ae7577bf8b8dee8b8d3054ef2",
     "src/sc_neurocore/neurons/model_descriptors/ResonateAndFireNeuron": {
       "toml": "d3e4f465f66e0455cca8f475ccae24aeb0d56f1a23c31dd7ecb977a66d9230f4"
     },
@@ -365,7 +365,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-07-26T04:57:55+00:00",
+  "timestamp_utc": "2026-07-29T05:53:12+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -388,7 +388,7 @@
         "test tests::source_defaults_are_valid ... ok",
         "test tests::voltage_crossing_installs_source_reset ... ok",
         "",
-        "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+        "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
         ""
       ],
       "passed": true,
