@@ -35,7 +35,9 @@ not expose kernel-reserved isolated cores to this user session, so these numbers
 remain local regression evidence rather than production throughput claims.
 
 The module-level pytest throughput checks use load-tolerant smoke thresholds
-unless `SC_NEUROCORE_STRICT_THROUGHPUT=1` is set.  Use strict mode only for
+unless `SC_NEUROCORE_STRICT_THROUGHPUT=1` is set. The shared default smoke floor
+is one percent of the historical strict rate, capped at 100 operations per
+second; finite positive progress is always required. Use strict mode only for
 isolated-core benchmark captures and commit the raw artefact before treating the
 numbers as release evidence.
 

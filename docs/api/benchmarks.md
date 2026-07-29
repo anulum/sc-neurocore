@@ -26,7 +26,7 @@ active. To enforce the historical strict numeric thresholds, run the affected
 tests on isolated benchmark cores with:
 
 ```bash
-SC_NEUROCORE_STRICT_THROUGHPUT=1 pytest tests/test_model_fitzhugh_nagumo.py tests/test_model_ai_optimized.py
+SC_NEUROCORE_STRICT_THROUGHPUT=1 pytest tests/test_model_*performance.py
 ```
 
 Strict throughput output is still local benchmark evidence until the raw
