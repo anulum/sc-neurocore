@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4580
+    "test_files": 4581
   },
   "documentation": {
     "public_pages": [
@@ -3343,6 +3343,7 @@
       "tests/test_accel_coverage_closure.py",
       "tests/test_accel_gpu_backend_contracts.py",
       "tests/test_accel_jit_kernel_contracts.py",
+      "tests/test_accel_model_coverage_closure.py",
       "tests/test_accel_mpi_driver_contracts.py",
       "tests/test_adapter_ecosystem_adapter_discovery.py",
       "tests/test_adapter_ecosystem_registry_wiring.py",
