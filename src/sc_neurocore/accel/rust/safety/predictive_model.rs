@@ -220,8 +220,8 @@ fn expect_shape(matrix: &[Vec<f64>], rows: usize, cols: usize, name: &str) -> Re
 
 fn eye(n: usize) -> Vec<Vec<f64>> {
     let mut out = vec![vec![0.0; n]; n];
-    for idx in 0..n {
-        out[idx][idx] = 1.0;
+    for (idx, row) in out.iter_mut().enumerate() {
+        row[idx] = 1.0;
     }
     out
 }
@@ -300,8 +300,8 @@ fn cholesky(matrix: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, String> {
     for i in 0..n {
         for j in 0..=i {
             let mut sum = matrix[i][j];
-            for k in 0..j {
-                sum -= l[i][k] * l[j][k];
+            for (left, right) in l[i][..j].iter().zip(&l[j][..j]) {
+                sum -= left * right;
             }
             if i == j {
                 if sum <= 0.0 || !sum.is_finite() {
