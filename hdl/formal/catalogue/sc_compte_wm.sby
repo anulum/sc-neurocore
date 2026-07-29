@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-4 Compte bounded safety proof
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_compte_wm_formal.v
+read -formal sc_compte_wm.v
+prep -top sc_compte_wm_formal
+
+[files]
+sc_compte_wm_formal.v
+sc_compte_wm.v

@@ -360,7 +360,7 @@ compute cycles for the 64x32 dense contract.
 | TsodyksMarkram STP | 10k | 86.4 µs | **8.6 ns** | Short-term plasticity |
 | Parallel spiking | 10k | 60.9 µs | **6.1 ns** | Multi-subunit LIF |
 | Astrocyte | 10k | 190 µs | **19.0 ns** | Ca²⁺/IP3/SERCA dynamics |
-| Compte WM | 10k | 232 µs | **23.2 ns** | Working memory NMDA |
+| Compte WM | 10k | — | — | Historical result superseded by the source-bounded cell contract; see the model-specific five-runtime benchmark |
 | LTC | 10k | 409 µs | **40.9 ns** | Liquid time constant |
 | FractionalLIF | 10k | 739 µs | **73.9 ns** | Fractional-order memory kernel |
 | LeakyCompeteFire | 10k | 972 µs | **97.2 ns** | WTA lateral inhibition (4 units) |

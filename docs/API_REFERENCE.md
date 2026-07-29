@@ -648,6 +648,19 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.compte_wm`
+
+### Function `backend_available(backend)`
+Return whether one named Compte runtime is executable.
+
+### Function `auto_backend()`
+Return the first executable measured lane, with Python as floor.
+
+### Function `simulate_compte_wm(v, s_ampa, s_nmda, x_nmda, s_gaba, ref_remaining, g_l, g_ampa, g_nmda, g_gaba, e_l, e_exc, e_inh, c_m, mg, tau_ampa, tau_nmda, tau_x, tau_gaba, alpha_nmda, v_threshold, v_reset, tau_ref, dt, currents, recurrent_events, external_events, inhibitory_events)`
+Run the complete configured Compte contract on one real backend.
+
+---
+
 ## Module `accel.dpi_neuron`
 
 ### Function `ensure_julia_loaded()`
@@ -20293,13 +20306,15 @@ for inhibitory interneurons.
 Reference: Wang, Neuron 36(5), 2002, Fig. 1.
 
 ### Function `working_memory_circuit(n_neurons)`
-Compte et al. 2000 bump attractor for spatial working memory.
+Build the legacy SC project-derived working-memory approximation.
 
 Ring of NMDA-based excitatory neurons with distance-dependent
 connectivity and uniform inhibition.  Transient cue creates a
 persistent activity bump encoding a remembered location.
 
-Reference: Compte et al., J. Neurophysiol. 84(3), 2000.
+This 500-cell convenience network is inspired by spatial working-memory
+attractors but does not reproduce the Compte et al. 2000 2,560-cell
+network and therefore carries no source-equivalence claim.
 
 ### Function `auditory_processing(n_channels)`
 Cochlear filterbank -> SNN spectro-temporal processing.
@@ -23066,11 +23081,40 @@ dt : float
 ## Module `neurons.models.compte_wm`
 
 ### Class `CompteWMNeuron`
-Compte et al. NMDA-based working-memory neuron with Mg2+ block.
+Compte et al. pyramidal LIF cell with incoming AMPA/NMDA/GABAA gates.
+
+The class implements the excitatory-cell and channel equations from
+Compte et al., Cerebral Cortex 10(9), 910--923 (2000), DOI
+10.1093/cercor/10.9.910. external_spike increments the external AMPA gate,
+the compatibility argument spike_in increments the recurrent NMDA
+precursor, and inhibitory_spike increments the GABAA gate. A postsynaptic
+output spike resets the membrane and starts the source 2 ms refractory
+interval; it does not create an inhibitory autapse.
+
+Conductances use microSiemens, voltages millivolts, currents nanoamps,
+capacitance nanofarads, and time milliseconds. The default conductances
+are the paper's control-set pyramidal pathways: 3.1 nS external AMPA,
+0.381 nS recurrent NMDA, and 1.336 nS interneuron-to-pyramidal GABAA.
+One public step applies event jumps, then an explicit midpoint RK2 flow at
+the source 0.02 ms timestep. Threshold detection is sampled at the end of
+the step; the paper's within-step firing-time interpolation is not claimed.
+
+Notes
+-----
+This is not the paper's 2,560-cell ring network. Connectivity footprints,
+Poisson drive, tuned persistent bumps, and distractor statistics belong to
+a separately named SC project-derived network model.
 
 - **__post_init__**()
+  - Normalise construction scalars and establish valid dynamic state.
 - **step**(current, spike_in)
+  - Advance one atomic source-level midpoint-RK2 timestep.
+- **simulate**(currents, recurrent_events, external_events, inhibitory_events)
+  - Run complete state/event traces through one maintained backend.
 - **reset**()
+  - Reset all dynamic state while preserving configuration.
+- **get_state**()
+  - Return the complete membrane, channel, and refractory state.
 
 ---
 

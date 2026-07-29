@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `CompteWMNeuron` to the source-bounded Compte et al. (2000)
+  pyramidal-cell membrane and incoming AMPA/NMDA/GABAA kinetics, including
+  separate presynaptic event paths, coupled midpoint RK2 at 0.02 ms, and
+  atomic refractory/reset semantics. Python, modular Rust, independent Rust
+  safety, Julia, Go, and Mojo preserve the complete six-state/event receipt;
+  an independent primary-equation trace, paired schemas, hand Q16.16 RTL
+  co-simulation, Yosys and bounded formal collateral, a source/binary-bound
+  200,000-step benchmark, and native-language documentation close together.
+  The existing convenience `working_memory_circuit` is now explicitly an SC
+  project-derived approximation. The paper's 2,560-cell ring, connectivity
+  footprint, Poisson drive, persistent bump, distractor resistance, and
+  network statistics are retained for a separately named SC network model.
 - Corrected `BrunelWangNeuron` to the Brunel-Wang (2001) excitatory
   pyramidal-cell defaults and midpoint-RK2 membrane equation at 0.1 ms. Python,
   modular Rust, independent Rust safety, Julia, Go, and Mojo now preserve the

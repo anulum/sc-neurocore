@@ -255,7 +255,8 @@ as modelled by Wang 2002 and Wong & Wang 2006.
 
 ### 8. working_memory_circuit
 
-**Reference:** Compte et al., J. Neurophysiol. 84(3), 2000
+**Identity:** Legacy SC project-derived working-memory approximation; not the
+Compte et al. (2000) 2,560-cell network
 **Topology:** Ring attractor with NMDA-based persistent activity
 **Neuron models:** CompteWMNeuron (excitatory), WangBuzsakiNeuron (inhibitory)
 

@@ -333,13 +333,15 @@ def decision_making_circuit(n_per_pool: int = 240) -> Network:
 
 
 def working_memory_circuit(n_neurons: int = 500) -> Network:
-    """Compte et al. 2000 bump attractor for spatial working memory.
+    """Build the legacy SC project-derived working-memory approximation.
 
     Ring of NMDA-based excitatory neurons with distance-dependent
     connectivity and uniform inhibition.  Transient cue creates a
     persistent activity bump encoding a remembered location.
 
-    Reference: Compte et al., J. Neurophysiol. 84(3), 2000.
+    This 500-cell convenience network is inspired by spatial working-memory
+    attractors but does not reproduce the Compte et al. 2000 2,560-cell
+    network and therefore carries no source-equivalence claim.
     """
     n_exc = int(0.8 * n_neurons)
     n_inh = n_neurons - n_exc

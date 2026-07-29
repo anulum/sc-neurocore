@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "model": "CompteWMNeuron",
+  "source": {
+    "authors": [
+      "Albert Compte",
+      "Nicolas Brunel",
+      "Patricia S. Goldman-Rakic",
+      "Xiao-Jing Wang"
+    ],
+    "title": "Synaptic Mechanisms and Network Dynamics Underlying Spatial Working Memory in a Cortical Network Model",
+    "journal": "Cerebral Cortex",
+    "volume_issue_pages": "10(9):910-923",
+    "year": 2000,
+    "doi": "10.1093/cercor/10.9.910",
+    "pdf_sha256": "4b259dfb67b14d65706a3188969eb652998f46ad39ef46d7c08ff97b1605dd26",
+    "scope": [
+      "pyramidal leaky integrate-and-fire parameters",
+      "incoming AMPA, NMDA, and GABAA channel kinetics",
+      "second-order Runge-Kutta integration at 0.02 ms"
+    ]
+  },
+  "specialization": {
+    "cell_type": "excitatory pyramidal",
+    "input_boundary": "separate external-AMPA, recurrent-NMDA, and inhibitory-GABAA presynaptic events plus direct somatic current",
+    "sampled_timing_note": "threshold is sampled after each midpoint-RK2 step; paper firing-time interpolation is not claimed",
+    "excluded_to_sc_successor": [
+      "2560-cell ring network",
+      "connectivity footprint",
+      "Poisson drive",
+      "persistent activity bump",
+      "distractor resistance",
+      "network statistics"
+    ]
+  },
+  "parameters": {
+    "v_init_mv": -70,
+    "v_reset_mv": -60,
+    "v_threshold_mv": -50,
+    "tau_ref_ms": 2,
+    "g_l_us": 0.025,
+    "g_ampa_external_us": 0.0031,
+    "g_nmda_recurrent_us": 0.000381,
+    "g_gaba_inhibitory_us": 0.001336,
+    "c_m_nf": 0.5,
+    "tau_ampa_ms": 2,
+    "tau_nmda_ms": 100,
+    "tau_x_ms": 2,
+    "tau_gaba_ms": 10,
+    "alpha_nmda_per_ms": 0.5,
+    "mg_mm": 1,
+    "dt_ms": 0.02
+  },
+  "stimulus": {
+    "steps": 1024,
+    "current_na": "1.0 + 0.2 * sin(i * 0.03)",
+    "recurrent_nmda_event": "i modulo 17 equals 0",
+    "external_ampa_event": "i modulo 11 equals 0",
+    "inhibitory_gabaa_event": "i modulo 23 equals 0"
+  },
+  "oracle": {
+    "canonical_row_format": "little-endian float64 (v, s_ampa, s_nmda, x_nmda, s_gaba, refractory_remaining_ms, event_as_float64)",
+    "trace_sha256": "bc071ae0c0057bc23a5e4c99ee5bbee53d306f07cd154e01bafff32335a6e192",
+    "event_indices": [
+      276,
+      505,
+      736,
+      971
+    ],
+    "final_state": [
+      -60.0,
+      9.50439697005333,
+      0.9966200056598907,
+      6.145607979233977,
+      18.975310664437984,
+      0.9599999999999991
+    ],
+    "first_eight_voltage_mv": [
+      -69.95139180503156,
+      -69.90268627339586,
+      -69.85388275956534,
+      -69.80498084413288,
+      -69.75598033306017,
+      -69.70688125673556,
+      -69.65768386884231,
+      -69.60838864503788
+    ]
+  }
+}

@@ -971,7 +971,7 @@
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4615
+    "test_files": 4620
   },
   "documentation": {
     "public_pages": [
@@ -3555,6 +3555,7 @@
       "tests/test_bench_chialvo_map.py",
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_coba_lif.py",
+      "tests/test_bench_compte_wm.py",
       "tests/test_bench_connor_stevens_mojo.py",
       "tests/test_bench_dna_mapper_import.py",
       "tests/test_bench_dpi_neuron.py",
@@ -3990,6 +3991,8 @@
       "tests/test_compression_toolkit_prune_weights.py",
       "tests/test_compression_toolkit_quantize_delays.py",
       "tests/test_compression_toolkit_quantize_weights.py",
+      "tests/test_compte_wm_backends.py",
+      "tests/test_compte_wm_engine_binding.py",
       "tests/test_connor_stevens_mojo.py",
       "tests/test_constants.py",
       "tests/test_continual_continual_learner.py",
@@ -4041,6 +4044,7 @@
       "tests/test_cosim_cazelles_map.py",
       "tests/test_cosim_chialvo_map.py",
       "tests/test_cosim_coba_lif.py",
+      "tests/test_cosim_compte_wm.py",
       "tests/test_cosim_connor_stevens.py",
       "tests/test_cosim_courage_nekorkin_map.py",
       "tests/test_cosim_dpi_neuron.py",
@@ -6370,6 +6374,7 @@
       "tests/test_reference_cazelles_map.py",
       "tests/test_reference_chialvo_map.py",
       "tests/test_reference_coba_lif.py",
+      "tests/test_reference_compte_wm.py",
       "tests/test_reference_connor_stevens.py",
       "tests/test_reference_courage_nekorkin_map.py",
       "tests/test_reference_dpi_neuron.py",
