@@ -11,7 +11,16 @@ use pyo3::types::PyDict;
 
 use crate::neurons;
 
-py_neuron_default!("ChayKeizerNeuron", PyChayKeizerNeuron, neurons::ChayKeizerNeuron, state v, state n, state ca);
+py_neuron_default!(
+    "ChayKeizerNeuron",
+    PyChayKeizerNeuron,
+    neurons::ChayKeizerNeuron,
+    state v,
+    state m,
+    state h,
+    state n,
+    state ca
+);
 
 /// Register the Chay-Keizer neuron class.
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {

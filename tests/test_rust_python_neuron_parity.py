@@ -30,6 +30,13 @@ class StepModel(Protocol):
         """Advance one model step and return the model-specific spike value."""
 
 
+class StateModel(StepModel, Protocol):
+    """Stepping model that also exposes its public dynamic state."""
+
+    def get_state(self) -> dict[str, float]:
+        """Return the model's named dynamic state."""
+
+
 class _RecordingStepModel:
     """Small step model used to cover generic stimulus routing."""
 
@@ -157,8 +164,6 @@ _STOCHASTIC = frozenset(
         "WongWangUnit",
     }
 )
-_KNOWN_PARITY_DIVERGENCE = frozenset({"ChayKeizerNeuron"})
-
 _DOC_PATH = Path("docs/api/neuron_models.md")
 _RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/pyo3_neurons.rs"),
@@ -307,7 +312,6 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert boundary_names == _PYTHON_ONLY_MODELS
     assert mapped_names <= model_names
     assert model_names >= _STOCHASTIC
-    assert model_names >= _KNOWN_PARITY_DIVERGENCE
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
     assert len(model_names) == 160
@@ -410,6 +414,23 @@ def test_rate_override_stimulus_routing() -> None:
     assert inhomogeneous.calls == [(200.0,)]
 
 
+@pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
+def test_chay_keizer_five_state_trajectory_parity() -> None:
+    """Lock the faithful Rust five-state burster to the Python reference trace."""
+
+    py_model = py_models.ChayKeizerNeuron()
+    constructor = _engine_module().ChayKeizerNeuron
+    rs_model = cast(StateModel, constructor())
+
+    for _ in range(500):
+        assert rs_model.step(5.0) == py_model.step(5.0)
+
+    rust_state = rs_model.get_state()
+    assert set(rust_state) == {"v", "m", "h", "n", "ca"}
+    for name in rust_state:
+        assert rust_state[name] == pytest.approx(getattr(py_model, name), abs=1e-12)
+
+
 @pytest.mark.parametrize("name", _all_model_names())
 @pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
 def test_parity(name: str) -> None:
@@ -421,9 +442,6 @@ def test_parity(name: str) -> None:
         pytest.skip(f"{name} uses a mapped Rust constructor outside this generic parity harness")
     if name in _STOCHASTIC:
         pytest.skip(f"{name} is RNG-dependent, skip exact parity")
-    if name in _KNOWN_PARITY_DIVERGENCE:
-        pytest.xfail(f"{name}: known Rust/Python parity divergence")
-
     py_model = _make_py(name)
     rs_model = _make_rs(name)
 
