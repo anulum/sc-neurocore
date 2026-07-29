@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.transformers.block import StochasticTransformerBlock
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -152,4 +153,8 @@ def test_block_perf_small():
     start = time.perf_counter()
     _ = block.forward(x)
     elapsed = time.perf_counter() - start
-    assert elapsed < 3.0
+    assert_load_tolerant_throughput(
+        label="transformer block run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 3.0,
+    )

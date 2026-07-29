@@ -102,3 +102,46 @@ def test_model_performance_modules_do_not_assert_raw_clock_values() -> None:
         "raw model wall-clock assertions bypass the shared throughput policy: "
         + ", ".join(violations)
     )
+
+
+def test_performance_scopes_do_not_assert_raw_clock_values() -> None:
+    performance_tokens = {"perf", "performance", "throughput", "benchmark"}
+    clock_names = {"elapsed", "rate", "throughput", "t_py", "t_rs"}
+    relative_speedup_exemption = (
+        "test_hierarchical_partitioner_backends_rust_refine_parity_and_perf.py",
+        "test_rust_backend_is_faster_at_v500",
+    )
+    violations = []
+
+    for path in sorted(Path(__file__).parent.rglob("test*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        path_tokens = set(path.stem.replace("-", "_").split("_"))
+        for function in (
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ):
+            function_tokens = set(function.name.split("_"))
+            if not performance_tokens & (path_tokens | function_tokens):
+                continue
+            if (path.name, function.name) == relative_speedup_exemption:
+                continue
+            for assertion in (node for node in ast.walk(function) if isinstance(node, ast.Assert)):
+                referenced_names = {
+                    node.id for node in ast.walk(assertion.test) if isinstance(node, ast.Name)
+                }
+                reads_clock_directly = any(
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in {"perf_counter", "process_time", "monotonic", "time"}
+                    for node in ast.walk(assertion.test)
+                )
+                if reads_clock_directly or referenced_names & clock_names:
+                    violations.append(
+                        f"{path.relative_to(Path(__file__).parent)}:{assertion.lineno}"
+                    )
+
+    assert violations == [], (
+        "raw performance wall-clock assertions bypass the shared throughput policy: "
+        + ", ".join(violations)
+    )

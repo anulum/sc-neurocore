@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_zoo_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMNISTClassifier:
@@ -80,7 +81,11 @@ class TestMNISTClassifier:
         net.run(0.05, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
         rate = n_neurons * 50 / elapsed
-        assert rate > 100, f"mnist throughput: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="MNIST model-zoo network",
+            observed_per_second=rate,
+            strict_minimum_per_second=100.0,
+        )
 
     def test_analysis_spike_count(self):
         net = mnist_classifier(n_hidden=32)

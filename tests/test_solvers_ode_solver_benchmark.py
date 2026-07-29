@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.solvers_ode_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSolverBenchmark:
@@ -22,7 +23,11 @@ class TestSolverBenchmark:
         for i in range(100_000):
             y, _ = solver.step(decay_ode, y, 0.0, 1e-5)
         elapsed = time.perf_counter() - t0
-        assert elapsed < 5.0, f"100k RK4 steps took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="RK4 solver",
+            observed_per_second=100_000 / elapsed,
+            strict_minimum_per_second=20_000.0,
+        )
 
     def test_exact_lif_throughput(self):
         """1000 exact LIF simulations, 100ms each."""
@@ -31,4 +36,8 @@ class TestSolverBenchmark:
         for _ in range(1000):
             solver.simulate(current=25.0, t_end=100.0)
         elapsed = time.perf_counter() - t0
-        assert elapsed < 2.0, f"1000 LIF sims took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="exact LIF solver",
+            observed_per_second=1_000 / elapsed,
+            strict_minimum_per_second=500.0,
+        )

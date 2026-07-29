@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_zoo_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSHDSpeechClassifier:
@@ -54,4 +55,8 @@ class TestSHDSpeechClassifier:
         t0 = time.perf_counter()
         net.run(0.05, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert n_neurons * 50 / elapsed > 100
+        assert_load_tolerant_throughput(
+            label="SHD model-zoo network",
+            observed_per_second=n_neurons * 50 / elapsed,
+            strict_minimum_per_second=100.0,
+        )
