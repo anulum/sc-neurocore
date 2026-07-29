@@ -115,6 +115,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert summary["known_evidence_classifications"] == [
         "analysis",
         "compile",
+        "cosim_parity",
         "default_flow",
         "local_regression",
         "project_workspace",
