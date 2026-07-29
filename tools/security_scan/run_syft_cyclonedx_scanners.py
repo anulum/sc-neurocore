@@ -25,6 +25,16 @@ except ModuleNotFoundError:  # pragma: no cover
 
 SYFT_CYCLONEDX_SCHEMA_VERSION = "sc-neurocore.syft-cyclonedx-scanner.v1"
 RunCommand = Callable[..., subprocess.CompletedProcess[str]]
+SYFT_EXCLUDE_GLOBS = (
+    "**/.git/**",
+    "**/.cache/**",
+    "**/.venv/**",
+    "**/.venv-*/**",
+    "**/.pixi/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/target/**",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +73,61 @@ def _project_identity(repo_root: Path) -> tuple[str, str]:
     return str(project["name"]), str(project["version"])
 
 
+def _project_license(repo_root: Path) -> str:
+    pyproject = tomllib.loads((repo_root / "pyproject.toml").read_text(encoding="utf-8"))
+    return str(pyproject["project"]["license"])
+
+
+def _component_licenses(component: dict[str, Any]) -> set[str]:
+    licenses: set[str] = set()
+    for entry in component.get("licenses", []):
+        if not isinstance(entry, dict):
+            continue
+        license_value = entry.get("license")
+        if not isinstance(license_value, dict):
+            continue
+        identifier = license_value.get("id") or license_value.get("name")
+        if isinstance(identifier, str):
+            licenses.add(identifier)
+    return licenses
+
+
+def _enrich_cyclonedx_root(
+    path: Path,
+    *,
+    project_name: str,
+    project_version: str,
+    project_license: str,
+) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+
+    metadata = payload.setdefault("metadata", {})
+    if not isinstance(metadata, dict):
+        return ["metadata must be an object for project enrichment"]
+    component = metadata.setdefault(
+        "component",
+        {
+            "type": "application",
+            "name": project_name,
+            "version": project_version,
+        },
+    )
+    if not isinstance(component, dict):
+        return ["metadata.component must be an object for project enrichment"]
+    if project_license not in _component_licenses(component):
+        licenses = component.setdefault("licenses", [])
+        if not isinstance(licenses, list):
+            return ["metadata.component.licenses must be a list"]
+        licenses.append({"license": {"id": project_license}})
+    _write_json(path, payload)
+    return []
+
+
 def _run(
     command: list[str],
     *,
@@ -80,7 +145,13 @@ def _run(
     )
 
 
-def _validate_cyclonedx_sbom(path: Path) -> tuple[list[str], int]:
+def _validate_cyclonedx_sbom(
+    path: Path,
+    *,
+    project_name: str,
+    project_version: str,
+    project_license: str,
+) -> tuple[list[str], int]:
     if not path.exists():
         return ["missing SBOM artifact"], 0
     try:
@@ -104,6 +175,17 @@ def _validate_cyclonedx_sbom(path: Path) -> tuple[list[str], int]:
         component_count = 0
     else:
         component_count = len(components)
+    metadata = payload.get("metadata")
+    root = metadata.get("component") if isinstance(metadata, dict) else None
+    if not isinstance(root, dict):
+        errors.append("metadata.component must be an object")
+    else:
+        if root.get("name") != project_name:
+            errors.append(f"metadata.component.name must be {project_name!r}")
+        if root.get("version") != project_version:
+            errors.append(f"metadata.component.version must be {project_version!r}")
+        if project_license not in _component_licenses(root):
+            errors.append(f"metadata.component must include license {project_license!r}")
     return errors, component_count
 
 
@@ -117,6 +199,7 @@ def run_syft_cyclonedx_scanner(
     security_dir.mkdir(parents=True, exist_ok=True)
     sbom_path = security_dir / "sbom.cdx.json"
     project_name, project_version = _project_identity(repo_root)
+    project_license = _project_license(repo_root)
     command = [
         "syft",
         ".",
@@ -124,11 +207,24 @@ def run_syft_cyclonedx_scanner(
         project_name,
         "--source-version",
         project_version,
-        "--output",
-        f"cyclonedx-json={sbom_path}",
     ]
+    for pattern in SYFT_EXCLUDE_GLOBS:
+        command.extend(("--exclude", pattern))
+    command.extend(("--output", f"cyclonedx-json={sbom_path}"))
     result = _run(command, repo_root=repo_root, run_command=run_command, timeout=300)
-    validation_errors, component_count = _validate_cyclonedx_sbom(sbom_path)
+    enrichment_errors = _enrich_cyclonedx_root(
+        sbom_path,
+        project_name=project_name,
+        project_version=project_version,
+        project_license=project_license,
+    )
+    validation_errors, component_count = _validate_cyclonedx_sbom(
+        sbom_path,
+        project_name=project_name,
+        project_version=project_version,
+        project_license=project_license,
+    )
+    validation_errors = enrichment_errors + validation_errors
     summary = {
         "schema_version": SYFT_CYCLONEDX_SCHEMA_VERSION,
         "passed": result.returncode == 0 and not validation_errors,

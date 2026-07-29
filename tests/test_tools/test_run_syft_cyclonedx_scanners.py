@@ -99,12 +99,37 @@ def test_runner_writes_and_validates_cyclonedx_sbom(tmp_path: Path) -> None:
             project_name,
             "--source-version",
             project_version,
+            "--exclude",
+            "**/.git/**",
+            "--exclude",
+            "**/.cache/**",
+            "--exclude",
+            "**/.venv/**",
+            "--exclude",
+            "**/.venv-*/**",
+            "--exclude",
+            "**/.pixi/**",
+            "--exclude",
+            "**/build/**",
+            "--exclude",
+            "**/node_modules/**",
+            "--exclude",
+            "**/target/**",
             "--output",
             f"cyclonedx-json={tmp_path / 'packet' / 'security' / 'sbom.cdx.json'}",
         ]
     ]
     assert summary["passed"] is True
     assert summary["component_count"] == 1
+    sbom = json.loads(
+        (tmp_path / "packet" / "security" / "sbom.cdx.json").read_text(encoding="utf-8")
+    )
+    assert sbom["metadata"]["component"] == {
+        "type": "application",
+        "name": project_name,
+        "version": project_version,
+        "licenses": [{"license": {"id": "AGPL-3.0-or-later"}}],
+    }
     assert (
         json.loads(
             (tmp_path / "packet" / "security" / "syft_cyclonedx_summary.json").read_text(
