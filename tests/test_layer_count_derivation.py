@@ -6,19 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Test for Conjecture C3/C18: 16 layers from free energy
 
-"""Test the Knm coupling matrix eigenspectrum.
+"""Test the exponential-decay Knm surrogate and its research boundary.
 
 Conjecture C3 (Round 3): The 16-layer structure is derivable from free energy
 minimization on a Stuart-Landau lattice.
 
 Conjecture C18 (Round 6): L=16 uniquely maximizes the minimum eigenvalue gap.
 
-Note: These conjectures require specific Knm parameters beyond simple
-exponential decay. The xfail-marked tests track the research hypothesis.
+The matrix in this module is only an exponential-distance surrogate; it is not
+the conjectured Stuart-Landau coupling model. Its eigengap decreases with layer
+count and therefore cannot provide evidence for C3/C18. The tests below lock
+that negative-control boundary until a sourced full model is implemented.
 """
 
 import numpy as np
-import pytest
 
 
 def build_knm(n_layers: int, k_base: float = 0.45, alpha: float = 0.3) -> np.ndarray:
@@ -42,42 +43,41 @@ def min_eigenvalue_gap(knm: np.ndarray) -> float:
     return float(np.min(np.abs(gaps)))
 
 
-class TestLayerCountDerivation:
-    @pytest.mark.xfail(reason="C18: requires full Stuart-Landau Knm, not exponential decay")
-    def test_16_maximizes_min_gap(self):
-        """Sweep L from 4 to 32 and verify L=16 has the largest min eigenvalue gap."""
+class TestExponentialDecayBoundary:
+    def test_minimum_gap_decreases_across_the_sweep(self) -> None:
+        """Prove the surrogate selects the smallest candidate, not 16 layers."""
+
         results = {}
-        for L in range(4, 33):
-            knm = build_knm(L)
-            results[L] = min_eigenvalue_gap(knm)
+        for layer_count in range(4, 33):
+            knm = build_knm(layer_count)
+            results[layer_count] = min_eigenvalue_gap(knm)
 
-        best_L = max(results, key=results.get)
-        assert 14 <= best_L <= 18, f"Expected L near 16, got {best_L}"
+        assert max(results, key=results.get) == 4
+        assert all(results[count] > results[count + 1] for count in range(4, 32))
 
-    @pytest.mark.xfail(reason="C18: exponential decay produces near-degenerate pairs")
-    def test_canonical_16_has_nondegenerate_spectrum(self):
-        """The canonical 16-layer Knm has no near-degenerate eigenvalue pairs."""
+    def test_16_layer_surrogate_has_near_degenerate_pairs(self) -> None:
+        """Record why the surrogate cannot support the nondegeneracy claim."""
+
         knm = build_knm(16)
         eigvals = np.sort(np.linalg.eigvalsh(knm))
         gaps = np.abs(np.diff(eigvals))
         spectral_range = eigvals[-1] - eigvals[0]
-        assert np.all(gaps > 0.01 * spectral_range)
+        assert np.any(gaps <= 0.01 * spectral_range)
 
-    @pytest.mark.xfail(reason="C18: gap ordering depends on Knm parametrization")
-    def test_small_and_large_L_have_smaller_gaps(self):
-        """L=8 and L=24 should have smaller min gaps than L=16."""
+    def test_selected_gap_order_is_opposite_the_conjecture(self) -> None:
+        """Keep the 8/16/24 negative control explicit and quantitative."""
+
         gap_8 = min_eigenvalue_gap(build_knm(8))
         gap_16 = min_eigenvalue_gap(build_knm(16))
         gap_24 = min_eigenvalue_gap(build_knm(24))
-        assert gap_16 > gap_8
-        assert gap_16 > gap_24
+        assert gap_8 > gap_16 > gap_24
 
-    def test_knm_is_symmetric(self):
+    def test_knm_is_symmetric(self) -> None:
         """Knm should be symmetric for real eigenvalues."""
         knm = build_knm(16)
         np.testing.assert_allclose(knm, knm.T)
 
-    def test_eigenvalues_span_nonzero_range(self):
+    def test_eigenvalues_span_nonzero_range(self) -> None:
         """The eigenspectrum should have a non-trivial range."""
         knm = build_knm(16)
         eigvals = np.linalg.eigvalsh(knm)
