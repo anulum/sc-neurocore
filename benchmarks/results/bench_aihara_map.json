@@ -1,0 +1,121 @@
+{
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 120000,
+      "event_count_matches_python": true,
+      "median_call_ms": 19.569715,
+      "minimum_call_ms": 15.535761,
+      "parity_max_abs_diff": 2.220446049250313e-16,
+      "samples_ms": [
+        37.329166,
+        19.569715,
+        15.535761
+      ],
+      "speedup_vs_python": 21.336003309194847,
+      "y_final": 0.029895998794140066
+    },
+    "julia": {
+      "available": true,
+      "event_count": 120000,
+      "event_count_matches_python": true,
+      "median_call_ms": 39.647253,
+      "minimum_call_ms": 30.465286,
+      "parity_max_abs_diff": 0.0,
+      "samples_ms": [
+        30.465286,
+        39.647253,
+        49.833988
+      ],
+      "speedup_vs_python": 10.531360243293527,
+      "y_final": 0.029895998794140066
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 120000,
+      "event_count_matches_python": true,
+      "median_call_ms": 28.979007,
+      "minimum_call_ms": 27.324941,
+      "parity_max_abs_diff": 5.262457136723242e-14,
+      "samples_ms": [
+        29.356394,
+        27.324941,
+        28.979007
+      ],
+      "speedup_vs_python": 14.408344081631231,
+      "y_final": 0.029895998794134404
+    },
+    "python": {
+      "available": true,
+      "event_count": 120000,
+      "event_count_matches_python": true,
+      "median_call_ms": 417.539504,
+      "minimum_call_ms": 396.958896,
+      "parity_max_abs_diff": 0.0,
+      "samples_ms": [
+        396.958896,
+        417.539504,
+        505.704145
+      ],
+      "speedup_vs_python": 1.0,
+      "y_final": 0.029895998794140066
+    },
+    "rust": {
+      "available": true,
+      "event_count": 120000,
+      "event_count_matches_python": true,
+      "median_call_ms": 72.172124,
+      "minimum_call_ms": 61.428269,
+      "parity_max_abs_diff": 0.0,
+      "samples_ms": [
+        72.172124,
+        61.428269,
+        85.870988
+      ],
+      "speedup_vs_python": 5.785329305259189,
+      "y_final": 0.029895998794140066
+    }
+  },
+  "environment": {
+    "affinity": [
+      4
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "load_average": [
+      14.8037109375,
+      17.47607421875,
+      17.291015625
+    ],
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "scope": "local diagnostic regression evidence; not a portable ranking",
+    "single_cpu_pinned": true
+  },
+  "kernel": "aihara_map_chaotic_batch",
+  "measured_order": [
+    "go",
+    "mojo",
+    "julia",
+    "rust",
+    "python"
+  ],
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_aihara_map.py": "5c991fc9a8ea7688fa06bc792573b69f036e016a4aa1c8ab18a39ab92d01c7ea",
+    "engine/src/bindings/maps/aihara_map.rs": "3dbf302ac590f0134db4ca13daaae41c2c67e96752a806e656e5241165761458",
+    "engine/src/neurons/aihara_map.rs": "176526f0d05896b2c34d3a746564a6da9441f040e701a56134b8dc18a748b601",
+    "src/sc_neurocore/accel/aihara_map.py": "7102cfbe9e5a0f36ec5bfb9134570810a2ef1842f795efaf7661a979f4401739",
+    "src/sc_neurocore/accel/go/aihara_map/aihara_map.go": "8bc56090146dc09b137d61be3f999a896cb591635fcdb5df1e5dbf59fd2f033d",
+    "src/sc_neurocore/accel/julia/neurons/aihara_map_neuron.jl": "f001b27719a9993f7e2466b9055504673cab95e221e66ec3093aff9cc58f155d",
+    "src/sc_neurocore/accel/mojo/aihara_map/aihara_map.mojo": "471a8021476444ac8f8e4fd40d2a5ab6d8d8b5f5409e1a578552165f44f7be09",
+    "src/sc_neurocore/neurons/models/aihara_map_neuron.py": "7d5411cac0fa326159f0a4b11b3895e2ab658126e7aef0f0d42e9df3c80aa67c"
+  },
+  "workload": {
+    "bias": 0.6288,
+    "current": 0.0,
+    "n_steps": 200000,
+    "repeats": 3,
+    "source_anchor": "Aihara 1989 Figure 4 periodic operating point"
+  }
+}

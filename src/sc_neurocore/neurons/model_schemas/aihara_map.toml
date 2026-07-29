@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — primary-equation Aihara map schema
+
+[metadata]
+schema_version = 1
+name = "Aihara Map"
+author = "Aihara, K.; Takabe, T.; Toyoda, M."
+year = 1990
+doi = "10.1016/0375-9601(90)90136-C"
+description = "Aihara reduced one-state chaotic neuron with logistic graded output"
+
+[state]
+y = 0.1
+
+[parameters]
+k = 0.7
+alpha = 1.0
+bias = 0.3968
+epsilon = 0.01
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+# Aihara (1989) Eqs. 10-11, with g(x)=x and the additive stimulus exposed as I.
+y = "k * y - alpha * sigmoid(y / epsilon) + bias + I"
+
+[threshold]
+# Eq. 12 is a level waveform shaper h(x), not an edge detector. Since the
+# logistic is monotone, x(t+1)>=0.5 is exactly y(t+1)>=0.
+condition = "y >= 0.0"
+detection = "level"
+
+[extensions]
+model_type = "map"
+discrete_time = true
+source_equation_note = "Aihara (1989), RIMS Kokyuroku 710, Eqs. 8-12; the manuscript cites the 1990 Aihara-Takabe-Toyoda article as submitted."
+input_note = "I is the effective additive stimulus a(t); raw A(t) requires the Eq. 5 temporal transform."
+defaults_note = "y0=0.1 is the Figure 5 initial condition; k=0.7, bias=0.3968, epsilon=0.01 and alpha=1 are the Figure 4 chaotic operating point."

@@ -4,27 +4,18 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Aihara chaotic map neuron
+// SC-NeuroCore — source-faithful Aihara chaotic neuron
 
-/// Aihara 1990 — chaotic neuron map with sigmoid nonlinearity.
-///
-/// 2D discrete map producing chaotic spiking, bursting, and tonic firing
-/// depending on parameters. The sigmoid output function models the
-/// nonlinear voltage-to-firing-rate relationship.
-///
-/// x(n+1) = k_f * x(n) / (1 + exp(-(x(n) + alpha))) - y(n) + I
-/// y(n+1) = k_s * y(n) + delta * x(n)
-///
-/// Aihara et al., Phys Lett A 144:333, 1990.
+//! Checked implementation of Aihara's reduced one-state map (1989, Eqs. 10-12).
+
+/// Aihara's internal-state map and graded logistic output.
 #[derive(Clone, Debug)]
 pub struct AiharaMapNeuron {
-    pub x: f64,
     pub y: f64,
-    pub k_f: f64,
-    pub k_s: f64,
+    pub k: f64,
     pub alpha: f64,
-    pub delta: f64,
-    pub x_threshold: f64,
+    pub bias: f64,
+    pub epsilon: f64,
 }
 
 impl Default for AiharaMapNeuron {
@@ -36,42 +27,141 @@ impl Default for AiharaMapNeuron {
 impl AiharaMapNeuron {
     pub fn new() -> Self {
         Self {
-            x: 0.0,
-            y: 0.0,
-            k_f: 0.7,
-            k_s: 0.95,
-            alpha: 2.0,
-            delta: 0.05,
-            x_threshold: 0.5,
+            y: 0.1,
+            k: 0.7,
+            alpha: 1.0,
+            bias: 0.3968,
+            epsilon: 0.01,
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let x_prev = self.x;
-        let sigmoid = 1.0 / (1.0 + (-(self.x + self.alpha)).exp());
-        let x_new = self.k_f * self.x * sigmoid - self.y + current;
-        let y_new = self.k_s * self.y + self.delta * self.x;
-
-        self.x = x_new.clamp(-10.0, 10.0);
-        self.y = y_new.clamp(-10.0, 10.0);
-
-        if !self.x.is_finite() {
-            self.x = 0.0;
-        }
-        if !self.y.is_finite() {
-            self.y = 0.0;
-        }
-
-        if self.x >= self.x_threshold && x_prev < self.x_threshold {
-            1
+    fn logistic(value: f64, epsilon: f64) -> f64 {
+        let argument = value / epsilon;
+        if argument >= 0.0 {
+            1.0 / (1.0 + (-argument).exp())
         } else {
-            0
+            let exponential = argument.exp();
+            exponential / (1.0 + exponential)
         }
+    }
+
+    fn valid(&self) -> bool {
+        [self.y, self.k, self.alpha, self.bias, self.epsilon]
+            .iter()
+            .all(|value| value.is_finite())
+            && (0.0..1.0).contains(&self.k)
+            && self.alpha > 0.0
+            && self.epsilon > 0.0
+    }
+
+    /// Current graded output `x(t)=f(y(t))` from Eq. 11.
+    pub fn output(&self) -> f64 {
+        Self::logistic(self.y, self.epsilon)
+    }
+
+    /// Checked Eq. 10 update; failures never mutate state.
+    pub fn try_step(&mut self, current: f64) -> Result<i32, AiharaMapError> {
+        if !self.valid() {
+            return Err(AiharaMapError::InvalidConfiguration);
+        }
+        if !current.is_finite() {
+            return Err(AiharaMapError::NonFiniteInput);
+        }
+        let next_y = self.k * self.y - self.alpha * self.output() + self.bias + current;
+        if !next_y.is_finite() {
+            return Err(AiharaMapError::NonFiniteCandidate);
+        }
+        let event = i32::from(Self::logistic(next_y, self.epsilon) >= 0.5);
+        self.y = next_y;
+        Ok(event)
+    }
+
+    /// Compatibility update for the engine network runner.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.y = 0.1;
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AiharaMapError {
+    InvalidConfiguration,
+    NonFiniteInput,
+    NonFiniteCandidate,
+    StepLimitExceeded,
+}
+
+impl std::fmt::Display for AiharaMapError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(match self {
+            Self::InvalidConfiguration => "invalid Aihara state or parameters",
+            Self::NonFiniteInput => "current must contain only finite values",
+            Self::NonFiniteCandidate => "Aihara map candidate must be finite",
+            Self::StepLimitExceeded => "current exceeds the signed-32-bit step limit",
+        })
+    }
+}
+
+impl std::error::Error for AiharaMapError {}
+
+#[derive(Clone, Debug)]
+pub struct AiharaMapBatchResult {
+    pub y: Vec<f64>,
+    pub x: Vec<f64>,
+    pub spikes: Vec<u8>,
+    pub y_final: f64,
+    pub x_final: f64,
+    pub spike_count: usize,
+}
+
+/// Run an atomically validated piecewise-stimulus batch.
+pub fn simulate_aihara_map(
+    y: f64,
+    k: f64,
+    alpha: f64,
+    bias: f64,
+    epsilon: f64,
+    current: &[f64],
+) -> Result<AiharaMapBatchResult, AiharaMapError> {
+    if current.len() > i32::MAX as usize {
+        return Err(AiharaMapError::StepLimitExceeded);
+    }
+    let mut neuron = AiharaMapNeuron {
+        y,
+        k,
+        alpha,
+        bias,
+        epsilon,
+    };
+    if !neuron.valid() {
+        return Err(AiharaMapError::InvalidConfiguration);
+    }
+    if current.iter().any(|value| !value.is_finite()) {
+        return Err(AiharaMapError::NonFiniteInput);
+    }
+
+    let mut y_trace = Vec::with_capacity(current.len());
+    let mut x_trace = Vec::with_capacity(current.len());
+    let mut spikes = Vec::with_capacity(current.len());
+    let mut spike_count = 0usize;
+    for &drive in current {
+        let event = neuron.try_step(drive)?;
+        y_trace.push(neuron.y);
+        x_trace.push(neuron.output());
+        spikes.push(event as u8);
+        spike_count += event as usize;
+    }
+    Ok(AiharaMapBatchResult {
+        y: y_trace,
+        x: x_trace,
+        spikes,
+        y_final: neuron.y,
+        x_final: neuron.output(),
+        spike_count,
+    })
 }
 
 #[cfg(test)]
@@ -79,94 +169,53 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fires_with_input() {
+    fn first_step_matches_primary_equation() {
         let mut neuron = AiharaMapNeuron::new();
-        let spikes: i32 = (0..2000).map(|_| neuron.step(1.0)).sum();
-        assert!(spikes > 0, "Aihara must fire with input, got {spikes}");
+        let expected = 0.7 * 0.1 - 1.0 / (1.0 + (-10.0_f64).exp()) + 0.3968;
+        assert_eq!(neuron.try_step(0.0), Ok(0));
+        assert!((neuron.y - expected).abs() < 1.0e-15);
     }
 
     #[test]
-    fn silent_without_input() {
+    fn waveform_shaper_is_a_level_observable() {
         let mut neuron = AiharaMapNeuron::new();
-        let spikes: i32 = (0..5000).map(|_| neuron.step(0.0)).sum();
-        assert_eq!(
-            spikes, 0,
-            "Aihara must be silent without input, got {spikes}"
-        );
+        neuron.y = -0.1;
+        neuron.k = 0.0;
+        neuron.alpha = 1.0;
+        neuron.bias = 0.2;
+        assert_eq!(neuron.try_step(0.0), Ok(1));
+        neuron.alpha = 0.01;
+        assert_eq!(neuron.try_step(0.0), Ok(1));
     }
 
     #[test]
-    fn chaotic_dynamics() {
-        let mut neuron = AiharaMapNeuron::new();
-        let mut values = Vec::new();
-        for _ in 0..1000 {
-            neuron.step(0.5);
-            values.push(neuron.x);
-        }
-        let mean = values.iter().sum::<f64>() / values.len() as f64;
-        let variance = values
-            .iter()
-            .map(|value| (value - mean).powi(2))
-            .sum::<f64>()
-            / values.len() as f64;
-        assert!(variance > 0.001, "trajectory variance={variance}");
+    fn invalid_batch_is_atomic() {
+        let result = simulate_aihara_map(0.1, 0.7, 1.0, 0.3968, 0.01, &[0.0, f64::NAN]);
+        assert_eq!(result.unwrap_err(), AiharaMapError::NonFiniteInput);
     }
 
     #[test]
-    fn negative_input_stays_finite() {
-        let mut neuron = AiharaMapNeuron::new();
-        for _ in 0..10_000 {
-            neuron.step(-100.0);
-        }
-        assert!(neuron.x.is_finite());
+    fn source_defaults_are_bounded_and_nontrivial() {
+        let drive = vec![0.0; 4096];
+        let result = simulate_aihara_map(0.1, 0.7, 1.0, 0.3968, 0.01, &drive).unwrap();
+        assert!(result.y.iter().all(|value| value.is_finite()));
+        assert!(result.spike_count > 0 && result.spike_count < drive.len());
     }
 
     #[test]
-    fn nan_input_stays_finite() {
-        let mut neuron = AiharaMapNeuron::new();
-        neuron.step(f64::NAN);
-        assert!(neuron.x.is_finite());
-    }
-
-    #[test]
-    fn extreme_input_is_bounded() {
-        let mut neuron = AiharaMapNeuron::new();
-        for _ in 0..1000 {
-            neuron.step(1e6);
-        }
-        assert!(neuron.x.is_finite() && neuron.x <= 1e6);
-    }
-
-    #[test]
-    fn reset_clears_state() {
-        let mut neuron = AiharaMapNeuron::new();
-        for _ in 0..100 {
-            neuron.step(1.0);
-        }
+    fn reset_preserves_parameters() {
+        let mut neuron = AiharaMapNeuron {
+            y: -2.0,
+            k: 0.6,
+            alpha: 2.0,
+            bias: 0.5,
+            epsilon: 0.015,
+        };
         neuron.reset();
-        assert_eq!(neuron.x, 0.0);
-        assert_eq!(neuron.y, 0.0);
-    }
-
-    #[test]
-    fn rate_increases_with_input() {
-        let mut low = AiharaMapNeuron::new();
-        let mut high = AiharaMapNeuron::new();
-        let spikes_low: i32 = (0..5000).map(|_| low.step(0.5)).sum();
-        let spikes_high: i32 = (0..5000).map(|_| high.step(2.0)).sum();
-        assert!(
-            spikes_high >= spikes_low,
-            "high={spikes_high}, low={spikes_low}"
+        assert_eq!(neuron.y, 0.1);
+        assert_eq!(
+            (neuron.k, neuron.alpha, neuron.bias, neuron.epsilon),
+            (0.6, 2.0, 0.5, 0.015)
         );
-    }
-
-    #[test]
-    fn performance_100k_steps() {
-        let start = std::time::Instant::now();
-        let mut neuron = AiharaMapNeuron::new();
-        for _ in 0..100_000 {
-            std::hint::black_box(neuron.step(0.5));
-        }
-        assert!(start.elapsed().as_millis() < 50);
     }
 }

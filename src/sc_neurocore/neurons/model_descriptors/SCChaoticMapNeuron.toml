@@ -1,0 +1,100 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — SC two-state chaotic map descriptor
+
+[metadata]
+schema_version = 2
+name = "SCChaoticMapNeuron"
+class_name = "SCChaoticMapNeuron"
+module = "sc_chaotic_map_neuron"
+display_name = "SC two-state chaotic map"
+summary = "Project-designed two-state sigmoid-gated map preserved under an honest SC identity."
+family = "Map-based"
+category = "map-based"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = ["engineering experiments", "bounded chaotic-map studies"]
+hardware_fit = []
+behavior_tags = ["chaotic", "two-state", "project-designed"]
+
+[provenance]
+authors = ["SC-NeuroCore project"]
+year = 2026
+doi = ""
+
+[state.x]
+init = 0.0
+[state.y]
+init = 0.0
+
+[parameters.k_f]
+default = 0.7
+unit = "1"
+meaning = "fast-state gain"
+range = [0.0, 10.0]
+[parameters.k_s]
+default = 0.95
+unit = "1"
+meaning = "slow-state retention"
+range = [-10.0, 10.0]
+[parameters.alpha]
+default = 2.0
+unit = "1"
+meaning = "sigmoid offset"
+range = [-10.0, 10.0]
+[parameters.delta]
+default = 0.05
+unit = "1"
+meaning = "fast-to-slow coupling"
+range = [0.0, 10.0]
+[parameters.x_threshold]
+default = 0.5
+unit = "1"
+meaning = "upward-crossing event threshold"
+range = [-10.0, 10.0]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "clamp(k_f * x * sigmoid(x + alpha) - y + I, -10, 10)"
+y = "clamp(k_s * y + delta * x, -10, 10)"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[documentation]
+slug = "models/sc_chaotic_map"
+notes = "This recurrence is not attributed to Aihara 1990 and is not yet polyglot-complete."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "historical SC-NeuroCore defaults"
+tolerance = "binary64 unit checks"
+evidence = "tests/test_model_sc_chaotic_map_neuron.py; tests/test_sc_chaotic_map_backends.py; engine/src/neurons/sc_chaotic_map.rs; src/sc_neurocore/accel/go/services/sc_chaotic_map_neuron_test.go"
+
+[silicon]
+compiles = false
+cosim_validated = false
+cosim_evidence = ""
+target_tier = "H0"
+terminal_reason = "Preserved as a distinct project model; full high-fidelity closure remains future work."

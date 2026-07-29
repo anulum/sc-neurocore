@@ -93,6 +93,8 @@ try:
         MedvedevMapNeuron,
         CazellesMapNeuron,
         CourageNekorkinMapNeuron,
+        AiharaMapNeuron,
+        SCChaoticMapNeuron,
         HodgkinHuxleyNeuron,
         TraubMilesNeuron,
         WangBuzsakiNeuron,
@@ -559,6 +561,22 @@ try:
     _chialvo_rust_available = True
 except ImportError:
     _chialvo_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_aihara_map_simulate
+
+    __all__ += ["py_aihara_map_simulate"]
+    _aihara_rust_available = True
+except ImportError:
+    _aihara_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_sc_chaotic_map_simulate
+
+    __all__ += ["py_sc_chaotic_map_simulate"]
+    _sc_chaotic_map_rust_available = True
+except ImportError:
+    _sc_chaotic_map_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

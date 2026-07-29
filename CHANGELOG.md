@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Split two previously conflated model identities: `AiharaMapNeuron` now uses
+  Aihara's primary-author one-state recurrence and Eq. 12 level waveform
+  shaper, while the original SC two-state recurrence remains available as the
+  explicitly project-designed `SCChaoticMapNeuron`. The SC model retains its
+  two-state recurrence with measured Python/Rust/Julia/Go/Mojo trajectory and
+  event parity. Separately, all Aihara lanes now share the source Figure 4/5
+  parameter anchors, checked batch receipts, paired schemas, an independent
+  primary-equation trace, dedicated documentation, Q8.24 bounded co-simulation,
+  a depth-6 Z3 proof, and a source-periodic benchmark.
 - Raised the Python coverage gate from 98% through the intermediate 99% ratchet
   to 100% in `pyproject.toml`, the primary CI matrix leg, and local preflight.
   The retained aggregate at tip `2e6118ba5` is 65,373/65,373 statements; the

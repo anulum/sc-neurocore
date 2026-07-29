@@ -243,6 +243,24 @@ The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
 Its depth-4 SymbiYosys/Z3 job proves the bounded reset/spike safety property;
 the Q16.16 operating set remains the behavioural evidence.
 
+### Aihara map Q8.24 bounded chaotic shadowing
+
+The `aihara_map` schemas encode Aihara's reduced one-state Eqs. 10–11 and the
+Eq. 12 level waveform shaper. They do not retain the former unrelated
+two-state fast/recovery recurrence or reinterpret the level output as an
+upward crossing. The Figure 4 chaotic defaults are `k=0.7`, `alpha=1`,
+`bias=0.3968`, and `epsilon=0.01`, with `y0=0.1`.
+
+Hand, TOML, and JSON trajectories agree exactly. The committed Q8.24 core
+preserves all 12 autonomous event decisions in the enrolled short horizon and
+keeps the internal-state error below `0.01`. The short horizon is a scientific
+boundary: sigmoid LUT quantisation and binary64 `exp` differences amplify on a
+chaotic orbit, so long-window pointwise identity is not claimed.
+
+The depth-6 SymbiYosys/Z3 job proves reset hygiene and the public Eq. 12
+relation between the state sign and event output. A regression test also pins
+the explicit signed casts required at the generated sigmoid-LUT boundary.
+
 ### Medvedev first-return Q16.16 enrolment
 
 The `medvedev_map` schema is the scalar slow-calcium first-return reduction in
@@ -429,8 +447,8 @@ python tools/schema_gap_report.py --format markdown --output docs/internal/schem
 The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
-and a ranked enrolment table. The current checkout has 153 model source modules,
-32 unique schema models, a net schema gap of 121, and 123 source-module rows
+and a ranked enrolment table. The current checkout has 154 model source modules,
+32 unique schema models, a net schema gap of 122, and 124 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

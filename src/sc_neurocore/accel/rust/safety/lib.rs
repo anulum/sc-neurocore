@@ -351,6 +351,7 @@ pub mod resonate_and_fire;
 pub mod resource_optimizer;
 pub mod rng;
 pub mod rulkov_map;
+pub mod sc_chaotic_map_neuron;
 pub mod safety;
 pub mod safety_monitor;
 pub mod sc_conv_layer;

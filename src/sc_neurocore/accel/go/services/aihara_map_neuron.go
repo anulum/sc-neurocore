@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for aihara_map_neuron
+// SC-NeuroCore — source-faithful Go Aihara service
 
 package services
 
@@ -13,95 +13,74 @@ import (
 	"math"
 )
 
-// AiharaMapNeuronState holds the neuron state
+// AiharaMapNeuronState is the one independent state and source parameters.
 type AiharaMapNeuronState struct {
-	X          float64
-	Y          float64
-	KF         float64
-	KS         float64
-	Alpha      float64
-	Delta      float64
-	XThreshold float64
+	Y       float64
+	K       float64
+	Alpha   float64
+	Bias    float64
+	Epsilon float64
 }
 
-// NewAiharaMapNeuron creates a new AiharaMapNeuron neuron with default parameters
 func NewAiharaMapNeuron() *AiharaMapNeuronState {
-	return &AiharaMapNeuronState{
-		X:          0.0,
-		Y:          0.0,
-		KF:         0.7,
-		KS:         0.95,
-		Alpha:      2.0,
-		Delta:      0.05,
-		XThreshold: 0.5,
-	}
+	return &AiharaMapNeuronState{Y: 0.1, K: 0.7, Alpha: 1.0, Bias: 0.3968, Epsilon: 0.01}
 }
 
 func finiteAiharaMap(value float64) bool {
 	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
-func logisticAiharaMap(z float64) float64 {
-	if z >= 0.0 {
-		return 1.0 / (1.0 + math.Exp(-z))
+func logisticAiharaMap(value, epsilon float64) float64 {
+	argument := value / epsilon
+	if argument >= 0.0 {
+		return 1.0 / (1.0 + math.Exp(-argument))
 	}
-	expZ := math.Exp(z)
-	return expZ / (1.0 + expZ)
+	exponential := math.Exp(argument)
+	return exponential / (1.0 + exponential)
 }
 
-// ValidateAiharaMap checks chaotic-map state and numerical parameters.
-func ValidateAiharaMap(s *AiharaMapNeuronState) bool {
-	if s == nil {
-		return false
-	}
-	return finiteAiharaMap(s.X) &&
-		finiteAiharaMap(s.Y) &&
-		finiteAiharaMap(s.KF) && s.KF >= 0.0 &&
-		finiteAiharaMap(s.KS) &&
-		finiteAiharaMap(s.Alpha) &&
-		finiteAiharaMap(s.Delta) && s.Delta >= 0.0 &&
-		finiteAiharaMap(s.XThreshold)
+func ValidateAiharaMap(state *AiharaMapNeuronState) bool {
+	return state != nil && finiteAiharaMap(state.Y) && finiteAiharaMap(state.K) &&
+		state.K >= 0.0 && state.K < 1.0 && finiteAiharaMap(state.Alpha) &&
+		state.Alpha > 0.0 && finiteAiharaMap(state.Bias) &&
+		finiteAiharaMap(state.Epsilon) && state.Epsilon > 0.0
 }
 
-// Step advances the neuron by one timestep
-func (s *AiharaMapNeuronState) Step(iExt float64) (int, error) {
-	if !ValidateAiharaMap(s) {
+func (state *AiharaMapNeuronState) Output() float64 {
+	return logisticAiharaMap(state.Y, state.Epsilon)
+}
+
+// Step applies Eqs. 10-12; rejected updates do not mutate state.
+func (state *AiharaMapNeuronState) Step(current float64) (int, error) {
+	if !ValidateAiharaMap(state) {
 		return 0, errors.New("invalid Aihara map runtime state")
 	}
-	if !finiteAiharaMap(iExt) {
+	if !finiteAiharaMap(current) {
 		return 0, errors.New("invalid Aihara map current")
 	}
-
-	xPrev := s.X
-	sigmoid := logisticAiharaMap(s.X + s.Alpha)
-	xNew := s.KF*s.X*sigmoid - s.Y + iExt
-	yNew := s.KS*s.Y + s.Delta*s.X
-	if !finiteAiharaMap(xNew) || !finiteAiharaMap(yNew) {
+	nextY := state.K*state.Y - state.Alpha*state.Output() + state.Bias + current
+	if !finiteAiharaMap(nextY) {
 		return 0, errors.New("invalid Aihara map candidate state")
 	}
-	s.X = math.Min(10.0, math.Max(-10.0, xNew))
-	s.Y = math.Min(10.0, math.Max(-10.0, yNew))
-	if s.X >= s.XThreshold && xPrev < s.XThreshold {
+	state.Y = nextY
+	if state.Output() >= 0.5 {
 		return 1, nil
 	}
 	return 0, nil
 }
 
-// SimulateAiharaMapNeuron runs the neuron for n steps
-func SimulateAiharaMapNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewAiharaMapNeuron()
+func SimulateAiharaMapNeuron(nSteps int, current float64) ([]float64, int) {
+	state := NewAiharaMapNeuron()
 	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
+	events := 0
+	for index := range trace {
+		event, err := state.Step(current)
 		if err != nil {
-			trace[t] = math.NaN()
+			trace[index] = math.NaN()
 			continue
 		}
-		trace[t] = s.X
-		if result > 0 {
-			spikes++
-		}
+		trace[index] = state.Y
+		events += event
 	}
-	return trace, spikes
+	return trace, events
 }

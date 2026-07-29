@@ -169,6 +169,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             CourageNekorkinMapNeuron::new(),
         )),
         "AiharaMap" | "AiharaMapNeuron" => Ok(NeuronVariant::AiharaMap(AiharaMapNeuron::new())),
+        "SCChaoticMap" | "SCChaoticMapNeuron" => {
+            Ok(NeuronVariant::SCChaoticMap(SCChaoticMapNeuron::new()))
+        }
         "KilincBhattMap" | "KilincBhattMapNeuron" => {
             Ok(NeuronVariant::KilincBhattMap(KilincBhattMapNeuron::new()))
         }
@@ -443,6 +446,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "CazellesMap",
         "CourageNekorkinMap",
         "AiharaMap",
+        "SCChaoticMap",
         "KilincBhattMap",
         "ErmentroutKopellMap",
         "BrainScaleSAdEx",

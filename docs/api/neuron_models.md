@@ -1,8 +1,8 @@
-# Neuron Model Reference — 158 Python Classes / 186 Rust PyO3 Wrappers
+# Neuron Model Reference — 159 Python Classes / 187 Rust PyO3 Wrappers
 
-SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
-153 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
-186 Rust PyO3 model wrappers in the optional engine. Matching model classes
+SC-NeuroCore currently exposes 159 lazy-loaded Python model classes across
+154 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
+187 Rust PyO3 model wrappers in the optional engine. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
 backend implements that surface.
 
@@ -10,11 +10,11 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today (41 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> page. Polyglot-complete today (43 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
 > Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF, McCulloch-Pitts, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
 > Pernarowski, Terman-Wang,
-> Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
+> Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Aihara map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell, Sigmoid Rate,
 > Threshold Linear Rate, Wilson-Cowan, Wong-Wang, Jansen-Rit,
 > Montbrió-Pazó-Roxin (`ErmentroutKopellPopulation`), Resonate-and-Fire, and
@@ -44,8 +44,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 186 Rust PyO3 model wrappers,
-162 of which are wired into the NetworkRunner pipeline.
+`HodgkinHuxleyNeuron`). The Rust engine provides 187 Rust PyO3 model wrappers,
+163 of which are wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -57,9 +57,9 @@ caches the resolved Python class for later imports.
 
 `tests/test_rust_python_neuron_parity.py` is the live coverage map for the
 Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
-capability inventory above counts 158 static classes in
+capability inventory above counts 159 static classes in
 `src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
-160 public Python registry names because `HybridFisherPosnerLIFNeuron` and
+161 public Python registry names because `HybridFisherPosnerLIFNeuron` and
 `StochasticLIFNeuron` are re-exported (from
 `sc_neurocore.quantum_cognition.fisher_posner` for population dispatch and
 `sc_neurocore.neurons.stochastic_lif` for the torch-free public root import,
@@ -67,12 +67,12 @@ respectively) rather than defined as static classes under `neurons/models/`.
 
 Current binding disposition:
 
-The current registry map records 146 same-name Rust constructors,
+The current registry map records 147 same-name Rust constructors,
 9 Rust-prefixed or core-only constructors, and 5 Python-only registry names.
 
 | Disposition | Count | Contract |
 |-------------|------:|----------|
-| Same-name Rust constructors | 146 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
+| Same-name Rust constructors | 147 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 9 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
 | Python-only registry names | 5 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 
@@ -248,11 +248,13 @@ raw TOML descriptor.
 | `LearnableNeuronModel` | `LearnableNeuronModel` | — |
 | `PernarowskiNeuron` | `PernarowskiNeuron` | Pernarowski 1994 |
 
-### Discrete Maps (7 models)
+### Discrete Maps (9 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
 | `ChialvoMapNeuron` | `ChialvoMapNeuron` | Chialvo 1995 |
+| `AiharaMapNeuron` | `AiharaMapNeuron` | Aihara, Takabe & Toyoda 1990; reduced map in Aihara 1989, Eqs. 10–12 |
+| `SCChaoticMapNeuron` | `SCChaoticMapNeuron` | SC-NeuroCore project model; no Aihara attribution |
 | `RulkovMapNeuron` | `RulkovMapNeuron` | Rulkov 2001 |
 | `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz, Tanaka, Sanjuan & Aihara 2007, Eqs. 2–3 |
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 slow-calcium first-return reduction |

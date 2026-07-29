@@ -4,87 +4,83 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for aihara_map_neuron
+// SC-NeuroCore — Rust safety mirror for Aihara Eqs. 10-12
 
-#![allow(unused_variables, dead_code, non_snake_case)]
+#![allow(dead_code)]
 
 #[derive(Debug, Clone)]
 pub struct AiharaMapNeuron {
-    pub x: f64,
     pub y: f64,
-    pub k_f: f64,
-    pub k_s: f64,
+    pub k: f64,
     pub alpha: f64,
-    pub delta: f64,
-    pub x_threshold: f64,
+    pub bias: f64,
+    pub epsilon: f64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AiharaMapError {
+    InvalidInput,
+    InvalidState,
+    NonFiniteUpdate,
+}
+
+impl Default for AiharaMapNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AiharaMapNeuron {
     pub fn new() -> Self {
         Self {
-            x: 0.0_f64,
-            y: 0.0_f64,
-            k_f: 0.7_f64,
-            k_s: 0.95_f64,
-            alpha: 2.0_f64,
-            delta: 0.05_f64,
-            x_threshold: 0.5_f64,
+            y: 0.1,
+            k: 0.7,
+            alpha: 1.0,
+            bias: 0.3968,
+            epsilon: 0.01,
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
-        if !validate_aihara_map_neuron(self) {
-            return Err("invalid Aihara map runtime state");
-        }
-        if !i_ext.is_finite() {
-            return Err("invalid Aihara map current");
-        }
+    pub fn output(&self) -> f64 {
+        logistic(self.y / self.epsilon)
+    }
 
-        let x_prev = self.x;
-        let sigmoid = logistic(self.x + self.alpha);
-        let x_new = self.k_f * self.x * sigmoid - self.y + i_ext;
-        let y_new = self.k_s * self.y + self.delta * self.x;
-        if !x_new.is_finite() || !y_new.is_finite() {
-            return Err("invalid Aihara map candidate state");
+    pub fn step(&mut self, current: f64) -> Result<i32, AiharaMapError> {
+        if !current.is_finite() {
+            return Err(AiharaMapError::InvalidInput);
         }
-        self.x = x_new.clamp(-10.0, 10.0);
-        self.y = y_new.clamp(-10.0, 10.0);
-        Ok(if self.x >= self.x_threshold && x_prev < self.x_threshold {
-            1
-        } else {
-            0
-        })
+        if !validate_aihara_map_neuron(self) {
+            return Err(AiharaMapError::InvalidState);
+        }
+        let next_y = self.k * self.y - self.alpha * self.output() + self.bias + current;
+        if !next_y.is_finite() {
+            return Err(AiharaMapError::NonFiniteUpdate);
+        }
+        let event = i32::from(logistic(next_y / self.epsilon) >= 0.5);
+        self.y = next_y;
+        Ok(event)
     }
 
     pub fn reset(&mut self) {
-        // self.x = 0.0
-        // self.y = 0.0
-        self.x = 0.0_f64;
-        self.y = 0.0_f64;
-        self.k_f = 0.7_f64;
-        self.k_s = 0.95_f64;
-        self.alpha = 2.0_f64;
+        self.y = 0.1;
     }
 }
 
 pub fn validate_aihara_map_neuron(state: &AiharaMapNeuron) -> bool {
-    state.x.is_finite()
-        && state.y.is_finite()
-        && state.k_f.is_finite()
-        && state.k_f >= 0.0
-        && state.k_s.is_finite()
-        && state.alpha.is_finite()
-        && state.delta.is_finite()
-        && state.delta >= 0.0
-        && state.x_threshold.is_finite()
+    [state.y, state.k, state.alpha, state.bias, state.epsilon]
+        .iter()
+        .all(|value| value.is_finite())
+        && (0.0..1.0).contains(&state.k)
+        && state.alpha > 0.0
+        && state.epsilon > 0.0
 }
 
-fn logistic(z: f64) -> f64 {
-    if z >= 0.0 {
-        1.0 / (1.0 + (-z).exp())
+fn logistic(argument: f64) -> f64 {
+    if argument >= 0.0 {
+        1.0 / (1.0 + (-argument).exp())
     } else {
-        let exp_z = z.exp();
-        exp_z / (1.0 + exp_z)
+        let exponential = argument.exp();
+        exponential / (1.0 + exponential)
     }
 }
 
@@ -93,22 +89,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_aihara_map_neuron_new() {
-        let state = AiharaMapNeuron::new();
-        assert!(validate_aihara_map_neuron(&state));
+    fn source_step_and_level_event() {
+        let mut state = AiharaMapNeuron::new();
+        assert_eq!(state.step(0.0), Ok(0));
+        let expected = 0.07 - 1.0 / (1.0 + (-10.0_f64).exp()) + 0.3968;
+        assert!((state.y - expected).abs() < 1.0e-15);
+        state.y = -0.1;
+        state.k = 0.0;
+        state.alpha = 0.01;
+        state.bias = 0.2;
+        assert_eq!(state.step(0.0), Ok(1));
+        assert_eq!(state.step(0.0), Ok(1));
     }
 
     #[test]
-    fn test_aihara_map_neuron_step() {
+    fn errors_leave_state_unchanged() {
         let mut state = AiharaMapNeuron::new();
-        let spike = state.step(10.0).unwrap();
-        assert!(spike == 0 || spike == 1);
-    }
-
-    #[test]
-    fn test_aihara_map_neuron_rejects_invalid_runtime_state() {
-        let mut state = AiharaMapNeuron::new();
-        state.y = f64::INFINITY;
-        assert!(state.step(0.0).is_err());
+        let before = state.y;
+        assert_eq!(state.step(f64::NAN), Err(AiharaMapError::InvalidInput));
+        assert_eq!(state.y, before);
+        state.epsilon = 0.0;
+        assert_eq!(state.step(0.0), Err(AiharaMapError::InvalidState));
+        assert_eq!(state.y, before);
     }
 }

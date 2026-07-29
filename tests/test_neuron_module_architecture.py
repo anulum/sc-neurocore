@@ -39,6 +39,14 @@ def test_aihara_rust_implementation_is_owned_by_its_module() -> None:
     assert sum(1 for _ in dedicated.open()) < 500
 
 
+def test_aihara_julia_facade_is_owned_by_its_module() -> None:
+    dedicated = ROOT / "src/sc_neurocore/accel/julia/neurons/aihara_map.py"
+    package_init = ROOT / "src/sc_neurocore/accel/julia/neurons/__init__.py"
+    assert "def simulate_aihara_map" in dedicated.read_text()
+    assert "def simulate_aihara_map" not in package_init.read_text()
+    assert sum(1 for _ in dedicated.open()) < 150
+
+
 def test_rust_map_models_have_one_owned_module_each() -> None:
     """Each map model owns its implementation and focused Rust tests."""
     owners = {
@@ -50,6 +58,7 @@ def test_rust_map_models_have_one_owned_module_each() -> None:
         "kilinc_bhatt_map.rs": "KilincBhattMapNeuron",
         "medvedev_map.rs": "MedvedevMapNeuron",
         "rulkov_map.rs": "RulkovMapNeuron",
+        "sc_chaotic_map.rs": "SCChaoticMapNeuron",
     }
     neuron_root = ROOT / "engine/src/neurons"
     for filename, model_name in owners.items():

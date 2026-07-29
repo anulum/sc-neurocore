@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+- Completed Aihara Model 43 from primary Eqs. 10–12 after separating the
+  original SC two-state recurrence into the preserved `SCChaoticMapNeuron`:
+  one-state source dynamics,
+  Eq. 12 level events, all maintained language backends, paired schemas,
+  independent trace, Q8.24 bounded co-simulation, depth-6 formal proof, and a
+  pinned Figure 4 periodic benchmark. The preserved SC model independently
+  has measured Python/Rust/Julia/Go/Mojo trajectory and event parity. The
+  public polyglot-complete count is 43.
+
 ### Native engine environment fidelity
 
 - Made the checkout-shadow loading regression exercise both clean editable

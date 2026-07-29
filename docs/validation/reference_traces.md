@@ -29,6 +29,7 @@ and event-hash fields into the deterministic trace schema.
 | Trace | Schema | Runner | Provenance |
 |-------|--------|--------|------------|
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | Independent explicit-Euler re-derivation of the subthreshold equations from `neurons/model_schemas/adex.toml` with DOI-backed schema provenance |
+| `aihara_map_primary` | `aihara_map` | `hand_and_universal_dsl` | Independent literal iteration of Aihara (1989), Eqs. 10–12, using the Figure 4 chaotic parameters and Eq. 12 level waveform shaper; publisher article DOI `10.1016/0375-9601(90)90136-C` |
 | `cazelles_map_bursting_doi` | `cazelles_map` | `universal_dsl` | Independent simultaneous clipped logistic fast/slow map iteration (Cazelles, Courbage & Rabinovich 2001, `method="map"`, level `x >= x_threshold` event) from `neurons/model_schemas/cazelles_map.toml` with DOI-backed schema provenance |
 | `chialvo_map_doi` | `chialvo_map` | `universal_dsl` | Independent simultaneous iteration of Chialvo (1995), Eq. 1 (`method="map"`), with the maintained upward `x_threshold` observation separated from DOI-sourced dynamics |
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
@@ -109,7 +110,7 @@ not a deterministic scalar-feature trace or an external-simulator claim.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, IQIF, McCulloch-Pitts, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
+LIF, QIF, IQIF, McCulloch-Pitts, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Aihara map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, Lapicque, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,

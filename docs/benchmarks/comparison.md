@@ -71,8 +71,8 @@ SC-NeuroCore-specific.
 
 | Category | SC-NeuroCore | snnTorch | Norse | Brian2 | Lava |
 |----------|:---:|:---:|:---:|:---:|:---:|
-| Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
-| Rust/compiled models | **186 Rust PyO3 wrappers / 162-model NetworkRunner** | — | — | C++ codegen | — |
+| Python models | **159 lazy-loaded classes / 154 source modules** | 11 | 6 | Custom eq. | 3 |
+| Rust/compiled models | **187 Rust PyO3 wrappers / 163-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
 | Formal verification | **59 SymbiYosys proof jobs and 193 formal statements (163 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
@@ -370,6 +370,26 @@ The artifact binds exact source and loaded Rust/Go/Mojo binary hashes and
 includes a passing seven-test standalone Rust safety receipt. These timings are
 local diagnostic regression evidence, not production, hardware, cross-host,
 or universal-ranking claims.
+
+## Aihara map polyglot batch loop
+
+The committed `benchmarks/bench_aihara_map.py` measures 200,000 iterations at
+Aihara's Figure 4 periodic point (`bias=0.6288`) so all runtimes can be checked
+over a long workload without disguising chaotic decorrelation as a backend
+failure. The 2026-07-29 run used logical CPU 4 on an Intel i5-11600K and
+records the non-isolated workstation load in the JSON artefact.
+
+| Backend | Median call | Speed-up vs Python | Maximum y difference | Events |
+|---|---:|---:|---:|---:|
+| Go | 19.570 ms | 21.34x | `2.220e-16` | 120,000 |
+| Mojo | 28.979 ms | 14.41x | `5.262e-14` | 120,000 |
+| Julia | 39.647 ms | 10.53x | `0` | 120,000 |
+| Rust | 72.172 ms | 5.79x | `0` | 120,000 |
+| Python | 417.540 ms | 1.00x | `0` | 120,000 |
+
+These are local regression measurements, not a portable backend ranking. The
+separate chaotic parity test uses a bounded equation horizon and explicitly
+measured state envelope.
 
 ## Chialvo map polyglot batch loop
 

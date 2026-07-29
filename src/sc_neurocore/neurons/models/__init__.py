@@ -19,6 +19,7 @@ _CLASS_TO_MODULE = {
     "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
     "AdaptiveThresholdMoENeuron": "adaptive_threshold_moe",
     "AiharaMapNeuron": "aihara_map_neuron",
+    "SCChaoticMapNeuron": "sc_chaotic_map_neuron",
     "AkidaNeuron": "akida_neuron",
     "AlphaMotorNeuron": "alpha_motor_neuron",
     "AlphaNeuron": "alpha",

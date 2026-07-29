@@ -2,8 +2,8 @@
 
 # Tutorial 22: Choosing the Right Neuron Model
 
-SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
-153 Python model source modules, with 186 Rust PyO3 model wrappers in the
+SC-NeuroCore currently exposes 159 lazy-loaded Python model classes across
+154 Python model source modules, with 187 Rust PyO3 model wrappers in the
 optional engine. This guide helps you pick the right model for your
 application.
 

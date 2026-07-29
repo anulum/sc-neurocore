@@ -4,75 +4,133 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for aihara_map_neuron
+# SC-NeuroCore — Julia mirror of source-faithful Aihara dynamics
 
 module AiharaMapNeuronAccel
 
-export step!, simulate, validate, AiharaMapNeuronState
+using PythonCall: PyArray
+
+export AiharaMapCandidateError,
+    AiharaMapConfigurationError,
+    AiharaMapNeuronState,
+    is_candidate_error,
+    is_configuration_error,
+    logistic,
+    reset!,
+    simulate_aihara_map_b,
+    simulate_aihara_map!,
+    step!,
+    valid
+
+struct AiharaMapConfigurationError <: Exception
+    message::String
+end
+
+struct AiharaMapCandidateError <: Exception
+    message::String
+end
+
+Base.showerror(io::IO, error::AiharaMapConfigurationError) = print(io, error.message)
+Base.showerror(io::IO, error::AiharaMapCandidateError) = print(io, error.message)
+is_configuration_error(error)::Bool = error isa AiharaMapConfigurationError
+is_candidate_error(error)::Bool = error isa AiharaMapCandidateError
 
 mutable struct AiharaMapNeuronState
-    x::Float64
     y::Float64
-    k_f::Float64
-    k_s::Float64
+    k::Float64
     alpha::Float64
-    delta::Float64
-    x_threshold::Float64
+    bias::Float64
+    epsilon::Float64
 end
 
-function AiharaMapNeuronState()
-    AiharaMapNeuronState(0.0, 0.0, 0.7, 0.95, 2.0, 0.05, 0.5)
+AiharaMapNeuronState() = AiharaMapNeuronState(0.1, 0.7, 1.0, 0.3968, 0.01)
+
+function valid(state::AiharaMapNeuronState)::Bool
+    return all(isfinite, (state.y, state.k, state.alpha, state.bias, state.epsilon)) &&
+        0.0 <= state.k < 1.0 && state.alpha > 0.0 && state.epsilon > 0.0
 end
 
-function validate(s::AiharaMapNeuronState)::Bool
-    return isfinite(s.x) &&
-        isfinite(s.y) &&
-        isfinite(s.k_f) &&
-        s.k_f >= 0.0 &&
-        isfinite(s.k_s) &&
-        isfinite(s.alpha) &&
-        isfinite(s.delta) &&
-        s.delta >= 0.0 &&
-        isfinite(s.x_threshold)
-end
-
-function logistic(z::Float64)::Float64
-    if z >= 0.0
-        return 1.0 / (1.0 + exp(-z))
+function logistic(value::Float64, epsilon::Float64)::Float64
+    argument = value / epsilon
+    if argument >= 0.0
+        return 1.0 / (1.0 + exp(-argument))
     end
-    exp_z = exp(z)
-    return exp_z / (1.0 + exp_z)
+    exponential = exp(argument)
+    return exponential / (1.0 + exponential)
 end
 
-function step!(s::AiharaMapNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    if !validate(s) || !isfinite(I_ext)
-        return -1
-    end
-
-    x_prev = s.x
-    sigmoid = logistic(s.x + s.alpha)
-    x_new = s.k_f * s.x * sigmoid - s.y + I_ext
-    y_new = s.k_s * s.y + s.delta * s.x
-    if !isfinite(x_new) || !isfinite(y_new)
-        return -1
-    end
-    s.x = max(-10.0, min(10.0, x_new))
-    s.y = max(-10.0, min(10.0, y_new))
-    return (s.x >= s.x_threshold && x_prev < s.x_threshold) ? 1 : 0
+function step!(state::AiharaMapNeuronState, current::Real = 0.0)::Int
+    drive = Float64(current)
+    isfinite(drive) && valid(state) ||
+        throw(AiharaMapConfigurationError("invalid Aihara state, parameters, or current"))
+    next_y = state.k * state.y - state.alpha * logistic(state.y, state.epsilon) +
+        state.bias + drive
+    isfinite(next_y) ||
+        throw(AiharaMapCandidateError("Aihara map candidate must be finite"))
+    state.y = next_y
+    return logistic(next_y, state.epsilon) >= 0.5 ? 1 : 0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = AiharaMapNeuronState()
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.x
-        if result isa Number && result > 0
-            spikes += 1
-        end
-    end
-    return trace, spikes
+function reset!(state::AiharaMapNeuronState)::Nothing
+    state.y = 0.1
+    return nothing
 end
+
+_writable(buffer::AbstractVector{Float64}) =
+    applicable(setindex!, buffer, 0.0, firstindex(buffer))
+_writable(::PyArray{Float64, 1, W, C, R}) where {W, C, R} = W
+
+function _validate_buffer(buffer::AbstractVector, name::String, steps::Int; writable::Bool = false)
+    eltype(buffer) === Float64 ||
+        throw(AiharaMapConfigurationError("$name must have Float64 elements"))
+    length(buffer) == steps ||
+        throw(AiharaMapConfigurationError("$name length mismatch"))
+    (isempty(buffer) || (applicable(stride, buffer, 1) && stride(buffer, 1) == 1)) ||
+        throw(AiharaMapConfigurationError("$name must have unit stride"))
+    if writable && !_writable(buffer)
+        throw(AiharaMapConfigurationError("$name must be writable"))
+    end
+    return nothing
+end
+
+function simulate_aihara_map!(
+    y_init::Real,
+    k::Real,
+    alpha::Real,
+    bias::Real,
+    epsilon::Real,
+    current::AbstractVector,
+    y_out::AbstractVector,
+    x_out::AbstractVector,
+    spikes_out::AbstractVector,
+)
+    steps = length(current)
+    _validate_buffer(current, "current", steps)
+    _validate_buffer(y_out, "y_out", steps; writable = true)
+    _validate_buffer(x_out, "x_out", steps; writable = true)
+    _validate_buffer(spikes_out, "spikes_out", steps; writable = true)
+    state = AiharaMapNeuronState(Float64.((y_init, k, alpha, bias, epsilon))...)
+    valid(state) || throw(AiharaMapConfigurationError("invalid Aihara configuration"))
+    all(isfinite, current) ||
+        throw(AiharaMapConfigurationError("current must contain only finite values"))
+
+    y_trace = Vector{Float64}(undef, steps)
+    x_trace = Vector{Float64}(undef, steps)
+    spike_trace = Vector{Float64}(undef, steps)
+    count = 0
+    @inbounds for index in 1:steps
+        event = step!(state, current[index])
+        y_trace[index] = state.y
+        x_trace[index] = logistic(state.y, state.epsilon)
+        spike_trace[index] = Float64(event)
+        count += event
+    end
+    copyto!(y_out, y_trace)
+    copyto!(x_out, x_trace)
+    copyto!(spikes_out, spike_trace)
+    return (state.y, logistic(state.y, state.epsilon), count)
+end
+
+simulate_aihara_map_b(args...) = simulate_aihara_map!(args...)
 
 end # module AiharaMapNeuronAccel

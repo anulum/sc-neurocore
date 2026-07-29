@@ -400,6 +400,25 @@ FloatingPointError
 
 ---
 
+## Module `accel.aihara_map`
+
+### Function `backend_available(backend)`
+Return whether one maintained execution lane is ready.
+
+### Function `auto_backend()`
+Return the first available lane in measured ascending-latency order.
+
+### Function `normalise_result(result)`
+Validate complete state, graded-output, event traces, and receipts.
+
+### Function `simulate_python(y, k, alpha, bias, epsilon, current)`
+Run a complete batch through the Python golden model.
+
+### Function `simulate_aihara_map(y, k, alpha, bias, epsilon, current)`
+Run one complete source-faithful batch on a selected execution lane.
+
+---
+
 ## Module `accel.alpha`
 
 ### Function `backend_available(backend)`
@@ -921,11 +940,23 @@ Run the Julia exact-relaxation recurrence with typed failure translation.
 
 ---
 
+## Module `accel.julia.neurons.aihara_map`
+
+### Function `simulate_aihara_map(y, k, alpha, bias, epsilon, current)`
+Run a checked Julia batch and translate typed numerical failures.
+
+---
+
 ## Module `accel.julia.neurons.alpha`
 
 ### Function `simulate_alpha(v_init, a_exc_init, i_exc_init, a_inh_init, i_inh_init, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current)`
 Run the Julia exact-flow recurrence with typed failure translation.
 
+---
+
+## Module `accel.julia.neurons.sc_chaotic_map`
+
+### Function `simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
 ---
 
 ## Module `accel.lapicque`
@@ -1365,6 +1396,19 @@ RuntimeError
 FloatingPointError
     If a numerical candidate or backend result violates the contract.
 
+---
+
+## Module `accel.sc_chaotic_map`
+
+### Function `backend_available(backend)`
+Return whether one executable SC-map lane is available.
+
+### Function `auto_backend()`
+### Function `normalise_result(result)`
+Validate complete traces, edge events, and final receipts.
+
+### Function `simulate_python(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
+### Function `simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
 ---
 
 ## Module `accel.sc_inference`
@@ -22240,22 +22284,35 @@ High error: faster learning. Low error: stabilize.
 ## Module `neurons.models.aihara_map_neuron`
 
 ### Class `AiharaMapNeuron`
-Aihara 1990 chaotic map neuron.
+Aihara's graded one-state chaotic neuron.
 
-2D discrete map exhibiting chaotic spiking dynamics. The fast variable
-x is driven by a sigmoidal self-feedback modulated by k_f, minus the
-slow recovery variable y.
-
-x(n+1) = k_f · x(n) · σ(x(n) + α) - y(n) + I
-y(n+1) = k_s · y(n) + δ · x(n)
-
-where σ(z) = 1 / (1 + exp(-z)).
-
-Reference: Aihara et al. (1990) Phys Lett A 144:333–340.
+Parameters
+----------
+y : float, default=0.1
+    Current internal state. The default is the initial condition used for
+    the source parameter sweep.
+k : float, default=0.7
+    Refractory-memory decay factor; the source requires ``0 <= k < 1``.
+alpha : float, default=1.0
+    Positive refractory scaling coefficient.
+bias : float, default=0.3968
+    Constant effective stimulus ``a``. The default is the chaotic example
+    in the primary-author manuscript's Figure 4.
+epsilon : float, default=0.01
+    Positive logistic steepness. The default is the Figure 4 value.
 
 - **__post_init__**()
+  - Normalise scalar fields and reject an invalid configuration.
+- **x**()
+  - Return the source graded output ``x=f(y)``.
+- **output**()
+  - Return the source graded output ``x=f(y)``.
 - **step**(current)
+  - Advance one map step and return the source thresholded output.
+- **simulate**(current)
+  - Run an atomic piecewise-stimulus batch on a maintained backend.
 - **reset**()
+  - Restore the source initial state while preserving parameters.
 
 ---
 
@@ -23841,6 +23898,7 @@ r∞ = 1 / (1 + exp((v + 80) / 10))
 Reference: Robinson & Siegelbaum (2003) Annu Rev Physiol 65:453;
 Pape (1996) Annu Rev Physiol 58:299.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 
@@ -24011,6 +24069,7 @@ all-or-nothing.
 References: Nagumo & Sato (1972) Kybernetik 10:155-164;
 Aihara, Takabe & Toyoda (1990) Phys Lett A 144:333-340.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 
@@ -24639,6 +24698,7 @@ p∞ = 1 / (1 + exp(-(v + 48) / 5))
 Reference: Crill (1996) Annu Rev Physiol 58:349;
 French et al. (1990) Neuroscience 42:363.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 
@@ -25020,6 +25080,21 @@ Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 - **reset**()
+
+---
+
+## Module `neurons.models.sc_chaotic_map_neuron`
+
+### Class `SCChaoticMapNeuron`
+Two-state sigmoid-gated SC chaotic map with bounded state.
+
+- **__post_init__**()
+- **step**(current)
+  - Commit one simultaneous bounded update and return an upward crossing.
+- **simulate**(current)
+  - Run an atomic batch on a parity-checked maintained backend.
+- **reset**()
+  - Clear both states while preserving the configured parameters.
 
 ---
 

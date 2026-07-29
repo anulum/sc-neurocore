@@ -84,6 +84,7 @@ parity note.
 | Medvedev map | ✅ | ✅ | ✅ | ✅ shared-lib | Source-derived slow-calcium first-return map: Rust/Julia/Go bit-exact and Mojo bounded to `5e-13`, with exact 750-event parity at I=2 over 1000 iterations; hand/TOML/JSON exact and Q16.16 RTL preserves the complete 75-event vector at I=2 over 100 iterations with maximum u error below 0.007813; DOI feature trace + Q16.16 depth-4 Z3 BMC | `this commit` |
 | Cazelles map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: Rust/Julia/Go bit-exact, Mojo per-step ULP-bounded, 5/182/204 @ I=0/0.5/1.0 over 1000 iterations; co-sim: hand/TOML/JSON exact and Q16.16 RTL event-exact at I=0.5/1.0/2.0 over 30 iterations with state error below 0.0004; I=0.05 is excluded; formal Q8.8 BMC depth 4 | `22110c66d` |
 | Chialvo map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: all compiled lanes ULP-bounded to the source recurrence and event-count exact at I=-0.05/0/0.01/0.05/0.1/1.0 over 1000 iterations (0/26/30/0/0/1); pinned 500,000-iteration benchmark records 12,935 events in every lane; co-sim: hand/TOML/JSON exact and Q16.16 event counts 0/2/3/0/1 at I=-0.05/0/0.01/0.1/1.0 over 100 iterations, with stable-point x/y errors below 0.055/0.093 and oscillatory timing explicitly excluded; formal Q8.8 BMC depth 4 | `this commit` |
+| Aihara map | ✅ | ✅ | ✅ | ✅ shared-lib | Aihara (1989) Eqs. 10–12: one internal state, logistic graded output, and source level waveform shaper; all lanes are within `5e-11` over the 64-step equation window, the measured 512-step Mojo chaotic envelope is below `2e-4` with exact events, and the source Figure 4 periodic benchmark records 120,000 exact events in all lanes; paired schemas and the primary-equation oracle agree, Q8.24 RTL preserves the first 12 events with state error below `0.01`, and the depth-6 Z3 event-consistency job passes | `this commit` |
 | Courbage-Nekorkin map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: Rust/Julia/Go bit-exact, Mojo per-step ULP-bounded, 157/193/168 @ I=-0.3/0/0.3 over 1000 iterations; co-sim: hand/TOML/JSON exact, Q16.16 event-exact at I=-0.3/0/0.3 over bounded 30/20/30-iteration windows, and Q32.32 event-exact at all three inputs over 30 iterations with state error below 0.00003; autonomous Q16.16 30-iteration trace is an explicit 4/6-event boundary; formal Q8.8 BMC depth 4 | `63826b513` |
 | Izhikevich 2007 | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/3/14 @ I=0/100/400 over 2000 steps (RK4, quadratic v-nullcline, spike reset v→c / u+=d; Mojo ULP-bounded but the per-spike reset re-synchronises the trace so its counts always match) | `75b32d935` |
 | Ibarz-Tanaka map | ✅ | ✅ | ✅ | ✅ shared-lib | Ibarz et al. (2007), Eqs. 2–3: source four-branch fast map plus simultaneous slow update; accel reset events 9/33/195 @ I=0/0.2/1 over 1000 iterations, Rust/Julia/Go bit-exact and Mojo within `1.5e-8`; hand/TOML/JSON exact, Q16.16 event-vector exact over the bounded 30-step `I=0.2` co-sim with v/u errors below 0.003/0.0001; formal Q16.16 BMC depth 4 | corrected source implementation |
@@ -98,7 +99,7 @@ Montbrió–Pazó–Roxin, Resonate-and-Fire, and Wong-Wang,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
-Chialvo map, Ibarz-Tanaka map, and Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
+Chialvo map, Aihara map, Ibarz-Tanaka map, and Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
 `accel/rust/safety` crate remains a tracked open lane item.
 
 ## In progress
@@ -113,7 +114,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **forty-two polyglot-complete models** out of the full catalogue;
+the latest landed commit that is **forty-three polyglot-complete models** out of the 154-model catalogue;
 the remaining **111** source-model units are Python-faithful with an acceleration chain still under
 remediation.
 

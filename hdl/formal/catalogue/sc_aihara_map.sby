@@ -1,0 +1,17 @@
+# SymbiYosys job for source-faithful Aihara Q8.24 RTL
+
+[options]
+mode bmc
+depth 6
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_aihara_map_formal.v
+read -formal sc_aihara_map.v
+prep -top sc_aihara_map_formal
+
+[files]
+sc_aihara_map_formal.v
+sc_aihara_map.v

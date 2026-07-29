@@ -4,96 +4,96 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
+# SC-NeuroCore — Aihara fidelity descriptor
 
 [metadata]
 schema_version = 2
 name = "AiharaMapNeuron"
 class_name = "AiharaMapNeuron"
 module = "aihara_map_neuron"
-display_name = ""
-summary = "Aihara 1990 chaotic map neuron."
+display_name = "Aihara chaotic neuron map"
+summary = "Primary-equation Aihara reduced one-state chaotic neuron."
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = []
-hardware_fit = []
-behavior_tags = [
-    "excitable",
-    "phasic",
-    "rate-coded",
-]
+intended_use = ["chaotic neural dynamics", "source-equation reference"]
+hardware_fit = ["fixed-point sigmoid-LUT co-simulation"]
+behavior_tags = ["chaotic", "graded-output", "rate-coded"]
 
 [provenance]
-authors = [
-    "Aihara, K., Takabe, T. & Toyoda, M.",
-]
+authors = ["Aihara, K.", "Takabe, T.", "Toyoda, M."]
 year = 1990
 doi = "10.1016/0375-9601(90)90136-C"
 
-[state.x]
-init = 0.0
-
 [state.y]
-init = 0.0
+init = 0.1
 
-[parameters.k_f]
+[parameters.k]
 default = 0.7
 unit = "1"
-meaning = "fast-variable self-feedback gain"
-range = [
-    0.0,
-    5.0,
-]
-
-[parameters.k_s]
-default = 0.95
-unit = "1"
-meaning = "slow refractory-variable retention coefficient"
-range = [
-    0.0,
-    1.0,
-]
+meaning = "refractory-memory decay"
+range = [0.0, 1.0]
 
 [parameters.alpha]
-default = 2.0
+default = 1.0
 unit = "1"
-meaning = "bias offset added inside the sigmoidal activation"
-range = [
-    -5.0,
-    5.0,
-]
+meaning = "refractory-output scale"
+range = [0.000001, 10.0]
 
-[parameters.delta]
-default = 0.05
+[parameters.bias]
+default = 0.3968
 unit = "1"
-meaning = "coupling gain from the fast variable to the slow refractory variable"
-range = [
-    0.0,
-    5.0,
-]
+meaning = "constant effective stimulus a"
+range = [-10.0, 10.0]
 
-[parameters.x_threshold]
-default = 0.5
+[parameters.epsilon]
+default = 0.01
 unit = "1"
-meaning = "level on the fast variable x at which a spike is registered"
-range = [
-    -10.0,
-    10.0,
-]
+meaning = "logistic steepness"
+range = [0.000001, 1.0]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+y = "k * y - alpha * sigmoid(y / epsilon) + bias + I"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/aihara_map_primary.json"
+golden_trace_sha256 = "7eea51ca94f7c8089e55de353a223a5a5b49ac2bbae6b7d3d239ec0dc2abb2f2"
 
 [documentation]
-slug = "models/aihara_map_neuron"
-notes = ""
+slug = "models/aihara_map"
+notes = "Eq. 12 level events are part of the primary model; current is the effective reduced-map stimulus."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "Figure 4 chaotic defaults and Figure 5 parameter anchor"
+tolerance = "binary64 short horizon <=5e-11; Mojo 512-step chaotic envelope <=2e-4 with exact events; Q8.24 twelve-step state <=0.01 with exact events"
+evidence = "tests/test_reference_aihara_map.py; tests/test_aihara_map_backends.py; tests/test_cosim_aihara_map.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_aihara_map.py::test_q824_shadows_source_events_and_state_for_twelve_steps"
+target_tier = "H1"
+terminal_reason = "Q8.24 preserves twelve source events and shadows y within 0.01; chaotic amplification forbids a false long-horizon trajectory-equivalence claim."
