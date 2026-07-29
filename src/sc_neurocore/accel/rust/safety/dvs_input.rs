@@ -131,7 +131,7 @@ impl DVSInputLayer {
             if event.timestamp_ms < self.last_update_time {
                 return Err("event timestamp cannot be earlier than last update time".to_string());
             }
-            if !matches!(event.polarity, -1 | 0 | 1) {
+            if !matches!(event.polarity, -1..=1) {
                 return Err("event polarity must be -1, 0, or 1".to_string());
             }
             previous_time = Some(event.timestamp_ms);
