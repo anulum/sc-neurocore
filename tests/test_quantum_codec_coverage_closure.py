@@ -41,7 +41,11 @@ def test_dashboard_draw_handles_terminal_failure_and_all_raster_bands(
     def terminal_failure(_fallback: tuple[int, int]) -> tuple[int, int]:
         raise OSError("terminal unavailable")
 
-    monkeypatch.setattr(dashboard.shutil, "get_terminal_size", terminal_failure)
+    monkeypatch.setattr(
+        dashboard,
+        "shutil",
+        SimpleNamespace(get_terminal_size=terminal_failure),
+    )
     neurons = [SimpleNamespace(atp_level=0.5) for _ in range(30)]
     history = [
         {"n_spikes": 0, "directive": "FOCUS"},
