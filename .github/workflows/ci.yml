@@ -405,6 +405,20 @@ jobs:
             --include='src/sc_neurocore/neurons/models/kilinc_bhatt_map_neuron.py' \
             --fail-under=100 --show-missing
 
+      - name: Ih exact coverage and backend parity
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-ih python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/neurons/models/ih_neuron.py' \
+            -m pytest tests/test_model_ih_neuron.py \
+              tests/test_ih_neuron_backends.py -q
+          COVERAGE_FILE=.coverage-ih python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/neurons/models/ih_neuron.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

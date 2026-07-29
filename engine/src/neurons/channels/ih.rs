@@ -20,7 +20,9 @@ use crate::neurons::biophysical::safe_rate;
 /// - Pacemaker oscillations: interplay of Ih and T-type Ca2+ in thalamic
 ///   relay neurons drives rhythmic bursting
 ///
-/// Robinson & Bhatt, Neuron 11:953, 1993; Pape, Annu Rev Physiol 58:299, 1996.
+/// Biological context: Robinson & Siegelbaum, Annu Rev Physiol 65:453, 2003;
+/// Pape, Annu Rev Physiol 58:299, 1996. The repository-specific WB+HCN
+/// recurrence is an experimental composite, not a publication-exact model.
 #[derive(Clone, Debug)]
 pub struct IhNeuron {
     pub v: f64,
@@ -73,14 +75,65 @@ impl IhNeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let input = self.gain * current;
+    fn valid(&self) -> bool {
+        let finite = [
+            self.v,
+            self.h,
+            self.n,
+            self.r,
+            self.g_na,
+            self.g_k,
+            self.g_h,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_h,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        ]
+        .into_iter()
+        .all(f64::is_finite);
+        finite
+            && (-100.0..=60.0).contains(&self.v)
+            && [self.h, self.n, self.r]
+                .into_iter()
+                .all(|gate| (0.0..=1.0).contains(&gate))
+            && (0.0..=200.0).contains(&self.g_na)
+            && (0.0..=100.0).contains(&self.g_k)
+            && (0.0..=5.0).contains(&self.g_h)
+            && (0.0..=5.0).contains(&self.g_l)
+            && (30.0..=70.0).contains(&self.e_na)
+            && (-100.0..=-70.0).contains(&self.e_k)
+            && (-50.0..=0.0).contains(&self.e_h)
+            && (-80.0..=-40.0).contains(&self.e_l)
+            && (0.5..=2.0).contains(&self.c_m)
+            && (0.5..=10.0).contains(&self.phi)
+            && self.dt > 0.0
+            && self.dt <= 1.0
+            && (-20.0..=20.0).contains(&self.v_threshold)
+            && (0.0..=10.0).contains(&self.gain)
+    }
+
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !current.is_finite() {
+            return Err("current must be finite");
+        }
+        if !self.valid() {
+            return Err("Ih state and parameters must satisfy the public bounds");
+        }
+
+        let mut candidate = self.clone();
+        let input = candidate.gain * current;
         let sub_steps = 50;
-        let sub_dt = self.dt / sub_steps as f64;
+        let sub_dt = candidate.dt / sub_steps as f64;
         let mut fired = 0i32;
 
         for _ in 0..sub_steps {
-            let v = self.v;
+            let v = candidate.v;
 
             // WB alpha/beta rates
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
@@ -99,41 +152,51 @@ impl IhNeuron {
             let tau_r = 100.0 + 200.0 / (1.0 + ((v + 70.0) / 10.0).exp());
 
             // Gate updates
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
-            self.r += sub_dt * (r_inf - self.r) / tau_r;
+            candidate.h +=
+                sub_dt * candidate.phi * (alpha_h * (1.0 - candidate.h) - beta_h * candidate.h);
+            candidate.n +=
+                sub_dt * candidate.phi * (alpha_n * (1.0 - candidate.n) - beta_n * candidate.n);
+            candidate.r += sub_dt * (r_inf - candidate.r) / tau_r;
 
             // Currents
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
-            let i_h = self.g_h * self.r * (v - self.e_h);
-            let i_l = self.g_l * (v - self.e_l);
+            let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
+            let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
+            let i_h = candidate.g_h * candidate.r * (v - candidate.e_h);
+            let i_l = candidate.g_l * (v - candidate.e_l);
 
-            let dv = (-i_na - i_k - i_h - i_l + input) / self.c_m;
-            self.v += sub_dt * dv;
+            let dv = (-i_na - i_k - i_h - i_l + input) / candidate.c_m;
+            candidate.v += sub_dt * dv;
+            if ![candidate.v, candidate.h, candidate.n, candidate.r]
+                .into_iter()
+                .all(f64::is_finite)
+            {
+                return Err("Ih candidate state became non-finite");
+            }
 
-            if self.v >= self.v_threshold {
+            if candidate.v >= candidate.v_threshold {
                 fired = 1;
-                self.v = -65.0;
+                candidate.v = -65.0;
             }
         }
 
-        // Safety bounds
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -65.0;
-            self.h = 0.6;
-            self.n = 0.32;
-        }
-        self.h = self.h.clamp(0.0, 1.0);
-        self.n = self.n.clamp(0.0, 1.0);
-        self.r = self.r.clamp(0.0, 1.0);
+        candidate.v = candidate.v.clamp(-100.0, 60.0);
+        candidate.h = candidate.h.clamp(0.0, 1.0);
+        candidate.n = candidate.n.clamp(0.0, 1.0);
+        candidate.r = candidate.r.clamp(0.0, 1.0);
+        *self = candidate;
 
-        fired
+        Ok(fired)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.v = -65.0;
+        self.h = 0.6;
+        self.n = 0.32;
+        self.r = 0.1;
     }
 }
 
@@ -246,10 +309,24 @@ mod tests {
     }
 
     #[test]
-    fn ih_nan_input_stays_finite() {
+    fn ih_nan_input_is_rejected_atomically() {
         let mut n = IhNeuron::new();
-        n.step(f64::NAN);
-        assert!(n.v.is_finite());
+        let before = n.clone();
+        assert!(n.try_step(f64::NAN).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.r, before.r);
+    }
+
+    #[test]
+    fn ih_invalid_configuration_is_rejected_atomically() {
+        let mut n = IhNeuron::new();
+        n.c_m = 0.0;
+        let before = n.clone();
+        assert!(n.try_step(1.0).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.c_m, before.c_m);
     }
 
     #[test]
@@ -264,12 +341,14 @@ mod tests {
     #[test]
     fn ih_reset_clears_state() {
         let mut n = IhNeuron::new();
+        n.g_h = 0.3;
         for _ in 0..1000 {
             n.step(10.0);
         }
         n.reset();
         assert_eq!(n.v, -65.0);
         assert_eq!(n.r, 0.1);
+        assert_eq!(n.g_h, 0.3);
     }
 
     #[test]

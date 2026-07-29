@@ -31,6 +31,8 @@ authors = [
 ]
 year = 2003
 doi = "10.1146/annurev.physiol.65.092101.142734"
+paper_title = "Hyperpolarization-Activated Cation Currents: From Molecules to Physiological Function"
+derivation_note = "The implemented recurrence is an SC-NeuroCore experimental composite: the Wang-Buzsaki sodium/potassium base plus a repository-specific HCN gate. The cited HCN reviews establish biological context but do not define this exact parameterisation."
 
 [state.v]
 init = -65.0
@@ -155,14 +157,52 @@ range = [
 [integration]
 dt = 0.5
 method = "euler"
+sub_steps = 50
 
 [dynamics]
+alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"
+beta_m = "4 * exp(-(v + 60) / 18)"
+m_inf = "alpha_m / (alpha_m + beta_m)"
+dh_dt = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - h / (1 + exp(-(v + 28) / 10)))"
+dn_dt = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+dr_dt = "(1 / (1 + exp((v + 80) / 10)) - r) / (100 + 200 / (1 + exp((v + 70) / 10)))"
+dv_dt = "(-g_na * m_inf^3 * h * (v - e_na) - g_k * n^4 * (v - e_k) - g_h * r * (v - e_h) - g_l * (v - e_l) + gain * I) / c_m"
+event = "v_next >= v_threshold; reset v to -65 while preserving h, n, and r"
 
 [backends.python]
 status = "implemented"
+parity = "reference"
+
+[backends.rust]
+status = "implemented"
+parity = "float64-1e-12"
+
+[backends.go]
+status = "implemented"
+parity = "float64-1e-12"
+
+[backends.julia]
+status = "implemented"
+parity = "float64-1e-12"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "204dd9c459e4ea16ccf79ad58796376b9f47c20e0e738e416717203c0386d09b"
+event_count = 135
+final_state = "{\"v\":-57.67348267126735,\"h\":0.5416473882147339,\"n\":0.14965651883058248,\"r\":0.08783655571240012}"
 
 [documentation]
 slug = "models/ih_neuron"
-notes = ""
+notes = "Experimental WB+HCN composite. Robinson-Siegelbaum 2003 and Pape 1996 are biological reviews, not exact recurrence sources. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "complete four-state trajectory and event vector"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"
+tolerance = "Python/Rust/Go/Julia complete state within 1e-12"
+evidence = "tests/test_ih_neuron_backends.py"
+
+[silicon]
+compiles = false
+cosim_validated = false
+terminal_reason = "No model-specific Mojo or RTL implementation and no synthesis evidence."
