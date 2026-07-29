@@ -61,20 +61,35 @@ _SV_MODULES = frozenset(
     }
 )
 
-# SHD-specific modules with $readmemh initialisation from external weight /
-# delay hex files. These are not part of the general SC-NeuroCore core and
-# are synthesised through a dedicated Vivado flow that stages the hex files
-# alongside the bitstream build; including them in the general yosys
-# resource counter fails at parse time because the hex files are not
-# available in the repository root.
-_SHD_MODULES = frozenset(
-    {
-        "sc_vmin_lif_neuron",
-        "sc_axonal_delay",
-        "sc_dense_int8_sparse",
-        "sc_shd_top",
-    }
+_DENSE_PRIMITIVES = (
+    "sc_bitstream_encoder",
+    "sc_bitstream_synapse",
+    "sc_dotproduct_to_current",
+    "sc_lif_neuron",
 )
+
+# Every synthesis top receives only its transitive HDL dependencies. Feeding
+# every repository HDL file to every top makes synth_xilinx flatten unrelated
+# designs and can exhaust the per-module timeout before producing any resource
+# evidence.
+_MODULE_SOURCE_STEMS = {
+    "sc_bitstream_encoder": ("sc_bitstream_encoder",),
+    "sc_lif_neuron": ("sc_lif_neuron",),
+    "sc_bitstream_synapse": ("sc_bitstream_synapse",),
+    "sc_dotproduct_to_current": ("sc_dotproduct_to_current",),
+    "sc_firing_rate_bank": ("sc_firing_rate_bank",),
+    "sc_axil_cfg": ("sc_axil_cfg",),
+    "sc_dense_layer_core": (*_DENSE_PRIMITIVES, "sc_dense_layer_core"),
+    "sc_dense_layer_top": (*_DENSE_PRIMITIVES, "sc_dense_layer_top"),
+    "sc_dense_matrix_layer": (*_DENSE_PRIMITIVES, "sc_dense_matrix_layer"),
+    "sc_neurocore_top": (
+        *_DENSE_PRIMITIVES,
+        "sc_axil_cfg",
+        "sc_dense_layer_core",
+        "sc_firing_rate_bank",
+        "sc_neurocore_top",
+    ),
+}
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -95,7 +110,7 @@ def parse_stat_output(text: str) -> dict[str, int]:
 
     Yosys prints intermediate stats during synth_xilinx; only the final
     block (from the explicit ``stat`` command) is authoritative.
-    Format: ``  <count>   <CELL_TYPE>``  (count before name).
+    Format: ``  <CELL_TYPE>   <count>``  (cell name before count).
     """
     blocks = text.split("Printing statistics.")
     if len(blocks) < 2:
@@ -104,10 +119,10 @@ def parse_stat_output(text: str) -> dict[str, int]:
 
     counts: dict[str, int] = {"luts": 0, "ffs": 0, "bram": 0, "dsp": 0}
     for line in last_block.splitlines():
-        m = re.match(r"\s*(\d+)\s+(\S+)", line)
+        m = re.match(r"\s*(\S+)\s+(\d+)\s*$", line)
         if not m:
             continue
-        n, cell = int(m.group(1)), m.group(2)
+        cell, n = m.group(1), int(m.group(2))
         if cell in ("LUT1", "LUT2", "LUT3", "LUT4", "LUT5", "LUT6"):
             counts["luts"] += n
         elif cell in ("FDRE", "FDSE", "FDCE", "FDPE"):
@@ -120,35 +135,32 @@ def parse_stat_output(text: str) -> dict[str, int]:
     return counts
 
 
-def preprocess_hdl() -> list[Path]:
-    """Collect HDL sources. Preprocesses through sv2v when available.
-
-    Testbenches (`tb_*.v`) and SHD-specific modules (see `_SHD_MODULES`)
-    are excluded — the SHD modules use `$readmemh` to load external
-    weight / delay hex files that are staged into cosim temp directories,
-    not into the repo root where this tool runs.
-    """
+def preprocess_hdl(module: str) -> list[Path]:
+    """Collect one top's dependency closure and preprocess SV when required."""
     hdl_dir = REPO_ROOT / "hdl"
-    all_v = sorted(
-        f
-        for f in hdl_dir.glob("*.v")
-        if not f.name.startswith("tb_") and f.stem not in _SHD_MODULES
-    )
+    try:
+        source_stems = _MODULE_SOURCE_STEMS[module]
+    except KeyError as exc:
+        raise ValueError(f"no HDL dependency closure registered for {module}") from exc
+    sources = [hdl_dir / f"{stem}.v" for stem in source_stems]
+    missing = [source for source in sources if not source.is_file()]
+    if missing:
+        raise FileNotFoundError(f"missing HDL source(s): {', '.join(map(str, missing))}")
 
     sv2v = shutil.which("sv2v")
-    if sv2v:
-        converted = Path(tempfile.mkdtemp()) / "sc_neurocore_converted.v"
+    if sv2v and module in _SV_MODULES:
+        converted = Path(tempfile.mkdtemp(prefix=f"yosys_{module}_")) / f"{module}.v"
         result = subprocess.run(
-            [sv2v, *[str(f) for f in all_v], "-w", str(converted)],
+            [sv2v, *[str(source) for source in sources], "-w", str(converted)],
             capture_output=True,
             text=True,
         )
         if result.returncode == 0:
-            print(f"  sv2v: preprocessed {len(all_v)} files -> {converted.name}")
+            print(f"  sv2v: {module} preprocessed {len(sources)} file(s) -> {converted.name}")
             return [converted]
         print(f"  sv2v failed ({result.stderr[:200]}), falling back to filtered sources")
 
-    return [f for f in all_v if f.stem not in _SV_MODULES]
+    return sources
 
 
 def _build_yosys_commands(module: str, sources: list[Path]) -> str:
@@ -224,7 +236,6 @@ def main() -> int:
         print("Install: https://github.com/YosysHQ/yosys")
         return 1
 
-    sources = preprocess_hdl()
     has_sv2v = shutil.which("sv2v") is not None
     modules = [args.module] if args.module else MODULES
 
@@ -235,6 +246,7 @@ def main() -> int:
             results.append(SynthResult(mod, 0, 0, 0, 0, False, "needs sv2v for SV features"))
             continue
         print(f"  Synthesizing {mod}...", end=" ", flush=True)
+        sources = preprocess_hdl(mod)
         r = run_synth(mod, sources)
         if r.ok:
             print(f"{r.luts} LUTs, {r.ffs} FFs")
@@ -263,7 +275,9 @@ def main() -> int:
         Path(args.json).write_text(json.dumps(payload, indent=2) + "\n")
         print(f"\nResults written to {args.json}")
 
-    return 0 if args.allow_skips or all(r.ok for r in results) else 1
+    if not any(result.ok for result in results):
+        return 1
+    return 0 if args.allow_skips or all(result.ok for result in results) else 1
 
 
 if __name__ == "__main__":
