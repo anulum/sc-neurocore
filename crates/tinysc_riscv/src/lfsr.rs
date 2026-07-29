@@ -40,7 +40,7 @@ impl Lfsr16 {
     /// Compares LFSR output against `threshold` for `length` steps.
     /// Caller provides the output buffer (zero-copy).
     pub fn encode_into(&mut self, threshold: u16, length: usize, out: &mut [u32]) {
-        debug_assert!(out.len() >= (length + 31) / 32);
+        debug_assert!(out.len() >= length.div_ceil(32));
         for w in out.iter_mut() {
             *w = 0;
         }
@@ -91,8 +91,8 @@ mod tests {
     #[test]
     fn test_encode_into_probability() {
         let mut lfsr = Lfsr16::new(0xACE1);
-        let length = 10000;
-        let words = (length + 31) / 32;
+        let length: usize = 10000;
+        let words = length.div_ceil(32);
         let mut buf = vec![0u32; words];
         lfsr.encode_into(32768, length, &mut buf);
         let popcount: u32 = buf.iter().map(|w| w.count_ones()).sum();

@@ -12,7 +12,6 @@
 //! bounds. Supports multi-layer feed-forward SC networks with
 //! configurable neuron types and bitstream lengths.
 
-use crate::bitstream;
 use crate::lfsr::Lfsr16;
 use crate::neuron::LifNeuron;
 
@@ -53,7 +52,7 @@ impl LayerConfig {
 
     /// Number of u32 words per bitstream.
     pub const fn words_per_bs(&self) -> usize {
-        ((self.bitstream_length as usize) + 31) / 32
+        (self.bitstream_length as usize).div_ceil(32)
     }
 }
 
@@ -70,8 +69,11 @@ pub struct LayerState {
 impl LayerState {
     pub fn new(config: LayerConfig) -> Self {
         let mut neurons = [const { LifNeuron::new(0, 0, 0) }; MAX_NEURONS_PER_LAYER];
-        for i in 0..config.num_neurons.min(MAX_NEURONS_PER_LAYER) {
-            neurons[i] = LifNeuron::new(config.threshold, config.leak_shift, 1);
+        for neuron in neurons
+            .iter_mut()
+            .take(config.num_neurons.min(MAX_NEURONS_PER_LAYER))
+        {
+            *neuron = LifNeuron::new(config.threshold, config.leak_shift, 1);
         }
         Self {
             neurons,
@@ -89,9 +91,12 @@ impl LayerState {
         self.spike_mask = 0;
 
         for i in 0..self.num_neurons {
-            let threshold_q16 =
-                ((input_popcount as u32).min(65535) as u16).wrapping_add(i as u16 * 7919);
-            self.lfsr.encode_into(threshold_q16, self.config.bitstream_length as usize, &mut bs_buf[..words]);
+            let threshold_q16 = (input_popcount.min(65535) as u16).wrapping_add(i as u16 * 7919);
+            self.lfsr.encode_into(
+                threshold_q16,
+                self.config.bitstream_length as usize,
+                &mut bs_buf[..words],
+            );
 
             if self.neurons[i].tick(&bs_buf[..words]) {
                 self.spike_mask |= 1u64 << i;
@@ -181,6 +186,12 @@ impl NetworkRunner {
     }
 }
 
+impl Default for NetworkRunner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -224,7 +235,9 @@ mod tests {
         let mut net = NetworkRunner::new();
         for i in 0..MAX_LAYERS {
             let seed = 0xACE1u16.wrapping_add(i as u16 * 1000);
-            assert!(net.add_layer(LayerConfig::new(2, 64, 5, 0, seed.max(1))).is_some());
+            assert!(net
+                .add_layer(LayerConfig::new(2, 64, 5, 0, seed.max(1)))
+                .is_some());
         }
         assert!(net.add_layer(test_config()).is_none());
     }

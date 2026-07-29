@@ -30,11 +30,11 @@
 #![cfg_attr(not(test), no_std)]
 
 pub mod bitstream;
-pub mod lfsr;
-pub mod neuron;
-pub mod network;
-pub mod ecc;
 pub mod deploy;
+pub mod ecc;
+pub mod lfsr;
+pub mod network;
+pub mod neuron;
 pub mod power;
 pub mod sobol;
 pub mod telemetry;
@@ -44,9 +44,9 @@ pub mod weights;
 
 /// Fixed-point Q16.16 LIF neuron (original tinySC API).
 pub struct TinyLIF {
-    pub v: i32,          // Fixed-point Q16.16
-    pub threshold: i32,  // Fixed-point Q16.16
-    pub leak: i32,       // Fixed-point Q0.16 (unsigned)
+    pub v: i32,         // Fixed-point Q16.16
+    pub threshold: i32, // Fixed-point Q16.16
+    pub leak: i32,      // Fixed-point Q0.16 (unsigned)
 }
 
 impl TinyLIF {
@@ -70,18 +70,22 @@ pub struct LegacyNetworkRunner<const N: usize> {
 
 impl<const N: usize> LegacyNetworkRunner<N> {
     pub fn new(threshold: i32, leak: i32) -> Self {
-        let neurons = core::array::from_fn(|_| TinyLIF { v: 0, threshold, leak });
+        let neurons = core::array::from_fn(|_| TinyLIF {
+            v: 0,
+            threshold,
+            leak,
+        });
         Self { neurons }
     }
 
     pub fn process_layer(&mut self, inputs: &[i32]) -> [bool; N] {
         let mut outputs = [false; N];
-        for i in 0..N {
+        for (i, output) in outputs.iter_mut().enumerate() {
             let mut acc = 0;
             for &val in inputs {
                 acc += val;
             }
-            outputs[i] = self.neurons[i].step(acc);
+            *output = self.neurons[i].step(acc);
         }
         outputs
     }
@@ -98,7 +102,11 @@ mod tests {
     use super::*;
 
     fn lif(threshold: i32, leak: i32) -> TinyLIF {
-        TinyLIF { v: 0, threshold, leak }
+        TinyLIF {
+            v: 0,
+            threshold,
+            leak,
+        }
     }
 
     #[test]

@@ -90,8 +90,18 @@ impl<const N: usize> RingBuffer<N> {
         if self.count == 0 {
             return None;
         }
-        let idx = if self.write_idx == 0 { N - 1 } else { self.write_idx - 1 };
+        let idx = if self.write_idx == 0 {
+            N - 1
+        } else {
+            self.write_idx - 1
+        };
         Some(self.buf[idx])
+    }
+}
+
+impl<const N: usize> Default for RingBuffer<N> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -161,6 +171,12 @@ impl<const W: usize> Telemetry<W> {
         self.tick_cycles.clear();
         self.peak_spikes = 0;
         self.min_spikes = u32::MAX;
+    }
+}
+
+impl<const W: usize> Default for Telemetry<W> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -31,10 +31,8 @@ impl Sobol16 {
             reg: 0,
             index: 0,
             direction: [
-                0x8000, 0x4000, 0x2000, 0x1000,
-                0x0800, 0x0400, 0x0200, 0x0100,
-                0x0080, 0x0040, 0x0020, 0x0010,
-                0x0008, 0x0004, 0x0002, 0x0001,
+                0x8000, 0x4000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100, 0x0080, 0x0040,
+                0x0020, 0x0010, 0x0008, 0x0004, 0x0002, 0x0001,
             ],
         }
     }
@@ -61,7 +59,7 @@ impl Sobol16 {
     ///
     /// Compare sequence values against threshold for each bit position.
     pub fn encode_into(&mut self, threshold: u16, length: usize, out: &mut [u32]) {
-        debug_assert!(out.len() >= (length + 31) / 32);
+        debug_assert!(out.len() >= length.div_ceil(32));
         for w in out.iter_mut() {
             *w = 0;
         }
@@ -83,6 +81,12 @@ impl Sobol16 {
     pub fn reset_with_seed(&mut self, seed: u16) {
         self.reg = seed;
         self.index = 0;
+    }
+}
+
+impl Default for Sobol16 {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -160,8 +164,8 @@ mod tests {
     #[test]
     fn test_sobol_encode_probability() {
         let mut s = Sobol16::new();
-        let length = 10000;
-        let words = (length + 31) / 32;
+        let length: usize = 10000;
+        let words = length.div_ceil(32);
         let mut buf = vec![0u32; words];
         s.encode_into(32768, length, &mut buf); // ~50% threshold
         let popcount = bitstream::popcount_slice(&buf);

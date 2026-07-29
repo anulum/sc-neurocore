@@ -23,6 +23,10 @@ pub enum Board {
     Generic,
 }
 
+/// Error returned when a deployment board name is not recognised.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ParseBoardError;
+
 impl Board {
     /// Rust target triple.
     pub const fn target_triple(&self) -> &'static str {
@@ -77,6 +81,10 @@ impl Board {
     }
 
     /// Parse from string (e.g., "esp32c6").
+    #[allow(
+        clippy::should_implement_trait,
+        reason = "retain the public Option-returning API alongside core::str::FromStr"
+    )]
     pub fn from_str(s: &str) -> Option<Self> {
         // Case-insensitive match without allocating
         let s = s.as_bytes();
@@ -96,17 +104,17 @@ impl Board {
     }
 }
 
+impl core::str::FromStr for Board {
+    type Err = ParseBoardError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Board::from_str(s).ok_or(ParseBoardError)
+    }
+}
+
 /// Case-insensitive byte comparison.
 fn eq_ci(a: &[u8], b: &[u8]) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
-    for i in 0..a.len() {
-        if a[i].to_ascii_lowercase() != b[i].to_ascii_lowercase() {
-            return false;
-        }
-    }
-    true
+    a.eq_ignore_ascii_case(b)
 }
 
 /// Generate `.cargo/config.toml` for the target board.
@@ -210,7 +218,7 @@ REGION_ALIAS("REGION_STACK", RAM);
 }
 
 /// Generate a `main.rs` stub for bare-metal deployment.
-pub fn main_stub(board: Board, num_layers: usize, neurons_per_layer: usize) -> &'static str {
+pub fn main_stub(_board: Board, _num_layers: usize, _neurons_per_layer: usize) -> &'static str {
     // Returns a generic template; real codegen would be more dynamic.
     r#"// SC-NeuroCore tinySC — Auto-generated bare-metal main
 // Run: sc-neurocore deploy --target riscv-mcu --board <board>
@@ -261,13 +269,20 @@ mod tests {
         assert_eq!(Board::from_str("esp32-c3"), Some(Board::Esp32c3));
         assert_eq!(Board::from_str("k210"), Some(Board::K210));
         assert_eq!(Board::from_str("unknown"), None);
+        assert_eq!("ESP32-C6".parse::<Board>(), Ok(Board::Esp32c6));
+        assert_eq!("unknown".parse::<Board>(), Err(ParseBoardError));
     }
 
     #[test]
     fn test_board_properties() {
         for board in [
-            Board::Esp32c3, Board::Esp32c6, Board::Esp32h2,
-            Board::Gd32vf103, Board::Ch32v307, Board::K210, Board::Generic,
+            Board::Esp32c3,
+            Board::Esp32c6,
+            Board::Esp32h2,
+            Board::Gd32vf103,
+            Board::Ch32v307,
+            Board::K210,
+            Board::Generic,
         ] {
             assert!(!board.name().is_empty());
             assert!(!board.target_triple().is_empty());

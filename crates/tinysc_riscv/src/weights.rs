@@ -38,7 +38,7 @@ impl WeightHeader {
 pub struct LayerDescriptor {
     pub num_neurons: u16,
     pub weights_per_neuron: u16,
-    pub offset: u32,       // byte offset from start of weight data
+    pub offset: u32, // byte offset from start of weight data
     pub lfsr_seed: u16,
     pub threshold: u16,
     pub bitstream_length: u16,
@@ -55,10 +55,12 @@ pub fn read_header(data: &[u8]) -> Option<WeightHeader> {
     if data.len() < core::mem::size_of::<WeightHeader>() {
         return None;
     }
-    let hdr = unsafe {
-        core::ptr::read_unaligned(data.as_ptr() as *const WeightHeader)
-    };
-    if hdr.is_valid() { Some(hdr) } else { None }
+    let hdr = unsafe { core::ptr::read_unaligned(data.as_ptr() as *const WeightHeader) };
+    if hdr.is_valid() {
+        Some(hdr)
+    } else {
+        None
+    }
 }
 
 /// Read layer descriptors following the header.
@@ -99,15 +101,10 @@ pub fn fletcher16(data: &[u8]) -> u32 {
 /// This is a host-side utility — in no_std context, weights are
 /// pre-built by the training pipeline and linked into flash.
 #[cfg(test)]
-pub fn build_weight_blob(
-    buf: &mut [u8],
-    layers: &[LayerDescriptor],
-    weights: &[i16],
-) -> usize {
+pub fn build_weight_blob(buf: &mut [u8], layers: &[LayerDescriptor], weights: &[i16]) -> usize {
     let hdr_size = core::mem::size_of::<WeightHeader>();
-    let desc_size = core::mem::size_of::<LayerDescriptor>();
     let weight_bytes = weights.len() * 2;
-    let total = hdr_size + desc_size * layers.len() + weight_bytes;
+    let total = hdr_size + core::mem::size_of_val(layers) + weight_bytes;
     assert!(buf.len() >= total);
 
     let hdr = WeightHeader {
@@ -124,7 +121,9 @@ pub fn build_weight_blob(
         for (i, desc) in layers.iter().enumerate() {
             core::ptr::write_unaligned(desc_ptr.add(i), *desc);
         }
-        let w_ptr = buf.as_mut_ptr().add(hdr_size + desc_size * layers.len()) as *mut i16;
+        let w_ptr = buf
+            .as_mut_ptr()
+            .add(hdr_size + core::mem::size_of_val(layers)) as *mut i16;
         for (i, &w) in weights.iter().enumerate() {
             core::ptr::write_unaligned(w_ptr.add(i), w);
         }
@@ -135,10 +134,7 @@ pub fn build_weight_blob(
     // Write checksum field via unaligned write
     unsafe {
         let checksum_offset = core::mem::offset_of!(WeightHeader, checksum);
-        core::ptr::write_unaligned(
-            buf.as_mut_ptr().add(checksum_offset) as *mut u32,
-            checksum,
-        );
+        core::ptr::write_unaligned(buf.as_mut_ptr().add(checksum_offset) as *mut u32, checksum);
     }
 
     total
@@ -149,18 +145,16 @@ mod tests {
     use super::*;
 
     fn make_test_blob() -> (Vec<u8>, usize) {
-        let layers = [
-            LayerDescriptor {
-                num_neurons: 4,
-                weights_per_neuron: 4,
-                offset: 0,
-                lfsr_seed: 0xACE1,
-                threshold: 10,
-                bitstream_length: 256,
-                leak_shift: 1,
-                _reserved: 0,
-            },
-        ];
+        let layers = [LayerDescriptor {
+            num_neurons: 4,
+            weights_per_neuron: 4,
+            offset: 0,
+            lfsr_seed: 0xACE1,
+            threshold: 10,
+            bitstream_length: 256,
+            leak_shift: 1,
+            _reserved: 0,
+        }];
         let weights: Vec<i16> = (0..16).map(|i| (i * 256) as i16).collect();
         let mut buf = vec![0u8; 1024];
         let n = build_weight_blob(&mut buf, &layers, &weights);
