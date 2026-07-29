@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import os
+
 from snn_memory_discipline_audit_support import *  # noqa: F403
 
 
@@ -20,6 +22,67 @@ def test_validate_stimulus_file_accepts_canonical_payload(tmp_path: Path) -> Non
     violations = audit_tool.validate_stimulus_file(path, tmp_path, "SC-NEUROCORE")
 
     assert violations == ()
+
+
+def test_validate_stimulus_file_accepts_recovery_grade_continuity_extension(
+    tmp_path: Path,
+) -> None:
+    """The exact Tier-0 extension remains canonical and recovery-addressable."""
+
+    path = tmp_path / "record.json"
+    _write_json(
+        path,
+        _canonical_payload(
+            kind="session_evidence",
+            records={
+                "session": ".coordination/sessions/SC-NEUROCORE/session.md",
+                "handover": ".coordination/handovers/SC-NEUROCORE/handover.md",
+            },
+            seat="SC-NEUROCORE/codex-test",
+            source_identity="SC-NEUROCORE/codex-test",
+        ),
+    )
+
+    violations = audit_tool.validate_stimulus_file(path, tmp_path, "SC-NEUROCORE")
+
+    assert violations == ()
+
+
+def test_validate_stimulus_file_rejects_malformed_continuity_extension(
+    tmp_path: Path,
+) -> None:
+    """Extension fields and kinds remain narrow instead of becoming aliases."""
+
+    path = tmp_path / "record.json"
+    _write_json(
+        path,
+        _canonical_payload(
+            kind="event",
+            records={"session": "elsewhere/session.txt"},
+            seat="unscoped-seat",
+            source_identity="other-project/codex-test",
+        ),
+    )
+
+    violations = audit_tool.validate_stimulus_file(path, tmp_path, "SC-NEUROCORE")
+
+    assert {item.code for item in violations} == {
+        "invalid_kind",
+        "invalid_records",
+        "invalid_seat",
+        "invalid_source_identity",
+    }
+
+
+def test_validate_stimulus_file_rejects_arbitrary_extra_key(tmp_path: Path) -> None:
+    """An unrelated extension key cannot broaden the accepted schema."""
+
+    path = tmp_path / "record.json"
+    _write_json(path, _canonical_payload(uncontrolled_extension=True))
+
+    violations = audit_tool.validate_stimulus_file(path, tmp_path, "SC-NEUROCORE")
+
+    assert {item.code for item in violations} == {"noncanonical_keys"}
 
 
 def test_validate_stimulus_file_rejects_legacy_aliases(tmp_path: Path) -> None:
@@ -91,3 +154,71 @@ def test_validate_stimulus_file_rejects_bad_timestamps(tmp_path: Path) -> None:
 
     assert "invalid_timestamp" in boolean_codes
     assert "invalid_timestamp" in text_codes
+
+
+def test_audit_accepts_later_canonical_append_only_successor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    legacy = tmp_path / "legacy.json"
+    successor = tmp_path / "successor.json"
+    _write_json(legacy, {"summary": "Legacy noncanonical memory record."})
+    _write_json(
+        successor,
+        _canonical_payload(
+            content="Supersedes legacy.json. Canonical append-only remediation record."
+        ),
+    )
+    os.utime(legacy, (1_000, 1_000))
+    os.utime(successor, (2_000, 2_000))
+    monkeypatch.setattr(
+        audit_tool,
+        "discover_snn_producers",
+        lambda _repo: (
+            audit_tool.ProducerCandidate(
+                path="writer.py", function="write_stimulus", source_refs=("test",)
+            ),
+        ),
+    )
+
+    audit = audit_tool.audit_memory_discipline(tmp_path, tmp_path, "SC-NEUROCORE")
+
+    assert audit.passed
+    assert audit.checked_records == 2
+    assert audit.violations == ()
+
+
+def test_audit_rejects_noncanonical_or_older_supersession(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    legacy = tmp_path / "legacy.json"
+    older = tmp_path / "older.json"
+    invalid = tmp_path / "invalid.json"
+    _write_json(legacy, {"summary": "Legacy noncanonical memory record."})
+    _write_json(
+        older,
+        _canonical_payload(content="Supersedes legacy.json. Canonical but older record."),
+    )
+    _write_json(
+        invalid,
+        _canonical_payload(
+            actor="uncontrolled",
+            content="Supersedes legacy.json. Later but noncanonical record.",
+        ),
+    )
+    os.utime(older, (1_000, 1_000))
+    os.utime(legacy, (2_000, 2_000))
+    os.utime(invalid, (3_000, 3_000))
+    monkeypatch.setattr(
+        audit_tool,
+        "discover_snn_producers",
+        lambda _repo: (
+            audit_tool.ProducerCandidate(
+                path="writer.py", function="write_stimulus", source_refs=("test",)
+            ),
+        ),
+    )
+
+    audit = audit_tool.audit_memory_discipline(tmp_path, tmp_path, "SC-NEUROCORE")
+
+    assert not audit.passed
+    assert {violation.path for violation in audit.violations} == {"invalid.json", "legacy.json"}

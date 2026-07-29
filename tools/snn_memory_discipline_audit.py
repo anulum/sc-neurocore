@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -32,8 +33,12 @@ CANONICAL_KEYS = frozenset(
         "source_ref",
     }
 )
+CONTINUITY_EXTENSION_KEYS = frozenset({"records", "seat", "source_identity"})
+CANONICAL_CONTINUITY_KEYS = CANONICAL_KEYS | CONTINUITY_EXTENSION_KEYS
 CONTROLLED_ACTORS = frozenset({"codex", "claude", "gemini", "grok", "system", "operator"})
 CONTROLLED_KINDS = frozenset({"event", "finding", "decision", "state"})
+CONTINUITY_KINDS = frozenset({"session_evidence", "task_completion"})
+SUPERSEDES_RECORD = re.compile(r"\bSupersedes\s+([A-Za-z0-9][A-Za-z0-9_.-]*\.json)\b", re.I)
 
 
 @dataclass(frozen=True)
@@ -142,9 +147,18 @@ def audit_memory_discipline(repo: Path, stimulus_dir: Path, project: str) -> Mem
     """Build a producer and stimulus-file memory-discipline audit."""
 
     records = tuple(sorted(stimulus_dir.glob("*.json")))
+    violations_by_record = {
+        record: validate_stimulus_file(record, stimulus_dir, project) for record in records
+    }
+    superseded_records = _superseded_records(
+        records,
+        violations_by_record=violations_by_record,
+        stimulus_dir=stimulus_dir,
+    )
     violations: list[StimulusViolation] = []
     for record in records:
-        violations.extend(validate_stimulus_file(record, stimulus_dir, project))
+        if record not in superseded_records:
+            violations.extend(violations_by_record[record])
     return MemoryDisciplineAudit(
         schema_version=SCHEMA_VERSION,
         project=project,
@@ -153,6 +167,34 @@ def audit_memory_discipline(repo: Path, stimulus_dir: Path, project: str) -> Mem
         checked_records=len(records),
         violations=tuple(violations),
     )
+
+
+def _superseded_records(
+    records: tuple[Path, ...],
+    *,
+    violations_by_record: dict[Path, tuple[StimulusViolation, ...]],
+    stimulus_dir: Path,
+) -> set[Path]:
+    """Return invalid predecessors named by later canonical successor records."""
+
+    superseded: set[Path] = set()
+    for successor in records:
+        if violations_by_record[successor]:
+            continue
+        payload = json.loads(successor.read_text(encoding="utf-8"))
+        content = payload.get("content")
+        if not isinstance(content, str):
+            continue
+        for target_name in SUPERSEDES_RECORD.findall(content):
+            target = stimulus_dir / target_name
+            if (
+                target != successor
+                and target in violations_by_record
+                and violations_by_record[target]
+                and successor.stat().st_mtime > target.stat().st_mtime
+            ):
+                superseded.add(target)
+    return superseded
 
 
 def validate_stimulus_file(path: Path, root: Path, project: str) -> tuple[StimulusViolation, ...]:
@@ -252,9 +294,9 @@ def _validate_payload(
     path: str, payload: dict[str, Any], project: str
 ) -> Iterable[StimulusViolation]:
     keys = set(payload)
-    if keys != CANONICAL_KEYS:
+    if keys not in {CANONICAL_KEYS, CANONICAL_CONTINUITY_KEYS}:
         missing = sorted(CANONICAL_KEYS - keys)
-        extra = sorted(keys - CANONICAL_KEYS)
+        extra = sorted(keys - CANONICAL_CONTINUITY_KEYS)
         detail = f"missing={missing}; extra={extra}"
         yield StimulusViolation(path=path, code="noncanonical_keys", detail=detail)
 
@@ -295,9 +337,10 @@ def _validate_payload(
         )
 
     kind = payload.get("kind")
-    if kind not in CONTROLLED_KINDS:
+    allowed_kinds = CONTINUITY_KINDS if keys == CANONICAL_CONTINUITY_KEYS else CONTROLLED_KINDS
+    if kind not in allowed_kinds:
         yield StimulusViolation(
-            path=path, code="invalid_kind", detail=f"kind must be one of {sorted(CONTROLLED_KINDS)}"
+            path=path, code="invalid_kind", detail=f"kind must be one of {sorted(allowed_kinds)}"
         )
 
     source_ref = payload.get("source_ref")
@@ -305,6 +348,44 @@ def _validate_payload(
         yield StimulusViolation(
             path=path, code="invalid_source_ref", detail="source_ref must be a non-empty string"
         )
+
+    if keys == CANONICAL_CONTINUITY_KEYS:
+        yield from _validate_continuity_extension(path, payload, project)
+
+
+def _validate_continuity_extension(
+    path: str, payload: dict[str, Any], project: str
+) -> Iterable[StimulusViolation]:
+    """Validate recovery-grade fields on the exact Tier-0 extension schema."""
+
+    records = payload.get("records")
+    expected_prefixes = {
+        "session": ".coordination/sessions/",
+        "handover": ".coordination/handovers/",
+    }
+    records_valid = isinstance(records, dict) and set(records) == set(expected_prefixes)
+    if records_valid:
+        records_valid = all(
+            isinstance(records[name], str)
+            and records[name].startswith(prefix)
+            and records[name].endswith(".md")
+            for name, prefix in expected_prefixes.items()
+        )
+    if not records_valid:
+        yield StimulusViolation(
+            path=path,
+            code="invalid_records",
+            detail="records must contain canonical session and handover Markdown paths",
+        )
+
+    for field in ("seat", "source_identity"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not value.startswith(f"{project}/"):
+            yield StimulusViolation(
+                path=path,
+                code=f"invalid_{field}",
+                detail=f"{field} must name a {project}/ identity",
+            )
 
 
 def _valid_timestamp(value: object) -> bool:
