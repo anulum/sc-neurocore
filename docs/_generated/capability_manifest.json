@@ -971,7 +971,7 @@
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4606
+    "test_files": 4610
   },
   "documentation": {
     "public_pages": [
@@ -3459,6 +3459,7 @@
       "tests/test_alternative_path_registry.py",
       "tests/test_alternative_path_reports.py",
       "tests/test_alternative_path_route_modes.py",
+      "tests/test_amari_field_backends.py",
       "tests/test_analog_bridge/analog_bridge_extended_support.py",
       "tests/test_analog_bridge/analog_bridge_support.py",
       "tests/test_analog_bridge/test_analog_bridge_emit_analog_config.py",
@@ -3549,6 +3550,7 @@
       "tests/test_bench_adaptive_threshold_if.py",
       "tests/test_bench_adex.py",
       "tests/test_bench_alpha.py",
+      "tests/test_bench_amari_field.py",
       "tests/test_bench_chialvo_map.py",
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_coba_lif.py",
@@ -4031,6 +4033,7 @@
       "tests/test_cosim_adex.py",
       "tests/test_cosim_aihara_map.py",
       "tests/test_cosim_alpha.py",
+      "tests/test_cosim_amari_field.py",
       "tests/test_cosim_cazelles_map.py",
       "tests/test_cosim_chialvo_map.py",
       "tests/test_cosim_coba_lif.py",
@@ -6358,6 +6361,7 @@
       "tests/test_reference_adex.py",
       "tests/test_reference_aihara_map.py",
       "tests/test_reference_alpha.py",
+      "tests/test_reference_amari_field.py",
       "tests/test_reference_cazelles_map.py",
       "tests/test_reference_chialvo_map.py",
       "tests/test_reference_coba_lif.py",

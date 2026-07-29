@@ -4,20 +4,26 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for amari_field
+# SC-NeuroCore — Mojo scalar primitives for the Amari 1977 neural field
 
-fn _build_kernel() -> Int:
-    var __build_kernel_line = 'x = abs(arange(n) - n // 2) * dx'
-    var __build_kernel_line = 'k = a_exc * exp(-a_width * x) - b_inh * exp(-b_width * x)'
-    var __build_kernel_line = '_w = roll(k, -n // 2)'
-    return 0
+from std.math import exp
 
-fn step(current: Int) -> Int:
-    var _step_line = 'f_u = maximum(u, 0.0)'
-    var _step_line = 'conv = real(fft.ifft(fft.fft(_w) * fft.fft(f_u))) * dx'
-    var _step_line = 'u += (-u + conv + current) / tau * dt'
-    return 0  # return float(mean(maximum(u, 0.0)))
 
-fn reset() -> Int:
-    var _reset_line = 'u = zeros(n)'
-    return 0
+@always_inline
+def amari_kernel(
+    distance: Float64,
+    a_exc: Float64,
+    a_width: Float64,
+    b_inh: Float64,
+    b_width: Float64,
+) -> Float64:
+    """Return one difference-of-exponentials interaction coefficient."""
+    return a_exc * exp(-a_width * distance) - b_inh * exp(-b_width * distance)
+
+
+@always_inline
+def amari_activity(state: Float64) -> Float64:
+    """Return Amari's source-level Heaviside firing rate."""
+    if state > 0.0:
+        return 1.0
+    return 0.0

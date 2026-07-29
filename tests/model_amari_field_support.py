@@ -10,31 +10,45 @@ from __future__ import annotations
 
 """Full pipeline test for AmariNeuralField (Amari 1977).
 
-Continuous neural field discretised on N=64 nodes. Mexican-hat kernel
-w(x) = A·exp(-a|x|) - B·exp(-b|x|). step() takes NDArray input,
-returns float (mean activation). FFT-based convolution.
+Continuous neural field discretised on a periodic N=64 grid. The declared
+difference-of-exponentials kernel is locally excitatory and distally
+inhibitory, and the source-level output is Amari's Heaviside firing rate.
+``step()`` accepts a scalar broadcast or exact-length vector and returns the
+active-site fraction.
 
-FINDING: default params (a_exc=1.5, b_inh=0.75) → kernel sum=4.5
-→ unstable (field diverges under persistent input). Balanced params
-(a_exc=0.5, b_inh=0.5) → kernel sum≈0.96 → stable bump.
-
-Performance: ~19K isolation steps/s (FFT-dominated).
+Performance is matrix-vector dominated at the default grid size.
 Network: Population works, Network.run produces spikes (float return
-interpreted as non-zero → spike)."""
+interpreted as non-zero → spike; that compatibility behavior is not a
+biological single-neuron event claim)."""
 import time
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
+import pytest
 from sc_neurocore.neurons.models.amari_field import AmariNeuralField
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
 from sc_neurocore.network.stimulus import PoissonInput
 
+
+def amari_state(neuron: AmariNeuralField) -> npt.NDArray[np.float64]:
+    """Return the initialized state while narrowing the constructor type."""
+    state = neuron.u
+    assert state is not None
+    return state
+
+
 __all__ = [
     "time",
     "np",
+    "pytest",
     "AmariNeuralField",
     "Population",
     "Network",
     "SpikeMonitor",
     "PoissonInput",
+    "Any",
+    "amari_state",
 ]

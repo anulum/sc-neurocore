@@ -16,32 +16,32 @@ from tests.model_amari_field_support import *  # noqa: F403
 class TestAmariMexicanHatKernel:
     """w(x) = A·exp(-a|x|) - B·exp(-b|x|). Centre excitatory, surround inhibitory."""
 
-    def test_kernel_centre_positive(self):
+    def test_kernel_centre_positive(self) -> None:
         """At x=0: w = A - B = 1.5 - 0.75 = 0.75."""
         n = AmariNeuralField()
         assert abs(n._w[0] - (n.a_exc - n.b_inh)) < 1e-10
 
-    def test_kernel_shape(self):
+    def test_kernel_shape(self) -> None:
         n = AmariNeuralField()
         assert n._w.shape == (n.n,)
 
-    def test_kernel_sum_default_positive(self):
-        """Default kernel sum > 1 → inherently unstable (positive feedback)."""
+    def test_kernel_is_distally_inhibitory(self) -> None:
+        """The farthest periodic interaction is inhibitory, as the source requires."""
         n = AmariNeuralField()
-        assert n._w.sum() > 1.0, f"Kernel sum = {n._w.sum():.2f}"
+        assert n._w[n.n // 2] < 0.0
 
-    def test_balanced_kernel_stable(self):
-        """With a_exc = b_inh = 0.5: kernel sum ≈ 0.96 → stable dynamics."""
-        n = AmariNeuralField(a_exc=0.5, b_inh=0.5)
-        assert n._w.sum() < 1.5
+    def test_non_lateral_kernel_is_rejected(self) -> None:
+        """Do not silently admit the historical all-excitatory width ordering."""
+        with pytest.raises(ValueError, match="distally inhibitory"):
+            AmariNeuralField(a_width=1.0, b_width=2.0)
 
-    def test_fft_convolution_correct(self):
-        """Convolution via FFT: should match direct sum for simple case."""
+    def test_circular_interaction_correct(self) -> None:
+        """The circular interaction responds to one active source site."""
         n = AmariNeuralField(n=8)
         # Set f(u) = delta at centre
         n.u = np.zeros(8)
         n.u[4] = 1.0
-        # After one step with zero input: u gets kernel contribution
+        # After one step with zero input: u gets the circular kernel contribution
         n.step(np.zeros(8))
         # u should have changed (kernel convolved with delta → kernel itself)
         assert not np.allclose(n.u, 0.0)

@@ -512,6 +512,19 @@ FloatingPointError
 
 ---
 
+## Module `accel.amari_field`
+
+### Function `backend_available(backend)`
+Return whether one named Amari execution lane is currently usable.
+
+### Function `auto_backend()`
+Return the first available lane in measured latency order.
+
+### Function `simulate_amari_field(u_init, tau, a_exc, a_width, b_inh, b_width, dx, dt, currents)`
+Run a complete Amari field batch on an explicit maintained backend.
+
+---
+
 ## Module `accel.backend`
 
 ### Class `Backend`
@@ -22454,18 +22467,47 @@ neuron state.
 ## Module `neurons.models.amari_field`
 
 ### Class `AmariNeuralField`
-Amari 1977 — continuous neural field, discretized on N nodes.
+Discretize Amari's homogeneous single-layer field on a periodic ring.
 
-tau du_i/dt = -u_i + sum_j w(|i-j|) f(u_j) * dx + I_i
-w(x) = A * exp(-a*|x|) - B * exp(-b*|x|)    (Mexican hat)
-f(u) = max(0, u)                              (Heaviside-linear)
+The maintained equation is Amari (1977), Eq. (3), with the paper's
+source-level Heaviside output and a declared difference-of-exponentials
+lateral-inhibition kernel. ``current`` supplies the combined homogeneous
+level ``h`` and deviational input ``s(x,t)``. A scalar drive is broadcast;
+a vector drive must contain exactly ``n`` finite samples.
 
-Reference: Amari, S. (1977). Biol. Cybern. 27:77–87.
+One call performs a simultaneous explicit-Euler update and returns the
+mean pulse-emission rate (active-site fraction). This is a continuous
+population-rate model; the returned value is not a spike event.
+
+Parameters
+----------
+n:
+    Number of uniformly spaced sites on the periodic ring; at least two.
+tau:
+    Positive field time constant.
+a_exc, a_width:
+    Non-negative local-excitation amplitude and positive inverse width.
+b_inh, b_width:
+    Non-negative distal-inhibition amplitude and positive inverse width.
+dx, dt:
+    Positive spatial and temporal discretization steps.
+u:
+    Optional finite initial field state of shape ``(n,)``.
+
+Raises
+------
+ValueError
+    If configuration, input, or a candidate state is invalid. Failed
+    updates leave ``u`` unchanged.
 
 - **__post_init__**()
+  - Validate configuration and build the circular interaction matrix.
 - **step**(current)
-  - Advance one timestep. Returns mean activation.
+  - Advance one atomic Euler step and return mean source-level activity.
+- **simulate**(currents)
+  - Run a complete drive batch through one maintained execution lane.
 - **reset**()
+  - Zero every dynamic site while preserving numerical configuration.
 
 ---
 

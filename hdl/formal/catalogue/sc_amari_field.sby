@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-12 safety induction for the four-site Amari field
+
+[options]
+mode prove
+depth 12
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_amari_field_formal.v
+read -formal sc_amari_field.v
+prep -top sc_amari_field_formal
+
+[files]
+sc_amari_field_formal.v
+sc_amari_field.v

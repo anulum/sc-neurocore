@@ -14,38 +14,39 @@ from tests.model_amari_field_support import *  # noqa: F403
 
 
 class TestAmariFieldDynamics:
-    def test_bump_stimulus_activates_field(self):
+    def test_bump_stimulus_activates_field(self) -> None:
         """Gaussian bump input should create localised activation."""
-        n = AmariNeuralField(a_exc=0.5, b_inh=0.5)
+        n = AmariNeuralField()
         x = np.arange(64)
         I_bump = np.exp(-0.5 * ((x - 32) / 5) ** 2) * 1.0
         for _ in range(500):
             n.step(I_bump)
         # Centre should be more active than edges
-        assert n.u[32] > n.u[0]
+        state = amari_state(n)
+        assert state[32] > state[0]
 
-    def test_balanced_field_stays_bounded(self):
+    def test_balanced_field_stays_bounded(self) -> None:
         """With balanced kernel, u should not diverge."""
-        n = AmariNeuralField(a_exc=0.5, b_inh=0.5)
+        n = AmariNeuralField()
         I = np.ones(64) * 0.5
         for _ in range(1000):
             n.step(I)
-        assert np.all(np.isfinite(n.u))
-        assert np.max(np.abs(n.u)) < 100
+        state = amari_state(n)
+        assert np.all(np.isfinite(state))
+        assert np.max(np.abs(state)) < 100
 
-    def test_default_params_diverge(self):
-        """FINDING: default kernel sum > 1 → persistent input causes divergence."""
+    def test_default_field_stays_bounded(self) -> None:
+        """The corrected lateral-inhibition defaults remain finite and bounded."""
         n = AmariNeuralField()
         I = np.ones(64) * 1.0
         for _ in range(500):
             n.step(I)
-        # u should have grown very large
-        assert np.max(np.abs(n.u)) > 1000
+        assert np.max(np.abs(amari_state(n))) < 100
 
-    def test_mean_activation_returned(self):
-        """step() returns mean of max(0, u) across field."""
-        n = AmariNeuralField(a_exc=0.5, b_inh=0.5)
+    def test_mean_activation_returned(self) -> None:
+        """step() returns the source-level active-site fraction."""
+        n = AmariNeuralField()
         I = np.ones(64) * 0.5
         act = n.step(I)
-        expected = float(np.mean(np.maximum(n.u, 0.0)))
+        expected = float(np.count_nonzero(amari_state(n) > 0.0) / n.n)
         assert abs(act - expected) < 1e-10

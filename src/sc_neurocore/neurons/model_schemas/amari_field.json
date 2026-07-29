@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Amari Neural Field (four-site periodic specialization)",
+    "author": "Amari, S.",
+    "year": 1977,
+    "doi": "10.1007/BF00337259",
+    "description": "Four-site executable specialization of the homogeneous single-layer lateral-inhibition field"
+  },
+  "state": {"u0": 0.0, "u1": 0.0, "u2": 0.0, "u3": 0.0},
+  "parameters": {
+    "tau": 10.0,
+    "dx": 0.5,
+    "w0": 0.75,
+    "w1": 0.09692116697268843,
+    "w2": -0.0729066560236627
+  },
+  "integration": {"dt": 0.5, "method": "euler"},
+  "dynamics": {
+    "u0": "(-u0 + dx * (w0*(u0 > 0.0) + w1*(u1 > 0.0) + w2*(u2 > 0.0) + w1*(u3 > 0.0)) + I) / tau",
+    "u1": "(-u1 + dx * (w1*(u0 > 0.0) + w0*(u1 > 0.0) + w1*(u2 > 0.0) + w2*(u3 > 0.0)) + I) / tau",
+    "u2": "(-u2 + dx * (w2*(u0 > 0.0) + w1*(u1 > 0.0) + w0*(u2 > 0.0) + w1*(u3 > 0.0)) + I) / tau",
+    "u3": "(-u3 + dx * (w1*(u0 > 0.0) + w2*(u1 > 0.0) + w1*(u2 > 0.0) + w0*(u3 > 0.0)) + I) / tau"
+  },
+  "extensions": {
+    "family": "rate-mean-field",
+    "model_type": "periodic_neural_field",
+    "site_count": 4,
+    "event_semantics": "none; states above zero emit source-level unit rate",
+    "input_semantics": "scalar I broadcasts the paper's combined h+s drive",
+    "kernel_note": "w(d)=1.5*exp(-2*d)-0.75*exp(-d), sampled at d=0,0.5,1",
+    "source_scope_note": "Amari 1977 equation (3), one-dimensional homogeneous single layer, negligible delay",
+    "silicon_note": "Fixed four-site schema and RTL are a bounded finite-grid enrolment, not a continuous-space convergence claim"
+  }
+}

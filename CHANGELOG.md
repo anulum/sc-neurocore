@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `AmariNeuralField` to the source-level Heaviside activity in Amari
+  (1977), restored a genuinely local-excitation/distal-inhibition default
+  kernel, and promoted the finite periodic-grid specialization across the
+  modular Rust engine, independent Rust safety, Julia, Go, and Mojo lanes.
+  Complete vector-state receipts, an independent DOI oracle, paired schemas,
+  Q16.16 four-site RTL co-simulation, Yosys/depth-12 safety induction, a
+  source/binary-bound benchmark, and language-native API documentation now
+  define the evidence boundary. Continuous-space convergence, persistent-bump
+  defaults, formal equivalence, timing, PPA, and device results remain unclaimed.
 - Graduated `SCChaoticMapNeuron` as its own project-specified high-fidelity
   model without restoring the removed Aihara attribution. The preserved
   Python/Rust/Julia/Go/Mojo recurrence is now bound to an independent project
