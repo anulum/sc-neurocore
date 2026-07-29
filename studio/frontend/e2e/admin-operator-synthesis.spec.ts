@@ -815,7 +815,7 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
       route: "/api/ir/emit-sv-direct",
     },
     include_audit: true,
-    project_name: "compile-test",
+    project_name: null,
   });
   await page
     .getByRole("button", { name: "Download compile evidence artifact evidence/replay.json" })
@@ -851,7 +851,7 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
     command_replay: null,
     include_audit: true,
     job_ids: ["sj_synthesis"],
-    project_name: "synthesis-multi-target",
+    project_name: null,
   });
   const synthesisArtifactPath = "/api/studio/jobs/sj_synthesis_bundle/artifacts/evidence/jobs/sj_synthesis/artifacts/synthesis/multi-target-evidence.json";
   await page

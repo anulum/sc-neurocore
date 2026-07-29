@@ -209,7 +209,7 @@ export default function SynthesisDashboard() {
     ? latestMultiTargetSynthesisJobId
     : latestSynthesisJobId;
 
-  function exportSynthesisEvidence(projectName: string) {
+  function exportSynthesisEvidence() {
     if (activeSynthesisJobId === null) {
       return;
     }
@@ -222,7 +222,7 @@ export default function SynthesisDashboard() {
       include_audit: true,
       job_ids: [activeSynthesisJobId],
       model_scan_results: [],
-      project_name: projectName,
+      project_name: null,
       simulation_results: [],
       weight_restore_results: [],
       weight_restore_attach_results: [],
@@ -382,7 +382,7 @@ export default function SynthesisDashboard() {
               onDownloadArtifact={(relativePath) => {
                 void downloadEvidenceBundleArtifactForSurface("synthesis", relativePath);
               }}
-              onExport={() => exportSynthesisEvidence("synthesis-multi-target")}
+              onExport={exportSynthesisEvidence}
             />
           </div>
         )}
@@ -447,7 +447,7 @@ export default function SynthesisDashboard() {
               onDownloadArtifact={(relativePath) => {
                 void downloadEvidenceBundleArtifactForSurface("synthesis", relativePath);
               }}
-              onExport={() => exportSynthesisEvidence(`synthesis-${synthResult.target}`)}
+              onExport={exportSynthesisEvidence}
             />
           </div>
         )}

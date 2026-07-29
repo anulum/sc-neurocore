@@ -43,7 +43,7 @@ export default function CompilerInspector() {
       include_audit: true,
       job_ids: [],
       model_scan_results: [],
-      project_name: `compile-${compileTraceability.output.module_name}`,
+      project_name: null,
       simulation_results: [],
       weight_restore_results: [],
       weight_restore_attach_results: [],

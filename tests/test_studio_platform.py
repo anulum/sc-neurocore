@@ -22,6 +22,7 @@ from sc_neurocore.studio.platform import (
     CapabilityRequirement,
     CapabilityStatus,
     EvidenceClass,
+    build_default_studio_capability_registry,
 )
 
 
@@ -69,6 +70,27 @@ def test_studio_capability_health_fails_closed_for_missing_requirement() -> None
     assert health.status == CapabilityStatus.UNAVAILABLE
     assert health.healthy is False
     assert health.message == "One or more capability requirements are unavailable."
+
+
+def test_default_synthesis_capability_uses_path_free_executable_inventory() -> None:
+    available = build_default_studio_capability_registry(
+        executable_resolver=lambda name: f"/tool-bin/{name}",
+    ).health("studio.synthesis_dashboard")
+    missing = build_default_studio_capability_registry(
+        executable_resolver=lambda _name: None,
+    ).health("studio.synthesis_dashboard")
+
+    assert available.healthy is True
+    assert available.status == CapabilityStatus.EXPERIMENTAL
+    assert available.requirements == (
+        CapabilityRequirement("yosys", True, "executable found on PATH"),
+    )
+    assert "/tool-bin" not in str(available.to_public_dict())
+    assert missing.healthy is False
+    assert missing.status == CapabilityStatus.UNAVAILABLE
+    assert missing.requirements == (
+        CapabilityRequirement("yosys", False, "executable not found on PATH"),
+    )
 
 
 def test_studio_capabilities_endpoint_returns_safe_inventory() -> None:

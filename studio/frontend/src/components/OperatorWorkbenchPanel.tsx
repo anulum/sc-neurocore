@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio operator workbench panel
 import type {
   OperatorWorkbenchCardKey,
+  OperatorWorkbenchCard,
   OperatorWorkbenchCardStatus,
   OperatorWorkbenchEvidenceTarget,
   OperatorWorkbenchState,
@@ -16,6 +17,7 @@ export interface OperatorWorkbenchPanelProps {
   onExportEvidence: (target: OperatorWorkbenchEvidenceTarget) => void;
   onOpenAdmin: () => void;
   onOpenCompiler: () => void;
+  onOpenSynthesis: () => void;
   onOpenProjects: () => void;
   onRunSimulation: () => void;
   state: OperatorWorkbenchState;
@@ -39,6 +41,7 @@ export default function OperatorWorkbenchPanel({
   onExportEvidence,
   onOpenAdmin,
   onOpenCompiler,
+  onOpenSynthesis,
   onOpenProjects,
   onRunSimulation,
   state,
@@ -63,10 +66,11 @@ export default function OperatorWorkbenchPanel({
             <div className="operator-workbench-detail" title={card.detail}>{card.detail}</div>
             <button
               disabled={actionDisabled(card.key, state)}
-              onClick={() => runAction(card.key, {
+              onClick={() => runAction(card, {
                 exportEvidence: onExportEvidence,
                 openAdmin: onOpenAdmin,
                 openCompiler: onOpenCompiler,
+                openSynthesis: onOpenSynthesis,
                 openProjects: onOpenProjects,
                 runSimulation: onRunSimulation,
                 state,
@@ -86,6 +90,7 @@ interface OperatorWorkbenchActions {
   exportEvidence: (target: OperatorWorkbenchEvidenceTarget) => void;
   openAdmin: () => void;
   openCompiler: () => void;
+  openSynthesis: () => void;
   openProjects: () => void;
   runSimulation: () => void;
   state: OperatorWorkbenchState;
@@ -95,10 +100,14 @@ function actionDisabled(key: OperatorWorkbenchCardKey, state: OperatorWorkbenchS
   return key === "export" && !state.evidenceActionEnabled;
 }
 
-function runAction(key: OperatorWorkbenchCardKey, actions: OperatorWorkbenchActions): void {
-  switch (key) {
+function runAction(card: OperatorWorkbenchCard, actions: OperatorWorkbenchActions): void {
+  switch (card.key) {
     case "compile":
-      actions.openCompiler();
+      if (card.action === "Open synthesis") {
+        actions.openSynthesis();
+      } else {
+        actions.openCompiler();
+      }
       return;
     case "evidence":
       actions.openAdmin();

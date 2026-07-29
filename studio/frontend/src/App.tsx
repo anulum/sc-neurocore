@@ -199,7 +199,7 @@ export default function App() {
       include_audit: true,
       job_ids: [],
       model_scan_results: [],
-      project_name: `compile-${s.compileTraceability.output.module_name}`,
+      project_name: null,
       simulation_results: [],
       weight_restore_results: [],
       weight_restore_attach_results: [],
@@ -221,9 +221,7 @@ export default function App() {
       include_audit: true,
       job_ids: [activeJobId],
       model_scan_results: [],
-      project_name: s.multiTargetResult === null
-        ? `synthesis-${s.synthResult?.target ?? s.synthTarget}`
-        : "synthesis-multi-target",
+      project_name: null,
       simulation_results: [],
       weight_restore_results: [],
       weight_restore_attach_results: [],
@@ -557,6 +555,7 @@ export default function App() {
               onExportEvidence={operateWorkbenchEvidenceBundle}
               onOpenAdmin={() => activatePanel("admin")}
               onOpenCompiler={() => activatePanel("verilog")}
+              onOpenSynthesis={() => activatePanel("synth")}
               onOpenProjects={() => activatePanel(s.sourceMode === "model" ? "trace" : "ir")}
               onRunSimulation={() => {
                 if (s.isSimulating || panelUnavailable("trace")) {

@@ -60,13 +60,17 @@ def _source_chain(verilog: str) -> tuple[dict[str, object], dict[str, object]]:
     return compile_traceability, cosim_parity
 
 
+@pytest.mark.parametrize("browser_round_trip", [False, True])
 def test_terminal_binds_netlist_and_routed_artifact_digests(
     monkeypatch: pytest.MonkeyPatch,
+    browser_round_trip: bool,
 ) -> None:
     import sc_neurocore.studio.synthesis as synthesis
 
     verilog = "module example_neuron(input clk, output q); assign q = clk; endmodule"
     compile_traceability, cosim_parity = _source_chain(verilog)
+    if browser_round_trip:
+        compile_traceability["source_payload"]["params"]["gain"] = 2  # type: ignore[index]
 
     def fake_synthesis(
         _verilog: str,

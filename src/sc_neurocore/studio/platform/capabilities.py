@@ -15,8 +15,12 @@ truth for capability, evidence, or requirement state.
 
 from __future__ import annotations
 
+import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+
+ExecutableResolver = Callable[[str], str | None]
 
 
 class CapabilityStatus(str, Enum):
@@ -155,7 +159,25 @@ class CapabilityRegistry:
         return [self.health(capability_id) for capability_id in sorted(self._descriptors)]
 
 
-def build_default_studio_capability_registry() -> CapabilityRegistry:
+def _executable_requirement(
+    executable: str,
+    *,
+    resolver: ExecutableResolver,
+) -> CapabilityRequirement:
+    """Build a path-free runtime requirement for one external executable."""
+
+    available = resolver(executable) is not None
+    return CapabilityRequirement(
+        executable,
+        available,
+        "executable found on PATH" if available else "executable not found on PATH",
+    )
+
+
+def build_default_studio_capability_registry(
+    *,
+    executable_resolver: ExecutableResolver = shutil.which,
+) -> CapabilityRegistry:
     """Build the default capability registry for the current Studio backend."""
 
     registry = CapabilityRegistry()
@@ -250,9 +272,7 @@ def build_default_studio_capability_registry() -> CapabilityRegistry:
             title="Synthesis Dashboard",
             summary="SystemVerilog synthesis and target resource reporting.",
             status=CapabilityStatus.EXPERIMENTAL,
-            requirements=(
-                CapabilityRequirement("yosys", False, "external tool availability not checked"),
-            ),
+            requirements=(_executable_requirement("yosys", resolver=executable_resolver),),
             evidence=(EvidenceClass.STATIC_INVENTORY,),
             ui_placement="Deploy",
             docs_path="docs/studio/synthesis-dashboard.md",

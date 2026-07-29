@@ -438,10 +438,12 @@ def _validate_selected_rtl_chain(
         raise ValueError("Selected RTL compile evidence is malformed.")
     if output.get("rtl_sha256") != actual_rtl_sha256:
         raise ValueError("Selected RTL does not match the compile output digest.")
-    if compile_traceability.get("input_sha256") != _sha256_json(source_payload):
+    digest_source_payload = _browser_stable_model_source_payload(source_payload)
+    if compile_traceability.get("input_sha256") != _sha256_json(digest_source_payload):
         raise ValueError("Selected RTL compile input digest is invalid.")
     trace_payload = dict(compile_traceability)
     claimed_trace_sha256 = trace_payload.pop("traceability_sha256", None)
+    trace_payload["source_payload"] = digest_source_payload
     if claimed_trace_sha256 != _sha256_json(trace_payload):
         raise ValueError("Selected RTL compile traceability digest is invalid.")
 
@@ -469,6 +471,33 @@ def _validate_selected_rtl_chain(
         "model_name": source_payload.get("model_name"),
         "module_name": output.get("module_name"),
         "rtl_sha256": actual_rtl_sha256,
+    }
+
+
+def _browser_stable_model_source_payload(
+    source_payload: Mapping[str, object],
+) -> dict[str, object]:
+    """Restore model float fields after a standards-compliant browser JSON round trip."""
+
+    dt = source_payload.get("dt")
+    params = source_payload.get("params")
+    if isinstance(dt, bool) or not isinstance(dt, (int, float)):
+        raise ValueError("Selected RTL compile source dt is invalid.")
+    if not isinstance(params, Mapping):
+        raise ValueError("Selected RTL compile source parameters are invalid.")
+    canonical_params: dict[str, float] = {}
+    for key, value in params.items():
+        if (
+            not isinstance(key, str)
+            or isinstance(value, bool)
+            or not isinstance(value, (int, float))
+        ):
+            raise ValueError("Selected RTL compile source parameters are invalid.")
+        canonical_params[key] = float(value)
+    return {
+        **source_payload,
+        "dt": float(dt),
+        "params": canonical_params,
     }
 
 
