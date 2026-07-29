@@ -43,4 +43,4 @@ class TestRallCableSpiking:
                 assert abs(n.v[0] - n.v_reset) < 1e-6
                 break
         else:
-            pytest.skip("No spike observed")
+            pytest.fail("Rall cable did not spike under the required strong-coupling stimulus")

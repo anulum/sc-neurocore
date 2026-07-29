@@ -32,11 +32,11 @@ class TestBenchmarkRegression:
         spiking = {
             k: v for k, v in results.items() if v["total_spikes"] > 0 and k != "brian2_reference"
         }
-        if not spiking:
-            pytest.skip("no spiking variants in results")
+        assert spiking, "committed benchmark has no spiking implementation variants"
         distances = {
             k: abs(v["rate_ratio"] - 1.0) for k, v in spiking.items() if v["rate_ratio"] > 0
         }
+        assert distances, "spiking variants omit positive Brian2 rate ratios"
         closest = min(distances, key=distances.get)
         assert closest == "v14_sobol_bitstream", f"Expected Sobol closest, got {closest}"
 
@@ -44,8 +44,7 @@ class TestBenchmarkRegression:
         """V18 (Numba) and V19 (CUDA) must be faster than V1 (pure Python)."""
         results = _load_results()
         v1_time = results.get("v1_stochastic_lif", {}).get("wall_time_s", 0)
-        if v1_time == 0:
-            pytest.skip("V1 result not found")
+        assert v1_time > 0, "committed benchmark omits a positive V1 wall time"
         for vname in ["v18_numba_jit", "v19_pytorch_cuda", "v20_vectorized_numpy"]:
             vt = results.get(vname, {}).get("wall_time_s", 0)
             if vt > 0:
@@ -54,8 +53,7 @@ class TestBenchmarkRegression:
     def test_refractory_rate_below_ceiling(self):
         results = _load_results()
         v8 = results.get("v8_refractory_lif", {})
-        if not v8 or v8["mean_rate_hz"] == 0:
-            pytest.skip("V8 result not found")
+        assert v8 and v8["mean_rate_hz"] > 0, "committed benchmark omits an active V8 result"
         assert v8["mean_rate_hz"] < 2000.0
 
     def test_v1_v20_spike_count_match(self):
@@ -63,8 +61,7 @@ class TestBenchmarkRegression:
         results = _load_results()
         v1 = results.get("v1_stochastic_lif", {})
         v20 = results.get("v20_vectorized_numpy", {})
-        if not v1 or not v20:
-            pytest.skip("V1 or V20 result not found")
+        assert v1 and v20, "committed benchmark omits required V1/V20 parity results"
         assert v1["total_spikes"] == v20["total_spikes"]
 
     def test_homeostatic_close_to_baseline(self):
@@ -72,8 +69,7 @@ class TestBenchmarkRegression:
         results = _load_results()
         v1 = results.get("v1_stochastic_lif", {})
         v6 = results.get("v6_homeostatic_lif", {})
-        if not v1 or not v6:
-            pytest.skip("V1 or V6 result not found")
+        assert v1 and v6, "committed benchmark omits required V1/V6 comparison results"
         ratio = v6["mean_rate_hz"] / v1["mean_rate_hz"]
         assert 0.95 <= ratio <= 1.05, f"V6/V1 ratio {ratio:.3f} outside 5% band"
 
@@ -82,8 +78,7 @@ class TestBenchmarkRegression:
         results = _load_results()
         v1 = results.get("v1_stochastic_lif", {})
         v7 = results.get("v7_noisy_lif", {})
-        if not v1 or not v7:
-            pytest.skip("V1 or V7 result not found")
+        assert v1 and v7, "committed benchmark omits required V1/V7 comparison results"
         ratio = v7["mean_rate_hz"] / v1["mean_rate_hz"]
         assert 0.90 <= ratio <= 1.10, f"V7/V1 ratio {ratio:.3f} outside 10% band"
 

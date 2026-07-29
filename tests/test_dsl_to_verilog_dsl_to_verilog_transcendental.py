@@ -20,10 +20,6 @@ class TestDSLToVerilogTranscendental:
     def test_transcendental_model_compiles(self, model_name: str) -> None:
         """Models with exp/tanh should compile using LUT approximations."""
         neuron = UniversalNeuron.from_schema(model_name)
-        try:
-            verilog = neuron.to_verilog()
-            assert "module sc_" in verilog
-            assert "endmodule" in verilog
-        except ValueError as e:
-            # Some equations may use patterns not yet supported
-            pytest.skip(f"Compilation not yet supported: {e}")
+        verilog = neuron.to_verilog()
+        assert "module sc_" in verilog
+        assert "endmodule" in verilog

@@ -66,8 +66,6 @@ class TestEquivalenceProof:
         """The compiled LIF RTL primitive is equivalent to the reference model."""
         dut_path = _REPO_ROOT / "hdl" / "sc_lif_neuron.v"
         ref_path = _REPO_ROOT / "hdl" / "equiv" / "sc_lif_reference.v"
-        if not dut_path.exists() or not ref_path.exists():
-            pytest.skip("committed LIF DUT / reference not present")
         from sc_neurocore.compiler.equivalence_miter import parse_module_interface
 
         ref_src = ref_path.read_text(encoding="utf-8")
@@ -90,8 +88,6 @@ class TestEquivalenceProof:
         """A reference with the wrong threshold parameter must be disproved."""
         dut_path = _REPO_ROOT / "hdl" / "sc_lif_neuron.v"
         ref_path = _REPO_ROOT / "hdl" / "equiv" / "sc_lif_reference.v"
-        if not dut_path.exists() or not ref_path.exists():
-            pytest.skip("committed LIF DUT / reference not present")
         from sc_neurocore.compiler.equivalence_miter import parse_module_interface
 
         ref_src = ref_path.read_text(encoding="utf-8")
@@ -137,8 +133,6 @@ class TestEquivalenceProof:
         """
         dut_path = _REPO_ROOT / "hdl" / "sc_lif_neuron.v"
         ref_path = _REPO_ROOT / "hdl" / "equiv" / "sc_lif_reference.v"
-        if not dut_path.exists() or not ref_path.exists():
-            pytest.skip("committed LIF DUT / reference not present")
         from sc_neurocore.compiler.equivalence_miter import parse_module_interface
         from sc_neurocore.compiler.whitebox_taps import StateTap, expose_state_taps
 
@@ -187,8 +181,6 @@ class TestEquivalenceProof:
         """
         dut_path = _REPO_ROOT / "hdl" / "sc_lif_neuron.v"
         ref_path = _REPO_ROOT / "hdl" / "equiv" / "sc_lif_reference.v"
-        if not dut_path.exists() or not ref_path.exists():
-            pytest.skip("committed LIF DUT / reference not present")
         from sc_neurocore.compiler.equivalence_miter import parse_module_interface
         from sc_neurocore.compiler.operator_abstraction import (
             LiftedSignal,

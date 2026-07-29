@@ -41,7 +41,7 @@ RESULTS_PATH = os.path.join(
 
 def _load_results() -> dict[str, dict]:
     if not os.path.exists(RESULTS_PATH):
-        pytest.skip("benchmark results JSON not found")
+        raise AssertionError(f"committed benchmark results missing: {RESULTS_PATH}")
     with open(RESULTS_PATH) as f:
         data = json.load(f)
     return {r["variant"]: r for r in data}
