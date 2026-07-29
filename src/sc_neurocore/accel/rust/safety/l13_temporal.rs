@@ -218,10 +218,10 @@ impl L13_TemporalLayer {
 
     fn emit_bitstreams(&mut self) -> Vec<Vec<u8>> {
         let mut bitstreams = vec![vec![0u8; self.bitstream_length]; self.n_channels];
-        for channel in 0..self.n_channels {
+        for (channel, channel_bits) in bitstreams.iter_mut().enumerate() {
             let activation = clamp01(self.binding_matrix[channel][channel] * 0.5 + 0.5);
-            for bit in 0..self.bitstream_length {
-                bitstreams[channel][bit] = u8::from(self.next_unit_interval() < activation);
+            for bit in channel_bits {
+                *bit = u8::from(self.next_unit_interval() < activation);
             }
         }
         bitstreams
