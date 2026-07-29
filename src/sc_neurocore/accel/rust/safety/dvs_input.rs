@@ -100,8 +100,8 @@ impl DVSInputLayer {
         for y in 0..self.height {
             for x in 0..self.width {
                 let probability = probabilities[y][x];
-                for idx in 0..length {
-                    bits[y][x][idx] = u8::from(self.next_unit_interval() < probability);
+                for bit in &mut bits[y][x] {
+                    *bit = u8::from(self.next_unit_interval() < probability);
                 }
             }
         }
