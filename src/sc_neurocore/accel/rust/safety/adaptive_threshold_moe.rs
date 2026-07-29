@@ -153,6 +153,7 @@ mod tests {
     #[test]
     fn test_adaptive_threshold_moe_step() {
         let mut state = AdaptiveThresholdMoENeuron::new();
+        state.ema_alpha = 1.0;
         assert_eq!(state.step(2.0), Ok(4));
         assert_eq!(state.v, 0.0);
         assert_eq!(state.v_th, 0.5);
