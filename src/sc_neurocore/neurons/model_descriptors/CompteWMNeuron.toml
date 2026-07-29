@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — source-bounded Compte 2000 pyramidal-cell descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -17,12 +17,27 @@ family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["single-cell Compte channel replay", "source-equation validation", "cross-runtime trajectory validation"]
-hardware_fit = ["bounded one-cell Q16.16 co-simulation"]
-behavior_tags = ["excitable", "spiking", "conductance-based"]
+intended_use = [
+    "single-cell Compte channel replay",
+    "source-equation validation",
+    "cross-runtime trajectory validation",
+]
+hardware_fit = [
+    "bounded one-cell Q16.16 co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "spiking",
+    "conductance-based",
+]
 
 [provenance]
-authors = ["Compte, A.", "Brunel, N.", "Goldman-Rakic, P.S.", "Wang, X.-J."]
+authors = [
+    "Compte, A.",
+    "Brunel, N.",
+    "Goldman-Rakic, P.S.",
+    "Wang, X.-J.",
+]
 year = 2000
 doi = "10.1093/cercor/10.9.910"
 paper_title = "Synaptic Mechanisms and Network Dynamics Underlying Spatial Working Memory in a Cortical Network Model"
@@ -33,22 +48,27 @@ derivation_note = "Excitatory pyramidal-cell parameters and incoming AMPA/NMDA/G
 init = -70.0
 unit = "mV"
 meaning = "membrane voltage"
+
 [state.s_ampa]
 init = 0.0
 unit = "1"
 meaning = "external AMPA gate accumulator"
+
 [state.s_nmda]
 init = 0.0
 unit = "1"
 meaning = "recurrent NMDA open fraction"
+
 [state.x_nmda]
 init = 0.0
 unit = "1"
 meaning = "recurrent NMDA rise precursor"
+
 [state.s_gaba]
 init = 0.0
 unit = "1"
 meaning = "incoming GABAA gate accumulator"
+
 [state.ref_remaining]
 init = 0.0
 unit = "ms"
@@ -58,93 +78,191 @@ meaning = "absolute refractory time remaining"
 default = 0.025
 unit = "uS"
 meaning = "pyramidal leak conductance"
-range = [0.0, 100.0]
+range = [
+    0.0,
+    100.0,
+]
+
 [parameters.g_ampa]
 default = 0.0031
 unit = "uS"
 meaning = "source control-set external pyramidal AMPA conductance"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.g_nmda]
 default = 0.000381
 unit = "uS"
 meaning = "source control-set recurrent pyramidal NMDA conductance"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.g_gaba]
 default = 0.001336
 unit = "uS"
 meaning = "source control-set interneuron-to-pyramidal GABAA conductance"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.e_l]
 default = -70.0
 unit = "mV"
 meaning = "leak reversal"
-range = [-150.0, 100.0]
+range = [
+    -150.0,
+    100.0,
+]
+
 [parameters.e_exc]
 default = 0.0
 unit = "mV"
 meaning = "AMPA and NMDA reversal"
-range = [-150.0, 100.0]
+range = [
+    -150.0,
+    100.0,
+]
+
 [parameters.e_inh]
 default = -70.0
 unit = "mV"
 meaning = "GABAA reversal"
-range = [-150.0, 100.0]
+range = [
+    -150.0,
+    100.0,
+]
+
 [parameters.c_m]
 default = 0.5
 unit = "nF"
 meaning = "pyramidal membrane capacitance"
-range = [0.000001, 1000.0]
+range = [
+    1e-06,
+    1000.0,
+]
+
 [parameters.mg]
 default = 1.0
 unit = "mM"
 meaning = "extracellular magnesium concentration"
-range = [0.0, 100.0]
+range = [
+    0.0,
+    100.0,
+]
+
 [parameters.tau_ampa]
 default = 2.0
 unit = "ms"
 meaning = "AMPA gate decay"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_nmda]
 default = 100.0
 unit = "ms"
 meaning = "NMDA open-fraction decay"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_x]
 default = 2.0
 unit = "ms"
 meaning = "NMDA rise-precursor decay"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_gaba]
 default = 10.0
 unit = "ms"
 meaning = "GABAA gate decay"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.alpha_nmda]
 default = 0.5
 unit = "1/ms"
 meaning = "NMDA saturation rate"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
+
 [parameters.v_threshold]
 default = -50.0
 unit = "mV"
 meaning = "sampled spike threshold"
-range = [-150.0, 100.0]
+range = [
+    -150.0,
+    100.0,
+]
+
 [parameters.v_reset]
 default = -60.0
 unit = "mV"
 meaning = "pyramidal reset voltage"
-range = [-150.0, 100.0]
+range = [
+    -150.0,
+    100.0,
+]
+
 [parameters.tau_ref]
 default = 2.0
 unit = "ms"
 meaning = "pyramidal absolute refractory interval"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
 
 [integration]
 dt = 0.02
-method = "midpoint-rk2"
+method = "map"
 
 [dynamics]
+v = "(v_reset if refractory_time > 0.0 else (v_reset if (v + dt * k2_v) >= v_threshold else (v + dt * k2_v))) if phase > 7.5 else v"
+s_ampa = "(pre_ampa + dt * k2_ampa) if phase > 7.5 else s_ampa"
+s_nmda = "(pre_nmda + dt * k2_nmda) if phase > 7.5 else s_nmda"
+x_nmda = "(pre_x + dt * k2_x) if phase > 7.5 else x_nmda"
+s_gaba = "(pre_gaba + dt * k2_gaba) if phase > 7.5 else s_gaba"
+refractory_time = "((max(0.0, refractory_time - dt)) if refractory_time > 0.0 else (tau_ref if (v + dt * k2_v) >= v_threshold else 0.0)) if phase > 7.5 else refractory_time"
+spike_flag = "(0.0 if refractory_time > 0.0 else (1.0 if (v + dt * k2_v) >= v_threshold else 0.0)) if phase > 7.5 else spike_flag"
+phase = "(phase + 1.0) % 9.0"
+current_latched = "I if phase < 0.5 else current_latched"
+recurrent_latched = "I if abs(phase - 1.0) < 0.5 else recurrent_latched"
+external_latched = "I if abs(phase - 2.0) < 0.5 else external_latched"
+inhibitory_latched = "I if abs(phase - 3.0) < 0.5 else inhibitory_latched"
+pre_ampa = "s_ampa + external_latched if abs(phase - 4.0) < 0.5 else pre_ampa"
+pre_nmda = "s_nmda if abs(phase - 4.0) < 0.5 else pre_nmda"
+pre_x = "x_nmda + recurrent_latched if abs(phase - 4.0) < 0.5 else pre_x"
+pre_gaba = "s_gaba + inhibitory_latched if abs(phase - 4.0) < 0.5 else pre_gaba"
+k1_v = "(0.0 if refractory_time > 0.0 else (-g_l*(v-e_l)-g_ampa*pre_ampa*(v-e_exc)-g_nmda*(1.0/(1.0+mg/mg_divisor*exp(-mg_slope*v)))*pre_nmda*(v-e_exc)-g_gaba*pre_gaba*(v-e_inh)+current_latched)/c_m) if abs(phase - 5.0) < 0.5 else k1_v"
+k1_ampa = "-pre_ampa/tau_ampa if abs(phase - 5.0) < 0.5 else k1_ampa"
+k1_nmda = "(-pre_nmda/tau_nmda+alpha_nmda*pre_x*(1.0-pre_nmda)) if abs(phase - 5.0) < 0.5 else k1_nmda"
+k1_x = "-pre_x/tau_x if abs(phase - 5.0) < 0.5 else k1_x"
+k1_gaba = "-pre_gaba/tau_gaba if abs(phase - 5.0) < 0.5 else k1_gaba"
+mid_v = "v+0.5*dt*k1_v if abs(phase - 6.0) < 0.5 else mid_v"
+mid_ampa = "pre_ampa+0.5*dt*k1_ampa if abs(phase - 6.0) < 0.5 else mid_ampa"
+mid_nmda = "pre_nmda+0.5*dt*k1_nmda if abs(phase - 6.0) < 0.5 else mid_nmda"
+mid_x = "pre_x+0.5*dt*k1_x if abs(phase - 6.0) < 0.5 else mid_x"
+mid_gaba = "pre_gaba+0.5*dt*k1_gaba if abs(phase - 6.0) < 0.5 else mid_gaba"
+k2_v = "(0.0 if refractory_time > 0.0 else (-g_l*(mid_v-e_l)-g_ampa*mid_ampa*(mid_v-e_exc)-g_nmda*(1.0/(1.0+mg/mg_divisor*exp(-mg_slope*mid_v)))*mid_nmda*(mid_v-e_exc)-g_gaba*mid_gaba*(mid_v-e_inh)+current_latched)/c_m) if abs(phase - 7.0) < 0.5 else k2_v"
+k2_ampa = "-mid_ampa/tau_ampa if abs(phase - 7.0) < 0.5 else k2_ampa"
+k2_nmda = "(-mid_nmda/tau_nmda+alpha_nmda*mid_x*(1.0-mid_nmda)) if abs(phase - 7.0) < 0.5 else k2_nmda"
+k2_x = "-mid_x/tau_x if abs(phase - 7.0) < 0.5 else k2_x"
+k2_gaba = "-mid_gaba/tau_gaba if abs(phase - 7.0) < 0.5 else k2_gaba"
 membrane = "C_m*dV/dt=-g_L*(V-E_L)-g_AMPA*s_AMPA*(V-E_exc)-g_NMDA*B(V)*s_NMDA*(V-E_exc)-g_GABA*s_GABA*(V-E_inh)+I"
 mg_block = "B(V)=1/(1+[Mg2+]*exp(-0.062*V)/3.57)"
 ampa = "ds_AMPA/dt=-s_AMPA/tau_AMPA; external presynaptic event adds 1"
@@ -157,15 +275,19 @@ scope = "Single excitatory pyramidal cell and incoming channel kinetics. The ful
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "approximate"

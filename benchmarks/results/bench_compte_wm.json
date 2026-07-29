@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
-  "generated_at": "2026-07-29T21:50:13.246150+00:00",
+  "generated_at": "2026-07-29T21:55:35.454192+00:00",
   "kernel": "compte_wm_pyramidal_rk2_batch",
   "model": "CompteWMNeuron",
   "evidence_class": "local_regression",
@@ -40,9 +40,9 @@
       11
     ],
     "load_average": [
-      16.18017578125,
-      16.24462890625,
-      16.57080078125
+      14.12109375,
+      14.39697265625,
+      15.60107421875
     ],
     "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
     "go": "go version go1.26.2 linux/amd64",
@@ -60,7 +60,7 @@
     "src/sc_neurocore/accel/julia/neurons/compte_wm.jl": "ca18e541d650e4cdbd5974f1c58bff5391823440d22d07284c9493e42f854e2f",
     "src/sc_neurocore/accel/mojo/compte_wm/compte_wm.mojo": "1d2afaab7bca0f4a7f8c9d67022cb47684f444f6a94674638fe8b5f6f469351f",
     "src/sc_neurocore/accel/rust/safety/compte_wm.rs": "15f916bd10d47314a7300e3b94bce6d94cc11237707cf4560e017a149b1507ea",
-    "src/sc_neurocore/neurons/model_descriptors/CompteWMNeuron.toml": "b77bd312578b9b1ff135c08da11df388b5a04e584468b084db5d72af51984031",
+    "src/sc_neurocore/neurons/model_descriptors/CompteWMNeuron.toml": "18c20e141bf0aa8129f194859ca6a74033324735492c68b33214b7318eb19da9",
     "src/sc_neurocore/neurons/model_schemas/compte_wm.json": "71020c87987503b712dbb667caea6cc1ee24ac507c5700f0353c167d045f7821",
     "src/sc_neurocore/neurons/model_schemas/compte_wm.toml": "b0a1d1d8e81d3cf15d70a1b8d52f990d5187caa2b19619a734a5ed29985cf5c2",
     "src/sc_neurocore/neurons/models/compte_wm.py": "2085eb3ac5129eeb3cc7a438c5c6b50be855523077434201cbbc22951bbaa5be",
@@ -102,12 +102,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        3450688249,
-        3356781284,
-        3544231933
+        3059326188,
+        2975781496,
+        3480208786
       ],
-      "median_ns": 3450688249,
-      "ns_per_step": 17253.441245,
+      "median_ns": 3059326188,
+      "ns_per_step": 15296.63094,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 0.0,
       "events_exact": true,
@@ -119,12 +119,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        1458225295,
-        1274222175,
-        1398344488
+        1650335504,
+        1292807121,
+        1236329580
       ],
-      "median_ns": 1398344488,
-      "ns_per_step": 6991.72244,
+      "median_ns": 1292807121,
+      "ns_per_step": 6464.035605,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "events_exact": true,
@@ -136,12 +136,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        53980729,
-        50583984,
-        63236677
+        115078179,
+        87951204,
+        89572266
       ],
-      "median_ns": 53980729,
-      "ns_per_step": 269.903645,
+      "median_ns": 89572266,
+      "ns_per_step": 447.86133,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "events_exact": true,
@@ -153,12 +153,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        70215603,
-        87510549,
-        72530298
+        71788842,
+        57669184,
+        54127158
       ],
-      "median_ns": 72530298,
-      "ns_per_step": 362.65149,
+      "median_ns": 57669184,
+      "ns_per_step": 288.34592,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "events_exact": true,
@@ -170,12 +170,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        27638204,
-        46857633,
-        41513448
+        38374556,
+        68522250,
+        25361643
       ],
-      "median_ns": 41513448,
-      "ns_per_step": 207.56724,
+      "median_ns": 38374556,
+      "ns_per_step": 191.87278,
       "parity_max_abs_diff": 3.552713678800501e-14,
       "parity_tolerance": 2e-10,
       "events_exact": true,
@@ -186,8 +186,8 @@
   },
   "observed_order_fastest_first": [
     "mojo",
-    "julia",
     "go",
+    "julia",
     "rust",
     "python"
   ],
