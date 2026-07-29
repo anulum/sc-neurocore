@@ -30,7 +30,7 @@ REPEATS = 5
 CURRENT = 50.0
 OUTPUT = Path("benchmarks/results/local_python_2026-06-18_energy_lif_exact_flow.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkEnergyLIFExactFlow-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_BENCH_RE = re.compile(r"^BenchmarkEnergyLIFExactFlow(?:-\d+)?\s+\d+\s+([0-9.]+)\s+ns/op")
 GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
 SOURCE_HASH_PATHS = {
     "benchmarks/bench_model_energy_lif.py": REPO_ROOT / "benchmarks/bench_model_energy_lif.py",

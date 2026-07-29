@@ -4,16 +4,16 @@
       "backend": "go",
       "command": "go test src/sc_neurocore/accel/go/services/sfa.go src/sc_neurocore/accel/go/services/sfa_test.go -run ^$ -bench BenchmarkSFARK4$ -benchtime 200000x -count 5",
       "current": 50.0,
-      "max_ns_per_step": 43.6,
-      "median_ns_per_step": 42.13,
-      "min_ns_per_step": 41.48,
+      "max_ns_per_step": 44.35,
+      "median_ns_per_step": 42.24,
+      "min_ns_per_step": 40.13,
       "repeats": 5,
       "results_ns_per_step": [
-        42.13,
-        42.72,
-        43.6,
-        41.51,
-        41.48
+        40.52,
+        40.13,
+        44.35,
+        42.24,
+        43.42
       ],
       "spike_counts": [
         2412,
@@ -43,16 +43,16 @@
         -53.71639835649897,
         -53.71639835649897
       ],
-      "max_ns_per_step": 41.637055,
-      "median_ns_per_step": 39.652655,
-      "min_ns_per_step": 39.12648,
+      "max_ns_per_step": 45.99803,
+      "median_ns_per_step": 39.723735,
+      "min_ns_per_step": 39.407015,
       "repeats": 5,
       "results_ns_per_step": [
-        39.773475,
-        39.652655,
-        39.21471,
-        39.12648,
-        41.637055
+        45.99803,
+        39.49736,
+        39.407015,
+        39.73429,
+        39.723735
       ],
       "spike_counts": [
         2412,
@@ -82,16 +82,16 @@
         -53.71639835649897,
         -53.71639835649897
       ],
-      "max_ns_per_step": 35.79590003937483,
-      "median_ns_per_step": 35.560529795475304,
-      "min_ns_per_step": 35.380395129323006,
+      "max_ns_per_step": 33.77902499778429,
+      "median_ns_per_step": 31.26405999864801,
+      "min_ns_per_step": 30.68779000386712,
       "repeats": 5,
       "results_ns_per_step": [
-        35.57601972715929,
-        35.380395129323006,
-        35.45550018316135,
-        35.79590003937483,
-        35.560529795475304
+        30.68779000386712,
+        31.26405999864801,
+        31.24134500467335,
+        33.293699998466764,
+        33.77902499778429
       ],
       "spike_counts": [
         2412,
@@ -105,67 +105,67 @@
     },
     "python": {
       "backend": "python",
-      "max_ns_per_step": 3684.090205,
-      "median_ns_per_step": 3311.59624,
-      "min_ns_per_step": 3228.061555,
+      "max_ns_per_step": 3548.97236,
+      "median_ns_per_step": 3396.983035,
+      "min_ns_per_step": 3362.99419,
       "results": [
         {
           "backend": "python",
           "current": 50.0,
-          "elapsed_ns": 678472668,
+          "elapsed_ns": 672598838,
           "ending_state": [
             -53.71639835649897,
             1.2544080745564916
           ],
-          "ns_per_step": 3392.36334,
+          "ns_per_step": 3362.99419,
           "spikes": 2412,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 50.0,
-          "elapsed_ns": 645612311,
+          "elapsed_ns": 679396607,
           "ending_state": [
             -53.71639835649897,
             1.2544080745564916
           ],
-          "ns_per_step": 3228.061555,
+          "ns_per_step": 3396.983035,
           "spikes": 2412,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 50.0,
-          "elapsed_ns": 660706785,
+          "elapsed_ns": 709794472,
           "ending_state": [
             -53.71639835649897,
             1.2544080745564916
           ],
-          "ns_per_step": 3303.533925,
+          "ns_per_step": 3548.97236,
           "spikes": 2412,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 50.0,
-          "elapsed_ns": 662319248,
+          "elapsed_ns": 678101535,
           "ending_state": [
             -53.71639835649897,
             1.2544080745564916
           ],
-          "ns_per_step": 3311.59624,
+          "ns_per_step": 3390.507675,
           "spikes": 2412,
           "steps": 200000
         },
         {
           "backend": "python",
           "current": 50.0,
-          "elapsed_ns": 736818041,
+          "elapsed_ns": 679814536,
           "ending_state": [
             -53.71639835649897,
             1.2544080745564916
           ],
-          "ns_per_step": 3684.090205,
+          "ns_per_step": 3399.07268,
           "spikes": 2412,
           "steps": 200000
         }
@@ -190,16 +190,16 @@
         -53.71639835649897,
         -53.71639835649897
       ],
-      "max_ns_per_step": 36.760775,
-      "median_ns_per_step": 36.169245,
-      "min_ns_per_step": 36.09009,
+      "max_ns_per_step": 38.95521,
+      "median_ns_per_step": 36.94294,
+      "min_ns_per_step": 36.327745,
       "repeats": 5,
       "results_ns_per_step": [
-        36.760775,
-        36.169245,
-        36.42021,
-        36.09009,
-        36.133985
+        36.94294,
+        36.594975,
+        36.327745,
+        37.73302,
+        38.95521
       ],
       "spike_counts": [
         2412,
@@ -217,15 +217,15 @@
   "evidence_class": "local_regression_non_isolated",
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
   "production_speed_claim": false,
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
     "benchmarks/bench_model_sfa": {
-      "py": "5b2d015a32acf5b203111da50fe0f02a74e0a2c19711b0f1fe528c007a7cb301"
+      "py": "b47d3eae44fb1f8ed7afa1528c34f0fb0cf62214b938abc1541d8b16646c28ae"
     },
-    "benchmarks/bench_model_sfa.py": "5b2d015a32acf5b203111da50fe0f02a74e0a2c19711b0f1fe528c007a7cb301",
+    "benchmarks/bench_model_sfa.py": "b47d3eae44fb1f8ed7afa1528c34f0fb0cf62214b938abc1541d8b16646c28ae",
     "src/sc_neurocore/accel/go/services/sfa": {
       "go": "0309ab30a5d6ddaf16941df51b8bc2a06ff0e2475ce1c1dfb8785980f6822754"
     },
@@ -243,9 +243,9 @@
     },
     "src/sc_neurocore/accel/mojo/kernels/sfa.mojo": "26545041dc4b5c584675bccbb8a36b8bb27a138f1b3298fd7cc32227744e3269",
     "src/sc_neurocore/accel/rust/safety/sfa": {
-      "rs": "dac380eb2a023d3992941012c3e6438c7c94930bed1e89a283f37cad5d1643d9"
+      "rs": "4eb6d93b2bce83a4bf43b32eadfcda1b8f5f4cf67c20a711a150d83a68b7c6d5"
     },
-    "src/sc_neurocore/accel/rust/safety/sfa.rs": "dac380eb2a023d3992941012c3e6438c7c94930bed1e89a283f37cad5d1643d9",
+    "src/sc_neurocore/accel/rust/safety/sfa.rs": "4eb6d93b2bce83a4bf43b32eadfcda1b8f5f4cf67c20a711a150d83a68b7c6d5",
     "src/sc_neurocore/neurons/models/sfa": {
       "py": "43b0086242233ef38fbc12b24db53c009c30229e204cdc4306ed1e9a37c9e02e"
     },
@@ -253,5 +253,5 @@
   },
   "spdx_license": "AGPL-3.0-or-later",
   "steps": 200000,
-  "timestamp_utc": "2026-06-18T19:27:32.816597+00:00"
+  "timestamp_utc": "2026-07-29T02:35:49.998377+00:00"
 }

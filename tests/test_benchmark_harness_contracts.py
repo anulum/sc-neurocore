@@ -16,6 +16,36 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+
+@pytest.mark.parametrize(
+    ("module_name", "benchmark_name"),
+    [
+        ("bench_model_nlif", "BenchmarkNonlinearLIFRK4"),
+        ("bench_model_sfa", "BenchmarkSFARK4"),
+        ("bench_model_mat", "BenchmarkMATRK4"),
+        ("bench_model_energy_lif", "BenchmarkEnergyLIFExactFlow"),
+    ],
+)
+def test_go_benchmark_parser_accepts_optional_cpu_suffix(
+    module_name: str, benchmark_name: str
+) -> None:
+    """Accept Go benchmark names with or without a GOMAXPROCS suffix."""
+
+    sys.path.insert(0, "benchmarks")
+    try:
+        benchmark_module = importlib.import_module(module_name)
+    finally:
+        sys.path.pop(0)
+
+    for emitted_name in (benchmark_name, f"{benchmark_name}-12"):
+        match = benchmark_module.GO_BENCH_RE.match(  # type: ignore[attr-defined]
+            f"{emitted_name}\t  200000\t  73.90 ns/op\t  4563 spikes"
+        )
+        assert match is not None
+        assert match.group(1) == "73.90"
+
 
 def test_cross_framework_harness_reports_missing_dependency_versions() -> None:
     sys.path.insert(0, "benchmarks")

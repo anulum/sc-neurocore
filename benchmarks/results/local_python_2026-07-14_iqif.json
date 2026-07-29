@@ -1,9 +1,9 @@
 {
   "auto_backend_order": [
-    "rust",
     "mojo",
-    "go",
+    "rust",
     "julia",
+    "go",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -16,21 +16,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 14.496246,
-      "median_call_ms": 11.263889,
-      "median_ns_per_step": 56.319445,
-      "minimum_call_ms": 6.558028,
+      "maximum_call_ms": 13.533632,
+      "median_call_ms": 5.401433,
+      "median_ns_per_step": 27.007165,
+      "minimum_call_ms": 4.924875,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        12.47237,
-        14.496246,
-        6.558028,
-        9.115261,
-        12.524438,
-        8.163645,
-        11.263889
+        5.401433,
+        13.533632,
+        4.924875,
+        5.072081,
+        5.820517,
+        10.424151,
+        4.965491
       ],
-      "speedup_vs_python": 9.403136873951794,
+      "speedup_vs_python": 13.990294612559296,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -44,21 +44,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 13.109112,
-      "median_call_ms": 11.729103,
-      "median_ns_per_step": 58.645515,
-      "minimum_call_ms": 6.003679,
+      "maximum_call_ms": 5.522022,
+      "median_call_ms": 4.563387,
+      "median_ns_per_step": 22.816935,
+      "minimum_call_ms": 4.217736,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        9.813912,
-        11.973578,
-        9.108145,
-        11.977137,
-        6.003679,
-        13.109112,
-        11.729103
+        5.283118,
+        4.988023,
+        4.323949,
+        5.522022,
+        4.227683,
+        4.217736,
+        4.563387
       ],
-      "speedup_vs_python": 9.030178181571088,
+      "speedup_vs_python": 16.559550833624236,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -72,21 +72,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 9.642183,
-      "median_call_ms": 4.961615,
-      "median_ns_per_step": 24.808075,
-      "minimum_call_ms": 2.961267,
+      "maximum_call_ms": 5.192984,
+      "median_call_ms": 2.558026,
+      "median_ns_per_step": 12.79013,
+      "minimum_call_ms": 2.250281,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        2.961267,
-        4.887161,
-        6.200388,
-        9.642183,
-        5.82503,
-        4.961615,
-        4.337893
+        3.452906,
+        2.431191,
+        2.401567,
+        3.090537,
+        2.558026,
+        5.192984,
+        2.250281
       ],
-      "speedup_vs_python": 21.347059374820496,
+      "speedup_vs_python": 29.541388164154704,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -100,19 +100,19 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 125.441487,
-      "median_call_ms": 105.91589,
-      "median_ns_per_step": 529.57945,
-      "minimum_call_ms": 91.931874,
+      "maximum_call_ms": 90.133888,
+      "median_call_ms": 75.567639,
+      "median_ns_per_step": 377.838195,
+      "minimum_call_ms": 70.91061,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        95.316186,
-        125.441487,
-        103.468571,
-        106.993693,
-        108.45703,
-        91.931874,
-        105.91589
+        75.567639,
+        77.105196,
+        70.91061,
+        72.96332,
+        90.133888,
+        75.825577,
+        74.448903
       ],
       "speedup_vs_python": 1.0,
       "trace_matches_python": true,
@@ -128,21 +128,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 7.658117,
-      "median_call_ms": 4.920439,
-      "median_ns_per_step": 24.602195,
-      "minimum_call_ms": 3.668054,
+      "maximum_call_ms": 2.852879,
+      "median_call_ms": 2.649812,
+      "median_ns_per_step": 13.24906,
+      "minimum_call_ms": 2.064115,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        3.984608,
-        7.658117,
-        6.122499,
-        3.668054,
-        7.316279,
-        4.920439,
-        4.510259
+        2.064115,
+        2.614075,
+        2.852879,
+        2.649812,
+        2.317597,
+        2.757003,
+        2.687108
       ],
-      "speedup_vs_python": 21.525699231308426,
+      "speedup_vs_python": 28.51811336049501,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -152,55 +152,55 @@
   "binary_hashes": {
     "go_shared_library": {
       "path": "src/sc_neurocore/accel/go/neurons/iqif/libiqif.so",
-      "sha256": "0f2be3b710b071b01c00ca2d960f52fa8eb783a15ddc52b23bac55ea7b12ed85",
+      "sha256": "9aa3f8da9109aeaf9af1f9586f2a88a7d006a61f148ee22d6bd6a28f80bec9f9",
       "size_bytes": 2020816
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/kernels/libiqif.so",
-      "sha256": "b0233f4ec9cc9516ca76e9b54026cbbb40bf8ae7b63ab970d8ca642cd38d5e9d",
+      "sha256": "1bc98954180b50c270fcba10b37d23f23c11e6ae736da9a34f6cd25ae373a9f6",
       "size_bytes": 15032
     },
     "rust_extension": {
       "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "fdf04bcc2580daeaca3bb71ec7d149a32cf876fc7d284e90f47c9a9d6dce0e30",
-      "size_bytes": 33928633
+      "sha256": "5128ca1c72ac38b9f2ca4782bd3988427ef9ae6f423a6bd279607b624ed4016a",
+      "size_bytes": 33932729
     }
   },
   "command": "taskset --cpu-list <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_iqif.py --json <artifact>",
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
-  "fastest_measured_native_backend": "rust",
+  "fastest_measured_native_backend": "mojo",
   "hardware_measurement_claimed": false,
   "kernel": "iqif_integer_q03_batch",
   "measured_order": [
-    "rust",
     "mojo",
-    "go",
+    "rust",
     "julia",
+    "go",
     "python"
   ],
   "meta": {
     "affinity": [
-      0
+      8
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "exclusive_cpu_isolation_claimed": false,
     "governor": "powersave",
     "kernel_isolated_cpus": "",
-    "kernel_nohz_full_cpus": "(null)",
+    "kernel_nohz_full_cpus": "",
     "load_average_end": [
-      6.787109375,
-      7.78759765625,
-      10.6171875
+      6.60400390625,
+      6.88916015625,
+      7.73046875
     ],
     "load_average_start": [
-      6.7333984375,
-      7.81396484375,
-      10.65673828125
+      5.69873046875,
+      6.71826171875,
+      7.68017578125
     ],
     "measurement_scope": "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
-      "go": "go version go1.24.0 linux/amd64",
+      "go": "go version go1.26.2 linux/amd64",
       "julia": "julia version 1.12.6",
       "mojo": "Mojo 1.0.0b1 (a9591de6)",
       "numpy": "2.2.6",
@@ -210,7 +210,7 @@
     "single_cpu_pinned": true
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "rust",
+  "recommended_auto_backend": "mojo",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_iqif": {
@@ -258,9 +258,9 @@
     },
     "src/sc_neurocore/accel/mojo/kernels/iqif.mojo": "deaeb18b1ee50633ef8a8329cb99b6d0ef56b728d6ab2209a97df22d12422851",
     "src/sc_neurocore/accel/rust/safety/iqif": {
-      "rs": "68ae519126178597242ae36ea9b3c0753ad0c36a0d5bb15adeaa64f53a6ef9c2"
+      "rs": "9062c4c1103a445bd2a0a913d5a1eaf9bb79b6ebe35e46d279fb2f72c3347855"
     },
-    "src/sc_neurocore/accel/rust/safety/iqif.rs": "68ae519126178597242ae36ea9b3c0753ad0c36a0d5bb15adeaa64f53a6ef9c2",
+    "src/sc_neurocore/accel/rust/safety/iqif.rs": "9062c4c1103a445bd2a0a913d5a1eaf9bb79b6ebe35e46d279fb2f72c3347855",
     "src/sc_neurocore/neurons/model_schemas/iqif": {
       "json": "76d71968545079f69abc31cb77d11d6dfa2f0ee5bab66bc05cc6d6865355ce68",
       "toml": "d61c38c7a1d1fd0bd0b2b4a86a1ccddfdd43f47378a48e27e78a1fe8cadd8787"
@@ -272,7 +272,7 @@
     },
     "src/sc_neurocore/neurons/models/iqif.py": "0babdca12ceb6775efd6674dcb6bc8c8bed577739ea0ea0c8263ab92808032f3"
   },
-  "timestamp_utc": "2026-07-23T00:20:03Z",
+  "timestamp_utc": "2026-07-29T02:32:52Z",
   "verification": {
     "rust_safety": {
       "command": "rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/iqif.rs -O -o <temp-binary> && <temp-binary>",
