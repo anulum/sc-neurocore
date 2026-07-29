@@ -190,9 +190,9 @@ fn init_metatron_matrix(
         }
     }
 
-    for row in 0..n_nodes {
-        let row_sum = off_diag[row].iter().sum::<f64>();
-        off_diag[row][row] = 1.0 - row_sum;
+    for (row, values) in off_diag.iter_mut().enumerate() {
+        let row_sum = values.iter().sum::<f64>();
+        values[row] = 1.0 - row_sum;
     }
     Ok(off_diag)
 }
