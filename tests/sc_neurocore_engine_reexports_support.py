@@ -10,8 +10,6 @@
 
 from __future__ import annotations
 
-import importlib
-
 import pytest
 
 _engine = pytest.importorskip("sc_neurocore_engine")
@@ -47,37 +45,3 @@ PREDICTIVE_CODEC_SYMBOLS: tuple[str, ...] = (
     "py_recover_xor_ema",
     "py_recover_xor_lfsr",
 )
-
-
-def _has_inner_symbols(symbols: tuple[str, ...]) -> bool:
-    """Return whether the compiled inner module exposes every requested symbol."""
-    try:
-        inner = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
-    except ImportError:
-        return False
-    return all(hasattr(inner, symbol) for symbol in symbols)
-
-
-def _has_inner_qa() -> bool:
-    """Return whether the engine exposes every quantum-annealing binding."""
-    return _has_inner_symbols(QA_SYMBOLS)
-
-
-def _has_inner_dna() -> bool:
-    """Return whether the engine exposes every DNA-mapper binding."""
-    return _has_inner_symbols(DNA_SYMBOLS)
-
-
-def _has_inner_photonics() -> bool:
-    """Return whether the engine exposes every photonic binding."""
-    return _has_inner_symbols(PHOTONIC_SYMBOLS)
-
-
-def _has_inner_world_model() -> bool:
-    """Return whether the engine exposes every world-model binding."""
-    return _has_inner_symbols(WORLD_MODEL_SYMBOLS)
-
-
-def _has_inner_predictive_codec() -> bool:
-    """Return whether the engine exposes every predictive-codec binding."""
-    return _has_inner_symbols(PREDICTIVE_CODEC_SYMBOLS)

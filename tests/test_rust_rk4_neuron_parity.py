@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import importlib
 from typing import Protocol
 
 import numpy as np
@@ -20,12 +19,6 @@ from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
 
 
 _engine = pytest.importorskip("sc_neurocore_engine")
-_inner = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
-
-pytestmark = pytest.mark.skipif(
-    not hasattr(_inner, "py_rk4_neuron_simulate"),
-    reason="engine wheel built without RK4 neuron simulator binding",
-)
 
 
 class _ReferenceFn(Protocol):

@@ -10,14 +10,9 @@
 
 import pytest
 
-from tests.sc_neurocore_engine_reexports_support import QA_SYMBOLS, _engine, _has_inner_qa
+from tests.sc_neurocore_engine_reexports_support import QA_SYMBOLS, _engine
 
 
-@pytest.mark.skipif(
-    not _has_inner_qa(),
-    reason="engine wheel built without QA bindings (rebuild via "
-    "`cd bridge && maturin develop --release`)",
-)
 @pytest.mark.parametrize("sym", QA_SYMBOLS)
 def test_qa_symbol_importable_from_toplevel(sym: str) -> None:
     """`from sc_neurocore_engine import py_qa_*` must resolve."""
@@ -28,7 +23,6 @@ def test_qa_symbol_importable_from_toplevel(sym: str) -> None:
     )
 
 
-@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
 def test_qa_symbols_in_all() -> None:
     """All QA symbols must appear in the top-level `__all__` list."""
     assert hasattr(_engine, "__all__")
@@ -37,7 +31,6 @@ def test_qa_symbols_in_all() -> None:
     assert not missing, f"QA symbols missing from __all__: {missing}"
 
 
-@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
 def test_qa_symbols_are_callable() -> None:
     """Every re-exported QA symbol must be callable rather than a stale stub."""
     for symbol in QA_SYMBOLS:
@@ -45,13 +38,11 @@ def test_qa_symbols_are_callable() -> None:
         assert callable(obj), f"{symbol} is not callable: type={type(obj).__name__}"
 
 
-@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
 def test_qa_rust_available_flag_true() -> None:
     """The engine availability flag must mirror the compiled bindings."""
     assert getattr(_engine, "_qa_rust_available", False) is True
 
 
-@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
 def test_qa_simulated_annealing_returns_dict_keys() -> None:
     """Run the top-level binding and verify its stable result schema."""
     result = _engine.py_qa_simulated_annealing(
@@ -74,7 +65,6 @@ def test_qa_simulated_annealing_returns_dict_keys() -> None:
     assert len(result["best_spins"]) == 4
 
 
-@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
 def test_bridges_quantum_annealing_HAS_RUST_QA_lit() -> None:
     """The consuming quantum-annealing bridge must detect the Rust backend."""
     from sc_neurocore.bridges.quantum_annealing import _HAS_RUST_QA

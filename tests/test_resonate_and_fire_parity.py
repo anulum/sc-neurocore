@@ -25,11 +25,7 @@ engine = pytest.importorskip(
     exc_type=ImportError,
 )
 _rust_export = getattr(engine, "py_resonate_and_fire_simulate", None)
-if _rust_export is None:
-    pytest.skip(
-        "installed Rust engine lacks the Model40 batch export",
-        allow_module_level=True,
-    )
+assert _rust_export is not None, "installed Rust engine lacks the Model40 batch export"
 py_resonate_and_fire_simulate = cast(
     "Callable[..., dict[str, Any]]",
     _rust_export,

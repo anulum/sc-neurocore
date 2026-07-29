@@ -8,28 +8,13 @@
 
 """Verify stable world-model, photonic, DNA, and quantum engine wrappers."""
 
-import pytest
 
-from tests.sc_neurocore_engine_reexports_support import (
-    _has_inner_dna,
-    _has_inner_photonics,
-    _has_inner_qa,
-    _has_inner_world_model,
-)
-
-
-@pytest.mark.skipif(
-    not _has_inner_world_model(), reason="engine wheel built without LGSSM bindings"
-)
 def test_world_model_wrapper_returns_callable() -> None:
     from sc_neurocore_engine.world_model import get_lgssm_kalman_filter
 
     assert callable(get_lgssm_kalman_filter())
 
 
-@pytest.mark.skipif(
-    not _has_inner_photonics(), reason="engine wheel built without photonic bindings"
-)
 def test_photonics_wrapper_returns_callable() -> None:
     from sc_neurocore_engine.photonics import (
         get_crosstalk_analyzer,
@@ -44,14 +29,12 @@ def test_photonics_wrapper_returns_callable() -> None:
     assert has_full_photonic_crosstalk_backend() is True
 
 
-@pytest.mark.skipif(not _has_inner_dna(), reason="engine wheel built without DNA bindings")
 def test_dna_wrapper_contract_true() -> None:
     from sc_neurocore_engine.dna import has_full_dna_backend
 
     assert has_full_dna_backend() is True
 
 
-@pytest.mark.skipif(not _has_inner_qa(), reason="engine wheel built without QA bindings")
 def test_quantum_wrapper_contract_true() -> None:
     from sc_neurocore_engine.quantum import has_full_quantum_annealing_backend
 
