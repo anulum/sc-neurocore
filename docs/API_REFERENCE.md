@@ -21529,7 +21529,10 @@ validation before the expressions are compiled for runtime.
 ### Function `from_equations()`
 Build an EquationNeuron from Brian2-style equation strings.
 
-Example:
+Examples
+--------
+Build a leaky integrate-and-fire neuron::
+
     lif = from_equations(
         "dv/dt = -(v - E_L)/tau_m + I/C",
         threshold="v > -50",
@@ -26170,7 +26173,7 @@ Export an SC-NeuroCore SCNetwork to NIR format.
 
 Parameters
 ----------
-network : SCNetwork
+network : sc_neurocore.nir_bridge.parser.SCNetwork
     The network to export.
 path : str or Path, optional
     If provided, write the NIR graph to this file.

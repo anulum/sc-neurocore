@@ -122,7 +122,13 @@ mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27", "httpx2>=2.5,<3"]
 federation = ["scpn-studio-platform>=0.9,<0.10"]  # Hub federation vertical (sc_neurocore.federation)
-docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
+docs = [
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+  "mkdocstrings[python]>=0.25",
+  "sphinx>=8,<10",
+  "furo>=2024.8.6",
+]
 compression = ["PyWavelets>=1.4", "zstandard>=0.22"]
 optics = ["gdsfactory>=9.0"]
 bioware = ["scikit-learn>=1.3"]

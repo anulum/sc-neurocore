@@ -61,13 +61,14 @@ class LateralInhibition:
 
         Parameters
         ----------
-        rates : np.ndarray, shape (n_neurons,)
-            Input firing rates or probabilities.
+        rates : np.ndarray
+            Input firing rates or probabilities with shape ``(n_neurons,)``.
 
         Returns
         -------
-        np.ndarray, shape (n_neurons,)
-            Inhibited firing rates, clipped to [0, inf).
+        np.ndarray
+            Inhibited firing rates with shape ``(n_neurons,)``, clipped to
+            ``[0, inf)``.
         """
         inhibition = self._kernel @ rates
         inhibited: np.ndarray[Any, Any] = np.maximum(rates - inhibition, 0.0)
@@ -93,13 +94,14 @@ class WinnerTakeAll:
 
         Parameters
         ----------
-        rates : np.ndarray, shape (n_neurons,)
-            Input firing rates.
+        rates : np.ndarray
+            Input firing rates with shape ``(n_neurons,)``.
 
         Returns
         -------
-        np.ndarray, shape (n_neurons,)
-            Only top-k values survive; rest are zero.
+        np.ndarray
+            Output with shape ``(n_neurons,)``; only the top-k values survive
+            and the rest are zero.
         """
         if self.k >= self.n_neurons:
             return rates.copy()

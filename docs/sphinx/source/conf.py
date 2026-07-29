@@ -13,10 +13,13 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../../../src"))
 
+from sc_neurocore import __version__
+
 project = "SC-NeuroCore"
 copyright = "1998-2026, Miroslav Sotek"
 author = "Miroslav Sotek"
-release = "3.15.8"
+release = __version__
+version = ".".join(release.split(".")[:2])
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -37,6 +40,7 @@ autodoc_mock_imports = ["nir", "cupy", "jax", "jaxlib", "qiskit", "pennylane", "
 
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
+napoleon_use_ivar = True
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -47,5 +51,5 @@ templates_path = ["_templates"]
 exclude_patterns = []
 
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = []
 html_title = "SC-NeuroCore API"

@@ -11,16 +11,25 @@
 Eliminates the last competitive gap with Brian2: users specify ODEs
 as strings, and EquationNeuron compiles them into a working model.
 
-Usage:
+Examples
+--------
+Define a custom neuron directly from string equations::
+
     from sc_neurocore.neurons.equation_builder import EquationNeuron
 
-    # Define a custom neuron with string equations
     neuron = EquationNeuron(
         equations={
             "v": "-(v - v_rest) / tau + R * I",
             "w": "epsilon * (v + a - b * w)",
         },
-        parameters={"v_rest": -65.0, "tau": 20.0, "R": 1.0, "epsilon": 0.08, "a": 0.7, "b": 0.8},
+        parameters={
+            "v_rest": -65.0,
+            "tau": 20.0,
+            "R": 1.0,
+            "epsilon": 0.08,
+            "a": 0.7,
+            "b": 0.8,
+        },
         state={"v": -65.0, "w": 0.0},
         threshold="v > v_threshold",
         reset={"v": "v_reset"},
@@ -29,10 +38,11 @@ Usage:
         method="euler",
     )
 
-    for t in range(10000):
+    for _ in range(10000):
         spike = neuron.step(I=10.0)
 
-    # Or use the factory for common patterns
+Or use the factory for a common pattern::
+
     from sc_neurocore.neurons.equation_builder import from_equations
 
     lif = from_equations(
@@ -628,7 +638,10 @@ def from_equations(
 ) -> EquationNeuron:
     """Build an EquationNeuron from Brian2-style equation strings.
 
-    Example:
+    Examples
+    --------
+    Build a leaky integrate-and-fire neuron::
+
         lif = from_equations(
             "dv/dt = -(v - E_L)/tau_m + I/C",
             threshold="v > -50",

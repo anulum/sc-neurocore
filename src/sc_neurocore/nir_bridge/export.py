@@ -150,7 +150,7 @@ def to_nir(network, path: str | Path | None = None) -> nir.NIRGraph:  # type: ig
 
     Parameters
     ----------
-    network : SCNetwork
+    network : sc_neurocore.nir_bridge.parser.SCNetwork
         The network to export.
     path : str or Path, optional
         If provided, write the NIR graph to this file.
