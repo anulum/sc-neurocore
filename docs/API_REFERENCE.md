@@ -954,6 +954,20 @@ Run the Julia exact-flow recurrence with typed failure translation.
 
 ---
 
+## Module `accel.julia.neurons.nagumo_sato_map`
+
+### Function `simulate_nagumo_sato_map(y, k, alpha, bias, current)`
+Run a checked Julia batch and translate typed numerical failures.
+
+---
+
+## Module `accel.julia.neurons.sc_adaptive_threshold_map`
+
+### Function `simulate_sc_adaptive_threshold_map(x, theta, k, beta, gamma, theta_spike, x_threshold, current)`
+Run a checked Julia batch and translate typed numerical failures.
+
+---
+
 ## Module `accel.julia.neurons.sc_chaotic_map`
 
 ### Function `simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
@@ -1085,6 +1099,28 @@ nodes.
   - Collect per-node result arrays back to the root rank.
 - **barrier**()
   - Synchronize all nodes.
+
+---
+
+## Module `accel.nagumo_sato_map`
+
+### Function `backend_available(backend)`
+Return whether one maintained execution lane is ready.
+
+### Function `auto_backend()`
+Return the first available lane in measured ascending-latency order.
+
+### Function `normalise_result(result)`
+Validate complete state/output traces and scalar receipts.
+
+### Function `math_isfinite(value)`
+Avoid importing a scalar math helper into the public surface.
+
+### Function `simulate_python(y, k, alpha, bias, current)`
+Run a complete batch through the Python golden model.
+
+### Function `simulate_nagumo_sato_map(y, k, alpha, bias, current)`
+Run one complete source-faithful batch on a selected lane.
 
 ---
 
@@ -1395,6 +1431,25 @@ RuntimeError
     If an explicitly requested maintained backend is unavailable.
 FloatingPointError
     If a numerical candidate or backend result violates the contract.
+
+---
+
+## Module `accel.sc_adaptive_threshold_map`
+
+### Function `backend_available(backend)`
+Return whether one executable SC adaptive-map lane is ready.
+
+### Function `auto_backend()`
+Return the first available lane in measured ascending-latency order.
+
+### Function `normalise_result(result)`
+Validate state traces, upward events, and scalar receipts.
+
+### Function `simulate_python(x, theta, k, beta, gamma, theta_spike, x_threshold, current)`
+Run a complete batch through the Python project specification.
+
+### Function `simulate_sc_adaptive_threshold_map(x, theta, k, beta, gamma, theta_spike, x_threshold, current)`
+Run one complete retained-project-model batch on a selected lane.
 
 ---
 
@@ -22061,7 +22116,7 @@ Return ``(family, category_slug)`` for a model, or ``None`` if unclassified.
 Return the family display name to category slug mapping.
 
 ### Function `classified_models()`
-Return every class name that the taxonomy classifies.
+Return canonical model names plus registered compatibility aliases.
 
 ---
 
@@ -24048,33 +24103,6 @@ https://doi.org/10.1007/BF00199471
 
 ---
 
-## Module `neurons.models.kilinc_bhatt_map_neuron`
-
-### Class `KilincBhattMapNeuron`
-Nagumo-Sato / Aihara sigmoid map neuron with a dynamic threshold.
-
-Minimal 2D map with built-in spike frequency adaptation via a slow
-threshold variable. Designed for efficient hardware implementation
-while retaining biologically relevant dynamics.
-
-x(n+1) = -x(n) + k · σ(4·(x(n) - θ(n))) + I
-θ(n+1) = β · θ(n) + γ · H(x(n) - θ_spike)
-
-where σ(z) = 1 / (1 + exp(-z)) and H() is Heaviside. This is the
-Nagumo-Sato (1972) discrete-time neuron with an accumulated dynamic
-threshold, using the Aihara, Takabe & Toyoda (1990) sigmoid firing in
-place of the hard Heaviside so that spiking is graded rather than
-all-or-nothing.
-
-References: Nagumo & Sato (1972) Kybernetik 10:155-164;
-Aihara, Takabe & Toyoda (1990) Phys Lett A 144:333-340.
-
-- **__post_init__**()
-- **step**(current)
-- **reset**()
-
----
-
 ## Module `neurons.models.klif`
 
 ### Class `KLIFNeuron`
@@ -24551,6 +24579,37 @@ integrator : {"rk4", "baseline_euler"}
   - Advance one step with ``current`` delivered to the basal dendrite.
 - **reset**()
   - Reset soma, basal, and apical state to initial conditions.
+
+---
+
+## Module `neurons.models.nagumo_sato_map_neuron`
+
+### Class `NagumoSatoMapNeuron`
+Nagumo and Sato's discontinuous refractory neuron map.
+
+Parameters
+----------
+y : float, default=0.1
+    Current internal state, matching Aihara's Figure 3 initial condition.
+k : float, default=0.6
+    Refractory-memory damping factor; the source requires ``0 <= k < 1``.
+alpha : float, default=1.0
+    Positive refractory decrement following a firing output.
+bias : float, default=0.2
+    Constant transformed stimulus ``a``.
+
+- **__post_init__**()
+  - Normalise scalar fields and reject invalid configuration.
+- **x**()
+  - Return the current all-or-none firing output ``H(y)``.
+- **output**()
+  - Return the current all-or-none firing output ``H(y)``.
+- **step**(current)
+  - Advance one source-equation step and return ``H(y&#91;t+1&#93;)``.
+- **simulate**(current)
+  - Run an atomic batch on Python, Rust, Julia, Go, or Mojo.
+- **reset**()
+  - Restore the source initial state while preserving parameters.
 
 ---
 
@@ -25080,6 +25139,29 @@ Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 - **reset**()
+
+---
+
+## Module `neurons.models.sc_adaptive_threshold_map_neuron`
+
+### Class `SCAdaptiveThresholdMapNeuron`
+Bounded SC sigmoid map with a slow adaptive threshold.
+
+The simultaneous update is
+
+``x' = clamp(-x + k*sigmoid(4*(x-theta)) + current, -5, 5)``
+``theta' = clamp(beta*theta + gamma*H(x-theta_spike), -5, 5)``.
+
+The returned event is an upward crossing of ``x_threshold`` by ``x'``.
+
+- **__post_init__**()
+  - Normalise scalar fields and reject invalid configuration.
+- **step**(current)
+  - Advance atomically and return an upward-threshold crossing event.
+- **simulate**(current)
+  - Run an atomic complete-state batch on a maintained backend.
+- **reset**()
+  - Restore both project-model states while preserving parameters.
 
 ---
 

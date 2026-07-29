@@ -172,9 +172,15 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "SCChaoticMap" | "SCChaoticMapNeuron" => {
             Ok(NeuronVariant::SCChaoticMap(SCChaoticMapNeuron::new()))
         }
-        "KilincBhattMap" | "KilincBhattMapNeuron" => {
-            Ok(NeuronVariant::KilincBhattMap(KilincBhattMapNeuron::new()))
+        "NagumoSatoMap" | "NagumoSatoMapNeuron" => {
+            Ok(NeuronVariant::NagumoSatoMap(NagumoSatoMapNeuron::new()))
         }
+        "SCAdaptiveThresholdMap"
+        | "SCAdaptiveThresholdMapNeuron"
+        | "KilincBhattMap"
+        | "KilincBhattMapNeuron" => Ok(NeuronVariant::SCAdaptiveThresholdMap(
+            SCAdaptiveThresholdMapNeuron::new(),
+        )),
         "ErmentroutKopellMap" | "ErmentroutKopellMapNeuron" => Ok(
             NeuronVariant::ErmentroutKopellMap(ErmentroutKopellMapNeuron::new()),
         ),

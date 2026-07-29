@@ -25,9 +25,11 @@ pub mod medvedev_map;
 pub mod misc;
 pub mod motor;
 pub mod multi_compartment;
+pub mod nagumo_sato_map;
 pub mod population;
 pub mod rate;
 pub mod rulkov_map;
+pub mod sc_adaptive_threshold_map;
 pub mod sc_chaotic_map;
 pub mod sensory;
 pub mod simple_spiking;
@@ -43,7 +45,9 @@ pub mod maps {
     pub use super::ibarz_tanaka_map::IbarzTanakaMapNeuron;
     pub use super::kilinc_bhatt_map::KilincBhattMapNeuron;
     pub use super::medvedev_map::MedvedevMapNeuron;
+    pub use super::nagumo_sato_map::NagumoSatoMapNeuron;
     pub use super::rulkov_map::RulkovMapNeuron;
+    pub use super::sc_adaptive_threshold_map::SCAdaptiveThresholdMapNeuron;
     pub use super::sc_chaotic_map::SCChaoticMapNeuron;
 }
 
@@ -65,9 +69,11 @@ pub use medvedev_map::*;
 pub use misc::*;
 pub use motor::*;
 pub use multi_compartment::*;
+pub use nagumo_sato_map::*;
 pub use population::*;
 pub use rate::*;
 pub use rulkov_map::*;
+pub use sc_adaptive_threshold_map::*;
 pub use sc_chaotic_map::*;
 pub use sensory::*;
 pub use simple_spiking::*;

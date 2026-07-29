@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Split the misidentified `KilincBhattMapNeuron` into the source-faithful
+  one-state `NagumoSatoMapNeuron` and the retained project-designed two-state
+  `SCAdaptiveThresholdMapNeuron`; the historical name is now a deprecated
+  compatibility alias only. Both canonical models carry complete
+  Python/Rust/Julia/Go/Mojo receipts, independent equation/specification
+  traces, paired schemas, fixed-point RTL co-simulation, Yosys/SymbiYosys
+  evidence, source-bound benchmarks, and native-language API documentation.
+- Adopted language-native API documentation as a project-wide forward ratchet:
+  Python docstrings, Rustdoc, GoDoc, Julia docstrings, Mojo ABI/module comments,
+  and RTL interface/fixed-point contracts accompany new or materially changed
+  public APIs. Rust documentation builds now execute in the engine workflow;
+  historical gaps remain explicit backfill work rather than implied compliance.
 - Split two previously conflated model identities: `AiharaMapNeuron` now uses
   Aihara's primary-author one-state recurrence and Eq. 12 level waveform
   shaper, while the original SC two-state recurrence remains available as the

@@ -1,0 +1,17 @@
+# SymbiYosys proof for source-faithful Nagumo–Sato Q16.16 RTL
+
+[options]
+mode prove
+depth 12
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_nagumo_sato_map_formal.v
+read -formal sc_nagumo_sato_map.v
+prep -top sc_nagumo_sato_map_formal
+
+[files]
+sc_nagumo_sato_map_formal.v
+sc_nagumo_sato_map.v

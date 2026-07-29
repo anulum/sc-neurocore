@@ -8,7 +8,7 @@
 
 """Individual neuron model files — one class per file.
 
-All 158 models are lazy-loaded on first access to keep import fast.
+All registered models are lazy-loaded on first access to keep import fast.
 ``from sc_neurocore.neurons.models import HodgkinHuxleyNeuron`` loads
 only that one file.
 """
@@ -19,6 +19,8 @@ _CLASS_TO_MODULE = {
     "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
     "AdaptiveThresholdMoENeuron": "adaptive_threshold_moe",
     "AiharaMapNeuron": "aihara_map_neuron",
+    "NagumoSatoMapNeuron": "nagumo_sato_map_neuron",
+    "SCAdaptiveThresholdMapNeuron": "sc_adaptive_threshold_map_neuron",
     "SCChaoticMapNeuron": "sc_chaotic_map_neuron",
     "AkidaNeuron": "akida_neuron",
     "AlphaMotorNeuron": "alpha_motor_neuron",

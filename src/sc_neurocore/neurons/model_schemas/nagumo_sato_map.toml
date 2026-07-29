@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — primary-equation Nagumo–Sato map schema
+
+[metadata]
+schema_version = 1
+name = "Nagumo–Sato Map"
+author = "Nagumo, J.; Sato, S."
+year = 1972
+doi = "10.1007/BF00290514"
+description = "One-state discontinuous refractory neuron map"
+
+[state]
+y = 0.1
+
+[parameters]
+k = 0.6
+alpha = 1.0
+bias = 0.2
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+# Aihara (1989) Eqs. 3-4; Python conditional expresses the source unit step.
+y = "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I"
+
+[threshold]
+condition = "y >= 0.0"
+detection = "level"
+
+[extensions]
+model_type = "map"
+discrete_time = true
+source_equation_note = "Nagumo and Sato (1972), DOI 10.1007/BF00290514; reduced equations reproduced in Aihara (1989), RIMS Kokyuroku 710, Eqs. 1-7."
+input_note = "I perturbs transformed stimulus a(t); raw A(t) requires the source temporal transform."
+defaults_note = "y0=0.1, k=0.6, alpha=1 are Aihara Figure 3 anchors; bias=0.2 is a documented nontrivial default."

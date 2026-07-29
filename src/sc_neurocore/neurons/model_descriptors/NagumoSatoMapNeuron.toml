@@ -1,0 +1,96 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Nagumo–Sato fidelity descriptor
+
+[metadata]
+schema_version = 2
+name = "NagumoSatoMapNeuron"
+class_name = "NagumoSatoMapNeuron"
+module = "nagumo_sato_map_neuron"
+display_name = "Nagumo–Sato refractory neuron map"
+summary = "Primary-equation one-state discontinuous refractory neuron."
+family = "Map-based"
+category = "map-based"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = ["refractory map dynamics", "source-equation reference"]
+hardware_fit = ["piecewise-linear fixed-point datapath"]
+behavior_tags = ["excitable", "rate-coded", "tonic"]
+
+[provenance]
+authors = ["Nagumo, J.", "Sato, S."]
+year = 1972
+doi = "10.1007/BF00290514"
+paper_title = "On a response characteristic of a mathematical neuron model"
+derivation_note = "Reduced Eqs. 3-4 reproduced by primary author K. Aihara in RIMS Kokyuroku 710 (1989), Eqs. 1-7."
+
+[state.y]
+init = 0.1
+
+[parameters.k]
+default = 0.6
+unit = "1"
+meaning = "refractory-memory damping"
+range = [0.0, 0.999999]
+
+[parameters.alpha]
+default = 1.0
+unit = "1"
+meaning = "positive refractory decrement"
+range = [0.000001, 10.0]
+
+[parameters.bias]
+default = 0.2
+unit = "1"
+meaning = "constant transformed stimulus a"
+range = [-10.0, 10.0]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+y = "k * y - alpha * H(y) + bias + I"
+event = "H(y_next), with H(0)=1"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "exact"
+[backends.julia]
+status = "implemented"
+parity = "exact"
+[backends.go]
+status = "implemented"
+parity = "exact"
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = '{"kind":"sampled_batch_v1","n_steps":1000,"y":0.1,"k":0.6,"alpha":1.0,"bias":0.2,"simulate_fields":["current"],"inputs":{"current":{"function":"sin","offset":0.0,"amplitude":0.05,"angular_frequency":0.037}},"trace_fields":["y","x"]}'
+golden_trace_sha256 = "007ead3407d534fb7e8b6f6bd38aa61607661307f2d0e67c15fe756fc2a2f05e"
+
+[documentation]
+slug = "models/nagumo_sato_map"
+notes = "Level firing is the source all-or-none output; current perturbs transformed stimulus a(t)."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "Aihara Figure 3 parameter anchors plus deterministic nonconstant drive"
+tolerance = "binary64 exact for Python/Rust/Julia/Go and <=5e-15 for Mojo, with exact events; Q16.16 exact events and bounded state error"
+evidence = "tests/test_reference_nagumo_sato_map.py; tests/test_nagumo_sato_map_backends.py; tests/test_cosim_nagumo_sato_map.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_nagumo_sato_map.py"
+target_tier = "H1"
+terminal_reason = "One-state piecewise-linear Q16.16 datapath preserves source event semantics."

@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Nagumo–Sato Map",
+    "author": "Nagumo, J.; Sato, S.",
+    "year": 1972,
+    "doi": "10.1007/BF00290514",
+    "description": "One-state discontinuous refractory neuron map"
+  },
+  "state": {"y": 0.1},
+  "parameters": {"k": 0.6, "alpha": 1.0, "bias": 0.2},
+  "integration": {"dt": 1.0, "method": "map"},
+  "dynamics": {
+    "y": "k * y - alpha * (1.0 if y >= 0.0 else 0.0) + bias + I"
+  },
+  "threshold": {"condition": "y >= 0.0", "detection": "level"},
+  "extensions": {
+    "model_type": "map",
+    "discrete_time": true,
+    "source_equation_note": "Nagumo and Sato (1972), DOI 10.1007/BF00290514; reduced equations reproduced in Aihara (1989), RIMS Kokyuroku 710, Eqs. 1-7.",
+    "input_note": "I perturbs transformed stimulus a(t); raw A(t) requires the source temporal transform.",
+    "defaults_note": "y0=0.1, k=0.6, alpha=1 are Aihara Figure 3 anchors; bias=0.2 is a documented nontrivial default."
+  }
+}

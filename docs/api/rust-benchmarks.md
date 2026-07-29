@@ -264,7 +264,8 @@ compute cycles for the 64x32 dense contract.
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
 | Aihara map | 100k | 3.38 ms | **33.8 ns** | Chaotic sigmoid map |
-| Kilinc-Bhatt map | 100k | 2.45 ms | **24.5 ns** | Adaptive threshold map |
+| Nagumo–Sato map | 100k | — | — | Added after this historical Criterion run; see the [polyglot benchmark](../benchmarks/comparison.md#nagumo-sato-and-sc-adaptive-map-polyglot-loops) |
+| SC adaptive-threshold map | 100k | — | — | Replaces the falsely attributed compatibility identity; see the [polyglot benchmark](../benchmarks/comparison.md#nagumo-sato-and-sc-adaptive-map-polyglot-loops) |
 | Ermentrout-Kopell | 100k | 2.90 ms | **29.0 ns** | Canonical Type I (theta) |
 
 ### Population / Mean-Field (`neurons/population/`) — Population and mean-field model group

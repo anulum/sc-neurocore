@@ -55,6 +55,30 @@ The `.githooks/pre-push` hook runs `preflight-fast` automatically before every `
 - **Python**: `ruff format` + `ruff check` (both enforced in CI and preflight). Use type hints on public APIs only.
 - **SPDX header**: Every `.py`, `.rs`, `.v` file must start with `# SPDX-License-Identifier: AGPL-3.0-or-later`.
 
+### Language-native API documentation
+
+Every new or materially changed public API must be documented in its native
+documentation system in the same change. This forward ratchet applies across
+the project; existing gaps remain explicit backfill work and are not silently
+declared compliant.
+
+- **Python:** module/class/function docstrings, including parameters, returns,
+  failure behaviour, state mutation, and scientific or project provenance.
+- **Rust:** `//!` module docs and `///` on public items; new public modules
+  enable `#![warn(missing_docs)]`, and `cargo doc --no-deps` must pass.
+- **Go:** GoDoc comments beginning with the exported identifier; `go test` and
+  `go vet` must pass for the touched package.
+- **Julia:** docstrings on exported modules, types, and functions, accessible
+  through Julia's help/documentation system.
+- **Mojo:** module and exported ABI comments recording parameter, ownership,
+  error, and mutation contracts until a stable generated-doc gate is available.
+- **RTL:** module, parameter, port, fixed-point-format, latency, reset, and
+  event-semantics comments beside the maintained Verilog/SystemVerilog source.
+
+Narrative Markdown complements these native surfaces but does not replace
+them. Compatibility aliases must point to the canonical documented identity
+and must not create duplicate scientific provenance.
+
 ### Testing
 
 - All new Rust code must include tests in `engine/tests/` or inline `#[cfg(test)]` modules.

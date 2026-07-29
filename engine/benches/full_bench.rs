@@ -103,7 +103,6 @@ use sc_neurocore_engine::neurons::{
     IntegerQIFNeuron,
     JansenRitUnit,
     KLIFNeuron,
-    KilincBhattMapNeuron,
     LarterBreakspearNeuron,
     LeakyCompeteFireNeuron,
     LearnableNeuronModel,
@@ -127,6 +126,7 @@ use sc_neurocore_engine::neurons::{
     MultiTimescaleNeuron,
     MyelinatedAxon,
     NMDANeuron,
+    NagumoSatoMapNeuron,
     NeuroGridNeuron,
     Nociceptor,
     NodeOfRanvier,
@@ -155,6 +155,7 @@ use sc_neurocore_engine::neurons::{
     RetinalGanglionCell,
     RodPhotoreceptor,
     RulkovMapNeuron,
+    SCAdaptiveThresholdMapNeuron,
     SFANeuron,
     SKNeuron,
     SSTNeuron,
@@ -857,9 +858,18 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("kilinc_bhatt_100k_steps", |b| {
+    c.bench_function("nagumo_sato_100k_steps", |b| {
         b.iter(|| {
-            let mut n = KilincBhattMapNeuron::new();
+            let mut n = NagumoSatoMapNeuron::new();
+            for _ in 0..100_000 {
+                black_box(n.step(0.5));
+            }
+        })
+    });
+
+    c.bench_function("sc_adaptive_threshold_map_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = SCAdaptiveThresholdMapNeuron::new();
             for _ in 0..100_000 {
                 black_box(n.step(0.5));
             }

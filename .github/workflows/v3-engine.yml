@@ -56,6 +56,11 @@ jobs:
       - name: Rust clippy
         run: cargo clippy --manifest-path engine/Cargo.toml -- -D warnings
 
+      - name: Rust API documentation builds
+        run: |
+          cargo doc --manifest-path engine/Cargo.toml --no-deps
+          cargo doc --manifest-path src/sc_neurocore/accel/rust/Cargo.toml --no-deps
+
       - name: Engine builds without optional Z3 (feature-gate guard)
         run: cargo check --manifest-path engine/Cargo.toml --no-default-features
 

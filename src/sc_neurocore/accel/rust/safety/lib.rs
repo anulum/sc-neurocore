@@ -275,6 +275,8 @@ pub mod mpi_runner;
 pub mod multi_clock;
 pub mod multicompartment_mcn;
 pub mod multimodal;
+/// Source-faithful Nagumo-Sato refractory-map safety mirror.
+pub mod nagumo_sato_map_neuron;
 pub mod network;
 pub mod network_graph;
 pub mod neural_decoders;
@@ -351,9 +353,11 @@ pub mod resonate_and_fire;
 pub mod resource_optimizer;
 pub mod rng;
 pub mod rulkov_map;
-pub mod sc_chaotic_map_neuron;
 pub mod safety;
 pub mod safety_monitor;
+/// Retained SC adaptive-threshold-map safety mirror.
+pub mod sc_adaptive_threshold_map_neuron;
+pub mod sc_chaotic_map_neuron;
 pub mod sc_conv_layer;
 pub mod sc_dense_layer;
 pub mod sc_doctor;

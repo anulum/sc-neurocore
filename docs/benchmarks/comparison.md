@@ -391,6 +391,39 @@ These are local regression measurements, not a portable backend ranking. The
 separate chaotic parity test uses a bounded equation horizon and explicitly
 measured state envelope.
 
+## Nagumo-Sato and SC adaptive-map polyglot loops
+
+`benchmarks/bench_nagumo_sato_and_sc_adaptive_map.py` measures both preserved
+model identities through Python, Rust, Julia, Go, and Mojo. The committed JSON
+is source-hash-bound, uses 200,000 nonconstant steps and three repeats, and was
+pinned to logical CPU 11 on the same i5-11600K host. The recorded one-minute
+load average was 28.69, so these timings are diagnostic regression evidence,
+not a portable ranking.
+
+Nagumo-Sato source map:
+
+| Backend | Median call | Speed-up vs Python | Maximum y difference | Events |
+|---|---:|---:|---:|---:|
+| Mojo | 11.724 ms | 52.63x | `2.220e-16` | 61,135 |
+| Go | 20.625 ms | 29.92x | `0` | 61,135 |
+| Rust | 58.913 ms | 10.47x | `0` | 61,135 |
+| Julia | 100.971 ms | 6.11x | `0` | 61,135 |
+| Python | 617.105 ms | 1.00x | `0` | 61,135 |
+
+Retained SC adaptive-threshold map:
+
+| Backend | Median call | Speed-up vs Python | Maximum state difference | Events |
+|---|---:|---:|---:|---:|
+| Julia | 26.796 ms | 36.40x | `4.441e-16` | 13,188 |
+| Go | 34.679 ms | 28.13x | `5.551e-16` | 13,188 |
+| Mojo | 37.192 ms | 26.23x | `1.981e-13` | 13,188 |
+| Rust | 55.042 ms | 17.72x | `0` | 13,188 |
+| Python | 975.373 ms | 1.00x | `0` | 13,188 |
+
+Every event vector is exact. The artefact is
+`benchmarks/results/bench_nagumo_sato_and_sc_adaptive_map.json`; it binds the
+canonical model and accelerator sources and keeps the two identities separate.
+
 ## Chialvo map polyglot batch loop
 
 The committed `benchmarks/bench_chialvo_map.py` runs the same

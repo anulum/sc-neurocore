@@ -55,9 +55,10 @@ def test_rust_map_models_have_one_owned_module_each() -> None:
         "courage_nekorkin_map.rs": "CourageNekorkinMapNeuron",
         "ermentrout_kopell_map.rs": "ErmentroutKopellMapNeuron",
         "ibarz_tanaka_map.rs": "IbarzTanakaMapNeuron",
-        "kilinc_bhatt_map.rs": "KilincBhattMapNeuron",
         "medvedev_map.rs": "MedvedevMapNeuron",
+        "nagumo_sato_map.rs": "NagumoSatoMapNeuron",
         "rulkov_map.rs": "RulkovMapNeuron",
+        "sc_adaptive_threshold_map.rs": "SCAdaptiveThresholdMapNeuron",
         "sc_chaotic_map.rs": "SCChaoticMapNeuron",
     }
     neuron_root = ROOT / "engine/src/neurons"
@@ -67,6 +68,15 @@ def test_rust_map_models_have_one_owned_module_each() -> None:
         assert definitions == [model_name]
         assert "#[cfg(test)]" in source
         assert len(source.splitlines()) < 300
+
+
+def test_kilinc_bhatt_rust_module_is_alias_only() -> None:
+    """The historical Rust name cannot regain an independent recurrence."""
+    source = (ROOT / "engine/src/neurons/kilinc_bhatt_map.rs").read_text()
+    assert "pub type KilincBhattMapNeuron" in source
+    assert "SCAdaptiveThresholdMapNeuron" in source
+    assert "pub struct" not in source
+    assert "impl " not in source
 
 
 def test_rust_map_compatibility_namespace_has_no_implementation() -> None:

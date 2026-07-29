@@ -1,0 +1,17 @@
+# SymbiYosys proof for the retained SC adaptive-threshold Q8.24 RTL
+
+[options]
+mode prove
+depth 12
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_adaptive_threshold_map_formal.v
+read -formal sc_adaptive_threshold_map.v
+prep -top sc_adaptive_threshold_map_formal
+
+[files]
+sc_adaptive_threshold_map_formal.v
+sc_adaptive_threshold_map.v

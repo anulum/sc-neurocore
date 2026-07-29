@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — project adaptive-threshold-map descriptor
+
+[metadata]
+schema_version = 2
+name = "SCAdaptiveThresholdMapNeuron"
+class_name = "SCAdaptiveThresholdMapNeuron"
+module = "sc_adaptive_threshold_map_neuron"
+display_name = "SC adaptive-threshold map"
+summary = "Repository-designed bounded sigmoid map with a slow threshold state."
+family = "Map-based"
+category = "map-based"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = ["adaptive map experiments", "hardware-oriented bounded dynamics"]
+hardware_fit = ["fixed-point sigmoid-LUT co-simulation"]
+behavior_tags = ["excitable", "phasic", "tonic"]
+
+[provenance]
+authors = ["SC-NeuroCore project"]
+year = 2026
+doi = ""
+paper_title = ""
+derivation_note = "Project recurrence formerly misidentified as KilincBhattMapNeuron; it is neither the Nagumo-Sato map nor an Aihara publication equation."
+
+[state.x]
+init = 0.0
+[state.theta]
+init = 0.0
+
+[parameters.k]
+default = 1.5
+unit = "1"
+meaning = "sigmoid gain"
+range = [0.0, 5.0]
+[parameters.beta]
+default = 0.95
+unit = "1"
+meaning = "threshold-state decay"
+range = [0.0, 1.0]
+[parameters.gamma]
+default = 0.3
+unit = "1"
+meaning = "threshold increment after a level event"
+range = [0.0, 2.0]
+[parameters.theta_spike]
+default = 0.8
+unit = "1"
+meaning = "level controlling threshold adaptation"
+range = [0.0, 2.0]
+[parameters.x_threshold]
+default = 0.8
+unit = "1"
+meaning = "upward-crossing event threshold"
+range = [0.0, 2.0]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "clamp(-x + k * sigmoid(4 * (x - theta)) + I, -5, 5)"
+theta = "clamp(beta * theta + gamma * H(x - theta_spike), -5, 5)"
+event = "x_next >= x_threshold and x < x_threshold"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = '{"kind":"sampled_batch_v1","n_steps":1000,"x":0.0,"theta":0.0,"k":1.5,"beta":0.95,"gamma":0.3,"theta_spike":0.8,"x_threshold":0.8,"simulate_fields":["current"],"inputs":{"current":{"function":"sin","offset":0.6,"amplitude":0.25,"angular_frequency":0.017}},"trace_fields":["x","theta","spikes"]}'
+golden_trace_sha256 = "93cd62457d0d0e3b5fc8c012ec1407671a42a8b79bb56fcf77ad22a32c999738"
+
+[documentation]
+slug = "models/sc_adaptive_threshold_map"
+notes = "SC project specification with no external paper attribution; KilincBhattMapNeuron remains a deprecated compatibility alias only."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "1000-step deterministic nonconstant drive at project defaults"
+tolerance = "binary64 state <=1e-10 with exact events; fixed-point RTL bounded against quantized project specification"
+evidence = "tests/test_sc_adaptive_threshold_map_backends.py; tests/test_cosim_sc_adaptive_threshold_map.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_adaptive_threshold_map.py"
+target_tier = "H1"
+terminal_reason = "Q8.24 sigmoid-LUT datapath preserves bounded state and upward-crossing semantics over the committed 32-step I=0.4 horizon."

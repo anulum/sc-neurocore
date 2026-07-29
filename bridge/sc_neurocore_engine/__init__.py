@@ -94,7 +94,10 @@ try:
         CazellesMapNeuron,
         CourageNekorkinMapNeuron,
         AiharaMapNeuron,
+        NagumoSatoMapNeuron,
+        SCAdaptiveThresholdMapNeuron,
         SCChaoticMapNeuron,
+        KilincBhattMapNeuron,
         HodgkinHuxleyNeuron,
         TraubMilesNeuron,
         WangBuzsakiNeuron,
@@ -577,6 +580,24 @@ try:
     _sc_chaotic_map_rust_available = True
 except ImportError:
     _sc_chaotic_map_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_nagumo_sato_map_simulate
+
+    __all__ += ["py_nagumo_sato_map_simulate"]
+    _nagumo_sato_rust_available = True
+except ImportError:
+    _nagumo_sato_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_sc_adaptive_threshold_map_simulate,
+    )
+
+    __all__ += ["py_sc_adaptive_threshold_map_simulate"]
+    _sc_adaptive_threshold_map_rust_available = True
+except ImportError:
+    _sc_adaptive_threshold_map_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

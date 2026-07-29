@@ -4,10 +4,11 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia Neuron Model Zoo (30 models)
+# SC-NeuroCore — Julia Neuron Model Zoo (31 models)
 
 module NeuronZoo
 
+using Printf
 using Statistics
 
 # ============================================================
@@ -293,12 +294,35 @@ function tripartite_step(g_syn, Ca_astro, pre_spike, post_V; τs=5.0, τCa=10.0,
     return g_syn+dg+gliot_release*dt, Ca_astro+dCa
 end
 
-# §30  Kilinc-Bhatt Map Neuron
-function kilinc_bhatt_step(x, y; α=3.5, β=0.1, I=0.0)
-    x_new = α / (1.0 + x^2) + β*y + I
-    y_new = x
-    return x_new, y_new
+# §30  Nagumo–Sato refractory map
+"""Advance the source equation `y'=k*y-alpha*H(y)+bias+I`, with `H(0)=1`."""
+function nagumo_sato_step(y; k=0.6, alpha=1.0, bias=0.2, I=0.0)
+    y_new = k*y - alpha*(y >= 0.0 ? 1.0 : 0.0) + bias + I
+    return y_new, y_new >= 0.0
 end
+
+# §31  SC adaptive-threshold project map
+"""Advance the simultaneous two-state SC project recurrence."""
+function sc_adaptive_threshold_step(
+    x,
+    theta;
+    k=1.5,
+    beta=0.95,
+    gamma=0.3,
+    theta_spike=0.8,
+    x_threshold=0.8,
+    I=0.0,
+)
+    previous_x = x
+    activation = 1.0 / (1.0 + exp(-4.0*(x-theta)))
+    x_new = clamp(-x + k*activation + I, -5.0, 5.0)
+    theta_new = clamp(beta*theta + gamma*(x >= theta_spike ? 1.0 : 0.0), -5.0, 5.0)
+    event = x_new >= x_threshold && previous_x < x_threshold
+    return x_new, theta_new, event
+end
+
+"""Deprecated compatibility spelling for `sc_adaptive_threshold_step`."""
+kilinc_bhatt_step(x, theta; kwargs...) = sc_adaptive_threshold_step(x, theta; kwargs...)
 
 # ============================================================
 # BATCH SIMULATOR
@@ -380,11 +404,12 @@ function run_benchmarks()
         ("PLIF",          () -> begin V=-65.0; for _ in 1:n_steps; V,_=plif_step(V,15.0;dt=dt); end; V end),
         ("Rall Cable 8",  () -> begin c=fill(-65.0,8); I=zeros(8); I[1]=15.0; for _ in 1:n_steps; c=rall_cable_step(c,I;dt=dt); end; c[1] end),
         ("Astrocyte",     () -> begin Ca=0.1;IP3=0.5;h=0.5; for _ in 1:n_steps; Ca,IP3,h=astrocyte_step(Ca,IP3,h;dt=dt); end; Ca end),
-        ("Kilinc-Bhatt",  () -> begin x=0.1;y=0.0; for _ in 1:n_steps; x,y=kilinc_bhatt_step(x,y); end; x end),
+        ("Nagumo–Sato",   () -> begin y=0.1; for _ in 1:n_steps; y,_=nagumo_sato_step(y); end; y end),
+        ("SC adaptive",   () -> begin x=0.0;theta=0.0; for _ in 1:n_steps; x,theta,_=sc_adaptive_threshold_step(x,theta); end; x end),
     ]
 
     println("=" ^ 55)
-    println("SC-NeuroCore Julia Neuron Zoo — 30 Models Benchmark")
+    println("SC-NeuroCore Julia Neuron Zoo — 31 Models Benchmark")
     println("=" ^ 55)
 
     for (name, fn) in models

@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — project adaptive-threshold-map schema
+
+[metadata]
+schema_version = 1
+name = "SC Adaptive Threshold Map"
+author = "SC-NeuroCore project"
+year = 2026
+doi = ""
+description = "Repository-designed bounded sigmoid map with an adaptive threshold"
+
+[state]
+x = 0.0
+theta = 0.0
+
+[parameters]
+k = 1.5
+beta = 0.95
+gamma = 0.3
+theta_spike = 0.8
+x_threshold = 0.8
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "clip(-x + k * sigmoid(4.0 * (x - theta)) + I, -5.0, 5.0)"
+theta = "clip(beta * theta + gamma * (1.0 if x >= theta_spike else 0.0), -5.0, 5.0)"
+
+[threshold]
+condition = "x >= x_threshold"
+detection = "crossing"
+
+[extensions]
+model_type = "map"
+discrete_time = true
+source_equation_note = "SC-NeuroCore project specification; no external paper attribution."
+identity_note = "Formerly exposed under the unsupported KilincBhattMapNeuron name, retained only as a compatibility alias."

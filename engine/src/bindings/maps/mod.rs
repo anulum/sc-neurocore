@@ -22,8 +22,10 @@ mod ibarz_tanaka_map;
 mod kilinc_bhatt_map;
 #[path = "../medvedev_map.rs"]
 mod medvedev_map;
+mod nagumo_sato_map;
 #[path = "../rulkov_map.rs"]
 mod rulkov_map;
+mod sc_adaptive_threshold_map;
 mod sc_chaotic_map;
 
 pub use aihara_map::PyAiharaMapNeuron;
@@ -34,10 +36,12 @@ pub use ermentrout_kopell_map::PyErmentroutKopellMapNeuron;
 pub use ibarz_tanaka_map::PyIbarzTanakaMapNeuron;
 pub use kilinc_bhatt_map::PyKilincBhattMapNeuron;
 pub use medvedev_map::PyMedvedevMapNeuron;
+pub use nagumo_sato_map::PyNagumoSatoMapNeuron;
 pub use rulkov_map::PyRulkovMapNeuron;
+pub use sc_adaptive_threshold_map::PySCAdaptiveThresholdMapNeuron;
 pub use sc_chaotic_map::PySCChaoticMapNeuron;
 
-/// Register the ten model-owned map-neuron bindings in stable class order.
+/// Register the model-owned map-neuron bindings in stable class order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     chialvo_map::register(module)?;
     rulkov_map::register(module)?;
@@ -47,6 +51,8 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     courage_nekorkin_map::register(module)?;
     aihara_map::register(module)?;
     sc_chaotic_map::register(module)?;
+    nagumo_sato_map::register(module)?;
+    sc_adaptive_threshold_map::register(module)?;
     kilinc_bhatt_map::register(module)?;
     ermentrout_kopell_map::register(module)?;
     Ok(())

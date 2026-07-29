@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 176,
+    "model_documentation_pages": 178,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 584,
-    "python_model_classes": 159,
-    "python_model_source_modules": 154,
-    "rust_pyo3_model_wrappers": 187,
-    "test_files": 4596
+    "public_documentation_pages": 586,
+    "python_model_classes": 160,
+    "python_model_source_modules": 156,
+    "rust_pyo3_model_wrappers": 189,
+    "test_files": 4604
   },
   "documentation": {
     "public_pages": [
@@ -1188,6 +1188,7 @@
       "docs/api/models/motor_unit.md",
       "docs/api/models/multicompartment_mcn.md",
       "docs/api/models/myelinated_axon.md",
+      "docs/api/models/nagumo_sato_map.md",
       "docs/api/models/neurogrid.md",
       "docs/api/models/nlif.md",
       "docs/api/models/nmda_neuron.md",
@@ -1216,6 +1217,7 @@
       "docs/api/models/retinal_ganglion.md",
       "docs/api/models/rod_photoreceptor.md",
       "docs/api/models/rulkov_map.md",
+      "docs/api/models/sc_adaptive_threshold_map.md",
       "docs/api/models/sc_chaotic_map.md",
       "docs/api/models/sfa.md",
       "docs/api/models/sherman_rinzel_keizer.md",
@@ -1693,6 +1695,7 @@
       "motor_unit.md",
       "multicompartment_mcn.md",
       "myelinated_axon.md",
+      "nagumo_sato_map.md",
       "neurogrid.md",
       "nlif.md",
       "nmda_neuron.md",
@@ -1721,6 +1724,7 @@
       "retinal_ganglion.md",
       "rod_photoreceptor.md",
       "rulkov_map.md",
+      "sc_adaptive_threshold_map.md",
       "sc_chaotic_map.md",
       "sfa.md",
       "sherman_rinzel_keizer.md",
@@ -2087,10 +2091,6 @@
         "path": "src/sc_neurocore/neurons/models/klif.py"
       },
       {
-        "name": "KilincBhattMapNeuron",
-        "path": "src/sc_neurocore/neurons/models/kilinc_bhatt_map_neuron.py"
-      },
-      {
         "name": "LapicqueNeuron",
         "path": "src/sc_neurocore/neurons/models/lapicque.py"
       },
@@ -2179,6 +2179,10 @@
         "path": "src/sc_neurocore/neurons/models/nmda_neuron.py"
       },
       {
+        "name": "NagumoSatoMapNeuron",
+        "path": "src/sc_neurocore/neurons/models/nagumo_sato_map_neuron.py"
+      },
+      {
         "name": "NeuroGridNeuron",
         "path": "src/sc_neurocore/neurons/models/neurogrid.py"
       },
@@ -2261,6 +2265,10 @@
       {
         "name": "RulkovMapNeuron",
         "path": "src/sc_neurocore/neurons/models/rulkov_map.py"
+      },
+      {
+        "name": "SCAdaptiveThresholdMapNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py"
       },
       {
         "name": "SCChaoticMapNeuron",
@@ -2496,6 +2504,7 @@
       "src/sc_neurocore/neurons/models/morris_lecar.py",
       "src/sc_neurocore/neurons/models/motor_unit.py",
       "src/sc_neurocore/neurons/models/multicompartment_mcn.py",
+      "src/sc_neurocore/neurons/models/nagumo_sato_map_neuron.py",
       "src/sc_neurocore/neurons/models/neurogrid.py",
       "src/sc_neurocore/neurons/models/nlif.py",
       "src/sc_neurocore/neurons/models/nmda_neuron.py",
@@ -2517,6 +2526,7 @@
       "src/sc_neurocore/neurons/models/renshaw_cell.py",
       "src/sc_neurocore/neurons/models/resonate_and_fire.py",
       "src/sc_neurocore/neurons/models/rulkov_map.py",
+      "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py",
       "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py",
       "src/sc_neurocore/neurons/models/sfa.py",
       "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py",
@@ -2662,6 +2672,7 @@
       "MultiTimescaleNeuron",
       "MyelinatedAxon",
       "NMDANeuron",
+      "NagumoSatoMapNeuron",
       "NeuroGridNeuron",
       "Nociceptor",
       "NodeOfRanvier",
@@ -2700,6 +2711,7 @@
       "RustQuantumInspiredLIFNeuron",
       "RustShortTermPlasticitySynapse",
       "RustTripletStdpSynapse",
+      "SCAdaptiveThresholdMapNeuron",
       "SCChaoticMapNeuron",
       "SFANeuron",
       "SKNeuron",
@@ -4058,6 +4070,7 @@
       "tests/test_cosim_mihalas_niebur.py",
       "tests/test_cosim_morris_lecar_q1616_precision.py",
       "tests/test_cosim_morris_lecar_transcendental_co_simulation.py",
+      "tests/test_cosim_nagumo_sato_map.py",
       "tests/test_cosim_perfect_integrator.py",
       "tests/test_cosim_pernarowski_q1616_precision.py",
       "tests/test_cosim_pernarowski_tier_b_model_cosim.py",
@@ -4067,6 +4080,7 @@
       "tests/test_cosim_resonate_and_fire.py",
       "tests/test_cosim_rtl_spike_execution.py",
       "tests/test_cosim_rulkov_map.py",
+      "tests/test_cosim_sc_adaptive_threshold_map.py",
       "tests/test_cosim_sigmoid_rate.py",
       "tests/test_cosim_support_architecture_architecture_invariants.py",
       "tests/test_cosim_support_architecture_ownership_biophysical.py",
@@ -5524,6 +5538,7 @@
       "tests/test_model_motor_unit.py",
       "tests/test_model_multicompartment_mcn.py",
       "tests/test_model_multicompartment_mcn_contracts.py",
+      "tests/test_model_nagumo_sato_map_neuron.py",
       "tests/test_model_neurogrid_neuro_grid.py",
       "tests/test_model_neurogrid_ng_analytical.py",
       "tests/test_model_neurogrid_ng_compartments.py",
@@ -5668,6 +5683,7 @@
       "tests/test_model_rulkov_map_rulkov_map_dynamics.py",
       "tests/test_model_rulkov_map_rulkov_network.py",
       "tests/test_model_rulkov_map_rulkov_parameters.py",
+      "tests/test_model_sc_adaptive_threshold_map_neuron.py",
       "tests/test_model_sc_chaotic_map_neuron.py",
       "tests/test_model_sfa_sfa_adaptation.py",
       "tests/test_model_sfa_sfa_analysis.py",
@@ -5865,6 +5881,7 @@
       "tests/test_mpi_runner_real.py",
       "tests/test_multi_target.py",
       "tests/test_multihead_attention.py",
+      "tests/test_nagumo_sato_map_backends.py",
       "tests/test_nas/darts_sc_nas_support.py",
       "tests/test_nas/sc_nas_engine_support.py",
       "tests/test_nas/test_darts_sc_nas_bitstream_candidate.py",
@@ -6368,12 +6385,14 @@
       "tests/test_reference_medvedev_map.py",
       "tests/test_reference_mihalas_niebur.py",
       "tests/test_reference_morris_lecar.py",
+      "tests/test_reference_nagumo_sato_map.py",
       "tests/test_reference_perfect_integrator.py",
       "tests/test_reference_pernarowski.py",
       "tests/test_reference_poisson.py",
       "tests/test_reference_quadratic_if.py",
       "tests/test_reference_resonate_fire.py",
       "tests/test_reference_rulkov_map.py",
+      "tests/test_reference_sc_adaptive_threshold_map.py",
       "tests/test_reference_terman_wang.py",
       "tests/test_reference_theta.py",
       "tests/test_reference_trace_payloads.py",
@@ -6472,6 +6491,7 @@
       "tests/test_sby_runner_raise_for_incomplete.py",
       "tests/test_sby_runner_run_sby_task.py",
       "tests/test_sby_runner_run_sby_task_end_to_end.py",
+      "tests/test_sc_adaptive_threshold_map_backends.py",
       "tests/test_sc_chaotic_map_backends.py",
       "tests/test_sc_convergence_and_multiplication_convergence.py",
       "tests/test_sc_convergence_bitstream_encoder_roundtrip.py",

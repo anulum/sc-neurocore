@@ -170,9 +170,10 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "CourageNekorkinMapNeuron",
             "ErmentroutKopellMapNeuron",
             "IbarzTanakaMapNeuron",
-            "KilincBhattMapNeuron",
             "MedvedevMapNeuron",
+            "NagumoSatoMapNeuron",
             "RulkovMapNeuron",
+            "SCAdaptiveThresholdMapNeuron",
         ),
     ),
     "Rate / mean-field": (
@@ -275,6 +276,10 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
     ),
 }
 
+_COMPATIBILITY_ALIASES = {
+    "KilincBhattMapNeuron": "SCAdaptiveThresholdMapNeuron",
+}
+
 _CLASS_TO_FAMILY: dict[str, tuple[str, str]] = {
     class_name: (family, category)
     for family, (category, members) in _FAMILIES.items()
@@ -285,7 +290,8 @@ _CLASS_TO_FAMILY: dict[str, tuple[str, str]] = {
 def model_family(class_name: str) -> tuple[str, str] | None:
     """Return ``(family, category_slug)`` for a model, or ``None`` if unclassified."""
 
-    return _CLASS_TO_FAMILY.get(class_name)
+    canonical_name = _COMPATIBILITY_ALIASES.get(class_name, class_name)
+    return _CLASS_TO_FAMILY.get(canonical_name)
 
 
 def families() -> dict[str, str]:
@@ -295,9 +301,9 @@ def families() -> dict[str, str]:
 
 
 def classified_models() -> frozenset[str]:
-    """Return every class name that the taxonomy classifies."""
+    """Return canonical model names plus registered compatibility aliases."""
 
-    return frozenset(_CLASS_TO_FAMILY)
+    return frozenset((*_CLASS_TO_FAMILY, *_COMPATIBILITY_ALIASES))
 
 
 __all__ = [
