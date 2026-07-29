@@ -137,9 +137,11 @@ mod tests {
 
     #[test]
     fn rejects_non_finite_current_before_mutation() {
-        let mut state = NonlinearLifState::default();
-        state.v = -60.0;
-        state.w = 0.5;
+        let mut state = NonlinearLifState {
+            v: -60.0,
+            w: 0.5,
+            ..NonlinearLifState::default()
+        };
         assert_eq!(step(&mut state, f64::NAN), -1);
         assert_eq!(state.v, -60.0);
         assert_eq!(state.w, 0.5);
