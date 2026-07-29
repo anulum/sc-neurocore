@@ -85,6 +85,7 @@ def test_release_workflow_installs_real_release_sweep_tools() -> None:
     assert "go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8" in run_text
     assert "go install github.com/anchore/syft/cmd/syft@v1.20.0" in run_text
     assert "go install github.com/zricethezav/gitleaks/v8@v8.20.1" in run_text
+    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.58.1" in run_text
     assert "cargo install cargo-audit --version 0.22.1 --locked" in run_text
     assert "cargo install cargo-deny --version 0.19.6 --locked" in run_text
     assert "cargo install cargo-fuzz --version 0.13.2" in run_text

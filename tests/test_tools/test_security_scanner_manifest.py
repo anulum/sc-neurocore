@@ -59,6 +59,14 @@ def test_manifest_contains_required_security_scanners() -> None:
     assert required <= scanner_names
 
 
+def test_manifest_scanner_versions_match_governed_locks() -> None:
+    tool = _load_tool()
+    scanners = {scanner["name"]: scanner for scanner in tool.build_scanner_manifest()["scanners"]}
+
+    assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
+    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.170.1"
+
+
 def test_scanner_records_ownership_and_noise_fields() -> None:
     tool = _load_tool()
     manifest = tool.build_scanner_manifest()

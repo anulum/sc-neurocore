@@ -44,7 +44,7 @@ def test_manifest_python_compliance_commands_are_executable_and_pinned() -> None
     manifest = manifest_tool.build_scanner_manifest()
     scanners = {scanner["name"]: scanner for scanner in manifest["scanners"]}
 
-    assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.0"
+    assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
     assert scanners["pip-audit"]["command"] == (
         "pip-audit --strict --requirement requirements/release.txt "
         "--format json --progress-spinner off --output security/pip_audit.json"

@@ -71,7 +71,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="pip-audit==2.10.0",
+        pinned_version="pip-audit==2.10.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
@@ -178,7 +178,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.170.0",
+        pinned_version="semgrep==1.170.1",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(
