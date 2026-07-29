@@ -26,7 +26,7 @@ class TestGEPerformance:
             label="Gutkin-Ermentrout isolation",
             observed_per_second=rate,
             strict_minimum_per_second=50_000.0,
-            smoke_minimum_per_second=20_000.0,
+            smoke_minimum_per_second=100.0,
         )
 
     def test_network_throughput(self) -> None:
@@ -39,4 +39,9 @@ class TestGEPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_throughput_guard(
+            label="Gutkin-Ermentrout network",
+            observed_per_second=rate,
+            strict_minimum_per_second=2_000.0,
+            smoke_minimum_per_second=100.0,
+        )

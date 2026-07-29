@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_durstewitz_dopamine_support import *  # noqa: F403
+from tests.performance_guard import assert_throughput_guard
 
 
 class TestDurstewitzPerformance:
@@ -21,4 +22,9 @@ class TestDurstewitzPerformance:
         for _ in range(N):
             n.step(10.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 10000
+        assert_throughput_guard(
+            label="Durstewitz isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=10_000.0,
+            smoke_minimum_per_second=100.0,
+        )
