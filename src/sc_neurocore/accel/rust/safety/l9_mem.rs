@@ -71,9 +71,9 @@ impl L9_MemoryAdapter {
 
         if let Some(rows) = inputs {
             let mapped = project_inputs(rows, self.n_memory_slots, self.bitstream_length)?;
-            for slot in 0..self.n_memory_slots {
-                for bit in 0..self.bitstream_length {
-                    let psi_next = if mapped[slot][bit] > 0.5 {
+            for (slot, mapped_row) in mapped.iter().enumerate() {
+                for (bit, mapped_value) in mapped_row.iter().enumerate() {
+                    let psi_next = if *mapped_value > 0.5 {
                         1_u8
                     } else {
                         self.imprints_psi[slot][bit]
