@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4579
+    "test_files": 4580
   },
   "documentation": {
     "public_pages": [
@@ -3340,6 +3340,7 @@
       "tests/test_accel/test_mojo_isa_pin.py",
       "tests/test_accel/test_mojo_namespace_contract.py",
       "tests/test_accel/test_mojo_runner_branches.py",
+      "tests/test_accel_coverage_closure.py",
       "tests/test_accel_gpu_backend_contracts.py",
       "tests/test_accel_jit_kernel_contracts.py",
       "tests/test_accel_mpi_driver_contracts.py",
