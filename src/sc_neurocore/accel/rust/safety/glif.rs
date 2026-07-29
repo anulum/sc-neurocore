@@ -183,7 +183,7 @@ mod tests {
         state.i_asc2 = -0.2;
         assert_eq!(state.step(4.0), 0);
         assert!((state.v - (-67.7924658728125)).abs() < 1e-12);
-        assert!((state.theta - (-45.049541282631253)).abs() < 1e-12);
+        assert!((state.theta - (-45.049_541_282_631_25)).abs() < 1e-12);
     }
 
     #[test]
