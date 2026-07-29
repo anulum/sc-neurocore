@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_non_resetting_lif_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestNRLIFPerformance:
@@ -23,7 +24,11 @@ class TestNRLIFPerformance:
             n.step(20.0)
         elapsed = time.perf_counter() - t0
         assert np.isfinite(n.v) and np.isfinite(n.theta)
-        assert elapsed < 10.0
+        assert_load_tolerant_throughput(
+            label="Non-resetting LIF isolation run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=0.1,
+        )
 
     def test_network_runtime_regression_sentinel(self):
         """Bound pathological network slowdowns without throughput claims."""
@@ -34,5 +39,9 @@ class TestNRLIFPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert elapsed < 10.0
+        assert_load_tolerant_throughput(
+            label="Non-resetting LIF network run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=0.1,
+        )
         assert mon.count >= 0

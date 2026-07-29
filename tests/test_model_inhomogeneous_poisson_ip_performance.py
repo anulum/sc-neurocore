@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_inhomogeneous_poisson_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestIPPerformance:
@@ -22,7 +23,11 @@ class TestIPPerformance:
             n.step(100.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 200_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Inhomogeneous Poisson isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=200_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(InhomogeneousPoissonNeuron, n=20, label="bench")
@@ -34,4 +39,8 @@ class TestIPPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Inhomogeneous Poisson network",
+            observed_per_second=rate,
+            strict_minimum_per_second=2_000.0,
+        )

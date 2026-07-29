@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_lnm_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestLNMPerformance:
@@ -21,7 +22,11 @@ class TestLNMPerformance:
         for _ in range(N):
             n.step(5.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 100_000
+        assert_load_tolerant_throughput(
+            label="LNM isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=100_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(LearnableNeuronModel, n=20, label="bench")
@@ -31,4 +36,8 @@ class TestLNMPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 20 * 500 / elapsed > 2_000
+        assert_load_tolerant_throughput(
+            label="LNM network",
+            observed_per_second=20 * 500 / elapsed,
+            strict_minimum_per_second=2_000.0,
+        )

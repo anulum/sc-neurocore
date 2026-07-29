@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_klif_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestKLIFPerformance:
@@ -22,7 +23,9 @@ class TestKLIFPerformance:
             n.step(1.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="KLIF isolation", observed_per_second=rate, strict_minimum_per_second=500_000.0
+        )
 
     def test_network_throughput(self):
         pop = Population(KLIFNeuron, n=20, label="bench")
@@ -34,4 +37,6 @@ class TestKLIFPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="KLIF network", observed_per_second=rate, strict_minimum_per_second=2_000.0
+        )

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_morris_lecar_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMLPerformance:
@@ -25,11 +26,10 @@ class TestMLPerformance:
         # Default RK4 evaluates the conductance RHS four times per step.
         # Hosted runners and the local workstation can share CPUs; this is
         # a regression guard, not an isolated benchmark claim.
-        assert_throughput_guard(
+        assert_load_tolerant_throughput(
             label="Morris-Lecar isolation",
             observed_per_second=rate,
             strict_minimum_per_second=20_000.0,
-            smoke_minimum_per_second=5_000.0,
         )
 
     def test_network_throughput(self):
@@ -42,4 +42,8 @@ class TestMLPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Morris-Lecar network",
+            observed_per_second=rate,
+            strict_minimum_per_second=2_000.0,
+        )

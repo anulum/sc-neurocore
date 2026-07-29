@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_mat_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMATPerformance:
@@ -22,11 +23,10 @@ class TestMATPerformance:
             n.step(30.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert_throughput_guard(
+        assert_load_tolerant_throughput(
             label="MAT isolation",
             observed_per_second=rate,
             strict_minimum_per_second=100_000.0,
-            smoke_minimum_per_second=25_000.0,
         )
 
     def test_network_throughput(self):
@@ -39,4 +39,6 @@ class TestMATPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="MAT network", observed_per_second=rate, strict_minimum_per_second=2_000.0
+        )

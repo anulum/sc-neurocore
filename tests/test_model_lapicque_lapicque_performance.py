@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_lapicque_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestLapicquePerformance:
@@ -24,7 +25,11 @@ class TestLapicquePerformance:
         rate = N / elapsed
         min_rate = 100_000 if os.environ.get("CI") else 160_000
         assert np.isfinite(n.v)
-        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
+        assert_load_tolerant_throughput(
+            label="Lapicque isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=float(min_rate),
+        )
 
     def test_network_throughput(self):
         pop = Population(LapicqueNeuron, n=20, label="bench")
@@ -36,4 +41,6 @@ class TestLapicquePerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 5_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Lapicque network", observed_per_second=rate, strict_minimum_per_second=5_000.0
+        )

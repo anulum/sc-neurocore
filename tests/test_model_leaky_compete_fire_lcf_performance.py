@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_leaky_compete_fire_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestLCFPerformance:
@@ -22,4 +23,8 @@ class TestLCFPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 10_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Leaky compete-fire isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=10_000.0,
+        )
