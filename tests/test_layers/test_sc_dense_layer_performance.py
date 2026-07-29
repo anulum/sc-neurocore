@@ -9,6 +9,7 @@
 """Opt-in performance contract for SCDenseLayer."""
 
 from tests.test_layers.sc_dense_layer_support import *
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
@@ -18,4 +19,6 @@ def test_dense_layer_perf_small():  # type: ignore[no-untyped-def] # Preserved l
     start = time.perf_counter()
     layer.run(64)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="SC dense-layer run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )

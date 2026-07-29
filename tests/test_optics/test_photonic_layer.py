@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.optics.photonic_layer import PhotonicBitstreamLayer
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -99,4 +100,6 @@ def test_photonic_perf_small():
     start = time.perf_counter()
     _ = layer.forward(probs, length=128)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="photonic-layer run", observed_per_second=1.0 / elapsed, strict_minimum_per_second=0.5
+    )

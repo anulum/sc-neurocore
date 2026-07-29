@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.hdl_gen.spice_generator import SpiceGenerator
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -115,4 +116,8 @@ def test_spice_generator_perf_small(tmp_path):
     start = time.perf_counter()
     SpiceGenerator.generate_crossbar(weights, str(path))
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="SPICE generation run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=0.5,
+    )

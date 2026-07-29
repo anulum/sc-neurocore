@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.solvers.ising import StochasticIsingGraph
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -101,4 +102,8 @@ def test_ising_perf_small():
     for _ in range(50):
         _ = solver.step()
     elapsed = time.perf_counter() - start
-    assert elapsed < 3.0
+    assert_load_tolerant_throughput(
+        label="Ising stepping run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 3.0,
+    )

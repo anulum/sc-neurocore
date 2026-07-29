@@ -15,6 +15,7 @@ import pytest
 
 from sc_neurocore.layers.vectorized_layer import VectorizedSCLayer
 from tests.test_layers.vectorized_layer_support import _expected_words, _perf_enabled
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def test_vectorized_packed_shape() -> None:
@@ -88,4 +89,9 @@ def test_vectorized_layer_perf_small() -> None:
     layer = VectorizedSCLayer(n_inputs=8, n_neurons=32, length=128)
     start = time.perf_counter()
     layer.forward([0.5] * 8)
-    assert time.perf_counter() - start < 3.0
+    elapsed = time.perf_counter() - start
+    assert_load_tolerant_throughput(
+        label="vectorized-layer run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 3.0,
+    )

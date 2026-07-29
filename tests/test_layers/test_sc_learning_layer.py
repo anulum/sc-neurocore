@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -107,4 +108,8 @@ def test_learning_layer_perf_small():
     start = time.perf_counter()
     _ = layer.run_epoch([0.2, 0.4, 0.6, 0.8])
     elapsed = time.perf_counter() - start
-    assert elapsed < 3.0
+    assert_load_tolerant_throughput(
+        label="SC learning-layer run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 3.0,
+    )

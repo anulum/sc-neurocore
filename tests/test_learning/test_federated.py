@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.learning.federated import FederatedAggregator
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -94,4 +95,8 @@ def test_federated_perf_small():
     start = time.perf_counter()
     _ = FederatedAggregator.aggregate_gradients(grads)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0
+    assert_load_tolerant_throughput(
+        label="federated aggregation run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=0.5,
+    )

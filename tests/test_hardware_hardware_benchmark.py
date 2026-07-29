@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.hardware_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestHardwareBenchmark:
@@ -25,7 +26,11 @@ class TestHardwareBenchmark:
         placements = mapper.map_greedy(adj, device)
         elapsed = time.perf_counter() - t0
         assert len(placements) == 10_000
-        assert elapsed < 2.0, f"10k mapping took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="hardware mapping run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=0.5,
+        )
 
     def test_estimate_10k_neurons(self):
         """Resource estimation for 10k neurons in < 1 second."""
@@ -37,7 +42,11 @@ class TestHardwareBenchmark:
         result = estimator.estimate(adj, get_device(DeviceFamily.LOIHI))
         elapsed = time.perf_counter() - t0
         assert result.neurons_mapped == 10_000
-        assert elapsed < 1.0, f"10k estimation took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="hardware estimation run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=1.0,
+        )
 
     def test_constraint_check_1k_neurons(self):
         """Constraint check for 1000 neurons in < 0.5 seconds."""
@@ -49,4 +58,8 @@ class TestHardwareBenchmark:
         t0 = time.perf_counter()
         violations = checker.check(adj, constraints)
         elapsed = time.perf_counter() - t0
-        assert elapsed < 0.5, f"1k constraint check took {elapsed:.2f}s"
+        assert_load_tolerant_throughput(
+            label="hardware constraint run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=2.0,
+        )

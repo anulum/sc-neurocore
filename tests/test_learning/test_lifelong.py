@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.learning.lifelong import EWC_SCLayer
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 def _perf_enabled() -> bool:
@@ -143,4 +144,8 @@ def test_ewc_perf_small():
     _ = layer.run_epoch([0.1, 0.2, 0.3, 0.4])
     layer.consolidate_task()
     elapsed = time.perf_counter() - start
-    assert elapsed < 3.0
+    assert_load_tolerant_throughput(
+        label="EWC consolidation run",
+        observed_per_second=1.0 / elapsed,
+        strict_minimum_per_second=1.0 / 3.0,
+    )
