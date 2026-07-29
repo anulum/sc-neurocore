@@ -26,12 +26,12 @@ impl PowerProfile {
     /// Create a power profile for a board at a given clock frequency.
     pub const fn new(board: Board, clock_mhz: u32) -> Self {
         let (active, sleep) = match board {
-            Board::Esp32c3 => (15_000, 5),    // ~15 mW active, 5 µW deep sleep
+            Board::Esp32c3 => (15_000, 5), // ~15 mW active, 5 µW deep sleep
             Board::Esp32c6 => (18_000, 7),
             Board::Esp32h2 => (12_000, 3),
             Board::Gd32vf103 => (8_000, 10),
             Board::Ch32v307 => (10_000, 8),
-            Board::K210 => (300_000, 50),     // dual-core RV64
+            Board::K210 => (300_000, 50), // dual-core RV64
             Board::Generic => (10_000, 10),
         };
         // Scale linearly with clock (reference is 160 MHz)
@@ -118,11 +118,17 @@ pub struct WatchdogConfig {
 
 impl WatchdogConfig {
     pub const fn new(timeout_ms: u32) -> Self {
-        Self { timeout_ms, enabled: true }
+        Self {
+            timeout_ms,
+            enabled: true,
+        }
     }
 
     pub const fn disabled() -> Self {
-        Self { timeout_ms: 0, enabled: false }
+        Self {
+            timeout_ms: 0,
+            enabled: false,
+        }
     }
 }
 
@@ -180,8 +186,13 @@ mod tests {
     #[test]
     fn test_all_boards_power() {
         for board in [
-            Board::Esp32c3, Board::Esp32c6, Board::Esp32h2,
-            Board::Gd32vf103, Board::Ch32v307, Board::K210, Board::Generic,
+            Board::Esp32c3,
+            Board::Esp32c6,
+            Board::Esp32h2,
+            Board::Gd32vf103,
+            Board::Ch32v307,
+            Board::K210,
+            Board::Generic,
         ] {
             let pp = PowerProfile::new(board, 160);
             assert!(pp.active_uw > 0);

@@ -129,7 +129,11 @@ pub fn scc(a: &[u32], b: &[u32], bit_length: u32) -> f32 {
     let pa = popcount_slice(a) as f32 / n;
     let pb = popcount_slice(b) as f32 / n;
 
-    let and_count: u32 = a.iter().zip(b.iter()).map(|(&x, &y)| popcount32(x & y)).sum();
+    let and_count: u32 = a
+        .iter()
+        .zip(b.iter())
+        .map(|(&x, &y)| popcount32(x & y))
+        .sum();
     let p_and = and_count as f32 / n;
 
     let num = p_and - (pa * pb);

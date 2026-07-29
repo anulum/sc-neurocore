@@ -76,12 +76,12 @@ impl LifNeuron {
 /// Uses Q8.8 fixed-point arithmetic (i16) for membrane voltage and
 /// recovery variable — no FPU required.
 pub struct IzhikevichNeuron {
-    pub v: i16,       // Q8.8 membrane voltage
-    pub u: i16,       // Q8.8 recovery variable
-    pub a: i16,       // Q8.8 time scale of u
-    pub b: i16,       // Q8.8 sensitivity of u to v
-    pub c: i16,       // Q8.8 after-spike reset of v
-    pub d: i16,       // Q8.8 after-spike reset of u
+    pub v: i16,         // Q8.8 membrane voltage
+    pub u: i16,         // Q8.8 recovery variable
+    pub a: i16,         // Q8.8 time scale of u
+    pub b: i16,         // Q8.8 sensitivity of u to v
+    pub c: i16,         // Q8.8 after-spike reset of v
+    pub d: i16,         // Q8.8 after-spike reset of u
     pub threshold: i16, // Q8.8 spike threshold
 }
 
@@ -89,12 +89,12 @@ impl IzhikevichNeuron {
     /// Regular spiking (RS) preset.
     pub const fn regular_spiking() -> Self {
         Self {
-            v: -65 * 256,  // -65.0 in Q8.8
-            u: -13 * 256,  // b * v
-            a: 5,          // 0.02 in Q8.8
-            b: 51,         // 0.2 in Q8.8
+            v: -65 * 256, // -65.0 in Q8.8
+            u: -13 * 256, // b * v
+            a: 5,         // 0.02 in Q8.8
+            b: 51,        // 0.2 in Q8.8
             c: -65 * 256,
-            d: 2 * 256,    // 8.0 in Q8.8 (actually d=8 → 2048)
+            d: 2 * 256, // 8.0 in Q8.8 (actually d=8 → 2048)
             threshold: 30 * 256,
         }
     }
@@ -104,10 +104,10 @@ impl IzhikevichNeuron {
         Self {
             v: -65 * 256,
             u: -13 * 256,
-            a: 26,         // 0.1 in Q8.8
+            a: 26, // 0.1 in Q8.8
             b: 51,
             c: -65 * 256,
-            d: 512,        // 2.0 in Q8.8
+            d: 512, // 2.0 in Q8.8
             threshold: 30 * 256,
         }
     }
@@ -122,8 +122,8 @@ impl IzhikevichNeuron {
 
         // dv = 0.04*v² + 5*v + 140 - u + I (simplified Q8.8)
         let v_sq = ((self.v as i32) * (self.v as i32)) >> 8;
-        let dv = ((v_sq >> 3) + (self.v as i32) * 5 + 140 * 256 - self.u as i32
-            + i_q88 as i32) >> 4;
+        let dv =
+            ((v_sq >> 3) + (self.v as i32) * 5 + 140 * 256 - self.u as i32 + i_q88 as i32) >> 4;
         self.v = self.v.saturating_add(dv as i16);
 
         // du = a * (b*v - u)
@@ -181,7 +181,11 @@ mod tests {
         let mut n = LifNeuron::new(1000, 1, 0);
         let input = [0x0000_00FFu32]; // 8 ones
         n.tick(&input);
-        assert!(n.potential < 8, "leak should reduce potential: {}", n.potential);
+        assert!(
+            n.potential < 8,
+            "leak should reduce potential: {}",
+            n.potential
+        );
     }
 
     #[test]
