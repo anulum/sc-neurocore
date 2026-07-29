@@ -147,10 +147,14 @@ impl VerilogGenerator {
         code.push_str(");\n\n");
 
         code.push_str("    // Internal signals\n");
-        for i in 0..widths.len().saturating_sub(1) {
+        for (i, width) in widths
+            .iter()
+            .enumerate()
+            .take(widths.len().saturating_sub(1))
+        {
             code.push_str(&format!(
                 "    wire [{}:0] layer_{i}_to_{};\n",
-                widths[i].1 - 1,
+                width.1 - 1,
                 i + 1
             ));
         }
@@ -226,10 +230,14 @@ impl VerilogGenerator {
 
         code.push_str("    // Research boundary: sync compute path with AER output wrapper.\n");
         code.push_str(&format!("    wire [{}:0] spike_vector;\n", spike_width - 1));
-        for i in 0..widths.len().saturating_sub(1) {
+        for (i, width) in widths
+            .iter()
+            .enumerate()
+            .take(widths.len().saturating_sub(1))
+        {
             code.push_str(&format!(
                 "    wire [{}:0] layer_{i}_to_{};\n",
-                widths[i].1 - 1,
+                width.1 - 1,
                 i + 1
             ));
         }
