@@ -363,7 +363,7 @@ function guidedMocks(): Map<string, ApiMockPayload> {
     ["/api/simulate", simulationResponse],
     ["/api/analysis/jobs", analysisJobReceipt],
     ["/api/studio/jobs/sj_guided_fi", analysisJobPoll],
-    ["/api/ir/emit-sv-direct", compileResponse],
+    ["/api/compile", compileResponse],
     ["/api/synth/run", synthesisResponse],
     ["/api/studio/evidence/bundle", evidenceBundle],
   ]);
@@ -402,7 +402,7 @@ test("guided operator run executes one ODE workflow through evidence export", as
 
   expect(api.requests("/api/simulate")).toBe(1);
   expect(api.requests("/api/analysis/jobs")).toBe(1);
-  expect(api.requests("/api/ir/emit-sv-direct")).toBe(1);
+  expect(api.requests("/api/compile")).toBe(1);
   expect(api.requests("/api/synth/run")).toBe(1);
   expect(api.requests("/api/studio/evidence/bundle")).toBe(0);
 });
