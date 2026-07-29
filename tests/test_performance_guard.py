@@ -17,6 +17,7 @@ import pytest
 from tests.performance_guard import (
     STRICT_THROUGHPUT_ENV,
     assert_load_tolerant_throughput,
+    assert_speedup_guard,
 )
 
 
@@ -64,6 +65,54 @@ def test_load_tolerant_guard_rejects_invalid_strict_minimum(minimum: float) -> N
         )
 
 
+def test_speedup_guard_separates_smoke_and_strict_modes(monkeypatch) -> None:
+    monkeypatch.delenv(STRICT_THROUGHPUT_ENV, raising=False)
+    assert_speedup_guard(
+        label="backend",
+        baseline_seconds=1.0,
+        candidate_seconds=2.0,
+        strict_minimum_speedup=2.0,
+        smoke_minimum_speedup=0.25,
+    )
+    with pytest.raises(AssertionError, match="speedup smoke guard failed"):
+        assert_speedup_guard(
+            label="backend",
+            baseline_seconds=1.0,
+            candidate_seconds=5.0,
+            strict_minimum_speedup=2.0,
+            smoke_minimum_speedup=0.25,
+        )
+
+    monkeypatch.setenv(STRICT_THROUGHPUT_ENV, "1")
+    with pytest.raises(AssertionError, match="speedup regressed"):
+        assert_speedup_guard(
+            label="backend",
+            baseline_seconds=1.0,
+            candidate_seconds=0.5,
+            strict_minimum_speedup=2.0,
+            smoke_minimum_speedup=0.25,
+        )
+    assert_speedup_guard(
+        label="backend",
+        baseline_seconds=1.0,
+        candidate_seconds=0.4,
+        strict_minimum_speedup=2.0,
+        smoke_minimum_speedup=0.25,
+    )
+
+
+@pytest.mark.parametrize("baseline,candidate", [(0.0, 1.0), (1.0, math.inf)])
+def test_speedup_guard_rejects_invalid_timings(baseline: float, candidate: float) -> None:
+    with pytest.raises(AssertionError, match="timing is not finite positive"):
+        assert_speedup_guard(
+            label="backend",
+            baseline_seconds=baseline,
+            candidate_seconds=candidate,
+            strict_minimum_speedup=2.0,
+            smoke_minimum_speedup=0.25,
+        )
+
+
 def test_model_performance_modules_do_not_assert_raw_clock_values() -> None:
     clock_names = {
         "elapsed",
@@ -107,10 +156,6 @@ def test_model_performance_modules_do_not_assert_raw_clock_values() -> None:
 def test_performance_scopes_do_not_assert_raw_clock_values() -> None:
     performance_tokens = {"perf", "performance", "throughput", "benchmark"}
     clock_names = {"elapsed", "rate", "throughput", "t_py", "t_rs"}
-    relative_speedup_exemption = (
-        "test_hierarchical_partitioner_backends_rust_refine_parity_and_perf.py",
-        "test_rust_backend_is_faster_at_v500",
-    )
     violations = []
 
     for path in sorted(Path(__file__).parent.rglob("test*.py")):
@@ -123,8 +168,6 @@ def test_performance_scopes_do_not_assert_raw_clock_values() -> None:
         ):
             function_tokens = set(function.name.split("_"))
             if not performance_tokens & (path_tokens | function_tokens):
-                continue
-            if (path.name, function.name) == relative_speedup_exemption:
                 continue
             for assertion in (node for node in ast.walk(function) if isinstance(node, ast.Assert)):
                 referenced_names = {

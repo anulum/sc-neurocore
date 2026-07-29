@@ -12,9 +12,11 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path as _Path
+from statistics import median
 
 sys.path.insert(0, str(_Path(__file__).resolve().parent))
 from hierarchical_partitioner_backends_support import *  # noqa: F403
+from tests.performance_guard import assert_speedup_guard
 
 
 class TestRustRefineParityAndPerf:
@@ -80,20 +82,39 @@ class TestRustRefineParityAndPerf:
             kl_iterations=3,
             refine_backend="rust",
         )
-        # warm
-        hp_py._refine(copy.deepcopy(init), adj, g)
-        hp_rs._refine_rust(copy.deepcopy(init), adj, g)
+        parts_py = copy.deepcopy(init)
+        hp_py._refine(parts_py, adj, g)
+        parts_rs = hp_rs._refine_rust(copy.deepcopy(init), adj, g)
+        pm_py = {v: i for i, part in enumerate(parts_py) for v in part}
+        pm_rs = {v: i for i, part in enumerate(parts_rs) for v in part}
+        assert pm_py == pm_rs
 
-        t0 = time.perf_counter()
-        hp_py._refine(copy.deepcopy(init), adj, g)
-        t_py = time.perf_counter() - t0
-        t0 = time.perf_counter()
-        hp_rs._refine_rust(copy.deepcopy(init), adj, g)
-        t_rs = time.perf_counter() - t0
+        def timed_python() -> float:
+            parts = copy.deepcopy(init)
+            started = time.perf_counter()
+            hp_py._refine(parts, adj, g)
+            return time.perf_counter() - started
 
-        # Generous floor: Rust should be at least 2× the Python time
-        # at V=500 (measured ~250× on the dev box; CI runners noisier).
-        assert t_rs * 2.0 < t_py, (
-            f"Rust refine ({t_rs * 1000:.2f} ms) not >2× faster than "
-            f"Python ({t_py * 1000:.2f} ms) at V=500 — perf regression?"
+        def timed_rust() -> float:
+            parts = copy.deepcopy(init)
+            started = time.perf_counter()
+            hp_rs._refine_rust(parts, adj, g)
+            return time.perf_counter() - started
+
+        python_samples = []
+        rust_samples = []
+        for sample_index in range(7):
+            if sample_index % 2:
+                rust_samples.append(timed_rust())
+                python_samples.append(timed_python())
+            else:
+                python_samples.append(timed_python())
+                rust_samples.append(timed_rust())
+
+        assert_speedup_guard(
+            label="Rust KL refine at V=500",
+            baseline_seconds=median(python_samples),
+            candidate_seconds=median(rust_samples),
+            strict_minimum_speedup=2.0,
+            smoke_minimum_speedup=0.25,
         )

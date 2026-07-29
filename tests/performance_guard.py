@@ -70,3 +70,38 @@ def assert_load_tolerant_throughput(
         strict_minimum_per_second=strict_minimum_per_second,
         smoke_minimum_per_second=smoke_minimum,
     )
+
+
+def assert_speedup_guard(
+    *,
+    label: str,
+    baseline_seconds: float,
+    candidate_seconds: float,
+    strict_minimum_speedup: float,
+    smoke_minimum_speedup: float,
+) -> None:
+    """Assert a relative speedup without claiming shared-host benchmark fidelity."""
+
+    for timing_label, timing in (
+        ("baseline", baseline_seconds),
+        ("candidate", candidate_seconds),
+    ):
+        assert math.isfinite(timing) and timing > 0.0, (
+            f"{label} {timing_label} timing is not finite positive: {timing!r}"
+        )
+    assert math.isfinite(strict_minimum_speedup) and strict_minimum_speedup > 0.0
+    assert math.isfinite(smoke_minimum_speedup) and smoke_minimum_speedup > 0.0
+    assert smoke_minimum_speedup <= strict_minimum_speedup
+
+    observed_speedup = baseline_seconds / candidate_seconds
+    if strict_throughput_enabled():
+        assert observed_speedup > strict_minimum_speedup, (
+            f"{label} speedup regressed: {observed_speedup:.2f}x <= {strict_minimum_speedup:.2f}x"
+        )
+        return
+
+    assert observed_speedup > smoke_minimum_speedup, (
+        f"{label} speedup smoke guard failed under non-strict local mode: "
+        f"{observed_speedup:.2f}x <= {smoke_minimum_speedup:.2f}x. "
+        f"Set {STRICT_THROUGHPUT_ENV}=1 only on isolated benchmark cores."
+    )
