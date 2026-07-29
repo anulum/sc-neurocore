@@ -151,12 +151,8 @@ class EquationNeuron:
             raise ValueError("probability_expression is only valid with detection='poisson'")
         if detection == "escape_rate" and rate_expression is None:
             raise ValueError("escape_rate detection requires rate_expression")
-        if detection == "escape_rate" and probability_expression is not None:
-            raise ValueError("escape_rate detection cannot define probability_expression")
         if detection == "poisson" and probability_expression is None:
             raise ValueError("poisson detection requires probability_expression")
-        if detection == "poisson" and rate_expression is not None:
-            raise ValueError("poisson detection cannot define rate_expression")
         if self._stochastic_threshold_enabled:
             if threshold not in (None, "stochastic"):
                 raise ValueError(

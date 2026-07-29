@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 186,
-    "test_files": 4578
+    "test_files": 4579
   },
   "documentation": {
     "public_pages": [
@@ -5943,6 +5943,7 @@
       "tests/test_neuroml_import_multiple_cells.py",
       "tests/test_neuroml_import_parse_helpers.py",
       "tests/test_neuromorphic_profile_modularisation.py",
+      "tests/test_neuron_descriptor_coverage_closure.py",
       "tests/test_neuron_families_neuron_families.py",
       "tests/test_neuron_families_no_spike_model.py",
       "tests/test_neuron_integrator_cross_language_parity.py",
