@@ -375,12 +375,10 @@ mod tests {
         let before_phi = state.phi_planetary.clone();
         let before_coherence = state.regional_coherence.clone();
 
-        assert!(state.step_jax(0.0, Some(&vec![vec![1.0; 4]])).is_err());
+        assert!(state.step_jax(0.0, Some(&[vec![1.0; 4]])).is_err());
         assert!(state.step_jax(0.05, Some(&Vec::<Vec<f64>>::new())).is_err());
-        assert!(state.step_jax(0.05, Some(&vec![vec![1.0; 3]])).is_err());
-        assert!(state
-            .step_jax(0.05, Some(&vec![vec![f64::NAN; 4]]))
-            .is_err());
+        assert!(state.step_jax(0.05, Some(&[vec![1.0; 3]])).is_err());
+        assert!(state.step_jax(0.05, Some(&[vec![f64::NAN; 4]])).is_err());
 
         assert_eq!(state.t, 0.0);
         assert_eq!(state.phi_planetary, before_phi);

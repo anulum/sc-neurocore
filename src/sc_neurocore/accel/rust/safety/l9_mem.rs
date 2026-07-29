@@ -255,12 +255,10 @@ mod tests {
         let mut state = L9_MemoryAdapter::try_new(2, 4, 0.8, 0.1, 100).unwrap();
         let before = state.imprints_psi.clone();
 
-        assert!(state.step_jax(0.0, Some(&vec![vec![1.0; 4]])).is_err());
+        assert!(state.step_jax(0.0, Some(&[vec![1.0; 4]])).is_err());
         assert!(state.step_jax(0.05, Some(&Vec::<Vec<f64>>::new())).is_err());
-        assert!(state.step_jax(0.05, Some(&vec![vec![1.0; 3]])).is_err());
-        assert!(state
-            .step_jax(0.05, Some(&vec![vec![f64::NAN; 4]]))
-            .is_err());
+        assert!(state.step_jax(0.05, Some(&[vec![1.0; 3]])).is_err());
+        assert!(state.step_jax(0.05, Some(&[vec![f64::NAN; 4]])).is_err());
         assert_eq!(state.imprints_psi, before);
     }
 

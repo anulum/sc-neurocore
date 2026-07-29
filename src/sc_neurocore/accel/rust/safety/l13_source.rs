@@ -339,14 +339,10 @@ mod tests {
         let before_vacuum = state.vacuum_state.clone();
         let before_fim = state.fim_density.clone();
 
-        assert!(state.step_jax(0.0, Some(&vec![vec![1.0; 4]])).is_err());
+        assert!(state.step_jax(0.0, Some(&[vec![1.0; 4]])).is_err());
         assert!(state.step_jax(0.05, Some(&Vec::<Vec<f64>>::new())).is_err());
-        assert!(state
-            .step_jax(0.05, Some(&vec![Vec::<f64>::new()]))
-            .is_err());
-        assert!(state
-            .step_jax(0.05, Some(&vec![vec![f64::NAN; 4]]))
-            .is_err());
+        assert!(state.step_jax(0.05, Some(&[Vec::<f64>::new()])).is_err());
+        assert!(state.step_jax(0.05, Some(&[vec![f64::NAN; 4]])).is_err());
 
         assert_eq!(state.vacuum_state, before_vacuum);
         assert_eq!(state.fim_density, before_fim);
@@ -355,12 +351,9 @@ mod tests {
     #[test]
     fn test_l13_source_decode_rejects_malformed_bitstreams() {
         assert!(L13_SourceAdapter::decode(&Vec::<Vec<f64>>::new()).is_err());
-        assert!(L13_SourceAdapter::decode(&vec![Vec::<f64>::new()]).is_err());
-        assert!(L13_SourceAdapter::decode(&vec![vec![f64::INFINITY]]).is_err());
-        assert_eq!(
-            L13_SourceAdapter::decode(&vec![vec![1.0, 0.0]]).unwrap(),
-            0.5
-        );
+        assert!(L13_SourceAdapter::decode(&[Vec::<f64>::new()]).is_err());
+        assert!(L13_SourceAdapter::decode(&[vec![f64::INFINITY]]).is_err());
+        assert_eq!(L13_SourceAdapter::decode(&[vec![1.0, 0.0]]).unwrap(), 0.5);
     }
 
     #[test]
