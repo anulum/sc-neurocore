@@ -497,7 +497,7 @@ fn emit_lfsr16_source(module_name: &str, seed: u16) -> Result<String, String> {
 }
 
 fn lfsr16_advance(state: u16) -> u16 {
-    let feedback = ((state >> 0) ^ (state >> 2) ^ (state >> 3) ^ (state >> 5)) & 1;
+    let feedback = (state ^ (state >> 2) ^ (state >> 3) ^ (state >> 5)) & 1;
     (state >> 1) | (feedback << 15)
 }
 
