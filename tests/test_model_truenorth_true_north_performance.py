@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_truenorth_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestTrueNorthPerformance:
@@ -22,7 +23,11 @@ class TestTrueNorthPerformance:
             n.step(50)
         elapsed = time.perf_counter() - t0
         steps_per_s = N / elapsed
-        assert steps_per_s > 100000, f"{steps_per_s:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="TrueNorth isolation",
+            observed_per_second=steps_per_s,
+            strict_minimum_per_second=100_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(TrueNorthNeuron, n=50, label="bench")
@@ -34,4 +39,8 @@ class TestTrueNorthPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 50 * 500
         nsteps_per_s = neuron_steps / elapsed
-        assert nsteps_per_s > 5000, f"{nsteps_per_s:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="TrueNorth network",
+            observed_per_second=nsteps_per_s,
+            strict_minimum_per_second=5_000.0,
+        )

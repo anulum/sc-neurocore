@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_wendling_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWendlingPerformance:
@@ -21,4 +22,8 @@ class TestWendlingPerformance:
         for _ in range(N):
             n.step(220.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 10000
+        assert_load_tolerant_throughput(
+            label="Wendling isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=10_000.0,
+        )

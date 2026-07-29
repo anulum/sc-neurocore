@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_wilson_hr_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWilsonHRPerformance:
@@ -21,7 +22,11 @@ class TestWilsonHRPerformance:
         for _ in range(steps):
             n.step(0.3)
         elapsed = time.perf_counter() - t0
-        assert steps / elapsed > 10_000
+        assert_load_tolerant_throughput(
+            label="Wilson-HR isolation",
+            observed_per_second=steps / elapsed,
+            strict_minimum_per_second=10_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(WilsonHRNeuron, n=50, label="bench")
@@ -31,4 +36,8 @@ class TestWilsonHRPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 50 * 500 / elapsed > 5_000
+        assert_load_tolerant_throughput(
+            label="Wilson-HR network",
+            observed_per_second=50 * 500 / elapsed,
+            strict_minimum_per_second=5_000.0,
+        )

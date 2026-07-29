@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_rall_cable_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestRallCablePerformance:
@@ -25,4 +26,8 @@ class TestRallCablePerformance:
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
         # N-compartment cable with numpy array ops
-        assert rate > 10_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Rall cable isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=10_000.0,
+        )

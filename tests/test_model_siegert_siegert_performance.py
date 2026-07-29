@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_siegert_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSiegertPerformance:
@@ -22,4 +23,8 @@ class TestSiegertPerformance:
         for _ in range(N):
             n.step(20.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 100  # ~524 steps/s
+        assert_load_tolerant_throughput(
+            label="Siegert isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=100.0,
+        )

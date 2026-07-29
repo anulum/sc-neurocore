@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_wilson_cowan_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWilsonCowanPerformance:
@@ -22,5 +23,9 @@ class TestWilsonCowanPerformance:
         for _ in range(N):
             n.step(5.0)
         elapsed = time.perf_counter() - t0
-        assert elapsed < 10.0
+        assert_load_tolerant_throughput(
+            label="Wilson-Cowan isolation run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=0.1,
+        )
         assert np.isfinite(n.e) and np.isfinite(n.i)

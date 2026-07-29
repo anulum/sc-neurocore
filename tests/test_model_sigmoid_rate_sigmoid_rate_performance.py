@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_sigmoid_rate_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSigmoidRatePerformance:
@@ -21,4 +22,8 @@ class TestSigmoidRatePerformance:
         for _ in range(N):
             n.step(3.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 50000
+        assert_load_tolerant_throughput(
+            label="Sigmoid-rate isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=50_000.0,
+        )

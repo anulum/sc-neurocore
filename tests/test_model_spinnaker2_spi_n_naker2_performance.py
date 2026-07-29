@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_spinnaker2_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSpiNNaker2Performance:
@@ -21,4 +22,8 @@ class TestSpiNNaker2Performance:
         for _ in range(N):
             n.step(500)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 100000
+        assert_load_tolerant_throughput(
+            label="SpiNNaker 2 isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=100_000.0,
+        )

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_psn_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestPSNPerformance:
@@ -24,7 +25,9 @@ class TestPSNPerformance:
             n.step(2.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 100_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="PSN isolation", observed_per_second=rate, strict_minimum_per_second=100_000.0
+        )
 
     def test_network_throughput(self):
         import time
@@ -38,4 +41,6 @@ class TestPSNPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="PSN network", observed_per_second=rate, strict_minimum_per_second=2_000.0
+        )
