@@ -505,7 +505,7 @@ pub fn e8_roots() -> Vec<Vec<f64>> {
                 negatives += 1;
             }
         }
-        if negatives % 2 == 0 {
+        if negatives.is_multiple_of(2) {
             roots.push(signs.into_iter().map(|value| 0.5 * value).collect());
         }
     }
