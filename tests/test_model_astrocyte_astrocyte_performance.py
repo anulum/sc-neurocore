@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_astrocyte_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestAstrocytePerformance:
@@ -21,4 +22,8 @@ class TestAstrocytePerformance:
         for _ in range(N):
             n.step(0.5)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 20000
+        assert_load_tolerant_throughput(
+            label="Astrocyte isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=20_000.0,
+        )

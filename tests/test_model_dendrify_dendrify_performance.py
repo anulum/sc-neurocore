@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_dendrify_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestDendrifyPerformance:
@@ -21,4 +22,8 @@ class TestDendrifyPerformance:
         for _ in range(N):
             n.step(50.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 20000
+        assert_load_tolerant_throughput(
+            label="Dendrify isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=20_000.0,
+        )

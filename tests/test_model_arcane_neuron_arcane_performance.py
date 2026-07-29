@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_arcane_neuron_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestArcanePerformance:
@@ -21,7 +22,11 @@ class TestArcanePerformance:
         for _ in range(N):
             n.step(2.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 1000
+        assert_load_tolerant_throughput(
+            label="Arcane isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=1_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(ArcaneNeuron, n=10, label="bench")
@@ -32,4 +37,8 @@ class TestArcanePerformance:
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
         neuron_steps = 10 * 500
-        assert neuron_steps / elapsed > 500
+        assert_load_tolerant_throughput(
+            label="Arcane network",
+            observed_per_second=neuron_steps / elapsed,
+            strict_minimum_per_second=500.0,
+        )

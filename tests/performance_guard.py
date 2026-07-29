@@ -15,6 +15,8 @@ import os
 
 
 STRICT_THROUGHPUT_ENV = "SC_NEUROCORE_STRICT_THROUGHPUT"
+DEFAULT_SMOKE_FRACTION = 0.01
+DEFAULT_SMOKE_CEILING_PER_SECOND = 100.0
 
 
 def strict_throughput_enabled() -> bool:
@@ -44,4 +46,27 @@ def assert_throughput_guard(
         f"{label} throughput smoke guard failed under non-strict local mode: "
         f"{observed_per_second:.0f}/s <= {smoke_minimum_per_second:.0f}/s. "
         f"Set {STRICT_THROUGHPUT_ENV}=1 only on isolated benchmark cores."
+    )
+
+
+def assert_load_tolerant_throughput(
+    *,
+    label: str,
+    observed_per_second: float,
+    strict_minimum_per_second: float,
+) -> None:
+    """Preserve an isolated-core threshold while tolerating shared-host load."""
+
+    assert math.isfinite(strict_minimum_per_second) and strict_minimum_per_second > 0.0, (
+        f"{label} strict throughput minimum is not finite positive: {strict_minimum_per_second!r}"
+    )
+    smoke_minimum = min(
+        DEFAULT_SMOKE_CEILING_PER_SECOND,
+        strict_minimum_per_second * DEFAULT_SMOKE_FRACTION,
+    )
+    assert_throughput_guard(
+        label=label,
+        observed_per_second=observed_per_second,
+        strict_minimum_per_second=strict_minimum_per_second,
+        smoke_minimum_per_second=smoke_minimum,
     )

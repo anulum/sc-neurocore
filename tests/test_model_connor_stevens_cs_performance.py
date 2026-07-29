@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_connor_stevens_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestCSPerformance:
@@ -23,7 +24,11 @@ class TestCSPerformance:
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
         # 100 sub-steps × HH → ~500 steps/s
-        assert rate > 50, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Connor-Stevens isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=50.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(ConnorStevensNeuron, n=5, label="bench")
@@ -35,4 +40,8 @@ class TestCSPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 5 * 100
         rate = neuron_steps / elapsed
-        assert rate > 10, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Connor-Stevens network",
+            observed_per_second=rate,
+            strict_minimum_per_second=10.0,
+        )

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_amari_field_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestAmariPerformance:
@@ -22,7 +23,11 @@ class TestAmariPerformance:
         for _ in range(N):
             n.step(I)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 5000
+        assert_load_tolerant_throughput(
+            label="Amari isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=5_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(AmariNeuralField, n=3, label="bench")
@@ -32,4 +37,8 @@ class TestAmariPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert 3 * 500 / elapsed > 100
+        assert_load_tolerant_throughput(
+            label="Amari network",
+            observed_per_second=3 * 500 / elapsed,
+            strict_minimum_per_second=100.0,
+        )

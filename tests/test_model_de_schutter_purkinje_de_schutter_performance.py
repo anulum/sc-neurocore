@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_de_schutter_purkinje_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestDeSchutterPerformance:
@@ -21,4 +22,8 @@ class TestDeSchutterPerformance:
         for _ in range(N):
             n.step(10.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 1000
+        assert_load_tolerant_throughput(
+            label="De Schutter-Purkinje isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=1_000.0,
+        )

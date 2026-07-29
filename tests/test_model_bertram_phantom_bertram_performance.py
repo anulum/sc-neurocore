@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_bertram_phantom_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestBertramPerformance:
@@ -24,7 +25,11 @@ class TestBertramPerformance:
         elapsed = time.perf_counter() - t0
         # 4 RK4 stages: 16 Boltzmann evaluations + 20 currents per step.
         # Production throughput belongs in isolated benchmark artifacts, not CI.
-        assert elapsed < 15.0
+        assert_load_tolerant_throughput(
+            label="Bertram isolation run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=1.0 / 15.0,
+        )
         assert np.isfinite(n.v) and np.isfinite(n.s1) and np.isfinite(n.s2)
 
     def test_network_runtime_regression_sentinel(self):
@@ -36,5 +41,9 @@ class TestBertramPerformance:
         t0 = time.perf_counter()
         net.run(duration=0.5, dt=0.001, backend="python")
         elapsed = time.perf_counter() - t0
-        assert elapsed < 15.0
+        assert_load_tolerant_throughput(
+            label="Bertram network run",
+            observed_per_second=1.0 / elapsed,
+            strict_minimum_per_second=1.0 / 15.0,
+        )
         assert mon.count >= 0

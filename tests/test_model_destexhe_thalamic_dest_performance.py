@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_destexhe_thalamic_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestDestPerformance:
@@ -22,7 +23,11 @@ class TestDestPerformance:
             n.step(5.0)
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
-        assert rate > 1_000, f"isolation: {rate:.0f} steps/s"
+        assert_load_tolerant_throughput(
+            label="Destexhe thalamic isolation",
+            observed_per_second=rate,
+            strict_minimum_per_second=1_000.0,
+        )
 
     def test_network_throughput(self):
         pop = Population(DestexheThalamicNeuron, n=10, label="bench")
@@ -34,4 +39,8 @@ class TestDestPerformance:
         elapsed = time.perf_counter() - t0
         neuron_steps = 10 * 200
         rate = neuron_steps / elapsed
-        assert rate > 100, f"network: {rate:.0f} neuron-steps/s"
+        assert_load_tolerant_throughput(
+            label="Destexhe thalamic network",
+            observed_per_second=rate,
+            strict_minimum_per_second=100.0,
+        )

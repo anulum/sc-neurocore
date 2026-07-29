@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from tests.model_brunel_wang_support import *  # noqa: F403
+from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestBrunelWangPerformance:
@@ -21,4 +22,8 @@ class TestBrunelWangPerformance:
         for _ in range(N):
             n.step(1.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 50000
+        assert_load_tolerant_throughput(
+            label="Brunel-Wang isolation",
+            observed_per_second=N / elapsed,
+            strict_minimum_per_second=50_000.0,
+        )
