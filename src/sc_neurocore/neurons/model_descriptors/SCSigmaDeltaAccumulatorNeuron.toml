@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+
+[metadata]
+schema_version = 2
+name = "SCSigmaDeltaAccumulatorNeuron"
+class_name = "SCSigmaDeltaAccumulatorNeuron"
+module = "sc_sigma_delta_accumulator"
+display_name = "SC bipolar sigma-delta accumulator"
+summary = "Retained project recurrence with signed one-event-per-sample threshold subtraction."
+family = "SC project models"
+category = "hardware-neuromorphic"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = ["historical project replay", "bipolar event encoding"]
+hardware_fit = ["bounded one-accumulator fixed-point co-simulation"]
+behavior_tags = ["bipolar", "project-defined", "event-driven"]
+[provenance]
+authors = ["Anulum Fortis & Arcane Sapience"]
+year = 2026
+doi = ""
+paper_title = ""
+derivation_note = "Exact retained recurrence formerly exposed as SigmaDeltaNeuron; no external publication attribution."
+[state.sigma]
+init = 0.0
+unit = "1"
+meaning = "signed accumulated residual"
+[parameters.v_threshold]
+default = 1.0
+unit = "1"
+meaning = "symmetric signed event threshold and subtraction quantum"
+range = [0.000001, 1000000.0]
+[integration]
+dt = 1.0
+method = "map"
+[dynamics]
+sigma = "sigma + I - v_threshold if sigma + I >= v_threshold else sigma + I + v_threshold if sigma + I <= -v_threshold else sigma + I"
+spike_flag = "1 if sigma + I >= v_threshold else -1 if sigma + I <= -v_threshold else 0"
+[backends.python]
+status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "exact"
+[backends.julia]
+status = "implemented"
+parity = "exact"
+[backends.go]
+status = "implemented"
+parity = "exact"
+[backends.mojo]
+status = "implemented"
+parity = "exact"
+[reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/sc_sigma_delta_accumulator_project.json"
+golden_trace_sha256 = "8cb57c49fe0bbd0c0a9d62bf888031883958daf91381e396a334dcdfe44f1e7a"
+golden_citation = "frozen project recurrence at cf7be8421"
+[documentation]
+slug = "models/sc_sigma_delta_accumulator"
+notes = "Count-neutral SC compatibility identity; SigmaDeltaNeuron owns the source APSDM entry."
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "256-step frozen compatibility receipt plus five-runtime parity"
+tolerance = "events and binary64 state exact"
+evidence = "tests/test_model_sc_sigma_delta_accumulator_compatibility.py; tests/test_reference_sc_sigma_delta_accumulator.py"
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_sigma_delta_accumulator.py::test_sc_accumulator_q3232_matches_integer_oracle"
+target_tier = "H1"
+terminal_reason = "Signed Q32.32 matches the bounded integer oracle, synthesizes in Yosys, and passes depth-12 CVC5 bounded safety. Timing, PPA, device evidence, and universal binary64 equivalence remain open."

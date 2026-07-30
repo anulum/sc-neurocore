@@ -1,0 +1,9 @@
+{
+  "metadata":{"schema_version":2,"name":"SigmaDeltaNeuron","author":"Yoon, Y. C.","year":2017,"doi":"10.1109/TNNLS.2016.2526029","description":"Sampled APSDM integrating prefilter with unipolar feedback events"},
+  "state":{"sigma":0.0,"reconstruction":0.0,"spike_flag":0.0},
+  "parameters":{"delta":1.0,"tau_reconstruction":10.0,"dt":0.1},
+  "integration":{"dt":0.1,"method":"map","substeps":1},
+  "dynamics":{"sigma":"sigma + dt * I","reconstruction":"reconstruction * exp(-dt / tau_reconstruction) + (delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)","spike_flag":"1 if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0"},
+  "threshold":{"condition":"spike_flag >= 0.5","detection":"level"},
+  "extensions":{"family":"asynchronous-pulse-sigma-delta","source_equations":"WO2016022241A1 equations 20-27 and 40","discretisation":"Clocked forward-Euler integrating prefilter and exact exponential reconstruction decay","identity_note":"SCSigmaDeltaAccumulatorNeuron retains the previous bipolar project recurrence"}
+}

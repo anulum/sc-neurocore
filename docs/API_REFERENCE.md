@@ -1613,6 +1613,24 @@ Run the complete configured SC recurrence on one real backend.
 
 ---
 
+## Module `accel.sc_sigma_delta_accumulator`
+
+### Function `backend_available(backend)`
+### Function `auto_backend()`
+### Function `simulate_sc_sigma_delta_accumulator(currents)`
+Run the complete retained project contract on one real backend.
+
+---
+
+## Module `accel.sigma_delta`
+
+### Function `backend_available(backend)`
+### Function `auto_backend()`
+### Function `simulate_sigma_delta(currents)`
+Run the complete sampled source contract on one real backend.
+
+---
+
 ## Module `accel.sigmoid_rate`
 
 ### Function `ensure_julia_loaded()`
@@ -25592,6 +25610,24 @@ non-resetting MAT* equations of Kobayashi et al. (2009).
 
 ---
 
+## Module `neurons.models.sc_sigma_delta_accumulator`
+
+### Class `SCSigmaDeltaAccumulatorNeuron`
+Retained bipolar accumulate/one-quantum-subtract recurrence.
+
+This is exactly the historical project behavior formerly exposed as
+``SigmaDeltaNeuron``. It emits at most one signed event per sample and
+carries any remaining threshold excess forward. It is project-defined and
+intentionally carries no external paper attribution.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance the frozen bipolar project recurrence by one sample.
+- **reset**()
+  - Clear the accumulator while retaining its threshold.
+
+---
+
 ## Module `neurons.models.sfa`
 
 ### Class `SFANeuron`
@@ -25645,15 +25681,30 @@ Reference: Siegert, A.J.F. (1951). Phys. Rev. 81:617–623.
 ## Module `neurons.models.sigma_delta`
 
 ### Class `SigmaDeltaNeuron`
-Yoon 2017 — event-driven sigma-delta encoding.
+Discrete-time specialization of Yoon's APSDM encoder.
 
-Reference: Yoon, Y. C. (2017). LIF and simplified SRM neurons encode
-signals into spikes via a form of asynchronous pulse sigma-delta
-modulation. IEEE Trans. Neural Netw. Learn. Syst. (DOI 10.1109/tnnls.2016.2526029).
+``sigma`` is the output of the disclosed integrating prefilter and
+``reconstruction`` is the local feedback signal. Each sample implements
+equations 20-27 and the exponentially decaying reconstruction of equation
+40 from WO2016022241A1: integrate the input, decay the reconstruction,
+compare their difference with the upper threshold ``delta / 2``, then add
+one reconstruction quantum ``delta`` for a unipolar event.
+
+This clocked specialization is source-bound but does not claim exact
+continuous-time event timing. The former bipolar accumulator is retained
+separately as :class:`SCSigmaDeltaAccumulatorNeuron`.
+
+Reference: Y. C. Yoon, IEEE TNNLS 28(5), 2017,
+doi:10.1109/TNNLS.2016.2526029; primary equations WO2016022241A1.
 
 - **__post_init__**()
+  - Validate the complete encoder state and configuration.
+- **error**()
+  - Return the current prefilter-minus-reconstruction error.
 - **step**(current)
+  - Advance one atomic sampled APSDM transition and return 0 or 1.
 - **reset**()
+  - Clear both dynamic encoder states while retaining configuration.
 
 ---
 

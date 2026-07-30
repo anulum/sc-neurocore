@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Sigma-delta dual-identity closure
+
+- Restored `SigmaDeltaNeuron` as the sampled Yoon APSDM source identity and
+  retained the former bipolar one-quantum recurrence as the explicit,
+  count-neutral `SCSigmaDeltaAccumulatorNeuron` project identity.
+- Closed both contracts through five runtimes, paired schemas, independent
+  receipts, Q32.32 RTL/Yosys/CVC5, local source/binary-bound benchmarks, and
+  language-native documentation. The source catalogue is now 52/155 complete.
+
 ### Non-resetting LIF dual-identity closure
 
 - Corrected `NonResettingLIFNeuron` to source MAT(1) with non-resetting

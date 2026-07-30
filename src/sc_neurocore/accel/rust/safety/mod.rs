@@ -376,6 +376,7 @@ pub mod sherman_rinzel_keizer;
 pub mod short_term_plasticity;
 pub mod siegert;
 pub mod sigma_delta;
+pub mod sc_sigma_delta_accumulator;
 pub mod sigmoid_rate;
 pub mod simulator;
 pub mod sk_neuron;

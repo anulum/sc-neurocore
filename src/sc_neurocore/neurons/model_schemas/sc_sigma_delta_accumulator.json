@@ -1,0 +1,9 @@
+{
+  "metadata":{"schema_version":2,"name":"SCSigmaDeltaAccumulatorNeuron","author":"Anulum Fortis & Arcane Sapience","year":2026,"doi":"","description":"Retained project bipolar one-quantum accumulator"},
+  "state":{"sigma":0.0,"spike_flag":0.0},
+  "parameters":{"v_threshold":1.0},
+  "integration":{"dt":1.0,"method":"map","substeps":1},
+  "dynamics":{"sigma":"sigma + I - v_threshold if sigma + I >= v_threshold else sigma + I + v_threshold if sigma + I <= -v_threshold else sigma + I","spike_flag":"1 if sigma + I >= v_threshold else -1 if sigma + I <= -v_threshold else 0"},
+  "threshold":{"condition":"abs(spike_flag) >= 0.5","detection":"level"},
+  "extensions":{"family":"sc-project","source_equations":"project recurrence frozen at cf7be8421","identity_note":"Count-neutral SC compatibility identity"}
+}

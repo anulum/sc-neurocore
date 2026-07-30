@@ -372,6 +372,7 @@ pub mod sc_optimizer;
 pub mod sc_quantum_compiler;
 pub mod sc_runtime;
 pub mod sc_scope;
+pub mod sc_sigma_delta_accumulator;
 pub mod sc_synapse;
 pub mod schedulers;
 pub mod search;

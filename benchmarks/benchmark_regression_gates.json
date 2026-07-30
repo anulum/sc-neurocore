@@ -3909,6 +3909,54 @@
         "src/sc_neurocore/neurons/model_schemas/wilson_cowan.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_cowan.toml",
         "src/sc_neurocore/neurons/models/wilson_cowan.py": "source_hashes.src/sc_neurocore/neurons/models/wilson_cowan.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sigma_delta.json",
+      "description": "Sampled Yoon APSDM parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "Yoon sampled asynchronous pulse sigma-delta source recurrence",
+        "current": 2.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 200000
+      },
+      "id": "sigma-delta-apsdm-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
+      "source_hashes": {
+        "benchmarks/bench_model_sigma_delta.py": "source_hashes.benchmarks/bench_model_sigma_delta.py",
+        "src/sc_neurocore/accel/go/services/sigma_delta.go": "source_hashes.src/sc_neurocore/accel/go/services/sigma_delta.go",
+        "src/sc_neurocore/accel/julia/neurons/sigma_delta.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sigma_delta.jl",
+        "src/sc_neurocore/accel/mojo/kernels/sigma_delta.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sigma_delta.mojo",
+        "src/sc_neurocore/accel/rust/safety/sigma_delta.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sigma_delta.rs",
+        "src/sc_neurocore/neurons/models/sigma_delta.py": "source_hashes.src/sc_neurocore/neurons/models/sigma_delta.py"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_sigma_delta_accumulator.json",
+      "description": "Retained SC bipolar accumulator parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "SC retained bipolar sigma-delta accumulator recurrence",
+        "current": 0.3,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 200000
+      },
+      "id": "sc-sigma-delta-accumulator-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
+      "source_hashes": {
+        "benchmarks/bench_model_sc_sigma_delta_accumulator.py": "source_hashes.benchmarks/bench_model_sc_sigma_delta_accumulator.py",
+        "src/sc_neurocore/accel/go/services/sc_sigma_delta_accumulator.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_sigma_delta_accumulator.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_sigma_delta_accumulator.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_sigma_delta_accumulator.jl",
+        "src/sc_neurocore/accel/mojo/kernels/sc_sigma_delta_accumulator.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_sigma_delta_accumulator.mojo",
+        "src/sc_neurocore/accel/rust/safety/sc_sigma_delta_accumulator.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_sigma_delta_accumulator.rs",
+        "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py": "source_hashes.src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

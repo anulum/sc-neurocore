@@ -140,6 +140,7 @@ _MODEL_NAMES = {
     "NeuroGridNeuron",
     "NonResettingLIFNeuron",
     "SCNonResettingAdaptiveLIFNeuron",
+    "SCSigmaDeltaAccumulatorNeuron",
     "NonlinearLIFNeuron",
     "ParallelSpikingNeuron",
     "ParametricLIFNeuron",

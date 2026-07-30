@@ -1,0 +1,7 @@
+{
+  "schema_version":1,
+  "model":"SCSigmaDeltaAccumulatorNeuron",
+  "source":{"kind":"frozen project recurrence","production_base":"cf7be842152bfd90dfe5760f2685eb6e0fa43911","source_sha256":"2491380add100122c96fe0ab1f174d5b8708c2148f1d5e1301dfb282ea177c47"},
+  "stimulus":{"steps":256,"current":"32 zeros, 96 samples at 0.3, then 64 repetitions of [-0.7, 1.1]"},
+  "oracle":{"canonical_row_format":"little-endian float64 sigma plus signed int32 event","trace_sha256":"8cb57c49fe0bbd0c0a9d62bf888031883958daf91381e396a334dcdfe44f1e7a","positive_events":54,"negative_events":0,"final_sigma":0.40000000000000857}
+}

@@ -40,6 +40,8 @@ What is your goal?
 │  ├─ SC RK4/reset compatibility → SCResettingMATNeuron
 │  ├─ Source one-timescale MAT(1) → NonResettingLIFNeuron
 │  ├─ SC affine-rest compatibility → SCNonResettingAdaptiveLIFNeuron
+│  ├─ Sampled APSDM source encoder → SigmaDeltaNeuron
+│  ├─ SC bipolar accumulator compatibility → SCSigmaDeltaAccumulatorNeuron
 │  ├─ Other threshold adaptation → HomeostaticLIFNeuron, GLIFNeuron
 │  ├─ Spike-frequency adaptation → SFANeuron, BendaHerzNeuron
 │  └─ Reward-modulated → EPropALIFNeuron (with eligibility traces)

@@ -48,8 +48,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 189 Rust PyO3 model wrappers,
-with 164 canonical models wired into the NetworkRunner pipeline.
+`HodgkinHuxleyNeuron`). The Rust engine provides 190 Rust PyO3 model wrappers,
+with 165 canonical models wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -224,7 +224,8 @@ raw TOML descriptor.
 | `NonResettingLIFNeuron` | `NonResettingLIFNeuron` | Kobayashi et al. 2009 MAT(1) |
 | `SCNonResettingAdaptiveLIFNeuron` | `SCNonResettingAdaptiveLIFNeuron` | SC-NeuroCore project recurrence |
 | `AdaptiveThresholdIFNeuron` | `AdaptiveThresholdIFNeuron` | Platkiewicz & Brette 2010 |
-| `SigmaDeltaNeuron` | `SigmaDeltaNeuron` | — |
+| `SigmaDeltaNeuron` | `SigmaDeltaNeuron` | Yoon 2017 sampled APSDM specialization |
+| `SCSigmaDeltaAccumulatorNeuron` | `SCSigmaDeltaAccumulatorNeuron` | SC-NeuroCore retained bipolar recurrence |
 | `EnergyLIFNeuron` | `EnergyLIFNeuron` | Sengupta et al. 2013 |
 | `IntegerQIFNeuron` | `IntegerQIFNeuron` | Wu et al. 2021, DOI `10.1109/AICAS51828.2021.9458572` |
 | `ClosedFormContinuousNeuron` | `ClosedFormContinuousNeuron` | Hasani et al. 2022 |

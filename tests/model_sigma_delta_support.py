@@ -15,7 +15,9 @@ when sigma ≥ θ, fires -1 when sigma ≤ -θ. Subtract-on-spike (not reset).
 Ternary output {-1, 0, +1}. Signal reconstruction error bounded by θ."""
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.sigma_delta import SigmaDeltaNeuron
+from sc_neurocore.neurons.models.sc_sigma_delta_accumulator import (
+    SCSigmaDeltaAccumulatorNeuron as SigmaDeltaNeuron,
+)
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor

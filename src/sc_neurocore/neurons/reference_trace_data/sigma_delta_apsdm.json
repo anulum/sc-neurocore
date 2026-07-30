@@ -1,0 +1,8 @@
+{
+  "schema_version":1,
+  "model":"SigmaDeltaNeuron",
+  "source":{"author":"Young C. Yoon","title":"LIF and Simplified SRM Neurons Encode Signals Into Spikes via a Form of Asynchronous Pulse Sigma-Delta Modulation","year":2017,"doi":"10.1109/TNNLS.2016.2526029","equations":"WO2016022241A1 equations 20-27 and 40"},
+  "specialization":{"state":["sigma","reconstruction"],"parameters":{"delta":1.0,"tau_reconstruction":10.0,"dt":0.1},"excluded":["continuous-time event interpolation","biological fitting","network behavior"]},
+  "stimulus":{"steps":512,"current":"32 zeros, 128 samples at 2.0, then 176 repetitions of [-1.0, 4.0]"},
+  "oracle":{"implementation":"independent direct transcription; does not import production kernels","canonical_row_format":"little-endian float64 (sigma, reconstruction) plus uint8 event","trace_sha256":"4c22a86d4fe810dad3d5a039717798c5183ff03e9f00d8317e5568a5ad5b8d99","event_count":276,"final_state":[78.40000000000012,78.4519805193165]}
+}

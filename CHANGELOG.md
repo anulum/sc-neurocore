@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `SigmaDeltaNeuron` to a source-bound sampled specialization of
+  Yoon's asynchronous pulse sigma-delta encoder: integrating prefilter,
+  exponentially decaying local reconstruction, upper-threshold quantizer, and
+  unipolar feedback events. The former signed accumulator remains exactly
+  available as `SCSigmaDeltaAccumulatorNeuron`. Both identities now carry
+  Python/Rust/Julia/Go/Mojo execution, paired schemas, independent receipts,
+  Q32.32 RTL/Yosys/CVC5 evidence, source/binary-bound benchmarks, and native
+  documentation. Only the source identity increments the catalogue to 52/155.
 - Corrected `NonResettingLIFNeuron` to the source Kobayashi-Tsubo-Shinomoto
   (2009) one-timescale MAT(1) identity: forward-Euler non-resetting membrane,
   exact 50 ms threshold history, and 2 ms absolute refractory gating. The

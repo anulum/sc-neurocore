@@ -95,13 +95,13 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 |---|---:|
 | Package version | 3.16.0 |
 | Public API exports | 45 |
-| Python model source modules | 158 |
-| Python model classes | 162 |
-| Model documentation pages | 180 |
-| Rust PyO3 model wrappers | 191 |
+| Python model source modules | 159 |
+| Python model classes | 163 |
+| Model documentation pages | 181 |
+| Rust PyO3 model wrappers | 192 |
 | Optional extras | 28 |
-| Python test files | 4656 |
-| Public documentation pages | 591 |
+| Python test files | 4667 |
+| Public documentation pages | 593 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -177,7 +177,7 @@ dependency matrix and research-only boundaries.
 ### Rust Engine and Benchmark Evidence
 
 The optional Rust engine provides SIMD-accelerated simulation, 189 Rust PyO3
-model wrappers, a 164-model NetworkRunner dispatch list, and fused E-I network
+model wrappers, a 165-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
 Use a matching release wheel first:
@@ -386,7 +386,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>189 Rust PyO3 wrappers · 164-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>190 Rust PyO3 wrappers · 165-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -683,10 +683,10 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (189 PyO3 Wrappers, 164-Model NetworkRunner)
+## Rust Engine (190 PyO3 Wrappers, 165-Model NetworkRunner)
 
 The `sc_neurocore_engine` crate provides 189 Rust PyO3 model wrappers callable
-from Python (including ArcaneNeuron), a 164-model NetworkRunner with
+from Python (including ArcaneNeuron), a 165-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
 RISC-V V). Rust test totals are maintained by the Rust workspace; public
@@ -705,8 +705,8 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 189 PyO3 model wrappers; 164 canonical models wired into NetworkRunner |
-| NetworkRunner | 164-model fused simulation loop with CSR projections and Rayon parallelism |
+| Neurons | 190 PyO3 model wrappers; 165 canonical models wired into NetworkRunner |
+| NetworkRunner | 165-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |
