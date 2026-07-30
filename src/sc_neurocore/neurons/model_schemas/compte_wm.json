@@ -111,6 +111,6 @@
     "discretisation": "Coupled explicit midpoint RK2 at 0.02 ms with sampled threshold timing",
     "serial_input_protocol": "Nine rising edges form one physical step: latch current, recurrent NMDA event, external AMPA event, and inhibitory GABAA event; apply jumps; evaluate k1; form midpoints; evaluate k2; commit.",
     "state_scope_note": "v, four channel variables, and refractory_time are physical state; phase, latches, pre-event values, slopes, and midpoints are deterministic lowering registers.",
-    "network_boundary": "The 2560-cell ring, connectivity footprint, Poisson drive, persistent bump, distractor resistance, and network statistics are reserved for a separately named SC-derived model."
+    "network_boundary": "The 2560-cell ring, connectivity footprint, Poisson drive, persistent bump, distractor resistance, and network statistics are retained as the separately named SC-COMPTE-WM-NETWORK project modification with its own evidence boundary."
   }
 }

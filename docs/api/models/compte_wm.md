@@ -168,10 +168,11 @@ This is H1 evidence only. It does not establish binary64 formal equivalence,
 firing-time interpolation, timing, PPA, device behavior, or production
 deployment.
 
-## Retained SC network successor
+## Retained SC network modification
 
 The 2,560-cell ring, columnar connectivity footprint, Poisson drive,
 persistent bump, distractor resistance, and network statistics are retained
-for a separately named SC project-derived model. They are not deleted, folded
-into this cell, or promoted by this cell's evidence. That successor must earn
-its own source/specification, parity, benchmark, and silicon evidence.
+as the separately named `SC-COMPTE-WM-NETWORK` project modification. They are
+not deleted, folded into this scalar cell, or promoted by this cell's evidence.
+The SC modification has its own five-runtime behavior, paired-schema, benchmark,
+and bounded ring-connectivity RTL/Yosys/formal evidence.

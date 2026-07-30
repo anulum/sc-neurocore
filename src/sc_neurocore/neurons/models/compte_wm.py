@@ -39,9 +39,11 @@ class CompteWMNeuron:
 
     Notes
     -----
-    This is not the paper's 2,560-cell ring network. Connectivity footprints,
-    Poisson drive, tuned persistent bumps, and distractor statistics belong to
-    a separately named SC project-derived network model.
+    This scalar reference model does not include the paper's 2,560-cell ring.
+    The connectivity footprints, Poisson drive, tuned persistent bumps,
+    distractor resistance, and network statistics are retained as the
+    separately named ``SC-COMPTE-WM-NETWORK`` project modification, with their
+    own evidence boundary.
     """
 
     v: float = -70.0
