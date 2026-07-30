@@ -1,0 +1,50 @@
+{
+  "configuration": {
+    "cells": 2560,
+    "dt_ms": 0.02,
+    "duration_ms": 20,
+    "excitatory_cells": 2048,
+    "inhibitory_cells": 512,
+    "repeats": 3,
+    "seed": 42,
+    "steps": 1000
+  },
+  "distractor_resistance_claimed": false,
+  "environment": {
+    "architecture": "amd64",
+    "cpu_threads": 12,
+    "go": "go1.26.3",
+    "gomaxprocs": 12,
+    "os": "linux"
+  },
+  "evidence_class": "local_regression",
+  "execution_path": "go-midpoint-rk2-radix2-fft",
+  "final_state_sha256": "c517b3945747a9a72edc5df5eef425687a908141692c6f3ef574a1ba17cbee51",
+  "generated_at": "2026-07-29T23:58:17.767397717Z",
+  "hardware_measurement_claimed": false,
+  "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
+  "median_cell_updates_per_second": 796433.6182921901,
+  "median_ns": 3214329407,
+  "median_ns_per_network_step": 3214329.407,
+  "model": "SC-COMPTE-WM-NETWORK",
+  "passed": true,
+  "persistent_bump_claimed": false,
+  "production_speed_claimed": false,
+  "repeat_receipts_exact": true,
+  "samples_ns": [
+    3177594165,
+    3216341299,
+    3214329407
+  ],
+  "schema_version": "sc-neurocore.sc-compte-wm-network-benchmark.v1",
+  "source_sha256": {
+    "src/sc_neurocore/accel/go/cmd/bench_sc_compte_wm_network/main.go": "0c74dbbef5c5b961f5e68bd8a93facae20a0b533fa5dedbee312d7d227053817",
+    "src/sc_neurocore/accel/go/go.mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097",
+    "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go": "ce8169dc4d8db150d72713b1047f6c4bbcf0b30cfed2394ffdd4c8f7be34a4d2"
+  },
+  "spike_counts": {
+    "excitatory": 1,
+    "inhibitory": 27
+  },
+  "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd"
+}

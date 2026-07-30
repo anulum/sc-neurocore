@@ -79,6 +79,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Added the complete Go runtime for `SC-COMPTE-WM-NETWORK`, with GoDoc,
+  all 2,560 states, counter Poisson input, an in-tree dependency-free radix-2
+  FFT, optional structured E-to-I coupling, explicit-event co-simulation,
+  stimuli/statistics/run receipts, and atomic validation. Native tests bind
+  the counter, preserved scalar cell, recurrent fixture, determinism, and
+  failure boundary; its source-bound three-repeat 1,000-step receipt exactly
+  matches Python/Julia input and spike evidence without claiming behavior.
 - Added the complete documented Julia runtime for `SC-COMPTE-WM-NETWORK`,
   including all 2,560 cells, repository-local pinned FFTW dependencies,
   counter Poisson drive, structured FFT recurrence, explicit-event

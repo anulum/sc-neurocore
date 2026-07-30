@@ -107,6 +107,25 @@ claimed bit-identical across FFT libraries. It is local regression evidence
 only: it makes no production-throughput, persistent-bump,
 distractor-resistance, hardware, or all-runtime claim.
 
+## Native Go lane
+
+`accel/go/sc_compte_wm_network` is the complete Go runtime for the same fixed
+SC network. It owns all state and receipt arrays, supports control/modulated
+and optional structured E-to-I modes, implements explicit-event
+co-simulation, stimuli, activity windows, and atomic failure, and preserves
+the source-bounded Go scalar Compte cell in `services` as a separate model.
+Every exported package/type/function/method surface has GoDoc.
+
+The production circular reduction uses an in-tree iterative radix-2 complex
+FFT and therefore adds no third-party module dependency. Go toolchain/module
+and build caches are routed through `.venv/go`. Native tests bind the counter
+fixture, isolated scalar-cell impulse, non-trivial recurrent anchor,
+deterministic seed behavior, full-population current/refractory behavior, and
+atomic invalid-input boundary. The source-bound three-repeat 1,000-step Go
+receipt exactly matches Python and Julia input digests, spike digests, and
+population spike counts. Binary64 state hashes are not claimed bit-identical
+across FFT implementations, and the timing is local regression evidence only.
+
 ## Claim boundary
 
 The Python executor and committed benchmark are deterministic simulator
@@ -116,8 +135,8 @@ host regression timing only. Persistent-bump formation, delay stability,
 random drift, response reset, distractor resistance, complete all-runtime
 parity, and silicon behavior remain open until demonstrated by separately
 committed ensemble and backend evidence. The current native claim is
-Python/Rust/Julia short-trace parity. The network therefore does not increment
-the 49/155 neuron-model fidelity count.
+Python/Rust/Julia/Go short-trace parity. The network therefore does not
+increment the 49/155 neuron-model fidelity count.
 
 ## Example
 
