@@ -14,7 +14,7 @@ import (
 )
 
 func TestEnergyLIFExactCandidateCommit(t *testing.T) {
-	state := NewEnergyLIFNeuron()
+	state := NewSCNormalizedEnergyLIFNeuron()
 	state.Epsilon = 0.5
 	vCandidate, epsilonCandidate := state.exactCandidate(10.0)
 
@@ -28,7 +28,7 @@ func TestEnergyLIFExactCandidateCommit(t *testing.T) {
 }
 
 func TestEnergyLIFInvalidStateDoesNotMutate(t *testing.T) {
-	state := NewEnergyLIFNeuron()
+	state := NewSCNormalizedEnergyLIFNeuron()
 	state.Epsilon = -1.0
 	before := *state
 	if spike := state.Step(10.0); spike != -1 {
@@ -40,7 +40,7 @@ func TestEnergyLIFInvalidStateDoesNotMutate(t *testing.T) {
 }
 
 func TestEnergyLIFSpikeUsesEnergyCandidate(t *testing.T) {
-	state := NewEnergyLIFNeuron()
+	state := NewSCNormalizedEnergyLIFNeuron()
 	_, epsilonCandidate := state.exactCandidate(250.0)
 
 	spike := state.Step(250.0)
@@ -58,7 +58,7 @@ func TestEnergyLIFSpikeUsesEnergyCandidate(t *testing.T) {
 
 func BenchmarkEnergyLIFExactFlow(b *testing.B) {
 	const current = 50.0
-	state := NewEnergyLIFNeuron()
+	state := NewSCNormalizedEnergyLIFNeuron()
 	spikes := 0
 	b.ReportAllocs()
 	b.ResetTimer()

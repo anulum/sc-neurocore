@@ -279,6 +279,14 @@ jobs:
             ( cd "src/sc_neurocore/accel/mojo/${model}" \
                 && mojo build --emit shared-lib --target-cpu x86-64-v3 -o "lib${model}.so" "${model}.mojo" )
           done
+          for model in energy_lif sc_normalized_energy_lif; do
+            ( cd "src/sc_neurocore/accel/go/${model}" \
+                && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+            mojo build -I "$GITHUB_WORKSPACE/src/sc_neurocore/accel/mojo/kernels" \
+              --emit shared-lib --target-cpu x86-64-v3 \
+              -o "src/sc_neurocore/accel/mojo/${model}/lib${model}.so" \
+              "src/sc_neurocore/accel/mojo/${model}/${model}_abi.mojo"
+          done
 
       - name: Enforce Mojo ISA baseline (no AVX-512 drift)
         shell: bash

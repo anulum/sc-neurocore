@@ -1,0 +1,1 @@
+{"model":"EnergyLIFNeuron","source":"doi:10.1371/journal.pcbi.1008503 and https://github.com/Silmathoron/elif-madexp","drive":{"pattern_pA":[80.0,0.0,120.0,20.0],"repeats":128},"oracle":{"steps":512,"events":8,"v_final":-59.02433934381977,"epsilon_final":0.2433699387834675,"trace_sha256":"fc0aa0c4d4faf2189bd3c819aea7ab49bcb4db4b8dc7430c283e453625b823d3"}}

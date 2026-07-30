@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### EnergyLIF dual-identity closure
+
+- Restored `EnergyLIFNeuron` as the Fardet-Levina coupled voltage-energy RK4
+  source identity and retained the former exact-flow normalized recurrence as
+  the explicit, count-neutral `SCNormalizedEnergyLIFNeuron` project identity.
+- Closed both contracts through five runtimes, paired schemas, independent
+  receipts, Q32.32 RTL/Yosys/bounded safety, local source/binary-bound
+  benchmarks, and language-native documentation. The source catalogue is now
+  53/155 complete.
+
 ### Sigma-delta dual-identity closure
 
 - Restored `SigmaDeltaNeuron` as the sampled Yoon APSDM source identity and

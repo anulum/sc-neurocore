@@ -40,6 +40,7 @@ _LIF_MODELS = frozenset(
         "NonlinearLIFNeuron",
         "FractionalLIFNeuron",
         "EnergyLIFNeuron",
+        "SCNormalizedEnergyLIFNeuron",
     }
 )
 

@@ -86,6 +86,7 @@ pub enum NeuronVariant {
     SigmaDelta(SigmaDeltaNeuron),
     SCSigmaDeltaAccumulator(SCSigmaDeltaAccumulatorNeuron),
     EnergyLIF(EnergyLIFNeuron),
+    SCNormalizedEnergyLIF(SCNormalizedEnergyLIFNeuron),
     ClosedFormContinuous(ClosedFormContinuousNeuron),
 
     // maps.rs
@@ -261,7 +262,7 @@ macro_rules! all_variants {
             EPropALIF, SuperSpike, LearnableNeuron, Pernarowski,
             QuadraticIF, Theta, PerfectIntegrator, GatedLIF, NonlinearLIF,
             SFA, MAT, SCResettingMAT, KLIF, InhibitoryLIF, ComplementaryLIF, ParametricLIF,
-            NonResettingLIF, SCNonResettingAdaptiveLIF, AdaptiveThresholdIF, SigmaDelta, SCSigmaDeltaAccumulator, EnergyLIF,
+            NonResettingLIF, SCNonResettingAdaptiveLIF, AdaptiveThresholdIF, SigmaDelta, SCSigmaDeltaAccumulator, EnergyLIF, SCNormalizedEnergyLIF,
             ClosedFormContinuous,
             ChialvoMap, RulkovMap, IbarzTanakaMap, MedvedevMap,
             CazellesMap, CourageNekorkinMap, AiharaMap, SCChaoticMap,
@@ -367,6 +368,7 @@ impl NeuronVariant {
             NeuronVariant::SigmaDelta(n) => n.sigma,
             NeuronVariant::SCSigmaDeltaAccumulator(n) => n.sigma,
             NeuronVariant::EnergyLIF(n) => n.v,
+            NeuronVariant::SCNormalizedEnergyLIF(n) => n.v,
             NeuronVariant::ClosedFormContinuous(n) => n.x,
             NeuronVariant::ChialvoMap(n) => n.x,
             NeuronVariant::RulkovMap(n) => n.x,

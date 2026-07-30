@@ -80,7 +80,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Hardware evidence | Committed synthesis and report artefacts exist for selected flows, including the bounded SC Compte ring-connectivity representative; power/energy and physical-device claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
 | Polyglot surfaces | Source-checkout research and parity surfaces, not default user install requirements. |
-| High-fidelity neurons | 50 of 155 catalogue models meet the strict five-runtime polyglot-completion bar; see the [per-model evidence table](docs/api/model_fidelity_status.md). |
+| High-fidelity neurons | 53 of 155 catalogue models meet the strict five-runtime polyglot-completion bar; see the [per-model evidence table](docs/api/model_fidelity_status.md). |
 | Regulated deployment | Readiness tooling and evidence categories only; no certification or field approval claim. |
 
 ## Version and Capability Snapshot
@@ -95,13 +95,13 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 |---|---:|
 | Package version | 3.16.0 |
 | Public API exports | 45 |
-| Python model source modules | 159 |
-| Python model classes | 163 |
-| Model documentation pages | 181 |
-| Rust PyO3 model wrappers | 192 |
+| Python model source modules | 160 |
+| Python model classes | 164 |
+| Model documentation pages | 182 |
+| Rust PyO3 model wrappers | 193 |
 | Optional extras | 28 |
-| Python test files | 4667 |
-| Public documentation pages | 593 |
+| Python test files | 4678 |
+| Public documentation pages | 595 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -177,7 +177,7 @@ dependency matrix and research-only boundaries.
 ### Rust Engine and Benchmark Evidence
 
 The optional Rust engine provides SIMD-accelerated simulation, 189 Rust PyO3
-model wrappers, a 165-model NetworkRunner dispatch list, and fused E-I network
+model wrappers, a 166-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
 Use a matching release wheel first:
@@ -244,7 +244,7 @@ rate, no-spike, and no-RTL boundaries.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
-- **NetworkRunner:** 163-model fused Rayon-parallel simulation loop
+- **NetworkRunner:** 166-model fused Rayon-parallel simulation loop
 - **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
 - **Batch simulate:** model dispatch loop in compiled Rust
 - **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
@@ -386,7 +386,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>190 Rust PyO3 wrappers · 165-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>193 Rust PyO3 wrappers · 166-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -397,7 +397,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>59 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>61 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -462,12 +462,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (59 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (61 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **59 SymbiYosys proof jobs and 193 formal
+Formal verification inventory: **61 SymbiYosys proof jobs and 199 formal
 statements (163 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **41 catalogue jobs** under `hdl/formal/catalogue/`). This
+non-catalogue jobs + **43 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 
@@ -683,10 +683,10 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (190 PyO3 Wrappers, 165-Model NetworkRunner)
+## Rust Engine (193 PyO3 Wrappers, 166-Model NetworkRunner)
 
 The `sc_neurocore_engine` crate provides 189 Rust PyO3 model wrappers callable
-from Python (including ArcaneNeuron), a 165-model NetworkRunner with
+from Python (including ArcaneNeuron), a 166-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
 RISC-V V). Rust test totals are maintained by the Rust workspace; public
@@ -705,8 +705,8 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 190 PyO3 model wrappers; 165 canonical models wired into NetworkRunner |
-| NetworkRunner | 165-model fused simulation loop with CSR projections and Rayon parallelism |
+| Neurons | 193 PyO3 model wrappers; 166 canonical models wired into NetworkRunner |
+| NetworkRunner | 166-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |

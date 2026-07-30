@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[options]
+mode bmc
+depth 2
+[engines]
+smtbmc cvc5
+[script]
+read -formal energy_lif_formal.v
+read -formal energy_lif.v
+prep -top energy_lif_formal
+[files]
+energy_lif_formal.v
+energy_lif.v

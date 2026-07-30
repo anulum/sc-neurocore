@@ -226,7 +226,8 @@ raw TOML descriptor.
 | `AdaptiveThresholdIFNeuron` | `AdaptiveThresholdIFNeuron` | Platkiewicz & Brette 2010 |
 | `SigmaDeltaNeuron` | `SigmaDeltaNeuron` | Yoon 2017 sampled APSDM specialization |
 | `SCSigmaDeltaAccumulatorNeuron` | `SCSigmaDeltaAccumulatorNeuron` | SC-NeuroCore retained bipolar recurrence |
-| `EnergyLIFNeuron` | `EnergyLIFNeuron` | Sengupta et al. 2013 |
+| `EnergyLIFNeuron` | `EnergyLIFNeuron` | Fardet & Levina 2020, DOI `10.1371/journal.pcbi.1008503` |
+| `SCNormalizedEnergyLIFNeuron` | `SCNormalizedEnergyLIFNeuron` | SC-NeuroCore retained project recurrence |
 | `IntegerQIFNeuron` | `IntegerQIFNeuron` | Wu et al. 2021, DOI `10.1109/AICAS51828.2021.9458572` |
 | `ClosedFormContinuousNeuron` | `ClosedFormContinuousNeuron` | Hasani et al. 2022 |
 

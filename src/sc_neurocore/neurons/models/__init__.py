@@ -67,6 +67,7 @@ _CLASS_TO_MODULE = {
     "DurstewitzDopamineNeuron": "durstewitz_dopamine",
     "EPropALIFNeuron": "e_prop_alif",
     "EnergyLIFNeuron": "energy_lif",
+    "SCNormalizedEnergyLIFNeuron": "sc_normalized_energy_lif",
     "ErmentroutKopellMapNeuron": "ermentrout_kopell_map_neuron",
     "ErmentroutKopellPopulation": "ermentrout_kopell_pop",
     "EscapeRateNeuron": "escape_rate",

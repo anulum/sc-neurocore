@@ -1,0 +1,1 @@
+{"model":"SCNormalizedEnergyLIFNeuron","source":"frozen pre-Model-52 project recurrence","drive":{"pattern":[30.0,0.0,50.0,10.0],"repeats":64},"oracle":{"steps":256,"events":3,"v_final":-52.508269792668216,"epsilon_final":0.7868689314467242,"trace_sha256":"29a0793719677083d6502511382bee812c5ea1fcd0b8599cd6bb94c34187d12a"}}

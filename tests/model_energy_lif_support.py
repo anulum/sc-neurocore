@@ -13,7 +13,9 @@ from __future__ import annotations
 LIF with metabolic energy constraint ε. Spike cost depletes ε."""
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.energy_lif import EnergyLIFNeuron
+from sc_neurocore.neurons.models.sc_normalized_energy_lif import (
+    SCNormalizedEnergyLIFNeuron as EnergyLIFNeuron,
+)
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network

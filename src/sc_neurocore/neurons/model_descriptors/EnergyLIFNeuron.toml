@@ -4,123 +4,113 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
-
 [metadata]
-schema_version = 2
-name = "EnergyLIFNeuron"
-class_name = "EnergyLIFNeuron"
-module = "energy_lif"
-display_name = ""
-summary = "Fardet & Levina 2020 — LIF with metabolic energy constraint."
-family = "Integrate-and-Fire"
-category = "integrate-and-fire"
-biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
-behavior_tags = [
-    "adapting",
-    "excitable",
-    "rate-coded",
-]
-
+schema_version=2
+name="EnergyLIFNeuron"
+class_name="EnergyLIFNeuron"
+module="energy_lif"
+display_name="Fardet-Levina energy-based LIF"
+summary="Coupled voltage-energy eLIF using the authors' Brian RK4 profile."
+family="Integrate-and-Fire"
+category="integrate-and-fire"
+biophysical_detail="point"
+maturity="validated"
+intended_use=["metabolic excitability studies","source recurrence replay"]
+hardware_fit=["bounded fixed-point co-simulation"]
+behavior_tags=["energy-gated","adapting","source-faithful"]
 [provenance]
-authors = [
-    "Fardet, T. & Levina, A.",
-]
-year = 2020
-doi = "10.1371/journal.pcbi.1008503"
-
+authors=["Fardet, T. & Levina, A."]
+year=2020
+doi="10.1371/journal.pcbi.1008503"
+paper_title="Simple models including energy and spike constraints reproduce complex activity patterns and metabolic disruptions"
+source_repository="https://github.com/Silmathoron/elif-madexp"
+derivation_note="Pinned Brian example: coupled RK4 at 0.1 ms, strict voltage and energy spike gate."
 [state.v]
-init = -70.0
-
+init=-61.0
+unit="mV"
+meaning="membrane potential"
 [state.epsilon]
-init = 1.0
-
-[parameters.v_rest]
-default = -70.0
-unit = "mV"
-meaning = "resting / leak reversal potential"
-range = [
-    -90.0,
-    -40.0,
-]
-
-[parameters.v_reset]
-default = -70.0
-unit = "mV"
-meaning = "membrane potential reset to after a spike"
-range = [
-    -90.0,
-    -40.0,
-]
-
+init=0.32
+unit="1"
+meaning="available normalized energy"
+[parameters.capacitance]
+default=100.0
+unit="pF"
+[parameters.g_leak]
+default=9.0
+unit="nS"
+[parameters.e_0]
+default=-62.5
+unit="mV"
+[parameters.e_u]
+default=-58.5
+unit="mV"
+[parameters.e_d]
+default=-40.0
+unit="mV"
+[parameters.e_f]
+default=-62.0
+unit="mV"
 [parameters.v_threshold]
-default = -50.0
-unit = "mV"
-meaning = "voltage at which a spike is registered"
-range = [
-    -60.0,
-    -20.0,
-]
-
-[parameters.tau_m]
-default = 10.0
-unit = "ms"
-meaning = "membrane time constant"
-range = [
-    1.0,
-    100.0,
-]
-
-[parameters.tau_e]
-default = 500.0
-unit = "ms"
-meaning = "recovery time constant of the metabolic energy variable"
-range = [
-    1.0,
-    2000.0,
-]
-
+default=-59.0
+unit="mV"
+[parameters.v_reset]
+default=-62.0
+unit="mV"
 [parameters.alpha]
-default = 0.1
-unit = "1"
-meaning = "normalised energy cost coupling per spike"
-range = [
-    0.0,
-    2.0,
-]
-
+default=1.0
+unit="1"
 [parameters.epsilon_0]
-default = 1.0
-unit = "1"
-meaning = "normalised resting (baseline) energy level"
-range = [
-    0.0,
-    5.0,
-]
-
-[parameters.resistance]
-default = 1.0
-unit = "1"
-meaning = "normalised membrane resistance (R=1 in the project's normalised-current convention)"
-range = [
-    0.0,
-    100.0,
-]
-
+default=0.5
+unit="1"
+[parameters.epsilon_c]
+default=0.18
+unit="1"
+[parameters.delta]
+default=0.01
+unit="1"
+[parameters.tau_e]
+default=200.0
+unit="ms"
 [integration]
-dt = 1.0
-method = "euler"
-
+dt=0.1
+method="rk4"
 [dynamics]
-
+e_leak="e_0 + (e_u - e_0) * (1 - epsilon / epsilon_0)"
+dv_dt="(g_leak * (e_leak - v) + I) / capacitance"
+depsilon_dt="((1 - epsilon / (alpha * epsilon_0))^3 - (v - e_f) / (e_d - e_f)) / tau_e"
+spike_flag="1 if v_candidate > v_threshold and epsilon_candidate > epsilon_c else 0"
 [backends.python]
-status = "implemented"
-
+status="implemented"
+parity="reference"
+[backends.rust]
+status="implemented"
+parity="2e-12"
+[backends.julia]
+status="implemented"
+parity="2e-12"
+[backends.go]
+status="implemented"
+parity="2e-12"
+[backends.mojo]
+status="implemented"
+parity="2e-12"
 [reproducibility]
-
+reference_config="src/sc_neurocore/neurons/reference_trace_data/energy_lif_fardet_levina.json"
+golden_trace_sha256="fc0aa0c4d4faf2189bd3c819aea7ab49bcb4db4b8dc7430c283e453625b823d3"
+golden_citation="Fardet-Levina author Brian example"
 [documentation]
-slug = "models/energy_lif"
-notes = ""
+slug="models/energy_lif"
+notes="SCNormalizedEnergyLIFNeuron retains the prior project recurrence."
+[validation]
+dynamics_faithful=true
+metric="trajectory"
+operating_point="512-step deterministic mixed-current DOI trace and five-runtime parity"
+tolerance="binary64 2e-12 across native runtimes"
+evidence="tests/test_model_energy_lif_source_fidelity.py; tests/test_reference_energy_lif.py"
+[silicon]
+compiles=true
+cosim_validated=true
+cosim_evidence="tests/test_cosim_energy_lif.py"
+target_tier="H1"
+terminal_reason="Pinned-profile fixed-point co-simulation and bounded reset proof only; timing, PPA, device evidence, transition-property formal proof, and universal real-number equivalence remain open."

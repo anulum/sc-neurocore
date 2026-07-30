@@ -4,140 +4,90 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for energy_lif
+// SC-NeuroCore — Go service for Fardet-Levina eLIF
 
 package services
 
-import (
-	"math"
-)
+import "math"
 
-const energyLIFVMin = -200.0
-const energyLIFVMax = 100.0
-const energyLIFGate = 0.1
-
-// EnergyLIFNeuronState holds the neuron state
+// EnergyLIFNeuronState holds the complete author-Brian eLIF state.
 type EnergyLIFNeuronState struct {
-	V          float64
-	Epsilon    float64
-	VRest      float64
-	VReset     float64
-	VThreshold float64
-	TauM       float64
-	TauE       float64
-	Alpha      float64
-	Epsilon0   float64
-	Resistance float64
-	Dt         float64
+	V, Epsilon                       float64
+	Capacitance, GLeak               float64
+	E0, EU, ED, EF                   float64
+	VThreshold, VReset               float64
+	Alpha, Epsilon0, EpsilonC, Delta float64
+	TauE, Dt                         float64
 }
 
-// NewEnergyLIFNeuron creates a new EnergyLIFNeuron neuron with default parameters
+// NewEnergyLIFNeuron constructs the pinned Fardet-Levina Brian profile.
 func NewEnergyLIFNeuron() *EnergyLIFNeuronState {
-	return &EnergyLIFNeuronState{
-		V:          -70.0,
-		Epsilon:    1.0,
-		VRest:      -70.0,
-		VReset:     -70.0,
-		VThreshold: -50.0,
-		TauM:       10.0,
-		TauE:       500.0,
-		Alpha:      0.1,
-		Epsilon0:   1.0,
-		Resistance: 1.0,
-		Dt:         1.0,
-	}
+	return &EnergyLIFNeuronState{-61, .32, 100, 9, -62.5, -58.5, -40, -62, -59, -62, 1, .5, .18, .01, 200, .1}
 }
 
-// Step advances the neuron by one timestep
-func (s *EnergyLIFNeuronState) Step(iExt float64) int {
-	if !s.Valid() || !isFiniteEnergyLIF(iExt) {
-		return -1
-	}
+func (s *EnergyLIFNeuronState) rhs(v, epsilon, current float64) (float64, float64) {
+	leak := s.E0 + (s.EU-s.E0)*(1-epsilon/s.Epsilon0)
+	dv := (s.GLeak*(leak-v) + current) / s.Capacitance
+	production := math.Pow(1-epsilon/(s.Alpha*s.Epsilon0), 3)
+	cost := (v - s.EF) / (s.ED - s.EF)
+	return dv, (production - cost) / s.TauE
+}
 
-	vCandidate, epsilonCandidate := s.exactCandidate(iExt)
-	if !isFiniteEnergyLIF(vCandidate) || !isFiniteEnergyLIF(epsilonCandidate) ||
-		vCandidate < energyLIFVMin || vCandidate > energyLIFVMax ||
-		epsilonCandidate < 0.0 || epsilonCandidate > s.Epsilon0 {
+func (s *EnergyLIFNeuronState) rk4Candidate(current float64) (float64, float64) {
+	dt := s.Dt
+	k1v, k1e := s.rhs(s.V, s.Epsilon, current)
+	k2v, k2e := s.rhs(s.V+dt*k1v/2, s.Epsilon+dt*k1e/2, current)
+	k3v, k3e := s.rhs(s.V+dt*k2v/2, s.Epsilon+dt*k2e/2, current)
+	k4v, k4e := s.rhs(s.V+dt*k3v, s.Epsilon+dt*k3e, current)
+	return s.V + dt*(k1v+2*k2v+2*k3v+k4v)/6,
+		s.Epsilon + dt*(k1e+2*k2e+2*k3e+k4e)/6
+}
+
+// Step advances one coupled RK4 sample, returning -1 on invalid input/state.
+func (s *EnergyLIFNeuronState) Step(current float64) int {
+	if !s.Valid() || !isFiniteEnergyLIF(current) {
 		return -1
 	}
-	if vCandidate >= s.VThreshold && epsilonCandidate > energyLIFGate {
-		epsilonAfterSpike := math.Max(0.0, epsilonCandidate-s.Alpha)
-		if !isFiniteEnergyLIF(epsilonAfterSpike) || epsilonAfterSpike > s.Epsilon0 {
+	v, epsilon := s.rk4Candidate(current)
+	if !isFiniteEnergyLIF(v) || v < -200 || v > 100 || !isFiniteEnergyLIF(epsilon) || epsilon < 0 || epsilon > 5 {
+		return -1
+	}
+	if v > s.VThreshold && epsilon > s.EpsilonC {
+		after := epsilon - s.Delta
+		if after < 0 || after > 5 {
 			return -1
 		}
-		s.V = s.VReset
-		s.Epsilon = epsilonAfterSpike
+		s.V, s.Epsilon = s.VReset, after
 		return 1
 	}
-	s.V = vCandidate
-	s.Epsilon = epsilonCandidate
+	s.V, s.Epsilon = v, epsilon
 	return 0
 }
 
-func (s *EnergyLIFNeuronState) exactCandidate(iExt float64) (float64, float64) {
-	membraneDecay := math.Exp(-s.Dt / s.TauM)
-	energyDecay := math.Exp(-s.Dt / s.TauE)
-	energyDelta := s.Epsilon - s.Epsilon0
-	epsilonCandidate := s.Epsilon0 + energyDelta*energyDecay
-	steadyEnergyIntegral := s.Epsilon0 * s.TauM * (1.0 - membraneDecay)
-	coupledRate := (1.0 / s.TauM) - (1.0 / s.TauE)
-	transientEnergyIntegral := 0.0
-	if math.Abs(coupledRate) < 1.0e-12 {
-		transientEnergyIntegral = energyDelta * membraneDecay * s.Dt
-	} else {
-		transientEnergyIntegral = energyDelta * membraneDecay * math.Expm1(coupledRate*s.Dt) / coupledRate
-	}
-	vCandidate := s.VRest + (s.V-s.VRest)*membraneDecay +
-		(s.Resistance*iExt/s.TauM)*(steadyEnergyIntegral+transientEnergyIntegral)
-	return vCandidate, epsilonCandidate
-}
-
-// Valid returns true when the state satisfies the energy-LIF physics contract.
+// Valid reports whether the complete source state is inside its envelope.
 func (s *EnergyLIFNeuronState) Valid() bool {
-	return isFiniteEnergyLIF(s.V) &&
-		s.V >= energyLIFVMin &&
-		s.V <= energyLIFVMax &&
-		isFiniteEnergyLIF(s.Epsilon) &&
-		s.Epsilon >= 0.0 &&
-		isFiniteEnergyLIF(s.VRest) &&
-		isFiniteEnergyLIF(s.VReset) &&
-		s.VReset >= energyLIFVMin &&
-		s.VReset <= energyLIFVMax &&
-		isFiniteEnergyLIF(s.VThreshold) &&
-		isFiniteEnergyLIF(s.TauM) &&
-		s.TauM > 0.0 &&
-		isFiniteEnergyLIF(s.TauE) &&
-		s.TauE > 0.0 &&
-		isFiniteEnergyLIF(s.Alpha) &&
-		s.Alpha >= 0.0 &&
-		isFiniteEnergyLIF(s.Epsilon0) &&
-		s.Epsilon0 >= 0.0 &&
-		isFiniteEnergyLIF(s.Resistance) &&
-		s.Resistance > 0.0 &&
-		isFiniteEnergyLIF(s.Dt) &&
-		s.Dt > 0.0 &&
-		s.Epsilon <= s.Epsilon0 &&
-		s.Dt <= s.TauM &&
-		s.Dt <= s.TauE &&
-		s.VThreshold > s.VRest &&
-		s.VThreshold > s.VReset
-}
-
-func isFiniteEnergyLIF(x float64) bool {
-	return !math.IsNaN(x) && !math.IsInf(x, 0)
-}
-
-// SimulateEnergyLIFNeuron runs the neuron for n steps
-func SimulateEnergyLIFNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewEnergyLIFNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
-		trace[t] = s.V
-		if result > 0 {
-			spikes++
+	finite := []float64{s.V, s.Epsilon, s.Capacitance, s.GLeak, s.E0, s.EU, s.ED, s.EF, s.VThreshold, s.VReset, s.Alpha, s.Epsilon0, s.EpsilonC, s.Delta, s.TauE, s.Dt}
+	for _, value := range finite {
+		if !isFiniteEnergyLIF(value) {
+			return false
 		}
 	}
-	return trace, spikes
+	return s.V >= -200 && s.V <= 100 && s.VReset >= -200 && s.VReset <= 100 &&
+		s.Epsilon >= 0 && s.Epsilon <= 5 && s.Capacitance > 0 && s.GLeak > 0 &&
+		s.Alpha > 0 && s.Epsilon0 > 0 && s.EpsilonC >= 0 && s.Delta >= 0 &&
+		s.TauE > 0 && s.Dt > 0 && s.Dt <= 1 && s.Dt <= s.TauE && s.ED != s.EF && s.VThreshold > s.VReset
+}
+
+func isFiniteEnergyLIF(x float64) bool { return !math.IsNaN(x) && !math.IsInf(x, 0) }
+
+// SimulateEnergyLIFNeuron runs the source neuron for n samples.
+func SimulateEnergyLIFNeuron(n int, current float64) ([]float64, int) {
+	state := NewEnergyLIFNeuron()
+	trace := make([]float64, n)
+	events := 0
+	for i := range trace {
+		events += state.Step(current)
+		trace[i] = state.V
+	}
+	return trace, events
 }

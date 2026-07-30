@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+[metadata]
+schema_version=2
+name="EnergyLIFNeuron"
+author="Fardet, T. & Levina, A."
+year=2020
+doi="10.1371/journal.pcbi.1008503"
+description="Coupled voltage-energy eLIF using the authors' Brian RK4 profile"
+[state]
+v=-61.0
+epsilon=0.32
+spike_flag=0.0
+[parameters]
+capacitance=100.0
+g_leak=9.0
+e_0=-62.5
+e_u=-58.5
+e_d=-40.0
+e_f=-62.0
+v_threshold=-59.0
+v_reset=-62.0
+alpha=1.0
+epsilon_0=0.5
+epsilon_c=0.18
+delta=0.01
+tau_e=200.0
+dt=0.1
+[integration]
+dt=0.1
+method="rk4"
+substeps=1
+[dynamics]
+e_leak="e_0 + (e_u - e_0) * (1 - epsilon / epsilon_0)"
+dv_dt="(g_leak * (e_leak - v) + I) / capacitance"
+depsilon_dt="((1 - epsilon / (alpha * epsilon_0))^3 - (v - e_f) / (e_d - e_f)) / tau_e"
+[threshold]
+condition="v_candidate > v_threshold and epsilon_candidate > epsilon_c"
+detection="strict sampled"
+[extensions]
+family="energy-based integrate-and-fire"
+source_equations="Fardet-Levina 2020 eLIF and author Brian example"
+identity_note="SCNormalizedEnergyLIFNeuron retains the previous project recurrence"

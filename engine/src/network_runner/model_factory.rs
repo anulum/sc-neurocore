@@ -160,6 +160,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             NeuronVariant::SCSigmaDeltaAccumulator(SCSigmaDeltaAccumulatorNeuron::default()),
         ),
         "EnergyLIF" | "EnergyLIFNeuron" => Ok(NeuronVariant::EnergyLIF(EnergyLIFNeuron::new())),
+        "SCNormalizedEnergyLIF" | "SCNormalizedEnergyLIFNeuron" => Ok(
+            NeuronVariant::SCNormalizedEnergyLIF(SCNormalizedEnergyLIFNeuron::new()),
+        ),
         "ClosedFormContinuous" | "ClosedFormContinuousNeuron" => Ok(
             NeuronVariant::ClosedFormContinuous(ClosedFormContinuousNeuron::new()),
         ),
@@ -455,6 +458,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "SigmaDelta",
         "SCSigmaDeltaAccumulator",
         "EnergyLIF",
+        "SCNormalizedEnergyLIF",
         "ClosedFormContinuous",
         "ChialvoMap",
         "RulkovMap",

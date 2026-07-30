@@ -3957,6 +3957,54 @@
         "src/sc_neurocore/accel/rust/safety/sc_sigma_delta_accumulator.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_sigma_delta_accumulator.rs",
         "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py": "source_hashes.src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_energy_lif.json",
+      "description": "Fardet-Levina coupled eLIF RK4 parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "Fardet-Levina source eLIF coupled RK4",
+        "current": 80.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 3,
+        "steps": 20000
+      },
+      "id": "energy-lif-fardet-levina-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
+      "source_hashes": {
+        "benchmarks/bench_model_energy_lif.py": "source_hashes.benchmarks/bench_model_energy_lif.py",
+        "src/sc_neurocore/accel/go/services/energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/energy_lif.go",
+        "src/sc_neurocore/accel/julia/neurons/energy_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/energy_lif.jl",
+        "src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo",
+        "src/sc_neurocore/accel/rust/safety/energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/energy_lif.rs",
+        "src/sc_neurocore/neurons/models/energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/energy_lif.py"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_normalized_energy_lif.json",
+      "description": "Retained SC normalized EnergyLIF parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "SC retained normalized energy-gated exact flow",
+        "current": 30.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 3,
+        "steps": 20000
+      },
+      "id": "sc-normalized-energy-lif-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
+      "source_hashes": {
+        "benchmarks/bench_model_sc_normalized_energy_lif.py": "source_hashes.benchmarks/bench_model_sc_normalized_energy_lif.py",
+        "src/sc_neurocore/accel/go/services/sc_normalized_energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_normalized_energy_lif.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_normalized_energy_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_normalized_energy_lif.jl",
+        "src/sc_neurocore/accel/mojo/kernels/sc_normalized_energy_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_normalized_energy_lif.mojo",
+        "src/sc_neurocore/accel/rust/safety/sc_normalized_energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_normalized_energy_lif.rs",
+        "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

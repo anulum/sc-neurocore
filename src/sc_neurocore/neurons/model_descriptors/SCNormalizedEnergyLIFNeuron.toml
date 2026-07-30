@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+[metadata]
+schema_version=2
+name="SCNormalizedEnergyLIFNeuron"
+class_name="SCNormalizedEnergyLIFNeuron"
+module="sc_normalized_energy_lif"
+display_name="SC normalized energy-gated LIF"
+summary="Retained project exact-flow normalized energy recurrence."
+family="SC project models"
+category="integrate-and-fire"
+biophysical_detail="point"
+maturity="validated"
+intended_use=["historical project replay"]
+hardware_fit=["bounded fixed-point co-simulation"]
+behavior_tags=["project-defined","energy-gated","exact-flow"]
+[provenance]
+authors=["Anulum Fortis & Arcane Sapience"]
+year=2026
+doi=""
+derivation_note="Exact recurrence formerly exposed as EnergyLIFNeuron; no external source attribution."
+[state.v]
+init=-70.0
+[state.epsilon]
+init=1.0
+[parameters]
+v_rest=-70.0
+v_reset=-70.0
+v_threshold=-50.0
+tau_m=10.0
+tau_e=500.0
+alpha=0.1
+epsilon_0=1.0
+resistance=1.0
+dt=1.0
+[integration]
+dt=1.0
+method="closed-form constant-current"
+[dynamics]
+identity_note="Count-neutral SC compatibility identity"
+[backends.python]
+status="implemented"
+parity="exact"
+[backends.rust]
+status="implemented"
+parity="2e-12"
+[backends.julia]
+status="implemented"
+parity="2e-12"
+[backends.go]
+status="implemented"
+parity="2e-12"
+[backends.mojo]
+status="implemented"
+parity="2e-12"
+[reproducibility]
+reference_config="src/sc_neurocore/neurons/reference_trace_data/sc_normalized_energy_lif_project.json"
+golden_trace_sha256="29a0793719677083d6502511382bee812c5ea1fcd0b8599cd6bb94c34187d12a"
+golden_citation="frozen pre-Model-52 project recurrence"
+[documentation]
+slug="models/sc_normalized_energy_lif"
+notes="Count-neutral SC compatibility identity; EnergyLIFNeuron owns the source catalogue entry."
+[validation]
+dynamics_faithful=true
+metric="trajectory"
+operating_point="256-step frozen compatibility trace plus five-runtime parity"
+tolerance="events exact and binary64 state within 2e-12"
+evidence="tests/test_model_sc_normalized_energy_lif_compatibility.py; tests/test_reference_sc_normalized_energy_lif.py"
+[silicon]
+compiles=true
+cosim_validated=true
+cosim_evidence="tests/test_cosim_sc_normalized_energy_lif.py"
+target_tier="H1"
+terminal_reason="Pinned-profile fixed-point co-simulation and bounded safety only; timing, PPA, and universal binary64 equivalence remain open."

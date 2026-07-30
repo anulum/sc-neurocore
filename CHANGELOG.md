@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `EnergyLIFNeuron` to the Fardet-Levina (2020) coupled eLIF source
+  identity and the authors' 0.1 ms Brian RK4 profile. The former normalized
+  exact-flow recurrence remains exactly available as the count-neutral
+  `SCNormalizedEnergyLIFNeuron`. Both identities now carry complete
+  Python/Rust/Julia/Go/Mojo dispatch, paired schemas, independent receipts,
+  pinned Q32.32 RTL/Yosys/bounded-safety evidence, source/binary-bound
+  benchmarks, and language-native documentation. Only the source identity
+  increments the catalogue, now 53/155.
 - Corrected `SigmaDeltaNeuron` to a source-bound sampled specialization of
   Yoon's asynchronous pulse sigma-delta encoder: integrating prefilter,
   exponentially decaying local reconstruction, upper-threshold quantizer, and

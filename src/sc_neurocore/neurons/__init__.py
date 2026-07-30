@@ -93,6 +93,7 @@ _MODEL_NAMES = {
     "DurstewitzDopamineNeuron",
     "EPropALIFNeuron",
     "EnergyLIFNeuron",
+    "SCNormalizedEnergyLIFNeuron",
     "ErmentroutKopellPopulation",
     "EscapeRateNeuron",
     "ExpIFNeuron",

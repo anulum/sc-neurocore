@@ -686,6 +686,13 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.energy_lif`
+
+### Function `backend_available(backend)`
+### Function `auto_backend()`
+### Function `simulate_energy_lif(currents)`
+---
+
 ## Module `accel.ermentrout_kopell_pop`
 
 ### Function `backend_available(backend)`
@@ -1598,6 +1605,13 @@ Return the first available measured lane, with Python as floor.
 ### Function `simulate_sc_non_resetting_adaptive_lif(currents)`
 Run the complete retained-project contract on one real backend.
 
+---
+
+## Module `accel.sc_normalized_energy_lif`
+
+### Function `backend_available(backend)`
+### Function `auto_backend()`
+### Function `simulate_sc_normalized_energy_lif(currents)`
 ---
 
 ## Module `accel.sc_resetting_mat`
@@ -23650,16 +23664,23 @@ Reference: Bellec, G. et al. (2020). Nat. Commun. 11:3625.
 ## Module `neurons.models.energy_lif`
 
 ### Class `EnergyLIFNeuron`
-Fardet & Levina 2020 — LIF with metabolic energy constraint.
+Fardet-Levina eLIF using the authors' 0.1 ms Brian RK4 profile.
 
-Reference: Fardet, T. & Levina, A. (2020). PLoS Comput. Biol. 16(12):e1008503.
+The two coupled states are membrane potential ``v`` in mV and normalized
+available energy ``epsilon``.  ``alpha`` is energetic health, ``delta`` is
+the per-spike energy cost, and ``epsilon_c`` is the energy firing gate.
+
+Reference
+---------
+Fardet & Levina (2020), PLOS Computational Biology 16:e1008503,
+DOI 10.1371/journal.pcbi.1008503.
 
 - **__post_init__**()
-  - Validate the energy-LIF state before first use.
+  - Validate the complete eLIF state and parameter contract.
 - **step**(current)
-  - Advance one exact-flow step and return `1` when a spike occurs.
+  - Advance one source RK4 sample and return the sampled spike event.
 - **reset**()
-  - Restore membrane voltage and energy reserve to resting state.
+  - Restore the source equilibrium-oriented reset state.
 
 ---
 
@@ -25589,6 +25610,20 @@ paper attribution. Use :class:`NonResettingLIFNeuron` for source MAT(1).
   - Advance one exact-relaxation sample with atomic failure.
 - **reset**()
   - Restore voltage and adaptive threshold to their configured rests.
+
+---
+
+## Module `neurons.models.sc_normalized_energy_lif`
+
+### Class `SCNormalizedEnergyLIFNeuron`
+Retain the project's normalized two-state energy-gated LIF exactly.
+
+- **__post_init__**()
+  - Validate the retained SC state before first use.
+- **step**(current)
+  - Advance one retained exact-flow sample and return its event.
+- **reset**()
+  - Restore the retained normalized resting state.
 
 ---
 

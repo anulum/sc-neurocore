@@ -123,6 +123,7 @@ pub mod encoder;
 pub mod encoding;
 pub mod energy;
 pub mod energy_lif;
+pub mod sc_normalized_energy_lif;
 pub mod engine;
 pub mod entropy;
 pub mod eprop;

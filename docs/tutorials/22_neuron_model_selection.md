@@ -42,6 +42,8 @@ What is your goal?
 │  ├─ SC affine-rest compatibility → SCNonResettingAdaptiveLIFNeuron
 │  ├─ Sampled APSDM source encoder → SigmaDeltaNeuron
 │  ├─ SC bipolar accumulator compatibility → SCSigmaDeltaAccumulatorNeuron
+│  ├─ Source metabolic eLIF → EnergyLIFNeuron
+│  ├─ SC normalized energy compatibility → SCNormalizedEnergyLIFNeuron
 │  ├─ Other threshold adaptation → HomeostaticLIFNeuron, GLIFNeuron
 │  ├─ Spike-frequency adaptation → SFANeuron, BendaHerzNeuron
 │  └─ Reward-modulated → EPropALIFNeuron (with eligibility traces)
