@@ -691,7 +691,9 @@ func inputSHA256(exc, inh []uint64, current []float64) string {
 		writeUint64(hash.Write, value)
 	}
 	for _, value := range current {
-		writeUint64(hash.Write, math.Float64bits(value))
+		// Canonical 1e-9 pA custody ignores platform-libm rounding in cue cosines.
+		quantized := int64(math.Floor(value*1_000_000_000.0 + 0.5))
+		writeUint64(hash.Write, uint64(quantized))
 	}
 	return hex.EncodeToString(hash.Sum(nil))
 }

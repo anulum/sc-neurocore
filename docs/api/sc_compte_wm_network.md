@@ -173,17 +173,50 @@ bit identity across FFT reductions. The recorded medians are local loaded-host
 regression measurements; Julia's command route includes JIT compilation in
 its reported interval. They are not production, hardware, or behavior claims.
 
+Run-input receipts encode Poisson counts exactly and direct currents as
+little-endian integers at `1e-9 pA` resolution. This custody quantization makes
+the digest independent of sub-nanopicoamp platform-libm differences in the
+raised-cosine cue; it does not quantize or otherwise change the binary64
+current executed by any runtime.
+
+## SC behavior ensemble
+
+`SCCompteWMBehaviorProtocol` turns the ring into the separately named SC
+working-memory mod through a frozen 2.5-second sequence: 250 ms spontaneous
+baseline; a 250 ms cue at 180 degrees; 500 ms unforced delay; a 250 ms,
+90-degree-separated distractor; 500 ms recovery; a 250 ms global response;
+and 500 ms reset observation. Every epoch is reduced into explicit 250 ms
+population-rate, circular-center, resultant-length, and width statistics.
+
+Acceptance thresholds are declared before execution in
+`SCCompteWMBehaviorAcceptance`. They require low spontaneous activity,
+cue-centered bump formation, persistent and narrowly drifting delay activity,
+a post-distractor center closer to the original cue than the distractor,
+diffuse high-rate global response, and low-rate/low-coherence reset. Circular
+distances are used at every angular boundary.
+
+The committed ensemble contains Rust reference runs for seeds 41, 42, and 43
+plus seed-42 anchors from Python, Julia, Go, and Mojo. All seven trials must
+pass every threshold, every explicit backend must be represented, all five
+seed-42 anchors must have exact input/spike/count custody, the three reference-
+seed delay drifts must include both signs, and their signed mean must remain
+within 5 degrees. The result hashes the protocol, dispatcher, all five runtime
+implementations, adapters, and committed Mojo binary.
+
+This establishes deterministic SC simulator evidence for bump persistence,
+bounded random drift, response reset, and distractor resistance at the frozen
+2,048+512 scale. It does not claim reproduction of the paper's larger
+distractor experiment, biological validation, production throughput, formal
+equivalence, or hardware behavior.
+
 ## Claim boundary
 
-The Python executor and committed benchmark are deterministic simulator
-receipts, not behavioral validation. The benchmark exercises 1,000 full
-network steps and binds its result to source hashes, but records local loaded-
-host regression timing only. Persistent-bump formation, delay stability,
-random drift, response reset, distractor resistance, and silicon behavior
-remain open until demonstrated by separately committed ensemble and backend
-evidence. The current native claim is explicit Python/Rust/Julia/Go/Mojo
-dispatch with exact event and short-trace custody. The network therefore does not
-increment the 49/155 neuron-model fidelity count.
+Persistent-bump formation, delay stability, bounded random drift, response
+reset, and distractor resistance are established by the separately committed
+deterministic simulator ensemble above. Biological validation, the paper's
+larger distractor experiment, schemas, RTL/co-simulation, formal equivalence,
+and silicon behavior remain open. The network therefore does not increment
+the 49/155 neuron-model fidelity count.
 
 ## Example
 

@@ -462,7 +462,7 @@ impl SCCompteWMNetwork {
             let mut step_input = Sha256::new();
             hash_u64_slice(&mut step_input, &exc_events);
             hash_u64_slice(&mut step_input, &inh_events);
-            hash_f64_slice(&mut step_input, &current);
+            hash_current_slice(&mut step_input, &current);
             input_digest.update(step_input.finalize());
             let receipt = self.step_with_events(&current, &exc_events, &inh_events)?;
             for (index, spike) in receipt.excitatory_spikes.iter().enumerate() {
@@ -736,6 +736,17 @@ fn hash_u64_slice(digest: &mut Sha256, values: &[u64]) {
 fn hash_f64_slice(digest: &mut Sha256, values: &[f64]) {
     for value in values {
         digest.update(value.to_le_bytes());
+    }
+}
+
+/// Hash currents as little-endian integers at 1e-9 pA resolution.
+///
+/// This keeps receipt custody stable across small platform-libm differences
+/// in the raised-cosine cue while leaving the executed binary64 current intact.
+fn hash_current_slice(digest: &mut Sha256, values: &[f64]) {
+    for value in values {
+        let quantized = (value * 1_000_000_000.0 + 0.5).floor() as i64;
+        digest.update(quantized.to_le_bytes());
     }
 }
 

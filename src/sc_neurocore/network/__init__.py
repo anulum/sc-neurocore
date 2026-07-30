@@ -53,6 +53,18 @@ from .sc_compte_wm_backends import (
     run_sc_compte_wm_network,
     sc_compte_wm_backend_status,
 )
+from .sc_compte_wm_behavior import (
+    SC_COMPTE_WM_BEHAVIOR_BACKENDS,
+    SC_COMPTE_WM_BEHAVIOR_REFERENCE_SEEDS,
+    SCCompteWMBehaviorAcceptance,
+    SCCompteWMBehaviorEnsemble,
+    SCCompteWMBehaviorMetrics,
+    SCCompteWMBehaviorProtocol,
+    SCCompteWMBehaviorTrial,
+    assess_sc_compte_wm_behavior,
+    run_sc_compte_wm_behavior_trial,
+    summarize_sc_compte_wm_behavior_ensemble,
+)
 
 __all__ = [
     "Population",
@@ -96,4 +108,14 @@ __all__ = [
     "SCCompteWMBackendUnavailable",
     "run_sc_compte_wm_network",
     "sc_compte_wm_backend_status",
+    "SC_COMPTE_WM_BEHAVIOR_BACKENDS",
+    "SC_COMPTE_WM_BEHAVIOR_REFERENCE_SEEDS",
+    "SCCompteWMBehaviorAcceptance",
+    "SCCompteWMBehaviorEnsemble",
+    "SCCompteWMBehaviorMetrics",
+    "SCCompteWMBehaviorProtocol",
+    "SCCompteWMBehaviorTrial",
+    "assess_sc_compte_wm_behavior",
+    "run_sc_compte_wm_behavior_trial",
+    "summarize_sc_compte_wm_behavior_ensemble",
 ]

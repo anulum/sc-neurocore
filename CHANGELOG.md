@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Established the separately named 2,560-cell `SC-COMPTE-WM-NETWORK` behavior
+  ensemble across Python, Rust, Julia, Go, and Mojo. Three reference seeds and
+  five explicit runtime anchors now satisfy predeclared circular-statistics
+  thresholds for spontaneous baseline, cue formation, persistent bump,
+  bounded bidirectional drift, distractor resistance, global response, and
+  reset, with exact long-run input/spike/count custody. Direct-current receipt
+  hashing now uses documented `1e-9 pA` custody resolution across platform
+  math libraries without changing executed binary64 currents. This is
+  deterministic SC simulator evidence, not reproduction of the paper's larger
+  distractor experiment or silicon/biological validation.
 - Corrected `CompteWMNeuron` to the source-bounded Compte et al. (2000)
   pyramidal-cell membrane and incoming AMPA/NMDA/GABAA kinetics, including
   separate presynaptic event paths, coupled midpoint RK2 at 0.02 ms, and

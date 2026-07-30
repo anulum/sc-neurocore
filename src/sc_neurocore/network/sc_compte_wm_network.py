@@ -43,6 +43,12 @@ def _array_digest(hasher: Any, values: np.ndarray[Any, Any], dtype: str) -> None
     hasher.update(np.ascontiguousarray(values, dtype=dtype).tobytes())
 
 
+def _current_digest(hasher: Any, current_pa: np.ndarray[Any, Any]) -> None:
+    """Hash current at 1e-9 pA resolution, independent of libm rounding."""
+    quantized = np.floor(current_pa * 1_000_000_000.0 + 0.5)
+    _array_digest(hasher, quantized, "<i8")
+
+
 @dataclass(slots=True)
 class SCCompteWMNetworkState:
     """Complete mutable state of the 2,560-cell network."""
@@ -445,7 +451,7 @@ class SCCompteWMNetwork:
         input_digest = hashlib.sha256()
         _array_digest(input_digest, exc_events, "<i8")
         _array_digest(input_digest, inh_events, "<i8")
-        _array_digest(input_digest, current_pa, "<f8")
+        _current_digest(input_digest, current_pa)
         self._state = next_state
         return SCCompteWMStepReceipt(
             step_index=step_index,

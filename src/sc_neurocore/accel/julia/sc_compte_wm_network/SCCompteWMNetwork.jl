@@ -329,7 +329,9 @@ function digest_inputs(exc_events, inh_events, current_pa)
         write(io, htol(UInt64(event)))
     end
     for value in current_pa
-        write(io, htol(reinterpret(UInt64, Float64(value))))
+        # Canonical 1e-9 pA custody ignores platform-libm rounding in cue cosines.
+        quantized = floor(Int64, Float64(value) * 1_000_000_000.0 + 0.5)
+        write(io, htol(reinterpret(UInt64, quantized)))
     end
     bytes2hex(sha256(take!(io)))
 end

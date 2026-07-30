@@ -84,6 +84,12 @@ def _array_digest(hasher: Any, values: np.ndarray[Any, Any], dtype: str) -> None
     hasher.update(np.ascontiguousarray(values, dtype=dtype).tobytes())
 
 
+def _current_digest(hasher: Any, current_pa: np.ndarray[Any, Any]) -> None:
+    """Hash current at 1e-9 pA resolution, independent of libm rounding."""
+    quantized = np.floor(current_pa * 1_000_000_000.0 + 0.5)
+    _array_digest(hasher, quantized, "<i8")
+
+
 def _address(values: np.ndarray[Any, Any]) -> int:
     return int(values.ctypes.data)
 
@@ -372,7 +378,7 @@ class SCCompteWMMojoNetwork:
         input_digest = hashlib.sha256()
         _array_digest(input_digest, exc_events, "<i8")
         _array_digest(input_digest, inh_events, "<i8")
-        _array_digest(input_digest, current, "<f8")
+        _current_digest(input_digest, current)
         return SCCompteWMStepReceipt(
             step_index=step_index,
             excitatory_spikes=exc_spikes,
