@@ -79,6 +79,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Added the complete Mojo runtime for `SC-COMPTE-WM-NETWORK`, with a
+  documented stable C ABI, all 2,560 states, native counter-Poisson input,
+  dependency-free radix-2 FFT coupling, control/modulated modes, explicit-
+  event co-simulation, protocol/window/run custody, and atomic validation.
+  The repository-local Mojo 0.26.2 build is pinned to `x86-64-v3`; its
+  source/binary-bound three-repeat 1,000-step receipt exactly matches the
+  Python/Rust/Julia/Go input and spike evidence without claiming network
+  behavior or hardware performance.
 - Added the complete Go runtime for `SC-COMPTE-WM-NETWORK`, with GoDoc,
   all 2,560 states, counter Poisson input, an in-tree dependency-free radix-2
   FFT, optional structured E-to-I coupling, explicit-event co-simulation,

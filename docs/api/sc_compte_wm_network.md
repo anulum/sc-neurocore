@@ -126,16 +126,37 @@ receipt exactly matches Python and Julia input digests, spike digests, and
 population spike counts. Binary64 state hashes are not claimed bit-identical
 across FFT implementations, and the timing is local regression evidence only.
 
+## Native Mojo lane
+
+`accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo` exports the complete
+fixed-size transition through a stable C ABI. Mojo builds both unit-mean
+footprint spectra, samples the portable counter-Poisson streams, applies its
+dependency-free radix-2 FFT reductions, advances all nine state arrays through
+midpoint RK2, and commits threshold/reset/refractory events atomically. The
+Python custody facade supplies contiguous caller-owned storage, protocol
+currents, window statistics, and canonical receipts; it never substitutes the
+Python network recurrence. Native comments document every ABI address, scalar,
+status, ownership, and invalid-output boundary.
+
+The committed shared library is built with the repository-local
+`.venv/bin/mojo` 0.26.2 toolchain and the portable `x86-64-v3` target. The
+source/binary-bound three-repeat 1,000-step receipt exactly matches the
+Python, Rust, Julia, and Go input digest, spike digest, and population spike
+counts. Its binary64 final-state digest is runtime-specific because FFT
+reduction orders differ. The timing is local regression evidence only and
+does not establish persistent-bump behavior, distractor resistance, hardware
+performance, or production throughput.
+
 ## Claim boundary
 
 The Python executor and committed benchmark are deterministic simulator
 receipts, not behavioral validation. The benchmark exercises 1,000 full
 network steps and binds its result to source hashes, but records local loaded-
 host regression timing only. Persistent-bump formation, delay stability,
-random drift, response reset, distractor resistance, complete all-runtime
-parity, and silicon behavior remain open until demonstrated by separately
-committed ensemble and backend evidence. The current native claim is
-Python/Rust/Julia/Go short-trace parity. The network therefore does not
+random drift, response reset, distractor resistance, and silicon behavior
+remain open until demonstrated by separately committed ensemble and backend
+evidence. The current native claim is Python/Rust/Julia/Go/Mojo event and
+short-trace parity. The network therefore does not
 increment the 49/155 neuron-model fidelity count.
 
 ## Example
