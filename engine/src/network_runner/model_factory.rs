@@ -147,6 +147,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "NonResettingLIF" | "NonResettingLIFNeuron" => {
             Ok(NeuronVariant::NonResettingLIF(NonResettingLIFNeuron::new()))
         }
+        "SCNonResettingAdaptiveLIF" | "SCNonResettingAdaptiveLIFNeuron" => Ok(
+            NeuronVariant::SCNonResettingAdaptiveLIF(SCNonResettingAdaptiveLIFNeuron::new()),
+        ),
         "AdaptiveThresholdIF" | "AdaptiveThresholdIFNeuron" => Ok(
             NeuronVariant::AdaptiveThresholdIF(AdaptiveThresholdIFNeuron::new()),
         ),
@@ -444,6 +447,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "ComplementaryLIF",
         "ParametricLIF",
         "NonResettingLIF",
+        "SCNonResettingAdaptiveLIF",
         "AdaptiveThresholdIF",
         "SigmaDelta",
         "EnergyLIF",

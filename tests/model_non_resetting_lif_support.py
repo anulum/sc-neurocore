@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-"""Full pipeline test for NonResettingLIFNeuron (Kobayashi 2009 / Jolivet 2004).
+"""Compatibility pipeline for the retained SC non-resetting adaptive LIF.
 
 Adaptive multi-timescale threshold (aMAT) variant — non-resetting LIF:
 tau_m dV/dt = -(V - V_rest) + R·I
@@ -23,7 +23,9 @@ FULL PIPELINE WIRED + BOUNDED RUNTIME SENTINELS."""
 import time
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.non_resetting_lif import NonResettingLIFNeuron
+from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
+    SCNonResettingAdaptiveLIFNeuron as NonResettingLIFNeuron,
+)
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network

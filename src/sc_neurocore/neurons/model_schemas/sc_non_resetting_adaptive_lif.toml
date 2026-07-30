@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — retained project exact-relaxation schema
+
+[metadata]
+schema_version = 2
+name = "SCNonResettingAdaptiveLIFNeuron"
+author = "SC-NeuroCore project"
+year = 2026
+doi = ""
+description = "Project affine-rest exact-relaxation adaptive LIF without voltage reset or refractory gating"
+
+[state]
+v = -65.0
+theta = -50.0
+spike_flag = 0.0
+
+[parameters]
+v_rest = -65.0
+theta_rest = -50.0
+delta_theta = 5.0
+tau_m = 10.0
+tau_theta = 50.0
+r_m = 1.0
+dt = 0.1
+
+[integration]
+dt = 0.1
+method = "map"
+substeps = 1
+
+[dynamics]
+v = "exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r_m * I)"
+theta = "exp(-dt / tau_theta) * theta + (1 - exp(-dt / tau_theta)) * theta_rest + (delta_theta if exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r_m * I) >= exp(-dt / tau_theta) * theta + (1 - exp(-dt / tau_theta)) * theta_rest else 0.0)"
+spike_flag = "1.0 if exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r_m * I) >= exp(-dt / tau_theta) * theta + (1 - exp(-dt / tau_theta)) * theta_rest else 0.0"
+
+[threshold]
+condition = "spike_flag >= 0.5"
+detection = "level"
+
+[extensions]
+family = "adaptive-threshold"
+model_type = "sc_non_resetting_adaptive_lif"
+source_equations = "SC-NeuroCore retained project recurrence; no publication attribution"
+discretisation = "Exact affine relaxation for voltage and threshold over each 0.1 ms sample"
+identity_note = "Former NonResettingLIFNeuron behavior, retained explicitly during Model 50 source correction."

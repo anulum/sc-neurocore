@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Non-resetting LIF dual-identity closure
+
+- Corrected `NonResettingLIFNeuron` to source MAT(1) with non-resetting
+  forward-Euler voltage, one exact 50 ms threshold history, and a 2 ms
+  absolute refractory interval. Preserved the former exact-relaxation behavior
+  as `SCNonResettingAdaptiveLIFNeuron` rather than overwriting it.
+- Closed both identities across Python, Rust engine/PyO3 and safety, Julia, Go,
+  Mojo, paired schemas, independent receipts, Q32.32 RTL/Yosys/formal checks,
+  source/binary-bound benchmarks, and native documentation. The source count is
+  now 51/155; the SC compatibility identity is not counted as literature.
+
 - Completed Aihara Model 43 from primary Eqs. 10–12 after separating the
   original SC two-state recurrence into the preserved `SCChaoticMapNeuron`:
   one-state source dynamics,

@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-12 source MAT(1) bounded safety proof
+
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_non_resetting_lif_formal.v
+read -formal sc_non_resetting_lif.v
+prep -top sc_non_resetting_lif_formal
+
+[files]
+sc_non_resetting_lif_formal.v
+sc_non_resetting_lif.v

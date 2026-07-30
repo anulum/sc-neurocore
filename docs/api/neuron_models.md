@@ -221,7 +221,8 @@ raw TOML descriptor.
 | `InhibitoryLIFNeuron` | `InhibitoryLIFNeuron` | — |
 | `ComplementaryLIFNeuron` | `ComplementaryLIFNeuron` | — |
 | `ParametricLIFNeuron` | `ParametricLIFNeuron` | Fang et al. 2021 |
-| `NonResettingLIFNeuron` | `NonResettingLIFNeuron` | Brette 2004 |
+| `NonResettingLIFNeuron` | `NonResettingLIFNeuron` | Kobayashi et al. 2009 MAT(1) |
+| `SCNonResettingAdaptiveLIFNeuron` | `SCNonResettingAdaptiveLIFNeuron` | SC-NeuroCore project recurrence |
 | `AdaptiveThresholdIFNeuron` | `AdaptiveThresholdIFNeuron` | Platkiewicz & Brette 2010 |
 | `SigmaDeltaNeuron` | `SigmaDeltaNeuron` | — |
 | `EnergyLIFNeuron` | `EnergyLIFNeuron` | Sengupta et al. 2013 |

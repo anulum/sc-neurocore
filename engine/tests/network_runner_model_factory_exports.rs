@@ -17,7 +17,7 @@ fn public_model_catalogue_is_unique_and_fully_constructible() {
     let models = supported_models();
     let unique: BTreeSet<_> = models.iter().copied().collect();
 
-    assert_eq!(models.len(), 162);
+    assert_eq!(models.len(), 164);
     assert_eq!(unique.len(), models.len());
     for name in models {
         assert!(
@@ -32,6 +32,14 @@ fn public_model_factory_preserves_alias_and_error_contracts() {
     assert!(matches!(
         create_neuron("AdExNeuron"),
         Ok(NeuronVariant::AdEx(_))
+    ));
+    assert!(matches!(
+        create_neuron("NonResettingLIFNeuron"),
+        Ok(NeuronVariant::NonResettingLIF(_))
+    ));
+    assert!(matches!(
+        create_neuron("SCNonResettingAdaptiveLIFNeuron"),
+        Ok(NeuronVariant::SCNonResettingAdaptiveLIF(_))
     ));
     assert_eq!(
         create_neuron("not-a-neuron").err().as_deref(),

@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCNonResettingAdaptiveLIFNeuron"
+class_name = "SCNonResettingAdaptiveLIFNeuron"
+module = "sc_non_resetting_adaptive_lif"
+display_name = "SC non-resetting adaptive LIF neuron"
+summary = "Historical SC affine-rest exact-relaxation recurrence with threshold adaptation, no voltage reset, and no refractory gate."
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = ["historical SC-NeuroCore trace compatibility", "exact-relaxation adaptive-threshold experiments", "cross-runtime regression validation"]
+hardware_fit = ["bounded one-cell signed Q32.32 co-simulation"]
+behavior_tags = ["adapting", "excitable", "spiking", "non-resetting"]
+
+[provenance]
+authors = ["SC-NeuroCore project"]
+year = 2026
+paper_title = "SC non-resetting exact-relaxation adaptive-LIF recurrence"
+derivation_note = "Project recurrence formerly carried under NonResettingLIFNeuron. Retained under an explicit SC identity after restoring the distinct source MAT(1) equations. No external paper attribution is claimed."
+
+[state.v]
+init = -65.0
+unit = "mV"
+meaning = "non-resetting membrane voltage"
+[state.theta]
+init = -50.0
+unit = "mV"
+meaning = "adaptive event threshold"
+
+[parameters.v_rest]
+default = -65.0
+unit = "mV"
+meaning = "membrane relaxation equilibrium without input"
+range = [-200.0, 100.0]
+[parameters.theta_rest]
+default = -50.0
+unit = "mV"
+meaning = "threshold relaxation equilibrium"
+range = [-200.0, 100.0]
+[parameters.delta_theta]
+default = 5.0
+unit = "mV"
+meaning = "threshold increment per event"
+range = [0.0, 1000.0]
+[parameters.tau_m]
+default = 10.0
+unit = "ms"
+meaning = "membrane relaxation time constant"
+range = [1e-06, 1000000.0]
+[parameters.tau_theta]
+default = 50.0
+unit = "ms"
+meaning = "threshold relaxation time constant"
+range = [1e-06, 1000000.0]
+[parameters.r_m]
+default = 1.0
+unit = "normalised"
+meaning = "project current-to-voltage gain"
+range = [0.0, 1000000.0]
+
+[integration]
+dt = 0.1
+method = "map"
+
+[dynamics]
+v = "exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r_m * I)"
+theta = "exp(-dt / tau_theta) * theta + (1 - exp(-dt / tau_theta)) * theta_rest + (delta_theta if exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r_m * I) >= exp(-dt / tau_theta) * theta + (1 - exp(-dt / tau_theta)) * theta_rest else 0.0)"
+spike_flag = "1.0 if exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r_m * I) >= exp(-dt / tau_theta) * theta + (1 - exp(-dt / tau_theta)) * theta_rest else 0.0"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/sc_non_resetting_adaptive_lif_project.json"
+golden_trace_sha256 = "7dd9f76fd1d819bc462460112cfb5906b137935db466bfd60e206f1b4303ae25"
+golden_citation = "SC-NeuroCore pre-split Python recurrence compatibility anchor"
+
+[documentation]
+slug = "models/sc_non_resetting_adaptive_lif"
+notes = "Project-defined model with no external publication attribution. It does not increment the literature-model fidelity count."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "256-step historical compatibility receipt with 5 events plus five-runtime parity"
+tolerance = "events exact; complete floating-point states within absolute 2e-12; Python receipt bit-identical"
+evidence = "tests/test_reference_sc_non_resetting_adaptive_lif.py; tests/test_sc_non_resetting_adaptive_lif_backend_dispatch.py; tests/test_cosim_sc_non_resetting_adaptive_lif.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_non_resetting_adaptive_lif.py::test_sc_project_q3232_matches_integer_oracle_and_events"
+target_tier = "H1"
+terminal_reason = "Signed Q32.32 preserves the bounded integer oracle and event vector, synthesizes in Yosys, matches its optimized netlist over the enrolled sequence, and passes depth-12 CVC5 bounded safety. Timing, PPA, device evidence, and universal binary64 equivalence remain open."

@@ -11,99 +11,120 @@ schema_version = 2
 name = "NonResettingLIFNeuron"
 class_name = "NonResettingLIFNeuron"
 module = "non_resetting_lif"
-display_name = ""
-summary = "Adaptive multi-timescale threshold (aMAT) variant — non-resetting LIF."
+display_name = "Kobayashi MAT(1) non-resetting neuron"
+summary = "Kobayashi-Tsubo-Shinomoto MAT(1) with one threshold-history decay, a non-resetting membrane, and a 2 ms refractory interval."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
-behavior_tags = [
-    "adapting",
-    "excitable",
-    "rate-coded",
-    "tonic",
-]
+maturity = "validated"
+intended_use = ["source-equation MAT(1) replay", "one-timescale adaptive-threshold studies", "cross-runtime complete-state validation"]
+hardware_fit = ["bounded one-cell signed Q32.32 co-simulation"]
+behavior_tags = ["adapting", "excitable", "spiking", "non-resetting"]
 
 [provenance]
-authors = [
-    "Jolivet, R., Lewis, T.J. & Gerstner, W.",
-]
-year = 2004
-doi = "10.1152/jn.00190.2004"
+authors = ["Kobayashi, R., Tsubo, Y. & Shinomoto, S."]
+year = 2009
+doi = "10.3389/neuro.10.009.2009"
+paper_title = "Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold"
+url = "https://doi.org/10.3389/neuro.10.009.2009"
+derivation_note = "Equations 1-3 in the MAT(1) specialization: forward-Euler membrane at 0.001 ms, one exact threshold-history exponential with source-optimal tau=50 ms, sampled level detection, 2 ms refractory gating, and no voltage reset. Alpha and omega defaults are an explicit numerical specialization, not a universal fit."
 
 [state.v]
-init = -65.0
+init = 0.0
+unit = "mV relative to rest"
+meaning = "non-resetting membrane voltage"
 
 [state.theta]
-init = -50.0
-
-[parameters.v_rest]
-default = -65.0
+init = 0.0
 unit = "mV"
-meaning = "resting / leak reversal potential"
-range = [
-    -90.0,
-    -40.0,
-]
+meaning = "single spike-history threshold contribution"
 
-[parameters.theta_rest]
-default = -50.0
-unit = "mV"
-meaning = "baseline (resting) value of the adaptive threshold"
-range = [
-    -60.0,
-    -20.0,
-]
+[state.refractory_remaining]
+init = 0.0
+unit = "ms"
+meaning = "absolute refractory time remaining; voltage still evolves"
 
-[parameters.delta_theta]
-default = 5.0
+[parameters.omega]
+default = 19.0
 unit = "mV"
-meaning = "threshold increment added at each spike"
-range = [
-    0.0,
-    20.0,
-]
+meaning = "documented baseline-threshold specialization"
+range = [-1000.0, 1000.0]
 
 [parameters.tau_m]
-default = 10.0
+default = 5.0
 unit = "ms"
 meaning = "membrane time constant"
-range = [
-    1.0,
-    100.0,
-]
+range = [1.0, 100.0]
 
 [parameters.tau_theta]
 default = 50.0
 unit = "ms"
-meaning = "threshold adaptation time constant"
-range = [
-    1.0,
-    500.0,
-]
+meaning = "paper-optimal MAT(1) threshold-kernel time constant"
+range = [1.0, 1000.0]
 
-[parameters.r_m]
-default = 1.0
-unit = "1"
-meaning = "normalised membrane resistance (R=1 in the project's normalised-current convention)"
-range = [
-    0.0,
-    100.0,
-]
+[parameters.alpha]
+default = 37.0
+unit = "mV"
+meaning = "documented threshold-increment specialization"
+range = [0.0, 1000.0]
+
+[parameters.resistance]
+default = 50.0
+unit = "MOhm"
+meaning = "source current-to-voltage conversion"
+range = [0.0, 100.0]
+
+[parameters.refractory_period]
+default = 2.0
+unit = "ms"
+meaning = "source absolute refractory interval"
+range = [0.0, 1000.0]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 0.001
+method = "map"
 
 [dynamics]
+v = "v + dt * (-v + resistance * I) / tau_m"
+theta = "theta * exp(-dt / tau_theta) + (alpha if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta * exp(-dt / tau_theta) else 0.0)"
+refractory_remaining = "refractory_period if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta * exp(-dt / tau_theta) else max(0.0, refractory_remaining - dt)"
+spike_flag = "1.0 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta * exp(-dt / tau_theta) else 0.0"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/non_resetting_lif_mat1.json"
+golden_trace_sha256 = "2ac13e42322a3ac6b4059f29190f0936409c9d4bf28f1837e4bee97add2069c6"
+golden_citation = "doi:10.3389/neuro.10.009.2009; independent direct Equations 1-3 MAT(1) oracle"
 
 [documentation]
 slug = "models/non_resetting_lif"
-notes = ""
+notes = "Voltage never resets. SCNonResettingAdaptiveLIFNeuron separately retains the historical affine-rest exact-relaxation recurrence."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "10272-step MAT(1) source-equation receipt plus five-runtime parity"
+tolerance = "events exact; complete floating-point states within absolute 2e-12"
+evidence = "tests/test_reference_non_resetting_lif.py; tests/test_non_resetting_lif_backend_dispatch.py; tests/test_cosim_non_resetting_lif.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_non_resetting_lif.py::test_source_mat1_q3232_matches_integer_oracle_and_events"
+target_tier = "H1"
+terminal_reason = "Signed Q32.32 preserves the bounded integer oracle and event vector, synthesizes in Yosys, matches its optimized netlist over the enrolled sequence, and passes depth-12 CVC5 bounded safety. Timing, PPA, device evidence, and universal binary64 equivalence remain open."

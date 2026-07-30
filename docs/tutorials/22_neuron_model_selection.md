@@ -38,6 +38,8 @@ What is your goal?
 ├─ Adaptive firing rate
 │  ├─ Source non-resetting MAT* → MATNeuron
 │  ├─ SC RK4/reset compatibility → SCResettingMATNeuron
+│  ├─ Source one-timescale MAT(1) → NonResettingLIFNeuron
+│  ├─ SC affine-rest compatibility → SCNonResettingAdaptiveLIFNeuron
 │  ├─ Other threshold adaptation → HomeostaticLIFNeuron, GLIFNeuron
 │  ├─ Spike-frequency adaptation → SFANeuron, BendaHerzNeuron
 │  └─ Reward-modulated → EPropALIFNeuron (with eligibility traces)

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "model": "SCNonResettingAdaptiveLIFNeuron",
+  "source": {"authors": ["SC-NeuroCore project"], "title": "SC non-resetting exact-relaxation adaptive-LIF recurrence", "year": 2026, "doi": null, "scope": ["historical SC-NeuroCore recurrence", "exact affine voltage and threshold relaxation", "no voltage reset and no refractory gate"]},
+  "specialization": {"identity": "project model retained during Model 50 source correction", "attribution_boundary": "not attributed to Kobayashi MAT(1), Jolivet generalized IF, or Brette adaptive exponential IF", "compatibility_contract": "binary64 trace must remain bit-identical to the pre-split Python recurrence"},
+  "parameters": {"v_init_mv": -65.0, "theta_init_mv": -50.0, "v_rest_mv": -65.0, "theta_rest_mv": -50.0, "delta_theta_mv": 5.0, "tau_m_ms": 10.0, "tau_theta_ms": 50.0, "r_m": 1.0, "dt_ms": 0.1},
+  "stimulus": {"steps": 256, "current": "32 zeros, 96 samples at 20, then 64 repetitions of [20, 60]"},
+  "oracle": {"canonical_row_format": "little-endian float64 (v, theta) plus int32 event", "trace_sha256": "7dd9f76fd1d819bc462460112cfb5906b137935db466bfd60e206f1b4303ae25", "event_count": 5, "final_state": [-32.61772042832371, -27.97424372241646]}
+}

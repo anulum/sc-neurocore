@@ -1,68 +1,59 @@
+#!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — NonResettingLIFNeuron exact-relaxation benchmark
+
+"""Source-bound five-runtime Kobayashi MAT(1) benchmark."""
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-import platform
-import statistics
-import time
-from datetime import datetime, timezone
+from benchmarks._non_resetting_lif_benchmark import BenchmarkSpec, REPOSITORY, run
+from sc_neurocore.accel import non_resetting_lif as backends
 
-from sc_neurocore.neurons.models.non_resetting_lif import NonResettingLIFNeuron
+SOURCE_PATHS = (
+    "benchmarks/_non_resetting_lif_benchmark.py",
+    "benchmarks/bench_model_non_resetting_lif.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/trivial/non_resetting_lif.rs",
+    "engine/src/neurons/trivial/non_resetting_lif.rs",
+    "src/sc_neurocore/accel/non_resetting_lif.py",
+    "src/sc_neurocore/accel/go/non_resetting_lif/non_resetting_lif.go",
+    "src/sc_neurocore/accel/go/services/non_resetting_lif.go",
+    "src/sc_neurocore/accel/go/services/non_resetting_lif_test.go",
+    "src/sc_neurocore/accel/julia/neurons/non_resetting_lif.jl",
+    "src/sc_neurocore/accel/mojo/kernels/non_resetting_lif.mojo",
+    "src/sc_neurocore/accel/mojo/non_resetting_lif/non_resetting_lif.mojo",
+    "src/sc_neurocore/accel/rust/safety/non_resetting_lif.rs",
+    "src/sc_neurocore/neurons/model_descriptors/NonResettingLIFNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/non_resetting_lif.json",
+    "src/sc_neurocore/neurons/model_schemas/non_resetting_lif.toml",
+    "src/sc_neurocore/neurons/models/non_resetting_lif.py",
+    "src/sc_neurocore/neurons/reference_trace_data/non_resetting_lif_mat1.json",
+)
+SPEC = BenchmarkSpec(
+    benchmark="Kobayashi MAT(1) non-resetting source recurrence",
+    model="NonResettingLIFNeuron",
+    output=REPOSITORY / "benchmarks/results/bench_non_resetting_lif.json",
+    current=0.7,
+    steps=200_000,
+    repeats=5,
+    simulate=backends.simulate_non_resetting_lif,
+    backend_available=backends.backend_available,
+    parity_atol=backends.PARITY_ATOL,
+    state_keys=("voltages", "theta", "refractory"),
+    final_keys=("v_final", "theta_final", "refractory_final"),
+    source_paths=SOURCE_PATHS,
+    go_library="src/sc_neurocore/accel/go/non_resetting_lif/libnon_resetting_lif.so",
+    mojo_library="src/sc_neurocore/accel/mojo/non_resetting_lif/libnon_resetting_lif.so",
+)
 
 
-STEPS = 200_000
-REPEATS = 5
-CURRENT = 20.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-01_non_resetting_lif.json")
-
-
-def run_once() -> dict[str, object]:
-    neuron = NonResettingLIFNeuron()
-    spikes = 0
-    start_ns = time.perf_counter_ns()
-    for _ in range(STEPS):
-        spikes += neuron.step(CURRENT)
-    elapsed_ns = time.perf_counter_ns() - start_ns
-    return {
-        "steps": STEPS,
-        "current": CURRENT,
-        "elapsed_ns": elapsed_ns,
-        "ns_per_step": elapsed_ns / STEPS,
-        "spikes": spikes,
-        "ending_state": [neuron.v, neuron.theta],
-    }
-
-
-def main() -> int:
-    results = [run_once() for _ in range(REPEATS)]
-    ns_per_step = [float(result["ns_per_step"]) for result in results]
-    report = {
-        "benchmark": "NonResettingLIFNeuron Python exact-relaxation step",
-        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_non_resetting_lif.py",
-        "python": platform.python_version(),
-        "platform": platform.platform(),
-        "processor": platform.processor(),
-        "steps": STEPS,
-        "repeats": REPEATS,
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(ns_per_step),
-        "min_ns_per_step": min(ns_per_step),
-        "max_ns_per_step": max(ns_per_step),
-        "results": results,
-    }
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(report, indent=2))
-    return 0
+def main(argv: list[str] | None = None) -> int:
+    """Write parity-clean local MAT(1) evidence."""
+    return int(run(SPEC, argv))
 
 
 if __name__ == "__main__":

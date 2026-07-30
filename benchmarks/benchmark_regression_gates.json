@@ -2933,6 +2933,118 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_non_resetting_lif.json",
+      "description": "Kobayashi MAT(1) non-resetting parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "Kobayashi MAT(1) non-resetting source recurrence",
+        "current": 0.7,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 200000
+      },
+      "id": "non-resetting-lif-mat1-multibackend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_non_resetting_lif.py": "source_hashes.benchmarks/bench_model_non_resetting_lif.py",
+        "src/sc_neurocore/accel/go/services/non_resetting_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/non_resetting_lif.go",
+        "src/sc_neurocore/accel/julia/neurons/non_resetting_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/non_resetting_lif.jl",
+        "src/sc_neurocore/accel/mojo/kernels/non_resetting_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/non_resetting_lif.mojo",
+        "src/sc_neurocore/accel/rust/safety/non_resetting_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/non_resetting_lif.rs",
+        "src/sc_neurocore/neurons/models/non_resetting_lif.py": "source_hashes.src/sc_neurocore/neurons/models/non_resetting_lif.py"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_non_resetting_adaptive_lif.json",
+      "description": "Retained SC exact-relaxation adaptive-LIF parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "SC non-resetting adaptive LIF exact-relaxation recurrence",
+        "current": 20.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 200000
+      },
+      "id": "sc-non-resetting-adaptive-lif-multibackend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "required_numbers": [
+        "backend_summary.python.median_ns_per_step",
+        "backend_summary.python.min_ns_per_step",
+        "backend_summary.python.max_ns_per_step",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ns_per_step",
+        "backend_summary.rust.min_ns_per_step",
+        "backend_summary.rust.max_ns_per_step",
+        "backend_summary.rust.spikes",
+        "backend_summary.go.median_ns_per_step",
+        "backend_summary.go.min_ns_per_step",
+        "backend_summary.go.max_ns_per_step",
+        "backend_summary.go.spikes",
+        "backend_summary.julia.median_ns_per_step",
+        "backend_summary.julia.min_ns_per_step",
+        "backend_summary.julia.max_ns_per_step",
+        "backend_summary.julia.spikes",
+        "backend_summary.mojo.median_ns_per_step",
+        "backend_summary.mojo.min_ns_per_step",
+        "backend_summary.mojo.max_ns_per_step",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_sc_non_resetting_adaptive_lif.py": "source_hashes.benchmarks/bench_model_sc_non_resetting_adaptive_lif.py",
+        "src/sc_neurocore/accel/go/services/sc_non_resetting_adaptive_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/sc_non_resetting_adaptive_lif.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_non_resetting_adaptive_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_non_resetting_adaptive_lif.jl",
+        "src/sc_neurocore/accel/mojo/kernels/sc_non_resetting_adaptive_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/sc_non_resetting_adaptive_lif.mojo",
+        "src/sc_neurocore/accel/rust/safety/sc_non_resetting_adaptive_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_non_resetting_adaptive_lif.rs",
+        "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-18_energy_lif_exact_flow.json",
       "description": "EnergyLIF exact constant-current metabolic flow parity across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

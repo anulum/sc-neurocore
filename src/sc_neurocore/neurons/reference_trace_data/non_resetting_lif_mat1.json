@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "model": "NonResettingLIFNeuron",
+  "source": {"authors": ["Ryota Kobayashi", "Yasuhiro Tsubo", "Shigeru Shinomoto"], "title": "Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold", "journal": "Frontiers in Computational Neuroscience", "year": 2009, "doi": "10.3389/neuro.10.009.2009", "scope": ["Equation 1 non-resetting leaky membrane", "Equations 2-3 single-timescale adaptive threshold", "MAT(1) tau=50 ms", "2 ms absolute refractory interval"]},
+  "specialization": {"profile": "documented MAT(1) numerical specialization", "numerical_contract": "forward Euler membrane at 0.001 ms plus exact exponential threshold-history decay", "event_contract": "sampled level detection after decay; voltage is not reset", "excluded": ["universal cell calibration", "parameter fitting", "network behavior", "firing-time interpolation"]},
+  "parameters": {"v_init_mv_relative_to_rest": 0.0, "omega_mv": 19.0, "tau_m_ms": 5.0, "tau_theta_ms": 50.0, "alpha_mv": 37.0, "resistance_mohm": 50.0, "refractory_ms": 2.0, "dt_ms": 0.001},
+  "stimulus": {"steps": 10272, "current_na": "32 zeros, 8192 samples at 0.7, then 1024 repetitions of [0.2, 0.9]"},
+  "oracle": {"implementation": "independent direct transcription of source equations; does not import production kernels", "canonical_row_format": "little-endian float64 (v, theta, refractory_remaining_ms) plus uint8 event", "trace_sha256": "2ac13e42322a3ac6b4059f29190f0936409c9d4bf28f1837e4bee97add2069c6", "event_indices": [3945], "final_state": [27.965935062410335, 32.60279147075955, 0.0]}
+}

@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `NonResettingLIFNeuron` to the source Kobayashi-Tsubo-Shinomoto
+  (2009) one-timescale MAT(1) identity: forward-Euler non-resetting membrane,
+  exact 50 ms threshold history, and 2 ms absolute refractory gating. The
+  frozen affine-rest exact-relaxation behavior remains as the explicitly
+  project-defined `SCNonResettingAdaptiveLIFNeuron`. Both identities now carry
+  Python/Rust/Julia/Go/Mojo execution, paired schemas, independent receipts,
+  signed Q32.32 RTL/Yosys/sequence/formal evidence, source/binary-bound local
+  benchmarks, and native-language documentation. Only MAT(1) increments the
+  public source-model fidelity count, now 51/155; timing, PPA, device, and
+  universal-equivalence claims remain open.
 - Restored `MATNeuron` to the source Kobayashi-Tsubo-Shinomoto (2009) MAT*
   identity: non-resetting voltage, paper-profile parameters, forward-Euler
   membrane at 0.001 ms, exact two-timescale threshold memories, and a 2 ms

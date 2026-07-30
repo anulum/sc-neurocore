@@ -30,6 +30,7 @@ _LIF_MODELS = frozenset(
         "COBALIFNeuron",
         "ComplementaryLIFNeuron",
         "NonResettingLIFNeuron",
+        "SCNonResettingAdaptiveLIFNeuron",
         "ParametricLIFNeuron",
         "InhibitoryLIFNeuron",
         "TwoCompartmentLIFNeuron",

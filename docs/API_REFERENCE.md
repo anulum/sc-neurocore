@@ -1176,6 +1176,19 @@ Run one complete source-faithful batch on a selected lane.
 
 ---
 
+## Module `accel.non_resetting_lif`
+
+### Function `backend_available(backend)`
+Return whether one named MAT(1) runtime is executable now.
+
+### Function `auto_backend()`
+Return the first available measured lane, with Python as floor.
+
+### Function `simulate_non_resetting_lif(currents)`
+Run the complete configured source MAT(1) contract on one backend.
+
+---
+
 ## Module `accel.perfect_integrator`
 
 ### Function `ensure_julia_loaded()`
@@ -1571,6 +1584,19 @@ Returns
 -------
 numpy.ndarray
     ``(n_out,)`` ``float64`` estimate of ``weights @ input_probs``.
+
+---
+
+## Module `accel.sc_non_resetting_adaptive_lif`
+
+### Function `backend_available(backend)`
+Return whether one named retained-project runtime is executable now.
+
+### Function `auto_backend()`
+Return the first available measured lane, with Python as floor.
+
+### Function `simulate_sc_non_resetting_adaptive_lif(currents)`
+Run the complete retained-project contract on one real backend.
 
 ---
 
@@ -25015,19 +25041,29 @@ Wang (1999) Neuron 22:409.
 ## Module `neurons.models.non_resetting_lif`
 
 ### Class `NonResettingLIFNeuron`
-Adaptive multi-timescale threshold (aMAT) variant — non-resetting LIF.
+Source-faithful one-timescale MAT(1) non-resetting LIF neuron.
 
-tau_m dV/dt = -(V - V_rest) + R*I
-On spike: threshold rises by delta_theta, V does NOT reset.
-dtheta/dt  = -(theta - theta_rest) / tau_theta
+The membrane follows equation 1 of Kobayashi, Tsubo, and Shinomoto
+(2009). ``theta`` stores the single exponentially decaying spike-history
+contribution from equations 2-3; the instantaneous threshold is
+``omega + theta``. A spike raises that history and starts the paper's
+2 ms absolute refractory interval, but never resets ``v``.
 
-Kobayashi et al. 2009, Jolivet et al. 2004.
+The paper identifies 50 ms as the optimal MAT(1) threshold timescale but
+fits threshold amplitude and baseline per neuron. The defaults therefore
+form a documented numerical specialization, not a universal cell fit.
 
-Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §1.3.
+Reference: R. Kobayashi, Y. Tsubo, and S. Shinomoto, Frontiers in
+Computational Neuroscience 3:9 (2009), doi:10.3389/neuro.10.009.2009.
 
 - **__post_init__**()
+  - Validate the complete MAT(1) state and parameter contract.
+- **threshold**()
+  - Return the instantaneous adaptive threshold in millivolts.
 - **step**(current)
+  - Advance one source MAT(1) sample and return ``1`` on a spike.
 - **reset**()
+  - Restore zero-rest voltage, threshold history, and refractory state.
 
 ---
 
@@ -25513,6 +25549,28 @@ source-faithful paper model.
   - Run an atomic batch on a parity-checked maintained backend.
 - **reset**()
   - Clear both states while preserving the configured parameters.
+
+---
+
+## Module `neurons.models.sc_non_resetting_adaptive_lif`
+
+### Class `SCNonResettingAdaptiveLIFNeuron`
+Retained SC exact-relaxation adaptive LIF with no voltage reset.
+
+This is the historical project recurrence formerly exposed as
+``NonResettingLIFNeuron``. Both voltage and threshold use exact affine
+relaxation over one configured sample. A level event raises threshold by
+``delta_theta``; voltage is never reset and no refractory gate is applied.
+
+The recurrence is project-defined and intentionally carries no external
+paper attribution. Use :class:`NonResettingLIFNeuron` for source MAT(1).
+
+- **__post_init__**()
+  - Validate the complete project recurrence before first use.
+- **step**(current)
+  - Advance one exact-relaxation sample with atomic failure.
+- **reset**()
+  - Restore voltage and adaptive threshold to their configured rests.
 
 ---
 

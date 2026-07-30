@@ -1,137 +1,102 @@
-# NonResettingLIFNeuron
+# Kobayashi MAT(1) non-resetting neuron
 
-**Module:** `sc_neurocore.neurons.models.non_resetting_lif`
-**Reference:** Kobayashi et al. 2009, Jolivet et al. 2004
-**Family:** Integrate-and-fire (non-resetting, adaptive threshold)
-**State variables:** `v` (voltage), `theta` (dynamic threshold)
+**Class:** `sc_neurocore.neurons.models.non_resetting_lif.NonResettingLIFNeuron`
+**Source:** Kobayashi, Tsubo, and Shinomoto (2009),
+[*Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold*](https://doi.org/10.3389/neuro.10.009.2009)
 
-## Equations
+## Identity
 
-$$\tau_m \frac{dV}{dt} = -(V - V_r) + R \cdot I$$
-$$\tau_\theta \frac{d\theta}{dt} = -(\theta - \theta_r)$$
+`NonResettingLIFNeuron` is the one-timescale MAT(1) member of the Kobayashi
+family. It is not the standard fire-and-reset generalized integrate-and-fire
+model described by Jolivet et al. Voltage evolves continuously through a spike;
+the event raises one threshold-history state and starts a 2 ms absolute
+refractory interval.
 
-Spike: $V \geq \theta$, then $\theta \leftarrow \theta + \Delta_\theta$.
+The former SC-NeuroCore exact-relaxation recurrence remains available under the
+explicit project identity
+[`SCNonResettingAdaptiveLIFNeuron`](sc_non_resetting_adaptive_lif.md).
 
-**Critically: $V$ does NOT reset.** Only the threshold jumps up.
+## Maintained equations
 
-## Numerical update
+The relative-to-rest membrane follows source Equation 1:
 
-The maintained Python, Go, Julia, and Rust safety implementations use the exact
-first-order solution for both linear subthreshold states:
+$$
+\tau_m \frac{dV}{dt}=-V+RI.
+$$
 
-$$x(t + \Delta t) = x_\infty + (x(t) - x_\infty)e^{-\Delta t / \tau}$$
+One maintained step uses the paper's 0.001 ms forward-Euler discretisation:
 
-For the membrane, $x_\infty = V_r + R \cdot I$. For the adaptive threshold,
-$x_\infty = \theta_r$. The production implementation evaluates the equivalent
-convex form `decay * state + (1 - decay) * steady_state` to avoid overflow from
-subtracting very large finite endpoints.
+$$
+V_{n+1}=V_n+\frac{\Delta t}{\tau_m}(-V_n+RI_n).
+$$
 
-## Parameters
+MAT(1) has one exponentially decaying spike-history contribution:
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `v_rest` | -65.0 | Resting potential (mV) |
-| `theta_rest` | -50.0 | Baseline threshold (mV) |
-| `delta_theta` | 5.0 | Threshold jump on spike (mV) |
-| `tau_m` | 10.0 | Membrane time constant (ms) |
-| `tau_theta` | 50.0 | Threshold relaxation time (ms) |
-| `r_m` | 1.0 | Membrane resistance |
-| `dt` | 0.1 | Integration step (ms) |
+$$
+\theta(t)=\omega+\sum_k \alpha e^{-(t-t_k)/\tau_\theta}.
+$$
 
-## Behaviour
+The public `theta` state stores only the history sum; `threshold` returns
+`omega + theta`. A sampled level event is eligible after the refractory timer
+decays to zero. It increments `theta` by `alpha` and reloads the timer without
+resetting or freezing voltage.
 
-- **No voltage reset:** Unlike standard LIF, voltage continues its
-  natural trajectory after spike. Only the threshold jumps up by
-  delta_theta, preventing immediate re-firing.
-- **Self-limiting:** Repeated spiking accumulates theta increases,
-  naturally reducing rate over time (adaptation).
-- **Theta decays:** Between spikes, theta relaxes back to theta_rest
-  with the exact first-order time constant tau_theta.
-- **aMAT variant:** Closely related to the MAT family (Kobayashi 2009).
-  Differs in the absence of voltage reset — preserves voltage information
-  across spikes.
+## Default specialization
 
-## Validation contract
+| Parameter | Default | Meaning |
+|---|---:|---|
+| `omega` | 19 mV | baseline threshold |
+| `tau_m` | 5 ms | membrane time constant |
+| `tau_theta` | 50 ms | source-selected MAT(1) threshold timescale |
+| `alpha` | 37 mV | documented threshold-history increment |
+| `resistance` | 50 MOhm | current-to-voltage factor |
+| `refractory_period` | 2 ms | absolute event-suppression interval |
+| `dt` | 0.001 ms | source simulation timestep |
 
-The implementation revalidates runtime `v`, `theta`, rests, `delta_theta`,
-`tau_m`, `tau_theta`, `r_m`, `dt`, and input current before integration. The
-membrane steady state, exact membrane candidate, and exact threshold candidate
-are checked for finite values before either state variable is assigned. If a
-spike occurs, the threshold jump is also checked before mutation, preserving the
-defining non-resetting voltage contract without allowing partial updates.
+The paper selects 50 ms as the optimal MAT(1) timescale but fits the threshold
+baseline and amplitude per neuron. These defaults are therefore a documented
+numerical specialization, not a universal biological-cell calibration.
 
-Go and Rust mirrors return explicit errors for invalid scalar state, and Julia
-throws `DomainError`. This surface currently has no Mojo kernel counterpart.
+```python
+from sc_neurocore.neurons.models.non_resetting_lif import NonResettingLIFNeuron
 
-## Infrastructure Pipeline
-
-```
-NonResettingLIFNeuron
-├── step(current) → int {0,1}
-├── Population: works
-├── Verilog: LIF + threshold register, ~20 LUTs
-└── Rust/Go/Julia: exact-relaxation candidate-before-mutation safety mirrors
+neuron = NonResettingLIFNeuron()
+events = [neuron.step(0.7) for _ in range(5000)]
+print(sum(events), neuron.v, neuron.threshold)
 ```
 
-## Test Coverage
+## Executable runtimes
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 12 | construction, exact relaxation, large-timestep boundedness, step binary, subthreshold, spikes, no voltage reset, theta increase, theta decay, stability, reset, deterministic |
-| Network | 1 | Population |
-| Analysis | 1 | spike_count |
-| **Total** | **86 module-specific checks** | Python module test file, Go service checks, Rust safety checks |
+| Lane | Surface | Enrolled parity |
+|---|---|---|
+| Python | `NonResettingLIFNeuron.step` | reference |
+| Rust engine | class plus `py_non_resetting_lif_simulate` | complete trace within `2e-12` |
+| Rust safety | `accel/rust/safety/non_resetting_lif.rs` | complete trace within `2e-12` |
+| Julia | `NonResettingLifAccel` | complete trace within `2e-12` |
+| Go | `accel/go/non_resetting_lif/libnon_resetting_lif.so` | complete trace within `2e-12` |
+| Mojo | `accel/mojo/non_resetting_lif/libnon_resetting_lif.so` | complete trace within `2e-12` |
 
+`sc_neurocore.accel.non_resetting_lif.simulate_non_resetting_lif` exposes the
+complete batch contract. Unknown or unavailable explicitly requested backends
+fail; they are not silently replaced.
 
----
+## Reproducibility and hardware boundary
 
-## Measured Performance (2026-06-01)
+The independent 10,272-step direct-equation receipt records one event at index
+3945, final state
+`[27.965935062410335, 32.60279147075955, 0.0]`, and trace SHA-256
+`2ac13e42322a3ac6b4059f29190f0936409c9d4bf28f1837e4bee97add2069c6`.
+Paired TOML/JSON schemas reproduce the same discrete contract.
 
-| Metric | Value |
-|--------|-------|
-| Python exact-relaxation step | 1652.43353 ns/step median |
-| Benchmark command | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_non_resetting_lif.py` |
-| Workload | 200,000 steps × 5 repeats, current = 20.0 |
-| Spikes per repeat | 577 |
-| Accepted ending state | `v=-45.000000000000064`, `theta=-44.02411024181201` |
-| Native safety mirrors | Rust / Go / Julia |
+The hand-written signed Q32.32 RTL is cycle-exact to an independent integer
+oracle and preserves the enrolled Python event vector. Yosys synthesis passes,
+the optimized netlist is sequence-exact on the checked drive, and a depth-12
+CVC5 job proves bounded reset/state/refractory/event safety. These are H1
+results: universal binary64 equivalence, timing, PPA, and device evidence are
+not claimed.
 
----
+The source/binary-bound 200,000-step five-runtime benchmark records four exact
+events at 0.7 nA. It is loaded-host local regression evidence, not a production
+speed or hardware-performance claim.
 
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`NonResettingLIFNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-No spikes at I=5.0 (model requires different drive or is sub-threshold at this current).
-**Status: PASS**
-
-### 4. State stability (200,000 steps)
-All state variables remain finite after extended exact-relaxation simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(NonResettingLIFNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Native safety mirrors
-Rust, Go, and Julia expose the same fail-closed scalar update contract.
-
----
-
-## Findings (measured 2026-04-04)
-
-1. Throughput: 1652.43353 ns/step median (Python, single-thread)
-2. All pipeline stages verified green
-3. Native safety mirrors aligned for Rust, Go, and Julia
-4. Numerical stability confirmed over 20K steps
+See [dual-identity source and runtime evidence](../../validation/non_resetting_lif_source_fidelity.md).

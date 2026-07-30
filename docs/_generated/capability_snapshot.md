@@ -7,13 +7,13 @@
 |---|---:|
 | Package version | 3.16.0 |
 | Public API exports | 45 |
-| Python model source modules | 157 |
-| Python model classes | 161 |
-| Model documentation pages | 179 |
-| Rust PyO3 model wrappers | 190 |
+| Python model source modules | 158 |
+| Python model classes | 162 |
+| Model documentation pages | 180 |
+| Rust PyO3 model wrappers | 191 |
 | Optional extras | 28 |
-| Python test files | 4644 |
-| Public documentation pages | 589 |
+| Python test files | 4656 |
+| Public documentation pages | 591 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.

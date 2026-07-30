@@ -367,6 +367,7 @@ pub mod sc_learning_layer;
 pub mod sc_nas_engine;
 pub mod sc_network;
 pub mod sc_neurocore_driver;
+pub mod sc_non_resetting_adaptive_lif;
 pub mod sc_optimizer;
 pub mod sc_quantum_compiler;
 pub mod sc_runtime;

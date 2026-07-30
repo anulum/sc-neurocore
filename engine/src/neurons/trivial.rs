@@ -8,7 +8,7 @@
 
 //! Compatibility facade for simple integrate-and-fire variants.
 //!
-//! Nineteen independent model implementations and their inherited tests
+//! Twenty independent model implementations and their inherited tests
 //! live in bounded child modules while historical public re-exports remain
 //! unchanged.
 
@@ -27,6 +27,7 @@ mod nonlinear_lif;
 mod parametric_lif;
 mod perfect_integrator;
 mod quadratic_if;
+mod sc_non_resetting_adaptive_lif;
 mod sc_resetting_mat;
 mod sfa;
 mod sigma_delta;
@@ -48,6 +49,7 @@ pub use nonlinear_lif::NonlinearLIFNeuron;
 pub use parametric_lif::ParametricLIFNeuron;
 pub use perfect_integrator::PerfectIntegratorNeuron;
 pub use quadratic_if::QuadraticIFNeuron;
+pub use sc_non_resetting_adaptive_lif::SCNonResettingAdaptiveLIFNeuron;
 pub use sc_resetting_mat::SCResettingMATNeuron;
 pub use sfa::SFANeuron;
 pub use sigma_delta::SigmaDeltaNeuron;

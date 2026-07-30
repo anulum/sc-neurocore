@@ -126,6 +126,7 @@ _CLASS_TO_MODULE = {
     "NMDANeuron": "nmda_neuron",
     "NeuroGridNeuron": "neurogrid",
     "NonResettingLIFNeuron": "non_resetting_lif",
+    "SCNonResettingAdaptiveLIFNeuron": "sc_non_resetting_adaptive_lif",
     "NonlinearLIFNeuron": "nlif",
     "PVFastSpikingNeuron": "pv_fast_spiking_neuron",
     "ParallelSpikingNeuron": "psn",

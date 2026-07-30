@@ -286,6 +286,7 @@ pub mod nmda_neuron;
 pub mod node_map;
 pub mod noise_models;
 pub mod non_resetting_lif;
+pub mod sc_non_resetting_adaptive_lif;
 pub mod normalizers;
 pub mod numerics;
 pub mod ode_layer;

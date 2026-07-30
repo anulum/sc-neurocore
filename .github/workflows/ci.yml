@@ -270,7 +270,7 @@ jobs:
           # mixed_dense and adc_to_spike) is tracked separately: it needs per-backend
           # test verification before those additional builds are turned on. rk4_neurons
           # is mandatory because its Go/Mojo parity modules otherwise skip at collection.
-          for model in wilson_cowan wong_wang jansen_rit amari_field brunel_wang compte_wm partition rk4_neurons; do
+          for model in wilson_cowan wong_wang jansen_rit amari_field brunel_wang compte_wm non_resetting_lif sc_non_resetting_adaptive_lif partition rk4_neurons; do
             ( cd "src/sc_neurocore/accel/go/${model}" \
                 && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
             # --target-cpu x86-64-v3 keeps this explicit build within the same portable ISA

@@ -95,13 +95,13 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 |---|---:|
 | Package version | 3.16.0 |
 | Public API exports | 45 |
-| Python model source modules | 157 |
-| Python model classes | 161 |
-| Model documentation pages | 179 |
-| Rust PyO3 model wrappers | 190 |
+| Python model source modules | 158 |
+| Python model classes | 162 |
+| Model documentation pages | 180 |
+| Rust PyO3 model wrappers | 191 |
 | Optional extras | 28 |
-| Python test files | 4644 |
-| Public documentation pages | 589 |
+| Python test files | 4656 |
+| Public documentation pages | 591 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -212,6 +212,12 @@ through the same five public paths. Its committed
 exact event parity and a `5e-8` voltage-trace envelope; the
 [ExpIF model page](docs/api/models/expif.md) states the fitted defaults,
 Q32.32 co-simulation boundary, and refractory protocol.
+
+`NonResettingLIFNeuron` now exposes the Kobayashi et al. one-timescale MAT(1)
+source recurrence across Python, Rust, Julia, Go, and Mojo. The former project
+exact-relaxation behavior is preserved separately as
+`SCNonResettingAdaptiveLIFNeuron`; the [MAT(1) model page](docs/api/models/non_resetting_lif.md)
+states the identity, benchmark, Q32.32, and bounded-formal evidence boundaries.
 
 The Lapicque model exposes its exact constant-current RC flow through Python,
 the factory-default Rust engine boundary, Julia, Go, and Mojo. The measured
