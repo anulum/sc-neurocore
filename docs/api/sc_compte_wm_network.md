@@ -223,14 +223,52 @@ Hardware collateral must name a bounded representative, fixed-point format,
 enrolled state subset, input surface, latency, and error bounds. Yosys
 synthesis alone is not device evidence.
 
+## Bounded RTL representative
+
+`hdl/formal/catalogue/sc_compte_wm_ring16.v` is the enrolled synthesizable
+hardware representative for the SC network's structured E-to-E connectivity.
+It accepts sixteen indexed coarse recurrent-NMDA gates, latches one target bin,
+and serially computes that target's circular no-autapse aggregate. The state
+subset is deliberately limited to this connectivity reduction; membrane and
+synaptic dynamics, counter-Poisson input, behavior protocol, the 2,560-cell
+binary64 state, and FFT execution remain in the software runtimes.
+
+Gates and weights use unsigned Q16.16, accumulation uses unsigned Q32.32, and
+the output truncates exactly once after the complete sum. The sixteen weights
+are round-to-nearest quantizations of
+`SCCompteWMNetworkSpec.connectivity_footprint("ee", 0, targets)` over sixteen
+uniform targets. Its discrete unit-mean normalization occurs before the
+source-equals-target term is excluded, matching the software no-autapse rule.
+An idle `start` is accepted atomically; `done` is asserted exactly sixteen
+processing cycles later. Loads and additional starts cannot perturb an active
+transaction.
+
+The committed evidence receipt is
+`benchmarks/results/bench_sc_compte_wm_ring16.json`. Icarus co-simulation
+checks 29 aggregates across zero, unity, ramp, and mixed vectors, covers every
+target bin, injects rejected busy-time loads, and matches an independent dense
+integer oracle with zero LSB error. A depth-20 cvc5 proof covers reset,
+one-cycle `done`, busy/done exclusion, and exact accepted-request latency.
+Yosys 0.33 synthesizes the top to 5,659 generic cells with no residual process
+or memory and proves its `proc+memory` representation equivalent to the same
+netlist after `opt` using `equiv_status -assert`.
+
+This closes the declared representative RTL/Yosys/formal readiness surface,
+not physical silicon. There is no device target, place-and-route, clock
+constraint, timing closure, area calibration, power result, board/HIL trace,
+or full-network binary64 equivalence claim.
+
 ## Claim boundary
 
 Persistent-bump formation, delay stability, bounded random drift, response
 reset, and distractor resistance are established by the separately committed
-deterministic simulator ensemble above. Biological validation, the paper's
-larger distractor experiment, schemas, RTL/co-simulation, formal equivalence,
-and silicon behavior remain open. The network therefore does not increment
-the 49/155 neuron-model fidelity count.
+deterministic simulator ensemble above. Paired schemas and the bounded
+connectivity representative now close their declared contract, co-simulation,
+synthesis, post-optimization equivalence, and control-safety surface.
+Biological validation, the paper's larger distractor experiment, physical
+device implementation, timing/PPA, board/HIL evidence, full-network binary64
+RTL equivalence, and silicon behavior remain unclaimed. This separately named
+network does not increment the 49/155 neuron-model fidelity count.
 
 ## Example
 

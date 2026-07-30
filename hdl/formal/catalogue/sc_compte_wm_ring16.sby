@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-20 SC Compte ring16 bounded safety proof
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_compte_wm_ring16_formal.v
+read -formal sc_compte_wm_ring16.v
+prep -top sc_compte_wm_ring16_formal
+
+[files]
+sc_compte_wm_ring16_formal.v
+sc_compte_wm_ring16.v

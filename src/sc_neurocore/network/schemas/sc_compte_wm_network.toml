@@ -67,6 +67,19 @@ runtime_specific = ["final_state_sha256"]
 [hardware_boundary]
 full_network_binary64_equivalence_claimed = false
 representative_required = true
+representative_kind = "16-bin circular E-to-E no-autapse convolution"
+representative_bins = 16
+state_subset = "coarse recurrent NMDA source gates and one target aggregate"
+fixed_point_format = "unsigned Q16.16"
+accumulator_format = "unsigned Q32.32"
+input_surface = "sixteen indexed gate loads followed by one idle-only target start"
+latency_cycles = 16
+weight_quantization = "round-to-nearest from the live 16-target footprint"
+output_quantization = "single truncation after the complete Q32.32 sum"
+weight_lut_q1616 = [106168, 80982, 61755, 59755, 59714, 59714, 59714, 59714, 59714, 59714, 59714, 59714, 59714, 59755, 61755, 80982]
+no_autapse = true
+integer_cosim_error_lsb = 0
+software_projection_error_claimed = false
 required_disclosures = ["state subset", "fixed-point format", "input surface", "latency", "error bounds"]
 yosys_is_device_evidence = false
 

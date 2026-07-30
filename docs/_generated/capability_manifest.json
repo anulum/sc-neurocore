@@ -971,7 +971,7 @@
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4631
+    "test_files": 4632
   },
   "documentation": {
     "public_pages": [
@@ -6520,6 +6520,7 @@
       "tests/test_sc_compte_wm_network.py",
       "tests/test_sc_compte_wm_network_schema.py",
       "tests/test_sc_compte_wm_network_spec.py",
+      "tests/test_sc_compte_wm_ring16_rtl.py",
       "tests/test_sc_compte_wm_rust_network.py",
       "tests/test_sc_convergence_and_multiplication_convergence.py",
       "tests/test_sc_convergence_bitstream_encoder_roundtrip.py",

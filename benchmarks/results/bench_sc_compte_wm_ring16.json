@@ -1,0 +1,114 @@
+{
+  "claim_boundary": {
+    "accumulator_format": "unsigned Q32.32",
+    "enrolled": "16-bin circular E-to-E no-autapse convolution",
+    "fixed_point_format": "unsigned Q16.16",
+    "full_network_binary64_equivalence_claimed": false,
+    "input_surface": "sixteen indexed gate loads followed by one idle-only target start",
+    "latency_cycles": 16,
+    "physical_device_evidence": false,
+    "software_projection_error_claimed": false,
+    "state_subset": "coarse recurrent NMDA source gates and one target aggregate"
+  },
+  "cosimulation": {
+    "all_sixteen_targets_checked": true,
+    "busy_load_rejection_checked": true,
+    "oracle": "independent Python dense integer sum from live software footprint",
+    "passed": true,
+    "target_aggregates_checked": 29,
+    "vectors": 4
+  },
+  "formal": {
+    "datapath_formally_claimed": false,
+    "depth": 20,
+    "engine": "smtbmc cvc5",
+    "passed": true,
+    "scope": [
+      "synchronous reset",
+      "one-cycle done pulse",
+      "busy/done exclusion",
+      "exact 16-cycle accepted-request latency"
+    ]
+  },
+  "identity": "SC-COMPTE-WM-NETWORK-RING16-RTL",
+  "post_optimization_equivalence": {
+    "gold": "Yosys proc+memory netlist",
+    "passed": true,
+    "proof": [
+      "equiv_struct -icells",
+      "equiv_simple -seq 1",
+      "equiv_induct -seq 4",
+      "equiv_status -assert"
+    ],
+    "revised": "same netlist after Yosys opt"
+  },
+  "quantization": {
+    "integer_cosim_error_lsb": 0,
+    "output_rule": "single truncation after the complete Q32.32 sum",
+    "weight_lut_q1616": [
+      106168,
+      80982,
+      61755,
+      59755,
+      59714,
+      59714,
+      59714,
+      59714,
+      59714,
+      59714,
+      59714,
+      59714,
+      59714,
+      59755,
+      61755,
+      80982
+    ],
+    "weight_rule": "round-to-nearest from the live 16-target footprint"
+  },
+  "schema_version": 1,
+  "source_sha256": {
+    "benchmarks/bench_sc_compte_wm_ring16.py": "8880cff0ef6ecf5af747e68ff09d6f2a92f60c7e3c52668e34834561187cf256",
+    "hdl/formal/catalogue/sc_compte_wm_ring16.sby": "2c2fe1a93a213f6e3407c881d800f30a0becca4f28bd5445420a909aebeb6ac1",
+    "hdl/formal/catalogue/sc_compte_wm_ring16.v": "f26aa6ff2e616c1c76a7fd265e67e1ad07b79770a1a0f2215268f00fa38e6799",
+    "hdl/formal/catalogue/sc_compte_wm_ring16_formal.v": "29623e346d9cb6ed292288d2ea0083658dfa05cac967aa285604de6f742cb9d8",
+    "src/sc_neurocore/network/schemas/sc_compte_wm_network.json": "67f359ab7a0a0e387fcd74308d06b1c4253b17522f3df2dc0afb55d4e3ca5809",
+    "tests/test_sc_compte_wm_ring16_rtl.py": "5a02a6ba60b820206b8e51d6b9b2690c9147058d52d1cc9bc4b1c3e0b6939a5e"
+  },
+  "synthesis": {
+    "area_claimed": false,
+    "creator": "Yosys 0.33 (git sha1 2584903a060)",
+    "device_target": null,
+    "num_cells": 5659,
+    "num_cells_by_type": {
+      "$_ANDNOT_": 1271,
+      "$_AND_": 65,
+      "$_MUX_": 494,
+      "$_NAND_": 107,
+      "$_NOR_": 396,
+      "$_NOT_": 661,
+      "$_ORNOT_": 177,
+      "$_OR_": 591,
+      "$_SDFFCE_PN0P_": 512,
+      "$_SDFFE_PN0N_": 52,
+      "$_SDFFE_PN0P_": 36,
+      "$_SDFF_PN0_": 6,
+      "$_XNOR_": 346,
+      "$_XOR_": 945
+    },
+    "num_memories": 0,
+    "num_processes": 0,
+    "num_wire_bits": 5851,
+    "num_wires": 5055,
+    "passed": true,
+    "power_claimed": false,
+    "timing_claimed": false,
+    "top": "sc_compte_wm_ring16"
+  },
+  "toolchain": {
+    "custody": "repository .venv/bin",
+    "cvc5": "This is cvc5 version 1.1.2",
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "sby": "SBY",
+    "yosys": "Yosys 0.33 (git sha1 2584903a060)"
+  }
+}

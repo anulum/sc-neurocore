@@ -77,7 +77,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | --- | --- |
 | Public Python package | Version 3.16.0 package surface with base NumPy/SciPy dependency boundary. |
 | Optional acceleration | Rust engine and optional heavy backends are opt-in; Python fallbacks remain available. |
-| Hardware evidence | Committed synthesis and report artefacts exist for selected flows; power/energy claims require matching committed reports. |
+| Hardware evidence | Committed synthesis and report artefacts exist for selected flows, including the bounded SC Compte ring-connectivity representative; power/energy and physical-device claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
 | Polyglot surfaces | Source-checkout research and parity surfaces, not default user install requirements. |
 | High-fidelity neurons | 49 of 155 catalogue models meet the strict five-runtime polyglot-completion bar; see the [per-model evidence table](docs/api/model_fidelity_status.md). |
@@ -100,7 +100,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 178 |
 | Rust PyO3 model wrappers | 189 |
 | Optional extras | 28 |
-| Python test files | 4631 |
+| Python test files | 4632 |
 | Public documentation pages | 587 |
 | GitHub Actions workflows | 20 |
 

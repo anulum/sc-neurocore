@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added the schema-bound `SC-COMPTE-WM-NETWORK` 16-bin circular E-to-E
+  no-autapse RTL representative. Its unsigned Q16.16/Q32.32 contract has
+  zero-LSB independent dense-oracle co-simulation across all targets,
+  busy-time input rejection, 16-cycle bounded control proof, Yosys synthesis,
+  and asserted post-`opt` equivalence. The committed receipt explicitly makes
+  no full-network binary64, device timing/PPA, board, or physical-silicon
+  claim.
 - Added identical JSON/TOML contracts for the separately named
   `SC-COMPTE-WM-NETWORK`, covering topology, numerics, all nine state arrays,
   behavior protocol, receipts, and an explicit bounded-representative hardware
