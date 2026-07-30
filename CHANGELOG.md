@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added identical JSON/TOML contracts for the separately named
+  `SC-COMPTE-WM-NETWORK`, covering topology, numerics, all nine state arrays,
+  behavior protocol, receipts, and an explicit bounded-representative hardware
+  boundary without conflating the preserved scalar Compte cell.
 - Established the separately named 2,560-cell `SC-COMPTE-WM-NETWORK` behavior
   ensemble across Python, Rust, Julia, Go, and Mojo. Three reference seeds and
   five explicit runtime anchors now satisfy predeclared circular-statistics

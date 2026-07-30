@@ -209,6 +209,20 @@ bounded random drift, response reset, and distractor resistance at the frozen
 distractor experiment, biological validation, production throughput, formal
 equivalence, or hardware behavior.
 
+## Paired network schemas
+
+`network/schemas/sc_compte_wm_network.{json,toml}` are identical, separately
+named contracts for the SC network rather than extensions of the preserved
+scalar-cell schemas. They freeze topology, binary64 numerics, counter-Poisson
+drive, connectivity, all nine runtime state arrays, behavior epochs, receipt
+fields, and the hardware disclosure boundary. Focused proof compares both
+encodings to each other and to the public specification and protocol.
+
+The schemas explicitly reject a full-network binary64 RTL-equivalence claim.
+Hardware collateral must name a bounded representative, fixed-point format,
+enrolled state subset, input surface, latency, and error bounds. Yosys
+synthesis alone is not device evidence.
+
 ## Claim boundary
 
 Persistent-bump formation, delay stability, bounded random drift, response

@@ -1,0 +1,108 @@
+[metadata]
+schema_version = 1
+identity = "SC-COMPTE-WM-NETWORK"
+specification_version = "sc-neurocore.sc-compte-wm-network.v1"
+ownership = "SC-NeuroCore project model"
+source_context = "Compte et al. 2000 architecture and control parameters; SC reproducibility contract"
+
+[topology]
+excitatory_cells = 2048
+inhibitory_cells = 512
+geometry = "uniform circular preferred-cue rings"
+allow_recurrent_autapses = false
+structured_ei_default = false
+
+[numerics]
+dt_ms = 0.02
+software_dtype = "binary64"
+integration = "coupled explicit midpoint RK2"
+threshold_timing = "sampled end-of-step"
+fft_reduction = "circular E-to-E and optional structured E-to-I"
+
+[external_drive]
+rate_hz = 1800.0
+stream = "counter-addressed SplitMix64 inverse-CDF Poisson"
+streams = 2
+receipt_current_resolution_pa = 1e-9
+
+[connectivity]
+ee_conductance_ns = 0.381
+ei_conductance_ns = 0.292
+ie_conductance_ns = 1.336
+ii_conductance_ns = 1.024
+ee_j_plus = 1.62
+ee_sigma_deg = 18.0
+ei_j_plus = 1.25
+ei_sigma_deg = 18.0
+structured_footprint_normalization = "exact discrete unit mean"
+
+[behavior_protocol]
+duration_ms = 2500.0
+statistics_window_ms = 250.0
+
+[behavior_protocol.cue]
+start_ms = 250.0
+duration_ms = 250.0
+current_pa = 200.0
+center_deg = 180.0
+
+[behavior_protocol.distractor]
+start_ms = 1000.0
+duration_ms = 250.0
+current_pa = 200.0
+center_deg = 270.0
+
+[behavior_protocol.response]
+start_ms = 1750.0
+duration_ms = 250.0
+current_pa = 500.0
+kind = "global_current"
+
+[receipt]
+run_hashes = ["input_sha256", "spike_sha256", "final_state_sha256"]
+window_statistics = ["excitatory_rate_hz", "inhibitory_rate_hz", "bump_angle_deg", "resultant_length", "circular_width_deg"]
+cross_runtime_exact = ["input_sha256", "spike_sha256", "excitatory_spikes", "inhibitory_spikes"]
+runtime_specific = ["final_state_sha256"]
+
+[hardware_boundary]
+full_network_binary64_equivalence_claimed = false
+representative_required = true
+required_disclosures = ["state subset", "fixed-point format", "input surface", "latency", "error bounds"]
+yosys_is_device_evidence = false
+
+[state_arrays.v_exc_mv]
+population = "excitatory"
+length = 2048
+dtype = "binary64"
+[state_arrays.v_inh_mv]
+population = "inhibitory"
+length = 512
+dtype = "binary64"
+[state_arrays.refractory_exc_ms]
+population = "excitatory"
+length = 2048
+dtype = "binary64"
+[state_arrays.refractory_inh_ms]
+population = "inhibitory"
+length = 512
+dtype = "binary64"
+[state_arrays.external_ampa_exc]
+population = "excitatory"
+length = 2048
+dtype = "binary64"
+[state_arrays.external_ampa_inh]
+population = "inhibitory"
+length = 512
+dtype = "binary64"
+[state_arrays.recurrent_nmda]
+population = "excitatory"
+length = 2048
+dtype = "binary64"
+[state_arrays.recurrent_nmda_rise]
+population = "excitatory"
+length = 2048
+dtype = "binary64"
+[state_arrays.recurrent_gabaa]
+population = "inhibitory"
+length = 512
+dtype = "binary64"
