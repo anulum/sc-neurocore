@@ -4,52 +4,57 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — McKean co-simulation contracts
 
-"""McKean Q16.16 parity contracts."""
+from pathlib import Path
+import re
+import subprocess
 
-from __future__ import annotations
+import numpy as np
 
-import pytest
+from sc_neurocore.neurons.models.mckean import McKeanNeuron
 
-from tests.cosim_support import (
-    HAS_IVERILOG,
-    _mckean_hand_spike_count,
-    _python_spike_count,
-    _verilog_spike_count_q1616,
-)
+ROOT = Path(__file__).parents[1]
+RTL = ROOT / "hdl/formal/catalogue/mckean.v"
+SCALE = 1 << 32
 
 
-@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-class TestQ1616Precision:
-    """Q16.16 precision mode: 16 integer + 16 fractional bits (32-bit).
+def _literal(value: int) -> str:
+    return f"-64'sd{-value}" if value < 0 else f"64'sd{value}"
 
-    Q16.16 combines Q8.8's wide integer range [-32768, +32767] with
-    1/65536 ≈ 0.000015 resolution. This is the "gold standard" for
-    hardware neuron fidelity, suitable for all model dynamics.
-    """
 
-    def test_mckean_q1616_parity(self) -> None:
-        """Faithful McKean co-simulates at exact Q16.16 three-way parity.
+def _rtl_trace(tmp: Path, currents: list[float]) -> np.ndarray:
+    drives = "\n".join(
+        f'current_t={_literal(round(x * SCALE))};@(posedge clk);#1;$display("MK %0d %0d %0d",v,w,event_out);'
+        for x in currents
+    )
+    tb = tmp / "tb.v"
+    binary = tmp / "tb"
+    tmp.mkdir(parents=True, exist_ok=True)
+    tb.write_text(
+        f"`timescale 1ns/1ps\nmodule tb;reg clk=0;reg rst_n=0;reg signed[63:0]current_t=0;wire signed[63:0]v,w;wire event_out;always #5 clk=~clk;mckean uut(.clk(clk),.rst_n(rst_n),.current_t(current_t),.v_out(v),.w_out(w),.event_out(event_out));initial begin #23;rst_n=1;{drives}$finish;end endmodule\n"
+    )
+    subprocess.run(
+        [str(ROOT / ".venv/bin/iverilog"), "-g2012", "-o", str(binary), str(RTL), str(tb)],
+        check=True,
+    )
+    output = subprocess.run(
+        [str(ROOT / ".venv/bin/vvp"), str(binary)], check=True, capture_output=True, text=True
+    ).stdout
+    return np.asarray(
+        [
+            [int(v) / SCALE, int(w) / SCALE, int(event)]
+            for v, w, event in re.findall(r"^MK (-?\d+) (-?\d+) ([01])$", output, re.M)
+        ]
+    )
 
-        The McKean (1970) piecewise-linear FitzHugh-Nagumo caricature replaces the
-        cubic nullcline with ``f(v) = min(max(-v, v - a), 1 - v)``; the bundled schema
-        is RK4, no reset, rising-edge (``v >= v_peak`` upward crossing) detection,
-        matching ``McKeanNeuron``. The min/max branch selection is exact arithmetic (a
-        fixed-point comparison + select, no look-up table), so at the sustained
-        relaxation-oscillation operating point (``epsilon=0.2``, ``gamma=0.5``,
-        ``I=0.6``) the hand model, the schema runner and the emitted Q16.16 RTL all
-        report the same 16-crossing train over 3000 steps, bit-exactly. (The default
-        hand-model regime ``epsilon=0.01`` is a single-transient knife-edge; the
-        enrolled regime is a robust limit cycle whose crossings survive fixed-point
-        rounding.)
-        """
-        current, n_steps = 0.6, 3000
-        hand_spikes = _mckean_hand_spike_count(n_steps, current)
-        py_spikes = _python_spike_count("mckean", n_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("mckean", n_steps, current)
-        assert 1 < py_spikes < n_steps  # a sustained oscillation train, not saturated
-        assert hand_spikes == py_spikes == vlog_spikes, (
-            f"McKean three-way mismatch: hand={hand_spikes}, "
-            f"schema={py_spikes}, verilog={vlog_spikes}"
-        )
+
+def test_source_mckean_q3232_tracks_python(tmp_path: Path) -> None:
+    currents = [0.0, 3.0, 0.0, -0.2] * 32
+    neuron = McKeanNeuron()
+    expected = []
+    for current in currents:
+        event = neuron.step(current)
+        expected.append((neuron.v, neuron.w, event))
+    actual = _rtl_trace(tmp_path, currents)
+    np.testing.assert_array_equal(actual[:, 2], np.asarray(expected)[:, 2])
+    np.testing.assert_allclose(actual[:, :2], np.asarray(expected)[:, :2], atol=2e-6, rtol=0)

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Polyglot parity tests for the McKean 1970 FHN caricature
+# SC-NeuroCore — Polyglot parity tests for the retained SC triangular recurrence
 
 """Cross-backend parity for ``McKeanNeuron.simulate``.
 
@@ -23,8 +23,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from sc_neurocore.neurons.models import mckean
-from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models import sc_triangular_mckean as mckean
+from sc_neurocore.neurons.models.sc_triangular_mckean import (
+    SCTriangularMcKeanNeuron as McKeanNeuron,
+)
 
 _ULP = float(np.spacing(1.0))
 _STEP_TOL = 8.0 * _ULP
@@ -68,7 +70,7 @@ _REGIMES = [
 @pytest.mark.parametrize("current", _CURRENTS)
 def test_bit_exact_trace_currents(backend: str, available, current: float) -> None:
     if not available():
-        pytest.skip(f"{backend} McKean backend unavailable")
+        pytest.skip(f"{backend} SC triangular backend unavailable")
     ref_trace, ref_spikes, rv, rw = _run("python", current=current)
     trace, spikes, vf, wf = _run(backend, current=current)
     np.testing.assert_array_equal(trace, ref_trace)

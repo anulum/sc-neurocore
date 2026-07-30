@@ -4,19 +4,19 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go McKean 1970 piecewise-linear FHN caricature (parity with mckean.py)
+// SC-NeuroCore — Go SC triangular project recurrence
 
 // Package main exposes a C-ABI shared library
-// (`go build -buildmode=c-shared -o libmckean.so mckean.go`) that the Python
+// (`go build -buildmode=c-shared -o libsc_triangular_mckean.so mckean.go`) that the Python
 // dispatcher loads via ctypes.
 //
-// Parity contract: `mckean_simulate_c` reproduces
-// `sc_neurocore.neurons.models.mckean.McKeanNeuron.simulate` bit-for-bit. The
+// Parity contract: `sc_triangular_mckean_simulate_c` reproduces
+// `sc_neurocore.neurons.models.sc_triangular_mckean.SCTriangularMcKeanNeuron.simulate` bit-for-bit. The
 // piecewise-linear right-hand side is exact arithmetic (additions, multiplications
 // and branch selection), so an identical RK4 operation order yields an identical
 // v trace, upward-crossing spike count, and final state.
 //
-// Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
+// Provenance: SC project recurrence; no external paper attribution.
 package main
 
 /*
@@ -26,12 +26,12 @@ import "C"
 
 import "unsafe"
 
-// mckean_simulate_c runs n RK4 steps under a constant input. The caller allocates
+// sc_triangular_mckean_simulate_c runs n RK4 steps under a constant input. The caller allocates
 // a trace buffer of length n+2: indices [0, n) receive the v trace, index n the
 // final v, index n+1 the final w. Returns the upward-crossing spike count.
 //
-//export mckean_simulate_c
-func mckean_simulate_c(
+//export sc_triangular_mckean_simulate_c
+func sc_triangular_mckean_simulate_c(
 	v0, w0, a, eps, gamma, dt, vPeak C.double,
 	nSteps C.int, current C.double,
 	tracePtr *C.double,

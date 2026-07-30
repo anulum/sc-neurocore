@@ -27,6 +27,8 @@ mod morris_lecar;
 mod pernarowski;
 #[path = "../resonate_and_fire.rs"]
 mod resonate_and_fire;
+#[path = "../sc_triangular_mckean.rs"]
+mod sc_triangular_mckean;
 mod sherman_rinzel_keizer;
 #[path = "../terman_wang.rs"]
 mod terman_wang;
@@ -46,6 +48,7 @@ pub use mckean::PyMcKeanNeuron;
 pub use morris_lecar::PyMorrisLecarNeuron;
 pub use pernarowski::PyPernarowskiNeuron;
 pub use resonate_and_fire::PyResonateAndFireNeuron;
+pub use sc_triangular_mckean::PySCTriangularMcKeanNeuron;
 pub use sherman_rinzel_keizer::PyShermanRinzelKeizerNeuron;
 pub use terman_wang::PyTermanWangOscillator;
 pub use wilson_hr::PyWilsonHRNeuron;
@@ -59,6 +62,7 @@ pub(crate) fn register_primary(module: &Bound<'_, PyModule>) -> PyResult<()> {
     balanced_resonate_and_fire::register(module)?;
     fitzhugh_rinzel::register(module)?;
     mckean::register(module)?;
+    sc_triangular_mckean::register(module)?;
     terman_wang::register(module)?;
     Ok(())
 }

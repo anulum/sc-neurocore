@@ -117,6 +117,7 @@ _CLASS_TO_MODULE = {
     "MartinottiNeuron": "martinotti_neuron",
     "McCullochPittsNeuron": "mcculloch_pitts",
     "McKeanNeuron": "mckean",
+    "SCTriangularMcKeanNeuron": "sc_triangular_mckean",
     "MedvedevMapNeuron": "medvedev_map",
     "MetaPlasticNeuron": "ai_optimized",
     "MihalasNieburNeuron": "mihalas_niebur",

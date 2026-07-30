@@ -93,6 +93,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::FitzHughRinzel(FitzHughRinzelNeuron::new()))
         }
         "McKean" | "McKeanNeuron" => Ok(NeuronVariant::McKean(McKeanNeuron::new())),
+        "SCTriangularMcKean" | "SCTriangularMcKeanNeuron" => Ok(NeuronVariant::SCTriangularMcKean(
+            SCTriangularMcKeanNeuron::new(),
+        )),
         "TermanWang" | "TermanWangOscillator" => {
             Ok(NeuronVariant::TermanWang(TermanWangOscillator::new()))
         }
@@ -428,6 +431,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "BalancedResonateAndFire",
         "FitzHughRinzel",
         "McKean",
+        "SCTriangularMcKean",
         "TermanWang",
         "GutkinErmentrout",
         "WilsonHR",

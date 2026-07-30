@@ -96,7 +96,7 @@ parity="2e-12"
 status="implemented"
 parity="2e-12"
 [reproducibility]
-reference_config="src/sc_neurocore/neurons/reference_trace_data/energy_lif_fardet_levina.json"
+reference_config="src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json"
 golden_trace_sha256="fc0aa0c4d4faf2189bd3c819aea7ab49bcb4db4b8dc7430c283e453625b823d3"
 golden_citation="Fardet-Levina author Brian example"
 [documentation]

@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — McKean engine-binding contracts
 
-"""Installed-extension contracts for the McKean binding."""
+"""Installed-extension contracts for the retained SC triangular binding."""
 
 from __future__ import annotations
 
@@ -19,14 +19,16 @@ import pytest
 from numpy.typing import NDArray
 
 import sc_neurocore_engine as engine
-from sc_neurocore.neurons.models import mckean
-from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models import sc_triangular_mckean as mckean
+from sc_neurocore.neurons.models.sc_triangular_mckean import (
+    SCTriangularMcKeanNeuron as McKeanNeuron,
+)
 
 extension = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
 
 
 def _direct(n_steps: int) -> tuple[NDArray[np.float64], int, float, float]:
-    result: tuple[Any, int, float, float] = extension.py_mckean_simulate(
+    result: tuple[Any, int, float, float] = extension.py_sc_triangular_mckean_simulate(
         0.0, 0.0, 0.25, 0.01, 0.5, 0.1, 0.8, n_steps, 0.2
     )
     trace, spikes, final_v, final_w = result
@@ -34,15 +36,15 @@ def _direct(n_steps: int) -> tuple[NDArray[np.float64], int, float, float]:
 
 
 def test_exported_name_signature_and_top_level_identity_are_stable() -> None:
-    function = extension.py_mckean_simulate
+    function = extension.py_sc_triangular_mckean_simulate
 
-    assert function.__name__ == "py_mckean_simulate"
+    assert function.__name__ == "py_sc_triangular_mckean_simulate"
     assert function.__module__ == "sc_neurocore_engine.sc_neurocore_engine"
     assert function.__text_signature__ == (
         "(v0, w0, a, epsilon, gamma, dt, v_peak, n_steps, current)"
     )
-    assert engine.py_mckean_simulate is function
-    assert "py_mckean_simulate" in engine.__all__
+    assert engine.py_sc_triangular_mckean_simulate is function
+    assert "py_sc_triangular_mckean_simulate" in engine.__all__
 
 
 def test_empty_and_initial_updates_preserve_array_and_state_contracts() -> None:
@@ -83,7 +85,9 @@ def test_step_count_conversion_errors_are_stable(
     n_steps: object, error: type[BaseException], message: str
 ) -> None:
     with pytest.raises(error) as captured:
-        extension.py_mckean_simulate(0.0, 0.0, 0.25, 0.01, 0.5, 0.1, 0.8, n_steps, 0.2)
+        extension.py_sc_triangular_mckean_simulate(
+            0.0, 0.0, 0.25, 0.01, 0.5, 0.1, 0.8, n_steps, 0.2
+        )
     assert str(captured.value) == message
     if sys.version_info >= (3, 11):
         assert captured.value.__notes__ == ["while processing 'n_steps'"]
@@ -91,7 +95,7 @@ def test_step_count_conversion_errors_are_stable(
 
 def test_production_rust_backend_is_exactly_the_installed_extension() -> None:
     assert mckean._HAS_RUST is True
-    assert mckean._rust_simulate is engine.py_mckean_simulate
+    assert mckean._rust_simulate is engine.py_sc_triangular_mckean_simulate
 
     rust_neuron = McKeanNeuron()
     python_neuron = McKeanNeuron()

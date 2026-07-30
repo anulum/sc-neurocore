@@ -55,7 +55,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "iqif": "iqif_a8752eb_tutorial",
     "lapicque": "lapicque_constant_current_closed_form",
     "lif": "lif_constant_current_closed_form",
-    "mckean": "mckean_driven_oscillation_doi",
+    "sc_triangular_mckean": "sc_triangular_mckean_project",
     "mcculloch_pitts": "mcculloch_pitts_1943_truth_table",
     "medvedev_map": "medvedev_map_first_return_doi",
     "mihalas_niebur": "mihalas_niebur_driven_spiking_doi",

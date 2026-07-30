@@ -77,6 +77,7 @@ try:
         BalancedResonateAndFireNeuron,
         FitzHughRinzelNeuron,
         McKeanNeuron,
+        SCTriangularMcKeanNeuron,
         TermanWangOscillator,
         BendaHerzNeuron,
         AlphaNeuron,
@@ -275,6 +276,7 @@ _NEURON_MODELS = [
     "ResonateAndFireNeuron",
     "FitzHughRinzelNeuron",
     "McKeanNeuron",
+    "SCTriangularMcKeanNeuron",
     "TermanWangOscillator",
     "BendaHerzNeuron",
     "AlphaNeuron",
@@ -632,9 +634,10 @@ except ImportError:
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_mckean_simulate,
+        py_sc_triangular_mckean_simulate,
     )
 
-    __all__ += ["py_mckean_simulate"]
+    __all__ += ["py_mckean_simulate", "py_sc_triangular_mckean_simulate"]
     _mckean_rust_available = True
 except ImportError:
     _mckean_rust_available = False

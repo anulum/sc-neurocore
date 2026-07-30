@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 182,
+    "model_documentation_pages": 183,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 595,
-    "python_model_classes": 164,
-    "python_model_source_modules": 160,
-    "rust_pyo3_model_wrappers": 193,
-    "test_files": 4678
+    "public_documentation_pages": 597,
+    "python_model_classes": 165,
+    "python_model_source_modules": 161,
+    "rust_pyo3_model_wrappers": 194,
+    "test_files": 4683
   },
   "documentation": {
     "public_pages": [
@@ -1223,6 +1223,7 @@
       "docs/api/models/sc_normalized_energy_lif.md",
       "docs/api/models/sc_resetting_mat.md",
       "docs/api/models/sc_sigma_delta_accumulator.md",
+      "docs/api/models/sc_triangular_mckean.md",
       "docs/api/models/sfa.md",
       "docs/api/models/sherman_rinzel_keizer.md",
       "docs/api/models/siegert.md",
@@ -1560,6 +1561,7 @@
       "docs/validation/lif_fi_curve.md",
       "docs/validation/mat_source_fidelity.md",
       "docs/validation/mcculloch_pitts_source_fidelity.md",
+      "docs/validation/mckean_source_fidelity.md",
       "docs/validation/neurobench_shd.md",
       "docs/validation/non_resetting_lif_source_fidelity.md",
       "docs/validation/poisson_stochastic_fidelity.md",
@@ -1739,6 +1741,7 @@
       "sc_normalized_energy_lif.md",
       "sc_resetting_mat.md",
       "sc_sigma_delta_accumulator.md",
+      "sc_triangular_mckean.md",
       "sfa.md",
       "sherman_rinzel_keizer.md",
       "siegert.md",
@@ -2304,6 +2307,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py"
       },
       {
+        "name": "SCTriangularMcKeanNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
+      },
+      {
         "name": "SFANeuron",
         "path": "src/sc_neurocore/neurons/models/sfa.py"
       },
@@ -2561,6 +2568,7 @@
       "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py",
       "src/sc_neurocore/neurons/models/sc_resetting_mat.py",
       "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py",
+      "src/sc_neurocore/neurons/models/sc_triangular_mckean.py",
       "src/sc_neurocore/neurons/models/sfa.py",
       "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py",
       "src/sc_neurocore/neurons/models/siegert.py",
@@ -2750,6 +2758,7 @@
       "SCNormalizedEnergyLIFNeuron",
       "SCResettingMATNeuron",
       "SCSigmaDeltaAccumulatorNeuron",
+      "SCTriangularMcKeanNeuron",
       "SFANeuron",
       "SKNeuron",
       "SSTNeuron",
@@ -3609,6 +3618,7 @@
       "tests/test_bench_lib_rs_provenance_sweep.py",
       "tests/test_bench_mat_dual_identity.py",
       "tests/test_bench_mcculloch_pitts.py",
+      "tests/test_bench_mckean_dual_identity.py",
       "tests/test_bench_neurogrid.py",
       "tests/test_bench_non_resetting_lif_dual_identity.py",
       "tests/test_bench_perfect_integrator.py",
@@ -4142,6 +4152,7 @@
       "tests/test_cosim_sc_normalized_energy_lif.py",
       "tests/test_cosim_sc_resetting_mat.py",
       "tests/test_cosim_sc_sigma_delta_accumulator.py",
+      "tests/test_cosim_sc_triangular_mckean.py",
       "tests/test_cosim_sigma_delta.py",
       "tests/test_cosim_sigmoid_rate.py",
       "tests/test_cosim_support_architecture_architecture_invariants.py",
@@ -5116,8 +5127,10 @@
       "tests/test_mcculloch_pitts_backend_loading.py",
       "tests/test_mcculloch_pitts_backends.py",
       "tests/test_mcculloch_pitts_schema_dsl.py",
+      "tests/test_mckean_backend_dispatch.py",
       "tests/test_mckean_backends.py",
       "tests/test_mckean_engine_binding.py",
+      "tests/test_mckean_schema_parity.py",
       "tests/test_medvedev_map_backends.py",
       "tests/test_medvedev_map_engine_binding.py",
       "tests/test_memristor/memristor_mapper_support.py",
@@ -5591,6 +5604,7 @@
       "tests/test_model_mckean_mc_kean_performance.py",
       "tests/test_model_mckean_mc_kean_public_workflow.py",
       "tests/test_model_mckean_mc_kean_validation.py",
+      "tests/test_model_mckean_source_fidelity.py",
       "tests/test_model_medvedev_map_cycles.py",
       "tests/test_model_medvedev_map_network.py",
       "tests/test_model_medvedev_map_source_dynamics.py",

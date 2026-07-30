@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### McKean dual-identity closure
+
+- Restored `McKeanNeuron` as the source McKean/Tonnelier space-clamped
+  Heaviside system and retained the former three-branch project recurrence as
+  explicit, count-neutral `SCTriangularMcKeanNeuron` without paper attribution.
+- Closed both identities through five runtimes, NetworkRunner, paired schemas,
+  independent receipts, signed-Q32.32 RTL/Yosys/bounded formal evidence, local
+  source/binary-bound benchmarks, and language-native documentation. The source
+  catalogue is now 54/155 complete.
+
 ### EnergyLIF dual-identity closure
 
 - Restored `EnergyLIFNeuron` as the Fardet-Levina coupled voltage-energy RK4

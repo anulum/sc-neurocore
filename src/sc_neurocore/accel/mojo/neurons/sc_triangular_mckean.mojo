@@ -4,13 +4,13 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo McKean 1970 piecewise-linear FHN caricature (parity with mckean.py)
+# SC-NeuroCore — retained triangular McKean-like RK4 shared library
 #
 # Build:
-#   mojo build --emit shared-lib -o libmckean.so mckean.mojo
+#   mojo build --emit shared-lib -o libsc_triangular_mckean.so sc_triangular_mckean.mojo
 #
-# Parity contract: `mckean_simulate_c` reproduces
-# `sc_neurocore.neurons.models.mckean.McKeanNeuron.simulate`. The piecewise-linear
+# Parity contract: `sc_triangular_mckean_simulate_c` reproduces
+# `sc_neurocore.neurons.models.sc_triangular_mckean.SCTriangularMcKeanNeuron.simulate`. The piecewise-linear
 # RHS is exact arithmetic; each product is rounded into its own variable before
 # the following add/subtract so the compiler cannot contract a multiply-add into a
 # single-rounding FMA — that fusion is the one operation that diverges from the
@@ -23,7 +23,7 @@
 # pointer is reconstructed inside. The caller allocates n+2 Float64 slots:
 # [0, n) receive the v trace, index n the final v, index n+1 the final w.
 #
-# Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
+# SC project recurrence; no external paper attribution.
 
 from std.memory import UnsafePointer
 
@@ -38,7 +38,7 @@ fn _fv(x: Float64, half_a: Float64, mid: Float64, a: Float64) -> Float64:
 
 
 @export
-fn mckean_simulate_c(
+fn sc_triangular_mckean_simulate_c(
     v0: Float64,
     w0: Float64,
     a: Float64,

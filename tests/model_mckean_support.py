@@ -8,10 +8,10 @@
 
 from __future__ import annotations
 
-"""Behavioural contract for the McKean 1970 neuron surface.
+"""Compatibility contract for the retained SC triangular recurrence.
 
 The test surface is module-specific by default. Cross-module checks exercise the
-real public workflow contract for using McKeanNeuron inside Population,
+real public workflow contract for using the SC recurrence inside Population,
 Projection, Network, SpikeMonitor, and spike-stat analysis APIs; they are not
 coverage bucket tests.
 
@@ -34,7 +34,9 @@ from sc_neurocore.network.network import Network
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models.sc_triangular_mckean import (
+    SCTriangularMcKeanNeuron as McKeanNeuron,
+)
 
 
 def _rhs(neuron: McKeanNeuron, v: float, w: float, current: float) -> tuple[float, float]:

@@ -15,7 +15,7 @@ def test_fardet_levina_receipt_matches_production() -> None:
     receipt = json.loads(
         (
             Path(__file__).parents[1]
-            / "src/sc_neurocore/neurons/reference_trace_data/energy_lif_fardet_levina.json"
+            / "src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json"
         ).read_text()
     )
     n = EnergyLIFNeuron()

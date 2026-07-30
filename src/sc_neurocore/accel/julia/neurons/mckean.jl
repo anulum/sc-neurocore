@@ -4,63 +4,84 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia McKean 1970 piecewise-linear FHN caricature (parity with mckean.py)
+# SC-NeuroCore — source-bound space-clamped McKean system
 
-# Parity contract: `simulate_trace` reproduces
-# `sc_neurocore.neurons.models.mckean.McKeanNeuron.simulate` bit-for-bit. The
-# piecewise-linear right-hand side is exact arithmetic (additions, multiplications
-# and branch selection — no transcendental functions), so an identical RK4
-# operation order yields an identical `v` trace, upward-crossing spike count, and
-# final `(v, w)` state.
-#
-# Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
-
+"""Right-continuous RK4 specialization of the McKean/Tonnelier equations."""
 module McKeanAccel
 
-export simulate_trace
+export McKeanNeuronState, simulate, step!, valid
 
-function simulate_trace(
-    v0::Float64,
-    w0::Float64,
-    a::Float64,
-    eps::Float64,
-    gamma::Float64,
-    dt::Float64,
-    v_peak::Float64,
-    n_steps::Int,
-    current::Float64,
-)
-    trace = Vector{Float64}(undef, n_steps)
-    v = v0
-    w = w0
-    half_a = a / 2.0
-    mid = (1.0 + a) / 2.0
-    fv(x) = x < half_a ? -x : (x < mid ? x - a : 1.0 - x)
-    spikes = 0
-    @inbounds for t in 1:n_steps
-        v_prev = v
-        dv1 = fv(v) - w + current
-        dw1 = eps * (v - gamma * w)
-        v2 = v + 0.5 * dt * dv1
-        w2 = w + 0.5 * dt * dw1
-        dv2 = fv(v2) - w2 + current
-        dw2 = eps * (v2 - gamma * w2)
-        v3 = v + 0.5 * dt * dv2
-        w3 = w + 0.5 * dt * dw2
-        dv3 = fv(v3) - w3 + current
-        dw3 = eps * (v3 - gamma * w3)
-        v4 = v + dt * dv3
-        w4 = w + dt * dw3
-        dv4 = fv(v4) - w4 + current
-        dw4 = eps * (v4 - gamma * w4)
-        v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
-        w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
-        trace[t] = v
-        if v >= v_peak && v_prev < v_peak
-            spikes += 1
-        end
-    end
-    return (trace = trace, spikes = spikes, vf = v, wf = w)
+"""Complete state and configuration for the source-bound scalar system."""
+mutable struct McKeanNeuronState
+    v::Float64
+    w::Float64
+    a::Float64
+    lambda::Float64
+    mu::Float64
+    b::Float64
+    dt::Float64
 end
 
-end # module McKeanAccel
+McKeanNeuronState() = McKeanNeuronState(0.0, 0.0, 0.25, 1.0, 1.0, 0.01, 0.1)
+
+"""Return whether state and source constraints lie in the safety envelope."""
+function valid(state::McKeanNeuronState)
+    values = (state.v, state.w, state.a, state.lambda, state.mu, state.b, state.dt)
+    return all(isfinite, values) &&
+           abs(state.v) <= 1e6 &&
+           abs(state.w) <= 1e6 &&
+           state.a > 0 &&
+           state.lambda > 0 &&
+           state.mu > state.lambda * state.a &&
+           state.b > 0 &&
+           0 < state.dt <= 1
+end
+
+function rhs(state::McKeanNeuronState, v, w, current)
+    heaviside = v >= state.a ? 1.0 : 0.0
+    return -state.lambda * v + state.mu * heaviside - w + current, state.b * v
+end
+
+function candidate(state::McKeanNeuronState, current)
+    dt = state.dt
+    k1 = rhs(state, state.v, state.w, current)
+    k2 = rhs(state, state.v + dt * k1[1] / 2, state.w + dt * k1[2] / 2, current)
+    k3 = rhs(state, state.v + dt * k2[1] / 2, state.w + dt * k2[2] / 2, current)
+    k4 = rhs(state, state.v + dt * k3[1], state.w + dt * k3[2], current)
+    scale = dt / 6
+    v = state.v + scale * (k1[1] + 2k2[1] + 2k3[1] + k4[1])
+    w = state.w + scale * (k1[2] + 2k2[2] + 2k3[2] + k4[2])
+    return v, w
+end
+
+"""Advance atomically and return `-1` when the transition is invalid."""
+function step!(state::McKeanNeuronState, current::Float64 = 0.0)
+    if !valid(state) || !isfinite(current)
+        return -1
+    end
+    previous = state.v
+    v, w = candidate(state, current)
+    if !(isfinite(v) && isfinite(w) && abs(v) <= 1e6 && abs(w) <= 1e6)
+        return -1
+    end
+    state.v, state.w = v, w
+    return previous < state.a <= v ? 1 : 0
+end
+
+"""Execute a complete current trace and return states, events, and final state."""
+function simulate(
+    currents::AbstractVector{<:Real};
+    state::McKeanNeuronState = McKeanNeuronState(),
+)
+    voltages = zeros(length(currents))
+    recovery = zeros(length(currents))
+    events = zeros(Int, length(currents))
+    for index in eachindex(currents)
+        events[index] = step!(state, Float64(currents[index]))
+        voltages[index] = state.v
+        recovery[index] = state.w
+    end
+    return (; voltages, recovery, events, state)
+end
+
+end

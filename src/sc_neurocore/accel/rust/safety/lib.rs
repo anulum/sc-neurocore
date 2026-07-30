@@ -256,6 +256,7 @@ pub mod martinotti_neuron;
 pub mod mat;
 pub mod mcculloch_pitts;
 pub mod mckean;
+pub mod sc_triangular_mckean;
 pub mod mdl_parser;
 pub mod medvedev_map;
 pub mod mega_advancements_demo;

@@ -4005,6 +4005,54 @@
         "src/sc_neurocore/accel/rust/safety/sc_normalized_energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_normalized_energy_lif.rs",
         "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_mckean.json",
+      "description": "McKean-Tonnelier source Heaviside RK4 parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "McKean/Tonnelier source Heaviside coupled RK4",
+        "current": 3.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 20000
+      },
+      "id": "mckean-tonnelier-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
+      "source_hashes": {
+        "benchmarks/bench_model_mckean.py": "source_hashes.benchmarks/bench_model_mckean.py",
+        "src/sc_neurocore/accel/go/services/mckean.go": "source_hashes.src/sc_neurocore/accel/go/services/mckean.go",
+        "src/sc_neurocore/accel/julia/neurons/mckean.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/mckean.jl",
+        "src/sc_neurocore/accel/mojo/kernels/mckean.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/mckean.mojo",
+        "src/sc_neurocore/accel/rust/safety/mckean.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/mckean.rs",
+        "src/sc_neurocore/neurons/models/mckean.py": "source_hashes.src/sc_neurocore/neurons/models/mckean.py"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_triangular_mckean.json",
+      "description": "Retained SC triangular McKean recurrence parity across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "SC retained triangular piecewise-linear RK4 recurrence",
+        "current": 0.5,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 5,
+        "steps": 512
+      },
+      "id": "sc-triangular-mckean-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns_per_step", "backend_summary.python.spikes", "backend_summary.rust.median_ns_per_step", "backend_summary.rust.spikes", "backend_summary.go.median_ns_per_step", "backend_summary.go.spikes", "backend_summary.julia.median_ns_per_step", "backend_summary.julia.spikes", "backend_summary.mojo.median_ns_per_step", "backend_summary.mojo.spikes"],
+      "source_hashes": {
+        "benchmarks/bench_model_sc_triangular_mckean.py": "source_hashes.benchmarks/bench_model_sc_triangular_mckean.py",
+        "src/sc_neurocore/accel/go/neurons/mckean/mckean.go": "source_hashes.src/sc_neurocore/accel/go/neurons/mckean/mckean.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_triangular_mckean.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_triangular_mckean.jl",
+        "src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo",
+        "src/sc_neurocore/accel/rust/safety/sc_triangular_mckean.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_triangular_mckean.rs",
+        "src/sc_neurocore/neurons/models/sc_triangular_mckean.py": "source_hashes.src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

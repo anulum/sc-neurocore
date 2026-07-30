@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models.sc_triangular_mckean import SCTriangularMcKeanNeuron
 from tests.cosim_reference_statistics import _summarise
 
 
@@ -23,7 +23,7 @@ _MCKEAN_PARAMS = {"a": 0.25, "epsilon": 0.2, "gamma": 0.5, "v_peak": 0.8}
 
 def _mckean_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored McKean (RK4, rising-edge crossing) spike count."""
-    neuron = McKeanNeuron(dt=0.1, v=0.0, w=0.0, **_MCKEAN_PARAMS)
+    neuron = SCTriangularMcKeanNeuron(dt=0.1, v=0.0, w=0.0, **_MCKEAN_PARAMS)
     return sum(neuron.step(current) for _ in range(n_steps))
 
 

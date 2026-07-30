@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `McKeanNeuron` to the source-bound space-clamped Heaviside system
+  (`dv/dt=-lambda*v+mu*H(v-a)-w+I`, `dw/dt=b*v`) and pinned the
+  right-continuous `H(0)=1`, simultaneous RK4, sampled upward switching-line
+  event, and no-reset conventions. The former three-branch recurrence remains
+  exactly available as count-neutral `SCTriangularMcKeanNeuron`. Both identities
+  now carry Python/Rust/Julia/Go/Mojo execution, paired schemas, independent
+  receipts, signed-Q32.32 RTL co-simulation, Yosys and bounded formal evidence,
+  source/binary-bound benchmarks, NetworkRunner wiring, and language-native
+  documentation. Only the source identity increments the catalogue, now
+  54/155; spatial diffusion and network behavior remain outside this scalar unit.
 - Corrected `EnergyLIFNeuron` to the Fardet-Levina (2020) coupled eLIF source
   identity and the authors' 0.1 ms Brian RK4 profile. The former normalized
   exact-flow recurrence remains exactly available as the count-neutral

@@ -279,7 +279,7 @@ jobs:
             ( cd "src/sc_neurocore/accel/mojo/${model}" \
                 && mojo build --emit shared-lib --target-cpu x86-64-v3 -o "lib${model}.so" "${model}.mojo" )
           done
-          for model in energy_lif sc_normalized_energy_lif; do
+          for model in energy_lif sc_normalized_energy_lif mckean; do
             ( cd "src/sc_neurocore/accel/go/${model}" \
                 && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
             mojo build -I "$GITHUB_WORKSPACE/src/sc_neurocore/accel/mojo/kernels" \
@@ -287,6 +287,12 @@ jobs:
               -o "src/sc_neurocore/accel/mojo/${model}/lib${model}.so" \
               "src/sc_neurocore/accel/mojo/${model}/${model}_abi.mojo"
           done
+          ( cd src/sc_neurocore/accel/go/neurons/mckean \
+              && go build -buildmode=c-shared \
+                -o libsc_triangular_mckean.so mckean.go )
+          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            -o src/sc_neurocore/accel/mojo/neurons/libsc_triangular_mckean.so \
+            src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo
 
       - name: Enforce Mojo ISA baseline (no AVX-512 drift)
         shell: bash

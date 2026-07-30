@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[options]
+mode bmc
+depth 2
+[engines]
+smtbmc z3
+[script]
+read -formal sc_triangular_mckean_formal.v
+read -formal sc_triangular_mckean.v
+prep -top sc_triangular_mckean_formal
+[files]
+sc_triangular_mckean_formal.v
+sc_triangular_mckean.v

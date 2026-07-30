@@ -1094,6 +1094,19 @@ Evaluate the Mojo recurrence through its shared-library ABI.
 
 ---
 
+## Module `accel.mckean`
+
+### Function `backend_available(backend)`
+Return whether an executable implementation of ``backend`` is available.
+
+### Function `auto_backend()`
+Select the first available backend under the configured policy.
+
+### Function `simulate_mckean(currents)`
+Execute the complete source state/event trace on one selected runtime.
+
+---
+
 ## Module `accel.mojo.isa_baseline`
 
 ### Function `pin_isa(argv)`
@@ -1633,6 +1646,19 @@ Run the complete configured SC recurrence on one real backend.
 ### Function `auto_backend()`
 ### Function `simulate_sc_sigma_delta_accumulator(currents)`
 Run the complete retained project contract on one real backend.
+
+---
+
+## Module `accel.sc_triangular_mckean`
+
+### Function `backend_available(backend)`
+Return whether the retained recurrence can execute on ``backend``.
+
+### Function `auto_backend()`
+Select the first available backend under the configured policy.
+
+### Function `simulate_sc_triangular_mckean(currents)`
+Execute the complete retained state/event trace on one runtime.
 
 ---
 
@@ -24826,19 +24852,20 @@ rule for every valid input.
 ## Module `neurons.models.mckean`
 
 ### Class `McKeanNeuron`
-McKean 1970 piecewise-linear FitzHugh-Nagumo caricature.
+McKean's discontinuous FitzHugh-Nagumo caricature.
 
-The model evolves the two-state ODE using candidate-first RK4 while
-preserving the three piecewise-linear voltage branches of McKean's
-analytically tractable Nagumo equation.
-
-Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
+The equations are the source-bound space-clamped system of Tonnelier
+(2002), equations (1.3)-(1.6), following McKean (1970):
+``dv/dt=-lambda*v+mu*H(v-a)-w+I`` and ``dw/dt=b*v``.
+The numerical specialization declares ``H(0)=1`` and samples an event on
+upward crossing of the switching line; the ODE has no spike reset.
 
 - **__post_init__**()
+  - Validate source state and parameter constraints.
 - **step**(current)
-- **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
+  - Advance one RK4 sample atomically and report a switching-line crossing.
 - **reset**()
+  - Restore the source equilibrium state.
 
 ---
 
@@ -25660,6 +25687,25 @@ intentionally carries no external paper attribution.
   - Advance the frozen bipolar project recurrence by one sample.
 - **reset**()
   - Clear the accumulator while retaining its threshold.
+
+---
+
+## Module `neurons.models.sc_triangular_mckean`
+
+### Class `SCTriangularMcKeanNeuron`
+Retained SC triangular piecewise-linear FitzHugh-Nagumo oscillator.
+
+The model evolves the two-state ODE using candidate-first RK4 while
+preserving the three piecewise-linear voltage branches of McKean's
+analytically tractable Nagumo equation.
+
+This project recurrence is not attributed to McKean's Heaviside system.
+
+- **__post_init__**()
+- **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
+- **reset**()
 
 ---
 

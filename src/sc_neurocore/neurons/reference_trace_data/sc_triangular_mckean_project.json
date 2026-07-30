@@ -1,0 +1,34 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "sc_triangular_mckean_project",
+  "model": {"schema_name": "sc_triangular_mckean", "runner": "universal_dsl"},
+  "protocol": {
+    "dt": 0.1,
+    "steps": 3000,
+    "inputs": {"I": 0.6},
+    "state_variables": ["v", "w"]
+  },
+  "provenance": {
+    "kind": "independent_rk4_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.toml",
+    "equation": "SC project three-branch recurrence independently advanced with classical RK4, upward v_peak detection, and no reset.",
+    "citation": "SC-NeuroCore project recurrence"
+  },
+  "expected_features": {
+    "spike_count": 16.0,
+    "first_spike_step": 12.0,
+    "final.v": 0.5189378988390342,
+    "min.v": -0.20274734793081386,
+    "max.v": 1.21940231179816,
+    "mean.v": 0.3773146668975017,
+    "final.w": 1.0291937219408265,
+    "min.w": 0.000578455,
+    "max.w": 1.0304943854882265,
+    "mean.w": 0.7203256671456074
+  },
+  "tolerances": {
+    "default": {"absolute": 1e-09, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
+  }
+}

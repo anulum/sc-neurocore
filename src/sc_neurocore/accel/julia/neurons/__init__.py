@@ -48,6 +48,63 @@ _SIGMA_DELTA_LOADED = False
 _SC_SIGMA_DELTA_ACCUMULATOR_LOADED = False
 _ENERGY_LIF_LOADED = False
 _SC_NORMALIZED_ENERGY_LIF_LOADED = False
+_MCKEAN_LOADED = False
+_SC_TRIANGULAR_MCKEAN_LOADED = False
+
+
+def _ensure_mckean_loaded() -> Any:
+    """Include the source-bound McKean module."""
+    global _MCKEAN_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _MCKEAN_LOADED:
+        jl_path = _KERNEL_DIR / "mckean.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"mckean.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _MCKEAN_LOADED = True
+    return _jl.McKeanAccel
+
+
+def simulate_mckean(
+    currents: npt.ArrayLike,
+    *,
+    v: float = 0.0,
+    w: float = 0.0,
+    a: float = 0.25,
+    lambda_: float = 1.0,
+    mu: float = 1.0,
+    b: float = 0.01,
+    dt: float = 0.1,
+) -> dict[str, object]:
+    """Run a complete source McKean state/event trace in Julia."""
+    drive = np.ascontiguousarray(currents, dtype=np.float64)
+    if drive.ndim != 1 or not np.isfinite(drive).all():
+        raise ValueError("Julia McKean current must be finite and one-dimensional")
+    module = _ensure_mckean_loaded()
+    state = module.McKeanNeuronState(v, w, a, lambda_, mu, b, dt)
+    result = module.simulate(drive, state=state)
+    return {
+        "voltages": np.asarray(result.voltages, dtype=np.float64),
+        "recovery": np.asarray(result.recovery, dtype=np.float64),
+        "events": np.asarray(result.events, dtype=np.int64),
+        "v_final": float(result.state.v),
+        "w_final": float(result.state.w),
+    }
+
+
+def _ensure_sc_triangular_mckean_loaded() -> Any:
+    """Include the retained SC triangular recurrence module."""
+    global _SC_TRIANGULAR_MCKEAN_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _SC_TRIANGULAR_MCKEAN_LOADED:
+        jl_path = _KERNEL_DIR / "sc_triangular_mckean.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"sc_triangular_mckean.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _SC_TRIANGULAR_MCKEAN_LOADED = True
+    return _jl.SCTriangularMcKeanAccel
 
 
 def _ensure_mat_loaded() -> Any:

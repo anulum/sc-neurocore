@@ -4,58 +4,106 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — McKean neuron PyO3 binding
 
-//! Python binding for the McKean piecewise-linear neuron.
+//! PyO3 exposure for the source-bound McKean Heaviside system.
 
-use numpy::{IntoPyArray, PyArray1};
+use crate::neurons::McKeanNeuron;
+use numpy::{IntoPyArray, PyReadonlyArray1};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
-use crate::neurons::McKeanNeuron;
+#[pyclass(
+    name = "McKeanNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyMcKeanNeuron {
+    inner: McKeanNeuron,
+}
 
-py_neuron_default!("McKeanNeuron", PyMcKeanNeuron, McKeanNeuron, state v, state w);
+#[pymethods]
+impl PyMcKeanNeuron {
+    #[new]
+    #[pyo3(signature=(v=0.0,w=0.0,a=0.25,lambda_=1.0,mu=1.0,b=0.01,dt=0.1))]
+    fn new(v: f64, w: f64, a: f64, lambda_: f64, mu: f64, b: f64, dt: f64) -> PyResult<Self> {
+        let inner = McKeanNeuron {
+            v,
+            w,
+            a,
+            lambda: lambda_,
+            mu,
+            b,
+            dt,
+        };
+        if !inner.valid() {
+            return Err(PyValueError::new_err(
+                "invalid McKean state or configuration",
+            ));
+        }
+        Ok(Self { inner })
+    }
+    fn step(&mut self, current: f64) -> PyResult<i32> {
+        self.inner.try_step(current).map_err(PyValueError::new_err)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        d.set_item("w", self.inner.w)?;
+        Ok(d.into_any().unbind())
+    }
+}
 
-/// Register the McKean class and simulator with the extension module.
+#[pyfunction]
+#[pyo3(signature=(v,w,a,lambda_,mu,b,dt,currents))]
+#[allow(clippy::too_many_arguments)]
+fn py_mckean_simulate<'py>(
+    py: Python<'py>,
+    v: f64,
+    w: f64,
+    a: f64,
+    lambda_: f64,
+    mu: f64,
+    b: f64,
+    dt: f64,
+    currents: PyReadonlyArray1<'py, f64>,
+) -> PyResult<Py<PyAny>> {
+    let mut n = McKeanNeuron {
+        v,
+        w,
+        a,
+        lambda: lambda_,
+        mu,
+        b,
+        dt,
+    };
+    if !n.valid() {
+        return Err(PyValueError::new_err(
+            "invalid McKean state or configuration",
+        ));
+    }
+    let mut voltages = Vec::with_capacity(currents.len()?);
+    let mut recovery = Vec::with_capacity(currents.len()?);
+    let mut events = Vec::with_capacity(currents.len()?);
+    for &current in currents.as_slice()? {
+        events.push(n.try_step(current).map_err(PyValueError::new_err)?);
+        voltages.push(n.v);
+        recovery.push(n.w);
+    }
+    let d = PyDict::new(py);
+    d.set_item("voltages", voltages.into_pyarray(py))?;
+    d.set_item("recovery", recovery.into_pyarray(py))?;
+    d.set_item("events", events.into_pyarray(py))?;
+    d.set_item("v_final", n.v)?;
+    d.set_item("w_final", n.w)?;
+    Ok(d.into_any().unbind())
+}
+
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyMcKeanNeuron>()?;
     module.add_function(wrap_pyfunction!(py_mckean_simulate, module)?)?;
     Ok(())
-}
-
-/// N-step McKean (1970) piecewise-linear FitzHugh-Nagumo caricature simulation.
-///
-/// Parity contract with
-/// `sc_neurocore.neurons.models.mckean.McKeanNeuron.simulate`: for the same
-/// parameters and constant input the returned `v` trace, upward-`v_peak`-crossing
-/// spike count, and final `(v, w)` state are bit-identical to the Python RK4
-/// reference (the piecewise-linear right-hand side is exact arithmetic —
-/// additions, multiplications and branch selection, no transcendental functions —
-/// and a two-dimensional autonomous flow cannot be chaotic).
-#[pyfunction]
-#[pyo3(signature = (v0, w0, a, epsilon, gamma, dt, v_peak, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_mckean_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    w0: f64,
-    a: f64,
-    epsilon: f64,
-    gamma: f64,
-    dt: f64,
-    v_peak: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = McKeanNeuron {
-        v: v0,
-        w: w0,
-        a,
-        epsilon,
-        gamma,
-        dt,
-        v_peak,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w)
 }

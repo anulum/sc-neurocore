@@ -133,6 +133,7 @@ _MODEL_NAMES = {
     "MarderSTGNeuron",
     "McCullochPittsNeuron",
     "McKeanNeuron",
+    "SCTriangularMcKeanNeuron",
     "MedvedevMapNeuron",
     "MetaPlasticNeuron",
     "MihalasNieburNeuron",

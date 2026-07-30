@@ -27,7 +27,7 @@ SOURCE_PATHS = (
     "src/sc_neurocore/neurons/model_schemas/energy_lif.json",
     "src/sc_neurocore/neurons/model_schemas/energy_lif.toml",
     "src/sc_neurocore/neurons/models/energy_lif.py",
-    "src/sc_neurocore/neurons/reference_trace_data/energy_lif_fardet_levina.json",
+    "src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json",
 )
 SPEC = BenchmarkSpec(
     benchmark="Fardet-Levina source eLIF coupled RK4",

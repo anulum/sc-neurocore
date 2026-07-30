@@ -33,6 +33,8 @@ What is your goal?
 ├─ Simple + fast
 │  ├─ 1 ODE → LapicqueNeuron, QuadraticIFNeuron
 │  ├─ 2 ODEs → Izhikevich, AdExNeuron, FitzHughNagumoNeuron
+│  ├─ Source Heaviside caricature → McKeanNeuron
+│  ├─ SC triangular compatibility → SCTriangularMcKeanNeuron
 │  └─ Map (O(1)) → RulkovMapNeuron, ChialvoMapNeuron
 │
 ├─ Adaptive firing rate
@@ -214,7 +216,8 @@ Non-spiking, continuous-valued models.
 McCullochPitts, SigmoidRate, ThresholdLinearRate, WilsonHR
 
 ### 14. Other (2 models)
-McKean (piecewise-linear FHN), Astrocyte (glial Ca2+)
+McKean (source Heaviside caricature), SC triangular McKean-like recurrence,
+Astrocyte (glial Ca2+)
 
 ## Next Steps
 
