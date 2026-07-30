@@ -11,18 +11,25 @@ schema_version = 2
 name = "MATNeuron"
 class_name = "MATNeuron"
 module = "mat"
-display_name = ""
-summary = "Kobayashi 2009 — Multi-timescale Adaptive Threshold."
+display_name = "Kobayashi MAT* non-resetting neuron"
+summary = "Kobayashi-Tsubo-Shinomoto MAT* with a non-resetting membrane, two exact threshold-history decays, and a 2 ms absolute refractory interval."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "source-equation MAT* replay",
+    "regular-spiking, intrinsically-bursting, and fast-spiking profile studies",
+    "cross-runtime complete-state validation",
+]
+hardware_fit = [
+    "bounded one-cell signed Q32.32 co-simulation",
+]
 behavior_tags = [
     "adapting",
     "excitable",
-    "rate-coded",
+    "spiking",
+    "non-resetting",
 ]
 
 [provenance]
@@ -31,45 +38,41 @@ authors = [
 ]
 year = 2009
 doi = "10.3389/neuro.10.009.2009"
+paper_title = "Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold"
+url = "https://doi.org/10.3389/neuro.10.009.2009"
+derivation_note = "Equations 1-3 in the MAT* specialization: forward-Euler membrane at 0.001 ms, exact threshold-history exponentials, sampled level detection, and no voltage reset. Defaults are the paper's regular-spiking example."
 
 [state.v]
-init = -70.0
+init = 0.0
+unit = "mV relative to rest"
+meaning = "non-resetting membrane voltage"
 
 [state.theta1]
 init = 0.0
+unit = "mV"
+meaning = "fast spike-history threshold contribution"
 
 [state.theta2]
 init = 0.0
-
-[parameters.v_rest]
-default = -70.0
 unit = "mV"
-meaning = "resting / leak reversal potential"
-range = [
-    -90.0,
-    -40.0,
-]
+meaning = "slow spike-history threshold contribution"
 
-[parameters.v_reset]
-default = -70.0
-unit = "mV"
-meaning = "membrane potential reset to after a spike"
-range = [
-    -90.0,
-    -40.0,
-]
+[state.refractory_remaining]
+init = 0.0
+unit = "ms"
+meaning = "absolute refractory time remaining; voltage still evolves"
 
-[parameters.v_threshold_base]
-default = -50.0
+[parameters.omega]
+default = 19.0
 unit = "mV"
-meaning = "baseline (resting) value of the adaptive threshold"
+meaning = "baseline threshold; 19 mV is the paper's regular-spiking profile"
 range = [
-    -60.0,
-    -20.0,
+    -1000.0,
+    1000.0,
 ]
 
 [parameters.tau_m]
-default = 10.0
+default = 5.0
 unit = "ms"
 meaning = "membrane time constant"
 range = [
@@ -95,44 +98,92 @@ range = [
     1000.0,
 ]
 
-[parameters.h1]
-default = 5.0
+[parameters.alpha_1]
+default = 37.0
 unit = "mV"
-meaning = "amplitude added to the fast threshold component at each spike"
+meaning = "fast threshold increment per spike"
 range = [
     0.0,
-    50.0,
+    1000.0,
 ]
 
-[parameters.h2]
-default = 3.0
+[parameters.alpha_2]
+default = 2.0
 unit = "mV"
-meaning = "amplitude added to the slow threshold component at each spike"
+meaning = "slow threshold increment per spike"
 range = [
     0.0,
-    50.0,
+    1000.0,
 ]
 
 [parameters.resistance]
-default = 1.0
-unit = "1"
-meaning = "normalised membrane resistance (R=1 in the project's normalised-current convention)"
+default = 50.0
+unit = "MOhm"
+meaning = "membrane resistance in the source current-to-voltage conversion"
 range = [
     0.0,
     100.0,
 ]
 
+[parameters.refractory_period]
+default = 2.0
+unit = "ms"
+meaning = "absolute refractory interval"
+range = [
+    0.0,
+    1000.0,
+]
+
 [integration]
-dt = 1.0
-method = "euler"
+dt = 0.001
+method = "map"
 
 [dynamics]
+v = "v + dt * (-v + resistance * I) / tau_m"
+theta1 = "theta1 * exp(-dt / tau_1) + (alpha_1 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else 0.0)"
+theta2 = "theta2 * exp(-dt / tau_2) + (alpha_2 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else 0.0)"
+refractory_remaining = "refractory_period if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else max(0.0, refractory_remaining - dt)"
+spike_flag = "1.0 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else 0.0"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/mat_2009_rs.json"
+golden_trace_sha256 = "3382c1a73215026c1c1f41749cbc2061ff338c044e336e8a25ca59b8ac139de8"
+golden_citation = "doi:10.3389/neuro.10.009.2009; direct Equations 1-3 oracle"
 
 [documentation]
 slug = "models/mat"
-notes = ""
+notes = "Voltage never resets. It continues evolving during refractory and may spike again when refractory expires. The separately named SCResettingMATNeuron preserves the historical project RK4/reset recurrence."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "10272-step regular-spiking profile receipt plus three named source profiles and five-runtime parity"
+tolerance = "events exact; complete floating-point states within absolute 2e-12"
+evidence = "tests/test_reference_mat.py; tests/test_mat_backend_dispatch.py; tests/test_cosim_mat.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_mat.py::test_source_mat_q3232_matches_independent_integer_oracle"
+target_tier = "H1"
+terminal_reason = "Signed Q32.32 preserves the bounded integer oracle and event vector, synthesizes in Yosys, matches its optimized netlist over the enrolled sequence, and passes depth-12 CVC5 bounded safety. Timing, PPA, device evidence, and universal binary64 equivalence remain open."

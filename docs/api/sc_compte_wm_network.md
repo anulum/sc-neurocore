@@ -268,7 +268,7 @@ synthesis, post-optimization equivalence, and control-safety surface.
 Biological validation, the paper's larger distractor experiment, physical
 device implementation, timing/PPA, board/HIL evidence, full-network binary64
 RTL equivalence, and silicon behavior remain unclaimed. This separately named
-network does not increment the 49/155 neuron-model fidelity count.
+network does not increment the 50/155 neuron-model fidelity count.
 
 ## Example
 

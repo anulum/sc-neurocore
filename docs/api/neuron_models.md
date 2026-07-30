@@ -204,7 +204,7 @@ approximate comparison. Studio model-detail responses expose the typed variant
 list so clients can verify either measured platform trace without parsing the
 raw TOML descriptor.
 
-### Trivial IF Variants (18 models)
+### Trivial IF Variants (19 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -215,6 +215,7 @@ raw TOML descriptor.
 | `NonlinearLIFNeuron` | `NonlinearLIFNeuron` | Touboul & Brette 2008 |
 | `SFANeuron` | `SFANeuron` | Benda & Herz 2003 |
 | `MATNeuron` | `MATNeuron` | Kobayashi et al. 2009 |
+| `SCResettingMATNeuron` | `SCResettingMATNeuron` | SC-NeuroCore project recurrence |
 | `EscapeRateNeuron` | `EscapeRateNeuron` | Gerstner 2000 |
 | `KLIFNeuron` | `KLIFNeuron` | Eshraghian et al. 2021 |
 | `InhibitoryLIFNeuron` | `InhibitoryLIFNeuron` | — |

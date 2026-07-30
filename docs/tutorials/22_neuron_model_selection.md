@@ -36,7 +36,9 @@ What is your goal?
 │  └─ Map (O(1)) → RulkovMapNeuron, ChialvoMapNeuron
 │
 ├─ Adaptive firing rate
-│  ├─ Threshold adaptation → HomeostaticLIFNeuron, MATNeuron, GLIFNeuron
+│  ├─ Source non-resetting MAT* → MATNeuron
+│  ├─ SC RK4/reset compatibility → SCResettingMATNeuron
+│  ├─ Other threshold adaptation → HomeostaticLIFNeuron, GLIFNeuron
 │  ├─ Spike-frequency adaptation → SFANeuron, BendaHerzNeuron
 │  └─ Reward-modulated → EPropALIFNeuron (with eligibility traces)
 │

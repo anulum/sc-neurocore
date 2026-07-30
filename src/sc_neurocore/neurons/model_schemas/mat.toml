@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Kobayashi 2009 non-resetting MAT* schema
+
+[metadata]
+schema_version = 2
+name = "MATNeuron"
+author = "Kobayashi, R.; Tsubo, Y.; Shinomoto, S."
+year = 2009
+doi = "10.3389/neuro.10.009.2009"
+description = "Non-resetting MAT* neuron with two exact adaptive-threshold memories"
+
+[state]
+v = 0.0
+theta1 = 0.0
+theta2 = 0.0
+refractory_remaining = 0.0
+spike_flag = 0.0
+
+[parameters]
+omega = 19.0
+tau_m = 5.0
+tau_1 = 10.0
+tau_2 = 200.0
+alpha_1 = 37.0
+alpha_2 = 2.0
+resistance = 50.0
+refractory_period = 2.0
+dt = 0.001
+
+[integration]
+dt = 0.001
+method = "map"
+substeps = 1
+
+[dynamics]
+v = "v + dt * (-v + resistance * I) / tau_m"
+theta1 = "theta1 * exp(-dt / tau_1) + (alpha_1 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else 0.0)"
+theta2 = "theta2 * exp(-dt / tau_2) + (alpha_2 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else 0.0)"
+refractory_remaining = "refractory_period if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else max(0.0, refractory_remaining - dt)"
+spike_flag = "1.0 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-v + resistance * I) / tau_m) >= omega + theta1 * exp(-dt / tau_1) + theta2 * exp(-dt / tau_2) else 0.0"
+
+[threshold]
+condition = "spike_flag >= 0.5"
+detection = "level"
+
+[extensions]
+family = "adaptive-threshold"
+model_type = "non_resetting_mat_star"
+source_equations = "Kobayashi, Tsubo, and Shinomoto 2009 Eqs. 1-3, DOI 10.3389/neuro.10.009.2009"
+discretisation = "Forward Euler voltage at 0.001 ms; exact exponential threshold histories; sampled level detection"
+profile_note = "Defaults are the paper's regular-spiking example, not universal biological constants."
+refractory_note = "Voltage continues evolving during the 2 ms absolute refractory interval and may re-emit if still suprathreshold when it expires."
+identity_note = "The historical SC reset/RK4 recurrence is separately named SCResettingMATNeuron."

@@ -127,6 +127,7 @@ _MODEL_NAMES = {
     "Loihi2Neuron",
     "LoihiCUBANeuron",
     "MATNeuron",
+    "SCResettingMATNeuron",
     "MainenSejnowskiNeuron",
     "MarderSTGNeuron",
     "McCullochPittsNeuron",

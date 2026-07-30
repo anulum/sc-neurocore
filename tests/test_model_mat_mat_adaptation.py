@@ -10,20 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *  # noqa: F403
+from tests.model_mat_support import *
 
 
 class TestMATAdaptation:
     def test_adaptation_reduces_rate(self):
         """Adaptation → first half has more spikes than second half."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         s1 = sum(n.step(40.0) for _ in range(2500))
         s2 = sum(n.step(40.0) for _ in range(2500))
         assert s1 >= s2
 
     def test_adaptation_recovers(self):
         """After silence, thetas decay → threshold drops → fires again."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         # Drive to adapt
         for _ in range(5000):
             n.step(40.0)
@@ -36,7 +36,7 @@ class TestMATAdaptation:
 
     def test_theta_accumulation_with_bursts(self):
         """Rapid spiking accumulates theta beyond single h1/h2."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         for _ in range(1000):
             n.step(50.0)
         # After sustained drive, thetas accumulate from multiple spikes

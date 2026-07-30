@@ -10,13 +10,13 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *  # noqa: F403
+from tests.model_mat_support import *
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMATPerformance:
     def test_isolation_throughput(self):
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         N = 100_000
         t0 = time.perf_counter()
         for _ in range(N):
@@ -30,7 +30,7 @@ class TestMATPerformance:
         )
 
     def test_network_throughput(self):
-        pop = Population(MATNeuron, n=20, label="bench")
+        pop = Population(SCResettingMATNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)

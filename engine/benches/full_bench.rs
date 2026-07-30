@@ -156,6 +156,7 @@ use sc_neurocore_engine::neurons::{
     RodPhotoreceptor,
     RulkovMapNeuron,
     SCAdaptiveThresholdMapNeuron,
+    SCResettingMATNeuron,
     SFANeuron,
     SKNeuron,
     SSTNeuron,
@@ -1437,7 +1438,16 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = MATNeuron::new();
             for _ in 0..10_000 {
-                black_box(n.step(30.0));
+                black_box(n.step(0.7));
+            }
+        })
+    });
+
+    c.bench_function("sc_resetting_mat_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = SCResettingMATNeuron::new();
+            for _ in 0..10_000 {
+                black_box(n.step(50.0));
             }
         })
     });

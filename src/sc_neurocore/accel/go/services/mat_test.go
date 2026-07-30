@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go tests for MAT RK4 service
+// SC-NeuroCore — Go source MAT* tests
 
 package services
 
@@ -13,70 +13,41 @@ import (
 	"testing"
 )
 
-func TestMATRK4CandidateCommit(t *testing.T) {
+func TestMATSourceStepDoesNotReset(t *testing.T) {
 	state := NewMATNeuron()
-	state.Theta1 = 0.5
-	state.Theta2 = 1.25
-	vCandidate, theta1Candidate, theta2Candidate := state.rk4Candidate(state.V, state.Theta1, state.Theta2, 10.0)
-
-	spike := state.Step(10.0)
-	if spike != 0 {
-		t.Fatalf("unexpected spike: %d", spike)
+	state.V = 20.0
+	want := state.V + state.Dt*(-state.V)/state.TauM
+	if got := state.Step(0.0); got != 1 {
+		t.Fatalf("event = %d, want 1", got)
 	}
-	if math.Abs(state.V-vCandidate) > 1.0e-12 ||
-		math.Abs(state.Theta1-theta1Candidate) > 1.0e-12 ||
-		math.Abs(state.Theta2-theta2Candidate) > 1.0e-12 {
-		t.Fatalf(
-			"RK4 candidate mismatch: got (%g,%g,%g), want (%g,%g,%g)",
-			state.V,
-			state.Theta1,
-			state.Theta2,
-			vCandidate,
-			theta1Candidate,
-			theta2Candidate,
-		)
+	if state.V != want || state.Theta1 != 37.0 || state.Theta2 != 2.0 {
+		t.Fatalf("non-resetting state mismatch: %+v", *state)
 	}
 }
 
-func TestMATInvalidStateDoesNotMutate(t *testing.T) {
+func TestMATSourceExactDecayAndAtomicFailure(t *testing.T) {
 	state := NewMATNeuron()
-	state.Theta1 = -1.0
+	state.Theta1, state.Theta2, state.RefractoryRemaining = 7.0, 4.0, 1.25
+	want1 := state.Theta1 * math.Exp(-state.Dt/state.Tau1)
+	want2 := state.Theta2 * math.Exp(-state.Dt/state.Tau2)
+	if got := state.Step(0.42); got != 0 || state.Theta1 != want1 || state.Theta2 != want2 {
+		t.Fatalf("source step mismatch: event=%d state=%+v", got, *state)
+	}
 	before := *state
-	if spike := state.Step(10.0); spike != -1 {
-		t.Fatalf("expected invalid-state signal, got %d", spike)
-	}
-	if *state != before {
-		t.Fatalf("invalid state mutated: got %+v want %+v", *state, before)
+	if got := state.Step(math.NaN()); got != -1 || *state != before {
+		t.Fatalf("invalid step was not atomic: event=%d state=%+v", got, *state)
 	}
 }
 
-func TestMATSpikeAddsThresholdCandidates(t *testing.T) {
-	state := NewMATNeuron()
-	_, theta1Candidate, theta2Candidate := state.rk4Candidate(state.V, state.Theta1, state.Theta2, 250.0)
-
-	spike := state.Step(250.0)
-	if spike != 1 {
-		t.Fatalf("expected spike, got %d", spike)
-	}
-	if state.V != state.VReset {
-		t.Fatalf("voltage did not reset: got %g want %g", state.V, state.VReset)
-	}
-	if math.Abs(state.Theta1-(theta1Candidate+state.H1)) > 1.0e-12 ||
-		math.Abs(state.Theta2-(theta2Candidate+state.H2)) > 1.0e-12 {
-		t.Fatalf("threshold candidates not retained after spike: got (%g,%g)", state.Theta1, state.Theta2)
-	}
-}
-
-func BenchmarkMATRK4(b *testing.B) {
-	const current = 50.0
+func BenchmarkMATSource(b *testing.B) {
 	state := NewMATNeuron()
 	spikes := 0
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		result := state.Step(current)
+	for index := 0; index < b.N; index++ {
+		result := state.Step(0.5)
 		if result < 0 {
-			b.Fatal("invalid RK4 step")
+			b.Fatal("invalid source MAT step")
 		}
 		spikes += result
 	}

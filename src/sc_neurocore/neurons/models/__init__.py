@@ -110,6 +110,7 @@ _CLASS_TO_MODULE = {
     "LoihiCUBANeuron": "loihi_cuba",
     "LugaroCell": "lugaro_cell",
     "MATNeuron": "mat",
+    "SCResettingMATNeuron": "sc_resetting_mat",
     "MainenSejnowskiNeuron": "mainen_sejnowski",
     "MarderSTGNeuron": "marder_stg",
     "MartinottiNeuron": "martinotti_neuron",

@@ -1037,6 +1037,19 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.mat`
+
+### Function `backend_available(backend)`
+Return whether one named MAT* runtime is executable now.
+
+### Function `auto_backend()`
+Return the first available measured lane, with Python as floor.
+
+### Function `simulate_mat(currents)`
+Run the complete configured MAT* contract on one real backend.
+
+---
+
 ## Module `accel.mcculloch_pitts`
 
 ### Function `ensure_julia_loaded()`
@@ -1558,6 +1571,19 @@ Returns
 -------
 numpy.ndarray
     ``(n_out,)`` ``float64`` estimate of ``weights @ input_probs``.
+
+---
+
+## Module `accel.sc_resetting_mat`
+
+### Function `backend_available(backend)`
+Return whether one named SC resetting-MAT runtime is executable.
+
+### Function `auto_backend()`
+Return the first available measured lane, with Python as floor.
+
+### Function `simulate_sc_resetting_mat(currents)`
+Run the complete configured SC recurrence on one real backend.
 
 ---
 
@@ -21104,6 +21130,71 @@ Compute rates and circular bump observables from one spike-count window.
 
 ---
 
+## Module `network.sc_compte_wm_backends`
+
+### Class `SCCompteWMBackendUnavailable`
+Raised when an explicitly selected native runtime cannot execute.
+
+
+### Class `SCCompteWMBackendStatus`
+Availability of one explicitly named full-network runtime.
+
+
+### Class `SCCompteWMBackendRun`
+One selected-backend receipt with native execution timing.
+
+
+### Function `sc_compte_wm_backend_status()`
+Return deterministic availability details for all five runtimes.
+
+### Function `run_sc_compte_wm_network(duration_ms)`
+Execute one explicitly selected complete runtime without fallback.
+
+``timeout_s=None`` permits long scientific runs. A finite timeout must be
+positive. Native v1 backends accept the fixed public constants plus the
+seed and three documented mode flags; incompatible parameter changes fail
+before process launch.
+
+---
+
+## Module `network.sc_compte_wm_behavior`
+
+### Class `SCCompteWMBehaviorProtocol`
+Frozen 2.5-second SC working-memory behavior protocol in milliseconds.
+
+- **__post_init__**()
+- **epoch_starts_ms**()
+  - Return cue, distractor, and response start times.
+- **stimuli**()
+  - Return the localized cue/distractor and global response stimuli.
+
+### Class `SCCompteWMBehaviorAcceptance`
+Predeclared v1 thresholds for classifying one protocol receipt.
+
+
+### Class `SCCompteWMBehaviorMetrics`
+Circular and rate observables extracted from one ten-window receipt.
+
+
+### Class `SCCompteWMBehaviorTrial`
+One selected-runtime, one-seed behavior classification and custody.
+
+
+### Class `SCCompteWMBehaviorEnsemble`
+Aggregate acceptance for the reference seeds and all runtime anchors.
+
+
+### Function `assess_sc_compte_wm_behavior(run)`
+Classify one complete backend receipt against the frozen v1 protocol.
+
+### Function `run_sc_compte_wm_behavior_trial()`
+Execute and classify one modulated-network behavior trial.
+
+### Function `summarize_sc_compte_wm_behavior_ensemble(trials)`
+Require three reference seeds, bidirectional drift, and exact route anchors.
+
+---
+
 ## Module `network.sc_compte_wm_drive`
 
 ### Class `CounterPoissonReceipt`
@@ -23214,7 +23305,7 @@ Notes
 This scalar reference model does not include the paper's 2,560-cell ring.
 The connectivity footprints, Poisson drive, tuned persistent bumps,
 distractor resistance, and network statistics are retained as the
-separately named `SC-COMPTE-WM-NETWORK` project modification, with their
+separately named ``SC-COMPTE-WM-NETWORK`` project modification, with their
 own evidence boundary.
 
 - **__post_init__**()
@@ -24596,16 +24687,31 @@ Toledo-Rodriguez et al. (2005); Pospischil et al. (2008) Biol. Cybern. 99:427.
 ## Module `neurons.models.mat`
 
 ### Class `MATNeuron`
-Kobayashi 2009 — Multi-timescale Adaptive Threshold.
+Non-resetting MAT* neuron from Kobayashi, Tsubo, and Shinomoto (2009).
 
-Reference: Kobayashi, R. et al. (2009). Front. Comput. Neurosci. 3:9.
+``v`` is measured relative to the resting potential. The membrane follows
+forward Euler, while the two spike-history terms use their exact
+exponential decay. A spike raises the adaptive threshold but never resets
+the membrane voltage. The default parameter set is the paper's regular-
+spiking (RS) example, not a universal cortical-cell calibration.
+
+Reference: R. Kobayashi, Y. Tsubo, and S. Shinomoto, Frontiers in
+Computational Neuroscience 3:9 (2009), doi:10.3389/neuro.10.009.2009.
 
 - **__post_init__**()
-  - Validate the numerical contract before the first integration step.
+  - Validate the complete source-model contract before first use.
+- **regular_spiking**(cls)
+  - Construct the paper's regular-spiking example profile.
+- **intrinsically_bursting**(cls)
+  - Construct the paper's intrinsically-bursting example profile.
+- **fast_spiking**(cls)
+  - Construct the paper's fast-spiking example profile.
+- **threshold**()
+  - Return the instantaneous adaptive threshold in millivolts.
 - **step**(current)
-  - Advance one MAT step and return `1` only when a spike occurs.
+  - Advance one paper-MAT* step and return ``1`` on a spike.
 - **reset**()
-  - Restore voltage and adaptive thresholds to the resting state.
+  - Restore zero-rest voltage, spike history, and refractory state.
 
 ---
 
@@ -25407,6 +25513,24 @@ source-faithful paper model.
   - Run an atomic batch on a parity-checked maintained backend.
 - **reset**()
   - Clear both states while preserving the configured parameters.
+
+---
+
+## Module `neurons.models.sc_resetting_mat`
+
+### Class `SCResettingMATNeuron`
+SC candidate-first RK4 adaptive-threshold neuron with voltage reset.
+
+This project model preserves the historical SC-NeuroCore ``MATNeuron``
+recurrence under an explicit identity. It is not attributed to the
+non-resetting MAT* equations of Kobayashi et al. (2009).
+
+- **__post_init__**()
+  - Validate the numerical contract before the first integration step.
+- **step**(current)
+  - Advance one SC resetting-MAT step and return ``1`` on a spike.
+- **reset**()
+  - Restore voltage and adaptive thresholds to the SC resting state.
 
 ---
 

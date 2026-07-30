@@ -10,16 +10,16 @@
 
 from __future__ import annotations
 
-from tests.extended_neurons_support import *  # noqa: F403
+from tests.extended_neurons_support import *
 
 
-class TestMAT:
+class TestSourceMAT:
     def test_fires(self):
         n = MATNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
     def test_threshold_adapts(self):
         n = MATNeuron()
-        for _ in range(50):
+        for _ in range(200):
             n.step(30.0)
         assert n.theta1 > 0.0

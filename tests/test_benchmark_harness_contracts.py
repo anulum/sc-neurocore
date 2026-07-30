@@ -34,7 +34,7 @@ import pytest
         ("bench_model_pospischil", "BenchmarkPospischilRK4"),
         ("bench_model_pv_fast_spiking_neuron", "BenchmarkPVFastSpikingRK4"),
         ("bench_model_sfa", "BenchmarkSFARK4"),
-        ("bench_model_mat", "BenchmarkMATRK4"),
+        ("bench_model_mat", "BenchmarkMATSource"),
         ("bench_model_energy_lif", "BenchmarkEnergyLIFExactFlow"),
         ("bench_model_spike_response", "BenchmarkSpikeResponseKernel"),
         ("bench_model_spinnaker_lif", "BenchmarkSpiNNakerLIFExactFlow"),

@@ -248,6 +248,7 @@ pub mod mainen_sejnowski;
 pub mod marder_stg;
 pub mod martinotti_neuron;
 pub mod mat;
+pub mod sc_resetting_mat;
 pub mod mcculloch_pitts;
 pub mod mckean;
 pub mod mdl_parser;

@@ -10,13 +10,13 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *  # noqa: F403
+from tests.model_mat_support import *
 
 
 class TestMATAnalytical:
     def test_rk4_candidate_one_step(self):
         """The public step commits the candidate-first RK4 state."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         I = 15.0
         expected_v, expected_theta1, expected_theta2 = n._rk4_candidate(I)
         n.step(I)
@@ -26,7 +26,7 @@ class TestMATAnalytical:
 
     def test_rk4_separates_from_forward_euler(self):
         """Finite-dt MAT integration must not regress to raw forward Euler."""
-        n = MATNeuron(theta1=4.0, theta2=2.0, dt=2.0)
+        n = SCResettingMATNeuron(theta1=4.0, theta2=2.0, dt=2.0)
         I = 15.0
         euler_v = n.v + (-(n.v - n.v_rest) + n.resistance * I) / n.tau_m * n.dt
         expected_v, _, _ = n._rk4_candidate(I)
@@ -34,7 +34,7 @@ class TestMATAnalytical:
 
     def test_theta1_exponential_decay(self):
         """RK4 threshold decay tracks the closed-form exponential."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         n.theta1 = 5.0  # as if just spiked
         steps = 20
         for _ in range(steps):
@@ -44,7 +44,7 @@ class TestMATAnalytical:
 
     def test_theta2_exponential_decay(self):
         """RK4 slow-threshold decay tracks the closed-form exponential."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         n.theta2 = 3.0
         steps = 20
         for _ in range(steps):
@@ -54,7 +54,7 @@ class TestMATAnalytical:
 
     def test_theta1_decays_faster_than_theta2(self):
         """tau_1 < tau_2 → theta1 decays faster."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         n.theta1 = 10.0
         n.theta2 = 10.0
         for _ in range(50):
@@ -63,7 +63,7 @@ class TestMATAnalytical:
 
     def test_decay_ratio_matches_timescale(self):
         """After 1 tau: theta decays to ≈ 1/e of initial."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         n.theta1 = 10.0
         for _ in range(int(n.tau_1 / n.dt)):
             n.step(0.0)
@@ -72,7 +72,7 @@ class TestMATAnalytical:
 
     def test_threshold_is_sum(self):
         """Effective threshold = V_base + theta1 + theta2."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         n.theta1 = 3.0
         n.theta2 = 2.0
         threshold = n.v_threshold_base + n.theta1 + n.theta2
@@ -80,7 +80,7 @@ class TestMATAnalytical:
 
     def test_spike_increments_both_thetas(self):
         """On spike: theta1 += h1=5, theta2 += h2=3."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         for _ in range(10_000):
             if n.step(30.0) == 1:
                 # theta1 was decayed then incremented
@@ -90,7 +90,7 @@ class TestMATAnalytical:
 
     def test_spike_retains_threshold_candidates(self):
         """Spike reset keeps the RK4-decayed threshold state before increments."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         _, theta1_candidate, theta2_candidate = n._rk4_candidate(250.0)
         assert n.step(250.0) == 1
         assert n.v == n.v_reset
@@ -99,7 +99,7 @@ class TestMATAnalytical:
 
     def test_spike_resets_voltage(self):
         """On spike: V → V_reset."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         for _ in range(10_000):
             if n.step(30.0) == 1:
                 assert n.v == n.v_reset
@@ -107,7 +107,7 @@ class TestMATAnalytical:
 
     def test_membrane_steady_state(self):
         """At steady state (no spike): V_ss = V_rest + R·I."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         # Low current to avoid spiking
         I = 10.0
         for _ in range(10_000):
@@ -118,7 +118,7 @@ class TestMATAnalytical:
 
     def test_invalid_current_preserves_state(self):
         """Invalid runtime current is rejected before mutating state."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         before = (n.v, n.theta1, n.theta2)
         with pytest.raises(ValueError, match="input current"):
             n.step(float("nan"))
@@ -126,7 +126,7 @@ class TestMATAnalytical:
 
     def test_invalid_state_preserves_state(self):
         """Corrupted threshold adaptation is rejected before mutation."""
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         n.theta1 = -1.0
         before = (n.v, n.theta1, n.theta2)
         with pytest.raises(ValueError, match="threshold adaptation"):

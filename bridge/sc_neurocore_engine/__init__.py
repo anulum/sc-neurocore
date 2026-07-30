@@ -55,6 +55,7 @@ try:
         NonlinearLIFNeuron,
         SFANeuron,
         MATNeuron,
+        SCResettingMATNeuron,
         EscapeRateNeuron,
         KLIFNeuron,
         InhibitoryLIFNeuron,
@@ -250,6 +251,7 @@ _NEURON_MODELS = [
     "NonlinearLIFNeuron",
     "SFANeuron",
     "MATNeuron",
+    "SCResettingMATNeuron",
     "EscapeRateNeuron",
     "KLIFNeuron",
     "InhibitoryLIFNeuron",
@@ -928,6 +930,17 @@ try:
     _resonate_and_fire_rust_available = True
 except ImportError:
     _resonate_and_fire_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_mat_simulate,
+        py_sc_resetting_mat_simulate,
+    )
+
+    __all__ += ["py_mat_simulate", "py_sc_resetting_mat_simulate"]
+    _mat_rust_available = True
+except ImportError:
+    _mat_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import py_adaptive_threshold_if_simulate

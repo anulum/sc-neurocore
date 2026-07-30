@@ -1,0 +1,189 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCResettingMATNeuron"
+class_name = "SCResettingMATNeuron"
+module = "sc_resetting_mat"
+display_name = "SC resetting MAT neuron"
+summary = "Historical SC candidate-first RK4 adaptive-threshold recurrence with voltage reset"
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = [
+    "historical SC-NeuroCore trace compatibility",
+    "candidate-first RK4 adaptive-threshold experiments",
+    "cross-runtime regression validation",
+]
+hardware_fit = [
+    "bounded one-cell signed Q32.32 co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "spiking",
+    "resetting",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+paper_title = "SC resetting-MAT candidate-first RK4 recurrence"
+derivation_note = "Project recurrence formerly carried under MATNeuron. Retained under an explicit SC identity after restoring the distinct non-resetting Kobayashi MAT* equations. No external paper attribution is claimed."
+
+[state.v]
+init = -70.0
+unit = "mV"
+meaning = "membrane voltage reset after an event"
+
+[state.theta1]
+init = 0.0
+unit = "mV"
+meaning = "fast adaptive-threshold component"
+
+[state.theta2]
+init = 0.0
+unit = "mV"
+meaning = "slow adaptive-threshold component"
+
+[parameters.v_rest]
+default = -70.0
+unit = "mV"
+meaning = "leak equilibrium and reset-state default"
+range = [
+    -200.0,
+    100.0,
+]
+
+[parameters.v_reset]
+default = -70.0
+unit = "mV"
+meaning = "post-event voltage reset"
+range = [
+    -200.0,
+    100.0,
+]
+
+[parameters.v_threshold_base]
+default = -50.0
+unit = "mV"
+meaning = "baseline event threshold"
+range = [
+    -200.0,
+    100.0,
+]
+
+[parameters.tau_m]
+default = 10.0
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1e-06,
+    1000000.0,
+]
+
+[parameters.tau_1]
+default = 10.0
+unit = "ms"
+meaning = "fast adaptive-threshold decay"
+range = [
+    1e-06,
+    1000000.0,
+]
+
+[parameters.tau_2]
+default = 200.0
+unit = "ms"
+meaning = "slow adaptive-threshold decay"
+range = [
+    1e-06,
+    1000000.0,
+]
+
+[parameters.h1]
+default = 5.0
+unit = "mV"
+meaning = "fast threshold increment per event"
+range = [
+    0.0,
+    1000000000.0,
+]
+
+[parameters.h2]
+default = 3.0
+unit = "mV"
+meaning = "slow threshold increment per event"
+range = [
+    0.0,
+    1000000000.0,
+]
+
+[parameters.resistance]
+default = 1.0
+unit = "normalised"
+meaning = "project current-to-voltage gain"
+range = [
+    1e-06,
+    1000000.0,
+]
+
+[integration]
+dt = 1.0
+method = "rk4"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I) / tau_m"
+theta1 = "-theta1 / tau_1"
+theta2 = "-theta2 / tau_2"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_mat_project.json"
+golden_trace_sha256 = "b64411c28f4ab24e87fb52a115fd9379793412350af57a933806f1b6c32af259"
+golden_citation = "SC-NeuroCore pre-split Python recurrence compatibility anchor"
+
+[documentation]
+slug = "models/sc_resetting_mat"
+notes = "Project-defined model with no external publication attribution. It is not the non-resetting Kobayashi MAT* model and does not increment the literature-model fidelity count."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "256-step historical compatibility anchor with 13 events plus five-runtime parity"
+tolerance = "events exact; complete floating-point states within absolute 2e-12; Python receipt bit-identical"
+evidence = "tests/test_reference_sc_resetting_mat.py; tests/test_sc_resetting_mat_backend_dispatch.py; tests/test_cosim_sc_resetting_mat.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_resetting_mat.py::test_sc_resetting_mat_q3232_matches_independent_integer_oracle"
+target_tier = "H1"
+terminal_reason = "Signed Q32.32 preserves the bounded integer oracle and 13-event vector, synthesizes in Yosys, matches its optimized netlist over the enrolled sequence, and passes depth-12 CVC5 bounded safety. Timing, PPA, device evidence, and universal binary64 equivalence remain open."

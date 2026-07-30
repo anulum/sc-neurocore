@@ -131,6 +131,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         }
         "SFA" | "SFANeuron" => Ok(NeuronVariant::SFA(SFANeuron::new())),
         "MAT" | "MATNeuron" => Ok(NeuronVariant::MAT(MATNeuron::new())),
+        "SCResettingMAT" | "SCResettingMATNeuron" => {
+            Ok(NeuronVariant::SCResettingMAT(SCResettingMATNeuron::new()))
+        }
         "KLIF" | "KLIFNeuron" => Ok(NeuronVariant::KLIF(KLIFNeuron::default())),
         "InhibitoryLIF" | "InhibitoryLIFNeuron" => {
             Ok(NeuronVariant::InhibitoryLIF(InhibitoryLIFNeuron::default()))

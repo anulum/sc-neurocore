@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Restored `MATNeuron` to the source Kobayashi-Tsubo-Shinomoto (2009) MAT*
+  identity: non-resetting voltage, paper-profile parameters, forward-Euler
+  membrane at 0.001 ms, exact two-timescale threshold memories, and a 2 ms
+  refractory interval. The former candidate-first RK4/reset recurrence remains
+  available as the explicitly project-defined `SCResettingMATNeuron`. Both
+  identities now carry complete Python/Rust/Julia/Go/Mojo execution, paired
+  schemas, independent trace receipts, signed Q32.32 RTL co-simulation, Yosys
+  synthesis, sequence-bounded optimized-netlist equivalence, depth-12 CVC5 safety,
+  source/binary-bound local benchmarks, and native-language documentation. Only
+  the source MAT* identity increments the public fidelity count, now 50/155;
+  timing, PPA, device, and universal equivalence claims remain open.
 - Added the schema-bound `SC-COMPTE-WM-NETWORK` 16-bin circular E-to-E
   no-autapse RTL representative. Its unsigned Q16.16/Q32.32 contract has
   zero-LSB independent dense-oracle co-simulation across all targets,

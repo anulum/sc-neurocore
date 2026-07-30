@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-12 SC resetting-MAT bounded safety proof
+
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_resetting_mat_formal.v
+read -formal sc_resetting_mat.v
+prep -top sc_resetting_mat_formal
+
+[files]
+sc_resetting_mat_formal.v
+sc_resetting_mat.v

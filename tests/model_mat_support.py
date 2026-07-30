@@ -8,24 +8,22 @@
 
 from __future__ import annotations
 
-"""Full pipeline test for MATNeuron (Kobayashi et al. 2009).
+"""Full pipeline support for the historical SC resetting-MAT recurrence.
 
-Multi-timescale Adaptive Threshold model.
+SC candidate-first RK4 adaptive-threshold model.
 dV/dt = (-(V-V_rest) + R·I) / tau_m
 dtheta1/dt = -theta1/tau_1    (fast adaptation, tau=10)
 dtheta2/dt = -theta2/tau_2    (slow adaptation, tau=200)
 Threshold: V_th = V_base + theta1 + theta2.
 On spike: V→V_reset, theta1 += h1, theta2 += h2.
 
-Two adaptation timescales produce spike-frequency adaptation and
-burst-rate adaptation. theta1 (fast, h1=5) captures short-term
-refractoriness; theta2 (slow, h2=3) captures long-term adaptation.
-FULL PIPELINE WIRED + PERFORMANCE."""
+This is an SC-NeuroCore modification, not the non-resetting source MAT* model.
+"""
 import time
 import numpy as np
 import pytest
 from tests.performance_guard import assert_throughput_guard
-from sc_neurocore.neurons.models.mat import MATNeuron
+from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
@@ -34,7 +32,7 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
 
 
-def _run(neuron: MATNeuron, current: float, steps: int) -> list[int]:
+def _run(neuron: SCResettingMATNeuron, current: float, steps: int) -> list[int]:
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
@@ -43,7 +41,7 @@ __all__ = [
     "np",
     "pytest",
     "assert_throughput_guard",
-    "MATNeuron",
+    "SCResettingMATNeuron",
     "Population",
     "Projection",
     "Network",

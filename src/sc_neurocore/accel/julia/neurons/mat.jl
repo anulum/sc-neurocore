@@ -4,143 +4,154 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for mat
+# SC-NeuroCore — Julia source MAT* kernel
 
+"""Source-faithful non-resetting MAT* adaptive-threshold implementation."""
 module MatAccel
 
-export step!, simulate, MATNeuronState, rk4_candidate
+export MATNeuronState, reset!, simulate, step!, threshold, valid_state
 
 const V_MIN = -200.0
-const V_MAX = 100.0
+const V_MAX = 200.0
 const THETA_MAX = 1.0e9
 
+"""
+Complete MAT* state and configuration.
+
+Voltage is relative to rest and never resets. Units are millivolts,
+milliseconds, nanoamps, and megaohms. Defaults select the regular-spiking
+example of Kobayashi, Tsubo, and Shinomoto (2009).
+"""
 mutable struct MATNeuronState
     v::Float64
     theta1::Float64
     theta2::Float64
-    v_rest::Float64
-    v_reset::Float64
-    v_threshold_base::Float64
+    refractory_remaining::Float64
+    omega::Float64
     tau_m::Float64
     tau_1::Float64
     tau_2::Float64
-    h1::Float64
-    h2::Float64
+    alpha_1::Float64
+    alpha_2::Float64
     resistance::Float64
+    refractory_period::Float64
     dt::Float64
 end
 
+"""Construct the paper's regular-spiking example profile."""
 function MATNeuronState()
-    MATNeuronState(-70.0, 0.0, 0.0, -70.0, -70.0, -50.0, 10.0, 10.0, 200.0, 5.0, 3.0, 1.0, 1.0)
+    MATNeuronState(0.0, 0.0, 0.0, 0.0, 19.0, 5.0, 10.0, 200.0, 37.0, 2.0, 50.0, 2.0, 0.001)
 end
 
-finite(x::Float64)::Bool = isfinite(x)
+"""Return the instantaneous adaptive threshold in millivolts."""
+threshold(state::MATNeuronState)::Float64 = state.omega + state.theta1 + state.theta2
 
-function valid_state(s::MATNeuronState)::Bool
-    finite(s.v) &&
-        finite(s.theta1) &&
-        finite(s.theta2) &&
-        finite(s.v_rest) &&
-        finite(s.v_reset) &&
-        finite(s.v_threshold_base) &&
-        finite(s.tau_m) &&
-        finite(s.tau_1) &&
-        finite(s.tau_2) &&
-        finite(s.h1) &&
-        finite(s.h2) &&
-        finite(s.resistance) &&
-        finite(s.dt) &&
-        V_MIN <= s.v <= V_MAX &&
-        V_MIN <= s.v_reset <= V_MAX &&
-        0.0 <= s.theta1 <= THETA_MAX &&
-        0.0 <= s.theta2 <= THETA_MAX &&
-        0.0 <= s.h1 <= THETA_MAX &&
-        0.0 <= s.h2 <= THETA_MAX &&
-        s.tau_m > 0.0 &&
-        s.tau_1 > 0.0 &&
-        s.tau_2 > 0.0 &&
-        s.resistance > 0.0 &&
-        s.dt > 0.0
+"""Return whether the complete state and configuration are valid."""
+function valid_state(state::MATNeuronState)::Bool
+    values = (
+        state.v,
+        state.theta1,
+        state.theta2,
+        state.refractory_remaining,
+        state.omega,
+        state.tau_m,
+        state.tau_1,
+        state.tau_2,
+        state.alpha_1,
+        state.alpha_2,
+        state.resistance,
+        state.refractory_period,
+        state.dt,
+    )
+    return all(isfinite, values) &&
+           V_MIN <= state.v <= V_MAX &&
+           -THETA_MAX <= state.omega <= THETA_MAX &&
+           0.0 <= state.theta1 <= THETA_MAX &&
+           0.0 <= state.theta2 <= THETA_MAX &&
+           0.0 <= state.alpha_1 <= THETA_MAX &&
+           0.0 <= state.alpha_2 <= THETA_MAX &&
+           state.tau_m > 0.0 &&
+           state.tau_1 > 0.0 &&
+           state.tau_2 > 0.0 &&
+           state.resistance > 0.0 &&
+           state.refractory_period >= 0.0 &&
+           state.dt > 0.0 &&
+           0.0 <= state.refractory_remaining <= state.refractory_period
 end
 
-function derivatives(s::MATNeuronState, v::Float64, theta1::Float64, theta2::Float64, I_ext::Float64)
-    dv = (-(v - s.v_rest) + s.resistance * I_ext) / s.tau_m
-    return dv, -theta1 / s.tau_1, -theta2 / s.tau_2
-end
+"""
+Advance one atomic source MAT* step and return `1` on an event.
 
-function rk4_candidate(s::MATNeuronState, I_ext::Float64)
-    k1v, k1t1, k1t2 = derivatives(s, s.v, s.theta1, s.theta2, I_ext)
-    k2v, k2t1, k2t2 = derivatives(
-        s,
-        s.v + 0.5 * s.dt * k1v,
-        s.theta1 + 0.5 * s.dt * k1t1,
-        s.theta2 + 0.5 * s.dt * k1t2,
-        I_ext,
-    )
-    k3v, k3t1, k3t2 = derivatives(
-        s,
-        s.v + 0.5 * s.dt * k2v,
-        s.theta1 + 0.5 * s.dt * k2t1,
-        s.theta2 + 0.5 * s.dt * k2t2,
-        I_ext,
-    )
-    k4v, k4t1, k4t2 = derivatives(
-        s,
-        s.v + s.dt * k3v,
-        s.theta1 + s.dt * k3t1,
-        s.theta2 + s.dt * k3t2,
-        I_ext,
-    )
-    scale = s.dt / 6.0
-    return (
-        s.v + scale * (k1v + 2.0 * k2v + 2.0 * k3v + k4v),
-        s.theta1 + scale * (k1t1 + 2.0 * k2t1 + 2.0 * k3t1 + k4t1),
-        s.theta2 + scale * (k1t2 + 2.0 * k2t2 + 2.0 * k3t2 + k4t2),
-    )
-end
-
-function step!(s::MATNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    _ = dt
-    if !finite(I_ext) || !valid_state(s)
+Voltage uses forward Euler and exact threshold-history decay. Voltage is never
+reset. Invalid input/state returns `-1` without mutation.
+"""
+function step!(state::MATNeuronState, current::Float64=0.0)::Int
+    if !isfinite(current) || !valid_state(state)
         return -1
     end
-    v_candidate, theta1_candidate, theta2_candidate = rk4_candidate(s, I_ext)
-    if !(finite(v_candidate) && finite(theta1_candidate) && finite(theta2_candidate))
+    v = state.v + state.dt * (-state.v + state.resistance * current) / state.tau_m
+    theta1 = state.theta1 * exp(-state.dt / state.tau_1)
+    theta2 = state.theta2 * exp(-state.dt / state.tau_2)
+    refractory = max(0.0, state.refractory_remaining - state.dt)
+    if !(all(isfinite, (v, theta1, theta2, refractory)) &&
+         V_MIN <= v <= V_MAX &&
+         0.0 <= theta1 <= THETA_MAX &&
+         0.0 <= theta2 <= THETA_MAX)
         return -1
     end
-    if !(V_MIN <= v_candidate <= V_MAX && 0.0 <= theta1_candidate <= THETA_MAX && 0.0 <= theta2_candidate <= THETA_MAX)
-        return -1
-    end
-    threshold = s.v_threshold_base + theta1_candidate + theta2_candidate
-    if v_candidate >= threshold
-        theta1_after_spike = theta1_candidate + s.h1
-        theta2_after_spike = theta2_candidate + s.h2
-        if !(finite(theta1_after_spike) && finite(theta2_after_spike) && theta1_after_spike <= THETA_MAX && theta2_after_spike <= THETA_MAX)
+    spike = refractory == 0.0 && v >= state.omega + theta1 + theta2
+    if spike
+        theta1 += state.alpha_1
+        theta2 += state.alpha_2
+        refractory = state.refractory_period
+        if theta1 > THETA_MAX || theta2 > THETA_MAX
             return -1
         end
-        s.v = s.v_reset
-        s.theta1 = theta1_after_spike
-        s.theta2 = theta2_after_spike
-        return 1
     end
-    s.v = v_candidate
-    s.theta1 = theta1_candidate
-    s.theta2 = theta2_candidate
-    return 0
+    state.v = v
+    state.theta1 = theta1
+    state.theta2 = theta2
+    state.refractory_remaining = refractory
+    return Int(spike)
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = MATNeuronState()
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.v
-        if result isa Number && result > 0
-            spikes += 1
+"""Reset dynamic state while preserving the configured profile."""
+function reset!(state::MATNeuronState)::Nothing
+    state.v = 0.0
+    state.theta1 = 0.0
+    state.theta2 = 0.0
+    state.refractory_remaining = 0.0
+    return nothing
+end
+
+"""Run a complete current trace and return all state traces and event outputs."""
+function simulate(currents::AbstractVector{<:Real}; state::MATNeuronState=MATNeuronState())
+    steps = length(currents)
+    voltages = Vector{Float64}(undef, steps)
+    theta1 = Vector{Float64}(undef, steps)
+    theta2 = Vector{Float64}(undef, steps)
+    refractory = Vector{Float64}(undef, steps)
+    events = Vector{Int}(undef, steps)
+    for index in eachindex(currents)
+        event = step!(state, Float64(currents[index]))
+        if event < 0
+            throw(ArgumentError("invalid MAT step at index $index"))
         end
+        voltages[index] = state.v
+        theta1[index] = state.theta1
+        theta2[index] = state.theta2
+        refractory[index] = state.refractory_remaining
+        events[index] = event
     end
-    return trace, spikes
+    return (; voltages, theta1, theta2, refractory, events, state)
+end
+
+"""Run `n_steps` under constant current; retained for service compatibility."""
+function simulate(n_steps::Int=1000; I_ext::Float64=0.5, dt::Float64=0.001)
+    state = MATNeuronState()
+    state.dt = dt
+    result = simulate(fill(I_ext, n_steps); state=state)
+    return result.voltages, sum(result.events)
 end
 
 end # module MatAccel

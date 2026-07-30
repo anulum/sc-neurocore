@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "model": "SCResettingMATNeuron",
+  "source": {
+    "authors": [
+      "SC-NeuroCore project"
+    ],
+    "title": "SC resetting-MAT candidate-first RK4 recurrence",
+    "year": 2026,
+    "doi": null,
+    "scope": [
+      "historical SC-NeuroCore MAT recurrence",
+      "candidate-first classical RK4",
+      "voltage reset and two post-event threshold increments"
+    ]
+  },
+  "specialization": {
+    "identity": "project model retained during Model 49 source correction",
+    "attribution_boundary": "not attributed to the non-resetting Kobayashi-Tsubo-Shinomoto MAT* equations",
+    "compatibility_contract": "binary64 trace must remain bit-identical to the pre-split Python recurrence"
+  },
+  "parameters": {
+    "v_init_mv": -70.0,
+    "v_rest_mv": -70.0,
+    "v_reset_mv": -70.0,
+    "v_threshold_base_mv": -50.0,
+    "tau_m_ms": 10.0,
+    "tau_1_ms": 10.0,
+    "tau_2_ms": 200.0,
+    "h1_mv": 5.0,
+    "h2_mv": 3.0,
+    "resistance": 1.0,
+    "dt_ms": 1.0
+  },
+  "stimulus": {
+    "steps": 256,
+    "current": "32 zeros, 96 samples at 50, then 64 repetitions of [20, 60]"
+  },
+  "oracle": {
+    "canonical_row_format": "little-endian float64 (v, theta1, theta2) plus uint8 event",
+    "trace_sha256": "b64411c28f4ab24e87fb52a115fd9379793412350af57a933806f1b6c32af259",
+    "event_count": 13,
+    "final_state": [
+      -70.0,
+      5.262135955944077,
+      21.149478444493045
+    ]
+  }
+}

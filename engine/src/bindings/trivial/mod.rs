@@ -22,6 +22,7 @@ mod nonlinear_lif;
 mod parametric_lif;
 mod perfect_integrator;
 mod quadratic_if;
+mod sc_resetting_mat;
 mod sfa;
 mod sigma_delta;
 mod theta;
@@ -39,11 +40,12 @@ pub use nonlinear_lif::PyNonlinearLIFNeuron;
 pub use parametric_lif::PyParametricLIFNeuron;
 pub use perfect_integrator::PyPerfectIntegratorNeuron;
 pub use quadratic_if::PyQuadraticIFNeuron;
+pub use sc_resetting_mat::PySCResettingMATNeuron;
 pub use sfa::PySFANeuron;
 pub use sigma_delta::PySigmaDeltaNeuron;
 pub use theta::PyThetaNeuron;
 
-/// Register the sixteen model-owned simple integrate-and-fire classes in stable ABI order.
+/// Register the seventeen model-owned simple integrate-and-fire classes in stable ABI order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     quadratic_if::register(module)?;
     theta::register(module)?;
@@ -52,6 +54,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     nonlinear_lif::register(module)?;
     sfa::register(module)?;
     mat::register(module)?;
+    sc_resetting_mat::register(module)?;
     klif::register(module)?;
     inhibitory_lif::register(module)?;
     complementary_lif::register(module)?;

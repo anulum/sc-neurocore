@@ -4,15 +4,21 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo acceleration contract for MAT RK4
+# SC-NeuroCore — Mojo source MAT* acceleration contract
 
-# The stateful Python, Rust, Go, and Julia paths integrate the same MAT ODE with
-# candidate-first RK4. This Mojo surface exposes stateless helpers so accelerator
-# kernels can share the numerical contract without owning host-side state.
+# Non-resetting MAT* helpers. Voltage uses forward Euler; threshold-history
+# terms use exact exponential decay. The caller owns state and must commit all
+# outputs from the same pre-step tuple. Units are mV, ms, nA, and megaohms.
 
-def _finite(x: Float64) -> Bool:
+from std.math import exp
+
+
+def _mat_finite(value: Float64) -> Bool:
+    """Return true for finite binary64 values."""
     return (
-        x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
+        value == value
+        and value <= 1.7976931348623157e308
+        and value >= -1.7976931348623157e308
     )
 
 
@@ -20,173 +26,199 @@ def mat_valid(
     v: Float64,
     theta1: Float64,
     theta2: Float64,
-    v_rest: Float64,
-    v_reset: Float64,
-    v_threshold_base: Float64,
+    refractory_remaining: Float64,
+    omega: Float64,
     tau_m: Float64,
     tau_1: Float64,
     tau_2: Float64,
-    h1: Float64,
-    h2: Float64,
+    alpha_1: Float64,
+    alpha_2: Float64,
     resistance: Float64,
+    refractory_period: Float64,
     dt: Float64,
 ) -> Bool:
+    """Validate the complete source MAT* state and configuration."""
     return (
-        _finite(v)
+        _mat_finite(v)
         and v >= -200.0
-        and v <= 100.0
-        and _finite(theta1)
+        and v <= 200.0
+        and _mat_finite(theta1)
         and theta1 >= 0.0
         and theta1 <= 1.0e9
-        and _finite(theta2)
+        and _mat_finite(theta2)
         and theta2 >= 0.0
         and theta2 <= 1.0e9
-        and _finite(v_rest)
-        and _finite(v_reset)
-        and v_reset >= -200.0
-        and v_reset <= 100.0
-        and _finite(v_threshold_base)
-        and _finite(tau_m)
+        and _mat_finite(refractory_remaining)
+        and refractory_remaining >= 0.0
+        and _mat_finite(omega)
+        and omega >= -1.0e9
+        and omega <= 1.0e9
+        and _mat_finite(tau_m)
         and tau_m > 0.0
-        and _finite(tau_1)
+        and _mat_finite(tau_1)
         and tau_1 > 0.0
-        and _finite(tau_2)
+        and _mat_finite(tau_2)
         and tau_2 > 0.0
-        and _finite(h1)
-        and h1 >= 0.0
-        and h1 <= 1.0e9
-        and _finite(h2)
-        and h2 >= 0.0
-        and h2 <= 1.0e9
-        and _finite(resistance)
+        and _mat_finite(alpha_1)
+        and alpha_1 >= 0.0
+        and alpha_1 <= 1.0e9
+        and _mat_finite(alpha_2)
+        and alpha_2 >= 0.0
+        and alpha_2 <= 1.0e9
+        and _mat_finite(resistance)
         and resistance > 0.0
-        and _finite(dt)
+        and _mat_finite(refractory_period)
+        and refractory_period >= 0.0
+        and refractory_remaining <= refractory_period
+        and _mat_finite(dt)
         and dt > 0.0
     )
 
 
-def mat_derivative_v(
-    v: Float64,
-    current: Float64,
-    v_rest: Float64,
-    tau_m: Float64,
-    resistance: Float64,
+def mat_candidate_v(
+    v: Float64, current: Float64, tau_m: Float64, resistance: Float64, dt: Float64
 ) -> Float64:
-    return (-(v - v_rest) + resistance * current) / tau_m
+    """Return the paper's forward-Euler membrane candidate."""
+    return v + dt * (-v + resistance * current) / tau_m
 
 
-def mat_derivative_theta(theta: Float64, tau: Float64) -> Float64:
-    return -theta / tau
+def mat_candidate_theta(theta: Float64, tau: Float64, dt: Float64) -> Float64:
+    """Return exact exponential threshold-history decay."""
+    return theta * exp(-dt / tau)
 
 
-def mat_next_v(
-    v: Float64,
-    theta1: Float64,
-    theta2: Float64,
-    current: Float64,
-    v_rest: Float64,
-    v_reset: Float64,
-    v_threshold_base: Float64,
-    tau_m: Float64,
-    tau_1: Float64,
-    tau_2: Float64,
-    h1: Float64,
-    h2: Float64,
-    resistance: Float64,
-    dt: Float64,
-) -> Float64:
-    if not _finite(current):
-        return 0.0 / 0.0
-    if not mat_valid(v, theta1, theta2, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt):
-        return 0.0 / 0.0
-    var k1v = mat_derivative_v(v, current, v_rest, tau_m, resistance)
-    var k2v = mat_derivative_v(v + 0.5 * dt * k1v, current, v_rest, tau_m, resistance)
-    var k3v = mat_derivative_v(v + 0.5 * dt * k2v, current, v_rest, tau_m, resistance)
-    var k4v = mat_derivative_v(v + dt * k3v, current, v_rest, tau_m, resistance)
-    return v + (dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v)
-
-
-def mat_next_theta1(
-    v: Float64,
-    theta1: Float64,
-    theta2: Float64,
-    current: Float64,
-    v_rest: Float64,
-    v_reset: Float64,
-    v_threshold_base: Float64,
-    tau_m: Float64,
-    tau_1: Float64,
-    tau_2: Float64,
-    h1: Float64,
-    h2: Float64,
-    resistance: Float64,
-    dt: Float64,
-) -> Float64:
-    if not _finite(current):
-        return 0.0 / 0.0
-    if not mat_valid(v, theta1, theta2, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt):
-        return 0.0 / 0.0
-    var k1 = mat_derivative_theta(theta1, tau_1)
-    var k2 = mat_derivative_theta(theta1 + 0.5 * dt * k1, tau_1)
-    var k3 = mat_derivative_theta(theta1 + 0.5 * dt * k2, tau_1)
-    var k4 = mat_derivative_theta(theta1 + dt * k3, tau_1)
-    return theta1 + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
-
-
-def mat_next_theta2(
-    v: Float64,
-    theta1: Float64,
-    theta2: Float64,
-    current: Float64,
-    v_rest: Float64,
-    v_reset: Float64,
-    v_threshold_base: Float64,
-    tau_m: Float64,
-    tau_1: Float64,
-    tau_2: Float64,
-    h1: Float64,
-    h2: Float64,
-    resistance: Float64,
-    dt: Float64,
-) -> Float64:
-    if not _finite(current):
-        return 0.0 / 0.0
-    if not mat_valid(v, theta1, theta2, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt):
-        return 0.0 / 0.0
-    var k1 = mat_derivative_theta(theta2, tau_2)
-    var k2 = mat_derivative_theta(theta2 + 0.5 * dt * k1, tau_2)
-    var k3 = mat_derivative_theta(theta2 + 0.5 * dt * k2, tau_2)
-    var k4 = mat_derivative_theta(theta2 + dt * k3, tau_2)
-    return theta2 + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+def mat_candidate_refractory(refractory_remaining: Float64, dt: Float64) -> Float64:
+    """Return the nonnegative refractory countdown candidate."""
+    var candidate = refractory_remaining - dt
+    if candidate < 0.0:
+        return 0.0
+    return candidate
 
 
 def mat_step_spike(
     v: Float64,
     theta1: Float64,
     theta2: Float64,
+    refractory_remaining: Float64,
     current: Float64,
-    v_rest: Float64,
-    v_reset: Float64,
-    v_threshold_base: Float64,
+    omega: Float64,
     tau_m: Float64,
     tau_1: Float64,
     tau_2: Float64,
-    h1: Float64,
-    h2: Float64,
+    alpha_1: Float64,
+    alpha_2: Float64,
     resistance: Float64,
+    refractory_period: Float64,
     dt: Float64,
 ) -> Int:
-    var next_v = mat_next_v(v, theta1, theta2, current, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt)
-    var next_theta1 = mat_next_theta1(v, theta1, theta2, current, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt)
-    var next_theta2 = mat_next_theta2(v, theta1, theta2, current, v_rest, v_reset, v_threshold_base, tau_m, tau_1, tau_2, h1, h2, resistance, dt)
-    if not (_finite(next_v) and _finite(next_theta1) and _finite(next_theta2)):
+    """Return `1` for an event, `0` for silence, or `-1` on invalid state."""
+    if not _mat_finite(current):
         return -1
-    if not (next_v >= -200.0 and next_v <= 100.0 and next_theta1 >= 0.0 and next_theta1 <= 1.0e9 and next_theta2 >= 0.0 and next_theta2 <= 1.0e9):
+    if not mat_valid(v, theta1, theta2, refractory_remaining, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt):
         return -1
-    if next_v >= v_threshold_base + next_theta1 + next_theta2:
-        var theta1_after_spike = next_theta1 + h1
-        var theta2_after_spike = next_theta2 + h2
-        if not (_finite(theta1_after_spike) and _finite(theta2_after_spike) and theta1_after_spike <= 1.0e9 and theta2_after_spike <= 1.0e9):
+    var next_v = mat_candidate_v(v, current, tau_m, resistance, dt)
+    var next_theta1 = mat_candidate_theta(theta1, tau_1, dt)
+    var next_theta2 = mat_candidate_theta(theta2, tau_2, dt)
+    var next_refractory = mat_candidate_refractory(refractory_remaining, dt)
+    if not (_mat_finite(next_v) and _mat_finite(next_theta1) and _mat_finite(next_theta2) and _mat_finite(next_refractory)):
+        return -1
+    if not (next_v >= -200.0 and next_v <= 200.0 and next_theta1 >= 0.0 and next_theta1 <= 1.0e9 and next_theta2 >= 0.0 and next_theta2 <= 1.0e9):
+        return -1
+    if next_refractory == 0.0 and next_v >= omega + next_theta1 + next_theta2:
+        if next_theta1 + alpha_1 > 1.0e9 or next_theta2 + alpha_2 > 1.0e9:
             return -1
         return 1
     return 0
+
+
+def mat_next_v(
+    v: Float64,
+    theta1: Float64,
+    theta2: Float64,
+    refractory_remaining: Float64,
+    current: Float64,
+    omega: Float64,
+    tau_m: Float64,
+    tau_1: Float64,
+    tau_2: Float64,
+    alpha_1: Float64,
+    alpha_2: Float64,
+    resistance: Float64,
+    refractory_period: Float64,
+    dt: Float64,
+) -> Float64:
+    """Return the non-resetting membrane output, or NaN on invalid input."""
+    if mat_step_spike(v, theta1, theta2, refractory_remaining, current, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt) < 0:
+        return 0.0 / 0.0
+    return mat_candidate_v(v, current, tau_m, resistance, dt)
+
+
+def mat_next_theta1(
+    v: Float64,
+    theta1: Float64,
+    theta2: Float64,
+    refractory_remaining: Float64,
+    current: Float64,
+    omega: Float64,
+    tau_m: Float64,
+    tau_1: Float64,
+    tau_2: Float64,
+    alpha_1: Float64,
+    alpha_2: Float64,
+    resistance: Float64,
+    refractory_period: Float64,
+    dt: Float64,
+) -> Float64:
+    """Return the post-step fast threshold-history state."""
+    var spike = mat_step_spike(v, theta1, theta2, refractory_remaining, current, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt)
+    if spike < 0:
+        return 0.0 / 0.0
+    return mat_candidate_theta(theta1, tau_1, dt) + Float64(spike) * alpha_1
+
+
+def mat_next_theta2(
+    v: Float64,
+    theta1: Float64,
+    theta2: Float64,
+    refractory_remaining: Float64,
+    current: Float64,
+    omega: Float64,
+    tau_m: Float64,
+    tau_1: Float64,
+    tau_2: Float64,
+    alpha_1: Float64,
+    alpha_2: Float64,
+    resistance: Float64,
+    refractory_period: Float64,
+    dt: Float64,
+) -> Float64:
+    """Return the post-step slow threshold-history state."""
+    var spike = mat_step_spike(v, theta1, theta2, refractory_remaining, current, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt)
+    if spike < 0:
+        return 0.0 / 0.0
+    return mat_candidate_theta(theta2, tau_2, dt) + Float64(spike) * alpha_2
+
+
+def mat_next_refractory(
+    v: Float64,
+    theta1: Float64,
+    theta2: Float64,
+    refractory_remaining: Float64,
+    current: Float64,
+    omega: Float64,
+    tau_m: Float64,
+    tau_1: Float64,
+    tau_2: Float64,
+    alpha_1: Float64,
+    alpha_2: Float64,
+    resistance: Float64,
+    refractory_period: Float64,
+    dt: Float64,
+) -> Float64:
+    """Return the post-step absolute-refractory state."""
+    var spike = mat_step_spike(v, theta1, theta2, refractory_remaining, current, omega, tau_m, tau_1, tau_2, alpha_1, alpha_2, resistance, refractory_period, dt)
+    if spike < 0:
+        return 0.0 / 0.0
+    if spike == 1:
+        return refractory_period
+    return mat_candidate_refractory(refractory_remaining, dt)

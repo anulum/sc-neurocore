@@ -10,16 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_mat_support import *  # noqa: F403
+from tests.model_mat_support import *
 
 
 class TestMATPipeline:
     def test_population(self):
-        assert Population(MATNeuron, n=10, label="mat").n == 10
+        assert Population(SCResettingMATNeuron, n=10, label="mat").n == 10
 
     def test_projection_wiring(self):
-        src = Population(MATNeuron, n=5, label="src")
-        tgt = Population(MATNeuron, n=5, label="tgt")
+        src = Population(SCResettingMATNeuron, n=5, label="src")
+        tgt = Population(SCResettingMATNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)
         proj = Projection(src, tgt, weight=10.0, probability=1.0, seed=42)
         mon_src = SpikeMonitor(src)
@@ -29,7 +29,7 @@ class TestMATPipeline:
         assert mon_src.count > 0
 
     def test_network_spikes(self):
-        pop = Population(MATNeuron, n=10, label="mat")
+        pop = Population(SCResettingMATNeuron, n=10, label="mat")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
@@ -37,13 +37,13 @@ class TestMATPipeline:
         assert mon.count > 0
 
     def test_analysis_spike_count(self):
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         train = np.array([float(n.step(30.0)) for _ in range(5000)])
         sc = spike_count(train)
         assert sc >= 20
 
     def test_analysis_isi(self):
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         train = np.array([float(n.step(30.0)) for _ in range(5000)])
         intervals = isi(train, dt=0.001)
         if intervals.size > 0:
@@ -51,13 +51,13 @@ class TestMATPipeline:
             assert np.all(intervals > 0)
 
     def test_analysis_firing_rate(self):
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         train = np.array([float(n.step(30.0)) for _ in range(5000)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
 
     def test_analysis_cross_validation(self):
-        n = MATNeuron()
+        n = SCResettingMATNeuron()
         train = np.array([float(n.step(30.0)) for _ in range(5000)])
         sc = spike_count(train)
         dt_sim = 0.001

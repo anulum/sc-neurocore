@@ -1,0 +1,252 @@
+{
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "backend_summary": {
+    "go": {
+      "available": true,
+      "event_vector_matches_python": true,
+      "events": 8620,
+      "final_state": [
+        -60.93654507031249,
+        4.506401304826021,
+        27.037364427691056
+      ],
+      "max_ns_per_step": 126.3718,
+      "median_ns_per_step": 76.45815,
+      "min_ns_per_step": 63.679055,
+      "parity_atol": 2e-12,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        20254071,
+        25274360,
+        15291630,
+        14704771,
+        12735811
+      ],
+      "spikes": 8620,
+      "trace_matches_python": true,
+      "trace_sha256": "4ac5809855a78b8c7517756bde861c3eb13f975ab57023212cb9bbe0421cd897"
+    },
+    "julia": {
+      "available": true,
+      "event_vector_matches_python": true,
+      "events": 8620,
+      "final_state": [
+        -60.93654507031249,
+        4.506401304826021,
+        27.037364427691056
+      ],
+      "max_ns_per_step": 208.745485,
+      "median_ns_per_step": 89.82619,
+      "min_ns_per_step": 83.831595,
+      "parity_atol": 2e-12,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        17965238,
+        17763476,
+        16766319,
+        41749097,
+        18557691
+      ],
+      "spikes": 8620,
+      "trace_matches_python": true,
+      "trace_sha256": "4ac5809855a78b8c7517756bde861c3eb13f975ab57023212cb9bbe0421cd897"
+    },
+    "mojo": {
+      "available": true,
+      "event_vector_matches_python": true,
+      "events": 8620,
+      "final_state": [
+        -60.936545070312505,
+        4.506401304826021,
+        27.03736442769106
+      ],
+      "max_ns_per_step": 77.113275,
+      "median_ns_per_step": 56.11639,
+      "min_ns_per_step": 44.897645,
+      "parity_atol": 2e-12,
+      "parity_max_abs_diff": 1.4210854715202004e-14,
+      "samples_ns": [
+        15422655,
+        11684596,
+        9373534,
+        11223278,
+        8979529
+      ],
+      "spikes": 8620,
+      "trace_matches_python": true,
+      "trace_sha256": "d1dd1476af5293365e61547269bbdd8bc7d50c3581dbdfcc66b033e513b1a490"
+    },
+    "python": {
+      "available": true,
+      "event_vector_matches_python": true,
+      "events": 8620,
+      "final_state": [
+        -60.93654507031249,
+        4.506401304826021,
+        27.037364427691056
+      ],
+      "max_ns_per_step": 3611.91471,
+      "median_ns_per_step": 3427.4579,
+      "min_ns_per_step": 3371.31815,
+      "parity_atol": 0.0,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        685491580,
+        689151781,
+        674263630,
+        722382942,
+        682281010
+      ],
+      "spikes": 8620,
+      "trace_matches_python": true,
+      "trace_sha256": "4ac5809855a78b8c7517756bde861c3eb13f975ab57023212cb9bbe0421cd897"
+    },
+    "rust": {
+      "available": true,
+      "event_vector_matches_python": true,
+      "events": 8620,
+      "final_state": [
+        -60.93654507031249,
+        4.506401304826021,
+        27.037364427691056
+      ],
+      "max_ns_per_step": 60.1169,
+      "median_ns_per_step": 53.174985,
+      "min_ns_per_step": 44.938965,
+      "parity_atol": 2e-12,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        10602436,
+        11974898,
+        12023380,
+        10634997,
+        8987793
+      ],
+      "spikes": 8620,
+      "trace_matches_python": true,
+      "trace_sha256": "4ac5809855a78b8c7517756bde861c3eb13f975ab57023212cb9bbe0421cd897"
+    }
+  },
+  "benchmark": "SC resetting-MAT candidate-first RK4 recurrence",
+  "binary_hashes": {
+    "go_shared_library": {
+      "path": "src/sc_neurocore/accel/go/sc_resetting_mat/libsc_resetting_mat.so",
+      "sha256": "6d94869c2c90448c6c58f639c2a1c002dc405c9cee3915ae5cafeb4fccce2d00",
+      "size_bytes": 2030272
+    },
+    "mojo_shared_library": {
+      "path": "src/sc_neurocore/accel/mojo/sc_resetting_mat/libsc_resetting_mat.so",
+      "sha256": "ceec0a6a25a4f79b34c3cadf2c6e803a68b6c8b1b2b7cd937a06f19c9b087e68",
+      "size_bytes": 15016
+    },
+    "rust_extension": {
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "b0de18f8befab05a98c25bb192e18a2053bda1b27824e4b220d95afb29810a5e",
+      "size_bytes": 34055617
+    }
+  },
+  "current": 50.0,
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "host": "aaarthuus",
+  "load_average": [
+    13.85693359375,
+    37.59423828125,
+    26.35498046875
+  ],
+  "model": "SCResettingMATNeuron",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+  "production_speed_claim": false,
+  "python": "3.12.3",
+  "repeats": 5,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_model_sc_resetting_mat": {
+      "py": "ddbf536f9c413174c3c27a1017d9070dba7a3565b0ceebaeb89ae112857dad3e"
+    },
+    "benchmarks/bench_model_sc_resetting_mat.py": "ddbf536f9c413174c3c27a1017d9070dba7a3565b0ceebaeb89ae112857dad3e",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "024c93d790fd210e0138e65547209a7061d8d894d4a94bf809553cef4fe69fee"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "024c93d790fd210e0138e65547209a7061d8d894d4a94bf809553cef4fe69fee",
+    "engine/src/bindings/trivial/sc_resetting_mat": {
+      "rs": "0096b50802cf974256bab05d2410dacebd9bf25b124f8a1c047711d97294fce3"
+    },
+    "engine/src/bindings/trivial/sc_resetting_mat.rs": "0096b50802cf974256bab05d2410dacebd9bf25b124f8a1c047711d97294fce3",
+    "engine/src/neurons/trivial/sc_resetting_mat": {
+      "rs": "0d62bf365abc59088e85772d644f5180ef415d39fcbe76e2de3e0c3021d2c512"
+    },
+    "engine/src/neurons/trivial/sc_resetting_mat.rs": "0d62bf365abc59088e85772d644f5180ef415d39fcbe76e2de3e0c3021d2c512",
+    "src/sc_neurocore/accel/go/sc_resetting_mat/sc_resetting_mat": {
+      "go": "b2086dd09365101fb66a1b9e20e54c57b51ef9185b367b799e257fa5359f0917"
+    },
+    "src/sc_neurocore/accel/go/sc_resetting_mat/sc_resetting_mat.go": "b2086dd09365101fb66a1b9e20e54c57b51ef9185b367b799e257fa5359f0917",
+    "src/sc_neurocore/accel/go/services/sc_resetting_mat": {
+      "go": "c8c6cd4219fce091e70d3285feba533479f9e027426f5ea294092a8f53df35a5"
+    },
+    "src/sc_neurocore/accel/go/services/sc_resetting_mat.go": "c8c6cd4219fce091e70d3285feba533479f9e027426f5ea294092a8f53df35a5",
+    "src/sc_neurocore/accel/go/services/sc_resetting_mat_test": {
+      "go": "686c1e9fd0811049df0da1158b8b852e830cee13d7f17cacaa16d82aecc3945c"
+    },
+    "src/sc_neurocore/accel/go/services/sc_resetting_mat_test.go": "686c1e9fd0811049df0da1158b8b852e830cee13d7f17cacaa16d82aecc3945c",
+    "src/sc_neurocore/accel/julia/neurons/sc_resetting_mat": {
+      "jl": "324c5f72de78a07c477cbd6058af2d1982d083d1e415cd68adaf8039ae7da226"
+    },
+    "src/sc_neurocore/accel/julia/neurons/sc_resetting_mat.jl": "324c5f72de78a07c477cbd6058af2d1982d083d1e415cd68adaf8039ae7da226",
+    "src/sc_neurocore/accel/mojo/kernels/sc_resetting_mat": {
+      "mojo": "98d2ee4a234f2a6337dac4c8438ca21e353ddb22e1c5d902a0d5dc1c0e897547"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/sc_resetting_mat.mojo": "98d2ee4a234f2a6337dac4c8438ca21e353ddb22e1c5d902a0d5dc1c0e897547",
+    "src/sc_neurocore/accel/mojo/sc_resetting_mat/sc_resetting_mat": {
+      "mojo": "b6299c5446a7dd9e02e5aa5ef5a64a79170576ce252af31fe985cf88c62a5664"
+    },
+    "src/sc_neurocore/accel/mojo/sc_resetting_mat/sc_resetting_mat.mojo": "b6299c5446a7dd9e02e5aa5ef5a64a79170576ce252af31fe985cf88c62a5664",
+    "src/sc_neurocore/accel/rust/safety/sc_resetting_mat": {
+      "rs": "6bebc159709661c59ac34997b74dca214303594cceb0c786ec77e4135bb2a0e9"
+    },
+    "src/sc_neurocore/accel/rust/safety/sc_resetting_mat.rs": "6bebc159709661c59ac34997b74dca214303594cceb0c786ec77e4135bb2a0e9",
+    "src/sc_neurocore/accel/sc_resetting_mat": {
+      "py": "3a57f6dafabaa86f042f37f5cf7e7996b23d588a93967106890496dd1ad80299"
+    },
+    "src/sc_neurocore/accel/sc_resetting_mat.py": "3a57f6dafabaa86f042f37f5cf7e7996b23d588a93967106890496dd1ad80299",
+    "src/sc_neurocore/neurons/model_descriptors/SCResettingMATNeuron": {
+      "toml": "cf508c7f3e282a44726bdf690ffd4243ed606f39e430dfaabe085e0585b12194"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/SCResettingMATNeuron.toml": "cf508c7f3e282a44726bdf690ffd4243ed606f39e430dfaabe085e0585b12194",
+    "src/sc_neurocore/neurons/model_schemas/sc_resetting_mat": {
+      "json": "df20c3bba7d4d546f09e68e31284d2e5f7339058f130b8a6487b10924ebaac78",
+      "toml": "29d2e26a180112562c99f767c1c31549351405f3fcb9d6aa9e8487e276213550"
+    },
+    "src/sc_neurocore/neurons/model_schemas/sc_resetting_mat.json": "df20c3bba7d4d546f09e68e31284d2e5f7339058f130b8a6487b10924ebaac78",
+    "src/sc_neurocore/neurons/model_schemas/sc_resetting_mat.toml": "29d2e26a180112562c99f767c1c31549351405f3fcb9d6aa9e8487e276213550",
+    "src/sc_neurocore/neurons/models/sc_resetting_mat": {
+      "py": "af0bec9e53a15e5003195be19234f2f0ac9368ac716415c688a5c5dc55323f73"
+    },
+    "src/sc_neurocore/neurons/models/sc_resetting_mat.py": "af0bec9e53a15e5003195be19234f2f0ac9368ac716415c688a5c5dc55323f73",
+    "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_mat_project": {
+      "json": "ecfb839376dcf8a50a3144e45b2255a6704b08dba6db99af156e88c4897f806d"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_mat_project.json": "ecfb839376dcf8a50a3144e45b2255a6704b08dba6db99af156e88c4897f806d"
+  },
+  "steps": 200000,
+  "timestamp_utc": "2026-07-30T05:03:05.732155+00:00",
+  "tool_versions": {
+    "go": "go version go1.26.2 linux/amd64",
+    "julia": "julia version 1.11.9",
+    "mojo": "Mojo 0.26.2.0 (d627decc)",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  }
+}

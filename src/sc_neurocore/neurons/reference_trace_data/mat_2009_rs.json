@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "model": "MATNeuron",
+  "source": {
+    "authors": [
+      "Ryohei Kobayashi",
+      "Yasuhiro Tsubo",
+      "Shigeru Shinomoto"
+    ],
+    "title": "Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold",
+    "journal": "Frontiers in Computational Neuroscience",
+    "year": 2009,
+    "doi": "10.3389/neuro.10.009.2009",
+    "scope": [
+      "Equation 1 non-resetting leaky membrane",
+      "Equations 2-3 two-timescale adaptive threshold",
+      "MAT* tau1=10 ms and tau2=200 ms",
+      "2 ms absolute refractory interval"
+    ]
+  },
+  "specialization": {
+    "profile": "regular-spiking Figure 1 example",
+    "numerical_contract": "forward Euler membrane at 0.001 ms plus exact exponential threshold-history decay",
+    "event_contract": "sampled level detection after decay; voltage is not reset; still-suprathreshold voltage may emit after refractory expiry",
+    "excluded": [
+      "universal cell-type calibration",
+      "parameter fitting to a new spike train",
+      "network behavior",
+      "firing-time interpolation"
+    ]
+  },
+  "parameters": {
+    "v_init_mv_relative_to_rest": 0.0,
+    "omega_mv": 19.0,
+    "tau_m_ms": 5.0,
+    "tau_1_ms": 10.0,
+    "tau_2_ms": 200.0,
+    "alpha_1_mv": 37.0,
+    "alpha_2_mv": 2.0,
+    "resistance_mohm": 50.0,
+    "refractory_ms": 2.0,
+    "dt_ms": 0.001
+  },
+  "stimulus": {
+    "steps": 10272,
+    "current_na": "32 zeros, 8192 samples at 0.7, then 1024 repetitions of [0.2, 0.9]"
+  },
+  "oracle": {
+    "implementation": "independent direct transcription of source equations; does not import production kernels",
+    "canonical_row_format": "little-endian float64 (v, theta1, theta2, refractory_remaining_ms) plus uint8 event",
+    "trace_sha256": "3382c1a73215026c1c1f41749cbc2061ff338c044e336e8a25ca59b8ac139de8",
+    "event_indices": [
+      3945
+    ],
+    "final_state": [
+      27.965935062410335,
+      19.654727854241134,
+      1.9377299916339141,
+      0.0
+    ]
+  }
+}
