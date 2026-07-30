@@ -79,6 +79,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   discovery appends the user site-packages root under `python -S`.
 
 ### Added
+- Added explicit fail-closed public dispatch for all five complete
+  `SC-COMPTE-WM-NETWORK` runtimes. Python and Mojo execute in process;
+  repository-native Rust, Julia, and Go JSON adapters expose the same run and
+  window receipt contract without silent fallback. Rust now natively owns
+  protocol stimuli, activity windows/statistics, and SHA-256 input/spike/state
+  custody. A source/binary-bound three-repeat 1,000-step consolidated benchmark
+  records exact Python/Rust/Julia/Go/Mojo input, spike, and count parity while
+  keeping timings local and behavior/hardware claims false.
 - Added the complete Mojo runtime for `SC-COMPTE-WM-NETWORK`, with a
   documented stable C ABI, all 2,560 states, native counter-Poisson input,
   dependency-free radix-2 FFT coupling, control/modulated modes, explicit-

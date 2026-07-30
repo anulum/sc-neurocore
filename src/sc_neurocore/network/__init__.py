@@ -45,6 +45,14 @@ from .sc_compte_wm_network import (
     SCCompteWMStimulus,
     SCCompteWMWindowReceipt,
 )
+from .sc_compte_wm_backends import (
+    SCCompteWMBackend,
+    SCCompteWMBackendRun,
+    SCCompteWMBackendStatus,
+    SCCompteWMBackendUnavailable,
+    run_sc_compte_wm_network,
+    sc_compte_wm_backend_status,
+)
 
 __all__ = [
     "Population",
@@ -82,4 +90,10 @@ __all__ = [
     "SCCompteWMStepReceipt",
     "SCCompteWMStimulus",
     "SCCompteWMWindowReceipt",
+    "SCCompteWMBackend",
+    "SCCompteWMBackendRun",
+    "SCCompteWMBackendStatus",
+    "SCCompteWMBackendUnavailable",
+    "run_sc_compte_wm_network",
+    "sc_compte_wm_backend_status",
 ]

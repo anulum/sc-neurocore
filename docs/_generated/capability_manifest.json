@@ -971,7 +971,7 @@
     "python_model_classes": 160,
     "python_model_source_modules": 156,
     "rust_pyo3_model_wrappers": 189,
-    "test_files": 4628
+    "test_files": 4629
   },
   "documentation": {
     "public_pages": [
@@ -6511,6 +6511,7 @@
       "tests/test_sby_runner_run_sby_task_end_to_end.py",
       "tests/test_sc_adaptive_threshold_map_backends.py",
       "tests/test_sc_chaotic_map_backends.py",
+      "tests/test_sc_compte_wm_backends.py",
       "tests/test_sc_compte_wm_drive.py",
       "tests/test_sc_compte_wm_go_network.py",
       "tests/test_sc_compte_wm_julia_network.py",

@@ -59,6 +59,7 @@ rand_xoshiro = "0.8"
 core_affinity = "0.8"
 rayon = "1.10"
 rustfft = "6.2"
+sha2 = "0.10"
 wgpu = { version = "30", optional = true }
 pollster = { version = "1.0", optional = true }
 bytemuck = { version = "1.21", features = ["derive"], optional = true }
@@ -145,6 +146,9 @@ name = "bench_precision_envelopes"
 
 [[example]]
 name = "bench_precision_traps"
+
+[[example]]
+name = "sc_compte_wm_network_run"
 
 [[example]]
 name = "bench_theta_exact_flow"

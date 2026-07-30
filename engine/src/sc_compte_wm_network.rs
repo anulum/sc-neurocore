@@ -15,6 +15,7 @@
 //! optional structured E→I connectivity, and explicit-event co-simulation.
 
 use rustfft::{num_complex::Complex64, Fft, FftPlanner};
+use sha2::{Digest, Sha256};
 use std::sync::Arc;
 
 /// Fixed excitatory population size.
@@ -110,6 +111,85 @@ pub struct SCCompteWMStepReceipt {
     pub excitatory_input_events: u64,
     /// Aggregate external events delivered to interneurons.
     pub inhibitory_input_events: u64,
+}
+
+/// Current profile selected for one bounded protocol epoch.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SCCompteWMStimulusKind {
+    /// Compact raised-cosine current on the excitatory ring.
+    LocalizedCue,
+    /// Uniform current delivered to every excitatory cell.
+    GlobalCurrent,
+}
+
+/// One validated excitatory current epoch in source pA units.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SCCompteWMStimulus {
+    /// Epoch start relative to the run in milliseconds.
+    pub start_ms: f64,
+    /// Epoch duration in milliseconds.
+    pub duration_ms: f64,
+    /// Peak or uniform current in picoamperes.
+    pub current_pa: f64,
+    /// Spatial current profile.
+    pub kind: SCCompteWMStimulusKind,
+    /// Cue center in degrees; required only for a localized cue.
+    pub center_deg: Option<f64>,
+}
+
+/// Population activity observables for one explicit statistics window.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SCCompteWMActivityStatistics {
+    /// Mean excitatory firing rate in hertz per cell.
+    pub excitatory_rate_hz: f64,
+    /// Mean inhibitory firing rate in hertz per cell.
+    pub inhibitory_rate_hz: f64,
+    /// Circular population-vector angle in degrees.
+    pub bump_angle_deg: f64,
+    /// Unitless population-vector resultant length.
+    pub resultant_length: f64,
+    /// Circular Gaussian width in degrees when the resultant is nonzero.
+    pub circular_width_deg: Option<f64>,
+}
+
+/// Spike totals and optional observables for one bounded run window.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SCCompteWMWindowReceipt {
+    /// Window start relative to the run in milliseconds.
+    pub start_ms: f64,
+    /// Window end relative to the run in milliseconds.
+    pub end_ms: f64,
+    /// Excitatory events observed in the window.
+    pub excitatory_spikes: u64,
+    /// Inhibitory events observed in the window.
+    pub inhibitory_spikes: u64,
+    /// Circular statistics, absent when no excitatory cell spiked.
+    pub statistics: Option<SCCompteWMActivityStatistics>,
+}
+
+/// Portable aggregate evidence from one complete native Rust run.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SCCompteWMRunReceipt {
+    /// Fixed SC specification identity.
+    pub specification_version: &'static str,
+    /// Counter-stream seed used by the run.
+    pub seed: u64,
+    /// Requested duration in milliseconds.
+    pub duration_ms: f64,
+    /// Complete native transitions executed.
+    pub steps: usize,
+    /// Total excitatory output events.
+    pub excitatory_spikes: u64,
+    /// Total inhibitory output events.
+    pub inhibitory_spikes: u64,
+    /// Explicitly bounded activity windows.
+    pub windows: Vec<SCCompteWMWindowReceipt>,
+    /// Canonical digest of every step input receipt.
+    pub input_sha256: String,
+    /// Canonical digest of every output spike bit.
+    pub spike_sha256: String,
+    /// Canonical digest of the complete final state.
+    pub final_state_sha256: String,
 }
 
 /// Return one portable counter-addressed Poisson sample for every cell.
@@ -341,6 +421,92 @@ impl SCCompteWMNetwork {
         Ok(receipt)
     }
 
+    /// Execute an integral number of native steps with bounded window receipts.
+    pub fn run(
+        &mut self,
+        duration_ms: f64,
+        stimuli: &[SCCompteWMStimulus],
+        statistics_window_ms: f64,
+    ) -> Result<SCCompteWMRunReceipt, &'static str> {
+        let steps = integral_steps(duration_ms, "invalid run duration")?;
+        let window_steps = integral_steps(statistics_window_ms, "invalid statistics window")?;
+        for stimulus in stimuli {
+            validate_stimulus(stimulus, duration_ms)?;
+        }
+        let mut input_digest = Sha256::new();
+        let mut spike_digest = Sha256::new();
+        let mut exc_window = vec![0_u64; N_EXCITATORY];
+        let mut inh_window = vec![0_u64; N_INHIBITORY];
+        let mut total_exc = 0_u64;
+        let mut total_inh = 0_u64;
+        let mut windows = Vec::new();
+        let mut window_start = 0_usize;
+        for offset in 0..steps {
+            let current = stimulus_current(offset as f64 * DT_MS, stimuli);
+            let exc_events = counter_poisson_counts(
+                N_EXCITATORY,
+                1800.0,
+                DT_MS,
+                self.spec.seed,
+                0,
+                self.state.step_index,
+            )?;
+            let inh_events = counter_poisson_counts(
+                N_INHIBITORY,
+                1800.0,
+                DT_MS,
+                self.spec.seed,
+                1,
+                self.state.step_index,
+            )?;
+            let mut step_input = Sha256::new();
+            hash_u64_slice(&mut step_input, &exc_events);
+            hash_u64_slice(&mut step_input, &inh_events);
+            hash_f64_slice(&mut step_input, &current);
+            input_digest.update(step_input.finalize());
+            let receipt = self.step_with_events(&current, &exc_events, &inh_events)?;
+            for (index, spike) in receipt.excitatory_spikes.iter().enumerate() {
+                spike_digest.update([u8::from(*spike)]);
+                exc_window[index] += u64::from(*spike);
+                total_exc += u64::from(*spike);
+            }
+            for (index, spike) in receipt.inhibitory_spikes.iter().enumerate() {
+                spike_digest.update([u8::from(*spike)]);
+                inh_window[index] += u64::from(*spike);
+                total_inh += u64::from(*spike);
+            }
+            if (offset + 1) % window_steps == 0 || offset + 1 == steps {
+                let elapsed_ms = (offset + 1 - window_start) as f64 * DT_MS;
+                let window_exc: u64 = exc_window.iter().sum();
+                let window_inh: u64 = inh_window.iter().sum();
+                let statistics = (window_exc > 0)
+                    .then(|| activity_statistics(&exc_window, &inh_window, elapsed_ms));
+                windows.push(SCCompteWMWindowReceipt {
+                    start_ms: window_start as f64 * DT_MS,
+                    end_ms: (offset + 1) as f64 * DT_MS,
+                    excitatory_spikes: window_exc,
+                    inhibitory_spikes: window_inh,
+                    statistics,
+                });
+                exc_window.fill(0);
+                inh_window.fill(0);
+                window_start = offset + 1;
+            }
+        }
+        Ok(SCCompteWMRunReceipt {
+            specification_version: "sc-neurocore.sc-compte-wm-network.v1",
+            seed: self.spec.seed,
+            duration_ms,
+            steps,
+            excitatory_spikes: total_exc,
+            inhibitory_spikes: total_inh,
+            windows,
+            input_sha256: hex_digest(input_digest.finalize()),
+            spike_sha256: hex_digest(spike_digest.finalize()),
+            final_state_sha256: state_sha256(&self.state),
+        })
+    }
+
     fn derivatives(
         &self,
         stage: &Stage,
@@ -458,6 +624,128 @@ impl SCCompteWMNetwork {
                 .all(|v| v.is_finite() && (0.0..=1.0).contains(v));
         valid.then_some(()).ok_or("invalid SC Compte network state")
     }
+}
+
+/// Return the canonical little-endian digest of every state scalar and array.
+pub fn state_sha256(state: &SCCompteWMNetworkState) -> String {
+    let mut digest = Sha256::new();
+    digest.update(state.step_index.to_le_bytes());
+    for values in [
+        &state.v_exc_mv,
+        &state.v_inh_mv,
+        &state.refractory_exc_ms,
+        &state.refractory_inh_ms,
+        &state.external_ampa_exc,
+        &state.external_ampa_inh,
+        &state.recurrent_nmda,
+        &state.recurrent_nmda_rise,
+        &state.recurrent_gabaa,
+    ] {
+        hash_f64_slice(&mut digest, values);
+    }
+    hex_digest(digest.finalize())
+}
+
+fn integral_steps(duration_ms: f64, message: &'static str) -> Result<usize, &'static str> {
+    if !duration_ms.is_finite() || duration_ms <= 0.0 {
+        return Err(message);
+    }
+    let raw = duration_ms / DT_MS;
+    let rounded = raw.round();
+    if (raw - rounded).abs() > 1.0e-10 || rounded > usize::MAX as f64 {
+        return Err(message);
+    }
+    Ok(rounded as usize)
+}
+
+fn validate_stimulus(stimulus: &SCCompteWMStimulus, duration_ms: f64) -> Result<(), &'static str> {
+    let valid_scalars = stimulus.start_ms.is_finite()
+        && stimulus.start_ms >= 0.0
+        && stimulus.duration_ms.is_finite()
+        && stimulus.duration_ms > 0.0
+        && stimulus.current_pa.is_finite()
+        && stimulus.current_pa > 0.0
+        && stimulus.start_ms + stimulus.duration_ms <= duration_ms + 1.0e-12;
+    let valid_center = match stimulus.kind {
+        SCCompteWMStimulusKind::LocalizedCue => stimulus.center_deg.is_some_and(f64::is_finite),
+        SCCompteWMStimulusKind::GlobalCurrent => stimulus.center_deg.is_none(),
+    };
+    (valid_scalars && valid_center)
+        .then_some(())
+        .ok_or("invalid SC Compte stimulus")
+}
+
+fn stimulus_current(time_ms: f64, stimuli: &[SCCompteWMStimulus]) -> Vec<f64> {
+    let mut current = vec![0.0; N_EXCITATORY];
+    for stimulus in stimuli {
+        if stimulus.start_ms <= time_ms && time_ms < stimulus.start_ms + stimulus.duration_ms {
+            match stimulus.kind {
+                SCCompteWMStimulusKind::GlobalCurrent => {
+                    for value in &mut current {
+                        *value += stimulus.current_pa;
+                    }
+                }
+                SCCompteWMStimulusKind::LocalizedCue => {
+                    let center = stimulus.center_deg.expect("validated localized cue");
+                    for (index, value) in current.iter_mut().enumerate() {
+                        let angle = index as f64 * 360.0 / N_EXCITATORY as f64;
+                        let distance = (angle - center + 180.0).rem_euclid(360.0) - 180.0;
+                        let absolute = distance.abs();
+                        if absolute < 18.0 {
+                            *value += 0.5
+                                * stimulus.current_pa
+                                * (1.0 + (std::f64::consts::PI * absolute / 18.0).cos());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    current
+}
+
+fn activity_statistics(exc: &[u64], inh: &[u64], window_ms: f64) -> SCCompteWMActivityStatistics {
+    let total_exc: u64 = exc.iter().sum();
+    let total_inh: u64 = inh.iter().sum();
+    let mut x = 0.0;
+    let mut y = 0.0;
+    for (index, count) in exc.iter().enumerate() {
+        let angle = 2.0 * std::f64::consts::PI * index as f64 / N_EXCITATORY as f64;
+        x += *count as f64 * angle.cos();
+        y += *count as f64 * angle.sin();
+    }
+    let resultant = (x.hypot(y) / total_exc as f64).min(1.0);
+    let angle = y.atan2(x).to_degrees().rem_euclid(360.0);
+    let width = (resultant > 0.0).then(|| (-2.0 * resultant.ln()).sqrt().to_degrees());
+    let seconds = window_ms / 1000.0;
+    SCCompteWMActivityStatistics {
+        excitatory_rate_hz: total_exc as f64 / (N_EXCITATORY as f64 * seconds),
+        inhibitory_rate_hz: total_inh as f64 / (N_INHIBITORY as f64 * seconds),
+        bump_angle_deg: angle,
+        resultant_length: resultant,
+        circular_width_deg: width,
+    }
+}
+
+fn hash_u64_slice(digest: &mut Sha256, values: &[u64]) {
+    for value in values {
+        digest.update(value.to_le_bytes());
+    }
+}
+
+fn hash_f64_slice(digest: &mut Sha256, values: &[f64]) {
+    for value in values {
+        digest.update(value.to_le_bytes());
+    }
+}
+
+fn hex_digest(bytes: impl AsRef<[u8]>) -> String {
+    let mut output = String::with_capacity(64);
+    for byte in bytes.as_ref() {
+        use std::fmt::Write as _;
+        write!(&mut output, "{byte:02x}").expect("write to String");
+    }
+    output
 }
 
 struct Stage {

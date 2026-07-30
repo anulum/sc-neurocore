@@ -1,0 +1,185 @@
+{
+  "schema_version": "sc-neurocore.sc-compte-wm-all-runtime-benchmark.v1",
+  "generated_at": "2026-07-30T01:02:39.150983+00:00",
+  "model": "SC-COMPTE-WM-NETWORK",
+  "evidence_class": "local_regression",
+  "production_speed_claimed": false,
+  "hardware_measurement_claimed": false,
+  "persistent_bump_claimed": false,
+  "distractor_resistance_claimed": false,
+  "configuration": {
+    "cells": 2560,
+    "excitatory_cells": 2048,
+    "inhibitory_cells": 512,
+    "dt_ms": 0.02,
+    "steps": 1000,
+    "duration_ms": 20.0,
+    "repeats": 3,
+    "seed": 42
+  },
+  "environment": {
+    "python": "3.12.3",
+    "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "julia": "julia version 1.12.6",
+    "go": "go version go1.26.2 linux/amd64",
+    "mojo": "Mojo 0.26.2.0 (d627decc)",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "load_average": [
+      13.2998046875,
+      14.05419921875,
+      14.86767578125
+    ]
+  },
+  "source_sha256": {
+    "benchmarks/bench_sc_compte_wm_network_all_runtimes.py": "2a1ec2303d708308ed83ad5018d2d546e77cb77766f53c2729eede54b656c091",
+    "src/sc_neurocore/network/sc_compte_wm.py": "0b9150690b5f4c2c8b8b8f36f83be72184af143f07d9d5b0bd81d66264eebcce",
+    "src/sc_neurocore/network/sc_compte_wm_drive.py": "e639dddf0a0d75542139bbb6f57f07ae3bdf770b0b9d57fe30d14271a1eb85fc",
+    "src/sc_neurocore/network/sc_compte_wm_network.py": "5d7fae7f782dcc6df24cafd0343abd987e68d450ad6248a2da91e54d92f9a8b7",
+    "src/sc_neurocore/network/sc_compte_wm_backends.py": "9a2f15512c99e94a4107a5efaba16997e48e20644367a82a5b7adfc1d4356d2a",
+    "engine/src/sc_compte_wm_network.rs": "d3ac1caaffbab3904784268c71b09594046a1255015036fa1af9572a0600ca79",
+    "engine/examples/sc_compte_wm_network_run.rs": "32890c90ad48d4b88252a3e80977b37c9accf825cff3991e957a5f0df1cec945",
+    "src/sc_neurocore/accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl": "3b5f4e99a111942162cb4777438ca886e3d4ff60d1870ebf956d50a21cd8c044",
+    "src/sc_neurocore/accel/julia/sc_compte_wm_network/run_sc_compte_wm_network.jl": "b4d5f97bac8c0341c3173205a457f6f085c6bc8e9cbf7e843104b6612dfa4681",
+    "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go": "ce8169dc4d8db150d72713b1047f6c4bbcf0b30cfed2394ffdd4c8f7be34a4d2",
+    "src/sc_neurocore/accel/go/cmd/run_sc_compte_wm_network/main.go": "a01576f2252cb6820054b2735b0d254de4dc639ee1e0b334aab493027bf97083",
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "2e135cdd7134dca820779b9d336c801deb0d6c477efcfcb1ad38c7a931520878",
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so": "3bd152ac6bd86201eb7283a7133f89b9bcddd760bc634818dc9a672e46901d75",
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "53d530b6a10560f538a3ef98a0a4972991561653dbf098ede9e599e7d9280a75"
+  },
+  "backends": {
+    "python": {
+      "execution_mode": "in-process",
+      "execution_samples_ns": [
+        1203605398,
+        1249254434,
+        1053924366
+      ],
+      "end_to_end_samples_ns": [
+        1204443882,
+        1250575019,
+        1054619650
+      ],
+      "median_execution_ns": 1203605398,
+      "median_ns_per_network_step": 1203605.398,
+      "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
+      "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
+      "final_state_sha256": "d422c4a67b133257e51c120b5e6bd745f4f035ef9625ed89f115276094ee61b3",
+      "spike_counts": {
+        "excitatory": 1,
+        "inhibitory": 27
+      },
+      "repeat_receipts_exact": true
+    },
+    "rust": {
+      "execution_mode": "repository-native-command",
+      "execution_samples_ns": [
+        243684118,
+        249791806,
+        225172675
+      ],
+      "end_to_end_samples_ns": [
+        593859299,
+        416849259,
+        377909977
+      ],
+      "median_execution_ns": 243684118,
+      "median_ns_per_network_step": 243684.118,
+      "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
+      "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
+      "final_state_sha256": "bbaa007cbd0da215906b0ee38a2071557dd80bee9dc99baa20ac713c17e1f4b1",
+      "spike_counts": {
+        "excitatory": 1,
+        "inhibitory": 27
+      },
+      "repeat_receipts_exact": true
+    },
+    "julia": {
+      "execution_mode": "repository-native-command",
+      "execution_samples_ns": [
+        6800268752,
+        7213266937,
+        6809254623
+      ],
+      "end_to_end_samples_ns": [
+        8883682241,
+        9267452585,
+        9087294567
+      ],
+      "median_execution_ns": 6809254623,
+      "median_ns_per_network_step": 6809254.623,
+      "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
+      "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
+      "final_state_sha256": "062db92b31c6098555cc1b8fccf07cfbe93fa99f3a4e12c46a3ec83db1b60a14",
+      "spike_counts": {
+        "excitatory": 1,
+        "inhibitory": 27
+      },
+      "repeat_receipts_exact": true
+    },
+    "go": {
+      "execution_mode": "repository-native-command",
+      "execution_samples_ns": [
+        3656482966,
+        3500260199,
+        3470747717
+      ],
+      "end_to_end_samples_ns": [
+        3850653589,
+        3575178158,
+        3571625726
+      ],
+      "median_execution_ns": 3500260199,
+      "median_ns_per_network_step": 3500260.199,
+      "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
+      "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
+      "final_state_sha256": "c517b3945747a9a72edc5df5eef425687a908141692c6f3ef574a1ba17cbee51",
+      "spike_counts": {
+        "excitatory": 1,
+        "inhibitory": 27
+      },
+      "repeat_receipts_exact": true
+    },
+    "mojo": {
+      "execution_mode": "in-process-shared-library",
+      "execution_samples_ns": [
+        754827625,
+        730086382,
+        737942320
+      ],
+      "end_to_end_samples_ns": [
+        755329744,
+        730444071,
+        738319688
+      ],
+      "median_execution_ns": 737942320,
+      "median_ns_per_network_step": 737942.32,
+      "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
+      "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
+      "final_state_sha256": "f437a93befcf2cb63c54eb641a0bf3f6688776a4e4f50f2103241a7b93dc9fbf",
+      "spike_counts": {
+        "excitatory": 1,
+        "inhibitory": 27
+      },
+      "repeat_receipts_exact": true
+    }
+  },
+  "all_backends_available": true,
+  "all_runtime_input_spike_count_exact": true,
+  "all_repeat_receipts_exact": true,
+  "passed": true
+}

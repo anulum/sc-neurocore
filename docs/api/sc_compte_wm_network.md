@@ -147,6 +147,32 @@ reduction orders differ. The timing is local regression evidence only and
 does not establish persistent-bump behavior, distractor resistance, hardware
 performance, or production throughput.
 
+## Public backend dispatch
+
+`sc_neurocore.network.run_sc_compte_wm_network` exposes the five complete
+runtime routes under the explicit backend names `python`, `rust`, `julia`,
+`go`, and `mojo`. `sc_compte_wm_backend_status()` reports their availability
+and execution mode before a run. Python and Mojo execute in process; Rust,
+Julia, and Go use documented repository-native JSON adapters. Their toolchains,
+package stores, and build caches resolve through `.venv`. Native v1 dispatch
+accepts the frozen constants plus `seed`, `structured_ei`, `modulated`, and
+`allow_recurrent_autapses`; unrepresented configuration changes fail before
+launch.
+
+Selection is deliberately fail closed. There is no `auto` mode and no silent
+fallback: requesting a missing, timed-out, nonzero-exit, wrong-identity, or
+malformed native route raises `SCCompteWMBackendUnavailable`. The returned
+`SCCompteWMBackendRun` identifies the backend, reports the runtime's measured
+execution interval, and carries the common `SCCompteWMRunReceipt`.
+
+The consolidated source/binary-bound benchmark invokes all five routes for
+three 1,000-step repetitions. Every runtime exactly agrees on the canonical
+input digest, spike digest, and `1` excitatory / `27` inhibitory spike counts.
+Final binary64 state hashes remain per-runtime custody rather than an asserted
+bit identity across FFT reductions. The recorded medians are local loaded-host
+regression measurements; Julia's command route includes JIT compilation in
+its reported interval. They are not production, hardware, or behavior claims.
+
 ## Claim boundary
 
 The Python executor and committed benchmark are deterministic simulator
@@ -155,8 +181,8 @@ network steps and binds its result to source hashes, but records local loaded-
 host regression timing only. Persistent-bump formation, delay stability,
 random drift, response reset, distractor resistance, and silicon behavior
 remain open until demonstrated by separately committed ensemble and backend
-evidence. The current native claim is Python/Rust/Julia/Go/Mojo event and
-short-trace parity. The network therefore does not
+evidence. The current native claim is explicit Python/Rust/Julia/Go/Mojo
+dispatch with exact event and short-trace custody. The network therefore does not
 increment the 49/155 neuron-model fidelity count.
 
 ## Example
@@ -166,6 +192,7 @@ from sc_neurocore.network import (
     SCCompteWMNetwork,
     SCCompteWMNetworkSpec,
     SCCompteWMStimulus,
+    run_sc_compte_wm_network,
 )
 
 spec = SCCompteWMNetworkSpec(modulated=True)
@@ -182,4 +209,12 @@ cue = SCCompteWMStimulus(0.0, 250.0, 200.0, center_deg=180.0)
 receipt = network.run(250.0, stimuli=(cue,))
 assert receipt.steps == 12_500
 assert len(receipt.final_state_sha256) == 64
+
+native = run_sc_compte_wm_network(
+    0.1,
+    backend="rust",
+    statistics_window_ms=0.1,
+)
+assert native.backend == "rust"
+assert native.receipt.steps == 5
 ```
