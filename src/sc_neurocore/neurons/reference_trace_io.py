@@ -156,8 +156,21 @@ def _load_all_specs() -> tuple[ReferenceTraceSpec, ...]:
 
 
 def _load_spec_file(path: Traversable) -> ReferenceTraceSpec | None:
+    """Load one corpus file, or skip non-universal-reference payloads.
+
+    The directory may also hold dedicated identity/spec artefacts that use a
+    different schema (for example map primary specs without a ``model`` block).
+    Those files are intentionally skipped rather than treated as hard failures
+    so the universal reference-trace loader stays fail-closed only for the
+    ``sc-neurocore.reference-trace.v1`` corpus.
+    """
     payload = cast(object, json.loads(path.read_text(encoding="utf-8")))
     mapping = _mapping_value(payload, path.name)
+    schema_version = mapping.get("schema_version")
+    if schema_version != REFERENCE_TRACE_SCHEMA_VERSION:
+        return None
+    if "model" not in mapping:
+        return None
     model = _mapping_field(mapping, "model")
     runner = _string_field(model, "runner")
     try:

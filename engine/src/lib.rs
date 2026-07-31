@@ -186,7 +186,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     analysis::bindings::register(m)?;
     dna::bindings::register(m)?;
     quantum::bindings::register(m)?;
-    // Photonic NoC acceleration
     photonic::bindings::register(m)?;
     optimizer_binding::register(m)?;
     evolution_binding::register(m)?;

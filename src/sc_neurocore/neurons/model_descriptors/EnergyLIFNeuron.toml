@@ -82,19 +82,19 @@ depsilon_dt="((1 - epsilon / (alpha * epsilon_0))^3 - (v - e_f) / (e_d - e_f)) /
 spike_flag="1 if v_candidate > v_threshold and epsilon_candidate > epsilon_c else 0"
 [backends.python]
 status="implemented"
-parity="reference"
+parity="exact"
 [backends.rust]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.julia]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.go]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.mojo]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [reproducibility]
 reference_config="src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json"
 golden_trace_sha256="fc0aa0c4d4faf2189bd3c819aea7ab49bcb4db4b8dc7430c283e453625b823d3"

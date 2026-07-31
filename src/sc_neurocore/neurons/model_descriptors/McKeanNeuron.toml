@@ -52,19 +52,19 @@ dw_dt="b*v"
 spike_flag="1 on sampled upward a crossing; no reset"
 [backends.python]
 status="implemented"
-parity="reference"
+parity="exact"
 [backends.rust]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.julia]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.go]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.mojo]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [documentation]
 slug="models/mckean"
 notes="SCTriangularMcKeanNeuron retains the previous project recurrence count-neutrally."

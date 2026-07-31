@@ -293,11 +293,16 @@ _CLASS_TO_FAMILY: dict[str, tuple[str, str]] = {
 }
 
 
+def canonical_model_name(class_name: str) -> str:
+    """Return the catalogue identity for ``class_name``, resolving aliases."""
+
+    return _COMPATIBILITY_ALIASES.get(class_name, class_name)
+
+
 def model_family(class_name: str) -> tuple[str, str] | None:
     """Return ``(family, category_slug)`` for a model, or ``None`` if unclassified."""
 
-    canonical_name = _COMPATIBILITY_ALIASES.get(class_name, class_name)
-    return _CLASS_TO_FAMILY.get(canonical_name)
+    return _CLASS_TO_FAMILY.get(canonical_model_name(class_name))
 
 
 def families() -> dict[str, str]:
@@ -313,6 +318,7 @@ def classified_models() -> frozenset[str]:
 
 
 __all__ = [
+    "canonical_model_name",
     "classified_models",
     "families",
     "model_family",

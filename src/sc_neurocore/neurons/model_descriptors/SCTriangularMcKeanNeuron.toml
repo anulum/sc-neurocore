@@ -51,19 +51,19 @@ dw_dt="epsilon * (v - gamma*w)"
 spike_flag="1 on sampled upward v_peak crossing; no reset"
 [backends.python]
 status="implemented"
-parity="reference"
+parity="exact"
 [backends.rust]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.julia]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.go]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [backends.mojo]
 status="implemented"
-parity="2e-12"
+parity="ulp-bounded"
 [documentation]
 slug="models/sc_triangular_mckean"
 notes="Count-neutral SC modification; McKeanNeuron is the catalogue-counted source identity."

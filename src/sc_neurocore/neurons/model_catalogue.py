@@ -33,6 +33,7 @@ from sc_neurocore.neurons.model_descriptor import (
     descriptor_completeness_tier,
     parse_model_descriptor,
 )
+from sc_neurocore.neurons.model_taxonomy import canonical_model_name
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 DESCRIPTOR_DIR = Path(__file__).resolve().parent / "model_descriptors"
@@ -58,7 +59,7 @@ def descriptor_path(class_name: str) -> Path:
     """
     if not class_name.isidentifier() or class_name.startswith("_"):
         raise ValueError("model class name must be a public Python identifier")
-    return DESCRIPTOR_DIR / f"{class_name}.toml"
+    return DESCRIPTOR_DIR / f"{canonical_model_name(class_name)}.toml"
 
 
 def load_descriptor_payload(class_name: str) -> dict[str, Any] | None:

@@ -115,7 +115,9 @@ data/
 
 # Local model checkpoints and trained weights. Reproducibility manifests should
 # point at curated artifact locations, not raw root-level binary weights.
-MODELS/
+# Root-anchored only: with core.ignorecase=true, bare MODELS/ also matches
+# src/**/models/ and silently drops new neuron modules from git (CI red).
+/MODELS/
 
 # Experimental / speculative code (AI-generated, not production)
 experimental/

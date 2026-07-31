@@ -303,7 +303,7 @@ notes = "The compatibility spike_in argument is the recurrent NMDA event only. T
 
 [validation]
 dynamics_faithful = true
-metric = "complete state trajectory and sampled events"
+metric = "trajectory"
 operating_point = "1024 varied current/event steps with four source-equation events plus five-runtime parity"
 tolerance = "Rust, Julia, and Go <=2e-12; Mojo <=2e-10; events exact"
 evidence = "tests/test_reference_compte_wm.py; tests/test_compte_wm_backends.py; tests/test_cosim_compte_wm.py"

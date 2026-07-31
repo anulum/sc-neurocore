@@ -163,19 +163,19 @@ event = "v_next >= v_threshold; reset v to -65 while preserving h, n, and p"
 
 [backends.python]
 status = "implemented"
-parity = "reference"
+parity = "exact"
 
 [backends.rust]
 status = "implemented"
-parity = "float64-1e-12"
+parity = "ulp-bounded"
 
 [backends.go]
 status = "implemented"
-parity = "float64-1e-12"
+parity = "ulp-bounded"
 
 [backends.julia]
 status = "implemented"
-parity = "float64-1e-12"
+parity = "ulp-bounded"
 
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
@@ -189,7 +189,7 @@ notes = "Experimental WB+INaP composite. Crill 1996 is a biological review and F
 
 [validation]
 dynamics_faithful = true
-metric = "complete four-state trajectory and event vector"
+metric = "trajectory"
 operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"
 tolerance = "Python/Rust/Go/Julia complete state within 1e-12"
 evidence = "tests/test_persistent_na_neuron_backends.py"

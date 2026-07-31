@@ -7,10 +7,6 @@
 // SC-NeuroCore — Simple integrate-and-fire variants
 
 //! Compatibility facade for simple integrate-and-fire variants.
-//!
-//! Twenty independent model implementations and their inherited tests
-//! live in bounded child modules while historical public re-exports remain
-//! unchanged.
 
 pub mod adaptive_threshold_if;
 mod closed_form_continuous;
@@ -35,27 +31,5 @@ mod sfa;
 mod sigma_delta;
 mod stochastic_lif;
 mod theta;
-
-pub use adaptive_threshold_if::AdaptiveThresholdIFNeuron;
-pub use closed_form_continuous::ClosedFormContinuousNeuron;
-pub use complementary_lif::ComplementaryLIFNeuron;
-pub use energy_lif::EnergyLIFNeuron;
-pub use escape_rate::EscapeRateNeuron;
-pub use gated_lif::GatedLIFNeuron;
-pub use inhibitory_lif::InhibitoryLIFNeuron;
-pub use integer_qif::IntegerQIFNeuron;
-pub use klif::KLIFNeuron;
-pub use mat::MATNeuron;
-pub use non_resetting_lif::NonResettingLIFNeuron;
-pub use nonlinear_lif::NonlinearLIFNeuron;
-pub use parametric_lif::ParametricLIFNeuron;
-pub use perfect_integrator::PerfectIntegratorNeuron;
-pub use quadratic_if::QuadraticIFNeuron;
-pub use sc_non_resetting_adaptive_lif::SCNonResettingAdaptiveLIFNeuron;
-pub use sc_normalized_energy_lif::SCNormalizedEnergyLIFNeuron;
-pub use sc_resetting_mat::SCResettingMATNeuron;
-pub use sc_sigma_delta_accumulator::SCSigmaDeltaAccumulatorNeuron;
-pub use sfa::SFANeuron;
-pub use sigma_delta::SigmaDeltaNeuron;
-pub use stochastic_lif::StochasticLIFNeuron;
-pub use theta::ThetaNeuron;
+mod reexports;
+pub use reexports::*;
