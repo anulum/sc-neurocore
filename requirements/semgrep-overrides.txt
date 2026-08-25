@@ -10,4 +10,4 @@
 # than its scan command requires. CI installs the complete hash-locked set with
 # --no-deps, and the real repository scanner is the compatibility gate.
 click==8.3.3
-mcp==1.28.1
+mcp==2.0.0
