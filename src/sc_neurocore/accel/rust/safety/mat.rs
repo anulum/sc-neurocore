@@ -159,7 +159,10 @@ mod tests {
 
     #[test]
     fn non_resetting_event_and_atomic_failure() {
-        let mut neuron = MATNeuron { v: 20.0, ..MATNeuron::new() };
+        let mut neuron = MATNeuron {
+            v: 20.0,
+            ..MATNeuron::new()
+        };
         assert_eq!(neuron.step(0.0), 1);
         assert!(neuron.v > 19.0);
         let before = neuron.clone();

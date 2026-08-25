@@ -56,6 +56,14 @@ def test_committed_descriptor_corpus_is_in_sync() -> None:
     assert tool.check_corpus() == []
 
 
+def test_compatibility_aliases_do_not_overwrite_canonical_descriptors() -> None:
+    """The corpus writer visits each shared descriptor path exactly once."""
+    tool = _load_tool()
+
+    assert "KilincBhattMapNeuron" not in tool._descriptor_identities()
+    assert "SCAdaptiveThresholdMapNeuron" in tool._descriptor_identities()
+
+
 def test_header_constant_matches_a_committed_descriptor() -> None:
     """The header constant must reproduce a committed descriptor's header byte-for-byte."""
     tool = _load_tool()

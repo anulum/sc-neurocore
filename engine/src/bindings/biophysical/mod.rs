@@ -27,6 +27,7 @@ mod mihalas_niebur;
 mod plant_r15;
 mod pospischil;
 mod prescott;
+mod sc_three_state_phantom_burster;
 mod traub_miles;
 mod wang_buzsaki;
 mod yamada;
@@ -48,6 +49,7 @@ pub use mihalas_niebur::PyMihalasNieburNeuron;
 pub use plant_r15::PyPlantR15Neuron;
 pub use pospischil::PyPospischilNeuron;
 pub use prescott::PyPrescottNeuron;
+pub use sc_three_state_phantom_burster::PySCThreeStatePhantomBurster;
 pub use traub_miles::PyTraubMilesNeuron;
 pub use wang_buzsaki::PyWangBuzsakiNeuron;
 pub use yamada::PyYamadaNeuron;
@@ -73,6 +75,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     durstewitz_dopamine::register(module)?;
     hill_tononi::register(module)?;
     bertram_phantom_burster::register(module)?;
+    sc_three_state_phantom_burster::register(module)?;
     yamada::register(module)?;
     Ok(())
 }

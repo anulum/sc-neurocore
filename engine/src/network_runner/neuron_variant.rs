@@ -45,6 +45,7 @@ pub enum NeuronVariant {
     DurstewitzDopamine(DurstewitzDopamineNeuron),
     HillTononi(HillTononiNeuron),
     BertramPhantom(BertramPhantomBurster),
+    SCThreeStatePhantom(SCThreeStatePhantomBurster),
     Yamada(YamadaNeuron),
 
     // simple_spiking.rs
@@ -257,7 +258,7 @@ macro_rules! all_variants {
             DestexheThalamic, HuberBraun, GolombFS,
             Pospischil, MainenSejnowski, DeSchutterPurkinje,
             PlantR15, Prescott, MihalasNiebur, GLIF, GIFPopulation,
-            AvRonCardiac, DurstewitzDopamine, HillTononi, BertramPhantom, Yamada, Akida, StochasticLIF,
+            AvRonCardiac, DurstewitzDopamine, HillTononi, BertramPhantom, SCThreeStatePhantom, Yamada, Akida, StochasticLIF,
             FitzHughNagumo, MorrisLecar, HindmarshRose, ResonateAndFire, BalancedResonateAndFire,
             FitzHughRinzel, McKean, SCTriangularMcKean, TermanWang, GutkinErmentrout, WilsonHR,
             Chay, ChayKeizer, ShermanRinzelKeizer, ButeraRespiratory,
@@ -333,6 +334,7 @@ impl NeuronVariant {
             NeuronVariant::DurstewitzDopamine(n) => n.v,
             NeuronVariant::HillTononi(n) => n.v,
             NeuronVariant::BertramPhantom(n) => n.v,
+            NeuronVariant::SCThreeStatePhantom(n) => n.v,
             NeuronVariant::Yamada(n) => n.v,
             NeuronVariant::FitzHughNagumo(n) => n.v,
             NeuronVariant::MorrisLecar(n) => n.v,

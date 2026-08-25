@@ -46,6 +46,7 @@ from sc_neurocore.neurons.model_catalogue import (  # noqa: E402
     descriptor_path,
     load_descriptor_payload,
 )
+from sc_neurocore.neurons.model_taxonomy import canonical_model_name  # noqa: E402
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
 
 
@@ -75,12 +76,27 @@ def _rendered_descriptor(class_name: str) -> str:
     return _DESCRIPTOR_HEADER + tomli_w.dumps(payload)
 
 
+def _descriptor_identities() -> tuple[str, ...]:
+    """Return unique catalogue identities, excluding compatibility aliases.
+
+    Alias classes resolve to their canonical descriptor in ``descriptor_path``.
+    Rendering an alias after its canonical class would overwrite that shared file
+    with alias metadata and make the generator permanently non-idempotent.
+    """
+
+    return tuple(
+        class_name
+        for class_name in sorted(_CLASS_TO_MODULE)
+        if canonical_model_name(class_name) == class_name
+    )
+
+
 def write_corpus() -> int:
     """Write or refresh every descriptor; return the number written."""
 
     DESCRIPTOR_DIR.mkdir(parents=True, exist_ok=True)
     written = 0
-    for class_name in sorted(_CLASS_TO_MODULE):
+    for class_name in _descriptor_identities():
         rendered = _rendered_descriptor(class_name)
         path = descriptor_path(class_name)
         if not path.is_file() or path.read_text(encoding="utf-8") != rendered:
@@ -93,7 +109,7 @@ def check_corpus() -> list[str]:
     """Return descriptors that are missing or out of sync with the code."""
 
     problems: list[str] = []
-    for class_name in sorted(_CLASS_TO_MODULE):
+    for class_name in _descriptor_identities():
         path = descriptor_path(class_name)
         if not path.is_file():
             problems.append(f"missing descriptor: {class_name}")
@@ -118,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             for problem in problems[:50]:
                 print(f"  {problem}")
             return 1
-        print(f"descriptor corpus is in sync ({len(_CLASS_TO_MODULE)} models)")
+        print(f"descriptor corpus is in sync ({len(_descriptor_identities())} identities)")
         return 0
     written = write_corpus()
     print(f"wrote {written} descriptor(s) to {DESCRIPTOR_DIR}")

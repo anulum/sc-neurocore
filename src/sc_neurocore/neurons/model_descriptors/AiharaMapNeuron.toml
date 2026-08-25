@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Aihara fidelity descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -17,12 +17,25 @@ family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = ["chaotic neural dynamics", "source-equation reference"]
-hardware_fit = ["fixed-point sigmoid-LUT co-simulation"]
-behavior_tags = ["chaotic", "graded-output", "rate-coded"]
+intended_use = [
+    "chaotic neural dynamics",
+    "source-equation reference",
+]
+hardware_fit = [
+    "fixed-point sigmoid-LUT co-simulation",
+]
+behavior_tags = [
+    "chaotic",
+    "graded-output",
+    "rate-coded",
+]
 
 [provenance]
-authors = ["Aihara, K.", "Takabe, T.", "Toyoda, M."]
+authors = [
+    "Aihara, K.",
+    "Takabe, T.",
+    "Toyoda, M.",
+]
 year = 1990
 doi = "10.1016/0375-9601(90)90136-C"
 
@@ -33,29 +46,41 @@ init = 0.1
 default = 0.7
 unit = "1"
 meaning = "refractory-memory decay"
-range = [0.0, 1.0]
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.alpha]
 default = 1.0
 unit = "1"
 meaning = "refractory-output scale"
-range = [0.000001, 10.0]
+range = [
+    1e-06,
+    10.0,
+]
 
 [parameters.bias]
 default = 0.3968
 unit = "1"
 meaning = "constant effective stimulus a"
-range = [-10.0, 10.0]
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.epsilon]
 default = 0.01
 unit = "1"
 meaning = "logistic steepness"
-range = [0.000001, 1.0]
+range = [
+    1e-06,
+    1.0,
+]
 
 [integration]
-dt = 1.0
-method = "map"
+dt = 0.1
+method = "euler"
 
 [dynamics]
 y = "k * y - alpha * sigmoid(y / epsilon) + bias + I"
@@ -63,15 +88,19 @@ y = "k * y - alpha * sigmoid(y / epsilon) + bias + I"
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"

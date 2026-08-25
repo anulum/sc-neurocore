@@ -11,7 +11,7 @@ use pyo3::types::PyDict;
 
 use crate::neurons;
 
-py_neuron_default!("BertramPhantomBurster", PyBertramPhantomBurster, neurons::BertramPhantomBurster, state v, state s1, state s2);
+py_neuron_default!("BertramPhantomBurster", PyBertramPhantomBurster, neurons::BertramPhantomBurster, state v, state n, state s1, state s2);
 
 /// Register the Bertram phantom burster class.
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {

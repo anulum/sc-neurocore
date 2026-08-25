@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Bertram phantom dual-identity closure
+
+- Restored `BertramPhantomBurster` as the four-state Bertram et al. (2000)
+  source system with dynamic `n`, equations 1–10, and the authors' `BJ_00`
+  defaults. The former instantaneous-`n_inf` project recurrence remains
+  count-neutrally as `SCThreeStatePhantomBurster` without paper attribution.
+- Closed source and compatibility identities through Python, Rust safety and
+  engine, Julia, Go, Mojo, paired schemas, independent receipts, native parity,
+  and a source-bound five-language benchmark. The source catalogue is now
+  56/155 complete.
+
+### Descriptor corpus alias and inherited-drift repair
+
+- Made descriptor generation idempotent by traversing unique canonical model
+  identities, preventing the `KilincBhattMapNeuron` compatibility alias from
+  overwriting `SCAdaptiveThresholdMapNeuron` metadata.
+- Regenerated the inherited drifted corpus and completed the missing parameter
+  units, ranges, and meanings exposed by the prior dual-identity closures.
+
 ### Benda-Herz dual-identity closure
 
 - Restored `BendaHerzNeuron` as the deterministic universal rate-adaptation

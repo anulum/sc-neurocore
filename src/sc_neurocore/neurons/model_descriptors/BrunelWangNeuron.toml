@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — source-faithful Brunel-Wang 2001 pyramidal-cell descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -17,12 +17,24 @@ family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["single-cell conductance response", "pre-aggregated cortical channel replay", "cross-runtime trajectory validation"]
-hardware_fit = ["one-cell Q16.16 co-simulation with four aggregate gates"]
-behavior_tags = ["excitable", "spiking", "tonic"]
+intended_use = [
+    "single-cell conductance response",
+    "pre-aggregated cortical channel replay",
+    "cross-runtime trajectory validation",
+]
+hardware_fit = [
+    "one-cell Q16.16 co-simulation with four aggregate gates",
+]
+behavior_tags = [
+    "excitable",
+    "spiking",
+    "tonic",
+]
 
 [provenance]
-authors = ["Brunel, N. & Wang, X.-J."]
+authors = [
+    "Brunel, N. & Wang, X.-J.",
+]
 year = 2001
 doi = "10.1023/A:1011204814320"
 paper_title = "Effects of Neuromodulation in a Cortical Network Model of Object Working Memory Dominated by Recurrent Inhibition"
@@ -43,98 +55,180 @@ meaning = "absolute refractory time remaining"
 default = -70.0
 unit = "mV"
 meaning = "leak reversal potential"
-range = [-100.0, 20.0]
+range = [
+    -100.0,
+    20.0,
+]
+
 [parameters.v_reset]
 default = -55.0
 unit = "mV"
 meaning = "post-event reset voltage"
-range = [-100.0, 20.0]
+range = [
+    -100.0,
+    20.0,
+]
+
 [parameters.v_threshold]
 default = -50.0
 unit = "mV"
 meaning = "event threshold"
-range = [-100.0, 50.0]
+range = [
+    -100.0,
+    50.0,
+]
+
 [parameters.tau_m]
 default = 20.0
 unit = "ms"
 meaning = "pyramidal membrane time constant from C_m/g_m"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_ref]
 default = 2.0
 unit = "ms"
 meaning = "absolute refractory period"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_ampa]
 default = 2.0
 unit = "ms"
 meaning = "source AMPA decay constant retained for network adapters"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_nmda_rise]
 default = 2.0
 unit = "ms"
 meaning = "source NMDA rise constant retained for network adapters"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_nmda_decay]
 default = 100.0
 unit = "ms"
 meaning = "source NMDA decay constant retained for network adapters"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_gaba]
 default = 10.0
 unit = "ms"
 meaning = "source GABA decay constant retained for network adapters"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.g_ampa_ext]
 default = 2.08
 unit = "nS"
 meaning = "external AMPA conductance per aggregate gate"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
+
 [parameters.g_ampa_rec]
 default = 0.104
 unit = "nS"
 meaning = "recurrent AMPA conductance per aggregate gate"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
+
 [parameters.g_nmda]
 default = 0.327
 unit = "nS"
 meaning = "recurrent NMDA conductance per aggregate gate"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
+
 [parameters.g_gaba]
 default = 1.25
 unit = "nS"
 meaning = "GABA conductance per aggregate gate"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
+
 [parameters.v_ampa]
 default = 0.0
 unit = "mV"
 meaning = "AMPA reversal potential"
-range = [-100.0, 100.0]
+range = [
+    -100.0,
+    100.0,
+]
+
 [parameters.v_nmda]
 default = 0.0
 unit = "mV"
 meaning = "NMDA reversal potential"
-range = [-100.0, 100.0]
+range = [
+    -100.0,
+    100.0,
+]
+
 [parameters.v_gaba]
 default = -70.0
 unit = "mV"
 meaning = "GABA reversal potential"
-range = [-150.0, 50.0]
+range = [
+    -150.0,
+    50.0,
+]
+
 [parameters.C_m]
 default = 0.5
 unit = "nF"
 meaning = "pyramidal membrane capacitance"
-range = [0.000001, 1000.0]
+range = [
+    1e-06,
+    1000.0,
+]
+
 [parameters.mg_conc]
 default = 1.0
 unit = "mM"
 meaning = "extracellular magnesium concentration in the NMDA block"
-range = [0.0, 100.0]
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 0.1
-method = "midpoint-rk2"
+method = "map"
 
 [dynamics]
+v = "(v_reset if refractory_time > 0.0 else (v_reset if (v + dt * k2) >= v_threshold else (v + dt * k2))) if phase > 5.5 else v"
+refractory_time = "((max(0.0, refractory_time - dt)) if refractory_time > 0.0 else (tau_ref if (v + dt * k2) >= v_threshold else 0.0)) if phase > 5.5 else refractory_time"
+spike_flag = "(0.0 if refractory_time > 0.0 else (1.0 if (v + dt * k2) >= v_threshold else 0.0)) if phase > 5.5 else spike_flag"
+phase = "(phase + 1.0) % 7.0"
+ext_latched = "I if phase < 0.5 else ext_latched"
+ampa_latched = "I if abs(phase - 1.0) < 0.5 else ampa_latched"
+nmda_latched = "I if abs(phase - 2.0) < 0.5 else nmda_latched"
+gaba_latched = "I if abs(phase - 3.0) < 0.5 else gaba_latched"
+k1 = "(-(v - v_rest) / tau_m + ((-g_ampa_ext * (v - v_ampa) * ext_latched - g_ampa_rec * (v - v_ampa) * ampa_latched - g_nmda * (1.0 / (1.0 + mg_conc / mg_divisor * exp(-mg_slope * v))) * (v - v_nmda) * nmda_latched - g_gaba * (v - v_gaba) * I) / c_m)) if abs(phase - 3.0) < 0.5 else k1"
+midpoint = "v + 0.5 * dt * k1 if abs(phase - 4.0) < 0.5 else midpoint"
+k2 = "(-(midpoint - v_rest) / tau_m + ((-g_ampa_ext * (midpoint - v_ampa) * ext_latched - g_ampa_rec * (midpoint - v_ampa) * ampa_latched - g_nmda * (1.0 / (1.0 + mg_conc / mg_divisor * exp(-mg_slope * midpoint))) * (midpoint - v_nmda) * nmda_latched - g_gaba * (midpoint - v_gaba) * gaba_latched) / c_m)) if abs(phase - 5.0) < 0.5 else k2"
 membrane = "dV/dt=-(V-V_L)/tau_m+(I_AMPA_ext+I_AMPA_rec+I_NMDA+I_GABA)/C_m"
 ampa = "I_AMPA=-g_AMPA*(V-V_AMPA)*s_AMPA"
 nmda = "I_NMDA=-g_NMDA*(V-V_NMDA)*s_NMDA/(1+[Mg]/3.57*exp(-0.062*V))"
@@ -145,15 +239,19 @@ scope = "Excitatory single-cell membrane specialization with four pre-aggregated
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "approximate"

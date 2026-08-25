@@ -23015,17 +23015,19 @@ Reference: Benda, J. & Herz, A. V. M. (2003), Neural Computation 15,
 ## Module `neurons.models.bertram_phantom`
 
 ### Class `BertramPhantomBurster`
-Bertram et al. 2000 — phantom burster with dual slow variables.
+Four-state phantom burster of Bertram et al. (2000).
 
-C dV/dt  = -(I_Ca + I_K + I_s1 + I_s2 + I_L) + I_ext
-ds1/dt   = (s1_inf(V) - s1) / tau_s1
-ds2/dt   = (s2_inf(V) - s2) / tau_s2
+The ionic equations and defaults follow equations 1–10 and the authors'
+``BJ_00.ode`` implementation. ``n`` is a dynamic fast potassium gate;
+``s1`` and ``s2`` are the 1 s and 120 s negative-feedback gates. The
+production integrator is simultaneous fixed-step RK4, rather than the
+authors' adaptive CVODE run. ``current`` is an additive external-current
+extension in fA. Events are sampled upward ``v_threshold`` crossings and
+do not reset any state.
 
-Two slow variables (s1, s2) with different timescales produce
-bursting via a phantom slow manifold.
-
-Reference: Bertram, R., Previte, J., Sherman, A., Kinard, T.A. & Satin, L.S.
-(2000). Biophys. J. 79:2880–2892.
+Reference: Bertram R, Previte J, Sherman A, Kinard TA, Satin LS (2000),
+Biophysical Journal 79(6):2880–2892,
+doi:10.1016/S0006-3495(00)76525-8.
 
 - **__post_init__**()
 - **step**(current)
@@ -25722,6 +25724,28 @@ generator.
 - **__post_init__**()
 - **step_with_uniform**(current, uniform)
   - Advance using an explicit uniform variate for backend parity.
+- **step**(current)
+- **reset**()
+
+---
+
+## Module `neurons.models.sc_three_state_phantom`
+
+### Class `SCThreeStatePhantomBurster`
+Retained project phantom recurrence with two slow variables.
+
+C dV/dt  = -(I_Ca + I_K + I_s1 + I_s2 + I_L) + I_ext
+ds1/dt   = (s1_inf(V) - s1) / tau_s1
+ds2/dt   = (s2_inf(V) - s2) / tau_s2
+
+Two slow variables (s1, s2) with different timescales produce
+bursting via a phantom slow manifold.
+
+This count-neutral compatibility model preserves the former
+``BertramPhantomBurster`` behavior. It is not the four-state Bertram et al.
+publication model and carries no paper attribution.
+
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 

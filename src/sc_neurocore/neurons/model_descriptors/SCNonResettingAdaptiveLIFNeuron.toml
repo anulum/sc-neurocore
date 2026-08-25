@@ -17,12 +17,25 @@ family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = ["historical SC-NeuroCore trace compatibility", "exact-relaxation adaptive-threshold experiments", "cross-runtime regression validation"]
-hardware_fit = ["bounded one-cell signed Q32.32 co-simulation"]
-behavior_tags = ["adapting", "excitable", "spiking", "non-resetting"]
+intended_use = [
+    "historical SC-NeuroCore trace compatibility",
+    "exact-relaxation adaptive-threshold experiments",
+    "cross-runtime regression validation",
+]
+hardware_fit = [
+    "bounded one-cell signed Q32.32 co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "spiking",
+    "non-resetting",
+]
 
 [provenance]
-authors = ["SC-NeuroCore project"]
+authors = [
+    "SC-NeuroCore project",
+]
 year = 2026
 paper_title = "SC non-resetting exact-relaxation adaptive-LIF recurrence"
 derivation_note = "Project recurrence formerly carried under NonResettingLIFNeuron. Retained under an explicit SC identity after restoring the distinct source MAT(1) equations. No external paper attribution is claimed."
@@ -31,6 +44,7 @@ derivation_note = "Project recurrence formerly carried under NonResettingLIFNeur
 init = -65.0
 unit = "mV"
 meaning = "non-resetting membrane voltage"
+
 [state.theta]
 init = -50.0
 unit = "mV"
@@ -40,32 +54,55 @@ meaning = "adaptive event threshold"
 default = -65.0
 unit = "mV"
 meaning = "membrane relaxation equilibrium without input"
-range = [-200.0, 100.0]
+range = [
+    -200.0,
+    100.0,
+]
+
 [parameters.theta_rest]
 default = -50.0
 unit = "mV"
 meaning = "threshold relaxation equilibrium"
-range = [-200.0, 100.0]
+range = [
+    -200.0,
+    100.0,
+]
+
 [parameters.delta_theta]
 default = 5.0
 unit = "mV"
 meaning = "threshold increment per event"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
+
 [parameters.tau_m]
 default = 10.0
 unit = "ms"
 meaning = "membrane relaxation time constant"
-range = [1e-06, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_theta]
 default = 50.0
 unit = "ms"
 meaning = "threshold relaxation time constant"
-range = [1e-06, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.r_m]
 default = 1.0
 unit = "normalised"
 meaning = "project current-to-voltage gain"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [integration]
 dt = 0.1
@@ -79,15 +116,19 @@ spike_flag = "1.0 if exp(-dt / tau_m) * v + (1 - exp(-dt / tau_m)) * (v_rest + r
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"

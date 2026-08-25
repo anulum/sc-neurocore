@@ -99,9 +99,9 @@
     },
     "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
     "engine/src/neurons/biophysical": {
-      "rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf"
+      "rs": "8a841c17752b221b76aed4c8c35bf55ae0cc16d36224a7d8f936a804e8faf9a9"
     },
-    "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
+    "engine/src/neurons/biophysical.rs": "8a841c17752b221b76aed4c8c35bf55ae0cc16d36224a7d8f936a804e8faf9a9",
     "src/sc_neurocore/accel/go/services/connor_stevens": {
       "go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995"
     },

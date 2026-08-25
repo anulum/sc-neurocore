@@ -136,8 +136,12 @@ table, validation commands, and external simulator boundary.
 | Butera | `butera_respiratory.py` | Butera 1999, respiratory |
 | Sherman-Rinzel-Keizer | `sherman_rinzel_keizer.py` | Sherman 1988 |
 | Plant R15 | `plant_r15.py` | Plant 1981, Aplysia |
-| Bertram Phantom | `bertram_phantom.py` | Bertram 2008 |
+| Bertram Phantom | `bertram_phantom.py` | Bertram et al. 2000 |
 | Pernarowski | `pernarowski.py` | Pernarowski 1994 |
+
+Count-neutral compatibility identity: `SCThreeStatePhantomBurster` in
+`sc_three_state_phantom.py` retains the former project recurrence without
+Bertram attribution.
 
 ### Multi-Compartment (4)
 

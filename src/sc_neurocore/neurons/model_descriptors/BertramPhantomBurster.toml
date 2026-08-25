@@ -12,7 +12,7 @@ name = "BertramPhantomBurster"
 class_name = "BertramPhantomBurster"
 module = "bertram_phantom"
 display_name = ""
-summary = "Bertram et al. 2008 — phantom burster with dual slow variables."
+summary = "Bertram et al. 2000 four-state phantom burster with dynamic fast potassium gate."
 family = "Bursting"
 category = "bursting"
 biophysical_detail = "point"
@@ -33,35 +33,47 @@ year = 2000
 doi = "10.1016/S0006-3495(00)76525-8"
 
 [state.v]
-init = -50.0
+init = -43.0
+
+[state.n]
+init = 0.03
 
 [state.s1]
 init = 0.1
 
 [state.s2]
-init = 0.1
+init = 0.434
+
+[parameters.lambda_n]
+default = 1.1
+unit = "1"
+meaning = "fast potassium-gate rate multiplier"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.g_ca]
-default = 3.6
-unit = "mS/cm^2"
+default = 280.0
+unit = "pS"
 meaning = "maximal calcium conductance"
 range = [
     0.0,
-    20.0,
+    1000000.0,
 ]
 
 [parameters.g_k]
-default = 10.0
-unit = "mS/cm^2"
+default = 1300.0
+unit = "pS"
 meaning = "maximal potassium conductance"
 range = [
     0.0,
-    50.0,
+    1000000.0,
 ]
 
 [parameters.g_s1]
-default = 4.0
-unit = "mS/cm^2"
+default = 20.0
+unit = "pS"
 meaning = "maximal conductance of the first slow current"
 range = [
     0.0,
@@ -69,25 +81,25 @@ range = [
 ]
 
 [parameters.g_s2]
-default = 4.0
-unit = "mS/cm^2"
+default = 32.0
+unit = "pS"
 meaning = "maximal conductance of the second slow current"
 range = [
     0.0,
-    20.0,
+    1000000.0,
 ]
 
 [parameters.g_l]
-default = 0.2
-unit = "mS/cm^2"
+default = 25.0
+unit = "pS"
 meaning = "leak conductance"
 range = [
     0.0,
-    5.0,
+    1000000.0,
 ]
 
 [parameters.e_ca]
-default = 25.0
+default = 100.0
 unit = "mV"
 meaning = "calcium reversal potential"
 range = [
@@ -96,7 +108,7 @@ range = [
 ]
 
 [parameters.e_k]
-default = -75.0
+default = -80.0
 unit = "mV"
 meaning = "potassium reversal potential"
 range = [
@@ -114,16 +126,16 @@ range = [
 ]
 
 [parameters.c_m]
-default = 5.3
-unit = "uF/cm^2"
+default = 4524.0
+unit = "fF"
 meaning = "membrane capacitance"
 range = [
     1.0,
-    10.0,
+    1000000000.0,
 ]
 
 [parameters.v_m]
-default = -20.0
+default = -22.0
 unit = "mV"
 meaning = "half-activation voltage of the calcium current"
 range = [
@@ -132,7 +144,7 @@ range = [
 ]
 
 [parameters.s_m]
-default = 12.0
+default = 7.5
 unit = "mV"
 meaning = "slope of the calcium activation function"
 range = [
@@ -141,7 +153,7 @@ range = [
 ]
 
 [parameters.v_n]
-default = -16.0
+default = -9.0
 unit = "mV"
 meaning = "half-activation voltage of the potassium current"
 range = [
@@ -150,7 +162,7 @@ range = [
 ]
 
 [parameters.s_n]
-default = 5.6
+default = 10.0
 unit = "mV"
 meaning = "slope of the potassium activation function"
 range = [
@@ -168,11 +180,11 @@ range = [
 ]
 
 [parameters.s_s1]
-default = 10.0
+default = 0.5
 unit = "mV"
 meaning = "slope of the first slow-variable activation"
 range = [
-    1.0,
+    0.001,
     30.0,
 ]
 
@@ -194,8 +206,17 @@ range = [
     30.0,
 ]
 
+[parameters.tau_n_bar]
+default = 9.09
+unit = "ms"
+meaning = "maximum voltage-dependent potassium-gate time constant"
+range = [
+    1e-12,
+    1000000000.0,
+]
+
 [parameters.tau_s1]
-default = 20000.0
+default = 1000.0
 unit = "ms"
 meaning = "time constant of the first slow variable"
 range = [
@@ -204,7 +225,7 @@ range = [
 ]
 
 [parameters.tau_s2]
-default = 100000.0
+default = 120000.0
 unit = "ms"
 meaning = "time constant of the second slow variable"
 range = [
@@ -223,9 +244,13 @@ range = [
 
 [integration]
 dt = 0.5
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "-(Ica+Ik+Is1+Is2+Il)/Cm + Iext/Cm"
+n = "lambda_n*(n_inf(V)-n)/tau_n(V)"
+s1 = "(s1_inf(V)-s1)/tau_s1"
+s2 = "(s2_inf(V)-s2)/tau_s2"
 
 [backends.python]
 status = "implemented"

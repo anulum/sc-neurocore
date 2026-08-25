@@ -1,0 +1,24 @@
+{
+  "benchmark": "Bertram et al. 2000 four-state phantom burster",
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "production_speed_claim": false,
+  "steps": 10000,
+  "repeats": 3,
+  "source_hashes": {
+    "python": "8a932ebbbe9a7d8d3d29602a54a52d1e59e4e5dd2a6c2d73b8f5e9dee04a45cd",
+    "rust": "d35e0f81f6d84696164e5e6024ec04e69da6625bdbb490fa439b331795e87048",
+    "julia": "9c10c6861a057d31e3ee6662c50ec704f6d28ee3bc896a1387f792c79eb997a4",
+    "go": "4e6d09dd8dbdb53af04db21773564d1c13a2e99bfb8495ef5644805661605053",
+    "mojo": "a1c5cde69de9ec9f0e4d2f6bddf109afaa4e4d1740f07e003d3519cd82fb2402"
+  },
+  "backend_summary": {
+    "python": {"median_ns": 141390511, "events": 18},
+    "rust": {"median_ns": 2696900, "events": 18},
+    "julia": {"median_ns": 2067942, "events": 18},
+    "go": {"median_ns": 3820000, "events": 18},
+    "mojo": {"median_ns": 24272982, "events": 18}
+  },
+  "final_state_python": [-27.635705868734412, 0.1969841125736782, 0.21414242579166587, 0.4341985645207124],
+  "max_native_state_error": 4.60852e-9
+}

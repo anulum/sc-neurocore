@@ -58,7 +58,13 @@ def test_committed_descriptor_matches_code(class_name: str) -> None:
     assert {p.name: p.default for p in committed.parameters} == {
         p.name: p.default for p in generated.parameters
     }
-    assert {s.name: s.init for s in committed.state} == {s.name: s.init for s in generated.state}
+    committed_state = {s.name: s.init for s in committed.state}
+    generated_state = {s.name: s.init for s in generated.state}
+    # Curated runtime-only state may be absent from constructor inspection: for
+    # example an array-valued neural field or a private refractory counter.
+    # Every generated structural state must still match exactly; the corpus
+    # generator's merge gate separately protects those deliberate extra states.
+    assert {name: committed_state[name] for name in generated_state} == generated_state
     assert committed.dt == generated.dt
 
 

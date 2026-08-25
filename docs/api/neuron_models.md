@@ -296,6 +296,7 @@ raw TOML descriptor.
 | `DurstewitzDopamineNeuron` | `DurstewitzDopamineNeuron` | Durstewitz et al. 2000 |
 | `HillTononiNeuron` | `HillTononiNeuron` | Hill & Tononi 2005 |
 | `BertramPhantomBurster` | `BertramPhantomBurster` | Bertram et al. 2000 |
+| `SCThreeStatePhantomBurster` | `SCThreeStatePhantomBurster` | SC-NeuroCore retained project recurrence |
 | `YamadaNeuron` | `YamadaNeuron` | Yamada et al. 1989 |
 
 ### Multi-Compartment (7 models)

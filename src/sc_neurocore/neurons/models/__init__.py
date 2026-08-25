@@ -37,6 +37,7 @@ _CLASS_TO_MODULE = {
     "BendaHerzNeuron": "benda_herz",
     "SCStochasticRateAdaptationNeuron": "sc_stochastic_rate_adaptation",
     "BertramPhantomBurster": "bertram_phantom",
+    "SCThreeStatePhantomBurster": "sc_three_state_phantom",
     "BoothRinzelNeuron": "booth_rinzel",
     "BrainScaleSAdExNeuron": "brainscales_adex",
     "BrunelWangNeuron": "brunel_wang",

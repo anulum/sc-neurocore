@@ -4,83 +4,137 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
 [metadata]
-schema_version=2
-name="McKeanNeuron"
-class_name="McKeanNeuron"
-module="mckean"
-display_name="McKean space-clamped Heaviside system"
-summary="Source-bound two-state discontinuous FitzHugh-Nagumo caricature."
-family="Oscillator"
-category="oscillator"
-biophysical_detail="point"
-maturity="validated"
-intended_use=["source recurrence replay","piecewise-linear excitability studies"]
-hardware_fit=["bounded fixed-point co-simulation"]
-behavior_tags=["source-faithful","heaviside","non-resetting"]
+schema_version = 2
+name = "McKeanNeuron"
+class_name = "McKeanNeuron"
+module = "mckean"
+display_name = "McKean space-clamped Heaviside system"
+summary = "Source-bound two-state discontinuous FitzHugh-Nagumo caricature."
+family = "Oscillator"
+category = "oscillator"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "source recurrence replay",
+    "piecewise-linear excitability studies",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
+behavior_tags = [
+    "source-faithful",
+    "heaviside",
+    "non-resetting",
+]
+
 [provenance]
-authors=["Tonnelier, A.","McKean, H. P."]
-year=2003
-doi="10.1137/S0036139901393500"
-paper_title="The McKean's Caricature of the FitzHugh--Nagumo Model I. The Space-Clamped System"
-derivation_note="Space-clamped equations (1.3)-(1.6); normalized parameters and explicit right-continuous H(0)=1 numerical specialization."
+authors = [
+    "Tonnelier, A.",
+    "McKean, H. P.",
+]
+year = 2003
+doi = "10.1137/S0036139901393500"
+paper_title = "The McKean's Caricature of the FitzHugh--Nagumo Model I. The Space-Clamped System"
+derivation_note = "Space-clamped equations (1.3)-(1.6); normalized parameters and explicit right-continuous H(0)=1 numerical specialization."
+
 [state.v]
-init=0.0
-unit="1"
+init = 0.0
+unit = "1"
+
 [state.w]
-init=0.0
-unit="1"
+init = 0.0
+unit = "1"
+
 [parameters.a]
-default=0.25
-unit="1"
+default = 0.25
+unit = "1"
+meaning = "piecewise-linear breakpoint"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [parameters.lambda_]
-default=1.0
-unit="1"
+default = 1.0
+unit = "1"
+meaning = "right-branch gain"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [parameters.mu]
-default=1.0
-unit="1"
+default = 1.0
+unit = "1"
+meaning = "left-branch gain"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [parameters.b]
-default=0.01
-unit="1"
+default = 0.01
+unit = "1"
+meaning = "slow-variable coupling"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [integration]
-dt=0.1
-method="rk4"
+dt = 0.1
+method = "rk4"
+
 [dynamics]
-heaviside="1 if v >= a else 0"
-dv_dt="-lambda_*v + mu*H(v-a) - w + I"
-dw_dt="b*v"
-spike_flag="1 on sampled upward a crossing; no reset"
+v = "-lambda_*v + mu*(1.0 if v >= a else 0.0) - w + I"
+w = "b*v"
+heaviside = "1 if v >= a else 0"
+dv_dt = "-lambda_*v + mu*H(v-a) - w + I"
+dw_dt = "b*v"
+spike_flag = "1 on sampled upward a crossing; no reset"
+
 [backends.python]
-status="implemented"
-parity="exact"
+status = "implemented"
+parity = "exact"
+
 [backends.rust]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
 [backends.julia]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
 [backends.go]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
 [backends.mojo]
-status="implemented"
-parity="ulp-bounded"
-[documentation]
-slug="models/mckean"
-notes="SCTriangularMcKeanNeuron retains the previous project recurrence count-neutrally."
+status = "implemented"
+parity = "ulp-bounded"
+
 [reproducibility]
-reference_config="src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json"
-golden_trace_sha256="19c575db5481027819df46f30bb0463ddfeba7815393c5ee25eb4d846611fff5"
-golden_citation="Tonnelier 2002 equations (1.3)-(1.6), following McKean 1970"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json"
+golden_trace_sha256 = "19c575db5481027819df46f30bb0463ddfeba7815393c5ee25eb4d846611fff5"
+golden_citation = "Tonnelier 2002 equations (1.3)-(1.6), following McKean 1970"
+
+[documentation]
+slug = "models/mckean"
+notes = "SCTriangularMcKeanNeuron retains the previous project recurrence count-neutrally."
+
 [validation]
-dynamics_faithful=true
-metric="trajectory"
-operating_point="512-step deterministic mixed-current DOI trace and five-runtime parity"
-tolerance="binary64 2e-12 across native runtimes"
-evidence="tests/test_model_mckean_source_fidelity.py; tests/test_reference_mckean.py"
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "512-step deterministic mixed-current DOI trace and five-runtime parity"
+tolerance = "binary64 2e-12 across native runtimes"
+evidence = "tests/test_model_mckean_source_fidelity.py; tests/test_reference_mckean.py"
+
 [silicon]
-compiles=true
-cosim_validated=true
-cosim_evidence="tests/test_cosim_mckean.py"
-target_tier="H1"
-terminal_reason="Pinned-profile fixed-point co-simulation and bounded safety proof only; timing, PPA, device evidence, and universal real-number equivalence remain open."
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_mckean.py"
+target_tier = "H1"
+terminal_reason = "Pinned-profile fixed-point co-simulation and bounded safety proof only; timing, PPA, device evidence, and universal real-number equivalence remain open."

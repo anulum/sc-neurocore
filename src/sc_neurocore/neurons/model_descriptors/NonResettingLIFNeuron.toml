@@ -17,12 +17,25 @@ family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["source-equation MAT(1) replay", "one-timescale adaptive-threshold studies", "cross-runtime complete-state validation"]
-hardware_fit = ["bounded one-cell signed Q32.32 co-simulation"]
-behavior_tags = ["adapting", "excitable", "spiking", "non-resetting"]
+intended_use = [
+    "source-equation MAT(1) replay",
+    "one-timescale adaptive-threshold studies",
+    "cross-runtime complete-state validation",
+]
+hardware_fit = [
+    "bounded one-cell signed Q32.32 co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "spiking",
+    "non-resetting",
+]
 
 [provenance]
-authors = ["Kobayashi, R., Tsubo, Y. & Shinomoto, S."]
+authors = [
+    "Kobayashi, R., Tsubo, Y. & Shinomoto, S.",
+]
 year = 2009
 doi = "10.3389/neuro.10.009.2009"
 paper_title = "Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold"
@@ -48,37 +61,55 @@ meaning = "absolute refractory time remaining; voltage still evolves"
 default = 19.0
 unit = "mV"
 meaning = "documented baseline-threshold specialization"
-range = [-1000.0, 1000.0]
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.tau_m]
 default = 5.0
 unit = "ms"
 meaning = "membrane time constant"
-range = [1.0, 100.0]
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_theta]
 default = 50.0
 unit = "ms"
 meaning = "paper-optimal MAT(1) threshold-kernel time constant"
-range = [1.0, 1000.0]
+range = [
+    1.0,
+    1000.0,
+]
 
 [parameters.alpha]
 default = 37.0
 unit = "mV"
 meaning = "documented threshold-increment specialization"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
 
 [parameters.resistance]
 default = 50.0
 unit = "MOhm"
 meaning = "source current-to-voltage conversion"
-range = [0.0, 100.0]
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.refractory_period]
 default = 2.0
 unit = "ms"
 meaning = "source absolute refractory interval"
-range = [0.0, 1000.0]
+range = [
+    0.0,
+    1000.0,
+]
 
 [integration]
 dt = 0.001
@@ -93,15 +124,19 @@ spike_flag = "1.0 if max(0.0, refractory_remaining - dt) <= 0.0 and (v + dt * (-
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"

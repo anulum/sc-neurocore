@@ -83,6 +83,8 @@ parity note.
 | SC triangular McKean-like recurrence | ✅ | ✅ | ✅ | ✅ shared-lib | count-neutral retained project recurrence with three continuous voltage branches, recovery `epsilon*(v-gamma*w)`, upward `v_peak` events, and no reset; no paper attribution; Python/Rust/Julia/Go/Mojo parity, independent project receipt, paired schemas, signed-Q32.32 co-simulation, Yosys and bounded reset proof are enrolled; higher silicon claims remain open | `this commit` |
 | Benda-Herz universal adaptation | ✅ | ✅ | ✅ | ✅ shared-lib | Benda and Herz 2003 equations (8) and (45), specialized to the Figure 8 square-root onset and linear steady-state adaptation example; deterministic phase events and both state traces agree across five runtimes within `2e-12`; paired schemas and the 512-step primary-equation receipt agree; bounded Q16.16 adaptation/phase RTL synthesizes and passes reset-safety proof; the paper's stated rate-model operating limits, timing, PPA, device evidence, and universal real-number equivalence remain open | `this commit` |
 | SC stochastic rate adaptation | ✅ | ✅ | ✅ | ✅ executable | count-neutral retained project logistic RK4 adaptation and exponential-hazard Bernoulli recurrence, without Benda-Herz attribution; explicit-uniform parity, paired schemas, and bounded hazard-commit RTL are enrolled; hardware randomness, timing, PPA, and device evidence remain open | `this commit` |
+| Bertram phantom burster | ✅ | ✅ | ✅ | ✅ executable | Bertram et al. 2000 equations 1–10 and `BJ_00.ode` author defaults with dynamic fast potassium gate `n`; five runtimes preserve the enrolled 18-event, 10,000-step four-state trajectory, native state error stays below `5e-9`, paired schemas and a 512-step primary-equation receipt agree; production fixed-step RK4 is an explicit specialization of the authors' adaptive CVODE run, and no identical interpolation, RTL, timing, PPA, or device claim is made | `this commit` |
+| SC three-state phantom | ✅ | ✅ | ✅ | ✅ executable | count-neutral retained project RK4 recurrence with instantaneous `n_inf`, without Bertram attribution; the old defaults and three-state behavior remain available under an explicit SC identity | `this commit` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
 | Pernarowski | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 7/17/27 @ I=0 over 2000/5000/8000 steps; co-sim exact spike count — hand/schema/Q16.16 RTL 17 @ I=-0.1/0/0.1/0.2 (5000 RK4 steps, autonomous cubic burster); formal Q8.8 reset-spike BMC depth 4 | `c384ac0cd` |
@@ -128,8 +130,8 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **fifty-four polyglot-complete models** out of the 155-model catalogue;
-the remaining **101** source-model units are Python-faithful with an acceleration chain still under
+the latest landed commit that is **fifty-six polyglot-complete models** out of the 155-model catalogue;
+the remaining **99** source-model units are Python-faithful with an acceleration chain still under
 remediation.
 
 ## How a model graduates onto this page

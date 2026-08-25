@@ -4,6 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -16,12 +17,23 @@ family = "Hardware / neuromorphic"
 category = "hardware-neuromorphic"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["source-equation signal encoding", "cross-runtime state validation"]
-hardware_fit = ["bounded one-encoder fixed-point co-simulation"]
-behavior_tags = ["event-driven", "unipolar", "rate-coded"]
+intended_use = [
+    "source-equation signal encoding",
+    "cross-runtime state validation",
+]
+hardware_fit = [
+    "bounded one-encoder fixed-point co-simulation",
+]
+behavior_tags = [
+    "event-driven",
+    "unipolar",
+    "rate-coded",
+]
 
 [provenance]
-authors = ["Yoon, Y. C."]
+authors = [
+    "Yoon, Y. C.",
+]
 year = 2017
 doi = "10.1109/TNNLS.2016.2526029"
 paper_title = "LIF and simplified SRM neurons encode signals into spikes via a form of asynchronous pulse sigma-delta modulation"
@@ -32,29 +44,34 @@ derivation_note = "Sampled specialization of WO2016022241A1 equations 20-27 and 
 init = 0.0
 unit = "signal*time"
 meaning = "integrating-prefilter output"
+
 [state.reconstruction]
 init = 0.0
 unit = "signal*time"
 meaning = "local exponentially decaying reconstruction"
+
 [parameters.delta]
 default = 1.0
 unit = "signal*time"
 meaning = "reconstruction quantum; upper threshold is delta/2"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.tau_reconstruction]
 default = 10.0
 unit = "sample-time"
 meaning = "exponential reconstruction time constant"
-range = [0.000001, 1000000.0]
-[parameters.dt]
-default = 0.1
-unit = "sample-time"
-meaning = "clocked specialization timestep"
-range = [0.000001, 1000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
 
 [integration]
 dt = 0.1
 method = "map"
+
 [dynamics]
 sigma = "sigma + dt * I"
 reconstruction = "reconstruction * exp(-dt / tau_reconstruction) + (delta if sigma + dt * I - reconstruction * exp(-dt / tau_reconstruction) >= delta / 2 else 0)"
@@ -63,31 +80,39 @@ spike_flag = "1 if sigma + dt * I - reconstruction * exp(-dt / tau_reconstructio
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"
+
 [reproducibility]
 reference_config = "src/sc_neurocore/neurons/reference_trace_data/sigma_delta_apsdm.json"
 golden_trace_sha256 = "4c22a86d4fe810dad3d5a039717798c5183ff03e9f00d8317e5568a5ad5b8d99"
 golden_citation = "doi:10.1109/TNNLS.2016.2526029; WO2016022241A1 equations 20-27, 40"
+
 [documentation]
 slug = "models/sigma_delta"
 notes = "SCSigmaDeltaAccumulatorNeuron separately retains the historical bipolar project recurrence."
+
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
 operating_point = "512-step independent equation receipt plus five-runtime parity"
 tolerance = "events exact; complete floating-point state within absolute 2e-12"
 evidence = "tests/test_model_sigma_delta_source_fidelity.py; tests/test_reference_sigma_delta.py; tests/test_sigma_delta_backend_dispatch.py"
+
 [silicon]
 compiles = true
 cosim_validated = true

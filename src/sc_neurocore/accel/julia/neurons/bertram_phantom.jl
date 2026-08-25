@@ -4,20 +4,18 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for bertram_phantom
+# SC-NeuroCore — Julia mirror of Bertram et al. 2000 phantom burster
 
 module BertramPhantomAccel
 
-export step!, simulate, BertramPhantomBursterState, validate_state
+export BertramPhantomState, step!, reset!, valid, simulate
 
-const VOLTAGE_MIN = -250.0
-const VOLTAGE_MAX = 250.0
-const GATE_TOL = 1e-9
-
-mutable struct BertramPhantomBursterState
+mutable struct BertramPhantomState
     v::Float64
+    n::Float64
     s1::Float64
     s2::Float64
+    lambda_n::Float64
     g_ca::Float64
     g_k::Float64
     g_s1::Float64
@@ -35,104 +33,92 @@ mutable struct BertramPhantomBursterState
     s_s1::Float64
     v_s2::Float64
     s_s2::Float64
+    tau_n_bar::Float64
     tau_s1::Float64
     tau_s2::Float64
     dt::Float64
     v_threshold::Float64
 end
 
-function BertramPhantomBursterState()
-    BertramPhantomBursterState(-50.0, 0.1, 0.1, 3.6, 10.0, 4.0, 4.0, 0.2, 25.0, -75.0, -40.0, 5.3, -20.0, 12.0, -16.0, 5.6, -40.0, 10.0, -42.0, 0.4, 20000.0, 100000.0, 0.5, -20.0)
+BertramPhantomState() = BertramPhantomState(
+    -43.0, 0.03, 0.1, 0.434, 1.1,
+    280.0, 1300.0, 20.0, 32.0, 25.0,
+    100.0, -80.0, -40.0, 4524.0,
+    -22.0, 7.5, -9.0, 10.0, -40.0, 0.5, -42.0, 0.4,
+    9.09, 1000.0, 120000.0, 0.5, -20.0,
+)
+
+function valid(state::BertramPhantomState)::Bool
+    values = (
+        state.v, state.n, state.s1, state.s2, state.lambda_n,
+        state.g_ca, state.g_k, state.g_s1, state.g_s2, state.g_l,
+        state.e_ca, state.e_k, state.e_l, state.c_m,
+        state.v_m, state.s_m, state.v_n, state.s_n,
+        state.v_s1, state.s_s1, state.v_s2, state.s_s2,
+        state.tau_n_bar, state.tau_s1, state.tau_s2, state.dt, state.v_threshold,
+    )
+    all(isfinite, values) && -250.0 <= state.v <= 250.0 &&
+        0.0 <= state.n <= 1.0 && 0.0 <= state.s1 <= 1.0 && 0.0 <= state.s2 <= 1.0 &&
+        state.lambda_n > 0.0 && all(x -> x >= 0.0, (state.g_ca, state.g_k, state.g_s1, state.g_s2, state.g_l)) &&
+        all(x -> x > 0.0, (state.c_m, state.s_m, state.s_n, state.s_s1, state.s_s2,
+            state.tau_n_bar, state.tau_s1, state.tau_s2, state.dt))
 end
 
-_positive(x) = isfinite(x) && x > 0.0
-_nonnegative(x) = isfinite(x) && x >= 0.0
-_gate(x) = isfinite(x) && 0.0 <= x <= 1.0
+_boltz(v::Float64, midpoint::Float64, slope::Float64) = 1.0 / (1.0 + exp((midpoint - v) / slope))
 
-function validate_state(s::BertramPhantomBursterState)
-    return isfinite(s.v) && VOLTAGE_MIN <= s.v <= VOLTAGE_MAX && _gate(s.s1) && _gate(s.s2) &&
-        _nonnegative(s.g_ca) && _nonnegative(s.g_k) && _nonnegative(s.g_s1) && _nonnegative(s.g_s2) && _nonnegative(s.g_l) &&
-        isfinite(s.e_ca) && isfinite(s.e_k) && isfinite(s.e_l) && _positive(s.c_m) &&
-        isfinite(s.v_m) && _positive(s.s_m) && isfinite(s.v_n) && _positive(s.s_n) &&
-        isfinite(s.v_s1) && _positive(s.s_s1) && isfinite(s.v_s2) && _positive(s.s_s2) &&
-        _positive(s.tau_s1) && _positive(s.tau_s2) && _positive(s.dt) && isfinite(s.v_threshold)
+function _rhs(state::BertramPhantomState, values::NTuple{4, Float64}, current::Float64)
+    v, n, s1, s2 = values
+    m_inf = _boltz(v, state.v_m, state.s_m)
+    n_inf = _boltz(v, state.v_n, state.s_n)
+    s1_inf = _boltz(v, state.v_s1, state.s_s1)
+    s2_inf = _boltz(v, state.v_s2, state.s_s2)
+    tau_n = state.tau_n_bar / (1.0 + exp((v - state.v_n) / state.s_n))
+    i_ca = state.g_ca * m_inf * (v - state.e_ca)
+    i_k = state.g_k * n * (v - state.e_k)
+    i_s1 = state.g_s1 * s1 * (v - state.e_k)
+    i_s2 = state.g_s2 * s2 * (v - state.e_k)
+    i_l = state.g_l * (v - state.e_l)
+    (
+        (-i_ca - i_k - i_s1 - i_s2 - i_l + current) / state.c_m,
+        state.lambda_n * (n_inf - n) / tau_n,
+        (s1_inf - s1) / state.tau_s1,
+        (s2_inf - s2) / state.tau_s2,
+    )
 end
 
-function _boltz(v::Float64, vh::Float64, k::Float64)
-    z = (vh - v) / k
-    if z >= 0.0
-        exp_neg = exp(-z)
-        return exp_neg / (1.0 + exp_neg)
+_shift(values, derivative, scale) = ntuple(i -> values[i] + scale * derivative[i], 4)
+
+function step!(state::BertramPhantomState, current::Float64 = 0.0)::Int
+    valid(state) && isfinite(current) || return -1
+    previous_v = state.v
+    values = (state.v, state.n, state.s1, state.s2)
+    k1 = _rhs(state, values, current)
+    k2 = _rhs(state, _shift(values, k1, 0.5 * state.dt), current)
+    k3 = _rhs(state, _shift(values, k2, 0.5 * state.dt), current)
+    k4 = _rhs(state, _shift(values, k3, state.dt), current)
+    next = ntuple(i -> values[i] + state.dt * (k1[i] + 2k2[i] + 2k3[i] + k4[i]) / 6.0, 4)
+    all(isfinite, next) && -250.0 <= next[1] <= 250.0 &&
+        all(x -> -1e-9 <= x <= 1.0 + 1e-9, next[2:4]) || return -1
+    state.v, state.n, state.s1, state.s2 = next[1], clamp(next[2], 0.0, 1.0),
+        clamp(next[3], 0.0, 1.0), clamp(next[4], 0.0, 1.0)
+    (state.v >= state.v_threshold && previous_v < state.v_threshold) ? 1 : 0
+end
+
+function reset!(state::BertramPhantomState)::Nothing
+    state.v, state.n, state.s1, state.s2 = -43.0, 0.03, 0.1, 0.434
+    nothing
+end
+
+function simulate(currents::AbstractVector{Float64}; state::BertramPhantomState = BertramPhantomState())
+    voltages = Vector{Float64}(undef, length(currents))
+    gates = Matrix{Float64}(undef, length(currents), 3)
+    events = Vector{Int64}(undef, length(currents))
+    for index in eachindex(currents)
+        events[index] = step!(state, currents[index])
+        voltages[index] = state.v
+        gates[index, :] = (state.n, state.s1, state.s2)
     end
-    exp_pos = exp(z)
-    return 1.0 / (1.0 + exp_pos)
+    (; voltages, gates, events, state)
 end
 
-function _derivatives(s::BertramPhantomBursterState, v::Float64, s1::Float64, s2::Float64, I_ext::Float64)
-    m_inf = _boltz(v, s.v_m, s.s_m)
-    n_inf = _boltz(v, s.v_n, s.s_n)
-    s1_inf = _boltz(v, s.v_s1, s.s_s1)
-    s2_inf = _boltz(v, s.v_s2, s.s_s2)
-    i_ca = s.g_ca * m_inf * (v - s.e_ca)
-    i_k = s.g_k * n_inf * (v - s.e_k)
-    i_s1 = s.g_s1 * s1 * (v - s.e_k)
-    i_s2 = s.g_s2 * s2 * (v - s.e_k)
-    i_l = s.g_l * (v - s.e_l)
-    dv = (-i_ca - i_k - i_s1 - i_s2 - i_l + I_ext) / s.c_m
-    ds1 = (s1_inf - s1) / s.tau_s1
-    ds2 = (s2_inf - s2) / s.tau_s2
-    return dv, ds1, ds2
 end
-
-function _candidate_valid(v::Float64, s1::Float64, s2::Float64)
-    return isfinite(v) && VOLTAGE_MIN <= v <= VOLTAGE_MAX &&
-        isfinite(s1) && -GATE_TOL <= s1 <= 1.0 + GATE_TOL &&
-        isfinite(s2) && -GATE_TOL <= s2 <= 1.0 + GATE_TOL
-end
-
-function step!(s::BertramPhantomBursterState, I_ext::Float64=0.0; dt::Union{Nothing, Float64}=nothing)
-    old_dt = s.dt
-    if dt !== nothing
-        s.dt = dt
-    end
-    try
-        if !isfinite(I_ext) || !validate_state(s)
-            return 0
-        end
-        v_prev = s.v
-        h = s.dt
-        k1 = _derivatives(s, s.v, s.s1, s.s2, I_ext)
-        k2 = _derivatives(s, s.v + 0.5h * k1[1], s.s1 + 0.5h * k1[2], s.s2 + 0.5h * k1[3], I_ext)
-        k3 = _derivatives(s, s.v + 0.5h * k2[1], s.s1 + 0.5h * k2[2], s.s2 + 0.5h * k2[3], I_ext)
-        k4 = _derivatives(s, s.v + h * k3[1], s.s1 + h * k3[2], s.s2 + h * k3[3], I_ext)
-        v = s.v + h * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
-        s1 = s.s1 + h * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
-        s2 = s.s2 + h * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
-        if !_candidate_valid(v, s1, s2)
-            return 0
-        end
-        s.v = v
-        s.s1 = clamp(s1, 0.0, 1.0)
-        s.s2 = clamp(s2, 0.0, 1.0)
-        return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
-    finally
-        s.dt = old_dt
-    end
-end
-
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.5)
-    s = BertramPhantomBursterState()
-    s.dt = dt
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext)
-        trace[t] = s.v
-        if result > 0
-            spikes += 1
-        end
-    end
-    return trace, spikes
-end
-
-end # module BertramPhantomAccel

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — SC two-state chaotic map descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -17,12 +17,23 @@ family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = ["engineering experiments", "bounded chaotic-map studies"]
-hardware_fit = ["fixed-point sigmoid-LUT co-simulation"]
-behavior_tags = ["excitable", "phasic", "rate-coded"]
+intended_use = [
+    "engineering experiments",
+    "bounded chaotic-map studies",
+]
+hardware_fit = [
+    "fixed-point sigmoid-LUT co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "phasic",
+    "rate-coded",
+]
 
 [provenance]
-authors = ["SC-NeuroCore project"]
+authors = [
+    "SC-NeuroCore project",
+]
 year = 2026
 doi = ""
 paper_title = ""
@@ -30,6 +41,7 @@ derivation_note = "Historical SC-NeuroCore engineering recurrence preserved afte
 
 [state.x]
 init = 0.0
+
 [state.y]
 init = 0.0
 
@@ -37,31 +49,50 @@ init = 0.0
 default = 0.7
 unit = "1"
 meaning = "fast-state gain"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.k_s]
 default = 0.95
 unit = "1"
 meaning = "slow-state retention"
-range = [-10.0, 10.0]
+range = [
+    -10.0,
+    10.0,
+]
+
 [parameters.alpha]
 default = 2.0
 unit = "1"
 meaning = "sigmoid offset"
-range = [-10.0, 10.0]
+range = [
+    -10.0,
+    10.0,
+]
+
 [parameters.delta]
 default = 0.05
 unit = "1"
 meaning = "fast-to-slow coupling"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.x_threshold]
 default = 0.5
 unit = "1"
 meaning = "upward-crossing event threshold"
-range = [-10.0, 10.0]
+range = [
+    -10.0,
+    10.0,
+]
 
 [integration]
-dt = 1.0
-method = "map"
+dt = 0.1
+method = "euler"
 
 [dynamics]
 x = "clamp(k_f * x * sigmoid(x + alpha) - y + I, -10, 10)"
@@ -71,26 +102,30 @@ event = "x_next >= x_threshold and x < x_threshold"
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"
 
-[documentation]
-slug = "models/sc_chaotic_map"
-notes = "Project-specified recurrence with no external publication attribution; AiharaMapNeuron remains the distinct source-faithful paper model."
-
 [reproducibility]
 reference_config = "src/sc_neurocore/neurons/reference_trace_data/sc_chaotic_map_spec.json"
 golden_trace_sha256 = "bef0b0758071a544b3cb612e9286fd377581bde66b774b52f3c85dfe97724173"
+
+[documentation]
+slug = "models/sc_chaotic_map"
+notes = "Project-specified recurrence with no external publication attribution; AiharaMapNeuron remains the distinct source-faithful paper model."
 
 [validation]
 dynamics_faithful = true

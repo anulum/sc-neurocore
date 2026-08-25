@@ -118,9 +118,7 @@ fn rk4_reference(n: &SCStochasticRateAdaptationNeuron, i_ext: f64) -> (f64, f64)
     (next_a, probability)
 }
 
-pub fn validate_sc_stochastic_rate_adaptation(
-    state: &SCStochasticRateAdaptationNeuron,
-) -> bool {
+pub fn validate_sc_stochastic_rate_adaptation(state: &SCStochasticRateAdaptationNeuron) -> bool {
     state.a.is_finite()
         && state.a >= 0.0
         && state.f_max.is_finite()

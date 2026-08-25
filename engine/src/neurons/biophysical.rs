@@ -33,7 +33,7 @@ mod wang_buzsaki;
 mod yamada;
 
 pub use av_ron_cardiac::AvRonCardiacNeuron;
-pub use bertram_phantom::BertramPhantomBurster;
+pub use bertram_phantom::{BertramPhantomBurster, SCThreeStatePhantomBurster};
 pub use connor_stevens::ConnorStevensNeuron;
 pub use de_schutter_purkinje::DeSchutterPurkinjeNeuron;
 pub use destexhe_thalamic::DestexheThalamicNeuron;

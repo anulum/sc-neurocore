@@ -7,81 +7,134 @@
 # SC-NeuroCore — Source/config provenance header
 
 [metadata]
-schema_version=2
-name="BendaHerzNeuron"
-class_name="BendaHerzNeuron"
-module="benda_herz"
-display_name="Benda-Herz universal adaptation model"
-summary="Source-bound universal rate adaptation coupled to the deterministic phase generator."
-family="Rate adaptation"
-category="phenomenological"
-biophysical_detail="point"
-maturity="validated"
-intended_use=["source recurrence replay","spike-frequency adaptation studies"]
-hardware_fit=["bounded fixed-point co-simulation"]
-behavior_tags=["adapting","excitable","phasic","rate-coded","tonic"]
+schema_version = 2
+name = "BendaHerzNeuron"
+class_name = "BendaHerzNeuron"
+module = "benda_herz"
+display_name = "Benda-Herz universal adaptation model"
+summary = "Source-bound universal rate adaptation coupled to the deterministic phase generator."
+family = "Rate adaptation"
+category = "phenomenological"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "source recurrence replay",
+    "spike-frequency adaptation studies",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "phasic",
+    "rate-coded",
+    "tonic",
+]
+
 [provenance]
-authors=["Benda, J.","Herz, A. V. M."]
-year=2003
-doi="10.1162/089976603322385063"
-paper_title="A universal model for spike-frequency adaptation"
-derivation_note="Equations (8) and (45), specialized to the Figure 8 square-root onset and linear A_inf example."
+authors = [
+    "Benda, J.",
+    "Herz, A. V. M.",
+]
+year = 2003
+doi = "10.1162/089976603322385063"
+paper_title = "A universal model for spike-frequency adaptation"
+derivation_note = "Equations (8) and (45), specialized to the Figure 8 square-root onset and linear A_inf example."
+
 [state.a]
-init=0.0
-unit="rate-equivalent current"
+init = 0.0
+unit = "rate-equivalent current"
+
 [state.phase]
-init=0.0
-unit="cycle"
+init = 0.0
+unit = "cycle"
+
 [parameters.onset_gain]
-default=60.0
-unit="Hz/sqrt(current)"
+default = 60.0
+unit = "Hz/sqrt(current)"
+meaning = "gain from effective drive to onset firing rate"
+range = [
+    1e-12,
+    1000000.0,
+]
+
 [parameters.rheobase]
-default=0.0
-unit="current"
+default = 0.0
+unit = "current"
+meaning = "effective-current rheobase"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [parameters.adaptation_slope]
-default=0.1
-unit="current/Hz"
+default = 0.1
+unit = "current/Hz"
+meaning = "steady adaptation per unit firing rate"
+range = [
+    0.0,
+    1000000.0,
+]
+
 [parameters.tau_a]
-default=100.0
-unit="ms"
+default = 100.0
+unit = "ms"
+meaning = "adaptation time constant"
+range = [
+    1e-12,
+    1000000000.0,
+]
+
 [integration]
-dt=0.1
-method="rk4"
+dt = 0.1
+method = "rk4"
+
 [dynamics]
-rate="60*sqrt(max(I-A,0))"
-adaptation="tau_a*dA/dt=adaptation_slope*rate-A"
-phase="dphase/dt=rate/1000; reset phase=0 at one"
+rate = "60*sqrt(max(I-A,0))"
+a = "(adaptation_slope*rate-a)/tau_a"
+phase = "dphase/dt=rate/1000; reset phase=0 at one"
+adaptation = "tau_a*dA/dt=adaptation_slope*rate-A"
+
 [backends.python]
-status="implemented"
-parity="exact"
+status = "implemented"
+parity = "exact"
+
 [backends.rust]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
 [backends.julia]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
 [backends.go]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
 [backends.mojo]
-status="implemented"
-parity="approximate"
-[documentation]
-slug="models/benda_herz"
-notes="SCStochasticRateAdaptationNeuron retains the former project recurrence count-neutrally."
+status = "implemented"
+parity = "approximate"
+
 [reproducibility]
-reference_config="src/sc_neurocore/neurons/reference_receipts/benda_herz_2003.json"
-golden_trace_sha256="ca19cf6447639dc195f526aa5834773bf64aa54077d1d0ff5278b20e4ce8233c"
-golden_citation="Benda and Herz 2003 equations (8), (45), and Figure 8"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/benda_herz_2003.json"
+golden_trace_sha256 = "ca19cf6447639dc195f526aa5834773bf64aa54077d1d0ff5278b20e4ce8233c"
+golden_citation = "Benda and Herz 2003 equations (8), (45), and Figure 8"
+
+[documentation]
+slug = "models/benda_herz"
+notes = "SCStochasticRateAdaptationNeuron retains the former project recurrence count-neutrally."
+
 [validation]
-dynamics_faithful=true
-metric="trajectory"
-operating_point="512-step deterministic mixed-current trace and five-runtime parity"
-tolerance="binary64 2e-12 across native runtimes"
-evidence="tests/test_model_benda_herz_source_fidelity.py; tests/test_benda_herz_backend_dispatch.py"
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "512-step deterministic mixed-current trace and five-runtime parity"
+tolerance = "binary64 2e-12 across native runtimes"
+evidence = "tests/test_model_benda_herz_source_fidelity.py; tests/test_benda_herz_backend_dispatch.py"
+
 [silicon]
-compiles=true
-cosim_validated=false
-cosim_evidence=""
-target_tier="H1"
-terminal_reason="Rate-input Q16.16 datapath synthesis and reset-safety proof only; full source-to-RTL co-simulation, timing, PPA, device evidence, and universal real-number equivalence remain open."
+compiles = true
+cosim_validated = false
+cosim_evidence = ""
+target_tier = "H1"
+terminal_reason = "Rate-input Q16.16 datapath synthesis and reset-safety proof only; full source-to-RTL co-simulation, timing, PPA, device evidence, and universal real-number equivalence remain open."

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — source-faithful Amari 1977 neural-field descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -17,62 +17,99 @@ family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "reduced"
 maturity = "validated"
-intended_use = ["neural-field dynamics", "localized population activity", "finite-grid accelerator studies"]
-hardware_fit = ["fixed four-site Q16.16 co-simulation"]
-behavior_tags = ["excitable", "rate-coded", "tonic"]
+intended_use = [
+    "neural-field dynamics",
+    "localized population activity",
+    "finite-grid accelerator studies",
+]
+hardware_fit = [
+    "fixed four-site Q16.16 co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+]
 
 [provenance]
-authors = ["Amari, S."]
+authors = [
+    "Amari, S.",
+]
 year = 1977
 doi = "10.1007/BF00337259"
 paper_title = "Dynamics of pattern formation in lateral-inhibition type neural fields"
 derivation_note = "Equation (3), specialized to a periodic uniform grid with source-level Heaviside activity and an explicit difference-of-exponentials lateral-inhibition kernel."
 
+[state.n]
+init = 64.0
+
 [state.u]
 init = 0.0
 shape = "n"
 
-[parameters.n]
-default = 64.0
-unit = "sites"
-meaning = "number of uniformly spaced periodic field sites"
-range = [2.0, 4096.0]
 [parameters.tau]
 default = 10.0
 unit = "time"
 meaning = "field time constant"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
+
 [parameters.a_exc]
 default = 1.5
 unit = "1"
 meaning = "local excitation amplitude"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.a_width]
 default = 2.0
 unit = "1/distance"
 meaning = "excitation inverse width; larger than b_width at the maintained defaults"
-range = [0.000001, 20.0]
+range = [
+    1e-06,
+    20.0,
+]
+
 [parameters.b_inh]
 default = 0.75
 unit = "1"
 meaning = "distal inhibition amplitude"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.b_width]
 default = 1.0
 unit = "1/distance"
 meaning = "inhibition inverse width"
-range = [0.000001, 20.0]
+range = [
+    1e-06,
+    20.0,
+]
+
 [parameters.dx]
 default = 0.5
 unit = "distance"
 meaning = "uniform spatial interval"
-range = [0.000001, 1000.0]
+range = [
+    1e-06,
+    1000.0,
+]
 
 [integration]
 dt = 0.5
 method = "euler"
 
 [dynamics]
+u0 = "(-u0 + dx * (w0*(u0 > 0.0) + w1*(u1 > 0.0) + w2*(u2 > 0.0) + w1*(u3 > 0.0)) + I) / tau"
+u1 = "(-u1 + dx * (w1*(u0 > 0.0) + w0*(u1 > 0.0) + w1*(u2 > 0.0) + w2*(u3 > 0.0)) + I) / tau"
+u2 = "(-u2 + dx * (w2*(u0 > 0.0) + w1*(u1 > 0.0) + w0*(u2 > 0.0) + w1*(u3 > 0.0)) + I) / tau"
+u3 = "(-u3 + dx * (w1*(u0 > 0.0) + w2*(u1 > 0.0) + w1*(u2 > 0.0) + w0*(u3 > 0.0)) + I) / tau"
 u = "du_i/dt=(-u_i+dx*sum_j w(d(i,j))*H(u_j)+current_i)/tau"
 kernel = "w(d)=a_exc*exp(-a_width*d)-b_inh*exp(-b_width*d)"
 activity = "H(u)=1 if u>0 else 0"
@@ -81,26 +118,30 @@ result = "mean_i H(u_i_next); continuous population rate, not a spike"
 [backends.python]
 status = "implemented"
 parity = "exact"
+
 [backends.rust]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.julia]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.go]
 status = "implemented"
 parity = "ulp-bounded"
+
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"
 
-[documentation]
-slug = "models/amari_field"
-notes = "The maintained model is a finite periodic numerical specialization. It does not claim continuous-space convergence, axonal delay, the paper's two-layer oscillator, or a biological single-neuron event."
-
 [reproducibility]
 reference_config = "{\"kind\":\"sampled_batch_v1\",\"n\":8,\"u\":[-0.2,-0.1,-0.05,0.01,0.03,0.07,0.2,-0.3],\"tau\":10.0,\"a_exc\":1.5,\"a_width\":2.0,\"b_inh\":0.75,\"b_width\":1.0,\"dx\":0.5,\"dt\":0.5,\"n_steps\":256,\"simulate_fields\":[\"currents\"],\"inputs\":{\"currents\":{\"function\":\"sin\",\"offset\":0.0,\"amplitude\":1.0,\"angular_frequency\":0.11}},\"trace_fields\":[\"mean_rates\"]}"
 golden_trace_sha256 = "dbdb62be72c76af69ab9c021a06fee72f7097335f44712c118a4190674dc345f"
+
+[documentation]
+slug = "models/amari_field"
+notes = "The maintained model is a finite periodic numerical specialization. It does not claim continuous-space convergence, axonal delay, the paper's two-layer oscillator, or a biological single-neuron event."
 
 [validation]
 dynamics_faithful = true

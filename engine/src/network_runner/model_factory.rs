@@ -77,6 +77,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "BertramPhantom" | "BertramPhantomBurster" => {
             Ok(NeuronVariant::BertramPhantom(BertramPhantomBurster::new()))
         }
+        "SCThreeStatePhantom" | "SCThreeStatePhantomBurster" => Ok(
+            NeuronVariant::SCThreeStatePhantom(SCThreeStatePhantomBurster::new()),
+        ),
         "Yamada" | "YamadaNeuron" => Ok(NeuronVariant::Yamada(YamadaNeuron::new())),
         "FitzHughNagumo" | "FitzHughNagumoNeuron" => {
             Ok(NeuronVariant::FitzHughNagumo(FitzHughNagumoNeuron::new()))

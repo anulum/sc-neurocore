@@ -40,7 +40,9 @@ authors = [
 year = 2009
 doi = "10.1162/neco.2008.12-07-680"
 secondary_doi = "10.1371/journal.pcbi.1000850"
-secondary_authors = ["Platkiewicz, J. & Brette, R."]
+secondary_authors = [
+    "Platkiewicz, J. & Brette, R.",
+]
 secondary_year = 2010
 paper_title = "A generalized linear integrate-and-fire neural model produces diverse spiking behaviors"
 url = "https://doi.org/10.1162/neco.2008.12-07-680"

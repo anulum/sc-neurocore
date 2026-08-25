@@ -4,78 +4,132 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
 [metadata]
-schema_version=2
-name="SCTriangularMcKeanNeuron"
-class_name="SCTriangularMcKeanNeuron"
-module="sc_triangular_mckean"
-display_name="SC triangular piecewise-linear oscillator"
-summary="Retained project recurrence with three voltage branches and sampled v_peak events."
-family="Oscillator"
-category="oscillator"
-biophysical_detail="point"
-maturity="validated"
-intended_use=["project compatibility","piecewise-linear oscillator experiments"]
-hardware_fit=["bounded fixed-point co-simulation"]
-behavior_tags=["sc-mod","piecewise-linear","non-resetting"]
+schema_version = 2
+name = "SCTriangularMcKeanNeuron"
+class_name = "SCTriangularMcKeanNeuron"
+module = "sc_triangular_mckean"
+display_name = "SC triangular piecewise-linear oscillator"
+summary = "Retained project recurrence with three voltage branches and sampled v_peak events."
+family = "Oscillator"
+category = "oscillator"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "project compatibility",
+    "piecewise-linear oscillator experiments",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
+behavior_tags = [
+    "sc-mod",
+    "piecewise-linear",
+    "non-resetting",
+]
+
 [provenance]
-authors=["SC-NeuroCore project"]
-year=2026
-doi=""
-derivation_note="Project recurrence retained count-neutrally; it is not attributed to the source McKean Heaviside equations."
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+doi = ""
+derivation_note = "Project recurrence retained count-neutrally; it is not attributed to the source McKean Heaviside equations."
+
 [state.v]
-init=0.0
-unit="1"
+init = 0.0
+unit = "1"
+
 [state.w]
-init=0.0
-unit="1"
+init = 0.0
+unit = "1"
+
 [parameters.a]
-default=0.25
-unit="1"
+default = 0.25
+unit = "1"
+meaning = "triangular breakpoint"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [parameters.epsilon]
-default=0.01
-unit="1"
+default = 0.01
+unit = "1"
+meaning = "slow-fast timescale ratio"
+range = [
+    1e-12,
+    1000000.0,
+]
+
 [parameters.gamma]
-default=0.5
-unit="1"
+default = 0.5
+unit = "1"
+meaning = "slow-variable feedback gain"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [parameters.v_peak]
-default=0.8
-unit="1"
+default = 0.8
+unit = "1"
+meaning = "sampled event threshold"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
 [integration]
-dt=0.1
-method="rk4"
+dt = 0.1
+method = "rk4"
+
 [dynamics]
-f_v="-v if v < a/2; v-a if v < (1+a)/2; 1-v otherwise"
-dv_dt="f_v - w + I"
-dw_dt="epsilon * (v - gamma*w)"
-spike_flag="1 on sampled upward v_peak crossing; no reset"
+v = "(-v if v < a/2 else (v-a if v < (1+a)/2 else 1-v)) - w + I"
+w = "epsilon * (v - gamma*w)"
+f_v = "-v if v < a/2; v-a if v < (1+a)/2; 1-v otherwise"
+dv_dt = "f_v - w + I"
+dw_dt = "epsilon * (v - gamma*w)"
+spike_flag = "1 on sampled upward v_peak crossing; no reset"
+
 [backends.python]
-status="implemented"
-parity="exact"
+status = "implemented"
+parity = "exact"
+
 [backends.rust]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
 [backends.julia]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
 [backends.go]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
 [backends.mojo]
-status="implemented"
-parity="ulp-bounded"
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+
 [documentation]
-slug="models/sc_triangular_mckean"
-notes="Count-neutral SC modification; McKeanNeuron is the catalogue-counted source identity."
+slug = "models/sc_triangular_mckean"
+notes = "Count-neutral SC modification; McKeanNeuron is the catalogue-counted source identity."
+
 [validation]
-dynamics_faithful=true
-metric="trajectory"
-operating_point="deterministic mixed-current trace and five-runtime parity"
-tolerance="binary64 2e-12 across native runtimes"
-evidence="tests/test_model_mckean_source_fidelity.py; tests/test_mckean_backend_dispatch.py"
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "deterministic mixed-current trace and five-runtime parity"
+tolerance = "binary64 2e-12 across native runtimes"
+evidence = "tests/test_model_mckean_source_fidelity.py; tests/test_mckean_backend_dispatch.py"
+
 [silicon]
-compiles=true
-cosim_validated=true
-cosim_evidence="tests/test_cosim_sc_triangular_mckean.py"
-target_tier="H1"
-terminal_reason="Pinned-profile fixed-point co-simulation and bounded safety proof only; timing, PPA, device evidence, and universal real-number equivalence remain open."
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_triangular_mckean.py"
+target_tier = "H1"
+terminal_reason = "Pinned-profile fixed-point co-simulation and bounded safety proof only; timing, PPA, device evidence, and universal real-number equivalence remain open."

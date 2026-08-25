@@ -157,7 +157,6 @@ range = [
 [integration]
 dt = 0.5
 method = "euler"
-sub_steps = 50
 
 [dynamics]
 alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"

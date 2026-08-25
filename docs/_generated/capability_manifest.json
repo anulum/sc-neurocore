@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 184,
+    "model_documentation_pages": 185,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 599,
-    "python_model_classes": 166,
-    "python_model_source_modules": 162,
-    "rust_pyo3_model_wrappers": 195,
-    "test_files": 4689
+    "public_documentation_pages": 601,
+    "python_model_classes": 167,
+    "python_model_source_modules": 163,
+    "rust_pyo3_model_wrappers": 196,
+    "test_files": 4692
   },
   "documentation": {
     "public_pages": [
@@ -1224,6 +1224,7 @@
       "docs/api/models/sc_resetting_mat.md",
       "docs/api/models/sc_sigma_delta_accumulator.md",
       "docs/api/models/sc_stochastic_rate_adaptation.md",
+      "docs/api/models/sc_three_state_phantom.md",
       "docs/api/models/sc_triangular_mckean.md",
       "docs/api/models/sfa.md",
       "docs/api/models/sherman_rinzel_keizer.md",
@@ -1550,6 +1551,7 @@
       "docs/validation/adaptive_threshold_if_source_fidelity.md",
       "docs/validation/alpha_source_fidelity.md",
       "docs/validation/benda_herz_source_fidelity.md",
+      "docs/validation/bertram_phantom_source_fidelity.md",
       "docs/validation/coba_lif_cosim_fidelity.md",
       "docs/validation/conductance_oscillator_cosim_fidelity.md",
       "docs/validation/cross_framework_brian2.md",
@@ -1744,6 +1746,7 @@
       "sc_resetting_mat.md",
       "sc_sigma_delta_accumulator.md",
       "sc_stochastic_rate_adaptation.md",
+      "sc_three_state_phantom.md",
       "sc_triangular_mckean.md",
       "sfa.md",
       "sherman_rinzel_keizer.md",
@@ -2314,6 +2317,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py"
       },
       {
+        "name": "SCThreeStatePhantomBurster",
+        "path": "src/sc_neurocore/neurons/models/sc_three_state_phantom.py"
+      },
+      {
         "name": "SCTriangularMcKeanNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
       },
@@ -2576,6 +2583,7 @@
       "src/sc_neurocore/neurons/models/sc_resetting_mat.py",
       "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py",
       "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py",
+      "src/sc_neurocore/neurons/models/sc_three_state_phantom.py",
       "src/sc_neurocore/neurons/models/sc_triangular_mckean.py",
       "src/sc_neurocore/neurons/models/sfa.py",
       "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py",
@@ -2767,6 +2775,7 @@
       "SCResettingMATNeuron",
       "SCSigmaDeltaAccumulatorNeuron",
       "SCStochasticRateAdaptationNeuron",
+      "SCThreeStatePhantomBurster",
       "SCTriangularMcKeanNeuron",
       "SFANeuron",
       "SKNeuron",
@@ -3607,6 +3616,7 @@
       "tests/test_bench_alpha.py",
       "tests/test_bench_amari_field.py",
       "tests/test_bench_benda_herz_dual_identity.py",
+      "tests/test_bench_bertram_phantom.py",
       "tests/test_bench_brunel_wang.py",
       "tests/test_bench_chialvo_map.py",
       "tests/test_bench_cli_startup.py",
@@ -3657,6 +3667,7 @@
       "tests/test_benda_herz_backend_dispatch.py",
       "tests/test_benda_herz_rtl.py",
       "tests/test_benda_herz_schema_parity.py",
+      "tests/test_bertram_phantom_native_parity.py",
       "tests/test_bio/test_dna_storage.py",
       "tests/test_bio/test_grn.py",
       "tests/test_bio_chaos_spatial_learning_chaotic_rng.py",
@@ -5276,6 +5287,7 @@
       "tests/test_model_bertram_phantom_bertram_performance.py",
       "tests/test_model_bertram_phantom_bertram_pipeline.py",
       "tests/test_model_bertram_phantom_bertram_reversals.py",
+      "tests/test_model_bertram_phantom_source_fidelity.py",
       "tests/test_model_bk_neuron.py",
       "tests/test_model_booth_rinzel_booth_rinzel_analysis.py",
       "tests/test_model_booth_rinzel_booth_rinzel_isolation.py",

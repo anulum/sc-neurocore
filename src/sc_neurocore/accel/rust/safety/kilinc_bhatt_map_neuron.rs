@@ -6,8 +6,5 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — deprecated standalone compatibility identity
 
-#[path = "sc_adaptive_threshold_map_neuron.rs"]
-mod sc_adaptive_threshold_map_neuron;
-
 /// Deprecated compatibility alias for the retained SC project model.
-pub use sc_adaptive_threshold_map_neuron::SCAdaptiveThresholdMapNeuron as KilincBhattMapNeuron;
+pub use super::sc_adaptive_threshold_map_neuron::SCAdaptiveThresholdMapNeuron as KilincBhattMapNeuron;

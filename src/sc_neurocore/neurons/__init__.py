@@ -71,6 +71,7 @@ _MODEL_NAMES = {
     "BendaHerzNeuron",
     "SCStochasticRateAdaptationNeuron",
     "BertramPhantomBurster",
+    "SCThreeStatePhantomBurster",
     "BoothRinzelNeuron",
     "BrainScaleSAdExNeuron",
     "ButeraRespiratoryNeuron",

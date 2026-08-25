@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-"""Module-specific tests for BertramPhantomBurster (Bertram et al. 2008).
+"""Regression tests for the retained three-state project recurrence.
 
 Dual slow variable phantom burster (pancreatic β-cell model).
 C dV/dt = -(I_Ca + I_K + I_s1 + I_s2 + I_L) + I_ext
@@ -19,13 +19,16 @@ Boltzmann: σ(v, vh, k) = 1/(1+exp((vh-v)/k)).
 Five ionic currents: I_Ca (m_inf-gated), I_K (n_inf-gated),
 I_s1 (s1-gated, slow), I_s2 (s2-gated, ultra-slow), I_L (leak).
 Phantom slow manifold: bursting can emerge from dual slow interaction in
-appropriate parameter regimes. Current tests validate RK4 integration,
-module wiring, and bounded runtime under CI instrumentation."""
+appropriate parameter regimes. These tests preserve the exact behavior that
+was formerly, and incorrectly, attributed to Bertram. Source-faithful Bertram
+tests live in ``test_model_bertram_phantom_source_fidelity.py``."""
 import math
 import time
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.bertram_phantom import BertramPhantomBurster
+from sc_neurocore.neurons.models.sc_three_state_phantom import (
+    SCThreeStatePhantomBurster as BertramPhantomBurster,
+)
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network

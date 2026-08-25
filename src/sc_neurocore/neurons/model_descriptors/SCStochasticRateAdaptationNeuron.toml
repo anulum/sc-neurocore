@@ -7,59 +7,129 @@
 # SC-NeuroCore — Source/config provenance header
 
 [metadata]
-schema_version=2
-name="SCStochasticRateAdaptationNeuron"
-class_name="SCStochasticRateAdaptationNeuron"
-module="sc_stochastic_rate_adaptation"
-display_name="SC stochastic rate adaptation"
-summary="Retained logistic RK4 adaptation and exponential-hazard spike sampler."
-family="Rate adaptation"
-category="phenomenological"
-biophysical_detail="point"
-maturity="validated"
-intended_use=["project compatibility","stochastic rate experiments"]
-hardware_fit=["bounded fixed-point co-simulation"]
-behavior_tags=["excitable","stochastic"]
+schema_version = 2
+name = "SCStochasticRateAdaptationNeuron"
+class_name = "SCStochasticRateAdaptationNeuron"
+module = "sc_stochastic_rate_adaptation"
+display_name = "SC stochastic rate adaptation"
+summary = "Retained logistic RK4 adaptation and exponential-hazard spike sampler."
+family = "Rate adaptation"
+category = "phenomenological"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "project compatibility",
+    "stochastic rate experiments",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "stochastic",
+]
+
 [provenance]
-authors=["SC-NeuroCore project"]
-year=2026
-doi=""
-derivation_note="Former project BendaHerzNeuron recurrence retained without source attribution."
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+doi = ""
+derivation_note = "Former project BendaHerzNeuron recurrence retained without source attribution."
+
 [state.a]
-init=0.0
-unit="current"
+init = 0.0
+unit = "current"
+
+[parameters.f_max]
+default = 200.0
+unit = "Hz"
+meaning = "maximum logistic firing rate"
+range = [
+    1e-12,
+    1000000.0,
+]
+
+[parameters.beta]
+default = 0.1
+unit = "1/current"
+meaning = "logistic input slope"
+range = [
+    1e-12,
+    1000000.0,
+]
+
+[parameters.i_half]
+default = 5.0
+unit = "current"
+meaning = "half-activation effective current"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.tau_a]
+default = 100.0
+unit = "ms"
+meaning = "adaptation time constant"
+range = [
+    1e-12,
+    1000000000.0,
+]
+
+[parameters.delta_a]
+default = 0.5
+unit = "current/Hz"
+meaning = "rate-to-adaptation coupling"
+range = [
+    0.0,
+    1000000.0,
+]
+
 [integration]
-dt=1.0
-method="rk4"
+dt = 1.0
+method = "rk4"
+
 [dynamics]
-rate="logistic(I-A)"
-adaptation="dA/dt=-A/tau_a+delta_a*rate"
-spike_flag="exponential-hazard Bernoulli sample"
+rate = "logistic(I-A)"
+a = "-a/tau_a+delta_a*rate"
+adaptation = "dA/dt=-A/tau_a+delta_a*rate"
+spike_flag = "exponential-hazard Bernoulli sample"
+
 [backends.python]
-status="implemented"
-parity="exact"
+status = "implemented"
+parity = "exact"
+
 [backends.rust]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
 [backends.julia]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
 [backends.go]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
 [backends.mojo]
-status="implemented"
-parity="approximate"
+status = "implemented"
+parity = "approximate"
+
+[reproducibility]
+
 [documentation]
-slug="models/sc_stochastic_rate_adaptation"
-notes="Count-neutral SC modification; BendaHerzNeuron is the catalogue-counted source identity."
+slug = "models/sc_stochastic_rate_adaptation"
+notes = "Count-neutral SC modification; BendaHerzNeuron is the catalogue-counted source identity."
+
 [validation]
-dynamics_faithful=true
-metric="trajectory"
-evidence="tests/test_sc_stochastic_rate_adaptation_isolation.py"
+dynamics_faithful = true
+metric = "trajectory"
+evidence = "tests/test_sc_stochastic_rate_adaptation_isolation.py"
+
 [silicon]
-compiles=true
-cosim_validated=false
-cosim_evidence=""
-target_tier="H1"
-terminal_reason="Hazard-commit shell synthesis and reset-safety proof only; full recurrence co-simulation, hardware randomness, and device evidence remain open."
+compiles = true
+cosim_validated = false
+cosim_evidence = ""
+target_tier = "H1"
+terminal_reason = "Hazard-commit shell synthesis and reset-safety proof only; full recurrence co-simulation, hardware randomness, and device evidence remain open."

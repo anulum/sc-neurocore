@@ -224,9 +224,9 @@
     },
     "src/sc_neurocore/accel/mojo/mat/mat.mojo": "82c0f53695a75afc89bcb197293e6999bbb8689ea09519d210a1c6196313d98d",
     "src/sc_neurocore/accel/rust/safety/mat": {
-      "rs": "746e634211be6104c376eec2f5454263a3de612b9c2690355b49e8fd7c72b771"
+      "rs": "01d2810d011a320ff66a482374a5305b0dd5c4cf21f7c2979f0c695cf2a2a35c"
     },
-    "src/sc_neurocore/accel/rust/safety/mat.rs": "746e634211be6104c376eec2f5454263a3de612b9c2690355b49e8fd7c72b771",
+    "src/sc_neurocore/accel/rust/safety/mat.rs": "01d2810d011a320ff66a482374a5305b0dd5c4cf21f7c2979f0c695cf2a2a35c",
     "src/sc_neurocore/neurons/model_descriptors/MATNeuron": {
       "toml": "776765c736000f1246d802ac71312bc19cccc415144cf60e6426a44e1351441a"
     },

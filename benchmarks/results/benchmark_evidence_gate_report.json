@@ -186,12 +186,20 @@
       "id": "sfa-rk4-multibackend-local-regression"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-18_mat_rk4.json",
-      "id": "mat-rk4-multibackend-local-regression"
+      "artefact": "benchmarks/results/bench_mat.json",
+      "id": "mat-source-multibackend-local-regression"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-18_energy_lif_exact_flow.json",
-      "id": "energy-lif-exact-flow-multibackend-local-regression"
+      "artefact": "benchmarks/results/bench_sc_resetting_mat.json",
+      "id": "sc-resetting-mat-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_non_resetting_lif.json",
+      "id": "non-resetting-lif-mat1-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_non_resetting_adaptive_lif.json",
+      "id": "sc-non-resetting-adaptive-lif-multibackend-local-regression"
     },
     {
       "artefact": "benchmarks/results/bench_connor_stevens_mojo.json",
@@ -236,11 +244,43 @@
     {
       "artefact": "benchmarks/results/bench_wilson_cowan.json",
       "id": "wilson-cowan-rk4-five-backend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sigma_delta.json",
+      "id": "sigma-delta-apsdm-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_sigma_delta_accumulator.json",
+      "id": "sc-sigma-delta-accumulator-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_energy_lif.json",
+      "id": "energy-lif-fardet-levina-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_normalized_energy_lif.json",
+      "id": "sc-normalized-energy-lif-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_mckean.json",
+      "id": "mckean-tonnelier-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_triangular_mckean.json",
+      "id": "sc-triangular-mckean-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_benda_herz.json",
+      "id": "benda-herz-source-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_stochastic_rate_adaptation.json",
+      "id": "sc-stochastic-rate-adaptation-multibackend-local-regression"
     }
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 59,
+  "gate_count": 69,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

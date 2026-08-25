@@ -48,6 +48,7 @@ pub mod bcm;
 pub mod benda_herz;
 pub mod sc_stochastic_rate_adaptation;
 pub mod bertram_phantom;
+pub mod sc_three_state_phantom;
 pub mod bipolar;
 pub mod bitstream_current_source;
 pub mod bitstreams;
