@@ -148,7 +148,7 @@ jobs:
         with:
           toolchain: "1.97.1"
 
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: engine
           # Repo- and lockfile-bound cache key so a poisoned cross-repo cache
@@ -187,7 +187,7 @@ jobs:
       # shadows the CI setup-python, breaking every later `python`/`pip` step.
       # Instead expose only `mojo` via a wrapper that delegates to `pixi run`,
       # keeping the CI Python primary. TIER 0: real Mojo builds, not skips.
-      - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
         with:
           # Pin the pixi executable to an exact release (the default `latest`
           # downloads/executes a moving target). Residual: the pinned release is
@@ -496,7 +496,7 @@ jobs:
         with:
           toolchain: "1.97.1"
 
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: crates/autonomous_learning
           # Repo- and lockfile-bound cache key (see the engine workspace note).
@@ -611,7 +611,7 @@ jobs:
         with:
           toolchain: "1.97.1"
 
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: engine
           # Repo- and lockfile-bound cache key so a poisoned cross-repo cache
