@@ -44,9 +44,7 @@ SOURCE_PATHS = (
 
 
 def _hashes() -> dict[str, str]:
-    return {
-        path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in SOURCE_PATHS
-    }
+    return {path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in SOURCE_PATHS}
 
 
 def _cpu_model() -> str:
@@ -67,9 +65,7 @@ def _measure(backend: str, drive: np.ndarray) -> tuple[list[float], dict[str, ob
     for _ in range(N_REPEATS):
         gc.collect()
         started = time.perf_counter_ns()
-        result = dict(
-            aihara_map.simulate_aihara_map(bias=BIAS, current=drive, backend=backend)
-        )
+        result = dict(aihara_map.simulate_aihara_map(bias=BIAS, current=drive, backend=backend))
         samples.append((time.perf_counter_ns() - started) / 1_000_000.0)
     return samples, result
 

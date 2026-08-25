@@ -126,9 +126,7 @@ def _row(
         np.abs(np.asarray(result[key]) - np.asarray(reference[key])) for key in spec.state_keys
     ]
     maximum = max(float(values.max(initial=0.0)) for values in differences)
-    event_match = np.array_equal(
-        np.asarray(result["events"]), np.asarray(reference["events"])
-    )
+    event_match = np.array_equal(np.asarray(result["events"]), np.asarray(reference["events"]))
     median_ns = float(statistics.median(samples))
     event_count = int(np.asarray(result["events"]).sum())
     return {

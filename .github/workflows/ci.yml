@@ -68,10 +68,10 @@ jobs:
         run: python tools/check_github_app_token_compat.py
 
       - name: ruff check
-        run: ruff check src/ tests/ tools/capability_manifest.py
+        run: ruff check src/ tests/ benchmarks/ tools/capability_manifest.py
 
       - name: ruff format
-        run: ruff format --check src/ tests/ tools/capability_manifest.py
+        run: ruff format --check src/ tests/ benchmarks/ tools/capability_manifest.py
 
       - name: bandit
         run: bandit -r src/sc_neurocore/ -c pyproject.toml -q
