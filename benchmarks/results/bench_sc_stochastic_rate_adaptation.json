@@ -1,0 +1,23 @@
+{
+  "benchmark": "SC retained stochastic rate-adaptation recurrence",
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "production_speed_claim": false,
+  "steps": 20000,
+  "repeats": 5,
+  "source_hashes": {
+    "benchmark": "3e5ff0342b3b1515681e4bd8e0646f90cb6409d0baaffbaf292623ec6f7d64c3",
+    "python": "5af84a6ac3e3e57286a07895b4a5cd251e8f8badfa5c332cc834a78c383e6f90",
+    "rust_binary": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
+    "go_binary": "14ee4442057ef8761a996563245532d8c494eff4f480aca2d80aa6b65d21ace7",
+    "mojo_binary": "40d3f95c3999bf285e4e62412755f62772db7ae24ea69aeeb1b34a5e09b173a1"
+  },
+  "backend_summary": {
+    "python": {"median_ns": 52842016, "events": 39},
+    "rust": {"median_ns": 3414324, "events": 39},
+    "julia": {"median_ns": 2678439, "events": 39},
+    "go": {"median_ns": 46048908, "events": 39},
+    "mojo": {"median_ns": 2376090, "events": 39}
+  },
+  "event_trace_sha256": "6fd680868f536a28c11a9a425f33a3752f987a80a814da1852ba948cf345f2d5"
+}

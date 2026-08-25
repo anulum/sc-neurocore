@@ -231,7 +231,7 @@ raw TOML descriptor.
 | `IntegerQIFNeuron` | `IntegerQIFNeuron` | Wu et al. 2021, DOI `10.1109/AICAS51828.2021.9458572` |
 | `ClosedFormContinuousNeuron` | `ClosedFormContinuousNeuron` | Hasani et al. 2022 |
 
-### Simple Spiking (22 models)
+### Simple Spiking (23 runtime identities; 22 catalogue models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -245,6 +245,7 @@ raw TOML descriptor.
 | `SCTriangularMcKeanNeuron` | `SCTriangularMcKeanNeuron` | SC-NeuroCore retained project recurrence |
 | `TermanWangOscillator` | `TermanWangOscillator` | Terman & Wang 1995 |
 | `BendaHerzNeuron` | `BendaHerzNeuron` | Benda & Herz 2003 |
+| `SCStochasticRateAdaptationNeuron` | `SCStochasticRateAdaptationNeuron` | SC-NeuroCore retained project recurrence |
 | `AlphaNeuron` | `AlphaNeuron` | — |
 | `COBALIFNeuron` | `COBALIFNeuron` | Brette et al. 2007 |
 | `GutkinErmentroutNeuron` | `GutkinErmentroutNeuron` | Gutkin & Ermentrout 1998 |

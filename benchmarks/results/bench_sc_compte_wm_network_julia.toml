@@ -2,18 +2,18 @@ distractor_resistance_claimed = false
 evidence_class = "local_regression"
 execution_path = "julia-midpoint-rk2-fftw"
 final_state_sha256 = "062db92b31c6098555cc1b8fccf07cfbe93fa99f3a4e12c46a3ec83db1b60a14"
-generated_at = "2026-07-29T23:46:38.876"
+generated_at = "2026-08-25T21:28:29.312"
 hardware_measurement_claimed = false
 input_sha256 = "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e"
-median_cell_updates_per_second = 1.345830980573693e6
-median_ns = 1902170508
-median_ns_per_network_step = 1.902170508e6
+median_cell_updates_per_second = 1.5929967620984274e6
+median_ns = 1607034026
+median_ns_per_network_step = 1.607034026e6
 model = "SC-COMPTE-WM-NETWORK"
 passed = true
 persistent_bump_claimed = false
 production_speed_claimed = false
 repeat_receipts_exact = true
-samples_ns = [2252909565, 1651254672, 1902170508]
+samples_ns = [1723708215, 1607034026, 1485301479]
 schema_version = "sc-neurocore.sc-compte-wm-network-benchmark.v1"
 spike_sha256 = "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd"
 
@@ -35,10 +35,10 @@ julia_threads = 1
 kernel = "Linux"
 
 [source_sha256]
-"src/sc_neurocore/accel/julia/sc_compte_wm_network/Manifest.toml" = "9527ecf16d681fb945c384e1efa346bd934b21386c1980ba06c0ef1a52bcc6cc"
-"src/sc_neurocore/accel/julia/sc_compte_wm_network/Project.toml" = "1b3a0a3ec9046516c016a7d26838d1db8cf67c5a2b9a33390f4ba8c85802a21e"
-"src/sc_neurocore/accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl" = "3b5f4e99a111942162cb4777438ca886e3d4ff60d1870ebf956d50a21cd8c044"
-"src/sc_neurocore/accel/julia/sc_compte_wm_network/bench_sc_compte_wm_network.jl" = "2bbe8bb37e7ce1d82ac83b5f500c4edd59f19a3b7f34aca2b435b6ebc6658bf7"
+"src/sc_neurocore/accel/julia/sc_compte_wm_network/Manifest.toml" = "a849fdc3f9e3eb4b8bbed986bcea376caf92b4822d7d51c124125dbef4250aaa"
+"src/sc_neurocore/accel/julia/sc_compte_wm_network/Project.toml" = "21e48f9de9ecca88d4b6ae5f2233d64ea4f4e8b76c67d2a611b28138ed1341db"
+"src/sc_neurocore/accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl" = "68e0942d0b1ea0fd8f714ab0c2fe36177342513c08263ae865253c447f50312d"
+"src/sc_neurocore/accel/julia/sc_compte_wm_network/bench_sc_compte_wm_network.jl" = "993d9dfaaa7dbff65ae57a41eea24b2eaa199257f3e196fd3b5deab708bf2a51"
 
 [spike_counts]
 excitatory = 1

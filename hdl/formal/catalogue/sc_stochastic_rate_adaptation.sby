@@ -1,0 +1,11 @@
+[options]
+mode bmc
+depth 2
+[engines]
+smtbmc z3
+[script]
+read -formal sc_stochastic_rate_adaptation.v sc_stochastic_rate_adaptation_formal.v
+prep -top sc_stochastic_rate_adaptation_formal
+[files]
+sc_stochastic_rate_adaptation.v
+sc_stochastic_rate_adaptation_formal.v

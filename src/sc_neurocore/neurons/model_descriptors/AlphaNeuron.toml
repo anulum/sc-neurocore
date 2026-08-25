@@ -33,10 +33,10 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Rall, W.",
     "Gerstner, W. & Kistler, W.M.",
+    "Rall, W.",
 ]
-year = 1967
+year = 2002
 doi = "10.1017/CBO9780511815706"
 secondary_doi = ""
 paper_title = "Spiking Neuron Models"

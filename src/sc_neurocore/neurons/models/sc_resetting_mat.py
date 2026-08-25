@@ -67,9 +67,13 @@ class SCResettingMATNeuron:
         if not (_VOLTAGE_MIN <= self.v_reset <= _VOLTAGE_MAX):
             raise ValueError("SCResettingMATNeuron reset voltage is outside the safety envelope")
         if not (0.0 <= self.theta1 <= _THETA_MAX and 0.0 <= self.theta2 <= _THETA_MAX):
-            raise ValueError("SCResettingMATNeuron threshold adaptation is outside the safety envelope")
+            raise ValueError(
+                "SCResettingMATNeuron threshold adaptation is outside the safety envelope"
+            )
         if not (0.0 <= self.h1 <= _THETA_MAX and 0.0 <= self.h2 <= _THETA_MAX):
-            raise ValueError("SCResettingMATNeuron threshold increments are outside the safety envelope")
+            raise ValueError(
+                "SCResettingMATNeuron threshold increments are outside the safety envelope"
+            )
         if self.tau_m <= 0.0 or self.tau_1 <= 0.0 or self.tau_2 <= 0.0:
             raise ValueError("SCResettingMATNeuron time constants must be positive")
         if self.resistance <= 0.0 or self.dt <= 0.0:
@@ -129,7 +133,9 @@ class SCResettingMATNeuron:
             theta1_after_spike = theta1_candidate + self.h1
             theta2_after_spike = theta2_candidate + self.h2
             if theta1_after_spike > _THETA_MAX or theta2_after_spike > _THETA_MAX:
-                raise ValueError("SCResettingMATNeuron post-spike adaptation left the safety envelope")
+                raise ValueError(
+                    "SCResettingMATNeuron post-spike adaptation left the safety envelope"
+                )
             self.v = self.v_reset
             self.theta1 = theta1_after_spike
             self.theta2 = theta2_after_spike

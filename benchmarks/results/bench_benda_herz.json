@@ -1,0 +1,23 @@
+{
+  "benchmark": "Benda-Herz source universal adaptation and phase generator",
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "production_speed_claim": false,
+  "steps": 20000,
+  "repeats": 5,
+  "source_hashes": {
+    "benchmark": "2a436173c7dd1d74b0a2fcaa125f0d3cf14240dbf4904a7e67d8c6b50eebd4d6",
+    "python": "632e23a6105e6add542d44c196272d6a5ea6d39aef498df51abc34c14563fb05",
+    "rust_binary": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
+    "go_binary": "ee562552be1adad82fc542cc77b524d6397d2afdd679ae42b48560d13bd33e06",
+    "mojo_binary": "8ed7af116e975fc71aebcc0d7783feaca63cdb54f962b4b0902982ded385c4fb"
+  },
+  "backend_summary": {
+    "python": {"median_ns": 52641131, "events": 79},
+    "rust": {"median_ns": 3703368, "events": 79},
+    "julia": {"median_ns": 2089966, "events": 79},
+    "go": {"median_ns": 46923245, "events": 79},
+    "mojo": {"median_ns": 1370131, "events": 79}
+  },
+  "event_trace_sha256": "e0a955a3b8092911e9c945aa26b5349c11d2a0b20486d27f1ae704b7b0558900"
+}

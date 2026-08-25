@@ -80,6 +80,7 @@ try:
         SCTriangularMcKeanNeuron,
         TermanWangOscillator,
         BendaHerzNeuron,
+        SCStochasticRateAdaptationNeuron,
         AlphaNeuron,
         COBALIFNeuron,
         GutkinErmentroutNeuron,

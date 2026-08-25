@@ -12,19 +12,19 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
 _ACCEL_ROOT = Path(__file__).resolve().parents[2]
 _LIBRARY = _ACCEL_ROOT / "go" / "mat" / "libmat.so"
 try:
-    _lib: ctypes.CDLL | None = ctypes.CDLL(str(_LIBRARY))
-    _function: Any | None = _lib.mat_simulate_c
-    _function.restype = ctypes.c_int
+    _lib = ctypes.CDLL(str(_LIBRARY))
+    function: Any = _lib.mat_simulate_c
+    function.restype = ctypes.c_int
+    _function: Any | None = function
     _HAS_GO_MAT = True
 except (OSError, AttributeError):
-    _lib = None
     _function = None
     _HAS_GO_MAT = False
 
@@ -33,7 +33,7 @@ def simulate_mat(*args: object) -> dict[str, object]:
     """Run the complete configured Go MAT* trace and enforce status zero."""
     if _function is None:
         raise RuntimeError("Go MAT shared library is unavailable")
-    config = tuple(float(value) for value in args[:13])
+    config = tuple(float(cast(float | int, value)) for value in args[:13])
     currents = np.ascontiguousarray(args[13], dtype=np.float64)
     if currents.ndim != 1:
         raise ValueError("Go MAT current must be one-dimensional")

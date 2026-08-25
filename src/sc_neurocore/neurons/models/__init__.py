@@ -35,6 +35,7 @@ _CLASS_TO_MODULE = {
     "BKNeuron": "bk_neuron",
     "BalancedResonateAndFireNeuron": "balanced_resonate_and_fire",
     "BendaHerzNeuron": "benda_herz",
+    "SCStochasticRateAdaptationNeuron": "sc_stochastic_rate_adaptation",
     "BertramPhantomBurster": "bertram_phantom",
     "BoothRinzelNeuron": "booth_rinzel",
     "BrainScaleSAdExNeuron": "brainscales_adex",

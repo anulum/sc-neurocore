@@ -13,6 +13,7 @@ mod galves_locherbach;
 mod gamma_renewal;
 mod glm;
 mod inhomogeneous_poisson;
+mod sc_stochastic_rate_adaptation;
 mod spike_response;
 mod stochastic_if;
 mod stochastic_lif;
@@ -22,12 +23,14 @@ pub use galves_locherbach::PyGalvesLocherbachNeuron;
 pub use gamma_renewal::PyGammaRenewalNeuron;
 pub use glm::PyGLMNeuron;
 pub use inhomogeneous_poisson::PyInhomogeneousPoissonNeuron;
+pub use sc_stochastic_rate_adaptation::PySCStochasticRateAdaptationNeuron;
 pub use spike_response::PySpikeResponseNeuron;
 pub use stochastic_if::PyStochasticIFNeuron;
 pub use stochastic_lif::PyStochasticLIFNeuron;
 
 pub(crate) fn register_adaptation(module: &Bound<'_, PyModule>) -> PyResult<()> {
     benda_herz::register(module)?;
+    sc_stochastic_rate_adaptation::register(module)?;
     Ok(())
 }
 

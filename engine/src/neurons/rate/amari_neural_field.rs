@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn update_and_reset_are_vector_complete() {
         let mut field = AmariNeuralField::new(16);
-        let rate = field.step(&vec![0.5; 16]).unwrap();
+        let rate = field.step(&[0.5; 16]).unwrap();
         assert_eq!(rate, 1.0);
         field.reset();
         assert!(field.u.iter().all(|value| *value == 0.0));

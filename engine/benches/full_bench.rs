@@ -1263,7 +1263,7 @@ fn bench_all(c: &mut Criterion) {
 
     c.bench_function("benda_herz_10k_steps", |b| {
         b.iter(|| {
-            let mut n = BendaHerzNeuron::new(42);
+            let mut n = BendaHerzNeuron::new();
             for _ in 0..10_000 {
                 black_box(n.step(20.0));
             }
@@ -1770,7 +1770,7 @@ fn bench_all(c: &mut Criterion) {
             let mut n = AmariNeuralField::new(32);
             let inp = vec![0.5; 32];
             for _ in 0..10_000 {
-                black_box(n.step(&inp));
+                let _ = black_box(n.step(&inp));
             }
         })
     });

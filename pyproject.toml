@@ -309,6 +309,7 @@ exclude_dirs = [
     "experiments",
     "research",
     "scripts",
+    "src/sc_neurocore/accel/go/.venv",
     "src/sc_neurocore/accel/mojo/.pixi",
 ]
 

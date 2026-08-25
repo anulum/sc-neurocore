@@ -4,120 +4,74 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for benda_herz
+# SC-NeuroCore — Julia Benda-Herz adaptation runtime
 
 module BendaHerzAccel
 
-export step!, simulate, BendaHerzNeuronState, valid, reset!, f_onset, rk4_candidate
+export BendaHerzNeuronState, step!, reset!, valid, simulate
 
+"""State and parameters for Benda-Herz equations (8) and (45)."""
 mutable struct BendaHerzNeuronState
     a::Float64
-    f_max::Float64
-    beta::Float64
-    i_half::Float64
+    phase::Float64
+    onset_gain::Float64
+    rheobase::Float64
+    adaptation_slope::Float64
     tau_a::Float64
-    delta_a::Float64
     dt::Float64
-    rng_threshold::Float64
 end
 
-function BendaHerzNeuronState()
-    BendaHerzNeuronState(0.0, 200.0, 0.1, 5.0, 100.0, 0.5, 1.0, 0.0)
-end
+BendaHerzNeuronState() = BendaHerzNeuronState(0.0, 0.0, 60.0, 0.0, 0.1, 100.0, 0.1)
 
 function valid(s::BendaHerzNeuronState)::Bool
-    return isfinite(s.a) && s.a >= 0.0 &&
-        isfinite(s.f_max) && s.f_max > 0.0 &&
-        isfinite(s.beta) && s.beta > 0.0 &&
-        isfinite(s.i_half) &&
-        isfinite(s.tau_a) && s.tau_a > 0.0 &&
-        isfinite(s.delta_a) && s.delta_a >= 0.0 &&
-        isfinite(s.dt) && s.dt > 0.0 &&
-        isfinite(s.rng_threshold) && 0.0 <= s.rng_threshold < 1.0
+    isfinite(s.a) && s.a >= 0.0 && isfinite(s.phase) && 0.0 <= s.phase < 1.0 &&
+        isfinite(s.onset_gain) && s.onset_gain > 0.0 && isfinite(s.rheobase) &&
+        isfinite(s.adaptation_slope) && s.adaptation_slope >= 0.0 &&
+        isfinite(s.tau_a) && s.tau_a > 0.0 && isfinite(s.dt) && s.dt > 0.0
 end
 
-function f_onset(s::BendaHerzNeuronState, x::Float64)::Float64
-    z = s.beta * (x - s.i_half)
-    if z == Inf
-        return s.f_max
-    elseif z == -Inf
-        return 0.0
-    elseif !isfinite(z)
-        return NaN
-    end
-    if z >= 0.0
-        return s.f_max / (1.0 + exp(-z))
-    end
-    exp_z = exp(z)
-    return s.f_max * exp_z / (1.0 + exp_z)
+function rhs(s::BendaHerzNeuronState, a::Float64, current::Float64)
+    rate = s.onset_gain * sqrt(max(current - a - s.rheobase, 0.0))
+    ((s.adaptation_slope * rate - a) / s.tau_a, rate / 1000.0)
 end
 
-function adaptation_rhs(s::BendaHerzNeuronState, a::Float64, I_ext::Float64)
-    if !isfinite(a) || a < 0.0
-        return 0.0, 0.0, false
-    end
-    rate = f_onset(s, I_ext - a)
-    if !isfinite(rate) || rate < 0.0 || rate > s.f_max
-        return 0.0, 0.0, false
-    end
-    return -a / s.tau_a + s.delta_a * rate, rate, true
-end
-
-function rk4_candidate(s::BendaHerzNeuronState, I_ext::Float64, dt::Float64=s.dt)
-    k1, r1, ok = adaptation_rhs(s, s.a, I_ext)
-    ok || return 0.0, 0.0, false
-    k2, r2, ok = adaptation_rhs(s, s.a + 0.5 * dt * k1, I_ext)
-    ok || return 0.0, 0.0, false
-    k3, r3, ok = adaptation_rhs(s, s.a + 0.5 * dt * k2, I_ext)
-    ok || return 0.0, 0.0, false
-    k4, r4, ok = adaptation_rhs(s, s.a + dt * k3, I_ext)
-    ok || return 0.0, 0.0, false
-
-    next_a = s.a + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
-    average_rate = (r1 + 2.0 * r2 + 2.0 * r3 + r4) / 6.0
-    hazard = average_rate * dt / 1000.0
-    if !isfinite(next_a) || next_a < 0.0 || !isfinite(hazard) || hazard < 0.0
-        return 0.0, 0.0, false
-    end
-    probability = -expm1(-hazard)
-    if !isfinite(probability) || probability < 0.0 || probability > 1.0
-        return 0.0, 0.0, false
-    end
-    return next_a, probability, true
-end
-
-function step!(s::BendaHerzNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
-    if !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0 || !valid(s)
-        return 0
-    end
-
-    next_a, probability, ok = rk4_candidate(s, I_ext, dt)
-    if !ok
-        return 0
-    end
-
-    s.dt = dt
+"""Advance one candidate-first RK4 sample and return the phase event."""
+function step!(s::BendaHerzNeuronState, current::Float64=0.0)::Int
+    valid(s) && isfinite(current) || return -1
+    k1a, k1p = rhs(s, s.a, current)
+    k2a, k2p = rhs(s, s.a + 0.5*s.dt*k1a, current)
+    k3a, k3p = rhs(s, s.a + 0.5*s.dt*k2a, current)
+    k4a, k4p = rhs(s, s.a + s.dt*k3a, current)
+    scale = s.dt / 6.0
+    next_a = s.a + scale*(k1a + 2k2a + 2k3a + k4a)
+    next_phase = s.phase + scale*(k1p + 2k2p + 2k3p + k4p)
+    isfinite(next_a) && next_a >= 0.0 && isfinite(next_phase) && 0.0 <= next_phase < 2.0 || return -1
     s.a = next_a
-    return s.rng_threshold < probability ? 1 : 0
+    if next_phase >= 1.0
+        s.phase = 0.0
+        return 1
+    end
+    s.phase = next_phase
+    0
 end
 
 function reset!(s::BendaHerzNeuronState)::Nothing
     s.a = 0.0
-    return nothing
+    s.phase = 0.0
+    nothing
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=1.0)
-    s = BendaHerzNeuronState()
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.a
-        if result > 0
-            spikes += 1
-        end
+"""Return complete adaptation, phase, and event traces."""
+function simulate(currents::AbstractVector{Float64}; state::BendaHerzNeuronState=BendaHerzNeuronState())
+    adaptation = Vector{Float64}(undef, length(currents))
+    phases = Vector{Float64}(undef, length(currents))
+    events = Vector{Int64}(undef, length(currents))
+    for index in eachindex(currents)
+        events[index] = step!(state, currents[index])
+        adaptation[index] = state.a
+        phases[index] = state.phase
     end
-    return trace, spikes
+    (; adaptation, phases, events, state)
 end
 
-end # module BendaHerzAccel
+end

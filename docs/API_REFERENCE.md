@@ -610,6 +610,13 @@ order is returned verbatim.
 
 ---
 
+## Module `accel.benda_herz`
+
+### Function `backend_available(backend)`
+### Function `auto_backend()`
+### Function `simulate_benda_herz(currents)`
+---
+
 ## Module `accel.brunel_wang`
 
 ### Function `backend_available(backend)`
@@ -1647,6 +1654,13 @@ Run the complete configured SC recurrence on one real backend.
 ### Function `simulate_sc_sigma_delta_accumulator(currents)`
 Run the complete retained project contract on one real backend.
 
+---
+
+## Module `accel.sc_stochastic_rate_adaptation`
+
+### Function `backend_available(backend)`
+### Function `auto_backend()`
+### Function `simulate_sc_stochastic_rate_adaptation(currents, uniforms)`
 ---
 
 ## Module `accel.sc_triangular_mckean`
@@ -22435,6 +22449,9 @@ ModelDescriptorError
 
 ## Module `neurons.model_taxonomy`
 
+### Function `canonical_model_name(class_name)`
+Return the catalogue identity for ``class_name``, resolving aliases.
+
 ### Function `model_family(class_name)`
 Return ``(family, category_slug)`` for a model, or ``None`` if unclassified.
 
@@ -22978,17 +22995,20 @@ The value is real only when ``0 < dt * omega <= 1``.
 ## Module `neurons.models.benda_herz`
 
 ### Class `BendaHerzNeuron`
-Benda & Herz 2003 — phenomenological spike-frequency adaptation.
+Benda–Herz universal rate adaptation with deterministic phase spikes.
 
-f = f_onset(I - A)          instantaneous f-I curve
-dA/dt = -A/tau_a + delta_a * f
-f_onset(x) = f_max / (1 + exp(-beta*(x - I_half)))
+The chosen paper example is ``f0(x) = onset_gain * sqrt(max(x-rheobase, 0))``
+with ``gamma(f)=0`` and ``A_inf(f)=adaptation_slope*f``. The phase follows
+``dphase/dt=f/1000`` and resets exactly to zero at threshold one.
 
-Reference: Benda, J. & Herz, A.V.M. (2003). Neural Comput. 15:2523–2564.
+Reference: Benda, J. & Herz, A. V. M. (2003), Neural Computation 15,
+2523–2564, DOI 10.1162/089976603322385063.
 
 - **__post_init__**()
 - **step**(current)
+  - Advance one sample and emit the paper's deterministic phase spike.
 - **reset**()
+  - Restore the paper state variables to their initial values.
 
 ---
 
@@ -25687,6 +25707,23 @@ intentionally carries no external paper attribution.
   - Advance the frozen bipolar project recurrence by one sample.
 - **reset**()
   - Clear the accumulator while retaining its threshold.
+
+---
+
+## Module `neurons.models.sc_stochastic_rate_adaptation`
+
+### Class `SCStochasticRateAdaptationNeuron`
+SC logistic rate adaptation with exponential-hazard spike sampling.
+
+This count-neutral project model preserves the former ``BendaHerzNeuron``
+behavior. It is not attributed to the deterministic Benda–Herz phase
+generator.
+
+- **__post_init__**()
+- **step_with_uniform**(current, uniform)
+  - Advance using an explicit uniform variate for backend parity.
+- **step**(current)
+- **reset**()
 
 ---
 

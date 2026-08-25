@@ -47,7 +47,9 @@ What is your goal?
 │  ├─ Source metabolic eLIF → EnergyLIFNeuron
 │  ├─ SC normalized energy compatibility → SCNormalizedEnergyLIFNeuron
 │  ├─ Other threshold adaptation → HomeostaticLIFNeuron, GLIFNeuron
-│  ├─ Spike-frequency adaptation → SFANeuron, BendaHerzNeuron
+│  ├─ Source universal rate adaptation → BendaHerzNeuron
+│  ├─ SC stochastic rate adaptation → SCStochasticRateAdaptationNeuron
+│  ├─ Conductance LIF adaptation → SFANeuron
 │  └─ Reward-modulated → EPropALIFNeuron (with eligibility traces)
 │
 ├─ Population / neural mass (EEG, fMRI)
@@ -163,7 +165,8 @@ HayL5Pyramidal, BoothRinzel, Dendrify, TwoCompartmentLIF
 ### 4. Adaptive (4 models)
 Spike-frequency adaptation and threshold dynamics.
 
-AdEx, Izhikevich, MihalasNiebur, BendaHerz
+AdEx, Izhikevich, MihalasNiebur, BendaHerz,
+SCStochasticRateAdaptation (count-neutral compatibility identity)
 
 ### 5. Oscillatory / Qualitative (7 models)
 Phase-plane dynamics, bifurcation analysis.

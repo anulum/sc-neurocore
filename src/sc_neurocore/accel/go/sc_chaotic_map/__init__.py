@@ -39,8 +39,14 @@ _HAS_GO_SC_CHAOTIC_MAP = _lib is not None
 
 
 def simulate_sc_chaotic_map(
-    x: float, y: float, k_f: float, k_s: float, alpha: float, delta: float,
-    x_threshold: float, current: npt.ArrayLike,
+    x: float,
+    y: float,
+    k_f: float,
+    k_s: float,
+    alpha: float,
+    delta: float,
+    x_threshold: float,
+    current: npt.ArrayLike,
 ) -> SCChaoticMapResult:
     logical = np.asarray(current)
     if logical.ndim != 1:
@@ -67,9 +73,14 @@ def simulate_sc_chaotic_map(
         raise FloatingPointError("sc_chaotic_map_simulate_c rejected map candidate")
     if status != 0:
         raise RuntimeError(f"sc_chaotic_map_simulate_c rejected code {status}")
-    return {"x": traces[0], "y": traces[1], "spikes": traces[2],
-            "x_final": float(finals[0][0]), "y_final": float(finals[1][0]),
-            "spike_count": int(finals[2][0])}
+    return {
+        "x": traces[0],
+        "y": traces[1],
+        "spikes": traces[2],
+        "x_final": float(finals[0][0]),
+        "y_final": float(finals[1][0]),
+        "spike_count": int(finals[2][0]),
+    }
 
 
 __all__ = ["_HAS_GO_SC_CHAOTIC_MAP", "simulate_sc_chaotic_map"]

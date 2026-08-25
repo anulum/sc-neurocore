@@ -126,7 +126,9 @@ def normalise_result(
         try:
             values = np.asarray(result[key], dtype=np.float64)
         except (KeyError, TypeError, ValueError, OverflowError) as exc:
-            raise FloatingPointError(f"SC chaotic-map backend returned invalid {key} trace") from exc
+            raise FloatingPointError(
+                f"SC chaotic-map backend returned invalid {key} trace"
+            ) from exc
         if values.ndim != 1 or values.shape != (n_steps,) or not np.isfinite(values).all():
             raise FloatingPointError(f"SC chaotic-map backend returned malformed {key} trace")
         normalised[key] = np.ascontiguousarray(values)
@@ -188,9 +190,18 @@ def simulate_python(
         x_trace[index], y_trace[index], spikes[index] = unit.x, unit.y, event
         count += event
     return normalise_result(
-        {"x": x_trace, "y": y_trace, "spikes": spikes, "x_final": unit.x,
-         "y_final": unit.y, "spike_count": count},
-        n_steps=drive.size, initial_x=x, initial_y=y, threshold=x_threshold,
+        {
+            "x": x_trace,
+            "y": y_trace,
+            "spikes": spikes,
+            "x_final": unit.x,
+            "y_final": unit.y,
+            "spike_count": count,
+        },
+        n_steps=drive.size,
+        initial_x=x,
+        initial_y=y,
+        threshold=x_threshold,
     )
 
 
@@ -233,8 +244,19 @@ def simulate_sc_chaotic_map(
         raise RuntimeError(f"{selected.title()} SC chaotic-map backend is unavailable")
     return normalise_result(
         _native_runner(selected)(*args),
-        n_steps=drive.size, initial_x=unit.x, initial_y=unit.y, threshold=unit.x_threshold,
+        n_steps=drive.size,
+        initial_x=unit.x,
+        initial_y=unit.y,
+        threshold=unit.x_threshold,
     )
 
 
-__all__ = ["KERNEL", "PARITY_ATOL", "auto_backend", "backend_available", "normalise_result", "simulate_python", "simulate_sc_chaotic_map"]
+__all__ = [
+    "KERNEL",
+    "PARITY_ATOL",
+    "auto_backend",
+    "backend_available",
+    "normalise_result",
+    "simulate_python",
+    "simulate_sc_chaotic_map",
+]

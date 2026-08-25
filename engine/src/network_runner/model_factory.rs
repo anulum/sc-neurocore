@@ -266,7 +266,10 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "MetaPlastic" | "MetaPlasticNeuron" => {
             Ok(NeuronVariant::MetaPlastic(MetaPlasticNeuron::new()))
         }
-        "BendaHerz" | "BendaHerzNeuron" => Ok(NeuronVariant::BendaHerz(BendaHerzNeuron::new(42))),
+        "BendaHerz" | "BendaHerzNeuron" => Ok(NeuronVariant::BendaHerz(BendaHerzNeuron::new())),
+        "SCStochasticRateAdaptation" | "SCStochasticRateAdaptationNeuron" => Ok(
+            NeuronVariant::SCStochasticRateAdaptation(SCStochasticRateAdaptationNeuron::new(42)),
+        ),
         "BrunelWang" | "BrunelWangNeuron" => Ok(NeuronVariant::BrunelWang(BrunelWangNeuron::new())),
         "Poisson" | "PoissonNeuron" => {
             Ok(NeuronVariant::Poisson(PoissonNeuron::new(50.0, 1.0, 42)))

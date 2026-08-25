@@ -48,9 +48,7 @@ def simulate_sc_chaotic_map(
         raise ValueError("current must be a finite one-dimensional array")
     module = _ensure_loaded()
     try:
-        result = module.simulate_sc_chaotic_map(
-            x, y, k_f, k_s, alpha, delta, x_threshold, drive
-        )
+        result = module.simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, drive)
     except Exception as exc:
         if is_julia_error(exc):
             raise ValueError(str(exc)) from exc

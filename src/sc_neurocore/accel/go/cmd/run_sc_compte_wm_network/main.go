@@ -2,6 +2,9 @@
 // Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Source/config provenance header
 
 // Command run_sc_compte_wm_network is the JSON adapter for public Go dispatch.
 package main

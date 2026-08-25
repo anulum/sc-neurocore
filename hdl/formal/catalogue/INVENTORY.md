@@ -11,6 +11,7 @@ Jobs: **42**
 | AdaptiveThresholdIFNeuron | adaptive_threshold_if | `sc_adaptive_threshold_if` | `v_out` | Q32.32 | 4 |
 | AiharaMapNeuron | aihara_map | `sc_aihara_map` | `y_out` | Q8.24 | 6 |
 | AlphaNeuron | alpha | `sc_alpha_synapse_lif` | `v_out` | Q32.32 | 4 |
+| BendaHerzNeuron | benda_herz | `benda_herz` | `adaptation_q` | Q16.16 | 2 |
 | COBALIFNeuron | coba_lif | `sc_cobalifneuron` | `v_out` | Q24.24 | 4 |
 | CazellesMapNeuron | cazelles_map | `sc_cazelles_map` | `x_out` | Q8.8 | 4 |
 | ChialvoMapNeuron | chialvo_map | `sc_chialvo_map` | `x_out` | Q8.8 | 4 |
@@ -42,6 +43,7 @@ Jobs: **42**
 | QuadraticIFNeuron | quadratic_if | `sc_quadratic_if` | `v_out` | Q8.8 | 20 |
 | ResonateAndFireNeuron | resonate_fire | `sc_resonate_and_fire` | `x_out` | Q32.32 | 4 |
 | RulkovMapNeuron | rulkov_map | `sc_rulkov_map` | `x_out` | Q8.8 | 4 |
+| SCStochasticRateAdaptationNeuron | sc_stochastic_rate_adaptation | `sc_stochastic_rate_adaptation` | `adaptation_q` | Q16.16 | 2 |
 | SigmoidRateNeuron | sigmoid_rate | `sc_sigmoidrateneuron` | `r_out` | Q32.32 | 4 |
 | TermanWangOscillator | terman_wang | `sc_terman_wang` | `v_out` | Q8.8 | 4 |
 | ThetaNeuron | theta | `sc_theta` | `theta_out` | Q8.8 | 6 |

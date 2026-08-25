@@ -1,4 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Source/config provenance header
+
 `default_nettype none
 module sc_triangular_mckean_formal(input wire clk,input wire rst_n,input wire signed [63:0] current_t);
 wire signed [63:0] v,w;wire event_out;

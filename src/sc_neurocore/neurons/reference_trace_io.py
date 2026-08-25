@@ -166,6 +166,11 @@ def _load_spec_file(path: Traversable) -> ReferenceTraceSpec | None:
     """
     payload = cast(object, json.loads(path.read_text(encoding="utf-8")))
     mapping = _mapping_value(payload, path.name)
+    raw_model = mapping.get("model")
+    if isinstance(raw_model, Mapping) and "runner" in raw_model:
+        runner = _string_field(cast(Mapping[str, object], raw_model), "runner")
+        if runner not in _RUNNER_USES_DEDICATED_VALIDATOR:
+            raise ValueError(f"reference trace runner {runner!r} is not supported")
     schema_version = mapping.get("schema_version")
     if schema_version != REFERENCE_TRACE_SCHEMA_VERSION:
         return None
@@ -173,10 +178,7 @@ def _load_spec_file(path: Traversable) -> ReferenceTraceSpec | None:
         return None
     model = _mapping_field(mapping, "model")
     runner = _string_field(model, "runner")
-    try:
-        uses_dedicated_validator = _RUNNER_USES_DEDICATED_VALIDATOR[runner]
-    except KeyError as exc:
-        raise ValueError(f"reference trace runner {runner!r} is not supported") from exc
+    uses_dedicated_validator = _RUNNER_USES_DEDICATED_VALIDATOR[runner]
     if uses_dedicated_validator:
         return None
     return reference_trace_spec_from_payload(mapping)

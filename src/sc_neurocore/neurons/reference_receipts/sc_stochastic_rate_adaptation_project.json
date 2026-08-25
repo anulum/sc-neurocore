@@ -1,0 +1,1 @@
+{"model":"SCStochasticRateAdaptationNeuron","source":"SC-NeuroCore project recurrence formerly misidentified as BendaHerzNeuron","identity":"count-neutral SC modification","randomness":"NumPy default_rng(seed) with exponential-hazard Bernoulli sampling"}

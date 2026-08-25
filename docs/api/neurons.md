@@ -89,7 +89,8 @@ table, validation commands, and external simulator boundary.
 | Gated LIF | `gated_lif.py` | Yao 2022, NeurIPS |
 | Sigma-Delta | `sigma_delta.py` | Yoon 2017 |
 | TC-LIF | `tc_lif.py` | AAAI 2024 |
-| Benda-Herz | `benda_herz.py` | Benda 2003 |
+| Benda-Herz universal adaptation | `benda_herz.py` | Benda & Herz 2003 equations (8), (45) |
+| SC stochastic rate adaptation | `sc_stochastic_rate_adaptation.py` | SC-NeuroCore retained project recurrence |
 | Integer QIF | `iqif.py` | Wu et al. 2021, piecewise-linear Q0.3 integer soma |
 | Complementary LIF | `clif.py` | ICML 2024, dual paths |
 | K-LIF | `klif.py` | Learnable scaling |

@@ -69,6 +69,7 @@ _MODEL_NAMES = {
     "AvRonCardiacNeuron",
     "BalancedResonateAndFireNeuron",
     "BendaHerzNeuron",
+    "SCStochasticRateAdaptationNeuron",
     "BertramPhantomBurster",
     "BoothRinzelNeuron",
     "BrainScaleSAdExNeuron",

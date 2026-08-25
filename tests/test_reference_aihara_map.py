@@ -30,10 +30,18 @@ def test_independent_equation_oracle_matches_committed_trace() -> None:
     expected_events: list[int] = []
     for current in receipt["current"]:
         argument = y / configuration["epsilon"]
-        x = 1.0 / (1.0 + np.exp(-argument)) if argument >= 0.0 else np.exp(argument) / (1.0 + np.exp(argument))
+        x = (
+            1.0 / (1.0 + np.exp(-argument))
+            if argument >= 0.0
+            else np.exp(argument) / (1.0 + np.exp(argument))
+        )
         y = configuration["k"] * y - configuration["alpha"] * x + configuration["bias"] + current
         argument = y / configuration["epsilon"]
-        x = 1.0 / (1.0 + np.exp(-argument)) if argument >= 0.0 else np.exp(argument) / (1.0 + np.exp(argument))
+        x = (
+            1.0 / (1.0 + np.exp(-argument))
+            if argument >= 0.0
+            else np.exp(argument) / (1.0 + np.exp(argument))
+        )
         expected_y.append(y)
         expected_x.append(x)
         expected_events.append(int(x >= 0.5))
@@ -46,7 +54,13 @@ def test_python_model_matches_primary_equation_oracle() -> None:
     receipt = json.loads(_TRACE.read_text())
     config = receipt["configuration"]
     result = simulate_aihara_map(
-        config["y0"], config["k"], config["alpha"], config["bias"], config["epsilon"], receipt["current"], backend="python"
+        config["y0"],
+        config["k"],
+        config["alpha"],
+        config["bias"],
+        config["epsilon"],
+        receipt["current"],
+        backend="python",
     )
     np.testing.assert_allclose(result["y"], receipt["y"], rtol=0.0, atol=1.0e-15)
     np.testing.assert_allclose(result["x"], receipt["x"], rtol=0.0, atol=1.0e-15)

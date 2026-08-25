@@ -12,10 +12,10 @@
         "n": 0.5162641019382804,
         "v": 43.414460539399464
       },
-      "median_call_ms": 5.661562,
-      "minimum_call_ms": 5.026994,
+      "median_call_ms": 3.660907,
+      "minimum_call_ms": 3.26128,
       "parity_max_abs_diff": 7.9102448768964e-07,
-      "speedup_vs_python": 77.78667424290327,
+      "speedup_vs_python": 56.056107407262736,
       "used": true
     },
     "python": {
@@ -30,8 +30,8 @@
         "n": 0.5162640994287648,
         "v": 43.41446009137186
       },
-      "median_call_ms": 440.394079,
-      "minimum_call_ms": 384.485737,
+      "median_call_ms": 205.216196,
+      "minimum_call_ms": 165.877958,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -48,10 +48,10 @@
         "n": 0.516264099428764,
         "v": 43.414460091371694
       },
-      "median_call_ms": 9.205124,
-      "minimum_call_ms": 8.153978,
+      "median_call_ms": 14.361103,
+      "minimum_call_ms": 12.601217,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 47.842275563045106,
+      "speedup_vs_python": 14.289723846420431,
       "used": true
     }
   },
@@ -63,23 +63,23 @@
   ],
   "meta": {
     "affinity": [
-      8
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      39.68994140625,
-      35.1337890625,
-      31.3720703125
+      11.4208984375,
+      18.22265625,
+      18.044921875
     ],
     "load_average_start": [
-      39.2275390625,
-      34.966796875,
-      31.29833984375
+      11.3701171875,
+      18.328125,
+      18.07763671875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
       "mojo": "Mojo 1.0.0b1 (a9591de6)",
       "numpy": "2.2.6",
@@ -95,9 +95,9 @@
     },
     "benchmarks/bench_connor_stevens_mojo.py": "b8f19106938b2943bb5d39205dd5cf7b98c9a6b594a4f8031ef74e0ca9bc7fd0",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
+      "py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
+    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
     "engine/src/neurons/biophysical": {
       "rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf"
     },

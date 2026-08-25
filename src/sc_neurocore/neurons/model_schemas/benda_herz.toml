@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version=2
+name="BendaHerzNeuron"
+author="Benda, J.; Herz, A. V. M."
+year=2003
+doi="10.1162/089976603322385063"
+description="Universal rate adaptation with the deterministic phase spike generator"
+[state]
+a=0.0
+phase=0.0
+[parameters]
+onset_gain=60.0
+rheobase=0.0
+adaptation_slope=0.1
+tau_a=100.0
+dt=0.1
+[integration]
+dt=0.1
+method="rk4"
+substeps=1
+[dynamics]
+rate="onset_gain*sqrt(max(I-a-rheobase,0))"
+a="(adaptation_slope*rate-a)/tau_a"
+phase="rate/1000"
+[threshold]
+condition="phase >= 1"
+detection="sampled"
+[extensions]
+source_equations="Benda and Herz 2003 equations (8) and (45), Figure 8 example"
+identity_note="SCStochasticRateAdaptationNeuron retains the former project recurrence"
+reset="phase=0 after spike"

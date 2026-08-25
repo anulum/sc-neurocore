@@ -3045,63 +3045,6 @@
       }
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-18_energy_lif_exact_flow.json",
-      "description": "EnergyLIF exact constant-current metabolic flow parity across Python, Rust, Go, Julia, and Mojo.",
-      "expected_values": {
-        "benchmark": "EnergyLIFNeuron candidate-first metabolic exact flow",
-        "current": 50.0,
-        "evidence_class": "local_regression_non_isolated",
-        "hardware_measurement_claimed": false,
-        "production_speed_claim": false,
-        "repeats": 5,
-        "steps": 200000
-      },
-      "id": "energy-lif-exact-flow-multibackend-local-regression",
-      "parity_groups": [
-        {
-          "paths": [
-            "backend_summary.python.spikes",
-            "backend_summary.rust.spikes",
-            "backend_summary.go.spikes",
-            "backend_summary.julia.spikes",
-            "backend_summary.mojo.spikes"
-          ],
-          "tolerance": 0.0
-        }
-      ],
-      "required_numbers": [
-        "backend_summary.python.median_ns_per_step",
-        "backend_summary.python.min_ns_per_step",
-        "backend_summary.python.max_ns_per_step",
-        "backend_summary.python.spikes",
-        "backend_summary.rust.median_ns_per_step",
-        "backend_summary.rust.min_ns_per_step",
-        "backend_summary.rust.max_ns_per_step",
-        "backend_summary.rust.spikes",
-        "backend_summary.go.median_ns_per_step",
-        "backend_summary.go.min_ns_per_step",
-        "backend_summary.go.max_ns_per_step",
-        "backend_summary.go.spikes",
-        "backend_summary.julia.median_ns_per_step",
-        "backend_summary.julia.min_ns_per_step",
-        "backend_summary.julia.max_ns_per_step",
-        "backend_summary.julia.spikes",
-        "backend_summary.mojo.median_ns_per_step",
-        "backend_summary.mojo.min_ns_per_step",
-        "backend_summary.mojo.max_ns_per_step",
-        "backend_summary.mojo.spikes"
-      ],
-      "source_hashes": {
-        "benchmarks/bench_model_energy_lif.py": "source_hashes.benchmarks/bench_model_energy_lif.py",
-        "src/sc_neurocore/accel/go/services/energy_lif.go": "source_hashes.src/sc_neurocore/accel/go/services/energy_lif.go",
-        "src/sc_neurocore/accel/go/services/energy_lif_test.go": "source_hashes.src/sc_neurocore/accel/go/services/energy_lif_test.go",
-        "src/sc_neurocore/accel/julia/neurons/energy_lif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/energy_lif.jl",
-        "src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/energy_lif.mojo",
-        "src/sc_neurocore/accel/rust/safety/energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/energy_lif.rs",
-        "src/sc_neurocore/neurons/models/energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/energy_lif.py"
-      }
-    },
-    {
       "artefact": "benchmarks/results/bench_connor_stevens_mojo.json",
       "description": "Source-bound Connor-Stevens Mojo executable-lane closure against the Python and Rust-engine simulation paths.",
       "expected_values": {
@@ -3967,8 +3910,8 @@
         "evidence_class": "local_regression_non_isolated",
         "hardware_measurement_claimed": false,
         "production_speed_claim": false,
-        "repeats": 3,
-        "steps": 20000
+        "repeats": 5,
+        "steps": 200000
       },
       "id": "energy-lif-fardet-levina-multibackend-local-regression",
       "parity_groups": [{"paths": ["backend_summary.python.spikes", "backend_summary.rust.spikes", "backend_summary.go.spikes", "backend_summary.julia.spikes", "backend_summary.mojo.spikes"], "tolerance": 0.0}],
@@ -4053,6 +3996,24 @@
         "src/sc_neurocore/accel/rust/safety/sc_triangular_mckean.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_triangular_mckean.rs",
         "src/sc_neurocore/neurons/models/sc_triangular_mckean.py": "source_hashes.src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_benda_herz.json",
+      "description": "Benda-Herz source adaptation and phase parity across five runtimes.",
+      "expected_values": {"benchmark": "Benda-Herz source universal adaptation and phase generator", "evidence_class": "local_regression_non_isolated", "hardware_measurement_claimed": false, "production_speed_claim": false, "repeats": 5, "steps": 20000},
+      "id": "benda-herz-source-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.events", "backend_summary.rust.events", "backend_summary.go.events", "backend_summary.julia.events", "backend_summary.mojo.events"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns", "backend_summary.rust.median_ns", "backend_summary.go.median_ns", "backend_summary.julia.median_ns", "backend_summary.mojo.median_ns"],
+      "source_hashes": {"benchmarks/bench_model_benda_herz.py": "source_hashes.benchmark", "src/sc_neurocore/neurons/models/benda_herz.py": "source_hashes.python"}
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_stochastic_rate_adaptation.json",
+      "description": "Retained SC stochastic adaptation explicit-uniform parity across five runtimes.",
+      "expected_values": {"benchmark": "SC retained stochastic rate-adaptation recurrence", "evidence_class": "local_regression_non_isolated", "hardware_measurement_claimed": false, "production_speed_claim": false, "repeats": 5, "steps": 20000},
+      "id": "sc-stochastic-rate-adaptation-multibackend-local-regression",
+      "parity_groups": [{"paths": ["backend_summary.python.events", "backend_summary.rust.events", "backend_summary.go.events", "backend_summary.julia.events", "backend_summary.mojo.events"], "tolerance": 0.0}],
+      "required_numbers": ["backend_summary.python.median_ns", "backend_summary.rust.median_ns", "backend_summary.go.median_ns", "backend_summary.julia.median_ns", "backend_summary.mojo.median_ns"],
+      "source_hashes": {"benchmarks/bench_model_sc_stochastic_rate_adaptation.py": "source_hashes.benchmark", "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py": "source_hashes.python"}
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

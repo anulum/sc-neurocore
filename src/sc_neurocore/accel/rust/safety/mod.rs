@@ -4,6 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Rust safety module catalogue
 
 pub mod _jax_compat;
 pub mod accountant;
@@ -45,6 +46,7 @@ pub mod bci_primitives;
 pub mod bci_studio;
 pub mod bcm;
 pub mod benda_herz;
+pub mod sc_stochastic_rate_adaptation;
 pub mod bertram_phantom;
 pub mod bipolar;
 pub mod bitstream_current_source;

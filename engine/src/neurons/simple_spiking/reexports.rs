@@ -9,7 +9,7 @@
 //! Public re-exports for the facade module.
 
 pub use super::alpha::AlphaNeuron;
-pub use super::balanced_resonate_and_fire::{
+pub use super::balanced_resonate_and_fire::BalancedResonateAndFireNeuron;
 pub use super::benda_herz::BendaHerzNeuron;
 pub use super::brunel_wang::BrunelWangNeuron;
 pub use super::butera_respiratory::ButeraRespiratoryNeuron;
@@ -26,6 +26,7 @@ pub use super::mckean::McKeanNeuron;
 pub use super::morris_lecar::MorrisLecarNeuron;
 pub use super::pernarowski::PernarowskiNeuron;
 pub use super::resonate_and_fire::ResonateAndFireNeuron;
+pub use super::sc_stochastic_rate_adaptation::SCStochasticRateAdaptationNeuron;
 pub use super::sc_triangular_mckean::SCTriangularMcKeanNeuron;
 pub use super::sherman_rinzel_keizer::ShermanRinzelKeizerNeuron;
 pub use super::superspike_neuron::SuperSpikeNeuron;

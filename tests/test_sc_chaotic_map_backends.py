@@ -25,12 +25,8 @@ def _drive() -> np.ndarray:
 def test_complete_trace_parity(backend: str) -> None:
     if not sc_chaotic_map.backend_available(backend):
         pytest.skip(f"{backend} SC chaotic-map backend unavailable")
-    expected = sc_chaotic_map.simulate_sc_chaotic_map(
-        0.4, -0.2, current=_drive(), backend="python"
-    )
-    observed = sc_chaotic_map.simulate_sc_chaotic_map(
-        0.4, -0.2, current=_drive(), backend=backend
-    )
+    expected = sc_chaotic_map.simulate_sc_chaotic_map(0.4, -0.2, current=_drive(), backend="python")
+    observed = sc_chaotic_map.simulate_sc_chaotic_map(0.4, -0.2, current=_drive(), backend=backend)
     tolerance = sc_chaotic_map.PARITY_ATOL[backend]
     for key in ("x", "y"):
         np.testing.assert_allclose(observed[key], expected[key], rtol=0.0, atol=tolerance)
@@ -55,9 +51,7 @@ def test_empty_receipt_preserves_initial_state() -> None:
 
 
 def test_result_guard_rejects_level_events() -> None:
-    result = sc_chaotic_map.simulate_sc_chaotic_map(
-        0.4, -0.2, current=[0.1, 0.1], backend="python"
-    )
+    result = sc_chaotic_map.simulate_sc_chaotic_map(0.4, -0.2, current=[0.1, 0.1], backend="python")
     forged = dict(result)
     forged["spikes"] = np.array([1.0, 1.0])
     forged["spike_count"] = 2

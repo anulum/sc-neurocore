@@ -1,0 +1,1 @@
+{"model":"BendaHerzNeuron","source":"doi:10.1162/089976603322385063 equations (8), (45), and Figure 8 example","drive":{"pattern":[0.0,1.0,4.0,9.0],"repeats":128},"oracle":{"steps":512,"events":3,"a_final":2.6220722275910986,"phase_final":0.38422886217335506,"trace_sha256":"ca19cf6447639dc195f526aa5834773bf64aa54077d1d0ff5278b20e4ce8233c"}}

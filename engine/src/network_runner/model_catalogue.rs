@@ -116,6 +116,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "ContinuousAttractor",
         "MetaPlastic",
         "BendaHerz",
+        "SCStochasticRateAdaptation",
         // point-process
         "Poisson",
         "InhomogeneousPoisson",

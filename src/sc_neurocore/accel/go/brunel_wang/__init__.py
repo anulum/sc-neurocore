@@ -12,18 +12,18 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
 _LIBRARY = Path(__file__).with_name("libbrunel_wang.so")
 try:
-    _lib: ctypes.CDLL | None = ctypes.CDLL(str(_LIBRARY))
-    _function: Any | None = _lib.brunel_wang_simulate_c
-    _function.restype = ctypes.c_int
+    _lib = ctypes.CDLL(str(_LIBRARY))
+    function: Any = _lib.brunel_wang_simulate_c
+    function.restype = ctypes.c_int
+    _function: Any | None = function
     _HAS_GO_BRUNEL_WANG = True
 except (OSError, AttributeError):
-    _lib = None
     _function = None
     _HAS_GO_BRUNEL_WANG = False
 
@@ -32,7 +32,7 @@ def simulate_brunel_wang(*args: object) -> dict[str, object]:
     """Run a complete Go batch, raising on any native failure status."""
     if _function is None:
         raise RuntimeError("Go Brunel-Wang shared library is unavailable")
-    config = tuple(float(value) for value in args[:17])
+    config = tuple(float(cast(float | int, value)) for value in args[:17])
     gates = tuple(np.ascontiguousarray(value, dtype=np.float64) for value in args[17:21])
     steps = gates[0].size
     voltages = np.empty(steps, dtype=np.float64)

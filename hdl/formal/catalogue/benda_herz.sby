@@ -1,0 +1,11 @@
+[options]
+mode bmc
+depth 2
+[engines]
+smtbmc z3
+[script]
+read -formal benda_herz.v benda_herz_formal.v
+prep -top benda_herz_formal
+[files]
+benda_herz.v
+benda_herz_formal.v

@@ -152,7 +152,7 @@ _GENERIC_PARITY_UNSUPPORTED = frozenset(_RUST_NAME_MAP) | _PYTHON_ONLY_MODELS
 _STOCHASTIC = frozenset(
     {
         "EscapeRateNeuron",
-        "BendaHerzNeuron",
+        "SCStochasticRateAdaptationNeuron",
         "PoissonNeuron",
         "InhomogeneousPoissonNeuron",
         "GammaRenewalNeuron",
@@ -314,8 +314,8 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert model_names >= _STOCHASTIC
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
-    assert len(model_names) == 163
-    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 149
+    assert len(model_names) == 169
+    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 155
 
 
 def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:

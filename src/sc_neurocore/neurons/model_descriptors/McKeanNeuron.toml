@@ -19,10 +19,10 @@ intended_use=["source recurrence replay","piecewise-linear excitability studies"
 hardware_fit=["bounded fixed-point co-simulation"]
 behavior_tags=["source-faithful","heaviside","non-resetting"]
 [provenance]
-authors=["McKean, H. P.","Tonnelier, A."]
-year=2002
+authors=["Tonnelier, A.","McKean, H. P."]
+year=2003
 doi="10.1137/S0036139901393500"
-paper_title="McKean caricature of the FitzHugh-Nagumo model: traveling pulses in a discrete diffusive medium"
+paper_title="The McKean's Caricature of the FitzHugh--Nagumo Model I. The Space-Clamped System"
 derivation_note="Space-clamped equations (1.3)-(1.6); normalized parameters and explicit right-continuous H(0)=1 numerical specialization."
 [state.v]
 init=0.0

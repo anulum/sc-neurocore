@@ -141,6 +141,7 @@ pub enum NeuronVariant {
     MetaPlastic(MetaPlasticNeuron),
     // simple_spiking.rs
     BendaHerz(BendaHerzNeuron),
+    SCStochasticRateAdaptation(SCStochasticRateAdaptationNeuron),
     BrunelWang(BrunelWangNeuron),
     // special.rs
     Poisson(PoissonNeuron),
@@ -276,7 +277,7 @@ macro_rules! all_variants {
             MultiTimescale, AttentionGated, PredictiveCoding,
             SelfReferential, CompositionalBinding, DifferentiableSurrogate,
             ContinuousAttractor, MetaPlastic,
-            BendaHerz, BrunelWang,
+            BendaHerz, SCStochasticRateAdaptation, BrunelWang,
             Poisson, InhomogeneousPoisson, GammaRenewal, EscapeRate,
             PVFastSpiking, SST, VIP, Chandelier, CerebellarBasket, Martinotti,
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
@@ -409,6 +410,7 @@ impl NeuronVariant {
             NeuronVariant::ContinuousAttractor(_) => 0.0,
             NeuronVariant::MetaPlastic(n) => n.v,
             NeuronVariant::BendaHerz(n) => n.a,
+            NeuronVariant::SCStochasticRateAdaptation(n) => n.a,
             NeuronVariant::BrunelWang(n) => n.v,
             NeuronVariant::Poisson(_) => 0.0,
             NeuronVariant::InhomogeneousPoisson(_) => 0.0,

@@ -35,6 +35,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -181,30 +186,54 @@ def build_ledger() -> dict[str, dict[str, Any]]:
     for toml_path in sorted(DESCRIPTOR_DIR.glob("*.toml")):
         descriptor = load_descriptor(toml_path.stem)
         provenance = getattr(descriptor, "provenance", None)
-        doi = getattr(provenance, "doi", None) if provenance else None
-        if not doi or doi in ledger:
+        if provenance is None:
             continue
-        claimed_authors = list(getattr(provenance, "authors", []) or [])
-        claimed_first = fold_surname(claimed_authors[0]) if claimed_authors else ""
-        claimed_year = getattr(provenance, "year", None)
-        translation = bool(getattr(provenance, "doi_is_translation", False))
-        outcome = resolve_doi(doi)
-        if outcome["registry"] == "crossref":
-            time.sleep(_CROSSREF_POLITE_DELAY_S)
-        match = classify_match(claimed_first, claimed_year, outcome, translation)
-        ledger[doi] = {
-            "model": toml_path.stem,
-            "registry": outcome["registry"],
-            "resolves": outcome["resolves"],
-            "author_match": match["author_match"],
-            "year_match": match["year_match"],
-            "translation": match["translation"],
-            "verified": match["verified"],
-            "registry_first_author": outcome.get("first_author"),
-            "registry_year": outcome.get("year"),
-            "title": outcome.get("title", "")[:120],
-            "verified_utc": stamp,
-        }
+        raw = tomllib.loads(toml_path.read_text(encoding="utf-8")).get("provenance", {})
+        if not isinstance(raw, dict):
+            continue
+        primary_authors = list(getattr(provenance, "authors", []) or [])
+        primary_year = getattr(provenance, "year", None)
+        primary_translation = bool(getattr(provenance, "doi_is_translation", False))
+        claims: list[tuple[str, str, list[str], int | None, bool]] = []
+        for key, value in sorted(raw.items()):
+            if key != "doi" and not key.endswith("_doi"):
+                continue
+            if not isinstance(value, str) or not value:
+                continue
+            prefix = key.removesuffix("_doi")
+            authors_value = raw.get(f"{prefix}_authors", primary_authors)
+            authors = (
+                [str(author) for author in authors_value]
+                if isinstance(authors_value, list)
+                else primary_authors
+            )
+            year_value = raw.get(f"{prefix}_year", primary_year)
+            year = year_value if isinstance(year_value, int) else primary_year
+            translation = bool(raw.get(f"{prefix}_doi_is_translation", primary_translation))
+            label = toml_path.stem if key == "doi" else f"{toml_path.stem}:{key}"
+            claims.append((label, value, authors, year, translation))
+
+        for label, doi, claimed_authors, claimed_year, translation in claims:
+            if doi in ledger:
+                continue
+            claimed_first = fold_surname(claimed_authors[0]) if claimed_authors else ""
+            outcome = resolve_doi(doi)
+            if outcome["registry"] == "crossref":
+                time.sleep(_CROSSREF_POLITE_DELAY_S)
+            match = classify_match(claimed_first, claimed_year, outcome, translation)
+            ledger[doi] = {
+                "model": label,
+                "registry": outcome["registry"],
+                "resolves": outcome["resolves"],
+                "author_match": match["author_match"],
+                "year_match": match["year_match"],
+                "translation": match["translation"],
+                "verified": match["verified"],
+                "registry_first_author": outcome.get("first_author"),
+                "registry_year": outcome.get("year"),
+                "title": outcome.get("title", "")[:120],
+                "verified_utc": stamp,
+            }
     return ledger
 
 

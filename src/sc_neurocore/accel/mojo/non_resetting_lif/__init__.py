@@ -10,17 +10,17 @@
 from __future__ import annotations
 import ctypes
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 import numpy as np
 
 _LIBRARY = Path(__file__).with_name("libnon_resetting_lif.so")
 try:
-    _lib: ctypes.CDLL | None = ctypes.CDLL(str(_LIBRARY))
-    _function: Any | None = _lib.non_resetting_lif_simulate_c
-    _function.restype = ctypes.c_int
+    _lib = ctypes.CDLL(str(_LIBRARY))
+    function: Any = _lib.non_resetting_lif_simulate_c
+    function.restype = ctypes.c_int
+    _function: Any | None = function
     _HAS_MOJO_NON_RESETTING_LIF = True
 except (OSError, AttributeError):
-    _lib = None
     _function = None
     _HAS_MOJO_NON_RESETTING_LIF = False
 
@@ -29,7 +29,7 @@ def simulate_non_resetting_lif(*args: object) -> dict[str, object]:
     """Run the complete configured Mojo MAT(1) trace."""
     if _function is None:
         raise RuntimeError("Mojo MAT(1) shared library is unavailable")
-    config = tuple(float(value) for value in args[:10])
+    config = tuple(float(cast(float | int, value)) for value in args[:10])
     currents = np.ascontiguousarray(args[10], dtype=np.float64)
     if currents.ndim != 1:
         raise ValueError("Mojo MAT(1) current must be one-dimensional")

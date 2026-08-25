@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore Rust safety library
+// SC-NeuroCore — Rust safety library
 
 // Source-parity safety mirrors retain their canonical `new()` constructors;
 // blanket `Default` impls would create 359 public contracts absent upstream.
@@ -50,6 +50,7 @@ pub mod bci_primitives;
 pub mod bci_studio;
 pub mod bcm;
 pub mod benda_herz;
+pub mod sc_stochastic_rate_adaptation;
 pub mod bertram_phantom;
 pub mod bipolar;
 pub mod bitstream_current_source;

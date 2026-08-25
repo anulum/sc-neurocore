@@ -4,7 +4,7 @@
 # Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Curated neuron model family taxonomy
+# SC-NeuroCore — Curated neuron model family taxonomy
 
 """Curated family and category taxonomy for the neuron model library.
 
@@ -61,11 +61,17 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "ResonateAndFireNeuron",
         ),
     ),
+    "Rate adaptation": (
+        "rate-adaptation",
+        (
+            "BendaHerzNeuron",
+            "SCStochasticRateAdaptationNeuron",
+        ),
+    ),
     "Conductance-based": (
         "conductance-based",
         (
             "AvRonCardiacNeuron",
-            "BendaHerzNeuron",
             "ConnorStevensNeuron",
             "DestexheThalamicNeuron",
             "GolombFSNeuron",

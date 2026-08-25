@@ -23,7 +23,9 @@ _MAX_NATIVE_STEPS = (1 << 31) - 1
 
 def _configure(library: ctypes.CDLL) -> ctypes.CDLL:
     library.sc_chaotic_map_simulate_c.argtypes = [
-        ctypes.c_int32, *([ctypes.c_double] * 7), *([ctypes.c_void_p] * 7)
+        ctypes.c_int32,
+        *([ctypes.c_double] * 7),
+        *([ctypes.c_void_p] * 7),
     ]
     library.sc_chaotic_map_simulate_c.restype = ctypes.c_int32
     return library
@@ -37,8 +39,14 @@ _HAS_MOJO_SC_CHAOTIC_MAP = _lib is not None
 
 
 def simulate_sc_chaotic_map(
-    x: float, y: float, k_f: float, k_s: float, alpha: float, delta: float,
-    x_threshold: float, current: npt.ArrayLike,
+    x: float,
+    y: float,
+    k_f: float,
+    k_s: float,
+    alpha: float,
+    delta: float,
+    x_threshold: float,
+    current: npt.ArrayLike,
 ) -> SCChaoticMapResult:
     logical = np.asarray(current)
     if logical.ndim != 1:
@@ -65,9 +73,14 @@ def simulate_sc_chaotic_map(
         raise FloatingPointError("sc_chaotic_map_simulate_c rejected map candidate")
     if status != 0:
         raise RuntimeError(f"sc_chaotic_map_simulate_c rejected code {status}")
-    return {"x": traces[0], "y": traces[1], "spikes": traces[2],
-            "x_final": float(finals[0][0]), "y_final": float(finals[1][0]),
-            "spike_count": int(finals[2][0])}
+    return {
+        "x": traces[0],
+        "y": traces[1],
+        "spikes": traces[2],
+        "x_final": float(finals[0][0]),
+        "y_final": float(finals[1][0]),
+        "spike_count": int(finals[2][0]),
+    }
 
 
 __all__ = ["_HAS_MOJO_SC_CHAOTIC_MAP", "simulate_sc_chaotic_map"]

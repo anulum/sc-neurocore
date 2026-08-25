@@ -179,12 +179,15 @@
     },
     "BendaHerzNeuron": {
       "behavior_tags": [
+        "adapting",
         "excitable",
-        "stochastic"
+        "phasic",
+        "rate-coded",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "d5950d38848a307ed1bbec5e7ad55eb98ee4a00bc2874c7d65348949c9be361d",
-      "stochastic": true
+      "result_sha256": "d62601dcc8027ff1193b774d3ffaa0dfaa07074dc455c1fd32ef12e94da996f7",
+      "stochastic": false
     },
     "BertramPhantomBurster": {
       "behavior_tags": [
@@ -1328,6 +1331,15 @@
       "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
       "stochastic": false
     },
+    "SCStochasticRateAdaptationNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "stochastic"
+      ],
+      "drivable": true,
+      "result_sha256": "11a1f6928160bdecc8bded6d91ad17c2cd6a40e2b2811ca1b0948aecb3b17db2",
+      "stochastic": true
+    },
     "SFANeuron": {
       "behavior_tags": [
         "adapting",
@@ -1662,7 +1674,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "861dba057e574e18d89ce35f6d19f866ab8617c59d8f8fdf9ded87b6224a606b",
+  "result_sha256": "5d7282287f08b8dd6578ec1a67b7ea0e8a8f7f19ac9de1a21fe447954377e268",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

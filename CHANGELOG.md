@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `BendaHerzNeuron` to Benda and Herz's deterministic universal
+  adaptation equations (8) and phase spike generator (45), using the paper's
+  Figure 8 square-root onset and linear steady-state adaptation example. The
+  former logistic RK4/exponential-hazard recurrence remains exactly available
+  as count-neutral `SCStochasticRateAdaptationNeuron` without paper
+  attribution. Both identities carry Python/Rust/Julia/Go/Mojo surfaces,
+  paired schemas, independent receipts, RTL/Yosys/bounded formal evidence,
+  focused benchmarks, NetworkRunner wiring, and native documentation. Only the
+  source identity increments the catalogue, now 55/155.
 - Corrected `McKeanNeuron` to the source-bound space-clamped Heaviside system
   (`dv/dt=-lambda*v+mu*H(v-a)-w+I`, `dw/dt=b*v`) and pinned the
   right-continuous `H(0)=1`, simultaneous RK4, sampled upward switching-line

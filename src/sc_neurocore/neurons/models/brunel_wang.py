@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import cast
+
+import numpy.typing as npt
 
 
 @dataclass
@@ -225,10 +228,10 @@ class BrunelWangNeuron:
 
     def simulate(
         self,
-        i_ampa_ext: object,
-        s_ampa_rec: object,
-        s_nmda_rec: object,
-        s_gaba: object,
+        i_ampa_ext: npt.ArrayLike,
+        s_ampa_rec: npt.ArrayLike,
+        s_nmda_rec: npt.ArrayLike,
+        s_gaba: npt.ArrayLike,
         *,
         backend: str = "auto",
     ) -> dict[str, object]:
@@ -261,7 +264,7 @@ class BrunelWangNeuron:
         )
         self.v = float(result["v_final"])
         self._ref_remaining = float(result["ref_final"])
-        return result
+        return cast(dict[str, object], result)
 
     def reset(self) -> None:
         """Reset dynamic state while preserving every configuration field."""

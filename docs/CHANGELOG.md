@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Benda-Herz dual-identity closure
+
+- Restored `BendaHerzNeuron` as the deterministic universal rate-adaptation
+  and phase-generator source identity, and retained the former stochastic
+  project recurrence as explicit, count-neutral
+  `SCStochasticRateAdaptationNeuron` without paper attribution.
+- Closed both contracts through the five runtime surfaces, paired schemas,
+  receipts, RTL/Yosys/bounded formal evidence, focused benchmarks,
+  NetworkRunner, and language-native documentation. The source catalogue is
+  now 55/155 complete.
+
 ### McKean dual-identity closure
 
 - Restored `McKeanNeuron` as the source McKean/Tonnelier space-clamped

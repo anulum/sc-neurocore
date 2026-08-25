@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.sc-compte-wm-network-benchmark.v1",
-  "generated_at": "2026-07-30T00:23:44.409754+00:00",
+  "generated_at": "2026-08-25T21:28:45.301952+00:00",
   "model": "SC-COMPTE-WM-NETWORK",
   "execution_path": "mojo-midpoint-rk2-radix2-fft-x86-64-v3",
   "evidence_class": "local_regression",
@@ -39,25 +39,25 @@
       11
     ],
     "load_average": [
-      10.1962890625,
-      12.3564453125,
-      13.69580078125
+      10.48193359375,
+      10.10302734375,
+      11.29736328125
     ]
   },
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_network_mojo.py": "17af715ae710ed627d15efa947b0ae64ec91c691eae5e3da681960771ac35768",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "53d530b6a10560f538a3ef98a0a4972991561653dbf098ede9e599e7d9280a75",
+    "benchmarks/bench_sc_compte_wm_network_mojo.py": "e5c744733b0edac6cce652fd86ca0785236dcd76e1828e71f4ab5d92fff6dd44",
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "e36c497ab5258f2ba79ce5be1dcb474dea2df68de0ffd7ce7a2b3e0a375f88f7",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "2e135cdd7134dca820779b9d336c801deb0d6c477efcfcb1ad38c7a931520878",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so": "3bd152ac6bd86201eb7283a7133f89b9bcddd760bc634818dc9a672e46901d75"
   },
   "samples_ns": [
-    771184162,
-    812074938,
-    844077505
+    634893441,
+    767323476,
+    703558023
   ],
-  "median_ns": 812074938,
-  "median_ns_per_network_step": 812074.938,
-  "median_cell_updates_per_second": 3152418.428654918,
+  "median_ns": 703558023,
+  "median_ns_per_network_step": 703558.023,
+  "median_cell_updates_per_second": 3638648.009561537,
   "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
   "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
   "final_state_sha256": "f437a93befcf2cb63c54eb641a0bf3f6688776a4e4f50f2103241a7b93dc9fbf",

@@ -26,6 +26,7 @@ import os
 import subprocess
 import sys
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from typing import Any, ParamSpec, TypeVar, cast
 
 import numpy as np
@@ -48,6 +49,15 @@ _AVX512_FEATURES = (
     "AVX512_CNL",
     "AVX512_ICL",
 )
+_DEDICATED_REPRODUCIBILITY_MODELS = {
+    "AiharaMapNeuron",
+    "CompteWMNeuron",
+    "IhNeuron",
+    "MATNeuron",
+    "NonResettingLIFNeuron",
+    "PersistentNaNeuron",
+    "SigmaDeltaNeuron",
+}
 
 
 def _parametrize(
@@ -95,10 +105,41 @@ sys.stdout.buffer.write(np.asarray(trace, dtype="<f8").tobytes())
 """
 
 
-def _tier3_models() -> list[str]:
+def _all_tier3_models() -> list[str]:
     return sorted(
         name for name in _CLASS_TO_MODULE if descriptor_completeness_tier(_descriptor(name)) >= 3
     )
+
+
+def _supports_generic_reproducibility(model: str) -> bool:
+    """Return whether the descriptor fits this generic batch replay harness."""
+    raw_config = _descriptor(model).reproducibility.reference_config.strip()
+    if not raw_config.startswith("{"):
+        return False
+    payload = json.loads(raw_config)
+    if not isinstance(payload, dict) or not callable(getattr(_load_class(model), "simulate", None)):
+        return False
+    if payload.get("kind") == "sampled_batch_v1":
+        return all(
+            key in payload for key in ("n_steps", "simulate_fields", "inputs", "trace_fields")
+        )
+    if payload.get("kind") == "truth_table":
+        return all(
+            key in payload
+            for key in (
+                "columns",
+                "constructor_fields",
+                "simulate_fields",
+                "expected_field",
+                "rows",
+            )
+        )
+    return "n_steps" in payload and "current" in payload
+
+
+def _tier3_models() -> list[str]:
+    """Return Tier-3 models supported by the generic descriptor replay route."""
+    return [model for model in _all_tier3_models() if _supports_generic_reproducibility(model)]
 
 
 def _descriptor(model: str) -> ModelDescriptor:
@@ -366,6 +407,13 @@ def _reference_trace_without_avx512(model: str) -> npt.NDArray[np.float64]:
     n_steps = config.get("n_steps")
     assert isinstance(n_steps, int) and not isinstance(n_steps, bool)
     environment = os.environ.copy()
+    source_root = str(Path(__file__).resolve().parents[1] / "src")
+    inherited_pythonpath = environment.get("PYTHONPATH")
+    environment["PYTHONPATH"] = (
+        os.pathsep.join((source_root, inherited_pythonpath))
+        if inherited_pythonpath
+        else source_root
+    )
     disabled = set(filter(None, environment.get("NPY_DISABLE_CPU_FEATURES", "").split(",")))
     environment["NPY_DISABLE_CPU_FEATURES"] = ",".join(sorted(disabled | set(_AVX512_FEATURES)))
     completed = subprocess.run(  # nosec B603 - fixed interpreter and audited model catalogue input
@@ -393,6 +441,13 @@ def test_at_least_one_model_reaches_tier3() -> None:
     """The polyglot models are engineering-verified, so Tier-3 is non-empty."""
 
     assert _tier3_models(), "no Tier-3 descriptors — backend/reproducibility regression"
+
+
+def test_non_generic_tier3_models_have_dedicated_reproducibility_routes() -> None:
+    """Every Tier-3 model outside the generic batch shape is explicitly routed."""
+
+    dedicated = set(_all_tier3_models()) - set(_tier3_models())
+    assert dedicated == _DEDICATED_REPRODUCIBILITY_MODELS
 
 
 @_parametrize("model", _tier3_models())

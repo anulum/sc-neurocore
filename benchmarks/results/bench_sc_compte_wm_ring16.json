@@ -67,12 +67,12 @@
   },
   "schema_version": 1,
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_ring16.py": "8880cff0ef6ecf5af747e68ff09d6f2a92f60c7e3c52668e34834561187cf256",
+    "benchmarks/bench_sc_compte_wm_ring16.py": "e70f7dd5422d7eb561aa926305078889b1ce391259b749eed08cb08853bd135b",
     "hdl/formal/catalogue/sc_compte_wm_ring16.sby": "2c2fe1a93a213f6e3407c881d800f30a0becca4f28bd5445420a909aebeb6ac1",
     "hdl/formal/catalogue/sc_compte_wm_ring16.v": "f26aa6ff2e616c1c76a7fd265e67e1ad07b79770a1a0f2215268f00fa38e6799",
-    "hdl/formal/catalogue/sc_compte_wm_ring16_formal.v": "29623e346d9cb6ed292288d2ea0083658dfa05cac967aa285604de6f742cb9d8",
+    "hdl/formal/catalogue/sc_compte_wm_ring16_formal.v": "c3498d9f55aedc90148592d0f1a7accb1f2321c65bfe4d7ae833fa76ea4aa4f9",
     "src/sc_neurocore/network/schemas/sc_compte_wm_network.json": "67f359ab7a0a0e387fcd74308d06b1c4253b17522f3df2dc0afb55d4e3ca5809",
-    "tests/test_sc_compte_wm_ring16_rtl.py": "5a02a6ba60b820206b8e51d6b9b2690c9147058d52d1cc9bc4b1c3e0b6939a5e"
+    "tests/test_sc_compte_wm_ring16_rtl.py": "742204c4fe01a55a49a1cdada6b3e8d3ffcacdab15fbea847bc2ca78942d52da"
   },
   "synthesis": {
     "area_claimed": false,

@@ -167,6 +167,11 @@ spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,
 `theta_reset` exceeds `theta_inf` the `max()` threshold floor engages on every
 spike, so the state-to-state `v >= theta` comparison is a genuine adaptive
 threshold rather than a fixed level.
+The Benda-Herz entry re-derives equations (8) and (45) with the paper's Figure 8
+square-root/linear example and validates the complete deterministic adaptation,
+phase, and event receipt. The former stochastic project recurrence is separately
+identified as `SCStochasticRateAdaptationNeuron` and carries no paper attribution.
+
 The McKean entry re-derives the exact classical fourth-order Runge-Kutta recurrence
 for its three-branch piecewise-linear membrane `f(v) = min(max(-v, v - a), 1 - v)` and
 linear recovery, with rising-edge `v >= v_peak` crossing detection and no reset; at the
