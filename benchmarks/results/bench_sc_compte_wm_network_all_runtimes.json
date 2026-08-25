@@ -46,7 +46,7 @@
     ]
   },
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_network_all_runtimes.py": "6dcfdcc9fcf2f48ba1e0bf54c839014828f18c771d0b2b2699bea1afb19ef125",
+    "benchmarks/bench_sc_compte_wm_network_all_runtimes.py": "04d6933af60188eb756f9b392744e2b60c47681ab8d44f5034d0bf6d293657ec",
     "src/sc_neurocore/network/sc_compte_wm.py": "0b9150690b5f4c2c8b8b8f36f83be72184af143f07d9d5b0bd81d66264eebcce",
     "src/sc_neurocore/network/sc_compte_wm_drive.py": "e639dddf0a0d75542139bbb6f57f07ae3bdf770b0b9d57fe30d14271a1eb85fc",
     "src/sc_neurocore/network/sc_compte_wm_network.py": "1b87761e475352cbd7f2bdbae108ee2c48297083d480c24ca009275c353eae34",

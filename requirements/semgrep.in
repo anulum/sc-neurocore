@@ -8,4 +8,5 @@
 
 # Compile with requirements/semgrep-overrides.txt. The override replaces two
 # vulnerable transitive pins that Semgrep's scan path does not require.
-semgrep==1.170.1
+cryptography==50.0.0
+semgrep==1.174.0

@@ -64,7 +64,7 @@ sequence.
   runs against the hashed `requirements/release.txt`.
 - OSV-Scanner v2 writes `security/osv_scanner.json` and
   `security/osv_scanner_summary.json`; the lane is blocking and runs with the
-  pinned Go `1.26.3` toolchain because OSV also evaluates Go standard-library
+  pinned Go `1.26.7` toolchain because OSV also evaluates Go standard-library
   vulnerability status from module metadata. The runner scans explicit
   lockfile/requirements inputs with OSV's lockfile plugin rather than recursive
   source discovery so optional development manifests cannot mask the tracked
@@ -175,10 +175,9 @@ the security packet workflow and tagged release workflow use
 REUSE lint is intentionally non-blocking in this lane while the repository-wide
 legacy SPDX coverage debt is remediated. The JSON report is still uploaded in
 the packet so the remaining file-level compliance gap is visible and measurable.
-The only OSV exception is a bounded `RUSTSEC-2024-0436` entry for the transitive
-`wgpu -> metal -> paste` path; `cargo audit` classifies that item as an
-unmaintained warning, and the exception expires on 2026-08-31 unless the GPU
-backend dependency path is upgraded or replaced earlier.
+The OSV configuration has no vulnerability exceptions. The former bounded
+`RUSTSEC-2024-0436` waiver was removed after the GPU backend moved to a wgpu
+release whose Apple backend no longer depends on the unmaintained `paste` crate.
 On tagged releases and manual tag backfills, `.github/workflows/release.yml`
 runs the release security sweep and uploads the retained
 `release-security-packet` workflow artifact even when a sweep step fails. When

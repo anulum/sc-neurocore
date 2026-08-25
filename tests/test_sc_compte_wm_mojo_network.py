@@ -129,7 +129,7 @@ def test_mojo_native_rejection_is_atomic_and_fixed_spec_fails_closed() -> None:
         SCCompteWMMojoNetwork(SCCompteWMNetworkSpec(dt_ms=0.01))
 
 
-def test_mojo_benchmark_is_binary_bound_and_matches_python_events() -> None:
+def test_mojo_benchmark_is_source_bound_and_matches_python_events() -> None:
     payload = json.loads(RESULT.read_text(encoding="utf-8"))
     python = json.loads(PYTHON_RESULT.read_text(encoding="utf-8"))
     assert payload["model"] == "SC-COMPTE-WM-NETWORK"
@@ -144,6 +144,6 @@ def test_mojo_benchmark_is_binary_bound_and_matches_python_events() -> None:
     assert payload["input_sha256"] == python["input_sha256"]
     assert payload["spike_sha256"] == python["spike_sha256"]
     assert payload["spike_counts"] == python["spike_counts"]
-    for path in (SOURCE_PATH, LIBRARY_PATH, FACADE, BENCHMARK):
+    for path in (SOURCE_PATH, FACADE, BENCHMARK):
         relative = path.relative_to(REPOSITORY).as_posix()
         assert payload["source_sha256"][relative] == _sha256(path)

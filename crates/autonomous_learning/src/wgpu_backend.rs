@@ -106,17 +106,17 @@ impl WgpuRuleLayer {
         }
         // Global Singleton context mapping replacing costly per-layer adapter querying over PCI-e
         let ctx_opt = WGPU_CONTEXT.get_or_init(|| {
-            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-                backends: wgpu::Backends::all(),
-                ..Default::default()
-            });
+            let mut instance_descriptor = wgpu::InstanceDescriptor::new_without_display_handle();
+            instance_descriptor.backends = wgpu::Backends::all();
+            let instance = wgpu::Instance::new(instance_descriptor);
 
             let adapter =
                 pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::HighPerformance,
                     compatible_surface: None,
                     force_fallback_adapter: false,
-                }))?;
+                }))
+                .ok()?;
 
             let mut limits = wgpu::Limits::downlevel_defaults();
             limits.max_storage_buffers_per_shader_stage = 16;
@@ -124,15 +124,14 @@ impl WgpuRuleLayer {
             limits.max_storage_buffer_binding_size = 1024 * 1024 * 1024;
             limits.max_buffer_size = 1024 * 1024 * 1024;
 
-            let (device, queue) = pollster::block_on(adapter.request_device(
-                &wgpu::DeviceDescriptor {
+            let (device, queue) =
+                pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
                     label: Some("Zenith WGPU Singleton Context"),
                     required_features: wgpu::Features::empty(),
                     required_limits: limits,
-                },
-                None,
-            ))
-            .ok()?;
+                    ..Default::default()
+                }))
+                .ok()?;
 
             Some(WgpuContext {
                 device: std::sync::Arc::new(device),
@@ -259,16 +258,17 @@ impl WgpuRuleLayer {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Plasticity Pipeline Layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&bind_group_layout)],
+            immediate_size: 0,
         });
 
         let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("Plasticity Compute Pipeline"),
             layout: Some(&pipeline_layout),
             module: &shader,
-            entry_point: "main",
+            entry_point: Some("main"),
             compilation_options: Default::default(),
+            cache: None,
         });
 
         let create_storage_buf = |device: &wgpu::Device, contents: &[f32]| {
@@ -430,7 +430,7 @@ impl WgpuRuleLayer {
         self.queue.submit(Some(encoder.finish()));
 
         // Wait for execution to finish
-        self.device.poll(wgpu::Maintain::Wait);
+        let _ = self.device.poll(wgpu::PollType::wait_indefinitely());
     }
 
     /// Zero the plasticity traces without changing the learned weights.
@@ -464,7 +464,7 @@ impl WgpuRuleLayer {
         self.queue
             .write_buffer(&self.param_extra2_buf, 0, bytemuck::cast_slice(&extra2));
 
-        self.device.poll(wgpu::Maintain::Wait);
+        let _ = self.device.poll(wgpu::PollType::wait_indefinitely());
     }
 
     /// Replace all weights after the caller has validated length and domain.
@@ -478,7 +478,7 @@ impl WgpuRuleLayer {
         }
         self.queue
             .write_buffer(&self.weights_buf, 0, bytemuck::cast_slice(weights));
-        self.device.poll(wgpu::Maintain::Wait);
+        let _ = self.device.poll(wgpu::PollType::wait_indefinitely());
         true
     }
 
@@ -503,7 +503,7 @@ impl WgpuRuleLayer {
             let _ = sender.send(result);
         });
 
-        self.device.poll(wgpu::Maintain::Wait);
+        self.device.poll(wgpu::PollType::wait_indefinitely()).ok()?;
         receiver.recv().ok()?.ok()?;
 
         let data = buffer_slice.get_mapped_range();

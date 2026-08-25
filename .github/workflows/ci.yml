@@ -148,7 +148,7 @@ jobs:
         with:
           toolchain: "1.97.1"
 
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: engine
           # Repo- and lockfile-bound cache key so a poisoned cross-repo cache
@@ -171,12 +171,12 @@ jobs:
           show-versioninfo: "never"
 
       # Go toolchain for the c-shared accel backends. Must match accel/go/go.mod's
-      # `go 1.26.3` (and release.yml / security-scanners.yml) — an older pin left
+      # `go 1.26.7` (and release.yml / security-scanners.yml) — an older pin left
       # `go build` rejecting the module under GOTOOLCHAIN=local. The builder also
       # sets GOTOOLCHAIN=auto as a belt-and-suspenders fallback. TIER 0: real builds.
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.3"
+          go-version: "1.26.7"
           cache-dependency-path: |
             src/sc_neurocore/accel/go/go.mod
             src/sc_neurocore/accel/go/services/hil_debugger/go.sum
@@ -187,7 +187,7 @@ jobs:
       # shadows the CI setup-python, breaking every later `python`/`pip` step.
       # Instead expose only `mojo` via a wrapper that delegates to `pixi run`,
       # keeping the CI Python primary. TIER 0: real Mojo builds, not skips.
-      - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
         with:
           # Pin the pixi executable to an exact release (the default `latest`
           # downloads/executes a moving target). Residual: the pinned release is
@@ -293,6 +293,9 @@ jobs:
           mojo build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libsc_triangular_mckean.so \
             src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo
+          ( cd src/sc_neurocore/accel/mojo/sc_compte_wm_network \
+              && mojo build --emit shared-lib --target-cpu x86-64-v3 \
+                -o libsc_compte_wm_network.so sc_compte_wm_network.mojo )
 
       - name: Enforce Mojo ISA baseline (no AVX-512 drift)
         shell: bash
@@ -496,7 +499,7 @@ jobs:
         with:
           toolchain: "1.97.1"
 
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: crates/autonomous_learning
           # Repo- and lockfile-bound cache key (see the engine workspace note).
@@ -611,7 +614,7 @@ jobs:
         with:
           toolchain: "1.97.1"
 
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: engine
           # Repo- and lockfile-bound cache key so a poisoned cross-repo cache

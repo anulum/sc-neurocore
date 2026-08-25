@@ -32,7 +32,6 @@ SOURCE_PATHS = (
     "benchmarks/bench_sc_compte_wm_network_mojo.py",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so",
 )
 
 
@@ -64,7 +63,7 @@ def _environment() -> dict[str, Any]:
 
 
 def build_payload(steps: int, repeats: int) -> dict[str, Any]:
-    """Measure fresh native runs and return source/binary-bound evidence."""
+    """Measure fresh native runs and return source-bound evidence."""
     if steps <= 0 or repeats <= 0:
         raise ValueError("steps and repeats must be positive")
     # Construct spectra and warm the shared-library boundary outside timing.

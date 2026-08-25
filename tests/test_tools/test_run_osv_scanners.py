@@ -59,16 +59,12 @@ def test_manifest_osv_command_uses_packet_runner_and_v2_pin() -> None:
     assert "tools/security_scan/osv-scanner.toml" in input_paths
 
 
-def test_osv_config_tracks_bounded_paste_unmaintained_exception() -> None:
+def test_osv_config_has_no_vulnerability_exceptions() -> None:
     config = tomllib.loads(
         (_repo_root() / "tools" / "security_scan" / "osv-scanner.toml").read_text(encoding="utf-8")
     )
 
-    ignored = {entry["id"]: entry for entry in config["IgnoredVulns"]}
-
-    assert ignored["RUSTSEC-2024-0436"]["ignoreUntil"] == "2026-08-31T23:59:59Z"
-    assert "wgpu -> metal" in ignored["RUSTSEC-2024-0436"]["reason"]
-    assert "cargo audit" in ignored["RUSTSEC-2024-0436"]["reason"]
+    assert config.get("IgnoredVulns", []) == []
 
 
 def test_semgrep_overrides_remove_mcp_waivers() -> None:
@@ -76,7 +72,7 @@ def test_semgrep_overrides_remove_mcp_waivers() -> None:
     config = tomllib.loads(
         (_repo_root() / "tools" / "security_scan" / "osv-scanner.toml").read_text(encoding="utf-8")
     )
-    ignored = {entry["id"]: entry for entry in config["IgnoredVulns"]}
+    ignored = {entry["id"]: entry for entry in config.get("IgnoredVulns", [])}
     overrides = (_repo_root() / "requirements" / "semgrep-overrides.txt").read_text(
         encoding="utf-8"
     )

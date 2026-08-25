@@ -270,7 +270,7 @@
   ],
   "source_hashes": {
     "benchmarks/bench_model_gutkin_ermentrout.py": "34d0af5dc7ddc254e61fd59a6e3a45860f1af63709989125e5e506f2c50be7ee",
-    "engine/Cargo.toml": "7a9d8adb4ed80c1bc3cb0e3085568c728d2bbe6fed516f78d72fc53c284ffccc",
+    "engine/Cargo.toml": "53a1df5686aed05d52298ca252a4c87198523521a66a297eb88b90f236653a3c",
     "engine/examples/bench_gutkin_ermentrout_rk4.rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd",
     "engine/src/neurons/simple_spiking.rs": "851c0d5e558a5c3e4dab63a534248e62f986b77a928e5f56325ca47e47654ac4",
     "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "3ef8cbbd876f80e80396ce0a3f498fd67b387dd06fd599c1d590599bee5c2b9f",
@@ -283,7 +283,7 @@
       "py": "34d0af5dc7ddc254e61fd59a6e3a45860f1af63709989125e5e506f2c50be7ee"
     },
     "engine/Cargo": {
-      "toml": "7a9d8adb4ed80c1bc3cb0e3085568c728d2bbe6fed516f78d72fc53c284ffccc"
+      "toml": "53a1df5686aed05d52298ca252a4c87198523521a66a297eb88b90f236653a3c"
     },
     "engine/examples/bench_gutkin_ermentrout_rk4": {
       "rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd"

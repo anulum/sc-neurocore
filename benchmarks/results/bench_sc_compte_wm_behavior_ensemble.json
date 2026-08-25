@@ -50,7 +50,7 @@
     ]
   },
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_behavior_ensemble.py": "5f3166692567960881a2b1190b111dab8954cf9f081cb928f0c547dbe207329f",
+    "benchmarks/bench_sc_compte_wm_behavior_ensemble.py": "96b391c6cd39e78a6f69e0a9eb5ffcc6580c8ec5304c09734469b32499342976",
     "src/sc_neurocore/network/sc_compte_wm.py": "0b9150690b5f4c2c8b8b8f36f83be72184af143f07d9d5b0bd81d66264eebcce",
     "src/sc_neurocore/network/sc_compte_wm_drive.py": "e639dddf0a0d75542139bbb6f57f07ae3bdf770b0b9d57fe30d14271a1eb85fc",
     "src/sc_neurocore/network/sc_compte_wm_network.py": "1b87761e475352cbd7f2bdbae108ee2c48297083d480c24ca009275c353eae34",

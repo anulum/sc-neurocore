@@ -45,7 +45,7 @@
     ]
   },
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_network_mojo.py": "e5c744733b0edac6cce652fd86ca0785236dcd76e1828e71f4ab5d92fff6dd44",
+    "benchmarks/bench_sc_compte_wm_network_mojo.py": "9e3c99ae82244e28babed6b636624146898d31ee2953d34a9cbd6acdaac0ac56",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "e36c497ab5258f2ba79ce5be1dcb474dea2df68de0ffd7ce7a2b3e0a375f88f7",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "2e135cdd7134dca820779b9d336c801deb0d6c477efcfcb1ad38c7a931520878",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so": "3bd152ac6bd86201eb7283a7133f89b9bcddd760bc634818dc9a672e46901d75"

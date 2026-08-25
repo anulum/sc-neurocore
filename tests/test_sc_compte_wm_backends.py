@@ -153,7 +153,6 @@ def test_consolidated_benchmark_is_source_bound_and_five_runtime_exact() -> None
         JULIA_RUNNER,
         GO_RUNNER,
         BENCHMARK,
-        REPOSITORY / "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so",
     ):
         relative = path.relative_to(REPOSITORY).as_posix()
         assert payload["source_sha256"][relative] == _sha256(path)

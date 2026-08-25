@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore hub runtime requirements
 
-fastapi>=0.100
+fastapi>=0.141.1
 httpx>=0.27
 nir>=1.0
 uvicorn[standard]>=0.20

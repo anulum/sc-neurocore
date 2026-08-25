@@ -23,7 +23,7 @@ rayon = "1.10"
 # underlying algorithm (Xoshiro256PlusPlus) is now in `rand_xoshiro`.
 rand = "0.10"
 rand_xoshiro = "0.8"
-wgpu = "0.20"
+wgpu = "29.0"
 pollster = "0.3"
 bytemuck = { version = "1.16", features = ["derive"] }
 [dev-dependencies]

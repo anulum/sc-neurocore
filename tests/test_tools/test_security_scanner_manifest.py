@@ -64,7 +64,7 @@ def test_manifest_scanner_versions_match_governed_locks() -> None:
     scanners = {scanner["name"]: scanner for scanner in tool.build_scanner_manifest()["scanners"]}
 
     assert scanners["pip-audit"]["pinned_version"] == "pip-audit==2.10.1"
-    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.170.1"
+    assert scanners["semgrep"]["pinned_version"] == "semgrep==1.174.0"
 
 
 def test_scanner_records_ownership_and_noise_fields() -> None:

@@ -46,7 +46,6 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go",
     "src/sc_neurocore/accel/go/cmd/run_sc_compte_wm_network/main.go",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py",
 )
 

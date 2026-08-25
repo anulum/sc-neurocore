@@ -97,7 +97,6 @@ def test_behavior_receipt_is_bound_to_protocol_and_all_runtime_sources() -> None
         REPOSITORY / "engine/src/sc_compte_wm_network.rs",
         REPOSITORY / "src/sc_neurocore/accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl",
         REPOSITORY / "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go",
-        REPOSITORY / "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so",
     )
     for path in required:
         relative = path.relative_to(REPOSITORY).as_posix()

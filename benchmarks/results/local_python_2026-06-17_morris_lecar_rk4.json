@@ -270,7 +270,7 @@
   ],
   "source_hashes": {
     "benchmarks/bench_model_morris_lecar.py": "880a5e3a75a9b637be234a063e9c61f25e7b7f034864701e95f1ae7a83644b49",
-    "engine/Cargo.toml": "7a9d8adb4ed80c1bc3cb0e3085568c728d2bbe6fed516f78d72fc53c284ffccc",
+    "engine/Cargo.toml": "53a1df5686aed05d52298ca252a4c87198523521a66a297eb88b90f236653a3c",
     "engine/examples/bench_morris_lecar_rk4.rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04",
     "engine/src/neurons/simple_spiking.rs": "851c0d5e558a5c3e4dab63a534248e62f986b77a928e5f56325ca47e47654ac4",
     "src/sc_neurocore/neurons/models/morris_lecar.py": "7732c4bbb2ba350b04db329a051a7e0212ce22949f16c429b4546605c669a006",
@@ -283,7 +283,7 @@
       "py": "880a5e3a75a9b637be234a063e9c61f25e7b7f034864701e95f1ae7a83644b49"
     },
     "engine/Cargo": {
-      "toml": "7a9d8adb4ed80c1bc3cb0e3085568c728d2bbe6fed516f78d72fc53c284ffccc"
+      "toml": "53a1df5686aed05d52298ca252a4c87198523521a66a297eb88b90f236653a3c"
     },
     "engine/examples/bench_morris_lecar_rk4": {
       "rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04"

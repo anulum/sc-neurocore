@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore release-only Semgrep security overrides
 
-# Semgrep 1.170.0 constrains these vulnerable transitive versions more tightly
+# Semgrep constrains these transitive versions more tightly
 # than its scan command requires. CI installs the complete hash-locked set with
 # --no-deps, and the real repository scanner is the compatibility gate.
 click==8.3.3
