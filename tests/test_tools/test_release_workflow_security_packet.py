@@ -48,12 +48,14 @@ def test_release_workflow_supports_manual_tag_backfill() -> None:
     events = _workflow_events(workflow)
     dispatch = events["workflow_dispatch"]
     assert dispatch["inputs"]["tag"]["required"] is True
+    assert dispatch["inputs"]["publish"]["required"] is True
+    assert dispatch["inputs"]["publish"]["default"] is False
 
     steps = workflow["jobs"]["release"]["steps"]
     checkout = steps[0]
     assert (
         checkout["with"]["ref"]
-        == "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
+        == "${{ github.event_name == 'workflow_dispatch' && inputs.publish && inputs.tag || github.ref }}"
     )
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
@@ -66,6 +68,7 @@ def test_release_workflow_supports_manual_tag_backfill() -> None:
         if isinstance(step, dict)
         and str(step.get("uses", "")).startswith("softprops/action-gh-release@")
     ][0]
+    assert release_step["if"] == "${{ github.event_name != 'workflow_dispatch' || inputs.publish }}"
     assert release_step["with"]["tag_name"] == "${{ env.RELEASE_TAG }}"
 
 
