@@ -158,12 +158,43 @@ dt = 0.5
 method = "euler"
 
 [dynamics]
+alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"
+beta_m = "4 * exp(-(v + 60) / 18)"
+m_inf = "alpha_m / (alpha_m + beta_m)"
+dh_dt = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - h / (1 + exp(-(v + 28) / 10)))"
+dn_dt = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+m_t_inf = "1 / (1 + exp(-(v + 52) / 5))"
+ds_dt = "(1 / (1 + exp((v + 81) / 4)) - s) / (30 + 100 / (1 + exp((v + 75) / 10)))"
+dv_dt = "(-g_na * m_inf^3 * h * (v - e_na) - g_k * n^4 * (v - e_k) - g_t * m_t_inf^2 * s * (v - e_ca) - g_l * (v - e_l) + gain * I) / c_m"
+event = "v_next >= v_threshold; reset v to -65, then s *= 0.3, preserving h and n"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "8a2f9b03467cb99d86ab7336c4228a3c43aa1dde76c388874dcd9b25d444d1bd"
+event_count = 130
+final_state = "{\"v\":-59.74359398190004,\"h\":0.5301202900051574,\"n\":0.15360400923700807,\"s\":0.0003550064659409702}"
 
 [documentation]
 slug = "models/ttype_ca_neuron"
-notes = ""
+notes = "Composite of the Wang-Buzsáki 1996 spiking base with a low-voltage-activated T-type calcium current per the Huguenard 1996 review and the Destexhe-Bal-McCormick-Sejnowski 1996 thalamic modelling lineage; the threshold-reset event and the spike-triggered inactivation collapse (s *= 0.3) are repository-specific specialisations, not a publication-exact recurrence. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"

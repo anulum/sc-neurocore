@@ -1,8 +1,12 @@
 # TTypeCaNeuron
 
 **Module:** `engine/src/neurons/channels/t_type_ca.rs`
-**Rust struct:** `TTypeCaNeuron` (line 25)
-**Reference:** Huguenard, Annu Rev Physiol 58:329, 1996; Destexhe et al., J Neurophysiol 76:2049, 1996
+**Rust struct:** `TTypeCaNeuron`
+**Reference:** Huguenard, Annu Rev Physiol 58:329, 1996; Destexhe, Bal, McCormick & Sejnowski, J Neurophysiol 76:2049, 1996
+
+The model is a repository composite: the threshold-reset event and the
+spike-triggered inactivation collapse (`s *= 0.3`) are
+repository-specific specialisations, not publication-exact claims.
 **Family:** Wang–Buzsáki Na⁺/K⁺ base + T-type Ca²⁺ (IT, low-voltage-activated)
 **State variables:** `v` (membrane potential), `h` (Na⁺ inactivation), `n` (Kdr activation), `s` (T-type inactivation)
 
@@ -197,14 +201,27 @@ $$\Delta t_{sub} = \frac{0.5}{50} = 0.01 \; \text{ms}$$
 The s gate is updated **without** the φ scaling factor (same as Ih r gate):
 `self.s += sub_dt * (s_inf - self.s) / tau_s`
 
-### Safety bounds
+### Safety bounds and invalid-input atomicity (fail-closed contract)
 
-| Variable | Lower | Upper | NaN fallback |
-|----------|-------|-------|-------------|
-| V | -100 mV | +60 mV | -65.0 mV |
-| h | 0.0 | 1.0 | 0.6 |
-| n | 0.0 | 1.0 | 0.32 |
-| s | 0.0 | 1.0 | (clamped) |
+| Variable | Lower | Upper |
+|----------|-------|-------|
+| V | -100 mV | +60 mV |
+| h | 0.0 | 1.0 |
+| n | 0.0 | 1.0 |
+| s | 0.0 | 1.0 |
+
+`step(current)` validates before touching state and computes the whole
+update on candidate values: a non-finite `current` (NaN, ±∞) raises
+`ValueError("current must be finite")` with no state change and no
+spike; an out-of-bounds configuration (descriptor ranges in
+`TTypeCaNeuron.toml`) raises `ValueError` at construction and at each
+step; a candidate that becomes non-finite mid-integration raises
+`ValueError("T-type candidate state became non-finite")` with the
+pre-step state preserved exactly. The production Rust engine
+(`try_step`), the PyO3 binding (typed `ValueError`), the standalone
+safety Rust, Go (`TryStep`), and Julia (`ArgumentError`) enforce the
+same contract; the engine `step` and Go `Step` legacy wrappers fail
+closed by returning 0 without mutating state.
 
 ---
 
@@ -377,9 +394,9 @@ step(current) → i32:
             V = -65.0
             s *= 0.3    ← spike-triggered inactivation
 
-    // Post-loop safety clamps
+    // Post-loop clamps on the candidate, then commit
     V ∈ [-100, +60], h ∈ [0,1], n ∈ [0,1], s ∈ [0,1]
-    NaN → reset to defaults
+    non-finite input or candidate → ValueError, state unchanged
 ```
 
 ### Key implementation notes
@@ -454,12 +471,18 @@ only during spike sub-steps. In FPGA, this can be a conditional multiply-by-cons
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels/t_type_ca.rs:25` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, s) |
-| NetworkRunner wired | `NeuronVariant::TTypeCa` |
+| Rust implementation | `engine/src/neurons/channels/t_type_ca.rs` (`try_step`, atomic rejection) |
+| PyO3 wrapper | `engine/src/bindings/channels/t_type_ca_neuron.rs` (typed `ValueError`; state: v, h, n, s) |
+| NetworkRunner wired | `NeuronVariant::TTypeCa` (`engine/src/network_runner/model_factory.rs`) |
 | `create_neuron("TTypeCa")` | Yes |
 | `supported_models()` | Includes "TTypeCa" |
-| coverage tests | 11 (fire, silent, rebound, s de-inactivation, spike inactivation, negative, NaN, extreme, reset, gates, performance) |
+| Standalone safety Rust | `src/sc_neurocore/accel/rust/safety/ttype_ca_neuron.rs` (full recurrence) |
+| Go service | `src/sc_neurocore/accel/go/services/ttype_ca_neuron.go` (`TryStep`, full recurrence) |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/ttype_ca_neuron.jl` (atomic `ArgumentError`) |
+| Mojo | not implemented; no kernel exists and no parity is claimed |
+| Silicon / RTL | not implemented; no HDL parity claimed |
+| Module-owned tests | `tests/test_model_ttype_ca_neuron.py`, `tests/test_ttype_ca_neuron_backends.py` |
+| Backend parity | Rust engine, safety Rust, Go, Julia vs Python: 64-step complete state ≤ 1e-12 |
 | Benchmark | `ttype_ca_1k_steps`: **3.94 ms** (3.94 µs/step), i5-11600K |
 
 ---
@@ -535,8 +558,10 @@ println!("Rebound spikes: {}, s: {:.3}", burst_spikes, neuron.s);
 4. **s gate de-inactivates at hyperpolarised potentials.** s increases during negative
    input, approaching s_∞(-90) ≈ 0.98. Verified.
 5. **Spike inactivates T-type.** Each spike reduces s by 70% (s *= 0.3). Verified.
-6. **Reset clears state.** V = -65, h = 0.6, n = 0.32, s = 0.9. Verified.
-7. **NaN safety.** Non-finite V triggers full state reset. Verified in code.
+6. **Reset clears dynamic state only.** V = -65, h = 0.6, n = 0.32, s = 0.9;
+   parameters are preserved. Verified.
+7. **Invalid input is rejected atomically.** Non-finite drive, configuration,
+   or candidate raises `ValueError` with the pre-step state preserved. Verified.
 8. **Gating bounds.** h ∈ [0,1], n ∈ [0,1], s ∈ [0,1] enforced. Verified.
 
 ---
@@ -546,7 +571,7 @@ println!("Rebound spikes: {}, s: {:.3}", burst_spikes, neuron.s);
 1. Huguenard JR (1996). Low-threshold calcium currents in central nervous system neurons.
    *Annu Rev Physiol* 58:329–348.
 
-2. Destexhe A, Bal T, McCormick DA, Bhatt DL (1996). Ionic mechanisms underlying
+2. Destexhe A, Bal T, McCormick DA, Sejnowski TJ (1996). Ionic mechanisms underlying
    synchronized oscillations and propagating waves in a model of ferret thalamic slices.
    *J Neurophysiol* 76:2049–2070.
 
@@ -559,7 +584,7 @@ println!("Rebound spikes: {}, s: {:.3}", burst_spikes, neuron.s);
 5. McCormick DA, Huguenard JR (1992). A model of the electrophysiological properties of
    thalamocortical relay neurons. *J Neurophysiol* 68:1384–1400.
 
-6. Destexhe A, Neubig M, Ulrich D, Bhatt DL (1998). Dendritic low-threshold calcium
+6. Destexhe A, Neubig M, Ulrich D, Huguenard JR (1998). Dendritic low-threshold calcium
    currents in thalamic relay cells. *J Neurosci* 18:3574–3588.
 
 7. Steriade M, McCormick DA, Sejnowski TJ (1993). Thalamocortical oscillations in the
@@ -571,7 +596,7 @@ println!("Rebound spikes: {}, s: {:.3}", burst_spikes, neuron.s);
 9. Crunelli V, Cope DW, Hughes SW (2006). Thalamic T-type Ca²⁺ channels and NREM sleep.
    *Cell Calcium* 40:175–190.
 
-10. Bourinet E, Bhatt DL, Bhatt SG, et al. (2005). Silencing of the CaV3.2 T-type calcium
+10. Bourinet E, Alloui A, Monteil A, et al. (2005). Silencing of the CaV3.2 T-type calcium
     channel gene in sensory neurons demonstrates its major role in nociception. *EMBO J*
     24:315–324.
 

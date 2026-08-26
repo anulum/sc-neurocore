@@ -63,6 +63,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "PersistentNaNeuron",
     "SigmaDeltaNeuron",
     "SKNeuron",
+    "TTypeCaNeuron",
 }
 
 

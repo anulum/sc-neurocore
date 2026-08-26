@@ -74,14 +74,65 @@ impl TTypeCaNeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let input = self.gain * current;
+    fn valid(&self) -> bool {
+        let finite = [
+            self.v,
+            self.h,
+            self.n,
+            self.s,
+            self.g_na,
+            self.g_k,
+            self.g_t,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_ca,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        ]
+        .into_iter()
+        .all(f64::is_finite);
+        finite
+            && (-100.0..=60.0).contains(&self.v)
+            && [self.h, self.n, self.s]
+                .into_iter()
+                .all(|gate| (0.0..=1.0).contains(&gate))
+            && (0.0..=200.0).contains(&self.g_na)
+            && (0.0..=100.0).contains(&self.g_k)
+            && (0.0..=20.0).contains(&self.g_t)
+            && (0.0..=5.0).contains(&self.g_l)
+            && (30.0..=70.0).contains(&self.e_na)
+            && (-100.0..=-70.0).contains(&self.e_k)
+            && (60.0..=150.0).contains(&self.e_ca)
+            && (-80.0..=-40.0).contains(&self.e_l)
+            && (0.5..=2.0).contains(&self.c_m)
+            && (0.5..=10.0).contains(&self.phi)
+            && self.dt > 0.0
+            && self.dt <= 1.0
+            && (-20.0..=20.0).contains(&self.v_threshold)
+            && (0.0..=10.0).contains(&self.gain)
+    }
+
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !current.is_finite() {
+            return Err("current must be finite");
+        }
+        if !self.valid() {
+            return Err("T-type state and parameters must satisfy the public bounds");
+        }
+
+        let mut candidate = self.clone();
+        let input = candidate.gain * current;
         let sub_steps = 50;
-        let sub_dt = self.dt / sub_steps as f64;
+        let sub_dt = candidate.dt / sub_steps as f64;
         let mut fired = 0i32;
 
         for _ in 0..sub_steps {
-            let v = self.v;
+            let v = candidate.v;
 
             // WB alpha/beta rates
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
@@ -100,42 +151,52 @@ impl TTypeCaNeuron {
             let tau_s = 30.0 + 100.0 / (1.0 + ((v + 75.0) / 10.0).exp());
 
             // Gate updates
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
-            self.s += sub_dt * (s_inf - self.s) / tau_s;
+            candidate.h +=
+                sub_dt * candidate.phi * (alpha_h * (1.0 - candidate.h) - beta_h * candidate.h);
+            candidate.n +=
+                sub_dt * candidate.phi * (alpha_n * (1.0 - candidate.n) - beta_n * candidate.n);
+            candidate.s += sub_dt * (s_inf - candidate.s) / tau_s;
 
             // Currents
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
-            let i_t = self.g_t * m_t_inf.powi(2) * self.s * (v - self.e_ca);
-            let i_l = self.g_l * (v - self.e_l);
+            let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
+            let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
+            let i_t = candidate.g_t * m_t_inf.powi(2) * candidate.s * (v - candidate.e_ca);
+            let i_l = candidate.g_l * (v - candidate.e_l);
 
-            let dv = (-i_na - i_k - i_t - i_l + input) / self.c_m;
-            self.v += sub_dt * dv;
+            let dv = (-i_na - i_k - i_t - i_l + input) / candidate.c_m;
+            candidate.v += sub_dt * dv;
+            if ![candidate.v, candidate.h, candidate.n, candidate.s]
+                .into_iter()
+                .all(f64::is_finite)
+            {
+                return Err("T-type candidate state became non-finite");
+            }
 
-            if self.v >= self.v_threshold {
+            if candidate.v >= candidate.v_threshold {
                 fired = 1;
-                self.v = -65.0;
-                self.s *= 0.3; // Spike inactivates T-type strongly
+                candidate.v = -65.0;
+                candidate.s *= 0.3; // Spike inactivates T-type strongly
             }
         }
 
-        // Safety bounds
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -65.0;
-            self.h = 0.6;
-            self.n = 0.32;
-        }
-        self.h = self.h.clamp(0.0, 1.0);
-        self.n = self.n.clamp(0.0, 1.0);
-        self.s = self.s.clamp(0.0, 1.0);
+        candidate.v = candidate.v.clamp(-100.0, 60.0);
+        candidate.h = candidate.h.clamp(0.0, 1.0);
+        candidate.n = candidate.n.clamp(0.0, 1.0);
+        candidate.s = candidate.s.clamp(0.0, 1.0);
+        *self = candidate;
 
-        fired
+        Ok(fired)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.v = -65.0;
+        self.h = 0.6;
+        self.n = 0.32;
+        self.s = 0.9;
     }
 }
 
@@ -252,10 +313,57 @@ mod tests {
     }
 
     #[test]
-    fn ttype_nan_input_stays_finite() {
+    fn ttype_nan_input_is_rejected_atomically() {
         let mut n = TTypeCaNeuron::new();
-        n.step(f64::NAN);
-        assert!(n.v.is_finite());
+        let before = n.clone();
+        assert!(n.try_step(f64::NAN).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.s, before.s);
+    }
+
+    #[test]
+    fn ttype_infinite_input_is_rejected_atomically() {
+        let mut n = TTypeCaNeuron::new();
+        let before = n.clone();
+        assert!(n.try_step(f64::INFINITY).is_err());
+        assert!(n.try_step(f64::NEG_INFINITY).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.s, before.s);
+    }
+
+    #[test]
+    fn ttype_invalid_configuration_is_rejected_atomically() {
+        let mut n = TTypeCaNeuron::new();
+        n.c_m = 0.0;
+        let before = n.clone();
+        assert!(n.try_step(1.0).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.c_m, before.c_m);
+    }
+
+    #[test]
+    fn ttype_nominal_step_matches_reference_anchor() {
+        let mut n = TTypeCaNeuron::new();
+        assert_eq!(n.try_step(5.0), Ok(0));
+        assert!((n.v - -63.168_136_340_251_8).abs() < 1.0e-12);
+        assert!((n.h - 0.648_043_259_776_001_7).abs() < 1.0e-12);
+        assert!((n.n - 0.237_216_896_172_727_87).abs() < 1.0e-12);
+        assert!((n.s - 0.892_025_427_204_723_3).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn ttype_reset_preserves_parameters() {
+        let mut n = TTypeCaNeuron::new();
+        n.g_t = 0.5;
+        for _ in 0..100 {
+            n.step(5.0);
+        }
+        n.reset();
+        assert_eq!(n.v, -65.0);
+        assert_eq!(n.s, 0.9);
+        assert_eq!(n.g_t, 0.5);
     }
 
     #[test]
