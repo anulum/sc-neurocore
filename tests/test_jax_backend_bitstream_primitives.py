@@ -11,6 +11,8 @@
 import numpy as np
 import pytest
 
+pytest.importorskip("jax")
+
 from tests.jax_backend_support import jax_pack_bitstream, jax_popcount, to_host
 
 

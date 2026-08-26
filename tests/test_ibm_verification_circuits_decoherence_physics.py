@@ -10,6 +10,10 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("qiskit")
+
 from tests.ibm_verification_circuits_support import *  # noqa: F403
 
 
