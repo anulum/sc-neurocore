@@ -19,6 +19,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 _NON_RESETTING_LIF_LOADED = False
 _SC_NON_RESETTING_ADAPTIVE_LIF_LOADED = False
 
+
 def _ensure_non_resetting_lif_loaded() -> Any:
     """Include the source MAT(1) module into Julia Main on first use."""
     global _NON_RESETTING_LIF_LOADED

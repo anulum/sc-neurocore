@@ -19,6 +19,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 _SIGMA_DELTA_LOADED = False
 _SC_SIGMA_DELTA_ACCUMULATOR_LOADED = False
 
+
 def _ensure_sigma_delta_loaded() -> Any:
     """Include the sampled APSDM source module into Julia Main."""
     global _SIGMA_DELTA_LOADED

@@ -51,7 +51,9 @@ _ensure_amari_field_loaded = _amari_field._ensure_amari_field_loaded
 simulate_amari_field = _amari_field.simulate_amari_field
 _ensure_benda_herz_loaded = _benda_herz._ensure_benda_herz_loaded
 simulate_benda_herz = _benda_herz.simulate_benda_herz
-_ensure_sc_stochastic_rate_adaptation_loaded = _benda_herz._ensure_sc_stochastic_rate_adaptation_loaded
+_ensure_sc_stochastic_rate_adaptation_loaded = (
+    _benda_herz._ensure_sc_stochastic_rate_adaptation_loaded
+)
 simulate_sc_stochastic_rate_adaptation = _benda_herz.simulate_sc_stochastic_rate_adaptation
 _ensure_brunel_wang_loaded = _brunel_wang._ensure_brunel_wang_loaded
 simulate_brunel_wang = _brunel_wang.simulate_brunel_wang
@@ -70,13 +72,14 @@ simulate_mckean = _mckean.simulate_mckean
 _ensure_sc_triangular_mckean_loaded = _mckean._ensure_sc_triangular_mckean_loaded
 _ensure_non_resetting_lif_loaded = _non_resetting_lif._ensure_non_resetting_lif_loaded
 simulate_non_resetting_lif = _non_resetting_lif.simulate_non_resetting_lif
-_ensure_sc_non_resetting_adaptive_lif_loaded = _non_resetting_lif._ensure_sc_non_resetting_adaptive_lif_loaded
+_ensure_sc_non_resetting_adaptive_lif_loaded = (
+    _non_resetting_lif._ensure_sc_non_resetting_adaptive_lif_loaded
+)
 simulate_sc_non_resetting_adaptive_lif = _non_resetting_lif.simulate_sc_non_resetting_adaptive_lif
 _ensure_sigma_delta_loaded = _sigma_delta._ensure_sigma_delta_loaded
 simulate_sigma_delta = _sigma_delta.simulate_sigma_delta
 _ensure_sc_sigma_delta_accumulator_loaded = _sigma_delta._ensure_sc_sigma_delta_accumulator_loaded
 simulate_sc_sigma_delta_accumulator = _sigma_delta.simulate_sc_sigma_delta_accumulator
-
 
 
 def _ensure_wong_wang_loaded() -> Any:

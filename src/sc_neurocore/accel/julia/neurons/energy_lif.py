@@ -19,6 +19,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 _ENERGY_LIF_LOADED = False
 _SC_NORMALIZED_ENERGY_LIF_LOADED = False
 
+
 def _ensure_energy_lif_loaded() -> Any:
     """Include the source-faithful Fardet-Levina eLIF module."""
     global _ENERGY_LIF_LOADED

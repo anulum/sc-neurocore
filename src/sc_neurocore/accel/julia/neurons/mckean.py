@@ -19,6 +19,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 _MCKEAN_LOADED = False
 _SC_TRIANGULAR_MCKEAN_LOADED = False
 
+
 def _ensure_mckean_loaded() -> Any:
     """Include the source-bound McKean module."""
     global _MCKEAN_LOADED

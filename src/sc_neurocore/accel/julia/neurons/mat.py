@@ -19,6 +19,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 _MAT_LOADED = False
 _SC_RESETTING_MAT_LOADED = False
 
+
 def _ensure_mat_loaded() -> Any:
     """Include the source MAT* module into Julia Main on first use."""
     global _MAT_LOADED

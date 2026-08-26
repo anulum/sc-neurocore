@@ -19,6 +19,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 _BENDA_HERZ_LOADED = False
 _SC_STOCHASTIC_RATE_ADAPTATION_LOADED = False
 
+
 def _ensure_benda_herz_loaded() -> Any:
     """Include the source-bound Benda-Herz module."""
     global _BENDA_HERZ_LOADED

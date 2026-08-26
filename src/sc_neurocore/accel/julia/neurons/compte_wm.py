@@ -18,6 +18,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 
 _COMPTE_WM_LOADED = False
 
+
 def _ensure_compte_wm_loaded() -> Any:
     """Include the native Compte module into Julia Main on first use."""
     global _COMPTE_WM_LOADED

@@ -91,9 +91,7 @@ def test_live_report_classifies_known_wc_a5_examples() -> None:
     assert records["butera_respiratory"]["classification"] == "schema_present"
     assert records["butera_respiratory"]["priority"] == "P0-schema-present"
     assert records["sc_six_state_thalamocortical"]["classification"] == "rk4_required"
-    assert records["sc_six_state_thalamocortical"]["priority"] == (
-        "P3-rk4-or-higher-order-blocked"
-    )
+    assert records["sc_six_state_thalamocortical"]["priority"] == ("P3-rk4-or-higher-order-blocked")
     assert records["pinsky_rinzel"]["classification"] == "multi_compartment"
     assert records["akida_neuron"]["classification"] == "event_discrete"
     assert records["astrocyte"]["classification"] == "euler_candidate"

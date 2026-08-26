@@ -18,6 +18,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 
 _AMARI_FIELD_LOADED = False
 
+
 def _ensure_amari_field_loaded() -> Any:
     """Include ``amari_field.jl`` into Julia Main on first use."""
     global _AMARI_FIELD_LOADED

@@ -18,6 +18,7 @@ from ._runtime import KERNEL_DIR as _KERNEL_DIR
 
 _BRUNEL_WANG_LOADED = False
 
+
 def _ensure_brunel_wang_loaded() -> Any:
     """Include ``brunel_wang.jl`` into Julia Main on first use."""
     global _BRUNEL_WANG_LOADED
