@@ -260,16 +260,17 @@ jobs:
       - name: Build accelerator backends (Go + Mojo)
         shell: bash
         run: |
-          REQUIRED=theta,dpi_neuron,quadratic_if,perfect_integrator,lapicque,expif,adex,sigmoid_rate,mcculloch_pitts,iqif,coba_lif,poisson,escape_rate,lgssm,ermentrout_kopell_pop,resonate_and_fire,adaptive_threshold_if,alpha,aihara_map,sc_chaotic_map,nagumo_sato_map,sc_adaptive_threshold_map,mat,sc_resetting_mat
+          REQUIRED=theta,dpi_neuron,quadratic_if,perfect_integrator,lapicque,expif,adex,sigmoid_rate,mcculloch_pitts,iqif,coba_lif,poisson,escape_rate,lgssm,ermentrout_kopell_pop,resonate_and_fire,adaptive_threshold_if,alpha,aihara_map,sc_chaotic_map,nagumo_sato_map,sc_adaptive_threshold_map,mat,sc_resetting_mat,benda_herz,sc_stochastic_rate_adaptation
           python tools/build_accel_backends.py --language go --require "$REQUIRED"
           python tools/build_accel_backends.py --language mojo --require "$REQUIRED"
 
           # Self-contained backends live in accel/<lang>/<model>/ and locate their
           # library with a Path(__file__).resolve().parent / "lib<model>.so" loader.
-          # build_accel_backends.py discovery recognises only the _ACCEL_ROOT-anchored
-          # loader idiom, so it does not yet find these; wilson_cowan, wong_wang and
-          # jansen_rit have failing compiled-backend parity/bench tests, so build them
-          # explicitly (both toolchains, per the recipes in their loaders). partition
+          # build_accel_backends.py recognises _ACCEL_ROOT-anchored loaders and direct
+          # ctypes.CDLL(Path(__file__).with_name(...)) calls, but not this path-variable
+          # idiom. Retain the audited explicit set because several members require it;
+          # wilson_cowan, wong_wang and jansen_rit have compiled-backend parity/bench
+          # tests that must execute against both toolchains. partition
           # is built too: without libpartition.so the chiplet Go/Mojo KL-refine load
           # paths never execute and the 3.12 "Chiplet hierarchical partitioner exact
           # coverage" step (--fail-under=100 on chiplet/hierarchical*.py) drops to 94%.

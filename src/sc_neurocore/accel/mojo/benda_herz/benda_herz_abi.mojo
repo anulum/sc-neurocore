@@ -5,17 +5,18 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Source/config provenance header
+# Build: mojo build --emit shared-lib -o libbenda_herz.so benda_herz_abi.mojo
 
 from std.memory import UnsafePointer
 from std.math import sqrt
 
-fn rate(a:Float64,current:Float64,gain:Float64,rheo:Float64)->Float64:
+def rate(a:Float64,current:Float64,gain:Float64,rheo:Float64)->Float64:
     return gain*sqrt(max(current-a-rheo,0.0))
 
-fn rhs_a(a:Float64,current:Float64,gain:Float64,rheo:Float64,slope:Float64,tau:Float64)->Float64:
+def rhs_a(a:Float64,current:Float64,gain:Float64,rheo:Float64,slope:Float64,tau:Float64)->Float64:
     return (slope*rate(a,current,gain,rheo)-a)/tau
 
-fn rhs_p(a:Float64,current:Float64,gain:Float64,rheo:Float64)->Float64:
+def rhs_p(a:Float64,current:Float64,gain:Float64,rheo:Float64)->Float64:
     return rate(a,current,gain,rheo)/1000.0
 
 @export

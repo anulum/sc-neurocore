@@ -5,14 +5,15 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Source/config provenance header
+# Build: mojo build --emit shared-lib -o libsc_stochastic_rate_adaptation.so sc_stochastic_rate_adaptation_abi.mojo
 
 from std.memory import UnsafePointer
 from std.math import exp
-fn rate(a:Float64,current:Float64,fmax:Float64,beta:Float64,ihalf:Float64)->Float64:
+def rate(a:Float64,current:Float64,fmax:Float64,beta:Float64,ihalf:Float64)->Float64:
     var z=beta*(current-a-ihalf)
     if z>=0.0:return fmax/(1.0+exp(-z))
     var ez=exp(z);return fmax*ez/(1.0+ez)
-fn rhs(a:Float64,current:Float64,fmax:Float64,beta:Float64,ihalf:Float64,tau:Float64,delta:Float64)->Float64:
+def rhs(a:Float64,current:Float64,fmax:Float64,beta:Float64,ihalf:Float64,tau:Float64,delta:Float64)->Float64:
     return -a/tau+delta*rate(a,current,fmax,beta,ihalf)
 @export
 def sc_sra_simulate_c(steps:Int,a0:Float64,fmax:Float64,beta:Float64,ihalf:Float64,tau:Float64,delta:Float64,dt:Float64,currents_addr:Int,uniforms_addr:Int,adaptation_addr:Int,events_addr:Int,afinal_addr:Int)->Int:

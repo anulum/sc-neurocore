@@ -48,6 +48,49 @@ def test_loader_output_paths_skips_unparsable(tmp_path: Path) -> None:
     assert MOD._loader_output_paths("go", [bad], tmp_path) == set()
 
 
+def test_self_contained_cdll_name_matches_only_direct_loader() -> None:
+    import ast
+
+    def expr(src: str) -> ast.AST:
+        return ast.parse(src, mode="eval").body
+
+    direct = 'ctypes.CDLL(str(Path(__file__).with_name("libmodel.so")))'
+    assert MOD._self_contained_cdll_name(expr(direct)) == "libmodel.so"
+    assert MOD._self_contained_cdll_name(expr('Path(__file__).with_name("libmodel.so")')) is None
+    assert (
+        MOD._self_contained_cdll_name(
+            expr('ctypes.CDLL(str(Path(other).with_name("libmodel.so")))')
+        )
+        is None
+    )
+    assert (
+        MOD._self_contained_cdll_name(
+            expr('ctypes.CDLL(str(Path(__file__).with_name("model.txt")))')
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    ("language", "source_name"),
+    (("go", "benda_herz.go"), ("mojo", "benda_herz_abi.mojo")),
+)
+def test_model57_self_contained_backend_is_discovered(language: str, source_name: str) -> None:
+    by_name = {target.name: target for target in MOD.discover_targets(language)}
+    assert by_name["benda_herz"].source.name == source_name
+    assert by_name["benda_herz"].output.name == "libbenda_herz.so"
+    assert "sc_stochastic_rate_adaptation" in by_name
+
+
+def test_model57_backends_are_required_by_ci() -> None:
+    workflow = (_repo_root() / ".github" / "workflows" / "ci.yml").read_text()
+    required_line = next(
+        line.strip() for line in workflow.splitlines() if line.strip().startswith("REQUIRED=")
+    )
+    required = set(required_line.removeprefix("REQUIRED=").split(","))
+    assert {"benda_herz", "sc_stochastic_rate_adaptation"} <= required
+
+
 def test_iter_files_prunes_vendored_dirs(tmp_path: Path) -> None:
     (tmp_path / "keep").mkdir()
     (tmp_path / "keep" / "a.py").write_text("x = 1\n")
@@ -88,6 +131,13 @@ def test_loader_lib_parts_matches_and_rejects() -> None:
 def test_conventional_source_name() -> None:
     assert MOD._conventional_source_name("libcoba_lif.so", ".go") == "coba_lif.go"
     assert MOD._conventional_source_name("plain.so", ".mojo") == "plain.mojo"
+
+
+def test_target_name_hides_matching_abi_suffix() -> None:
+    assert MOD._target_name(Path("model_abi.mojo"), Path("libmodel.so"), ".mojo") == "model"
+    assert MOD._target_name(Path("hindmarsh_rose.mojo"), Path("libhr.so"), ".mojo") == (
+        "hindmarsh_rose"
+    )
 
 
 def test_hint_pairs_and_read_text(tmp_path: Path) -> None:

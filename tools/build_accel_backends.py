@@ -126,6 +126,57 @@ def _loader_lib_parts(node: ast.AST) -> tuple[str, list[str]] | None:
     return None
 
 
+def _self_contained_cdll_name(node: ast.AST) -> str | None:
+    """Return the library name from a direct package-local ``ctypes.CDLL`` call.
+
+    Self-contained fidelity backends keep their loader and shared object in the
+    same package and use this deliberately narrow idiom::
+
+        ctypes.CDLL(str(Path(__file__).with_name("libmodel.so")))
+
+    Matching the complete call (rather than every arbitrary ``with_name`` in a
+    module) keeps discovery tied to an actual runtime loader.
+    """
+    if not (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "CDLL"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "ctypes"
+        and len(node.args) == 1
+    ):
+        return None
+    path_expr = node.args[0]
+    if (
+        isinstance(path_expr, ast.Call)
+        and isinstance(path_expr.func, ast.Name)
+        and path_expr.func.id == "str"
+        and len(path_expr.args) == 1
+    ):
+        path_expr = path_expr.args[0]
+    if not (
+        isinstance(path_expr, ast.Call)
+        and isinstance(path_expr.func, ast.Attribute)
+        and path_expr.func.attr == "with_name"
+        and len(path_expr.args) == 1
+        and isinstance(path_expr.args[0], ast.Constant)
+        and isinstance(path_expr.args[0].value, str)
+    ):
+        return None
+    receiver = path_expr.func.value
+    if not (
+        isinstance(receiver, ast.Call)
+        and isinstance(receiver.func, ast.Name)
+        and receiver.func.id == "Path"
+        and len(receiver.args) == 1
+        and isinstance(receiver.args[0], ast.Name)
+        and receiver.args[0].id == "__file__"
+    ):
+        return None
+    name = path_expr.args[0].value
+    return name if name.startswith("lib") and name.endswith(".so") else None
+
+
 def _loader_output_paths(language: str, py_files: Sequence[Path], accel_root: Path) -> set[Path]:
     """Extract the absolute ``lib*.so`` paths the ctypes loaders open.
 
@@ -134,6 +185,7 @@ def _loader_output_paths(language: str, py_files: Sequence[Path], accel_root: Pa
     makes the compiled-backend tests pass.
     """
     package_root = accel_root.parent
+    language_root = accel_root / language
     outputs: set[Path] = set()
     for py_file in py_files:
         try:
@@ -142,13 +194,14 @@ def _loader_output_paths(language: str, py_files: Sequence[Path], accel_root: Pa
             continue
         for node in ast.walk(tree):
             matched = _loader_lib_parts(node)
-            if matched is None:
-                continue
-            root, parts = matched
-            if not (parts[-1].endswith(".so") and language in parts):
-                continue
-            base = accel_root if "ACCEL" in root else package_root
-            outputs.add(base.joinpath(*parts))
+            if matched is not None:
+                root, parts = matched
+                if parts[-1].endswith(".so") and language in parts:
+                    base = accel_root if "ACCEL" in root else package_root
+                    outputs.add(base.joinpath(*parts))
+            local_name = _self_contained_cdll_name(node)
+            if local_name is not None and py_file.is_relative_to(language_root):
+                outputs.add(py_file.with_name(local_name))
     return outputs
 
 
@@ -207,7 +260,7 @@ def discover_targets(
         targets.append(
             BackendTarget(
                 language=language,
-                name=source.name[: -len(suffix)],
+                name=_target_name(source, output, suffix),
                 source=source,
                 output=output,
             )
@@ -221,6 +274,15 @@ def _conventional_source_name(output_name: str, suffix: str) -> str:
     if stem.startswith("lib"):
         stem = stem[len("lib") :]
     return stem + suffix
+
+
+def _target_name(source: Path, output: Path, suffix: str) -> str:
+    """Return the logical backend name, hiding a source-only ``_abi`` suffix."""
+    source_stem = source.name[: -len(suffix)]
+    output_stem = output.name.removeprefix("lib").removesuffix(".so")
+    if source_stem.endswith("_abi") and source_stem.removesuffix("_abi") == output_stem:
+        return output_stem
+    return source_stem
 
 
 def _go_command(target: BackendTarget) -> list[str]:
