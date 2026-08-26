@@ -286,8 +286,11 @@ mod tests {
     #[test]
     fn brunel_wang_refractory() {
         let mut n = BrunelWangNeuron::new();
-        // Drive to spike
-        while n.step(10.0) == 0 {}
+        // A unit external-AMPA gate crosses threshold under the maintained
+        // midpoint-RK2 contract. Keep the search bounded so a future numeric
+        // regression fails instead of hanging the complete Engine matrix.
+        let spiked = (0..100).any(|_| n.step(1.0) == 1);
+        assert!(spiked, "Must spike before the bounded drive window ends");
         // Immediately after spike, should be in refractory
         assert!(n.ref_remaining > 0.0, "Should be refractory after spike");
         // Should not spike during refractory

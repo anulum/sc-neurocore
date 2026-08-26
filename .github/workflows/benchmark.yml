@@ -41,6 +41,7 @@ jobs:
   benchmark:
     name: Run Benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     concurrency:
       group: metrics-branch-writer
       cancel-in-progress: false
@@ -91,6 +92,7 @@ jobs:
   python-benchmark:
     name: Python Benchmark Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -122,6 +124,7 @@ jobs:
     name: Perf-Gated Pytest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     env:
