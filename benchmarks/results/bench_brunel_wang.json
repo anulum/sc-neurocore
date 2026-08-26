@@ -149,7 +149,7 @@
     "benchmarks/bench_brunel_wang.py": "f1497406e23497b2b6d7c14a8e0b58b45b756cd68ecff5c0d1c66d264d2cfa2f",
     "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
     "engine/src/bindings/population/brunel_wang.rs": "9d6ba36ff2a8a107a9c26f21e97605c2b88a8ba6ccaaa04f580d2091425a82b2",
-    "engine/src/neurons/simple_spiking/brunel_wang.rs": "358eae43bf7fb59338f05f1993fd1d4ae98d982c0c4016036d259a9fa599b214",
+    "engine/src/neurons/simple_spiking/brunel_wang.rs": "1d6aa052a502497d055061dfd17627dd9c408d123da15493ab6c5751b90c03a2",
     "hdl/formal/catalogue/sc_brunel_wang.v": "bbe1e193f0b3486cc8d3a42aef94b77d47205ade4bc6a54f7d642dd844a00fbd",
     "src/sc_neurocore/accel/brunel_wang.py": "915961af0e285ff964878bcbeef4b743e128a6cd0de3d31ec82297fa5c9d7fb9",
     "src/sc_neurocore/accel/go/brunel_wang/brunel_wang.go": "dc2de7a13924a66db96944eeec491facc51b9634d99634890a52c67aa07e6c42",
