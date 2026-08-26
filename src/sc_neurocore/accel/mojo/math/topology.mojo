@@ -30,44 +30,44 @@ alias TOLERANCE: Float64 = 1e-12
 
 
 @always_inline
-fn _ptr(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
+def _ptr(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
     return UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=addr)
 
 
-fn _alloc(n: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
+def _alloc(n: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
     var raw = alloc[Float64](n)
     return UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=Int(raw))
 
 
-fn _alloc_int(n: Int) -> UnsafePointer[Int, MutAnyOrigin]:
+def _alloc_int(n: Int) -> UnsafePointer[Int, MutAnyOrigin]:
     var raw = alloc[Int](n)
     return UnsafePointer[Int, MutAnyOrigin](unsafe_from_address=Int(raw))
 
 
-fn _free(p: UnsafePointer[Float64, MutAnyOrigin]):
+def _free(p: UnsafePointer[Float64, MutAnyOrigin]):
     var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
-fn _free_int(p: UnsafePointer[Int, MutAnyOrigin]):
+def _free_int(p: UnsafePointer[Int, MutAnyOrigin]):
     var raw = UnsafePointer[Int, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
 @always_inline
-fn _inf() -> Float64:
+def _inf() -> Float64:
     var big: Float64 = 1.0e308
     return big * 10.0
 
 
 @always_inline
-fn _is_inf(x: Float64) -> Bool:
+def _is_inf(x: Float64) -> Bool:
     return x > 1.0e307
 
 
 # ─── BFS hop-count all-pairs distances (flat n*n, row-major) ──────
 
-fn _shortest_path_distances(
+def _shortest_path_distances(
     graph: UnsafePointer[Float64, MutAnyOrigin], n: Int
 ) -> UnsafePointer[Float64, MutAnyOrigin]:
     var distances = _alloc(n * n)
@@ -95,7 +95,7 @@ fn _shortest_path_distances(
     return distances
 
 
-fn _lazy_random_walk(
+def _lazy_random_walk(
     graph: UnsafePointer[Float64, MutAnyOrigin], n: Int, node: Int
 ) -> UnsafePointer[Float64, MutAnyOrigin]:
     var distribution = _alloc(n)
@@ -118,7 +118,7 @@ fn _lazy_random_walk(
 # ─── exact Wasserstein-1 via successive-shortest-path min-cost flow ──
 # Returns NaN on an infeasible transport sub-problem.
 
-fn _minimum_transport_cost(
+def _minimum_transport_cost(
     source: UnsafePointer[Float64, MutAnyOrigin],
     target: UnsafePointer[Float64, MutAnyOrigin],
     distances: UnsafePointer[Float64, MutAnyOrigin],
@@ -238,7 +238,7 @@ fn _minimum_transport_cost(
 
 
 @export
-fn ollivier_ricci_curvature_c(knm_addr: Int, n: Int, i: Int, j: Int) -> Float64:
+def ollivier_ricci_curvature_c(knm_addr: Int, n: Int, i: Int, j: Int) -> Float64:
     var graph = _ptr(knm_addr)
     if i == j:
         return 0.0

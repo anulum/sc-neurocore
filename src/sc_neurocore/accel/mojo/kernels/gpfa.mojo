@@ -36,26 +36,26 @@ comptime F64Ptr = UnsafePointer[Float64, MutAnyOrigin]
 # ─── pointer / allocation helpers (mirror lgssm.mojo) ────────────
 
 @always_inline
-fn _ptr(addr: Int) -> F64Ptr:
+def _ptr(addr: Int) -> F64Ptr:
     return F64Ptr(unsafe_from_address=addr)
 
 
-fn _alloc(n: Int) -> F64Ptr:
+def _alloc(n: Int) -> F64Ptr:
     var raw = alloc[Float64](n)
     return F64Ptr(unsafe_from_address=Int(raw))
 
 
-fn _free(p: F64Ptr):
+def _free(p: F64Ptr):
     var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
-fn _zero(p: F64Ptr, n: Int):
+def _zero(p: F64Ptr, n: Int):
     for i in range(n):
         p[i] = 0.0
 
 
-fn _identity(p: F64Ptr, n: Int):
+def _identity(p: F64Ptr, n: Int):
     _zero(p, n * n)
     for i in range(n):
         p[i * n + i] = 1.0
@@ -66,7 +66,7 @@ fn _identity(p: F64Ptr, n: Int):
 # Lower Cholesky factor L (row-major, upper triangle left at zero) of the
 # symmetric positive-definite matrix `a`. GPFA only factors SPD matrices, so
 # Cholesky is the stable, ~2x cheaper choice over a general LU elimination.
-fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
+def _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
     _zero(l, n * n)
     for j in range(n):
         var d = a[j * n + j]
@@ -85,7 +85,7 @@ fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
 # Solve M X = B for `cols` right-hand sides (B and X row-major n×cols) given the
 # lower Cholesky factor L of M, via forward and back substitution. `y_work` is a
 # caller-supplied scratch buffer of length n.
-fn _chol_solve(l: F64Ptr, n: Int, b: F64Ptr, cols: Int, x_out: F64Ptr, y_work: F64Ptr):
+def _chol_solve(l: F64Ptr, n: Int, b: F64Ptr, cols: Int, x_out: F64Ptr, y_work: F64Ptr):
     for c in range(cols):
         for i in range(n):
             var s = b[i * cols + c]
@@ -101,7 +101,7 @@ fn _chol_solve(l: F64Ptr, n: Int, b: F64Ptr, cols: Int, x_out: F64Ptr, y_work: F
 
 
 # log|M| = 2 Σ log L_ii from the Cholesky factor.
-fn _chol_logdet(l: F64Ptr, n: Int) -> Float64:
+def _chol_logdet(l: F64Ptr, n: Int) -> Float64:
     var s: Float64 = 0.0
     for i in range(n):
         s += log(l[i * n + i])
@@ -115,7 +115,7 @@ fn _chol_logdet(l: F64Ptr, n: Int) -> Float64:
 # log-determinant log|K|. AᵀR⁻¹A adds (CᵀR⁻¹C)[j,k] along the time-diagonal of each
 # (j,k) block. Each kernel carries a 1e-6 jitter (the model kernel) and is
 # Cholesky-factored once for both its inverse block and its log-determinant.
-fn _gpfa_precision(
+def _gpfa_precision(
     c: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
     nn: Int, nb: Int, nl: Int,
     m_out: F64Ptr,
@@ -174,7 +174,7 @@ fn _gpfa_precision(
 # E-step: posterior mean x_out (flat nl·nb) and second moment xx_out (nl×nl). The
 # precision M is Cholesky-factored once; the same factor yields the mean
 # (M⁻¹ AᵀR⁻¹y) and the covariance (M⁻¹).
-fn _e_step(
+def _e_step(
     y: F64Ptr, c: F64Ptr, d: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
     nn: Int, nb: Int, nl: Int,
     x_out: F64Ptr, xx_out: F64Ptr,
@@ -224,7 +224,7 @@ fn _e_step(
 
 # M-step: update C (nn×nl), d (nn) and the noise diagonal R (nn). Reads only y,
 # x_post and xx_post, so it writes straight into the persistent c/d/r buffers.
-fn _m_step(
+def _m_step(
     y: F64Ptr, x_post: F64Ptr, xx_post: F64Ptr,
     nn: Int, nb: Int, nl: Int,
     c_out: F64Ptr, d_out: F64Ptr, r_out: F64Ptr,
@@ -291,7 +291,7 @@ fn _m_step(
 # matrix-determinant lemma, routed through the n_state×n_state precision M:
 #   yᵀ Σ⁻¹ y = yᵀ R⁻¹ y − (AᵀR⁻¹y)ᵀ M⁻¹ (AᵀR⁻¹y)
 #   log|Σ|   = log|M| + log|K| + log|R_big|
-fn _log_likelihood(
+def _log_likelihood(
     y: F64Ptr, c: F64Ptr, d: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
     nn: Int, nb: Int, nl: Int,
 ) -> Float64:
@@ -349,7 +349,7 @@ fn _log_likelihood(
 # ─── exported EM driver ──────────────────────────────────────────
 
 @export
-fn gpfa_em_c(
+def gpfa_em_c(
     y_addr: Int, c0_addr: Int, d0_addr: Int, r0_addr: Int, tau_addr: Int,
     n_neurons: Int, n_bins: Int, n_latents: Int, max_iter: Int,
     tol: Float64,

@@ -24,27 +24,27 @@ comptime F64Ptr = UnsafePointer[Float64, MutAnyOrigin]
 
 
 @always_inline
-fn _ptr(addr: Int) -> F64Ptr:
+def _ptr(addr: Int) -> F64Ptr:
     return F64Ptr(unsafe_from_address=addr)
 
 
-fn _alloc(n: Int) -> F64Ptr:
+def _alloc(n: Int) -> F64Ptr:
     var raw = alloc[Float64](n)
     return F64Ptr(unsafe_from_address=Int(raw))
 
 
-fn _free(p: F64Ptr):
+def _free(p: F64Ptr):
     var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
-fn _zero(p: F64Ptr, n: Int):
+def _zero(p: F64Ptr, n: Int):
     for i in range(n):
         p[i] = 0.0
 
 
 # Lower Cholesky factor L (row-major) of the SPD matrix `a`.
-fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
+def _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
     _zero(l, n * n)
     for j in range(n):
         var d = a[j * n + j]
@@ -61,7 +61,7 @@ fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
 
 
 # log|A| = 2 Σ log Lᵢᵢ for an SPD matrix via Cholesky.
-fn _logdet_spd(a: F64Ptr, n: Int) -> Float64:
+def _logdet_spd(a: F64Ptr, n: Int) -> Float64:
     var l = _alloc(n * n)
     _cholesky(a, n, l)
     var s: Float64 = 0.0
@@ -73,7 +73,7 @@ fn _logdet_spd(a: F64Ptr, n: Int) -> Float64:
 
 # Unbiased (ddof=1) row covariance of `data` (n_rows × n_cols) with `eps` jitter on
 # the diagonal, written row-major into `cov_out` (n_rows × n_rows).
-fn _covariance(data: F64Ptr, n_rows: Int, n_cols: Int, eps: Float64, cov_out: F64Ptr):
+def _covariance(data: F64Ptr, n_rows: Int, n_cols: Int, eps: Float64, cov_out: F64Ptr):
     var means = _alloc(n_rows)
     for i in range(n_rows):
         var s: Float64 = 0.0
@@ -96,7 +96,7 @@ fn _covariance(data: F64Ptr, n_rows: Int, n_cols: Int, eps: Float64, cov_out: F6
 
 
 # Gaussian mutual information MI(X;Y) = 0.5 (log|Cov_X| + log|Cov_Y| - log|Cov_XY|).
-fn _gaussian_mi(x: F64Ptr, nx: Int, y: F64Ptr, ny: Int, n_cols: Int) -> Float64:
+def _gaussian_mi(x: F64Ptr, nx: Int, y: F64Ptr, ny: Int, n_cols: Int) -> Float64:
     var eps: Float64 = 1e-10
     var cov_x = _alloc(nx * nx)
     _covariance(x, nx, n_cols, eps, cov_x)
@@ -125,7 +125,7 @@ fn _gaussian_mi(x: F64Ptr, nx: Int, y: F64Ptr, ny: Int, n_cols: Int) -> Float64:
 
 
 @export
-fn phi_star_c(
+def phi_star_c(
     data_addr: Int, n_channels: Int, n_timesteps: Int, tau: Int, out_addr: Int
 ):
     var data = _ptr(data_addr)

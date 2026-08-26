@@ -26,34 +26,34 @@ comptime F64Ptr = UnsafePointer[Float64, MutAnyOrigin]
 
 
 @always_inline
-fn _ptr(addr: Int) -> F64Ptr:
+def _ptr(addr: Int) -> F64Ptr:
     return F64Ptr(unsafe_from_address=addr)
 
 
-fn _alloc(n: Int) -> F64Ptr:
+def _alloc(n: Int) -> F64Ptr:
     var raw = alloc[Float64](n)
     return F64Ptr(unsafe_from_address=Int(raw))
 
 
-fn _free(p: F64Ptr):
+def _free(p: F64Ptr):
     var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
-fn _zero(p: F64Ptr, n: Int):
+def _zero(p: F64Ptr, n: Int):
     for i in range(n):
         p[i] = 0.0
 
 
 @always_inline
-fn _nan() -> Float64:
+def _nan() -> Float64:
     # IEEE 0/0 = NaN; the runtime variable prevents constant folding.
     var z: Float64 = 0.0
     return z / z
 
 
 # Lower Cholesky factor L (row-major) of the SPD matrix `a`.
-fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
+def _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
     _zero(l, n * n)
     for j in range(n):
         var d = a[j * n + j]
@@ -73,7 +73,7 @@ fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
 
 # Unbiased (ddof=1) feature covariance of `data` (n_rows × d) over its rows, with
 # `eps` jitter on the diagonal, written row-major into `cov_out` (d × d).
-fn _feature_covariance(data: F64Ptr, n_rows: Int, d: Int, eps: Float64, cov_out: F64Ptr):
+def _feature_covariance(data: F64Ptr, n_rows: Int, d: Int, eps: Float64, cov_out: F64Ptr):
     var means = _alloc(d)
     for j in range(d):
         means[j] = 0.0
@@ -101,7 +101,7 @@ fn _feature_covariance(data: F64Ptr, n_rows: Int, d: Int, eps: Float64, cov_out:
 
 # Squared Mahalanobis distances of each row of `points` (n_pts × d) from the
 # cluster mean, via the Cholesky factor of the cluster covariance.
-fn _mahalanobis_sq(
+def _mahalanobis_sq(
     cluster: F64Ptr, n_cluster: Int, points: F64Ptr, n_pts: Int, d: Int, dst: F64Ptr
 ):
     var mu = _alloc(d)
@@ -137,7 +137,7 @@ fn _mahalanobis_sq(
 
 
 # Insertion sort of `a` (length n) in place — n is the noise count.
-fn _sort(a: F64Ptr, n: Int):
+def _sort(a: F64Ptr, n: Int):
     for i in range(1, n):
         var key = a[i]
         var j = i - 1
@@ -148,7 +148,7 @@ fn _sort(a: F64Ptr, n: Int):
 
 
 @export
-fn isolation_distance_c(
+def isolation_distance_c(
     cluster_addr: Int,
     n_cluster: Int,
     noise_addr: Int,
@@ -174,7 +174,7 @@ fn isolation_distance_c(
 
 
 @export
-fn l_ratio_c(
+def l_ratio_c(
     cluster_addr: Int,
     n_cluster: Int,
     noise_addr: Int,

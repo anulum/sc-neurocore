@@ -28,36 +28,36 @@ comptime IntPtr = UnsafePointer[Int, MutAnyOrigin]
 
 
 @always_inline
-fn _ptr(addr: Int) -> F64Ptr:
+def _ptr(addr: Int) -> F64Ptr:
     return F64Ptr(unsafe_from_address=addr)
 
 
 @always_inline
-fn _fabs(x: Float64) -> Float64:
+def _fabs(x: Float64) -> Float64:
     return x if x >= 0.0 else -x
 
 
-fn _alloc(n: Int) -> F64Ptr:
+def _alloc(n: Int) -> F64Ptr:
     var raw = alloc[Float64](n)
     return F64Ptr(unsafe_from_address=Int(raw))
 
 
-fn _free(p: F64Ptr):
+def _free(p: F64Ptr):
     var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
-fn _alloc_int(n: Int) -> IntPtr:
+def _alloc_int(n: Int) -> IntPtr:
     var raw = alloc[Int](n)
     return IntPtr(unsafe_from_address=Int(raw))
 
 
-fn _free_int(p: IntPtr):
+def _free_int(p: IntPtr):
     var raw = UnsafePointer[Int, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
 
-fn _zero(p: F64Ptr, n: Int):
+def _zero(p: F64Ptr, n: Int):
     for i in range(n):
         p[i] = 0.0
 
@@ -65,7 +65,7 @@ fn _zero(p: F64Ptr, n: Int):
 # Descending eigenvalues + sign-canonicalised eigenvectors (row-major) of the
 # symmetric matrix `a` (n × n) via cyclic Jacobi. Writes into `vals_out` (n) and
 # `vecs_out` (n × n, row-major).
-fn _jacobi_eigen(a_in: F64Ptr, n: Int, vals_out: F64Ptr, vecs_out: F64Ptr):
+def _jacobi_eigen(a_in: F64Ptr, n: Int, vals_out: F64Ptr, vecs_out: F64Ptr):
     var a = _alloc(n * n)
     for i in range(n * n):
         a[i] = a_in[i]
@@ -148,7 +148,7 @@ fn _jacobi_eigen(a_in: F64Ptr, n: Int, vals_out: F64Ptr, vecs_out: F64Ptr):
 
 
 # Lower Cholesky factor L (row-major) of the SPD matrix `a` (n × n).
-fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
+def _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
     _zero(l, n * n)
     for j in range(n):
         var d = a[j * n + j]
@@ -168,7 +168,7 @@ fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
 
 # Solve A X = B for the Cholesky factor `l` of A (n × n); B row-major n × k →
 # X row-major n × k.
-fn _cholesky_solve(l: F64Ptr, n: Int, b: F64Ptr, k: Int, x: F64Ptr):
+def _cholesky_solve(l: F64Ptr, n: Int, b: F64Ptr, k: Int, x: F64Ptr):
     var y = _alloc(n)
     for col in range(k):
         for i in range(n):
@@ -185,7 +185,7 @@ fn _cholesky_solve(l: F64Ptr, n: Int, b: F64Ptr, k: Int, x: F64Ptr):
 
 
 # A⁻¹ for the SPD matrix `a` (n × n) via Cholesky, written into `out` (n × n).
-fn _spd_inverse(a: F64Ptr, n: Int, out_buf: F64Ptr):
+def _spd_inverse(a: F64Ptr, n: Int, out_buf: F64Ptr):
     var l = _alloc(n * n)
     _cholesky(a, n, l)
     var eye = _alloc(n * n)
@@ -197,7 +197,7 @@ fn _spd_inverse(a: F64Ptr, n: Int, out_buf: F64Ptr):
     _free(eye)
 
 
-fn _explained(vals: F64Ptr, n: Int, nc: Int, expl_out: F64Ptr):
+def _explained(vals: F64Ptr, n: Int, nc: Int, expl_out: F64Ptr):
     var total: Float64 = 0.0
     for i in range(n):
         total += vals[i]
@@ -208,7 +208,7 @@ fn _explained(vals: F64Ptr, n: Int, nc: Int, expl_out: F64Ptr):
             expl_out[c] = vals[c]
 
 
-fn _pca_core(mat: F64Ptr, d: Int, t: Int, nc: Int, proj_out: F64Ptr, expl_out: F64Ptr):
+def _pca_core(mat: F64Ptr, d: Int, t: Int, nc: Int, proj_out: F64Ptr, expl_out: F64Ptr):
     var denom = Float64(t - 1)
     if denom < 1.0:
         denom = 1.0
@@ -236,7 +236,7 @@ fn _pca_core(mat: F64Ptr, d: Int, t: Int, nc: Int, proj_out: F64Ptr, expl_out: F
     _free(vecs)
 
 
-fn _demixed_core(
+def _demixed_core(
     mean_mat: F64Ptr, n_cond: Int, t: Int, nc: Int, proj_out: F64Ptr, expl_out: F64Ptr
 ):
     var cov = _alloc(t * t)
@@ -264,7 +264,7 @@ fn _demixed_core(
     _free(vecs)
 
 
-fn _fa_core(mat: F64Ptr, d: Int, t: Int, nf: Int, n_iter: Int, load_out: F64Ptr, psi_out: F64Ptr):
+def _fa_core(mat: F64Ptr, d: Int, t: Int, nf: Int, n_iter: Int, load_out: F64Ptr, psi_out: F64Ptr):
     var tf = Float64(t)
     var cov = _alloc(d * d)
     for i in range(d):
@@ -366,21 +366,21 @@ fn _fa_core(mat: F64Ptr, d: Int, t: Int, nf: Int, n_iter: Int, load_out: F64Ptr,
 
 
 @export
-fn pca_from_matrix_c(
+def pca_from_matrix_c(
     mat_addr: Int, d: Int, t: Int, nc: Int, proj_addr: Int, expl_addr: Int
 ):
     _pca_core(_ptr(mat_addr), d, t, nc, _ptr(proj_addr), _ptr(expl_addr))
 
 
 @export
-fn demixed_from_matrix_c(
+def demixed_from_matrix_c(
     mat_addr: Int, n_cond: Int, t: Int, nc: Int, proj_addr: Int, expl_addr: Int
 ):
     _demixed_core(_ptr(mat_addr), n_cond, t, nc, _ptr(proj_addr), _ptr(expl_addr))
 
 
 @export
-fn factor_analysis_c(
+def factor_analysis_c(
     mat_addr: Int, d: Int, t: Int, nf: Int, load_addr: Int, psi_addr: Int, n_iter: Int
 ):
     _fa_core(_ptr(mat_addr), d, t, nf, n_iter, _ptr(load_addr), _ptr(psi_addr))

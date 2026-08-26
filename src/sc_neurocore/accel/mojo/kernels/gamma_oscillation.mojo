@@ -13,11 +13,11 @@
 # Excitatory and Inhibitory Neurons with Sparse, Random Connectivity.
 # Neural Computation 15(3): 509-538.
 
-from memory import UnsafePointer
-from math import exp, sqrt
+from std.memory import UnsafePointer
+from std.math import exp, sqrt
 
 @export
-fn py_ping_step(
+def py_ping_step(
     n_excit: Int,
     n_inhib: Int,
     v_e_addr: Int,
