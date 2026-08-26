@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Hill-Tononi source schema
+
+[metadata]
+schema_version=2
+name="HillTononiNeuron"
+author="Hill, S.; Tononi, G."
+year=2005
+doi="10.1152/jn.00915.2004"
+description="Hybrid cortical-excitatory waking neuron with dynamic threshold and depolarisation-dependent potassium current"
+[state]
+v=-70.0
+theta=-51.0
+d_k=0.001
+m_h=0.2871859013825026
+m_t=0.1450215950687922
+h_t=0.03732688734412946
+spike_timer=0.0
+[parameters]
+g_na_l=0.2
+g_k_l=1.0
+g_na_p=0.5
+g_dk=0.5
+g_h=0.0
+g_t=0.0
+e_na=30.0
+e_k=-90.0
+e_na_p=30.0
+e_dk=-90.0
+e_h=-40.0
+e_t=0.0
+n_na_p=3.0
+n_t=2.0
+tau_m=16.0
+theta_eq=-51.0
+tau_theta=2.0
+g_spike=1.0
+t_spike=2.0
+tau_spike=1.75
+tau_d=1250.0
+d_influx_peak=0.025
+d_threshold=-10.0
+d_slope=5.0
+d_eq=0.001
+d_half=0.25
+dt=0.25
+[integration]
+dt=0.25
+method="rk4"
+substeps=1
+[dynamics]
+v="(I_NaL+I_KL+I_NaP+I_DK+I_h+I_T+I_ext)/tau_m+I_spike"
+theta="-(theta-theta_eq)/tau_theta"
+d_k="(tau_d*d_influx(v)+d_eq-d_k)/tau_d"
+m_h="(m_h_inf(v)-m_h)/tau_m_h(v)"
+m_t="(m_t_inf(v)-m_t)/tau_m_t(v)"
+h_t="(h_t_inf(v)-h_t)/tau_h_t(v)"
+[threshold]
+condition="spike_timer <= 0 and candidate_v >= candidate_theta"
+detection="sampled"
+[extensions]
+source_equations="Hill and Tononi 2005 model-neuron equations and Table 2"
+implementation_note="Maintained NEST ht_neuron disambiguates printed I_NaP, D, and I_T parentheses"
+profile="cortical-excitatory waking; optional I_h and I_T disabled"
+spike="set v and theta to e_na, then apply the finite potassium pulse for t_spike"
+identity_note="SCSixStateThalamocorticalNeuron retains the former project HH/Na-pump recurrence"
+hardware_note="No RTL, synthesis, formal-equivalence, timing, PPA, or device claim"

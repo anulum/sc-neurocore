@@ -80,7 +80,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Hardware evidence | Committed synthesis and report artefacts exist for selected flows, including the bounded SC Compte ring-connectivity representative; power/energy and physical-device claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
 | Polyglot surfaces | Source-checkout research and parity surfaces, not default user install requirements. |
-| High-fidelity neurons | 55 of 155 catalogue models meet the strict five-runtime polyglot-completion bar; see the [per-model evidence table](docs/api/model_fidelity_status.md). |
+| High-fidelity neurons | 57 of 155 catalogue models meet the strict five-runtime polyglot-completion bar; see the [per-model evidence table](docs/api/model_fidelity_status.md). |
 | Regulated deployment | Readiness tooling and evidence categories only; no certification or field approval claim. |
 
 ## Version and Capability Snapshot
@@ -95,13 +95,13 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 |---|---:|
 | Package version | 3.16.0 |
 | Public API exports | 45 |
-| Python model source modules | 163 |
-| Python model classes | 167 |
+| Python model source modules | 164 |
+| Python model classes | 168 |
 | Model documentation pages | 185 |
 | Rust PyO3 model wrappers | 196 |
 | Optional extras | 28 |
-| Python test files | 4692 |
-| Public documentation pages | 601 |
+| Python test files | 4695 |
+| Public documentation pages | 602 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.

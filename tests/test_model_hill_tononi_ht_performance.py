@@ -16,7 +16,7 @@ from tests.performance_guard import assert_load_tolerant_throughput
 
 class TestHTPerformance:
     def test_isolation_throughput(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         N = 20_000
         t0 = time.perf_counter()
         for _ in range(N):
@@ -24,13 +24,13 @@ class TestHTPerformance:
         elapsed = time.perf_counter() - t0
         rate = N / elapsed
         assert_load_tolerant_throughput(
-            label="Hill-Tononi isolation",
+            label="SC six-state thalamocortical isolation",
             observed_per_second=rate,
             strict_minimum_per_second=5_000.0,
         )
 
     def test_network_throughput(self):
-        pop = Population(HillTononiNeuron, n=20, label="bench")
+        pop = Population(SCSixStateThalamocorticalNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
@@ -40,5 +40,7 @@ class TestHTPerformance:
         neuron_steps = 20 * 500
         rate = neuron_steps / elapsed
         assert_load_tolerant_throughput(
-            label="Hill-Tononi network", observed_per_second=rate, strict_minimum_per_second=1_000.0
+            label="SC six-state thalamocortical network",
+            observed_per_second=rate,
+            strict_minimum_per_second=1_000.0,
         )

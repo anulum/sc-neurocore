@@ -707,12 +707,13 @@
     },
     "HillTononiNeuron": {
       "behavior_tags": [
-        "bursting",
+        "adapting",
         "excitable",
-        "phasic"
+        "rate-coded",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "7c0e6cf74e822383ebef48db4fd7603eee32459e5140032165f944b231cded4d",
+      "result_sha256": "3a20123e21b090464de2f31bc00de84d945cdc1702b07384e8cbc03d06b2109e",
       "stochastic": false
     },
     "HindmarshRoseNeuron": {
@@ -1735,7 +1736,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "b9282f9fd991c923ef125e0603a9b050a5b98f27ce7031d6192d8eb54a7d97cf",
+  "result_sha256": "3daf33a4b773bdd6ba49fefc607ef41e738b96a670f04c2e00d94ab414d1093d",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

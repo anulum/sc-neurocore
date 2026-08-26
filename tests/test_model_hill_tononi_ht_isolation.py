@@ -15,29 +15,29 @@ from tests.model_hill_tononi_support import *  # noqa: F403
 
 class TestHTIsolation:
     def test_defaults(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         assert n.v == -65.0 and n.na_i == 5.0
         assert n.h_na == 0.6 and n.n_k == 0.3
         assert n.m_h == 0.0 and n.h_t == 0.9
         assert n.g_kna == 1.33 and n.dt == 0.05
 
     def test_six_state_variables(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for attr in ["v", "h_na", "n_k", "m_h", "h_t", "na_i"]:
             assert hasattr(n, attr)
 
     def test_step_returns_binary(self):
-        assert HillTononiNeuron().step(0.0) in (0, 1)
+        assert SCSixStateThalamocorticalNeuron().step(0.0) in (0, 1)
 
     def test_state_finite_long_run(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for _ in range(50_000):
             n.step(0.0)
         for attr in ["v", "h_na", "n_k", "m_h", "h_t", "na_i"]:
             assert np.isfinite(getattr(n, attr)), f"{attr} not finite"
 
     def test_reset_restores_defaults(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for _ in range(5000):
             n.step(2.0)
         n.reset()
@@ -46,7 +46,7 @@ class TestHTIsolation:
     def test_deterministic(self):
         traces = []
         for _ in range(2):
-            n = HillTononiNeuron()
+            n = SCSixStateThalamocorticalNeuron()
             trace = [(n.step(0.0), n.v, n.na_i) for _ in range(500)]
             traces.append(trace)
         assert traces[0] == traces[1]

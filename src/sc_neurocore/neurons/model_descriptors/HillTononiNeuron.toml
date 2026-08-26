@@ -11,18 +11,25 @@ schema_version = 2
 name = "HillTononiNeuron"
 class_name = "HillTononiNeuron"
 module = "hill_tononi"
-display_name = ""
-summary = "Hill & Tononi 2005 — thalamocortical sleep/wake model."
+display_name = "Hill–Tononi cortical waking neuron"
+summary = "Hill and Tononi 2005 hybrid cortical neuron with dynamic threshold and depolarisation-dependent potassium current."
 family = "Conductance-based"
 category = "conductance-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "single-cell sleep/wake simulations",
+    "cross-runtime recurrence validation",
+]
+hardware_fit = [
+    "software reference",
+    "transcendental RK4 requires an explicitly validated hardware approximation",
+]
 behavior_tags = [
-    "bursting",
+    "adapting",
     "excitable",
-    "phasic",
+    "rate-coded",
+    "tonic",
 ]
 
 [provenance]
@@ -31,162 +38,328 @@ authors = [
 ]
 year = 2005
 doi = "10.1152/jn.00915.2004"
+paper_title = "Modeling sleep and wakefulness in the thalamocortical system"
+url = "https://pubmed.ncbi.nlm.nih.gov/15537811/"
+license_note = "Equations transcribed from the publication; maintained NEST ht_neuron used only to disambiguate printed parentheses."
 
 [state.v]
-init = -65.0
+init = -70.0
+unit = "mV"
+meaning = "membrane potential"
 
-[state.h_na]
-init = 0.6
+[state.theta]
+init = -51.0
+unit = "mV"
+meaning = "dynamic spike threshold"
 
-[state.n_k]
-init = 0.3
+[state.d_k]
+init = 0.001
+unit = "1"
+meaning = "depolarisation measure controlling I_DK"
 
 [state.m_h]
-init = 0.0
+init = 0.2871859013825026
+unit = "1"
+meaning = "I_h activation gate"
+
+[state.m_t]
+init = 0.1450215950687922
+unit = "1"
+meaning = "I_T activation gate"
 
 [state.h_t]
-init = 0.9
+init = 0.03732688734412946
+unit = "1"
+meaning = "I_T inactivation gate"
 
-[state.na_i]
-init = 5.0
+[state.spike_timer]
+init = 0.0
+unit = "ms"
+meaning = "remaining source potassium-pulse interval"
 
-[parameters.g_na]
-default = 50.0
-unit = "mS/cm^2"
-meaning = "maximal sodium conductance"
+[parameters.g_na_l]
+default = 0.2
+unit = "1"
+meaning = "normalised sodium leak conductance"
 range = [
     0.0,
-    200.0,
+    5.0,
 ]
 
-[parameters.g_k]
-default = 5.0
-unit = "mS/cm^2"
-meaning = "maximal potassium conductance"
+[parameters.g_k_l]
+default = 1.0
+unit = "1"
+meaning = "normalised potassium leak conductance"
 range = [
     0.0,
-    50.0,
+    5.0,
+]
+
+[parameters.g_na_p]
+default = 0.5
+unit = "1"
+meaning = "normalised persistent-sodium conductance"
+range = [
+    0.0,
+    5.0,
+]
+
+[parameters.g_dk]
+default = 0.5
+unit = "1"
+meaning = "normalised depolarisation-dependent potassium conductance"
+range = [
+    0.0,
+    5.0,
 ]
 
 [parameters.g_h]
-default = 1.0
-unit = "mS/cm^2"
-meaning = "maximal hyperpolarisation-activated (Ih) conductance"
+default = 0.0
+unit = "1"
+meaning = "normalised hyperpolarisation-activated conductance; disabled for the default cortical waking cell"
 range = [
     0.0,
     5.0,
 ]
 
 [parameters.g_t]
-default = 3.0
-unit = "mS/cm^2"
-meaning = "maximal low-threshold (T-type) calcium conductance"
+default = 0.0
+unit = "1"
+meaning = "normalised low-threshold calcium conductance; disabled for the default cortical waking cell"
 range = [
     0.0,
     20.0,
 ]
 
-[parameters.g_kna]
-default = 1.33
-unit = "mS/cm^2"
-meaning = "maximal sodium-dependent potassium conductance"
-range = [
-    0.0,
-    10.0,
-]
-
-[parameters.g_l]
-default = 0.02
-unit = "mS/cm^2"
-meaning = "leak conductance"
-range = [
-    0.0,
-    1.0,
-]
-
 [parameters.e_na]
-default = 50.0
+default = 30.0
 unit = "mV"
-meaning = "sodium reversal potential"
+meaning = "sodium reversal and spike-clamp potential"
 range = [
-    30.0,
+    0.0,
     70.0,
 ]
 
 [parameters.e_k]
 default = -90.0
 unit = "mV"
-meaning = "potassium reversal potential"
+meaning = "potassium leak reversal potential"
 range = [
-    -100.0,
-    -70.0,
-]
-
-[parameters.e_h]
-default = -43.0
-unit = "mV"
-meaning = "hyperpolarisation-activated current reversal potential"
-range = [
-    -60.0,
-    -20.0,
-]
-
-[parameters.e_ca]
-default = 120.0
-unit = "mV"
-meaning = "calcium reversal potential"
-range = [
-    60.0,
-    150.0,
-]
-
-[parameters.e_l]
-default = -70.0
-unit = "mV"
-meaning = "leak reversal potential"
-range = [
-    -90.0,
+    -120.0,
     -50.0,
 ]
 
-[parameters.na_pump_max]
-default = 20.0
-unit = "mM/s"
-meaning = "maximum rate of the sodium-potassium pump"
+[parameters.e_na_p]
+default = 30.0
+unit = "mV"
+meaning = "persistent-sodium reversal potential"
 range = [
     0.0,
-    100.0,
+    70.0,
 ]
 
-[parameters.na_eq]
-default = 9.5
-unit = "mM"
-meaning = "intracellular sodium concentration at half-maximal pump activation"
-range = [
-    1.0,
-    30.0,
-]
-
-[parameters.v_threshold]
-default = -20.0
+[parameters.e_dk]
+default = -90.0
 unit = "mV"
-meaning = "voltage at which a spike is registered"
+meaning = "depolarisation-dependent potassium reversal potential"
+range = [
+    -120.0,
+    -50.0,
+]
+
+[parameters.e_h]
+default = -40.0
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -80.0,
+    0.0,
+]
+
+[parameters.e_t]
+default = 0.0
+unit = "mV"
+meaning = "low-threshold calcium reversal potential"
 range = [
     -40.0,
+    80.0,
+]
+
+[parameters.n_na_p]
+default = 3.0
+unit = "1"
+meaning = "persistent-sodium activation exponent"
+range = [
+    1.0,
+    4.0,
+]
+
+[parameters.n_t]
+default = 2.0
+unit = "1"
+meaning = "low-threshold calcium activation exponent"
+range = [
+    1.0,
+    4.0,
+]
+
+[parameters.tau_m]
+default = 16.0
+unit = "ms"
+meaning = "membrane integration time constant"
+range = [
+    0.01,
+    1000.0,
+]
+
+[parameters.theta_eq]
+default = -51.0
+unit = "mV"
+meaning = "equilibrium dynamic threshold"
+range = [
+    -100.0,
+    0.0,
+]
+
+[parameters.tau_theta]
+default = 2.0
+unit = "ms"
+meaning = "dynamic-threshold relaxation time constant"
+range = [
+    0.01,
+    1000.0,
+]
+
+[parameters.g_spike]
+default = 1.0
+unit = "1"
+meaning = "normalised post-spike potassium-pulse conductance"
+range = [
+    0.0,
+    5.0,
+]
+
+[parameters.t_spike]
+default = 2.0
+unit = "ms"
+meaning = "duration of the post-spike potassium pulse"
+range = [
+    0.01,
     20.0,
 ]
 
+[parameters.tau_spike]
+default = 1.75
+unit = "ms"
+meaning = "post-spike repolarisation time constant"
+range = [
+    0.01,
+    20.0,
+]
+
+[parameters.tau_d]
+default = 1250.0
+unit = "ms"
+meaning = "depolarisation-measure relaxation time constant"
+range = [
+    1.0,
+    10000.0,
+]
+
+[parameters.d_influx_peak]
+default = 0.025
+unit = "ms^-1"
+meaning = "peak voltage-dependent influx into the depolarisation measure"
+range = [
+    0.0,
+    1.0,
+]
+
+[parameters.d_threshold]
+default = -10.0
+unit = "mV"
+meaning = "half-activation voltage of depolarisation influx"
+range = [
+    -100.0,
+    100.0,
+]
+
+[parameters.d_slope]
+default = 5.0
+unit = "mV"
+meaning = "slope of depolarisation influx activation"
+range = [
+    0.1,
+    50.0,
+]
+
+[parameters.d_eq]
+default = 0.001
+unit = "1"
+meaning = "resting depolarisation measure"
+range = [
+    0.0,
+    1.0,
+]
+
+[parameters.d_half]
+default = 0.25
+unit = "1"
+meaning = "half-activation value of the depolarisation-dependent potassium current"
+range = [
+    1e-06,
+    10.0,
+]
+
 [integration]
-dt = 0.05
-method = "euler"
+dt = 0.25
+method = "rk4"
 
 [dynamics]
+v = "(I_NaL + I_KL + I_NaP + I_DK + I_h + I_T + I_ext)/tau_m + I_spike"
+theta = "-(theta-theta_eq)/tau_theta"
+d_k = "(tau_d*d_influx(v)+d_eq-d_k)/tau_d"
+m_h = "(m_h_inf(v)-m_h)/tau_m_h(v)"
+m_t = "(m_t_inf(v)-m_t)/tau_m_t(v)"
+h_t = "(h_t_inf(v)-h_t)/tau_h_t(v)"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_receipts/hill_tononi_2005.json"
+golden_trace_sha256 = "64aaf9659f1c9c3e4233dfd73f5f21f143a1718e2dc29d69a6db657e1d911b9b"
+golden_citation = "Hill and Tononi 2005 cortical-excitatory waking profile; NEST ht_neuron equation disambiguation"
 
 [documentation]
 slug = "models/hill_tononi"
-notes = ""
+notes = "The default is the cortical-excitatory waking profile. I_h and I_T are optional and disabled by default. The former six-state HH/Na-pump project recurrence is retained separately as SCSixStateThalamocorticalNeuron."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "768-step mixed-drive source receipt and 200000-step I_ext=20 five-runtime benchmark"
+tolerance = "exact events; native continuous state within the committed per-backend binary64 tolerance"
+evidence = "tests/test_model_hill_tononi_source_fidelity.py"
+
+[silicon]
+compiles = false
+target_tier = ""
+terminal_reason = "No verified fixed-point approximation exists for the source exponential-gate RK4 recurrence; no RTL claim is made."

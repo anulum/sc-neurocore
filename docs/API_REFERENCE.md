@@ -24218,40 +24218,39 @@ Reference: Hay, E. et al. (2011). PLoS Comput. Biol. 7:e1002107.
 ## Module `neurons.models.hill_tononi`
 
 ### Class `HillTononiNeuron`
-Hill & Tononi 2005 — thalamocortical sleep/wake neuron.
+Hill and Tononi's hybrid integrate-and-fire neuron.
 
-A conductance-based cell with fast Na⁺ (instantaneous ``m_∞``, dynamic
-inactivation ``h_na``), delayed-rectifier K⁺ (``n_k``), a hyperpolarisation-
-activated ``Ih`` (``m_h``), a low-threshold T-type Ca²⁺ current (instantaneous
-``m_T``, dynamic inactivation ``h_t``), a sodium-dependent K⁺ current
-(``I_KNa`` gated by intracellular ``na_i`` through a Hill function), and an
-ohmic leak — the six-state ``(V, h_na, n_k, m_h, h_t, na_i)`` system. The
-intracellular sodium accumulates from the sodium current and is removed by a
-saturating Na/K pump.
+The continuous state is ``(V, theta, D, m_h, m_T, h_T)``. A spike sets
+both ``V`` and the dynamic threshold ``theta`` to ``E_Na`` and enables
+a brief potassium repolarisation pulse. ``D`` is the generic
+depolarisation measure used by ``I_DK``; the paper explicitly does not
+integrate intracellular sodium or calcium concentration.
 
-The production integrator is candidate-first RK4 over the six-state system:
-each sub-step evaluates the full right-hand side from one consistent state,
-forms the RK4 candidate, and commits it only once finite. The historical
-hard-coded forward-Euler update — which advanced the gates from the old
-voltage and then the voltage and sodium from the freshly updated gates,
-mixing inconsistent states — remains reachable only through the explicit
-``integrator="baseline_euler"`` regression option.
+Defaults select the paper's cortical-excitatory waking profile. Sodium and
+potassium leaks, ``I_NaP``, and ``I_DK`` are active. ``I_h`` and ``I_T``
+remain available with zero default conductance because the source assigns
+them only to specific intrinsically bursting or thalamic cell types. The
+recurrence uses source step ``dt=0.25 ms`` and classical RK4. Synaptic
+conductance dynamics, minis, and the full network are outside this
+single-cell catalogue model.
 
-The sodium concentration is clamped to be non-negative once per committed
-step, matching the original. The conductance powers use explicit
-multiplication and the ``I_KNa`` Hill exponent ``3.5`` is evaluated as
-``b·b·b·sqrt(b)`` (an IEEE-754 exact decomposition of ``b**3.5``) so the
-Rust, Julia, Go, and Mojo kernels reproduce the trajectory bit-for-bit
-rather than depending on a per-platform ``pow`` implementation.
-
-Reference: Hill, S. & Tononi, G. (2005). Modeling sleep and wakefulness in
-the thalamocortical system. J. Neurophysiol. 93:1671–1698.
+Primary source: Hill & Tononi, J Neurophysiol 93:1671–1698 (2005),
+doi:10.1152/jn.00915.2004. Maintained NEST ``ht_neuron`` equations
+disambiguate parentheses in the printed ``I_NaP``, ``D``, and ``I_T``
+formulae.
 
 - **__post_init__**()
+- **m_h_inf**(v)
+- **tau_m_h**(v)
+- **m_t_inf**(v)
+- **tau_m_t**(v)
+- **h_t_inf**(v)
+- **tau_h_t**(v)
+- **d_k_inf**(v)
 - **step**(current)
-  - Advance the neuron by one ``dt`` step and report a threshold crossing.
+  - Advance one source timestep and return ``1`` on spike emission.
 - **reset**()
-  - Restore the resting potential, gating defaults, and sodium baseline.
+  - Restore the source cortical-excitatory waking initial state.
 
 ---
 
@@ -25709,6 +25708,47 @@ intentionally carries no external paper attribution.
   - Advance the frozen bipolar project recurrence by one sample.
 - **reset**()
   - Clear the accumulator while retaining its threshold.
+
+---
+
+## Module `neurons.models.sc_six_state_thalamocortical`
+
+### Class `SCSixStateThalamocorticalNeuron`
+Preserved SC six-state thalamocortical oscillator.
+
+A conductance-based cell with fast Na⁺ (instantaneous ``m_∞``, dynamic
+inactivation ``h_na``), delayed-rectifier K⁺ (``n_k``), a hyperpolarisation-
+activated ``Ih`` (``m_h``), a low-threshold T-type Ca²⁺ current (instantaneous
+``m_T``, dynamic inactivation ``h_t``), a sodium-dependent K⁺ current
+(``I_KNa`` gated by intracellular ``na_i`` through a Hill function), and an
+ohmic leak — the six-state ``(V, h_na, n_k, m_h, h_t, na_i)`` system. The
+intracellular sodium accumulates from the sodium current and is removed by a
+saturating Na/K pump.
+
+The production integrator is candidate-first RK4 over the six-state system:
+each sub-step evaluates the full right-hand side from one consistent state,
+forms the RK4 candidate, and commits it only once finite. The historical
+hard-coded forward-Euler update — which advanced the gates from the old
+voltage and then the voltage and sodium from the freshly updated gates,
+mixing inconsistent states — remains reachable only through the explicit
+``integrator="baseline_euler"`` regression option.
+
+The sodium concentration is clamped to be non-negative once per committed
+step, matching the preserved SC recurrence. The conductance powers use explicit
+multiplication and the ``I_KNa`` Hill exponent ``3.5`` is evaluated as
+``b·b·b·sqrt(b)`` (an IEEE-754 exact decomposition of ``b**3.5``) so the
+Rust, Julia, Go, and Mojo kernels reproduce the trajectory bit-for-bit
+rather than depending on a per-platform ``pow`` implementation.
+
+This recurrence is retained for compatibility with earlier SC-NeuroCore
+releases. It is deliberately not attributed to Hill and Tononi (2005), whose
+source model is a hybrid integrate-and-fire system with a dynamic threshold.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance the neuron by one ``dt`` step and report a threshold crossing.
+- **reset**()
+  - Restore the resting potential, gating defaults, and sodium baseline.
 
 ---
 

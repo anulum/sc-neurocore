@@ -967,11 +967,11 @@
     "model_documentation_pages": 185,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 601,
-    "python_model_classes": 167,
-    "python_model_source_modules": 163,
+    "public_documentation_pages": 602,
+    "python_model_classes": 168,
+    "python_model_source_modules": 164,
     "rust_pyo3_model_wrappers": 196,
-    "test_files": 4692
+    "test_files": 4695
   },
   "documentation": {
     "public_pages": [
@@ -1558,6 +1558,7 @@
       "docs/validation/energy_lif_source_fidelity.md",
       "docs/validation/ermentrout_kopell_pop_source_fidelity.md",
       "docs/validation/escape_rate_stochastic_fidelity.md",
+      "docs/validation/hill_tononi_source_fidelity.md",
       "docs/validation/hodgkin_huxley.md",
       "docs/validation/iqif_source_fidelity.md",
       "docs/validation/izhikevich_patterns.md",
@@ -2313,6 +2314,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py"
       },
       {
+        "name": "SCSixStateThalamocorticalNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_six_state_thalamocortical.py"
+      },
+      {
         "name": "SCStochasticRateAdaptationNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py"
       },
@@ -2582,6 +2587,7 @@
       "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py",
       "src/sc_neurocore/neurons/models/sc_resetting_mat.py",
       "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py",
+      "src/sc_neurocore/neurons/models/sc_six_state_thalamocortical.py",
       "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py",
       "src/sc_neurocore/neurons/models/sc_three_state_phantom.py",
       "src/sc_neurocore/neurons/models/sc_triangular_mckean.py",
@@ -3629,6 +3635,7 @@
       "tests/test_bench_ermentrout_kopell_pop.py",
       "tests/test_bench_escape_rate.py",
       "tests/test_bench_expif.py",
+      "tests/test_bench_hill_tononi.py",
       "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_iqif_evidence_and_hashes.py",
       "tests/test_bench_iqif_gates_and_rejects.py",
@@ -4847,6 +4854,7 @@
       "tests/test_hdl_gen/test_stochastic_source_emitters_seed_and_rejects.py",
       "tests/test_hh_validation_hodgkin_huxley_validation.py",
       "tests/test_hh_validation_native_hodgkin_huxley.py",
+      "tests/test_hill_tononi_native_parity.py",
       "tests/test_hindmarsh_rose_backends_bit_exact.py",
       "tests/test_hindmarsh_rose_backends_dispatch_validation.py",
       "tests/test_hindmarsh_rose_backends_dynamics.py",
@@ -5488,6 +5496,7 @@
       "tests/test_model_hill_tononi_ht_parameters.py",
       "tests/test_model_hill_tononi_ht_performance.py",
       "tests/test_model_hill_tononi_ht_pipeline.py",
+      "tests/test_model_hill_tononi_source_fidelity.py",
       "tests/test_model_hindmarsh_rose_hr_analytical.py",
       "tests/test_model_hindmarsh_rose_hr_bursting.py",
       "tests/test_model_hindmarsh_rose_hr_isolation.py",

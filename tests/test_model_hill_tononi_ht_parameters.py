@@ -16,21 +16,21 @@ from tests.model_hill_tononi_support import *  # noqa: F403
 class TestHTParameters:
     @pytest.mark.parametrize("g_kna", [0.0, 1.33, 3.0])
     def test_g_kna_sweep(self, g_kna: float):
-        n = HillTononiNeuron(g_kna=g_kna)
+        n = SCSixStateThalamocorticalNeuron(g_kna=g_kna)
         for _ in range(5000):
             n.step(0.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("g_t", [0.0, 3.0, 6.0])
     def test_g_t_sweep(self, g_t: float):
-        n = HillTononiNeuron(g_t=g_t)
+        n = SCSixStateThalamocorticalNeuron(g_t=g_t)
         for _ in range(5000):
             n.step(0.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("dt", [0.02, 0.05, 0.1])
     def test_dt_stability(self, dt: float):
-        n = HillTononiNeuron(dt=dt)
+        n = SCSixStateThalamocorticalNeuron(dt=dt)
         for _ in range(10_000):
             n.step(0.0)
         assert np.isfinite(n.v) and np.isfinite(n.na_i)

@@ -15,7 +15,7 @@ from tests.model_hill_tononi_support import *  # noqa: F403
 
 class TestHTAnalytical:
     def test_six_ionic_currents(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for g in [n.g_na, n.g_k, n.g_h, n.g_t, n.g_kna, n.g_l]:
             assert g > 0
 
@@ -31,7 +31,7 @@ class TestHTAnalytical:
 
     def test_na_accumulation_during_spiking(self):
         """Na_i increases during spiking (I_Na inward → Na enters)."""
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         na_before = n.na_i
         for _ in range(10_000):
             n.step(2.0)
@@ -40,23 +40,23 @@ class TestHTAnalytical:
 
     def test_na_non_negative(self):
         """Na_i clipped to ≥ 0."""
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for _ in range(50_000):
             n.step(0.0)
             assert n.na_i >= 0.0
 
     def test_na_pump_formula(self):
         """Na/K pump: rate = pump_max · Na_i / (Na_i + Na_eq)."""
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         pump_rate = n.na_pump_max * n.na_i / (n.na_i + n.na_eq)
         assert pump_rate > 0 and np.isfinite(pump_rate)
 
     def test_reversal_ordering(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         assert n.e_k < n.e_l < n.e_h < n.e_na < n.e_ca
 
     def test_gating_bounded(self):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for _ in range(10_000):
             n.step(0.0)
         for attr in ["h_na", "n_k", "m_h", "h_t"]:

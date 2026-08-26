@@ -4,146 +4,200 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go candidate-first RK4 service for hill_tononi
+// SC-NeuroCore — Go Hill-Tononi 2005 hybrid neuron
 
 package services
 
 import (
+	"errors"
 	"math"
 )
 
-// HillTononiNeuronState holds the neuron state
+// HillTononiNeuronState holds the source continuous state and cell parameters.
 type HillTononiNeuronState struct {
-	V          float64
-	HNa        float64
-	NK         float64
-	MH         float64
-	HT         float64
-	NaI        float64
-	GNa        float64
-	GK         float64
-	GH         float64
-	GT         float64
-	GKna       float64
-	GL         float64
-	ENa        float64
-	EK         float64
-	EH         float64
-	ECa        float64
-	EL         float64
-	NaPumpMax  float64
-	NaEq       float64
-	Dt         float64
-	VThreshold float64
+	V, Theta, DK, MH, MT, HT, SpikeTimer float64
+	GNaL, GKL, GNaP, GDK, GH, GT         float64
+	ENa, EK, ENaP, EDK, EH, ET           float64
+	NNaP, NT                             float64
+	TauM, ThetaEq, TauTheta              float64
+	GSpike, TSpike, TauSpike             float64
+	TauD, DInfluxPeak, DThreshold        float64
+	DSlope, DEq, DHalf, Dt               float64
 }
 
-// NewHillTononiNeuron creates a new HillTononiNeuron neuron with default parameters
+// NewHillTononiNeuron returns the paper's cortical-excitatory waking profile.
 func NewHillTononiNeuron() *HillTononiNeuronState {
 	return &HillTononiNeuronState{
-		V:          -65.0,
-		HNa:        0.6,
-		NK:         0.3,
-		MH:         0.0,
-		HT:         0.9,
-		NaI:        5.0,
-		GNa:        50.0,
-		GK:         5.0,
-		GH:         1.0,
-		GT:         3.0,
-		GKna:       1.33,
-		GL:         0.02,
-		ENa:        50.0,
-		EK:         -90.0,
-		EH:         -43.0,
-		ECa:        120.0,
-		EL:         -70.0,
-		NaPumpMax:  20.0,
-		NaEq:       9.5,
-		Dt:         0.05,
-		VThreshold: -20.0,
+		V: -70.0, Theta: -51.0, DK: 0.001,
+		MH: 0.2871859013825026, MT: 0.1450215950687922,
+		HT: 0.03732688734412946, SpikeTimer: 0.0,
+		GNaL: 0.2, GKL: 1.0, GNaP: 0.5, GDK: 0.5, GH: 0.0, GT: 0.0,
+		ENa: 30.0, EK: -90.0, ENaP: 30.0, EDK: -90.0, EH: -40.0, ET: 0.0,
+		NNaP: 3.0, NT: 2.0,
+		TauM: 16.0, ThetaEq: -51.0, TauTheta: 2.0,
+		GSpike: 1.0, TSpike: 2.0, TauSpike: 1.75,
+		TauD: 1250.0, DInfluxPeak: 0.025, DThreshold: -10.0,
+		DSlope: 5.0, DEq: 0.001, DHalf: 0.25, Dt: 0.25,
 	}
 }
 
-// derivatives returns (dV, dHNa, dNK, dMH, dHT, dNaI) evaluated from one
-// consistent state. The conductance powers use explicit multiplication and the
-// I_KNa Hill exponent 3.5 is evaluated as b*b*b*sqrt(b) (an IEEE-754 exact
-// decomposition) so the Python, Rust, Julia, and Mojo backends reproduce the
-// trajectory bit-for-bit rather than depending on math.Pow.
-func (s *HillTononiNeuronState) derivatives(v, hNa, nK, mH, hT, naI, current float64) (float64, float64, float64, float64, float64, float64) {
-	mNaInf := 1.0 / (1.0 + math.Exp(-(v+38.0)/10.0))
-	hNaInf := 1.0 / (1.0 + math.Exp((v+43.0)/6.0))
-	nKInf := 1.0 / (1.0 + math.Exp(-(v+27.0)/11.5))
-	mHInf := 1.0 / (1.0 + math.Exp((v+75.0)/5.5))
-	mTInf := 1.0 / (1.0 + math.Exp(-(v+59.0)/6.2))
-	hTInf := 1.0 / (1.0 + math.Exp((v+83.0)/4.0))
-	hillBase := 38.7 / math.Max(naI, 0.01)
-	wKna := 0.37 / (1.0 + hillBase*hillBase*hillBase*math.Sqrt(hillBase))
-	tauHNa := math.Max(1.0+10.0/(1.0+math.Exp((v+40.0)/10.0)), 0.1)
-	zN := (v + 50.0) / 25.0
-	tauNK := math.Max(5.0+47.0*math.Exp(-(zN*zN)), 0.1)
-	tauMH := math.Max(20.0+1000.0/(math.Exp((v+71.5)/14.2)+math.Exp(-(v+89.0)/11.6)), 1.0)
-	tauHT := 10.0
-	if v < -81.0 {
-		tauHT = math.Max(30.8+211.4*math.Exp((v+115.2)/5.0)/(1.0+math.Exp((v+86.0)/3.2)), 0.1)
+func mHInf(v float64) float64 {
+	return 1.0 / (1.0 + math.Exp((v+75.0)/5.5))
+}
+
+func tauMH(v float64) float64 {
+	return 1.0 / (math.Exp(-14.59-0.086*v) + math.Exp(-1.87+0.0701*v))
+}
+
+func mTInf(v float64) float64 {
+	return 1.0 / (1.0 + math.Exp(-(v+59.0)/6.2))
+}
+
+func tauMT(v float64) float64 {
+	return 0.22/(math.Exp(-(v+132.0)/16.7)+math.Exp((v+16.8)/18.2)) + 0.13
+}
+
+func hTInf(v float64) float64 {
+	return 1.0 / (1.0 + math.Exp((v+83.0)/4.0))
+}
+
+func tauHT(v float64) float64 {
+	return 8.2 + (56.6+0.27*math.Exp((v+115.2)/5.0))/(1.0+math.Exp((v+86.0)/3.2))
+}
+
+func (s *HillTononiNeuronState) dKInf(v float64) float64 {
+	influx := s.DInfluxPeak / (1.0 + math.Exp(-(v-s.DThreshold)/s.DSlope))
+	return s.TauD*influx + s.DEq
+}
+
+func (s *HillTononiNeuronState) derivatives(state [6]float64, current float64, spikeActive bool) [6]float64 {
+	v, theta, dK := state[0], state[1], state[2]
+	mH, mT, hT := state[3], state[4], state[5]
+	mNaP := 1.0 / (1.0 + math.Exp(-(v+55.7)/7.7))
+	dActivation := 1.0 / (1.0 + math.Pow(s.DHalf/math.Max(dK, 1e-15), 3.5))
+	iNaL := -s.GNaL * (v - s.ENa)
+	iKL := -s.GKL * (v - s.EK)
+	iNaP := -s.GNaP * math.Pow(mNaP, s.NNaP) * (v - s.ENaP)
+	iDK := -s.GDK * dActivation * (v - s.EDK)
+	iH := -s.GH * mH * (v - s.EH)
+	iT := -s.GT * math.Pow(mT, s.NT) * hT * (v - s.ET)
+	iSpike := 0.0
+	if spikeActive {
+		iSpike = -s.GSpike * (v - s.EK) / s.TauSpike
 	}
-	dHNa := (hNaInf - hNa) / tauHNa
-	dNK := (nKInf - nK) / tauNK
-	dMH := (mHInf - mH) / tauMH
-	dHT := (hTInf - hT) / tauHT
-	iNa := s.GNa * mNaInf * mNaInf * mNaInf * hNa * (v - s.ENa)
-	iK := s.GK * nK * nK * nK * nK * (v - s.EK)
-	iH := s.GH * mH * (v - s.EH)
-	iT := s.GT * mTInf * mTInf * hT * (v - s.ECa)
-	iKna := s.GKna * wKna * (v - s.EK)
-	iL := s.GL * (v - s.EL)
-	dV := -iNa - iK - iH - iT - iKna - iL + current
-	dNaI := -0.001*iNa - s.NaPumpMax*(naI/(naI+s.NaEq))
-	return dV, dHNa, dNK, dMH, dHT, dNaI
-}
-
-// rk4Substep returns one classical RK4 increment of the six-state vector over Dt.
-func (s *HillTononiNeuronState) rk4Substep(v, hNa, nK, mH, hT, naI, current float64) (float64, float64, float64, float64, float64, float64) {
-	dt := s.Dt
-	k1v, k1hNa, k1nK, k1mH, k1hT, k1naI := s.derivatives(v, hNa, nK, mH, hT, naI, current)
-	k2v, k2hNa, k2nK, k2mH, k2hT, k2naI := s.derivatives(v+0.5*dt*k1v, hNa+0.5*dt*k1hNa, nK+0.5*dt*k1nK, mH+0.5*dt*k1mH, hT+0.5*dt*k1hT, naI+0.5*dt*k1naI, current)
-	k3v, k3hNa, k3nK, k3mH, k3hT, k3naI := s.derivatives(v+0.5*dt*k2v, hNa+0.5*dt*k2hNa, nK+0.5*dt*k2nK, mH+0.5*dt*k2mH, hT+0.5*dt*k2hT, naI+0.5*dt*k2naI, current)
-	k4v, k4hNa, k4nK, k4mH, k4hT, k4naI := s.derivatives(v+dt*k3v, hNa+dt*k3hNa, nK+dt*k3nK, mH+dt*k3mH, hT+dt*k3hT, naI+dt*k3naI, current)
-	nextV := v + dt*(k1v+2.0*k2v+2.0*k3v+k4v)/6.0
-	nextHNa := hNa + dt*(k1hNa+2.0*k2hNa+2.0*k3hNa+k4hNa)/6.0
-	nextNK := nK + dt*(k1nK+2.0*k2nK+2.0*k3nK+k4nK)/6.0
-	nextMH := mH + dt*(k1mH+2.0*k2mH+2.0*k3mH+k4mH)/6.0
-	nextHT := hT + dt*(k1hT+2.0*k2hT+2.0*k3hT+k4hT)/6.0
-	nextNaI := naI + dt*(k1naI+2.0*k2naI+2.0*k3naI+k4naI)/6.0
-	return nextV, nextHNa, nextNK, nextMH, nextHT, nextNaI
-}
-
-// Step advances the neuron by one RK4 timestep and reports a threshold crossing.
-func (s *HillTononiNeuronState) Step(iExt float64) int {
-	vPrev := s.V
-	nextV, nextHNa, nextNK, nextMH, nextHT, nextNaI := s.rk4Substep(s.V, s.HNa, s.NK, s.MH, s.HT, s.NaI, iExt)
-	s.V = nextV
-	s.HNa = nextHNa
-	s.NK = nextNK
-	s.MH = nextMH
-	s.HT = nextHT
-	s.NaI = math.Max(nextNaI, 0.0)
-	if s.V >= s.VThreshold && vPrev < s.VThreshold {
-		return 1
+	return [6]float64{
+		(iNaL+iKL+iNaP+iDK+iH+iT+current)/s.TauM + iSpike,
+		-(theta - s.ThetaEq) / s.TauTheta,
+		(s.dKInf(v) - dK) / s.TauD,
+		(mHInf(v) - mH) / tauMH(v),
+		(mTInf(v) - mT) / tauMT(v),
+		(hTInf(v) - hT) / tauHT(v),
 	}
-	return 0
 }
 
-// SimulateHillTononiNeuron runs the neuron for n steps
-func SimulateHillTononiNeuron(nSteps int, iExt float64) ([]float64, int) {
+func shifted(state, slope [6]float64, scale float64) [6]float64 {
+	var out [6]float64
+	for i := range state {
+		out[i] = state[i] + scale*slope[i]
+	}
+	return out
+}
+
+func (s *HillTononiNeuronState) candidate(state [6]float64, current float64, spikeActive bool) [6]float64 {
+	k1 := s.derivatives(state, current, spikeActive)
+	k2 := s.derivatives(shifted(state, k1, 0.5*s.Dt), current, spikeActive)
+	k3 := s.derivatives(shifted(state, k2, 0.5*s.Dt), current, spikeActive)
+	k4 := s.derivatives(shifted(state, k3, s.Dt), current, spikeActive)
+	var out [6]float64
+	for i := range state {
+		out[i] = state[i] + s.Dt*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i])/6.0
+	}
+	return out
+}
+
+func hillTononiFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *HillTononiNeuronState) configurationIsValid() bool {
+	if !hillTononiFinite(
+		s.V, s.Theta, s.DK, s.MH, s.MT, s.HT, s.SpikeTimer,
+		s.GNaL, s.GKL, s.GNaP, s.GDK, s.GH, s.GT,
+		s.ENa, s.EK, s.ENaP, s.EDK, s.EH, s.ET, s.NNaP, s.NT,
+		s.TauM, s.ThetaEq, s.TauTheta, s.GSpike, s.TSpike, s.TauSpike,
+		s.TauD, s.DInfluxPeak, s.DThreshold, s.DSlope, s.DEq, s.DHalf, s.Dt,
+	) {
+		return false
+	}
+	if s.DK < 0.0 || s.SpikeTimer < 0.0 {
+		return false
+	}
+	for _, value := range []float64{s.GNaL, s.GKL, s.GNaP, s.GDK, s.GH, s.GT, s.GSpike, s.DInfluxPeak, s.DEq} {
+		if value < 0.0 {
+			return false
+		}
+	}
+	for _, value := range []float64{s.NNaP, s.NT, s.TauM, s.TauTheta, s.TSpike, s.TauSpike, s.TauD, s.DSlope, s.DHalf, s.Dt} {
+		if value <= 0.0 {
+			return false
+		}
+	}
+	return true
+}
+
+// TryStep advances one source RK4 step and leaves state unchanged on error.
+func (s *HillTononiNeuronState) TryStep(current float64) (int, error) {
+	if !hillTononiFinite(current) || !s.configurationIsValid() {
+		return 0, errors.New("Hill-Tononi configuration and current must be finite and physical")
+	}
+	refractory := s.SpikeTimer > 0.0
+	state := [6]float64{s.V, s.Theta, s.DK, s.MH, s.MT, s.HT}
+	next := s.candidate(state, current, refractory)
+	if !hillTononiFinite(next[:]...) || next[2] < 0.0 {
+		return 0, errors.New("Hill-Tononi candidate must be finite and physical")
+	}
+	timer := math.Max(0.0, s.SpikeTimer-s.Dt)
+	spike := !refractory && next[0] >= next[1]
+	if spike {
+		next[0], next[1], timer = s.ENa, s.ENa, s.TSpike
+	}
+	s.V, s.Theta, s.DK = next[0], next[1], next[2]
+	s.MH, s.MT, s.HT, s.SpikeTimer = next[3], next[4], next[5], timer
+	if spike {
+		return 1, nil
+	}
+	return 0, nil
+}
+
+// Step preserves the historical integer-return API and fails closed on error.
+func (s *HillTononiNeuronState) Step(current float64) int {
+	spike, err := s.TryStep(current)
+	if err != nil {
+		return 0
+	}
+	return spike
+}
+
+// Reset restores the source cortical-excitatory waking initial state.
+func (s *HillTononiNeuronState) Reset() {
+	s.V, s.Theta, s.DK = -70.0, -51.0, 0.001
+	s.MH, s.MT, s.HT = mHInf(s.V), mTInf(s.V), hTInf(s.V)
+	s.SpikeTimer = 0.0
+}
+
+// SimulateHillTononiNeuron runs the public step surface for n steps.
+func SimulateHillTononiNeuron(nSteps int, current float64) ([]float64, int) {
 	s := NewHillTononiNeuron()
 	trace := make([]float64, nSteps)
 	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
-		trace[t] = s.V
-		if result > 0 {
-			spikes++
-		}
+	for step := 0; step < nSteps; step++ {
+		spikes += s.Step(current)
+		trace[step] = s.V
 	}
 	return trace, spikes
 }

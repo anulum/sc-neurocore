@@ -16,20 +16,20 @@ from tests.model_hill_tononi_support import *  # noqa: F403
 class TestHTIntrinsic:
     def test_fires_at_zero_current(self):
         """Intrinsic oscillator — fires without external input."""
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         spikes = _run(n, current=0.0, steps=10_000)
         assert len(spikes) >= 5
 
     def test_rate_monotonic(self):
         rates = []
         for I in [0.0, 2.0, 5.0]:
-            n = HillTononiNeuron()
+            n = SCSixStateThalamocorticalNeuron()
             rates.append(len(_run(n, current=I, steps=10_000)))
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [0.0, 1.0, 3.0, 5.0])
     def test_fi_sweep(self, current: float):
-        n = HillTononiNeuron()
+        n = SCSixStateThalamocorticalNeuron()
         for _ in range(10_000):
             n.step(current)
         assert np.isfinite(n.v)

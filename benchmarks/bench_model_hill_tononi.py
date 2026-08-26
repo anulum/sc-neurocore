@@ -5,7 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Hill-Tononi thalamocortical neuron RK4 multi-backend local regression benchmark
+# SC-NeuroCore — Hill-Tononi source hybrid RK4 multi-backend benchmark
 
 from __future__ import annotations
 
@@ -27,8 +27,8 @@ from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron
 
 STEPS = 200_000
 REPEATS = 5
-CURRENT = 10.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-25_hill_tononi_rk4.json")
+CURRENT = 20.0
+OUTPUT = Path("benchmarks/results/bench_hill_tononi.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GO_BENCH_RE = re.compile(r"^BenchmarkHillTononiRK4(?:-\d+)?\s+\d+\s+([0-9.]+)\s+ns/op")
 GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
@@ -38,6 +38,8 @@ SOURCE_HASH_PATHS = {
     "engine/examples/bench_hill_tononi_rk4.rs": REPO_ROOT
     / "engine/examples/bench_hill_tononi_rk4.rs",
     "engine/src/neurons/biophysical.rs": REPO_ROOT / "engine/src/neurons/biophysical.rs",
+    "engine/src/neurons/biophysical/hill_tononi.rs": REPO_ROOT
+    / "engine/src/neurons/biophysical/hill_tononi.rs",
     "src/sc_neurocore/neurons/models/hill_tononi.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/hill_tononi.py",
     "src/sc_neurocore/accel/go/services/hill_tononi.go": REPO_ROOT
@@ -48,12 +50,14 @@ SOURCE_HASH_PATHS = {
     / "src/sc_neurocore/accel/julia/neurons/hill_tononi.jl",
     "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo": REPO_ROOT
     / "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo",
+    "src/sc_neurocore/accel/rust/safety/hill_tononi.rs": REPO_ROOT
+    / "src/sc_neurocore/accel/rust/safety/hill_tononi.rs",
 }
 
 
 class _StepNeuron(Protocol):
     v: float
-    na_i: float
+    d_k: float
 
     def step(self, current: float) -> int: ...
 
@@ -84,7 +88,7 @@ def _run_once(backend: str) -> dict[str, object]:
         "elapsed_ns": elapsed_ns,
         "ns_per_step": elapsed_ns / STEPS,
         "spikes": spikes,
-        "ending_state": [float(neuron.v), float(neuron.na_i)],
+        "ending_state": [float(neuron.v), float(neuron.d_k)],
     }
 
 
@@ -110,6 +114,7 @@ def _run_rust_backend() -> dict[str, object]:
         "cargo",
         "run",
         "--release",
+        "--no-default-features",
         "--manifest-path",
         "engine/Cargo.toml",
         "--example",
@@ -187,7 +192,7 @@ function run_once()
         spikes += HillTononiAccel.step!(s, CURRENT)
     end
     elapsed = time_ns() - start
-    return elapsed / STEPS, spikes, s.v, s.na_i
+    return elapsed / STEPS, spikes, s.v, s.d_k
 end
 results = [run_once() for _ in 1:REPEATS]
 values = [r[1] for r in results]
@@ -197,7 +202,7 @@ println("max_ns_per_step=", maximum(values))
 println("results_ns_per_step=", join(values, ","))
 println("spike_counts=", join([r[2] for r in results], ","))
 println("final_vs=", join([r[3] for r in results], ","))
-println("final_nas=", join([r[4] for r in results], ","))
+println("final_ds=", join([r[4] for r in results], ","))
 """
     command = ["julia", "--project=.", "-e", script]
     try:
@@ -218,7 +223,7 @@ println("final_nas=", join([r[4] for r in results], ","))
         "results_ns_per_step": values,
         "spikes": int(fields["spike_counts"].split(",")[0]),
         "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-        "final_nas": [float(value) for value in fields["final_nas"].split(",")],
+        "final_ds": [float(value) for value in fields["final_ds"].split(",")],
     }
 
 
@@ -340,7 +345,7 @@ def main() -> None:
     _require_spike_parity(summaries)
     payload = {
         "spdx_license": "AGPL-3.0-or-later",
-        "benchmark": "HillTononiNeuron candidate-first RK4 thalamocortical sleep/wake step",
+        "benchmark": "HillTononiNeuron source hybrid RK4 cortical-wake step",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_hill_tononi.py",
         "evidence_class": "local_regression_non_isolated",

@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Hill-Tononi thalamocortical neuron RK4 Rust benchmark artefact writer
+// SC-NeuroCore — Hill-Tononi source hybrid RK4 Rust benchmark writer
 
 #[allow(dead_code)]
 mod benchmark_context;
@@ -16,7 +16,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const STEPS: usize = 200_000;
 const REPEATS: usize = 5;
-const CURRENT: f64 = 10.0;
+const CURRENT: f64 = 20.0;
 
 fn run_once() -> (f64, i32, f64, f64) {
     let mut neuron = HillTononiNeuron::default();
@@ -26,7 +26,7 @@ fn run_once() -> (f64, i32, f64, f64) {
         spikes += neuron.step(black_box(CURRENT));
     }
     let elapsed_ns = start.elapsed().as_nanos() as f64;
-    (elapsed_ns / STEPS as f64, spikes, neuron.v, neuron.na_i)
+    (elapsed_ns / STEPS as f64, spikes, neuron.v, neuron.d_k)
 }
 
 fn median(values: &mut [f64]) -> f64 {
@@ -51,14 +51,14 @@ fn main() {
     let mut ns_per_step = Vec::with_capacity(REPEATS);
     let mut spike_counts = Vec::with_capacity(REPEATS);
     let mut final_vs = Vec::with_capacity(REPEATS);
-    let mut final_nas = Vec::with_capacity(REPEATS);
+    let mut final_ds = Vec::with_capacity(REPEATS);
 
     for _ in 0..REPEATS {
-        let (ns, spikes, v, na) = run_once();
+        let (ns, spikes, v, d_k) = run_once();
         ns_per_step.push(ns);
         spike_counts.push(spikes);
         final_vs.push(v);
-        final_nas.push(na);
+        final_ds.push(d_k);
     }
 
     let mut sorted = ns_per_step.clone();
@@ -68,7 +68,7 @@ fn main() {
             "{{\n",
             "  \"backend\": \"rust\",\n",
             "  \"timestamp_unix\": {timestamp_unix},\n",
-            "  \"command\": \"cargo run --manifest-path engine/Cargo.toml --example bench_hill_tononi_rk4\",\n",
+            "  \"command\": \"cargo run --release --no-default-features --manifest-path engine/Cargo.toml --example bench_hill_tononi_rk4\",\n",
             "  \"rustc\": \"{rust_version}\",\n",
             "  \"target_os\": \"{os}\",\n",
             "  \"target_arch\": \"{arch}\",\n",
@@ -82,7 +82,7 @@ fn main() {
             "  \"results_ns_per_step\": [{results}],\n",
             "  \"spike_counts\": {spike_counts:?},\n",
             "  \"final_vs\": {final_vs:?},\n",
-            "  \"final_nas\": {final_nas:?}\n",
+            "  \"final_ds\": {final_ds:?}\n",
             "}}\n"
         ),
         timestamp_unix = timestamp_unix,
@@ -99,6 +99,6 @@ fn main() {
         results = values_json(&ns_per_step),
         spike_counts = spike_counts,
         final_vs = final_vs,
-        final_nas = final_nas,
+        final_ds = final_ds,
     );
 }

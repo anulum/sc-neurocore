@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Hill-Tononi dual-identity closure
+
+- Restored `HillTononiNeuron` as the Hill and Tononi (2005) hybrid model
+  neuron using the cortical-excitatory waking profile, dynamic threshold,
+  depolarisation-dependent potassium current, finite post-spike pulse, and
+  source `0.25 ms` RK4 integration. The former six-state HH/Na-pump project
+  recurrence remains count-neutrally as `SCSixStateThalamocorticalNeuron`
+  without paper attribution.
+- Closed the source identity through Python, Rust safety and engine, Julia,
+  Go, Mojo, paired schemas, an independent mixed-drive receipt, native parity,
+  and a source-bound five-runtime benchmark. The source catalogue is now
+  57/155 complete; full-network and silicon evidence remain explicitly
+  unclaimed.
+
 ### Bertram phantom dual-identity closure
 
 - Restored `BertramPhantomBurster` as the four-state Bertram et al. (2000)
