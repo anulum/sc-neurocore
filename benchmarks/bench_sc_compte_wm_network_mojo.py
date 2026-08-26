@@ -25,6 +25,7 @@ from typing import Any
 from sc_neurocore.accel.mojo.sc_compte_wm_network import SCCompteWMMojoNetwork
 
 REPOSITORY = Path(__file__).resolve().parents[1]
+MOJO_MANIFEST = REPOSITORY / "src/sc_neurocore/accel/mojo/pixi.toml"
 DEFAULT_OUTPUT = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network_mojo.json"
 N_STEPS = 1_000
 N_REPEATS = 3
@@ -41,7 +42,14 @@ def _sha256(path: Path) -> str:
 
 def _mojo_version() -> str:
     executed = subprocess.run(
-        [str(REPOSITORY / ".venv/bin/mojo"), "--version"],
+        [
+            "pixi",
+            "run",
+            "--manifest-path",
+            str(MOJO_MANIFEST),
+            "mojo",
+            "--version",
+        ],
         cwd=REPOSITORY,
         check=True,
         capture_output=True,

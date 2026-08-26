@@ -31,26 +31,26 @@ comptime STREAM_MIX: UInt64 = 0x94D049BB133111EB
 
 
 @always_inline
-fn _f64(addr: Int) -> F64Ptr:
+def _f64(addr: Int) -> F64Ptr:
     return F64Ptr(unsafe_from_address=addr)
 
 
 @always_inline
-fn _i64(addr: Int) -> I64Ptr:
+def _i64(addr: Int) -> I64Ptr:
     return I64Ptr(unsafe_from_address=addr)
 
 
 @always_inline
-fn _u64(addr: Int) -> U64Ptr:
+def _u64(addr: Int) -> U64Ptr:
     return U64Ptr(unsafe_from_address=addr)
 
 
-fn _alloc_f64(n: Int) -> F64Ptr:
+def _alloc_f64(n: Int) -> F64Ptr:
     var raw = alloc[Float64](n)
     return F64Ptr(unsafe_from_address=Int(raw))
 
 
-fn _free_f64(pointer: F64Ptr):
+def _free_f64(pointer: F64Ptr):
     var raw = UnsafePointer[Float64, MutExternalOrigin](
         unsafe_from_address=Int(pointer)
     )
@@ -58,7 +58,7 @@ fn _free_f64(pointer: F64Ptr):
 
 
 @always_inline
-fn _mg_block(voltage: Float64) -> Float64:
+def _mg_block(voltage: Float64) -> Float64:
     var exponent = -0.062 * voltage
     if exponent < -700.0:
         exponent = -700.0
@@ -67,7 +67,7 @@ fn _mg_block(voltage: Float64) -> Float64:
     return 1.0 / (1.0 + exp(exponent) / 3.57)
 
 
-fn _fft_in_place(real: F64Ptr, imag: F64Ptr, inverse: Bool):
+def _fft_in_place(real: F64Ptr, imag: F64Ptr, inverse: Bool):
     """Apply the fixed-size iterative radix-2 transform in place."""
     for index in range(N_EXC):
         var source = index
@@ -119,7 +119,7 @@ fn _fft_in_place(real: F64Ptr, imag: F64Ptr, inverse: Bool):
             imag[index] /= Float64(N_EXC)
 
 
-fn _circular_sum(
+def _circular_sum(
     source: F64Ptr,
     spectrum_real: F64Ptr,
     spectrum_imag: F64Ptr,
@@ -148,7 +148,7 @@ fn _circular_sum(
 
 
 @export
-fn sc_compte_wm_network_kernel_spectrum_c(
+def sc_compte_wm_network_kernel_spectrum_c(
     j_plus: Float64,
     sigma_deg: Float64,
     output_real_addr: Int,
@@ -204,7 +204,7 @@ fn sc_compte_wm_network_kernel_spectrum_c(
 
 
 @always_inline
-fn _splitmix64(value: UInt64) -> UInt64:
+def _splitmix64(value: UInt64) -> UInt64:
     var mixed = value + GOLDEN
     mixed = (mixed ^ (mixed >> 30)) * UInt64(0xBF58476D1CE4E5B9)
     mixed = (mixed ^ (mixed >> 27)) * UInt64(0x94D049BB133111EB)
@@ -212,7 +212,7 @@ fn _splitmix64(value: UInt64) -> UInt64:
 
 
 @export
-fn sc_compte_wm_network_counter_poisson_c(
+def sc_compte_wm_network_counter_poisson_c(
     population_size: Int,
     rate_hz: Float64,
     dt_ms: Float64,
@@ -279,7 +279,7 @@ fn sc_compte_wm_network_counter_poisson_c(
     return 0
 
 
-fn _derivatives(
+def _derivatives(
     structured_ei: Bool,
     modulated: Bool,
     allow_autapses: Bool,
@@ -388,7 +388,7 @@ fn _derivatives(
 
 
 @export
-fn sc_compte_wm_network_step_c(
+def sc_compte_wm_network_step_c(
     structured_ei_flag: Int64,
     modulated_flag: Int64,
     allow_autapses_flag: Int64,

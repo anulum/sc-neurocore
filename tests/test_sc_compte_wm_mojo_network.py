@@ -52,7 +52,7 @@ def test_mojo_library_and_documented_complete_abi_exist() -> None:
         "sc_compte_wm_network_counter_poisson_c",
         "sc_compte_wm_network_step_c",
     ):
-        assert f"fn {symbol}(" in source
+        assert f"def {symbol}(" in source
         assert "@export" in source[max(0, source.index(symbol) - 80) : source.index(symbol)]
     assert "--target-cpu x86-64-v3" in source
 

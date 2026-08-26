@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.sc-compte-wm-network-benchmark.v1",
-  "generated_at": "2026-08-25T21:28:45.301952+00:00",
+  "generated_at": "2026-08-26T02:19:48.202252+00:00",
   "model": "SC-COMPTE-WM-NETWORK",
   "execution_path": "mojo-midpoint-rk2-radix2-fft-x86-64-v3",
   "evidence_class": "local_regression",
@@ -21,7 +21,7 @@
   },
   "environment": {
     "python": "3.12.3",
-    "mojo": "Mojo 0.26.2.0 (d627decc)",
+    "mojo": "Mojo 1.0.0 (ed45d567)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
     "affinity": [
@@ -39,25 +39,24 @@
       11
     ],
     "load_average": [
-      10.48193359375,
-      10.10302734375,
-      11.29736328125
+      11.951171875,
+      10.42626953125,
+      10.84423828125
     ]
   },
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_network_mojo.py": "9e3c99ae82244e28babed6b636624146898d31ee2953d34a9cbd6acdaac0ac56",
+    "benchmarks/bench_sc_compte_wm_network_mojo.py": "0a5be112e99a31308b7b58919b2f187701b71e39b31bb8ad96c137c8e2e15713",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "e36c497ab5258f2ba79ce5be1dcb474dea2df68de0ffd7ce7a2b3e0a375f88f7",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "2e135cdd7134dca820779b9d336c801deb0d6c477efcfcb1ad38c7a931520878",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so": "3bd152ac6bd86201eb7283a7133f89b9bcddd760bc634818dc9a672e46901d75"
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "1f46a295044fad64caa7eb56e6ec0e8db60613c818dc52b41492ab5645a2f012"
   },
   "samples_ns": [
-    634893441,
-    767323476,
-    703558023
+    1239908362,
+    869769248,
+    666578983
   ],
-  "median_ns": 703558023,
-  "median_ns_per_network_step": 703558.023,
-  "median_cell_updates_per_second": 3638648.009561537,
+  "median_ns": 869769248,
+  "median_ns_per_network_step": 869769.248,
+  "median_cell_updates_per_second": 2943309.396011205,
   "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
   "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
   "final_state_sha256": "f437a93befcf2cb63c54eb641a0bf3f6688776a4e4f50f2103241a7b93dc9fbf",
