@@ -289,6 +289,7 @@ def run_rust_proptest(
     command = [
         "cargo",
         "test",
+        "--no-default-features",
         "--manifest-path",
         "engine/Cargo.toml",
         "--test",

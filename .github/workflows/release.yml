@@ -103,7 +103,7 @@ jobs:
       - name: Generate release security packet
         run: |
           mkdir -p security/ci-security-packet
-          python tools/security_scan/release_security_sweep.py \
+          "${pythonLocation}/bin/python" tools/security_scan/release_security_sweep.py \
             --output-dir security/ci-security-packet \
             --include-fuzz \
             --fuzz-max-total-time 300

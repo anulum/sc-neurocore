@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import sys
 from typing import Any
 
@@ -174,3 +175,35 @@ def test_release_security_sweep_cli_returns_nonzero_for_failed_lane(
     assert exit_code == 1
     output = json.loads(capsys.readouterr().out)
     assert output["failed_lanes"] == ["osv-scanner"]
+
+
+def test_rust_proptest_lane_disables_unneeded_bundled_z3(tmp_path: Path) -> None:
+    tool = _load_tool()
+    commands: list[list[str]] = []
+
+    def record(command: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="3 passed", stderr="")
+
+    summary = tool.run_rust_proptest(
+        repo_root=REPO_ROOT,
+        output_dir=tmp_path,
+        run_command=record,
+    )
+
+    assert summary["passed"] is True
+    assert commands == [
+        [
+            "cargo",
+            "test",
+            "--no-default-features",
+            "--manifest-path",
+            "engine/Cargo.toml",
+            "--test",
+            "prop_neuron",
+            "--test",
+            "prop_layer",
+            "--test",
+            "prop_kuramoto",
+        ]
+    ]

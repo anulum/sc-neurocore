@@ -38,6 +38,10 @@ def test_release_workflow_builds_security_packet_before_release() -> None:
 
     assert any("tools/security_scan/release_security_sweep.py" in step for step in run_steps)
     assert any(
+        '"${pythonLocation}/bin/python" tools/security_scan/release_security_sweep.py' in step
+        for step in run_steps
+    )
+    assert any(
         "--output-dir" in step and "security/ci-security-packet" in step for step in run_steps
     )
     assert any("--include-fuzz" in step for step in run_steps)
