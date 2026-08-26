@@ -214,11 +214,15 @@ mod tests {
         let mut n = BrunelWangNeuron::new();
         let mut spikes = 0;
         for _ in 0..5000 {
-            spikes += n.step(5.0);
+            spikes += n.step(1.0);
         }
         assert!(
             spikes > 0,
             "Must fire with external AMPA drive, got {spikes}"
+        );
+        assert!(
+            spikes < 5000,
+            "Refractory dynamics must produce a non-saturated train, got {spikes}"
         );
     }
 
