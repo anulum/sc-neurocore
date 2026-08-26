@@ -120,21 +120,36 @@ Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin 
 Chialvo map, Aihara map, SC chaotic map, Ibarz-Tanaka map, and Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
 `accel/rust/safety` crate remains a tracked open lane item.
 
+## Runtime-validated models awaiting the complete acceleration chain
+
+The models below have a faithful Python reference and executed parity through the production Rust
+engine plus the standalone safety Rust, Go, and Julia lanes. They are recorded here so that completed
+runtime work is visible, but they are **not** included in the polyglot-complete total: Mojo remains
+missing or non-computing, and no RTL/silicon parity is claimed. A ✅ in this table therefore means
+validated on that named surface only, not graduation under the stricter bar above.
+
+| Model | Python | Rust engine | Rust safety | Go | Julia | Mojo | RTL | Executed parity basis | Local closure |
+|---|---|---|---|---|---|---|---|---|---|
+| NMDA neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ stub | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `ad5e95c35` |
+| SK neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `aed317321` |
+| T-type calcium neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `5577616dc` |
+| GLM neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | 64-step spike and history-buffer parity within `1e-12` under explicit uniform samples; legacy engine filters remain reconstructible without a second model identity | `0e1770007`, `8897bd0d0` |
+
 ## In progress
 
-No model is mid-flight right now. The next remediation unit will appear here when it opens; see the
-internal working tracker for the queue.
+The local-first remediation campaign remains active. Mid-flight ownership and queue position are
+kept in the internal working tracker; this public page records a model only after its current unit has
+an executed evidence packet and a local closure commit.
 
 ## The rest of the catalogue
 
 Every other catalogued model has a **faithful, tested Python reference** (and most have the real
-Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernels are **stubs, fakes,
-or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
-models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
-unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **fifty-eight polyglot-complete models** out of the 155-model catalogue;
-the remaining **97** source-model units are Python-faithful with an acceleration chain still under
-remediation.
+Rust engine acceleration path), but at least one required `accel/{rust,go,julia,mojo}` lane is a stub,
+missing, or not yet verified. The polyglot-stub-remediation sweep is replacing those gaps
+model-by-model. Partial runtime closures are shown separately above and are **deliberately not
+promoted** into the strict table. As of the latest strict graduation, there are **fifty-eight
+polyglot-complete source models** out of the 155-model source catalogue; the remaining **97** source
+model units still have at least one acceleration-chain requirement open.
 
 ## How a model graduates onto this page
 
