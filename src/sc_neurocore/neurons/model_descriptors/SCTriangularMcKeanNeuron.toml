@@ -25,9 +25,9 @@ hardware_fit = [
     "bounded fixed-point co-simulation",
 ]
 behavior_tags = [
-    "sc-mod",
-    "piecewise-linear",
-    "non-resetting",
+    "excitable",
+    "phasic",
+    "rate-coded",
 ]
 
 [provenance]

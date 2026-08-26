@@ -25,9 +25,9 @@ hardware_fit = [
     "bounded one-encoder fixed-point co-simulation",
 ]
 behavior_tags = [
-    "event-driven",
-    "unipolar",
+    "excitable",
     "rate-coded",
+    "tonic",
 ]
 
 [provenance]

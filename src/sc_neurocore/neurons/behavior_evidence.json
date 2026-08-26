@@ -1331,6 +1331,47 @@
       "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
       "stochastic": false
     },
+    "SCNonResettingAdaptiveLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "ef28fa03bfef1d452ce5c06b2286e692b315522d78cc0bf80435bae3a47f6d91",
+      "stochastic": false
+    },
+    "SCNormalizedEnergyLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "811c1e16e3e4d1203b499cc7c175514732b9ea144953c70934836482fd56447d",
+      "stochastic": false
+    },
+    "SCResettingMATNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "3ed3ff1e40703180939d2e7fa217515387e03a96e749bf6fca1edce12864263c",
+      "stochastic": false
+    },
+    "SCSigmaDeltaAccumulatorNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
+      "stochastic": false
+    },
     "SCStochasticRateAdaptationNeuron": {
       "behavior_tags": [
         "excitable",
@@ -1339,6 +1380,26 @@
       "drivable": true,
       "result_sha256": "11a1f6928160bdecc8bded6d91ad17c2cd6a40e2b2811ca1b0948aecb3b17db2",
       "stochastic": true
+    },
+    "SCThreeStatePhantomBurster": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "c83606237832a403db94d43ad1b861a17c2e93f757d41f6d12b8374e9591af15",
+      "stochastic": false
+    },
+    "SCTriangularMcKeanNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
     },
     "SFANeuron": {
       "behavior_tags": [
@@ -1674,7 +1735,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "5d7282287f08b8dd6578ec1a67b7ea0e8a8f7f19ac9de1a21fe447954377e268",
+  "result_sha256": "b9282f9fd991c923ef125e0603a9b050a5b98f27ce7031d6192d8eb54a7d97cf",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

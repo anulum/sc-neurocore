@@ -28,8 +28,8 @@ hardware_fit = [
 behavior_tags = [
     "adapting",
     "excitable",
-    "spiking",
-    "non-resetting",
+    "rate-coded",
+    "tonic",
 ]
 
 [provenance]

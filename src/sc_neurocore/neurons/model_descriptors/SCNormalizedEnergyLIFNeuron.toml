@@ -24,9 +24,9 @@ hardware_fit = [
     "bounded fixed-point co-simulation",
 ]
 behavior_tags = [
-    "project-defined",
-    "energy-gated",
-    "exact-flow",
+    "adapting",
+    "excitable",
+    "rate-coded",
 ]
 
 [provenance]

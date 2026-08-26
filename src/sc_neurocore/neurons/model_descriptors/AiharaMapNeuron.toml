@@ -25,8 +25,8 @@ hardware_fit = [
     "fixed-point sigmoid-LUT co-simulation",
 ]
 behavior_tags = [
-    "chaotic",
-    "graded-output",
+    "excitable",
+    "phasic",
     "rate-coded",
 ]
 

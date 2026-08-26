@@ -25,9 +25,9 @@ hardware_fit = [
     "bounded one-accumulator fixed-point co-simulation",
 ]
 behavior_tags = [
-    "bipolar",
-    "project-defined",
-    "event-driven",
+    "excitable",
+    "rate-coded",
+    "tonic",
 ]
 
 [provenance]
