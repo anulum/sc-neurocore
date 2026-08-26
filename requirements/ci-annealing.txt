@@ -385,8 +385,8 @@ markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
     --hash=sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a
     # via rich
-mblack==26.2.0 \
-    --hash=sha256:f83cf39f9cf3d71b16d8aed5433db2d0f8e8fc59f05e129ed01ed2446d7a8d23
+mblack==26.5.0 \
+    --hash=sha256:072b304646c277979e6a1d19b086ef226bb7381810902e975cf1c3886d1d7883
     # via mojo
 mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
@@ -433,23 +433,23 @@ ml-dtypes==0.5.4 \
     --hash=sha256:d81fdb088defa30eb37bf390bb7dde35d3a83ec112ac8e33d75ab28cc29dd8b0 \
     --hash=sha256:f21c9219ef48ca5ee78402d5cc831bd58ea27ce89beda894428bc67a52da5328
     # via onnx
-mojo==0.26.2.0 \
-    --hash=sha256:068ad903bb64dc1535aee7da5cf84957f7da84a0e248b72589efa63e7d6ac955 \
-    --hash=sha256:fb37761fa3e685240908c4dddf9f423a8bc73f7a8e924d646759e63da474c3e5 \
-    --hash=sha256:fbb2472a243faa8304871e914e94356ad72261f06c2ba4bb8cc4f1c49fc71004
+mojo==1.0.0 \
+    --hash=sha256:69413fee96dfd43c4955ace56e4bb0f89401098daf61538a563c82571bc9d984 \
+    --hash=sha256:725d6b7f29a5a3334e3c225f35f2b709fd46151a0a31a2c22738b1937dfc83d9 \
+    --hash=sha256:a6db18b2846ec4877c5cd43a2dce1556400520dc0d4450dc8b4703dab569e9a2
     # via sc-neurocore (pyproject.toml)
-mojo-compiler==0.26.2.0 \
-    --hash=sha256:a88837d71435330d1c100a8f16d9ef8221d366227c0eb1234d60e8cf06a5e48c \
-    --hash=sha256:afb81f9146369bbef7f05899b95ce3897e598be69e0109694a85278613e84e1f \
-    --hash=sha256:d9ff03ed5db5f921d7ef5c7e4afcb8bc1cb2ff4ff40ee0403f248d23f85d5881
+mojo-compiler==1.0.0 \
+    --hash=sha256:3ae3eb0c58a8956f542e324f736866df0ae2f9f875e8a279cbeea961ec4e9ee8 \
+    --hash=sha256:5077ee27c0dfbbdf138a11ec12838b0d3f10148a874cf95040c9ca2332ae2622 \
+    --hash=sha256:e9e60f9638e69ca0f4be7292468523fc98a143f58dbf9024f60ed68b874a867e
     # via mojo
-mojo-compiler-mojo-libs==0.26.2.0 \
-    --hash=sha256:e4419e4b744e88fc187a552d0e9cb4145c5b1ad1a3a4efff1301e13e7c70b55c
+mojo-compiler-mojo-libs==1.0.0 \
+    --hash=sha256:20a92e37ecbd19e2dbb1a525612a8de4c9f266f5536def55c5e2b0786320e8b3
     # via mojo-compiler
-mojo-lldb-libs==0.26.2.0 \
-    --hash=sha256:246b9c15f2e1cf357768a1a6ff07beef63e57a94628423c0272552f145d600cf \
-    --hash=sha256:c6e23c9252388f899e0b5e25da850ef1ebbecd498f2020af476b2f296f281c18 \
-    --hash=sha256:dc73a545e423caff0201fbaa9ce5ada7870f0f7af1aa2e4f0041fe47aa66b94d
+mojo-lldb-libs==1.0.0 \
+    --hash=sha256:7eb1f204829f031fda8cc9ee4e7f461f1ca3ddf1c8fb509abf2eb6f02c9de4f5 \
+    --hash=sha256:b8f417c3c2c64058c1c11467086c2e64464abcd91dba938c659b49d94cc75c5b \
+    --hash=sha256:de151c87f3fb4d184a85e735eae05bf43f9a9deb4cb8f2b07cf6b59cb769d93f
     # via mojo
 mpmath==1.3.0 \
     --hash=sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f \
