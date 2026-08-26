@@ -1,9 +1,13 @@
 # GLMNeuron
 
 **Module:** `sc_neurocore.neurons.models.glm_neuron`
-**Reference:** Pillow et al. 2008
+**Reference:** Pillow, J.W. et al. (2008). *Nature* 454:995–999 (doi 10.1038/nature07140)
 **Family:** Statistical (point-process GLM)
 **State variables:** `_stim_buf` (stimulus history), `_spike_buf` (spike history)
+
+The exponential nonlinearity, log-rate clip to [−20, 20], and per-bin
+Bernoulli sampling are the repository's discrete-time specialisation of
+the paper's point process.
 
 ## Equations
 
@@ -39,11 +43,39 @@ $\mathbf{s}$ = stimulus history, $\mathbf{y}$ = spike history.
 
 ```
 GLMNeuron
-├── step(stimulus) → int {0,1} (stochastic)
+├── step(stimulus, uniform=None) → int {0,1}
+│     uniform=None  → Bernoulli draw from the seeded generator
+│     uniform=u     → deterministic draw from the explicit sample u ∈ [0, 1)
 ├── Population: works (no current needed — uses stimulus)
 ├── Filters: customisable via k, h arrays
 └── Rust: supported via NeuronVariant
 ```
+
+### Determinism, Seeding, and Invalid-Input Atomicity
+
+- `GLMNeuron(seed=42)` gives a reproducible generator; `seed=None`
+  (default) draws fresh entropy, matching the historical behaviour.
+- Passing `uniform` to `step` supplies the Bernoulli sample explicitly
+  and bypasses the generator — this is the exact cross-backend parity
+  contract (the same explicit samples drive every backend).
+- Non-finite `stimulus`, an out-of-domain `uniform` (outside `[0, 1)`),
+  a corrupted configuration, or a corrupted history buffer raises
+  `ValueError` with the pre-step state preserved exactly — a NaN input
+  can no longer poison the stimulus history.
+
+### Backend Inventory
+
+| Surface | Status |
+|---------|--------|
+| Python reference | `src/sc_neurocore/neurons/models/glm_neuron.py` |
+| Production Rust engine | `engine/src/neurons/special/spike_response_models.rs` (`try_step`, reference filters, log-rate clip) |
+| PyO3 binding | `engine/src/bindings/stochastic/glm.rs` (typed `ValueError`; `step(stimulus, uniform=None)`, `get_state`) |
+| Standalone safety Rust | `src/sc_neurocore/accel/rust/safety/glm_neuron.rs` (explicit-uniform contract) |
+| Go service | `src/sc_neurocore/accel/go/services/glm_neuron.go` (`TryStep(stimulus, uniform)`) |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/glm_neuron.jl` (atomic `ArgumentError`) |
+| Mojo | not implemented; no kernel exists and no parity is claimed |
+| Silicon / RTL | not implemented; no HDL parity claimed |
+| Backend parity | engine, safety Rust, Go, Julia vs Python: 64-step spike train and history buffers ≤ 1e-12 under the explicit-uniform contract |
 
 ## Test Coverage
 
@@ -95,7 +127,12 @@ State returns to initial values after `reset()`.
 **Status: PASS**
 
 ### 7. Rust parity
-**N/A** — stochastic model, exact parity not applicable.
+Exact under the explicit-uniform sample contract
+(`tests/test_glm_neuron_backends.py`): the engine binding, standalone
+safety Rust, Go, and Julia reproduce the Python spike train and history
+buffers within 1e-12 when all surfaces consume the same explicit
+uniform samples. Free-running (generator-driven) sampling remains
+distribution-level only, as the generators differ by design.
 
 ---
 

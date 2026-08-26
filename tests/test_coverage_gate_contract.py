@@ -144,3 +144,19 @@ def test_ttype_ca_exact_coverage_and_backend_parity_is_hosted() -> None:
     assert "tests/test_model_ttype_ca_neuron.py" in step
     assert "tests/test_ttype_ca_neuron_backends.py" in step
     assert "--fail-under=100 --show-missing" in step
+
+
+def test_glm_exact_coverage_and_backend_parity_is_hosted() -> None:
+    """The omitted GLM model needs an explicit branch gate and backend custody."""
+
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    start = workflow.index("- name: GLM exact coverage and backend parity")
+    end = workflow.index("\n      - name:", start + 1)
+    step = workflow[start:end]
+
+    assert "if: matrix.primary" in step
+    assert "--rcfile=/dev/null --branch" in step
+    assert "--include='src/sc_neurocore/neurons/models/glm_neuron.py'" in step
+    assert "tests/test_model_glm_neuron_glm_atomicity.py" in step
+    assert "tests/test_glm_neuron_backends.py" in step
+    assert "--fail-under=100 --show-missing" in step

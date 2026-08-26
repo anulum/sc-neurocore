@@ -528,6 +528,26 @@ jobs:
             --include='src/sc_neurocore/neurons/models/ttype_ca_neuron.py' \
             --fail-under=100 --show-missing
 
+      - name: GLM exact coverage and backend parity
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-glm python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/neurons/models/glm_neuron.py' \
+            -m pytest tests/test_model_glm_neuron_glm_atomicity.py \
+              tests/test_model_glm_neuron_glm_analytical.py \
+              tests/test_model_glm_neuron_glm_dynamics.py \
+              tests/test_model_glm_neuron_glm_isolation.py \
+              tests/test_model_glm_neuron_glm_parameters.py \
+              tests/test_model_glm_neuron_glm_performance.py \
+              tests/test_model_glm_neuron_glm_pipeline.py \
+              tests/test_glm_neuron_backends.py -q
+          COVERAGE_FILE=.coverage-glm python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/neurons/models/glm_neuron.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

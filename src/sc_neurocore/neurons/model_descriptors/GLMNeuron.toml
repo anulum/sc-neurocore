@@ -70,16 +70,45 @@ range = [
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+log_rate = "clip(k . stim_history + h . spike_history + mu, -20, 20)"
+lambda = "exp(log_rate)"
+p_spike = "min(lambda * dt_ms / 1000, 1)"
+spike = "Bernoulli(p_spike); sampled from the generator, or from the explicit uniform argument when supplied"
+history = "shift-register update: stim_history[0] = stimulus, spike_history[0] = spike, both after the draw"
+k_default = "0.5 * exp(-i / 3), i = 0..n_k-1"
+h_default = "-5 * exp(-t / 2) + 0.5 * exp(-t / 10), t = 0..n_h-1"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":5.0,\"seed\":42,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "21818fdf06ba04df17e66995fa29ac5565044f55c5ec5186f45c6763cba6709c"
+event_count = 144
+final_state = "{\"stim_buf0\":5.0,\"spike_buf0\":0.0,\"stim_sum\":50.0,\"spike_sum\":4.0}"
 
 [documentation]
 slug = "models/glm_neuron"
-notes = ""
+notes = "Discrete-time Bernoulli specialisation of the Pillow 2008 point-process GLM with an exponential nonlinearity and a log-rate clip to [-20, 20]. Stochastic: cross-backend parity is exact under the explicit-uniform sample contract; free-running sampling uses each surface's own generator (numpy PCG64 in Python, seeded Xoshiro256++ in the engine). Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "64 varied drives under the explicit-uniform contract plus 1000 seeded steps at I=5"

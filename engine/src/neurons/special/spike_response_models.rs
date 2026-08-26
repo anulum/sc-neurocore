@@ -73,29 +73,62 @@ pub struct GLMNeuron {
 
 impl GLMNeuron {
     pub fn new(n_k: usize, n_h: usize, seed: u64) -> Self {
+        // Reference filters (Pillow 2008 discrete specialisation), matching
+        // the Python reference implementation exactly.
+        let k = (0..n_k).map(|i| (-(i as f64) / 3.0).exp() * 0.5).collect();
+        let h = (0..n_h)
+            .map(|t| -5.0 * (-(t as f64) / 2.0).exp() + 0.5 * (-(t as f64) / 10.0).exp())
+            .collect();
         Self {
             mu: -3.0,
             dt_ms: 1.0,
-            k: vec![0.1; n_k],
-            h: vec![-0.5; n_h],
+            k,
+            h,
             stim_buf: vec![0.0; n_k],
             spike_buf: vec![0.0; n_h],
             rng: Xoshiro256PlusPlus::seed_from_u64(seed),
         }
     }
-    pub fn step(&mut self, stimulus: f64) -> i32 {
+
+    fn valid(&self) -> bool {
+        self.mu.is_finite()
+            && self.dt_ms.is_finite()
+            && self.dt_ms > 0.0
+            && self.dt_ms <= 1000.0
+            && self.k.len() == self.stim_buf.len()
+            && self.h.len() == self.spike_buf.len()
+            && self.k.iter().all(|value| value.is_finite())
+            && self.h.iter().all(|value| value.is_finite())
+            && self.stim_buf.iter().all(|value| value.is_finite())
+            && self.spike_buf.iter().all(|value| value.is_finite())
+    }
+
+    pub fn try_step(&mut self, stimulus: f64, uniform: Option<f64>) -> Result<i32, &'static str> {
+        if !stimulus.is_finite() {
+            return Err("stimulus must be finite");
+        }
+        if let Some(sample) = uniform {
+            if !sample.is_finite() || !(0.0..1.0).contains(&sample) {
+                return Err("uniform must be finite and within [0, 1)");
+            }
+        }
+        if !self.valid() {
+            return Err("GLM state and parameters must satisfy the public bounds");
+        }
+
         let nk = self.stim_buf.len();
         let nh = self.spike_buf.len();
+        let mut stim_candidate = self.stim_buf.clone();
         for i in (1..nk).rev() {
-            self.stim_buf[i] = self.stim_buf[i - 1];
+            stim_candidate[i] = stim_candidate[i - 1];
         }
         if nk > 0 {
-            self.stim_buf[0] = stimulus;
+            stim_candidate[0] = stimulus;
         }
         let dot_k: f64 = self
             .k
             .iter()
-            .zip(self.stim_buf.iter())
+            .zip(stim_candidate.iter())
             .map(|(a, b)| a * b)
             .sum();
         let dot_h: f64 = self
@@ -104,20 +137,41 @@ impl GLMNeuron {
             .zip(self.spike_buf.iter())
             .map(|(a, b)| a * b)
             .sum();
-        let lam = (dot_k + dot_h + self.mu).exp();
+        let log_rate = (dot_k + dot_h + self.mu).clamp(-20.0, 20.0);
+        let lam = log_rate.exp();
         let p = lam * self.dt_ms / 1000.0;
-        let spike = if self.rng.random::<f64>() < p { 1 } else { 0 };
+        let draw = match uniform {
+            Some(sample) => sample,
+            None => self.rng.random::<f64>(),
+        };
+        let spike = if draw < p.min(1.0) { 1 } else { 0 };
+        let mut spike_candidate = self.spike_buf.clone();
         for i in (1..nh).rev() {
-            self.spike_buf[i] = self.spike_buf[i - 1];
+            spike_candidate[i] = spike_candidate[i - 1];
         }
         if nh > 0 {
-            self.spike_buf[0] = spike as f64;
+            spike_candidate[0] = spike as f64;
         }
-        spike
+        self.stim_buf = stim_candidate;
+        self.spike_buf = spike_candidate;
+        Ok(spike)
     }
+
+    pub fn step(&mut self, stimulus: f64) -> i32 {
+        self.try_step(stimulus, None).unwrap_or(0)
+    }
+
     pub fn reset(&mut self) {
         self.stim_buf.fill(0.0);
         self.spike_buf.fill(0.0);
+    }
+
+    pub fn stim_buf_view(&self) -> Vec<f64> {
+        self.stim_buf.clone()
+    }
+
+    pub fn spike_buf_view(&self) -> Vec<f64> {
+        self.spike_buf.clone()
     }
 }
 
@@ -182,7 +236,44 @@ mod tests {
     }
 
     #[test]
-    fn glm_nan_does_not_panic() {
-        GLMNeuron::new(5, 10, 42).step(f64::NAN);
+    fn glm_nan_input_is_rejected_atomically() {
+        let mut n = GLMNeuron::new(5, 10, 42);
+        let stim_before = n.stim_buf.clone();
+        let spike_before = n.spike_buf.clone();
+        assert!(n.try_step(f64::NAN, None).is_err());
+        assert!(n.try_step(f64::INFINITY, None).is_err());
+        assert_eq!(n.stim_buf, stim_before);
+        assert_eq!(n.spike_buf, spike_before);
+    }
+
+    #[test]
+    fn glm_out_of_range_uniform_is_rejected() {
+        let mut n = GLMNeuron::new(5, 10, 42);
+        assert!(n.try_step(1.0, Some(1.0)).is_err());
+        assert!(n.try_step(1.0, Some(f64::NAN)).is_err());
+        assert!(n.try_step(1.0, Some(0.0)).is_ok());
+    }
+
+    #[test]
+    fn glm_reference_filters_match_python_defaults() {
+        let n = GLMNeuron::new(10, 20, 42);
+        assert!((n.k[0] - 0.5).abs() < 1e-15);
+        assert!((n.k[3] - 0.5 * (-1.0_f64).exp()).abs() < 1e-15);
+        assert!((n.h[0] - -4.5).abs() < 1e-15);
+        assert!(n.h[19] > n.h[0]);
+    }
+
+    #[test]
+    fn glm_explicit_uniform_is_deterministic_across_seeds() {
+        let mut a = GLMNeuron::new(10, 20, 1);
+        let mut b = GLMNeuron::new(10, 20, 2);
+        for index in 0..200 {
+            let sample = (index as f64 % 97.0) / 97.0;
+            let spike_a = a.try_step(5.0, Some(sample)).expect("finite drive");
+            let spike_b = b.try_step(5.0, Some(sample)).expect("finite drive");
+            assert_eq!(spike_a, spike_b);
+        }
+        assert_eq!(a.stim_buf, b.stim_buf);
+        assert_eq!(a.spike_buf, b.spike_buf);
     }
 }

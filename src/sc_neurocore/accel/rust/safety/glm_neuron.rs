@@ -4,64 +4,101 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for glm_neuron
-
-#![allow(unused_variables, dead_code, non_snake_case)]
+// SC-NeuroCore — Standalone Rust safety mirror for GLMNeuron
 
 #[derive(Debug, Clone)]
 pub struct GLMNeuron {
-    pub n_k: f64,
-    pub n_h: f64,
     pub mu: f64,
     pub dt_ms: f64,
-    pub k: f64,
-    pub h: f64,
-    pub _stim_buf: f64,
-    pub _spike_buf: f64,
-    pub _rng: f64,
+    pub k: Vec<f64>,
+    pub h: Vec<f64>,
+    pub stim_buf: Vec<f64>,
+    pub spike_buf: Vec<f64>,
 }
 
 impl GLMNeuron {
-    pub fn new() -> Self {
+    pub fn new(n_k: usize, n_h: usize) -> Self {
+        let k = (0..n_k).map(|i| (-(i as f64) / 3.0).exp() * 0.5).collect();
+        let h = (0..n_h)
+            .map(|t| -5.0 * (-(t as f64) / 2.0).exp() + 0.5 * (-(t as f64) / 10.0).exp())
+            .collect();
         Self {
-            n_k: 10.0_f64,
-            n_h: 20.0_f64,
-            mu: -3.0_f64,
-            dt_ms: 1.0_f64,
-            k: 0.0_f64,
-            h: 0.0_f64,
-            _stim_buf: 0.0_f64,
-            _spike_buf: 0.0_f64,
-            _rng: 0.0_f64,
+            mu: -3.0,
+            dt_ms: 1.0,
+            k,
+            h,
+            stim_buf: vec![0.0; n_k],
+            spike_buf: vec![0.0; n_h],
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // self._stim_buf = np.roll(self._stim_buf, 1)
-        // self._stim_buf[0] = stimulus
-        // log_rate = float(np.dot(self.k, self._stim_buf) + np.dot(self.h, self.
-        // lam = ((log_rate_f64).clamp(-20.0, 20.0_f64).exp())
-        // p = lam * self.dt_ms / 1000.0
-        // spike = 1 if self._rng.random() < min(p, 1.0) else 0
-        // self._spike_buf = np.roll(self._spike_buf, 1)
-        // self._spike_buf[0] = float(spike)
-        // return spike
-        0 // spike indicator
+    /// Advance one step consuming an explicit uniform sample in [0, 1).
+    pub fn step(&mut self, stimulus: f64, uniform: f64) -> Result<i32, &'static str> {
+        if !stimulus.is_finite() {
+            return Err("stimulus must be finite");
+        }
+        if !uniform.is_finite() || !(0.0..1.0).contains(&uniform) {
+            return Err("uniform must be finite and within [0, 1)");
+        }
+        if !validate_glm_neuron(self) {
+            return Err("GLM state and parameters must satisfy the public bounds");
+        }
+
+        let nk = self.stim_buf.len();
+        let nh = self.spike_buf.len();
+        let mut stim_candidate = self.stim_buf.clone();
+        for i in (1..nk).rev() {
+            stim_candidate[i] = stim_candidate[i - 1];
+        }
+        if nk > 0 {
+            stim_candidate[0] = stimulus;
+        }
+        let dot_k: f64 = self
+            .k
+            .iter()
+            .zip(stim_candidate.iter())
+            .map(|(a, b)| a * b)
+            .sum();
+        let dot_h: f64 = self
+            .h
+            .iter()
+            .zip(self.spike_buf.iter())
+            .map(|(a, b)| a * b)
+            .sum();
+        let log_rate = (dot_k + dot_h + self.mu).clamp(-20.0, 20.0);
+        let p = log_rate.exp() * self.dt_ms / 1000.0;
+        let spike = if uniform < p.min(1.0) { 1 } else { 0 };
+        let mut spike_candidate = self.spike_buf.clone();
+        for i in (1..nh).rev() {
+            spike_candidate[i] = spike_candidate[i - 1];
+        }
+        if nh > 0 {
+            spike_candidate[0] = spike as f64;
+        }
+        self.stim_buf = stim_candidate;
+        self.spike_buf = spike_candidate;
+        Ok(spike)
     }
 
     pub fn reset(&mut self) {
-        // self._stim_buf = np.zeros(self.n_k)
-        // self._spike_buf = np.zeros(self.n_h)
-        self.n_k = 10.0_f64;
-        self.n_h = 20.0_f64;
-        self.mu = -3.0_f64;
-        self.dt_ms = 1.0_f64;
-        self.k = 0.0_f64;
+        self.stim_buf.fill(0.0);
+        self.spike_buf.fill(0.0);
     }
 }
 
 pub fn validate_glm_neuron(state: &GLMNeuron) -> bool {
-    true
+    state.mu.is_finite()
+        && state.dt_ms.is_finite()
+        && state.dt_ms > 0.0
+        && state.dt_ms <= 1000.0
+        && state.k.len() == state.stim_buf.len()
+        && state.h.len() == state.spike_buf.len()
+        && !state.k.is_empty()
+        && !state.h.is_empty()
+        && state.k.iter().all(|value| value.is_finite())
+        && state.h.iter().all(|value| value.is_finite())
+        && state.stim_buf.iter().all(|value| value.is_finite())
+        && state.spike_buf.iter().all(|value| value.is_finite())
 }
 
 #[cfg(test)]
@@ -69,15 +106,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_glm_neuron_new() {
-        let state = GLMNeuron::new();
-        assert!(validate_glm_neuron(&state));
+    fn deterministic_forced_spike_and_refractory_feedback() {
+        let mut state = GLMNeuron::new(10, 20);
+        let spike = state.step(20.0, 0.0).expect("finite drive");
+        assert_eq!(spike, 1);
+        assert_eq!(state.spike_buf[0], 1.0);
+        assert_eq!(state.stim_buf[0], 20.0);
     }
 
     #[test]
-    fn test_glm_neuron_step() {
-        let mut state = GLMNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
+    fn invalid_drive_and_uniform_are_atomic() {
+        let mut state = GLMNeuron::new(10, 20);
+        let before = state.clone();
+        assert!(state.step(f64::NAN, 0.5).is_err());
+        assert!(state.step(1.0, 1.0).is_err());
+        assert!(state.step(1.0, f64::NAN).is_err());
+        assert_eq!(state.stim_buf, before.stim_buf);
+        assert_eq!(state.spike_buf, before.spike_buf);
+    }
+
+    #[test]
+    fn invalid_configuration_is_atomic() {
+        let mut state = GLMNeuron::new(10, 20);
+        state.mu = f64::NAN;
+        let before = state.clone();
+        assert!(state.step(1.0, 0.5).is_err());
+        assert_eq!(state.stim_buf, before.stim_buf);
+    }
+
+    #[test]
+    fn reset_preserves_filters() {
+        let mut state = GLMNeuron::new(10, 20);
+        state.step(5.0, 0.0).expect("finite drive");
+        let k_before = state.k.clone();
+        state.reset();
+        assert!(state.stim_buf.iter().all(|value| *value == 0.0));
+        assert!(state.spike_buf.iter().all(|value| *value == 0.0));
+        assert_eq!(state.k, k_before);
     }
 }
