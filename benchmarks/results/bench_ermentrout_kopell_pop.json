@@ -347,9 +347,9 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/ermentrout_kopell_pop_eq12_euler_doi.json": "d8618c37256eee3104b0f63234e2c81af2a624c77e2361a5add831b0e418bc71",
     "tools/build_accel_backends": {
-      "py": "8f3e92b0cf9f34764466c0d5b5eff84019146cbaa7089feceaa3aec6baba4387"
+      "py": "d0ea955a6aae029d7d780d4d86f4933cc4252edf09b9b2d61e8b5f8e09478087"
     },
-    "tools/build_accel_backends.py": "8f3e92b0cf9f34764466c0d5b5eff84019146cbaa7089feceaa3aec6baba4387",
+    "tools/build_accel_backends.py": "d0ea955a6aae029d7d780d4d86f4933cc4252edf09b9b2d61e8b5f8e09478087",
     "tools/check_mojo_isa_baseline": {
       "py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
     },
