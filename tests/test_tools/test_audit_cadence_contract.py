@@ -78,6 +78,7 @@ def test_audit_cadence_builds_collection_gating_backends() -> None:
 
     assert any(item.startswith("actions/setup-go@") for item in uses)
     assert any(item.startswith("prefix-dev/setup-pixi@") for item in uses)
+    assert "sudo apt-get install -y -qq iverilog yosys" in run_text
     assert "for model in rk4_neurons wilson_cowan" in run_text
     assert "mojo build --emit shared-lib --target-cpu x86-64-v3" in run_text
 

@@ -58,6 +58,11 @@ jobs:
       - name: Install package
         run: python tools/ci_install_dev.py
 
+      - name: Install collection-gating HDL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog yosys
+
       - name: Build collection-gating native backends
         shell: bash
         run: |
