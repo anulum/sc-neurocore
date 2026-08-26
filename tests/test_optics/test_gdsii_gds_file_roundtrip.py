@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from gdsii_support import *  # noqa: F403
+import pytest
+
+
+pytest.importorskip(
+    "gdsfactory",
+    reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
+)
+
+from gdsii_support import *  # noqa: E402,F403
 
 
 class TestGDSFileRoundtrip:
