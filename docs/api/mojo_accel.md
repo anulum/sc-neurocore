@@ -325,8 +325,10 @@ points.
 ### 6.3 Toolchain expectations
 
 - **pixi** at ``~/.pixi/bin/pixi`` (override via ``_pixi_bin``).
-- **Mojo 0.26+** — earlier versions miss the ``UnsafePointer`` FFI
-  pattern the kernels use internally. Install via the pixi env
+- **Mojo 1.0.0** — pinned for the maintained C-ABI kernels; earlier versions
+  reject the current ``def``-based source surface and newer unpinned versions
+  may introduce compiler migration drift. The kernels retain the legacy
+  ``UnsafePointer`` FFI pattern internally. Install via the pixi env
   manifest ``src/sc_neurocore/accel/mojo/pixi.toml`` + lock file.
 
 ### 6.4 Error modes
@@ -564,7 +566,7 @@ Mojo-backed kernels into the default ``accel/`` dispatch path.
   stable across versions. When Modular releases a stable ABI (tracker
   milestone 2026 Q3), the subprocess façade will be replaced with a
   direct ``ctypes.CDLL`` call using the same Python method signatures.
-- **Platform.** Mojo 0.26+ is Linux x86-64 first-class. macOS support
+- **Platform.** The pinned Mojo 1.0.0 toolchain is Linux x86-64 first-class. macOS support
   tracks upstream Modular; Windows support is not on the near-term
   roadmap.
 - **No GPU kernels in this module.** The WGPU path lives under

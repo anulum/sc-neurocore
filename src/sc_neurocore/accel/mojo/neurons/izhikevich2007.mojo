@@ -30,7 +30,7 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dv(
+def _dv(
     v: Float64, u: Float64, cap: Float64, k: Float64, vr: Float64, vt: Float64, cur: Float64
 ) -> Float64:
     var dvr = v - vr
@@ -40,13 +40,13 @@ fn _dv(
 
 
 @always_inline
-fn _du(v: Float64, u: Float64, vr: Float64, a: Float64, b: Float64) -> Float64:
+def _du(v: Float64, u: Float64, vr: Float64, a: Float64, b: Float64) -> Float64:
     var bv = b * (v - vr)
     return a * (bv - u)
 
 
 @export
-fn izhikevich2007_simulate_c(
+def izhikevich2007_simulate_c(
     v0: Float64,
     u0: Float64,
     cap: Float64,

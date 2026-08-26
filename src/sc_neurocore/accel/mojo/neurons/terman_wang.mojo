@@ -24,26 +24,26 @@
 #
 # Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 
-from math import tanh
+from std.math import tanh
 from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dv(v: Float64, w: Float64, current: Float64, rho: Float64) -> Float64:
+def _dv(v: Float64, w: Float64, current: Float64, rho: Float64) -> Float64:
     var cube = v * v * v
     var f = 3.0 * v - cube + 2.0
     return f - w + current + rho
 
 
 @always_inline
-fn _dw(v: Float64, w: Float64, alpha: Float64, beta: Float64, eps: Float64) -> Float64:
+def _dw(v: Float64, w: Float64, alpha: Float64, beta: Float64, eps: Float64) -> Float64:
     var arg = v / beta
     var g = alpha * (1.0 + tanh(arg))
     return eps * (g - w)
 
 
 @export
-fn terman_wang_simulate_c(
+def terman_wang_simulate_c(
     v0: Float64,
     w0: Float64,
     alpha: Float64,

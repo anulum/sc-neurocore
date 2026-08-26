@@ -27,7 +27,7 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _clamp_unit(v: Float64) -> Float64:
+def _clamp_unit(v: Float64) -> Float64:
     if v < -2.0:
         return -2.0
     if v > 2.0:
@@ -36,7 +36,7 @@ fn _clamp_unit(v: Float64) -> Float64:
 
 
 @export
-fn cazelles_map_simulate_c(
+def cazelles_map_simulate_c(
     x0: Float64,
     y0: Float64,
     a: Float64,

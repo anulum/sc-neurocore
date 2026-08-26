@@ -29,27 +29,27 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dv(v: Float64, w: Float64, z: Float64, current: Float64) -> Float64:
+def _dv(v: Float64, w: Float64, z: Float64, current: Float64) -> Float64:
     var cube = v * v * v
     var third = cube / 3.0
     return v - third - w - z + current
 
 
 @always_inline
-fn _dw(v: Float64, w: Float64, eps1: Float64, gamma: Float64, alpha: Float64) -> Float64:
+def _dw(v: Float64, w: Float64, eps1: Float64, gamma: Float64, alpha: Float64) -> Float64:
     var gw = gamma * w
     return eps1 * (v - gw + alpha)
 
 
 @always_inline
-fn _dz(v: Float64, z: Float64, eps2: Float64, beta: Float64) -> Float64:
+def _dz(v: Float64, z: Float64, eps2: Float64, beta: Float64) -> Float64:
     var shifted = v + 0.7
     var bv = beta * shifted
     return eps2 * (bv - z)
 
 
 @export
-fn pernarowski_simulate_c(
+def pernarowski_simulate_c(
     v0: Float64,
     w0: Float64,
     z0: Float64,

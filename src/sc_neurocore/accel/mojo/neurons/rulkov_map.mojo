@@ -31,7 +31,7 @@ from std.memory import UnsafePointer
 
 
 @export
-fn rulkov_map_simulate_c(
+def rulkov_map_simulate_c(
     x0: Float64,
     y0: Float64,
     alpha: Float64,

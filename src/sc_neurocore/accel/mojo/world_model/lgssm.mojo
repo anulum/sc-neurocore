@@ -26,7 +26,7 @@
 #   P_filt = (I - K C) P_pred (I - K C)' + K R K'   (Joseph form)
 #   log_lik += -0.5 (p log 2π + log |S| + e' S^{-1} e)
 #
-# Mojo 0.26 FFI rules (per feedback_mojo_026_ffi_pattern):
+# Mojo C-ABI rules (legacy pointer pattern, compiled with pinned Mojo 1.0.0):
 #   - @export rejects parametric signatures, so all matrix/vector
 #     args are raw `Int` addresses + size scalars; we reconstruct
 #     UnsafePointer[Float64, MutAnyOrigin] inside.
@@ -40,7 +40,7 @@ from std.math import log, pi, sqrt, nan
 # ─── pointer helper ──────────────────────────────────────────────
 
 @always_inline
-fn _ptr(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
+def _ptr(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
     return UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=addr)
 
 
@@ -49,12 +49,12 @@ fn _ptr(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
 # `MutAnyOrigin` via `unsafe_from_address` so the helper signatures
 # stay uniform with the input pointers.
 
-fn _alloc(n: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
+def _alloc(n: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
     var raw = alloc[Float64](n)
     return UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=Int(raw))
 
 
-fn _free(p: UnsafePointer[Float64, MutAnyOrigin]):
+def _free(p: UnsafePointer[Float64, MutAnyOrigin]):
     var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
     raw.free()
 
@@ -62,17 +62,17 @@ fn _free(p: UnsafePointer[Float64, MutAnyOrigin]):
 # ─── flat row-major matrix ops (rows = r, cols = c) ──────────────
 
 @always_inline
-fn _at(m: UnsafePointer[Float64, MutAnyOrigin], cols: Int, i: Int, j: Int) -> Float64:
+def _at(m: UnsafePointer[Float64, MutAnyOrigin], cols: Int, i: Int, j: Int) -> Float64:
     return m[i * cols + j]
 
 
 @always_inline
-fn _set(m: UnsafePointer[Float64, MutAnyOrigin], cols: Int, i: Int, j: Int, v: Float64):
+def _set(m: UnsafePointer[Float64, MutAnyOrigin], cols: Int, i: Int, j: Int, v: Float64):
     m[i * cols + j] = v
 
 
 # C = A · B  where A is (a_rows × a_cols), B is (a_cols × b_cols)
-fn _matmul(
+def _matmul(
     a: UnsafePointer[Float64, MutAnyOrigin],
     b: UnsafePointer[Float64, MutAnyOrigin],
     c: UnsafePointer[Float64, MutAnyOrigin],
@@ -88,7 +88,7 @@ fn _matmul(
 
 # C = A · B^T  where A is (a_rows × a_cols), B is (b_rows × a_cols)
 # → C shape (a_rows × b_rows).
-fn _matmul_t(
+def _matmul_t(
     a: UnsafePointer[Float64, MutAnyOrigin],
     b: UnsafePointer[Float64, MutAnyOrigin],
     c: UnsafePointer[Float64, MutAnyOrigin],
@@ -105,7 +105,7 @@ fn _matmul_t(
 # In-place Cholesky of a symmetric PSD matrix A (n × n), lower
 # triangular factor L stored in-place (upper triangle untouched).
 # Returns 0 on success, -1 on numerical breakdown (negative pivot).
-fn _cholesky(a: UnsafePointer[Float64, MutAnyOrigin], n: Int) -> Int:
+def _cholesky(a: UnsafePointer[Float64, MutAnyOrigin], n: Int) -> Int:
     for j in range(n):
         var diag = a[j * n + j]
         for k in range(j):
@@ -124,7 +124,7 @@ fn _cholesky(a: UnsafePointer[Float64, MutAnyOrigin], n: Int) -> Int:
 
 
 # Solve L · x = b in-place into x  (b is consumed → x).
-fn _trsv_lower(
+def _trsv_lower(
     l: UnsafePointer[Float64, MutAnyOrigin],
     n: Int,
     x: UnsafePointer[Float64, MutAnyOrigin],
@@ -137,7 +137,7 @@ fn _trsv_lower(
 
 
 # Solve L^T · x = b in-place into x  (b is consumed → x).
-fn _trsv_lower_transpose(
+def _trsv_lower_transpose(
     l: UnsafePointer[Float64, MutAnyOrigin],
     n: Int,
     x: UnsafePointer[Float64, MutAnyOrigin],
@@ -153,7 +153,7 @@ fn _trsv_lower_transpose(
 # ─── exported Kalman filter ──────────────────────────────────────
 
 @export
-fn kalman_filter_c(
+def kalman_filter_c(
     obs_addr: Int, ctl_addr: Int,
     a_addr: Int, b_addr: Int, c_addr: Int, d_addr: Int,
     q_addr: Int, r_addr: Int,

@@ -29,7 +29,7 @@ from std.memory import UnsafePointer
 
 
 @export
-fn wilson_hr_simulate_c(
+def wilson_hr_simulate_c(
     v0: Float64,
     r0: Float64,
     tau_r: Float64,
@@ -67,7 +67,7 @@ fn wilson_hr_simulate_c(
 
 
 @always_inline
-fn _dv(v: Float64, r: Float64, current: Float64) -> Float64:
+def _dv(v: Float64, r: Float64, current: Float64) -> Float64:
     var quad = 32.63 * v * v
     var lin = 47.71 * v
     var poly = -(17.81 + lin + quad) * (v - 0.55)
@@ -76,6 +76,6 @@ fn _dv(v: Float64, r: Float64, current: Float64) -> Float64:
 
 
 @always_inline
-fn _dr(v: Float64, r: Float64, tau_r: Float64) -> Float64:
+def _dr(v: Float64, r: Float64, tau_r: Float64) -> Float64:
     var num = -r + 1.35 * v + 1.03
     return num / tau_r

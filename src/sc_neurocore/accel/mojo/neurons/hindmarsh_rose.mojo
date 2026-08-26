@@ -32,25 +32,25 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dx(x: Float64, y: Float64, z: Float64, b: Float64, cur: Float64) -> Float64:
+def _dx(x: Float64, y: Float64, z: Float64, b: Float64, cur: Float64) -> Float64:
     var x2 = x * x
     var x3 = x2 * x
     return y - x3 + b * x2 - z + cur
 
 
 @always_inline
-fn _dy(x: Float64, y: Float64) -> Float64:
+def _dy(x: Float64, y: Float64) -> Float64:
     var x2 = x * x
     return 1.0 - 5.0 * x2 - y
 
 
 @always_inline
-fn _dz(x: Float64, z: Float64, r: Float64, s: Float64, x_rest: Float64) -> Float64:
+def _dz(x: Float64, z: Float64, r: Float64, s: Float64, x_rest: Float64) -> Float64:
     return r * (s * (x - x_rest) - z)
 
 
 @export
-fn hindmarsh_rose_simulate_c(
+def hindmarsh_rose_simulate_c(
     x0: Float64,
     y0: Float64,
     z0: Float64,

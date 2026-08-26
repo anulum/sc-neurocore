@@ -27,7 +27,7 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dv(
+def _dv(
     v: Float64,
     a1: Float64,
     a2: Float64,
@@ -41,7 +41,7 @@ fn _dv(
 
 
 @always_inline
-fn _dtheta(
+def _dtheta(
     v: Float64,
     theta: Float64,
     theta_inf: Float64,
@@ -54,7 +54,7 @@ fn _dtheta(
 
 
 @export
-fn glif_simulate_c(
+def glif_simulate_c(
     v0: Float64,
     theta0: Float64,
     theta_inf: Float64,

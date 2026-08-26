@@ -29,7 +29,7 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _fv(x: Float64, half_a: Float64, mid: Float64, a: Float64) -> Float64:
+def _fv(x: Float64, half_a: Float64, mid: Float64, a: Float64) -> Float64:
     if x < half_a:
         return -x
     if x < mid:
@@ -38,7 +38,7 @@ fn _fv(x: Float64, half_a: Float64, mid: Float64, a: Float64) -> Float64:
 
 
 @export
-fn sc_triangular_mckean_simulate_c(
+def sc_triangular_mckean_simulate_c(
     v0: Float64,
     w0: Float64,
     a: Float64,

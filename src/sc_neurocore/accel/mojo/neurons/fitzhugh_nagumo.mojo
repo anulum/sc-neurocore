@@ -31,19 +31,19 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _rhs_v(v: Float64, w: Float64, cur: Float64) -> Float64:
+def _rhs_v(v: Float64, w: Float64, cur: Float64) -> Float64:
     var v3 = v * v * v
     return v - v3 / 3.0 - w + cur
 
 
 @always_inline
-fn _rhs_w(v: Float64, w: Float64, a: Float64, b: Float64, eps: Float64) -> Float64:
+def _rhs_w(v: Float64, w: Float64, a: Float64, b: Float64, eps: Float64) -> Float64:
     var bw = b * w
     return eps * (v + a - bw)
 
 
 @export
-fn fitzhugh_nagumo_simulate_c(
+def fitzhugh_nagumo_simulate_c(
     v0: Float64,
     w0: Float64,
     a: Float64,

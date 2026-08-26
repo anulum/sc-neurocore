@@ -25,17 +25,17 @@
 # Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233-253.
 
 from std.memory import UnsafePointer
-from math import cos, floor
+from std.math import cos, floor
 
 
 @always_inline
-fn _fold_two_pi(v: Float64, two_pi: Float64) -> Float64:
+def _fold_two_pi(v: Float64, two_pi: Float64) -> Float64:
     # Floored remainder modulo 2*pi: lands in [0, 2*pi), matching Python `%`.
     return v - floor(v / two_pi) * two_pi
 
 
 @export
-fn ermentrout_kopell_map_simulate_c(
+def ermentrout_kopell_map_simulate_c(
     theta0: Float64,
     dt: Float64,
     gain: Float64,

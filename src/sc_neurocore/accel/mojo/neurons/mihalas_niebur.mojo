@@ -27,14 +27,14 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dv(
+def _dv(
     v: Float64, i1: Float64, i2: Float64, current: Float64, v_rest: Float64, tau_v: Float64
 ) -> Float64:
     return (-(v - v_rest) + i1 + i2 + current) / tau_v
 
 
 @always_inline
-fn _dtheta(
+def _dtheta(
     v: Float64,
     theta: Float64,
     theta_inf: Float64,
@@ -47,7 +47,7 @@ fn _dtheta(
 
 
 @export
-fn mihalas_niebur_simulate_c(
+def mihalas_niebur_simulate_c(
     v0: Float64,
     theta0: Float64,
     i1_0: Float64,

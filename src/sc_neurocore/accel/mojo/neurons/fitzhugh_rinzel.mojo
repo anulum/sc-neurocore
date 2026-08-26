@@ -30,23 +30,23 @@ from std.memory import UnsafePointer
 
 
 @always_inline
-fn _dv(v: Float64, w: Float64, y: Float64, cur: Float64) -> Float64:
+def _dv(v: Float64, w: Float64, y: Float64, cur: Float64) -> Float64:
     var v3 = v * v * v
     return v - v3 / 3.0 - w + y + cur
 
 
 @always_inline
-fn _dw(v: Float64, w: Float64, a: Float64, b: Float64, delta: Float64) -> Float64:
+def _dw(v: Float64, w: Float64, a: Float64, b: Float64, delta: Float64) -> Float64:
     return delta * (a + v - b * w)
 
 
 @always_inline
-fn _dy(v: Float64, y: Float64, c: Float64, d: Float64, mu: Float64) -> Float64:
+def _dy(v: Float64, y: Float64, c: Float64, d: Float64, mu: Float64) -> Float64:
     return mu * (c - v - d * y)
 
 
 @export
-fn fitzhugh_rinzel_simulate_c(
+def fitzhugh_rinzel_simulate_c(
     v0: Float64,
     w0: Float64,
     y0: Float64,

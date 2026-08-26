@@ -31,7 +31,7 @@ from std.memory import UnsafePointer
 
 
 @export
-fn courage_nekorkin_map_simulate_c(
+def courage_nekorkin_map_simulate_c(
     x0: Float64,
     y0: Float64,
     m0: Float64,
