@@ -17,7 +17,7 @@ fn public_model_catalogue_is_unique_and_fully_constructible() {
     let models = supported_models();
     let unique: BTreeSet<_> = models.iter().copied().collect();
 
-    assert_eq!(models.len(), 169);
+    assert_eq!(models.len(), 170);
     assert_eq!(unique.len(), models.len());
     for name in models {
         assert!(
