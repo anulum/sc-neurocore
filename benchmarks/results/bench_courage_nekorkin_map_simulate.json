@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 37.068234058097005,
-      "min_ms": 26.73037303611636,
+      "median_ms": 16.507267951965332,
+      "min_ms": 16.44913898780942,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 38.053438685833456,
+      "speedup_vs_python": 37.676290455624695,
       "spikes": 371008
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 39.92236591875553,
-      "min_ms": 24.357602931559086,
+      "median_ms": 17.46501901652664,
+      "min_ms": 17.110151005908847,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.33292026811542,
+      "speedup_vs_python": 35.61018865187345,
       "spikes": 371008
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 31.781770987436175,
-      "min_ms": 23.548290133476257,
+      "median_ms": 14.862214040476829,
+      "min_ms": 14.550282037816942,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 44.38310792937056,
+      "speedup_vs_python": 41.84656608317271,
       "spikes": 371063
     },
     "python": {
       "backend": "python",
-      "median_ms": 1410.5737719219178,
-      "min_ms": 1204.2744711507112,
+      "median_ms": 621.9326219870709,
+      "min_ms": 598.4555099857971,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 18.96635303273797,
-      "min_ms": 16.434791963547468,
+      "median_ms": 39.094039995688945,
+      "min_ms": 38.486678968183696,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 74.372430455508,
+      "speedup_vs_python": 15.908630114862875,
       "spikes": 371008
     }
   },
@@ -45,48 +45,48 @@
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
     "numpy": "2.2.6",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 1410.5737719219178,
-      "min_ms": 1204.2744711507112,
+      "median_ms": 621.9326219870709,
+      "min_ms": 598.4555099857971,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     {
       "backend": "rust",
-      "median_ms": 18.96635303273797,
-      "min_ms": 16.434791963547468,
+      "median_ms": 39.094039995688945,
+      "min_ms": 38.486678968183696,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 74.372430455508,
+      "speedup_vs_python": 15.908630114862875,
       "spikes": 371008
     },
     {
       "backend": "julia",
-      "median_ms": 39.92236591875553,
-      "min_ms": 24.357602931559086,
+      "median_ms": 17.46501901652664,
+      "min_ms": 17.110151005908847,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.33292026811542,
+      "speedup_vs_python": 35.61018865187345,
       "spikes": 371008
     },
     {
       "backend": "go",
-      "median_ms": 37.068234058097005,
-      "min_ms": 26.73037303611636,
+      "median_ms": 16.507267951965332,
+      "min_ms": 16.44913898780942,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 38.053438685833456,
+      "speedup_vs_python": 37.676290455624695,
       "spikes": 371008
     },
     {
       "backend": "mojo",
-      "median_ms": 31.781770987436175,
-      "min_ms": 23.548290133476257,
+      "median_ms": 14.862214040476829,
+      "min_ms": 14.550282037816942,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 44.38310792937056,
+      "speedup_vs_python": 41.84656608317271,
       "spikes": 371063
     }
   ],
@@ -108,9 +108,9 @@
     },
     "src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl": "b329db7a9545d6b47c54e1f81e86845fa09dfc9b394d5ce14402efa987fea146",
     "src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map": {
-      "mojo": "befbb7513a356d86d984a78467ff79d308ade30eb178b68d162d8e511ed7efc0"
+      "mojo": "f8da07c1661f44ab96b0503e060c862f21220ec6abf8ea8cef45442896e7679c"
     },
-    "src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo": "befbb7513a356d86d984a78467ff79d308ade30eb178b68d162d8e511ed7efc0",
+    "src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo": "f8da07c1661f44ab96b0503e060c862f21220ec6abf8ea8cef45442896e7679c",
     "src/sc_neurocore/neurons/models/courage_nekorkin_map": {
       "py": "d8c7b65dcb78285fd99d1ca61c6dd0353c4527901f43df5310d62c1b6d46709f"
     },
