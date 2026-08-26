@@ -1,8 +1,8 @@
 {
   "auto_backend_order": [
     "rust",
-    "mojo",
     "julia",
+    "mojo",
     "go",
     "python"
   ],
@@ -20,19 +20,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.9203306439740118e-12,
-      "max_call_ns": 12099471,
-      "median_call_ms": 7.984633,
-      "median_call_ns": 7984633.0,
-      "median_ns_per_step": 159.69266,
-      "min_call_ns": 6923425,
+      "max_call_ns": 10367366,
+      "median_call_ms": 4.564101,
+      "median_call_ns": 4564101.0,
+      "median_ns_per_step": 91.28202,
+      "min_call_ns": 4436368,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 6.188827228470473e-12,
       "samples_ns": [
-        6923425,
-        12099471,
-        7166187,
-        7984633,
-        9169401
+        5371988,
+        10367366,
+        4564101,
+        4436368,
+        4449057
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -51,19 +51,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 3.552713678800501e-15,
-      "max_call_ns": 5107868,
-      "median_call_ms": 4.799008,
-      "median_call_ns": 4799008.0,
-      "median_ns_per_step": 95.98016,
-      "min_call_ns": 4319511,
+      "max_call_ns": 4211348,
+      "median_call_ms": 3.432256,
+      "median_call_ns": 3432256.0,
+      "median_ns_per_step": 68.64512,
+      "min_call_ns": 3101272,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 1.4210854715202004e-14,
       "samples_ns": [
-        4799008,
-        4319511,
-        4819552,
-        4373809,
-        5107868
+        3101272,
+        4211348,
+        3820104,
+        3432256,
+        3404715
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -82,19 +82,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.0981437981172348e-11,
-      "max_call_ns": 4459374,
-      "median_call_ms": 4.263897,
-      "median_call_ns": 4263897.0,
-      "median_ns_per_step": 85.27794,
-      "min_call_ns": 3687085,
+      "max_call_ns": 4552750,
+      "median_call_ms": 3.753209,
+      "median_call_ns": 3753209.0,
+      "median_ns_per_step": 75.06418,
+      "min_call_ns": 3264722,
       "parity_atol": 1e-08,
       "parity_max_abs_diff": 2.660414111232967e-10,
       "samples_ns": [
-        4263897,
-        4459374,
-        4372548,
-        3774355,
-        3687085
+        3753209,
+        4552750,
+        4129499,
+        3532855,
+        3264722
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -113,19 +113,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 728951156,
-      "median_call_ms": 459.128734,
-      "median_call_ns": 459128734.0,
-      "median_ns_per_step": 9182.57468,
-      "min_call_ns": 430373839,
+      "max_call_ns": 329810871,
+      "median_call_ms": 305.225157,
+      "median_call_ns": 305225157.0,
+      "median_ns_per_step": 6104.50314,
+      "min_call_ns": 300561144,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        444397364,
-        497079505,
-        728951156,
-        430373839,
-        459128734
+        329810871,
+        319740679,
+        304231461,
+        305225157,
+        300561144
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -144,19 +144,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 4552169,
-      "median_call_ms": 4.006927,
-      "median_call_ns": 4006927.0,
-      "median_ns_per_step": 80.13854,
-      "min_call_ns": 3685906,
+      "max_call_ns": 3597115,
+      "median_call_ms": 2.993882,
+      "median_call_ns": 2993882.0,
+      "median_ns_per_step": 59.87764,
+      "min_call_ns": 2873481,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3685906,
-        4552169,
-        3717418,
-        4221027,
-        4006927
+        2873481,
+        3469317,
+        3597115,
+        2993882,
+        2923088
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -185,14 +185,14 @@
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_jansen_rit.py --json benchmarks/results/bench_jansen_rit.json",
   "environment": {
     "affinity": [
-      8
+      11
     ],
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      10.58056640625,
-      8.29541015625,
-      8.65673828125
+      5.404296875,
+      4.5537109375,
+      4.71435546875
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -281,9 +281,9 @@
     },
     "src/sc_neurocore/accel/jansen_rit.py": "6070404d2ad676cc7941af7165ecabe8e1afdcaac1a93be5f17d5f7bcf0a4eea",
     "src/sc_neurocore/accel/julia/neurons/__init__": {
-      "py": "a178d4d94c965a808b6dc46fe0395a5457e76d57fa51d3d6602fd7c83c67cccd"
+      "py": "5aaa79efe90ec4c3f2f9ebc8f8367489a63c3e701c02c9e9a0ba7bf45691b3ce"
     },
-    "src/sc_neurocore/accel/julia/neurons/__init__.py": "a178d4d94c965a808b6dc46fe0395a5457e76d57fa51d3d6602fd7c83c67cccd",
+    "src/sc_neurocore/accel/julia/neurons/__init__.py": "5aaa79efe90ec4c3f2f9ebc8f8367489a63c3e701c02c9e9a0ba7bf45691b3ce",
     "src/sc_neurocore/accel/julia/neurons/jansen_rit": {
       "jl": "978cbc62c0a340088b00867f346e65c6b657d1072325dd7ff9eadbdbeefbd146"
     },
@@ -319,7 +319,7 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/jansen_rit_eq6_euler_brian2.json": "6a5895a51159ea469a8109a9984e03e6aa55a4c7a19657f6c9a945b80883a464"
   },
-  "timestamp_utc": "2026-08-26T06:09:35+00:00",
+  "timestamp_utc": "2026-08-26T07:44:20+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -329,7 +329,7 @@
         "--test",
         "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/src/sc_neurocore/accel/rust/safety/jansen_rit.rs",
         "-o",
-        "/tmp/jansen-rit-rust-ws3g76nz/jansen_rit_tests"
+        "/tmp/jansen-rit-rust-bheu71dx/jansen_rit_tests"
       ],
       "output_tail": [
         "",

@@ -9,7 +9,11 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 
 ROOT = Path(__file__).parents[1] / "src/sc_neurocore/neurons/model_schemas"
 

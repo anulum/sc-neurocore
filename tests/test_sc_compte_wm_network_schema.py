@@ -12,7 +12,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 from typing import Any, cast
 
 from sc_neurocore.network import SCCompteWMBehaviorProtocol, SCCompteWMNetworkSpec

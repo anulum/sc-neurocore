@@ -22,6 +22,7 @@ import json
 import math
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import time
 from typing import Any, Literal, cast
@@ -93,8 +94,16 @@ class SCCompteWMBackendRun:
     receipt: SCCompteWMRunReceipt
 
 
-def _executable(path: Path) -> bool:
-    return path.is_file() and os.access(path, os.X_OK)
+def _runtime_executable(name: str) -> str | None:
+    """Resolve a required runner tool without assuming a repository venv."""
+    return shutil.which(name)
+
+
+def _require_runtime_executable(name: str) -> str:
+    executable = _runtime_executable(name)
+    if executable is None:
+        raise SCCompteWMBackendUnavailable(f"required {name} runtime is not on PATH")
+    return executable
 
 
 def sc_compte_wm_backend_status() -> tuple[SCCompteWMBackendStatus, ...]:
@@ -106,17 +115,17 @@ def sc_compte_wm_backend_status() -> tuple[SCCompteWMBackendStatus, ...]:
     checks: dict[SCCompteWMBackend, tuple[bool, str, str | None]] = {
         "python": (True, "in-process", None),
         "rust": (
-            _executable(_VENV / "bin/cargo") and _RUST_RUNNER.is_file(),
+            _runtime_executable("cargo") is not None and _RUST_RUNNER.is_file(),
             "repository-native-command",
             None,
         ),
         "julia": (
-            _executable(_VENV / "bin/julia") and _JULIA_RUNNER.is_file(),
+            _runtime_executable("julia") is not None and _JULIA_RUNNER.is_file(),
             "repository-native-command",
             None,
         ),
         "go": (
-            _executable(_VENV / "bin/go") and _GO_RUNNER.is_file(),
+            _runtime_executable("go") is not None and _GO_RUNNER.is_file(),
             "repository-native-command",
             None,
         ),
@@ -210,7 +219,7 @@ def _command(backend: SCCompteWMBackend, arguments: list[str]) -> tuple[list[str
     if backend == "rust":
         return (
             [
-                str(_VENV / "bin/cargo"),
+                _require_runtime_executable("cargo"),
                 "run",
                 "--quiet",
                 "--release",
@@ -227,7 +236,7 @@ def _command(backend: SCCompteWMBackend, arguments: list[str]) -> tuple[list[str
     if backend == "julia":
         return (
             [
-                str(_VENV / "bin/julia"),
+                _require_runtime_executable("julia"),
                 f"--project={_JULIA_ROOT}",
                 str(_JULIA_RUNNER),
                 *arguments,
@@ -236,7 +245,12 @@ def _command(backend: SCCompteWMBackend, arguments: list[str]) -> tuple[list[str
         )
     if backend == "go":
         return (
-            [str(_VENV / "bin/go"), "run", "./cmd/run_sc_compte_wm_network", *arguments],
+            [
+                _require_runtime_executable("go"),
+                "run",
+                "./cmd/run_sc_compte_wm_network",
+                *arguments,
+            ],
             _GO_ROOT,
         )
     raise ValueError(f"{backend} does not use native command dispatch")

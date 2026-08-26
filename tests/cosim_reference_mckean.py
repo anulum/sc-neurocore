@@ -14,11 +14,10 @@ from sc_neurocore.neurons.models.sc_triangular_mckean import SCTriangularMcKeanN
 from tests.cosim_reference_statistics import _summarise
 
 
-# Sustained relaxation-oscillation operating point mirrored by the bundled ``mckean`` schema.
-# The default hand-model regime (epsilon=0.01) is a single-transient knife-edge; epsilon=0.2 /
-# gamma=0.5 puts the piecewise-linear caricature on a robust limit cycle whose upward v_peak
-# crossings survive Q16.16 rounding, so the min/max RK4 datapath co-simulates bit-exactly.
-_MCKEAN_PARAMS = {"a": 0.25, "epsilon": 0.2, "gamma": 0.5, "v_peak": 0.8}
+# Retained project parameters mirrored by ``sc_triangular_mckean``. This helper
+# verifies the preserved recurrence; the source McKean identity has a separate
+# receipt and must not be blended back into this compatibility oracle.
+_MCKEAN_PARAMS = {"a": 0.25, "epsilon": 0.01, "gamma": 0.5, "v_peak": 0.8}
 
 
 def _mckean_hand_spike_count(n_steps: int, current: float) -> int:
@@ -35,11 +34,11 @@ def _mckean_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, 
     1 - v)`` (min/max are supported by the schema DSL). The membrane and linear
     recovery equations are advanced with the same four-stage RK4 step and rising-edge
     ``v >= v_peak`` crossing detection the faithful schema runner applies, with **no
-    reset** — the enrolled operating point (``epsilon = 0.2``, ``gamma = 0.5``,
-    ``I = 0.6``) is a sustained relaxation oscillator whose spikes are upward threshold
-    crossings. The right-hand side is exact arithmetic (comparisons and linear pieces,
-    no cube or transcendental), so the reference is an independent re-derivation of the
-    committed trace, not a copy of the runner.
+    reset**. The retained project point uses ``epsilon = 0.01``, ``gamma = 0.5``, and
+    ``I = 0.6``; its initial upward threshold crossing is an observational event. The
+    right-hand side is exact arithmetic (comparisons and linear pieces, no cube or
+    transcendental), so the reference is an independent re-derivation of the committed
+    trace, not a copy of the runner.
 
     Parameters
     ----------
@@ -57,7 +56,7 @@ def _mckean_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, 
         spike-count and first-spike-step features.
     """
     a = 0.25
-    epsilon = 0.2
+    epsilon = 0.01
     gamma = 0.5
     v_peak = 0.8
     v = 0.0

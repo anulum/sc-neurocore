@@ -187,14 +187,20 @@ _CLASS_TO_MODULE = {
     "YamadaNeuron": "yamada",
 }
 
+# Import-compatible historical names that must not become catalogue identities.
+_COMPATIBILITY_ALIASES = {
+    "KilincBhattMapNeuron": "kilinc_bhatt_map_neuron",
+}
+
 __all__ = sorted(_CLASS_TO_MODULE.keys())
 
 
 def __getattr__(name: str) -> type:
-    if name in _CLASS_TO_MODULE:
+    module_name = _CLASS_TO_MODULE.get(name) or _COMPATIBILITY_ALIASES.get(name)
+    if module_name is not None:
         import importlib
 
-        module = importlib.import_module(f".{_CLASS_TO_MODULE[name]}", __name__)
+        module = importlib.import_module(f".{module_name}", __name__)
         obj: type = getattr(module, name)
         globals()[name] = obj
         return obj

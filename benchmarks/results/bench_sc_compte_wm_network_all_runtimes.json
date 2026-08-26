@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.sc-compte-wm-all-runtime-benchmark.v1",
-  "generated_at": "2026-08-25T21:12:26.120689+00:00",
+  "generated_at": "2026-08-26T07:45:32.438116+00:00",
   "model": "SC-COMPTE-WM-NETWORK",
   "evidence_class": "local_regression",
   "production_speed_claimed": false,
@@ -26,23 +26,12 @@
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
     "affinity": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
       11
     ],
     "load_average": [
-      9.60498046875,
-      12.45751953125,
-      14.39794921875
+      5.39111328125,
+      4.69970703125,
+      4.75390625
     ]
   },
   "source_sha256": {
@@ -50,32 +39,31 @@
     "src/sc_neurocore/network/sc_compte_wm.py": "0b9150690b5f4c2c8b8b8f36f83be72184af143f07d9d5b0bd81d66264eebcce",
     "src/sc_neurocore/network/sc_compte_wm_drive.py": "e639dddf0a0d75542139bbb6f57f07ae3bdf770b0b9d57fe30d14271a1eb85fc",
     "src/sc_neurocore/network/sc_compte_wm_network.py": "1b87761e475352cbd7f2bdbae108ee2c48297083d480c24ca009275c353eae34",
-    "src/sc_neurocore/network/sc_compte_wm_backends.py": "9a2f15512c99e94a4107a5efaba16997e48e20644367a82a5b7adfc1d4356d2a",
+    "src/sc_neurocore/network/sc_compte_wm_backends.py": "414e637e48b2d7f51f09557ee07c47513dbc98a39a0d824a804ddee492cfba05",
     "engine/src/sc_compte_wm_network.rs": "82e5fd767bdf6d217b03d63ed804108a2a9b8638d4870f84d104211ab23f0974",
     "engine/examples/sc_compte_wm_network_run.rs": "32890c90ad48d4b88252a3e80977b37c9accf825cff3991e957a5f0df1cec945",
     "src/sc_neurocore/accel/julia/sc_compte_wm_network/SCCompteWMNetwork.jl": "68e0942d0b1ea0fd8f714ab0c2fe36177342513c08263ae865253c447f50312d",
     "src/sc_neurocore/accel/julia/sc_compte_wm_network/run_sc_compte_wm_network.jl": "70e1d8f5a5991a4c4385a17f78c6a6b3794a5e7026c79c71f1d43ebcaa45c755",
     "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go": "dea09aad1f75a7e5202a390321d005e2e7277e3c50d6cc82a9724a0ea46db7aa",
     "src/sc_neurocore/accel/go/cmd/run_sc_compte_wm_network/main.go": "2ead9e0ed2aadc0ab43bd145e950c89d3a721e92ae74efc40d8999b2c88c4b1f",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "2e135cdd7134dca820779b9d336c801deb0d6c477efcfcb1ad38c7a931520878",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so": "3bd152ac6bd86201eb7283a7133f89b9bcddd760bc634818dc9a672e46901d75",
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "1f46a295044fad64caa7eb56e6ec0e8db60613c818dc52b41492ab5645a2f012",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "e36c497ab5258f2ba79ce5be1dcb474dea2df68de0ffd7ce7a2b3e0a375f88f7"
   },
   "backends": {
     "python": {
       "execution_mode": "in-process",
       "execution_samples_ns": [
-        1130517629,
-        1111769567,
-        972505651
+        921398242,
+        899066967,
+        863022883
       ],
       "end_to_end_samples_ns": [
-        1130867831,
-        1112543803,
-        972879746
+        921819532,
+        899541744,
+        863773351
       ],
-      "median_execution_ns": 1111769567,
-      "median_ns_per_network_step": 1111769.567,
+      "median_execution_ns": 899066967,
+      "median_ns_per_network_step": 899066.967,
       "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
       "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
       "final_state_sha256": "d422c4a67b133257e51c120b5e6bd745f4f035ef9625ed89f115276094ee61b3",
@@ -88,17 +76,17 @@
     "rust": {
       "execution_mode": "repository-native-command",
       "execution_samples_ns": [
-        234976012,
-        204442238,
-        199921094
+        189634228,
+        193506814,
+        209522248
       ],
       "end_to_end_samples_ns": [
-        395008121,
-        318992840,
-        299444781
+        275145065,
+        282336328,
+        305556134
       ],
-      "median_execution_ns": 204442238,
-      "median_ns_per_network_step": 204442.238,
+      "median_execution_ns": 193506814,
+      "median_ns_per_network_step": 193506.814,
       "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
       "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
       "final_state_sha256": "bbaa007cbd0da215906b0ee38a2071557dd80bee9dc99baa20ac713c17e1f4b1",
@@ -111,17 +99,17 @@
     "julia": {
       "execution_mode": "repository-native-command",
       "execution_samples_ns": [
-        4734588708,
-        4596231786,
-        4255239186
+        3822613072,
+        3877932839,
+        3831943278
       ],
       "end_to_end_samples_ns": [
-        6263638723,
-        6083427911,
-        5485978641
+        4987719874,
+        5155233899,
+        4997500777
       ],
-      "median_execution_ns": 4596231786,
-      "median_ns_per_network_step": 4596231.786,
+      "median_execution_ns": 3831943278,
+      "median_ns_per_network_step": 3831943.278,
       "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
       "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
       "final_state_sha256": "062db92b31c6098555cc1b8fccf07cfbe93fa99f3a4e12c46a3ec83db1b60a14",
@@ -134,17 +122,17 @@
     "go": {
       "execution_mode": "repository-native-command",
       "execution_samples_ns": [
-        2854066918,
-        2752592757,
-        2858341593
+        2753472663,
+        2737052222,
+        2687598987
       ],
       "end_to_end_samples_ns": [
-        2902901183,
-        2787354060,
-        2902612146
+        2808399445,
+        2808193122,
+        2743303671
       ],
-      "median_execution_ns": 2854066918,
-      "median_ns_per_network_step": 2854066.918,
+      "median_execution_ns": 2737052222,
+      "median_ns_per_network_step": 2737052.222,
       "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
       "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
       "final_state_sha256": "c517b3945747a9a72edc5df5eef425687a908141692c6f3ef574a1ba17cbee51",
@@ -157,17 +145,17 @@
     "mojo": {
       "execution_mode": "in-process-shared-library",
       "execution_samples_ns": [
-        597800540,
-        641230275,
-        632606847
+        586818572,
+        573275164,
+        587626632
       ],
       "end_to_end_samples_ns": [
-        598151305,
-        641540221,
-        632930212
+        587204825,
+        573662780,
+        588042312
       ],
-      "median_execution_ns": 632606847,
-      "median_ns_per_network_step": 632606.847,
+      "median_execution_ns": 586818572,
+      "median_ns_per_network_step": 586818.572,
       "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
       "spike_sha256": "48c0162191ec908e436306094f0ca1dcb5cb6648a4f921b4c183788d312cc8fd",
       "final_state_sha256": "f437a93befcf2cb63c54eb641a0bf3f6688776a4e4f50f2103241a7b93dc9fbf",

@@ -1,6 +1,6 @@
 {
   "affinity": [
-    8
+    11
   ],
   "backend_summary": {
     "go": {
@@ -13,17 +13,17 @@
         12.836725151792399,
         0.0
       ],
-      "max_ns_per_step": 91.871725,
-      "median_ns_per_step": 77.955745,
-      "min_ns_per_step": 68.530165,
+      "max_ns_per_step": 94.241025,
+      "median_ns_per_step": 79.655965,
+      "min_ns_per_step": 66.868845,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        15591149,
-        16537176,
-        13706033,
-        18374345,
-        15403337
+        18848205,
+        15931193,
+        13373769,
+        16039127,
+        13875928
       ],
       "spikes": 11,
       "trace_matches_python": true,
@@ -39,17 +39,17 @@
         12.836725151792399,
         0.0
       ],
-      "max_ns_per_step": 129.01407,
-      "median_ns_per_step": 55.31817,
-      "min_ns_per_step": 55.119035,
+      "max_ns_per_step": 136.46901,
+      "median_ns_per_step": 73.759115,
+      "min_ns_per_step": 54.5185,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        12216410,
-        25802814,
-        11023807,
-        11049517,
-        11063634
+        26153612,
+        10903700,
+        14751823,
+        27293802,
+        14077680
       ],
       "spikes": 11,
       "trace_matches_python": true,
@@ -65,17 +65,17 @@
         12.836725151792399,
         0.0
       ],
-      "max_ns_per_step": 44.119165,
-      "median_ns_per_step": 30.255095,
-      "min_ns_per_step": 23.28701,
+      "max_ns_per_step": 40.46673,
+      "median_ns_per_step": 32.941845,
+      "min_ns_per_step": 26.320225,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_ns": [
-        6902208,
-        6051019,
-        4763875,
-        8823833,
-        4657402
+        7216730,
+        6588369,
+        5430469,
+        8093346,
+        5264045
       ],
       "spikes": 11,
       "trace_matches_python": true,
@@ -91,17 +91,17 @@
         12.836725151792399,
         0.0
       ],
-      "max_ns_per_step": 3619.43854,
-      "median_ns_per_step": 3455.554265,
-      "min_ns_per_step": 3260.19319,
+      "max_ns_per_step": 3564.59857,
+      "median_ns_per_step": 3433.514545,
+      "min_ns_per_step": 3106.827535,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        723887708,
-        691971205,
-        652038638,
-        677849083,
-        691110853
+        686702909,
+        712919714,
+        621365507,
+        630653402,
+        689796090
       ],
       "spikes": 11,
       "trace_matches_python": true,
@@ -117,17 +117,17 @@
         12.836725151792399,
         0.0
       ],
-      "max_ns_per_step": 250.395135,
-      "median_ns_per_step": 234.079955,
-      "min_ns_per_step": 227.708635,
+      "max_ns_per_step": 49.856635,
+      "median_ns_per_step": 42.76336,
+      "min_ns_per_step": 36.84217,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        50079027,
-        46815991,
-        46760815,
-        47591018,
-        45541727
+        9971327,
+        8552672,
+        7368434,
+        9439189,
+        7784760
       ],
       "spikes": 11,
       "trace_matches_python": true,
@@ -147,9 +147,9 @@
       "size_bytes": 14984
     },
     "rust_extension": {
-      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
-      "size_bytes": 525572993
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "e2229701382272474a91ad35b8b58c7069e44f2bda1c73ca05c287661abaedc4",
+      "size_bytes": 34153913
     }
   },
   "current": 0.7,
@@ -157,9 +157,9 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    10.1796875,
-    10.61279296875,
-    10.38671875
+    5.0556640625,
+    4.541015625,
+    4.70703125
   ],
   "model": "MATNeuron",
   "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -227,16 +227,16 @@
     "src/sc_neurocore/neurons/model_schemas/mat.json": "d4108f8fc24b6d4a7fe88fb5b8f5cf7a61f82ba3849d18c7805f5c7986a8ccad",
     "src/sc_neurocore/neurons/model_schemas/mat.toml": "f4b0c352421814c4845a89cefa5eac44404c5066e5efbdf91bfa72bfa3b41976",
     "src/sc_neurocore/neurons/models/mat": {
-      "py": "7093025700ea087d5bd7a5fa266e71b81191248e384b276507793b753d2e6283"
+      "py": "108b39609734047fa91a462bb5d5148997ec4d87735a179aea54fbc678a6030b"
     },
-    "src/sc_neurocore/neurons/models/mat.py": "7093025700ea087d5bd7a5fa266e71b81191248e384b276507793b753d2e6283",
+    "src/sc_neurocore/neurons/models/mat.py": "108b39609734047fa91a462bb5d5148997ec4d87735a179aea54fbc678a6030b",
     "src/sc_neurocore/neurons/reference_trace_data/mat_2009_rs": {
       "json": "7839f46d5023c88b78a4893e91123590a67a8bea4ca7f6322f23609877538019"
     },
     "src/sc_neurocore/neurons/reference_trace_data/mat_2009_rs.json": "7839f46d5023c88b78a4893e91123590a67a8bea4ca7f6322f23609877538019"
   },
   "steps": 200000,
-  "timestamp_utc": "2026-08-26T05:17:40.595741+00:00",
+  "timestamp_utc": "2026-08-26T07:44:48.026217+00:00",
   "tool_versions": {
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",

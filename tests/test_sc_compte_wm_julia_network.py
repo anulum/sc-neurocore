@@ -15,7 +15,11 @@ import json
 from pathlib import Path
 import os
 import subprocess
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 
 from tests.toolchain_support import require_executable
 

@@ -12,7 +12,11 @@ from pathlib import Path
 
 import json
 import numpy as np
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 
 from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron

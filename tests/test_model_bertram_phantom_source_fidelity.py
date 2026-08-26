@@ -12,7 +12,11 @@ import math
 import hashlib
 import json
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 
 import numpy as np
 import pytest

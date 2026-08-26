@@ -85,7 +85,7 @@ struct HillTononi(Copyable, Movable):
         self.d_half = 0.25
         self.dt = 0.25
 
-    fn configuration_is_valid(self) -> Bool:
+    def configuration_is_valid(self) -> Bool:
         return (
             isfinite(self.v) and isfinite(self.theta) and isfinite(self.d_k)
             and isfinite(self.m_h) and isfinite(self.m_t) and isfinite(self.h_t)
@@ -115,7 +115,7 @@ struct HillTononi(Copyable, Movable):
             and isfinite(self.dt) and self.dt > 0.0
         )
 
-    fn derivatives(self, y: State, current: Float64, spike_active: Bool) -> State:
+    def derivatives(self, y: State, current: Float64, spike_active: Bool) -> State:
         var v = y[0]
         var theta = y[1]
         var d_k = y[2]
@@ -163,7 +163,7 @@ struct HillTononi(Copyable, Movable):
         derivative[5] = (h_t_inf - h_t) / tau_h_t
         return derivative
 
-    fn rk4_candidate(self, y: State, current: Float64, spike_active: Bool) -> State:
+    def rk4_candidate(self, y: State, current: Float64, spike_active: Bool) -> State:
         var k1 = self.derivatives(y, current, spike_active)
         var k2 = self.derivatives(y + 0.5 * self.dt * k1, current, spike_active)
         var k3 = self.derivatives(y + 0.5 * self.dt * k2, current, spike_active)

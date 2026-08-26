@@ -11,7 +11,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 
 from sc_neurocore.neurons.models.mat import MATNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron

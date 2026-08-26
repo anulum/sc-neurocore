@@ -9,7 +9,11 @@
 
 from __future__ import annotations
 import json
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 from pathlib import Path
 
 

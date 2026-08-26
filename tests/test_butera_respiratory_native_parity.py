@@ -16,6 +16,7 @@ import subprocess
 import numpy as np
 import pytest
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.butera_respiratory import ButeraRespiratoryNeuron
 from sc_neurocore.neurons.models.sc_unit_capacitance_respiratory import (
     SCUnitCapacitanceRespiratoryNeuron,
@@ -58,7 +59,7 @@ def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/butera_respiratory.mojo"
     binary = tmp_path / "butera_respiratory"
     subprocess.run(
-        ["mojo", "build", "--disable-warnings", str(kernel), "-o", str(binary)],
+        pin_isa(["mojo", "build", "--disable-warnings", str(kernel), "-o", str(binary)]),
         check=True,
         timeout=60,
     )
@@ -103,16 +104,18 @@ def test_mojo_sc_identity_matches_python(tmp_path: Path) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/sc_unit_capacitance_respiratory.mojo"
     binary = tmp_path / "sc_unit_capacitance_respiratory"
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--disable-warnings",
-            "-I",
-            str(kernel.parent),
-            str(kernel),
-            "-o",
-            str(binary),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--disable-warnings",
+                "-I",
+                str(kernel.parent),
+                str(kernel),
+                "-o",
+                str(binary),
+            ]
+        ),
         check=True,
         timeout=60,
     )

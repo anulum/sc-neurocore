@@ -1,9 +1,9 @@
 {
   "auto_backend_order": [
     "rust",
-    "julia",
-    "go",
     "mojo",
+    "go",
+    "julia",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 3029411,
-      "median_call_ms": 2.596534,
-      "median_call_ns": 2596534.0,
-      "median_ns_per_step": 51.93068,
-      "min_call_ns": 2400760,
+      "max_call_ns": 2171045,
+      "median_call_ms": 1.963319,
+      "median_call_ns": 1963319.0,
+      "median_ns_per_step": 39.26638,
+      "min_call_ns": 1788482,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2955989,
-        2596534,
-        3029411,
-        2400760,
-        2530168
+        2171045,
+        1837116,
+        1788482,
+        2014628,
+        1963319
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -43,19 +43,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 2743703,
-      "median_call_ms": 2.505906,
-      "median_call_ns": 2505906.0,
-      "median_ns_per_step": 50.11812,
-      "min_call_ns": 1964022,
+      "max_call_ns": 2351849,
+      "median_call_ms": 2.132877,
+      "median_call_ns": 2132877.0,
+      "median_ns_per_step": 42.65754,
+      "min_call_ns": 1578902,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1964022,
-        2306457,
-        2540976,
-        2743703,
-        2505906
+        1578902,
+        2063616,
+        2143178,
+        2132877,
+        2351849
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -70,19 +70,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.220446049250313e-16,
-      "max_call_ns": 3153622,
-      "median_call_ms": 2.789227,
-      "median_call_ns": 2789227.0,
-      "median_ns_per_step": 55.78454,
-      "min_call_ns": 2327420,
+      "max_call_ns": 2377289,
+      "median_call_ms": 1.894649,
+      "median_call_ns": 1894649.0,
+      "median_ns_per_step": 37.89298,
+      "min_call_ns": 1819559,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 2.220446049250313e-16,
       "samples_ns": [
-        2892354,
-        3153622,
-        2789227,
-        2382718,
-        2327420
+        2377289,
+        1819559,
+        1894649,
+        2100733,
+        1820067
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -97,19 +97,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 114626778,
-      "median_call_ms": 99.433866,
-      "median_call_ns": 99433866.0,
-      "median_ns_per_step": 1988.67732,
-      "min_call_ns": 93829586,
+      "max_call_ns": 83181655,
+      "median_call_ms": 77.443765,
+      "median_call_ns": 77443765.0,
+      "median_ns_per_step": 1548.8753,
+      "min_call_ns": 72893372,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        99433866,
-        93829586,
-        114626778,
-        111299563,
-        96382446
+        77443765,
+        72893372,
+        74388029,
+        79105526,
+        83181655
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -124,19 +124,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 2122272,
-      "median_call_ms": 2.010615,
-      "median_call_ns": 2010615.0,
-      "median_ns_per_step": 40.2123,
-      "min_call_ns": 1828368,
+      "max_call_ns": 1803767,
+      "median_call_ms": 1.638414,
+      "median_call_ns": 1638414.0,
+      "median_ns_per_step": 32.76828,
+      "min_call_ns": 1618676,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2010615,
-        1828368,
-        2092598,
-        2122272,
-        1927790
+        1714728,
+        1638414,
+        1803767,
+        1629858,
+        1618676
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -165,7 +165,7 @@
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. .venv/bin/python benchmarks/bench_ermentrout_kopell_pop.py --json benchmarks/results/bench_ermentrout_kopell_pop.json",
   "environment": {
     "affinity": [
-      8
+      11
     ],
     "go_binary": {
       "binary": "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop.so",
@@ -194,9 +194,9 @@
     "julia_cli": "julia version 1.12.6",
     "julia_runtime": "1.11.9",
     "load_average": [
-      9.52783203125,
-      8.03076171875,
-      8.5771484375
+      4.9169921875,
+      4.44482421875,
+      4.68017578125
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
     "mojo_pixi": "Mojo 1.0.0 (ed45d567)",
@@ -303,9 +303,9 @@
     },
     "src/sc_neurocore/accel/go/services/ermentrout_kopell_pop_test.go": "a41d2dc31fbd47fcc145f1f2679d79bb917bdabb7a12dafcc56def7849817ff6",
     "src/sc_neurocore/accel/julia/neurons/__init__": {
-      "py": "a178d4d94c965a808b6dc46fe0395a5457e76d57fa51d3d6602fd7c83c67cccd"
+      "py": "5aaa79efe90ec4c3f2f9ebc8f8367489a63c3e701c02c9e9a0ba7bf45691b3ce"
     },
-    "src/sc_neurocore/accel/julia/neurons/__init__.py": "a178d4d94c965a808b6dc46fe0395a5457e76d57fa51d3d6602fd7c83c67cccd",
+    "src/sc_neurocore/accel/julia/neurons/__init__.py": "5aaa79efe90ec4c3f2f9ebc8f8367489a63c3e701c02c9e9a0ba7bf45691b3ce",
     "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_pop": {
       "jl": "0a82c4bf7d5505b94ae7f50783f4f3a7fe010be19520b2495763305aa798d349"
     },
@@ -355,7 +355,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-08-26T06:09:24+00:00",
+  "timestamp_utc": "2026-08-26T07:44:13+00:00",
   "verification": {
     "rust_safety": {
       "command": [

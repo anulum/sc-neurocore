@@ -14,7 +14,11 @@ import math
 from pathlib import Path
 import shutil
 import subprocess
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 from typing import Protocol, cast
 
 import numpy as np

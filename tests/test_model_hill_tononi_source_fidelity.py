@@ -13,7 +13,11 @@ import json
 import math
 from pathlib import Path
 import struct
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+    import tomli as tomllib
 from typing import cast
 
 import pytest
