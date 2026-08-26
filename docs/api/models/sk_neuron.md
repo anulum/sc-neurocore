@@ -1,9 +1,15 @@
 # SKNeuron
 
 **Module:** `engine/src/neurons/channels/sk.rs`
-**Reference:** Bhatt & Storm, *J Physiol* 557:329–352, 2003; Stocker, *Nat Rev Neurosci* 5:758–770, 2004
+**Reference:** Stocker, *Nat Rev Neurosci* 5:758–770, 2004; Wang & Buzsáki, *J Neurosci* 16:6402–6413, 1996
 **Family:** WB (Wang–Buzsáki) Na⁺/K⁺ base + SK (small conductance Ca²⁺-activated K⁺)
 **State variables:** `v`, `h` (Na⁺ inactivation), `n` (K_dr activation), `ca` (intracellular Ca²⁺)
+
+The model is a repository composite grounded in the Stocker (2004)
+review: the threshold-reset event, the spike-triggered Ca²⁺ increment
+(+0.2), and the Hill constants (n = 2, half-activation at Ca = 0.5)
+are repository-specific specialisations, not a publication-exact
+recurrence.
 
 ---
 
@@ -49,7 +55,7 @@ other cell types.  The sequence is:
 ### SK in Synaptic Plasticity
 
 SK channels in dendritic spines act as a brake on NMDA receptor
-activation (Bhatt & Storm, 2003; Faber et al., 2005):
+activation (Faber, Delaney & Sah, 2005; Adelman, Maylie & Sah, 2012):
 
 - Ca²⁺ entry through NMDA receptors activates spine SK channels
 - SK hyperpolarisation limits further NMDA current (Mg²⁺ block)
@@ -262,8 +268,29 @@ can exceed 10 ms⁻¹), requiring dt_sub = 0.01 ms for stability.
    If V ≥ V_th: fired = 1, V ← -65, Ca += 0.2
 ```
 
-After all sub-steps: clamp V to [−100, 60], h and n to [0, 1],
-Ca ≥ 0, NaN guard.
+After all sub-steps: clamp V to [−100, 60], h and n to [0, 1], Ca ≥ 0,
+and commit the candidate state.
+
+### Invalid-Input Atomicity (Fail-Closed Contract)
+
+`step(current)` validates before touching state and computes the whole
+update on candidate values:
+
+- A non-finite `current` (NaN, ±∞) raises `ValueError("current must be
+  finite")` — no state field changes, and no spike is reported.
+- A non-finite or out-of-bounds configuration or state field (see the
+  descriptor ranges in `SKNeuron.toml`; `ca` must be finite and ≥ 0,
+  with no artificial upper bound) raises `ValueError` at construction
+  and again at each step if corrupted afterwards.
+- A candidate state that becomes non-finite mid-integration raises
+  `ValueError("SK candidate state became non-finite")` and the
+  pre-step state is preserved exactly.
+
+The production Rust engine (`try_step`), the PyO3 binding (typed
+`ValueError`), the standalone safety Rust, Go (`TryStep`), and Julia
+(`ArgumentError`) surfaces enforce the same contract; the engine's
+`step` and Go's `Step` legacy wrappers fail closed by returning 0
+without mutating state.
 
 ---
 
@@ -457,7 +484,8 @@ At 100 MHz with 50 sub-steps:
 | Removing g_SK increases rate | Monotonic | Confirmed | ✅ |
 | Ca²⁺ ≥ 0 | Always | Confirmed | ✅ |
 | V clamped [−100, 60] | Always | 10⁶ steps | ✅ |
-| NaN recovery | Resets to default | Confirmed | ✅ |
+| Non-finite input rejected atomically | `ValueError`, state unchanged | Confirmed | ✅ |
+| Invalid configuration rejected atomically | `ValueError`, state unchanged | Confirmed | ✅ |
 | Reset clears state | V=−65, Ca=0 | Confirmed | ✅ |
 | mAHP duration ~50–200 ms | Matches | ~150 ms at default | ✅ |
 
@@ -467,12 +495,18 @@ At 100 MHz with 50 sub-steps:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels/sk.rs:24` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, ca) |
-| NetworkRunner wired | `NeuronVariant::SK` |
+| Rust implementation | `engine/src/neurons/channels/sk.rs` (`try_step`, atomic rejection) |
+| PyO3 wrapper | `engine/src/bindings/channels/sk_neuron.rs` (typed `ValueError`; state: v, h, n, ca) |
+| NetworkRunner wired | `NeuronVariant::SK` (`engine/src/network_runner/model_factory.rs`) |
 | `create_neuron("SK")` | Yes |
 | `supported_models()` | Includes "SK" |
-| coverage tests | 10 (fire, silent, adaptation, Ca²⁺-only, rate reduction, negative, NaN, extreme, reset, performance) |
+| Standalone safety Rust | `src/sc_neurocore/accel/rust/safety/sk_neuron.rs` (full recurrence) |
+| Go service | `src/sc_neurocore/accel/go/services/sk_neuron.go` (`TryStep`, full recurrence) |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/sk_neuron.jl` (atomic `ArgumentError`) |
+| Mojo | not implemented; no kernel exists and no parity is claimed |
+| Silicon / RTL | not implemented; no HDL parity claimed |
+| Module-owned tests | `tests/test_model_sk_neuron.py`, `tests/test_sk_neuron_backends.py` |
+| Backend parity | Rust engine, safety Rust, Go, Julia vs Python: 64-step complete state ≤ 1e-12 |
 | Benchmark | `sk_1k_steps`: **2.79 ms** (2.79 µs/step), i5-11600K |
 
 ---
@@ -527,11 +561,11 @@ Cholinergic modulation of SK is a key mechanism for:
    inhibition in a hippocampal interneuronal network model. *J Neurosci*,
    16(20), 6402–6413.
 
-3. Faber, E. S. L., Delaney, A. J. & Bhatt, D. (2005). SK channels
+3. Faber, E. S. L., Delaney, A. J. & Sah, P. (2005). SK channels
    regulate excitatory synaptic transmission and plasticity in the
    lateral amygdala. *Nat Neurosci*, 8(5), 635–641.
 
-4. Adelman, J. P., Maylie, J. & Bhatt, D. (2012). Small-conductance
+4. Adelman, J. P., Maylie, J. & Sah, P. (2012). Small-conductance
    Ca²⁺-activated K⁺ channels: form and function. *Annu Rev Physiol*,
    74, 245–269.
 
@@ -539,7 +573,8 @@ Cholinergic modulation of SK is a key mechanism for:
    calcium gating in small-conductance calcium-activated potassium
    channels. *Nature*, 395, 503–507.
 
-6. Bond, C. T., Herson, P. S., Bhatt, D. & Bhatt, E. (2005).
+6. Bond, C. T., Herson, P. S., Strassmaier, T., Hammond, R.,
+   Stackman, R., Maylie, J. & Adelman, J. P. (2004).
    Small conductance Ca²⁺-activated K⁺ channel knock-out mice reveal
    the identity of calcium-dependent afterhyperpolarization currents.
    *J Neurosci*, 24(23), 5301–5306.
@@ -548,7 +583,7 @@ Cholinergic modulation of SK is a key mechanism for:
    discharge of rat CA1 pyramidal neurones in vitro. *J Physiol*,
    354, 319–331.
 
-8. Pedarzani, P. & Bhatt, D. (2008). Molecular and cellular basis of
+8. Pedarzani, P. & Stocker, M. (2008). Molecular and cellular basis of
    small- and intermediate-conductance, calcium-activated potassium
    channel function in the brain. *Cell Mol Life Sci*, 65(20),
    3196–3217.
@@ -557,14 +592,11 @@ Cholinergic modulation of SK is a key mechanism for:
    spike-frequency adaptation. *Neural Computation*, 15(11),
    2523–2564.
 
-10. Ha, G. E. & Bhatt, D. (2016). Spike frequency adaptation in
-    neurons of the central nervous system. *Exp Neurobiol*, 25(5),
-    206–215.
+10. Ha, G. E. & Cheong, E. (2017). Spike frequency adaptation in
+    neurons of the central nervous system. *Exp Neurobiol*, 26(4),
+    179–185.
 
-11. Engel, J., Bhatt, D. & Bhatt, E. (1999). Small conductance
+11. Engel, J., Schultens, H. A. & Schild, D. (1999). Small conductance
     potassium channels cause an activity-dependent spike frequency
     adaptation and make the transfer function of neurons logarithmic.
     *Biophys J*, 76(3), 1310–1319.
-
-12. Bhatt, D. L. & Storm, J. F. (2003). SK channels in the
-    hippocampus. *J Physiol*, 557(2), 329–352.

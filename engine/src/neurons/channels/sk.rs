@@ -20,7 +20,11 @@ use crate::neurons::biophysical::safe_rate;
 /// - Rhythmic firing patterns: SK-mediated pauses create regular ISIs
 /// - Synaptic plasticity gating: SK in dendritic spines regulates NMDA currents
 ///
-/// Bhatt & Storm, J Physiol 557:329, 2003; Stocker, Nat Rev Neurosci 5:758, 2004.
+/// Stocker, Nat Rev Neurosci 5:758, 2004; Wang & Buzsáki, J Neurosci
+/// 16:6402, 1996. The threshold-reset event, the spike-triggered Ca2+
+/// increment, and the Hill constants are repository-specific
+/// specialisations of that review material, not a publication-exact
+/// recurrence.
 #[derive(Clone, Debug)]
 pub struct SKNeuron {
     pub v: f64,
@@ -71,14 +75,66 @@ impl SKNeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let input = self.gain * current;
+    fn valid(&self) -> bool {
+        let finite = [
+            self.v,
+            self.h,
+            self.n,
+            self.ca,
+            self.g_na,
+            self.g_k,
+            self.g_sk,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.tau_ca,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        ]
+        .into_iter()
+        .all(f64::is_finite);
+        finite
+            && (-100.0..=60.0).contains(&self.v)
+            && [self.h, self.n]
+                .into_iter()
+                .all(|gate| (0.0..=1.0).contains(&gate))
+            && self.ca >= 0.0
+            && (0.0..=200.0).contains(&self.g_na)
+            && (0.0..=100.0).contains(&self.g_k)
+            && (0.0..=50.0).contains(&self.g_sk)
+            && (0.0..=5.0).contains(&self.g_l)
+            && (30.0..=70.0).contains(&self.e_na)
+            && (-100.0..=-70.0).contains(&self.e_k)
+            && (-80.0..=-40.0).contains(&self.e_l)
+            && (0.5..=2.0).contains(&self.c_m)
+            && (0.5..=10.0).contains(&self.phi)
+            && (10.0..=2000.0).contains(&self.tau_ca)
+            && self.dt > 0.0
+            && self.dt <= 1.0
+            && (-20.0..=20.0).contains(&self.v_threshold)
+            && (0.0..=10.0).contains(&self.gain)
+    }
+
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !current.is_finite() {
+            return Err("current must be finite");
+        }
+        if !self.valid() {
+            return Err("SK state and parameters must satisfy the public bounds");
+        }
+
+        let mut candidate = self.clone();
+        let input = candidate.gain * current;
         let sub_steps = 50;
-        let sub_dt = self.dt / sub_steps as f64;
+        let sub_dt = candidate.dt / sub_steps as f64;
         let mut fired = 0i32;
 
         for _ in 0..sub_steps {
-            let v = self.v;
+            let v = candidate.v;
 
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
             let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
@@ -91,48 +147,56 @@ impl SKNeuron {
             let beta_n = 0.125 * (-(v + 44.0) / 80.0).exp();
 
             // SK activation: purely Ca2+-dependent (Hill function, n=2)
-            let ca2 = self.ca * self.ca;
+            let ca2 = candidate.ca * candidate.ca;
             let sk_inf = ca2 / (ca2 + 0.25); // Half-activation at [Ca2+]=0.5
 
             // Ca2+ decay
-            self.ca += sub_dt * (-self.ca / self.tau_ca);
+            candidate.ca += sub_dt * (-candidate.ca / candidate.tau_ca);
 
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
+            candidate.h +=
+                sub_dt * candidate.phi * (alpha_h * (1.0 - candidate.h) - beta_h * candidate.h);
+            candidate.n +=
+                sub_dt * candidate.phi * (alpha_n * (1.0 - candidate.n) - beta_n * candidate.n);
 
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
-            let i_sk = self.g_sk * sk_inf * (v - self.e_k);
-            let i_l = self.g_l * (v - self.e_l);
+            let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
+            let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
+            let i_sk = candidate.g_sk * sk_inf * (v - candidate.e_k);
+            let i_l = candidate.g_l * (v - candidate.e_l);
 
-            let dv = (-i_na - i_k - i_sk - i_l + input) / self.c_m;
-            self.v += sub_dt * dv;
+            let dv = (-i_na - i_k - i_sk - i_l + input) / candidate.c_m;
+            candidate.v += sub_dt * dv;
+            if ![candidate.v, candidate.h, candidate.n, candidate.ca]
+                .into_iter()
+                .all(f64::is_finite)
+            {
+                return Err("SK candidate state became non-finite");
+            }
 
-            if self.v >= self.v_threshold {
+            if candidate.v >= candidate.v_threshold {
                 fired = 1;
-                self.v = -65.0;
-                self.ca += 0.2;
+                candidate.v = -65.0;
+                candidate.ca += 0.2;
             }
         }
 
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -65.0;
-            self.h = 0.6;
-            self.n = 0.32;
-        }
-        if !self.ca.is_finite() {
-            self.ca = 0.0;
-        }
-        self.h = self.h.clamp(0.0, 1.0);
-        self.n = self.n.clamp(0.0, 1.0);
-        self.ca = self.ca.max(0.0);
+        candidate.v = candidate.v.clamp(-100.0, 60.0);
+        candidate.h = candidate.h.clamp(0.0, 1.0);
+        candidate.n = candidate.n.clamp(0.0, 1.0);
+        candidate.ca = candidate.ca.max(0.0);
+        *self = candidate;
 
-        fired
+        Ok(fired)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.v = -65.0;
+        self.h = 0.6;
+        self.n = 0.32;
+        self.ca = 0.0;
     }
 }
 
@@ -163,6 +227,16 @@ mod tests {
             spikes, 0,
             "SK neuron must be silent without input, got {spikes}"
         );
+    }
+
+    #[test]
+    fn sk_nominal_step_matches_reference_anchor() {
+        let mut n = SKNeuron::new();
+        assert_eq!(n.try_step(5.0), Ok(0));
+        assert!((n.v - -63.180_064_213_072_19).abs() < 1.0e-12);
+        assert!((n.h - 0.648_122_835_749_998_1).abs() < 1.0e-12);
+        assert!((n.n - 0.237_186_365_946_861_5).abs() < 1.0e-12);
+        assert_eq!(n.ca, 0.0);
     }
 
     #[test]
@@ -225,10 +299,34 @@ mod tests {
     }
 
     #[test]
-    fn sk_nan_input_stays_finite() {
+    fn sk_nan_input_is_rejected_atomically() {
         let mut n = SKNeuron::new();
-        n.step(f64::NAN);
-        assert!(n.v.is_finite());
+        let before = n.clone();
+        assert!(n.try_step(f64::NAN).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.ca, before.ca);
+    }
+
+    #[test]
+    fn sk_infinite_input_is_rejected_atomically() {
+        let mut n = SKNeuron::new();
+        let before = n.clone();
+        assert!(n.try_step(f64::INFINITY).is_err());
+        assert!(n.try_step(f64::NEG_INFINITY).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.ca, before.ca);
+    }
+
+    #[test]
+    fn sk_invalid_configuration_is_rejected_atomically() {
+        let mut n = SKNeuron::new();
+        n.c_m = 0.0;
+        let before = n.clone();
+        assert!(n.try_step(1.0).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.c_m, before.c_m);
     }
 
     #[test]
@@ -249,6 +347,18 @@ mod tests {
         n.reset();
         assert_eq!(n.v, -65.0);
         assert_eq!(n.ca, 0.0);
+    }
+
+    #[test]
+    fn sk_reset_preserves_parameters() {
+        let mut n = SKNeuron::new();
+        n.g_sk = 4.0;
+        for _ in 0..100 {
+            n.step(5.0);
+        }
+        n.reset();
+        assert_eq!(n.v, -65.0);
+        assert_eq!(n.g_sk, 4.0);
     }
 
     #[test]

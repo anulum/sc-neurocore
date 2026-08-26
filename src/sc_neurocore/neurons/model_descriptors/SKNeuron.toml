@@ -160,12 +160,43 @@ dt = 0.5
 method = "euler"
 
 [dynamics]
+alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"
+beta_m = "4 * exp(-(v + 60) / 18)"
+m_inf = "alpha_m / (alpha_m + beta_m)"
+dh_dt = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - h / (1 + exp(-(v + 28) / 10)))"
+dn_dt = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+sk_inf = "ca^2 / (ca^2 + 0.25); evaluated from the pre-decay ca of the same sub-step"
+dca_dt = "-ca / tau_ca; plus a +0.2 increment immediately after each threshold reset"
+dv_dt = "(-g_na * m_inf^3 * h * (v - e_na) - g_k * n^4 * (v - e_k) - g_sk * sk_inf * (v - e_k) - g_l * (v - e_l) + gain * I) / c_m"
+event = "v_next >= v_threshold; reset v to -65, then ca += 0.2, preserving h and n"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "a4a7a51ceebfb55d8f183ccbf7ea637944b94f821c6d45e7b249bc0f5ea3b137"
+event_count = 5
+final_state = "{\"v\":-78.54410136446847,\"h\":0.9688809026046244,\"n\":0.02633986417448006,\"ca\":0.30688701422932596}"
 
 [documentation]
 slug = "models/sk_neuron"
-notes = ""
+notes = "Composite of the Wang-Buzsáki 1996 spiking base with a calcium-only SK (KCa2.x) Hill activation grounded in the Stocker 2004 review; the threshold-reset event, the spike-triggered ca increment, and the Hill constants are repository-specific specialisations, not a publication-exact recurrence. The ca state is bounded below at zero with no artificial upper bound. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"
