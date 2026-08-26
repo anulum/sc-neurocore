@@ -8,9 +8,8 @@
 
 """Python-side validation of the Mojo evolve runner.
 
-Mojo 0.26 does not ship a native unit-test harness, so we exercise the
-runner as a subprocess (the same dispatch pattern Python uses in
-production) and assert invariants on its JSON output. This mirrors what
+The runner is exercised as a subprocess (the same dispatch pattern Python
+uses in production) and the suite asserts invariants on its JSON output. This mirrors what
 a `go test` / `Test.jl` unit suite would cover.
 
 Skipped when pixi / Mojo toolchain is missing.
@@ -80,7 +79,7 @@ def _minimal_cfg(seed: int, pop: int = 8, gens: int = 3) -> str:
 
 
 def _run_mojo(cfg: str) -> JsonObject:
-    # Mojo 0.26 JIT-compiles the runner on every invocation (~1 min on
+    # Mojo JIT-compiles the runner on every invocation (~1 min on
     # cold pixi cache, faster once warm). 900 s gives comfortable margin
     # for the slowest cold run without hiding a genuine hang.
     assert PIXI is not None

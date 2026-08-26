@@ -6,14 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo industrial whole-process evolve runner
 #
-# Port of `crates/evo_substrate_core/src/runner.rs` to Mojo 0.26+.
+# Port of `crates/evo_substrate_core/src/runner.rs` to Mojo 1.0.
 # Same industrial guards (TournamentSelector, FormalSafetyGuard,
 # BloatPenalizer, AgeRegulator, ExtinctionDetector, HallOfFame,
 # ParetoFront, MutationEngine × 4 variants, CrossoverEngine,
 # parametric FitnessEvaluator). Same JSON wire contract.
 #
 # I/O boundary uses Mojo's Python interop: `json` + `hashlib` are
-# delegated to CPython because Mojo 0.26's stdlib does not ship them
+# delegated to CPython because Mojo's stdlib does not ship them
 # natively. The compute loop (mutation, fitness, tournament,
 # crossover) runs in pure Mojo with flat Float64 arrays to avoid
 # List[List[Float64]] copy-semantics issues in this Mojo release.
@@ -25,8 +25,8 @@ from std.python import Python, PythonObject
 from std.math import abs, cos, log, sqrt
 from std.collections import List
 
-alias GENOME_DIM: Int = 19
-alias EPSILON: Float64 = 1.0e-10
+comptime GENOME_DIM: Int = 19
+comptime EPSILON: Float64 = 1.0e-10
 
 
 # ─── Shared XorShift64 PRNG (byte-identical uniform across 4 backends) ──
@@ -40,13 +40,13 @@ alias EPSILON: Float64 = 1.0e-10
 struct XorShift64:
     var state: UInt64
 
-    fn __init__(out self, seed: UInt64):
+    def __init__(out self, seed: UInt64):
         var v = seed
         if v == UInt64(0):
             v = UInt64(0xDEAD_BEEF_CAFE_BABE)
         self.state = v
 
-    fn next_u64(mut self) -> UInt64:
+    def next_u64(mut self) -> UInt64:
         var x = self.state
         x = x ^ (x << 13)
         x = x ^ (x >> 7)
@@ -54,10 +54,10 @@ struct XorShift64:
         self.state = x
         return x
 
-    fn next_f64(mut self) -> Float64:
+    def next_f64(mut self) -> Float64:
         return Float64(Int(self.next_u64() >> 11)) / 9007199254740992.0
 
-    fn next_normal(mut self, mu: Float64, sigma: Float64) -> Float64:
+    def next_normal(mut self, mu: Float64, sigma: Float64) -> Float64:
         """Box-Muller; same RNG-draw order as the other runners."""
         var u1 = self.next_f64()
         var u2 = self.next_f64()
@@ -67,7 +67,7 @@ struct XorShift64:
         var theta = 2.0 * 3.14159265358979323846 * u2
         return mu + sigma * radius * cos(theta)
 
-    fn gen_range(mut self, lo: Int, hi: Int) -> Int:
+    def gen_range(mut self, lo: Int, hi: Int) -> Int:
         var span = UInt64(hi - lo)
         return lo + Int(self.next_u64() % span)
 
@@ -75,7 +75,7 @@ struct XorShift64:
 # ─── Helpers ──────────────────────────────────────────────────────
 
 
-fn clamp_f64(x: Float64, lo: Float64, hi: Float64) -> Float64:
+def clamp_f64(x: Float64, lo: Float64, hi: Float64) -> Float64:
     if x < lo:
         return lo
     if x > hi:
@@ -83,7 +83,7 @@ fn clamp_f64(x: Float64, lo: Float64, hi: Float64) -> Float64:
     return x
 
 
-fn clamp_i32(x: Int, lo: Int, hi: Int) -> Int:
+def clamp_i32(x: Int, lo: Int, hi: Int) -> Int:
     if x < lo:
         return lo
     if x > hi:
@@ -91,13 +91,13 @@ fn clamp_i32(x: Int, lo: Int, hi: Int) -> Int:
     return x
 
 
-fn max_f(a: Float64, b: Float64) -> Float64:
+def max_f(a: Float64, b: Float64) -> Float64:
     if a > b:
         return a
     return b
 
 
-fn max_i(a: Int, b: Int) -> Int:
+def max_i(a: Int, b: Int) -> Int:
     if a > b:
         return a
     return b
@@ -106,7 +106,7 @@ fn max_i(a: Int, b: Int) -> Int:
 # ─── Default genome (flat 19-D vector) ────────────────────────────
 
 
-fn default_vector() -> List[Float64]:
+def default_vector() -> List[Float64]:
     var v = List[Float64]()
     # Topology: num_neurons, num_layers, connectivity, recurrent_fraction, bitstream_length
     v.append(16.0)
@@ -134,7 +134,7 @@ fn default_vector() -> List[Float64]:
     return v^
 
 
-fn clamp_vector(mut v: List[Float64]):
+def clamp_vector(mut v: List[Float64]):
     """Apply gene-block clamping that matches `Genome.from_vector` in
     both the Python reference and the Rust runner."""
     v[0] = Float64(max_i(2, Int(v[0])))
@@ -161,7 +161,7 @@ fn clamp_vector(mut v: List[Float64]):
 # ─── Compute SHA-256 id via Python hashlib (I/O boundary) ────────
 
 
-fn compute_id(v: List[Float64], py_hashlib: PythonObject) raises -> String:
+def compute_id(v: List[Float64], py_hashlib: PythonObject) raises -> String:
     """12-hex-char SHA-256 fingerprint of the little-endian float64 bytes.
     Matches the Python reference + Rust / Julia / Go runners."""
     var py = Python.import_module("builtins")
@@ -177,7 +177,7 @@ fn compute_id(v: List[Float64], py_hashlib: PythonObject) raises -> String:
 # ─── Mutation ─────────────────────────────────────────────────────
 
 
-fn apply_point(
+def apply_point(
     mut v: List[Float64],
     mut rng: XorShift64,
     point_rate: Float64,
@@ -190,7 +190,7 @@ fn apply_point(
     clamp_vector(v)
 
 
-fn apply_structural(
+def apply_structural(
     mut v: List[Float64],
     mut rng: XorShift64,
     min_neurons: Int,
@@ -209,7 +209,7 @@ fn apply_structural(
     v[2] = clamp_f64(v[2] + conn_noise, 0.01, 1.0)
 
 
-fn apply_duplication(mut v: List[Float64], max_neurons: Int):
+def apply_duplication(mut v: List[Float64], max_neurons: Int):
     var new_layers = Int(v[1]) + 1
     if new_layers > 10:
         new_layers = 10
@@ -220,14 +220,14 @@ fn apply_duplication(mut v: List[Float64], max_neurons: Int):
     v[0] = Float64(scaled)
 
 
-fn apply_swap(mut v: List[Float64]):
+def apply_swap(mut v: List[Float64]):
     # Swap tau_fast (idx 5) and tau_work (idx 6)
     var tmp = v[5]
     v[5] = v[6]
     v[6] = tmp
 
 
-fn mutate(
+def mutate(
     mut v: List[Float64],
     mut rng: XorShift64,
     point_rate: Float64,
@@ -259,7 +259,7 @@ fn mutate(
 # ─── Crossover ────────────────────────────────────────────────────
 
 
-fn crossover(a: List[Float64], b: List[Float64], mut rng: XorShift64) -> List[Float64]:
+def crossover(a: List[Float64], b: List[Float64], mut rng: XorShift64) -> List[Float64]:
     var out = List[Float64]()
     for i in range(GENOME_DIM):
         if rng.next_f64() < 0.5:
@@ -273,7 +273,7 @@ fn crossover(a: List[Float64], b: List[Float64], mut rng: XorShift64) -> List[Fl
 # ─── Fitness ──────────────────────────────────────────────────────
 
 
-fn evaluate_fitness(
+def evaluate_fitness(
     v: List[Float64],
     accuracy_bias: Float64,
     accuracy_neuron_coef: Float64,
@@ -290,7 +290,7 @@ fn evaluate_fitness(
     return w_accuracy * accuracy + w_energy * energy + w_latency * latency
 
 
-fn evaluate_fitness_components(
+def evaluate_fitness_components(
     v: List[Float64],
     accuracy_bias: Float64,
     accuracy_neuron_coef: Float64,
@@ -308,7 +308,7 @@ fn evaluate_fitness_components(
     return out^
 
 
-fn dominates(a: List[Float64], b: List[Float64]) -> Bool:
+def dominates(a: List[Float64], b: List[Float64]) -> Bool:
     """Pareto dominance on the 3-objective fitness vector (accuracy,
     energy, latency) — mirrors the Rust runner's `dominates` exactly."""
     var at_least_one_better = False
@@ -323,7 +323,7 @@ fn dominates(a: List[Float64], b: List[Float64]) -> Bool:
 # ─── Bloat + guard helpers ────────────────────────────────────────
 
 
-fn bloat_score(v: List[Float64], baseline_neurons: Float64) -> Float64:
+def bloat_score(v: List[Float64], baseline_neurons: Float64) -> Float64:
     var n = v[0]
     var l = v[1]
     var conn = n * n * v[2]
@@ -334,7 +334,7 @@ fn bloat_score(v: List[Float64], baseline_neurons: Float64) -> Float64:
     return total / baseline
 
 
-fn penalize(
+def penalize(
     fitness: Float64,
     v: List[Float64],
     penalty_weight: Float64,
@@ -347,7 +347,7 @@ fn penalize(
     return fitness
 
 
-fn safety_check(
+def safety_check(
     v: List[Float64],
     max_neurons: Int,
     max_connectivity: Float64,
@@ -363,7 +363,7 @@ fn safety_check(
 # ─── Tournament selection ─────────────────────────────────────────
 
 
-fn tournament_select(
+def tournament_select(
     fits: List[Float64], alive: List[Bool], k: Int, mut rng: XorShift64
 ) -> Int:
     """Returns the index of the tournament winner among alive organisms,
@@ -396,7 +396,7 @@ fn tournament_select(
 # ─── Main entry point ────────────────────────────────────────────
 
 
-fn main() raises:
+def main() raises:
     var json_mod = Python.import_module("json")
     var sys_mod = Python.import_module("sys")
     var hashlib = Python.import_module("hashlib")
@@ -405,8 +405,8 @@ fn main() raises:
     var cfg_str = String(sys_mod.stdin.read())
     var cfg = json_mod.loads(cfg_str)
 
-    # PythonObject → native numeric via stringify + atol/atof (Mojo 0.26
-    # does not yet expose a direct PyObject-to-Int/Float conversion).
+    # PythonObject → native numeric via the validated stringify + atol/atof
+    # boundary used by the current Mojo Python interop API.
     var seed = Int(atol(String(cfg["seed"])))
     var pop_size = Int(atol(String(cfg["pop_size"])))
     var n_generations = Int(atol(String(cfg["n_generations"])))
@@ -456,7 +456,7 @@ fn main() raises:
     var birth_gens = List[Int]()
     var fits = List[Float64]()
 
-    for i in range(pop_size):
+    for _ in range(pop_size):
         var g = default_vector()
         for k in range(GENOME_DIM):
             pop_flat.append(g[k])
@@ -708,7 +708,7 @@ fn main() raises:
         if alive_count > 0:
             mean_fit = sum_fit / Float64(alive_count)
         # Build dict by setitem because Python.dict kwargs mix Float/Int
-        # fails to type-check in Mojo 0.26.
+        # remains rejected by the current compiler.
         var g_stats = json_mod.loads("{}")
         g_stats["generation"] = gen
         g_stats["population_size"] = alive_count
