@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.sc-compte-wm-behavior-ensemble.v1",
-  "generated_at": "2026-08-25T21:27:42.985797+00:00",
+  "generated_at": "2026-08-26T08:44:06.730784+00:00",
   "model": "SC-COMPTE-WM-NETWORK",
   "evidence_class": "deterministic_simulator_behavior_ensemble",
   "source_reproduction_claimed": false,
@@ -54,7 +54,7 @@
     "src/sc_neurocore/network/sc_compte_wm.py": "0b9150690b5f4c2c8b8b8f36f83be72184af143f07d9d5b0bd81d66264eebcce",
     "src/sc_neurocore/network/sc_compte_wm_drive.py": "e639dddf0a0d75542139bbb6f57f07ae3bdf770b0b9d57fe30d14271a1eb85fc",
     "src/sc_neurocore/network/sc_compte_wm_network.py": "1b87761e475352cbd7f2bdbae108ee2c48297083d480c24ca009275c353eae34",
-    "src/sc_neurocore/network/sc_compte_wm_backends.py": "9a2f15512c99e94a4107a5efaba16997e48e20644367a82a5b7adfc1d4356d2a",
+    "src/sc_neurocore/network/sc_compte_wm_backends.py": "414e637e48b2d7f51f09557ee07c47513dbc98a39a0d824a804ddee492cfba05",
     "src/sc_neurocore/network/sc_compte_wm_behavior.py": "2084261e696257b85d78986b77c63ef861a06514406432be3e6f7a2829730892",
     "engine/src/sc_compte_wm_network.rs": "82e5fd767bdf6d217b03d63ed804108a2a9b8638d4870f84d104211ab23f0974",
     "engine/examples/sc_compte_wm_network_run.rs": "32890c90ad48d4b88252a3e80977b37c9accf825cff3991e957a5f0df1cec945",
@@ -62,15 +62,14 @@
     "src/sc_neurocore/accel/julia/sc_compte_wm_network/run_sc_compte_wm_network.jl": "70e1d8f5a5991a4c4385a17f78c6a6b3794a5e7026c79c71f1d43ebcaa45c755",
     "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go": "dea09aad1f75a7e5202a390321d005e2e7277e3c50d6cc82a9724a0ea46db7aa",
     "src/sc_neurocore/accel/go/cmd/run_sc_compte_wm_network/main.go": "2ead9e0ed2aadc0ab43bd145e950c89d3a721e92ae74efc40d8999b2c88c4b1f",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "2e135cdd7134dca820779b9d336c801deb0d6c477efcfcb1ad38c7a931520878",
-    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/libsc_compte_wm_network.so": "3bd152ac6bd86201eb7283a7133f89b9bcddd760bc634818dc9a672e46901d75",
+    "src/sc_neurocore/accel/mojo/sc_compte_wm_network/sc_compte_wm_network.mojo": "1f46a295044fad64caa7eb56e6ec0e8db60613c818dc52b41492ab5645a2f012",
     "src/sc_neurocore/accel/mojo/sc_compte_wm_network/__init__.py": "e36c497ab5258f2ba79ce5be1dcb474dea2df68de0ffd7ce7a2b3e0a375f88f7"
   },
   "trials": [
     {
       "backend": "rust",
       "seed": 41,
-      "execution_ns": 25105853650,
+      "execution_ns": 24690017865,
       "input_sha256": "42eaebc157e322c13c65378e2a42392cc42d9be44ab48f19f364451c9fbd6a13",
       "spike_sha256": "99282c91a690f7c4c0b02b320ce52d68f71a587a6343cceddc593be9006ee320",
       "final_state_sha256": "159adcddefc867148df537d3a2c22d71d5a430df6b8184bbda1388085c85a37c",
@@ -109,7 +108,7 @@
     {
       "backend": "rust",
       "seed": 42,
-      "execution_ns": 24306067295,
+      "execution_ns": 24942420809,
       "input_sha256": "5436c33ba6abc331dcb0a61d273958aa8a39c2afef1cca270fee35e257d6d55b",
       "spike_sha256": "387319bb8dde40de3c461f1bd95b7adbaacd131a89f7a5009e36ea8c676acdaf",
       "final_state_sha256": "fe7a8fd02000b323e22faa5803ccab4fcea19093d054f361c51795d345c77449",
@@ -148,7 +147,7 @@
     {
       "backend": "rust",
       "seed": 43,
-      "execution_ns": 25038376986,
+      "execution_ns": 23669863548,
       "input_sha256": "a210eaa862caaa8ab76832df94462aa27f60d734f905aa82344cb5fa1994ef0d",
       "spike_sha256": "2076d4169909296f16dd37f8998a7c3cf20c7fdc144251284e4a1d4116aabbe1",
       "final_state_sha256": "6ddff8e1927a15bc555cb51b076108aceaa320747d1605bfba74369f7560dd19",
@@ -187,7 +186,7 @@
     {
       "backend": "python",
       "seed": 42,
-      "execution_ns": 126724417892,
+      "execution_ns": 102787459102,
       "input_sha256": "5436c33ba6abc331dcb0a61d273958aa8a39c2afef1cca270fee35e257d6d55b",
       "spike_sha256": "387319bb8dde40de3c461f1bd95b7adbaacd131a89f7a5009e36ea8c676acdaf",
       "final_state_sha256": "6fe8f85330f3b580b7b62e3115444c1b9278c1e7e4536281e31a6e7e0bd08be5",
@@ -226,7 +225,7 @@
     {
       "backend": "julia",
       "seed": 42,
-      "execution_ns": 205454773727,
+      "execution_ns": 174477230288,
       "input_sha256": "5436c33ba6abc331dcb0a61d273958aa8a39c2afef1cca270fee35e257d6d55b",
       "spike_sha256": "387319bb8dde40de3c461f1bd95b7adbaacd131a89f7a5009e36ea8c676acdaf",
       "final_state_sha256": "d0975f2cedfee93fdff329f5539a32c49f32ce40e36cd0d60f0d174c91f9d3b9",
@@ -265,7 +264,7 @@
     {
       "backend": "go",
       "seed": 42,
-      "execution_ns": 399028545544,
+      "execution_ns": 350418655693,
       "input_sha256": "5436c33ba6abc331dcb0a61d273958aa8a39c2afef1cca270fee35e257d6d55b",
       "spike_sha256": "387319bb8dde40de3c461f1bd95b7adbaacd131a89f7a5009e36ea8c676acdaf",
       "final_state_sha256": "814202eea616512c0fc4ae7635a46ce866a621c03950d14dc05eb85b69861681",
@@ -304,7 +303,7 @@
     {
       "backend": "mojo",
       "seed": 42,
-      "execution_ns": 99645242600,
+      "execution_ns": 77121368965,
       "input_sha256": "5436c33ba6abc331dcb0a61d273958aa8a39c2afef1cca270fee35e257d6d55b",
       "spike_sha256": "387319bb8dde40de3c461f1bd95b7adbaacd131a89f7a5009e36ea8c676acdaf",
       "final_state_sha256": "c891a4b0f952705468334f0f43f4fe5379d7072c1af0a50cef84a95377746306",
