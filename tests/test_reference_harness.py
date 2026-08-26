@@ -80,6 +80,8 @@ def _committed_reference_routes() -> dict[str, tuple[str, str]]:
     routes: dict[str, tuple[str, str]] = {}
     for path in sorted(data_dir.glob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
+        if payload.get("schema_version") != "sc-neurocore.reference-trace.v1":
+            continue
         model = payload["model"]
         routes[payload["name"]] = (model["schema_name"], model["runner"])
     return routes

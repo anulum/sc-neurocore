@@ -16,6 +16,7 @@ import subprocess
 import numpy as np
 import pytest
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -68,7 +69,7 @@ def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo"
     binary = tmp_path / "hill_tononi"
     subprocess.run(
-        ["mojo", "build", "--disable-warnings", str(kernel), "-o", str(binary)],
+        pin_isa(["mojo", "build", "--disable-warnings", str(kernel), "-o", str(binary)]),
         check=True,
         timeout=60,
     )

@@ -18,7 +18,7 @@ class TestEdgeDetectionRunner:
 
     def test_crossing_matches_hand_oscillator_over_a_sequence(self) -> None:
         """A no-reset crossing schema reproduces the McKean hand model's edge decision."""
-        hand = McKeanNeuron(dt=0.1, **_MCKEAN_INIT, **_MCKEAN_PARAMS)
+        hand = SCTriangularMcKeanNeuron(dt=0.1, **_MCKEAN_INIT, **_MCKEAN_PARAMS)
         schema = UniversalNeuron.from_dict(_mckean_schema("crossing"))
 
         for current in (0.0, 0.2, 0.3, 0.2, 0.1, 0.2):

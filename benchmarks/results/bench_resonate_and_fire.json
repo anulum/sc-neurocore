@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 4547185,
-      "median_call_ms": 3.272818,
-      "median_call_ns": 3272818.0,
-      "median_ns_per_step": 65.45636,
-      "min_call_ns": 3193465,
+      "max_call_ns": 7893206,
+      "median_call_ms": 3.688008,
+      "median_call_ns": 3688008.0,
+      "median_ns_per_step": 73.76016,
+      "min_call_ns": 3555376,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3193465,
-        3272818,
-        4547185,
-        3581743,
-        3264572
+        4078702,
+        3664851,
+        3688008,
+        7893206,
+        3555376
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -45,19 +45,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 4074457,
-      "median_call_ms": 3.686728,
-      "median_call_ns": 3686728.0,
-      "median_ns_per_step": 73.73456,
-      "min_call_ns": 3537505,
+      "max_call_ns": 4337145,
+      "median_call_ms": 3.989585,
+      "median_call_ns": 3989585.0,
+      "median_ns_per_step": 79.7917,
+      "min_call_ns": 3417592,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4024023,
-        3686728,
-        3547888,
-        3537505,
-        4074457
+        3417592,
+        3921227,
+        4255355,
+        4337145,
+        3989585
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -70,29 +70,29 @@
       "available": true,
       "final_state": {
         "x": -0.12694720935988085,
-        "y": 0.7130088368248868
+        "y": 0.7130088368248867
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.7755575615628914e-16,
-      "max_call_ns": 2481389,
-      "median_call_ms": 1.988718,
-      "median_call_ns": 1988718.0,
-      "median_ns_per_step": 39.77436,
-      "min_call_ns": 1793307,
+      "max_call_ns": 2033016,
+      "median_call_ms": 2.024058,
+      "median_call_ns": 2024058.0,
+      "median_ns_per_step": 40.48116,
+      "min_call_ns": 1930715,
       "parity_atol": 1e-10,
-      "parity_max_abs_diff": 9.992007221626409e-16,
+      "parity_max_abs_diff": 8.881784197001252e-16,
       "samples_ns": [
-        1988718,
-        2481389,
-        2075782,
-        1915189,
-        1793307
+        2031667,
+        2019716,
+        1930715,
+        2033016,
+        2024058
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
-      "trace_sha256": "80ef96bfc7558e8522c7e98341e38e16ba4eaf830f13c527dc62df9e47c8f8c8",
+      "trace_sha256": "b0c4e9a594d793e10cbb218b74a7c18e4e1f5105a9cde96726981d45d127c606",
       "used": true
     },
     "python": {
@@ -103,19 +103,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 109621102,
-      "median_call_ms": 90.796291,
-      "median_call_ns": 90796291.0,
-      "median_ns_per_step": 1815.92582,
-      "min_call_ns": 89063906,
+      "max_call_ns": 124404187,
+      "median_call_ms": 122.417561,
+      "median_call_ns": 122417561.0,
+      "median_ns_per_step": 2448.35122,
+      "min_call_ns": 117789402,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        109621102,
-        105597603,
-        90796291,
-        89542599,
-        89063906
+        117789402,
+        119814861,
+        124404187,
+        122693057,
+        122417561
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -132,19 +132,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 2462972,
-      "median_call_ms": 2.005184,
-      "median_call_ns": 2005184.0,
-      "median_ns_per_step": 40.10368,
-      "min_call_ns": 1938860,
+      "max_call_ns": 2997108,
+      "median_call_ms": 2.793305,
+      "median_call_ns": 2793305.0,
+      "median_ns_per_step": 55.8661,
+      "min_call_ns": 2528526,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2123268,
-        2462972,
-        1988635,
-        2005184,
-        1938860
+        2935513,
+        2528526,
+        2793305,
+        2642791,
+        2997108
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -158,18 +158,18 @@
   "binary_hashes": {
     "go_shared_library": {
       "path": "src/sc_neurocore/accel/go/resonate_and_fire/libresonate_and_fire.so",
-      "sha256": "acf27285772d299920d3d3a43382e206edd33deea7b106da8fb249e29e419039",
-      "size_bytes": 2023672
+      "sha256": "2e44da0ea7cec6c573f0d1c982623121ced57729d268371df8bf6de17830a40e",
+      "size_bytes": 2023616
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/resonate_and_fire/libresonate_and_fire.so",
-      "sha256": "bbb881d2e828c8c6e150f997e06281a68fcf716608887d06325a702b36b8ca73",
-      "size_bytes": 15488
+      "sha256": "75ed87d1e3c24f56b693a9e2d72124d3981bcdb3ae2e7ce73588696d5c28cc02",
+      "size_bytes": 15928
     },
     "rust_extension": {
       "path": "$WHEEL_SITE/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "5128ca1c72ac38b9f2ca4782bd3988427ef9ae6f423a6bd279607b624ed4016a",
-      "size_bytes": 33932729
+      "sha256": "e2229701382272474a91ad35b8b58c7069e44f2bda1c73ca05c287661abaedc4",
+      "size_bytes": 34153913
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. python benchmarks/bench_model_resonate_and_fire.py --json benchmarks/results/bench_resonate_and_fire.json",
@@ -192,24 +192,24 @@
         "GOOS": "linux",
         "vcs": "git",
         "vcs.modified": "true",
-        "vcs.revision": "14b3003e211ee79193ddbbe0510f1e7ec3b433f1",
-        "vcs.time": "2026-07-25T12:41:54Z"
+        "vcs.revision": "facc607a7ee4e01b61f2beeb7eb57e2b37007f5c",
+        "vcs.time": "2026-07-29T14:59:53Z"
       },
       "cgo_enabled": "1",
       "go_version": "go1.26.3",
       "module": "github.com/anulum/sc-neurocore/accel",
       "package": "github.com/anulum/sc-neurocore/accel/resonate_and_fire"
     },
-    "go_cli": "go version go1.26.2 linux/amd64",
+    "go_cli": "go version go1.24.0 linux/amd64",
     "julia_cli": "julia version 1.12.6",
     "julia_runtime": "1.11.9",
     "load_average": [
-      7.69873046875,
-      7.56640625,
-      7.85986328125
+      11.31494140625,
+      8.53173828125,
+      8.73046875
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
-    "mojo_pixi": "Mojo 0.26.2.0 (d627decc)",
+    "mojo_pixi": "Mojo 1.0.0 (ed45d567)",
     "numpy": "2.2.6",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
@@ -249,45 +249,45 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     ".github/workflows/ci": {
-      "yml": "dc21cf025c9576186c20fc6af72e317d6ded03ddec2315d5ba64af30925198ef"
+      "yml": "b4ef6875245487da076600924447e98e3090a8737932799f27ab712fdfce1892"
     },
-    ".github/workflows/ci.yml": "dc21cf025c9576186c20fc6af72e317d6ded03ddec2315d5ba64af30925198ef",
+    ".github/workflows/ci.yml": "b4ef6875245487da076600924447e98e3090a8737932799f27ab712fdfce1892",
     "Cargo": {
-      "lock": "620ef71b9177692260386cb2c1f94868886489c9ffb0e8cbcdb27ed2b48add1b"
+      "lock": "91ed757d87477abf6bed5195e9258761d8f52a6dce4cd94ae653448871edd3ea"
     },
-    "Cargo.lock": "620ef71b9177692260386cb2c1f94868886489c9ffb0e8cbcdb27ed2b48add1b",
+    "Cargo.lock": "91ed757d87477abf6bed5195e9258761d8f52a6dce4cd94ae653448871edd3ea",
     "benchmarks/bench_model_resonate_and_fire": {
       "py": "acb0621ba3f15c4b4630caac0112e0fb092d53f9ad9d9b7e0d8357bb203b1166"
     },
     "benchmarks/bench_model_resonate_and_fire.py": "acb0621ba3f15c4b4630caac0112e0fb092d53f9ad9d9b7e0d8357bb203b1166",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a"
+      "py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
+    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
     "engine/Cargo": {
-      "toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a"
+      "toml": "f539d821a6203bfddff9c207c8f0eda570d1a450958c4918e1de7a49f742429c"
     },
-    "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
+    "engine/Cargo.toml": "f539d821a6203bfddff9c207c8f0eda570d1a450958c4918e1de7a49f742429c",
     "engine/src/bindings/resonate_and_fire": {
       "rs": "6d07ee3d8793dcd6e744e4490dd136961823ab4f17b64f2feb5c05e159f7e30d"
     },
     "engine/src/bindings/resonate_and_fire.rs": "6d07ee3d8793dcd6e744e4490dd136961823ab4f17b64f2feb5c05e159f7e30d",
     "engine/src/neurons/simple_spiking": {
-      "rs": "7992827d120e3165c0619f5ff9c21a2161354604b0aace15c534239adc89b920"
+      "rs": "9d399cd4e2032cfda2ddbac8c2ed217532e537805864ad53eee66799f0fb6de8"
     },
-    "engine/src/neurons/simple_spiking.rs": "7992827d120e3165c0619f5ff9c21a2161354604b0aace15c534239adc89b920",
+    "engine/src/neurons/simple_spiking.rs": "9d399cd4e2032cfda2ddbac8c2ed217532e537805864ad53eee66799f0fb6de8",
     "engine/src/neurons/simple_spiking/resonate_and_fire": {
       "rs": "bfccff5508c95fcde4a5848fb17cd18f2293b127fd1ea80286bf7e08993eb5fc"
     },
     "engine/src/neurons/simple_spiking/resonate_and_fire.rs": "bfccff5508c95fcde4a5848fb17cd18f2293b127fd1ea80286bf7e08993eb5fc",
     "pyproject": {
-      "toml": "470dbd6a7dfe41c7c5ddd4456eec2a52450ada82f93e7addb4f0726e39b9a224"
+      "toml": "0ba9bf4ea8c5a4892d3e50a7d8399be2b64520bb01cff8ce856e016ac91bca3b"
     },
-    "pyproject.toml": "470dbd6a7dfe41c7c5ddd4456eec2a52450ada82f93e7addb4f0726e39b9a224",
+    "pyproject.toml": "0ba9bf4ea8c5a4892d3e50a7d8399be2b64520bb01cff8ce856e016ac91bca3b",
     "src/sc_neurocore/accel/go/go": {
-      "mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097"
+      "mod": "b2976e0d6b929312eb6fd46c9edcdda48fccb1cc46ba86b754afaaa6d49ed005"
     },
-    "src/sc_neurocore/accel/go/go.mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097",
+    "src/sc_neurocore/accel/go/go.mod": "b2976e0d6b929312eb6fd46c9edcdda48fccb1cc46ba86b754afaaa6d49ed005",
     "src/sc_neurocore/accel/go/resonate_and_fire/__init__": {
       "py": "398a165ae5a2d332f6be9c647c02890bbec51b0d2cb49ae4c03709176fd4ee50"
     },
@@ -305,9 +305,9 @@
     },
     "src/sc_neurocore/accel/go/services/resonate_and_fire_test.go": "0072c569315a995bf089519a05786ba1f5cca16ed393e2ef60dff1f9f1a59c90",
     "src/sc_neurocore/accel/julia/neurons/__init__": {
-      "py": "27c91f93279bd27f01400638cbcb6cc7e57ec8935d65f44972b974ffc38511b5"
+      "py": "a178d4d94c965a808b6dc46fe0395a5457e76d57fa51d3d6602fd7c83c67cccd"
     },
-    "src/sc_neurocore/accel/julia/neurons/__init__.py": "27c91f93279bd27f01400638cbcb6cc7e57ec8935d65f44972b974ffc38511b5",
+    "src/sc_neurocore/accel/julia/neurons/__init__.py": "a178d4d94c965a808b6dc46fe0395a5457e76d57fa51d3d6602fd7c83c67cccd",
     "src/sc_neurocore/accel/julia/neurons/resonate_and_fire": {
       "jl": "998021e53c47a6302862e06580d3f2301fa18bb849125d3961952dcdc8d253b4"
     },
@@ -317,11 +317,11 @@
     },
     "src/sc_neurocore/accel/mojo/kernels/resonate_and_fire.mojo": "b2bdb7c20368fd4bc0b5846559d32dded3178c4f0ac213c73f1916665134569b",
     "src/sc_neurocore/accel/mojo/pixi": {
-      "lock": "9d12493eb7c1f74743881d3ab1a4473be4f22d0227beccad162008e4e405d492",
-      "toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a"
+      "lock": "ce2094ef3249440e2b2f07e74531915cfea101647eebbd36be6fa7c8c74fe585",
+      "toml": "cc9d3398db119800ffc48ac0e32e11e6195e029007a4d4007b2b0b83d29fa89a"
     },
-    "src/sc_neurocore/accel/mojo/pixi.lock": "9d12493eb7c1f74743881d3ab1a4473be4f22d0227beccad162008e4e405d492",
-    "src/sc_neurocore/accel/mojo/pixi.toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a",
+    "src/sc_neurocore/accel/mojo/pixi.lock": "ce2094ef3249440e2b2f07e74531915cfea101647eebbd36be6fa7c8c74fe585",
+    "src/sc_neurocore/accel/mojo/pixi.toml": "cc9d3398db119800ffc48ac0e32e11e6195e029007a4d4007b2b0b83d29fa89a",
     "src/sc_neurocore/accel/mojo/resonate_and_fire/__init__": {
       "py": "d5009a0296b1174204727b9c2b9944fe43574bd9427833ef68da6633191c92cc"
     },
@@ -365,7 +365,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-07-29T05:53:12+00:00",
+  "timestamp_utc": "2026-08-26T06:09:43+00:00",
   "verification": {
     "rust_safety": {
       "command": [

@@ -15,9 +15,11 @@ pub struct ButeraRespiratoryNeuron {
     pub g_nap: f64,
     pub g_k: f64,
     pub g_l: f64,
+    pub capacitance: f64,
     pub e_na: f64,
     pub e_k: f64,
     pub e_l: f64,
+    pub g_tonic: f64,
     pub e_syn: f64,
     pub tau_h: f64,
     pub dt: f64,
@@ -41,10 +43,12 @@ impl ButeraRespiratoryNeuron {
             g_nap: 2.8,
             g_k: 11.2,
             g_l: 2.8,
+            capacitance: 21.0,
             e_na: 50.0,
             e_k: -85.0,
             e_l: -65.0,
-            e_syn: -10.0,
+            g_tonic: 0.0,
+            e_syn: 0.0,
             tau_h: 10000.0,
             dt: 0.1,
             v_threshold: -20.0,
@@ -64,9 +68,11 @@ impl ButeraRespiratoryNeuron {
             self.g_nap,
             self.g_k,
             self.g_l,
+            self.capacitance,
             self.e_na,
             self.e_k,
             self.e_l,
+            self.g_tonic,
             self.e_syn,
             self.tau_h,
             self.dt,
@@ -78,6 +84,8 @@ impl ButeraRespiratoryNeuron {
             && self.g_nap >= 0.0
             && self.g_k >= 0.0
             && self.g_l >= 0.0
+            && self.capacitance > 0.0
+            && self.g_tonic >= 0.0
             && self.tau_h > 0.0
             && self.dt > 0.0
     }
@@ -104,8 +112,9 @@ impl ButeraRespiratoryNeuron {
         let i_nap = self.g_nap * m_nap * state.h_nap * (state.v - self.e_na);
         let i_k = self.g_k * state.n.powi(4) * (state.v - self.e_k);
         let i_l = self.g_l * (state.v - self.e_l);
+        let i_tonic = self.g_tonic * (state.v - self.e_syn);
         let deriv = Deriv {
-            v: -i_na - i_nap - i_k - i_l + current,
+            v: (-i_na - i_nap - i_k - i_l - i_tonic + current) / self.capacitance,
             n: (n_inf - state.n) / tau_n,
             h_nap: (h_inf - state.h_nap) / tau_h,
         };

@@ -12,34 +12,34 @@
   "distractor_resistance_claimed": false,
   "environment": {
     "architecture": "amd64",
-    "cpu_threads": 12,
-    "go": "go1.26.3",
-    "gomaxprocs": 12,
+    "cpu_threads": 1,
+    "go": "go1.26.7",
+    "gomaxprocs": 1,
     "os": "linux"
   },
   "evidence_class": "local_regression",
   "execution_path": "go-midpoint-rk2-radix2-fft",
   "final_state_sha256": "c517b3945747a9a72edc5df5eef425687a908141692c6f3ef574a1ba17cbee51",
-  "generated_at": "2026-08-25T21:27:59.363409799Z",
+  "generated_at": "2026-08-26T05:16:46.998120612Z",
   "hardware_measurement_claimed": false,
   "input_sha256": "9fc865d5f39694f586cb72e6bef84da99ee18ea4bbea8d487d5928f5065d5a2e",
-  "median_cell_updates_per_second": 739572.8721448733,
-  "median_ns": 3461457412,
-  "median_ns_per_network_step": 3461457.412,
+  "median_cell_updates_per_second": 865374.6287000716,
+  "median_ns": 2958256361,
+  "median_ns_per_network_step": 2958256.361,
   "model": "SC-COMPTE-WM-NETWORK",
   "passed": true,
   "persistent_bump_claimed": false,
   "production_speed_claimed": false,
   "repeat_receipts_exact": true,
   "samples_ns": [
-    3461457412,
-    3222608976,
-    3472974123
+    2958256361,
+    2910539589,
+    3175401127
   ],
   "schema_version": "sc-neurocore.sc-compte-wm-network-benchmark.v1",
   "source_sha256": {
     "src/sc_neurocore/accel/go/cmd/bench_sc_compte_wm_network/main.go": "1679b6d53969eb8a0cc92d329016c55c7b964c6a4c4555c1775153f99efef07f",
-    "src/sc_neurocore/accel/go/go.mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097",
+    "src/sc_neurocore/accel/go/go.mod": "b2976e0d6b929312eb6fd46c9edcdda48fccb1cc46ba86b754afaaa6d49ed005",
     "src/sc_neurocore/accel/go/sc_compte_wm_network/network.go": "dea09aad1f75a7e5202a390321d005e2e7277e3c50d6cc82a9724a0ea46db7aa"
   },
   "spike_counts": {

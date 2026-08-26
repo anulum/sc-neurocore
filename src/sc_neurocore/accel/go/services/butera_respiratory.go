@@ -15,25 +15,27 @@ import (
 
 // ButeraRespiratoryNeuronState holds the Butera Model I respiratory state.
 type ButeraRespiratoryNeuronState struct {
-	V          float64
-	N          float64
-	HNap       float64
-	GNa        float64
-	GNap       float64
-	GK         float64
-	GL         float64
-	ENa        float64
-	EK         float64
-	EL         float64
-	ESyn       float64
-	TauH       float64
-	Dt         float64
-	VThreshold float64
+	V           float64
+	N           float64
+	HNap        float64
+	GNa         float64
+	GNap        float64
+	GK          float64
+	GL          float64
+	Capacitance float64
+	ENa         float64
+	EK          float64
+	EL          float64
+	GTonic      float64
+	ESyn        float64
+	TauH        float64
+	Dt          float64
+	VThreshold  float64
 }
 
 // NewButeraRespiratoryNeuron creates a new ButeraRespiratoryNeuron neuron with default parameters.
 func NewButeraRespiratoryNeuron() *ButeraRespiratoryNeuronState {
-	return &ButeraRespiratoryNeuronState{V: -50.0, N: 0.01, HNap: 0.5, GNa: 28.0, GNap: 2.8, GK: 11.2, GL: 2.8, ENa: 50.0, EK: -85.0, EL: -65.0, ESyn: -10.0, TauH: 10000.0, Dt: 0.1, VThreshold: -20.0}
+	return &ButeraRespiratoryNeuronState{V: -50.0, N: 0.01, HNap: 0.5, GNa: 28.0, GNap: 2.8, GK: 11.2, GL: 2.8, Capacitance: 21.0, ENa: 50.0, EK: -85.0, EL: -65.0, GTonic: 0.0, ESyn: 0.0, TauH: 10000.0, Dt: 0.1, VThreshold: -20.0}
 }
 
 type buteraDeriv struct{ v, n, hNap float64 }
@@ -48,7 +50,7 @@ func buteraFinite(xs ...float64) bool {
 }
 
 func (s *ButeraRespiratoryNeuronState) validStatic() bool {
-	return buteraFinite(s.GNa, s.GNap, s.GK, s.GL, s.ENa, s.EK, s.EL, s.ESyn, s.TauH, s.Dt, s.VThreshold) && s.GNa >= 0 && s.GNap >= 0 && s.GK >= 0 && s.GL >= 0 && s.TauH > 0 && s.Dt > 0
+	return buteraFinite(s.GNa, s.GNap, s.GK, s.GL, s.Capacitance, s.ENa, s.EK, s.EL, s.GTonic, s.ESyn, s.TauH, s.Dt, s.VThreshold) && s.GNa >= 0 && s.GNap >= 0 && s.GK >= 0 && s.GL >= 0 && s.Capacitance > 0 && s.GTonic >= 0 && s.TauH > 0 && s.Dt > 0
 }
 
 func buteraValidState(v, n, hNap float64) bool {
@@ -80,7 +82,8 @@ func (s *ButeraRespiratoryNeuronState) derivatives(state buteraDeriv, current fl
 	iNap := s.GNap * mNap * state.hNap * (state.v - s.ENa)
 	iK := s.GK * math.Pow(state.n, 4) * (state.v - s.EK)
 	iL := s.GL * (state.v - s.EL)
-	deriv := buteraDeriv{v: -iNa - iNap - iK - iL + current, n: (nInf - state.n) / tauN, hNap: (hNapInf - state.hNap) / tauH}
+	iTonic := s.GTonic * (state.v - s.ESyn)
+	deriv := buteraDeriv{v: (-iNa - iNap - iK - iL - iTonic + current) / s.Capacitance, n: (nInf - state.n) / tauN, hNap: (hNapInf - state.hNap) / tauH}
 	return deriv, buteraFinite(deriv.v, deriv.n, deriv.hNap)
 }
 

@@ -1,0 +1,36 @@
+{
+  "model": "SCUnitCapacitanceRespiratoryNeuron",
+  "source": "SC-NeuroCore project compatibility specification v1",
+  "profile": "unit capacitance; g_tonic disabled; e_syn=-10 mV; candidate-first RK4 dt=0.1 ms",
+  "drive": {
+    "segments": [
+      {
+        "current": 0.0,
+        "steps": 64
+      },
+      {
+        "current": 20.0,
+        "steps": 128
+      },
+      {
+        "current": -5.0,
+        "steps": 64
+      }
+    ],
+    "repeats": 4
+  },
+  "oracle": {
+    "steps": 1024,
+    "events": 1,
+    "event_indices": [
+      179
+    ],
+    "final_state": [
+      -66.04662216537878,
+      0.00009498811762872614,
+      0.4954913917469798
+    ],
+    "trace_sha256": "f1ca289bb49540b4db99d260d4a07c0c4a4b40c5e2f70be5f9c96288f777d492"
+  },
+  "encoding": "little-endian float64 states v,n,h_nap followed by little-endian int64 event per step"
+}

@@ -8,92 +8,81 @@
     "canonical_output_equivalent": true,
     "go_process_ns": {
       "available": true,
-      "baseline_median": 687909931.0,
-      "candidate_delta_percent": 13.884669009088624,
-      "candidate_median": 783423948.0
+      "baseline_median": 251485282.0,
+      "candidate_delta_percent": 5.177652503735786,
+      "candidate_median": 264506316.0
     },
     "import_ns": {
       "available": true,
-      "baseline_median": 2655841407.0,
-      "candidate_delta_percent": 4.579796770974887,
-      "candidate_median": 2777473546.0
+      "baseline_median": 1032996875.0,
+      "candidate_delta_percent": -2.1542599535937623,
+      "candidate_median": 1010743437.0
     },
     "julia_process_ns": {
       "available": true,
-      "baseline_median": 592998107.0,
-      "candidate_delta_percent": 4.328949906749036,
-      "candidate_median": 618668698.0
+      "baseline_median": 256580960.0,
+      "candidate_delta_percent": 11.644894071641176,
+      "candidate_median": 286459541.0
     },
     "max_rss_kib": {
       "available": true,
-      "baseline_median": 338056.0,
-      "candidate_delta_percent": 0.28515985517192366,
-      "candidate_median": 339020.0
+      "baseline_median": 339780.0,
+      "candidate_delta_percent": 0.0200129495556034,
+      "candidate_median": 339848.0
     },
     "rust_batched_ns": {
       "available": true,
-      "baseline_median": 160398.0,
-      "candidate_delta_percent": 123.04891582189303,
-      "candidate_median": 357766.0
+      "baseline_median": 92036.0,
+      "candidate_delta_percent": -10.569777043765482,
+      "candidate_median": 82308.0
     },
     "rust_layer_ns": {
       "available": true,
-      "baseline_median": 525564.0,
-      "candidate_delta_percent": 50.61914438584074,
-      "candidate_median": 791600.0
+      "baseline_median": 222287.0,
+      "candidate_delta_percent": 4.514434042476623,
+      "candidate_median": 232322.0
     },
     "rust_scalar_ns": {
       "available": true,
-      "baseline_median": 2551117.0,
-      "candidate_delta_percent": 74.27268133919378,
-      "candidate_median": 4445900.0
+      "baseline_median": 2552612.0,
+      "candidate_delta_percent": -6.582982450916941,
+      "candidate_median": 2384574.0
     },
     "subprocess_wall_ns": {
       "available": true,
-      "baseline_median": 5183446455.0,
-      "candidate_delta_percent": 10.155809239472502,
-      "candidate_median": 5709867389.0
+      "baseline_median": 2056937896.0,
+      "candidate_delta_percent": 2.067532767163338,
+      "candidate_median": 2099465761.0
     },
     "torch_ns": {
       "available": true,
-      "baseline_median": 181502987.0,
-      "candidate_delta_percent": 54.960647011280315,
-      "candidate_median": 281258203.0
+      "baseline_median": 124207729.0,
+      "candidate_delta_percent": 0.45132618115897305,
+      "candidate_median": 124768311.0
     }
   },
   "configuration": {
     "affinity_mode": "taskset affinity pinned; CPU not exclusively isolated",
-    "cpu": 0,
+    "cpu": 8,
     "interleaving": "variant order reverses on alternating rounds",
     "iterations": 5,
     "machine": "x86_64",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "python_version": "3.12.3",
     "steps": 1024,
     "warmups": 1
   },
   "evidence_class": "local_source_and_native_library_regression",
-  "generated_at_utc": "2026-07-22T15:31:23.531056+00:00",
+  "generated_at_utc": "2026-08-26T06:11:04.698495+00:00",
   "hardware_measurement_claimed": false,
   "measurement_context": {
     "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
     "cpu_affinity": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11
+      8
     ],
     "cpu_frequency_mhz": {
-      "max_observed_mhz": 3500.035,
-      "min_observed_mhz": 3499.959,
+      "max_observed_mhz": 4300.52,
+      "min_observed_mhz": 4299.558,
       "sampled_cpu_count": 12.0
     },
     "cpu_governor": [
@@ -102,14 +91,14 @@
     "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
     "host_load": "workstation under concurrent load during capture",
     "load_average_after": [
-      20.4716796875,
-      23.8193359375,
-      21.00048828125
+      8.380859375,
+      8.19580078125,
+      8.59228515625
     ],
     "load_average_before": [
-      29.4326171875,
-      25.61572265625,
-      21.287109375
+      8.7529296875,
+      8.263671875,
+      8.62841796875
     ],
     "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
     "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
@@ -129,57 +118,57 @@
       "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
       "go_process_ns": {
         "available_samples": 5,
-        "max": 950717514,
-        "mean": 805912298.2,
-        "median": 783423948,
-        "min": 679666343
+        "max": 301814168,
+        "mean": 274667287.2,
+        "median": 264506316,
+        "min": 257777467
       },
       "go_weight": 0.780652463,
       "import_ns": {
         "available_samples": 5,
-        "max": 3237405542,
-        "mean": 2807450662.4,
-        "median": 2777473546,
-        "min": 2559416112
+        "max": 1562158027,
+        "mean": 1094222604.0,
+        "median": 1010743437,
+        "min": 874411573
       },
       "julia_process_ns": {
         "available_samples": 5,
-        "max": 942502967,
-        "mean": 680206454.0,
-        "median": 618668698,
-        "min": 539005462
+        "max": 294028858,
+        "mean": 286614977.4,
+        "median": 286459541,
+        "min": 279109448
       },
       "julia_weight": 0.78065246,
       "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
       "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
       "max_rss_kib": {
         "available_samples": 5,
-        "max": 339128,
-        "mean": 339032.8,
-        "median": 339020,
-        "min": 338984
+        "max": 339860,
+        "mean": 339807.2,
+        "median": 339848,
+        "min": 339732
       },
       "rust_batched_ns": {
         "available_samples": 5,
-        "max": 611859,
-        "mean": 361029.8,
-        "median": 357766,
-        "min": 215699
+        "max": 125431,
+        "mean": 91499.0,
+        "median": 82308,
+        "min": 65640
       },
       "rust_batched_weight": 0.7806524634361267,
       "rust_layer_ns": {
         "available_samples": 5,
-        "max": 979971,
-        "mean": 755599.6,
-        "median": 791600,
-        "min": 534182
+        "max": 255255,
+        "mean": 231630.0,
+        "median": 232322,
+        "min": 214046
       },
       "rust_scalar_ns": {
         "available_samples": 5,
-        "max": 6008827,
-        "mean": 4555331.4,
-        "median": 4445900,
-        "min": 3186197
+        "max": 3926240,
+        "mean": 2699244.6,
+        "median": 2384574,
+        "min": 2131670
       },
       "rust_scalar_weight": 0.7806524634361267,
       "sample_count": 5,
@@ -187,176 +176,176 @@
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 950717514,
+          "go_process_ns": 264506316,
           "go_weight": 0.780652463,
-          "import_ns": 3237405542,
-          "julia_process_ns": 604461495,
+          "import_ns": 921197818,
+          "julia_process_ns": 291352170,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338988,
-          "rust_batched_ns": 357766,
+          "max_rss_kib": 339732,
+          "rust_batched_ns": 82308,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 791600,
-          "rust_scalar_ns": 4445900,
+          "rust_layer_ns": 214046,
+          "rust_scalar_ns": 2307711,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 6242383718,
-          "torch_ns": 203201940,
+          "subprocess_wall_ns": 1966450966,
+          "torch_ns": 127275082,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 679666343,
+          "go_process_ns": 257777467,
           "go_weight": 0.780652463,
-          "import_ns": 2862822910,
-          "julia_process_ns": 618668698,
+          "import_ns": 874411573,
+          "julia_process_ns": 286459541,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 339044,
-          "rust_batched_ns": 380436,
+          "max_rss_kib": 339860,
+          "rust_batched_ns": 65640,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 823204,
-          "rust_scalar_ns": 3270824,
+          "rust_layer_ns": 236578,
+          "rust_scalar_ns": 2131670,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 5697905751,
-          "torch_ns": 228126940,
+          "subprocess_wall_ns": 1861262326,
+          "torch_ns": 123459356,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 898882684,
+          "go_process_ns": 260183545,
           "go_weight": 0.780652463,
-          "import_ns": 2777473546,
-          "julia_process_ns": 942502967,
+          "import_ns": 1102602165,
+          "julia_process_ns": 294028858,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 339128,
-          "rust_batched_ns": 215699,
+          "max_rss_kib": 339852,
+          "rust_batched_ns": 115436,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 534182,
-          "rust_scalar_ns": 6008827,
+          "rust_layer_ns": 232322,
+          "rust_scalar_ns": 2746028,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 6138235476,
-          "torch_ns": 281258203,
+          "subprocess_wall_ns": 2133182651,
+          "torch_ns": 124768311,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 783423948,
+          "go_process_ns": 289054940,
           "go_weight": 0.780652463,
-          "import_ns": 2559416112,
-          "julia_process_ns": 696393648,
+          "import_ns": 1010743437,
+          "julia_process_ns": 279109448,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338984,
-          "rust_batched_ns": 611859,
+          "max_rss_kib": 339848,
+          "rust_batched_ns": 68680,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 979971,
-          "rust_scalar_ns": 5864909,
+          "rust_layer_ns": 219949,
+          "rust_scalar_ns": 2384574,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 5709867389,
-          "torch_ns": 282729069,
+          "subprocess_wall_ns": 2099465761,
+          "torch_ns": 114369476,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 716871002,
+          "go_process_ns": 301814168,
           "go_weight": 0.780652463,
-          "import_ns": 2600135202,
-          "julia_process_ns": 539005462,
+          "import_ns": 1562158027,
+          "julia_process_ns": 282124870,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 339020,
-          "rust_batched_ns": 239389,
+          "max_rss_kib": 339744,
+          "rust_batched_ns": 125431,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 649041,
-          "rust_scalar_ns": 3186197,
+          "rust_layer_ns": 255255,
+          "rust_scalar_ns": 3926240,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 5345980764,
-          "torch_ns": 314116252,
+          "subprocess_wall_ns": 2735156118,
+          "torch_ns": 137447321,
           "torch_weight": 0.7806524634361267
         }
       ],
       "subprocess_wall_ns": {
         "available_samples": 5,
-        "max": 6242383718,
-        "mean": 5826874619.6,
-        "median": 5709867389,
-        "min": 5345980764
+        "max": 2735156118,
+        "mean": 2159103564.4,
+        "median": 2099465761,
+        "min": 1861262326
       },
       "torch_ns": {
         "available_samples": 5,
-        "max": 314116252,
-        "mean": 261886480.8,
-        "median": 281258203,
-        "min": 203201940
+        "max": 137447321,
+        "mean": 125463909.2,
+        "median": 124768311,
+        "min": 114369476
       },
       "torch_weight": 0.7806524634361267
     },
-    "parent-5f3d5d254": {
+    "parent-69e2ac087": {
       "canonical_bytes": 314,
       "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
       "go_process_ns": {
         "available_samples": 5,
-        "max": 719492554,
-        "mean": 677546101.6,
-        "median": 687909931,
-        "min": 620745941
+        "max": 271549066,
+        "mean": 250860771.6,
+        "median": 251485282,
+        "min": 231085834
       },
       "go_weight": 0.780652463,
       "import_ns": {
         "available_samples": 5,
-        "max": 2915123464,
-        "mean": 2577633109.6,
-        "median": 2655841407,
-        "min": 2206904565
+        "max": 1135530267,
+        "mean": 1043950288.8,
+        "median": 1032996875,
+        "min": 982535390
       },
       "julia_process_ns": {
         "available_samples": 5,
-        "max": 624724863,
-        "mean": 569759511.2,
-        "median": 592998107,
-        "min": 490719291
+        "max": 265838839,
+        "mean": 252815899.8,
+        "median": 256580960,
+        "min": 240996721
       },
       "julia_weight": 0.78065246,
       "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
       "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
       "max_rss_kib": {
         "available_samples": 5,
-        "max": 338072,
-        "mean": 338058.4,
-        "median": 338056,
-        "min": 338044
+        "max": 339788,
+        "mean": 339761.6,
+        "median": 339780,
+        "min": 339728
       },
       "rust_batched_ns": {
         "available_samples": 5,
-        "max": 254611,
-        "mean": 147219.4,
-        "median": 160398,
-        "min": 57670
+        "max": 125212,
+        "mean": 97355.0,
+        "median": 92036,
+        "min": 86602
       },
       "rust_batched_weight": 0.7806524634361267,
       "rust_layer_ns": {
         "available_samples": 5,
-        "max": 893027,
-        "mean": 557909.0,
-        "median": 525564,
-        "min": 276507
+        "max": 257656,
+        "mean": 234413.0,
+        "median": 222287,
+        "min": 220998
       },
       "rust_scalar_ns": {
         "available_samples": 5,
-        "max": 3391891,
-        "mean": 2488825.0,
-        "median": 2551117,
-        "min": 1600789
+        "max": 2681521,
+        "mean": 2578950.2,
+        "median": 2552612,
+        "min": 2494312
       },
       "rust_scalar_weight": 0.7806524634361267,
       "sample_count": 5,
@@ -364,117 +353,117 @@
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 687909931,
+          "go_process_ns": 251485282,
           "go_weight": 0.780652463,
-          "import_ns": 2294455082,
-          "julia_process_ns": 520169693,
+          "import_ns": 1039830987,
+          "julia_process_ns": 242816606,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338068,
-          "rust_batched_ns": 254611,
+          "max_rss_kib": 339780,
+          "rust_batched_ns": 125212,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 783403,
-          "rust_scalar_ns": 3391891,
+          "rust_layer_ns": 222287,
+          "rust_scalar_ns": 2681521,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 4781299638,
-          "torch_ns": 200298662,
+          "subprocess_wall_ns": 2056937896,
+          "torch_ns": 121745111,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 719492554,
+          "go_process_ns": 271549066,
           "go_weight": 0.780652463,
-          "import_ns": 2655841407,
-          "julia_process_ns": 592998107,
+          "import_ns": 1032996875,
+          "julia_process_ns": 257846373,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338056,
-          "rust_batched_ns": 76999,
+          "max_rss_kib": 339784,
+          "rust_batched_ns": 94381,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 311044,
-          "rust_scalar_ns": 2744835,
+          "rust_layer_ns": 257656,
+          "rust_scalar_ns": 2552612,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 5183446455,
-          "torch_ns": 158243170,
+          "subprocess_wall_ns": 2087831100,
+          "torch_ns": 129234423,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 647580906,
+          "go_process_ns": 254947751,
           "go_weight": 0.780652463,
-          "import_ns": 2206904565,
-          "julia_process_ns": 490719291,
+          "import_ns": 1135530267,
+          "julia_process_ns": 240996721,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338052,
-          "rust_batched_ns": 186419,
+          "max_rss_kib": 339728,
+          "rust_batched_ns": 92036,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 525564,
-          "rust_scalar_ns": 2155493,
+          "rust_layer_ns": 249053,
+          "rust_scalar_ns": 2494312,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 4728989148,
-          "torch_ns": 181502987,
+          "subprocess_wall_ns": 2083873692,
+          "torch_ns": 127250944,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 620745941,
+          "go_process_ns": 231085834,
           "go_weight": 0.780652463,
-          "import_ns": 2915123464,
-          "julia_process_ns": 620185602,
+          "import_ns": 982535390,
+          "julia_process_ns": 256580960,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338044,
-          "rust_batched_ns": 160398,
+          "max_rss_kib": 339728,
+          "rust_batched_ns": 86602,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 893027,
-          "rust_scalar_ns": 2551117,
+          "rust_layer_ns": 222071,
+          "rust_scalar_ns": 2521303,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 5570152350,
-          "torch_ns": 162233505,
+          "subprocess_wall_ns": 1940085609,
+          "torch_ns": 117393914,
           "torch_weight": 0.7806524634361267
         },
         {
           "canonical_bytes": 314,
           "canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
-          "go_process_ns": 712001176,
+          "go_process_ns": 245235925,
           "go_weight": 0.780652463,
-          "import_ns": 2815841030,
-          "julia_process_ns": 624724863,
+          "import_ns": 1028857925,
+          "julia_process_ns": 265838839,
           "julia_weight": 0.78065246,
           "layer_state_sha256": "ffd2aa63fffd0044114729350f6b3036886bfd9ca3433e0a39b60eaa6701be2c",
           "layer_weights_sha256": "87f26b627e95c40eb494f1f137f86d8cdc85ccee5df7c682a7d75b279b226af2",
-          "max_rss_kib": 338072,
-          "rust_batched_ns": 57670,
+          "max_rss_kib": 339788,
+          "rust_batched_ns": 88544,
           "rust_batched_weight": 0.7806524634361267,
-          "rust_layer_ns": 276507,
-          "rust_scalar_ns": 1600789,
+          "rust_layer_ns": 220998,
+          "rust_scalar_ns": 2645003,
           "rust_scalar_weight": 0.7806524634361267,
-          "subprocess_wall_ns": 5572523450,
-          "torch_ns": 182728985,
+          "subprocess_wall_ns": 2012631749,
+          "torch_ns": 124207729,
           "torch_weight": 0.7806524634361267
         }
       ],
       "subprocess_wall_ns": {
         "available_samples": 5,
-        "max": 5572523450,
-        "mean": 5167282208.2,
-        "median": 5183446455,
-        "min": 4728989148
+        "max": 2087831100,
+        "mean": 2036272009.2,
+        "median": 2056937896,
+        "min": 1940085609
       },
       "torch_ns": {
         "available_samples": 5,
-        "max": 200298662,
-        "mean": 177001461.8,
-        "median": 181502987,
-        "min": 158243170
+        "max": 129234423,
+        "mean": 123966424.2,
+        "median": 124207729,
+        "min": 117393914
       },
       "torch_weight": 0.7806524634361267
     }
@@ -484,7 +473,7 @@
   "source_hashes": {
     "crates/autonomous_learning/src/lib.rs": "04aacbe10e96edd780c930b8cd717ced5ed746f8848decf1bef27c5cf7cf8159",
     "crates/autonomous_learning/src/state_codec.rs": "8426f775c526f7282e5595da860b9e252e852d3c63a1cd29d933d4d08293b84b",
-    "crates/autonomous_learning/src/wgpu_backend.rs": "7f0c36302c8c3800e2978f03f6094f4911661bd3a54c6a5e326af10599492efa",
+    "crates/autonomous_learning/src/wgpu_backend.rs": "6519bc4b83878a2281d803092aa5ecae6049262d9c0cb91d920df86b2f330b02",
     "src/sc_neurocore/_native/learning_bridge.py": "4d74ea6d011ccb9f5db164e0b509f904bef95edf4daa424c183b9a4b94372be2",
     "src/sc_neurocore/_native/learning_factory.py": "021e3cd3096795d889402d52e531abb64b65d4fca0450167b6cf69e01b83bc38",
     "src/sc_neurocore/_native/learning_runtime.py": "75b668fdc12638cfb9853be69ad11cecf1281883677e0dabdd7219f5bde5f8e4",
@@ -499,30 +488,12 @@
     "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "1468937f02fc39a6be5c2f3e6f5b43ef0dfff3f18b4984200c1f823cdccc7b97",
     "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "aaa64049ce45768d3157917ae4d6aa9a51855435c1d89c21aeefb7f17572c2ea"
   },
-  "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605",
+  "source_sha256": "a06db1976c7e7a2011e095fe406c88a4c655d871b66b789726b0f855ab024324",
   "support_sha256": "1b6bc333a52a40f5f58b0f44b1500f5295717efbb0a9c7d6186d1487891c5b2e",
   "variants": [
     {
-      "git_head": null,
-      "label": "parent-5f3d5d254",
-      "library_bytes": 8010336,
-      "library_sha256": "9c654e46ea36e695ee409da29c4d7d9fc0a966a08ab5309531c2319439077676",
-      "local_paths_recorded": false,
-      "source_file_count": 5,
-      "source_hashes": {
-        "crates/autonomous_learning/src/lib.rs": "874232c2810161c9debcdf6873e225fef3114d23bf2a35e2a7a04da01141f81c",
-        "crates/autonomous_learning/src/wgpu_backend.rs": "5b76bd8c2f69fca02b2098690a5d56bf37e63d76cc434b39cbdf8b7ce822723f",
-        "src/sc_neurocore/_native/learning_bridge.py": "05cfaed9ea5b6e9d961b990cf04017807151ff3f9999aff8e12935bf6027942c",
-        "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "5b8c8af4c5647711a7bd23aea764bd37df5f26c639951799f716c2f28001415e",
-        "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "2f44b1af33cbdc23a635ab6da4bdaa3b19803ae7472a469e75e75e3796fbbb38"
-      },
-      "source_ref": "5f3d5d254b459c7243c70e753014b571b0498779",
-      "source_sha256": "fa568cd44211538a61750da896b251ce3f5357555d8aa9d3ce474cdf57ed744a",
-      "surface_dirty": null
-    },
-    {
-      "git_head": "ae6e077a798d103b0f8916ced4299c4c8fb8cc33",
-      "label": "learning-modular",
+      "git_head": "69e2ac087925014fd6d825576fb6c3df44bd2312",
+      "label": "parent-69e2ac087",
       "library_bytes": 8017064,
       "library_sha256": "a3178b5999dd38c29c115f5d5584b3e823376bbaa94c7f9eecfb1802941a9a68",
       "local_paths_recorded": false,
@@ -530,7 +501,7 @@
       "source_hashes": {
         "crates/autonomous_learning/src/lib.rs": "04aacbe10e96edd780c930b8cd717ced5ed746f8848decf1bef27c5cf7cf8159",
         "crates/autonomous_learning/src/state_codec.rs": "8426f775c526f7282e5595da860b9e252e852d3c63a1cd29d933d4d08293b84b",
-        "crates/autonomous_learning/src/wgpu_backend.rs": "7f0c36302c8c3800e2978f03f6094f4911661bd3a54c6a5e326af10599492efa",
+        "crates/autonomous_learning/src/wgpu_backend.rs": "6519bc4b83878a2281d803092aa5ecae6049262d9c0cb91d920df86b2f330b02",
         "src/sc_neurocore/_native/learning_bridge.py": "4d74ea6d011ccb9f5db164e0b509f904bef95edf4daa424c183b9a4b94372be2",
         "src/sc_neurocore/_native/learning_factory.py": "021e3cd3096795d889402d52e531abb64b65d4fca0450167b6cf69e01b83bc38",
         "src/sc_neurocore/_native/learning_runtime.py": "75b668fdc12638cfb9853be69ad11cecf1281883677e0dabdd7219f5bde5f8e4",
@@ -545,8 +516,37 @@
         "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "1468937f02fc39a6be5c2f3e6f5b43ef0dfff3f18b4984200c1f823cdccc7b97",
         "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "aaa64049ce45768d3157917ae4d6aa9a51855435c1d89c21aeefb7f17572c2ea"
       },
-      "source_ref": "ae6e077a7",
-      "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605",
+      "source_ref": "69e2ac087925014fd6d825576fb6c3df44bd2312",
+      "source_sha256": "a06db1976c7e7a2011e095fe406c88a4c655d871b66b789726b0f855ab024324",
+      "surface_dirty": false
+    },
+    {
+      "git_head": "69e2ac087925014fd6d825576fb6c3df44bd2312",
+      "label": "learning-modular",
+      "library_bytes": 8017064,
+      "library_sha256": "a3178b5999dd38c29c115f5d5584b3e823376bbaa94c7f9eecfb1802941a9a68",
+      "local_paths_recorded": false,
+      "source_file_count": 16,
+      "source_hashes": {
+        "crates/autonomous_learning/src/lib.rs": "04aacbe10e96edd780c930b8cd717ced5ed746f8848decf1bef27c5cf7cf8159",
+        "crates/autonomous_learning/src/state_codec.rs": "8426f775c526f7282e5595da860b9e252e852d3c63a1cd29d933d4d08293b84b",
+        "crates/autonomous_learning/src/wgpu_backend.rs": "6519bc4b83878a2281d803092aa5ecae6049262d9c0cb91d920df86b2f330b02",
+        "src/sc_neurocore/_native/learning_bridge.py": "4d74ea6d011ccb9f5db164e0b509f904bef95edf4daa424c183b9a4b94372be2",
+        "src/sc_neurocore/_native/learning_factory.py": "021e3cd3096795d889402d52e531abb64b65d4fca0450167b6cf69e01b83bc38",
+        "src/sc_neurocore/_native/learning_runtime.py": "75b668fdc12638cfb9853be69ad11cecf1281883677e0dabdd7219f5bde5f8e4",
+        "src/sc_neurocore/_native/learning_rust.py": "61056ca3640dc1d55157560958dd7fc47d68f1aade1269693119daf76fddadc2",
+        "src/sc_neurocore/_native/learning_rust_layer.py": "a30a8208a776192144c14900786b02dab496d59847fa6d38647158d2ec3c2107",
+        "src/sc_neurocore/_native/learning_torch.py": "d3b8155209420a4c021b470ebaade143eac6abe5934c4d05bcf2cd4c7057f5b5",
+        "src/sc_neurocore/_native/learning_torch_autograd.py": "f3f227ae1bd73f79ab4be705bf03c006f38d6777a79ce1919efac0479cfc1392",
+        "src/sc_neurocore/_native/learning_torch_precision.py": "5a1307a19601181a079d95cff1c3a7a0ab49c366def92899cc133ecae2cdc54c",
+        "src/sc_neurocore/_native/learning_torch_support.py": "3433a3fd2754a1321d469db62e343c940c6b0f5b117c0b66655d3775c76baa53",
+        "src/sc_neurocore/_native/learning_validation.py": "92dc085eb28b64fb5893db6f8ecb6d51aef4534d4b737abc41ea77a5b532d10d",
+        "src/sc_neurocore/_native/learning_wgpu.py": "663df1e8534b214c1738f6d1b1f40a20fe0955e81e9cb034df2530d5accf9ce5",
+        "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "1468937f02fc39a6be5c2f3e6f5b43ef0dfff3f18b4984200c1f823cdccc7b97",
+        "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "aaa64049ce45768d3157917ae4d6aa9a51855435c1d89c21aeefb7f17572c2ea"
+      },
+      "source_ref": "working-tree",
+      "source_sha256": "a06db1976c7e7a2011e095fe406c88a4c655d871b66b789726b0f855ab024324",
       "surface_dirty": false
     }
   ]

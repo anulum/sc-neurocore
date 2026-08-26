@@ -360,7 +360,7 @@ def working_memory_circuit(n_neurons: int = 500) -> Network:
     p_ie = Projection(inh, exc, weight=-3.0, probability=0.3)
     p_ii = Projection(inh, inh, weight=-2.0, probability=0.2)
 
-    stim = PoissonInput(n_exc, rate_hz=800.0, weight=5.0)
+    stim = PoissonInput(n_exc, rate_hz=800.0, weight=10.0)
     stim.target = exc
 
     mon_e = SpikeMonitor(exc, label="wm_exc_spikes")

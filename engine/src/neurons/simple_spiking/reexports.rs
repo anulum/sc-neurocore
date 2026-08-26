@@ -28,6 +28,7 @@ pub use super::pernarowski::PernarowskiNeuron;
 pub use super::resonate_and_fire::ResonateAndFireNeuron;
 pub use super::sc_stochastic_rate_adaptation::SCStochasticRateAdaptationNeuron;
 pub use super::sc_triangular_mckean::SCTriangularMcKeanNeuron;
+pub use super::sc_unit_capacitance_respiratory::SCUnitCapacitanceRespiratoryNeuron;
 pub use super::sherman_rinzel_keizer::ShermanRinzelKeizerNeuron;
 pub use super::superspike_neuron::SuperSpikeNeuron;
 pub use super::terman_wang::TermanWangOscillator;

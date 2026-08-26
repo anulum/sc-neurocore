@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Butera-Rinzel-Smith 1999 Model 1 source schema
+
+[metadata]
+schema_version=2
+name="ButeraRespiratoryNeuron"
+author="Butera, R. J.; Rinzel, J.; Smith, J. C."
+year=1999
+doi="10.1152/jn.1999.82.1.382"
+description="Model 1 pre-Botzinger respiratory pacemaker with slow persistent-sodium inactivation"
+[state]
+v=-50.0
+n=0.01
+h_nap=0.5
+[parameters]
+g_na=28.0
+g_nap=2.8
+g_k=11.2
+g_l=2.8
+capacitance=21.0
+e_na=50.0
+e_k=-85.0
+e_l=-65.0
+g_tonic=0.0
+e_syn=0.0
+tau_h=10000.0
+dt=0.1
+v_threshold=-20.0
+[integration]
+dt=0.1
+method="rk4"
+substeps=1
+[dynamics]
+v="(-I_Na-I_NaP-I_K-I_L-I_tonic+I_app)/capacitance"
+n="(n_inf(v)-n)/tau_n(v)"
+h_nap="(h_inf(v)-h_nap)/tau_h(v)"
+[threshold]
+condition="candidate_v >= v_threshold and previous_v < v_threshold"
+detection="sampled upward crossing; observational only; no reset"
+[extensions]
+source_equations="Butera, Rinzel, and Smith 1999 Model 1 equations 1-7"
+input_contract="step current is applied current I_app in pA; tonic conductance is configured separately"
+implementation_note="Continuous source ODE integrated by repository candidate-first RK4 at configurable dt"
+identity_note="SCUnitCapacitanceRespiratoryNeuron retains the former omitted-capacitance recurrence"
+hardware_note="No RTL, synthesis, formal-equivalence, timing, PPA, board, device, or silicon claim"

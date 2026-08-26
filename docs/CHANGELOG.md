@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Butera Model 1 dual-identity closure
+
+- Restored `ButeraRespiratoryNeuron` as the Butera-Rinzel-Smith (1999)
+  three-state Model 1 current balance with the source `C = 21 pF` membrane
+  capacitance, persistent-sodium inactivation, optional tonic conductance, and
+  observational spike crossing without reset. The repository's candidate-first
+  RK4 at `0.1 ms` is an explicit numerical specialization of the continuous
+  source equations.
+- Retained the former omitted-capacitance recurrence as count-neutral
+  `SCUnitCapacitanceRespiratoryNeuron` without paper attribution. It has its own
+  public registration, descriptor, measured behavior, paired schemas,
+  project-spec receipt, native Python/Rust/Go/Julia/Mojo custody, and
+  five-runtime benchmark. The source identity preserves 954 exact events over
+  200,000 steps in every runtime. The numerically sensitive SC profile binds
+  one-step state parity and an explicit 4–5-event native envelope over 20,000
+  steps rather than claiming false long-run bit identity. The catalogue is now
+  58/155 complete; RTL and higher silicon rungs remain unclaimed.
+
 ### Hill-Tononi dual-identity closure
 
 - Restored `HillTononiNeuron` as the Hill and Tononi (2005) hybrid model

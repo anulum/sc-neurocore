@@ -17,12 +17,13 @@ import numpy as np
 from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (
     SCNonResettingAdaptiveLIFNeuron,
 )
+from tests.toolchain_support import require_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 RTL = ROOT / "hdl/formal/catalogue/sc_non_resetting_adaptive_lif.v"
-IVERILOG = ROOT / ".venv/bin/iverilog"
-VVP = ROOT / ".venv/bin/vvp"
-YOSYS = ROOT / ".venv/bin/yosys"
+IVERILOG = require_executable("iverilog")
+VVP = require_executable("vvp")
+YOSYS = require_executable("yosys")
 SCALE = 1 << 32
 V_REST = -65 * SCALE
 THETA_REST = -50 * SCALE

@@ -1007,10 +1007,78 @@ Run the Julia exact-flow recurrence with typed failure translation.
 
 ---
 
+## Module `accel.julia.neurons.amari_field`
+
+### Function `simulate_amari_field(u_init, tau, a_exc, a_width, b_inh, b_width, dx, dt, currents)`
+Run the complete vector batch through the native Julia module.
+
+---
+
+## Module `accel.julia.neurons.benda_herz`
+
+### Function `simulate_benda_herz(currents)`
+Run a source Benda-Herz trace in Julia.
+
+### Function `simulate_sc_stochastic_rate_adaptation(currents, uniforms)`
+Run the retained SC recurrence with controlled uniforms in Julia.
+
+---
+
+## Module `accel.julia.neurons.brunel_wang`
+
+### Function `simulate_brunel_wang(v, ref_remaining, v_rest, v_reset, v_threshold, tau_m, tau_ref, g_ampa_ext, g_ampa_rec, g_nmda, g_gaba, v_ampa, v_nmda, v_gaba, c_m, mg_conc, dt, ext, ampa, nmda, gaba)`
+Run complete voltage, refractory, and event traces in Julia.
+
+---
+
+## Module `accel.julia.neurons.compte_wm`
+
+### Function `simulate_compte_wm()`
+Run complete Compte membrane, channel, refractory, and event traces.
+
+---
+
+## Module `accel.julia.neurons.energy_lif`
+
+### Function `simulate_energy_lif(currents)`
+Run the complete source-faithful eLIF trace in Julia.
+
+### Function `simulate_sc_normalized_energy_lif(currents)`
+Run the complete retained normalized-energy SC trace in Julia.
+
+---
+
+## Module `accel.julia.neurons.mat`
+
+### Function `simulate_mat(currents)`
+Run a complete non-resetting MAT* state/event trace in Julia.
+
+### Function `simulate_sc_resetting_mat(currents)`
+Run a complete candidate-first RK4/reset trace in Julia.
+
+---
+
+## Module `accel.julia.neurons.mckean`
+
+### Function `simulate_mckean(currents)`
+Run a complete source McKean state/event trace in Julia.
+
+---
+
 ## Module `accel.julia.neurons.nagumo_sato_map`
 
 ### Function `simulate_nagumo_sato_map(y, k, alpha, bias, current)`
 Run a checked Julia batch and translate typed numerical failures.
+
+---
+
+## Module `accel.julia.neurons.non_resetting_lif`
+
+### Function `simulate_non_resetting_lif(currents)`
+Run a complete source MAT(1) state/event trace in Julia.
+
+### Function `simulate_sc_non_resetting_adaptive_lif(currents)`
+Run a complete retained-project state/event trace in Julia.
 
 ---
 
@@ -1024,6 +1092,16 @@ Run a checked Julia batch and translate typed numerical failures.
 ## Module `accel.julia.neurons.sc_chaotic_map`
 
 ### Function `simulate_sc_chaotic_map(x, y, k_f, k_s, alpha, delta, x_threshold, current)`
+---
+
+## Module `accel.julia.neurons.sigma_delta`
+
+### Function `simulate_sigma_delta(currents)`
+Run the complete sampled APSDM trace in Julia.
+
+### Function `simulate_sc_sigma_delta_accumulator(currents)`
+Run the complete retained bipolar accumulator trace in Julia.
+
 ---
 
 ## Module `accel.lapicque`
@@ -22459,7 +22537,11 @@ Return ``(family, category_slug)`` for a model, or ``None`` if unclassified.
 Return the family display name to category slug mapping.
 
 ### Function `classified_models()`
-Return canonical model names plus registered compatibility aliases.
+Return canonical catalogue model names.
+
+Historical aliases remain accepted by :func:`model_family`, but they are
+not independent catalogue identities and therefore must not inflate the
+model inventory.
 
 ---
 
@@ -23122,11 +23204,13 @@ that this single-cell object owns presynaptic channel states.
 ### Class `ButeraRespiratoryNeuron`
 Butera, Rinzel & Smith 1999 pre-Botzinger respiratory neuron.
 
-The maintained numerical contract is candidate-first RK4 over the published
-three-state Model I ODE: membrane voltage ``v``, potassium activation ``n``,
-and persistent sodium inactivation ``h_nap``. Invalid drive, parameters,
-corrupted state, non-finite rates, or out-of-envelope candidates raise
-before mutating state.
+This is the paper's three-state Model 1: membrane voltage ``v``, delayed-
+rectifier activation ``n``, and persistent-sodium inactivation ``h_nap``.
+``current`` passed to :meth:`step` is the applied current ``I_app`` in pA;
+the tonic conductance current remains independently configurable. The
+continuous source equations are integrated with the repository's explicit
+candidate-first RK4 specialization. Invalid input cannot partially mutate
+state.
 
 - **__post_init__**()
 - **step**(current)
@@ -25807,6 +25891,20 @@ This project recurrence is not attributed to McKean's Heaviside system.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
+
+---
+
+## Module `neurons.models.sc_unit_capacitance_respiratory`
+
+### Class `SCUnitCapacitanceRespiratoryNeuron`
+Retain the historical SC respiratory recurrence without paper attribution.
+
+The legacy implementation omitted the Butera Model 1 whole-cell
+capacitance divisor, which is equivalent to fixing capacitance to one in
+the repository's RK4 recurrence. This count-neutral identity preserves
+that established timing and event behavior while the literature-labelled
+class uses the source ``C = 21 pF`` equation.
+
 
 ---
 

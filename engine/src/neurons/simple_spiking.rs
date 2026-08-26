@@ -29,6 +29,7 @@ mod reexports;
 pub mod resonate_and_fire;
 mod sc_stochastic_rate_adaptation;
 mod sc_triangular_mckean;
+pub mod sc_unit_capacitance_respiratory;
 mod sherman_rinzel_keizer;
 mod superspike_neuron;
 mod terman_wang;

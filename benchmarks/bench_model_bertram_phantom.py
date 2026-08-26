@@ -25,6 +25,7 @@ import subprocess
 import tempfile
 import time
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.bertram_phantom import BertramPhantomBurster
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,7 +144,11 @@ def _mojo() -> dict[str, object]:
     kernel = ROOT / "src/sc_neurocore/accel/mojo/kernels/bertram_phantom.mojo"
     with tempfile.TemporaryDirectory(prefix="bertram-mojo-") as directory:
         binary = Path(directory) / "bertram_phantom"
-        subprocess.run(["mojo", "build", str(kernel), "-o", str(binary)], check=True, timeout=120)
+        subprocess.run(
+            pin_isa(["mojo", "build", str(kernel), "-o", str(binary)]),
+            check=True,
+            timeout=120,
+        )
         timings: list[int] = []
         row: list[str] = []
         for _ in range(REPEATS):

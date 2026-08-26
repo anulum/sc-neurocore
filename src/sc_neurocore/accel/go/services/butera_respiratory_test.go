@@ -41,8 +41,9 @@ func buteraDerivatives(s buteraState, cell ButeraRespiratoryNeuronState, current
 	iNap := cell.GNap * mNap * s.hNap * (s.v - cell.ENa)
 	iK := cell.GK * math.Pow(s.n, 4) * (s.v - cell.EK)
 	iL := cell.GL * (s.v - cell.EL)
+	iTonic := cell.GTonic * (s.v - cell.ESyn)
 	return buteraState{
-		v:    -iNa - iNap - iK - iL + current,
+		v:    (-iNa - iNap - iK - iL - iTonic + current) / cell.Capacitance,
 		n:    (nInf - s.n) / tauN,
 		hNap: (hNapInf - s.hNap) / tauH,
 	}
@@ -90,4 +91,52 @@ func TestButeraRespiratoryInvalidCurrentPreservesState(t *testing.T) {
 	if *cell != before {
 		t.Fatalf("state mutated after invalid current")
 	}
+}
+
+func TestSCUnitCapacitanceRespiratoryRetainsHistoricalProfile(t *testing.T) {
+	cell := NewSCUnitCapacitanceRespiratoryNeuron()
+	if cell.Capacitance != 1.0 || cell.ESyn != -10.0 {
+		t.Fatalf("unexpected SC profile: capacitance=%g e_syn=%g", cell.Capacitance, cell.ESyn)
+	}
+	spikes := 0
+	for range 20_000 {
+		spike, err := cell.Step(20.0)
+		if err != nil {
+			t.Fatalf("SC step returned error: %v", err)
+		}
+		spikes += spike
+	}
+	if spikes != 5 {
+		t.Fatalf("historical event count changed: got %d want 5", spikes)
+	}
+}
+
+func BenchmarkButeraRespiratoryRK4(b *testing.B) {
+	cell := NewButeraRespiratoryNeuron()
+	spikes := 0
+	b.ResetTimer()
+	for index := 0; index < b.N; index++ {
+		spike, err := cell.Step(50.0)
+		if err != nil {
+			b.Fatal(err)
+		}
+		spikes += spike
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(spikes), "spikes")
+}
+
+func BenchmarkSCUnitCapacitanceRespiratoryRK4(b *testing.B) {
+	cell := NewSCUnitCapacitanceRespiratoryNeuron()
+	spikes := 0
+	b.ResetTimer()
+	for index := 0; index < b.N; index++ {
+		spike, err := cell.Step(20.0)
+		if err != nil {
+			b.Fatal(err)
+		}
+		spikes += spike
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(spikes), "spikes")
 }

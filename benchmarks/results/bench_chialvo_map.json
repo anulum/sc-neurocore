@@ -10,11 +10,11 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 3.4389158187764224e-14,
-      "median_call_ms": 42.812708,
-      "minimum_call_ms": 34.489403,
+      "median_call_ms": 21.432065,
+      "minimum_call_ms": 20.092105,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 3.5424996269739495e-12,
-      "speedup_vs_python": 178.46487771808316,
+      "speedup_vs_python": 119.54814106806785,
       "used": true
     },
     "julia": {
@@ -27,11 +27,11 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.534883331544279e-14,
-      "median_call_ms": 14.434317,
-      "minimum_call_ms": 12.793963,
+      "median_call_ms": 10.141913,
+      "minimum_call_ms": 9.92642,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 1.7363888105137448e-12,
-      "speedup_vs_python": 529.3333032660985,
+      "speedup_vs_python": 252.63118802143143,
       "used": true
     },
     "mojo": {
@@ -44,11 +44,11 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 7.553070877075463e-09,
-      "median_call_ms": 17.421262,
-      "minimum_call_ms": 14.194338,
+      "median_call_ms": 11.69808,
+      "minimum_call_ms": 11.288052,
       "parity_atol": 1e-06,
       "parity_max_abs_diff": 6.83866635764474e-07,
-      "speedup_vs_python": 438.57699275747075,
+      "speedup_vs_python": 219.0242783431127,
       "used": true
     },
     "python": {
@@ -61,8 +61,8 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 7640.564698,
-      "minimum_call_ms": 6959.976563,
+      "median_call_ms": 2562.16353,
+      "minimum_call_ms": 2413.667346,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
@@ -78,19 +78,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 3.555489236362064e-14,
-      "median_call_ms": 17.871504,
-      "minimum_call_ms": 9.239709,
+      "median_call_ms": 7.771994,
+      "minimum_call_ms": 7.75284,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 5.1951776214309575e-12,
-      "speedup_vs_python": 427.5277949746143,
+      "speedup_vs_python": 329.66617447208523,
       "used": true
     }
   },
   "kernel": "chialvo_map_simulate",
   "measured_order": [
+    "rust",
     "julia",
     "mojo",
-    "rust",
     "go",
     "python"
   ],
@@ -102,17 +102,17 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      28.634765625,
-      25.23876953125,
-      28.08837890625
+      9.3017578125,
+      7.94482421875,
+      8.55615234375
     ],
     "load_average_start": [
-      25.91943359375,
-      23.33154296875,
-      27.71142578125
+      8.12451171875,
+      7.65234375,
+      8.47314453125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
       "go": "go version go1.24.0 linux/amd64",
       "julia": "julia version 1.12.6",
@@ -126,7 +126,7 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_chialvo_map.py": "b92ba07a8acb825028f96f6f1ef05cabc1bd24ac461f28d4a8d605114e6a86dc",
-    "bridge/sc_neurocore_engine/__init__.py": "bad0f868a5fbd65a86f0f4f15384cd11a3c6b002a040218dd482f2e896fa769a",
+    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
     "engine/src/neurons/chialvo_map.rs": "3b23aa76d48b64da889bed3aa482e2203607e81593358f97337f8fbef92b0c3e",
     "src/sc_neurocore/accel/go/neurons/chialvo_map/chialvo_map.go": "787bf993c6e617f787ae1503b72c89d35cc1bf045f0cc0392a7450ed52b67bb3",
     "src/sc_neurocore/accel/go/services/chialvo_map.go": "1d879a94055efb9f39bc0fd48b0647d4b3f648519c68cab4bbcba528ef2cf9ff",

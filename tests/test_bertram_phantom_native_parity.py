@@ -16,6 +16,7 @@ import subprocess
 import numpy as np
 import pytest
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.bertram_phantom import BertramPhantomBurster
 from sc_neurocore.neurons.models.sc_three_state_phantom import SCThreeStatePhantomBurster
 
@@ -63,7 +64,11 @@ def test_julia_source_mirror_matches_python() -> None:
 def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/bertram_phantom.mojo"
     binary = tmp_path / "bertram_phantom"
-    subprocess.run(["mojo", "build", str(kernel), "-o", str(binary)], check=True, timeout=60)
+    subprocess.run(
+        pin_isa(["mojo", "build", str(kernel), "-o", str(binary)]),
+        check=True,
+        timeout=60,
+    )
     output = subprocess.run(
         [str(binary)], check=True, capture_output=True, text=True, timeout=20
     ).stdout.split()
@@ -103,7 +108,11 @@ def test_sc_julia_compatibility_mirror() -> None:
 def test_sc_mojo_compatibility_mirror(tmp_path: Path) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/sc_three_state_phantom.mojo"
     binary = tmp_path / "sc_three_state_phantom"
-    subprocess.run(["mojo", "build", str(kernel), "-o", str(binary)], check=True, timeout=60)
+    subprocess.run(
+        pin_isa(["mojo", "build", str(kernel), "-o", str(binary)]),
+        check=True,
+        timeout=60,
+    )
     values = [
         float(value)
         for value in subprocess.run(

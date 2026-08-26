@@ -72,7 +72,7 @@
     "hdl/formal/catalogue/sc_compte_wm_ring16.v": "f26aa6ff2e616c1c76a7fd265e67e1ad07b79770a1a0f2215268f00fa38e6799",
     "hdl/formal/catalogue/sc_compte_wm_ring16_formal.v": "c3498d9f55aedc90148592d0f1a7accb1f2321c65bfe4d7ae833fa76ea4aa4f9",
     "src/sc_neurocore/network/schemas/sc_compte_wm_network.json": "67f359ab7a0a0e387fcd74308d06b1c4253b17522f3df2dc0afb55d4e3ca5809",
-    "tests/test_sc_compte_wm_ring16_rtl.py": "742204c4fe01a55a49a1cdada6b3e8d3ffcacdab15fbea847bc2ca78942d52da"
+    "tests/test_sc_compte_wm_ring16_rtl.py": "e23831aab655dc143436041f72817b722a22aac35e4a25889127bc83aca25814"
   },
   "synthesis": {
     "area_claimed": false,

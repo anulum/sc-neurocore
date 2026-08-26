@@ -10,7 +10,8 @@ from __future__ import annotations
 
 """Tests for the ``detection = "crossing"`` rising-edge threshold capability.
 
-A non-resetting oscillator (FitzHugh-Nagumo, McKean) spikes when its membrane crosses
+A non-resetting oscillator (FitzHugh-Nagumo, the preserved SC triangular McKean form)
+spikes when its membrane crosses
 threshold *upward*, not on every step the membrane stays above threshold. The schema DSL
 now honours ``[threshold] detection = "crossing"`` in both the Python runner and the
 emitted Verilog, so such oscillators co-simulate faithfully against their hand models.
@@ -29,7 +30,7 @@ import pytest
 from sc_neurocore.compiler.equation_compiler import compile_to_verilog, generate_testbench
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
-from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models.sc_triangular_mckean import SCTriangularMcKeanNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 HAS_IVERILOG = shutil.which("iverilog") is not None
@@ -147,7 +148,7 @@ __all__ = [
     "generate_testbench",
     "EquationNeuron",
     "FitzHughNagumoNeuron",
-    "McKeanNeuron",
+    "SCTriangularMcKeanNeuron",
     "UniversalNeuron",
     "HAS_IVERILOG",
     "_FHN_PARAMS",

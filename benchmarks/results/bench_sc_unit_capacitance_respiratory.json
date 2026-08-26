@@ -1,0 +1,218 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "SCUnitCapacitanceRespiratoryNeuron retained RK4 profile",
+  "timestamp_utc": "2026-08-26T05:00:21+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_sc_unit_capacitance_respiratory.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+  "steps": 20000,
+  "repeats": 5,
+  "current": 20.0,
+  "event_contract": "Python/Rust/Go/Julia=5; Mojo=4 accepted only with one-step state parity and maximum event-count spread 1",
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 30366.7744,
+      "min_ns_per_step": 24315.4626,
+      "max_ns_per_step": 40391.51855,
+      "results_ns_per_step": [
+        40391.51855,
+        29245.6376,
+        32228.2687,
+        30366.7744,
+        24315.4626
+      ],
+      "spikes": 5,
+      "spike_counts": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "final_states": [
+        [
+          -53.261492742679444,
+          0.0023160566421737364,
+          0.4494223616226333
+        ],
+        [
+          -53.261492742679444,
+          0.0023160566421737364,
+          0.4494223616226333
+        ],
+        [
+          -53.261492742679444,
+          0.0023160566421737364,
+          0.4494223616226333
+        ],
+        [
+          -53.261492742679444,
+          0.0023160566421737364,
+          0.4494223616226333
+        ],
+        [
+          -53.261492742679444,
+          0.0023160566421737364,
+          0.4494223616226333
+        ]
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1787720416,
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "23.31 13.06 10.22 4/4824 770027",
+        "load_average_after": "22.00 12.96 10.20 1/4824 770037",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4599.860,max=4610.454,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 20000,
+      "repeats": 5,
+      "current": 20,
+      "median_ns_per_step": 209.9043,
+      "min_ns_per_step": 207.1662,
+      "max_ns_per_step": 255.33035,
+      "results_ns_per_step": [
+        207.9753,
+        233.638,
+        207.1662,
+        255.33035,
+        209.9043
+      ],
+      "spike_counts": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "final_states": [
+        [
+          -53.26149274576011,
+          0.0023160566403945906,
+          0.44942236151691056
+        ],
+        [
+          -53.26149274576011,
+          0.0023160566403945906,
+          0.44942236151691056
+        ],
+        [
+          -53.26149274576011,
+          0.0023160566403945906,
+          0.44942236151691056
+        ],
+        [
+          -53.26149274576011,
+          0.0023160566403945906,
+          0.44942236151691056
+        ],
+        [
+          -53.26149274576011,
+          0.0023160566403945906,
+          0.44942236151691056
+        ]
+      ],
+      "spikes": 5
+    },
+    {
+      "backend": "go",
+      "median_ns_per_step": 562.2,
+      "min_ns_per_step": 560.0,
+      "max_ns_per_step": 636.9,
+      "results_ns_per_step": [
+        560.0,
+        562.2,
+        586.2,
+        562.0,
+        636.9
+      ],
+      "spikes": 5,
+      "spike_counts": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "command": "go test src/sc_neurocore/accel/go/services/butera_respiratory.go src/sc_neurocore/accel/go/services/butera_respiratory_test.go src/sc_neurocore/accel/go/services/sc_unit_capacitance_respiratory.go -run ^$ -bench BenchmarkSCUnitCapacitanceRespiratoryRK4$ -benchtime 20000x -count 5"
+    },
+    {
+      "backend": "julia",
+      "median_ns_per_step": 337.0801,
+      "min_ns_per_step": 334.36135,
+      "max_ns_per_step": 348.92545,
+      "results_ns_per_step": [
+        335.1724,
+        334.36135,
+        337.0801,
+        348.92545,
+        337.76185
+      ],
+      "spikes": 5,
+      "spike_counts": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "final_states": "-53.26149274576011:0.0023160566403945906:0.44942236151691056,-53.26149274576011:0.0023160566403945906:0.44942236151691056,-53.26149274576011:0.0023160566403945906:0.44942236151691056,-53.26149274576011:0.0023160566403945906:0.44942236151691056,-53.26149274576011:0.0023160566403945906:0.44942236151691056"
+    },
+    {
+      "backend": "mojo",
+      "median_ns_per_step": 322.2350496798754,
+      "min_ns_per_step": 315.44860103167593,
+      "max_ns_per_step": 361.6425994550809,
+      "results_ns_per_step": [
+        361.6425994550809,
+        322.2350496798754,
+        317.3768491251394,
+        342.64895075466484,
+        315.44860103167593
+      ],
+      "spikes": 4,
+      "spike_counts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "command": "mojo run <SC benchmark>"
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_sc_unit_capacitance_respiratory.py": "8be9f8889af80fb735d9d71baa32c1632dc238c49e33acadd82a9544ae2063c5",
+    "engine/Cargo.toml": "f539d821a6203bfddff9c207c8f0eda570d1a450958c4918e1de7a49f742429c",
+    "engine/examples/bench_sc_unit_capacitance_respiratory_rk4.rs": "9024ae98d60c83ade54770452882f4a596959e091002b12d2d710f60e6fc5715",
+    "engine/src/neurons/simple_spiking.rs": "9d399cd4e2032cfda2ddbac8c2ed217532e537805864ad53eee66799f0fb6de8",
+    "engine/src/neurons/simple_spiking/reexports.rs": "6e7f6757881f1e0bf54becbc54f0120e6ba44538d70d73fb2f03b3e833c5116a",
+    "engine/src/neurons/simple_spiking/butera_respiratory.rs": "a0271376a3b5a0d8400296b45f5d59fbe3c8d1a8e7c7c61f1f5cea29697db5ba",
+    "engine/src/neurons/simple_spiking/sc_unit_capacitance_respiratory.rs": "95c8b88898ec769f711b81f6f301cc779e285e2d346dfebc8663cf4d1826cc7d",
+    "src/sc_neurocore/neurons/models/butera_respiratory.py": "0bb00886d6829d13367ca3b3e4f39e4ff8f4d8ea766ba0fa8a642a056548e150",
+    "src/sc_neurocore/neurons/models/sc_unit_capacitance_respiratory.py": "20a6fd1c0204aa3fc3483236b69eb0c1a1794c6ffdaeae42dcccdd4dddd3bd18",
+    "src/sc_neurocore/accel/go/services/butera_respiratory.go": "43d9616a178879d18ba9851831cf67a21f801143a44a300518f2af47255cb385",
+    "src/sc_neurocore/accel/go/services/butera_respiratory_test.go": "56c1646c37bc4d6ee1533951571183419720f94612b8b6b65223442b656e1c75",
+    "src/sc_neurocore/accel/go/services/sc_unit_capacitance_respiratory.go": "e76ea15a3c7da8b04bdf4e2cac517a6e68ecdb7efed65ad9539d54d6bfbb45ae",
+    "src/sc_neurocore/accel/julia/neurons/butera_respiratory.jl": "5e784a455c5d88f2138fd65704aa3483a17cb3587245fd65e10a690a3c6721ec",
+    "src/sc_neurocore/accel/julia/neurons/sc_unit_capacitance_respiratory.jl": "3bd5b3502c6370954029b7ed9ff2eb581807a4d2f26b87b66439e1d6200e17cf",
+    "src/sc_neurocore/accel/mojo/kernels/butera_respiratory.mojo": "4d704642f9adbb122de180cc4a0a5cc41f5a1a4e7fe09345a81fafca3b5db0d9",
+    "src/sc_neurocore/accel/mojo/kernels/sc_unit_capacitance_respiratory.mojo": "4239a0089fc3c821cb549bc00c5071ba780bac0283fe35be983030b68899e2a2",
+    "src/sc_neurocore/accel/rust/safety/butera_respiratory.rs": "e80846e0ad3cf9a8b8c74f69b0069ecaf9fd9e0abb3faa1bfa0ecfbe2a5c3eb9",
+    "src/sc_neurocore/accel/rust/safety/sc_unit_capacitance_respiratory.rs": "2224bf3d566a7e84bb9a742179bb99d5cc220d2ed8a528caa4822368f7dd482f"
+  }
+}

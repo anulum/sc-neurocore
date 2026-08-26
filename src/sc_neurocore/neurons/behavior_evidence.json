@@ -232,12 +232,12 @@
     },
     "ButeraRespiratoryNeuron": {
       "behavior_tags": [
-        "adapting",
         "excitable",
-        "phasic"
+        "phasic",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "231f3816dd5ed6dbb1a5244fdf7358c17b435e4f2b25561bbdf9677310c59222",
+      "result_sha256": "f3366f92c108d09e6b6b4cee63ca1d4c211675a415b65c2af5e9245b8c850bc1",
       "stochastic": false
     },
     "COBALIFNeuron": {
@@ -1373,6 +1373,16 @@
       "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
       "stochastic": false
     },
+    "SCSixStateThalamocorticalNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "7c0e6cf74e822383ebef48db4fd7603eee32459e5140032165f944b231cded4d",
+      "stochastic": false
+    },
     "SCStochasticRateAdaptationNeuron": {
       "behavior_tags": [
         "excitable",
@@ -1400,6 +1410,16 @@
       ],
       "drivable": true,
       "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
+    },
+    "SCUnitCapacitanceRespiratoryNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "231f3816dd5ed6dbb1a5244fdf7358c17b435e4f2b25561bbdf9677310c59222",
       "stochastic": false
     },
     "SFANeuron": {
@@ -1736,7 +1756,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "3daf33a4b773bdd6ba49fefc607ef41e738b96a670f04c2e00d94ab414d1093d",
+  "result_sha256": "59d2eab2d2a6c1c9ec395392f800c3d014ffbebeade715819a70c3e4d12f8358",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

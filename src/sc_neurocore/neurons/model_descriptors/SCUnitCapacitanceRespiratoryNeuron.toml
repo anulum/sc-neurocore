@@ -1,0 +1,205 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCUnitCapacitanceRespiratoryNeuron"
+class_name = "SCUnitCapacitanceRespiratoryNeuron"
+module = "sc_unit_capacitance_respiratory"
+display_name = "SC unit-capacitance respiratory neuron"
+summary = "Retained unit-capacitance respiratory RK4 recurrence without Butera attribution."
+family = "Bursting"
+category = "bursting"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "project compatibility",
+    "historical respiratory recurrence studies",
+]
+hardware_fit = [
+    "software reference only; nonlinear RK4 has no enrolled RTL rung",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "phasic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+doi = ""
+derivation_note = "Former ButeraRespiratoryNeuron project recurrence retained count-neutrally after restoring the source whole-cell capacitance equation. No external paper attribution is claimed."
+
+[state.v]
+init = -50.0
+
+[state.n]
+init = 0.01
+
+[state.h_nap]
+init = 0.5
+
+[parameters.g_na]
+default = 28.0
+unit = "project conductance"
+meaning = "maximal fast sodium conductance"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.g_nap]
+default = 2.8
+unit = "project conductance"
+meaning = "maximal persistent sodium conductance"
+range = [
+    0.0,
+    20.0,
+]
+
+[parameters.g_k]
+default = 11.2
+unit = "project conductance"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    50.0,
+]
+
+[parameters.g_l]
+default = 2.8
+unit = "project conductance"
+meaning = "leak conductance"
+range = [
+    0.0,
+    20.0,
+]
+
+[parameters.capacitance]
+default = 1.0
+unit = "normalized"
+meaning = "fixed unit capacitance preserving the historical project recurrence"
+range = [
+    1.0,
+    1.0,
+]
+
+[parameters.e_na]
+default = 50.0
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
+
+[parameters.e_k]
+default = -85.0
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
+
+[parameters.e_l]
+default = -65.0
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -40.0,
+]
+
+[parameters.g_tonic]
+default = 0.0
+unit = "project conductance"
+meaning = "optional tonic conductance; inactive in the retained profile"
+range = [
+    0.0,
+    20.0,
+]
+
+[parameters.e_syn]
+default = -10.0
+unit = "mV"
+meaning = "historical project synaptic reversal default"
+range = [
+    -80.0,
+    50.0,
+]
+
+[parameters.tau_h]
+default = 10000.0
+unit = "ms"
+meaning = "maximal persistent-sodium inactivation time constant"
+range = [
+    1000.0,
+    30000.0,
+]
+
+[parameters.v_threshold]
+default = -20.0
+unit = "mV"
+meaning = "sampled upward-crossing event threshold"
+range = [
+    -40.0,
+    10.0,
+]
+
+[integration]
+dt = 0.1
+method = "rk4"
+
+[dynamics]
+v = "-I_Na-I_NaP-I_K-I_L-I_tonic+I_ext"
+n = "(n_inf(v)-n)/tau_n(v)"
+h_nap = "(h_inf(v)-h_nap)/tau_h(v)"
+event = "sampled upward v_threshold crossing; observational only; no reset"
+
+[backends.python]
+status = "implemented"
+
+[backends.rust_engine]
+status = "implemented"
+
+[backends.rust_safety]
+status = "implemented"
+
+[backends.go]
+status = "implemented"
+
+[backends.julia]
+status = "implemented"
+
+[backends.mojo]
+status = "implemented"
+
+[reproducibility]
+receipt = "src/sc_neurocore/neurons/reference_receipts/sc_unit_capacitance_respiratory_v1.json"
+benchmark = "benchmarks/results/bench_sc_unit_capacitance_respiratory.json"
+parity = "One-step five-runtime state parity within 2e-12; 20,000-step event envelope is 4-5 across native libm implementations"
+
+[documentation]
+slug = "models/sc_unit_capacitance_respiratory"
+notes = "Count-neutral SC compatibility identity; ButeraRespiratoryNeuron owns the literature catalogue entry. No RTL or silicon claim."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+evidence = "tests/test_model_butera_respiratory_source_fidelity.py"
+
+[silicon]
+compiles = false
+cosim_validated = false
+cosim_evidence = ""
+target_tier = "H0"
+terminal_reason = "Nonlinear binary64 RK4 software identity; no enrolled fixed-point, RTL, synthesis, timing, PPA, device, or silicon evidence."

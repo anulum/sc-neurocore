@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — retained unit-capacitance respiratory schema
+
+[metadata]
+schema_version=2
+name="SCUnitCapacitanceRespiratoryNeuron"
+author="SC-NeuroCore project"
+year=2026
+doi=""
+description="Retained unit-capacitance respiratory RK4 recurrence"
+[state]
+v=-50.0
+n=0.01
+h_nap=0.5
+[parameters]
+g_na=28.0
+g_nap=2.8
+g_k=11.2
+g_l=2.8
+capacitance=1.0
+e_na=50.0
+e_k=-85.0
+e_l=-65.0
+g_tonic=0.0
+e_syn=-10.0
+tau_h=10000.0
+dt=0.1
+v_threshold=-20.0
+[integration]
+dt=0.1
+method="rk4"
+substeps=1
+[dynamics]
+v="-I_Na-I_NaP-I_K-I_L-I_tonic+I_ext"
+n="(n_inf(v)-n)/tau_n(v)"
+h_nap="(h_inf(v)-h_nap)/tau_h(v)"
+[threshold]
+condition="candidate_v >= v_threshold and previous_v < v_threshold"
+detection="sampled upward crossing; observational only; no reset"
+[extensions]
+source_equations="SC project recurrence"
+identity_note="Count-neutral SC model; no Butera source attribution"
+reset="project initial state"

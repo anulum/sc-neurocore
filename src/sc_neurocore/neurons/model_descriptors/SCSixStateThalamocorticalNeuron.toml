@@ -1,0 +1,213 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCSixStateThalamocorticalNeuron"
+class_name = "SCSixStateThalamocorticalNeuron"
+module = "sc_six_state_thalamocortical"
+display_name = "SC six-state thalamocortical oscillator"
+summary = "Preserved SC six-state thalamocortical oscillator."
+family = "Conductance-based"
+category = "conductance-based"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = [
+    "project compatibility",
+    "six-state thalamocortical dynamics studies",
+]
+hardware_fit = [
+    "software reference only; nonlinear RK4 has no enrolled RTL rung",
+]
+behavior_tags = [
+    "bursting",
+    "excitable",
+    "phasic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+derivation_note = "Preserved project recurrence separated from the source-faithful HillTononiNeuron identity. No external paper attribution is claimed."
+
+[state.v]
+init = -65.0
+
+[state.h_na]
+init = 0.6
+
+[state.n_k]
+init = 0.3
+
+[state.m_h]
+init = 0.0
+
+[state.h_t]
+init = 0.9
+
+[state.na_i]
+init = 5.0
+
+[parameters.g_na]
+default = 50.0
+unit = "project conductance"
+meaning = "maximal fast sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
+
+[parameters.g_k]
+default = 5.0
+unit = "project conductance"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.g_h]
+default = 1.0
+unit = "project conductance"
+meaning = "maximal hyperpolarisation-activated conductance"
+range = [
+    0.0,
+    50.0,
+]
+
+[parameters.g_t]
+default = 3.0
+unit = "project conductance"
+meaning = "maximal low-threshold calcium conductance"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.g_kna]
+default = 1.33
+unit = "project conductance"
+meaning = "maximal sodium-dependent potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.g_l]
+default = 0.02
+unit = "project conductance"
+meaning = "leak conductance"
+range = [
+    0.0,
+    20.0,
+]
+
+[parameters.e_na]
+default = 50.0
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.e_k]
+default = -90.0
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -150.0,
+    -20.0,
+]
+
+[parameters.e_h]
+default = -43.0
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -100.0,
+    20.0,
+]
+
+[parameters.e_ca]
+default = 120.0
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    0.0,
+    200.0,
+]
+
+[parameters.e_l]
+default = -70.0
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -120.0,
+    20.0,
+]
+
+[parameters.na_pump_max]
+default = 20.0
+unit = "mM/s"
+meaning = "maximum saturating sodium-pump removal rate"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.na_eq]
+default = 9.5
+unit = "mM"
+meaning = "sodium-pump half-saturation concentration"
+range = [
+    1e-06,
+    100.0,
+]
+
+[parameters.v_threshold]
+default = -20.0
+unit = "mV"
+meaning = "sampled upward-crossing event threshold"
+range = [
+    -100.0,
+    100.0,
+]
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+v = "-(I_Na+I_K+I_h+I_T+I_KNa+I_L)+I_ext"
+h_na = "(h_na_inf(v)-h_na)/tau_h_na(v)"
+n_k = "(n_k_inf(v)-n_k)/tau_n_k(v)"
+m_h = "(m_h_inf(v)-m_h)/tau_m_h(v)"
+h_t = "(h_t_inf(v)-h_t)/tau_h_t(v)"
+na_i = "sodium-current accumulation minus saturating Na/K-pump removal"
+event = "sampled upward v_threshold crossing; observational only; no reset"
+
+[backends.python]
+status = "implemented"
+
+[backends.rust_engine]
+status = "implemented"
+
+[backends.go]
+status = "implemented"
+
+[backends.julia]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sc_six_state_thalamocortical"
+notes = "Count-neutral compatibility identity retained when HillTononiNeuron was restored to the cited hybrid source equations."

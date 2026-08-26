@@ -29,6 +29,7 @@ mod pernarowski;
 mod resonate_and_fire;
 #[path = "../sc_triangular_mckean.rs"]
 mod sc_triangular_mckean;
+mod sc_unit_capacitance_respiratory;
 mod sherman_rinzel_keizer;
 #[path = "../terman_wang.rs"]
 mod terman_wang;
@@ -49,6 +50,7 @@ pub use morris_lecar::PyMorrisLecarNeuron;
 pub use pernarowski::PyPernarowskiNeuron;
 pub use resonate_and_fire::PyResonateAndFireNeuron;
 pub use sc_triangular_mckean::PySCTriangularMcKeanNeuron;
+pub use sc_unit_capacitance_respiratory::PySCUnitCapacitanceRespiratoryNeuron;
 pub use sherman_rinzel_keizer::PyShermanRinzelKeizerNeuron;
 pub use terman_wang::PyTermanWangOscillator;
 pub use wilson_hr::PyWilsonHRNeuron;
@@ -75,6 +77,7 @@ pub(crate) fn register_conductance_models(module: &Bound<'_, PyModule>) -> PyRes
     chay_keizer::register(module)?;
     sherman_rinzel_keizer::register(module)?;
     butera_respiratory::register(module)?;
+    sc_unit_capacitance_respiratory::register(module)?;
     Ok(())
 }
 

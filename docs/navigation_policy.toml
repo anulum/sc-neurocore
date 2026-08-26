@@ -35,7 +35,13 @@ expected_count = 1
 name = "model-reference-pages"
 rationale = "Generated per-model API pages; the navigable entry point is the curated model catalogue."
 patterns = ["api/models/*.md"]
-expected_count = 174
+expected_count = 185
+
+[[classification]]
+name = "supplemental-source-fidelity-validation"
+rationale = "Model-specific source-fidelity evidence linked from the public model pages but kept outside the curated validation navigation."
+patterns = ["validation/*_source_fidelity.md"]
+expected_count = 9
 
 [[classification]]
 name = "supplemental-api-references"

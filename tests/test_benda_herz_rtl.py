@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 import pytest
 
+from tests.toolchain_support import require_executable
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -18,7 +20,7 @@ ROOT = Path(__file__).parents[1]
 def test_yosys_synthesizes_catalogue_unit(stem: str) -> None:
     rtl = ROOT / f"hdl/formal/catalogue/{stem}.v"
     result = subprocess.run(
-        [".venv/bin/yosys", "-q", "-p", f"read_verilog {rtl}; synth -top {stem}; check"],
+        [require_executable("yosys"), "-q", "-p", f"read_verilog {rtl}; synth -top {stem}; check"],
         cwd=ROOT,
         text=True,
         capture_output=True,

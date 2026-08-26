@@ -1,17 +1,6 @@
 {
   "affinity": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11
+    8
   ],
   "backend_summary": {
     "go": {
@@ -22,17 +11,17 @@
         -2.114916495805737e-08,
         3.000000020935515
       ],
-      "max_ns_per_step": 19379.49205,
-      "median_ns_per_step": 9800.49055,
-      "min_ns_per_step": 8312.82035,
+      "max_ns_per_step": 4566.37005,
+      "median_ns_per_step": 4039.6873,
+      "min_ns_per_step": 4020.5621,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 5.551115123125783e-16,
       "samples_ns": [
-        387589841,
-        211565031,
-        196009811,
-        166256407,
-        193021029
+        87248697,
+        91327401,
+        80793746,
+        80411242,
+        80543852
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -46,17 +35,17 @@
         -2.114916495805737e-08,
         3.000000020935515
       ],
-      "max_ns_per_step": 326.36965,
-      "median_ns_per_step": 258.52575,
-      "min_ns_per_step": 111.1886,
+      "max_ns_per_step": 91.6284,
+      "median_ns_per_step": 75.1144,
+      "min_ns_per_step": 72.94675,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2223772,
-        5170515,
-        5468086,
-        6527393,
-        5003507
+        1832568,
+        1518372,
+        1485727,
+        1502288,
+        1458935
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -70,17 +59,17 @@
         -2.114916495805737e-08,
         3.000000020935515
       ],
-      "max_ns_per_step": 225.1566,
-      "median_ns_per_step": 169.05575,
-      "min_ns_per_step": 56.8065,
+      "max_ns_per_step": 60.52955,
+      "median_ns_per_step": 50.4575,
+      "min_ns_per_step": 49.0766,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 4.440892098500626e-16,
       "samples_ns": [
-        1136130,
-        4503132,
-        1548824,
-        3381115,
-        3762491
+        1009150,
+        1210591,
+        981532,
+        1005338,
+        1112882
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -94,17 +83,17 @@
         -2.114916495805737e-08,
         3.000000020935515
       ],
-      "max_ns_per_step": 19855.77785,
-      "median_ns_per_step": 8890.89185,
-      "min_ns_per_step": 8281.54625,
+      "max_ns_per_step": 13622.25545,
+      "median_ns_per_step": 11321.60165,
+      "min_ns_per_step": 9599.68735,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        366803906,
-        397115557,
-        177817837,
-        174552961,
-        165630925
+        262304982,
+        272445109,
+        226432033,
+        213333473,
+        191993747
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -118,17 +107,17 @@
         -2.114916495805737e-08,
         3.000000020935515
       ],
-      "max_ns_per_step": 730.5727,
-      "median_ns_per_step": 530.7669,
-      "min_ns_per_step": 142.0725,
+      "max_ns_per_step": 454.56075,
+      "median_ns_per_step": 331.8644,
+      "min_ns_per_step": 320.40855,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 5.551115123125783e-16,
       "samples_ns": [
-        14611454,
-        10615338,
-        12022127,
-        6826731,
-        2841450
+        7224248,
+        6637288,
+        6474265,
+        6408171,
+        9091215
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -149,8 +138,8 @@
     },
     "rust_extension": {
       "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "6d90436a50f557736bc3b6f3abe2381dbbc4dc77ca6148798060a10e73afea4b",
-      "size_bytes": 34108865
+      "sha256": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
+      "size_bytes": 525572993
     }
   },
   "current": 3.0,
@@ -158,9 +147,9 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    34.08349609375,
-    28.12255859375,
-    23.017578125
+    18.8916015625,
+    12.5439453125,
+    11.03173828125
   ],
   "model": "McKeanNeuron",
   "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -174,9 +163,9 @@
     },
     "benchmarks/_mckean_benchmark.py": "8eedbbd99007e7fda5b811e1351b9899d2769cc93350a81c78e5a47fdfbca97a",
     "benchmarks/_non_resetting_lif_benchmark": {
-      "py": "42b9bfb705e7d952fb0eae72f416fd7087fa34e882ca01fa09d51ce94b7c2852"
+      "py": "d45d6ac9a6ce5e9bea41600af34fa20a8b0ed6d7d8aa601c62d208041f8d953f"
     },
-    "benchmarks/_non_resetting_lif_benchmark.py": "42b9bfb705e7d952fb0eae72f416fd7087fa34e882ca01fa09d51ce94b7c2852",
+    "benchmarks/_non_resetting_lif_benchmark.py": "d45d6ac9a6ce5e9bea41600af34fa20a8b0ed6d7d8aa601c62d208041f8d953f",
     "benchmarks/bench_model_mckean": {
       "py": "d88f05013df3d4f6973d899da76dcf5c1f8fb3d972f249b3f52502af032bc628"
     },
@@ -218,9 +207,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/mckean.rs": "08e82f4f027acbaa98236976664eb0bfa922118b77e1a1e8ecd48016f8b01b2a",
     "src/sc_neurocore/neurons/model_descriptors/McKeanNeuron": {
-      "toml": "8bbbb1d813aab4d95bdaa82aeca650b3ef31cc16311196f6c52b720f52f6bc45"
+      "toml": "1b7e478465a4f4cc9dfd98836f5d64e5c289314e23e99a6b70076b1f7d1a59c2"
     },
-    "src/sc_neurocore/neurons/model_descriptors/McKeanNeuron.toml": "8bbbb1d813aab4d95bdaa82aeca650b3ef31cc16311196f6c52b720f52f6bc45",
+    "src/sc_neurocore/neurons/model_descriptors/McKeanNeuron.toml": "1b7e478465a4f4cc9dfd98836f5d64e5c289314e23e99a6b70076b1f7d1a59c2",
     "src/sc_neurocore/neurons/model_schemas/mckean": {
       "json": "23182154d454d4953acb5a4d1dc812d84b71c15afb82b372b3cc7feb78cc2da6",
       "toml": "5cd0227d797623efc38b026f419c2b703c457503e27745c44b9d5ead6db5a1bb"
@@ -237,7 +226,7 @@
     "src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json": "14b40e036b2b2f98546d76b2fc4fdf7dfd714a00912cf43a92f6a4466db5802f"
   },
   "steps": 20000,
-  "timestamp_utc": "2026-07-30T12:40:36.416583+00:00",
+  "timestamp_utc": "2026-08-26T05:18:20.530111+00:00",
   "tool_versions": {
     "go": "go version go1.26.2 linux/amd64",
     "julia": "julia version 1.12.6",

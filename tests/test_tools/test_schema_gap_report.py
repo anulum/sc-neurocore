@@ -47,13 +47,22 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
     assert counts["model_modules"] == len(modules)
-    assert counts["schema_models"] == 44
-    assert counts["schema_only_models"] == 2
-    assert report["schema_only_models"] == ["izhikevich", "lif"]
+    assert counts["schema_models"] == 67
+    assert counts["schema_only_models"] == 6
+    assert report["schema_only_models"] == [
+        "aihara_map",
+        "izhikevich",
+        "lif",
+        "nagumo_sato_map",
+        "sc_adaptive_threshold_map",
+        "sc_chaotic_map",
+    ]
     assert len(report["records"]) == len(modules)
     assert counts["source_modules_without_schema"] == len(report["ranked_enrolment"])
     assert isinstance(counts["net_missing_schema_models"], int)
-    assert counts["net_missing_schema_models"] >= counts["source_modules_without_schema"] - 5
+    assert counts["net_missing_schema_models"] == (
+        counts["source_modules_without_schema"] - counts["schema_only_models"]
+    )
     assert "stochastic_lif" in {row["model"] for row in report["records"]}
     assert any(
         row["model"] == "stochastic_lif" and row["classification"] == "package_alias"
@@ -79,8 +88,12 @@ def test_live_report_classifies_known_wc_a5_examples() -> None:
     assert records["medvedev_map"]["schema_name"] == "medvedev_map"
     assert records["ibarz_tanaka_map"]["schema_present"] is True
     assert records["ibarz_tanaka_map"]["schema_name"] == "ibarz_tanaka_map"
-    assert records["butera_respiratory"]["classification"] == "rk4_required"
-    assert records["butera_respiratory"]["priority"] == "P3-rk4-or-higher-order-blocked"
+    assert records["butera_respiratory"]["classification"] == "schema_present"
+    assert records["butera_respiratory"]["priority"] == "P0-schema-present"
+    assert records["sc_six_state_thalamocortical"]["classification"] == "rk4_required"
+    assert records["sc_six_state_thalamocortical"]["priority"] == (
+        "P3-rk4-or-higher-order-blocked"
+    )
     assert records["pinsky_rinzel"]["classification"] == "multi_compartment"
     assert records["akida_neuron"]["classification"] == "event_discrete"
     assert records["astrocyte"]["classification"] == "euler_candidate"
@@ -98,7 +111,7 @@ def test_markdown_report_contains_ranked_enrolment_table() -> None:
     assert "| `P1-euler-schema-candidate` |" in markdown
     assert "| `P3-rk4-or-higher-order-blocked` |" in markdown
     assert "| `P5-out-of-auto-cosim` |" in markdown
-    assert "`butera_respiratory`" in markdown
+    assert "`sc_six_state_thalamocortical`" in markdown
     assert "`stochastic_lif`" in markdown
 
 
@@ -213,6 +226,10 @@ def test_script_entrypoint_writes_report(tmp_path: Path, monkeypatch: pytest.Mon
     runpy.run_path(str(TOOL), run_name="__main__")
 
     assert json.loads(output.read_text(encoding="utf-8"))["schema_only_models"] == [
+        "aihara_map",
         "izhikevich",
         "lif",
+        "nagumo_sato_map",
+        "sc_adaptive_threshold_map",
+        "sc_chaotic_map",
     ]

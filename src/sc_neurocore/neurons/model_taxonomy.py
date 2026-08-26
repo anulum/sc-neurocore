@@ -78,6 +78,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "GutkinErmentroutNeuron",
             "HayL5PyramidalNeuron",
             "HillTononiNeuron",
+            "SCSixStateThalamocorticalNeuron",
             "HodgkinHuxleyNeuron",
             "HuberBraunNeuron",
             "MainenSejnowskiNeuron",
@@ -150,6 +151,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "BertramPhantomBurster",
             "SCThreeStatePhantomBurster",
             "ButeraRespiratoryNeuron",
+            "SCUnitCapacitanceRespiratoryNeuron",
             "ChayKeizerMinimalNeuron",
             "ChayKeizerNeuron",
             "ChayNeuron",
@@ -319,9 +321,14 @@ def families() -> dict[str, str]:
 
 
 def classified_models() -> frozenset[str]:
-    """Return canonical model names plus registered compatibility aliases."""
+    """Return canonical catalogue model names.
 
-    return frozenset((*_CLASS_TO_FAMILY, *_COMPATIBILITY_ALIASES))
+    Historical aliases remain accepted by :func:`model_family`, but they are
+    not independent catalogue identities and therefore must not inflate the
+    model inventory.
+    """
+
+    return frozenset(_CLASS_TO_FAMILY)
 
 
 __all__ = [

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Self
+from typing_extensions import Self
 
 _VOLTAGE_MIN = -200.0
 _VOLTAGE_MAX = 200.0

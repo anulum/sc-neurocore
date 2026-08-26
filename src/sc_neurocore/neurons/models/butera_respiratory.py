@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Butera, Rinzel & Smith 1999 — pre-Botzinger respiratory
+# SC-NeuroCore — Butera, Rinzel & Smith 1999 Model 1 respiratory pacemaker
 
 from __future__ import annotations
 
@@ -17,11 +17,13 @@ from typing import ClassVar
 class ButeraRespiratoryNeuron:
     """Butera, Rinzel & Smith 1999 pre-Botzinger respiratory neuron.
 
-    The maintained numerical contract is candidate-first RK4 over the published
-    three-state Model I ODE: membrane voltage ``v``, potassium activation ``n``,
-    and persistent sodium inactivation ``h_nap``. Invalid drive, parameters,
-    corrupted state, non-finite rates, or out-of-envelope candidates raise
-    before mutating state.
+    This is the paper's three-state Model 1: membrane voltage ``v``, delayed-
+    rectifier activation ``n``, and persistent-sodium inactivation ``h_nap``.
+    ``current`` passed to :meth:`step` is the applied current ``I_app`` in pA;
+    the tonic conductance current remains independently configurable. The
+    continuous source equations are integrated with the repository's explicit
+    candidate-first RK4 specialization. Invalid input cannot partially mutate
+    state.
     """
 
     _EXP_MAX: ClassVar[float] = 700.0
@@ -33,10 +35,12 @@ class ButeraRespiratoryNeuron:
     g_nap: float = 2.8
     g_k: float = 11.2
     g_l: float = 2.8
+    capacitance: float = 21.0
     e_na: float = 50.0
     e_k: float = -85.0
     e_l: float = -65.0
-    e_syn: float = -10.0
+    g_tonic: float = 0.0
+    e_syn: float = 0.0
     tau_h: float = 10000.0
     dt: float = 0.1
     v_threshold: float = -20.0
@@ -49,9 +53,11 @@ class ButeraRespiratoryNeuron:
         self.g_nap = self._non_negative_float("g_nap", self.g_nap)
         self.g_k = self._non_negative_float("g_k", self.g_k)
         self.g_l = self._non_negative_float("g_l", self.g_l)
+        self.capacitance = self._positive_float("capacitance", self.capacitance)
         self.e_na = self._finite_float("e_na", self.e_na)
         self.e_k = self._finite_float("e_k", self.e_k)
         self.e_l = self._finite_float("e_l", self.e_l)
+        self.g_tonic = self._non_negative_float("g_tonic", self.g_tonic)
         self.e_syn = self._finite_float("e_syn", self.e_syn)
         self.tau_h = self._positive_float("tau_h", self.tau_h)
         self.dt = self._positive_float("dt", self.dt)
@@ -129,6 +135,8 @@ class ButeraRespiratoryNeuron:
         self._non_negative_float("g_nap", self.g_nap)
         self._non_negative_float("g_k", self.g_k)
         self._non_negative_float("g_l", self.g_l)
+        self._positive_float("capacitance", self.capacitance)
+        self._non_negative_float("g_tonic", self.g_tonic)
         self._positive_float("tau_h", self.tau_h)
         self._positive_float("dt", self.dt)
         self._finite_float("v_threshold", self.v_threshold)
@@ -157,8 +165,9 @@ class ButeraRespiratoryNeuron:
         i_nap = self.g_nap * m_nap_inf * h_nap * (v - self.e_na)
         i_k = self.g_k * n**4 * (v - self.e_k)
         i_l = self.g_l * (v - self.e_l)
+        i_tonic = self.g_tonic * (v - self.e_syn)
         derivs = (
-            -i_na - i_nap - i_k - i_l + current,
+            (-i_na - i_nap - i_k - i_l - i_tonic + current) / self.capacitance,
             (n_inf - n) / tau_n,
             (h_nap_inf - h_nap) / tau_h,
         )

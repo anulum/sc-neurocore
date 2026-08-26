@@ -8,13 +8,15 @@
 
 from __future__ import annotations
 
-"""Module-specific behavioural tests for ButeraRespiratoryNeuron (Butera, Rinzel & Smith 1999).
+"""Compatibility tests for the retained SC respiratory recurrence.
 
 Pre-Bötzinger respiratory neuron with persistent Na⁺ current and
 slow h_nap inactivation. Bursting at high current."""
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.butera_respiratory import ButeraRespiratoryNeuron
+from sc_neurocore.neurons.models.sc_unit_capacitance_respiratory import (
+    SCUnitCapacitanceRespiratoryNeuron as ButeraRespiratoryNeuron,
+)
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network

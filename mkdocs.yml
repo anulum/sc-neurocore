@@ -7,7 +7,7 @@
 # SC-NeuroCore — Source/config provenance header
 
 site_name: SC-NeuroCore Documentation
-site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design - 160 Python model classes, 189 Rust PyO3 model wrappers, bit-true FPGA co-simulation"
+site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design - 169 Python model classes, 198 Rust PyO3 model wrappers, bit-true FPGA co-simulation"
 site_author: Miroslav Šotek
 site_url: https://anulum.github.io/sc-neurocore/
 repo_url: https://github.com/anulum/sc-neurocore
@@ -40,6 +40,7 @@ not_in_nav: |
   SC_NEUROCORE_PERFORMANCE_INDEX.md
   source_papers/SOURCES.md
   source_papers/parameters/*.md
+  validation/*_source_fidelity.md
 
 validation:
   anchors: ignore

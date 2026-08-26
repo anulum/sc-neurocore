@@ -51,9 +51,13 @@ _AVX512_FEATURES = (
 )
 _DEDICATED_REPRODUCIBILITY_MODELS = {
     "AiharaMapNeuron",
+    "BendaHerzNeuron",
     "CompteWMNeuron",
+    "EnergyLIFNeuron",
+    "HillTononiNeuron",
     "IhNeuron",
     "MATNeuron",
+    "McKeanNeuron",
     "NonResettingLIFNeuron",
     "PersistentNaNeuron",
     "SigmaDeltaNeuron",

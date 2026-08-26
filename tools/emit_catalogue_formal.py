@@ -83,6 +83,51 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "WilsonCowanUnit": "wilson_cowan",
 }
 
+# Perfect models whose committed formal lane is intentionally curated rather
+# than regenerated through ``UniversalNeuron.to_verilog``.  These designs carry
+# model-specific fixed-point recurrences, network structure, or proof contracts
+# that the generic equation compiler does not represent at the same fidelity.
+# Keeping the mapping explicit prevents the inventory gate from overwriting
+# higher-grade RTL merely to make every artefact look generator-produced.
+CURATED_CLASS_TO_MODULE: dict[str, str] = {
+    "AiharaMapNeuron": "sc_aihara_map",
+    "AmariNeuralField": "sc_amari_field",
+    "BrunelWangNeuron": "sc_brunel_wang",
+    "CompteWMNeuron": "sc_compte_wm",
+    "EnergyLIFNeuron": "energy_lif",
+    "MATNeuron": "sc_mat",
+    "NagumoSatoMapNeuron": "sc_nagumo_sato_map",
+    "NonResettingLIFNeuron": "sc_non_resetting_lif",
+    "SigmaDeltaNeuron": "sc_sigma_delta",
+}
+
+# Other committed curated jobs cover retained SC variants or dedicated
+# subsystem representatives.  They are valid formal evidence, but are not part
+# of the one-job-per-perfect-model emitter count.
+CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
+    {
+        "benda_herz",
+        "energy_lif",
+        "mckean",
+        "sc_adaptive_threshold_map",
+        "sc_aihara_map",
+        "sc_amari_field",
+        "sc_brunel_wang",
+        "sc_compte_wm",
+        "sc_compte_wm_ring16",
+        "sc_mat",
+        "sc_nagumo_sato_map",
+        "sc_non_resetting_adaptive_lif",
+        "sc_non_resetting_lif",
+        "sc_normalized_energy_lif",
+        "sc_resetting_mat",
+        "sc_sigma_delta",
+        "sc_sigma_delta_accumulator",
+        "sc_stochastic_rate_adaptation",
+        "sc_triangular_mckean",
+    }
+)
+
 # BMC depth: small for huge LUT models; deeper for compact IF cores.
 DEPTH_BY_SCHEMA: dict[str, int] = {
     "adaptive_threshold_if": 4,

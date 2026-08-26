@@ -11,18 +11,23 @@ schema_version = 2
 name = "ButeraRespiratoryNeuron"
 class_name = "ButeraRespiratoryNeuron"
 module = "butera_respiratory"
-display_name = ""
-summary = "Butera, Rinzel & Smith 1999 pre-Botzinger respiratory neuron."
+display_name = "Butera Model 1 respiratory pacemaker"
+summary = "Butera-Rinzel-Smith 1999 Model 1 with capacitance-scaled voltage and persistent-sodium inactivation."
 family = "Bursting"
 category = "bursting"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "pre-Botzinger respiratory pacemaker dynamics",
+    "source-equation and cross-runtime studies",
+]
+hardware_fit = [
+    "software reference only; nonlinear RK4 has no enrolled RTL rung",
+]
 behavior_tags = [
-    "adapting",
     "excitable",
     "phasic",
+    "tonic",
 ]
 
 [provenance]
@@ -77,6 +82,15 @@ range = [
     20.0,
 ]
 
+[parameters.capacitance]
+default = 21.0
+unit = "pF"
+meaning = "whole-cell capacitance dividing the complete membrane-current balance"
+range = [
+    1.0,
+    100.0,
+]
+
 [parameters.e_na]
 default = 50.0
 unit = "mV"
@@ -104,13 +118,22 @@ range = [
     -40.0,
 ]
 
+[parameters.g_tonic]
+default = 0.0
+unit = "nS"
+meaning = "tonic excitatory synaptic conductance; inactive in the scalar source profile"
+range = [
+    0.0,
+    20.0,
+]
+
 [parameters.e_syn]
-default = -10.0
+default = 0.0
 unit = "mV"
 meaning = "reversal potential of the tonic synaptic drive"
 range = [
-    -40.0,
-    10.0,
+    -80.0,
+    50.0,
 ]
 
 [parameters.tau_h]
@@ -133,15 +156,39 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "(-I_Na-I_NaP-I_K-I_L-I_tonic+I_app)/capacitance"
+n = "(n_inf(v)-n)/tau_n(v)"
+h_nap = "(h_inf(v)-h_nap)/tau_h(v)"
+voltage = "(-I_Na-I_NaP-I_K-I_L-I_tonic+I_app)/capacitance"
+gates = "dn/dt=(n_inf-n)/tau_n; dh_nap/dt=(h_inf-h_nap)/tau_h"
+event = "sampled upward v_threshold crossing; observational only; no reset"
 
 [backends.python]
 status = "implemented"
 
+[backends.rust_engine]
+status = "implemented"
+
+[backends.rust_safety]
+status = "implemented"
+
+[backends.go]
+status = "implemented"
+
+[backends.julia]
+status = "implemented"
+
+[backends.mojo]
+status = "implemented"
+
 [reproducibility]
+receipt = "src/sc_neurocore/neurons/reference_receipts/butera_rinzel_smith_1999_model1.json"
+benchmark = "benchmarks/results/bench_butera_respiratory.json"
+parity = "954 events over 200000 steps at I_app=50 pA in Python, Rust, Go, Julia, and Mojo"
 
 [documentation]
 slug = "models/butera_respiratory"
-notes = ""
+notes = "RK4 at 0.1 ms is a repository specialization of the continuous paper equations. SCUnitCapacitanceRespiratoryNeuron preserves the former omitted-capacitance recurrence without paper attribution. No RTL or silicon claim."

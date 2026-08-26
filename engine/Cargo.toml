@@ -115,6 +115,12 @@ name = "bench_durstewitz_dopamine_rk4"
 name = "bench_hill_tononi_rk4"
 
 [[example]]
+name = "bench_butera_respiratory_rk4"
+
+[[example]]
+name = "bench_sc_unit_capacitance_respiratory_rk4"
+
+[[example]]
 name = "bench_de_schutter_purkinje_rk4"
 
 [[example]]

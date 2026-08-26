@@ -12,6 +12,7 @@ import subprocess
 import numpy as np
 
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from tests.toolchain_support import require_executable
 
 ROOT = Path(__file__).parents[1]
 RTL = ROOT / "hdl/formal/catalogue/mckean.v"
@@ -34,11 +35,11 @@ def _rtl_trace(tmp: Path, currents: list[float]) -> np.ndarray:
         f"`timescale 1ns/1ps\nmodule tb;reg clk=0;reg rst_n=0;reg signed[63:0]current_t=0;wire signed[63:0]v,w;wire event_out;always #5 clk=~clk;mckean uut(.clk(clk),.rst_n(rst_n),.current_t(current_t),.v_out(v),.w_out(w),.event_out(event_out));initial begin #23;rst_n=1;{drives}$finish;end endmodule\n"
     )
     subprocess.run(
-        [str(ROOT / ".venv/bin/iverilog"), "-g2012", "-o", str(binary), str(RTL), str(tb)],
+        [require_executable("iverilog"), "-g2012", "-o", str(binary), str(RTL), str(tb)],
         check=True,
     )
     output = subprocess.run(
-        [str(ROOT / ".venv/bin/vvp"), str(binary)], check=True, capture_output=True, text=True
+        [require_executable("vvp"), str(binary)], check=True, capture_output=True, text=True
     ).stdout
     return np.asarray(
         [

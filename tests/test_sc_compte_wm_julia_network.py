@@ -17,6 +17,8 @@ import os
 import subprocess
 import tomllib
 
+from tests.toolchain_support import require_executable
+
 REPOSITORY = Path(__file__).resolve().parents[1]
 JULIA_ROOT = REPOSITORY / "src/sc_neurocore/accel/julia/sc_compte_wm_network"
 PROJECT = JULIA_ROOT / "Project.toml"
@@ -25,7 +27,7 @@ SOURCE = JULIA_ROOT / "SCCompteWMNetwork.jl"
 NATIVE_TEST = JULIA_ROOT / "test_sc_compte_wm_network.jl"
 BENCHMARK = JULIA_ROOT / "bench_sc_compte_wm_network.jl"
 RESULT = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network_julia.toml"
-JULIA = Path("/home/anulum/.juliaup/bin/julia")
+JULIA = require_executable("julia")
 
 
 def _environment() -> dict[str, str]:

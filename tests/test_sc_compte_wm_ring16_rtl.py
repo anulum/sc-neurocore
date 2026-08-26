@@ -18,11 +18,12 @@ from pathlib import Path
 import numpy as np
 
 from sc_neurocore.network.sc_compte_wm import SCCompteWMNetworkSpec
+from tests.toolchain_support import require_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 RTL = ROOT / "hdl/formal/catalogue/sc_compte_wm_ring16.v"
-IVERILOG = ROOT / ".venv/bin/iverilog"
-VVP = ROOT / ".venv/bin/vvp"
+IVERILOG = require_executable("iverilog")
+VVP = require_executable("vvp")
 RECEIPT = ROOT / "benchmarks/results/bench_sc_compte_wm_ring16.json"
 SCALE = 1 << 16
 N_BINS = 16
@@ -93,9 +94,6 @@ def test_frozen_lut_is_live_source_derived_and_schema_bounded() -> None:
 
 
 def test_iverilog_matches_independent_dense_oracle(tmp_path: Path) -> None:
-    assert IVERILOG.is_file(), "repository .venv must expose iverilog"
-    assert VVP.is_file(), "repository .venv must expose vvp"
-
     zero = [0] * N_BINS
     unity = [SCALE] * N_BINS
     ramp = [index * 4096 for index in range(N_BINS)]

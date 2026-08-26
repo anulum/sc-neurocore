@@ -32,7 +32,6 @@ mod sc_six_state_thalamocortical;
 mod traub_miles;
 mod wang_buzsaki;
 mod yamada;
-
 pub use av_ron_cardiac::AvRonCardiacNeuron;
 pub use bertram_phantom::{BertramPhantomBurster, SCThreeStatePhantomBurster};
 pub use connor_stevens::ConnorStevensNeuron;
@@ -54,7 +53,6 @@ pub use sc_six_state_thalamocortical::SCSixStateThalamocorticalNeuron;
 pub use traub_miles::TraubMilesNeuron;
 pub use wang_buzsaki::WangBuzsakiNeuron;
 pub use yamada::YamadaNeuron;
-
 // ── Helper: safe alpha/beta kinetics avoiding division-by-zero ──
 
 pub fn safe_rate(

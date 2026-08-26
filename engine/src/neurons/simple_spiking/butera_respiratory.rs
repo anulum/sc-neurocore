@@ -18,9 +18,12 @@ pub struct ButeraRespiratoryNeuron {
     pub g_nap: f64,
     pub g_k: f64,
     pub g_l: f64,
+    pub capacitance: f64,
     pub e_na: f64,
     pub e_k: f64,
     pub e_l: f64,
+    pub g_tonic: f64,
+    pub e_syn: f64,
     pub tau_h: f64,
     pub dt: f64,
     pub v_threshold: f64,
@@ -36,9 +39,12 @@ impl ButeraRespiratoryNeuron {
             g_nap: 2.8,
             g_k: 11.2,
             g_l: 2.8,
+            capacitance: 21.0,
             e_na: 50.0,
             e_k: -85.0,
             e_l: -65.0,
+            g_tonic: 0.0,
+            e_syn: 0.0,
             tau_h: 10000.0,
             dt: 0.1,
             v_threshold: -20.0,
@@ -57,9 +63,12 @@ impl ButeraRespiratoryNeuron {
             self.g_nap,
             self.g_k,
             self.g_l,
+            self.capacitance,
             self.e_na,
             self.e_k,
             self.e_l,
+            self.g_tonic,
+            self.e_syn,
             self.tau_h,
             self.dt,
             self.v_threshold,
@@ -70,6 +79,8 @@ impl ButeraRespiratoryNeuron {
             && self.g_nap >= 0.0
             && self.g_k >= 0.0
             && self.g_l >= 0.0
+            && self.capacitance > 0.0
+            && self.g_tonic >= 0.0
             && self.tau_h > 0.0
             && self.dt > 0.0
     }
@@ -92,8 +103,9 @@ impl ButeraRespiratoryNeuron {
         let i_nap = self.g_nap * m_nap * h_nap * (v - self.e_na);
         let i_k = self.g_k * n.powi(4) * (v - self.e_k);
         let i_l = self.g_l * (v - self.e_l);
+        let i_tonic = self.g_tonic * (v - self.e_syn);
         let deriv = (
-            -i_na - i_nap - i_k - i_l + current,
+            (-i_na - i_nap - i_k - i_l - i_tonic + current) / self.capacitance,
             (n_inf - n) / tau_n,
             (h_nap_inf - h_nap) / tau_h_eff,
         );
@@ -188,6 +200,25 @@ mod tests {
         let mut n = ButeraRespiratoryNeuron::new();
         let t: i32 = (0..20000).map(|_| n.step(50.0)).sum();
         assert!(t > 0);
+    }
+
+    #[test]
+    fn source_capacitance_and_tonic_current_are_active() {
+        let neuron = ButeraRespiratoryNeuron::new();
+        assert_eq!(neuron.capacitance, 21.0);
+        assert_eq!(neuron.g_tonic, 0.0);
+        assert_eq!(neuron.e_syn, 0.0);
+        let derivative = neuron
+            .butera_derivatives((neuron.v, neuron.n, neuron.h_nap), 20.0)
+            .unwrap();
+        let mut legacy = neuron.clone();
+        legacy.capacitance = 1.0;
+        let legacy_derivative = legacy
+            .butera_derivatives((legacy.v, legacy.n, legacy.h_nap), 20.0)
+            .unwrap();
+        assert!((legacy_derivative.0 - 21.0 * derivative.0).abs() < 1e-12);
+        assert_eq!(legacy_derivative.1, derivative.1);
+        assert_eq!(legacy_derivative.2, derivative.2);
     }
 
     #[test]

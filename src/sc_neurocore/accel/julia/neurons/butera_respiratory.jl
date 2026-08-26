@@ -18,9 +18,11 @@ mutable struct ButeraRespiratoryNeuronState
     g_nap::Float64
     g_k::Float64
     g_l::Float64
+    capacitance::Float64
     e_na::Float64
     e_k::Float64
     e_l::Float64
+    g_tonic::Float64
     e_syn::Float64
     tau_h::Float64
     dt::Float64
@@ -28,15 +30,15 @@ mutable struct ButeraRespiratoryNeuronState
 end
 
 function ButeraRespiratoryNeuronState()
-    ButeraRespiratoryNeuronState(-50.0, 0.01, 0.5, 28.0, 2.8, 11.2, 2.8, 50.0, -85.0, -65.0, -10.0, 10000.0, 0.1, -20.0)
+    ButeraRespiratoryNeuronState(-50.0, 0.01, 0.5, 28.0, 2.8, 11.2, 2.8, 21.0, 50.0, -85.0, -65.0, 0.0, 0.0, 10000.0, 0.1, -20.0)
 end
 
 @inline _finite(xs...) = all(isfinite, xs)
 @inline _state_valid(v, n, h) = _finite(v, n, h) && -200.0 <= v <= 100.0 && -0.05 <= n <= 1.05 && -0.05 <= h <= 1.05
 
 function validate_butera_respiratory(s::ButeraRespiratoryNeuronState)::Bool
-    return _finite(s.v, s.n, s.h_nap, s.g_na, s.g_nap, s.g_k, s.g_l, s.e_na, s.e_k, s.e_l, s.e_syn, s.tau_h, s.dt, s.v_threshold) &&
-        s.g_na >= 0.0 && s.g_nap >= 0.0 && s.g_k >= 0.0 && s.g_l >= 0.0 && s.tau_h > 0.0 && s.dt > 0.0 &&
+    return _finite(s.v, s.n, s.h_nap, s.g_na, s.g_nap, s.g_k, s.g_l, s.capacitance, s.e_na, s.e_k, s.e_l, s.g_tonic, s.e_syn, s.tau_h, s.dt, s.v_threshold) &&
+        s.g_na >= 0.0 && s.g_nap >= 0.0 && s.g_k >= 0.0 && s.g_l >= 0.0 && s.capacitance > 0.0 && s.g_tonic >= 0.0 && s.tau_h > 0.0 && s.dt > 0.0 &&
         _state_valid(s.v, s.n, s.h_nap)
 end
 
@@ -64,7 +66,8 @@ function _derivatives(s::ButeraRespiratoryNeuronState, state::NTuple{3,Float64},
     i_nap = s.g_nap * m_nap * h_nap * (v - s.e_na)
     i_k = s.g_k * n^4 * (v - s.e_k)
     i_l = s.g_l * (v - s.e_l)
-    deriv = (-i_na - i_nap - i_k - i_l + I_ext, (n_inf - n) / tau_n, (h_inf - h_nap) / tau_h)
+    i_tonic = s.g_tonic * (v - s.e_syn)
+    deriv = ((-i_na - i_nap - i_k - i_l - i_tonic + I_ext) / s.capacitance, (n_inf - n) / tau_n, (h_inf - h_nap) / tau_h)
     return all(isfinite, deriv) ? deriv : nothing
 end
 
