@@ -48,9 +48,18 @@ def simulate_sc_stochastic_rate_adaptation(
     adaptation = np.empty(drive.size)
     events = np.empty(drive.size, dtype=np.int64)
     for index, (current, uniform) in enumerate(zip(drive, randoms, strict=True)):
-        out = _LIB.sc_sra_step(
-            a, f_max, beta, i_half, tau_a, delta_a, dt, float(current), float(uniform)
+        transition = (
+            a,
+            f_max,
+            beta,
+            i_half,
+            tau_a,
+            delta_a,
+            dt,
+            float(current),
+            float(uniform),
         )
+        out = _LIB.sc_sra_step(*transition)
         if out.status:
             raise ValueError("Go SC stochastic transition failed")
         a = out.a

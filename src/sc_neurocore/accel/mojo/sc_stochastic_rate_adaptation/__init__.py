@@ -44,15 +44,10 @@ def simulate_sc_stochastic_rate_adaptation(
     adaptation = np.empty(drive.size)
     events = np.empty(drive.size, dtype=np.int64)
     af = np.empty(1)
-    code = _fn(
-        ctypes.c_ssize_t(drive.size),
-        *(ctypes.c_double(x) for x in (a, f_max, beta, i_half, tau_a, delta_a, dt)),
-        ctypes.c_ssize_t(drive.ctypes.data),
-        ctypes.c_ssize_t(randoms.ctypes.data),
-        ctypes.c_ssize_t(adaptation.ctypes.data),
-        ctypes.c_ssize_t(events.ctypes.data),
-        ctypes.c_ssize_t(af.ctypes.data),
-    )
+    config = tuple(ctypes.c_double(x) for x in (a, f_max, beta, i_half, tau_a, delta_a, dt))
+    arrays = (drive, randoms, adaptation, events, af)
+    addresses = tuple(ctypes.c_ssize_t(values.ctypes.data) for values in arrays)
+    code = _fn(ctypes.c_ssize_t(drive.size), *config, *addresses)
     if code:
         raise FloatingPointError(f"Mojo SC stochastic batch failed with status {code}")
     return {"adaptation": adaptation, "events": events, "a_final": float(af[0])}

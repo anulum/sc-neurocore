@@ -971,7 +971,7 @@
     "python_model_classes": 169,
     "python_model_source_modules": 165,
     "rust_pyo3_model_wrappers": 198,
-    "test_files": 4700
+    "test_files": 4702
   },
   "documentation": {
     "public_pages": [
@@ -3512,6 +3512,7 @@
       "tests/test_aer_spike_codec_aer_spike_codec_compression.py",
       "tests/test_aer_spike_codec_aer_spike_codec_edge_cases.py",
       "tests/test_aer_spike_codec_aer_spike_codec_roundtrip.py",
+      "tests/test_aggregate_coverage_closure.py",
       "tests/test_ai_neurons_attention_gated.py",
       "tests/test_ai_neurons_compositional_binding.py",
       "tests/test_ai_neurons_continuous_attractor.py",
@@ -4693,6 +4694,7 @@
       "tests/test_federation/test_federation_vertical.py",
       "tests/test_federation/test_studio_manifest_artifact.py",
       "tests/test_few_shot.py",
+      "tests/test_fidelity_accel_coverage_closure.py",
       "tests/test_fim_symmetry_dynamics_fim_feedback.py",
       "tests/test_fim_symmetry_dynamics_k_symmetry_enforcement.py",
       "tests/test_fim_symmetry_dynamics_lazarus_phase_gap.py",

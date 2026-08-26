@@ -243,6 +243,13 @@ jobs:
           cp crates/autonomous_learning/target/release/libautonomous_learning.so \
              src/sc_neurocore/_native/libautonomous_learning.so
 
+      - name: Build core-engine C FFI
+        shell: bash
+        run: |
+          cargo build --release --manifest-path crates/core_engine/Cargo.toml
+          cp crates/core_engine/target/release/libcore_engine.so \
+             src/sc_neurocore/_native/libcore_engine.so
+
       # Compile each neuron's Go c-shared and Mojo shared library into the path
       # its ctypes loader opens (beside the source). These lib*.so are gitignored
       # build artefacts, so without this step every compiled-backend and
@@ -296,6 +303,25 @@ jobs:
           ( cd src/sc_neurocore/accel/mojo/sc_compte_wm_network \
               && mojo build --emit shared-lib --target-cpu x86-64-v3 \
                 -o libsc_compte_wm_network.so sc_compte_wm_network.mojo )
+
+          # Analysis and network parity suites are part of the aggregate coverage
+          # authority. Build their real C-ABI lanes so those suites exercise native
+          # dispatch instead of silently collecting as optional skips.
+          for model in gamma_oscillation phi dimensionality gpfa sorting_quality topology; do
+            ( cd "src/sc_neurocore/accel/go/${model}" \
+                && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+          done
+          for kernel in gamma_oscillation dimensionality gpfa sorting_quality; do
+            mojo build --emit shared-lib --target-cpu x86-64-v3 \
+              -o "src/sc_neurocore/accel/mojo/kernels/lib${kernel}.so" \
+              "src/sc_neurocore/accel/mojo/kernels/${kernel}.mojo"
+          done
+          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            -o src/sc_neurocore/accel/mojo/kernels/libphi.so \
+            src/sc_neurocore/accel/mojo/kernels/phi_estimation.mojo
+          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            -o src/sc_neurocore/accel/mojo/math/libtopology.so \
+            src/sc_neurocore/accel/mojo/math/topology.mojo
 
       - name: Enforce Mojo ISA baseline (no AVX-512 drift)
         shell: bash

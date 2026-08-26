@@ -54,9 +54,8 @@ def simulate_benda_herz(
     phases = np.empty(drive.size)
     events = np.empty(drive.size, dtype=np.int64)
     for index, current in enumerate(drive):
-        out = _LIB.benda_herz_step(
-            a, phase, onset_gain, rheobase, adaptation_slope, tau_a, dt, float(current)
-        )
+        transition = (a, phase, onset_gain, rheobase, adaptation_slope, tau_a, dt, float(current))
+        out = _LIB.benda_herz_step(*transition)
         if out.status:
             raise ValueError("Go Benda-Herz transition failed")
         a, phase = out.a, out.phase

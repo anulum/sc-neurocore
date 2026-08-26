@@ -2146,7 +2146,7 @@
         "protocol.warmups": 2,
         "schema_version": "sc-neurocore.evo-substrate-multilang-benchmark.v2",
         "source.source_file_count": 33,
-        "source.source_sha256": "68429990b9f2c8fa39cc9f69052801da8e9c70e0a5b9eb8950c7643db0cc26de",
+        "source.source_sha256": "05fb212fff2e38830e1aa979474f7acd265ec6e6da45c0cbc8796d5619720ce2",
         "unavailable": []
       },
       "id": "evo-substrate-five-language-local-diagnostics",
@@ -3384,7 +3384,7 @@
         "results.learning-modular.canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
         "schema_version": "sc-neurocore.learning-bridge-modularisation-benchmark.v1",
         "source_file_count": 16,
-        "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605"
+        "source_sha256": "a06db1976c7e7a2011e095fe406c88a4c655d871b66b789726b0f855ab024324"
       },
       "id": "autonomous-learning-modularisation-local-diagnostics",
       "parity_groups": [
@@ -3400,16 +3400,16 @@
         }
       ],
       "required_numbers": [
-        "results.parent-5f3d5d254.sample_count",
-        "results.parent-5f3d5d254.subprocess_wall_ns.median",
-        "results.parent-5f3d5d254.import_ns.median",
-        "results.parent-5f3d5d254.rust_scalar_ns.median",
-        "results.parent-5f3d5d254.rust_batched_ns.median",
-        "results.parent-5f3d5d254.rust_layer_ns.median",
-        "results.parent-5f3d5d254.torch_ns.median",
-        "results.parent-5f3d5d254.go_process_ns.median",
-        "results.parent-5f3d5d254.julia_process_ns.median",
-        "results.parent-5f3d5d254.max_rss_kib.median",
+        "results.parent-69e2ac087.sample_count",
+        "results.parent-69e2ac087.subprocess_wall_ns.median",
+        "results.parent-69e2ac087.import_ns.median",
+        "results.parent-69e2ac087.rust_scalar_ns.median",
+        "results.parent-69e2ac087.rust_batched_ns.median",
+        "results.parent-69e2ac087.rust_layer_ns.median",
+        "results.parent-69e2ac087.torch_ns.median",
+        "results.parent-69e2ac087.go_process_ns.median",
+        "results.parent-69e2ac087.julia_process_ns.median",
+        "results.parent-69e2ac087.max_rss_kib.median",
         "results.learning-modular.sample_count",
         "results.learning-modular.subprocess_wall_ns.median",
         "results.learning-modular.import_ns.median",
@@ -3934,7 +3934,7 @@
         "evidence_class": "local_regression_non_isolated",
         "hardware_measurement_claimed": false,
         "production_speed_claim": false,
-        "repeats": 3,
+        "repeats": 5,
         "steps": 20000
       },
       "id": "sc-normalized-energy-lif-multibackend-local-regression",

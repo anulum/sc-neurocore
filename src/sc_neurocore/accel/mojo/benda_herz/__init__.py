@@ -44,19 +44,12 @@ def simulate_benda_herz(
     events = np.empty(drive.size, dtype=np.int64)
     af = np.empty(1)
     pf = np.empty(1)
-    code = _fn(
-        ctypes.c_ssize_t(drive.size),
-        *(
-            ctypes.c_double(x)
-            for x in (a, phase, onset_gain, rheobase, adaptation_slope, tau_a, dt)
-        ),
-        ctypes.c_ssize_t(drive.ctypes.data),
-        ctypes.c_ssize_t(adaptation.ctypes.data),
-        ctypes.c_ssize_t(phases.ctypes.data),
-        ctypes.c_ssize_t(events.ctypes.data),
-        ctypes.c_ssize_t(af.ctypes.data),
-        ctypes.c_ssize_t(pf.ctypes.data),
+    config = tuple(
+        ctypes.c_double(x) for x in (a, phase, onset_gain, rheobase, adaptation_slope, tau_a, dt)
     )
+    arrays = (drive, adaptation, phases, events, af, pf)
+    addresses = tuple(ctypes.c_ssize_t(values.ctypes.data) for values in arrays)
+    code = _fn(ctypes.c_ssize_t(drive.size), *config, *addresses)
     if code:
         raise FloatingPointError(f"Mojo Benda-Herz batch failed with status {code}")
     return {

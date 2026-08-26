@@ -5,15 +5,15 @@
       "event_count": 9,
       "event_count_matches_python": true,
       "final_state": {
-        "h": 0.33980454597957904,
-        "m": 0.04463063892153461,
+        "h": 0.339804545979579,
+        "m": 0.044630638921534585,
         "n": 0.4793337094301593,
         "v": -65.85312343949775
       },
-      "median_call_ms": 0.741472,
-      "minimum_call_ms": 0.706286,
-      "parity_max_abs_diff": 1.6047962958509743e-10,
-      "speedup_vs_python": 89.63725670018557,
+      "median_call_ms": 0.59647,
+      "minimum_call_ms": 0.585319,
+      "parity_max_abs_diff": 1.6049739315349143e-10,
+      "speedup_vs_python": 86.43426492531059,
       "used": true
     },
     "python": {
@@ -26,8 +26,8 @@
         "n": 0.47933370943008335,
         "v": -65.85312343949003
       },
-      "median_call_ms": 66.463516,
-      "minimum_call_ms": 59.53885,
+      "median_call_ms": 51.555446,
+      "minimum_call_ms": 48.64508,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -42,10 +42,10 @@
         "n": 0.47933370943008374,
         "v": -65.85312343949006
       },
-      "median_call_ms": 1.152739,
-      "minimum_call_ms": 1.02932,
+      "median_call_ms": 0.891159,
+      "minimum_call_ms": 0.883775,
       "parity_max_abs_diff": 9.485745522397337e-13,
-      "speedup_vs_python": 57.657037716256674,
+      "speedup_vs_python": 57.852129642409494,
       "used": true
     }
   },
@@ -57,20 +57,20 @@
   ],
   "meta": {
     "affinity": [
-      0
+      8
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      11.4208984375,
-      18.22265625,
-      18.044921875
+      6.73876953125,
+      6.68212890625,
+      5.62158203125
     ],
     "load_average_start": [
-      11.4208984375,
-      18.22265625,
-      18.044921875
+      6.73876953125,
+      6.68212890625,
+      5.62158203125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -93,9 +93,9 @@
     },
     "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
     "engine/src/neurons/biophysical": {
-      "rs": "8a841c17752b221b76aed4c8c35bf55ae0cc16d36224a7d8f936a804e8faf9a9"
+      "rs": "80a012bff8b60cf92a2912f8404000bffee0a7aabea735fc494a88d9ad85156e"
     },
-    "engine/src/neurons/biophysical.rs": "8a841c17752b221b76aed4c8c35bf55ae0cc16d36224a7d8f936a804e8faf9a9",
+    "engine/src/neurons/biophysical.rs": "80a012bff8b60cf92a2912f8404000bffee0a7aabea735fc494a88d9ad85156e",
     "src/sc_neurocore/accel/go/services/hodgkin_huxley": {
       "go": "630937354359111414f1dac84f36b666acd9a1f199f9d548fab97c4e9e342271"
     },
