@@ -185,12 +185,44 @@ dt = 0.5
 method = "euler"
 
 [dynamics]
+alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"
+beta_m = "4 * exp(-(v + 60) / 18)"
+m_inf = "alpha_m / (alpha_m + beta_m)"
+dh_dt = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - h / (1 + exp(-(v + 28) / 10)))"
+dn_dt = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+mg_block = "1 / (1 + (mg_conc / 3.57) * exp(-0.062 * v))"
+s_drive = "gain * I / (gain * I + 5) if gain * I > 0 else 0"
+ds = "dt * (s_drive - s_nmda) / (tau_rise if s_drive > s_nmda else tau_decay); s_nmda clamped to [0, 1] once per step before sub-stepping"
+dv_dt = "(-g_na * m_inf^3 * h * (v - e_na) - g_k * n^4 * (v - e_k) - g_nmda * s_nmda * mg_block * (v - e_nmda) - g_l * (v - e_l) + gain * I) / c_m"
+event = "v_next >= v_threshold; reset v to -65 while preserving h, n, and s_nmda"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "bf94b8477b0cdd8ffcdbe29b345e2f1cbac81e89637777171dbcd59d108e0600"
+event_count = 177
+final_state = "{\"v\":-22.568276731433897,\"h\":0.3451271472502443,\"n\":0.2343923195462924,\"s_nmda\":0.49999999999999944}"
 
 [documentation]
 slug = "models/nmda_neuron"
-notes = ""
+notes = "Composite of the Wang-Buzsáki 1996 spiking base with the Jahr-Stevens 1990 voltage-dependent Mg block; the threshold-reset event and the input-driven s_NMDA drive are repository-specific specialisations, not publication-exact claims. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"

@@ -1,9 +1,15 @@
 # NMDANeuron
 
 **Module:** `engine/src/neurons/channels/nmda.rs`
-**Reference:** Jahr & Stevens, *J Neurosci* 10:1830–1835, 1990; Wang, *Neuron* 22:409–413, 1999
+**Reference:** Jahr & Stevens, *J Neurosci* 10(9):3178–3182, 1990; Wang, *Neuron* 22:409–433, 1999
 **Family:** WB Na⁺/K⁺ base + NMDA receptor-gated channel with Mg²⁺ voltage block
 **State variables:** `v`, `h` (Na⁺ inactivation), `n` (K_dr activation), `s_nmda` (NMDA synaptic variable)
+
+The Mg²⁺ block equation and its 3.57 mM / 0.062 mV⁻¹ constants come from
+Jahr & Stevens (1990), *J Neurosci* 10(9):3178–3182; the fast-spiking base is
+Wang & Buzsáki (1996). The threshold-reset event and the input-driven
+`s_nmda` drive are repository-specific specialisations, not
+publication-exact claims.
 
 ---
 
@@ -266,7 +272,28 @@ For each sub-step:
   6. Spike check: if V ≥ V_th → V = −65, fired = 1
 ```
 
-After all sub-steps: clamp V to [−100, 60], h/n to [0, 1], NaN guard.
+After all sub-steps: clamp V to [−100, 60], h/n to [0, 1], and commit the
+candidate state.
+
+### Invalid-Input Atomicity (Fail-Closed Contract)
+
+`step(current)` validates before touching state and computes the whole
+update on candidate values:
+
+- A non-finite `current` (NaN, ±∞) raises `ValueError("current must be
+  finite")` — no state field changes, and no spike is reported.
+- A non-finite or out-of-bounds configuration or state field (see the
+  descriptor ranges in `NMDANeuron.toml`) raises `ValueError` at
+  construction and again at each step if corrupted afterwards.
+- A candidate state that becomes non-finite mid-integration raises
+  `ValueError("NMDA candidate state became non-finite")` and the
+  pre-step state is preserved exactly.
+
+The production Rust engine (`try_step`), the PyO3 binding (typed
+`ValueError`), the standalone safety Rust, Go (`TryStep`), and Julia
+(`ArgumentError`) surfaces enforce the same contract; the engine's
+`step` and Go's `Step` legacy wrappers fail closed by returning 0
+without mutating state.
 
 ---
 
@@ -443,7 +470,8 @@ At 100 MHz with 50 sub-steps:
 | Zero Mg²⁺ increases firing | More spikes | Confirmed | ✅ |
 | V clamped [−100, 60] | Always | 10⁶ steps | ✅ |
 | s_NMDA ∈ [0, 1] | Clamped | Confirmed | ✅ |
-| NaN recovery | Resets | Confirmed | ✅ |
+| Non-finite input rejected atomically | `ValueError`, state unchanged | Confirmed | ✅ |
+| Invalid configuration rejected atomically | `ValueError`, state unchanged | Confirmed | ✅ |
 | Higher g_NMDA → more excitable | Monotonic | Confirmed | ✅ |
 | Spike = V crossing −20 mV | Reset to −65 | Confirmed | ✅ |
 
@@ -453,12 +481,18 @@ At 100 MHz with 50 sub-steps:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels/nmda.rs:27` |
-| PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, s_nmda) |
-| NetworkRunner wired | `NeuronVariant::NMDA` |
+| Rust implementation | `engine/src/neurons/channels/nmda.rs` (`try_step`, atomic rejection) |
+| PyO3 wrapper | `engine/src/bindings/channels/nmda_neuron.rs` (typed `ValueError`; state: v, h, n, s_nmda) |
+| NetworkRunner wired | `NeuronVariant::NMDA` (`engine/src/network_runner/model_factory.rs`) |
 | `create_neuron("NMDA")` | Yes |
 | `supported_models()` | Includes "NMDA" |
-| coverage tests | 12 |
+| Standalone safety Rust | `src/sc_neurocore/accel/rust/safety/nmda_neuron.rs` (full recurrence) |
+| Go service | `src/sc_neurocore/accel/go/services/nmda_neuron.go` (`TryStep`, full recurrence) |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl` (atomic `ArgumentError`) |
+| Mojo | not implemented (`accel/mojo/kernels/nmda_neuron.mojo` is a non-computing stub; no parity claimed) |
+| Silicon / RTL | not implemented; no HDL parity claimed |
+| Module-owned tests | `tests/test_model_nmda_neuron.py`, `tests/test_nmda_neuron_backends.py` |
+| Backend parity | Rust engine, safety Rust, Go, Julia vs Python: 64-step complete state ≤ 1e-12 |
 | Benchmark | `nmda_1k_steps`: **3.29 ms** (3.29 µs/step), i5-11600K |
 
 ---

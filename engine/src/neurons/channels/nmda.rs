@@ -23,7 +23,10 @@ use crate::neurons::biophysical::safe_rate;
 ///   activity in prefrontal cortex
 /// - Slow synaptic integration: rise ~10 ms, decay ~100 ms
 ///
-/// Jahr & Stevens, J Neurosci 10:1830, 1990; Wang, Neuron 22:409, 1999.
+/// Jahr & Stevens, J Neurosci 10(9):3178, 1990; Wang, Neuron 22:409, 1999.
+/// The WB spiking base follows Wang & Buzsáki, J Neurosci 16:6402, 1996;
+/// the threshold-reset event and input-driven s_NMDA drive are
+/// repository-specific specialisations, not publication-exact claims.
 #[derive(Clone, Debug)]
 pub struct NMDANeuron {
     pub v: f64,
@@ -80,10 +83,67 @@ impl NMDANeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let input = self.gain * current;
+    fn valid(&self) -> bool {
+        let finite = [
+            self.v,
+            self.h,
+            self.n,
+            self.s_nmda,
+            self.g_na,
+            self.g_k,
+            self.g_nmda,
+            self.g_l,
+            self.e_na,
+            self.e_k,
+            self.e_nmda,
+            self.e_l,
+            self.c_m,
+            self.phi,
+            self.mg_conc,
+            self.tau_rise,
+            self.tau_decay,
+            self.dt,
+            self.v_threshold,
+            self.gain,
+        ]
+        .into_iter()
+        .all(f64::is_finite);
+        finite
+            && (-100.0..=60.0).contains(&self.v)
+            && [self.h, self.n, self.s_nmda]
+                .into_iter()
+                .all(|gate| (0.0..=1.0).contains(&gate))
+            && (0.0..=200.0).contains(&self.g_na)
+            && (0.0..=100.0).contains(&self.g_k)
+            && (0.0..=20.0).contains(&self.g_nmda)
+            && (0.0..=5.0).contains(&self.g_l)
+            && (30.0..=70.0).contains(&self.e_na)
+            && (-100.0..=-70.0).contains(&self.e_k)
+            && (-10.0..=10.0).contains(&self.e_nmda)
+            && (-80.0..=-40.0).contains(&self.e_l)
+            && (0.5..=2.0).contains(&self.c_m)
+            && (0.5..=10.0).contains(&self.phi)
+            && (0.0..=5.0).contains(&self.mg_conc)
+            && (0.1..=20.0).contains(&self.tau_rise)
+            && (10.0..=500.0).contains(&self.tau_decay)
+            && self.dt > 0.0
+            && self.dt <= 1.0
+            && (-20.0..=20.0).contains(&self.v_threshold)
+            && (0.0..=10.0).contains(&self.gain)
+    }
+
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !current.is_finite() {
+            return Err("current must be finite");
+        }
+        if !self.valid() {
+            return Err("NMDA state and parameters must satisfy the public bounds");
+        }
+
+        let mut candidate = self.clone();
+        let input = candidate.gain * current;
         let sub_steps = 50;
-        let sub_dt = self.dt / sub_steps as f64;
+        let sub_dt = candidate.dt / sub_steps as f64;
         let mut fired = 0i32;
 
         // NMDA synaptic variable: driven by input (as proxy for glutamate)
@@ -92,17 +152,17 @@ impl NMDANeuron {
         } else {
             0.0
         };
-        let ds = (drive - self.s_nmda)
-            / if drive > self.s_nmda {
-                self.tau_rise
+        let ds = (drive - candidate.s_nmda)
+            / if drive > candidate.s_nmda {
+                candidate.tau_rise
             } else {
-                self.tau_decay
+                candidate.tau_decay
             };
-        self.s_nmda += self.dt * ds;
-        self.s_nmda = self.s_nmda.clamp(0.0, 1.0);
+        candidate.s_nmda += candidate.dt * ds;
+        candidate.s_nmda = candidate.s_nmda.clamp(0.0, 1.0);
 
         for _ in 0..sub_steps {
-            let v = self.v;
+            let v = candidate.v;
 
             let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
             let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
@@ -116,42 +176,51 @@ impl NMDANeuron {
 
             // Mg2+ block: B(V) = 1 / (1 + [Mg2+]/3.57 * exp(-0.062 * V))
             // Jahr & Stevens 1990
-            let mg_block = 1.0 / (1.0 + (self.mg_conc / 3.57) * (-0.062 * v).exp());
+            let mg_block = 1.0 / (1.0 + (candidate.mg_conc / 3.57) * (-0.062 * v).exp());
 
-            self.h += sub_dt * self.phi * (alpha_h * (1.0 - self.h) - beta_h * self.h);
-            self.n += sub_dt * self.phi * (alpha_n * (1.0 - self.n) - beta_n * self.n);
+            candidate.h +=
+                sub_dt * candidate.phi * (alpha_h * (1.0 - candidate.h) - beta_h * candidate.h);
+            candidate.n +=
+                sub_dt * candidate.phi * (alpha_n * (1.0 - candidate.n) - beta_n * candidate.n);
 
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (v - self.e_k);
-            let i_nmda = self.g_nmda * self.s_nmda * mg_block * (v - self.e_nmda);
-            let i_l = self.g_l * (v - self.e_l);
+            let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
+            let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
+            let i_nmda =
+                candidate.g_nmda * candidate.s_nmda * mg_block * (v - candidate.e_nmda);
+            let i_l = candidate.g_l * (v - candidate.e_l);
 
-            let dv = (-i_na - i_k - i_nmda - i_l + input) / self.c_m;
-            self.v += sub_dt * dv;
+            let dv = (-i_na - i_k - i_nmda - i_l + input) / candidate.c_m;
+            candidate.v += sub_dt * dv;
+            if ![candidate.v, candidate.h, candidate.n]
+                .into_iter()
+                .all(f64::is_finite)
+            {
+                return Err("NMDA candidate state became non-finite");
+            }
 
-            if self.v >= self.v_threshold {
+            if candidate.v >= candidate.v_threshold {
                 fired = 1;
-                self.v = -65.0;
+                candidate.v = -65.0;
             }
         }
 
-        self.v = self.v.clamp(-100.0, 60.0);
-        if !self.v.is_finite() {
-            self.v = -65.0;
-            self.h = 0.6;
-            self.n = 0.32;
-        }
-        if !self.s_nmda.is_finite() {
-            self.s_nmda = 0.0;
-        }
-        self.h = self.h.clamp(0.0, 1.0);
-        self.n = self.n.clamp(0.0, 1.0);
+        candidate.v = candidate.v.clamp(-100.0, 60.0);
+        candidate.h = candidate.h.clamp(0.0, 1.0);
+        candidate.n = candidate.n.clamp(0.0, 1.0);
+        *self = candidate;
 
-        fired
+        Ok(fired)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.v = -65.0;
+        self.h = 0.6;
+        self.n = 0.32;
+        self.s_nmda = 0.0;
     }
 }
 
@@ -182,6 +251,16 @@ mod tests {
             spikes, 0,
             "NMDA neuron must be silent without input, got {spikes}"
         );
+    }
+
+    #[test]
+    fn nmda_nominal_step_matches_reference_anchor() {
+        let mut n = NMDANeuron::new();
+        assert_eq!(n.try_step(5.0), Ok(0));
+        assert!((n.v - -63.155_663_780_395_78).abs() < 1.0e-12);
+        assert!((n.h - 0.648_031_194_399_744_1).abs() < 1.0e-12);
+        assert!((n.n - 0.237_221_887_163_776).abs() < 1.0e-12);
+        assert!((n.s_nmda - 0.025).abs() < 1.0e-15);
     }
 
     #[test]
@@ -264,10 +343,34 @@ mod tests {
     }
 
     #[test]
-    fn nmda_nan_input_stays_finite() {
+    fn nmda_nan_input_is_rejected_atomically() {
         let mut n = NMDANeuron::new();
-        n.step(f64::NAN);
-        assert!(n.v.is_finite());
+        let before = n.clone();
+        assert!(n.try_step(f64::NAN).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.h, before.h);
+        assert_eq!(n.n, before.n);
+        assert_eq!(n.s_nmda, before.s_nmda);
+    }
+
+    #[test]
+    fn nmda_infinite_input_is_rejected_atomically() {
+        let mut n = NMDANeuron::new();
+        let before = n.clone();
+        assert!(n.try_step(f64::INFINITY).is_err());
+        assert!(n.try_step(f64::NEG_INFINITY).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.s_nmda, before.s_nmda);
+    }
+
+    #[test]
+    fn nmda_invalid_configuration_is_rejected_atomically() {
+        let mut n = NMDANeuron::new();
+        n.c_m = 0.0;
+        let before = n.clone();
+        assert!(n.try_step(1.0).is_err());
+        assert_eq!(n.v, before.v);
+        assert_eq!(n.c_m, before.c_m);
     }
 
     #[test]
@@ -288,6 +391,18 @@ mod tests {
         n.reset();
         assert_eq!(n.v, -65.0);
         assert_eq!(n.s_nmda, 0.0);
+    }
+
+    #[test]
+    fn nmda_reset_preserves_parameters() {
+        let mut n = NMDANeuron::new();
+        n.g_nmda = 1.5;
+        for _ in 0..100 {
+            n.step(5.0);
+        }
+        n.reset();
+        assert_eq!(n.v, -65.0);
+        assert_eq!(n.g_nmda, 1.5);
     }
 
     #[test]

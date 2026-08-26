@@ -58,6 +58,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "IhNeuron",
     "MATNeuron",
     "McKeanNeuron",
+    "NMDANeuron",
     "NonResettingLIFNeuron",
     "PersistentNaNeuron",
     "SigmaDeltaNeuron",
