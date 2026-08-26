@@ -10,6 +10,7 @@ module GlmNeuronAccel
 
 export step!, simulate, reset!, valid, GLMNeuronState
 
+"""Point-process GLM filters and history buffers mirroring the Python reference."""
 mutable struct GLMNeuronState
     mu::Float64
     dt_ms::Float64
@@ -26,6 +27,7 @@ function GLMNeuronState(n_k::Int=10, n_h::Int=20)
     GLMNeuronState(-3.0, 1.0, k, h, zeros(n_k), zeros(n_h))
 end
 
+"""Return whether every parameter, filter, and history value is finite and inside the public bounds."""
 function valid(s::GLMNeuronState)
     isfinite(s.mu) &&
         isfinite(s.dt_ms) && 0.0 < s.dt_ms <= 1000.0 &&
@@ -36,6 +38,14 @@ function valid(s::GLMNeuronState)
         all(isfinite, s.stim_buf) && all(isfinite, s.spike_buf)
 end
 
+"""
+    step!(state, stimulus, uniform) -> Int
+
+Advance the point-process GLM one bin using the explicit uniform sample
+`uniform ∈ [0, 1)` for the Bernoulli draw. Throws `ArgumentError` — with
+the pre-step history preserved exactly — for a non-finite stimulus, an
+out-of-domain sample, or an invalid configuration.
+"""
 function step!(s::GLMNeuronState, stimulus::Float64, uniform::Float64)
     isfinite(stimulus) || throw(ArgumentError("stimulus must be finite"))
     (isfinite(uniform) && 0.0 <= uniform < 1.0) ||
@@ -56,12 +66,14 @@ function step!(s::GLMNeuronState, stimulus::Float64, uniform::Float64)
     spike
 end
 
+"""Clear both history buffers, preserving the filters."""
 function reset!(s::GLMNeuronState)
     fill!(s.stim_buf, 0.0)
     fill!(s.spike_buf, 0.0)
     nothing
 end
 
+"""Run `n_steps` with a service-local xorshift generator (regression evidence only)."""
 function simulate(n_steps::Int=1000; stimulus::Float64=5.0, seed::Int=42)
     n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
     s = GLMNeuronState()

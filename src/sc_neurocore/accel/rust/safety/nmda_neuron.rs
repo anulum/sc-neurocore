@@ -7,6 +7,8 @@
 // SC-NeuroCore — Standalone Rust safety mirror for NMDANeuron
 
 #[derive(Debug, Clone)]
+/// Standalone safety mirror of the WB base with the Jahr-Stevens NMDA current, matching the Python
+/// reference recurrence and its atomic fail-closed contract.
 pub struct NMDANeuron {
     pub v: f64,
     pub h: f64,
@@ -32,6 +34,7 @@ pub struct NMDANeuron {
 }
 
 impl NMDANeuron {
+    /// Construct the canonical repository default configuration.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -58,6 +61,9 @@ impl NMDANeuron {
         }
     }
 
+    /// Advance one step; `Err` preserves the pre-step state exactly for a
+    /// non-finite drive, an out-of-bounds configuration, or a non-finite
+    /// candidate.
     pub fn step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -102,8 +108,7 @@ impl NMDANeuron {
                 sub_dt * candidate.phi * (alpha_n * (1.0 - candidate.n) - beta_n * candidate.n);
             let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
             let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
-            let i_nmda =
-                candidate.g_nmda * candidate.s_nmda * mg_block * (v - candidate.e_nmda);
+            let i_nmda = candidate.g_nmda * candidate.s_nmda * mg_block * (v - candidate.e_nmda);
             let i_l = candidate.g_l * (v - candidate.e_l);
             candidate.v += sub_dt * (-i_na - i_k - i_nmda - i_l + input) / candidate.c_m;
 
@@ -126,6 +131,7 @@ impl NMDANeuron {
         Ok(fired)
     }
 
+    /// Restore dynamic state to the initial values, preserving parameters.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.6;
@@ -143,6 +149,8 @@ fn safe_rate(a: f64, vhalf: f64, v: f64, k: f64, fallback: f64) -> f64 {
     }
 }
 
+/// Return whether every state and configuration field is finite and
+/// inside the public descriptor bounds.
 pub fn validate_nmda_neuron(state: &NMDANeuron) -> bool {
     let finite = [
         state.v,

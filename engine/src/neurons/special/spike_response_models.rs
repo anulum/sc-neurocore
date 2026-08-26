@@ -47,6 +47,7 @@ impl SpikeResponseNeuron {
             0
         }
     }
+    /// Clear both history buffers, preserving the filters and generator.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.time_since_spike = 1000.0;
@@ -113,6 +114,12 @@ impl GLMNeuron {
             && self.spike_buf.iter().all(|value| value.is_finite())
     }
 
+    /// Advance one step after validating the stimulus, the optional explicit
+    /// uniform sample (must lie in `[0, 1)`), and the configuration.
+    ///
+    /// With `uniform` supplied the Bernoulli draw is deterministic and the
+    /// internal generator is not consumed; history buffers are updated
+    /// candidate-first, so any `Err` leaves the pre-step state intact.
     pub fn try_step(&mut self, stimulus: f64, uniform: Option<f64>) -> Result<i32, &'static str> {
         if !stimulus.is_finite() {
             return Err("stimulus must be finite");
@@ -167,6 +174,8 @@ impl GLMNeuron {
         Ok(spike)
     }
 
+    /// Fail-closed wrapper for legacy callers: samples from the seeded
+    /// generator and returns 0 on any rejected input without mutating state.
     pub fn step(&mut self, stimulus: f64) -> i32 {
         self.try_step(stimulus, None).unwrap_or(0)
     }
@@ -176,10 +185,12 @@ impl GLMNeuron {
         self.spike_buf.fill(0.0);
     }
 
+    /// Return a copy of the stimulus history buffer (most recent first).
     pub fn stim_buf_view(&self) -> Vec<f64> {
         self.stim_buf.clone()
     }
 
+    /// Return a copy of the spike history buffer (most recent first).
     pub fn spike_buf_view(&self) -> Vec<f64> {
         self.spike_buf.clone()
     }

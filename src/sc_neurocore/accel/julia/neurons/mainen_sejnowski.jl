@@ -10,6 +10,7 @@ module MainenSejnowskiAccel
 
 export step!, simulate, reset!, valid, MainenSejnowskiNeuronState
 
+"""Complete two-compartment soma+axon state mirroring the Python reference."""
 mutable struct MainenSejnowskiNeuronState
     vs::Float64
     va::Float64
@@ -38,6 +39,7 @@ function MainenSejnowskiNeuronState()
     )
 end
 
+"""Return whether every state and configuration field is finite and inside the public bounds."""
 function valid(s::MainenSejnowskiNeuronState)
     values = (
         s.vs, s.va, s.m, s.h, s.n, s.kappa, s.g_na, s.g_k, s.g_l,
@@ -59,6 +61,15 @@ function linoid(x::Float64, k::Float64)
     x == 0.0 ? k : x / -expm1(-x / k)
 end
 
+"""
+    step!(state, current; dt=state.dt) -> Int
+
+Advance the Mainen-Sejnowski two-compartment reduction by one discrete step and return the spike
+indicator. Throws `ArgumentError` — with the pre-step state preserved
+exactly — for a non-finite drive, an out-of-bounds configuration, a
+`dt` that does not match the configured step, or a non-finite
+candidate. State (vs, va, m, h, n) is committed only on success.
+"""
 function step!(s::MainenSejnowskiNeuronState, current::Float64=0.0; dt::Float64=s.dt)
     isfinite(current) || throw(ArgumentError("current must be finite"))
     valid(s) || throw(
@@ -105,12 +116,14 @@ function step!(s::MainenSejnowskiNeuronState, current::Float64=0.0; dt::Float64=
     (s.vs >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
+"""Restore dynamic state to the initial values, preserving configuration."""
 function reset!(s::MainenSejnowskiNeuronState)
     s.vs, s.va = -65.0, -65.0
     s.m, s.h, s.n = 0.05, 0.6, 0.3
     nothing
 end
 
+"""Run a fresh default-configured state for `n_steps` and return `(trace, spikes)`."""
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.005)
     n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
     s = MainenSejnowskiNeuronState()

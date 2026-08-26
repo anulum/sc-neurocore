@@ -10,6 +10,7 @@ module NmdaNeuronAccel
 
 export step!, simulate, reset!, valid, NMDANeuronState
 
+"""Complete WB+NMDA state and configuration mirroring the Python reference."""
 mutable struct NMDANeuronState
     v::Float64
     h::Float64
@@ -44,6 +45,7 @@ function NMDANeuronState()
     )
 end
 
+"""Return whether every state and configuration field is finite and inside the public bounds."""
 function valid(s::NMDANeuronState)
     values = (
         s.v, s.h, s.n, s.s_nmda, s.g_na, s.g_k, s.g_nmda, s.g_l,
@@ -69,6 +71,15 @@ function safe_rate(a::Float64, vhalf::Float64, v::Float64, k::Float64, fallback:
     abs(d) < 1.0e-7 ? fallback : a * d / (1.0 - exp(-d / k))
 end
 
+"""
+    step!(state, current; dt=state.dt) -> Int
+
+Advance the WB base + Jahr-Stevens NMDA channel by one discrete step and return the spike
+indicator. Throws `ArgumentError` — with the pre-step state preserved
+exactly — for a non-finite drive, an out-of-bounds configuration, a
+`dt` that does not match the configured step, or a non-finite
+candidate. State (v, h, n, s_nmda) is committed only on success.
+"""
 function step!(s::NMDANeuronState, current::Float64=0.0; dt::Float64=s.dt)
     isfinite(current) || throw(ArgumentError("current must be finite"))
     valid(s) || throw(ArgumentError("NMDA state and parameters must satisfy the public bounds"))
@@ -119,11 +130,13 @@ function step!(s::NMDANeuronState, current::Float64=0.0; dt::Float64=s.dt)
     fired
 end
 
+"""Restore dynamic state to the initial values, preserving configuration."""
 function reset!(s::NMDANeuronState)
     s.v, s.h, s.n, s.s_nmda = -65.0, 0.6, 0.32, 0.0
     nothing
 end
 
+"""Run a fresh default-configured state for `n_steps` and return `(trace, spikes)`."""
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.5)
     n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
     s = NMDANeuronState()

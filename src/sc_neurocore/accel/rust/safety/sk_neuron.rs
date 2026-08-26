@@ -7,6 +7,8 @@
 // SC-NeuroCore — Standalone Rust safety mirror for SKNeuron
 
 #[derive(Debug, Clone)]
+/// Standalone safety mirror of the WB base with the calcium-gated SK current, matching the Python
+/// reference recurrence and its atomic fail-closed contract.
 pub struct SKNeuron {
     pub v: f64,
     pub h: f64,
@@ -29,6 +31,7 @@ pub struct SKNeuron {
 }
 
 impl SKNeuron {
+    /// Construct the canonical repository default configuration.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -52,6 +55,9 @@ impl SKNeuron {
         }
     }
 
+    /// Advance one step; `Err` preserves the pre-step state exactly for a
+    /// non-finite drive, an out-of-bounds configuration, or a non-finite
+    /// candidate.
     pub fn step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -109,6 +115,7 @@ impl SKNeuron {
         Ok(fired)
     }
 
+    /// Restore dynamic state to the initial values, preserving parameters.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.6;
@@ -126,6 +133,8 @@ fn safe_rate(a: f64, vhalf: f64, v: f64, k: f64, fallback: f64) -> f64 {
     }
 }
 
+/// Return whether every state and configuration field is finite and
+/// inside the public descriptor bounds.
 pub fn validate_sk_neuron(state: &SKNeuron) -> bool {
     let finite = [
         state.v,

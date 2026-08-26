@@ -7,6 +7,8 @@
 // SC-NeuroCore — Standalone Rust safety mirror for MainenSejnowskiNeuron
 
 #[derive(Debug, Clone)]
+/// Standalone safety mirror of the two-compartment soma+axon reduction, matching the Python
+/// reference recurrence and its atomic fail-closed contract.
 pub struct MainenSejnowskiNeuron {
     pub vs: f64,
     pub va: f64,
@@ -27,6 +29,7 @@ pub struct MainenSejnowskiNeuron {
 }
 
 impl MainenSejnowskiNeuron {
+    /// Construct the canonical repository default configuration.
     pub fn new() -> Self {
         Self {
             vs: -65.0,
@@ -56,6 +59,9 @@ impl MainenSejnowskiNeuron {
         }
     }
 
+    /// Advance one step; `Err` preserves the pre-step state exactly for a
+    /// non-finite drive, an out-of-bounds configuration, or a non-finite
+    /// candidate.
     pub fn step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -75,32 +81,36 @@ impl MainenSejnowskiNeuron {
             let an = 0.02 * Self::linoid(va - 20.0, 9.0);
             let bn = 0.002 * Self::linoid(-(va - 20.0), 9.0);
 
-            candidate.m =
-                (candidate.m + (am * (1.0 - candidate.m) - bm * candidate.m) * candidate.dt)
-                    .clamp(0.0, 1.0);
-            candidate.h =
-                (candidate.h + (ah * (1.0 - candidate.h) - bh * candidate.h) * candidate.dt)
-                    .clamp(0.0, 1.0);
-            candidate.n =
-                (candidate.n + (an * (1.0 - candidate.n) - bn * candidate.n) * candidate.dt)
-                    .clamp(0.0, 1.0);
+            candidate.m = (candidate.m
+                + (am * (1.0 - candidate.m) - bm * candidate.m) * candidate.dt)
+                .clamp(0.0, 1.0);
+            candidate.h = (candidate.h
+                + (ah * (1.0 - candidate.h) - bh * candidate.h) * candidate.dt)
+                .clamp(0.0, 1.0);
+            candidate.n = (candidate.n
+                + (an * (1.0 - candidate.n) - bn * candidate.n) * candidate.dt)
+                .clamp(0.0, 1.0);
 
-            let i_na =
-                candidate.g_na * candidate.m.powi(3) * candidate.h * (va - candidate.e_na);
+            let i_na = candidate.g_na * candidate.m.powi(3) * candidate.h * (va - candidate.e_na);
             let i_k = candidate.g_k * candidate.n * (va - candidate.e_k);
             let i_l_s = candidate.g_l * (candidate.vs - candidate.e_l);
 
-            let dvs = (-i_l_s + candidate.kappa * (va - candidate.vs) + current)
-                / candidate.c_s
+            let dvs = (-i_l_s + candidate.kappa * (va - candidate.vs) + current) / candidate.c_s
                 * candidate.dt;
             let dva = (-i_na - i_k + candidate.kappa * (candidate.vs - va)) / candidate.c_a
                 * candidate.dt;
             candidate.vs = (candidate.vs + dvs).clamp(-200.0, 200.0);
             candidate.va = (va + dva).clamp(-200.0, 200.0);
 
-            if ![candidate.vs, candidate.va, candidate.m, candidate.h, candidate.n]
-                .into_iter()
-                .all(f64::is_finite)
+            if ![
+                candidate.vs,
+                candidate.va,
+                candidate.m,
+                candidate.h,
+                candidate.n,
+            ]
+            .into_iter()
+            .all(f64::is_finite)
             {
                 return Err("Mainen-Sejnowski candidate state became non-finite");
             }
@@ -114,6 +124,7 @@ impl MainenSejnowskiNeuron {
         }
     }
 
+    /// Restore dynamic state to the initial values, preserving parameters.
     pub fn reset(&mut self) {
         self.vs = -65.0;
         self.va = -65.0;
@@ -123,6 +134,8 @@ impl MainenSejnowskiNeuron {
     }
 }
 
+/// Return whether every state and configuration field is finite and
+/// inside the public descriptor bounds.
 pub fn validate_mainen_sejnowski(state: &MainenSejnowskiNeuron) -> bool {
     let finite = [
         state.vs,

@@ -7,6 +7,8 @@
 // SC-NeuroCore — Standalone Rust safety mirror for GLMNeuron
 
 #[derive(Debug, Clone)]
+/// Standalone safety mirror of the point-process generalised linear model, matching the Python
+/// reference recurrence and its atomic fail-closed contract.
 pub struct GLMNeuron {
     pub mu: f64,
     pub dt_ms: f64,
@@ -17,6 +19,7 @@ pub struct GLMNeuron {
 }
 
 impl GLMNeuron {
+    /// Construct the reference filters and empty history buffers.
     pub fn new(n_k: usize, n_h: usize) -> Self {
         let k = (0..n_k).map(|i| (-(i as f64) / 3.0).exp() * 0.5).collect();
         let h = (0..n_h)
@@ -80,12 +83,15 @@ impl GLMNeuron {
         Ok(spike)
     }
 
+    /// Restore dynamic state to the initial values, preserving parameters.
     pub fn reset(&mut self) {
         self.stim_buf.fill(0.0);
         self.spike_buf.fill(0.0);
     }
 }
 
+/// Return whether every state and configuration field is finite and
+/// inside the public descriptor bounds.
 pub fn validate_glm_neuron(state: &GLMNeuron) -> bool {
     state.mu.is_finite()
         && state.dt_ms.is_finite()

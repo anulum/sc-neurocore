@@ -117,6 +117,12 @@ impl TTypeCaNeuron {
             && (0.0..=10.0).contains(&self.gain)
     }
 
+    /// Advance one step after validating the drive and configuration.
+    ///
+    /// Computes the whole update on a candidate clone and commits only on
+    /// success: a non-finite `current`, a configuration outside the public
+    /// bounds, or a non-finite candidate returns `Err` with the pre-step
+    /// state preserved exactly.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -188,10 +194,14 @@ impl TTypeCaNeuron {
         Ok(fired)
     }
 
+    /// Fail-closed wrapper for legacy callers: returns 0 on any rejected
+    /// input without mutating state.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Restore the dynamic state to its initial values, preserving every
+    /// configuration parameter.
     pub fn reset(&mut self) {
         self.v = -65.0;
         self.h = 0.6;

@@ -30,14 +30,19 @@ impl PyNMDANeuron {
         }
     }
 
+    /// Advance one step; raises `ValueError` with the state unchanged for
+    /// a non-finite drive, an invalid configuration, or a non-finite
+    /// candidate.
     fn step(&mut self, current: f64) -> PyResult<i32> {
         self.inner.try_step(current).map_err(PyValueError::new_err)
     }
 
+    /// Restore dynamic state to the initial values, preserving parameters.
     fn reset(&mut self) {
         self.inner.reset();
     }
 
+    /// Return the complete dynamic state as a Python dictionary.
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let state = PyDict::new(py);
         state.set_item("v", self.inner.v)?;

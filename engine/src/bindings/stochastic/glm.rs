@@ -38,6 +38,9 @@ impl PyGLMNeuron {
         }
     }
 
+    /// Advance one bin; `uniform` (in `[0, 1)`) makes the Bernoulli draw
+    /// deterministic, otherwise the seeded generator is used. Raises
+    /// `ValueError` with the history unchanged on any invalid input.
     #[pyo3(signature = (stimulus, uniform=None))]
     fn step(&mut self, stimulus: f64, uniform: Option<f64>) -> PyResult<i32> {
         self.inner
@@ -45,10 +48,12 @@ impl PyGLMNeuron {
             .map_err(PyValueError::new_err)
     }
 
+    /// Clear both history buffers, preserving the filters and generator.
     fn reset(&mut self) {
         self.inner.reset();
     }
 
+    /// Return filters, parameters, and history buffers as a Python dictionary.
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let state = PyDict::new(py);
         state.set_item("mu", self.inner.mu)?;

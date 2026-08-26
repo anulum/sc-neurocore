@@ -116,6 +116,12 @@ impl MainenSejnowskiNeuron {
         }
     }
 
+    /// Advance one step after validating the drive and configuration.
+    ///
+    /// Computes the whole update on a candidate clone and commits only on
+    /// success: a non-finite `current`, a configuration outside the public
+    /// bounds, or a non-finite candidate returns `Err` with the pre-step
+    /// state preserved exactly.
     pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -133,9 +139,15 @@ impl MainenSejnowskiNeuron {
                 Self::canonical_substep(&mut candidate, current);
             }
 
-            if ![candidate.vs, candidate.va, candidate.m, candidate.h, candidate.n]
-                .into_iter()
-                .all(f64::is_finite)
+            if ![
+                candidate.vs,
+                candidate.va,
+                candidate.m,
+                candidate.h,
+                candidate.n,
+            ]
+            .into_iter()
+            .all(f64::is_finite)
             {
                 return Err("Mainen-Sejnowski candidate state became non-finite");
             }
@@ -161,15 +173,12 @@ impl MainenSejnowskiNeuron {
         let an = 0.02 * Self::linoid(va - 20.0, 9.0);
         let bn = 0.002 * Self::linoid(-(va - 20.0), 9.0);
 
-        candidate.m =
-            (candidate.m + (am * (1.0 - candidate.m) - bm * candidate.m) * candidate.dt)
-                .clamp(0.0, 1.0);
-        candidate.h =
-            (candidate.h + (ah * (1.0 - candidate.h) - bh * candidate.h) * candidate.dt)
-                .clamp(0.0, 1.0);
-        candidate.n =
-            (candidate.n + (an * (1.0 - candidate.n) - bn * candidate.n) * candidate.dt)
-                .clamp(0.0, 1.0);
+        candidate.m = (candidate.m + (am * (1.0 - candidate.m) - bm * candidate.m) * candidate.dt)
+            .clamp(0.0, 1.0);
+        candidate.h = (candidate.h + (ah * (1.0 - candidate.h) - bh * candidate.h) * candidate.dt)
+            .clamp(0.0, 1.0);
+        candidate.n = (candidate.n + (an * (1.0 - candidate.n) - bn * candidate.n) * candidate.dt)
+            .clamp(0.0, 1.0);
 
         let i_na = candidate.g_na * candidate.m.powi(3) * candidate.h * (va - candidate.e_na);
         let i_k = candidate.g_k * candidate.n * (va - candidate.e_k);
@@ -222,22 +231,18 @@ impl MainenSejnowskiNeuron {
         } else {
             -0.002 * x_an / (1.0 - ((x_an) / 9.0).exp() + 1e-12)
         };
-        candidate.m =
-            (candidate.m + (am * (1.0 - candidate.m) - bm * candidate.m) * candidate.dt)
-                .clamp(0.0, 1.0);
-        candidate.h =
-            (candidate.h + (ah * (1.0 - candidate.h) - bh * candidate.h) * candidate.dt)
-                .clamp(0.0, 1.0);
-        candidate.n =
-            (candidate.n + (an * (1.0 - candidate.n) - bn * candidate.n) * candidate.dt)
-                .clamp(0.0, 1.0);
-        let i_na = candidate.g_na * candidate.m.powi(3) * candidate.h
-            * (candidate.va - candidate.e_na);
+        candidate.m = (candidate.m + (am * (1.0 - candidate.m) - bm * candidate.m) * candidate.dt)
+            .clamp(0.0, 1.0);
+        candidate.h = (candidate.h + (ah * (1.0 - candidate.h) - bh * candidate.h) * candidate.dt)
+            .clamp(0.0, 1.0);
+        candidate.n = (candidate.n + (an * (1.0 - candidate.n) - bn * candidate.n) * candidate.dt)
+            .clamp(0.0, 1.0);
+        let i_na =
+            candidate.g_na * candidate.m.powi(3) * candidate.h * (candidate.va - candidate.e_na);
         let i_k = candidate.g_k * candidate.n * (candidate.va - candidate.e_k);
         let i_l_s = candidate.g_l * (candidate.vs - candidate.e_l);
         candidate.vs = (candidate.vs
-            + (-i_l_s + candidate.kappa * (candidate.va - candidate.vs) + current)
-                / candidate.c_s
+            + (-i_l_s + candidate.kappa * (candidate.va - candidate.vs) + current) / candidate.c_s
                 * candidate.dt)
             .clamp(-200.0, 200.0);
         candidate.va = (candidate.va
@@ -246,10 +251,14 @@ impl MainenSejnowskiNeuron {
             .clamp(-200.0, 200.0);
     }
 
+    /// Fail-closed wrapper for legacy callers: returns 0 on any rejected
+    /// input without mutating state.
     pub fn step(&mut self, current: f64) -> i32 {
         self.try_step(current).unwrap_or(0)
     }
 
+    /// Restore the dynamic state to its initial values, preserving every
+    /// configuration parameter.
     pub fn reset(&mut self) {
         self.vs = -65.0;
         self.va = -65.0;
