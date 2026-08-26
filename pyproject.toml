@@ -74,7 +74,7 @@ holonomic_neuromodulation = "sc_neurocore.adapters.holonomic.neuromodulation:Neu
 [project.optional-dependencies]
 minimal = []
 core = []
-dev = ["pytest", "pytest-cov", "pytest-xdist", "filelock", "hypothesis", "mypy", "ruff", "bandit", "pyyaml", "onnx", "pint>=0.23", "sympy>=1.12", "mojo>=0.26.2.0; platform_system != 'Windows'", "tomli; python_version < '3.11'", "tomli-w>=1.0"]
+dev = ["pytest", "pytest-cov", "pytest-xdist", "filelock", "hypothesis", "mypy", "ruff", "bandit", "pyyaml", "onnx", "pint>=0.23", "sympy>=1.12", "mojo>=1.0.0; platform_system != 'Windows'", "tomli; python_version < '3.11'", "tomli-w>=1.0"]
 dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 accel = ["numba>=0.56"]
 gpu = ["cupy-cuda12x>=12.0"]

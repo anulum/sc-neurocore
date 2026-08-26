@@ -8,4 +8,4 @@ mypy>=2.3.0
 ruff>=0.16.4
 bandit>=1.7
 pyyaml>=6.0
-mojo>=0.26.2.0
+mojo>=1.0.0
