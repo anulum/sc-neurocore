@@ -2,3 +2,4 @@ ruff==0.16.4
 bandit==1.9.4
 mypy==2.3.0
 numpy
+tomli==2.4.1
