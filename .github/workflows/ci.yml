@@ -548,6 +548,25 @@ jobs:
             --include='src/sc_neurocore/neurons/models/glm_neuron.py' \
             --fail-under=100 --show-missing
 
+      - name: MainenSejnowski exact coverage and backend parity
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-mainen python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/neurons/models/mainen_sejnowski.py' \
+            -m pytest tests/test_model_mainen_sejnowski_ms_atomicity.py \
+              tests/test_model_mainen_sejnowski_ms_analytical.py \
+              tests/test_model_mainen_sejnowski_ms_dynamics.py \
+              tests/test_model_mainen_sejnowski_ms_isolation.py \
+              tests/test_model_mainen_sejnowski_ms_performance.py \
+              tests/test_model_mainen_sejnowski_ms_pipeline.py \
+              tests/test_mainen_sejnowski_backends.py -q
+          COVERAGE_FILE=.coverage-mainen python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/neurons/models/mainen_sejnowski.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

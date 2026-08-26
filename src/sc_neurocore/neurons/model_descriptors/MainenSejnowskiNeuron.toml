@@ -141,12 +141,46 @@ dt = 0.005
 method = "euler"
 
 [dynamics]
+am = "0.182 * linoid(va + 25, 9)"
+bm = "0.124 * linoid(-(va + 25), 9)"
+ah = "0.024 * linoid(va + 40, 5)"
+bh = "0.0091 * linoid(-(va + 65), 5)"
+an = "0.02 * linoid(va - 20, 9)"
+bn = "0.002 * linoid(-(va - 20), 9)"
+linoid = "x / (1 - exp(-x / k)) evaluated as x / (-expm1(-x / k)) with the analytic limit k at x = 0"
+gates = "dg/dt = alpha * (1 - g) - beta * g for m, h, n; clipped to [0, 1] each sub-step"
+dvs_dt = "(-g_l * (vs - e_l) + kappa * (va - vs) + I) / c_s"
+dva_dt = "(-g_na * m^3 * h * (va - e_na) - g_k * n * (va - e_k) + kappa * (vs - va)) / c_a"
+integration_note = "20 Euler sub-steps of dt per step; Jacobi ordering (both voltage derivatives from pre-update values); voltages clipped to [-200, 200] mV each sub-step"
+event = "upward crossing of v_threshold by vs relative to the pre-step vs; no reset"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":10.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "01782aa2112669fe7a8e75be353db892d736a64ae462c4cdc07f092ec7b70dec"
+event_count = 1
+final_state = "{\"vs\":-10.595933629352658,\"va\":200.0,\"m\":0.627192124975699,\"h\":0.8233167065506499,\"n\":0.8908751810852584}"
 
 [documentation]
 slug = "models/mainen_sejnowski"
-notes = ""
+notes = "Two-compartment soma+axon reduction after Mainen & Sejnowski 1996. Canonical rates use numerically stable analytic removable-singularity limits (expm1 linoid); the historical Python additive-1e-12 regularisation (zero rate exactly at singular voltages) remains reconstructible via legacy_epsilon_rates=True, and the historical engine Gauss-Seidel ordering via the engine's new_legacy_sequential path — both count-neutral legacy configurations. Euler sub-stepping and the [-200, 200] mV clips are repository specialisations, not publication-exact claims. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=10"

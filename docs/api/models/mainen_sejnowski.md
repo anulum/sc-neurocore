@@ -1,9 +1,43 @@
 # MainenSejnowskiNeuron
 
 **Module:** `sc_neurocore.neurons.models.mainen_sejnowski`
-**Reference:** Mainen, Z.F. & Sejnowski, T.J., Nature 382:363, 1996
+**Reference:** Mainen, Z.F. & Sejnowski, T.J., *Nature* 382:363–366, 1996
 **Family:** Conductance-based (two-compartment: soma + axon)
 **State variables:** `vs` (soma potential), `va` (axon potential), `m` (Na⁺ activation), `h` (Na⁺ inactivation), `n` (K⁺ activation)
+
+The Euler sub-stepping (20 × dt = 0.005 ms), the in-loop voltage clips
+to [−200, 200] mV, and the gate clips to [0, 1] are repository-specific
+specialisations, not publication-exact claims. Canonical rate
+evaluation uses numerically stable analytic removable-singularity
+limits (`expm1` linoid form) so every rate is exact and continuous at
+its singular voltage.
+
+### Atomicity, Parity, and Legacy Configurations
+
+- `step(current)` validates before touching state and computes the
+  whole 20-sub-step update on candidate values: a non-finite `current`
+  raises `ValueError` with the pre-step state preserved exactly (a NaN
+  input can no longer silently poison all five state variables), an
+  out-of-bounds configuration raises `ValueError` at construction and
+  at each step, and a non-finite candidate aborts atomically. The
+  production Rust engine (`try_step`), the typed PyO3 binding, the
+  standalone safety Rust, Go (`TryStep`), and Julia (`ArgumentError`)
+  enforce the same contract; the engine `step` and Go `Step` wrappers
+  fail closed.
+- Backend parity: engine binding, safety Rust, Go, and Julia reproduce
+  the Python reference within 1e-12 over 64 varied steps on the
+  complete `(vs, va, m, h, n, event)` state.
+- Two historical behaviours remain reconstructible as count-neutral
+  legacy configurations with executed regression anchors: the old
+  Python additive-1e-12 rate regularisation (which returned a **zero**
+  rate exactly at each singular voltage) via
+  `MainenSejnowskiNeuron(legacy_epsilon_rates=True)`, and the original
+  engine Gauss-Seidel compartment ordering with its historical rate
+  handling via Rust `MainenSejnowskiNeuron::new_legacy_sequential` /
+  PyO3 `MainenSejnowskiNeuron.legacy_sequential()`.
+- Mojo: not implemented (`accel/mojo/kernels/mainen_sejnowski.mojo` is
+  a non-computing stub; no parity claimed). Silicon / RTL: not
+  implemented; no HDL parity claimed.
 
 ---
 
@@ -279,13 +313,11 @@ The model is stiff due to:
 ### Extreme input instability
 
 At very high (>10⁴ µA/cm²) or very negative (<−100 µA/cm²) input, the
-model can diverge because:
-- The soma voltage is driven beyond the linear regime of the coupling
-- The axon exp() evaluations overflow
-- No voltage clamping is applied
-
-This is documented in the Rust test `mainen_weak_negative_no_crash`
-which uses moderate negative input (−10 µA/cm²).
+compartments saturate at the ±200 mV in-loop clips instead of tracking
+physically meaningful dynamics; the rate evaluations themselves stay
+finite (the `expm1` linoid saturates instead of overflowing). The Rust
+test `mainen_weak_negative_no_crash` exercises moderate negative input
+(−10 µA/cm²).
 
 ### Coupling symmetry
 
@@ -348,7 +380,9 @@ Parity status: **EXACT** — verified by Rust pipeline test.
 | Moderate stable | 1 | finite after 200 steps at I=500 |
 | Coupling | 1 | κ > 0 (compartments coupled) |
 | Weak negative | 1 | finite after 200 steps at I=−10 |
-| NaN | 1 | no panic on NaN input |
+| NaN / ±Inf | 2 | rejected atomically (`ValueError` / `Err`), state unchanged |
+| Singular voltages | 1 | rates exact and continuous at va = −25/−40/−65/+20 |
+| Legacy configurations | 2 | epsilon-rate Python flag + engine Gauss-Seidel path anchored |
 | **Total** | **7** | |
 
 ---
@@ -561,9 +595,9 @@ alternatives for network-scale simulations.
 | C_a | 0.01 | 1.0 | 0.1 |
 
 Outside these ranges, the explicit Euler integrator may produce
-non-physical oscillations or diverge. The model has no intrinsic
-voltage clamping — stability relies on the negative feedback of
-conductance-based dynamics within the safe range.
+non-physical oscillations or pin the voltages at the ±200 mV in-loop
+clips; within the safe range, stability relies on the negative feedback
+of conductance-based dynamics.
 
 ### Stiffness metric
 

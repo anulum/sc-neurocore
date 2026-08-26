@@ -4,11 +4,11 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for mainen_sejnowski
+# SC-NeuroCore — Julia mirror for MainenSejnowskiNeuron
 
 module MainenSejnowskiAccel
 
-export step!, simulate, MainenSejnowskiNeuronState
+export step!, simulate, reset!, valid, MainenSejnowskiNeuronState
 
 mutable struct MainenSejnowskiNeuronState
     vs::Float64
@@ -30,48 +30,98 @@ mutable struct MainenSejnowskiNeuronState
 end
 
 function MainenSejnowskiNeuronState()
-    MainenSejnowskiNeuronState(-65.0, -65.0, 0.05, 0.6, 0.3, 10.0, 3000.0, 1500.0, 1.0, 50.0, -90.0, -70.0, 1.0, 0.1, 0.005, -20.0)
+    MainenSejnowskiNeuronState(
+        -65.0, -65.0, 0.05, 0.6, 0.3,
+        10.0, 3000.0, 1500.0, 1.0,
+        50.0, -90.0, -70.0,
+        1.0, 0.1, 0.005, -20.0,
+    )
 end
 
-function step!(s::MainenSejnowskiNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        vs_prev = s.vs
-        for _ in 1:20
-            am = 0.182 * (s.va + 25.0) / (1.0 - _safe_exp(-(s.va + 25.0) / 9.0) + 1e-12)
-            bm = -0.124 * (s.va + 25.0) / (1.0 - _safe_exp((s.va + 25.0) / 9.0) + 1e-12)
-            ah = 0.024 * (s.va + 40.0) / (1.0 - _safe_exp(-(s.va + 40.0) / 5.0) + 1e-12)
-            bh = -0.0091 * (s.va + 65.0) / (1.0 - _safe_exp((s.va + 65.0) / 5.0) + 1e-12)
-            an = 0.02 * (s.va - 20.0) / (1.0 - _safe_exp(-(s.va - 20.0) / 9.0) + 1e-12)
-            bn = -0.002 * (s.va - 20.0) / (1.0 - _safe_exp((s.va - 20.0) / 9.0) + 1e-12)
-            s.m = clamp(s.m + (am * (1 - s.m) - bm * s.m) * s.dt, 0.0, 1.0)
-            s.h = clamp(s.h + (ah * (1 - s.h) - bh * s.h) * s.dt, 0.0, 1.0)
-            s.n = clamp(s.n + (an * (1 - s.n) - bn * s.n) * s.dt, 0.0, 1.0)
-            i_na = s.g_na * s.m ^ 3 * s.h * (s.va - s.e_na)
-            i_k = s.g_k * s.n * (s.va - s.e_k)
-            i_l = s.g_l * (s.vs - s.e_l)
-            dvs = (-i_l + s.kappa * (s.va - s.vs) + I_ext) / s.c_s * s.dt
-            dva = (-i_na - i_k + s.kappa * (s.vs - s.va)) / s.c_a * s.dt
-            s.vs = Float64(clamp(s.vs + dvs, -200.0, 200.0))
-            s.va = Float64(clamp(s.va + dva, -200.0, 200.0))
-        end
-        return (s.vs >= s.v_threshold && vs_prev < s.v_threshold) ? 1 : 0
-    catch _e
-        return 0
+function valid(s::MainenSejnowskiNeuronState)
+    values = (
+        s.vs, s.va, s.m, s.h, s.n, s.kappa, s.g_na, s.g_k, s.g_l,
+        s.e_na, s.e_k, s.e_l, s.c_s, s.c_a, s.dt, s.v_threshold,
+    )
+    all(isfinite, values) &&
+        -200.0 <= s.vs <= 200.0 && -200.0 <= s.va <= 200.0 &&
+        all(gate -> 0.0 <= gate <= 1.0, (s.m, s.h, s.n)) &&
+        0.0 <= s.kappa <= 100.0 &&
+        0.0 <= s.g_na <= 5000.0 && 0.0 <= s.g_k <= 3000.0 &&
+        0.0 <= s.g_l <= 5.0 &&
+        30.0 <= s.e_na <= 70.0 && -100.0 <= s.e_k <= -70.0 &&
+        -90.0 <= s.e_l <= -50.0 &&
+        0.5 <= s.c_s <= 2.0 && 0.05 <= s.c_a <= 1.0 &&
+        0.0 < s.dt <= 0.1 && -40.0 <= s.v_threshold <= 20.0
+end
+
+function linoid(x::Float64, k::Float64)
+    x == 0.0 ? k : x / -expm1(-x / k)
+end
+
+function step!(s::MainenSejnowskiNeuronState, current::Float64=0.0; dt::Float64=s.dt)
+    isfinite(current) || throw(ArgumentError("current must be finite"))
+    valid(s) || throw(
+        ArgumentError("Mainen-Sejnowski state and parameters must satisfy the public bounds")
+    )
+    dt == s.dt || throw(ArgumentError("dt must match the configured discrete step"))
+
+    vs = s.vs
+    va = s.va
+    m = s.m
+    h = s.h
+    n = s.n
+    v_prev = vs
+    for _ in 1:20
+        am = 0.182 * linoid(va + 25.0, 9.0)
+        bm = 0.124 * linoid(-(va + 25.0), 9.0)
+        ah = 0.024 * linoid(va + 40.0, 5.0)
+        bh = 0.0091 * linoid(-(va + 65.0), 5.0)
+        an = 0.02 * linoid(va - 20.0, 9.0)
+        bn = 0.002 * linoid(-(va - 20.0), 9.0)
+
+        m = clamp(m + (am * (1.0 - m) - bm * m) * s.dt, 0.0, 1.0)
+        h = clamp(h + (ah * (1.0 - h) - bh * h) * s.dt, 0.0, 1.0)
+        n = clamp(n + (an * (1.0 - n) - bn * n) * s.dt, 0.0, 1.0)
+
+        i_na = s.g_na * m ^ 3 * h * (va - s.e_na)
+        i_k = s.g_k * n * (va - s.e_k)
+        i_l = s.g_l * (vs - s.e_l)
+
+        dvs = (-i_l + s.kappa * (va - vs) + current) / s.c_s * s.dt
+        dva = (-i_na - i_k + s.kappa * (vs - va)) / s.c_a * s.dt
+        vs = clamp(vs + dvs, -200.0, 200.0)
+        va = clamp(va + dva, -200.0, 200.0)
+
+        all(isfinite, (vs, va, m, h, n)) ||
+            throw(ArgumentError("Mainen-Sejnowski candidate state became non-finite"))
     end
+
+    s.vs = vs
+    s.va = va
+    s.m = m
+    s.h = h
+    s.n = n
+    (s.vs >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
+function reset!(s::MainenSejnowskiNeuronState)
+    s.vs, s.va = -65.0, -65.0
+    s.m, s.h, s.n = 0.05, 0.6, 0.3
+    nothing
+end
+
+function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.005)
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
     s = MainenSejnowskiNeuronState()
+    dt == s.dt || throw(ArgumentError("dt must match the configured discrete step"))
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        spikes += step!(s, I_ext; dt=dt)
         trace[t] = s.vs
-        if result isa Number && result > 0
-            spikes += 1
-        end
     end
-    return trace, spikes
+    trace, spikes
 end
 
 end # module MainenSejnowskiAccel
