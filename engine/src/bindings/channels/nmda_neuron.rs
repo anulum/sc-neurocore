@@ -12,7 +12,10 @@ use pyo3::types::PyDict;
 
 use crate::neurons;
 
-#[pyclass(name = "NMDANeuron", module = "sc_neurocore_engine.sc_neurocore_engine")]
+#[pyclass(
+    name = "NMDANeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
 #[derive(Clone)]
 pub struct PyNMDANeuron {
     inner: neurons::NMDANeuron,

@@ -84,6 +84,14 @@ def test_production_rust_binding_matches_complete_python_state() -> None:
     assert np.array_equal(np.asarray(before["spike_buf"]), np.asarray(after["spike_buf"]))
 
 
+def test_production_rust_binding_preserves_legacy_constant_filter_configuration() -> None:
+    engine = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+    legacy = engine.GLMNeuron.legacy_constant_filters(5, 10, 42)
+    state = legacy.get_state()
+    np.testing.assert_array_equal(np.asarray(state["k"]), np.full(5, 0.1))
+    np.testing.assert_array_equal(np.asarray(state["h"]), np.full(10, -0.5))
+
+
 def test_standalone_safety_rust_matches_complete_python_state(tmp_path: Path) -> None:
     rustc = shutil.which("rustc")
     if rustc is None:

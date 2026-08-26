@@ -28,6 +28,16 @@ impl PyGLMNeuron {
         }
     }
 
+    /// Construct the original engine constant-filter configuration without
+    /// adding a second model identity to the public catalogue.
+    #[staticmethod]
+    #[pyo3(signature = (n_k=10, n_h=20, seed=42))]
+    fn legacy_constant_filters(n_k: usize, n_h: usize, seed: u64) -> Self {
+        Self {
+            inner: neurons::GLMNeuron::new_legacy_constant_filters(n_k, n_h, seed),
+        }
+    }
+
     #[pyo3(signature = (stimulus, uniform=None))]
     fn step(&mut self, stimulus: f64, uniform: Option<f64>) -> PyResult<i32> {
         self.inner

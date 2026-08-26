@@ -185,8 +185,7 @@ impl NMDANeuron {
 
             let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
             let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
-            let i_nmda =
-                candidate.g_nmda * candidate.s_nmda * mg_block * (v - candidate.e_nmda);
+            let i_nmda = candidate.g_nmda * candidate.s_nmda * mg_block * (v - candidate.e_nmda);
             let i_l = candidate.g_l * (v - candidate.e_l);
 
             let dv = (-i_na - i_k - i_nmda - i_l + input) / candidate.c_m;

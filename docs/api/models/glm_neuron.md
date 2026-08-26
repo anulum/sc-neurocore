@@ -77,14 +77,20 @@ GLMNeuron
 | Silicon / RTL | not implemented; no HDL parity claimed |
 | Backend parity | engine, safety Rust, Go, Julia vs Python: 64-step spike train and history buffers ≤ 1e-12 under the explicit-uniform contract |
 
+The original engine surface used constant defaults (`k=0.1`, `h=-0.5`).
+Those coefficients are a GLM configuration, not a distinct scientific model,
+so the canonical constructor now follows the documented reference filters
+without growing the catalogue. The historical configuration remains directly
+reconstructible through Rust `GLMNeuron::new_legacy_constant_filters` and PyO3
+`GLMNeuron.legacy_constant_filters`, with an executed regression test.
+
 ## Test Coverage
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 12 | construction, step binary, low stim, spikes, rate increase, k shape, h shape, refractoriness, buffer populated, stability, reset, custom filters |
-| Network | 1 | Population |
-| Analysis | 1 | spike_count |
-| **Total** | **14** | |
+| Source model | `tests/test_model_glm_neuron_glm_atomicity.py` | defaults, seeding, explicit samples, atomic rejection, reproducibility |
+| Backend parity | `tests/test_glm_neuron_backends.py` | engine, legacy engine configuration, safety Rust, Go, Julia, custody claims |
+| Hosted gate | `.github/workflows/ci.yml` | exact statement/branch coverage and backend execution |
 
 
 ---
@@ -136,9 +142,10 @@ distribution-level only, as the generators differ by design.
 
 ---
 
-## Findings (measured 2026-04-04)
+## Current evidence boundary
 
-1. Throughput: ~8K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: N/A
-4. Numerical stability confirmed over 20K steps
+The 2026-04-04 throughput and spike-count rows above are retained as historical
+local measurements and were not re-benchmarked by this correctness unit. They
+are not production performance claims. Current cross-language correctness is
+the executed explicit-uniform parity contract described above; free-running
+generator speed and distribution parity require separate benchmark evidence.

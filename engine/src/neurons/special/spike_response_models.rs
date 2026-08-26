@@ -90,6 +90,16 @@ impl GLMNeuron {
         }
     }
 
+    /// Reconstruct the constant-filter defaults shipped by the original
+    /// engine GLM surface. This is a legacy configuration of the same GLM,
+    /// not a separate catalogue model.
+    pub fn new_legacy_constant_filters(n_k: usize, n_h: usize, seed: u64) -> Self {
+        let mut neuron = Self::new(n_k, n_h, seed);
+        neuron.k.fill(0.1);
+        neuron.h.fill(-0.5);
+        neuron
+    }
+
     fn valid(&self) -> bool {
         self.mu.is_finite()
             && self.dt_ms.is_finite()
@@ -261,6 +271,13 @@ mod tests {
         assert!((n.k[3] - 0.5 * (-1.0_f64).exp()).abs() < 1e-15);
         assert!((n.h[0] - -4.5).abs() < 1e-15);
         assert!(n.h[19] > n.h[0]);
+    }
+
+    #[test]
+    fn glm_legacy_constant_filters_remain_explicitly_constructible() {
+        let n = GLMNeuron::new_legacy_constant_filters(5, 10, 42);
+        assert!(n.k.iter().all(|value| *value == 0.1));
+        assert!(n.h.iter().all(|value| *value == -0.5));
     }
 
     #[test]
