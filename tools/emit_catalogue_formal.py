@@ -81,6 +81,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "ThetaNeuron": "theta",
     "ThresholdLinearRateNeuron": "threshold_linear_rate",
     "WilsonCowanUnit": "wilson_cowan",
+    "WangBuzsakiNeuron": "wang_buzsaki",
 }
 
 # Perfect models whose committed formal lane is intentionally curated rather
@@ -170,6 +171,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "theta": 6,
     "adex": 6,
     "glif": 6,
+    "wang_buzsaki": 4,
 }
 
 # Heavy multi-state / transcendental cores: prove bounded public spike-port
@@ -209,6 +211,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "ibarz_tanaka_map",
         "jansen_rit",
         "wong_wang",
+        "wang_buzsaki",
     }
 )
 
@@ -264,6 +267,14 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "threshold_linear_rate": (32, 16),
     "wilson_cowan": (64, 32),
     "wong_wang": (64, 32),
+    "wang_buzsaki": (32, 16),
+}
+
+# Schema display names are user-facing and may contain punctuation or
+# diacritics.  Pin an ASCII HDL identifier where sanitising the display name
+# would otherwise make a faithful schema impossible to commit as RTL.
+MODULE_NAME_BY_SCHEMA: dict[str, str] = {
+    "wang_buzsaki": "sc_wang_buzsaki",
 }
 
 
@@ -480,7 +491,11 @@ def emit_one(class_name: str) -> EmitResult:
     schema = CLASS_TO_SCHEMA[class_name]
     neuron = UniversalNeuron.from_schema(schema)
     data_width, fraction = PRECISION_BY_SCHEMA.get(schema, DEFAULT_PRECISION)
-    rtl = neuron.to_verilog(data_width=data_width, fraction=fraction)
+    rtl = neuron.to_verilog(
+        module_name=MODULE_NAME_BY_SCHEMA.get(schema),
+        data_width=data_width,
+        fraction=fraction,
+    )
     ports = _parse_module_ports(rtl)
     module = ports.name
     depth = DEPTH_BY_SCHEMA.get(schema, 20)

@@ -45,9 +45,9 @@ Every lane below carries the real model dynamics with an executed Python-parity 
 surface in this promoted set is now executable; no lane below is a fake stub or documentation-only
 parity note.
 
-| Model | Rust safety | Go | Julia | Mojo | Parity basis (golden) | Landed |
+| Model | Rust safety | Go | Julia | Mojo | Parity basis (golden) | Evidence anchor |
 |---|---|---|---|---|---|---|
-| Wang-Buzsaki | ✅ | ✅ | ✅ | ✅ executable | spike count — 3 AP @ I=10, 20 macro steps (Gauss-Seidel) | `0ebf4ea88` |
+| Wang-Buzsaki | ✅ | ✅ | ✅ | ✅ executable | exact 2,856-event parity over the measured 20,000-step `I=10` packet; five-runtime final-state error below `1e-8`; committed compiler-bound Q16.16 RTL stays within one event over the bounded 20-macro-step co-simulation, synthesizes in Yosys, and passes depth-4 reset-safety BMC; timing, PPA, device, and silicon remain open | `benchmarks/results/bench_wang_buzsaki.json`; `hdl/formal/catalogue/sc_wang_buzsaki.v` |
 | FitzHugh-Nagumo | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 1 AP @ I=10/100 steps, 5-spike train @ I=0.5/2000 steps (RK4, exact RHS) | `729e0a2ea` |
 | Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | spike count — 0/3/5 @ I=0/50/100 over 2000 steps (RK4, tanh/cosh) | `bc46a0fb5` |
 | Connor-Stevens | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (candidate-first RK4 with 100 sub-steps, exp); Mojo C ABI preserves every event and the six-state trace within `2e-6` over the enrolled envelope | `this commit` |

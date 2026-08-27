@@ -1,0 +1,132 @@
+{
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "model": "WangBuzsakiNeuron",
+  "steps": 20000,
+  "repeats": 3,
+  "current": 10.0,
+  "measured_order": [
+    "python",
+    "rust",
+    "go",
+    "julia",
+    "mojo"
+  ],
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "median_ns_per_step": 126895.07885,
+      "results_ns_per_step": [
+        130509.61685,
+        126895.07885,
+        116749.102
+      ],
+      "spike_count": 2856,
+      "final_state": [
+        -58.47282577063182,
+        0.12115257781133763,
+        0.5389858321382023
+      ],
+      "spike_count_matches_python": true,
+      "parity_max_abs_diff": 0.0,
+      "final_state_matches_python": true
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "median_ns_per_step": 3230.5474,
+      "results_ns_per_step": [
+        3230.5474,
+        3263.69195,
+        3119.98105
+      ],
+      "spike_count": 2856,
+      "final_state": [
+        -58.472825770631886,
+        0.12115257781133881,
+        0.5389858321382011
+      ],
+      "spike_count_matches_python": true,
+      "parity_max_abs_diff": 6.394884621840902e-14,
+      "final_state_matches_python": true
+    },
+    "go": {
+      "available": true,
+      "used": true,
+      "median_ns_per_step": 6579.4751,
+      "results_ns_per_step": [
+        6579.4751,
+        6638.61065,
+        6500.20825
+      ],
+      "spike_count": 2856,
+      "final_state": [
+        -58.47282577063714,
+        0.12115257781144428,
+        0.5389858321380726
+      ],
+      "spike_count_matches_python": true,
+      "parity_max_abs_diff": 5.314859663485549e-12,
+      "final_state_matches_python": true
+    },
+    "julia": {
+      "available": true,
+      "used": true,
+      "median_ns_per_step": 3382.9789,
+      "results_ns_per_step": [
+        3391.0054,
+        3382.9789,
+        3380.9288
+      ],
+      "spike_count": 2856,
+      "final_state": [
+        -58.47282577063178,
+        0.12115257781133756,
+        0.5389858321382022
+      ],
+      "spike_count_matches_python": true,
+      "parity_max_abs_diff": 4.263256414560601e-14,
+      "final_state_matches_python": true
+    },
+    "mojo": {
+      "available": true,
+      "used": true,
+      "median_ns_per_step": 3084.183798637241,
+      "results_ns_per_step": [
+        3113.648254657164,
+        3084.183798637241,
+        3075.153153622523
+      ],
+      "spike_count": 2856,
+      "final_state": [
+        -58.47282576615648,
+        0.12115257772096916,
+        0.5389858322487747
+      ],
+      "spike_count_matches_python": true,
+      "parity_max_abs_diff": 4.475339210330276e-09,
+      "final_state_matches_python": true
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_wang_buzsaki.py": "7cc352728f81668e950295bfd39ff2331df1252968dd6ac6066fc6ef730ea67b",
+    "engine/Cargo.toml": "18987357c785befcdfac0970e51114dcbd396a286c9b7e1b3355865c57e5771a",
+    "engine/examples/bench_wang_buzsaki.rs": "6ec856950c73b1f682b7e97d3572d893d4f41080a0d732d45b9f91c7d7e30c44",
+    "engine/src/neurons/biophysical/wang_buzsaki.rs": "ee5d6deeaea65b2d34e9f8f43943d1caa6537a1e85ada19bfafdf63a926739e1",
+    "src/sc_neurocore/neurons/models/wang_buzsaki.py": "cb3152ded2b34282c753b427f738ccf3ac6f4eb747d33aa0fd9d0288ea02e94b",
+    "src/sc_neurocore/accel/go/services/wang_buzsaki.go": "cf4e5f1e786f9be4113bc0d41ec0761001847e7a3c84ab5dd3a14e9dc9e5f322",
+    "src/sc_neurocore/accel/go/services/wang_buzsaki_test.go": "325b7b1151a2185a7c8dd645f8eca71f5e6deed1f2c07b924e74b1bc334999c1",
+    "src/sc_neurocore/accel/julia/neurons/wang_buzsaki.jl": "1376e4ec2d5c69940877809389c1bc8cdc4b935e7f5ed2981ee7f432925e77c6",
+    "src/sc_neurocore/accel/mojo/kernels/wang_buzsaki.mojo": "b093bc71fa0b7f1d26e84192cdb37059491ec454f8cd9c9c0b07884cecd95bc5",
+    "src/sc_neurocore/accel/rust/safety/wang_buzsaki.rs": "f1e46aed7376bd61e8fb20d2427ca293378a36f98d9ab0ec9a76cf63a2c43134"
+  },
+  "environment": {
+    "python": "3.12.3",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "single_cpu_pinned": true,
+    "exclusive_cpu_isolation_claimed": false
+  },
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "notes": "Loaded-host regression only; timings are not comparative production claims."
+}

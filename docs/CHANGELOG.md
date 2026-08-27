@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wang-Buzsaki full-fidelity closure
+
+- Closed the existing Wang-Buzsaki (1996) source identity through a replayable
+  mixed-drive receipt and a source-hashed 20,000-step measured packet across
+  Python, production Rust, Go, Julia, and Mojo. The descriptor now records the
+  complete runtime, reproducibility, validation, and silicon boundary; the
+  catalogue remains 60/155 polyglot-complete because this model was already
+  counted by the strict runtime inventory.
+- Committed the current equation compiler's signed-Q16.16 Gauss-Seidel RTL,
+  bounded event-count co-simulation, Yosys synthesis gate, and depth-4
+  public-port reset-safety proof. This reaches the declared H2 terminal tier;
+  timing, PPA, device, universal real-number equivalence, and silicon claims
+  remain explicitly open.
+
 ### Wang NMDA-autapse dual-identity closure
 
 - Restored `NMDANeuron` as the Wang (1999) pyramidal LIF plus two-stage

@@ -41,7 +41,7 @@ expected_count = 190
 name = "supplemental-source-fidelity-validation"
 rationale = "Model-specific source-fidelity evidence linked from the public model pages but kept outside the curated validation navigation."
 patterns = ["validation/*_source_fidelity.md"]
-expected_count = 11
+expected_count = 12
 
 [[classification]]
 name = "supplemental-api-references"

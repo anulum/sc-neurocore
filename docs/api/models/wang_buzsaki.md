@@ -1,5 +1,10 @@
 # WangBuzsakiNeuron
 
+!!! info "Fidelity evidence"
+    The source recurrence, five-runtime measurement boundary, Q16.16 RTL
+    co-simulation, synthesis, and formal-safety limits are recorded in the
+    [Wang-Buzsaki source-fidelity boundary](../../validation/wang_buzsaki_source_fidelity.md).
+
 **Module:** `sc_neurocore.neurons.models.wang_buzsaki`
 **Reference:** Wang & Buzsáki, J. Neurosci. 16(20), 1996
 **Family:** Biophysical conductance-based (fast-spiking interneuron)

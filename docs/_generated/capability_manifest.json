@@ -967,11 +967,11 @@
     "model_documentation_pages": 191,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 612,
+    "public_documentation_pages": 613,
     "python_model_classes": 174,
     "python_model_source_modules": 170,
     "rust_pyo3_model_wrappers": 201,
-    "test_files": 4737
+    "test_files": 4739
   },
   "documentation": {
     "public_pages": [
@@ -1585,6 +1585,7 @@
       "docs/validation/sigma_delta_source_fidelity.md",
       "docs/validation/sigmoid_rate_source_fidelity.md",
       "docs/validation/threshold_linear_rate_source_fidelity.md",
+      "docs/validation/wang_buzsaki_source_fidelity.md",
       "docs/validation/wilson_cowan_source_fidelity.md",
       "docs/validation/wong_wang_source_fidelity.md"
     ]
@@ -3719,6 +3720,7 @@
       "tests/test_bench_theta.py",
       "tests/test_bench_threshold_linear_rate.py",
       "tests/test_bench_verilog_compiler.py",
+      "tests/test_bench_wang_buzsaki.py",
       "tests/test_bench_wilson_cowan.py",
       "tests/test_bench_wong_wang.py",
       "tests/test_benchmark_context.py",
@@ -4258,6 +4260,7 @@
       "tests/test_cosim_theta.py",
       "tests/test_cosim_threshold_linear_rate.py",
       "tests/test_cosim_wang_buzsaki.py",
+      "tests/test_cosim_wang_buzsaki_catalogue.py",
       "tests/test_cosim_wilson_cowan.py",
       "tests/test_cosim_wilson_hr_q1616_precision.py",
       "tests/test_cosim_wilson_hr_tier_b_model_cosim.py",

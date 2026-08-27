@@ -1,7 +1,7 @@
 {
   "spdx_license": "AGPL-3.0-or-later",
   "benchmark": "GutkinErmentroutNeuron candidate-first RK4 conductance step",
-  "timestamp_utc": "2026-08-27T19:53:16+00:00",
+  "timestamp_utc": "2026-08-27T20:34:53+00:00",
   "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_gutkin_ermentrout.py",
   "evidence_class": "local_regression_non_isolated",
   "production_speed_claim": false,
@@ -14,50 +14,50 @@
   "current": 5.0,
   "backend_summary": {
     "python": {
-      "median_ns_per_step": 4859.271895,
-      "min_ns_per_step": 4784.248215,
-      "max_ns_per_step": 5629.01707,
+      "median_ns_per_step": 5082.598215,
+      "min_ns_per_step": 4779.36035,
+      "max_ns_per_step": 5246.89552,
       "spikes": 662
     },
     "rust": {
-      "median_ns_per_step": 195.185365,
-      "min_ns_per_step": 187.794105,
-      "max_ns_per_step": 252.581075,
+      "median_ns_per_step": 208.149265,
+      "min_ns_per_step": 196.87486,
+      "max_ns_per_step": 217.363545,
       "spikes": 662
     },
     "go": {
-      "median_ns_per_step": 194.9,
-      "min_ns_per_step": 189.7,
-      "max_ns_per_step": 196.0,
+      "median_ns_per_step": 201.4,
+      "min_ns_per_step": 193.2,
+      "max_ns_per_step": 216.4,
       "spikes": 662
     },
     "julia": {
-      "median_ns_per_step": 127.46783,
-      "min_ns_per_step": 126.28276,
-      "max_ns_per_step": 128.16601,
+      "median_ns_per_step": 141.895735,
+      "min_ns_per_step": 135.813885,
+      "max_ns_per_step": 143.803805,
       "spikes": 662
     },
     "mojo": {
-      "median_ns_per_step": 157.1104902541265,
-      "min_ns_per_step": 155.79976025037467,
-      "max_ns_per_step": 158.61541498452425,
+      "median_ns_per_step": 152.40325999911875,
+      "min_ns_per_step": 151.450255070813,
+      "max_ns_per_step": 156.39457502402365,
       "spikes": 662
     }
   },
   "results": [
     {
       "backend": "python",
-      "median_ns_per_step": 4859.271895,
-      "min_ns_per_step": 4784.248215,
-      "max_ns_per_step": 5629.01707,
+      "median_ns_per_step": 5082.598215,
+      "min_ns_per_step": 4779.36035,
+      "max_ns_per_step": 5246.89552,
       "spikes": 662,
       "results": [
         {
           "backend": "python",
           "steps": 200000,
           "current": 5.0,
-          "elapsed_ns": 956849643,
-          "ns_per_step": 4784.248215,
+          "elapsed_ns": 1049379104,
+          "ns_per_step": 5246.89552,
           "spikes": 662,
           "ending_state": [
             -65.4141155174714,
@@ -68,8 +68,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 5.0,
-          "elapsed_ns": 971854379,
-          "ns_per_step": 4859.271895,
+          "elapsed_ns": 1016519643,
+          "ns_per_step": 5082.598215,
           "spikes": 662,
           "ending_state": [
             -65.4141155174714,
@@ -80,8 +80,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 5.0,
-          "elapsed_ns": 965599060,
-          "ns_per_step": 4827.9953,
+          "elapsed_ns": 955872070,
+          "ns_per_step": 4779.36035,
           "spikes": 662,
           "ending_state": [
             -65.4141155174714,
@@ -92,8 +92,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 5.0,
-          "elapsed_ns": 1125803414,
-          "ns_per_step": 5629.01707,
+          "elapsed_ns": 1003517859,
+          "ns_per_step": 5017.589295,
           "spikes": 662,
           "ending_state": [
             -65.4141155174714,
@@ -104,8 +104,8 @@
           "backend": "python",
           "steps": 200000,
           "current": 5.0,
-          "elapsed_ns": 1026314755,
-          "ns_per_step": 5131.573775,
+          "elapsed_ns": 1031173282,
+          "ns_per_step": 5155.86641,
           "spikes": 662,
           "ending_state": [
             -65.4141155174714,
@@ -116,7 +116,7 @@
     },
     {
       "backend": "rust",
-      "timestamp_unix": 1787860388,
+      "timestamp_unix": 1787862887,
       "command": "cargo run --manifest-path engine/Cargo.toml --example bench_gutkin_ermentrout_rk4",
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
       "target_os": "linux",
@@ -127,10 +127,10 @@
         "cpu_affinity": "0",
         "cgroup_effective_cpuset": "unavailable",
         "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "4.68 4.47 5.04 5/4763 562687",
-        "load_average_after": "4.68 4.47 5.04 4/4760 562707",
+        "load_average_before": "5.08 5.62 5.94 3/4623 767223",
+        "load_average_after": "5.08 5.62 5.94 3/4625 767234",
         "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=3991.091,max=4001.018,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=1769.451,max=4100.838,sampled_cpu_count=12",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
@@ -138,15 +138,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 5,
-      "median_ns_per_step": 195.185365,
-      "min_ns_per_step": 187.794105,
-      "max_ns_per_step": 252.581075,
+      "median_ns_per_step": 208.149265,
+      "min_ns_per_step": 196.87486,
+      "max_ns_per_step": 217.363545,
       "results_ns_per_step": [
-        195.185365,
-        191.877815,
-        187.794105,
-        196.890405,
-        252.581075
+        205.945335,
+        208.149265,
+        211.55427,
+        196.87486,
+        217.363545
       ],
       "spike_counts": [
         662,
@@ -177,15 +177,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 5.0,
-      "median_ns_per_step": 194.9,
-      "min_ns_per_step": 189.7,
-      "max_ns_per_step": 196.0,
+      "median_ns_per_step": 201.4,
+      "min_ns_per_step": 193.2,
+      "max_ns_per_step": 216.4,
       "results_ns_per_step": [
-        196.0,
-        195.0,
-        189.7,
-        194.1,
-        194.9
+        216.4,
+        206.8,
+        200.7,
+        193.2,
+        201.4
       ],
       "spikes": 662,
       "spike_counts": [
@@ -202,15 +202,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 5.0,
-      "median_ns_per_step": 127.46783,
-      "min_ns_per_step": 126.28276,
-      "max_ns_per_step": 128.16601,
+      "median_ns_per_step": 141.895735,
+      "min_ns_per_step": 135.813885,
+      "max_ns_per_step": 143.803805,
       "results_ns_per_step": [
-        126.28276,
-        126.58425,
-        128.16601,
-        127.635875,
-        127.46783
+        141.98035,
+        143.803805,
+        141.895735,
+        135.813885,
+        136.986735
       ],
       "spikes": 662,
       "final_vs": [
@@ -234,15 +234,15 @@
       "steps": 200000,
       "repeats": 5,
       "current": 5.0,
-      "median_ns_per_step": 157.1104902541265,
-      "min_ns_per_step": 155.79976025037467,
-      "max_ns_per_step": 158.61541498452425,
+      "median_ns_per_step": 152.40325999911875,
+      "min_ns_per_step": 151.450255070813,
+      "max_ns_per_step": 156.39457502402365,
       "results_ns_per_step": [
-        155.79976025037467,
-        158.61541498452425,
-        157.1104902541265,
-        157.17306989245117,
-        156.59100492484868
+        151.450255070813,
+        156.39457502402365,
+        154.08513485454023,
+        152.40325999911875,
+        151.5214703977108
       ],
       "spikes": 662,
       "spike_counts": [
@@ -270,7 +270,7 @@
   ],
   "source_hashes": {
     "benchmarks/bench_model_gutkin_ermentrout.py": "34d0af5dc7ddc254e61fd59a6e3a45860f1af63709989125e5e506f2c50be7ee",
-    "engine/Cargo.toml": "9b2356e423cfd836ed426f1468c1173e8acb6e953963edcbc76bd9c84219bd61",
+    "engine/Cargo.toml": "18987357c785befcdfac0970e51114dcbd396a286c9b7e1b3355865c57e5771a",
     "engine/examples/bench_gutkin_ermentrout_rk4.rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd",
     "engine/src/neurons/simple_spiking.rs": "9d399cd4e2032cfda2ddbac8c2ed217532e537805864ad53eee66799f0fb6de8",
     "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "3ef8cbbd876f80e80396ce0a3f498fd67b387dd06fd599c1d590599bee5c2b9f",
@@ -283,7 +283,7 @@
       "py": "34d0af5dc7ddc254e61fd59a6e3a45860f1af63709989125e5e506f2c50be7ee"
     },
     "engine/Cargo": {
-      "toml": "9b2356e423cfd836ed426f1468c1173e8acb6e953963edcbc76bd9c84219bd61"
+      "toml": "18987357c785befcdfac0970e51114dcbd396a286c9b7e1b3355865c57e5771a"
     },
     "engine/examples/bench_gutkin_ermentrout_rk4": {
       "rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd"

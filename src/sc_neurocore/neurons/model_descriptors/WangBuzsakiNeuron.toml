@@ -11,14 +11,20 @@ schema_version = 2
 name = "Wang-Buzsáki"
 class_name = "WangBuzsakiNeuron"
 module = "wang_buzsaki"
-display_name = ""
+display_name = "Wang-Buzsaki fast-spiking interneuron"
 summary = "Modified HH for hippocampal interneurons — fast-spiking GABAergic basket cells"
 family = "Conductance-based"
 category = "conductance-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "fast-spiking hippocampal interneuron dynamics",
+    "ING and PING network studies",
+    "source-equation and cross-runtime regression",
+]
+hardware_fit = [
+    "bounded Q16.16 Gauss-Seidel co-simulation",
+]
 behavior_tags = [
     "excitable",
     "phasic",
@@ -133,9 +139,45 @@ v = "(-g_Na * ((1 / exprel(-(v + 35) / 10)) / (1 / exprel(-(v + 35) / 10) + 4 * 
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "approximate"
+
+[backends.go]
+status = "implemented"
+parity = "approximate"
+
+[backends.julia]
+status = "implemented"
+parity = "approximate"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_receipts/wang_buzsaki_1996.json"
+golden_trace_sha256 = "4a53c138c52518b13f6277dd1176190e952abb5094a14abaa0b12c9cc154013d"
+golden_citation = "Wang and Buzsaki 1996, DOI 10.1523/JNEUROSCI.16-20-06402.1996"
 
 [documentation]
 slug = "models/wang_buzsaki"
-notes = ""
+notes = "The committed RTL is a bounded Q16.16 compiler lowering, not a universal real-number or device claim."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "30 macro steps at I=10 with 50 Gauss-Seidel substeps per macro step"
+tolerance = "float64 reference 1e-9 absolute; five-runtime final state 1e-9; Q16.16 event count within one spike"
+evidence = "tests/test_reference_wang_buzsaki.py; tests/test_bench_wang_buzsaki.py; tests/test_cosim_wang_buzsaki_catalogue.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_wang_buzsaki_catalogue.py"
+synthesised = true
+synth_report = "tests/test_cosim_wang_buzsaki_catalogue.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "The bounded Q16.16 compiler lowering has event-count co-simulation, synthesis, and port-safety BMC; timing, PPA, device evidence, and universal real-number equivalence remain open."
