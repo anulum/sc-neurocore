@@ -49,7 +49,7 @@ parity note.
 |---|---|---|---|---|---|---|
 | Wang-Buzsaki | ✅ | ✅ | ✅ | ✅ executable | exact 2,856-event parity over the measured 20,000-step `I=10` packet; five-runtime final-state error below `1e-8`; committed compiler-bound Q16.16 RTL stays within one event over the bounded 20-macro-step co-simulation, synthesizes in Yosys, and passes depth-4 reset-safety BMC; timing, PPA, device, and silicon remain open | `benchmarks/results/bench_wang_buzsaki.json`; `hdl/formal/catalogue/sc_wang_buzsaki.v` |
 | FitzHugh-Nagumo | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 1 AP @ I=10/100 steps, 5-spike train @ I=0.5/2000 steps (RK4, exact RHS) | `729e0a2ea` |
-| Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | spike count — 0/3/5 @ I=0/50/100 over 2000 steps (RK4, tanh/cosh) | `bc46a0fb5` |
+| Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | exact 0/3/5-event parity at I=0/50/100 over 2,000 RK4 steps; executed five-runtime 200,000-step packet records 476 events and complete final-state error below `4e-8`; the committed compiler-bound Q16.16 RTL exactly preserves seven events over the 3,000-step receipt, passes Yosys coarse synthesis, and passes depth-4 reset-safety BMC under the receipt reset/current protocol; timing, PPA, device, and silicon remain open | `benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`; `hdl/formal/catalogue/sc_morris_lecar.v` |
 | Connor-Stevens | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (candidate-first RK4 with 100 sub-steps, exp); Mojo C ABI preserves every event and the six-state trace within `2e-6` over the enrolled envelope | `this commit` |
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (gate-first baseline-Euler with 100 sub-steps, exp); Mojo C ABI preserves every event and the four-state trace within `2e-9` over the enrolled envelope | `this commit` |
 | AdEx | ✅ | ✅ | ✅ | ✅ shared-lib | accel event count — 0/4/12 @ I=0/200/500 over 1000 baseline-Euler steps; all compiled traces stay within `5e-12` of Python and transport the complete maintained numeric contract except the factory-default Rust engine boundary; existing Q16.16 RTL co-simulation retains its declared two-percent event-count envelope at I=1000 over 500 steps | `this commit` |
@@ -113,7 +113,7 @@ parity note.
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
-plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
+plus source-hashed executable closure benchmarks for Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
 Lapicque, Perfect Integrator, Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF,
 McCulloch-Pitts, Sigmoid Rate, Threshold-linear Rate, Wilson-Cowan, Jansen–Rit,
 Montbrió–Pazó–Roxin, Resonate-and-Fire, Wong-Wang, Amari neural field, Brunel-Wang,

@@ -36,7 +36,7 @@ Jobs: **43**
 | McKeanNeuron | mckean | `sc_mckeanneuron` | `v_out` | Q8.8 | 4 |
 | MedvedevMapNeuron | medvedev_map | `sc_medvedev_map` | `u_out` | Q16.16 | 4 |
 | MihalasNieburNeuron | mihalas_niebur | `sc_mihalasnieburneuron` | `v_out` | Q8.8 | 3 |
-| MorrisLecarNeuron | morris_lecar | `sc_morris_lecar` | `v_out` | Q8.8 | 3 |
+| MorrisLecarNeuron | morris_lecar | `sc_morris_lecar` | `v_out` | Q16.16 | 4 |
 | PerfectIntegratorNeuron | perfect_integrator | `sc_perfect_integrator` | `v_out` | Q8.8 | 20 |
 | PernarowskiNeuron | pernarowski | `sc_pernarowski` | `v_out` | Q8.8 | 4 |
 | PoissonNeuron | poisson | `sc_poissonneuron` | — | Q24.24 | 4 |

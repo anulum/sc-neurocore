@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Morris-Lecar full-fidelity closure
+
+- Bound the existing Morris-Lecar source identity to a replayable 3,000-step
+  full-state/event receipt and its executed source-hashed 200,000-step packet
+  across Python, production Rust, Go, Julia, and Mojo. The descriptor and public
+  model page now expose the production engine, safety Rust, Go, Julia, and Mojo
+  truth instead of reporting only Python/Rust.
+- Replaced the stale committed Q8.8 catalogue object with the current compiler's
+  signed-Q16.16 lowering used by the behavioral evidence. The committed object
+  preserves all seven receipt events under Icarus/VVP, passes Yosys coarse
+  synthesis, and passes depth-4 public-port reset-safety BMC under the explicit
+  initial-reset and fixed-current receipt protocol. This reaches the declared H2
+  terminal tier; timing, PPA, device, formal equation equivalence, and physical
+  silicon remain explicitly open.
+
 ### Wang-Buzsaki full-fidelity closure
 
 - Closed the existing Wang-Buzsaki (1996) source identity through a replayable

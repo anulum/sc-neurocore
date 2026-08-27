@@ -13,12 +13,12 @@
 module sc_morris_lecar_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [31:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] v_out;
-    wire signed [15:0] w_out;
+    wire signed [31:0] v_out;
+    wire signed [31:0] w_out;
 
     sc_morris_lecar uut (
         .clk(clk),
@@ -30,6 +30,19 @@ module sc_morris_lecar_formal (
     );
 
 `ifdef FORMAL
+
+    // Bounded receipt protocol: initialise through reset and hold the exact
+    // enrolled fixed-point drive while checking the public reset property.
+    reg protocol_started = 1'b0;
+    always @(posedge clk) begin
+        if (!protocol_started)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        assume ($signed(I_t) == 32'sd6553600);
+        protocol_started <= 1'b1;
+    end
+
     // Minimal safety: async reset clears the spike flag.
     always @(*) begin
         if (!rst_n)

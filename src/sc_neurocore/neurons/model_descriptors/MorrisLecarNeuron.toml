@@ -16,9 +16,14 @@ summary = "Calcium-potassium oscillator — 2D conductance-based model with sigm
 family = "Oscillator"
 category = "oscillator"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "type-II conductance-oscillator simulation",
+    "cross-runtime and bounded fixed-point fidelity studies",
+]
+hardware_fit = [
+    "bounded compiler-generated Q16.16 event-count accelerator",
+]
 behavior_tags = [
     "excitable",
     "phasic",
@@ -167,28 +172,49 @@ w = "phi * cosh((v - v3) / (2 * v4)) * (0.5 * (1 + tanh((v - v3) / v4)) - w)"
 status = "implemented"
 parity = "exact"
 
-[backends.rust]
+[backends.rust_engine]
 status = "implemented"
 parity = "ulp-bounded"
 
+[backends.rust_safety]
+status = "implemented"
+parity = "approximate"
+
+[backends.go]
+status = "implemented"
+parity = "approximate"
+
+[backends.julia]
+status = "implemented"
+parity = "approximate"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
+
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":80.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "9adb3f1cbcaf8a25ca6360f079e15d10a7be0cdc0cd536082a310b5226a7ee60"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/morris_lecar_1981.json"
+golden_trace_sha256 = "2e2c431596a086ade7c6239a5acb1077b82a9911106836fbeea03c7068a2049d"
+receipt = "src/sc_neurocore/neurons/reference_receipts/morris_lecar_1981.json"
+benchmark = "benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json"
+parity = "exact events and bounded complete state across Python, Rust engine, Rust safety, Go, Julia, and Mojo"
 
 [documentation]
 slug = "models/morris_lecar"
-notes = ""
+notes = "The continuous source equations use the maintained type-II profile. Fixed-step RK4 and sampled upward crossings are repository numerical specialisations."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
 operating_point = "schema-DSL Morris-Lecar conductance; rk4/crossing"
-tolerance = "spike-count parity; not full state trajectory"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_morris_lecar_q1616_parity"
+tolerance = "exact event count; complete five-runtime final state within 4e-8 at the measured operating point"
+evidence = "tests/test_bench_morris_lecar.py; tests/test_cosim_morris_lecar_catalogue.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_morris_lecar_q1616_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+cosim_evidence = "tests/test_cosim_morris_lecar_catalogue.py::test_committed_rtl_matches_the_bounded_source_event_count"
+synthesised = true
+synth_report = "tests/test_cosim_morris_lecar_catalogue.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Committed compiler-bound Q16.16 RTL has bounded event co-simulation, Yosys coarse synthesis, and depth-4 reset-safety BMC under the receipt reset/current protocol; timing, PPA, device, and physical-silicon rungs remain open."

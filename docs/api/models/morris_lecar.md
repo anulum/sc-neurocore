@@ -230,6 +230,18 @@ sc_neurocore Pipeline
 │       ├── reset()
 │       └── get_state() → dict {v, w}
 │
+├── Safety and language-native mirrors
+│   ├── accel/rust/safety/morris_lecar.rs
+│   ├── accel/go/services/morris_lecar.go
+│   ├── accel/julia/neurons/morris_lecar.jl
+│   └── accel/mojo/kernels/morris_lecar.mojo
+│
+├── Hardware evidence
+│   └── committed compiler-generated signed-Q16.16 RTL
+│       ├── exact seven-event Icarus/VVP receipt co-simulation
+│       ├── Yosys synthesis
+│       └── depth-4 reset-safety BMC
+│
 └── Network runner
     └── NeuronVariant::MorrisLecar(MorrisLecarNeuron)
         ├── Wired in network_runner.rs:203
@@ -259,14 +271,17 @@ fail-closed signal.
 
 ### 4.2 Supported Operations
 
-| Operation | Python | Rust | PyO3 |
-|-----------|--------|------|------|
-| step(current) → spike | ✅ | ✅ | ✅ |
-| reset() | ✅ | ✅ | ✅ |
-| get_state() → dict | — | — | ✅ (v, w) |
-| Population wrapping | ✅ | via NeuronVariant | — |
-| Network integration | ✅ | ✅ | — |
-| Spike analysis | ✅ | — | — |
+| Operation | Python | Rust engine/PyO3 | Rust safety | Go | Julia | Mojo |
+|-----------|--------|------------------|-------------|----|-------|------|
+| RK4 step/current → event | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Complete `(v, w)` state | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Reset/default construction | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| NetworkRunner integration | — | ✅ | — | — | — | — |
+| Executed benchmark row | ✅ | ✅ | — | ✅ | ✅ | ✅ |
+
+The standalone safety-Rust kernel is covered by native parity and atomicity
+tests but is not a second timing row in the five-runtime benchmark: the measured
+Rust row is the production engine path.
 
 ### 4.3 Parameter Sensitivity
 
@@ -387,17 +402,17 @@ for _ in range(10000):
 
 ### 6.3 Runtime Implementation Comparison
 
-| Aspect | Python | Rust safety | Go service | Julia |
-|--------|--------|-------------|------------|-------|
-| m_inf | math.tanh | f64::tanh | math.Tanh | tanh |
-| w_inf | math.tanh | f64::tanh | math.Tanh | tanh |
-| lambda | math.cosh | f64::cosh | math.Cosh | cosh |
-| Baseline integration | old-V Euler | old-V Euler | old-V Euler | old-V Euler |
-| Invalid state | ValueError at construction/step | NaN fail-closed state | NaN fail-closed state | NaN fail-closed state |
+| Aspect | Python | Rust engine/safety | Go | Julia | Mojo |
+|--------|--------|--------------------|----|-------|------|
+| Activation functions | `math.tanh/cosh` | `f64::tanh/cosh` | `math.Tanh/Cosh` | `tanh/cosh` | `tanh/cosh` |
+| Maintained integration | candidate-first RK4 | candidate-first RK4 | candidate-first RK4 | candidate-first RK4 | candidate-first RK4 |
+| Event | sampled upward `v >= 0` crossing | same | same | same | same |
+| Invalid input/state | exception before commit | fail-closed, no commit | `-1`, no commit | `-1`, no commit | non-finite sentinel/error event |
 
-The runtime surfaces are verified against the same one-step current-balance
-invariant. Published parity claims should cite the exact verification run
-or benchmark artefact used for that release.
+The stable cross-libm observable is the event vector plus an explicit complete
+state tolerance; bit-identical floating-point trajectories are not claimed.
+The replayable receipt is
+`src/sc_neurocore/neurons/reference_receipts/morris_lecar_1981.json`.
 
 ### 6.4 NeuronVariant Wiring
 
@@ -423,7 +438,8 @@ NeuronVariant::MorrisLecar(n) => n.v,
 The maintained RK4 path is covered by
 `benchmarks/bench_model_morris_lecar.py`, which writes
 `benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`.
-That artefact records Python, Rust, Go, and Julia timing medians plus
+That artefact records Python, production Rust, Go, Julia, and Mojo timing
+medians plus
 source hashes for the touched implementation and test files. The run is
 labelled `local_regression_non_isolated` and
 `production_speed_claim=false`; it is evidence that the same RK4 contract
@@ -434,11 +450,11 @@ Measured local regression values from
 
 | Backend | Median ns/step | Min ns/step | Max ns/step | Spikes | Evidence |
 |---------|---------------:|------------:|------------:|-------:|----------|
-| Python | 24885.30318 | 24151.06455 | 25356.900475 | 476 | RK4 reference |
-| Rust engine | 285.99298 | 279.441885 | 290.10643 | 476 | RK4 engine example |
-| Go service mirror | 212.0 | 209.3 | 246.1 | 476 | deterministic RK4 mirror |
-| Julia mirror | 153.35269 | 151.68447 | 153.651085 | 476 | RK4 mirror |
-| Mojo mirror | 189.85700502526015 | 188.84797507780604 | 190.70768496021628 | 476 | RK4 mirror |
+| Python | 35631.74989 | 30500.767725 | 51336.38503 | 476 | RK4 reference |
+| Rust engine | 350.713925 | 328.178685 | 358.75923 | 476 | RK4 engine example |
+| Go service mirror | 248.1 | 246.8 | 251.4 | 476 | deterministic RK4 mirror |
+| Julia mirror | 179.829115 | 176.156045 | 181.100615 | 476 | RK4 mirror |
+| Mojo mirror | 233.19244501180947 | 230.25805014185607 | 247.85831512417644 | 476 | RK4 mirror |
 
 ### 7.2 Historical Rust Criterion evidence
 
@@ -477,62 +493,24 @@ the speedup achievable through Rust compilation alone.
 
 ---
 
-## 8. Test Coverage
+## 8. Verification evidence
 
-### 8.1 Python Tests (42 total)
+The maintained evidence is organized by contract rather than a brittle test
+count:
 
-**File:** `tests/test_model_morris_lecar.py` (40 tests)
+| Contract | Evidence |
+|----------|----------|
+| Source equations and independent RK4 trace | `tests/test_reference_morris_lecar.py` and `morris_lecar_driven_oscillation_doi.json` |
+| Replayable full state plus event receipt | `tests/test_bench_morris_lecar.py` |
+| Python dynamics, parameters, integrators, atomicity | `tests/test_model_morris_lecar_*.py`, `tests/test_morris_lecar_integrator_paths.py` |
+| Production Rust/PyO3 and NetworkRunner | engine model, binding, public-export, and runner tests |
+| Safety Rust, Go, Julia, executable Mojo | native kernel tests plus the source-hashed five-runtime benchmark |
+| Committed Q16.16 object and event co-simulation | `tests/test_cosim_morris_lecar_catalogue.py` |
+| Yosys and formal reset safety | the same catalogue test and `hdl/formal/catalogue/sc_morris_lecar.sby` |
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 5 | Construction, binary output, variables evolve, finite, reset |
-| Activation | 4 | m_inf sigmoid, w_inf sigmoid, lambda positive, tanh boundaries |
-| Dynamics | 6 | Fires under drive, subthreshold silence, Type-II onset, non-monotonic f-I, depolarisation block, rate increase |
-| Equations | 4 | dV formula, dw formula, V-nullcline, w-nullcline |
-| Parameters | 6 | g_ca sweep, g_k sweep, phi sweep, V3/V4 Type-I, c_m effect, dt stability |
-| Excitability | 4 | Type-I SNLC, Type-II Hopf, frequency discontinuity, subthreshold oscillation |
-| Performance | 2 | Isolation throughput, network throughput |
-| Pipeline | 4 | Population, projection wiring, network spikes, spike analysis |
-| Stability | 5 | Extended run, extreme drive, negative input, NaN detection, bounded voltage |
-
-**File:** `tests/test_new_neurons.py` (2 tests)
-
-| Test | What is verified |
-|------|-----------------|
-| `test_fires` | Fires under drive |
-| `test_w_recovery` | w variable evolves |
-
-### 8.2 Rust Tests (10 total)
-
-**File:** `engine/src/neurons/simple_spiking/morris_lecar.rs`
-
-| Test | What is verified |
-|------|-----------------|
-| `default_matches_constructor_state` | `Default` and `new` start from the same voltage |
-| `morris_lecar_fires` | Fires under sustained drive |
-| `ml_silent_without_input` | v bounded at I=0 |
-| `ml_reset_clears_state` | v=-60.0, w=0.0 after reset |
-| `ml_moderate_input_stable` | v finite at moderate drive |
-| `ml_rk4_separates_from_forward_euler` | RK4 candidate differs from one Euler step |
-| `ml_nan_no_panic` | NaN input does not crash |
-| `ml_overflow_candidate_preserves_state` | Invalid RK4 candidate fails closed |
-| `ml_negative_no_crash` | v finite at negative drive |
-| `ml_k_gating_bounded` | 0 ≤ w ≤ 1 (activation range) |
-
-### 8.3 Coverage Summary
-
-| Category | Python | Rust | Total |
-|----------|--------|------|-------|
-| Construction/reset | 3 | 2 | 5 |
-| Activation functions | 4 | 0 | 4 |
-| Dynamics/spiking | 10 | 3 | 13 |
-| Equations/nullclines | 4 | 1 | 5 |
-| Excitability types | 4 | 0 | 4 |
-| Parameters | 6 | 0 | 6 |
-| Numerical stability | 5 | 4 | 9 |
-| Performance | 2 | 0 | 2 |
-| Pipeline | 4 | 0 | 4 |
-| **Total** | **42** | **10** | **52** |
+The hardware evidence is bounded: exact receipt event count and compiler-object
+identity are tested, while formal equation equivalence and physical-device
+claims remain open.
 
 ---
 

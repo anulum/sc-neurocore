@@ -60,7 +60,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "MainenSejnowskiNeuron",
     "MATNeuron",
     "McKeanNeuron",
-    "NMDANeuron",
+    "MorrisLecarNeuron",
     "NonResettingLIFNeuron",
     "ParallelSpikingNeuron",
     "PersistentNaNeuron",
@@ -68,6 +68,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "SKNeuron",
     "TTypeCaNeuron",
     "TwoCompartmentLIFNeuron",
+    "WangBuzsakiNeuron",
 }
 
 

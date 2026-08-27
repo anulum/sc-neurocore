@@ -151,7 +151,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "iqif": 4,
     "jansen_rit": 4,
     "mcculloch_pitts": 4,
-    "morris_lecar": 3,
+    "morris_lecar": 4,
     "fitzhugh_nagumo": 4,
     "fitzhugh_rinzel": 4,
     "hindmarsh_rose": 4,
@@ -261,6 +261,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "jansen_rit": (64, 32),
     "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
+    "morris_lecar": (32, 16),
     "poisson": (48, 24),
     "resonate_fire": (64, 32),
     "sigmoid_rate": (64, 32),
@@ -268,6 +269,14 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "wilson_cowan": (64, 32),
     "wong_wang": (64, 32),
     "wang_buzsaki": (32, 16),
+}
+
+# Transcendental Q16.16 designs can make an unconstrained-current BMC spend
+# most of its time solving input cones unrelated to the stated reset property.
+# Pin only those jobs to their enrolled receipt current and an initial reset;
+# the DUT remains the exact committed compiler lowering.
+FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
+    "morris_lecar": 100.0,
 }
 
 # Schema display names are user-facing and may contain punctuation or
@@ -367,6 +376,7 @@ def _formal_wrapper(
     minimal: bool,
     event_silent: bool = False,
     data_width: int = 16,
+    fixed_current_word: int | None = None,
 ) -> str:
     """Build a port-only formal harness (no hierarchical probes)."""
     module = ports.name
@@ -389,6 +399,24 @@ def _formal_wrapper(
     conn_block = ",\n        ".join(connections)
     wires = "\n".join(wire_decls)
     if minimal:
+        bounded_protocol = (
+            f"""
+    // Bounded receipt protocol: initialise through reset and hold the exact
+    // enrolled fixed-point drive while checking the public reset property.
+    reg protocol_started = 1'b0;
+    always @(posedge clk) begin
+        if (!protocol_started)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        assume ($signed(I_t) == {data_width}'sd{fixed_current_word});
+        protocol_started <= 1'b1;
+    end
+
+"""
+            if fixed_current_word is not None and ports.has_current_input
+            else ""
+        )
         event_silence = (
             """
     reg past_valid = 1'b0;
@@ -404,7 +432,7 @@ def _formal_wrapper(
         )
         formal_body = f"""
 `ifdef FORMAL
-    // Minimal safety: async reset clears the spike flag.
+{bounded_protocol}    // Minimal safety: async reset clears the spike flag.
     always @(*) begin
         if (!rst_n)
             assert (spike_out == 1'b0);
@@ -514,6 +542,11 @@ def emit_one(class_name: str) -> EmitResult:
             minimal=schema in MINIMAL_SAFETY_SCHEMAS,
             event_silent=schema in EVENT_SILENT_SCHEMAS,
             data_width=data_width,
+            fixed_current_word=(
+                round(FORMAL_FIXED_CURRENT_BY_SCHEMA[schema] * (1 << fraction))
+                if schema in FORMAL_FIXED_CURRENT_BY_SCHEMA
+                else None
+            ),
         ),
         encoding="utf-8",
     )
