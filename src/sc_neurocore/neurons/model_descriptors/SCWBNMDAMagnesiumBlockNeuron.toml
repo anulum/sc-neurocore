@@ -17,20 +17,34 @@ family = "Ion-channel"
 category = "ion-channel"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["compatibility with the retained SC project recurrence"]
-hardware_fit = ["bounded source-default 50-cycle Q32.32 FSM co-simulation"]
-behavior_tags = ["excitable", "irregular", "rate-coded", "tonic"]
+intended_use = [
+    "compatibility with the retained SC project recurrence",
+]
+hardware_fit = [
+    "bounded source-default 50-cycle Q32.32 FSM co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "irregular",
+    "rate-coded",
+    "tonic",
+]
 
 [provenance]
-authors = ["SC-NeuroCore project"]
+authors = [
+    "SC-NeuroCore project",
+]
 year = 2026
 
 [state.v]
 init = -65.0
+
 [state.h]
 init = 0.6
+
 [state.n]
 init = 0.32
+
 [state.s_nmda]
 init = 0.0
 
@@ -38,58 +52,72 @@ init = 0.0
 default = 35.0
 unit = "mS/cm^2"
 meaning = "maximal sodium conductance"
+
 [parameters.g_k]
 default = 9.0
 unit = "mS/cm^2"
 meaning = "maximal potassium conductance"
+
 [parameters.g_nmda]
 default = 0.5
 unit = "mS/cm^2"
 meaning = "project NMDA conductance"
+
 [parameters.g_l]
 default = 0.1
 unit = "mS/cm^2"
 meaning = "leak conductance"
+
 [parameters.e_na]
 default = 55.0
 unit = "mV"
 meaning = "sodium reversal potential"
+
 [parameters.e_k]
 default = -90.0
 unit = "mV"
 meaning = "potassium reversal potential"
+
 [parameters.e_nmda]
 default = 0.0
 unit = "mV"
 meaning = "NMDA reversal potential"
+
 [parameters.e_l]
 default = -65.0
 unit = "mV"
 meaning = "leak reversal potential"
+
 [parameters.c_m]
 default = 1.0
 unit = "uF/cm^2"
 meaning = "membrane capacitance"
+
 [parameters.phi]
 default = 5.0
 unit = "1"
 meaning = "gating-kinetic scale"
+
 [parameters.mg_conc]
 default = 1.0
 unit = "mM"
 meaning = "extracellular magnesium concentration"
+
 [parameters.tau_rise]
 default = 10.0
 unit = "ms"
 meaning = "project gate rise time constant"
+
 [parameters.tau_decay]
 default = 100.0
 unit = "ms"
 meaning = "project gate decay time constant"
+
 [parameters.v_threshold]
 default = -20.0
 unit = "mV"
 meaning = "project event threshold"
+
 [parameters.gain]
 default = 1.0
 unit = "1"
@@ -106,14 +134,19 @@ event = "threshold reset to -65 mV"
 
 [backends.python]
 status = "implemented"
+
 [backends.rust_engine]
 status = "implemented"
+
 [backends.rust_safety]
 status = "implemented"
+
 [backends.go]
 status = "implemented"
+
 [backends.julia]
 status = "implemented"
+
 [backends.mojo]
 status = "implemented"
 

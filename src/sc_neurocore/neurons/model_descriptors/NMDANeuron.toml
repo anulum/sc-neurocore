@@ -17,23 +17,38 @@ family = "Ion-channel"
 category = "ion-channel"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["NMDA feedback and bistability studies", "source-equation and cross-runtime studies"]
-hardware_fit = ["bounded source-default Q16.16 midpoint-RK2 co-simulation"]
-behavior_tags = ["excitable", "rate-coded", "tonic"]
+intended_use = [
+    "NMDA feedback and bistability studies",
+    "source-equation and cross-runtime studies",
+]
+hardware_fit = [
+    "bounded source-default Q16.16 midpoint-RK2 co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+]
 
 [provenance]
-authors = ["Wang, X.-J."]
+authors = [
+    "Wang, X.-J.",
+]
 year = 1999
 doi = "10.1523/JNEUROSCI.19-21-09587.1999"
 
 [state.v]
 init = -70.0
+
 [state.x_nmda]
 init = 0.0
+
 [state.s_nmda]
 init = 0.0
+
 [state.ca]
 init = 0.0
+
 [state.refractory_remaining]
 init = 0.0
 
@@ -41,92 +56,163 @@ init = 0.0
 default = 0.5
 unit = "nF"
 meaning = "pyramidal-cell membrane capacitance"
-range = [0.01, 10.0]
+range = [
+    0.01,
+    10.0,
+]
+
 [parameters.g_l]
 default = 0.025
 unit = "uS"
 meaning = "leak conductance"
-range = [0.0, 1.0]
+range = [
+    0.0,
+    1.0,
+]
+
 [parameters.v_l]
 default = -70.0
 unit = "mV"
 meaning = "leak reversal potential"
-range = [-100.0, -40.0]
+range = [
+    -100.0,
+    -40.0,
+]
+
 [parameters.g_nmda]
 default = 0.1
 unit = "uS"
 meaning = "NMDA autapse conductance used by the source single-cell experiment"
-range = [0.0, 2.0]
+range = [
+    0.0,
+    2.0,
+]
+
 [parameters.e_nmda]
 default = 0.0
 unit = "mV"
 meaning = "NMDA reversal potential"
-range = [-10.0, 10.0]
+range = [
+    -10.0,
+    10.0,
+]
+
 [parameters.mg_conc]
 default = 1.0
 unit = "mM"
 meaning = "extracellular magnesium concentration"
-range = [0.0, 5.0]
+range = [
+    0.0,
+    5.0,
+]
+
 [parameters.alpha_x]
 default = 1.0
 unit = "1"
 meaning = "presynaptic NMDA transmitter increment per emitted event"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.tau_x]
 default = 2.0
 unit = "ms"
 meaning = "NMDA transmitter decay time constant"
-range = [0.01, 100.0]
+range = [
+    0.01,
+    100.0,
+]
+
 [parameters.alpha_s]
 default = 1.0
 unit = "ms^-1"
 meaning = "saturating NMDA gate opening factor"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.tau_s]
 default = 80.0
 unit = "ms"
 meaning = "NMDA gate decay time constant"
-range = [1.0, 1000.0]
+range = [
+    1.0,
+    1000.0,
+]
+
 [parameters.kinetic_scale]
 default = 1.0
 unit = "1"
 meaning = "explicit scaling of the NMDA kinetic equations"
-range = [0.01, 100.0]
+range = [
+    0.01,
+    100.0,
+]
+
 [parameters.g_ahp]
 default = 0.0
 unit = "uS"
 meaning = "optional calcium-activated potassium adaptation conductance"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.v_k]
 default = -85.0
 unit = "mV"
 meaning = "potassium reversal potential"
-range = [-120.0, -40.0]
+range = [
+    -120.0,
+    -40.0,
+]
+
 [parameters.alpha_ca]
 default = 0.2
 unit = "1"
 meaning = "calcium increment per emitted event"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
+
 [parameters.tau_ca]
 default = 80.0
 unit = "ms"
 meaning = "calcium decay time constant"
-range = [1.0, 1000.0]
+range = [
+    1.0,
+    1000.0,
+]
+
 [parameters.v_threshold]
 default = -52.0
 unit = "mV"
 meaning = "pyramidal-cell spike threshold"
-range = [-80.0, -30.0]
+range = [
+    -80.0,
+    -30.0,
+]
+
 [parameters.v_reset]
 default = -59.0
 unit = "mV"
 meaning = "post-spike reset potential"
-range = [-100.0, -30.0]
+range = [
+    -100.0,
+    -30.0,
+]
+
 [parameters.refractory_period]
 default = 2.0
 unit = "ms"
 meaning = "absolute refractory period"
-range = [0.0, 20.0]
+range = [
+    0.0,
+    20.0,
+]
 
 [integration]
 dt = 0.05
@@ -136,20 +222,25 @@ method = "midpoint-rk2"
 v = "C_m*dV/dt=-g_l*(V-V_l)-g_nmda*s*B(V)*(V-E_nmda)-g_ahp*Ca*(V-V_k)+I_app"
 x_nmda = "dx/dt=-x/tau_x; emitted events increment x by alpha_x"
 s_nmda = "ds/dt=alpha_s*x*(1-s)-s/tau_s"
-mg_block = "B(V)=1/(1+[Mg]*exp(-0.062*V)/3.57)"
 ca = "dCa/dt=-Ca/tau_ca; emitted events increment Ca by alpha_ca"
+mg_block = "B(V)=1/(1+[Mg]*exp(-0.062*V)/3.57)"
 event = "sampled upward threshold detection, reset to v_reset, then absolute refractory hold"
 
 [backends.python]
 status = "implemented"
+
 [backends.rust_engine]
 status = "implemented"
+
 [backends.rust_safety]
 status = "implemented"
+
 [backends.go]
 status = "implemented"
+
 [backends.julia]
 status = "implemented"
+
 [backends.mojo]
 status = "implemented"
 

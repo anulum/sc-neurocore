@@ -130,7 +130,6 @@ pub mod sc_normalized_energy_lif;
 pub mod engine;
 pub mod entropy;
 pub mod eprop;
-pub mod equation_builder;
 pub mod equiv;
 pub mod ermentrout_kopell_map_neuron;
 pub mod ermentrout_kopell_pop;

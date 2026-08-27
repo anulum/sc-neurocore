@@ -95,6 +95,7 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
         "method": "euler",
         "parameters": {"theta", "dt"},
     },
+    "SCWBNMDAMagnesiumBlockNeuron": {"method": "euler-50-substeps"},
 }
 
 
