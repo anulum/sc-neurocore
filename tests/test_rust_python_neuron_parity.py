@@ -101,6 +101,7 @@ _PYTHON_ONLY_MODELS = frozenset(
         "HybridFisherPosnerLIFNeuron",
         "Izhikevich2007Neuron",
         "SCLeakyTwoCompartmentLIFNeuron",
+        "SCResettingParallelSpikingNeuron",
         "SRM0Neuron",
     }
 )
@@ -135,6 +136,12 @@ _PYTHON_ONLY_BOUNDARIES = (
         source_path=Path("src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py"),
         source_token="preserved repository recurrence",
         reason_token="count-neutral preserved leaky recurrence",
+    ),
+    PythonOnlyBoundary(
+        name="SCResettingParallelSpikingNeuron",
+        source_path=Path("src/sc_neurocore/neurons/models/sc_resetting_psn.py"),
+        source_token="preserved repository recurrence",
+        reason_token="count-neutral preserved resetting recurrence",
     ),
     PythonOnlyBoundary(
         name="SRM0Neuron",
@@ -179,10 +186,10 @@ _RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/lib.rs"),
 )
 _DOC_TOKENS = (
-    "173 public Python registry names",
+    "174 public Python registry names",
     "157 same-name Rust constructors",
     "10 Rust-prefixed or core-only constructors",
-    "6 Python-only registry names",
+    "7 Python-only registry names",
     "Python-only boundary rationale",
     "HybridFisherPosnerLIFNeuron",
 )
@@ -323,7 +330,7 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert model_names >= _STOCHASTIC
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
-    assert len(model_names) == 173
+    assert len(model_names) == 174
     assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 157
 
 

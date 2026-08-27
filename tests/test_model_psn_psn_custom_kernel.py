@@ -16,7 +16,7 @@ from tests.model_psn_support import *  # noqa: F403
 class TestPSNCustomKernel:
     def test_custom_kernel_affects_scoring(self):
         """Non-uniform kernel weights recent inputs differently."""
-        n = ParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
+        n = SCResettingParallelSpikingNeuron(kernel_size=4, v_threshold=1.0)
         n.kernel = np.array([0.0, 0.0, 0.0, 1.0])  # only last entry
         # Only the value at position 3 matters
         n.step(0.0)

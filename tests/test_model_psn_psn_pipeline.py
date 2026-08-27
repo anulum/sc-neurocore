@@ -15,11 +15,11 @@ from tests.model_psn_support import *  # noqa: F403
 
 class TestPSNPipeline:
     def test_population(self):
-        assert Population(ParallelSpikingNeuron, n=10, label="psn").n == 10
+        assert Population(SCResettingParallelSpikingNeuron, n=10, label="psn").n == 10
 
     def test_projection_wiring(self):
-        src = Population(ParallelSpikingNeuron, n=5, label="src")
-        tgt = Population(ParallelSpikingNeuron, n=5, label="tgt")
+        src = Population(SCResettingParallelSpikingNeuron, n=5, label="src")
+        tgt = Population(SCResettingParallelSpikingNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         proj = Projection(src, tgt, weight=1.0, probability=1.0, seed=42)
         mon_src = SpikeMonitor(src)
@@ -29,7 +29,7 @@ class TestPSNPipeline:
         assert mon_src.count > 0
 
     def test_network_spikes(self):
-        pop = Population(ParallelSpikingNeuron, n=10, label="psn")
+        pop = Population(SCResettingParallelSpikingNeuron, n=10, label="psn")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
@@ -37,17 +37,17 @@ class TestPSNPipeline:
         assert mon.count > 0
 
     def test_analysis_spike_count(self):
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         assert spike_count(train) > 10
 
     def test_analysis_spike_count_consistency(self):
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         assert spike_count(train) == int(train.sum())
 
     def test_analysis_isi(self):
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         intervals = isi(train, dt=0.001)
         if intervals.size > 0:
@@ -55,13 +55,13 @@ class TestPSNPipeline:
             assert np.all(intervals > 0)
 
     def test_analysis_firing_rate(self):
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
 
     def test_analysis_cross_validation(self):
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(500)])
         sc = spike_count(train)
         dt_sim = 0.001

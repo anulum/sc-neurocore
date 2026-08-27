@@ -12,11 +12,11 @@ name = "ParallelSpikingNeuron"
 class_name = "ParallelSpikingNeuron"
 module = "psn"
 display_name = ""
-summary = "Parallel Spiking Neuron — 2024, linear filter over all timesteps."
+summary = "k-order sliding Parallel Spiking Neuron — Fang et al. (2023)."
 family = "Hardware / neuromorphic"
 category = "hardware-neuromorphic"
 biophysical_detail = "point"
-maturity = "experimental"
+maturity = "reference"
 intended_use = []
 hardware_fit = []
 behavior_tags = [
@@ -27,34 +27,70 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Comsa, I.-M., Potempa, K., Versari, L. et al.",
+    "Fang, W., Yu, Z., Zhou, Z., Chen, D., Chen, Y., Ma, Z., Masquelier, T. & Tian, Y.",
 ]
-year = 2020
-doi = "10.1109/ICASSP40776.2020.9053856"
+year = 2023
+doi = "10.48550/arXiv.2304.12760"
 
-[state.kernel_size]
-init = 8.0
+[state.hidden]
+init = 0.0
+
+[parameters.kernel_size]
+default = 8.0
+unit = "steps"
+meaning = "window order k: number of retained inputs the hidden state integrates"
+range = [
+    1.0,
+    1048576.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
 unit = "1"
-meaning = "normalised firing threshold of the alpha-synapse temporal-coding neuron"
+meaning = "firing threshold compared against the hidden state; trained in the paper"
 range = [
-    0.0,
-    10.0,
+    -1000000.0,
+    1000000.0,
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+hidden = "H[t] = sum_{i=0}^{k-1} W_i * X[t-k+1+i], with X[j] = 0 for j < 0 (paper Eq. 14)"
+spike = "S[t] = Theta(H[t] - v_threshold); Theta(0) = 1 per the paper (paper Eq. 15)"
+weights = "W in R^k is learnable and shared across time-steps; weights[k-1] multiplies the newest input; the uniform W_i = 1/k default is a repository default (the paper trains W and v_threshold per task)"
+reset = "none — no PSN variant has a reset; firing never clears the retained inputs"
+order = "the hidden sum accumulates sequentially from i = 0 so every backend is bit-exact"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":1.2,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "dda5e26b56b6b0c049e2e601d68c37870f55bed221b7929e51371736094d121b"
+event_count = 994
+final_state = "{\"hidden\":1.2}"
 
 [documentation]
 slug = "models/psn"
-notes = ""
+notes = "Publication-exact k-order sliding PSN (Fang et al. 2023, Eqs. 14-15), the only PSN-family member expressible as a per-step streaming neuron; the T-order PSN (Eq. 9-10) and the k-order masked PSN (Eq. 11-12) are whole-sequence training formulations. The pure-arithmetic window sum gives bit-exact cross-backend parity. The structurally different historical recurrence formerly published under this name (spike-triggered buffer reset and circular kernel pairing) is preserved as the count-neutral SCResettingParallelSpikingNeuron identity. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "32-64 deterministic non-constant drives with a non-uniform weight vector plus 1000 steps at I=1.2"

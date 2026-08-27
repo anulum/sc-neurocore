@@ -238,6 +238,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "LoihiCUBANeuron",
             "NeuroGridNeuron",
             "ParallelSpikingNeuron",
+            "SCResettingParallelSpikingNeuron",
             "SigmaDeltaNeuron",
             "SpiNNaker2Neuron",
             "SpiNNakerLIFNeuron",

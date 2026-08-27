@@ -136,6 +136,7 @@ _CLASS_TO_MODULE = {
     "NonlinearLIFNeuron": "nlif",
     "PVFastSpikingNeuron": "pv_fast_spiking_neuron",
     "ParallelSpikingNeuron": "psn",
+    "SCResettingParallelSpikingNeuron": "sc_resetting_psn",
     "ParametricLIFNeuron": "plif",
     "PerfectIntegratorNeuron": "perfect_integrator",
     "PernarowskiNeuron": "pernarowski",

@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCResettingParallelSpikingNeuron"
+class_name = "SCResettingParallelSpikingNeuron"
+module = "sc_resetting_psn"
+display_name = ""
+summary = "SC resetting windowed neuron — preserved repository recurrence."
+family = "Hardware / neuromorphic"
+category = "hardware-neuromorphic"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+doi = ""
+derivation_note = "Project recurrence retained count-neutrally; it is not attributed to the Fang et al. 2023 sliding PSN equations."
+
+[state.buffer]
+init = 0.0
+
+[parameters.kernel_size]
+default = 8.0
+unit = "steps"
+meaning = "length of the circular input buffer and of the kernel"
+range = [
+    1.0,
+    1048576.0,
+]
+
+[parameters.v_threshold]
+default = 1.0
+unit = "1"
+meaning = "firing threshold compared against the windowed score"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+score = "score[t] = kernel[:n] . buffer[:n], n = min(t+1, kernel_size); the dot pairs kernel entries with circular buffer slots, not time-ordered inputs"
+event = "spike when score >= v_threshold, then buffer[:] = 0 (spike-triggered buffer reset)"
+warmup = "the score divides by the full kernel_size during warm-up, matching zero-padded pre-history for the default uniform kernel"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sc_resetting_psn"
+notes = "Count-neutral SC identity preserving the resetting windowed recurrence formerly published as ParallelSpikingNeuron; finite-input trajectories are bit-exact with the pre-2026-08-27 implementation (frozen anchors in tests/test_model_sc_resetting_psn.py). Structurally distinct from the Fang et al. 2023 sliding PSN (the PSN family has no reset); no publication-exact claim. Engine, Go, Julia, Mojo, and silicon lanes are intentionally not implemented for this preserved identity."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "frozen 64/20/12-step anchors at varied, constant, and non-uniform-kernel drives"

@@ -62,6 +62,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "McKeanNeuron",
     "NMDANeuron",
     "NonResettingLIFNeuron",
+    "ParallelSpikingNeuron",
     "PersistentNaNeuron",
     "SigmaDeltaNeuron",
     "SKNeuron",

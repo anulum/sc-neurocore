@@ -194,3 +194,20 @@ def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
     assert "tests/test_model_tc_lif_atomicity.py" in step
     assert "tests/test_tc_lif_backends.py" in step
     assert "--fail-under=100 --show-missing" in step
+
+
+def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
+    """The sliding PSN family (canonical + SC identity) needs branch custody."""
+
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    start = workflow.index("- name: ParallelSpiking exact coverage and backend parity")
+    end = workflow.index("\n      - name:", start + 1)
+    step = workflow[start:end]
+
+    assert "if: matrix.primary" in step
+    assert "--rcfile=/dev/null --branch" in step
+    assert "src/sc_neurocore/neurons/models/psn.py" in step
+    assert "src/sc_neurocore/neurons/models/sc_resetting_psn.py" in step
+    assert "tests/test_model_psn_atomicity.py" in step
+    assert "tests/test_psn_backends.py" in step
+    assert "--fail-under=100 --show-missing" in step

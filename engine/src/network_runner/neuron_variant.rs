@@ -395,7 +395,7 @@ impl NeuronVariant {
             NeuronVariant::BoothRinzel(n) => n.vs,
             NeuronVariant::Dendrify(n) => n.v_s,
             NeuronVariant::LiquidTimeConstant(n) => n.x,
-            NeuronVariant::ParallelSpiking(_) => 0.0,
+            NeuronVariant::ParallelSpiking(n) => n.hidden,
             NeuronVariant::FractionalLIF(n) => n.v,
             NeuronVariant::StochasticIF(n) => n.v,
             NeuronVariant::GalvesLocherbach(n) => n.v,

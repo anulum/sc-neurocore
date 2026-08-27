@@ -18,7 +18,7 @@ class TestPSNPerformance:
     def test_isolation_throughput(self):
         import time
 
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         N = 200_000
         t0 = time.perf_counter()
         for _ in range(N):
@@ -32,7 +32,7 @@ class TestPSNPerformance:
     def test_network_throughput(self):
         import time
 
-        pop = Population(ParallelSpikingNeuron, n=20, label="bench")
+        pop = Population(SCResettingParallelSpikingNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)

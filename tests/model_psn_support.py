@@ -8,13 +8,13 @@
 
 from __future__ import annotations
 
-"""Full pipeline test for ParallelSpikingNeuron (PSN, 2024).
+"""Full pipeline test for SCResettingParallelSpikingNeuron (PSN, 2024).
 
 1D convolution kernel over circular buffer. Spike when
 dot(kernel, buffer) >= threshold. Buffer cleared on spike."""
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.psn import ParallelSpikingNeuron
+from sc_neurocore.neurons.models.sc_resetting_psn import SCResettingParallelSpikingNeuron
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
@@ -25,7 +25,7 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, is
 __all__ = [
     "np",
     "pytest",
-    "ParallelSpikingNeuron",
+    "SCResettingParallelSpikingNeuron",
     "Population",
     "Projection",
     "Network",

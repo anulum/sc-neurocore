@@ -590,6 +590,28 @@ jobs:
             --include='src/sc_neurocore/neurons/models/tc_lif.py,src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py,src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py' \
             --fail-under=100 --show-missing
 
+      - name: ParallelSpiking exact coverage and backend parity
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-psn python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/neurons/models/psn.py,src/sc_neurocore/neurons/models/sc_resetting_psn.py' \
+            -m pytest tests/test_model_psn_atomicity.py \
+              tests/test_model_sc_resetting_psn.py \
+              tests/test_model_psn_parallel_spiking_neuron.py \
+              tests/test_model_psn_psn_edge_cases.py \
+              tests/test_model_psn_psn_custom_kernel.py \
+              tests/test_model_psn_psn_performance.py \
+              tests/test_model_psn_psn_isolation.py \
+              tests/test_model_psn_psn_pipeline.py \
+              tests/test_model_psn_psn_scoring.py \
+              tests/test_psn_backends.py -q
+          COVERAGE_FILE=.coverage-psn python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/neurons/models/psn.py,src/sc_neurocore/neurons/models/sc_resetting_psn.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

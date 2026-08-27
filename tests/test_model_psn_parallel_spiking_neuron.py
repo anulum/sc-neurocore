@@ -15,8 +15,8 @@ from tests.model_psn_support import *  # noqa: F403
 
 class TestParallelSpikingNeuron:
     def test_dynamics(self):
-        from sc_neurocore.neurons.models.psn import ParallelSpikingNeuron
+        from sc_neurocore.neurons.models.sc_resetting_psn import SCResettingParallelSpikingNeuron
 
-        n = ParallelSpikingNeuron()
+        n = SCResettingParallelSpikingNeuron()
         results = [n.step(0.3) for _ in range(20)]
         assert any(r != 0 for r in results) or any(b != 0.0 for b in n.buffer)

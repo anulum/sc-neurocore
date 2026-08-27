@@ -1,8 +1,8 @@
-# Neuron Model Reference — 169 Python Classes / 198 Rust PyO3 Wrappers
+# Neuron Model Reference — 172 Python Classes / 199 Rust PyO3 Wrappers
 
-SC-NeuroCore currently exposes 171 lazy-loaded Python registry names, including
-169 static model classes across 165 Python model source modules in
-`src/sc_neurocore/neurons/models/`, plus 198 Rust PyO3 model wrappers in the
+SC-NeuroCore currently exposes 174 lazy-loaded Python registry names, including
+172 static model classes across 168 Python model source modules in
+`src/sc_neurocore/neurons/models/`, plus 199 Rust PyO3 model wrappers in the
 optional engine. The historical Kilinc-Bhatt module is alias-only and does not
 add a scientific catalogue model. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
@@ -53,9 +53,9 @@ caches the resolved Python class for later imports.
 
 `tests/test_rust_python_neuron_parity.py` is the live coverage map for the
 Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
-capability inventory above counts 171 static classes in
+capability inventory above counts 172 static classes in
 `src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
-173 public Python registry names because `HybridFisherPosnerLIFNeuron` and
+174 public Python registry names because `HybridFisherPosnerLIFNeuron` and
 `StochasticLIFNeuron` are re-exported (from
 `sc_neurocore.quantum_cognition.fisher_posner` for population dispatch and
 `sc_neurocore.neurons.stochastic_lif` for the torch-free public root import,
@@ -64,13 +64,13 @@ respectively) rather than defined as static classes under `neurons/models/`.
 Current binding disposition:
 
 The current registry map records 157 same-name Rust constructors,
-10 Rust-prefixed or core-only constructors, and 6 Python-only registry names.
+10 Rust-prefixed or core-only constructors, and 7 Python-only registry names.
 
 | Disposition | Count | Contract |
 |-------------|------:|----------|
 | Same-name Rust constructors | 157 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 10 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
-| Python-only registry names | 6 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
+| Python-only registry names | 7 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 
 Rust-prefixed or core-only constructor map:
 
@@ -96,6 +96,7 @@ Python-only boundary rationale:
 | `HybridFisherPosnerLIFNeuron` | The population-compatible entry depends on the Python `SpinPoolMPS` quantum-metabolic state and shared-pool measurement side effects, so a same-name Rust constructor would overclaim parity until that state model is ported. |
 | `Izhikevich2007Neuron` | This model already has a function-level compiled accelerator for the RK4 `simulate()` path (`py_izhikevich2007_simulate`), but no stateful PyO3 neuron constructor is claimed for the full Python object. |
 | `SCLeakyTwoCompartmentLIFNeuron` | The count-neutral preserved leaky recurrence formerly published as `TwoCompartmentLIFNeuron`; its frozen bit-exact anchors live on the Python surface only, so no Rust constructor is claimed for this preserved identity. |
+| `SCResettingParallelSpikingNeuron` | The count-neutral preserved resetting recurrence formerly published as `ParallelSpikingNeuron`; its frozen bit-exact anchors live on the Python surface only, so no Rust constructor is claimed for this preserved identity. |
 | `SRM0Neuron` | The maintained Python model is an exact-flow SRM0 membrane accumulator; it is not equivalent to the older Rust `SpikeResponseNeuron` kernel, so the registry name stays Python-only until a faithful Rust SRM0 kernel lands. |
 
 The parity test checks this map against the Python registry, committed Rust
@@ -352,6 +353,7 @@ raw TOML descriptor.
 | `SiegertTransferFunction` | `SiegertTransferFunction` | Siegert 1951 |
 | `FractionalLIFNeuron` | `FractionalLIFNeuron` | Teka et al. 2014 |
 | `ParallelSpikingNeuron` | `ParallelSpikingNeuron` | Fang et al. 2023 |
+| `SCResettingParallelSpikingNeuron` | — (Python-only preserved identity) | SC-NeuroCore retained project recurrence |
 | `AmariNeuralField` | `AmariNeuralField` | Amari 1977 |
 | `LeakyCompeteFireNeuron` | `LeakyCompeteFireNeuron` | — |
 

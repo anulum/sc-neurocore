@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 186,
+    "model_documentation_pages": 189,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 604,
-    "python_model_classes": 169,
-    "python_model_source_modules": 165,
-    "rust_pyo3_model_wrappers": 198,
-    "test_files": 4710
+    "public_documentation_pages": 607,
+    "python_model_classes": 172,
+    "python_model_source_modules": 168,
+    "rust_pyo3_model_wrappers": 199,
+    "test_files": 4719
   },
   "documentation": {
     "public_pages": [
@@ -1219,9 +1219,12 @@
       "docs/api/models/rulkov_map.md",
       "docs/api/models/sc_adaptive_threshold_map.md",
       "docs/api/models/sc_chaotic_map.md",
+      "docs/api/models/sc_exponential_tc_lif.md",
+      "docs/api/models/sc_leaky_tc_lif.md",
       "docs/api/models/sc_non_resetting_adaptive_lif.md",
       "docs/api/models/sc_normalized_energy_lif.md",
       "docs/api/models/sc_resetting_mat.md",
+      "docs/api/models/sc_resetting_psn.md",
       "docs/api/models/sc_sigma_delta_accumulator.md",
       "docs/api/models/sc_stochastic_rate_adaptation.md",
       "docs/api/models/sc_three_state_phantom.md",
@@ -1744,9 +1747,12 @@
       "rulkov_map.md",
       "sc_adaptive_threshold_map.md",
       "sc_chaotic_map.md",
+      "sc_exponential_tc_lif.md",
+      "sc_leaky_tc_lif.md",
       "sc_non_resetting_adaptive_lif.md",
       "sc_normalized_energy_lif.md",
       "sc_resetting_mat.md",
+      "sc_resetting_psn.md",
       "sc_sigma_delta_accumulator.md",
       "sc_stochastic_rate_adaptation.md",
       "sc_three_state_phantom.md",
@@ -2301,6 +2307,14 @@
         "path": "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py"
       },
       {
+        "name": "SCExponentialTwoCompartmentLIFNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py"
+      },
+      {
+        "name": "SCLeakyTwoCompartmentLIFNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py"
+      },
+      {
         "name": "SCNonResettingAdaptiveLIFNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py"
       },
@@ -2311,6 +2325,10 @@
       {
         "name": "SCResettingMATNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_resetting_mat.py"
+      },
+      {
+        "name": "SCResettingParallelSpikingNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_resetting_psn.py"
       },
       {
         "name": "SCSigmaDeltaAccumulatorNeuron",
@@ -2590,9 +2608,12 @@
       "src/sc_neurocore/neurons/models/rulkov_map.py",
       "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py",
       "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py",
+      "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py",
+      "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py",
       "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py",
       "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py",
       "src/sc_neurocore/neurons/models/sc_resetting_mat.py",
+      "src/sc_neurocore/neurons/models/sc_resetting_psn.py",
       "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py",
       "src/sc_neurocore/neurons/models/sc_six_state_thalamocortical.py",
       "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py",
@@ -2784,6 +2805,7 @@
       "RustTripletStdpSynapse",
       "SCAdaptiveThresholdMapNeuron",
       "SCChaoticMapNeuron",
+      "SCExponentialTwoCompartmentLIF",
       "SCNonResettingAdaptiveLIFNeuron",
       "SCNormalizedEnergyLIFNeuron",
       "SCResettingMATNeuron",
@@ -5168,6 +5190,7 @@
       "tests/test_live_control_specs_invariants.py",
       "tests/test_loihi_cuba_docs.py",
       "tests/test_lr_schedulers.py",
+      "tests/test_mainen_sejnowski_backends.py",
       "tests/test_mat_backend_dispatch.py",
       "tests/test_mat_engine_binding.py",
       "tests/test_mat_schema_parity.py",
@@ -5614,6 +5637,7 @@
       "tests/test_model_ltc_ltc_pipeline.py",
       "tests/test_model_lugaro_cell.py",
       "tests/test_model_mainen_sejnowski_ms_analytical.py",
+      "tests/test_model_mainen_sejnowski_ms_atomicity.py",
       "tests/test_model_mainen_sejnowski_ms_dynamics.py",
       "tests/test_model_mainen_sejnowski_ms_isolation.py",
       "tests/test_model_mainen_sejnowski_ms_performance.py",
@@ -5770,6 +5794,7 @@
       "tests/test_model_prescott_prescott_network.py",
       "tests/test_model_prescott_prescott_oscillations.py",
       "tests/test_model_prescott_prescott_parameters.py",
+      "tests/test_model_psn_atomicity.py",
       "tests/test_model_psn_parallel_spiking_neuron.py",
       "tests/test_model_psn_psn_custom_kernel.py",
       "tests/test_model_psn_psn_edge_cases.py",
@@ -5819,9 +5844,12 @@
       "tests/test_model_rulkov_map_rulkov_parameters.py",
       "tests/test_model_sc_adaptive_threshold_map_neuron.py",
       "tests/test_model_sc_chaotic_map_neuron.py",
+      "tests/test_model_sc_exponential_tc_lif.py",
+      "tests/test_model_sc_leaky_tc_lif.py",
       "tests/test_model_sc_non_resetting_adaptive_lif_compatibility.py",
       "tests/test_model_sc_normalized_energy_lif_compatibility.py",
       "tests/test_model_sc_resetting_mat_compatibility.py",
+      "tests/test_model_sc_resetting_psn.py",
       "tests/test_model_sc_sigma_delta_accumulator_compatibility.py",
       "tests/test_model_sfa_sfa_adaptation.py",
       "tests/test_model_sfa_sfa_analysis.py",
@@ -5908,6 +5936,7 @@
       "tests/test_model_superspike_neuron_super_spike_pipeline.py",
       "tests/test_model_superspike_neuron_super_spike_surrogate_gradient.py",
       "tests/test_model_taxonomy.py",
+      "tests/test_model_tc_lif_atomicity.py",
       "tests/test_model_tc_lif_tclif_compartmental_coupling.py",
       "tests/test_model_tc_lif_tclif_isolation.py",
       "tests/test_model_tc_lif_tclif_parameters.py",
@@ -6405,6 +6434,7 @@
       "tests/test_profiling.py",
       "tests/test_proto_schema_surface.py",
       "tests/test_provenance_doi_integrity.py",
+      "tests/test_psn_backends.py",
       "tests/test_public_api_install_profiles.py",
       "tests/test_public_api_lazy_facades.py",
       "tests/test_public_api_packaged_resources.py",
@@ -7249,6 +7279,7 @@
       "tests/test_synthesis_conjectures_sc_encoding_precision.py",
       "tests/test_synthesis_conjectures_stdpfim_competition.py",
       "tests/test_systems.py",
+      "tests/test_tc_lif_backends.py",
       "tests/test_tcbo_demo_build_knm.py",
       "tests/test_tcbo_demo_order_parameter.py",
       "tests/test_tcbo_demo_p_h1_lightweight.py",
