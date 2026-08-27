@@ -52,6 +52,7 @@ class HDCEncoder:
     )
 
     def __post_init__(self) -> None:
+        """Validate configuration and initialise the seeded generator."""
         if not isinstance(self.dim, int) or isinstance(self.dim, bool) or self.dim < 1:
             raise ValueError("dim must be a positive integer")
         if self.tie_policy not in _TIE_POLICIES:

@@ -16,7 +16,7 @@ import re
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
-    import tomli as tomllib
+    import tomli as tomllib  # type: ignore[no-redef]  # Python 3.10 fallback
 
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -211,6 +211,7 @@ def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
     assert "tests/test_model_psn_atomicity.py" in step
     assert "tests/test_psn_backends.py" in step
     assert "--fail-under=100 --show-missing" in step
+
 
 def test_hdc_exact_coverage_is_hosted() -> None:
     """The rebuilt HDC surface needs an explicit branch gate."""
