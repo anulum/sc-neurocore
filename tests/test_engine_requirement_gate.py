@@ -126,25 +126,37 @@ def _call_is_gate(node: ast.Call) -> bool:
     )
 
 
-class _ModuleLevelEngineScan:
-    """Module-import-time engine usage: gate line and unguarded imports.
+class _ModuleLevelEngineScan(ast.NodeVisitor):
+    """Module-execution-time engine usage: gate lines and engine imports.
 
-    Walks only code that executes while the module is imported (module
-    body, class bodies, module-level ``try``/``if``/``with`` blocks) and
-    never descends into function bodies. An engine import inside a
+    Visits everything that executes while the module is imported —
+    every compound-statement body and header expression (``for``,
+    ``while``, ``if``, ``match``, ``with`` items, ``try`` incl.
+    ``except*``, class bodies, assignments, calls) — and skips descent
+    ONLY into function and lambda BODIES, whose decorators, argument
+    defaults, and annotations still execute at import time and stay
+    scanned. Sibling nodes always continue. An engine import inside a
     ``try`` whose handlers catch ``ImportError``/``ModuleNotFoundError``
     (or broader) counts as guarded by construction.
     """
 
     def __init__(self) -> None:
         self.gate_line: int | None = None
+        self.require_engine_line: int | None = None
         self.engine_imports: list[tuple[int, bool]] = []
+        self._guard_depth = 0
 
-    def _record_gate(self, lineno: int) -> None:
+    def _record_gate(self, lineno: int, *, is_require_engine: bool) -> None:
         self.gate_line = lineno if self.gate_line is None else min(self.gate_line, lineno)
+        if is_require_engine:
+            self.require_engine_line = (
+                lineno
+                if self.require_engine_line is None
+                else min(self.require_engine_line, lineno)
+            )
 
     @staticmethod
-    def _try_guards_imports(node: ast.Try) -> bool:
+    def _try_guards_imports(node: ast.Try | ast.TryStar) -> bool:
         for handler in node.handlers:
             if handler.type is None:
                 return True
@@ -163,51 +175,94 @@ class _ModuleLevelEngineScan:
                 return True
         return False
 
-    def visit(self, statements: list[ast.stmt], guarded: bool) -> None:
-        for statement in statements:
-            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
-            if isinstance(statement, ast.Import):
-                if any(_is_engine_name(alias.name) for alias in statement.names):
-                    self.engine_imports.append((statement.lineno, guarded))
-                continue
-            if isinstance(statement, ast.ImportFrom):
-                if statement.module is not None and _is_engine_name(statement.module):
-                    self.engine_imports.append((statement.lineno, guarded))
-                continue
-            if isinstance(statement, ast.Try):
-                inner = guarded or self._try_guards_imports(statement)
-                self.visit(statement.body, inner)
-                for handler in statement.handlers:
-                    self.visit(handler.body, guarded)
-                self.visit(statement.orelse, guarded)
-                self.visit(statement.finalbody, guarded)
-                continue
-            if isinstance(statement, ast.If):
-                self.visit(statement.body, guarded)
-                self.visit(statement.orelse, guarded)
-                continue
-            if isinstance(statement, ast.With):
-                self.visit(statement.body, guarded)
-                continue
-            if isinstance(statement, ast.ClassDef):
-                self.visit(statement.body, guarded)
-                continue
-            for node in ast.walk(statement):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
-                    break
-                if isinstance(node, ast.Call):
-                    if _call_is_gate(node):
-                        self._record_gate(node.lineno)
-                    elif _call_imports_engine_module(node):
-                        self.engine_imports.append((node.lineno, guarded))
+    def _visit_import_time_parts_of_callable(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda
+    ) -> None:
+        """Scan the parts of a def/lambda that run at definition time."""
+        for decorator in getattr(node, "decorator_list", []):
+            self.visit(decorator)
+        arguments = node.args
+        for default in arguments.defaults:
+            self.visit(default)
+        for kw_default in arguments.kw_defaults:
+            if kw_default is not None:
+                self.visit(kw_default)
+        for argument in [
+            *arguments.posonlyargs,
+            *arguments.args,
+            *arguments.kwonlyargs,
+            *([arguments.vararg] if arguments.vararg else []),
+            *([arguments.kwarg] if arguments.kwarg else []),
+        ]:
+            if argument.annotation is not None:
+                self.visit(argument.annotation)
+        returns = getattr(node, "returns", None)
+        if returns is not None:
+            self.visit(returns)
+        # The body is deliberately NOT visited: it runs post-collection.
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_import_time_parts_of_callable(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._visit_import_time_parts_of_callable(node)
+
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        self._visit_import_time_parts_of_callable(node)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        if any(_is_engine_name(alias.name) for alias in node.names):
+            self.engine_imports.append((node.lineno, self._guard_depth > 0))
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        if node.module is not None and _is_engine_name(node.module):
+            self.engine_imports.append((node.lineno, self._guard_depth > 0))
+
+    def _visit_try_like(self, node: ast.Try | ast.TryStar) -> None:
+        guards = self._try_guards_imports(node)
+        if guards:
+            self._guard_depth += 1
+        for child in node.body:
+            self.visit(child)
+        if guards:
+            self._guard_depth -= 1
+        for handler in node.handlers:
+            for child in handler.body:
+                self.visit(child)
+        for child in node.orelse:
+            self.visit(child)
+        for child in node.finalbody:
+            self.visit(child)
+
+    def visit_Try(self, node: ast.Try) -> None:
+        self._visit_try_like(node)
+
+    def visit_TryStar(self, node: ast.TryStar) -> None:
+        self._visit_try_like(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if _call_is_gate(node):
+            func = node.func
+            is_require = (isinstance(func, ast.Name) and func.id == "require_engine") or (
+                isinstance(func, ast.Attribute) and func.attr == "require_engine"
+            )
+            self._record_gate(node.lineno, is_require_engine=is_require)
+        elif _call_imports_engine_module(node):
+            self.engine_imports.append((node.lineno, self._guard_depth > 0))
+        self.generic_visit(node)
+
+
+def _scan_module(path: Path) -> _ModuleLevelEngineScan:
+    """Run the module-execution scan over one test file."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    scan = _ModuleLevelEngineScan()
+    scan.visit(tree)
+    return scan
 
 
 def _module_level_engine_analysis(path: Path) -> tuple[int | None, int | None]:
     """Return (first gate lineno, first UNGUARDED module-level engine import)."""
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    scan = _ModuleLevelEngineScan()
-    scan.visit(tree.body, False)
+    scan = _scan_module(path)
     unguarded = [lineno for lineno, guarded in scan.engine_imports if not guarded]
     return scan.gate_line, (min(unguarded) if unguarded else None)
 
@@ -297,6 +352,90 @@ def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
                 f"{relative} gates on line {gate_line} AFTER importing the engine "
                 f"on line {engine_line}"
             )
+
+
+_SCANNER_COUNTEREXAMPLES = (
+    (
+        "for-body import",
+        "for _ in range(1):\n    import sc_neurocore_engine as engine\n",
+    ),
+    (
+        "while-body import",
+        "while flag:\n    import sc_neurocore_engine\n",
+    ),
+    (
+        "match-case import",
+        "match value:\n    case 1:\n        import sc_neurocore_engine\n",
+    ),
+    (
+        "with-context import_module",
+        "import importlib\n"
+        'with importlib.import_module("sc_neurocore_engine.sc_neurocore_engine") as engine:\n'
+        "    pass\n",
+    ),
+    (
+        "lambda then sibling import_module",
+        "import importlib\n"
+        "values = [(lambda: 0), "
+        'importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")]\n',
+    ),
+    (
+        "lambda default executes at definition time",
+        "import importlib\n"
+        "f = lambda x="
+        'importlib.import_module("sc_neurocore_engine.sc_neurocore_engine"): x\n',
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    ("label", "source"), _SCANNER_COUNTEREXAMPLES, ids=[c[0] for c in _SCANNER_COUNTEREXAMPLES]
+)
+def test_scanner_detects_engine_imports_in_every_compound_position(label: str, source: str) -> None:
+    """Executed regressions for the audited scanner false negatives."""
+    scan = _ModuleLevelEngineScan()
+    scan.visit(ast.parse(source))
+    assert scan.engine_imports, f"scanner missed the engine import for: {label}"
+    assert all(not guarded for _, guarded in scan.engine_imports)
+
+
+def test_scanner_treats_import_guards_and_function_bodies_correctly() -> None:
+    """try/except-ImportError marks guarded; function bodies never scan."""
+    guarded = _ModuleLevelEngineScan()
+    guarded.visit(
+        ast.parse("try:\n    import sc_neurocore_engine\nexcept ImportError:\n    pass\n")
+    )
+    assert guarded.engine_imports == [(2, True)]
+
+    function_body = _ModuleLevelEngineScan()
+    function_body.visit(ast.parse("def helper():\n    import sc_neurocore_engine\n"))
+    assert function_body.engine_imports == []
+
+    ordered = _ModuleLevelEngineScan()
+    ordered.visit(
+        ast.parse(
+            "from tests.engine_requirement import require_engine\n"
+            "require_engine()\n"
+            "import sc_neurocore_engine as engine\n"
+        )
+    )
+    assert ordered.require_engine_line == 2
+    assert ordered.engine_imports == [(3, False)]
+
+
+def test_pinned_inventory_equals_the_derived_require_engine_set() -> None:
+    """Exact set equality: silent additions fail exactly like removals."""
+    derived = set()
+    for path in sorted((_ROOT / "tests").rglob("test_*.py")):
+        if path.name == Path(__file__).name:
+            continue
+        if _scan_module(path).require_engine_line is not None:
+            derived.add(str(path.relative_to(_ROOT)))
+    assert derived == set(_GUARDED_BINDING_FILES), (
+        "require_engine-guarded set drifted from the pinned inventory; "
+        f"unpinned additions: {sorted(derived - set(_GUARDED_BINDING_FILES))}; "
+        f"missing from tree: {sorted(set(_GUARDED_BINDING_FILES) - derived)}"
+    )
 
 
 def test_no_test_module_imports_the_engine_before_a_gate() -> None:
