@@ -180,7 +180,7 @@ iverilog co-simulation (hdl/tb_sc_shd_top.v)
     |  bit-exact match with Q8.8 reference
     v
 Vivado v2025.2 synthesis (Zynq XC7Z020, 100 MHz)
-    |  1317 LUT (2.5%), 848 FF (0.8%), WNS +4.048 ns
+    |  990 LUT (1.86%), 670 FF (0.63%), WNS +4.048 ns
     v
 Bitstream generation (system_wrapper.bit + system.hwh)
     |  via Vivado block design (Zynq PS + AXI-Lite)
@@ -194,15 +194,22 @@ PYNQ-Z2 deployment package (hdl/pynq/)
 
 | Resource | Used | Available | % |
 |----------|------|-----------|---|
-| LUTs | 1,317 | 53,200 | 2.5% |
-| Flip-flops | 848 | 106,400 | 0.8% |
+| LUTs | 990 | 53,200 | 1.86% |
+| Flip-flops | 670 | 106,400 | 0.63% |
 | BRAM | 0 | 140 | 0% |
 | DSP48 | 0 | 220 | 0% |
 | WNS | +4.048 ns | | ~168 MHz achievable |
 
+Source artefacts: `hdl/reports/vivado_util_xc7z020_100mhz.rpt` and
+`hdl/reports/vivado_timing_xc7z020_100mhz.rpt` (Vivado v2025.2,
+design `sc_shd_top`, design state Synthesized, out-of-context run —
+post-implementation counts are typically lower).
+`tests/test_hardware_number_provenance.py` keeps this table bound to
+those committed reports.
+
 All weights, delays, scales, and LUT contents are hardcoded in Verilog.
-No external memory. The entire SHD inference network fits in 2.5% of a
-Zynq-7020.
+No external memory. The entire SHD inference network fits in under 2% of a
+Zynq-7020's LUTs at synthesis.
 
 ## Build Targets
 

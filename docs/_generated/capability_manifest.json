@@ -90,7 +90,7 @@
       ],
       "executed": [
         "SC inference rust/numpy bit-identical for fixed seed (accel/backend.py)",
-        "SHD pipeline proven on silicon: Zynq XC7Z020, 1317 LUT / 2.5%, cosim bit-exact"
+        "SHD pipeline synthesised for Zynq XC7Z020: 990 LUT / 1.9% (committed OOC synthesis report), co-simulation bit-exact"
       ],
       "feasibility_only": [
         "per-language speed multipliers asserted only in docstrings (e.g. Mojo 27-214x) lack stored measured artefacts",
@@ -971,7 +971,7 @@
     "python_model_classes": 172,
     "python_model_source_modules": 168,
     "rust_pyo3_model_wrappers": 199,
-    "test_files": 4722
+    "test_files": 4723
   },
   "documentation": {
     "public_pages": [
@@ -4869,6 +4869,7 @@
       "tests/test_hardware_hardware_benchmark.py",
       "tests/test_hardware_interface.py",
       "tests/test_hardware_mapper.py",
+      "tests/test_hardware_number_provenance.py",
       "tests/test_hardware_package_contracts.py",
       "tests/test_hardware_resource_estimator.py",
       "tests/test_hdc/test_base.py",

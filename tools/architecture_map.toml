@@ -179,7 +179,7 @@ wire_format = "hil-telemetry"
 [boundaries]
 executed = [
   "SC inference rust/numpy bit-identical for fixed seed (accel/backend.py)",
-  "SHD pipeline proven on silicon: Zynq XC7Z020, 1317 LUT / 2.5%, cosim bit-exact",
+  "SHD pipeline synthesised for Zynq XC7Z020: 990 LUT / 1.9% (committed OOC synthesis report), co-simulation bit-exact",
 ]
 bounded = [
   "Network Rust/MPI paths cover a subset (plasticity/FIM/spike-gating are Python-only)",
