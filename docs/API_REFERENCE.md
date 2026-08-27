@@ -17894,16 +17894,31 @@ Estimate hardware cost for deploying an SC-NeuroCore network.
 ### Class `HDCEncoder`
 Hyperdimensional computing encoder.
 
-Dimension D is usually >= 10,000.
+Dimension D is usually >= 10,000. ``seed`` makes every draw
+deterministic (given the same call order); ``tie_policy`` states
+what an even-count bundle does on exactly tied bit positions:
+``"zeros"`` clears them (historical strict-majority behaviour),
+``"ones"`` sets them, and ``"random"`` decides each tied position
+from a fresh seeded tie-break hypervector (the unbiased Kanerva
+convention).
 
+- **__post_init__**()
 - **generate_random_vector**()
   - Generate a random D-dimensional binary vector in {0, 1}.
+- **item**(name)
+  - Return the named item hypervector, drawing it on first use.
 - **bind**(v1, v2)
   - Bind two hypervectors via XOR.
 - **bundle**(vectors)
   - Bundle hypervectors by majority superposition.
+- **majority**(sum_vec, count)
+  - Return the majority vector of ``count`` bundled binary vectors.
 - **permute**(v, shifts)
   - Permute a hypervector by a cyclic shift.
+- **level_vectors**(low, high, levels)
+  - Return the ``levels`` linear level hypervectors for &#91;low, high&#93;.
+- **encode_level**(value, low, high, levels)
+  - Encode a scalar as its nearest linear level hypervector.
 
 ### Class `AssociativeMemory`
 Simple HDC associative clean-up memory.
@@ -17914,6 +17929,28 @@ Stores (key, value) pairs or bare prototypes for nearest-match retrieval.
   - Store a labelled hypervector in the clean-up memory.
 - **query**(query_vec)
   - Return the label of the closest stored vector by Hamming distance.
+
+---
+
+## Module `hdc.classifier`
+
+### Class `CentroidHDClassifier`
+Nearest-centroid classifier over binary hypervectors.
+
+Deterministic for a seeded encoder: fitting, prediction, and
+retraining consume randomness only through the encoder (and only
+when its tie policy is ``"random"``).
+
+- **fit**(vectors, labels)
+  - Accumulate the labelled hypervectors into their class centroids.
+- **predict**(vector)
+  - Return the label of the nearest centroid by Hamming distance.
+- **retrain**(vectors, labels, epochs)
+  - Run mistake-driven retraining; return misclassifications per epoch.
+- **centroid**(label)
+  - Return a copy of one fitted class centroid.
+- **classes**()
+  - Return the fitted class labels in sorted order.
 
 ---
 
@@ -24137,10 +24174,15 @@ P(spike in dt) = lambda(t) * dt
 k: stimulus filter (length n_k)
 h: post-spike filter (length n_h), typically negative (refractoriness)
 
-Reference: Pillow, J.W. et al. (2008). Nature 454:1058–1062.
+Reference: Pillow, J.W. et al. (2008). Nature 454:995–999.
+The exponential nonlinearity, log-rate clip to &#91;-20, 20&#93;, and
+Bernoulli per-bin sampling are the repository's discrete-time
+specialisation of the paper's point process. Pass ``seed`` for a
+reproducible generator, and ``uniform`` to :meth:`step` to supply
+the Bernoulli sample explicitly (exact cross-backend parity).
 
 - **__post_init__**()
-- **step**(stimulus)
+- **step**(stimulus, uniform)
 - **reset**()
 
 ---
@@ -24779,7 +24821,16 @@ C_s dV_s/dt = -g_L(V_s - E_L) + gc(V_a - V_s) + I
 C_a dV_a/dt = -I_Na - I_K + gc(V_s - V_a)
 
 Reference: Mainen, Z.F. & Sejnowski, T.J. (1996). Nature 382:363–366.
+The Euler substepping and the in-loop voltage clips to &#91;-200, 200&#93; mV
+are repository-specific specialisations, not publication-exact
+claims. Canonical rate evaluation uses numerically stable analytic
+removable-singularity limits (``expm1`` linoid form); the historical
+additive 1e-12 denominator regularisation — which returned a zero
+rate exactly at each singular voltage — remains reconstructible via
+``legacy_epsilon_rates=True`` as a count-neutral legacy
+configuration.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 
@@ -25201,9 +25252,13 @@ B(V) = 1 / (1 + &#91;Mg²⁺&#93;/3.57 · exp(-0.062 · V))
 
 I_NMDA = g_NMDA · s_NMDA · B(V) · (V - E_NMDA)
 
-Reference: Jahr & Stevens (1990) J Neurosci 10:1830;
-Wang (1999) Neuron 22:409.
+Reference: Jahr & Stevens (1990) J Neurosci 10(9):3178–3182;
+Wang (1999) Neuron 22:409. The WB spiking base follows
+Wang & Buzsáki (1996) J Neurosci 16:6402; the threshold-reset event
+and input-driven s_NMDA drive are repository-specific
+specialisations, not publication-exact claims.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 
@@ -25489,13 +25544,28 @@ Reference: Prescott, S.A. et al. (2008). PLoS Comput. Biol. 4:e1000198.
 ## Module `neurons.models.psn`
 
 ### Class `ParallelSpikingNeuron`
-Parallel Spiking Neuron — 2024, linear filter over all timesteps.
+k-order sliding Parallel Spiking Neuron — Fang et al. (2023).
 
-Applies a learned 1D convolution kernel over an internal buffer,
-enabling non-causal temporal aggregation during training.
-At each step: score = sum(kernel * buffer); spike if score >= threshold.
+Streaming form of the PSN family (paper Eqs. 14–15):
 
-Reference: Comsa, I.-M. et al. (2020). Proc. ICLR 2020.
+H&#91;t&#93; = sum_{i=0}^{k-1} W_i * X&#91;t-k+1+i&#93;,  with X&#91;j&#93; = 0 for j < 0
+S&#91;t&#93; = Theta(H&#91;t&#93; - v_threshold)
+
+``weights&#91;i&#93;`` is W_i, so ``weights&#91;k-1&#93;`` multiplies the newest
+input X&#91;t&#93; and ``weights&#91;0&#93;`` the oldest retained input X&#91;t-k+1&#93;;
+the sum is accumulated sequentially from i = 0 to k-1 so every
+backend reproduces the same binary64 result bit-for-bit. The
+right-continuous ``Theta(0) = 1`` convention follows the paper. No
+PSN variant has a reset: firing never clears the input history, and
+:meth:`reset` only re-zeroes the retained inputs. The paper trains
+``W`` and ``v_threshold`` per task and publishes no universal
+default; the uniform ``W_i = 1/k``, ``v_threshold = 1.0`` and
+``kernel_size = 8`` defaults are repository defaults.
+
+Reference: Fang, W., Yu, Z., Zhou, Z., Chen, D., Chen, Y., Ma, Z.,
+Masquelier, T. & Tian, Y. (2023). Parallel Spiking Neurons
+with High Efficiency and Ability to Learn Long-term Dependencies.
+NeurIPS 2023. DOI 10.48550/arXiv.2304.12760.
 
 - **__post_init__**()
 - **step**(current)
@@ -25723,6 +25793,60 @@ source-faithful paper model.
 
 ---
 
+## Module `neurons.models.sc_exponential_tc_lif`
+
+### Class `SCExponentialTwoCompartmentLIFNeuron`
+SC exponential two-compartment LIF — preserved engine recurrence.
+
+Historical production-engine model formerly published under the
+``TwoCompartmentLIFNeuron`` name. It is structurally distinct from
+both the Zhang et al. (2024) TC-LIF and the SC leaky variant:
+per-step exponential decay factors, additive wholesale coupling of
+the freshly decayed dendrite into the soma, per-compartment external
+currents, and a HARD soma reset:
+
+V_d&#91;t&#93; = exp(-dt/tau_d) * V_d&#91;t-1&#93; + I_dend&#91;t&#93;
+V_s&#91;t&#93; = exp(-dt/tau_s) * V_s&#91;t-1&#93; + I_soma&#91;t&#93; + kappa * V_d&#91;t&#93;
+Spike when V_s >= theta; V_s -> V_reset, V_d unchanged.
+
+Count-neutral SC identity: it consumes no source-catalogue slot and
+makes no publication-exact claim. The production Rust engine keeps
+this recurrence verbatim as ``SCExponentialTwoCompartmentLIF``,
+anchored to the pre-2026-08-27 built engine trajectories.
+
+- **__post_init__**()
+- **step**(i_soma, i_dend)
+- **reset**()
+
+---
+
+## Module `neurons.models.sc_leaky_tc_lif`
+
+### Class `SCLeakyTwoCompartmentLIFNeuron`
+SC leaky two-compartment LIF — preserved repository recurrence.
+
+Historical repository model formerly published under the
+``TwoCompartmentLIFNeuron`` name. It is structurally distinct from
+the Zhang et al. (2024) TC-LIF: both compartments leak toward
+``v_rest``, the soma couples one-way to the dendrite through
+``kappa * (v_d - v_s)``, each compartment takes its own external
+current, and the soma HARD-resets to ``v_reset`` on threshold
+crossing while the dendrite is untouched.
+
+Soma:     tau_s dV_s/dt = -(V_s - V_rest) + kappa*(V_d - V_s) + I_soma
+Dendrite: tau_d dV_d/dt = -(V_d - V_rest) + I_dend
+Spike when V_s >= theta; V_s -> V_reset, V_d unchanged.
+
+Count-neutral SC identity: it consumes no source-catalogue slot and
+makes no publication-exact claim. Finite-input trajectories are
+preserved bit-for-bit from the pre-2026-08-27 implementation.
+
+- **__post_init__**()
+- **step**(i_soma, i_dend)
+- **reset**()
+
+---
+
 ## Module `neurons.models.sc_non_resetting_adaptive_lif`
 
 ### Class `SCNonResettingAdaptiveLIFNeuron`
@@ -25774,6 +25898,34 @@ non-resetting MAT* equations of Kobayashi et al. (2009).
   - Advance one SC resetting-MAT step and return ``1`` on a spike.
 - **reset**()
   - Restore voltage and adaptive thresholds to the SC resting state.
+
+---
+
+## Module `neurons.models.sc_resetting_psn`
+
+### Class `SCResettingParallelSpikingNeuron`
+SC resetting windowed neuron — preserved repository recurrence.
+
+Historical repository model formerly published under the
+``ParallelSpikingNeuron`` name. It is structurally distinct from the
+Fang et al. (2023) sliding PSN in two ways: the retained-input
+buffer is zeroed whenever the neuron fires (the PSN family has no
+reset), and a replaced ``kernel`` is dotted against circular buffer
+slots rather than time-ordered inputs, so for non-uniform kernels
+the weight-to-input pairing rotates with the write pointer. During
+warm-up the score divides by the full ``kernel_size``, which for
+the default uniform kernel matches zero-padded pre-history.
+
+score&#91;t&#93; = kernel&#91;:n&#93; . buffer&#91;:n&#93;,  n = min(t+1, kernel_size)
+spike when score >= v_threshold, then buffer&#91;:&#93; = 0.
+
+Count-neutral SC identity: it consumes no source-catalogue slot and
+makes no publication-exact claim. Finite-input trajectories are
+preserved bit-for-bit from the pre-2026-08-27 implementation.
+
+- **__post_init__**()
+- **step**(current)
+- **reset**()
 
 ---
 
@@ -26022,8 +26174,12 @@ SK∞ = &#91;Ca²⁺&#93;² / (&#91;Ca²⁺&#93;² + 0.25)   (Hill function, n=2
 τ_Ca = 150 ms (slower than BK's 50 ms)
 
 Reference: Stocker (2004) Nat Rev Neurosci 5:758–770;
-Wang & Buzsáki (1996) base model.
+Wang & Buzsáki (1996) base model. The threshold-reset event, the
+spike-triggered Ca²⁺ increment, and the specific Hill constants are
+repository-specific specialisations of that review material, not a
+publication-exact recurrence.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 
@@ -26229,16 +26385,32 @@ Reference: Zenke, F. & Ganguli, S. (2018). Neural Comput. 30:1514–1541.
 ## Module `neurons.models.tc_lif`
 
 ### Class `TwoCompartmentLIFNeuron`
-Two-compartment LIF — Yang et al. AAAI 2024.
+TC-LIF — Zhang et al. (2024) two-compartment spiking neuron.
 
-Soma:     tau_s dV_s/dt = -(V_s - V_rest) + kappa*(V_d - V_s) + I_ext
-Dendrite: tau_d dV_d/dt = -(V_d - V_rest) + I_d
-Spike when V_s >= theta; V_s -> V_reset, V_d unchanged.
-Dendrite provides history-dependent input for sequential tasks.
+Discrete map (paper Eqs. 10–12, exact ordering U_D → U_S → S):
 
-Reference: Destexhe, A. et al. (1996). J. Comput. Neurosci. 3:19–46.
+U_D&#91;t&#93; = U_D&#91;t-1&#93; + beta1 * U_S&#91;t-1&#93; + I&#91;t&#93; - gamma * S&#91;t-1&#93;
+U_S&#91;t&#93; = U_S&#91;t-1&#93; + beta2 * U_D&#91;t&#93;          - v_th  * S&#91;t-1&#93;
+S&#91;t&#93;   = Theta(U_S&#91;t&#93; - v_th)
 
-- **step**(i_soma, i_dend)
+One external input I&#91;t&#93; enters the dendritic compartment; both
+compartments reset softly through the delayed spike S&#91;t-1&#93;
+(subtraction terms). ``beta1 = -sigmoid(c1)`` and
+``beta2 = sigmoid(c2)`` are trained per task in the paper, so
+``beta1 in (-1, 0)`` and ``beta2 in (0, 1)``; defaults here are the
+published S-MNIST feedforward profile (Table 5), and every Table 5
+profile is exposed via :data:`TC_LIF_PROFILES` /
+:meth:`from_profile`. The right-continuous ``Theta(0) = 1``
+convention and the &#91;0, 10&#93; public bound on ``gamma`` are repository
+specialisations.
+
+Reference: Zhang, S., Yang, Q., Ma, C., Wu, J., Li, H. & Tan, K.C.
+(2024). AAAI 38(15):16838–16847. DOI 10.1609/aaai.v38i15.29625.
+
+- **__post_init__**()
+- **from_profile**(cls, profile)
+  - Construct the neuron from a named Table 5 profile.
+- **step**(i_ext)
 - **reset**()
 
 ---
@@ -26372,8 +26544,13 @@ s∞ = 1 / (1 + exp((v + 81) / 4))
 τ_s = 30 + 100 / (1 + exp((v + 75) / 10))
 
 Reference: Huguenard (1996) Annu Rev Physiol 58:329;
-Destexhe et al. (1996) J Neurophysiol 76:2049.
+Destexhe, Bal, McCormick & Sejnowski (1996) J Neurophysiol 76:2049.
+The WB spiking base follows Wang & Buzsáki (1996) J Neurosci 16:6402;
+the threshold-reset event and the spike-triggered inactivation
+collapse (s ×= 0.3) are repository-specific specialisations, not
+publication-exact claims.
 
+- **__post_init__**()
 - **step**(current)
 - **reset**()
 

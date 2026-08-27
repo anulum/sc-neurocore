@@ -971,7 +971,7 @@
     "python_model_classes": 172,
     "python_model_source_modules": 168,
     "rust_pyo3_model_wrappers": 199,
-    "test_files": 4720
+    "test_files": 4722
   },
   "documentation": {
     "public_pages": [
@@ -4872,6 +4872,8 @@
       "tests/test_hardware_package_contracts.py",
       "tests/test_hardware_resource_estimator.py",
       "tests/test_hdc/test_base.py",
+      "tests/test_hdc/test_hdc_centroid_classifier.py",
+      "tests/test_hdc/test_hdc_encoder_determinism_and_levels.py",
       "tests/test_hdc_associative_memory.py",
       "tests/test_hdc_hdc_encoder.py",
       "tests/test_hdc_python_bit_stream_tensor.py",

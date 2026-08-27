@@ -211,3 +211,18 @@ def test_psn_exact_coverage_and_backend_parity_is_hosted() -> None:
     assert "tests/test_model_psn_atomicity.py" in step
     assert "tests/test_psn_backends.py" in step
     assert "--fail-under=100 --show-missing" in step
+
+def test_hdc_exact_coverage_is_hosted() -> None:
+    """The rebuilt HDC surface needs an explicit branch gate."""
+
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    start = workflow.index("- name: HDC exact coverage")
+    end = workflow.index("\n      - name:", start + 1)
+    step = workflow[start:end]
+
+    assert "if: matrix.primary" in step
+    assert "--rcfile=/dev/null --branch" in step
+    assert "src/sc_neurocore/hdc/base.py" in step
+    assert "src/sc_neurocore/hdc/classifier.py" in step
+    assert "tests/test_hdc/" in step
+    assert "--fail-under=100 --show-missing" in step

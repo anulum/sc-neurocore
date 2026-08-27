@@ -11,8 +11,10 @@
 __tier__ = "research"
 
 from .base import HDCEncoder, AssociativeMemory
+from .classifier import CentroidHDClassifier
 
 __all__ = [
     "HDCEncoder",
     "AssociativeMemory",
+    "CentroidHDClassifier",
 ]
