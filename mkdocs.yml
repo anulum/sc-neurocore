@@ -409,6 +409,7 @@ nav:
           - Generative: api/generative.md
           - Graphs: api/graphs.md
           - HDC: api/hdc.md
+          - HDC Semantic Contract: api/hdc_contract.md
           - Interfaces: api/interfaces.md
           - Learning: api/learning.md
           - Math: api/math.md

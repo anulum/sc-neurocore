@@ -967,11 +967,11 @@
     "model_documentation_pages": 189,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 607,
+    "public_documentation_pages": 608,
     "python_model_classes": 172,
     "python_model_source_modules": 168,
     "rust_pyo3_model_wrappers": 199,
-    "test_files": 4725
+    "test_files": 4728
   },
   "documentation": {
     "public_pages": [
@@ -1058,6 +1058,7 @@
       "docs/api/graphs.md",
       "docs/api/hardware.md",
       "docs/api/hdc.md",
+      "docs/api/hdc_contract.md",
       "docs/api/hdl_gen.md",
       "docs/api/homeostasis.md",
       "docs/api/hub.md",
@@ -4875,8 +4876,11 @@
       "tests/test_hardware_package_contracts.py",
       "tests/test_hardware_resource_estimator.py",
       "tests/test_hdc/test_base.py",
+      "tests/test_hdc/test_hdc_algebra_properties.py",
       "tests/test_hdc/test_hdc_centroid_classifier.py",
       "tests/test_hdc/test_hdc_encoder_determinism_and_levels.py",
+      "tests/test_hdc/test_hdc_retrieval_regressions.py",
+      "tests/test_hdc/test_hdc_torchhd_reference.py",
       "tests/test_hdc_associative_memory.py",
       "tests/test_hdc_hdc_encoder.py",
       "tests/test_hdc_python_bit_stream_tensor.py",

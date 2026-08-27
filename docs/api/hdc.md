@@ -12,6 +12,11 @@ HDC represents symbols as random binary vectors of dimension D (typically D >= 1
 | **Bundle** (⊕) | Majority vote | Preserves similarity to all inputs |
 | **Permute** (ρ) | Cyclic shift | Breaks commutativity for ordered structures |
 
+The full reference-locked semantics — representation, seed contract,
+tie policies, permutation direction, distance, clean-up-memory ties,
+and the executed enforcement map — live in the
+[HDC/VSA semantic contract](hdc_contract.md).
+
 ## Components
 
 - **`HDCEncoder`** — Generate random D-dimensional binary vectors and perform algebraic operations.
