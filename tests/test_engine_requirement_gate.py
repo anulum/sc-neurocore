@@ -252,19 +252,74 @@ class _ModuleLevelEngineScan(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def _scan_module(path: Path) -> _ModuleLevelEngineScan:
-    """Run the module-execution scan over one test file."""
+def _statement_unconditional_gate(statement: ast.stmt) -> tuple[bool, bool]:
+    """Classify a TOP-LEVEL statement as an unconditional gate.
+
+    Returns ``(is_gate, is_require_engine)``. Only two dominant forms
+    count — a bare expression statement or a plain assignment whose
+    VALUE IS the gate call itself (``require_engine(...)`` or an
+    engine ``pytest.importorskip``). A call nested anywhere deeper
+    (conditional expressions, boolean short-circuits, compound-
+    statement bodies, handlers) does not dominate module execution and
+    is deliberately not a gate.
+    """
+    value: ast.expr | None = None
+    if isinstance(statement, (ast.Expr, ast.Assign, ast.AnnAssign)):
+        value = statement.value
+    if value is None or not isinstance(value, ast.Call) or not _call_is_gate(value):
+        return False, False
+    func = value.func
+    is_require = (isinstance(func, ast.Name) and func.id == "require_engine") or (
+        isinstance(func, ast.Attribute) and func.attr == "require_engine"
+    )
+    return True, is_require
+
+
+class _DominanceAnalysis:
+    """Dominance-ordered module analysis of gates and engine imports."""
+
+    def __init__(self, tree: ast.Module) -> None:
+        self.gate_index: int | None = None
+        self.gate_line: int | None = None
+        self.require_engine_gate_line: int | None = None
+        # (top-level statement index, import lineno) of unguarded imports.
+        self.unguarded: list[tuple[int, int]] = []
+        for index, statement in enumerate(tree.body):
+            is_gate, is_require = _statement_unconditional_gate(statement)
+            if is_gate and self.gate_index is None:
+                self.gate_index = index
+                self.gate_line = statement.lineno
+            if is_gate and is_require and self.require_engine_gate_line is None:
+                self.require_engine_gate_line = statement.lineno
+            scan = _ModuleLevelEngineScan()
+            scan.visit(statement)
+            for lineno, guarded in scan.engine_imports:
+                if not guarded:
+                    self.unguarded.append((index, lineno))
+
+    def first_undominated_import_line(self) -> int | None:
+        """First unguarded engine import NOT dominated by the gate.
+
+        Ordering is by top-level statement index — never by inner line
+        numbers — so an import nested inside a compound statement is
+        dominated only when the gate's statement strictly precedes the
+        import's enclosing top-level statement.
+        """
+        for index, lineno in sorted(self.unguarded):
+            if self.gate_index is None or self.gate_index >= index:
+                return lineno
+        return None
+
+
+def _analyse(path: Path) -> _DominanceAnalysis:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    scan = _ModuleLevelEngineScan()
-    scan.visit(tree)
-    return scan
+    return _DominanceAnalysis(tree)
 
 
 def _module_level_engine_analysis(path: Path) -> tuple[int | None, int | None]:
-    """Return (first gate lineno, first UNGUARDED module-level engine import)."""
-    scan = _scan_module(path)
-    unguarded = [lineno for lineno, guarded in scan.engine_imports if not guarded]
-    return scan.gate_line, (min(unguarded) if unguarded else None)
+    """Return (unconditional gate lineno, first UNDOMINATED unguarded import)."""
+    analysis = _analyse(path)
+    return analysis.gate_line, analysis.first_undominated_import_line()
 
 
 def test_require_engine_returns_the_compiled_extension_when_present() -> None:
@@ -342,16 +397,18 @@ def test_hosted_ci_exports_the_engine_requirement_at_workflow_level() -> None:
 
 
 def test_every_pinned_binding_file_gates_before_its_engine_import() -> None:
-    """Order-aware: the gate call must precede any module-level engine import."""
+    """Dominance: an unconditional module-body gate precedes every import."""
     assert len(_GUARDED_BINDING_FILES) == 49
     for relative in _GUARDED_BINDING_FILES:
-        gate_line, engine_line = _module_level_engine_analysis(_ROOT / relative)
-        assert gate_line is not None, f"{relative} lost its require_engine gate"
-        if engine_line is not None:
-            assert gate_line < engine_line, (
-                f"{relative} gates on line {gate_line} AFTER importing the engine "
-                f"on line {engine_line}"
-            )
+        analysis = _analyse(_ROOT / relative)
+        assert analysis.require_engine_gate_line is not None, (
+            f"{relative} lost its unconditional module-body require_engine gate"
+        )
+        undominated = analysis.first_undominated_import_line()
+        assert undominated is None, (
+            f"{relative} imports the engine on line {undominated} without being "
+            "dominated by the unconditional gate"
+        )
 
 
 _SCANNER_COUNTEREXAMPLES = (
@@ -423,13 +480,68 @@ def test_scanner_treats_import_guards_and_function_bodies_correctly() -> None:
     assert ordered.engine_imports == [(3, False)]
 
 
+_CONDITIONAL_GUARD_COUNTEREXAMPLES = (
+    (
+        "if-False guard never executes",
+        "if False:\n    require_engine()\nimport sc_neurocore_engine\n",
+    ),
+    (
+        "empty-for guard never executes",
+        "for _ in []:\n    require_engine()\nimport sc_neurocore_engine\n",
+    ),
+    (
+        "except-only guard never executes",
+        "try:\n    pass\nexcept Exception:\n    require_engine()\nimport sc_neurocore_engine\n",
+    ),
+    (
+        "gate after the import does not dominate",
+        "import sc_neurocore_engine\nrequire_engine()\n",
+    ),
+    (
+        "compound importing before a later gate is not dominated",
+        "if flag:\n    import sc_neurocore_engine\nrequire_engine()\n",
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    ("label", "source"),
+    _CONDITIONAL_GUARD_COUNTEREXAMPLES,
+    ids=[case[0] for case in _CONDITIONAL_GUARD_COUNTEREXAMPLES],
+)
+def test_conditional_or_late_guards_never_dominate(label: str, source: str) -> None:
+    """Executed regressions for the audited conditional-guard false greens."""
+    analysis = _DominanceAnalysis(ast.parse(source))
+    assert analysis.first_undominated_import_line() is not None, (
+        f"a non-dominating guard was accepted for: {label}"
+    )
+
+
+def test_unconditional_module_body_guards_dominate() -> None:
+    """Direct top-level gate forms dominate every later engine import."""
+    bare = _DominanceAnalysis(ast.parse("require_engine()\nimport sc_neurocore_engine\n"))
+    assert bare.require_engine_gate_line == 1
+    assert bare.first_undominated_import_line() is None
+
+    assigned = _DominanceAnalysis(
+        ast.parse("engine = require_engine()\nif flag:\n    import sc_neurocore_engine\n")
+    )
+    assert assigned.require_engine_gate_line == 1
+    assert assigned.first_undominated_import_line() is None
+
+    guarded_try_only = _DominanceAnalysis(
+        ast.parse("try:\n    import sc_neurocore_engine\nexcept ImportError:\n    pass\n")
+    )
+    assert guarded_try_only.first_undominated_import_line() is None
+
+
 def test_pinned_inventory_equals_the_derived_require_engine_set() -> None:
     """Exact set equality: silent additions fail exactly like removals."""
     derived = set()
     for path in sorted((_ROOT / "tests").rglob("test_*.py")):
         if path.name == Path(__file__).name:
             continue
-        if _scan_module(path).require_engine_line is not None:
+        if _analyse(path).require_engine_gate_line is not None:
             derived.add(str(path.relative_to(_ROOT)))
     assert derived == set(_GUARDED_BINDING_FILES), (
         "require_engine-guarded set drifted from the pinned inventory; "
@@ -439,15 +551,13 @@ def test_pinned_inventory_equals_the_derived_require_engine_set() -> None:
 
 
 def test_no_test_module_imports_the_engine_before_a_gate() -> None:
-    """AST sweep: every module-level engine import repo-wide sits behind a gate."""
+    """AST sweep: every unguarded engine import is dominated by a gate."""
     offenders = []
     for path in sorted((_ROOT / "tests").rglob("test_*.py")):
-        gate_line, engine_line = _module_level_engine_analysis(path)
-        if engine_line is None:
-            continue
-        if gate_line is None or gate_line > engine_line:
-            offenders.append(f"{path.relative_to(_ROOT)}:{engine_line}")
-    assert offenders == [], f"module-level engine imports without a preceding gate: {offenders}"
+        undominated = _analyse(path).first_undominated_import_line()
+        if undominated is not None:
+            offenders.append(f"{path.relative_to(_ROOT)}:{undominated}")
+    assert offenders == [], f"engine imports not dominated by an unconditional gate: {offenders}"
 
 
 def _subprocess_collect(
