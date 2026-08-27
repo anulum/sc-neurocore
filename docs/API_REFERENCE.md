@@ -17903,6 +17903,7 @@ from a fresh seeded tie-break hypervector (the unbiased Kanerva
 convention).
 
 - **__post_init__**()
+  - Validate configuration and initialise the seeded generator.
 - **generate_random_vector**()
   - Generate a random D-dimensional binary vector in {0, 1}.
 - **item**(name)
