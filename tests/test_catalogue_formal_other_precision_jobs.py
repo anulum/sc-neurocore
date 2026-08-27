@@ -11,6 +11,23 @@ from __future__ import annotations
 from tests.catalogue_formal_support import *  # noqa: F403
 
 
+def test_fitzhugh_nagumo_formal_job_uses_enrolled_q1616_precision() -> None:
+    """Keep formal FitzHugh-Nagumo RTL aligned with exact event co-simulation."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_fitzhugh_nagumo_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["FitzHughNagumoNeuron"] == "fitzhugh_nagumo"
+    assert module.PRECISION_BY_SCHEMA["fitzhugh_nagumo"] == (32, 16)
+    assert module.DEPTH_BY_SCHEMA["fitzhugh_nagumo"] == 4
+    assert "fitzhugh_nagumo" in module.MINIMAL_SAFETY_SCHEMAS
+
+
 def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
     import importlib.util

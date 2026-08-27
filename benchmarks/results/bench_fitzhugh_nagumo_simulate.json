@@ -1,48 +1,151 @@
 {
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 5067,
+      "event_count_matches_python": true,
+      "final_state": [
+        -1.8389384970239788,
+        0.6773179102150991
+      ],
+      "final_state_matches_python": true,
+      "median_ms": 109.93059095926583,
+      "min_ms": 107.62163193430752,
+      "parity_max_abs_diff": 0.0,
+      "results_ms": [
+        110.09051208384335,
+        107.62163193430752,
+        109.93059095926583,
+        110.67899293266237,
+        108.97660197224468
+      ],
+      "speedup_vs_python": 12.304527203913878,
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "event_count": 5067,
+      "event_count_matches_python": true,
+      "final_state": [
+        -1.8389384970239788,
+        0.6773179102150991
+      ],
+      "final_state_matches_python": true,
+      "median_ms": 113.71981096453965,
+      "min_ms": 108.38008893188089,
+      "parity_max_abs_diff": 0.0,
+      "results_ms": [
+        108.38008893188089,
+        108.50437299814075,
+        123.41640889644623,
+        113.71981096453965,
+        120.49118499271572
+      ],
+      "speedup_vs_python": 11.894532144644522,
+      "used": true
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 5067,
+      "event_count_matches_python": true,
+      "final_state": [
+        -1.8389384970239837,
+        0.6773179102151109
+      ],
+      "final_state_matches_python": true,
+      "median_ms": 104.6015010215342,
+      "min_ms": 103.23792300187051,
+      "parity_max_abs_diff": 7.156497616733759e-13,
+      "results_ms": [
+        103.23792300187051,
+        106.44894000142813,
+        104.6015010215342,
+        104.35255896300077,
+        111.00198293570429
+      ],
+      "speedup_vs_python": 12.93140092437247,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 5067,
+      "event_count_matches_python": true,
+      "final_state": [
+        -1.8389384970239788,
+        0.6773179102150991
+      ],
+      "final_state_matches_python": true,
+      "median_ms": 1352.6439470006153,
+      "min_ms": 1222.1121720504016,
+      "parity_max_abs_diff": 0.0,
+      "results_ms": [
+        1222.1121720504016,
+        1292.2757309861481,
+        1429.872076958418,
+        1352.6439470006153,
+        1433.2826760364696
+      ],
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 5067,
+      "event_count_matches_python": true,
+      "final_state": [
+        -1.8389384970239788,
+        0.6773179102150991
+      ],
+      "final_state_matches_python": true,
+      "median_ms": 113.60704305116087,
+      "min_ms": 111.47649795748293,
+      "parity_max_abs_diff": 0.0,
+      "results_ms": [
+        111.47649795748293,
+        113.39956393931061,
+        113.98033599834889,
+        113.60704305116087,
+        118.80187795031816
+      ],
+      "speedup_vs_python": 11.90633882083769,
+      "used": true
+    }
+  },
   "benchmark": "fitzhugh_nagumo_simulate_rk4",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3"
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "single_cpu_pinned": true
   },
-  "results": [
-    {
-      "backend": "python",
-      "median_ms": 1016.645718998916,
-      "min_ms": 963.8310189984622,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 1.0
-    },
-    {
-      "backend": "rust",
-      "median_ms": 91.69857600500109,
-      "min_ms": 89.88089700142154,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 11.08682122766519
-    },
-    {
-      "backend": "julia",
-      "median_ms": 94.24474499974167,
-      "min_ms": 88.60238300258061,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 10.787293434787294
-    },
-    {
-      "backend": "go",
-      "median_ms": 87.62338800443104,
-      "min_ms": 85.8048250011052,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 11.60244704242097
-    },
-    {
-      "backend": "mojo",
-      "median_ms": 81.80550500401296,
-      "min_ms": 79.18245499604382,
-      "parity_max_abs_diff": 7.156497616733759e-13,
-      "speedup_vs_python": 12.42759541609143
-    }
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "measured_order": [
+    "python",
+    "rust",
+    "julia",
+    "go",
+    "mojo"
   ],
+  "model": "FitzHughNagumoNeuron",
+  "notes": "Loaded-host regression only; timings are not comparative production claims.",
+  "production_speed_claim": false,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_fitzhugh_nagumo_simulate.py": "f171ec7d56ad3ce3249198cfb68c1811894b37f46babd9f1e684dd569b662c0f",
+    "engine/src/bindings/fitzhugh_nagumo.rs": "0f4359663b59c1078e6574671bdb914470f45ec7bbe5989fe701fcf680f7902a",
+    "engine/src/neurons/simple_spiking/fitzhugh_nagumo.rs": "037ba8f8110d6cb2991c4cd4067f7e21a99690e07b4e812459e4af3df5e2f6be",
+    "src/sc_neurocore/accel/go/neurons/fitzhugh_nagumo/fitzhugh_nagumo.go": "45d0cbc61f70c08abd95e186829247243893a2270c5d51bfa2a5dda4d13dc1eb",
+    "src/sc_neurocore/accel/go/services/fitzhugh_nagumo.go": "f98c7d6c298d8eb22f5d7c068132220c2c3038f0ec2b813c8054d6526b414539",
+    "src/sc_neurocore/accel/go/services/fitzhugh_nagumo_test.go": "63c78fce8cd9c66a1b02e5875c30b571441bfce3684585abf4bd4b50a1ea4ecc",
+    "src/sc_neurocore/accel/julia/neurons/fitzhugh_nagumo.jl": "dc9e9b5a61535d4da805b8445222936feff98cc851ded5f949e5e27e98fcf980",
+    "src/sc_neurocore/accel/mojo/neurons/fitzhugh_nagumo.mojo": "afe57b4350cdec9af13bd5eb55b5a7340a806b89d27f0265a3f5cd7b138aaf0a",
+    "src/sc_neurocore/accel/rust/safety/fitzhugh_nagumo.rs": "89fc48c2662ecac88f5695b0a1938b1a86045190d912acd8a41a3ea3c36dd94c",
+    "src/sc_neurocore/neurons/model_schemas/fitzhugh_nagumo.json": "b5ba905cc8f60e2a8851a336b4412e10901e0645bf537e743b92bf8499199179",
+    "src/sc_neurocore/neurons/model_schemas/fitzhugh_nagumo.toml": "4ce41f282629905262aff1bb3080a27157aaf2944ca73816f37279273ac202b9",
+    "src/sc_neurocore/neurons/models/fitzhugh_nagumo.py": "5c8f876ff47340e0fca8433c804ba830abbbc5d5d3f11760bb5f3b1326c70ba2"
+  },
   "workload": {
     "current": 0.5,
     "n_steps": 2000000,

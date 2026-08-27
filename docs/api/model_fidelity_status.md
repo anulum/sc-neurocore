@@ -48,7 +48,7 @@ parity note.
 | Model | Rust safety | Go | Julia | Mojo | Parity basis (golden) | Evidence anchor |
 |---|---|---|---|---|---|---|
 | Wang-Buzsaki | ✅ | ✅ | ✅ | ✅ executable | exact 2,856-event parity over the measured 20,000-step `I=10` packet; five-runtime final-state error below `1e-8`; committed compiler-bound Q16.16 RTL stays within one event over the bounded 20-macro-step co-simulation, synthesizes in Yosys, and passes depth-4 reset-safety BMC; timing, PPA, device, and silicon remain open | `benchmarks/results/bench_wang_buzsaki.json`; `hdl/formal/catalogue/sc_wang_buzsaki.v` |
-| FitzHugh-Nagumo | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 1 AP @ I=10/100 steps, 5-spike train @ I=0.5/2000 steps (RK4, exact RHS) | `729e0a2ea` |
+| FitzHugh-Nagumo | ✅ | ✅ | ✅ | ✅ shared-lib | source-transformed two-state RK4 recurrence; the source-hashed 2,000,000-step five-runtime packet records 5,067 exact events, binary64-exact Python/Rust/Julia/Go traces, and Mojo error below `1e-9`; the committed compiler-bound Q16.16 RTL preserves all eight 3,000-step receipt events, synthesizes in Yosys, and passes depth-4 reset-safety BMC; timing, PPA, device, and silicon remain open | `benchmarks/results/bench_fitzhugh_nagumo_simulate.json`; `hdl/formal/catalogue/sc_fitzhugh_nagumo.v` |
 | Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | exact 0/3/5-event parity at I=0/50/100 over 2,000 RK4 steps; executed five-runtime 200,000-step packet records 476 events and complete final-state error below `4e-8`; the committed compiler-bound Q16.16 RTL exactly preserves seven events over the 3,000-step receipt, passes Yosys coarse synthesis, and passes depth-4 reset-safety BMC under the receipt reset/current protocol; timing, PPA, device, and silicon remain open | `benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json`; `hdl/formal/catalogue/sc_morris_lecar.v` |
 | Connor-Stevens | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (candidate-first RK4 with 100 sub-steps, exp); Mojo C ABI preserves every event and the six-state trace within `2e-6` over the enrolled envelope | `this commit` |
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (gate-first baseline-Euler with 100 sub-steps, exp); Mojo C ABI preserves every event and the four-state trace within `2e-9` over the enrolled envelope | `this commit` |
@@ -113,7 +113,7 @@ parity note.
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
-plus source-hashed executable closure benchmarks for Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
+plus source-hashed executable closure benchmarks for FitzHugh-Nagumo, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
 Lapicque, Perfect Integrator, Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF,
 McCulloch-Pitts, Sigmoid Rate, Threshold-linear Rate, Wilson-Cowan, Jansen–Rit,
 Montbrió–Pazó–Roxin, Resonate-and-Fire, Wong-Wang, Amari neural field, Brunel-Wang,

@@ -256,6 +256,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "ermentrout_kopell_pop": (64, 32),
     "escape_rate": (48, 24),
     "exp_if": (64, 32),
+    "fitzhugh_nagumo": (32, 16),
     "ibarz_tanaka_map": (32, 16),
     "iqif": (32, 0),
     "jansen_rit": (64, 32),

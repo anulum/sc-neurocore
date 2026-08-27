@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### FitzHugh-Nagumo full-fidelity closure
+
+- Reconciled the maintained two-state recurrence with FitzHugh's (1961)
+  equations (1)-(3) under the explicit coordinate/time transformation and kept
+  RK4, the parameter profile, and sampled upward crossings clearly identified
+  as repository numerical specializations. Added a replayable 3,000-step
+  complete-state/event receipt and a source-hashed 2,000,000-step packet across
+  Python, production Rust, Julia, Go, and Mojo; standalone safety Rust and the
+  Go service remain independently exercised.
+- Replaced the stale committed Q8.8 catalogue object with the current
+  compiler's signed-Q16.16 lowering used by the behavioral evidence. The
+  committed object preserves all eight receipt events under Icarus/VVP, passes
+  Yosys coarse synthesis, and passes depth-4 public-port reset-safety BMC. This
+  reaches the declared H2 terminal tier; timing, PPA, device, formal real-number
+  equivalence, and physical silicon remain explicitly open.
+
 ### Morris-Lecar full-fidelity closure
 
 - Bound the existing Morris-Lecar source identity to a replayable 3,000-step

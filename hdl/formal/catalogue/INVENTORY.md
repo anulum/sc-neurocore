@@ -22,7 +22,7 @@ Jobs: **43**
 | ErmentroutKopellPopulation | ermentrout_kopell_pop | `sc_ermentroutkopellpopulation` | `v_out` | Q32.32 | 4 |
 | EscapeRateNeuron | escape_rate | `sc_escaperateneuron` | `v_out` | Q24.24 | 4 |
 | ExpIFNeuron | exp_if | `sc_exponential_if` | `v_out` | Q32.32 | 4 |
-| FitzHughNagumoNeuron | fitzhugh_nagumo | `sc_fitzhugh_nagumo` | `v_out` | Q8.8 | 4 |
+| FitzHughNagumoNeuron | fitzhugh_nagumo | `sc_fitzhugh_nagumo` | `v_out` | Q16.16 | 4 |
 | FitzHughRinzelNeuron | fitzhugh_rinzel | `sc_fitzhugh_rinzel` | `v_out` | Q8.8 | 4 |
 | GLIFNeuron | glif | `sc_glif` | `v_out` | Q8.8 | 6 |
 | HindmarshRoseNeuron | hindmarsh_rose | `sc_hindmarsh_rose` | `x_out` | Q8.8 | 4 |

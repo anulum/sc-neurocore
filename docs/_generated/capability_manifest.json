@@ -967,11 +967,11 @@
     "model_documentation_pages": 191,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 614,
+    "public_documentation_pages": 615,
     "python_model_classes": 174,
     "python_model_source_modules": 170,
     "rust_pyo3_model_wrappers": 201,
-    "test_files": 4741
+    "test_files": 4743
   },
   "documentation": {
     "public_pages": [
@@ -1566,6 +1566,7 @@
       "docs/validation/energy_lif_source_fidelity.md",
       "docs/validation/ermentrout_kopell_pop_source_fidelity.md",
       "docs/validation/escape_rate_stochastic_fidelity.md",
+      "docs/validation/fitzhugh_nagumo_source_fidelity.md",
       "docs/validation/hill_tononi_source_fidelity.md",
       "docs/validation/hodgkin_huxley.md",
       "docs/validation/iqif_source_fidelity.md",
@@ -3692,6 +3693,7 @@
       "tests/test_bench_ermentrout_kopell_pop.py",
       "tests/test_bench_escape_rate.py",
       "tests/test_bench_expif.py",
+      "tests/test_bench_fitzhugh_nagumo.py",
       "tests/test_bench_hill_tononi.py",
       "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_iqif_evidence_and_hashes.py",
@@ -4206,6 +4208,7 @@
       "tests/test_cosim_escape_rate.py",
       "tests/test_cosim_exp_if.py",
       "tests/test_cosim_fitzhugh_nagumo.py",
+      "tests/test_cosim_fitzhugh_nagumo_catalogue.py",
       "tests/test_cosim_fitzhugh_rinzel_q1616_precision.py",
       "tests/test_cosim_fitzhugh_rinzel_tier_b_model_cosim.py",
       "tests/test_cosim_glif_q1616_precision.py",

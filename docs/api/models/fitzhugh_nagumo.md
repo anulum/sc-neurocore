@@ -1,6 +1,11 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 # FitzHughNagumoNeuron
 
+!!! info "Fidelity evidence"
+    The source transformation, five-runtime measurement boundary, Q16.16 RTL
+    co-simulation, synthesis, and formal-safety limits are recorded in the
+    [FitzHugh-Nagumo source-fidelity boundary](../../validation/fitzhugh_nagumo_source_fidelity.md).
+
 **Module:** `sc_neurocore.neurons.models.fitzhugh_nagumo`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::FitzHughNagumoNeuron`
 **Reference:** FitzHugh, Biophys. J. 1(6), 1961; Nagumo, Arimoto & Yoshizawa, Proc. IRE 50(10), 1962
@@ -11,7 +16,9 @@
 
 ## Equations
 
-The maintained runtime surfaces integrate the published two-state FitzHugh-Nagumo ODE:
+FitzHugh's equations (1)-(3) use `(x, y, z, c)`. Under the explicit
+transformation `v = -x`, `w = y`, `I = -z`, `tau = c t`, and
+`epsilon = 1/c^2`, the maintained runtime surfaces integrate:
 
 $$\frac{dv}{dt} = v - \frac{v^3}{3} - w + I$$
 
@@ -21,7 +28,11 @@ Spike events are threshold crossings of the continuous limit-cycle variable:
 
 $$v_t \geq v_{threshold} \;\text{and}\; v_{t-1} < v_{threshold}$$
 
-There is no artificial reset after a spike. The trajectory continues through the phase plane and returns through the cubic recovery dynamics.
+There is no artificial reset after a spike. The trajectory continues through
+the phase plane and returns through the cubic recovery dynamics. RK4, the
+maintained parameter profile, the observation grid, and the threshold event are
+repository numerical specializations rather than claims about the paper's
+analogue solver.
 
 ---
 
@@ -115,34 +126,39 @@ sc_neurocore pipeline
 │   ├── Julia: src/sc_neurocore/accel/julia/neurons/fitzhugh_nagumo.jl
 │   ├── Go:    src/sc_neurocore/accel/go/neurons/fitzhugh_nagumo/fitzhugh_nagumo.go (c-shared)
 │   └── Mojo:  src/sc_neurocore/accel/mojo/neurons/fitzhugh_nagumo.mojo (FFI)
-└── Rust safety mirror: src/sc_neurocore/accel/rust/safety/fitzhugh_nagumo.rs
+├── Rust safety mirror: src/sc_neurocore/accel/rust/safety/fitzhugh_nagumo.rs
+├── NetworkRunner: NeuronVariant::FitzHughNagumo
+└── Hardware evidence: committed signed-Q16.16 compiler lowering
+    ├── exact eight-event Icarus/VVP receipt co-simulation
+    ├── Yosys coarse synthesis
+    └── depth-4 public-port reset-safety BMC
 ```
 
 ---
 
-## Verification Evidence (Measured 2026-05-31)
+## Verification evidence
 
-### Python module tests and coverage
+The maintained evidence is organized by contract rather than brittle test
+counts:
 
-```text
-PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null --source=src/sc_neurocore/neurons/models -m pytest tests/test_model_fitzhugh_nagumo.py -q
-53 passed in 33.91s
-src/sc_neurocore/neurons/models/fitzhugh_nagumo.py: 100%
-```
+| Contract | Evidence |
+|----------|----------|
+| Source transformation and independent RK4 features | `tests/test_reference_fitzhugh_nagumo.py` and `fitzhugh_nagumo_driven_oscillation_doi.json` |
+| Replayable complete state plus event receipt | `tests/test_bench_fitzhugh_nagumo.py` |
+| Python dynamics, parameters, integrators, atomicity, and network pipeline | `tests/test_model_fitzhugh_nagumo_*.py`, `tests/test_fitzhugh_nagumo_integrator_paths.py` |
+| Production Rust/PyO3 and NetworkRunner | engine model, binding, export, and runner tests |
+| Safety Rust, Go, Julia, and executable Mojo | native kernel tests plus the source-hashed five-runtime packet |
+| Committed Q16.16 object and event co-simulation | `tests/test_cosim_fitzhugh_nagumo_catalogue.py` |
+| Yosys and formal reset safety | the same catalogue test and `hdl/formal/catalogue/sc_fitzhugh_nagumo.sby` |
 
-### Polyglot checks
-
-| Surface | Verification |
-|---------|--------------|
-| Python reference | module-specific pytest suite, 53 passed, 100% model coverage |
-| Rust engine | `cargo test --manifest-path engine/Cargo.toml fhn_ -- --nocapture`, 8 FHN tests passed |
-| Julia mirror | `include(...)`; one RK4 step produced finite valid state |
-| Go mirror | `go test src/sc_neurocore/accel/go/services/fitzhugh_nagumo.go` |
-| Rust safety mirror | `rustc --test .../fitzhugh_nagumo.rs`, 5 tests passed |
+The compact receipt at
+`src/sc_neurocore/neurons/reference_receipts/fitzhugh_nagumo_1961.json`
+records all eight event indices, final `(v,w)` state, and a binary digest over
+3,000 RK4 steps at current 0.5.
 
 ---
 
-## Performance Benchmarks
+## Benchmark evidence
 
 ### Python RK4 reference (local i5-11600K, measured 2026-05-31)
 
@@ -168,7 +184,9 @@ Artifact: `benchmarks/results/local_i5_11600k_criterion_2026-05-31_fitzhugh_nagu
 | Point-estimate per-step | 50.824 ns |
 | Point-estimate throughput | 19,675,743.7431 steps/s |
 
-The new Rust number reflects four RK4 derivative stages per step, replacing the previous single-stage engine benchmark.
+These historical packets remain reproducible historical evidence. The current
+five-runtime closure packet below supersedes them for cross-runtime parity; its
+timings are still not production claims.
 
 ---
 
@@ -217,17 +235,18 @@ not isolated-core release numbers.
 
 | backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
 |---|---:|---:|---:|
-| python (NumPy) | 1016.65 | 1.00× | 0 |
-| mojo | 81.81 | 12.43× | 7.16e-13 (non-amplifying FMA) |
-| go | 87.62 | 11.60× | 0 (bit-exact) |
-| rust | 91.70 | 11.09× | 0 (bit-exact) |
-| julia | 94.24 | 10.79× | 0 (bit-exact) |
+| python (NumPy) | 1352.64 | 1.00× | 0 |
+| mojo | 104.60 | 12.93× | 7.16e-13 (non-amplifying FMA) |
+| go | 109.93 | 12.30× | 0 (bit-exact) |
+| rust | 113.61 | 11.91× | 0 (bit-exact) |
+| julia | 113.72 | 11.89× | 0 (bit-exact) |
 
 Mojo is fastest in raw throughput (the FMA contraction helps the arithmetic-heavy
 RK4), but because it is not bit-exact it is **not** chosen by `auto`; `auto`
 selects Rust — the fastest backend that is both bit-exact and ships in the wheel.
-The four derivative stages per step make the absolute per-step cost higher than
-the map kernels, so the speedups settle around 11–12×.
+All five rows record 5,067 events and the same final state within the declared
+per-backend tolerance. The four derivative stages per step make the absolute
+per-step cost higher than the map kernels.
 
 ---
 
