@@ -13,6 +13,10 @@ from __future__ import annotations
 import subprocess
 import sys
 
+from tests.engine_requirement import require_engine
+
+require_engine()
+
 
 class TestSetNumThreads:
     """Tests for Rayon thread-pool configuration."""
@@ -20,9 +24,6 @@ class TestSetNumThreads:
     def test_zero_preserves_uninitialised_default_pool(self) -> None:
         """Zero leaves the pool unset so a later explicit size can initialise it."""
         script = """
-from tests.engine_requirement import require_engine
-
-require_engine()
 import sc_neurocore_engine as v3
 
 assert v3.set_num_threads(0) is None
