@@ -16,22 +16,28 @@ summary = "A-type potassium current model — Type-I excitability with 6 state v
 family = "Conductance-based"
 category = "conductance-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "six-state A-current excitability simulation",
+    "cross-runtime and bounded fixed-point fidelity studies",
+]
+hardware_fit = [
+    "bounded compiler-generated Q16.16 event-count accelerator",
+]
 behavior_tags = [
-    "chaotic",
     "excitable",
-    "irregular",
     "phasic",
+    "tonic",
 ]
 
 [provenance]
 authors = [
-    "Connor, J.A. & Stevens, C.F.",
+    "Connor, J.A.",
+    "Walter, D.",
+    "McKown, R.",
 ]
-year = 1971
-doi = "10.1113/jphysiol.1971.sp009366"
+year = 1977
+doi = "10.1016/S0006-3495(77)85598-7"
 
 [state.v]
 init = -68.0
@@ -157,28 +163,49 @@ b = "((1/(1+exp((v+53.3)/14.54))**4) - b) / (1.24 + 2.678/(1+exp((v+50)/16.027))
 status = "implemented"
 parity = "exact"
 
-[backends.rust]
+[backends.rust_engine]
 status = "implemented"
 parity = "ulp-bounded"
 
+[backends.rust_safety]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
+
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":10.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "5e50dfeb202f5f83d7dfe5761691b0e93523df0f0e19806f9dc922f5d78d58a0"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/connor_stevens_1977.json"
+golden_trace_sha256 = "195da33f66783d439305a8b06d9ffe53c21b5f000f1fb9eb465bf1af1ef27aff"
+receipt = "src/sc_neurocore/neurons/reference_receipts/connor_stevens_1977.json"
+benchmark = "benchmarks/results/bench_connor_stevens_mojo.json"
+parity = "exact events across Python, production Rust, Julia, Go, and Mojo; complete trace/final-state error below 1e-9 for Rust/Julia/Go and below 2e-6 for Mojo; independent Rust safety parity"
 
 [documentation]
 slug = "models/connor_stevens"
-notes = ""
+notes = "The common Connor-Stevens catalogue name is retained. Exact maintained conductances, batteries, and A-gate functions come from Connor-Walter-McKown 1977 Appendix A; Connor-Stevens 1971 is experimental/model lineage. Candidate-first RK4, the macro-step sampling grid, and upward-crossing events are repository numerical specializations."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL Connor-Stevens macro-step; substeps"
-tolerance = "hand==schema exact; Q16.16 bounded band"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_connor_stevens_q1616_macrostep_parity"
+operating_point = "1977 standard parameterization; 100 candidate-first RK4 substeps per macro-step; sampled upward crossing"
+tolerance = "exact events across five runtimes; complete-state tolerance 1e-9 except Mojo 2e-6; committed Q16.16 event count within one over the bounded LUT envelope"
+evidence = "tests/test_bench_connor_stevens_mojo.py; tests/test_cosim_connor_stevens_catalogue.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_connor_stevens_q1616_macrostep_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+cosim_evidence = "tests/test_cosim_connor_stevens_catalogue.py::test_committed_q1616_rtl_preserves_the_bounded_event_band"
+synthesised = true
+synth_report = "tests/test_cosim_connor_stevens_catalogue.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Committed compiler-bound Q16.16 RTL has bounded LUT-limited event co-simulation, Yosys coarse synthesis, and depth-4 reset-safety BMC; unrestricted equation parity, timing, PPA, device, and physical-silicon rungs remain open."

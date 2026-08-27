@@ -1,5 +1,11 @@
 # ConnorStevensNeuron
 
+!!! info "Fidelity evidence"
+    The direct 1977 parameter source, 1971 lineage, five-runtime packet,
+    complete-state receipt, Q16.16 co-simulation, synthesis, and formal-safety
+    limits are recorded in the
+    [Connor-Stevens source-fidelity boundary](../../validation/connor_stevens_source_fidelity.md).
+
 **Module:** `sc_neurocore.neurons.models.connor_stevens`
 **Rust:** `sc_neurocore_engine::neurons::biophysical::ConnorStevensNeuron`
 **Reference:** Connor & Stevens (1971); Connor, Walter & McKown (1977)
@@ -11,6 +17,12 @@ potassium current to Hodgkin-Huxley-style sodium and delayed-rectifier
 potassium dynamics. The maintained runtime contract is candidate-first RK4 over
 sub-steps; invalid state, parameters, current, rates, or candidates fail before
 state mutation.
+
+The common model name reflects the Connor-Stevens experimental/model lineage.
+The exact maintained numerical parameterization is the five-branch crustacean
+axon model of Connor, Walter, and McKown (1977), Appendix A. Candidate-first
+RK4, the macro-step observation grid, and sampled threshold events are
+repository numerical specializations rather than source-paper solver claims.
 
 ## Equations
 
@@ -104,24 +116,22 @@ and positive. Constructor gate values must be finite and physically bounded.
 | Rust safety mirror | Candidate-first RK4, no-spike sentinel, standalone `rustc --test` coverage |
 | Mojo shared library | Compiled C ABI, complete state/parameter transport, negative fail-closed sentinel |
 
-## Behavioural tests
+## Verification evidence
 
-Module-specific tests in `tests/test_model_connor_stevens.py` verify:
+| Contract | Evidence |
+|----------|----------|
+| Direct 1977 parameter source plus 1971 lineage | `docs/validation/connor_stevens_source_fidelity.md` |
+| Independent six-state RK4 feature derivation | `tests/test_reference_connor_stevens.py` and `connor_stevens_driven_spiking_doi.json` |
+| Replayable complete-state/event receipt | `tests/test_bench_connor_stevens_mojo.py` and `connor_stevens_1977.json` |
+| Python dynamics, parameters, atomicity, and network pipeline | `tests/test_model_connor_stevens_*.py` and `tests/test_biophysical_neurons_connor_stevens.py` |
+| Production Rust/PyO3 and NetworkRunner | engine model, binding, export, factory, and runner tests |
+| Safety Rust, Go, Julia, and executable Mojo | native kernel tests plus the source-hashed five-runtime packet |
+| Committed Q16.16 object and bounded event co-simulation | `tests/test_cosim_connor_stevens_catalogue.py` |
+| Yosys and formal reset safety | the same catalogue test and `hdl/formal/catalogue/sc_connor_stevens.sby` |
 
-- default parameters and six-state reset semantics,
-- finite long-run trajectories,
-- deterministic traces,
-- A-type conductance dominance and onset-delay behaviour,
-- bounded voltage and gate trajectories,
-- parameter sweeps for `g_a` and `g_na`,
-- population/network/spike-stat integration wiring,
-- independent RK4 reference parity for one macro-step,
-- invalid constructor parameters and fail-closed runtime mutation boundaries.
-
-Additional module-owned checks cover the Go service, Rust engine, Julia mirror,
-Rust safety mirror, and the compiled Mojo C ABI. The Mojo test pins exact
-`0/2/9` crossing counts at `I=0/10/20` over 100 macro-steps and bounds the
-six-state transcendental trace to `2e-6` against the Python reference.
+The runtime golden envelope remains exact `0/2/9` crossings at currents
+`0/10/20` over 100 macro steps. The current-20 receipt records all nine event
+indices, the complete final `(v,m,h,n,a,b)` state, and a binary digest.
 
 ## Benchmarks
 
@@ -137,20 +147,30 @@ sub-step evaluates four derivative stages and rejects invalid candidates before
 commit. The benchmark is retained as evidence of runtime cost, not as a target
 for numerical shortcuts.
 
-The executable Mojo closure was measured on 2026-07-13 with single-logical-CPU
-affinity. The host was loaded and the core was not kernel-isolated, so these
-numbers are functional/local-regression evidence rather than production speed
-claims.
+The current five-runtime closure was measured with single-logical-CPU affinity.
+The host was loaded and the core was not kernel-isolated, so these numbers are
+functional/local-regression evidence rather than production speed claims.
 
-| Runtime | Workload | Median | Per macro-step | Parity max abs diff |
-|---------|----------|-------:|---------------:|--------------------:|
-| Python | 100 macro-steps x 11 repeats | 379.390 ms | 3.794 ms | 0 |
-| Rust engine | 100 macro-steps x 11 repeats | 10.377 ms | 103.769 us | `6.253e-13` |
-| Mojo shared library | 100 macro-steps x 11 repeats | 5.327 ms | 53.275 us | `7.910e-7` |
+| Runtime | Workload | Median | Trace max abs diff | Final-state max abs diff |
+|---------|----------|-------:|-------------------:|-------------------------:|
+| Python | 100 macro-steps x 11 repeats | 200.370 ms | 0 | 0 |
+| Rust engine | 100 macro-steps x 11 repeats | 6.780 ms | `6.253e-13` | `1.634e-13` |
+| Julia | 100 macro-steps x 11 repeats | 124.450 ms | `1.641e-12` | `1.371e-12` |
+| Go | 100 macro-steps x 11 repeats | 10.717 ms | `4.960e-12` | `4.960e-12` |
+| Mojo shared library | 100 macro-steps x 11 repeats | 4.378 ms | `7.910e-7` | `4.480e-7` |
 
-All three paths produced nine events at `I=20`. The complete affinity, load,
+All five paths produced nine events at `I=20`. The complete affinity, load,
 runtime-version, source-hash, timing, parity, and final-state record is
 `benchmarks/results/bench_connor_stevens_mojo.json`.
+
+## Hardware evidence
+
+The committed signed-Q16.16 compiler lowering is byte-equal to a fresh compiler
+emission. Hand and schema event counts are exact over the enrolled 20-macro-step
+current-100 window; committed RTL stays within one event under Icarus/VVP,
+passes Yosys coarse synthesis, and passes depth-4 reset-safety BMC. The
+lookup-table-limited event band is not claimed as unrestricted equation parity,
+timing closure, PPA, target-device validation, or physical silicon.
 
 ## Example
 

@@ -23,7 +23,7 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "connor_stevens_driven_spiking_doi",
         "connor_stevens",
         "independent_macrostep_rk4_reference",
-        "doi:10.1113/jphysiol.1971.sp009366",
+        "doi:10.1016/S0006-3495(77)85598-7",
         lambda spec: _connor_stevens_macrostep_rk4_features(
             current=spec.protocol.inputs["I"],
             dt=spec.protocol.dt,

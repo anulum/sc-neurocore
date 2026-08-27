@@ -7,12 +7,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Controlled Connor-Stevens Mojo-closure benchmark
 
-"""Measure the Connor-Stevens Python, Rust-engine, and Mojo simulation paths.
+"""Measure all maintained Connor-Stevens runtime paths.
 
-This benchmark closes the previously non-executable Mojo lane. It records
-source hashes, CPU affinity, host load, runtime versions, event parity, and the
-measured voltage-trace error over the established 100-macro-step envelope.
-Missing backends or unpinned execution fail unless explicitly allowed.
+The packet executes Python, production Rust, Julia, Go, and Mojo. It records
+source hashes, CPU affinity, host load, runtime versions, event and final-state
+parity, and the voltage-trace error over the established 100-macro-step
+envelope. Missing backends or unpinned execution fail unless explicitly
+allowed.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ import platform
 import shutil
 import statistics
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -41,18 +43,124 @@ N_STEPS = 100
 N_REPEATS = 11
 CURRENT = 20.0
 MOJO_TRACE_ATOL = 2.0e-6
-KERNEL = "connor_stevens_mojo_simulate"
-BACKENDS = ("python", "rust", "mojo")
+KERNEL = "connor_stevens_five_runtime"
+BACKENDS = ("python", "rust", "julia", "go", "mojo")
+PARITY_ATOL = {
+    "python": 0.0,
+    "rust": 1.0e-9,
+    "julia": 1.0e-9,
+    "go": 1.0e-9,
+    "mojo": MOJO_TRACE_ATOL,
+}
 SOURCE_PATHS = (
     "benchmarks/bench_connor_stevens_mojo.py",
     "bridge/sc_neurocore_engine/__init__.py",
-    "engine/src/neurons/biophysical.rs",
+    "engine/src/bindings/biophysical/connor_stevens.rs",
+    "engine/src/neurons/biophysical/connor_stevens.rs",
+    "src/sc_neurocore/accel/go/services/connor_stevens_test.go",
     "src/sc_neurocore/accel/go/services/connor_stevens.go",
+    "src/sc_neurocore/accel/julia/connor_stevens_parity_test.jl",
     "src/sc_neurocore/accel/julia/neurons/connor_stevens.jl",
     "src/sc_neurocore/accel/mojo/kernels/connor_stevens.mojo",
     "src/sc_neurocore/accel/rust/safety/connor_stevens.rs",
+    "src/sc_neurocore/neurons/model_descriptors/ConnorStevensNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/connor_stevens.json",
+    "src/sc_neurocore/neurons/model_schemas/connor_stevens.toml",
     "src/sc_neurocore/neurons/models/connor_stevens.py",
+    "src/sc_neurocore/neurons/reference_receipts/connor_stevens_1977.json",
+    "src/sc_neurocore/neurons/reference_trace_data/connor_stevens_driven_spiking_doi.json",
 )
+
+GO_ROOT = REPOSITORY / "src/sc_neurocore/accel/go"
+JULIA_SOURCE = REPOSITORY / "src/sc_neurocore/accel/julia/neurons/connor_stevens.jl"
+
+_GO_HELPER = r"""package main
+
+import (
+    "encoding/json"
+    "os"
+    "strconv"
+    "time"
+
+    services "github.com/anulum/sc-neurocore/accel/services"
+)
+
+type report struct {
+    ResultsMS []float64 `json:"results_ms"`
+    Trace []float64 `json:"trace"`
+    EventCount int `json:"event_count"`
+    FinalState []float64 `json:"final_state"`
+}
+
+func run(nSteps int, current float64) ([]float64, int, []float64) {
+    neuron := services.NewConnorStevensNeuron()
+    trace := make([]float64, nSteps)
+    events := 0
+    for index := 0; index < nSteps; index++ {
+        event, err := neuron.Step(current)
+        if err != nil { panic(err) }
+        events += event
+        trace[index] = neuron.V
+    }
+    state := []float64{neuron.V, neuron.M, neuron.H, neuron.N, neuron.A, neuron.B}
+    return trace, events, state
+}
+
+func main() {
+    nSteps, _ := strconv.Atoi(os.Args[1])
+    current, _ := strconv.ParseFloat(os.Args[2], 64)
+    repeats, _ := strconv.Atoi(os.Args[3])
+    run(nSteps, current)
+    result := report{}
+    for index := 0; index < repeats; index++ {
+        started := time.Now()
+        result.Trace, result.EventCount, result.FinalState = run(nSteps, current)
+        result.ResultsMS = append(result.ResultsMS, float64(time.Since(started).Nanoseconds())/1e6)
+    }
+    if err := json.NewEncoder(os.Stdout).Encode(result); err != nil { panic(err) }
+}
+"""
+
+_JULIA_HELPER = r"""
+include(ARGS[1])
+using .ConnorStevensAccel
+
+function run_once(n_steps::Int, current::Float64)
+    neuron = ConnorStevensNeuronState()
+    trace = zeros(Float64, n_steps)
+    events = 0
+    for index in 1:n_steps
+        event = step!(neuron, current)
+        event < 0 && error("Connor-Stevens Julia kernel rejected enrolled input")
+        events += event
+        trace[index] = neuron.v
+    end
+    state = (neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b)
+    return trace, events, state
+end
+
+function main()
+    n_steps = parse(Int, ARGS[2])
+    current = parse(Float64, ARGS[3])
+    repeats = parse(Int, ARGS[4])
+    run_once(n_steps, current)
+    times = Float64[]
+    trace = Float64[]
+    events = 0
+    state = ntuple(_ -> 0.0, 6)
+    for _ in 1:repeats
+        started = time_ns()
+        trace, events, state = run_once(n_steps, current)
+        push!(times, (time_ns() - started) / 1.0e6)
+    end
+    println(join(times, ','))
+    println(join(trace, ','))
+    println(events)
+    println(join(state, ','))
+end
+
+main()
+"""
 
 
 def _cpu_model() -> str:
@@ -112,7 +220,10 @@ def _source_hashes() -> dict[str, object]:
     nested: dict[str, object] = {}
     for relative, digest in flat.items():
         stem, suffix = relative.rsplit(".", 1)
-        nested[stem] = {suffix: digest}
+        bucket = nested.setdefault(stem, {})
+        if not isinstance(bucket, dict):
+            raise RuntimeError(f"source-hash namespace collision at {stem}")
+        bucket[suffix] = digest
     return {**flat, **nested}
 
 
@@ -123,11 +234,17 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
     if backend == "rust":
         available = connor_stevens._HAS_RUST
         return available, "" if available else "Rust engine ConnorStevens symbol unavailable"
+    if backend == "julia":
+        available = shutil.which("julia") is not None and JULIA_SOURCE.is_file()
+        return available, "" if available else "Julia runtime or Connor-Stevens module unavailable"
+    if backend == "go":
+        available = shutil.which("go") is not None and GO_ROOT.is_dir()
+        return available, "" if available else "Go runtime or accelerator module unavailable"
     available = connor_stevens._ensure_mojo_loaded()
     return available, "" if available else "compiled libconnor_stevens.so unavailable"
 
 
-def _measure_backend(
+def _measure_in_process(
     backend: str,
 ) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, ...]]:
     """Warm one backend, then return timings and final numerical state."""
@@ -146,6 +263,69 @@ def _measure_backend(
     return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
 
 
+def _measure_go() -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, ...]]:
+    """Execute the maintained Go service and return its measured complete state."""
+    with tempfile.TemporaryDirectory(prefix="scn-connor-go-") as tmpdir:
+        helper = Path(tmpdir) / "main.go"
+        helper.write_text(_GO_HELPER, encoding="utf-8")
+        completed = subprocess.run(
+            ["go", "run", str(helper), str(N_STEPS), repr(CURRENT), str(N_REPEATS)],
+            cwd=GO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    payload = json.loads(completed.stdout)
+    timings = [float(value) for value in payload["results_ms"]]
+    return (
+        statistics.median(timings),
+        min(timings),
+        np.asarray(payload["trace"], dtype=np.float64),
+        int(payload["event_count"]),
+        tuple(float(value) for value in payload["final_state"]),
+    )
+
+
+def _measure_julia() -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, ...]]:
+    """Execute the maintained Julia module and return its measured complete state."""
+    completed = subprocess.run(
+        [
+            "julia",
+            "--startup-file=no",
+            "-e",
+            _JULIA_HELPER,
+            str(JULIA_SOURCE),
+            str(N_STEPS),
+            repr(CURRENT),
+            str(N_REPEATS),
+        ],
+        cwd=REPOSITORY,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    lines = completed.stdout.strip().splitlines()
+    if len(lines) != 4:
+        raise RuntimeError(f"unexpected Julia Connor-Stevens output: {completed.stdout!r}")
+    timings = [float(value) for value in lines[0].split(",")]
+    trace = np.asarray([float(value) for value in lines[1].split(",")], dtype=np.float64)
+    final_state = tuple(float(value) for value in lines[3].split(","))
+    return statistics.median(timings), min(timings), trace, int(lines[2]), final_state
+
+
+def _measure_backend(
+    backend: str,
+) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, ...]]:
+    """Measure one maintained runtime through its executable surface."""
+    if backend == "go":
+        return _measure_go()
+    if backend == "julia":
+        return _measure_julia()
+    return _measure_in_process(backend)
+
+
 def _runtime_versions() -> dict[str, str]:
     """Record the runtimes involved in the measured closure."""
     home = Path.home()
@@ -154,6 +334,8 @@ def _runtime_versions() -> dict[str, str]:
         "python": platform.python_version(),
         "numpy": np.__version__,
         "rust": _tool_version([_tool_path("rustc") or "", "--version"]),
+        "julia": _tool_version([_tool_path("julia") or "", "--version"]),
+        "go": _tool_version([_tool_path("go") or "", "version"]),
         "mojo": _tool_version([mojo, "--version"]),
     }
 
@@ -207,6 +389,7 @@ def main(argv: list[str]) -> int:
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
     reference_spikes: int | None = None
+    reference_state: tuple[float, ...] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
@@ -221,11 +404,23 @@ def main(argv: list[str]) -> int:
             reference = trace
             reference_ms = median_ms
             reference_spikes = spikes
+            reference_state = final_state
             parity = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if (
+                reference is None
+                or reference_ms is None
+                or reference_spikes is None
+                or reference_state is None
+            ):
                 raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference)))
+        if reference_state is None:
+            raise RuntimeError("Python reference state must be measured first")
+        final_state_gap = max(
+            abs(actual - expected)
+            for actual, expected in zip(final_state, reference_state, strict=True)
+        )
         rows[backend] = {
             "available": True,
             "used": True,
@@ -237,6 +432,8 @@ def main(argv: list[str]) -> int:
             "event_count_matches_python": (
                 True if reference_spikes is None else spikes == reference_spikes
             ),
+            "final_state_max_abs_diff": final_state_gap,
+            "final_state_matches_python": final_state_gap <= PARITY_ATOL[backend],
             "final_state": dict(zip(("v", "m", "h", "n", "a", "b"), final_state, strict=True)),
         }
 
@@ -258,6 +455,10 @@ def main(argv: list[str]) -> int:
         "backends": rows,
         "measured_order": measured_order,
         "source_hashes": _source_hashes(),
+        "evidence_class": "local_regression_non_isolated",
+        "production_speed_claim": False,
+        "hardware_measurement_claimed": False,
+        "notes": "Loaded-host regression only; timings are not comparative production claims.",
     }
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -276,8 +477,15 @@ def main(argv: list[str]) -> int:
 
     if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
         return 3
-    mojo_gap = float(rows.get("mojo", {}).get("parity_max_abs_diff", 0.0))
-    return 4 if mojo_gap > MOJO_TRACE_ATOL else 0
+    parity_failed = any(
+        bool(row.get("used"))
+        and (
+            float(row.get("parity_max_abs_diff", 0.0)) > PARITY_ATOL[backend]
+            or not bool(row.get("final_state_matches_python", False))
+        )
+        for backend, row in rows.items()
+    )
+    return 4 if parity_failed else 0
 
 
 if __name__ == "__main__":

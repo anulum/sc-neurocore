@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Connor-Stevens full-fidelity closure
+
+- Corrected direct provenance from the 1971 experimental lineage to the exact
+  Connor-Walter-McKown (1977) Appendix A parameterization while preserving the
+  established Connor-Stevens catalogue identity. Added a replayable complete
+  six-state/event receipt and expanded the source-bound packet from three
+  executed runtimes to Python, production Rust, Julia, Go, and Mojo with exact
+  event custody and explicit non-production measurement boundaries.
+- Replaced the stale committed Q8.8 catalogue object with the current
+  compiler's signed-Q16.16 lowering used by the behavioral evidence. The
+  committed object retains the honest one-event LUT-limited bounded envelope,
+  passes Yosys coarse synthesis, and passes depth-4 public-port reset-safety
+  BMC. This reaches H2 without claiming unrestricted numerical equivalence,
+  timing, PPA, a target device, or physical silicon.
+
 ### FitzHugh-Nagumo full-fidelity closure
 
 - Reconciled the maintained two-state recurrence with FitzHugh's (1961)

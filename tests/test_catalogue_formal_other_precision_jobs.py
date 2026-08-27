@@ -11,6 +11,24 @@ from __future__ import annotations
 from tests.catalogue_formal_support import *  # noqa: F403
 
 
+def test_connor_stevens_formal_job_uses_enrolled_q1616_precision() -> None:
+    """Keep committed Connor-Stevens RTL aligned with the bounded co-sim carrier."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_connor_stevens_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["ConnorStevensNeuron"] == "connor_stevens"
+    assert module.PRECISION_BY_SCHEMA["connor_stevens"] == (32, 16)
+    assert module.DEPTH_BY_SCHEMA["connor_stevens"] == 4
+    assert "connor_stevens" in module.MINIMAL_SAFETY_SCHEMAS
+    assert module.FORMAL_FIXED_CURRENT_BY_SCHEMA["connor_stevens"] == 100.0
+
+
 def test_fitzhugh_nagumo_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal FitzHugh-Nagumo RTL aligned with exact event co-simulation."""
     import importlib.util

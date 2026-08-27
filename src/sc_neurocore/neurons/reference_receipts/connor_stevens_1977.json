@@ -1,0 +1,33 @@
+{
+  "model": "ConnorStevensNeuron",
+  "source": "doi:10.1016/S0006-3495(77)85598-7 Appendix A; common catalogue name retains the Connor-Stevens lineage from doi:10.1113/jphysiol.1971.sp009366",
+  "profile": "1977 standard conductances and batteries; repository candidate-first classical RK4 with 100 dt=0.01 substeps per one-millisecond macro step and sampled upward v>=0 crossing without reset",
+  "drive": {
+    "current": 20.0
+  },
+  "oracle": {
+    "steps": 100,
+    "events": 9,
+    "event_indices": [
+      1,
+      16,
+      31,
+      39,
+      46,
+      54,
+      69,
+      84,
+      99
+    ],
+    "final_state": [
+      43.41446009137186,
+      0.935221863599606,
+      0.37426919288336785,
+      0.5162640994287648,
+      0.7477258113981685,
+      0.04911167479985322
+    ],
+    "trace_sha256": "195da33f66783d439305a8b06d9ffe53c21b5f000f1fb9eb465bf1af1ef27aff"
+  },
+  "encoding": "per macro step: little-endian float64 states v,m,h,n,a,b followed by little-endian int64 event"
+}

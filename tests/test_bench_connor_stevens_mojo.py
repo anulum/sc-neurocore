@@ -16,6 +16,7 @@ import os
 import platform
 import shutil
 from pathlib import Path
+import struct
 
 import numpy as np
 import numpy.typing as npt
@@ -23,8 +24,12 @@ import pytest
 
 from benchmarks import bench_connor_stevens_mojo as benchmark
 from sc_neurocore.neurons.models import connor_stevens
+from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
 
 _BACKENDS_AVAILABLE = connor_stevens._HAS_RUST and connor_stevens._ensure_mojo_loaded()
+_RECEIPT = (
+    benchmark.REPOSITORY / "src/sc_neurocore/neurons/reference_receipts/connor_stevens_1977.json"
+)
 
 
 @pytest.mark.skipif(not _BACKENDS_AVAILABLE, reason="Connor-Stevens Rust/Mojo backends unavailable")
@@ -40,11 +45,36 @@ def test_real_benchmark_writes_pinned_parity_evidence(
     assert benchmark.main(["--json", str(output), "--allow-unpinned"]) == 0
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
-    assert payload["kernel"] == "connor_stevens_mojo_simulate"
+    assert payload["kernel"] == "connor_stevens_five_runtime"
     assert payload["workload"]["n_steps"] == 3
     assert payload["backends"]["mojo"]["event_count_matches_python"] is True
     assert payload["backends"]["rust"]["event_count_matches_python"] is True
-    assert set(payload["measured_order"]) == {"python", "rust", "mojo"}
+    assert payload["backends"]["julia"]["event_count_matches_python"] is True
+    assert payload["backends"]["go"]["event_count_matches_python"] is True
+    assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
+    assert payload["production_speed_claim"] is False
+    assert payload["hardware_measurement_claimed"] is False
+
+
+def test_reference_receipt_replays_complete_state_and_events() -> None:
+    """Bind the 1977 parameterization to an exact six-state binary receipt."""
+    receipt = json.loads(_RECEIPT.read_text(encoding="utf-8"))
+    neuron = ConnorStevensNeuron()
+    digest = hashlib.sha256()
+    event_indices: list[int] = []
+    for index in range(receipt["oracle"]["steps"]):
+        event = neuron.step(receipt["drive"]["current"])
+        if event:
+            event_indices.append(index)
+        digest.update(
+            struct.pack("<6dq", neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b, event)
+        )
+    assert event_indices == receipt["oracle"]["event_indices"]
+    assert len(event_indices) == receipt["oracle"]["events"]
+    assert [neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b] == receipt["oracle"][
+        "final_state"
+    ]
+    assert digest.hexdigest() == receipt["oracle"]["trace_sha256"]
 
 
 def test_source_hashes_cover_the_declared_implementation_surfaces() -> None:

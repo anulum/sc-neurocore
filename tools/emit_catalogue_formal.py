@@ -252,6 +252,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "adaptive_threshold_if": (64, 32),
     "alpha": (64, 32),
     "coba_lif": (48, 24),
+    "connor_stevens": (32, 16),
     "dpi_neuron": (32, 16),
     "ermentrout_kopell_pop": (64, 32),
     "escape_rate": (48, 24),
@@ -277,6 +278,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
 # Pin only those jobs to their enrolled receipt current and an initial reset;
 # the DUT remains the exact committed compiler lowering.
 FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
+    "connor_stevens": 100.0,
     "morris_lecar": 100.0,
 }
 

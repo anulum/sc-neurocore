@@ -1,5 +1,45 @@
 {
   "backends": {
+    "go": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "a": 0.7477258113981919,
+        "b": 0.049111674799851825,
+        "h": 0.3742691928833203,
+        "m": 0.9352218635996645,
+        "n": 0.5162640994287926,
+        "v": 43.41446009137682
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 4.959588295605499e-12,
+      "median_call_ms": 10.717102,
+      "minimum_call_ms": 10.538932,
+      "parity_max_abs_diff": 4.959588295605499e-12,
+      "speedup_vs_python": 18.696317903851245,
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "a": 0.7477258113981752,
+        "b": 0.0491116747998528,
+        "h": 0.37426919288335503,
+        "m": 0.9352218635996221,
+        "n": 0.5162640994287726,
+        "v": 43.41446009137323
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 1.3713474800169934e-12,
+      "median_call_ms": 124.449936,
+      "minimum_call_ms": 116.660496,
+      "parity_max_abs_diff": 1.6413537196058314e-12,
+      "speedup_vs_python": 1.6100478026762506,
+      "used": true
+    },
     "mojo": {
       "available": true,
       "event_count": 9,
@@ -12,10 +52,12 @@
         "n": 0.5162641019382902,
         "v": 43.41446053940109
       },
-      "median_call_ms": 4.739325,
-      "minimum_call_ms": 4.209449,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 4.480292332686986e-07,
+      "median_call_ms": 4.377701,
+      "minimum_call_ms": 4.236144,
       "parity_max_abs_diff": 7.910317325610094e-07,
-      "speedup_vs_python": 43.237116889008455,
+      "speedup_vs_python": 45.770678719263834,
       "used": true
     },
     "python": {
@@ -30,8 +72,10 @@
         "n": 0.5162640994287648,
         "v": 43.41446009137186
       },
-      "median_call_ms": 204.914749,
-      "minimum_call_ms": 197.319776,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 200.370346,
+      "minimum_call_ms": 191.018676,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -48,64 +92,86 @@
         "n": 0.516264099428764,
         "v": 43.414460091371694
       },
-      "median_call_ms": 6.402382,
-      "minimum_call_ms": 5.637236,
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 1.6342482922482304e-13,
+      "median_call_ms": 6.780457,
+      "minimum_call_ms": 6.015205,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 32.00601729168925,
+      "speedup_vs_python": 29.551156507592335,
       "used": true
     }
   },
-  "kernel": "connor_stevens_mojo_simulate",
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "kernel": "connor_stevens_five_runtime",
   "measured_order": [
     "mojo",
     "rust",
+    "go",
+    "julia",
     "python"
   ],
   "meta": {
     "affinity": [
-      0
+      1
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      7.0185546875,
-      5.26025390625,
-      5.21875
+      8.0625,
+      6.6826171875,
+      12.9130859375
     ],
     "load_average_start": [
-      7.0205078125,
-      5.23046875,
-      5.208984375
+      8.068359375,
+      6.66015625,
+      12.93994140625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
       "mojo": "Mojo 1.0.0b1 (a9591de6)",
       "numpy": "2.2.6",
       "python": "3.12.3",
-      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
     },
     "single_cpu_pinned": true
   },
+  "notes": "Loaded-host regression only; timings are not comparative production claims.",
+  "production_speed_claim": false,
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_connor_stevens_mojo": {
-      "py": "b8f19106938b2943bb5d39205dd5cf7b98c9a6b594a4f8031ef74e0ca9bc7fd0"
+      "py": "92ef9f64a19e7689e2aa3a2e5bf96a12128e6753393c79e2a9c2bd37424f860a"
     },
-    "benchmarks/bench_connor_stevens_mojo.py": "b8f19106938b2943bb5d39205dd5cf7b98c9a6b594a4f8031ef74e0ca9bc7fd0",
+    "benchmarks/bench_connor_stevens_mojo.py": "92ef9f64a19e7689e2aa3a2e5bf96a12128e6753393c79e2a9c2bd37424f860a",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2"
     },
     "bridge/sc_neurocore_engine/__init__.py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2",
-    "engine/src/neurons/biophysical": {
-      "rs": "80a012bff8b60cf92a2912f8404000bffee0a7aabea735fc494a88d9ad85156e"
+    "engine/src/bindings/biophysical/connor_stevens": {
+      "rs": "733b09113412f1067aadfe4eb6f5758e2595f28490be36ed3522d55cf2da12fa"
     },
-    "engine/src/neurons/biophysical.rs": "80a012bff8b60cf92a2912f8404000bffee0a7aabea735fc494a88d9ad85156e",
+    "engine/src/bindings/biophysical/connor_stevens.rs": "733b09113412f1067aadfe4eb6f5758e2595f28490be36ed3522d55cf2da12fa",
+    "engine/src/neurons/biophysical/connor_stevens": {
+      "rs": "fccb35a75a7702a76d82f76ce35c7b5783ce8b4fd360d3eb24435ad8feece6df"
+    },
+    "engine/src/neurons/biophysical/connor_stevens.rs": "fccb35a75a7702a76d82f76ce35c7b5783ce8b4fd360d3eb24435ad8feece6df",
     "src/sc_neurocore/accel/go/services/connor_stevens": {
       "go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995"
     },
     "src/sc_neurocore/accel/go/services/connor_stevens.go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995",
+    "src/sc_neurocore/accel/go/services/connor_stevens_test": {
+      "go": "8796e3869bfbeadd1edb6c618f78b8471a911bcb5b42b9529a062686592fa6b0"
+    },
+    "src/sc_neurocore/accel/go/services/connor_stevens_test.go": "8796e3869bfbeadd1edb6c618f78b8471a911bcb5b42b9529a062686592fa6b0",
+    "src/sc_neurocore/accel/julia/connor_stevens_parity_test": {
+      "jl": "0c3f4904a0cdb224a37d4ebdce201599b80fa46b9d0c1a4bb7662d204c9312d8"
+    },
+    "src/sc_neurocore/accel/julia/connor_stevens_parity_test.jl": "0c3f4904a0cdb224a37d4ebdce201599b80fa46b9d0c1a4bb7662d204c9312d8",
     "src/sc_neurocore/accel/julia/neurons/connor_stevens": {
       "jl": "4cfaff39275e3b08669615a56de435de1546312e02c1bd7e5f4e2d3fcc6212c1"
     },
@@ -118,10 +184,28 @@
       "rs": "585c84439c576d755f1594e4a9404ac1d9aef5fb3225e8b19c134d522705a634"
     },
     "src/sc_neurocore/accel/rust/safety/connor_stevens.rs": "585c84439c576d755f1594e4a9404ac1d9aef5fb3225e8b19c134d522705a634",
-    "src/sc_neurocore/neurons/models/connor_stevens": {
-      "py": "cb51411939a3af79ecd22478afaed530970078e7c6f0369d3854011f2dab6d9c"
+    "src/sc_neurocore/neurons/model_descriptors/ConnorStevensNeuron": {
+      "toml": "5b994b21952cc9557472f2837d046e2b32a3eddb7ed18a26c0ec7ba33a8f378e"
     },
-    "src/sc_neurocore/neurons/models/connor_stevens.py": "cb51411939a3af79ecd22478afaed530970078e7c6f0369d3854011f2dab6d9c"
+    "src/sc_neurocore/neurons/model_descriptors/ConnorStevensNeuron.toml": "5b994b21952cc9557472f2837d046e2b32a3eddb7ed18a26c0ec7ba33a8f378e",
+    "src/sc_neurocore/neurons/model_schemas/connor_stevens": {
+      "json": "792dc9f0b62d1c8dbc7ef8319cbecff03bc46b7ec5158f35536effbd0b05a97d",
+      "toml": "10d8d58bb1e6dcc36f532a8c41e3217501dcdd2693ad1485ce64251b9c46f4fb"
+    },
+    "src/sc_neurocore/neurons/model_schemas/connor_stevens.json": "792dc9f0b62d1c8dbc7ef8319cbecff03bc46b7ec5158f35536effbd0b05a97d",
+    "src/sc_neurocore/neurons/model_schemas/connor_stevens.toml": "10d8d58bb1e6dcc36f532a8c41e3217501dcdd2693ad1485ce64251b9c46f4fb",
+    "src/sc_neurocore/neurons/models/connor_stevens": {
+      "py": "230f19076e481598554ac18ed0890d0d56946031b69985576b461027d32174e8"
+    },
+    "src/sc_neurocore/neurons/models/connor_stevens.py": "230f19076e481598554ac18ed0890d0d56946031b69985576b461027d32174e8",
+    "src/sc_neurocore/neurons/reference_receipts/connor_stevens_1977": {
+      "json": "135c50c89ad76641b843726dbb756779495035913a8ce96c9d4b537153337701"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/connor_stevens_1977.json": "135c50c89ad76641b843726dbb756779495035913a8ce96c9d4b537153337701",
+    "src/sc_neurocore/neurons/reference_trace_data/connor_stevens_driven_spiking_doi": {
+      "json": "f92e9c3997dc43df99b5daab6111b03b53c15b26caadf63f6cf52298356da5b7"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/connor_stevens_driven_spiking_doi.json": "f92e9c3997dc43df99b5daab6111b03b53c15b26caadf63f6cf52298356da5b7"
   },
   "workload": {
     "current": 20.0,

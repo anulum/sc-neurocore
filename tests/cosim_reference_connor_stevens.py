@@ -33,7 +33,7 @@ def _connor_stevens_macrostep_rk4_features(
 ) -> dict[str, float]:
     """Return exact macro-step RK4 features for the driven Connor-Stevens oscillator.
 
-    The Connor-Stevens (1971) A-current model is the faithful representation of the
+    The Connor-Walter-McKown (1977) A-current parameterization is the faithful representation of the
     maintained ``ConnorStevensNeuron`` (RK4, sub-stepped): each macro step advances
     ``substeps`` inner four-stage classical RK4 sub-steps of ``dt``, and the rising-edge
     ``v >= 0`` crossing is evaluated only on the macro boundary against the condition at
@@ -43,7 +43,7 @@ def _connor_stevens_macrostep_rk4_features(
     the schema, reusing :func:`_np_exp` and :func:`_reference_exprel` (and the cube-root
     ``a``-gate) so the recurrence reproduces the schema runner bit-for-bit. The reference is
     an independent re-derivation of the committed driven-spiking trace, not a copy of the
-    runner.
+    runner. Connor-Stevens (1971) remains the experimental A-current lineage.
 
     Parameters
     ----------

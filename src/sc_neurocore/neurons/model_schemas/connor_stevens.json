@@ -2,9 +2,9 @@
   "metadata": {
     "schema_version": 1,
     "name": "Connor-Stevens",
-    "author": "Connor, J.A. & Stevens, C.F.",
-    "year": 1971,
-    "doi": "10.1113/jphysiol.1971.sp009366",
+    "author": "Connor, J.A.; Walter, D.; McKown, R.",
+    "year": 1977,
+    "doi": "10.1016/S0006-3495(77)85598-7",
     "description": "A-type potassium current model \u2014 Type-I excitability with 6 state variables"
   },
   "state": {

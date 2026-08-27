@@ -967,11 +967,11 @@
     "model_documentation_pages": 191,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 615,
+    "public_documentation_pages": 616,
     "python_model_classes": 174,
     "python_model_source_modules": 170,
     "rust_pyo3_model_wrappers": 201,
-    "test_files": 4743
+    "test_files": 4744
   },
   "documentation": {
     "public_pages": [
@@ -1562,6 +1562,7 @@
       "docs/validation/butera_respiratory_source_fidelity.md",
       "docs/validation/coba_lif_cosim_fidelity.md",
       "docs/validation/conductance_oscillator_cosim_fidelity.md",
+      "docs/validation/connor_stevens_source_fidelity.md",
       "docs/validation/cross_framework_brian2.md",
       "docs/validation/energy_lif_source_fidelity.md",
       "docs/validation/ermentrout_kopell_pop_source_fidelity.md",
@@ -4195,6 +4196,7 @@
       "tests/test_cosim_coba_lif.py",
       "tests/test_cosim_compte_wm.py",
       "tests/test_cosim_connor_stevens.py",
+      "tests/test_cosim_connor_stevens_catalogue.py",
       "tests/test_cosim_courage_nekorkin_map.py",
       "tests/test_cosim_dpi_neuron.py",
       "tests/test_cosim_emitters_co_simulation.py",

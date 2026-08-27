@@ -23,8 +23,8 @@
   "provenance": {
     "kind": "independent_macrostep_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/connor_stevens.toml",
-    "equation": "Driven Connor-Stevens A-current spiking (ten upward v>=0 crossings over 60 one-millisecond macro steps) advanced with the exact macro-step integrator: 100 inner four-stage classical RK4 sub-steps of dt=0.01 per macro step, rising-edge crossing evaluated only on the macro boundary, no reset. The six-state membrane and Na/K/A-type gating equations (numpy exp/exprel rates and the cube-root a-gate) are independently re-derived from the Connor-Stevens (1971) model definition, matching the schema runner bit-for-bit.",
-    "citation": "doi:10.1113/jphysiol.1971.sp009366"
+    "equation": "Driven Connor-Stevens A-current spiking (ten upward v>=0 crossings over 60 one-millisecond macro steps) advanced with the exact macro-step integrator: 100 inner four-stage classical RK4 sub-steps of dt=0.01 per macro step, rising-edge crossing evaluated only on the macro boundary, no reset. The six-state membrane and modified Na/K/A-type gating equations (numpy exp/exprel rates and the cube-root A-gate) are independently re-derived from the Connor-Walter-McKown (1977) Appendix A parameterization, matching the schema runner bit-for-bit. Connor-Stevens (1971) remains the experimental A-current lineage.",
+    "citation": "doi:10.1016/S0006-3495(77)85598-7"
   },
   "expected_features": {
     "spike_count": 10.0,

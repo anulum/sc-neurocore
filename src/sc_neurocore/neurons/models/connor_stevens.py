@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Connor-Stevens 1977 — A-type potassium current, Type-I
+# SC-NeuroCore — Connor-Walter-McKown 1977 A-current parameterization
 
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ _RUST_ENGINE_DEFAULTS: dict[str, float] = {
 
 @dataclass
 class ConnorStevensNeuron:
-    """Connor-Stevens 1977 A-type potassium current model.
+    """Connor-Stevens-family A-current model with the 1977 parameterization.
 
     State variables are membrane voltage ``v`` plus sodium activation ``m``,
     sodium inactivation ``h``, delayed-rectifier potassium activation ``n``,

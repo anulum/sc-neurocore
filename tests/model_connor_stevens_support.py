@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-"""Module-specific behavioural tests for ConnorStevensNeuron (Connor & Stevens 1977).
+"""Module-specific tests for the Connor-Walter-McKown 1977 parameterization.
 
 HH-type model with A-type potassium current (I_A), Type-I excitability.
 6 state variables: v, m (Na act), h (Na inact), n (K), a (A-type act),
