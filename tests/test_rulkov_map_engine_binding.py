@@ -18,6 +18,9 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 from sc_neurocore.neurons.models import rulkov_map
 from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron

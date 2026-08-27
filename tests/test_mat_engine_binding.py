@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 from sc_neurocore.neurons.models.mat import MATNeuron
 from sc_neurocore.neurons.models.sc_resetting_mat import SCResettingMATNeuron

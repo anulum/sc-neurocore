@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import pytest
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 from sc_neurocore_engine import CompteWMNeuron
 
 

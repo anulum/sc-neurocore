@@ -971,7 +971,7 @@
     "python_model_classes": 172,
     "python_model_source_modules": 168,
     "rust_pyo3_model_wrappers": 199,
-    "test_files": 4723
+    "test_files": 4725
   },
   "documentation": {
     "public_pages": [
@@ -3113,6 +3113,7 @@
       "tests/edge_crossing_detection_support.py",
       "tests/encoding_zoo_support.py",
       "tests/energy_accounting_support.py",
+      "tests/engine_requirement.py",
       "tests/engine_v3_bitstream_kernels_support.py",
       "tests/engine_v3_dense_kernels_support.py",
       "tests/engine_v3_lif_kernels_support.py",
@@ -4431,6 +4432,7 @@
       "tests/test_energy_lif_schema_parity.py",
       "tests/test_engine_lif_vector_run.py",
       "tests/test_engine_probability_array_encoding.py",
+      "tests/test_engine_requirement_gate.py",
       "tests/test_engine_rust_performance_guards.py",
       "tests/test_engine_v3_bitstream_kernels_fast_bernoulli.py",
       "tests/test_engine_v3_bitstream_kernels_fast_prng.py",

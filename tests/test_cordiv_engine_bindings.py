@@ -17,6 +17,9 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 
 extension = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")

@@ -16,6 +16,9 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 from sc_neurocore.accel import sc_forward
 

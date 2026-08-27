@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import pytest
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine
 
 

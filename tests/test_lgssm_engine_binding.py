@@ -16,6 +16,9 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 from sc_neurocore.world_model import _lgssm_backends as backends
 from sc_neurocore.world_model.predictive_model import KalmanFilter, LinearGaussianSSM

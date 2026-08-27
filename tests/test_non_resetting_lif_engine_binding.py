@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 from sc_neurocore.neurons.models.non_resetting_lif import NonResettingLIFNeuron
 from sc_neurocore.neurons.models.sc_non_resetting_adaptive_lif import (

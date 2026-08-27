@@ -17,6 +17,9 @@ from typing import Any
 import numpy as np
 import pytest
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 import sc_neurocore_engine as engine
 from sc_neurocore.neurons.models import glif
 from sc_neurocore.neurons.models.glif import GLIFNeuron

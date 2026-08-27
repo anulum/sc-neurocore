@@ -35,6 +35,10 @@ concurrency:
 env:
   CARGO_HTTP_MULTIPLEXING: "false"
   CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+  # Hosted CI builds the engine, so the engine-binding import gate must never
+  # skip here: a missing/broken engine is a hard red, not a wall of skips
+  # (tests/engine_requirement.py).
+  SC_NEUROCORE_REQUIRE_ENGINE: "1"
 
 jobs:
   lint:
