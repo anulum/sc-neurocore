@@ -227,3 +227,23 @@ def test_hdc_exact_coverage_is_hosted() -> None:
     assert "src/sc_neurocore/hdc/classifier.py" in step
     assert "tests/test_hdc/" in step
     assert "--fail-under=100 --show-missing" in step
+
+
+def test_exactly_one_primary_matrix_leg_carries_the_exact_coverage_lanes() -> None:
+    """Every exact-coverage lane rides `if: matrix.primary`; losing the single
+    `primary: true` matrix entry would silently disable all of them on every
+    leg, so the matrix must always declare exactly one primary interpreter."""
+
+    try:
+        import yaml
+    except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.
+        import pytest
+
+        pytest.skip("PyYAML is not installed")
+    workflow = yaml.safe_load((_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    include = workflow["jobs"]["test"]["strategy"]["matrix"]["include"]
+    primary_legs = [leg for leg in include if leg.get("primary") is True]
+    assert len(primary_legs) == 1, (
+        "the test matrix must declare exactly one primary leg; "
+        f"found {len(primary_legs)} of {len(include)}"
+    )
