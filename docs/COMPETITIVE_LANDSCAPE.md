@@ -164,11 +164,15 @@ Brian2 comparison (same network, 1K excitatory + 250 inhibitory):
 | V01 ratio | 1.17× faster | baseline |
 
 **Honest framing**: The 1.17× figure is for 1K-neuron Python-path simulation.
-The committed Brunel balanced-network scaling artifact
-`benchmarks/results/rust_scaling_benchmark.json` records 39-202x speedups
-against Brian2 for its 10K-100K Rust rows. Brian2 is faster at small networks
-where its C++ code generation amortizes overhead. SC-NeuroCore's Rust engine
-advantage grows with network size on that recorded workload.
+The committed Brunel balanced-network scaling artefact
+`benchmarks/results/rust_scaling_benchmark.json` records 39-202x wall-clock
+ratios against Brian2 for its 10K-100K Rust rows, but those rows measure an
+unconnected fixed-point LIF layer under constant external drive rather than
+the recurrent Brunel network, so they are not a dynamics-parity result. The
+dynamics-parity comparison in the same artefact is the NumPy dense lane:
+2.4x faster than Brian2 at 1,000 neurons, 1.3x at 5,000, and 0.75x (slower)
+at 10,000. Brian2 is faster at small networks where its C++ code generation
+amortises overhead.
 
 ### 3.3 GPU Scaling (NVIDIA RTX A6000)
 

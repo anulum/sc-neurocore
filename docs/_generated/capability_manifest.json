@@ -971,7 +971,7 @@
     "python_model_classes": 172,
     "python_model_source_modules": 168,
     "rust_pyo3_model_wrappers": 199,
-    "test_files": 4719
+    "test_files": 4720
   },
   "documentation": {
     "public_pages": [
@@ -3894,6 +3894,7 @@
       "tests/test_bridges_photonic_noc_thermal_phase_shifter.py",
       "tests/test_bridges_photonic_noc_waveguide_router.py",
       "tests/test_bridges_photonic_noc_wdm_assigner.py",
+      "tests/test_brunel_dynamics_parity_gate.py",
       "tests/test_brunel_regression_benchmark_regression.py",
       "tests/test_brunel_regression_brunel_params_algebra.py",
       "tests/test_brunel_regression_fixed_point_roundtrip.py",

@@ -655,6 +655,14 @@ def run_nest(cfg: BrunelConfig) -> RunMetrics | None:
 # Simulator: Rust engine (batch_lif_run_multi)
 # ---------------------------------------------------------------------------
 def run_rust_engine(cfg: BrunelConfig) -> RunMetrics | None:
+    """Run the unconnected fixed-point LIF layer on the Rust engine.
+
+    This lane has no recurrent connectivity: each neuron receives a constant
+    external drive plus a per-neuron noise offset, so its firing rate does not
+    track the recurrent Brunel network and its rows are NOT a dynamics-parity
+    comparison against Brian2. The gate in
+    ``tests/test_brunel_dynamics_parity_gate.py`` pins this boundary.
+    """
     try:
         import sc_neurocore_engine as eng
     except ImportError:

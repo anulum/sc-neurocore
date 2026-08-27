@@ -12,9 +12,12 @@ within the same process are instant (<1ms).
 
 No. The Rust engine (`sc-neurocore-engine`) is optional. All Python
 functionality works without it. The committed Brunel balanced-network
-benchmark artifact `benchmarks/results/rust_scaling_benchmark.json` records
-39-202x speedups against Brian2 for its 10K-100K rows; treat that as
-workload-specific evidence, not a universal speed claim for every operation.
+benchmark artefact `benchmarks/results/rust_scaling_benchmark.json` records
+39-202x wall-clock ratios against Brian2 for its 10K-100K Rust rows, but
+those rows measure an unconnected fixed-point LIF layer rather than the
+recurrent Brunel network, so they are not a dynamics-parity result. The
+parity-validated NumPy lane in the same artefact is 2.4x faster than Brian2
+at 1,000 neurons, 1.3x at 5,000, and slower than Brian2 at 10,000.
 
 Use `sc-neurocore info` to see whether the current environment can import
 `sc_neurocore_engine`. For source checkouts, build the local bridge with
