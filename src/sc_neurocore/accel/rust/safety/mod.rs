@@ -237,6 +237,7 @@ pub mod l9_mem;
 pub mod l9_memory;
 pub mod lapicque;
 pub mod larter_breakspear;
+pub mod sc_decoupled_adaptation_ion_mass;
 pub mod lava_bridge;
 pub mod leaky_compete_fire;
 pub mod lfsr;

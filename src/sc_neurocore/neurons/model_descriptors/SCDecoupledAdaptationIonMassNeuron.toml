@@ -1,0 +1,151 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCDecoupledAdaptationIonMassNeuron"
+class_name = "SCDecoupledAdaptationIonMassNeuron"
+module = "sc_decoupled_adaptation_ion_mass"
+display_name = "SC decoupled-adaptation ion mass"
+summary = "Retain the former project ion-mass recurrence without paper attribution."
+family = "Rate / mean-field"
+category = "rate-mean-field"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "compatibility with the retained SC project recurrence",
+]
+hardware_fit = [
+    "software reference only; nonlinear RK4 has no enrolled RTL rung",
+]
+behavior_tags = [
+    "excitable",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+
+[state.v]
+init = -0.5
+
+[state.w]
+init = 0.0
+
+[state.z]
+init = 0.0
+
+[parameters.g_ca]
+default = 1.1
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 6.7
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.v_ca]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_na]
+default = 0.53
+unit = ""
+meaning = ""
+
+[parameters.v_k]
+default = -0.7
+unit = ""
+meaning = ""
+
+[parameters.v_l]
+default = -0.5
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.tau_k]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.a_ee]
+default = 0.36
+unit = ""
+meaning = ""
+
+[parameters.v0]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.i_ext]
+default = 0.3
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "rk4"
+
+[dynamics]
+v = "-I_Ca-I_Na-I_K-I_L+i_ext+coupling+a_ee*v"
+w = "phi*(mK(v)-w)/tau_k"
+z = "b*(v+0.5-z)"
+output = "continuous v; no spike event or reset"
+
+[backends.python]
+status = "implemented"
+
+[backends.rust_engine]
+status = "implemented"
+
+[backends.rust_safety]
+status = "implemented"
+
+[backends.go]
+status = "implemented"
+
+[backends.julia]
+status = "implemented"
+
+[backends.mojo]
+status = "implemented"
+
+[reproducibility]
+receipt = "src/sc_neurocore/neurons/reference_receipts/sc_decoupled_adaptation_ion_mass.json"
+benchmark = "benchmarks/results/bench_larter_breakspear.json"
+parity = "complete one-step state within 2e-12 across Python, Rust, Go, Julia, and Mojo"
+
+[documentation]
+slug = "models/sc_decoupled_adaptation_ion_mass"
+notes = "Count-neutral SC identity preserving the former recurrence. No external-paper, RTL, formal-equivalence, timing, PPA, device, or silicon claim."

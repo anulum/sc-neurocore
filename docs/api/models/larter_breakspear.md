@@ -1,72 +1,42 @@
 # LarterBreakspearNeuron
 
-**Module:** `sc_neurocore.neurons.models.larter_breakspear`
-**Reference:** Larter et al. 1999; Breakspear, Terry & Friston 2003
-**Family:** Neural mass with ion-channel kinetics
-**State variables:** `v` (voltage), `w` (K recovery), `z` (slow adaptation)
+`LarterBreakspearNeuron` implements the three-state cortical neural mass used by
+Breakspear, Terry, and Friston (2003), DOI
+[`10.1088/0954-898X/14/4/305`](https://doi.org/10.1088/0954-898X/14/4/305).
+The maintained parameter profile and equation disambiguation follow the
+Larter–Breakspear implementation in The Virtual Brain.
 
-## Equations
+The states are mean excitatory voltage `v`, the open potassium-channel fraction
+`w`, and mean inhibitory voltage `z`. Calcium, sodium, potassium, excitatory
+firing-rate, and inhibitory firing-rate gates use the source hyperbolic-tangent
+activation functions. `z` feeds back into the voltage balance through
+`-a_ie*z*QZ(z)`; removing that term changes the model identity.
 
-$$\frac{dV}{dt} = -I_{Ca} - I_{Na} - I_K - I_L + I_{ext} + C_{coupling} + a_{ee}V$$
-$$\frac{dW}{dt} = \phi \frac{m_K(V) - W}{\tau_K}$$
-$$\frac{dZ}{dt} = b(V + 0.5 - Z)$$
+`step(coupling)` accepts an external excitatory population firing rate and
+returns the continuous voltage. It does not emit a binary spike and has no
+threshold reset. The implementation uses simultaneous fixed-step classical RK4
+at the default `dt=0.01`; this is a declared repository numerical
+specialization rather than an author-prescribed solver.
 
-Ion currents use the tanh sigmoidal gates from the Larter-Breakspear neural-mass formulation:
+```python
+from sc_neurocore.neurons.models import LarterBreakspearNeuron
 
-$$m_{Ca}(V)=0.5(1+\tanh((V+0.01)/0.15))$$
-$$m_{Na}(V)=0.5(1+\tanh((V-0.12)/0.15))$$
-$$m_K(V)=0.5(1+\tanh((V-v_0)/0.3))$$
+mass = LarterBreakspearNeuron()
+voltage = mass.step(coupling=0.0)
+state = mass.v, mass.w, mass.z
+```
 
-## Parameters
+Python, production Rust/PyO3, Rust safety, Go, Julia, and executable Mojo carry
+the same equations and source defaults. One-step parity is checked within
+`2e-12`; a frozen 512-step mixed-drive receipt binds the full three-state
+trajectory. The source-hashed benchmark records real timings for all five
+runtime lanes without making a comparative production-speed claim.
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `g_ca` | 1.1 | Ca conductance |
-| `g_na` | 6.7 | Na conductance |
-| `g_k` | 2.0 | K conductance |
-| `g_l` | 0.5 | Leak conductance |
-| `phi` | 0.7 | K recovery rate |
-| `tau_k` | 1.0 | K recovery time constant |
-| `b` | 0.1 | Slow adaptation rate |
-| `a_ee` | 0.36 | Self-excitation |
-| `i_ext` | 0.3 | External drive |
-| `dt` | 0.01 | Integration step |
-| `integrator` | `rk4` | Time integrator; `euler` is retained as an explicit baseline |
+The previous project recurrence is not deleted. It remains separately available
+as [`SCDecoupledAdaptationIonMassNeuron`](sc_decoupled_adaptation_ion_mass.md),
+without Larter–Breakspear attribution and without incrementing the
+155-literature-model catalogue.
 
-## Behaviour
-
-- Whole-brain modelling: each node represents a cortical-region neural mass, not a single spiking neuron.
-- Continuous output: `step()` returns voltage as a `float`, not a binary spike indicator.
-- Default integration: fourth-order Runge-Kutta for the coupled conductance ODEs.
-- Baseline integration: explicit Euler remains available with `integrator="euler"` for regression comparisons.
-- Fail-closed validation: construction and runtime entry reject non-finite
-  and non-physical timestep, conductance, and rate parameters; `step()`
-  rejects non-finite coupling.
-- State safety: Python, Go, Rust, and Julia surfaces apply the same tanh
-  gates and RK4 state equations, validate candidate `(v, w, z)` before
-  mutation, and preserve the previous state when the potassium gate leaves
-  `[0, 1]` or any candidate becomes non-finite.
-
-## Test coverage
-
-The module-specific test file is `tests/test_model_larter_breakspear.py`.
-
-| Category | What is verified |
-|----------|------------------|
-| Isolation | defaults, reset, deterministic traces, finite long-run state, continuous voltage output |
-| Analytical gates | exact tanh midpoint contracts for Ca, Na, and K gates |
-| Dynamics | oscillatory voltage, coupling response, RK4 accuracy against a substepped reference, finite coupling sweep |
-| Parameters | conductance, drive, and self-excitation sweeps plus fail-closed invalid-parameter boundaries |
-| Numerical safety | runtime parameter corruption and potassium-gate candidate rejection before state mutation |
-| Pipeline | population, projection wiring, network execution, monitor contract |
-| Performance guard | module-owned throughput thresholds for isolation and network execution |
-
-## Counterpart surfaces
-
-- Python: `src/sc_neurocore/neurons/models/larter_breakspear.py`
-- Go: `src/sc_neurocore/accel/go/services/larter_breakspear.go`
-- Rust safety: `src/sc_neurocore/accel/rust/safety/larter_breakspear.rs`
-- Julia: `src/sc_neurocore/accel/julia/neurons/larter_breakspear.jl`
-- Mojo descriptor: `src/sc_neurocore/accel/mojo/kernels/larter_breakspear.mojo`
-
-Historical benchmark artefacts from the Euler/stub era are not valid evidence for the RK4 surface. Regenerate benchmark artefacts before publishing throughput claims for this model revision.
+No RTL, formal-equivalence, synthesis, timing, PPA, device, board, or silicon
+claim is made. The nonlinear population-rate and RK4 contract is outside the
+faithful expressiveness of the currently enrolled scalar RTL schema path.

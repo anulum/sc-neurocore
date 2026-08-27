@@ -26,11 +26,11 @@ behavior_tags = [
 ]
 
 [provenance]
+doi = "10.1609/aaai.v38i15.29625"
 authors = [
     "Zhang, S., Yang, Q., Ma, C., Wu, J., Li, H. & Tan, K.C.",
 ]
 year = 2024
-doi = "10.1609/aaai.v38i15.29625"
 
 [state.u_d]
 init = 0.0

@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 189,
+    "model_documentation_pages": 190,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 608,
-    "python_model_classes": 172,
-    "python_model_source_modules": 168,
-    "rust_pyo3_model_wrappers": 199,
-    "test_files": 4730
+    "public_documentation_pages": 610,
+    "python_model_classes": 173,
+    "python_model_source_modules": 169,
+    "rust_pyo3_model_wrappers": 200,
+    "test_files": 4733
   },
   "documentation": {
     "public_pages": [
@@ -1220,6 +1220,7 @@
       "docs/api/models/rulkov_map.md",
       "docs/api/models/sc_adaptive_threshold_map.md",
       "docs/api/models/sc_chaotic_map.md",
+      "docs/api/models/sc_decoupled_adaptation_ion_mass.md",
       "docs/api/models/sc_exponential_tc_lif.md",
       "docs/api/models/sc_leaky_tc_lif.md",
       "docs/api/models/sc_non_resetting_adaptive_lif.md",
@@ -1569,6 +1570,7 @@
       "docs/validation/iqif_source_fidelity.md",
       "docs/validation/izhikevich_patterns.md",
       "docs/validation/jansen_rit_source_fidelity.md",
+      "docs/validation/larter_breakspear_source_fidelity.md",
       "docs/validation/lif_fi_curve.md",
       "docs/validation/mat_source_fidelity.md",
       "docs/validation/mcculloch_pitts_source_fidelity.md",
@@ -1748,6 +1750,7 @@
       "rulkov_map.md",
       "sc_adaptive_threshold_map.md",
       "sc_chaotic_map.md",
+      "sc_decoupled_adaptation_ion_mass.md",
       "sc_exponential_tc_lif.md",
       "sc_leaky_tc_lif.md",
       "sc_non_resetting_adaptive_lif.md",
@@ -2308,6 +2311,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py"
       },
       {
+        "name": "SCDecoupledAdaptationIonMassNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py"
+      },
+      {
         "name": "SCExponentialTwoCompartmentLIFNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py"
       },
@@ -2609,6 +2616,7 @@
       "src/sc_neurocore/neurons/models/rulkov_map.py",
       "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py",
       "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py",
+      "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py",
       "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py",
       "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py",
       "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py",
@@ -2806,6 +2814,7 @@
       "RustTripletStdpSynapse",
       "SCAdaptiveThresholdMapNeuron",
       "SCChaoticMapNeuron",
+      "SCDecoupledAdaptationIonMassNeuron",
       "SCExponentialTwoCompartmentLIF",
       "SCNonResettingAdaptiveLIFNeuron",
       "SCNormalizedEnergyLIFNeuron",
@@ -3679,6 +3688,7 @@
       "tests/test_bench_iqif_probes_and_metadata.py",
       "tests/test_bench_jansen_rit.py",
       "tests/test_bench_lapicque.py",
+      "tests/test_bench_larter_breakspear.py",
       "tests/test_bench_lib_rs_provenance_sweep.py",
       "tests/test_bench_mat_dual_identity.py",
       "tests/test_bench_mcculloch_pitts.py",
@@ -5158,6 +5168,7 @@
       "tests/test_lapicque_backend_unavailability.py",
       "tests/test_lapicque_backend_validation.py",
       "tests/test_lapicque_engine_binding.py",
+      "tests/test_larter_breakspear_native_parity.py",
       "tests/test_lava_integration.py",
       "tests/test_layer_count_derivation.py",
       "tests/test_layers/sc_dense_layer_support.py",
@@ -5616,6 +5627,7 @@
       "tests/test_model_larter_breakspear_lb_parameters.py",
       "tests/test_model_larter_breakspear_lb_performance.py",
       "tests/test_model_larter_breakspear_lb_pipeline.py",
+      "tests/test_model_larter_breakspear_source_fidelity.py",
       "tests/test_model_leaky_compete_fire_lcf_analytical.py",
       "tests/test_model_leaky_compete_fire_lcf_isolation.py",
       "tests/test_model_leaky_compete_fire_lcf_parameters.py",

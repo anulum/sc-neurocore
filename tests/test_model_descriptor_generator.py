@@ -183,3 +183,33 @@ def test_generator_handles_source_without_class_definition(
 
     assert list(payload["state"]) == ["v", "w"]
     assert "b" in payload["parameters"]
+
+
+@pytest.mark.parametrize(
+    ("class_name", "method", "dt"),
+    [
+        ("GLMNeuron", "map", 1.0),
+        ("ParallelSpikingNeuron", "map", 1.0),
+        ("TwoCompartmentLIFNeuron", "map", 1.0),
+        ("SCResettingParallelSpikingNeuron", "map", 1.0),
+        ("SCExponentialTwoCompartmentLIFNeuron", "map", 1.0),
+        ("SCLeakyTwoCompartmentLIFNeuron", "euler", 1.0),
+    ],
+)
+def test_schema_less_models_keep_declared_integration_contracts(
+    class_name: str, method: str, dt: float
+) -> None:
+    payload = generate_descriptor_payload(class_name)
+    assert payload["integration"] == {"dt": dt, "method": method}
+
+
+def test_schema_less_compatibility_parameters_are_not_reclassified_as_state() -> None:
+    exponential = generate_descriptor_payload("SCExponentialTwoCompartmentLIFNeuron")
+    leaky = generate_descriptor_payload("SCLeakyTwoCompartmentLIFNeuron")
+    resetting = generate_descriptor_payload("SCResettingParallelSpikingNeuron")
+    for payload in (exponential, leaky):
+        assert "theta" in payload["parameters"]
+        assert "dt" in payload["parameters"]
+        assert "theta" not in payload["state"]
+    assert "kernel_size" in resetting["parameters"]
+    assert "kernel_size" not in resetting["state"]

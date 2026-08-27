@@ -107,6 +107,7 @@ _CLASS_TO_MODULE = {
     "KLIFNeuron": "klif",
     "LapicqueNeuron": "lapicque",
     "LarterBreakspearNeuron": "larter_breakspear",
+    "SCDecoupledAdaptationIonMassNeuron": "sc_decoupled_adaptation_ion_mass",
     "LeakyCompeteFireNeuron": "leaky_compete_fire",
     "LearnableNeuronModel": "lnm",
     "LiquidTimeConstantNeuron": "ltc",

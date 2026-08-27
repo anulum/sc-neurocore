@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Larter-Breakspear dual-identity closure
+
+- Restored `LarterBreakspearNeuron` to the source cortical population equations,
+  including excitatory and inhibitory firing-rate feedback, NMDA modulation,
+  external coupling balance, and complete three-state RK4 dynamics.
+- Retained the former decoupled-adaptation recurrence count-neutrally as
+  `SCDecoupledAdaptationIonMassNeuron`. Both identities have independent
+  receipts, paired schemas, Python/Rust/Go/Julia/Mojo custody, production Rust
+  bindings, and source-hashed benchmark evidence. The catalogue is now 59/155
+  complete; no RTL or higher-silicon claim is made.
+
 ### Butera Model 1 dual-identity closure
 
 - Restored `ButeraRespiratoryNeuron` as the Butera-Rinzel-Smith (1999)

@@ -1,0 +1,138 @@
+{
+  "steps": 20000,
+  "repeats": 3,
+  "coupling": 0.0,
+  "backends": {
+    "python": {
+      "source_median_ns_per_step": 13775.42325,
+      "sc_median_ns_per_step": 8703.6862,
+      "source_results_ns_per_step": [
+        13775.42325,
+        12677.18915,
+        14657.625
+      ],
+      "sc_results_ns_per_step": [
+        8703.6862,
+        12341.63515,
+        8157.57195
+      ],
+      "source_final_state": [
+        -0.1583605131330604,
+        0.2576130466116499,
+        0.09959547056049418
+      ],
+      "sc_final_state": [
+        0.3447005481518007,
+        0.9087115674896625,
+        0.844700545922778
+      ]
+    },
+    "rust": {
+      "source_median_ns_per_step": 818.0132,
+      "sc_median_ns_per_step": 487.7516,
+      "source_results_ns_per_step": [
+        818.96345,
+        818.0132,
+        809.58135
+      ],
+      "sc_results_ns_per_step": [
+        494.50345,
+        479.3373,
+        487.7516
+      ],
+      "source_final_state": [
+        -0.1583605131344443,
+        0.25761304661080353,
+        0.09959547056060762
+      ],
+      "sc_final_state": [
+        0.3447005481518007,
+        0.9087115674896625,
+        0.844700545922778
+      ]
+    },
+    "go": {
+      "source_median_ns_per_step": 387.1,
+      "sc_median_ns_per_step": 281.2,
+      "source_results_ns_per_step": [
+        387.1,
+        481.7,
+        379.4
+      ],
+      "sc_results_ns_per_step": [
+        281.2,
+        289.0,
+        273.0
+      ],
+      "source_final_state": [],
+      "sc_final_state": []
+    },
+    "julia": {
+      "source_median_ns_per_step": 368.484,
+      "sc_median_ns_per_step": 266.31015,
+      "source_results_ns_per_step": [
+        368.484,
+        397.00495,
+        302.29995
+      ],
+      "sc_results_ns_per_step": [
+        313.9363,
+        266.31015,
+        241.0215
+      ],
+      "source_final_state": [
+        -0.15836051313563493,
+        0.2576130466100735,
+        0.09959547056070185
+      ],
+      "sc_final_state": [
+        0.3447005481518007,
+        0.9087115674896625,
+        0.844700545922778
+      ]
+    },
+    "mojo": {
+      "source_median_ns_per_step": 521.3757511228323,
+      "sc_median_ns_per_step": 413.8488962780684,
+      "source_results_ns_per_step": [
+        521.3757511228323,
+        503.09160142205656,
+        521.5796991251409
+      ],
+      "sc_results_ns_per_step": [
+        413.8488962780684,
+        422.15134599246085,
+        385.11495222337544
+      ],
+      "source_final_state": [
+        -0.15836051313740562,
+        0.2576130466090016,
+        0.09959547056084771
+      ],
+      "sc_final_state": [
+        0.3447005481518007,
+        0.9087115674896625,
+        0.844700545922778
+      ]
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_larter_breakspear.py": "c3731e97b9ce5607bb25411d2c0e130ee8e3a52839013ebffe6ecd971e839ea4",
+    "engine/examples/bench_larter_breakspear_rk4.rs": "d649bb672c8820d0c29cf209d75901aedea3c4f026686a2dca201c7ef5d0bac5",
+    "engine/src/neurons/special/larter_breakspear_neural_mass.rs": "5bf442dfb628fd2d0e3215591a2ccf8cfdc2c4c618fdd6b7a542ba0de1137da0",
+    "engine/src/neurons/special/sc_decoupled_adaptation_ion_mass.rs": "22a6ccb5a85e5868134dc0609bd0e00565f6b578e65cb252e2b53660e90f413c",
+    "src/sc_neurocore/neurons/models/larter_breakspear.py": "5411bc4f79b1c37939cb85c9f8a66c04dfe3794a3b3c0f8f8c32290172f412d7",
+    "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py": "ca002dcdfa16c19fbb00fbcb38defa9b3fad47fe9db2b17a0826b0086180349b",
+    "src/sc_neurocore/accel/go/services/larter_breakspear.go": "fc30af7b149a9bcec7f783f9f8179e35767d280c83d7dfae06a1f58ee39ac3d2",
+    "src/sc_neurocore/accel/go/services/sc_decoupled_adaptation_ion_mass.go": "2444a9b526fdfdee7c56fc27ef58adf318f1cd47e6359f47ce7422957c8d5e79",
+    "src/sc_neurocore/accel/julia/neurons/larter_breakspear.jl": "89490adb290de5e8fe4e66069d1f24c34c78a07a39f0047bf793a1cab9e68005",
+    "src/sc_neurocore/accel/julia/neurons/sc_decoupled_adaptation_ion_mass.jl": "5e6827348cf71bf67ae7632603190b2d2bafd80d3104f4fd8965198c3253fbf1",
+    "src/sc_neurocore/accel/mojo/kernels/larter_breakspear.mojo": "88267232bee3b65a1280f867ad243e9945e10579b4b282c4650217df0a88df67",
+    "src/sc_neurocore/accel/mojo/kernels/sc_decoupled_adaptation_ion_mass.mojo": "a5fa624aabae3f025a9e046c1bfbcf2fb223261a3d37e0f93c0997b432e2b3e2",
+    "src/sc_neurocore/accel/rust/safety/larter_breakspear.rs": "6d61fe12f09ed420c624cff75a12d013ec29c40174511cb604a224693f609470",
+    "src/sc_neurocore/accel/rust/safety/sc_decoupled_adaptation_ion_mass.rs": "1dbe0e504e227cda9fa5066ea53ef255b981b84c1c0364bd29a678f1d09d47b7"
+  },
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "notes": "Local loaded-host regression; continuous state parity is tested separately; no comparative speed claim."
+}

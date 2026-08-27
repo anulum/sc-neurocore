@@ -324,6 +324,7 @@ raw TOML descriptor.
 | `ErmentroutKopellPopulation` | `ErmentroutKopellPopulation` | Montbrió et al. 2015 |
 | `WendlingNeuron` | `WendlingNeuron` | Wendling et al. 2002 |
 | `LarterBreakspearNeuron` | `LarterBreakspearNeuron` | Breakspear et al. 2003 |
+| `SCDecoupledAdaptationIonMassNeuron` | `SCDecoupledAdaptationIonMassNeuron` | SC project recurrence; count-neutral |
 
 ### Hardware Chip Emulators (9 models)
 

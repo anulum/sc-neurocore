@@ -204,6 +204,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "GIFPopulationNeuron",
             "JansenRitUnit",
             "LarterBreakspearNeuron",
+            "SCDecoupledAdaptationIonMassNeuron",
             "LeakyCompeteFireNeuron",
             "SiegertTransferFunction",
             "SigmoidRateNeuron",

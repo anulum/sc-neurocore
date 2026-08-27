@@ -12,6 +12,7 @@
 //! biological responsibility. Historical re-exports remain stable.
 
 mod larter_breakspear_neural_mass;
+mod sc_decoupled_adaptation_ion_mass;
 mod spike_response_models;
 mod stochastic_point_processes;
 mod stochastic_spiking_models;
@@ -22,6 +23,7 @@ mod wilson_cowan_population;
 mod canonical_population_reexport_tests;
 
 pub use larter_breakspear_neural_mass::LarterBreakspearNeuron;
+pub use sc_decoupled_adaptation_ion_mass::SCDecoupledAdaptationIonMassNeuron;
 pub use spike_response_models::{GLMNeuron, SpikeResponseNeuron};
 pub use stochastic_point_processes::{
     GammaRenewalNeuron, InhomogeneousPoissonNeuron, PoissonNeuron,

@@ -26,11 +26,11 @@ behavior_tags = [
 ]
 
 [provenance]
+doi = "10.48550/arXiv.2304.12760"
 authors = [
     "Fang, W., Yu, Z., Zhou, Z., Chen, D., Chen, Y., Ma, Z., Masquelier, T. & Tian, Y.",
 ]
 year = 2023
-doi = "10.48550/arXiv.2304.12760"
 
 [state.hidden]
 init = 0.0

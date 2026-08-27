@@ -4,29 +4,28 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Larter-Breakspear neural-mass PyO3 binding
+// SC-NeuroCore — Retained project ion-mass PyO3 binding
 
+use crate::neurons;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
-use crate::neurons;
-
 #[pyclass(
-    name = "LarterBreakspearNeuron",
+    name = "SCDecoupledAdaptationIonMassNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
 )]
 #[derive(Clone)]
-pub struct PyLarterBreakspearNeuron {
-    inner: neurons::LarterBreakspearNeuron,
+pub struct PySCDecoupledAdaptationIonMassNeuron {
+    inner: neurons::SCDecoupledAdaptationIonMassNeuron,
 }
 
 #[pymethods]
-impl PyLarterBreakspearNeuron {
+impl PySCDecoupledAdaptationIonMassNeuron {
     #[new]
     fn new() -> Self {
         Self {
-            inner: neurons::LarterBreakspearNeuron::new(),
+            inner: neurons::SCDecoupledAdaptationIonMassNeuron::new(),
         }
     }
 
@@ -49,6 +48,6 @@ impl PyLarterBreakspearNeuron {
 }
 
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_class::<PyLarterBreakspearNeuron>()?;
+    module.add_class::<PySCDecoupledAdaptationIonMassNeuron>()?;
     Ok(())
 }

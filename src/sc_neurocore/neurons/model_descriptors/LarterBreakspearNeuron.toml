@@ -11,14 +11,19 @@ schema_version = 2
 name = "LarterBreakspearNeuron"
 class_name = "LarterBreakspearNeuron"
 module = "larter_breakspear"
-display_name = ""
-summary = "Breakspear, Terry & Friston 2003 — neural mass with ion channels."
+display_name = "Larter-Breakspear cortical neural mass"
+summary = "Larter-Breakspear conductance neural mass with excitatory and inhibitory population feedback."
 family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "cortical population dynamics",
+    "source-equation and cross-runtime studies",
+]
+hardware_fit = [
+    "software reference only; nonlinear RK4 has no enrolled RTL rung",
+]
 behavior_tags = [
     "excitable",
     "tonic",
@@ -26,19 +31,19 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Larter, R., Speelman, B. & Worth, R.M.",
+    "Breakspear, M., Terry, J.R. & Friston, K.J.",
 ]
-year = 1999
-doi = "10.1063/1.166453"
+year = 2003
+doi = "10.1088/0954-898X/14/4/305"
 
 [state.v]
-init = -0.5
+init = 0.1
 
 [state.w]
-init = 0.0
+init = 0.1
 
 [state.z]
-init = 0.0
+init = 0.1
 
 [parameters.g_ca]
 default = 1.1
@@ -65,6 +70,15 @@ meaning = "normalised potassium conductance"
 range = [
     0.0,
     5.0,
+]
+
+[parameters.g_l]
+default = 0.5
+unit = "1"
+meaning = "normalised leak conductance"
+range = [
+    0.0,
+    2.0,
 ]
 
 [parameters.v_ca]
@@ -103,14 +117,35 @@ range = [
     1.0,
 ]
 
-[parameters.g_l]
-default = 0.5
-unit = "1"
-meaning = "normalised leak conductance"
-range = [
-    0.0,
-    2.0,
-]
+[parameters.t_ca]
+default = -0.01
+unit = ""
+meaning = ""
+
+[parameters.t_na]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.t_k]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.delta_ca]
+default = 0.15
+unit = ""
+meaning = ""
+
+[parameters.delta_na]
+default = 0.15
+unit = ""
+meaning = ""
+
+[parameters.delta_k]
+default = 0.3
+unit = ""
+meaning = ""
 
 [parameters.phi]
 default = 0.7
@@ -140,7 +175,7 @@ range = [
 ]
 
 [parameters.a_ee]
-default = 0.36
+default = 0.4
 unit = "1"
 meaning = "excitatory self-coupling strength"
 range = [
@@ -148,14 +183,65 @@ range = [
     2.0,
 ]
 
-[parameters.v0]
+[parameters.a_ei]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.a_ie]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.a_ne]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.a_ni]
+default = 0.4
+unit = ""
+meaning = ""
+
+[parameters.r_nmda]
+default = 0.25
+unit = ""
+meaning = ""
+
+[parameters.coupling_balance]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.v_t]
 default = 0.0
-unit = "1"
-meaning = "normalised midpoint of the firing-rate function"
-range = [
-    -1.0,
-    1.0,
-]
+unit = ""
+meaning = ""
+
+[parameters.z_t]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.delta_v]
+default = 0.65
+unit = ""
+meaning = ""
+
+[parameters.delta_z]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.q_v_max]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.q_z_max]
+default = 1.0
+unit = ""
+meaning = ""
 
 [parameters.i_ext]
 default = 0.3
@@ -166,17 +252,44 @@ range = [
     1.0,
 ]
 
+[parameters.t_scale]
+default = 1.0
+unit = ""
+meaning = ""
+
 [integration]
 dt = 0.01
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "source conductance balance with QV/QZ population feedback"
+w = "phi*(mK(V)-W)/tauK"
+z = "b*(a_ni*Iext+a_ei*V*QV(V))"
+output = "continuous V; no spike event or reset"
 
 [backends.python]
 status = "implemented"
 
+[backends.rust_engine]
+status = "implemented"
+
+[backends.rust_safety]
+status = "implemented"
+
+[backends.go]
+status = "implemented"
+
+[backends.julia]
+status = "implemented"
+
+[backends.mojo]
+status = "implemented"
+
 [reproducibility]
+receipt = "src/sc_neurocore/neurons/reference_receipts/larter_breakspear_2003.json"
+benchmark = "benchmarks/results/bench_larter_breakspear.json"
+parity = "complete one-step state within 2e-12 across Python, Rust, Go, Julia, and Mojo"
 
 [documentation]
 slug = "models/larter_breakspear"
-notes = ""
+notes = "Fixed-step RK4 is the repository specialization. SCDecoupledAdaptationIonMassNeuron retains the former project recurrence without publication attribution. No RTL or silicon claim."

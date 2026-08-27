@@ -13,6 +13,7 @@ mod brunel_wang;
 mod el_boustani_network;
 mod larter_breakspear;
 mod montbrio_mean_field;
+mod sc_decoupled_adaptation_ion_mass;
 mod tum_network;
 mod wendling;
 mod wilson_cowan_unit;
@@ -23,6 +24,7 @@ pub use brunel_wang::PyBrunelWangNeuron;
 pub use el_boustani_network::PyElBoustaniNetwork;
 pub use larter_breakspear::PyLarterBreakspearNeuron;
 pub use montbrio_mean_field::PyMontbrioMeanField;
+pub use sc_decoupled_adaptation_ion_mass::PySCDecoupledAdaptationIonMassNeuron;
 pub use tum_network::PyTUMNetwork;
 pub use wendling::PyWendlingNeuron;
 pub use wilson_cowan_unit::PyWilsonCowanUnit;
@@ -46,6 +48,7 @@ pub(crate) fn register_wong_wang_unit(module: &Bound<'_, PyModule>) -> PyResult<
 pub(crate) fn register_neural_mass_tail(module: &Bound<'_, PyModule>) -> PyResult<()> {
     wendling::register(module)?;
     larter_breakspear::register(module)?;
+    sc_decoupled_adaptation_ion_mass::register(module)?;
     Ok(())
 }
 

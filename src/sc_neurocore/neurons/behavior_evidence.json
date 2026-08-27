@@ -1332,6 +1332,35 @@
       "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
       "stochastic": false
     },
+    "SCDecoupledAdaptationIonMassNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "358855d18edda6181f0d7f07cb2717383c2d6ae432831789afab190c35dc956b",
+      "stochastic": false
+    },
+    "SCExponentialTwoCompartmentLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "SCLeakyTwoCompartmentLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c7b600699ffc9399f1b7d390f1c3754eaed0c53851aae2a8301c2c36a5046b2a",
+      "stochastic": false
+    },
     "SCNonResettingAdaptiveLIFNeuron": {
       "behavior_tags": [
         "adapting",
@@ -1361,6 +1390,16 @@
       ],
       "drivable": true,
       "result_sha256": "3ed3ff1e40703180939d2e7fa217515387e03a96e749bf6fca1edce12864263c",
+      "stochastic": false
+    },
+    "SCResettingParallelSpikingNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "79e9f000f2ef917bd6246518ca2c84d2a566339652a91aa4efeb825eb3dcd542",
       "stochastic": false
     },
     "SCSigmaDeltaAccumulatorNeuron": {
@@ -1756,7 +1795,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "59d2eab2d2a6c1c9ec395392f800c3d014ffbebeade715819a70c3e4d12f8358",
+  "result_sha256": "12bdcc26b4d91937a83ac467015c1dfbefee2fae44664d0b76eabddf9c631962",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

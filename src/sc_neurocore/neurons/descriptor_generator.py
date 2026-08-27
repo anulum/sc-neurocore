@@ -74,6 +74,29 @@ _PARAM_SUFFIXES = ("_threshold", "_reset", "_rest", "_rev", "_max", "_min")
 _PUBLIC_STATE_PROPERTIES = frozenset({"rng_state"})
 _DOI_IN_TEXT = re.compile(r"10\.\d{4,9}/[^\s,)]+")
 
+# Models without a v1 schema whose public contract cannot be inferred from field
+# names alone. These are narrow structural facts, not scientific curation.
+_STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
+    "GLMNeuron": {"dt": 1.0, "method": "map"},
+    "ParallelSpikingNeuron": {"dt": 1.0, "method": "map"},
+    "TwoCompartmentLIFNeuron": {"dt": 1.0, "method": "map"},
+    "SCResettingParallelSpikingNeuron": {
+        "dt": 1.0,
+        "method": "map",
+        "parameters": {"kernel_size"},
+    },
+    "SCExponentialTwoCompartmentLIFNeuron": {
+        "dt": 1.0,
+        "method": "map",
+        "parameters": {"theta", "dt"},
+    },
+    "SCLeakyTwoCompartmentLIFNeuron": {
+        "dt": 1.0,
+        "method": "euler",
+        "parameters": {"theta", "dt"},
+    },
+}
+
 
 def _load_class(class_name: str) -> type:
     module = importlib.import_module(f"sc_neurocore.neurons.models.{_CLASS_TO_MODULE[class_name]}")
@@ -305,12 +328,14 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     v1_params = v1.get("parameters", {}) if isinstance(v1.get("parameters"), Mapping) else {}
     v1_integration = v1.get("integration", {}) if isinstance(v1.get("integration"), Mapping) else {}
     event_kind = stateless_event_kind(v1)
+    structural = _STRUCTURAL_OVERRIDES.get(class_name, {})
     if event_kind == "level_threshold":
         integration_method = "map"
     elif event_kind == "poisson":
         integration_method = "poisson_interval"
     else:
         integration_method = str(v1_integration.get("method", "euler"))
+    integration_method = str(structural.get("method", integration_method))
 
     specs = _field_specs(cls)
     dyn_state = _dynamic_state_fields(cls)
@@ -320,14 +345,19 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
         v1_integration.get("dt") if integration_method == "map" or event_kind is not None else None
     )
     dt = float(schema_dt) if _is_number(schema_dt) else 0.1
+    if _is_number(structural.get("dt")):
+        dt = float(structural["dt"])
+    forced_parameters = structural.get("parameters", set())
     for name, default in specs:
-        if name == "dt":
+        if name == "dt" and name not in forced_parameters:
             dt = default
             continue
         if name in v1_state:
             state[name] = {"init": float(v1_state[name]) if _is_number(v1_state[name]) else default}
         elif name in v1_params:
             # A curated v1 schema is authoritative: it keeps its declared parameters.
+            parameters[name] = {"default": default, "unit": "", "meaning": ""}
+        elif name in forced_parameters:
             parameters[name] = {"default": default, "unit": "", "meaning": ""}
         elif name in dyn_state:
             # Assigned by the model's dynamics — an integration state variable.

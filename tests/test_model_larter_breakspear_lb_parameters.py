@@ -24,10 +24,13 @@ class TestLBParameters:
             ("b", -0.1),
             ("w", -0.01),
             ("w", 1.01),
-            ("g_ca", 0.0),
-            ("g_na", 0.0),
-            ("g_k", 0.0),
-            ("g_l", 0.0),
+            ("g_ca", -0.1),
+            ("g_na", -0.1),
+            ("g_k", -0.1),
+            ("g_l", -0.1),
+            ("delta_v", 0.0),
+            ("delta_z", 0.0),
+            ("coupling_balance", 1.01),
         ],
     )
     def test_rejects_nonphysical_parameters(self, field: str, value: float):
@@ -73,7 +76,7 @@ class TestLBParameters:
             n.step(0.0)
         assert np.isfinite(n.v)
 
-    @pytest.mark.parametrize("a_ee", [0.0, 0.36, 0.5])
+    @pytest.mark.parametrize("a_ee", [0.0, 0.4, 0.5])
     def test_a_ee_sweep(self, a_ee: float):
         n = LarterBreakspearNeuron(a_ee=a_ee)
         for _ in range(5000):

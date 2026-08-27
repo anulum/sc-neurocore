@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Larter-Breakspear source schema
+
+[metadata]
+schema_version=2
+name="LarterBreakspearNeuron"
+author="Breakspear, M.; Terry, J. R.; Friston, K. J."
+year=2003
+doi="10.1088/0954-898X/14/4/305"
+description="Conductance cortical neural mass with excitatory and inhibitory feedback"
+[state]
+v=0.1
+w=0.1
+z=0.1
+[parameters]
+g_ca=1.1
+g_na=6.7
+g_k=2.0
+g_l=0.5
+v_ca=1.0
+v_na=0.53
+v_k=-0.7
+v_l=-0.5
+t_ca=-0.01
+t_na=0.3
+t_k=0.0
+delta_ca=0.15
+delta_na=0.15
+delta_k=0.3
+phi=0.7
+tau_k=1.0
+b=0.1
+a_ee=0.4
+a_ei=2.0
+a_ie=2.0
+a_ne=1.0
+a_ni=0.4
+r_nmda=0.25
+coupling_balance=0.1
+v_t=0.0
+z_t=0.0
+delta_v=0.65
+delta_z=0.7
+q_v_max=1.0
+q_z_max=1.0
+i_ext=0.3
+t_scale=1.0
+dt=0.01
+[integration]
+dt=0.01
+method="rk4"
+substeps=1
+[dynamics]
+v="source conductance balance with QV/QZ population feedback"
+w="phi*(mK(v)-w)/tau_k"
+z="b*(a_ni*i_ext+a_ei*v*QV(v))"
+[threshold]
+condition="none"
+detection="continuous population voltage; no spike event"
+[extensions]
+source_equations="Breakspear, Terry, and Friston 2003; maintained TVB LarterBreakspear profile"
+input_contract="coupling is external excitatory population firing-rate input"
+identity_note="Former project recurrence is retained as SCDecoupledAdaptationIonMassNeuron"
+hardware_note="No RTL, synthesis, formal-equivalence, timing, PPA, device, or silicon claim"

@@ -126,6 +126,7 @@ _MODEL_NAMES = {
     "KLIFNeuron",
     "LapicqueNeuron",
     "LarterBreakspearNeuron",
+    "SCDecoupledAdaptationIonMassNeuron",
     "LeakyCompeteFireNeuron",
     "LearnableNeuronModel",
     "LiquidTimeConstantNeuron",

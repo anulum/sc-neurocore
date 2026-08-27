@@ -16,8 +16,10 @@ from tests.model_larter_breakspear_support import *  # noqa: F403
 class TestLBIsolation:
     def test_defaults(self):
         n = LarterBreakspearNeuron()
-        assert n.v == -0.5 and n.w == 0.0 and n.z == 0.0
+        assert n.v == 0.1 and n.w == 0.1 and n.z == 0.1
         assert n.g_ca == 1.1 and n.g_na == 6.7
+        assert n.a_ee == 0.4 and n.r_nmda == 0.25
+        assert n.coupling_balance == 0.1
         assert n.dt == 0.01
         assert n.integrator == "rk4"
 
@@ -37,7 +39,7 @@ class TestLBIsolation:
         for _ in range(5000):
             n.step(0.0)
         n.reset()
-        assert n.v == -0.5 and n.w == 0.0 and n.z == 0.0
+        assert n.v == 0.1 and n.w == 0.1 and n.z == 0.1
 
     def test_deterministic(self):
         traces = []

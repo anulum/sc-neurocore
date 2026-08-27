@@ -24702,17 +24702,27 @@ Mojo transport the complete numeric state and parameter contract.
 ## Module `neurons.models.larter_breakspear`
 
 ### Class `LarterBreakspearNeuron`
-Breakspear, Terry & Friston 2003 — neural mass with ion channels.
+Three-state Larter-Breakspear cortical neural mass.
 
-3 ODEs per node. Combines Wilson-Cowan population dynamics with
-conductance-based ion channel kinetics for whole-brain modelling.
-Used in The Virtual Brain (TVB) simulator.
+The transition follows the excitatory-voltage, potassium-channel, and
+inhibitory-voltage equations of Breakspear, Terry, and Friston (2003).
+``coupling`` is the external excitatory firing-rate term denoted by the
+population-average :math:`Q_V` in the source model. The default parameters
+are the maintained Larter-Breakspear profile used by The Virtual Brain.
 
-Reference: Larter, R. et al. (1999). Chaos 9:795–804.; Breakspear, M. et al. (2003). Cereb. Cortex 13:189–202.
+A fixed-step classical RK4 grid is an implementation specialisation. The
+equations are continuous, produce continuous population activity, and do
+not define a spike/reset event.
+
+References:
+    Breakspear, Terry & Friston, Network 14 (2003), 703-732,
+    doi:10.1088/0954-898X/14/4/305.
 
 - **__post_init__**()
 - **step**(coupling)
+  - Advance one observation step and return excitatory voltage.
 - **reset**()
+  - Restore the maintained source-profile initial state.
 
 ---
 
@@ -25791,6 +25801,19 @@ source-faithful paper model.
   - Run an atomic batch on a parity-checked maintained backend.
 - **reset**()
   - Clear both states while preserving the configured parameters.
+
+---
+
+## Module `neurons.models.sc_decoupled_adaptation_ion_mass`
+
+### Class `SCDecoupledAdaptationIonMassNeuron`
+Retain the former project ion-mass recurrence without paper attribution.
+
+- **__post_init__**()
+- **step**(coupling)
+  - Advance the retained project recurrence atomically.
+- **reset**()
+  - Restore dynamic state without changing configuration.
 
 ---
 
