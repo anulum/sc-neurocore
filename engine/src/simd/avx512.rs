@@ -17,9 +17,9 @@ use core::arch::x86_64::*;
 /// Caller must ensure the current CPU supports `avx512f` and `avx512vpopcntdq`.
 pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
     let mut total = 0_u64;
-    let mut chunks = data.chunks_exact(16);
+    let (chunks, remainder) = data.as_chunks::<16>();
 
-    for chunk in chunks.by_ref() {
+    for chunk in chunks {
         let v0 = _mm512_loadu_si512(chunk.as_ptr() as *const __m512i);
         let v1 = _mm512_loadu_si512(chunk.as_ptr().add(8) as *const __m512i);
 
@@ -27,7 +27,7 @@ pub unsafe fn popcount_avx512(data: &[u64]) -> u64 {
         total += _mm512_reduce_add_epi64(_mm512_popcnt_epi64(v1)) as u64;
     }
 
-    total + crate::bitstream::popcount_words_portable(chunks.remainder())
+    total + crate::bitstream::popcount_words_portable(remainder)
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -46,9 +46,9 @@ pub unsafe fn pack_avx512(bits: &[u8]) -> Vec<u64> {
     let full_words = length / 64;
     let zero = _mm512_setzero_si512();
 
-    let mut chunks = data[..full_words].chunks_exact_mut(4);
+    let (chunks, _) = data[..full_words].as_chunks_mut::<4>();
     let mut word_idx = 0;
-    for chunk in chunks.by_ref() {
+    for chunk in chunks {
         let base = word_idx * 64;
         for i in 0..4 {
             let v = _mm512_loadu_si512(bits.as_ptr().add(base + i * 64) as *const __m512i);
@@ -80,10 +80,10 @@ pub unsafe fn pack_avx512(bits: &[u8]) -> Vec<u64> {
 pub unsafe fn fused_and_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
     let mut total = 0_u64;
-    let mut chunks_a = a[..len].chunks_exact(16);
-    let mut chunks_b = b[..len].chunks_exact(16);
+    let (chunks_a, remainder_a) = a[..len].as_chunks::<16>();
+    let (chunks_b, remainder_b) = b[..len].as_chunks::<16>();
 
-    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+    for (ca, cb) in chunks_a.iter().zip(chunks_b) {
         let va0 = _mm512_loadu_si512(ca.as_ptr() as *const __m512i);
         let vb0 = _mm512_loadu_si512(cb.as_ptr() as *const __m512i);
         let va1 = _mm512_loadu_si512(ca.as_ptr().add(8) as *const __m512i);
@@ -97,10 +97,9 @@ pub unsafe fn fused_and_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
     }
 
     total
-        + chunks_a
-            .remainder()
+        + remainder_a
             .iter()
-            .zip(chunks_b.remainder().iter())
+            .zip(remainder_b)
             .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
             .sum::<u64>()
 }
@@ -114,10 +113,10 @@ pub unsafe fn fused_and_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
 pub unsafe fn fused_xor_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
     let len = a.len().min(b.len());
     let mut total = 0_u64;
-    let mut chunks_a = a[..len].chunks_exact(16);
-    let mut chunks_b = b[..len].chunks_exact(16);
+    let (chunks_a, remainder_a) = a[..len].as_chunks::<16>();
+    let (chunks_b, remainder_b) = b[..len].as_chunks::<16>();
 
-    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+    for (ca, cb) in chunks_a.iter().zip(chunks_b) {
         let va0 = _mm512_loadu_si512(ca.as_ptr() as *const __m512i);
         let vb0 = _mm512_loadu_si512(cb.as_ptr() as *const __m512i);
         let va1 = _mm512_loadu_si512(ca.as_ptr().add(8) as *const __m512i);
@@ -131,10 +130,9 @@ pub unsafe fn fused_xor_popcount_avx512(a: &[u64], b: &[u64]) -> u64 {
     }
 
     total
-        + chunks_a
-            .remainder()
+        + remainder_a
             .iter()
-            .zip(chunks_b.remainder().iter())
+            .zip(remainder_b)
             .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
             .sum::<u64>()
 }
@@ -223,17 +221,17 @@ pub unsafe fn bernoulli_compare_avx512(buf: &[u8], threshold: u8) -> u64 {
 pub unsafe fn dot_f64_avx512(a: &[f64], b: &[f64]) -> f64 {
     let len = a.len().min(b.len());
     let mut acc = _mm512_setzero_pd();
-    let mut chunks_a = a[..len].chunks_exact(8);
-    let mut chunks_b = b[..len].chunks_exact(8);
+    let (chunks_a, remainder_a) = a[..len].as_chunks::<8>();
+    let (chunks_b, remainder_b) = b[..len].as_chunks::<8>();
 
-    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+    for (ca, cb) in chunks_a.iter().zip(chunks_b) {
         let va = _mm512_loadu_pd(ca.as_ptr());
         let vb = _mm512_loadu_pd(cb.as_ptr());
         acc = _mm512_fmadd_pd(va, vb, acc);
     }
 
     let mut sum = _mm512_reduce_add_pd(acc);
-    for (&ra, &rb) in chunks_a.remainder().iter().zip(chunks_b.remainder()) {
+    for (&ra, &rb) in remainder_a.iter().zip(remainder_b) {
         sum += ra * rb;
     }
     sum
@@ -251,15 +249,15 @@ pub unsafe fn max_f64_avx512(a: &[f64]) -> f64 {
     }
     let mut vmax0 = _mm512_set1_pd(f64::NEG_INFINITY);
     let mut vmax1 = _mm512_set1_pd(f64::NEG_INFINITY);
-    let mut chunks = a.chunks_exact(16);
+    let (chunks, remainder) = a.as_chunks::<16>();
 
-    for chunk in chunks.by_ref() {
+    for chunk in chunks {
         vmax0 = _mm512_max_pd(vmax0, _mm512_loadu_pd(chunk.as_ptr()));
         vmax1 = _mm512_max_pd(vmax1, _mm512_loadu_pd(chunk.as_ptr().add(8)));
     }
 
     let mut m = _mm512_reduce_max_pd(_mm512_max_pd(vmax0, vmax1));
-    for &v in chunks.remainder() {
+    for &v in remainder {
         m = m.max(v);
     }
     m
@@ -274,15 +272,15 @@ pub unsafe fn max_f64_avx512(a: &[f64]) -> f64 {
 pub unsafe fn sum_f64_avx512(a: &[f64]) -> f64 {
     let mut acc0 = _mm512_setzero_pd();
     let mut acc1 = _mm512_setzero_pd();
-    let mut chunks = a.chunks_exact(16);
+    let (chunks, remainder) = a.as_chunks::<16>();
 
-    for chunk in chunks.by_ref() {
+    for chunk in chunks {
         acc0 = _mm512_add_pd(acc0, _mm512_loadu_pd(chunk.as_ptr()));
         acc1 = _mm512_add_pd(acc1, _mm512_loadu_pd(chunk.as_ptr().add(8)));
     }
 
     let mut sum = _mm512_reduce_add_pd(_mm512_add_pd(acc0, acc1));
-    for &v in chunks.remainder() {
+    for &v in remainder {
         sum += v;
     }
     sum
@@ -296,16 +294,16 @@ pub unsafe fn sum_f64_avx512(a: &[f64]) -> f64 {
 /// Caller must ensure the current CPU supports `avx512f`.
 pub unsafe fn scale_f64_avx512(alpha: f64, y: &mut [f64]) {
     let valpha = _mm512_set1_pd(alpha);
-    let mut chunks = y.chunks_exact_mut(16);
+    let (chunks, remainder) = y.as_chunks_mut::<16>();
 
-    for chunk in chunks.by_ref() {
+    for chunk in chunks {
         let v0 = _mm512_loadu_pd(chunk.as_ptr());
         let v1 = _mm512_loadu_pd(chunk.as_ptr().add(8));
         _mm512_storeu_pd(chunk.as_mut_ptr(), _mm512_mul_pd(v0, valpha));
         _mm512_storeu_pd(chunk.as_mut_ptr().add(8), _mm512_mul_pd(v1, valpha));
     }
 
-    for v in chunks.into_remainder() {
+    for v in remainder {
         *v *= alpha;
     }
 }

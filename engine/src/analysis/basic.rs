@@ -38,11 +38,11 @@ pub fn firing_rate(binary_train: &[i32], dt: f64) -> f64 {
 /// Total spike count.
 pub fn spike_count(binary_train: &[i32]) -> i64 {
     let mut total = 0_i64;
-    let mut chunks = binary_train.chunks_exact(4);
-    for c in chunks.by_ref() {
+    let (chunks, remainder) = binary_train.as_chunks::<4>();
+    for c in chunks {
         total += (c[0] + c[1] + c[2] + c[3]) as i64;
     }
-    for &s in chunks.remainder() {
+    for &s in remainder {
         total += s as i64;
     }
     total
@@ -59,11 +59,11 @@ pub fn bin_spike_train(binary_train: &[i32], bin_size: usize) -> Vec<i64> {
     for i in 0..n_bins {
         let chunk = &binary_train[i * bin_size..(i + 1) * bin_size];
         let mut total = 0_i64;
-        let mut c_iter = chunk.chunks_exact(4);
-        for c in c_iter.by_ref() {
+        let (chunks, remainder) = chunk.as_chunks::<4>();
+        for c in chunks {
             total += (c[0] + c[1] + c[2] + c[3]) as i64;
         }
-        for &s in c_iter.remainder() {
+        for &s in remainder {
             total += s as i64;
         }
         res.push(total);

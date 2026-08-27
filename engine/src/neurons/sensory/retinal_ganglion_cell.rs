@@ -166,12 +166,8 @@ impl RetinalGanglionCell {
     }
 
     pub fn reset(&mut self) {
-        for x in &mut self.stim_buffer {
-            *x = 0.0;
-        }
-        for x in &mut self.hist_buffer {
-            *x = 0.0;
-        }
+        self.stim_buffer.fill(0.0);
+        self.hist_buffer.fill(0.0);
         self.stim_idx = 0;
         self.hist_idx = 0;
     }

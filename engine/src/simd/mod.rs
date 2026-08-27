@@ -116,18 +116,17 @@ pub fn fused_and_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
     }
 
     let mut total = 0_u64;
-    let mut chunks_a = a.chunks_exact(4);
-    let mut chunks_b = b.chunks_exact(4);
-    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+    let (chunks_a, remainder_a) = a.as_chunks::<4>();
+    let (chunks_b, remainder_b) = b.as_chunks::<4>();
+    for (ca, cb) in chunks_a.iter().zip(chunks_b) {
         total += (ca[0] & cb[0]).count_ones() as u64;
         total += (ca[1] & cb[1]).count_ones() as u64;
         total += (ca[2] & cb[2]).count_ones() as u64;
         total += (ca[3] & cb[3]).count_ones() as u64;
     }
-    total += chunks_a
-        .remainder()
+    total += remainder_a
         .iter()
-        .zip(chunks_b.remainder().iter())
+        .zip(remainder_b)
         .map(|(&wa, &wb)| (wa & wb).count_ones() as u64)
         .sum::<u64>();
     total
@@ -151,17 +150,16 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
         }
         if is_x86_feature_detected!("avx") {
             let mut total = 0_u64;
-            let mut chunks_a = a.chunks_exact(16);
-            let mut chunks_b = b.chunks_exact(16);
-            for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+            let (chunks_a, remainder_a) = a.as_chunks::<16>();
+            let (chunks_b, remainder_b) = b.as_chunks::<16>();
+            for (ca, cb) in chunks_a.iter().zip(chunks_b) {
                 for i in 0..16 {
                     total += (ca[i] ^ cb[i]).count_ones() as u64;
                 }
             }
-            total += chunks_a
-                .remainder()
+            total += remainder_a
                 .iter()
-                .zip(chunks_b.remainder().iter())
+                .zip(remainder_b)
                 .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
                 .sum::<u64>();
             return total;
@@ -182,18 +180,17 @@ pub fn fused_xor_popcount_dispatch(a: &[u64], b: &[u64]) -> u64 {
     }
 
     let mut total = 0_u64;
-    let mut chunks_a = a.chunks_exact(4);
-    let mut chunks_b = b.chunks_exact(4);
-    for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+    let (chunks_a, remainder_a) = a.as_chunks::<4>();
+    let (chunks_b, remainder_b) = b.as_chunks::<4>();
+    for (ca, cb) in chunks_a.iter().zip(chunks_b) {
         total += (ca[0] ^ cb[0]).count_ones() as u64;
         total += (ca[1] ^ cb[1]).count_ones() as u64;
         total += (ca[2] ^ cb[2]).count_ones() as u64;
         total += (ca[3] ^ cb[3]).count_ones() as u64;
     }
-    total += chunks_a
-        .remainder()
+    total += remainder_a
         .iter()
-        .zip(chunks_b.remainder().iter())
+        .zip(remainder_b)
         .map(|(&wa, &wb)| (wa ^ wb).count_ones() as u64)
         .sum::<u64>();
     total
@@ -217,15 +214,14 @@ pub fn dot_f64_dispatch(a: &[f64], b: &[f64]) -> f64 {
         if is_x86_feature_detected!("sse2") {
             let len = a.len().min(b.len());
             let mut sum = 0.0_f64;
-            let mut chunks_a = a[..len].chunks_exact(4);
-            let mut chunks_b = b[..len].chunks_exact(4);
-            for (ca, cb) in chunks_a.by_ref().zip(chunks_b.by_ref()) {
+            let (chunks_a, remainder_a) = a[..len].as_chunks::<4>();
+            let (chunks_b, remainder_b) = b[..len].as_chunks::<4>();
+            for (ca, cb) in chunks_a.iter().zip(chunks_b) {
                 sum += ca[0] * cb[0] + ca[1] * cb[1] + ca[2] * cb[2] + ca[3] * cb[3];
             }
-            sum += chunks_a
-                .remainder()
+            sum += remainder_a
                 .iter()
-                .zip(chunks_b.remainder())
+                .zip(remainder_b)
                 .map(|(x, y)| x * y)
                 .sum::<f64>();
             return sum;
@@ -256,11 +252,11 @@ pub fn max_f64_dispatch(a: &[f64]) -> f64 {
         }
         if is_x86_feature_detected!("sse2") {
             let mut m = f64::NEG_INFINITY;
-            let mut chunks = a.chunks_exact(4);
-            for c in chunks.by_ref() {
+            let (chunks, remainder) = a.as_chunks::<4>();
+            for c in chunks {
                 m = m.max(c[0].max(c[1]).max(c[2].max(c[3])));
             }
-            for &v in chunks.remainder() {
+            for &v in remainder {
                 m = m.max(v);
             }
             return m;
@@ -290,11 +286,11 @@ pub fn sum_f64_dispatch(a: &[f64]) -> f64 {
         }
         if is_x86_feature_detected!("sse2") {
             let mut s = 0.0_f64;
-            let mut chunks = a.chunks_exact(4);
-            for c in chunks.by_ref() {
+            let (chunks, remainder) = a.as_chunks::<4>();
+            for c in chunks {
                 s += c[0] + c[1] + c[2] + c[3];
             }
-            s += chunks.remainder().iter().sum::<f64>();
+            s += remainder.iter().sum::<f64>();
             return s;
         }
     }
@@ -324,14 +320,14 @@ pub fn scale_f64_dispatch(alpha: f64, y: &mut [f64]) {
             return;
         }
         if is_x86_feature_detected!("sse2") {
-            let mut chunks = y.chunks_exact_mut(4);
-            for c in chunks.by_ref() {
+            let (chunks, remainder) = y.as_chunks_mut::<4>();
+            for c in chunks {
                 c[0] *= alpha;
                 c[1] *= alpha;
                 c[2] *= alpha;
                 c[3] *= alpha;
             }
-            for v in chunks.into_remainder() {
+            for v in remainder {
                 *v *= alpha;
             }
             return;
@@ -372,14 +368,14 @@ pub fn softmax_inplace_f64_dispatch(scores: &mut [f64]) {
     }
 
     let max_val = max_f64_dispatch(scores);
-    let mut chunks = scores.chunks_exact_mut(4);
-    for c in chunks.by_ref() {
+    let (chunks, remainder) = scores.as_chunks_mut::<4>();
+    for c in chunks {
         c[0] = (c[0] - max_val).exp();
         c[1] = (c[1] - max_val).exp();
         c[2] = (c[2] - max_val).exp();
         c[3] = (c[3] - max_val).exp();
     }
-    for s in chunks.into_remainder() {
+    for s in remainder {
         *s = (*s - max_val).exp();
     }
 
