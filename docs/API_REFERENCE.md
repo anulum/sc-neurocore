@@ -25253,25 +25253,27 @@ state mutation can occur.
 ## Module `neurons.models.nmda_neuron`
 
 ### Class `NMDANeuron`
-NMDA receptor neuron — WB base + NMDA-type glutamate receptor current.
+Wang (1999) pyramidal LIF neuron with an NMDA autapse.
 
-NMDA receptors require both glutamate binding (modelled as input
-current) AND membrane depolarisation (Mg²⁺ block removal). The
-voltage-dependent Mg²⁺ block follows Jahr & Stevens (1990):
+The scalar model combines Wang's equations (1), (2), (4), and (5):
+a pyramidal leaky integrate-and-fire membrane, optional calcium-activated
+potassium adaptation, and the two-stage saturating NMDA gate. The recurrent
+gate receives the neuron's own emitted events, matching the NMDA-only
+autapse experiment in Figure 3. ``current`` is the paper's applied current
+``I_app`` in nA.
 
-B(V) = 1 / (1 + &#91;Mg²⁺&#93;/3.57 · exp(-0.062 · V))
+The source used second-order Runge--Kutta integration at 0.02--0.05 ms and
+interpolated spike times. This deterministic scalar specialization uses
+midpoint RK2 at 0.05 ms and sampled upward threshold detection.
 
-I_NMDA = g_NMDA · s_NMDA · B(V) · (V - E_NMDA)
-
-Reference: Jahr & Stevens (1990) J Neurosci 10(9):3178–3182;
-Wang (1999) Neuron 22:409. The WB spiking base follows
-Wang & Buzsáki (1996) J Neurosci 16:6402; the threshold-reset event
-and input-driven s_NMDA drive are repository-specific
-specialisations, not publication-exact claims.
+Reference: Wang, X.-J. (1999), J Neurosci 19(21):9587--9603;
+Jahr & Stevens (1990), J Neurosci 10(9):3178--3182.
 
 - **__post_init__**()
 - **step**(current)
+  - Advance one source-grid step and return the sampled spike event.
 - **reset**()
+  - Restore dynamic state while preserving the configured source profile.
 
 ---
 
@@ -26081,6 +26083,22 @@ the repository's RK4 recurrence. This count-neutral identity preserves
 that established timing and event behavior while the literature-labelled
 class uses the source ``C = 21 pF`` equation.
 
+
+---
+
+## Module `neurons.models.sc_wb_nmda_magnesium_block`
+
+### Class `SCWBNMDAMagnesiumBlockNeuron`
+Retained SC Wang--Buzsaki plus input-driven NMDA recurrence.
+
+The magnesium block is the Jahr--Stevens component and the fast-spiking
+membrane uses Wang--Buzsaki rates. The saturating current-to-gate drive,
+asymmetric gate relaxation, threshold reset, and their combination are an
+SC-NeuroCore project recurrence rather than a published neuron model.
+
+- **__post_init__**()
+- **step**(current)
+- **reset**()
 
 ---
 

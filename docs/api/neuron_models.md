@@ -1,8 +1,8 @@
-# Neuron Model Reference — 172 Python Classes / 199 Rust PyO3 Wrappers
+# Neuron Model Reference — 174 Python Classes / 201 Rust PyO3 Wrappers
 
-SC-NeuroCore currently exposes 174 lazy-loaded Python registry names, including
-172 static model classes across 168 Python model source modules in
-`src/sc_neurocore/neurons/models/`, plus 199 Rust PyO3 model wrappers in the
+SC-NeuroCore currently exposes 176 lazy-loaded Python registry names, including
+174 static model classes across 170 Python model source modules in
+`src/sc_neurocore/neurons/models/`, plus 201 Rust PyO3 model wrappers in the
 optional engine. The historical Kilinc-Bhatt module is alias-only and does not
 add a scientific catalogue model. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
@@ -12,7 +12,7 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today: 58 models. The linked generated evidence table
+> page. Polyglot-complete today: 60 models. The linked generated evidence table
 > is the authoritative per-model list and prevents a duplicated prose list from
 > drifting.
 > All other models are Python-faithful with their
@@ -40,8 +40,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 198 Rust PyO3 model wrappers,
-with 170 canonical models wired into the NetworkRunner pipeline.
+`HodgkinHuxleyNeuron`). The Rust engine provides 201 Rust PyO3 model wrappers,
+with 171 canonical models wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -53,9 +53,9 @@ caches the resolved Python class for later imports.
 
 `tests/test_rust_python_neuron_parity.py` is the live coverage map for the
 Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
-capability inventory above counts 172 static classes in
+capability inventory above counts 174 static classes in
 `src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
-174 public Python registry names because `HybridFisherPosnerLIFNeuron` and
+176 public Python registry names because `HybridFisherPosnerLIFNeuron` and
 `StochasticLIFNeuron` are re-exported (from
 `sc_neurocore.quantum_cognition.fisher_posner` for population dispatch and
 `sc_neurocore.neurons.stochastic_lif` for the torch-free public root import,
@@ -63,12 +63,12 @@ respectively) rather than defined as static classes under `neurons/models/`.
 
 Current binding disposition:
 
-The current registry map records 157 same-name Rust constructors,
+The current registry map records 159 same-name Rust constructors,
 10 Rust-prefixed or core-only constructors, and 7 Python-only registry names.
 
 | Disposition | Count | Contract |
 |-------------|------:|----------|
-| Same-name Rust constructors | 157 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
+| Same-name Rust constructors | 159 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 10 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
 | Python-only registry names | 7 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 
@@ -269,13 +269,15 @@ raw TOML descriptor.
 | `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage, Nekorkin & Vdovin 2007 |
 | `ErmentroutKopellMapNeuron` | `ErmentroutKopellMapNeuron` | Ermentrout & Kopell 1986 (maintained Euler map) |
 
-### Biophysical / Conductance-Based (20 models)
+### Biophysical / Conductance-Based (23 runtime identities)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
 | `HodgkinHuxleyNeuron` | `HodgkinHuxleyNeuron` | Hodgkin & Huxley 1952 |
 | `TraubMilesNeuron` | `TraubMilesNeuron` | Traub & Miles 1991 |
 | `WangBuzsakiNeuron` | `WangBuzsakiNeuron` | Wang & Buzsáki 1996 |
+| `NMDANeuron` | `NMDANeuron` | Wang 1999, DOI `10.1523/JNEUROSCI.19-21-09587.1999` |
+| `SCWBNMDAMagnesiumBlockNeuron` | `SCWBNMDAMagnesiumBlockNeuron` | SC-NeuroCore retained project recurrence |
 | `ConnorStevensNeuron` | `ConnorStevensNeuron` | Connor et al. 1977 |
 | `DestexheThalamicNeuron` | `DestexheThalamicNeuron` | Destexhe et al. 1993 |
 | `HuberBraunNeuron` | `HuberBraunNeuron` | Braun et al. 1998 |
@@ -307,7 +309,7 @@ raw TOML descriptor.
 | `DendrifyNeuron` | `DendrifyNeuron` | Beniaguev et al. 2022 |
 | `TwoCompartmentLIFNeuron` | `TwoCompartmentLIFNeuron` | — |
 
-### Stochastic / Population / Neural Mass (13 models)
+### Stochastic / Population / Neural Mass (14 runtime identities)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|

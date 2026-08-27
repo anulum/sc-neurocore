@@ -12,10 +12,10 @@
         "n": 0.5162641019382902,
         "v": 43.41446053940109
       },
-      "median_call_ms": 3.710165,
-      "minimum_call_ms": 3.602754,
+      "median_call_ms": 4.739325,
+      "minimum_call_ms": 4.209449,
       "parity_max_abs_diff": 7.910317325610094e-07,
-      "speedup_vs_python": 43.283223522403986,
+      "speedup_vs_python": 43.237116889008455,
       "used": true
     },
     "python": {
@@ -30,8 +30,8 @@
         "n": 0.5162640994287648,
         "v": 43.41446009137186
       },
-      "median_call_ms": 160.587901,
-      "minimum_call_ms": 155.463842,
+      "median_call_ms": 204.914749,
+      "minimum_call_ms": 197.319776,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -48,10 +48,10 @@
         "n": 0.516264099428764,
         "v": 43.414460091371694
       },
-      "median_call_ms": 10.928364,
-      "minimum_call_ms": 10.643625,
+      "median_call_ms": 6.402382,
+      "minimum_call_ms": 5.637236,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 14.694596647769052,
+      "speedup_vs_python": 32.00601729168925,
       "used": true
     }
   },
@@ -63,20 +63,20 @@
   ],
   "meta": {
     "affinity": [
-      8
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      6.890625,
-      6.7109375,
-      5.625
+      7.0185546875,
+      5.26025390625,
+      5.21875
     ],
     "load_average_start": [
-      6.890625,
-      6.7109375,
-      5.625
+      7.0205078125,
+      5.23046875,
+      5.208984375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -95,9 +95,9 @@
     },
     "benchmarks/bench_connor_stevens_mojo.py": "b8f19106938b2943bb5d39205dd5cf7b98c9a6b594a4f8031ef74e0ca9bc7fd0",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168"
+      "py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
+    "bridge/sc_neurocore_engine/__init__.py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2",
     "engine/src/neurons/biophysical": {
       "rs": "80a012bff8b60cf92a2912f8404000bffee0a7aabea735fc494a88d9ad85156e"
     },

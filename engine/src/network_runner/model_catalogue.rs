@@ -158,6 +158,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "BK",
         "SK",
         "NMDA",
+        "SCWBNMDAMagnesiumBlock",
         // population
         "MontbrioMeanField",
         "BrunelNetwork",

@@ -1,0 +1,141 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCWBNMDAMagnesiumBlockNeuron"
+class_name = "SCWBNMDAMagnesiumBlockNeuron"
+module = "sc_wb_nmda_magnesium_block"
+display_name = "SC WB plus NMDA magnesium-block recurrence"
+summary = "Retained project recurrence combining a WB membrane, input-driven NMDA gate, and threshold reset."
+family = "Ion-channel"
+category = "ion-channel"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = ["compatibility with the retained SC project recurrence"]
+hardware_fit = ["bounded source-default 50-cycle Q32.32 FSM co-simulation"]
+behavior_tags = ["excitable", "irregular", "rate-coded", "tonic"]
+
+[provenance]
+authors = ["SC-NeuroCore project"]
+year = 2026
+
+[state.v]
+init = -65.0
+[state.h]
+init = 0.6
+[state.n]
+init = 0.32
+[state.s_nmda]
+init = 0.0
+
+[parameters.g_na]
+default = 35.0
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+[parameters.g_k]
+default = 9.0
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+[parameters.g_nmda]
+default = 0.5
+unit = "mS/cm^2"
+meaning = "project NMDA conductance"
+[parameters.g_l]
+default = 0.1
+unit = "mS/cm^2"
+meaning = "leak conductance"
+[parameters.e_na]
+default = 55.0
+unit = "mV"
+meaning = "sodium reversal potential"
+[parameters.e_k]
+default = -90.0
+unit = "mV"
+meaning = "potassium reversal potential"
+[parameters.e_nmda]
+default = 0.0
+unit = "mV"
+meaning = "NMDA reversal potential"
+[parameters.e_l]
+default = -65.0
+unit = "mV"
+meaning = "leak reversal potential"
+[parameters.c_m]
+default = 1.0
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+[parameters.phi]
+default = 5.0
+unit = "1"
+meaning = "gating-kinetic scale"
+[parameters.mg_conc]
+default = 1.0
+unit = "mM"
+meaning = "extracellular magnesium concentration"
+[parameters.tau_rise]
+default = 10.0
+unit = "ms"
+meaning = "project gate rise time constant"
+[parameters.tau_decay]
+default = 100.0
+unit = "ms"
+meaning = "project gate decay time constant"
+[parameters.v_threshold]
+default = -20.0
+unit = "mV"
+meaning = "project event threshold"
+[parameters.gain]
+default = 1.0
+unit = "1"
+meaning = "applied-current gain"
+
+[integration]
+dt = 0.5
+method = "euler-50-substeps"
+
+[dynamics]
+membrane = "Wang-Buzsaki rates with Jahr-Stevens magnesium block"
+s_nmda = "input-driven saturating target with asymmetric project rise and decay"
+event = "threshold reset to -65 mV"
+
+[backends.python]
+status = "implemented"
+[backends.rust_engine]
+status = "implemented"
+[backends.rust_safety]
+status = "implemented"
+[backends.go]
+status = "implemented"
+[backends.julia]
+status = "implemented"
+[backends.mojo]
+status = "implemented"
+
+[reproducibility]
+receipt = "src/sc_neurocore/neurons/reference_receipts/sc_wb_nmda_magnesium_block.json"
+benchmark = "benchmarks/results/bench_nmda.json"
+parity = "complete one-step state within 2e-12 across Python, Rust, Go, Julia, and Mojo"
+
+[documentation]
+slug = "models/sc_wb_nmda_magnesium_block"
+notes = "Count-neutral SC identity preserving the former NMDANeuron recurrence. Wang-Buzsaki and Jahr-Stevens support component provenance only; the combined recurrence is not attributed to either publication. The enrolled Q32.32 FSM is bounded hardware evidence, not a configurable or device-level claim."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "source defaults; 64 macro-steps at I=0 and 32 macro-steps at I=5"
+tolerance = "Q32.32 event vectors exact; I=0 errors v<0.08 mV, h<0.004, n<0.0012; I=5 errors v<4.6 mV, h<0.037, n<0.016, s<2e-9"
+evidence = "tests/test_nmda_source_fidelity.py; tests/test_nmda_neuron_backends.py; tests/test_cosim_sc_wb_nmda_magnesium_block.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_wb_nmda_magnesium_block.py::test_q3232_fsm_preserves_bounded_source_vectors"
+target_tier = "H1"
+terminal_reason = "The source-default 50-cycle Q32.32 FSM uses interpolated 5 mV voltage-rate and 0.5 nA current-drive LUTs, is bit-exact to its integer oracle, preserves the enrolled quiet and spiking event vectors with declared state envelopes, passes Yosys coarse synthesis, and carries bounded handshake/output safety only. Configurable-parameter RTL, technology gate mapping, timing, PPA, device validation, and binary64 formal equivalence remain open."

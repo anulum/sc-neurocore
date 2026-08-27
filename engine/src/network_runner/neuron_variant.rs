@@ -187,6 +187,7 @@ pub enum NeuronVariant {
     BK(BKNeuron),
     SK(SKNeuron),
     NMDA(NMDANeuron),
+    SCWBNMDAMagnesiumBlock(SCWBNMDAMagnesiumBlockNeuron),
 
     // population.rs (step(f64)->i32)
     MontbrioMPR(MontbrioMeanField),
@@ -284,7 +285,7 @@ macro_rules! all_variants {
             AlphaMotor, GammaMotor, UpperMotor, Renshaw, MotorUnitCell,
             RetinalGanglion, Merkel, Pacinian, NociceptorCell, OlfactoryReceptor,
             Granule, Golgi, Stellate, Lugaro, UnipolarBrush, DCN,
-            PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA,
+            PersistentNa, Ih, TTypeCa, ATypeK, BK, SK, NMDA, SCWBNMDAMagnesiumBlock,
             MontbrioMPR, Brunel, TUM, ElBoustani,
             GradedSynapse, GapJunction, FHAxon, NodeOfRanvier, MyelinAxon, CardiacPurkinje,
             SmoothMuscle, BetaCell,
@@ -454,6 +455,7 @@ impl NeuronVariant {
             NeuronVariant::BK(n) => n.v,
             NeuronVariant::SK(n) => n.v,
             NeuronVariant::NMDA(n) => n.v,
+            NeuronVariant::SCWBNMDAMagnesiumBlock(n) => n.v,
             // population
             NeuronVariant::MontbrioMPR(n) => n.v,
             NeuronVariant::Brunel(n) => n.r_e,

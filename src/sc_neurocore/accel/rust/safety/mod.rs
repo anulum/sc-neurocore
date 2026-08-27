@@ -289,6 +289,7 @@ pub mod neuromodulation;
 pub mod neuron;
 pub mod nlif;
 pub mod nmda_neuron;
+pub mod sc_wb_nmda_magnesium_block;
 pub mod node_map;
 pub mod noise_models;
 pub mod non_resetting_lif;

@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-4 retained SC NMDA handshake safety
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_wb_nmda_magnesium_block_formal.v
+read -formal sc_wb_nmda_magnesium_block.v
+prep -top sc_wb_nmda_magnesium_block_formal
+
+[files]
+sc_wb_nmda_magnesium_block_formal.v
+sc_wb_nmda_magnesium_block.v

@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for NMDANeuron
+// SC-NeuroCore — Go Wang 1999 NMDA-autapse neuron
 
 package services
 
@@ -13,40 +13,22 @@ import (
 	"math"
 )
 
-// NMDANeuronState holds the complete WB+NMDA state and configuration.
+// NMDANeuronState holds the complete Wang 1999 scalar source contract.
 type NMDANeuronState struct {
-	V          float64
-	H          float64
-	N          float64
-	SNmda      float64
-	GNa        float64
-	GK         float64
-	GNmda      float64
-	GL         float64
-	ENa        float64
-	EK         float64
-	ENmda      float64
-	EL         float64
-	CM         float64
-	Phi        float64
-	MgConc     float64
-	TauRise    float64
-	TauDecay   float64
-	Dt         float64
-	VThreshold float64
-	Gain       float64
-	SubSteps   int
+	V, XNmda, SNmda, Ca, RefractoryRemaining float64
+	CM, GL, VL, GNmda, ENmda, MgConc         float64
+	AlphaX, TauX, AlphaS, TauS, KineticScale float64
+	GAHP, VK, AlphaCa, TauCa                 float64
+	Dt, VThreshold, VReset, RefractoryPeriod float64
 }
 
-// NewNMDANeuron creates an NMDANeuron with the canonical repository defaults.
+// NewNMDANeuron creates the source NMDA-autapse profile.
 func NewNMDANeuron() *NMDANeuronState {
 	return &NMDANeuronState{
-		V: -65.0, H: 0.6, N: 0.32, SNmda: 0.0,
-		GNa: 35.0, GK: 9.0, GNmda: 0.5, GL: 0.1,
-		ENa: 55.0, EK: -90.0, ENmda: 0.0, EL: -65.0,
-		CM: 1.0, Phi: 5.0, MgConc: 1.0,
-		TauRise: 10.0, TauDecay: 100.0,
-		Dt: 0.5, VThreshold: -20.0, Gain: 1.0, SubSteps: 50,
+		V: -70, CM: 0.5, GL: 0.025, VL: -70, GNmda: 0.1,
+		MgConc: 1, AlphaX: 1, TauX: 2, AlphaS: 1, TauS: 80, KineticScale: 1,
+		VK: -85, AlphaCa: 0.2, TauCa: 80, Dt: 0.05,
+		VThreshold: -52, VReset: -59, RefractoryPeriod: 2,
 	}
 }
 
@@ -59,123 +41,107 @@ func nmdaFinite(values ...float64) bool {
 	return true
 }
 
-func nmdaBetween(value, lower, upper float64) bool {
-	return value >= lower && value <= upper
-}
+func nmdaBetween(value, lower, upper float64) bool { return value >= lower && value <= upper }
 
-// ValidNMDANeuron enforces the public descriptor and runtime safety bounds.
+// ValidNMDANeuron validates all public state and configuration fields.
 func ValidNMDANeuron(s *NMDANeuronState) bool {
 	if s == nil || !nmdaFinite(
-		s.V, s.H, s.N, s.SNmda, s.GNa, s.GK, s.GNmda, s.GL, s.ENa, s.EK,
-		s.ENmda, s.EL, s.CM, s.Phi, s.MgConc, s.TauRise, s.TauDecay,
-		s.Dt, s.VThreshold, s.Gain,
-	) {
+		s.V, s.XNmda, s.SNmda, s.Ca, s.RefractoryRemaining, s.CM, s.GL, s.VL, s.GNmda, s.ENmda,
+		s.MgConc, s.AlphaX, s.TauX, s.AlphaS, s.TauS, s.KineticScale, s.GAHP, s.VK, s.AlphaCa,
+		s.TauCa, s.Dt, s.VThreshold, s.VReset, s.RefractoryPeriod) {
 		return false
 	}
-	return nmdaBetween(s.V, -100.0, 60.0) &&
-		nmdaBetween(s.H, 0.0, 1.0) && nmdaBetween(s.N, 0.0, 1.0) &&
-		nmdaBetween(s.SNmda, 0.0, 1.0) &&
-		nmdaBetween(s.GNa, 0.0, 200.0) && nmdaBetween(s.GK, 0.0, 100.0) &&
-		nmdaBetween(s.GNmda, 0.0, 20.0) && nmdaBetween(s.GL, 0.0, 5.0) &&
-		nmdaBetween(s.ENa, 30.0, 70.0) && nmdaBetween(s.EK, -100.0, -70.0) &&
-		nmdaBetween(s.ENmda, -10.0, 10.0) && nmdaBetween(s.EL, -80.0, -40.0) &&
-		nmdaBetween(s.CM, 0.5, 2.0) && nmdaBetween(s.Phi, 0.5, 10.0) &&
-		nmdaBetween(s.MgConc, 0.0, 5.0) &&
-		nmdaBetween(s.TauRise, 0.1, 20.0) && nmdaBetween(s.TauDecay, 10.0, 500.0) &&
-		s.Dt > 0.0 && s.Dt <= 1.0 && nmdaBetween(s.VThreshold, -20.0, 20.0) &&
-		nmdaBetween(s.Gain, 0.0, 10.0) && s.SubSteps >= 1 && s.SubSteps <= 10000
+	return nmdaBetween(s.V, -120, 80) && s.XNmda >= 0 && nmdaBetween(s.SNmda, 0, 1) && s.Ca >= 0 &&
+		nmdaBetween(s.RefractoryRemaining, 0, s.RefractoryPeriod) && nmdaBetween(s.CM, 0.01, 10) &&
+		nmdaBetween(s.GL, 0, 1) && nmdaBetween(s.VL, -100, -40) && nmdaBetween(s.GNmda, 0, 2) &&
+		nmdaBetween(s.ENmda, -10, 10) && nmdaBetween(s.MgConc, 0, 5) && nmdaBetween(s.AlphaX, 0, 10) &&
+		nmdaBetween(s.TauX, 0.01, 100) && nmdaBetween(s.AlphaS, 0, 10) && nmdaBetween(s.TauS, 1, 1000) &&
+		nmdaBetween(s.KineticScale, 0.01, 100) && nmdaBetween(s.GAHP, 0, 10) && nmdaBetween(s.VK, -120, -40) &&
+		nmdaBetween(s.AlphaCa, 0, 10) && nmdaBetween(s.TauCa, 1, 1000) && s.Dt > 0 && s.Dt <= 0.05 &&
+		nmdaBetween(s.VThreshold, -80, -30) && s.VReset >= -100 && s.VReset < s.VThreshold &&
+		nmdaBetween(s.RefractoryPeriod, 0, 20)
 }
 
-func nmdaSafeRate(a, vhalf, v, k, fallback float64) float64 {
-	d := v + vhalf
-	if math.Abs(d) < 1e-7 {
-		return fallback
-	}
-	return a * d / (1.0 - math.Exp(-d/k))
+func (s *NMDANeuronState) derivatives(v, x, g, ca, current float64) [4]float64 {
+	block := 1 / (1 + s.MgConc*math.Exp(-0.062*v)/3.57)
+	iL := s.GL * (v - s.VL)
+	iAHP := s.GAHP * ca * (v - s.VK)
+	iNmda := s.GNmda * g * block * (v - s.ENmda)
+	return [4]float64{(-iL - iAHP - iNmda + current) / s.CM, s.KineticScale * (-x / s.TauX),
+		s.KineticScale * (s.AlphaS*x*(1-g) - g/s.TauS), -ca / s.TauCa}
 }
 
-// TryStep advances the complete recurrence atomically or returns an error.
-func (s *NMDANeuronState) TryStep(iExt float64) (int, error) {
-	if !nmdaFinite(iExt) {
+func (s *NMDANeuronState) rk2(v, current float64) [4]float64 {
+	y := [4]float64{v, s.XNmda, s.SNmda, s.Ca}
+	k1 := s.derivatives(y[0], y[1], y[2], y[3], current)
+	h := 0.5 * s.Dt
+	m := [4]float64{y[0] + h*k1[0], y[1] + h*k1[1], y[2] + h*k1[2], y[3] + h*k1[3]}
+	k2 := s.derivatives(m[0], m[1], m[2], m[3], current)
+	return [4]float64{y[0] + s.Dt*k2[0], y[1] + s.Dt*k2[1], y[2] + s.Dt*k2[2], y[3] + s.Dt*k2[3]}
+}
+
+// TryStep advances one source-grid step atomically.
+func (s *NMDANeuronState) TryStep(current float64) (int, error) {
+	if !nmdaFinite(current) {
 		return 0, errors.New("current must be finite")
 	}
 	if !ValidNMDANeuron(s) {
 		return 0, errors.New("NMDA state and parameters must satisfy the public bounds")
 	}
-
-	next := *s
-	input := next.Gain * iExt
-	subDt := next.Dt / float64(next.SubSteps)
-	fired := 0
-
-	drive := 0.0
-	if input > 0.0 {
-		drive = input / (input + 5.0)
+	held := s.RefractoryRemaining > 0
+	voltage := s.V
+	if held {
+		voltage = s.VReset
 	}
-	tau := next.TauDecay
-	if drive > next.SNmda {
-		tau = next.TauRise
+	y := s.rk2(voltage, current)
+	refractory := math.Max(0, s.RefractoryRemaining-s.Dt)
+	event := 0
+	if held {
+		y[0] = s.VReset
+	} else if y[0] >= s.VThreshold {
+		event = 1
+		y[0] = s.VReset
+		refractory = s.RefractoryPeriod
+		y[1] += s.KineticScale * s.AlphaX
+		y[3] += s.AlphaCa
 	}
-	ds := (drive - next.SNmda) / tau
-	next.SNmda += next.Dt * ds
-	next.SNmda = math.Max(0.0, math.Min(1.0, next.SNmda))
-
-	for index := 0; index < next.SubSteps; index++ {
-		v := next.V
-		alphaM := nmdaSafeRate(0.1, 35.0, v, 10.0, 1.0)
-		betaM := 4.0 * math.Exp(-(v+60.0)/18.0)
-		mInf := alphaM / (alphaM + betaM)
-		alphaH := 0.07 * math.Exp(-(v+58.0)/20.0)
-		betaH := 1.0 / (1.0 + math.Exp(-(v+28.0)/10.0))
-		alphaN := nmdaSafeRate(0.01, 34.0, v, 10.0, 0.1)
-		betaN := 0.125 * math.Exp(-(v+44.0)/80.0)
-		mgBlock := 1.0 / (1.0 + (next.MgConc/3.57)*math.Exp(-0.062*v))
-
-		next.H += subDt * next.Phi * (alphaH*(1.0-next.H) - betaH*next.H)
-		next.N += subDt * next.Phi * (alphaN*(1.0-next.N) - betaN*next.N)
-		iNa := next.GNa * math.Pow(mInf, 3.0) * next.H * (v - next.ENa)
-		iK := next.GK * math.Pow(next.N, 4.0) * (v - next.EK)
-		iNmda := next.GNmda * next.SNmda * mgBlock * (v - next.ENmda)
-		iL := next.GL * (v - next.EL)
-		next.V += subDt * (-iNa - iK - iNmda - iL + input) / next.CM
-		if !nmdaFinite(next.V, next.H, next.N) {
-			return 0, errors.New("NMDA candidate state became non-finite")
-		}
-		if next.V >= next.VThreshold {
-			fired = 1
-			next.V = -65.0
-		}
+	if !nmdaFinite(y[0], y[1], y[2], y[3], refractory) {
+		return 0, errors.New("NMDA candidate state became non-finite")
 	}
-
-	next.V = math.Max(-100.0, math.Min(60.0, next.V))
-	next.H = math.Max(0.0, math.Min(1.0, next.H))
-	next.N = math.Max(0.0, math.Min(1.0, next.N))
-	*s = next
-	return fired, nil
+	s.V = math.Max(-120, math.Min(80, y[0]))
+	s.XNmda = math.Max(0, y[1])
+	s.SNmda = math.Max(0, math.Min(1, y[2]))
+	s.Ca = math.Max(0, y[3])
+	s.RefractoryRemaining = refractory
+	return event, nil
 }
 
-// Step advances the neuron and fails closed for legacy direct callers.
-func (s *NMDANeuronState) Step(iExt float64) int {
-	spike, err := s.TryStep(iExt)
+// Step is the fail-closed legacy wrapper.
+func (s *NMDANeuronState) Step(current float64) int {
+	event, err := s.TryStep(current)
 	if err != nil {
 		return 0
 	}
-	return spike
+	return event
 }
 
-// Reset restores dynamic state while preserving configuration.
+// Reset restores dynamic source state.
 func (s *NMDANeuronState) Reset() {
-	s.V, s.H, s.N, s.SNmda = -65.0, 0.6, 0.32, 0.0
+	s.V = s.VL
+	s.XNmda = 0
+	s.SNmda = 0
+	s.Ca = 0
+	s.RefractoryRemaining = 0
 }
 
-// SimulateNMDANeuron runs the neuron for n steps.
-func SimulateNMDANeuron(nSteps int, iExt float64) ([]float64, int) {
+// SimulateNMDANeuron runs a fresh source state.
+func SimulateNMDANeuron(nSteps int, current float64) ([]float64, int) {
 	s := NewNMDANeuron()
 	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		spikes += s.Step(iExt)
-		trace[t] = s.V
+	events := 0
+	for i := range trace {
+		events += s.Step(current)
+		trace[i] = s.V
 	}
-	return trace, spikes
+	return trace, events
 }

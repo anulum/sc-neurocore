@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — NMDA-channel neuron PyO3 binding
+// SC-NeuroCore — Wang 1999 NMDA-autapse neuron PyO3 binding
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -46,14 +46,15 @@ impl PyNMDANeuron {
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let state = PyDict::new(py);
         state.set_item("v", self.inner.v)?;
-        state.set_item("h", self.inner.h)?;
-        state.set_item("n", self.inner.n)?;
+        state.set_item("x_nmda", self.inner.x_nmda)?;
         state.set_item("s_nmda", self.inner.s_nmda)?;
+        state.set_item("ca", self.inner.ca)?;
+        state.set_item("refractory_remaining", self.inner.refractory_remaining)?;
         Ok(state.into_any().unbind())
     }
 }
 
-/// Register the NMDA-channel neuron class.
+/// Register the source NMDA-autapse neuron class.
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyNMDANeuron>()?;
     Ok(())

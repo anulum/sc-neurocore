@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wang NMDA-autapse dual-identity closure
+
+- Restored `NMDANeuron` as the Wang (1999) pyramidal LIF plus two-stage
+  saturating NMDA-autapse equations, including the Jahr–Stevens magnesium
+  block. Midpoint RK2 at `0.05 ms` with sampled threshold handling is the
+  declared scalar implementation specialization.
+- Retained the former WB membrane plus input-driven NMDA project recurrence
+  count-neutrally as `SCWBNMDAMagnesiumBlockNeuron`. Both identities have
+  separate descriptors, paired schemas, independent receipts, measured
+  behavior, Python/Rust/Go/Julia/Mojo custody, production Rust bindings, and a
+  source-hashed benchmark. Source-default signed-Q16.16 RTL is bit-exact to an
+  independent integer oracle, preserves the four-event receipt and bounded
+  state envelopes, synthesizes in Yosys, and passes depth-4 CVC5 bounded
+  safety. The retained identity has its own 50-cycle signed-Q32.32 FSM,
+  bit-exact integer oracle, exact enrolled quiet/spiking event vectors, Yosys
+  coarse synthesis, and bounded handshake/output proof. The catalogue is now
+  60/155 polyglot-complete; network, interpolated spike-time, configurable-
+  parameter RTL, SC technology gate mapping, timing, PPA, device, and higher-
+  silicon claims remain outside scope.
+
 ### Larter-Breakspear dual-identity closure
 
 - Restored `LarterBreakspearNeuron` to the source cortical population equations,

@@ -330,6 +330,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "BK" | "BKNeuron" => Ok(NeuronVariant::BK(BKNeuron::new())),
         "SK" | "SKNeuron" => Ok(NeuronVariant::SK(SKNeuron::new())),
         "NMDA" | "NMDANeuron" => Ok(NeuronVariant::NMDA(NMDANeuron::new())),
+        "SCWBNMDAMagnesiumBlock" | "SCWBNMDAMagnesiumBlockNeuron" => Ok(
+            NeuronVariant::SCWBNMDAMagnesiumBlock(SCWBNMDAMagnesiumBlockNeuron::new()),
+        ),
         // population
         "MontbrioMeanField" | "MPR" => Ok(NeuronVariant::MontbrioMPR(MontbrioMeanField::new())),
         "BrunelNetwork" | "Brunel" => Ok(NeuronVariant::Brunel(BrunelNetwork::new())),

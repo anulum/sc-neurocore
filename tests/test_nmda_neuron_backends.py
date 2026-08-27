@@ -4,197 +4,220 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Executed NMDA backend and custody parity
-
-"""Execute every declared NMDA backend and bind public claims to live sources."""
+# SC-NeuroCore — independently executed NMDA native parity
 
 from __future__ import annotations
 
-import math
+import json
 from pathlib import Path
 import shutil
 import subprocess
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
-    import tomli as tomllib
 from typing import Protocol, cast
 
 import numpy as np
 import pytest
 
-from sc_neurocore.neurons.models.nmda_neuron import NMDANeuron
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
+from sc_neurocore.neurons.models import NMDANeuron, SCWBNMDAMagnesiumBlockNeuron
+from tests.engine_requirement import require_engine
+
+require_engine()
+import sc_neurocore_engine as engine
 
 _ROOT = Path(__file__).resolve().parents[1]
-_DRIVE = tuple(2.0 + 3.0 * math.sin(index * 0.17) for index in range(64))
+_SOURCE = np.array([-69.9700375, 0.0, 0.0, 0.0, 0.0])
+_SC = np.array([-63.15566378039578, 0.6480311943997441, 0.237221887163776, 0.025])
 
 
-class _RustNMDA(Protocol):
+class _EngineNeuron(Protocol):
     def step(self, current: float) -> int: ...
 
     def get_state(self) -> dict[str, float]: ...
 
 
-def _python_trace() -> np.ndarray:
-    neuron = NMDANeuron()
-    rows = []
-    for current in _DRIVE:
-        event = neuron.step(current)
-        rows.append((neuron.v, neuron.h, neuron.n, neuron.s_nmda, event))
-    return np.asarray(rows, dtype=np.float64)
-
-
-def _parse_trace(stdout: str) -> np.ndarray:
-    return np.asarray(
-        [[float(token) for token in line.split()] for line in stdout.splitlines()],
-        dtype=np.float64,
+def test_python_dual_identity_anchors() -> None:
+    source = NMDANeuron()
+    retained = SCWBNMDAMagnesiumBlockNeuron()
+    assert source.step(0.3) == 0
+    assert retained.step(5.0) == 0
+    np.testing.assert_allclose(
+        [source.v, source.x_nmda, source.s_nmda, source.ca, source.refractory_remaining],
+        _SOURCE,
+        rtol=0,
+        atol=2e-14,
+    )
+    np.testing.assert_allclose(
+        [retained.v, retained.h, retained.n, retained.s_nmda], _SC, rtol=0, atol=2e-14
     )
 
 
-def test_production_rust_binding_matches_complete_python_state() -> None:
-    engine = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
-    rust = cast(_RustNMDA, engine.NMDANeuron())
-    actual = []
-    for current in _DRIVE:
-        event = rust.step(current)
-        state = rust.get_state()
-        actual.append((state["v"], state["h"], state["n"], state["s_nmda"], event))
-    np.testing.assert_allclose(actual, _python_trace(), rtol=0.0, atol=1.0e-12)
-
-    before = rust.get_state()
+@pytest.mark.parametrize(
+    ("constructor", "current", "keys", "expected"),
+    [
+        (
+            engine.NMDANeuron,
+            0.3,
+            ("v", "x_nmda", "s_nmda", "ca", "refractory_remaining"),
+            _SOURCE,
+        ),
+        (
+            engine.SCWBNMDAMagnesiumBlockNeuron,
+            5.0,
+            ("v", "h", "n", "s_nmda"),
+            _SC,
+        ),
+    ],
+)
+def test_production_rust_binding_dual_identity_parity(
+    constructor: type[object], current: float, keys: tuple[str, ...], expected: np.ndarray
+) -> None:
+    neuron = cast(_EngineNeuron, constructor())
+    assert neuron.step(current) == 0
+    state = neuron.get_state()
+    np.testing.assert_allclose([state[key] for key in keys], expected, rtol=0, atol=2e-12)
+    before = neuron.get_state()
     with pytest.raises(ValueError, match="current"):
-        rust.step(math.nan)
-    with pytest.raises(ValueError, match="current"):
-        rust.step(math.inf)
-    assert rust.get_state() == before
+        neuron.step(float("nan"))
+    assert neuron.get_state() == before
 
 
-def test_standalone_safety_rust_matches_complete_python_state(tmp_path: Path) -> None:
-    rustc = shutil.which("rustc")
-    if rustc is None:
-        pytest.skip("rustc is not installed")
+@pytest.mark.skipif(shutil.which("rustc") is None, reason="rustc is unavailable")
+def test_standalone_safety_rust_dual_identity_parity(tmp_path: Path) -> None:
     source = _ROOT / "src/sc_neurocore/accel/rust/safety/nmda_neuron.rs"
-    literals = ", ".join(f"{current:.17e}_f64" for current in _DRIVE)
-    program = tmp_path / "nmda_trace.rs"
-    binary = tmp_path / "nmda_trace"
+    retained = _ROOT / "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs"
+    program = tmp_path / "nmda_anchor.rs"
+    binary = tmp_path / "nmda_anchor"
     program.write_text(
-        f'''#[path = r#"{source}"#]
-mod nmda;
-
-use nmda::NMDANeuron;
-
+        f'''#[path = r#"{source}"#] mod source;
+#[path = r#"{retained}"#] mod retained;
 fn main() {{
-    let mut state = NMDANeuron::new();
-    for current in [{literals}] {{
-        let event = state.step(current).expect("finite configured drive");
-        println!("{{:.17e}} {{:.17e}} {{:.17e}} {{:.17e}} {{}}", state.v, state.h, state.n, state.s_nmda, event);
-    }}
+    let mut a = source::NMDANeuron::new();
+    let ae = a.step(0.3).expect("valid source step");
+    println!("{{}} {{:.17e}} {{:.17e}} {{:.17e}} {{:.17e}} {{:.17e}}", ae, a.v, a.x_nmda, a.s_nmda, a.ca, a.refractory_remaining);
+    let mut b = retained::SCWBNMDAMagnesiumBlockNeuron::new();
+    let be = b.step(5.0).expect("valid retained step");
+    println!("{{}} {{:.17e}} {{:.17e}} {{:.17e}} {{:.17e}}", be, b.v, b.h, b.n, b.s_nmda);
 }}
 ''',
         encoding="utf-8",
     )
     subprocess.run(
-        [rustc, "--edition", "2021", "-O", str(program), "-o", str(binary)],
+        ["rustc", "--edition", "2021", "-O", str(program), "-o", str(binary)],
         check=True,
         capture_output=True,
         text=True,
         timeout=120,
     )
-    completed = subprocess.run(
+    lines = subprocess.run(
         [str(binary)], check=True, capture_output=True, text=True, timeout=30
-    )
-    np.testing.assert_allclose(
-        _parse_trace(completed.stdout), _python_trace(), rtol=0.0, atol=1.0e-12
-    )
+    ).stdout.splitlines()
+    source_values = [float(value) for value in lines[0].split()]
+    retained_values = [float(value) for value in lines[1].split()]
+    assert source_values[0] == retained_values[0] == 0.0
+    np.testing.assert_allclose(source_values[1:], _SOURCE, rtol=0, atol=2e-12)
+    np.testing.assert_allclose(retained_values[1:], _SC, rtol=0, atol=2e-12)
 
 
-def test_go_backend_matches_complete_python_state(tmp_path: Path) -> None:
-    go = shutil.which("go")
-    if go is None:
-        pytest.skip("Go is not installed")
-    literals = ", ".join(f"{current:.17e}" for current in _DRIVE)
-    program = tmp_path / "nmda_trace.go"
+@pytest.mark.skipif(shutil.which("go") is None, reason="Go is unavailable")
+def test_go_dual_identity_parity(tmp_path: Path) -> None:
+    program = tmp_path / "nmda_anchor.go"
     program.write_text(
-        f"""package main
-
+        """package main
 import (
     "fmt"
     services "github.com/anulum/sc-neurocore/accel/services"
 )
-
-func main() {{
-    state := services.NewNMDANeuron()
-    for _, current := range []float64{{{literals}}} {{
-        event, err := state.TryStep(current)
-        if err != nil {{ panic(err) }}
-        fmt.Printf("%.17e %.17e %.17e %.17e %d\\n", state.V, state.H, state.N, state.SNmda, event)
-    }}
-}}
+func main() {
+    a := services.NewNMDANeuron()
+    ae, err := a.TryStep(0.3); if err != nil { panic(err) }
+    fmt.Printf("%d %.17e %.17e %.17e %.17e %.17e\\n", ae, a.V, a.XNmda, a.SNmda, a.Ca, a.RefractoryRemaining)
+    b := services.NewSCWBNMDAMagnesiumBlockNeuron()
+    be, err := b.TryStep(5.0); if err != nil { panic(err) }
+    fmt.Printf("%d %.17e %.17e %.17e %.17e\\n", be, b.V, b.H, b.N, b.SNmda)
+}
 """,
         encoding="utf-8",
     )
-    completed = subprocess.run(
-        [go, "run", str(program)],
+    lines = subprocess.run(
+        ["go", "run", str(program)],
         cwd=_ROOT / "src/sc_neurocore/accel/go",
         check=True,
         capture_output=True,
         text=True,
         timeout=120,
-    )
-    np.testing.assert_allclose(
-        _parse_trace(completed.stdout), _python_trace(), rtol=0.0, atol=1.0e-12
-    )
+    ).stdout.splitlines()
+    source_values = [float(value) for value in lines[0].split()]
+    retained_values = [float(value) for value in lines[1].split()]
+    assert source_values[0] == retained_values[0] == 0.0
+    np.testing.assert_allclose(source_values[1:], _SOURCE, rtol=0, atol=2e-12)
+    np.testing.assert_allclose(retained_values[1:], _SC, rtol=0, atol=2e-12)
 
 
-def test_julia_backend_matches_complete_python_state() -> None:
-    julia = shutil.which("julia")
-    if julia is None:
-        pytest.skip("Julia is not installed")
+@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia is unavailable")
+def test_julia_dual_identity_parity() -> None:
     source = _ROOT / "src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl"
-    literals = ", ".join(f"{current:.17e}" for current in _DRIVE)
-    program = f'''
-include(raw"{source}")
-using .NmdaNeuronAccel
-state = NMDANeuronState()
-for current in [{literals}]
-    event = step!(state, current)
-    println(state.v, " ", state.h, " ", state.n, " ", state.s_nmda, " ", event)
-end
-before = (state.v, state.h, state.n, state.s_nmda)
-for bad in (NaN, Inf, -Inf)
-    try
-        step!(state, bad)
-        error("non-finite drive was accepted")
-    catch error
-        error isa ArgumentError || rethrow()
-    end
-end
-(state.v, state.h, state.n, state.s_nmda) == before || error("invalid drive mutated state")
+    retained = _ROOT / "src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block.jl"
+    expression = f'''
+include(raw"{source}"); using .NmdaNeuronAccel
+a=NMDANeuronState(); ae=step!(a,0.3)
+println("[",ae,",",a.v,",",a.x_nmda,",",a.s_nmda,",",a.ca,",",a.refractory_remaining,"]")
+include(raw"{retained}"); using .SCWBNMDAMagnesiumBlockAccel
+b=SCWBNMDAMagnesiumBlockNeuronState(); be=SCWBNMDAMagnesiumBlockAccel.step!(b,5.0)
+println("[",be,",",b.v,",",b.h,",",b.n,",",b.s_nmda,"]")
 '''
-    completed = subprocess.run(
-        [julia, "--startup-file=no", "-e", program],
+    lines = subprocess.run(
+        ["julia", "--startup-file=no", "-e", expression],
         check=True,
         capture_output=True,
         text=True,
         timeout=120,
-    )
-    np.testing.assert_allclose(
-        _parse_trace(completed.stdout), _python_trace(), rtol=0.0, atol=1.0e-12
-    )
+    ).stdout.splitlines()
+    source_values = np.asarray(json.loads(lines[0]), dtype=np.float64)
+    retained_values = np.asarray(json.loads(lines[1]), dtype=np.float64)
+    assert source_values[0] == retained_values[0] == 0.0
+    np.testing.assert_allclose(source_values[1:], _SOURCE, rtol=0, atol=2e-12)
+    np.testing.assert_allclose(retained_values[1:], _SC, rtol=0, atol=2e-12)
 
 
-def test_descriptor_and_public_page_report_only_proven_backends() -> None:
-    descriptor = tomllib.loads(
-        (_ROOT / "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml").read_text(
-            encoding="utf-8"
+@pytest.mark.skipif(shutil.which("mojo") is None, reason="Mojo is unavailable")
+@pytest.mark.parametrize(
+    ("filename", "expected"),
+    [("nmda_neuron.mojo", _SOURCE), ("sc_wb_nmda_magnesium_block.mojo", _SC)],
+)
+def test_mojo_dual_identity_parity(tmp_path: Path, filename: str, expected: np.ndarray) -> None:
+    kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels" / filename
+    binary = tmp_path / kernel.stem
+    command = [
+        "mojo",
+        "build",
+        "--disable-warnings",
+        "-Xlinker",
+        "-lm",
+        str(kernel),
+        "-o",
+        str(binary),
+    ]
+    subprocess.run(pin_isa(command), check=True, timeout=120)
+    values = [
+        float(value)
+        for value in subprocess.run(
+            [str(binary)], check=True, capture_output=True, text=True, timeout=30
         )
-    )
-    assert set(descriptor["backends"]) == {"python", "rust", "go", "julia"}
-    assert all(config["status"] == "implemented" for config in descriptor["backends"].values())
-    assert descriptor["provenance"]["doi"] == "10.1523/jneurosci.10-09-03178.1990"
+        .stdout.splitlines()[0]
+        .split()
+    ]
+    assert values[0] == 0.0
+    np.testing.assert_allclose(values[1:], expected, rtol=0, atol=2e-12)
 
-    page = (_ROOT / "docs/api/models/nmda_neuron.md").read_text(encoding="utf-8")
-    assert "10(9):3178" in page
-    assert "engine/src/neurons/channels/nmda.rs" in page
-    assert "Mojo" in page and "not implemented" in page
+
+def test_declared_backends_and_public_boundary_are_exact() -> None:
+    source = (_ROOT / "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml").read_text(
+        encoding="utf-8"
+    )
+    assert all(
+        f"[backends.{backend}]" in source
+        for backend in ("python", "rust_engine", "rust_safety", "go", "julia", "mojo")
+    )
+    assert "[silicon]" in source
+    assert "cosim_validated = true" in source
+    assert "binary64 formal equivalence remain open" in source

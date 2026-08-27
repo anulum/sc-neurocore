@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Wang 1999 NMDA-autapse schema
+
+[metadata]
+schema_version=2
+name="NMDANeuron"
+author="Wang, X.-J."
+year=1999
+doi="10.1523/JNEUROSCI.19-21-09587.1999"
+description="Pyramidal LIF neuron with a two-stage saturating NMDA autapse"
+[state]
+v=-70.0
+x_nmda=0.0
+s_nmda=0.0
+ca=0.0
+refractory_remaining=0.0
+[parameters]
+c_m=0.5
+g_l=0.025
+v_l=-70.0
+g_nmda=0.1
+e_nmda=0.0
+mg_conc=1.0
+alpha_x=1.0
+tau_x=2.0
+alpha_s=1.0
+tau_s=80.0
+kinetic_scale=1.0
+g_ahp=0.0
+v_k=-85.0
+alpha_ca=0.2
+tau_ca=80.0
+dt=0.05
+v_threshold=-52.0
+v_reset=-59.0
+refractory_period=2.0
+[integration]
+dt=0.05
+method="midpoint-rk2"
+substeps=1
+[dynamics]
+v="Wang pyramidal LIF balance with NMDA autapse and optional calcium AHP"
+x_nmda="-x/tau_x with alpha_x event increments"
+s_nmda="alpha_s*x*(1-s)-s/tau_s"
+ca="-ca/tau_ca with alpha_ca event increments"
+[threshold]
+condition="sampled v_next >= v_threshold"
+detection="sampled-grid upward event; reset and absolute refractory hold"
+[extensions]
+source_equations="Wang 1999 equations 1, 2, 4, and 5; Jahr-Stevens magnesium block"
+input_contract="current is the applied current I_app in nA; emitted events drive the scalar autapse"
+identity_note="Former project composite retained separately as SCWBNMDAMagnesiumBlockNeuron"
+hardware_note="No RTL, synthesis, formal-equivalence, timing, PPA, device, or silicon claim"

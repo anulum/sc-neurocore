@@ -13,6 +13,7 @@ mod bk_neuron;
 mod ih_neuron;
 mod nmda_neuron;
 mod persistent_na_neuron;
+mod sc_wb_nmda_magnesium_block;
 mod sk_neuron;
 mod t_type_ca_neuron;
 
@@ -21,6 +22,7 @@ pub use bk_neuron::PyBKNeuron;
 pub use ih_neuron::PyIhNeuron;
 pub use nmda_neuron::PyNMDANeuron;
 pub use persistent_na_neuron::PyPersistentNaNeuron;
+pub use sc_wb_nmda_magnesium_block::PySCWBNMDAMagnesiumBlockNeuron;
 pub use sk_neuron::PySKNeuron;
 pub use t_type_ca_neuron::PyTTypeCaNeuron;
 
@@ -33,5 +35,6 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     bk_neuron::register(module)?;
     sk_neuron::register(module)?;
     nmda_neuron::register(module)?;
+    sc_wb_nmda_magnesium_block::register(module)?;
     Ok(())
 }

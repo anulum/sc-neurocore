@@ -130,6 +130,7 @@ _CLASS_TO_MODULE = {
     "MultiTimescaleNeuron": "ai_optimized",
     "MulticompartmentMCNNeuron": "multicompartment_mcn",
     "NMDANeuron": "nmda_neuron",
+    "SCWBNMDAMagnesiumBlockNeuron": "sc_wb_nmda_magnesium_block",
     "NeuroGridNeuron": "neurogrid",
     "NonResettingLIFNeuron": "non_resetting_lif",
     "SCNonResettingAdaptiveLIFNeuron": "sc_non_resetting_adaptive_lif",

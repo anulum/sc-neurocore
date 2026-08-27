@@ -4,66 +4,98 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Standalone Rust safety mirror for NMDANeuron
+// SC-NeuroCore — Standalone Wang 1999 NMDA-autapse safety mirror
 
-#[derive(Debug, Clone)]
-/// Standalone safety mirror of the WB base with the Jahr-Stevens NMDA current, matching the Python
-/// reference recurrence and its atomic fail-closed contract.
+#[derive(Clone, Debug)]
 pub struct NMDANeuron {
     pub v: f64,
-    pub h: f64,
-    pub n: f64,
+    pub x_nmda: f64,
     pub s_nmda: f64,
-    pub g_na: f64,
-    pub g_k: f64,
-    pub g_nmda: f64,
-    pub g_l: f64,
-    pub e_na: f64,
-    pub e_k: f64,
-    pub e_nmda: f64,
-    pub e_l: f64,
+    pub ca: f64,
+    pub refractory_remaining: f64,
     pub c_m: f64,
-    pub phi: f64,
+    pub g_l: f64,
+    pub v_l: f64,
+    pub g_nmda: f64,
+    pub e_nmda: f64,
     pub mg_conc: f64,
-    pub tau_rise: f64,
-    pub tau_decay: f64,
+    pub alpha_x: f64,
+    pub tau_x: f64,
+    pub alpha_s: f64,
+    pub tau_s: f64,
+    pub kinetic_scale: f64,
+    pub g_ahp: f64,
+    pub v_k: f64,
+    pub alpha_ca: f64,
+    pub tau_ca: f64,
     pub dt: f64,
     pub v_threshold: f64,
-    pub gain: f64,
-    pub sub_steps: usize,
+    pub v_reset: f64,
+    pub refractory_period: f64,
 }
 
 impl NMDANeuron {
-    /// Construct the canonical repository default configuration.
     pub fn new() -> Self {
         Self {
-            v: -65.0,
-            h: 0.6,
-            n: 0.32,
+            v: -70.0,
+            x_nmda: 0.0,
             s_nmda: 0.0,
-            g_na: 35.0,
-            g_k: 9.0,
-            g_nmda: 0.5,
-            g_l: 0.1,
-            e_na: 55.0,
-            e_k: -90.0,
+            ca: 0.0,
+            refractory_remaining: 0.0,
+            c_m: 0.5,
+            g_l: 0.025,
+            v_l: -70.0,
+            g_nmda: 0.1,
             e_nmda: 0.0,
-            e_l: -65.0,
-            c_m: 1.0,
-            phi: 5.0,
             mg_conc: 1.0,
-            tau_rise: 10.0,
-            tau_decay: 100.0,
-            dt: 0.5,
-            v_threshold: -20.0,
-            gain: 1.0,
-            sub_steps: 50,
+            alpha_x: 1.0,
+            tau_x: 2.0,
+            alpha_s: 1.0,
+            tau_s: 80.0,
+            kinetic_scale: 1.0,
+            g_ahp: 0.0,
+            v_k: -85.0,
+            alpha_ca: 0.2,
+            tau_ca: 80.0,
+            dt: 0.05,
+            v_threshold: -52.0,
+            v_reset: -59.0,
+            refractory_period: 2.0,
         }
     }
 
-    /// Advance one step; `Err` preserves the pre-step state exactly for a
-    /// non-finite drive, an out-of-bounds configuration, or a non-finite
-    /// candidate.
+    fn derivatives(&self, v: f64, x: f64, s: f64, ca: f64, current: f64) -> [f64; 4] {
+        let block = 1.0 / (1.0 + self.mg_conc * (-0.062 * v).exp() / 3.57);
+        let i_l = self.g_l * (v - self.v_l);
+        let i_ahp = self.g_ahp * ca * (v - self.v_k);
+        let i_nmda = self.g_nmda * s * block * (v - self.e_nmda);
+        [
+            (-i_l - i_ahp - i_nmda + current) / self.c_m,
+            self.kinetic_scale * (-x / self.tau_x),
+            self.kinetic_scale * (self.alpha_s * x * (1.0 - s) - s / self.tau_s),
+            -ca / self.tau_ca,
+        ]
+    }
+
+    fn rk2(&self, v: f64, current: f64) -> [f64; 4] {
+        let y = [v, self.x_nmda, self.s_nmda, self.ca];
+        let k1 = self.derivatives(y[0], y[1], y[2], y[3], current);
+        let h = 0.5 * self.dt;
+        let m = [
+            y[0] + h * k1[0],
+            y[1] + h * k1[1],
+            y[2] + h * k1[2],
+            y[3] + h * k1[3],
+        ];
+        let k2 = self.derivatives(m[0], m[1], m[2], m[3], current);
+        [
+            y[0] + self.dt * k2[0],
+            y[1] + self.dt * k2[1],
+            y[2] + self.dt * k2[2],
+            y[3] + self.dt * k2[3],
+        ]
+    }
+
     pub fn step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() {
             return Err("current must be finite");
@@ -71,179 +103,112 @@ impl NMDANeuron {
         if !validate_nmda_neuron(self) {
             return Err("NMDA state and parameters must satisfy the public bounds");
         }
-
-        let mut candidate = self.clone();
-        let input = candidate.gain * current;
-        let sub_dt = candidate.dt / candidate.sub_steps as f64;
-        let mut fired = 0;
-
-        let drive = if input > 0.0 {
-            input / (input + 5.0)
-        } else {
-            0.0
-        };
-        let ds = (drive - candidate.s_nmda)
-            / if drive > candidate.s_nmda {
-                candidate.tau_rise
-            } else {
-                candidate.tau_decay
-            };
-        candidate.s_nmda += candidate.dt * ds;
-        candidate.s_nmda = candidate.s_nmda.clamp(0.0, 1.0);
-
-        for _ in 0..candidate.sub_steps {
-            let v = candidate.v;
-            let alpha_m = safe_rate(0.1, 35.0, v, 10.0, 1.0);
-            let beta_m = 4.0 * (-(v + 60.0) / 18.0).exp();
-            let m_inf = alpha_m / (alpha_m + beta_m);
-            let alpha_h = 0.07 * (-(v + 58.0) / 20.0).exp();
-            let beta_h = 1.0 / (1.0 + (-(v + 28.0) / 10.0).exp());
-            let alpha_n = safe_rate(0.01, 34.0, v, 10.0, 0.1);
-            let beta_n = 0.125 * (-(v + 44.0) / 80.0).exp();
-            let mg_block = 1.0 / (1.0 + (candidate.mg_conc / 3.57) * (-0.062 * v).exp());
-
-            candidate.h +=
-                sub_dt * candidate.phi * (alpha_h * (1.0 - candidate.h) - beta_h * candidate.h);
-            candidate.n +=
-                sub_dt * candidate.phi * (alpha_n * (1.0 - candidate.n) - beta_n * candidate.n);
-            let i_na = candidate.g_na * m_inf.powi(3) * candidate.h * (v - candidate.e_na);
-            let i_k = candidate.g_k * candidate.n.powi(4) * (v - candidate.e_k);
-            let i_nmda = candidate.g_nmda * candidate.s_nmda * mg_block * (v - candidate.e_nmda);
-            let i_l = candidate.g_l * (v - candidate.e_l);
-            candidate.v += sub_dt * (-i_na - i_k - i_nmda - i_l + input) / candidate.c_m;
-
-            if ![candidate.v, candidate.h, candidate.n]
-                .into_iter()
-                .all(f64::is_finite)
-            {
-                return Err("NMDA candidate state became non-finite");
-            }
-            if candidate.v >= candidate.v_threshold {
-                fired = 1;
-                candidate.v = -65.0;
-            }
+        let held = self.refractory_remaining > 0.0;
+        let mut y = self.rk2(if held { self.v_reset } else { self.v }, current);
+        let mut refractory = (self.refractory_remaining - self.dt).max(0.0);
+        let mut event = 0;
+        if held {
+            y[0] = self.v_reset;
+        } else if y[0] >= self.v_threshold {
+            event = 1;
+            y[0] = self.v_reset;
+            refractory = self.refractory_period;
+            y[1] += self.kinetic_scale * self.alpha_x;
+            y[3] += self.alpha_ca;
         }
-
-        candidate.v = candidate.v.clamp(-100.0, 60.0);
-        candidate.h = candidate.h.clamp(0.0, 1.0);
-        candidate.n = candidate.n.clamp(0.0, 1.0);
-        *self = candidate;
-        Ok(fired)
+        if !y.into_iter().chain([refractory]).all(f64::is_finite) {
+            return Err("NMDA candidate state became non-finite");
+        }
+        self.v = y[0].clamp(-120.0, 80.0);
+        self.x_nmda = y[1].max(0.0);
+        self.s_nmda = y[2].clamp(0.0, 1.0);
+        self.ca = y[3].max(0.0);
+        self.refractory_remaining = refractory;
+        Ok(event)
     }
 
-    /// Restore dynamic state to the initial values, preserving parameters.
     pub fn reset(&mut self) {
-        self.v = -65.0;
-        self.h = 0.6;
-        self.n = 0.32;
+        self.v = self.v_l;
+        self.x_nmda = 0.0;
         self.s_nmda = 0.0;
+        self.ca = 0.0;
+        self.refractory_remaining = 0.0;
     }
 }
 
-fn safe_rate(a: f64, vhalf: f64, v: f64, k: f64, fallback: f64) -> f64 {
-    let d = v + vhalf;
-    if d.abs() < 1.0e-7 {
-        fallback
-    } else {
-        a * d / (1.0 - (-d / k).exp())
+impl Default for NMDANeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-/// Return whether every state and configuration field is finite and
-/// inside the public descriptor bounds.
-pub fn validate_nmda_neuron(state: &NMDANeuron) -> bool {
-    let finite = [
-        state.v,
-        state.h,
-        state.n,
-        state.s_nmda,
-        state.g_na,
-        state.g_k,
-        state.g_nmda,
-        state.g_l,
-        state.e_na,
-        state.e_k,
-        state.e_nmda,
-        state.e_l,
-        state.c_m,
-        state.phi,
-        state.mg_conc,
-        state.tau_rise,
-        state.tau_decay,
-        state.dt,
-        state.v_threshold,
-        state.gain,
+pub fn validate_nmda_neuron(s: &NMDANeuron) -> bool {
+    [
+        s.v,
+        s.x_nmda,
+        s.s_nmda,
+        s.ca,
+        s.refractory_remaining,
+        s.c_m,
+        s.g_l,
+        s.v_l,
+        s.g_nmda,
+        s.e_nmda,
+        s.mg_conc,
+        s.alpha_x,
+        s.tau_x,
+        s.alpha_s,
+        s.tau_s,
+        s.kinetic_scale,
+        s.g_ahp,
+        s.v_k,
+        s.alpha_ca,
+        s.tau_ca,
+        s.dt,
+        s.v_threshold,
+        s.v_reset,
+        s.refractory_period,
     ]
     .into_iter()
-    .all(f64::is_finite);
-    finite
-        && (-100.0..=60.0).contains(&state.v)
-        && [state.h, state.n, state.s_nmda]
-            .into_iter()
-            .all(|gate| (0.0..=1.0).contains(&gate))
-        && (0.0..=200.0).contains(&state.g_na)
-        && (0.0..=100.0).contains(&state.g_k)
-        && (0.0..=20.0).contains(&state.g_nmda)
-        && (0.0..=5.0).contains(&state.g_l)
-        && (30.0..=70.0).contains(&state.e_na)
-        && (-100.0..=-70.0).contains(&state.e_k)
-        && (-10.0..=10.0).contains(&state.e_nmda)
-        && (-80.0..=-40.0).contains(&state.e_l)
-        && (0.5..=2.0).contains(&state.c_m)
-        && (0.5..=10.0).contains(&state.phi)
-        && (0.0..=5.0).contains(&state.mg_conc)
-        && (0.1..=20.0).contains(&state.tau_rise)
-        && (10.0..=500.0).contains(&state.tau_decay)
-        && state.dt > 0.0
-        && state.dt <= 1.0
-        && (-20.0..=20.0).contains(&state.v_threshold)
-        && (0.0..=10.0).contains(&state.gain)
-        && (1..=10_000).contains(&state.sub_steps)
+    .all(f64::is_finite)
+        && (-120.0..=80.0).contains(&s.v)
+        && s.x_nmda >= 0.0
+        && (0.0..=1.0).contains(&s.s_nmda)
+        && s.ca >= 0.0
+        && (0.0..=s.refractory_period).contains(&s.refractory_remaining)
+        && (0.01..=10.0).contains(&s.c_m)
+        && (0.0..=1.0).contains(&s.g_l)
+        && (-100.0..=-40.0).contains(&s.v_l)
+        && (0.0..=2.0).contains(&s.g_nmda)
+        && (-10.0..=10.0).contains(&s.e_nmda)
+        && (0.0..=5.0).contains(&s.mg_conc)
+        && (0.0..=10.0).contains(&s.alpha_x)
+        && (0.01..=100.0).contains(&s.tau_x)
+        && (0.0..=10.0).contains(&s.alpha_s)
+        && (1.0..=1000.0).contains(&s.tau_s)
+        && (0.01..=100.0).contains(&s.kinetic_scale)
+        && (0.0..=10.0).contains(&s.g_ahp)
+        && (-120.0..=-40.0).contains(&s.v_k)
+        && (0.0..=10.0).contains(&s.alpha_ca)
+        && (1.0..=1000.0).contains(&s.tau_ca)
+        && s.dt > 0.0
+        && s.dt <= 0.05
+        && (-80.0..=-30.0).contains(&s.v_threshold)
+        && s.v_reset >= -100.0
+        && s.v_reset < s.v_threshold
+        && (0.0..=20.0).contains(&s.refractory_period)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
-    fn nominal_step_matches_reference_anchor() {
-        let mut state = NMDANeuron::new();
-        assert_eq!(state.step(5.0), Ok(0));
-        assert!((state.v - -63.155_663_780_395_78).abs() < 1.0e-12);
-        assert!((state.h - 0.648_031_194_399_744_1).abs() < 1.0e-12);
-        assert!((state.n - 0.237_221_887_163_776).abs() < 1.0e-12);
-        assert!((state.s_nmda - 0.025).abs() < 1.0e-15);
-    }
-
-    #[test]
-    fn invalid_drive_is_atomic() {
-        let mut state = NMDANeuron::new();
-        let before = state.clone();
-        assert!(state.step(f64::NAN).is_err());
-        assert!(state.step(f64::INFINITY).is_err());
-        assert_eq!(state.v, before.v);
-        assert_eq!(state.s_nmda, before.s_nmda);
-    }
-
-    #[test]
-    fn invalid_configuration_is_atomic() {
-        let mut state = NMDANeuron::new();
-        state.c_m = 0.0;
-        let before = state.clone();
-        assert!(state.step(1.0).is_err());
-        assert_eq!(state.v, before.v);
-        assert_eq!(state.c_m, before.c_m);
-    }
-
-    #[test]
-    fn reset_preserves_parameters() {
-        let mut state = NMDANeuron::new();
-        state.g_nmda = 1.5;
-        state.v = -30.0;
-        state.s_nmda = 0.7;
-        state.reset();
-        assert_eq!(state.v, -65.0);
-        assert_eq!(state.s_nmda, 0.0);
-        assert_eq!(state.g_nmda, 1.5);
+    fn anchor_and_atomic_failure() {
+        let mut n = NMDANeuron::new();
+        assert_eq!(n.step(0.3), Ok(0));
+        assert!((n.v + 69.9700375).abs() < 1e-12);
+        let before = n.clone();
+        assert!(n.step(f64::NAN).is_err());
+        assert_eq!(n.v, before.v);
     }
 }

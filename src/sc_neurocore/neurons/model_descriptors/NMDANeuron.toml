@@ -11,218 +11,167 @@ schema_version = 2
 name = "NMDANeuron"
 class_name = "NMDANeuron"
 module = "nmda_neuron"
-display_name = ""
-summary = "NMDA receptor neuron — WB base + NMDA-type glutamate receptor current."
+display_name = "Wang NMDA-autapse pyramidal neuron"
+summary = "Wang 1999 pyramidal LIF neuron with two-stage saturating NMDA autapse kinetics."
 family = "Ion-channel"
 category = "ion-channel"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
-behavior_tags = [
-    "excitable",
-    "irregular",
-    "rate-coded",
-    "tonic",
-]
+maturity = "validated"
+intended_use = ["NMDA feedback and bistability studies", "source-equation and cross-runtime studies"]
+hardware_fit = ["bounded source-default Q16.16 midpoint-RK2 co-simulation"]
+behavior_tags = ["excitable", "rate-coded", "tonic"]
 
 [provenance]
-authors = [
-    "Jahr, C.E. & Stevens, C.F.",
-]
-year = 1990
-doi = "10.1523/jneurosci.10-09-03178.1990"
+authors = ["Wang, X.-J."]
+year = 1999
+doi = "10.1523/JNEUROSCI.19-21-09587.1999"
 
 [state.v]
-init = -65.0
-
-[state.h]
-init = 0.6
-
-[state.n]
-init = 0.32
-
+init = -70.0
+[state.x_nmda]
+init = 0.0
 [state.s_nmda]
 init = 0.0
+[state.ca]
+init = 0.0
+[state.refractory_remaining]
+init = 0.0
 
-[parameters.g_na]
-default = 35.0
-unit = "mS/cm^2"
-meaning = "maximal sodium conductance"
-range = [
-    0.0,
-    200.0,
-]
-
-[parameters.g_k]
-default = 9.0
-unit = "mS/cm^2"
-meaning = "maximal delayed-rectifier potassium conductance"
-range = [
-    0.0,
-    100.0,
-]
-
-[parameters.g_nmda]
+[parameters.c_m]
 default = 0.5
-unit = "mS/cm^2"
-meaning = "maximal NMDA-receptor conductance"
-range = [
-    0.0,
-    20.0,
-]
-
+unit = "nF"
+meaning = "pyramidal-cell membrane capacitance"
+range = [0.01, 10.0]
 [parameters.g_l]
-default = 0.1
-unit = "mS/cm^2"
+default = 0.025
+unit = "uS"
 meaning = "leak conductance"
-range = [
-    0.0,
-    5.0,
-]
-
-[parameters.e_na]
-default = 55.0
+range = [0.0, 1.0]
+[parameters.v_l]
+default = -70.0
 unit = "mV"
-meaning = "sodium reversal potential"
-range = [
-    30.0,
-    70.0,
-]
-
-[parameters.e_k]
-default = -90.0
-unit = "mV"
-meaning = "potassium reversal potential"
-range = [
-    -100.0,
-    -70.0,
-]
-
+meaning = "leak reversal potential"
+range = [-100.0, -40.0]
+[parameters.g_nmda]
+default = 0.1
+unit = "uS"
+meaning = "NMDA autapse conductance used by the source single-cell experiment"
+range = [0.0, 2.0]
 [parameters.e_nmda]
 default = 0.0
 unit = "mV"
-meaning = "NMDA-receptor reversal potential"
-range = [
-    -10.0,
-    10.0,
-]
-
-[parameters.e_l]
-default = -65.0
-unit = "mV"
-meaning = "leak reversal potential"
-range = [
-    -80.0,
-    -40.0,
-]
-
-[parameters.c_m]
-default = 1.0
-unit = "uF/cm^2"
-meaning = "membrane capacitance"
-range = [
-    0.5,
-    2.0,
-]
-
-[parameters.phi]
-default = 5.0
-unit = "1"
-meaning = "temperature scaling factor of the gating kinetics"
-range = [
-    0.5,
-    10.0,
-]
-
+meaning = "NMDA reversal potential"
+range = [-10.0, 10.0]
 [parameters.mg_conc]
 default = 1.0
 unit = "mM"
-meaning = "extracellular magnesium concentration setting the voltage-dependent block"
-range = [
-    0.0,
-    5.0,
-]
-
-[parameters.tau_rise]
-default = 10.0
-unit = "ms"
-meaning = "rise time constant of the NMDA conductance"
-range = [
-    0.1,
-    20.0,
-]
-
-[parameters.tau_decay]
-default = 100.0
-unit = "ms"
-meaning = "decay time constant of the NMDA conductance"
-range = [
-    10.0,
-    500.0,
-]
-
-[parameters.v_threshold]
-default = -20.0
-unit = "mV"
-meaning = "voltage at which a spike is registered"
-range = [
-    -20.0,
-    20.0,
-]
-
-[parameters.gain]
+meaning = "extracellular magnesium concentration"
+range = [0.0, 5.0]
+[parameters.alpha_x]
 default = 1.0
 unit = "1"
-meaning = "gain applied to the injected input current"
-range = [
-    0.0,
-    10.0,
-]
+meaning = "presynaptic NMDA transmitter increment per emitted event"
+range = [0.0, 10.0]
+[parameters.tau_x]
+default = 2.0
+unit = "ms"
+meaning = "NMDA transmitter decay time constant"
+range = [0.01, 100.0]
+[parameters.alpha_s]
+default = 1.0
+unit = "ms^-1"
+meaning = "saturating NMDA gate opening factor"
+range = [0.0, 10.0]
+[parameters.tau_s]
+default = 80.0
+unit = "ms"
+meaning = "NMDA gate decay time constant"
+range = [1.0, 1000.0]
+[parameters.kinetic_scale]
+default = 1.0
+unit = "1"
+meaning = "explicit scaling of the NMDA kinetic equations"
+range = [0.01, 100.0]
+[parameters.g_ahp]
+default = 0.0
+unit = "uS"
+meaning = "optional calcium-activated potassium adaptation conductance"
+range = [0.0, 10.0]
+[parameters.v_k]
+default = -85.0
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [-120.0, -40.0]
+[parameters.alpha_ca]
+default = 0.2
+unit = "1"
+meaning = "calcium increment per emitted event"
+range = [0.0, 10.0]
+[parameters.tau_ca]
+default = 80.0
+unit = "ms"
+meaning = "calcium decay time constant"
+range = [1.0, 1000.0]
+[parameters.v_threshold]
+default = -52.0
+unit = "mV"
+meaning = "pyramidal-cell spike threshold"
+range = [-80.0, -30.0]
+[parameters.v_reset]
+default = -59.0
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [-100.0, -30.0]
+[parameters.refractory_period]
+default = 2.0
+unit = "ms"
+meaning = "absolute refractory period"
+range = [0.0, 20.0]
 
 [integration]
-dt = 0.5
-method = "euler"
+dt = 0.05
+method = "midpoint-rk2"
 
 [dynamics]
-alpha_m = "0.1 * (v + 35) / (1 - exp(-(v + 35) / 10))"
-beta_m = "4 * exp(-(v + 60) / 18)"
-m_inf = "alpha_m / (alpha_m + beta_m)"
-dh_dt = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - h / (1 + exp(-(v + 28) / 10)))"
-dn_dt = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
-mg_block = "1 / (1 + (mg_conc / 3.57) * exp(-0.062 * v))"
-s_drive = "gain * I / (gain * I + 5) if gain * I > 0 else 0"
-ds = "dt * (s_drive - s_nmda) / (tau_rise if s_drive > s_nmda else tau_decay); s_nmda clamped to [0, 1] once per step before sub-stepping"
-dv_dt = "(-g_na * m_inf^3 * h * (v - e_na) - g_k * n^4 * (v - e_k) - g_nmda * s_nmda * mg_block * (v - e_nmda) - g_l * (v - e_l) + gain * I) / c_m"
-event = "v_next >= v_threshold; reset v to -65 while preserving h, n, and s_nmda"
+v = "C_m*dV/dt=-g_l*(V-V_l)-g_nmda*s*B(V)*(V-E_nmda)-g_ahp*Ca*(V-V_k)+I_app"
+x_nmda = "dx/dt=-x/tau_x; emitted events increment x by alpha_x"
+s_nmda = "ds/dt=alpha_s*x*(1-s)-s/tau_s"
+mg_block = "B(V)=1/(1+[Mg]*exp(-0.062*V)/3.57)"
+ca = "dCa/dt=-Ca/tau_ca; emitted events increment Ca by alpha_ca"
+event = "sampled upward threshold detection, reset to v_reset, then absolute refractory hold"
 
 [backends.python]
 status = "implemented"
-parity = "exact"
-
-[backends.rust]
+[backends.rust_engine]
 status = "implemented"
-parity = "ulp-bounded"
-
+[backends.rust_safety]
+status = "implemented"
 [backends.go]
 status = "implemented"
-parity = "ulp-bounded"
-
 [backends.julia]
 status = "implemented"
-parity = "ulp-bounded"
+[backends.mojo]
+status = "implemented"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":5.0,\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "bf94b8477b0cdd8ffcdbe29b345e2f1cbac81e89637777171dbcd59d108e0600"
-event_count = 177
-final_state = "{\"v\":-22.568276731433897,\"h\":0.3451271472502443,\"n\":0.2343923195462924,\"s_nmda\":0.49999999999999944}"
+receipt = "src/sc_neurocore/neurons/reference_receipts/nmda_neuron_wang_1999.json"
+benchmark = "benchmarks/results/bench_nmda.json"
+parity = "complete one-step state within 2e-12 across Python, Rust, Go, Julia, and Mojo"
 
 [documentation]
 slug = "models/nmda_neuron"
-notes = "Composite of the Wang-Buzsáki 1996 spiking base with the Jahr-Stevens 1990 voltage-dependent Mg block; the threshold-reset event and the input-driven s_NMDA drive are repository-specific specialisations, not publication-exact claims. Mojo and silicon lanes are not implemented."
+notes = "Bounded scalar NMDA-only autapse specialization. Fixed-grid sampled threshold handling replaces the source interpolation method. Network competition, AMPA/GABA populations, parameter sweeps, and Figure 3 rate reproduction are outside this identity. The enrolled Q16.16 profile is bounded hardware evidence, not a universal or device-level claim."
 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "64 deterministic non-constant drives plus 1000 steps at I=5"
+operating_point = "source defaults at dt=0.05 ms"
+tolerance = "native complete-state parity <=2e-12; Q16.16 source envelope v<0.012 mV, x<0.0004, s<0.0006, ca<0.0024, refractory<0.00013 ms with exact events"
+evidence = "tests/test_nmda_source_fidelity.py; tests/test_nmda_neuron_backends.py; tests/test_cosim_nmda_autapse.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_nmda_autapse.py::test_q1616_rtl_preserves_source_event_vector_and_state_envelope"
+target_tier = "H1"
+terminal_reason = "The source-default Q16.16 midpoint-RK2 datapath uses an interpolated 5 mV magnesium LUT, preserves the 512-step event vector and bounded state envelopes, synthesizes in Yosys, and carries bounded safety only. Configurable-parameter RTL, timing, PPA, device validation, and binary64 formal equivalence remain open."

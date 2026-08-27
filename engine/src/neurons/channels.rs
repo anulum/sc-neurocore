@@ -16,6 +16,7 @@ mod bk;
 mod ih;
 mod nmda;
 mod persistent_na;
+mod sc_wb_nmda_magnesium_block;
 mod sk;
 mod t_type_ca;
 
@@ -24,5 +25,6 @@ pub use bk::BKNeuron;
 pub use ih::IhNeuron;
 pub use nmda::NMDANeuron;
 pub use persistent_na::PersistentNaNeuron;
+pub use sc_wb_nmda_magnesium_block::SCWBNMDAMagnesiumBlockNeuron;
 pub use sk::SKNeuron;
 pub use t_type_ca::TTypeCaNeuron;

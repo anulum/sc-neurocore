@@ -10,10 +10,10 @@
         "n": 0.4793337094301593,
         "v": -65.85312343949775
       },
-      "median_call_ms": 0.59647,
-      "minimum_call_ms": 0.585319,
+      "median_call_ms": 0.679453,
+      "minimum_call_ms": 0.651328,
       "parity_max_abs_diff": 1.6049739315349143e-10,
-      "speedup_vs_python": 86.43426492531059,
+      "speedup_vs_python": 89.9671397432935,
       "used": true
     },
     "python": {
@@ -26,8 +26,8 @@
         "n": 0.47933370943008335,
         "v": -65.85312343949003
       },
-      "median_call_ms": 51.555446,
-      "minimum_call_ms": 48.64508,
+      "median_call_ms": 61.128443,
+      "minimum_call_ms": 56.773596,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -42,35 +42,35 @@
         "n": 0.47933370943008374,
         "v": -65.85312343949006
       },
-      "median_call_ms": 0.891159,
-      "minimum_call_ms": 0.883775,
+      "median_call_ms": 0.622771,
+      "minimum_call_ms": 0.596973,
       "parity_max_abs_diff": 9.485745522397337e-13,
-      "speedup_vs_python": 57.852129642409494,
+      "speedup_vs_python": 98.15557082780026,
       "used": true
     }
   },
   "kernel": "hodgkin_huxley_mojo_simulate",
   "measured_order": [
-    "mojo",
     "rust",
+    "mojo",
     "python"
   ],
   "meta": {
     "affinity": [
-      8
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      6.73876953125,
-      6.68212890625,
-      5.62158203125
+      6.47998046875,
+      5.2021484375,
+      5.19970703125
     ],
     "load_average_start": [
-      6.73876953125,
-      6.68212890625,
-      5.62158203125
+      6.47998046875,
+      5.2021484375,
+      5.19970703125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -89,9 +89,9 @@
     },
     "benchmarks/bench_hodgkin_huxley_mojo.py": "ebd56302184626d6d9c67f35e54a453e1ddd3b2f07dcc1ceeac9e56771ff61d4",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168"
+      "py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
+    "bridge/sc_neurocore_engine/__init__.py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2",
     "engine/src/neurons/biophysical": {
       "rs": "80a012bff8b60cf92a2912f8404000bffee0a7aabea735fc494a88d9ad85156e"
     },

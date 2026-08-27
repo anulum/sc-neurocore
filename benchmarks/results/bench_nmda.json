@@ -1,0 +1,151 @@
+{
+  "steps": 20000,
+  "repeats": 3,
+  "source_current": 0.6,
+  "sc_current": 5.0,
+  "backends": {
+    "python": {
+      "source_median_ns_per_step": 5918.4959,
+      "sc_median_ns_per_step": 84995.68575,
+      "source_results_ns_per_step": [
+        5992.24645,
+        5918.4959,
+        5851.76825
+      ],
+      "sc_results_ns_per_step": [
+        87011.21935,
+        84995.68575,
+        78518.25195
+      ],
+      "source_final_state": [
+        -57.236651346510506,
+        0.22084909813135878,
+        0.9661756711082998,
+        2.4654675448694814,
+        0.0
+      ],
+      "sc_final_state": [
+        -48.55507005848929,
+        0.47349255911925064,
+        0.17861401453944378,
+        0.49999999999999944
+      ]
+    },
+    "rust": {
+      "source_median_ns_per_step": 600.8884,
+      "sc_median_ns_per_step": 7093.7608,
+      "source_results_ns_per_step": [
+        599.4714,
+        600.8884,
+        664.0977
+      ],
+      "sc_results_ns_per_step": [
+        6843.2718,
+        7093.7608,
+        8291.17145
+      ],
+      "source_final_state": [
+        -57.236651346510506,
+        0.22084909813135878,
+        0.9661756711082998,
+        2.4654675448694814,
+        0.0
+      ],
+      "sc_final_state": [
+        -48.55507005848929,
+        0.47349255911925064,
+        0.17861401453944378,
+        0.49999999999999944
+      ]
+    },
+    "go": {
+      "source_median_ns_per_step": 174.4,
+      "sc_median_ns_per_step": 7132.0,
+      "source_results_ns_per_step": [
+        174.4,
+        175.3,
+        172.6
+      ],
+      "sc_results_ns_per_step": [
+        5845.0,
+        7159.0,
+        7132.0
+      ],
+      "source_final_state": [],
+      "sc_final_state": []
+    },
+    "julia": {
+      "source_median_ns_per_step": 699.6433,
+      "sc_median_ns_per_step": 3571.3152,
+      "source_results_ns_per_step": [
+        637.61125,
+        699.6433,
+        4487.86545
+      ],
+      "sc_results_ns_per_step": [
+        3571.3152,
+        3461.35735,
+        3641.54135
+      ],
+      "source_final_state": [
+        -57.236651346510506,
+        0.22084909813135878,
+        0.9661756711082998,
+        2.4654675448694814,
+        0.0
+      ],
+      "sc_final_state": [
+        -48.55507005848929,
+        0.47349255911925064,
+        0.17861401453944378,
+        0.49999999999999944
+      ]
+    },
+    "mojo": {
+      "source_median_ns_per_step": 74.96565231122077,
+      "sc_median_ns_per_step": 3403.6587981972843,
+      "source_results_ns_per_step": [
+        76.80910057388246,
+        74.96565231122077,
+        72.94450188055634
+      ],
+      "sc_results_ns_per_step": [
+        3469.25409976393,
+        3403.6587981972843,
+        3263.080003671348
+      ],
+      "source_final_state": [
+        -57.23665134651192,
+        0.22084909813135883,
+        0.9661756711082998,
+        2.4654675448694814,
+        0.0
+      ],
+      "sc_final_state": [
+        -48.555070058497,
+        0.47349255911965904,
+        0.1786140145392509,
+        0.49999999999999944
+      ]
+    }
+  },
+  "source_hashes": {
+    "benchmarks/bench_model_nmda.py": "2568ca51849a4735e1a94542a7aac264ecdb9eea0527a71c6c6544fc3b7f0cab",
+    "engine/examples/bench_nmda_rk2.rs": "49ac8d91e1eaaaa441b3ad16125fe497696c8f24a857dfe8017b5a962d18ff59",
+    "engine/src/neurons/channels/nmda.rs": "3979131640dae00409b638cb3e0464edc16c52345f1acb69dd77aa0354ca3484",
+    "engine/src/neurons/channels/sc_wb_nmda_magnesium_block.rs": "ca2310405fa487426ce732ed328db4503b732603f8561bf30bc5feff58612e89",
+    "src/sc_neurocore/neurons/models/nmda_neuron.py": "8405408091514e236f04915607c92303d0f271fb71493192d6844f5a24a1f3d0",
+    "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py": "f7bbd7bdd6cbf4046996098997c515e4c8328a4373b6754f616233f0b42a4498",
+    "src/sc_neurocore/accel/go/services/nmda_neuron.go": "0244ce6a5347624906a05eee2e345b4f66ce8cbc7390c00947e8ea06103f8659",
+    "src/sc_neurocore/accel/go/services/sc_wb_nmda_magnesium_block.go": "e836c4c18c38040a25ded497623e74ff1d6935eac5d18ccdf1a061b2dc2cb843",
+    "src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl": "97bfbe09b790e9f20693b6690f991edbbfdb219eb10046f1e5159933e72d9ab6",
+    "src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block.jl": "9fda30ef9df1b7d625e19244578874ffeb75137f798f8a7d6db24143d34436b6",
+    "src/sc_neurocore/accel/mojo/kernels/nmda_neuron.mojo": "21d6d1230141a67bfcb1e77236be60bd46459a9ea81491cab9d2005bd582e5b7",
+    "src/sc_neurocore/accel/mojo/kernels/sc_wb_nmda_magnesium_block.mojo": "4bc894dc495a6eff5fc2a67b4064ff7837d267d78315004533f2b39331388dd1",
+    "src/sc_neurocore/accel/rust/safety/nmda_neuron.rs": "811207a3fb1219ac45afbd1c87ce41508ddd217a981bcc483eb7df02ee8f6496",
+    "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs": "86cfde58067a4dc423dbc36cfcbc4ef7b5abda4981931ab9679c41bab7532e33"
+  },
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "notes": "Local loaded-host regression; state parity is tested separately; no comparative speed claim."
+}

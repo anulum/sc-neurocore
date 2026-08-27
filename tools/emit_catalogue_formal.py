@@ -97,6 +97,7 @@ CURATED_CLASS_TO_MODULE: dict[str, str] = {
     "EnergyLIFNeuron": "energy_lif",
     "MATNeuron": "sc_mat",
     "NagumoSatoMapNeuron": "sc_nagumo_sato_map",
+    "NMDANeuron": "sc_nmda_autapse",
     "NonResettingLIFNeuron": "sc_non_resetting_lif",
     "SigmaDeltaNeuron": "sc_sigma_delta",
 }
@@ -117,6 +118,7 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
         "sc_compte_wm_ring16",
         "sc_mat",
         "sc_nagumo_sato_map",
+        "sc_nmda_autapse",
         "sc_non_resetting_adaptive_lif",
         "sc_non_resetting_lif",
         "sc_normalized_energy_lif",
@@ -125,6 +127,7 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
         "sc_sigma_delta_accumulator",
         "sc_stochastic_rate_adaptation",
         "sc_triangular_mckean",
+        "sc_wb_nmda_magnesium_block",
     }
 )
 

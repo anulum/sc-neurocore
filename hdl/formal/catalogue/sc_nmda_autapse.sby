@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SC-NeuroCore — depth-4 Wang NMDA-autapse bounded safety proof
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc cvc5
+
+[script]
+read -formal sc_nmda_autapse_formal.v
+read -formal sc_nmda_autapse.v
+prep -top sc_nmda_autapse_formal
+
+[files]
+sc_nmda_autapse_formal.v
+sc_nmda_autapse.v

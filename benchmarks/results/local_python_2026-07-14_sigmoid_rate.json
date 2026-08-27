@@ -2,8 +2,8 @@
   "auto_backend_order": [
     "mojo",
     "julia",
-    "go",
     "rust",
+    "go",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -12,17 +12,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 15018269,
-      "median_call_ns": 10529748.0,
-      "median_ns_per_step": 52.64874,
-      "min_call_ns": 9617437,
+      "max_call_ns": 14262221,
+      "median_call_ns": 10047214.0,
+      "median_ns_per_step": 50.23607,
+      "min_call_ns": 9412647,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        15018269,
-        13534560,
-        10529748,
-        9617437,
-        10392522
+        10436544,
+        14262221,
+        9412647,
+        10047214,
+        9802258
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -33,17 +33,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 5025812,
-      "median_call_ns": 4335510.0,
-      "median_ns_per_step": 21.67755,
-      "min_call_ns": 4215598,
+      "max_call_ns": 5501184,
+      "median_call_ns": 4405412.0,
+      "median_ns_per_step": 22.02706,
+      "min_call_ns": 4185331,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4381537,
-        5025812,
-        4215598,
-        4335510,
-        4268275
+        5501184,
+        4405412,
+        4185331,
+        4736723,
+        4341717
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -54,17 +54,17 @@
       "available": true,
       "final_rate": 0.9820137900379374,
       "final_rate_matches_python": true,
-      "max_call_ns": 2120146,
-      "median_call_ns": 1473090.0,
-      "median_ns_per_step": 7.36545,
-      "min_call_ns": 1271884,
+      "max_call_ns": 1771018,
+      "median_call_ns": 1141437.0,
+      "median_ns_per_step": 5.707185,
+      "min_call_ns": 1088761,
       "parity_max_abs_diff": 3.0753177782116836e-14,
       "samples_ns": [
-        2120146,
-        1676419,
-        1271884,
-        1473090,
-        1352955
+        1771018,
+        1640935,
+        1141437,
+        1088761,
+        1127529
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -75,17 +75,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 20742592,
-      "median_call_ns": 20233991.0,
-      "median_ns_per_step": 101.169955,
-      "min_call_ns": 18081660,
+      "max_call_ns": 21497491,
+      "median_call_ns": 19423611.0,
+      "median_ns_per_step": 97.118055,
+      "min_call_ns": 17713606,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        20604065,
-        20742592,
-        20233991,
-        18877579,
-        18081660
+        17713606,
+        21497491,
+        19423611,
+        19773747,
+        18062378
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -96,17 +96,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 18033942,
-      "median_call_ns": 15479677.0,
-      "median_ns_per_step": 77.398385,
-      "min_call_ns": 15316444,
+      "max_call_ns": 6175487,
+      "median_call_ns": 4692193.0,
+      "median_ns_per_step": 23.460965,
+      "min_call_ns": 4226947,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        18033942,
-        15442777,
-        15479677,
-        15316444,
-        15717875
+        6175487,
+        4658904,
+        4226947,
+        4692193,
+        4887637
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -123,13 +123,13 @@
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/kernels/libsigmoid_rate.so",
-      "sha256": "2b4eabd9982896d37fe7114f4e7b2c18976ffcfc389fc3a8a660ae9c91e4c1e5",
-      "size_bytes": 15288
+      "sha256": "bd08c79b2fdb779662e65894117d0c9d6acfe6f3504a3d790feedd6e8d86f789",
+      "size_bytes": 15400
     },
     "rust_extension": {
       "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
-      "size_bytes": 525572993
+      "sha256": "6772b5d23ea42745d3a308f1683d0971c1e92f28f63314cddd8e1e4344a027d4",
+      "size_bytes": 34198969
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_sigmoid_rate.py --json benchmarks/results/local_python_2026-07-14_sigmoid_rate.json",
@@ -140,9 +140,9 @@
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      11.4453125,
-      17.88671875,
-      17.9365234375
+      6.12109375,
+      5.14892578125,
+      5.18212890625
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -180,9 +180,9 @@
     },
     "benchmarks/bench_model_sigmoid_rate.py": "1f21ae34ee681e62f4d1f93047afe663aa4dc1665282165711d0031050650a69",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168"
+      "py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
+    "bridge/sc_neurocore_engine/__init__.py": "f850b7e970d6189c7d18abec6d81585ed424008c388c7aed614a274191a4e7e2",
     "engine/src/bindings/sigmoid_rate": {
       "rs": "b6487c31e845fdd2790dda584c6a856a0da7507723b68d2f5959262b8990c667"
     },
@@ -236,7 +236,7 @@
     },
     "src/sc_neurocore/neurons/models/sigmoid_rate.py": "3340acd62fd8a8a9eceea20903b4375f2fbddbcc00c6572bda965839041f2fec"
   },
-  "timestamp_utc": "2026-08-25T20:59:27+00:00",
+  "timestamp_utc": "2026-08-27T19:56:07+00:00",
   "verification": {
     "rust_safety": {
       "command": [

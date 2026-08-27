@@ -121,6 +121,9 @@ name = "bench_butera_respiratory_rk4"
 name = "bench_larter_breakspear_rk4"
 
 [[example]]
+name = "bench_nmda_rk2"
+
+[[example]]
 name = "bench_sc_unit_capacitance_respiratory_rk4"
 
 [[example]]

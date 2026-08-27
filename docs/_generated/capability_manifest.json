@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 190,
+    "model_documentation_pages": 191,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 610,
-    "python_model_classes": 173,
-    "python_model_source_modules": 169,
-    "rust_pyo3_model_wrappers": 200,
-    "test_files": 4733
+    "public_documentation_pages": 612,
+    "python_model_classes": 174,
+    "python_model_source_modules": 170,
+    "rust_pyo3_model_wrappers": 201,
+    "test_files": 4737
   },
   "documentation": {
     "public_pages": [
@@ -1232,6 +1232,7 @@
       "docs/api/models/sc_three_state_phantom.md",
       "docs/api/models/sc_triangular_mckean.md",
       "docs/api/models/sc_unit_capacitance_respiratory.md",
+      "docs/api/models/sc_wb_nmda_magnesium_block.md",
       "docs/api/models/sfa.md",
       "docs/api/models/sherman_rinzel_keizer.md",
       "docs/api/models/siegert.md",
@@ -1576,6 +1577,7 @@
       "docs/validation/mcculloch_pitts_source_fidelity.md",
       "docs/validation/mckean_source_fidelity.md",
       "docs/validation/neurobench_shd.md",
+      "docs/validation/nmda_source_fidelity.md",
       "docs/validation/non_resetting_lif_source_fidelity.md",
       "docs/validation/poisson_stochastic_fidelity.md",
       "docs/validation/reference_traces.md",
@@ -1762,6 +1764,7 @@
       "sc_three_state_phantom.md",
       "sc_triangular_mckean.md",
       "sc_unit_capacitance_respiratory.md",
+      "sc_wb_nmda_magnesium_block.md",
       "sfa.md",
       "sherman_rinzel_keizer.md",
       "siegert.md",
@@ -2363,6 +2366,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_unit_capacitance_respiratory.py"
       },
       {
+        "name": "SCWBNMDAMagnesiumBlockNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py"
+      },
+      {
         "name": "SFANeuron",
         "path": "src/sc_neurocore/neurons/models/sfa.py"
       },
@@ -2629,6 +2636,7 @@
       "src/sc_neurocore/neurons/models/sc_three_state_phantom.py",
       "src/sc_neurocore/neurons/models/sc_triangular_mckean.py",
       "src/sc_neurocore/neurons/models/sc_unit_capacitance_respiratory.py",
+      "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py",
       "src/sc_neurocore/neurons/models/sfa.py",
       "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py",
       "src/sc_neurocore/neurons/models/siegert.py",
@@ -2825,6 +2833,7 @@
       "SCThreeStatePhantomBurster",
       "SCTriangularMcKeanNeuron",
       "SCUnitCapacitanceRespiratoryNeuron",
+      "SCWBNMDAMagnesiumBlockNeuron",
       "SFANeuron",
       "SKNeuron",
       "SSTNeuron",
@@ -3694,6 +3703,7 @@
       "tests/test_bench_mcculloch_pitts.py",
       "tests/test_bench_mckean_dual_identity.py",
       "tests/test_bench_neurogrid.py",
+      "tests/test_bench_nmda.py",
       "tests/test_bench_non_resetting_lif_dual_identity.py",
       "tests/test_bench_perfect_integrator.py",
       "tests/test_bench_photonic_crosstalk.py",
@@ -4217,6 +4227,7 @@
       "tests/test_cosim_morris_lecar_q1616_precision.py",
       "tests/test_cosim_morris_lecar_transcendental_co_simulation.py",
       "tests/test_cosim_nagumo_sato_map.py",
+      "tests/test_cosim_nmda_autapse.py",
       "tests/test_cosim_non_resetting_lif.py",
       "tests/test_cosim_perfect_integrator.py",
       "tests/test_cosim_pernarowski_q1616_precision.py",
@@ -4234,6 +4245,7 @@
       "tests/test_cosim_sc_resetting_mat.py",
       "tests/test_cosim_sc_sigma_delta_accumulator.py",
       "tests/test_cosim_sc_triangular_mckean.py",
+      "tests/test_cosim_sc_wb_nmda_magnesium_block.py",
       "tests/test_cosim_sigma_delta.py",
       "tests/test_cosim_sigmoid_rate.py",
       "tests/test_cosim_support_architecture_architecture_invariants.py",
@@ -6261,6 +6273,7 @@
       "tests/test_nir_silicon_mapping.py",
       "tests/test_nir_spec_conformance.py",
       "tests/test_nmda_neuron_backends.py",
+      "tests/test_nmda_source_fidelity.py",
       "tests/test_non_resetting_lif_backend_dispatch.py",
       "tests/test_non_resetting_lif_engine_binding.py",
       "tests/test_non_resetting_lif_schema_parity.py",

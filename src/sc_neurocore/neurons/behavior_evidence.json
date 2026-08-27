@@ -1073,12 +1073,11 @@
     "NMDANeuron": {
       "behavior_tags": [
         "excitable",
-        "irregular",
         "rate-coded",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "69dcffe397db8dd93f9ad0e3ec2b685f7ff16338ffd6d2daea0a083f1c1ffdf3",
+      "result_sha256": "d5f33c13d88eca03dbf03a400ef7925f7894eb713fbd8d7d0c0f73f96323a40c",
       "stochastic": false
     },
     "NagumoSatoMapNeuron": {
@@ -1461,6 +1460,17 @@
       "result_sha256": "231f3816dd5ed6dbb1a5244fdf7358c17b435e4f2b25561bbdf9677310c59222",
       "stochastic": false
     },
+    "SCWBNMDAMagnesiumBlockNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "69dcffe397db8dd93f9ad0e3ec2b685f7ff16338ffd6d2daea0a083f1c1ffdf3",
+      "stochastic": false
+    },
     "SFANeuron": {
       "behavior_tags": [
         "adapting",
@@ -1795,7 +1805,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "12bdcc26b4d91937a83ac467015c1dfbefee2fae44664d0b76eabddf9c631962",
+  "result_sha256": "a1f5da3ea6d5bf0ab9c91f5463c4d3cc9cc557e9034d26022e80bec3215bc7f9",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [
