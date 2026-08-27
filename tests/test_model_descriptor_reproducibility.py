@@ -66,6 +66,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "SigmaDeltaNeuron",
     "SKNeuron",
     "TTypeCaNeuron",
+    "TwoCompartmentLIFNeuron",
 }
 
 

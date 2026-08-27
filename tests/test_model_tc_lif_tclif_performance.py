@@ -16,7 +16,7 @@ from tests.performance_guard import assert_load_tolerant_throughput
 
 class TestTCLIFPerformance:
     def test_isolation_throughput(self):
-        n = TwoCompartmentLIFNeuron()
+        n = SCLeakyTwoCompartmentLIFNeuron()
         N = 50000
         t0 = time.perf_counter()
         for _ in range(N):
@@ -29,7 +29,7 @@ class TestTCLIFPerformance:
         )
 
     def test_network_throughput(self):
-        pop = Population(TwoCompartmentLIFNeuron, n=50, label="bench")
+        pop = Population(SCLeakyTwoCompartmentLIFNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)

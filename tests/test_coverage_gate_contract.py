@@ -176,3 +176,21 @@ def test_mainen_sejnowski_exact_coverage_and_backend_parity_is_hosted() -> None:
     assert "tests/test_model_mainen_sejnowski_ms_atomicity.py" in step
     assert "tests/test_mainen_sejnowski_backends.py" in step
     assert "--fail-under=100 --show-missing" in step
+
+
+def test_tc_lif_exact_coverage_and_backend_parity_is_hosted() -> None:
+    """The TC-LIF family (canonical + both SC identities) needs branch custody."""
+
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    start = workflow.index("- name: TwoCompartmentLIF exact coverage and backend parity")
+    end = workflow.index("\n      - name:", start + 1)
+    step = workflow[start:end]
+
+    assert "if: matrix.primary" in step
+    assert "--rcfile=/dev/null --branch" in step
+    assert "src/sc_neurocore/neurons/models/tc_lif.py" in step
+    assert "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py" in step
+    assert "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py" in step
+    assert "tests/test_model_tc_lif_atomicity.py" in step
+    assert "tests/test_tc_lif_backends.py" in step
+    assert "--fail-under=100 --show-missing" in step

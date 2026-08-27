@@ -15,12 +15,12 @@ from tests.model_tc_lif_support import *  # noqa: F403
 
 class TestTCLIFFI:
     def test_zero_input_silent(self):
-        n = TwoCompartmentLIFNeuron()
+        n = SCLeakyTwoCompartmentLIFNeuron()
         assert len(_run(n, i_soma=0.0, steps=5000)) == 0
 
     def test_monotonic_fi(self):
         rates = []
         for I in [1.5, 2.0, 3.0, 5.0]:
-            n = TwoCompartmentLIFNeuron()
+            n = SCLeakyTwoCompartmentLIFNeuron()
             rates.append(len(_run(n, i_soma=I, steps=5000)))
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))

@@ -1,0 +1,128 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCLeakyTwoCompartmentLIFNeuron"
+class_name = "SCLeakyTwoCompartmentLIFNeuron"
+module = "sc_leaky_tc_lif"
+display_name = ""
+summary = "SC leaky two-compartment LIF — preserved repository recurrence."
+family = "Compartmental"
+category = "compartmental"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+doi = ""
+derivation_note = "Project recurrence retained count-neutrally; it is not attributed to the Zhang et al. 2024 TC-LIF equations."
+
+[state.v_s]
+init = 0.0
+
+[state.v_d]
+init = 0.0
+
+[parameters.v_rest]
+default = 0.0
+unit = "1"
+meaning = "rest potential both compartments leak toward"
+range = [
+    -100.0,
+    100.0,
+]
+
+[parameters.v_reset]
+default = 0.0
+unit = "1"
+meaning = "somatic hard-reset potential"
+range = [
+    -100.0,
+    100.0,
+]
+
+[parameters.theta]
+default = 1.0
+unit = "1"
+meaning = "somatic firing threshold"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.tau_s]
+default = 2.0
+unit = "steps"
+meaning = "somatic leak time constant"
+range = [
+    0.1,
+    1000.0,
+]
+
+[parameters.tau_d]
+default = 20.0
+unit = "steps"
+meaning = "dendritic leak time constant"
+range = [
+    0.1,
+    1000.0,
+]
+
+[parameters.kappa]
+default = 0.5
+unit = "1"
+meaning = "one-way dendro-somatic coupling strength"
+range = [
+    0.0,
+    10.0,
+]
+
+[parameters.dt]
+default = 1.0
+unit = "steps"
+meaning = "Euler step size"
+range = [
+    0.0,
+    10.0,
+]
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v_d = "tau_d dV_d/dt = -(V_d - v_rest) + I_dend"
+v_s = "tau_s dV_s/dt = -(V_s - v_rest) + kappa * (V_d - V_s) + I_soma; the soma derivative consumes the freshly updated V_d"
+event = "spike when V_s >= theta; V_s -> v_reset (hard reset), V_d unchanged"
+input = "two external currents: I_soma and I_dend"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sc_leaky_tc_lif"
+notes = "Count-neutral SC identity preserving the leaky/hard-reset recurrence formerly published as TwoCompartmentLIFNeuron; finite-input trajectories are bit-exact with the pre-2026-08-27 implementation (frozen anchors in tests/test_model_sc_leaky_tc_lif.py). Structurally distinct from the Zhang et al. 2024 TC-LIF; no publication-exact claim. Engine, Go, Julia, Mojo, and silicon lanes are intentionally not implemented for this preserved identity."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "frozen 10/50/30-step anchors at mixed two-current drives"

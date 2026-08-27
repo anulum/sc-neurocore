@@ -2014,7 +2014,7 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = TwoCompartmentLIFNeuron::new();
             for _ in 0..10_000 {
-                black_box(n.step(0.5, 0.3));
+                black_box(n.step(0.5));
             }
         })
     });

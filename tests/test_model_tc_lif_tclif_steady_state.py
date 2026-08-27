@@ -16,7 +16,7 @@ from tests.model_tc_lif_support import *  # noqa: F403
 class TestTCLIFSteadyState:
     def test_soma_steady_state(self):
         """At steady state (no spikes): v_s_ss depends on both i_soma and v_d."""
-        n = TwoCompartmentLIFNeuron(theta=100.0)  # prevent spikes
+        n = SCLeakyTwoCompartmentLIFNeuron(theta=100.0)  # prevent spikes
         for _ in range(10000):
             n.step(0.5, 0.0)
         # Soma steady state with v_d=0: v_s_ss = i_soma / (1 + kappa)
@@ -27,7 +27,7 @@ class TestTCLIFSteadyState:
 
     def test_dendrite_steady_state(self):
         """v_d_ss = i_dend (at v_rest=0, from -(v_d-0)+i_dend=0 → v_d=i_dend)."""
-        n = TwoCompartmentLIFNeuron(theta=100.0)
+        n = SCLeakyTwoCompartmentLIFNeuron(theta=100.0)
         for _ in range(10000):
             n.step(0.0, 2.0)
         # v_d_ss = i_dend = 2.0

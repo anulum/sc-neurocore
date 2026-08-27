@@ -567,6 +567,29 @@ jobs:
             --include='src/sc_neurocore/neurons/models/mainen_sejnowski.py' \
             --fail-under=100 --show-missing
 
+      - name: TwoCompartmentLIF exact coverage and backend parity
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-tc-lif python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/neurons/models/tc_lif.py,src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py,src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py' \
+            -m pytest tests/test_model_tc_lif_atomicity.py \
+              tests/test_model_sc_leaky_tc_lif.py \
+              tests/test_model_sc_exponential_tc_lif.py \
+              tests/test_model_tc_lif_tclif_performance.py \
+              tests/test_model_tc_lif_tcliffi.py \
+              tests/test_model_tc_lif_tclif_steady_state.py \
+              tests/test_model_tc_lif_tclif_pipeline.py \
+              tests/test_model_tc_lif_tclif_compartmental_coupling.py \
+              tests/test_model_tc_lif_tclif_isolation.py \
+              tests/test_model_tc_lif_tclif_parameters.py \
+              tests/test_tc_lif_backends.py -q
+          COVERAGE_FILE=.coverage-tc-lif python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/neurons/models/tc_lif.py,src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py,src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

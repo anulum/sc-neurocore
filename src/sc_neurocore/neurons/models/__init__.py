@@ -176,6 +176,8 @@ _CLASS_TO_MODULE = {
     "TrueNorthNeuron": "truenorth",
     "TsodyksMarkramNeuron": "tsodyks_markram",
     "TwoCompartmentLIFNeuron": "tc_lif",
+    "SCLeakyTwoCompartmentLIFNeuron": "sc_leaky_tc_lif",
+    "SCExponentialTwoCompartmentLIFNeuron": "sc_exponential_tc_lif",
     "UnipolarBrushCell": "unipolar_brush_cell",
     "UpperMotorNeuron": "upper_motor_neuron",
     "VIPNeuron": "vip_neuron",

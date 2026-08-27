@@ -130,7 +130,30 @@ wrap_2arg_f64!(WrCompteWM, CompteWMNeuron, v, false);
 wrap_2arg_f64!(WrTsodyksMarkram, TsodyksMarkramNeuron, v, false);
 wrap_2arg_f64!(WrPinskyRinzel, PinskyRinzelNeuron, v_s, 0.0_f64);
 wrap_2arg_f64!(WrHayL5, HayL5PyramidalNeuron, v_s, 0.0_f64);
-wrap_2arg_f64!(WrTwoCompLIF, TwoCompartmentLIFNeuron, v_s, 0.0_f64);
+/// Adapter for the canonical one-input TC-LIF (Zhang et al. 2024): the
+/// runner drive is the single external current entering the dendrite,
+/// and the reported voltage is the somatic potential `u_s`.
+#[derive(Clone, Debug)]
+pub struct WrTwoCompLIF(pub TwoCompartmentLIFNeuron);
+impl WrTwoCompLIF {
+    pub fn new() -> Self {
+        Self(TwoCompartmentLIFNeuron::new())
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.0.step(current)
+    }
+    pub fn reset(&mut self) {
+        self.0.reset();
+    }
+    pub fn v(&self) -> f64 {
+        self.0.u_s
+    }
+}
+impl Default for WrTwoCompLIF {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 wrap_i32_input!(WrLoihiCUBA, LoihiCUBANeuron, v, LoihiCUBANeuron::new());
 wrap_i32_input!(WrLoihi2, Loihi2Neuron, s1, Loihi2Neuron::new());

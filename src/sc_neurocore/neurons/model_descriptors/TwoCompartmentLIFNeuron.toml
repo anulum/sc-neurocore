@@ -12,11 +12,11 @@ name = "TwoCompartmentLIFNeuron"
 class_name = "TwoCompartmentLIFNeuron"
 module = "tc_lif"
 display_name = ""
-summary = "Two-compartment LIF — Yang et al. AAAI 2024."
+summary = "TC-LIF — Zhang et al. (2024) two-compartment spiking neuron."
 family = "Compartmental"
 category = "compartmental"
 biophysical_detail = "point"
-maturity = "experimental"
+maturity = "reference"
 intended_use = []
 hardware_fit = []
 behavior_tags = [
@@ -32,71 +32,90 @@ authors = [
 year = 2024
 doi = "10.1609/aaai.v38i15.29625"
 
-[state.v_s]
+[state.u_d]
 init = 0.0
 
-[state.v_d]
+[state.u_s]
 init = 0.0
 
-[state.theta]
-init = 1.0
+[state.s_prev]
+init = 0.0
 
-[parameters.v_rest]
-default = 0.0
+[parameters.beta1]
+default = -0.5
 unit = "1"
-meaning = "resting potential (normalised)"
+meaning = "somato-dendritic coupling, -sigmoid(c1) in the paper; strictly inside (-1, 0)"
 range = [
-    -5.0,
-    5.0,
+    -1.0,
+    0.0,
 ]
 
-[parameters.v_reset]
-default = 0.0
-unit = "1"
-meaning = "reset potential (normalised)"
-range = [
-    -5.0,
-    5.0,
-]
-
-[parameters.tau_s]
-default = 2.0
-unit = "ms"
-meaning = "somatic-compartment time constant"
-range = [
-    1.0,
-    100.0,
-]
-
-[parameters.tau_d]
-default = 20.0
-unit = "ms"
-meaning = "dendritic-compartment time constant"
-range = [
-    1.0,
-    200.0,
-]
-
-[parameters.kappa]
+[parameters.beta2]
 default = 0.5
 unit = "1"
-meaning = "soma-dendrite coupling factor"
+meaning = "dendro-somatic coupling, sigmoid(c2) in the paper; strictly inside (0, 1)"
 range = [
     0.0,
-    2.0,
+    1.0,
+]
+
+[parameters.gamma]
+default = 0.5
+unit = "1"
+meaning = "dendritic soft-reset magnitude applied through the delayed spike"
+range = [
+    0.0,
+    10.0,
+]
+
+[parameters.v_th]
+default = 1.0
+unit = "1"
+meaning = "somatic firing threshold and somatic soft-reset magnitude"
+range = [
+    0.0,
+    100.0,
 ]
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "map"
 
 [dynamics]
+u_d = "U_D[t] = U_D[t-1] + beta1 * U_S[t-1] + I[t] - gamma * S[t-1]"
+u_s = "U_S[t] = U_S[t-1] + beta2 * U_D[t] - v_th * S[t-1]"
+spike = "S[t] = Theta(U_S[t] - v_th); Theta(0) = 1 (right-continuous repository convention)"
+input = "one external current I[t] enters the dendritic compartment"
+reset = "soft subtraction on BOTH compartments through the delayed spike S[t-1]; no hard reset"
+profiles = "defaults are the published S-MNIST feedforward profile; all ten Table 5 dataset profiles are exposed as named profiles (no universal paper default exists)"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":0.5,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "e6d320882c483b5f29c54c4c8e30687c7b2cf791eca86b279b259da2fa649bb5"
+event_count = 283
+final_state = "{\"u_d\":0.8393844765206133,\"u_s\":0.9115914263445875,\"s_prev\":0.0}"
 
 [documentation]
 slug = "models/tc_lif"
-notes = ""
+notes = "Publication-exact TC-LIF discrete map (Zhang et al. 2024, Eqs. 10-12) with the exact U_D -> U_S -> S ordering and delayed soft reset. The pure-arithmetic map gives bit-exact cross-backend parity. Two structurally different historical recurrences formerly published under this name are preserved as the count-neutral SCLeakyTwoCompartmentLIFNeuron and SCExponentialTwoCompartmentLIFNeuron identities. Mojo and silicon lanes are not implemented."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "64 deterministic non-constant drives plus 1000 steps at I=0.5"

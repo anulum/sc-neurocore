@@ -28,7 +28,7 @@ pub use marder_stg::PyMarderSTGNeuron;
 pub use multicompartment_mcn::PyMulticompartmentMCNNeuron;
 pub use pinsky_rinzel::PyPinskyRinzelNeuron;
 pub use rall_cable::PyRallCableNeuron;
-pub use two_compartment_lif::PyTwoCompartmentLIFNeuron;
+pub use two_compartment_lif::{PySCExponentialTwoCompartmentLIF, PyTwoCompartmentLIFNeuron};
 
 /// Register the multi-compartment neuron classes in their stable order.
 pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {

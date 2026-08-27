@@ -31,4 +31,4 @@ pub use marder_stg::MarderSTGNeuron;
 pub use multicompartment_mcn::MulticompartmentMCNNeuron;
 pub use pinsky_rinzel::PinskyRinzelNeuron;
 pub use rall_cable::RallCableNeuron;
-pub use two_compartment_lif::TwoCompartmentLIFNeuron;
+pub use two_compartment_lif::{SCExponentialTwoCompartmentLIF, TwoCompartmentLIFNeuron};

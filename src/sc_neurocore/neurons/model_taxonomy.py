@@ -97,6 +97,8 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "PinskyRinzelNeuron",
             "RallCableNeuron",
             "TwoCompartmentLIFNeuron",
+            "SCLeakyTwoCompartmentLIFNeuron",
+            "SCExponentialTwoCompartmentLIFNeuron",
         ),
     ),
     "Ion-channel": (

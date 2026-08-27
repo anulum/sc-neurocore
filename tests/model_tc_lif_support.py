@@ -8,14 +8,14 @@
 
 from __future__ import annotations
 
-"""Full pipeline test for TwoCompartmentLIFNeuron (Yang et al. AAAI 2024).
+"""Full pipeline test for SCLeakyTwoCompartmentLIFNeuron (preserved SC leaky recurrence).
 
 Soma + dendrite: dendritic input provides history-dependent sequential
 context via kappa coupling. step(i_soma, i_dend). Performance: ~635K steps/s."""
 import time
 import numpy as np
 import pytest
-from sc_neurocore.neurons.models.tc_lif import TwoCompartmentLIFNeuron
+from sc_neurocore.neurons.models.sc_leaky_tc_lif import SCLeakyTwoCompartmentLIFNeuron
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.network import Network
@@ -25,7 +25,7 @@ from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 
 def _run(
-    neuron: TwoCompartmentLIFNeuron, i_soma: float, steps: int, i_dend: float = 0.0
+    neuron: SCLeakyTwoCompartmentLIFNeuron, i_soma: float, steps: int, i_dend: float = 0.0
 ) -> list[int]:
     return [t for t in range(steps) if neuron.step(i_soma, i_dend) == 1]
 
@@ -34,7 +34,7 @@ __all__ = [
     "time",
     "np",
     "pytest",
-    "TwoCompartmentLIFNeuron",
+    "SCLeakyTwoCompartmentLIFNeuron",
     "Population",
     "Projection",
     "Network",

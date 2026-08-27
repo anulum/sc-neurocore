@@ -76,7 +76,8 @@ _DUAL_FLOAT = frozenset(
         "COBALIFNeuron",
         "PinskyRinzelNeuron",
         "HayL5PyramidalNeuron",
-        "TwoCompartmentLIFNeuron",
+        "SCLeakyTwoCompartmentLIFNeuron",
+        "SCExponentialTwoCompartmentLIFNeuron",
     }
 )
 _BOOL_PARAM = frozenset({"TsodyksMarkramNeuron", "CompteWMNeuron"})
@@ -99,6 +100,7 @@ _PYTHON_ONLY_MODELS = frozenset(
         "ChayKeizerMinimalNeuron",
         "HybridFisherPosnerLIFNeuron",
         "Izhikevich2007Neuron",
+        "SCLeakyTwoCompartmentLIFNeuron",
         "SRM0Neuron",
     }
 )
@@ -129,6 +131,12 @@ _PYTHON_ONLY_BOUNDARIES = (
         reason_token="function-level compiled accelerator",
     ),
     PythonOnlyBoundary(
+        name="SCLeakyTwoCompartmentLIFNeuron",
+        source_path=Path("src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py"),
+        source_token="preserved repository recurrence",
+        reason_token="count-neutral preserved leaky recurrence",
+    ),
+    PythonOnlyBoundary(
         name="SRM0Neuron",
         source_path=Path("src/sc_neurocore/neurons/models/srm0.py"),
         source_token="coupled linear system",
@@ -146,6 +154,7 @@ _RUST_NAME_MAP = {
     "HybridLinearAttentionNeuron": "RustHybridLinearAttentionNeuron",
     "MulticompartmentMCNNeuron": "RustMulticompartmentMCNNeuron",
     "QuantumInspiredLIFNeuron": "RustQuantumInspiredLIFNeuron",
+    "SCExponentialTwoCompartmentLIFNeuron": "SCExponentialTwoCompartmentLIF",
 }
 
 _GENERIC_PARITY_UNSUPPORTED = frozenset(_RUST_NAME_MAP) | _PYTHON_ONLY_MODELS
@@ -170,10 +179,10 @@ _RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/lib.rs"),
 )
 _DOC_TOKENS = (
-    "171 public Python registry names",
+    "173 public Python registry names",
     "157 same-name Rust constructors",
-    "9 Rust-prefixed or core-only constructors",
-    "5 Python-only registry names",
+    "10 Rust-prefixed or core-only constructors",
+    "6 Python-only registry names",
     "Python-only boundary rationale",
     "HybridFisherPosnerLIFNeuron",
 )
@@ -314,7 +323,7 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert model_names >= _STOCHASTIC
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
-    assert len(model_names) == 171
+    assert len(model_names) == 173
     assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 157
 
 
