@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import pytest
 
@@ -79,8 +80,9 @@ def test_t_type_gating_voltage_dependence() -> None:
 def test_constructor_rejects_invalid_configuration(
     field: str, value: float | bool, error: type[Exception]
 ) -> None:
+    constructor: Callable[..., TTypeCaNeuron] = TTypeCaNeuron
     with pytest.raises(error):
-        TTypeCaNeuron(**{field: value})
+        constructor(**{field: value})
 
 
 @pytest.mark.parametrize("current", (math.nan, math.inf, -math.inf))
@@ -93,7 +95,7 @@ def test_non_finite_drive_is_rejected_atomically(current: float) -> None:
 
 
 def test_infinite_drive_no_longer_emits_a_false_spike() -> None:
-    """Regression for NCDBG-045: step(+inf) returned 1 and collapsed s to ~1.35e-6."""
+    """Reject infinite drive instead of emitting a false spike."""
 
     neuron = TTypeCaNeuron()
     with pytest.raises(ValueError, match="current"):

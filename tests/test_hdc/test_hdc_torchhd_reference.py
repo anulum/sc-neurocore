@@ -8,9 +8,9 @@
 
 """Cross-check the binary spatter-code operators against ``torchhd``.
 
-Runs only where the optional ``torchhd`` package is installed (it is
-not part of the project's pinned environments yet — tracked under
-DD-1); the semantic contract page records the deliberate differences.
+Runs only where the optional ``torchhd`` package is installed; it is
+not part of the project's pinned environments. The semantic contract
+page records the deliberate differences from the external reference.
 The adapter maps SC-NeuroCore's {0, 1} uint8 arrays onto torchhd BSC
 tensors rather than weakening either side's semantics.
 """

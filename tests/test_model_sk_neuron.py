@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import pytest
 
@@ -77,8 +78,9 @@ def test_sk_activation_is_calcium_hill_n2() -> None:
 def test_constructor_rejects_invalid_configuration(
     field: str, value: float | bool, error: type[Exception]
 ) -> None:
+    constructor: Callable[..., SKNeuron] = SKNeuron
     with pytest.raises(error):
-        SKNeuron(**{field: value})
+        constructor(**{field: value})
 
 
 def test_calcium_has_no_artificial_upper_bound() -> None:
@@ -97,7 +99,7 @@ def test_non_finite_drive_is_rejected_atomically(current: float) -> None:
 
 
 def test_infinite_drive_no_longer_emits_a_false_spike() -> None:
-    """Regression for NCDBG-045: step(+inf) used to return 1 and pump ca to ~9.98."""
+    """Reject infinite drive instead of emitting a false spike."""
 
     neuron = SKNeuron()
     with pytest.raises(ValueError, match="current"):

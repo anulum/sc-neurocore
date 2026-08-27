@@ -11,14 +11,16 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from sc_neurocore.neurons.models.glm_neuron import GLMNeuron
 
 
-def _buffers(neuron: GLMNeuron) -> tuple[np.ndarray, np.ndarray]:
+def _buffers(neuron: GLMNeuron) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     return neuron._stim_buf.copy(), neuron._spike_buf.copy()
 
 
@@ -33,7 +35,7 @@ def test_non_finite_stimulus_is_rejected_atomically(stimulus: float) -> None:
 
 
 def test_nan_stimulus_no_longer_poisons_the_history_buffer() -> None:
-    """Regression for NCDBG-047: step(NaN) silently wrote NaN into _stim_buf."""
+    """Reject NaN before it can silently poison the stimulus history."""
 
     neuron = GLMNeuron(seed=1)
     with pytest.raises(ValueError, match="stimulus"):
@@ -90,8 +92,9 @@ def test_resized_history_buffer_is_rejected() -> None:
 def test_constructor_rejects_invalid_configuration(
     field: str, value: float | bool, error: type[Exception]
 ) -> None:
+    constructor: Callable[..., GLMNeuron] = GLMNeuron
     with pytest.raises(error):
-        GLMNeuron(**{field: value})
+        constructor(**{field: value})
 
 
 def test_constructor_rejects_mismatched_filters() -> None:

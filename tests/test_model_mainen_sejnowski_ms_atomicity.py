@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import pytest
 
@@ -95,7 +96,7 @@ def test_non_finite_drive_is_rejected_atomically(current: float) -> None:
 
 
 def test_nan_drive_no_longer_poisons_the_whole_state() -> None:
-    """Regression for NCDBG-047: step(NaN) silently set vs=va=m=h=n=NaN."""
+    """Reject NaN before it can silently poison every state variable."""
 
     neuron = MainenSejnowskiNeuron()
     with pytest.raises(ValueError, match="current"):
@@ -147,8 +148,9 @@ def test_non_finite_candidate_is_rejected_atomically(monkeypatch: pytest.MonkeyP
 def test_constructor_rejects_invalid_configuration(
     field: str, value: float, error: type[Exception]
 ) -> None:
+    constructor: Callable[..., MainenSejnowskiNeuron] = MainenSejnowskiNeuron
     with pytest.raises(error):
-        MainenSejnowskiNeuron(**{field: value})
+        constructor(**{field: value})
 
 
 def test_spike_event_and_reset_preserves_parameters() -> None:
