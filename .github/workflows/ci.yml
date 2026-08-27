@@ -39,6 +39,9 @@ env:
   # skip here: a missing/broken engine is a hard red, not a wall of skips
   # (tests/engine_requirement.py).
   SC_NEUROCORE_REQUIRE_ENGINE: "1"
+  # Hosted CI installs and warms juliacall, so the Julia-lane import gate must
+  # never skip here either (tests/julia_requirement.py).
+  SC_NEUROCORE_REQUIRE_JULIA: "1"
 
 jobs:
   lint:

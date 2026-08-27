@@ -23,7 +23,6 @@ from sc_neurocore.analysis.spike_stats.dimensionality import (
 
 _DIM = importlib.import_module("sc_neurocore.analysis.spike_stats.dimensionality")
 _RUST_AVAILABLE = _DIM._rust_pca is not None
-_JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _DIM._ensure_go_dim()
 _MOJO_AVAILABLE = _DIM._ensure_mojo_dim()
 
@@ -69,7 +68,6 @@ __all__ = [
     "factor_analysis",
     "_DIM",
     "_RUST_AVAILABLE",
-    "_JULIA_AVAILABLE",
     "_GO_AVAILABLE",
     "_MOJO_AVAILABLE",
     "_raise_oserror",

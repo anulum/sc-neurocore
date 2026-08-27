@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 from typing import Protocol
 
 import numpy as np
@@ -20,10 +19,9 @@ from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
 
 from sc_neurocore.accel.julia.neurons import simulate_rk4_neuron
 
-pytestmark = pytest.mark.skipif(
-    importlib.util.find_spec("juliacall") is None,
-    reason="juliacall not installed",
-)
+from tests.julia_requirement import require_julia
+
+require_julia()
 
 
 class _ReferenceFn(Protocol):

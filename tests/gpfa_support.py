@@ -33,7 +33,6 @@ from sc_neurocore.analysis.spike_stats.gpfa import (
 )
 
 _RUST_AVAILABLE = _rust_gpfa_em is not None
-_JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _GPFA_MODULE._ensure_go_gpfa()
 _MOJO_AVAILABLE = _GPFA_MODULE._ensure_mojo_gpfa()
 
@@ -68,7 +67,6 @@ __all__ = [
     "gpfa_pca_init",
     "gpfa_transform",
     "_RUST_AVAILABLE",
-    "_JULIA_AVAILABLE",
     "_GO_AVAILABLE",
     "_MOJO_AVAILABLE",
     "_raise_oserror",

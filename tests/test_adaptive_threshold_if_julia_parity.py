@@ -17,6 +17,10 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tests.julia_requirement import require_julia
+
+require_julia()
+
 from sc_neurocore.accel import adaptive_threshold_if as backends
 
 _PARAMETERS = (-63.5, -52.5, -68.0, -67.0, -49.0, 4.5, 8.0, 42.0, 0.05)

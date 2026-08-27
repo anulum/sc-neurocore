@@ -971,7 +971,7 @@
     "python_model_classes": 172,
     "python_model_source_modules": 168,
     "rust_pyo3_model_wrappers": 199,
-    "test_files": 4728
+    "test_files": 4730
   },
   "documentation": {
     "public_pages": [
@@ -3194,6 +3194,7 @@
       "tests/izhikevich2007_backends_support.py",
       "tests/jax_adapter_fallback_contracts_support.py",
       "tests/jax_backend_support.py",
+      "tests/julia_requirement.py",
       "tests/lapicque_backends_support.py",
       "tests/layers/fusion_support.py",
       "tests/layers/sc_conv_layer_support.py",
@@ -5144,6 +5145,7 @@
       "tests/test_jax_backend_lif_step.py",
       "tests/test_jax_backend_vector_ops.py",
       "tests/test_jax_layer.py",
+      "tests/test_julia_requirement_gate.py",
       "tests/test_julia_rk4_neuron_parity.py",
       "tests/test_kilinc_bhatt_map_backends.py",
       "tests/test_kuramoto_python.py",

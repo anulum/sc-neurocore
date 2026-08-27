@@ -17,6 +17,10 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tests.julia_requirement import require_julia
+
+require_julia()
+
 from sc_neurocore.accel import alpha as backends
 
 _PARAMETERS = (0.15, 0.08, 0.05, 0.04, 0.03, -0.5, 1.2, 16.0, 4.0, 9.0, 0.5)

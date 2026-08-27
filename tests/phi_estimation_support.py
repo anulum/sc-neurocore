@@ -34,7 +34,6 @@ from sc_neurocore.analysis.phi_estimation import (
 import sc_neurocore.analysis as analysis
 
 _RUST_AVAILABLE = _rust_phi is not None
-_JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _PHI_MODULE._ensure_go_phi()
 _MOJO_AVAILABLE = _PHI_MODULE._ensure_mojo_phi()
 
@@ -71,7 +70,6 @@ __all__ = [
     "phi_star",
     "analysis",
     "_RUST_AVAILABLE",
-    "_JULIA_AVAILABLE",
     "_GO_AVAILABLE",
     "_MOJO_AVAILABLE",
     "_raise_oserror",

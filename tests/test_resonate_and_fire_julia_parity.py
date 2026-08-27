@@ -17,6 +17,10 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tests.julia_requirement import require_julia
+
+require_julia()
+
 from sc_neurocore.accel import resonate_and_fire as backends
 
 _PARAMETERS = (0.13, -0.27, -0.8, 7.5, 0.9, 0.006)

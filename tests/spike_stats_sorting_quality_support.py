@@ -35,7 +35,6 @@ from sc_neurocore.analysis.spike_stats.sorting_quality import (
 
 _SQ = importlib.import_module("sc_neurocore.analysis.spike_stats.sorting_quality")
 _RUST_AVAILABLE = _SQ._rust_isolation is not None
-_JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _SQ._ensure_go_sq()
 _MOJO_AVAILABLE = _SQ._ensure_mojo_sq()
 
@@ -70,7 +69,6 @@ __all__ = [
     "drift_metric",
     "_SQ",
     "_RUST_AVAILABLE",
-    "_JULIA_AVAILABLE",
     "_GO_AVAILABLE",
     "_MOJO_AVAILABLE",
     "_rng",
