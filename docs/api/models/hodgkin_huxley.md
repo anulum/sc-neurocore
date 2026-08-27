@@ -1,5 +1,11 @@
 # HodgkinHuxleyNeuron
 
+!!! info "Fidelity evidence"
+    The 1952 source coordinate, distinct default-Euler and schema-RK4
+    numerical profiles, five-runtime packet, complete-state receipt, Q16.16
+    co-simulation, synthesis, and formal-safety limits are recorded in the
+    [Hodgkin-Huxley validation boundary](../../validation/hodgkin_huxley.md).
+
 **Module:** `sc_neurocore.neurons.models.hodgkin_huxley`
 **Reference:** Hodgkin & Huxley, J. Physiol. 117(4), 1952
 **Family:** Biophysical conductance-based (the original)
@@ -7,6 +13,23 @@
 **Nobel Prize:** 1963 (Hodgkin & Huxley, with Eccles)
 
 ---
+
+## Source coordinate and numerical profiles
+
+The 1952 paper writes membrane voltage relative to rest. The maintained
+defaults use the equivalent modern absolute-voltage coordinate:
+\(V_\text{modern}=V_\text{paper}-65\) mV, which maps the source batteries
+\(+115,-12,-10.613\) mV to approximately \(+50,-77,-54.4\) mV while
+retaining \(C_m=1\), \(\bar g_{Na}=120\), \(\bar g_K=36\), and
+\(g_L=0.3\).
+
+Two numerical profiles are intentionally maintained. The production Python,
+Rust engine, safety Rust, Go, Julia, and Mojo surfaces use 100 gate-first
+explicit-Euler substeps. The paired schemas, independent feature trace, and
+compiler/RTL object use 100 simultaneous classical-RK4 substeps. Both sample
+the upward \(v\geq0\) crossing only at the one-millisecond macro boundary and
+apply no artificial reset. Solver choice and sampling are repository
+specialisations, not claims about the paper's hand-computation procedure.
 
 ## Equations
 
@@ -121,9 +144,9 @@ At rest (V = −65):
   β_m = 4.0. m_∞ ≈ 0.305/4.305 ≈ 0.071. (Default m=0.05 is close.)
 - h_∞ ≈ 0.07/(0.07+β_h(-65)). β_h(-65) = 1/(1+exp(3.0)) ≈ 0.047.
   h_∞ ≈ 0.07/0.117 ≈ 0.598. (Default h=0.6 matches.)
-- n_∞: α_n(-65) = 0.01×(-10)/(1-exp(1)) ≈ 0.0147, β_n = 0.125×exp(0) = 0.125.
-  n_∞ ≈ 0.0147/0.1397 ≈ 0.105. (Default n=0.32 is above steady-state — this
-  represents a "prepared" initial condition, not exact rest.)
+- n_∞: α_n(-65) = 0.01×(-10)/(1-exp(1)) ≈ 0.0582,
+  β_n = 0.125×exp(0) = 0.125, so n_∞ ≈ 0.3177. (Default n=0.32 is the
+  rounded steady-state value.)
 
 ### Reversal potential ordering
 
@@ -569,28 +592,52 @@ assert!((neuron.v - (-65.0)).abs() < 1e-12);
 | PoissonInput | Yes | Tested at 500 Hz, weight=10 |
 | Model Zoo | Yes | 3 architectures |
 | PyO3 bridge | Yes | 4 state vars mapped |
-| Equation compiler | No | Not an ODE-string model |
+| Equation compiler | Yes | paired simultaneous-RK4 TOML/JSON schemas |
 
 ---
 
+## Current verification evidence
+
+| Contract | Evidence |
+|----------|----------|
+| 1952 source and modern voltage-coordinate transformation | docs/validation/hodgkin_huxley.md |
+| Default gate-first Euler complete-state/event receipt | tests/test_bench_hodgkin_huxley_mojo.py and hodgkin_huxley_1952.json |
+| Python, production Rust, Julia, Go, and executable Mojo | source-hashed five-runtime benchmark packet |
+| Independent safety Rust and failure atomicity | native kernel tests plus Python runtime-boundary tests |
+| Alternate RK4 primary-equation feature derivation | tests/test_reference_hodgkin_huxley.py |
+| Paired-schema and committed Q16.16 event co-simulation | tests/test_cosim_hodgkin_huxley_catalogue.py |
+| Yosys and bounded formal reset safety | the same catalogue test and sc_hodgkin_huxley.sby |
+
 ## Performance Benchmarks
 
-### Executable Mojo closure (2026-07-13)
+### Five-runtime default-profile closure
 
 The source-hashed closure run used one logical CPU, 100 macro-steps, and 11
-repeats at `I=20`. CPU 10 was affinity-pinned but not kernel-isolated, the
-governor was `powersave`, and workstation load was non-zero. These values are
-local functional/regression evidence, not general throughput claims.
+repeats at `I=20`. The core was affinity-pinned but not kernel-isolated and
+workstation load was non-zero. These values are local functional/regression
+evidence, not comparative production throughput claims.
 
-| Runtime | Median per 100 macro-steps | Per macro-step | Events | Max voltage gap |
-|---------|---------------------------:|---------------:|-------:|----------------:|
-| Mojo shared library | 1.238 ms | 12.385 µs | 9 | `1.605e-10` |
-| Rust engine | 1.543 ms | 15.432 µs | 9 | `9.486e-13` |
-| Python | 187.566 ms | 1.876 ms | 9 | reference |
+| Runtime | Median per 100 macro-steps | Events | Trace max abs diff | Final-state max abs diff |
+|---------|---------------------------:|-------:|-------------------:|-------------------------:|
+| Python | 69.154 ms | 9 | 0 | 0 |
+| Rust engine | 0.693 ms | 9 | `9.486e-13` | `2.842e-14` |
+| Julia | 0.568 ms | 9 | `6.395e-14` | `1.110e-16` |
+| Go | 1.100 ms | 9 | `6.555e-13` | `1.110e-16` |
+| Mojo shared library | 0.588 ms | 9 | `1.605e-10` | `7.716e-12` |
 
 The complete affinity, load, governor, runtime-version, source-hash, timing,
 parity, and final-state record is
 `benchmarks/results/bench_hodgkin_huxley_mojo.json`.
+
+## Hardware evidence
+
+The committed signed-Q16.16 compiler lowering represents the separate
+simultaneous-RK4 schema profile and is byte-equal to a fresh emission. Hand and
+paired-schema events are exact over the enrolled 20-macro-step current-15
+window; committed RTL stays within one event under Icarus/VVP, passes Yosys
+coarse synthesis, and passes depth-4 reset-safety BMC under the enrolled
+current/reset protocol. The lookup-table band is not unrestricted equation
+parity, timing closure, PPA, target-device validation, or physical silicon.
 
 ```python
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron

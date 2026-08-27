@@ -1,0 +1,31 @@
+{
+  "model": "HodgkinHuxleyNeuron",
+  "source": "doi:10.1113/jphysiol.1952.sp004764; original rest-relative voltage transformed to the maintained modern absolute-voltage coordinate",
+  "profile": "default production gate-first explicit Euler with 100 dt=0.01 substeps per one-millisecond macro step and sampled upward v>=0 crossing without reset",
+  "drive": {
+    "current": 20.0
+  },
+  "oracle": {
+    "steps": 100,
+    "events": 9,
+    "event_indices": [
+      1,
+      13,
+      24,
+      36,
+      47,
+      59,
+      70,
+      82,
+      93
+    ],
+    "final_state": [
+      -65.85312343949003,
+      0.044630638921627476,
+      0.33980454597964965,
+      0.47933370943008335
+    ],
+    "trace_sha256": "32211db09352bf618b540a0894094cc8dae875059c49d9e5ca52c27d4f688972"
+  },
+  "encoding": "per macro step: little-endian float64 states v,m,h,n followed by little-endian int64 event"
+}

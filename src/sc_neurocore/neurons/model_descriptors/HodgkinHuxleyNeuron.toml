@@ -16,13 +16,18 @@ summary = "4D conductance-based model — Nobel Prize 1963 — the gold standard
 family = "Conductance-based"
 category = "conductance-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "four-state squid-axon conductance simulation",
+    "cross-runtime and bounded fixed-point fidelity studies",
+]
+hardware_fit = [
+    "bounded compiler-generated Q16.16 event-count accelerator for the RK4 schema profile",
+]
 behavior_tags = [
     "excitable",
-    "irregular",
     "phasic",
+    "tonic",
 ]
 
 [provenance]
@@ -122,7 +127,7 @@ range = [
 
 [integration]
 dt = 0.01
-method = "rk4"
+method = "baseline_euler"
 
 [dynamics]
 v = "(-g_Na * m**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C"
@@ -134,31 +139,49 @@ n = "0.01 * (v + 55) / (1 - exp(-(v + 55) / 10)) * (1 - n) - 0.125 * exp(-(v + 6
 status = "implemented"
 parity = "exact"
 
-[backends.rust]
+[backends.rust_engine]
 status = "implemented"
 parity = "ulp-bounded"
 
+[backends.rust_safety]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
+
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":10.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "cf7f009a3cdbcba2a6402c89c198ed40283e54a7ba844133eaae1f6b8c5c2e54"
-golden_trace_sha256_variants = [
-    "4d626b852b03a1f029534b5f535af96f5f1b7b48da421d1ca482ae08eb71610c",
-]
+reference_config = "src/sc_neurocore/neurons/reference_receipts/hodgkin_huxley_1952.json"
+golden_trace_sha256 = "32211db09352bf618b540a0894094cc8dae875059c49d9e5ca52c27d4f688972"
+receipt = "src/sc_neurocore/neurons/reference_receipts/hodgkin_huxley_1952.json"
+benchmark = "benchmarks/results/bench_hodgkin_huxley_mojo.json"
+parity = "exact default-profile events across Python, production Rust, Julia, Go, and Mojo; complete trace/final-state error below 1e-9 for Rust/Julia/Go and below 2e-9 for Mojo; independent Rust safety parity; alternate simultaneous-RK4 schema/compiler evidence is tracked separately"
 
 [documentation]
 slug = "models/hodgkin_huxley"
-notes = ""
+notes = "The original 1952 rest-relative voltage is shifted into the maintained modern absolute-voltage coordinate. The default production profile is gate-first explicit Euler; paired schemas and compiler RTL intentionally represent the separate simultaneous-RK4 profile. Both use 100 dt=0.01 substeps per sampled one-millisecond macro step."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL HH macro-step RK4; hand==schema exact"
-tolerance = "Q16.16 ±1 bounded window"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_hodgkin_huxley_q1616_macrostep_parity"
+operating_point = "default gate-first Euler five-runtime current-20 receipt; alternate simultaneous-RK4 schema/compiler current-15 bounded window"
+tolerance = "default events exact and complete state 1e-9 except Mojo 2e-9; RK4 hand/schema exact and committed Q16.16 event count within one"
+evidence = "tests/test_bench_hodgkin_huxley_mojo.py; tests/test_cosim_hodgkin_huxley_catalogue.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_hodgkin_huxley_q1616_macrostep_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+cosim_evidence = "tests/test_cosim_hodgkin_huxley_catalogue.py::test_committed_q1616_rtl_preserves_the_bounded_rk4_event_band"
+synthesised = true
+synth_report = "tests/test_cosim_hodgkin_huxley_catalogue.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Committed compiler-bound Q16.16 RK4 RTL has bounded LUT-limited event co-simulation, Yosys coarse synthesis, and depth-4 reset-safety BMC under the enrolled current protocol; unrestricted equation parity, timing, PPA, device, and physical-silicon rungs remain open."

@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -18,6 +20,27 @@ from tests.neuron_integrator_paths_support import as_untyped, count_spikes
 def test_hodgkin_huxley_integrator_validation() -> None:
     with pytest.raises(ValueError, match="Unsupported integrator"):
         HodgkinHuxleyNeuron(integrator=as_untyped("bad-path"))
+
+
+@pytest.mark.parametrize("current", [math.nan, math.inf, -math.inf])
+def test_hodgkin_huxley_invalid_current_is_failure_atomic(current: float) -> None:
+    neuron = HodgkinHuxleyNeuron()
+    before = (neuron.v, neuron.m, neuron.h, neuron.n)
+
+    with pytest.raises(ValueError, match="current must be finite"):
+        neuron.step(current)
+
+    assert (neuron.v, neuron.m, neuron.h, neuron.n) == before
+
+
+def test_hodgkin_huxley_invalid_candidate_is_failure_atomic() -> None:
+    neuron = HodgkinHuxleyNeuron(v=249.0)
+    before = (neuron.v, neuron.m, neuron.h, neuron.n)
+
+    with pytest.raises(FloatingPointError, match="candidate left finite physical bounds"):
+        neuron.step(2.0e4)
+
+    assert (neuron.v, neuron.m, neuron.h, neuron.n) == before
 
 
 def test_hodgkin_huxley_rk4_path_stays_finite_and_tracks_baseline() -> None:

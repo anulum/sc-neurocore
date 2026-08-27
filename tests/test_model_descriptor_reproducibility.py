@@ -57,6 +57,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "EnergyLIFNeuron",
     "FitzHughNagumoNeuron",
     "GLMNeuron",
+    "HodgkinHuxleyNeuron",
     "HillTononiNeuron",
     "IhNeuron",
     "MainenSejnowskiNeuron",

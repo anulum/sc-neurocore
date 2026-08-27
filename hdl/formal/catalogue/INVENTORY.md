@@ -26,7 +26,7 @@ Jobs: **43**
 | FitzHughRinzelNeuron | fitzhugh_rinzel | `sc_fitzhugh_rinzel` | `v_out` | Q8.8 | 4 |
 | GLIFNeuron | glif | `sc_glif` | `v_out` | Q8.8 | 6 |
 | HindmarshRoseNeuron | hindmarsh_rose | `sc_hindmarsh_rose` | `x_out` | Q8.8 | 4 |
-| HodgkinHuxleyNeuron | hodgkin_huxley | `sc_hodgkin_huxley` | `v_out` | Q8.8 | 4 |
+| HodgkinHuxleyNeuron | hodgkin_huxley | `sc_hodgkin_huxley` | `v_out` | Q16.16 | 4 |
 | IbarzTanakaMapNeuron | ibarz_tanaka_map | `sc_ibarz_tanaka_rulkov_map` | `v_out` | Q16.16 | 4 |
 | IntegerQIFNeuron | iqif | `sc_integerqifneuron` | `v_out` | Q32.0 | 4 |
 | Izhikevich2007Neuron | izhikevich2007 | `sc_izhikevich2007` | `v_out` | Q8.8 | 20 |

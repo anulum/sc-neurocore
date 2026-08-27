@@ -3153,12 +3153,21 @@
     },
     {
       "artefact": "benchmarks/results/bench_hodgkin_huxley_mojo.json",
-      "description": "Source-bound Hodgkin-Huxley Mojo executable-lane closure against the Python and Rust-engine simulation paths.",
+      "description": "Source-bound Hodgkin-Huxley default-profile executable closure across Python, Rust engine, Julia, Go, and Mojo.",
       "expected_values": {
+        "backends.go.event_count_matches_python": true,
+        "backends.go.final_state_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.julia.final_state_matches_python": true,
         "backends.mojo.event_count_matches_python": true,
+        "backends.mojo.final_state_matches_python": true,
         "backends.rust.event_count_matches_python": true,
-        "kernel": "hodgkin_huxley_mojo_simulate",
+        "backends.rust.final_state_matches_python": true,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "kernel": "hodgkin_huxley_five_runtime",
         "meta.single_cpu_pinned": true,
+        "production_speed_claim": false,
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "workload.current": 20.0,
         "workload.mojo_trace_atol": 2e-09,
@@ -3171,14 +3180,34 @@
           "paths": [
             "backends.python.event_count",
             "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
             "backends.mojo.event_count"
           ],
           "tolerance": 0.0
         }
       ],
       "regression_limits": {
+        "backends.go.final_state_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.go.parity_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.julia.final_state_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.mojo.final_state_max_abs_diff": {
+          "max": 2e-09
+        },
         "backends.mojo.parity_max_abs_diff": {
           "max": 2e-09
+        },
+        "backends.rust.final_state_max_abs_diff": {
+          "max": 1e-09
         },
         "backends.rust.parity_max_abs_diff": {
           "max": 1e-09
@@ -3193,20 +3222,40 @@
         "backends.rust.minimum_call_ms",
         "backends.rust.parity_max_abs_diff",
         "backends.rust.event_count",
+        "backends.rust.final_state_max_abs_diff",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.event_count",
+        "backends.julia.final_state_max_abs_diff",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.event_count",
+        "backends.go.final_state_max_abs_diff",
         "backends.mojo.median_call_ms",
         "backends.mojo.minimum_call_ms",
         "backends.mojo.parity_max_abs_diff",
-        "backends.mojo.event_count"
+        "backends.mojo.event_count",
+        "backends.mojo.final_state_max_abs_diff"
       ],
       "source_hashes": {
         "benchmarks/bench_hodgkin_huxley_mojo.py": "source_hashes.benchmarks/bench_hodgkin_huxley_mojo.py",
         "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
-        "engine/src/neurons/biophysical.rs": "source_hashes.engine/src/neurons/biophysical.rs",
+        "engine/src/bindings/biophysical/hodgkin_huxley.rs": "source_hashes.engine/src/bindings/biophysical/hodgkin_huxley.rs",
+        "engine/src/neurons/biophysical/hodgkin_huxley.rs": "source_hashes.engine/src/neurons/biophysical/hodgkin_huxley.rs",
         "src/sc_neurocore/accel/go/services/hodgkin_huxley.go": "source_hashes.src/sc_neurocore/accel/go/services/hodgkin_huxley.go",
+        "src/sc_neurocore/accel/go/services/hodgkin_huxley_test.go": "source_hashes.src/sc_neurocore/accel/go/services/hodgkin_huxley_test.go",
+        "src/sc_neurocore/accel/julia/hodgkin_huxley_parity_test.jl": "source_hashes.src/sc_neurocore/accel/julia/hodgkin_huxley_parity_test.jl",
         "src/sc_neurocore/accel/julia/neurons/hodgkin_huxley.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/hodgkin_huxley.jl",
         "src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley.mojo",
         "src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs",
-        "src/sc_neurocore/neurons/models/hodgkin_huxley.py": "source_hashes.src/sc_neurocore/neurons/models/hodgkin_huxley.py"
+        "src/sc_neurocore/neurons/model_descriptors/HodgkinHuxleyNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/HodgkinHuxleyNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json",
+        "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml",
+        "src/sc_neurocore/neurons/models/hodgkin_huxley.py": "source_hashes.src/sc_neurocore/neurons/models/hodgkin_huxley.py",
+        "src/sc_neurocore/neurons/reference_receipts/hodgkin_huxley_1952.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/hodgkin_huxley_1952.json",
+        "src/sc_neurocore/neurons/reference_trace_data/hodgkin_huxley_driven_spiking_doi.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/hodgkin_huxley_driven_spiking_doi.json"
       }
     },
     {

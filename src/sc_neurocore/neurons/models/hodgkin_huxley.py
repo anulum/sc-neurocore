@@ -89,6 +89,11 @@ class HodgkinHuxleyNeuron:
 
     Reference: Hodgkin, A.L. & Huxley, A.F. (1952). J. Physiol. 117:500–544.
 
+    The source rest-relative voltage is shifted to the maintained modern
+    absolute-voltage coordinate. The default production recurrence is the
+    historical gate-first explicit-Euler profile; paired schemas separately
+    represent simultaneous RK4. Public steps validate and commit atomically.
+
     Integrator options:
     - ``baseline_euler`` preserves the historical explicit-Euler sub-step path
     - ``rk4`` is an explicit higher-order alternative path over the same
@@ -115,6 +120,43 @@ class HodgkinHuxleyNeuron:
     def __post_init__(self) -> None:
         if self.integrator not in {"baseline_euler", "rk4", "rosenbrock"}:
             raise ValueError(f"Unsupported integrator for HodgkinHuxleyNeuron: {self.integrator}")
+        self._validate_runtime_state()
+
+    @staticmethod
+    def _finite_float(name: str, value: float) -> float:
+        if isinstance(value, bool):
+            raise TypeError(f"{name} must be a finite float")
+        value = float(value)
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+        return value
+
+    def _validate_runtime_state(self) -> None:
+        for name in ("v", "m", "h", "n", "e_na", "e_k", "e_l", "v_threshold"):
+            setattr(self, name, self._finite_float(name, getattr(self, name)))
+        for name in ("c_m", "dt"):
+            value = self._finite_float(name, getattr(self, name))
+            if value <= 0.0:
+                raise ValueError(f"{name} must be positive")
+            setattr(self, name, value)
+        for name in ("g_na", "g_k", "g_l"):
+            value = self._finite_float(name, getattr(self, name))
+            if value < 0.0:
+                raise ValueError(f"{name} must be non-negative")
+            setattr(self, name, value)
+        if not self._candidate_valid((self.v, self.m, self.h, self.n)):
+            raise ValueError("Hodgkin-Huxley initial state is outside finite physical bounds")
+
+    @staticmethod
+    def _candidate_valid(state: tuple[float, float, float, float]) -> bool:
+        v, m, h, n = state
+        return (
+            all(math.isfinite(value) for value in state)
+            and -250.0 <= v <= 250.0
+            and -0.05 <= m <= 1.05
+            and -0.05 <= h <= 1.05
+            and -0.05 <= n <= 1.05
+        )
 
     def _alpha_m(self, v: float) -> float:
         d = v + 40.0
@@ -141,13 +183,23 @@ class HodgkinHuxleyNeuron:
         return float(0.125 * np.exp(-(v + 65.0) / 80.0))
 
     def step(self, current: float) -> int:
+        """Advance one macro step and commit only a finite physical candidate."""
+        current = self._finite_float("current", current)
+        self._validate_runtime_state()
         v_prev = self.v
-        if self.integrator == "baseline_euler":
-            self._step_baseline_euler(current)
-        elif self.integrator == "rk4":
-            self._step_rk4(current)
-        else:
-            self._step_rosenbrock(current)
+        previous = (self.v, self.m, self.h, self.n)
+        try:
+            if self.integrator == "baseline_euler":
+                self._step_baseline_euler(current)
+            elif self.integrator == "rk4":
+                self._step_rk4(current)
+            else:
+                self._step_rosenbrock(current)
+            if not self._candidate_valid((self.v, self.m, self.h, self.n)):
+                raise FloatingPointError("Hodgkin-Huxley candidate left finite physical bounds")
+        except Exception:
+            self.v, self.m, self.h, self.n = previous
+            raise
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def _matches_rust_engine_contract(self) -> bool:

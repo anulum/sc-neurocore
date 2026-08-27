@@ -13,14 +13,14 @@
 module sc_hodgkin_huxley_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [31:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] v_out;
-    wire signed [15:0] m_out;
-    wire signed [15:0] h_out;
-    wire signed [15:0] n_out;
+    wire signed [31:0] v_out;
+    wire signed [31:0] m_out;
+    wire signed [31:0] h_out;
+    wire signed [31:0] n_out;
 
     sc_hodgkin_huxley uut (
         .clk(clk),
@@ -34,6 +34,19 @@ module sc_hodgkin_huxley_formal (
     );
 
 `ifdef FORMAL
+
+    // Bounded receipt protocol: initialise through reset and hold the exact
+    // enrolled fixed-point drive while checking the public reset property.
+    reg protocol_started = 1'b0;
+    always @(posedge clk) begin
+        if (!protocol_started)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        assume ($signed(I_t) == 32'sd983040);
+        protocol_started <= 1'b1;
+    end
+
     // Minimal safety: async reset clears the spike flag.
     always @(*) begin
         if (!rst_n)

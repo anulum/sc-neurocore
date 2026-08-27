@@ -11,6 +11,24 @@ from __future__ import annotations
 from tests.catalogue_formal_support import *  # noqa: F403
 
 
+def test_hodgkin_huxley_formal_job_uses_enrolled_q1616_precision() -> None:
+    """Keep committed Hodgkin-Huxley RTL aligned with the bounded RK4 co-sim carrier."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_hodgkin_huxley_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["HodgkinHuxleyNeuron"] == "hodgkin_huxley"
+    assert module.PRECISION_BY_SCHEMA["hodgkin_huxley"] == (32, 16)
+    assert module.DEPTH_BY_SCHEMA["hodgkin_huxley"] == 4
+    assert "hodgkin_huxley" in module.MINIMAL_SAFETY_SCHEMAS
+    assert module.FORMAL_FIXED_CURRENT_BY_SCHEMA["hodgkin_huxley"] == 15.0
+
+
 def test_connor_stevens_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep committed Connor-Stevens RTL aligned with the bounded co-sim carrier."""
     import importlib.util

@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Hodgkin-Huxley full-fidelity closure
+
+- Recorded the original rest-relative to modern absolute-voltage coordinate
+  transformation and separated the maintained default gate-first Euler
+  production profile from the simultaneous-RK4 schema/compiler profile. Added
+  a replayable complete four-state/event receipt, failure-atomic Python
+  boundaries, and source-bound execution across Python, production Rust,
+  Julia, Go, and Mojo with independent safety Rust custody.
+- Replaced the stale committed Q8.8 catalogue object with the current
+  signed-Q16.16 RK4 lowering used by bounded co-simulation. The committed
+  object retains the honest one-event LUT-limited envelope, passes Yosys coarse
+  synthesis, and passes depth-4 reset-safety BMC under the enrolled receipt
+  protocol without claiming unrestricted numerical equivalence or silicon.
+
 ### Connor-Stevens full-fidelity closure
 
 - Corrected direct provenance from the 1971 experimental lineage to the exact

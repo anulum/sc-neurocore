@@ -971,7 +971,7 @@
     "python_model_classes": 174,
     "python_model_source_modules": 170,
     "rust_pyo3_model_wrappers": 201,
-    "test_files": 4744
+    "test_files": 4745
   },
   "documentation": {
     "public_pages": [
@@ -4218,6 +4218,7 @@
       "tests/test_cosim_glif_transcendental_co_simulation.py",
       "tests/test_cosim_hindmarsh_rose_q1616_precision.py",
       "tests/test_cosim_hindmarsh_rose_tier_b_model_cosim.py",
+      "tests/test_cosim_hodgkin_huxley_catalogue.py",
       "tests/test_cosim_hodgkin_huxley_q1616_precision.py",
       "tests/test_cosim_hodgkin_huxley_transcendental_co_simulation.py",
       "tests/test_cosim_ibarz_tanaka_map.py",

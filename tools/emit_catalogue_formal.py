@@ -258,6 +258,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "escape_rate": (48, 24),
     "exp_if": (64, 32),
     "fitzhugh_nagumo": (32, 16),
+    "hodgkin_huxley": (32, 16),
     "ibarz_tanaka_map": (32, 16),
     "iqif": (32, 0),
     "jansen_rit": (64, 32),
@@ -279,6 +280,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
 # the DUT remains the exact committed compiler lowering.
 FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
     "connor_stevens": 100.0,
+    "hodgkin_huxley": 15.0,
     "morris_lecar": 100.0,
 }
 

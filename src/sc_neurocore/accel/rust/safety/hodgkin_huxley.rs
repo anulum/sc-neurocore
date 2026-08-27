@@ -245,8 +245,8 @@ mod tests {
         // Euler sub-steps per macro step): silent at zero drive, six action potentials at I=10 over
         // 100 macro steps, and nine at I=20. Hodgkin-Huxley gating is exp-based, so the trace is not
         // bit-exact across libms; the spike count is the stable observable and is the parity
-        // contract — not a "spike is 0 or 1" smoke check. The Go and Julia kernels reproduce the
-        // same counts; the Rust engine RK4 binding is covered separately by the Python parity suite.
+        // contract — not a "spike is 0 or 1" smoke check. The production Rust engine, Go, Julia,
+        // and Mojo kernels reproduce the same gate-first baseline-Euler profile.
         for (current, want) in [(0.0_f64, 0_usize), (10.0, 6), (20.0, 9)] {
             let mut state = HodgkinHuxleyNeuron::new();
             let spikes = (0..100).filter(|_| state.step(current) == 1).count();

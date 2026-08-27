@@ -1,50 +1,68 @@
-# Hodgkin-Huxley 1952 Action Potential Validation
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+# Hodgkin-Huxley source and implementation fidelity
 
-Validates `HodgkinHuxleyNeuron` against the original 1952 paper expectations.
+The direct source is Hodgkin and Huxley (1952), “A quantitative description
+of membrane current and its application to conduction and excitation in
+nerve,” DOI 10.1113/jphysiol.1952.sp004764.
 
-## Reference
+## Source coordinate
 
-Hodgkin, A.L. & Huxley, A.F. (1952). A quantitative description of membrane
-current and its application to conduction and excitation in nerve. J Physiol
-117(4):500-544.
+The paper measures voltage from the resting potential and chooses
+\(C_m=1\), \(\bar g_{Na}=120\), \(\bar g_K=36\), \(g_L=0.3\), and batteries
+\(+115,-12,-10.613\) mV. The maintained modern form uses
+\(V_\text{modern}=V_\text{paper}-65\) mV, producing the familiar
+\(E_{Na}=50\), \(E_K=-77\), and rounded \(E_L=-54.4\) mV values. The
+shifted alpha/beta functions are the same coordinate transformation.
 
-## Model
+The source defines the conductance system and its hand-computed numerical
+solution. Repository substep ordering, fixed-step solvers, singularity guards,
+finite physical envelope, sampled upward-crossing event, and macro-step API are
+explicit implementation and safety specialisations.
 
-```
-C_m dv/dt = -g_Na m³h(v-E_Na) - g_K n⁴(v-E_K) - g_L(v-E_L) + I_ext
-```
+## Two maintained numerical profiles
 
-Standard parameters: g_Na=120, g_K=36, g_L=0.3, E_Na=50, E_K=-77, E_L=-54.4 mV.
+The default production profile advances 100 gate-first explicit-Euler
+substeps of 0.01 ms per public one-millisecond macro step. Python, production
+Rust/PyO3 and NetworkRunner, standalone safety Rust, Go, Julia, and executable
+Mojo preserve this profile. The five measured benchmark lanes produce nine
+events at current 20 and compare complete voltage traces and final
+\((v,m,h,n)\) state.
 
-## Validated Properties (Kaggle run 2026-03-28)
+The paired TOML/JSON schemas intentionally represent the separate simultaneous
+classical-RK4 profile over the same equations and substep schedule. The
+independent DOI feature trace re-derives that recurrence. The schema/compiler
+profile must not be reported as the default Euler production recurrence.
 
-| Property | Expected | Measured | Status |
-|----------|----------|----------|--------|
-| Resting potential | -65 ± 5 mV | -65.00 mV | PASS |
-| AP peak | 20–60 mV | 40.6 mV | PASS |
-| Spike width (half-max) | 0.5–3.0 ms | 1.46 ms | PASS |
-| m gate at peak | > 0.8 | 0.894 | PASS |
-| h gate at peak | < 0.4 | 0.355 | PASS |
-| n gate rises | > n₀ | 0.500 > 0.320 | PASS |
-| AHP | < -65 mV | -75.1 mV | PASS |
-| f-I monotonic | increasing | [6, 7, 8, 9] | PASS |
-| Subthreshold (I=1) | 0 spikes | 0 | PASS |
+The default-profile receipt at
+src/sc_neurocore/neurons/reference_receipts/hodgkin_huxley_1952.json records
+all nine event indices, all four final state values, and a binary digest over
+every macro-step state/event tuple. The source-hashed five-runtime packet is
+benchmarks/results/bench_hodgkin_huxley_mojo.json.
 
-## Euler Integration Notes
+## Hardware boundary
 
-- h gate at peak (0.355) is slightly above the continuous-model value (~0.2)
-  due to Euler integration lag. This is expected with dt=0.01ms forward Euler.
-- I=3 µA/cm² (below HH rheobase ~6.3) can produce a single transient spike
-  from initial conditions with Euler. Subthreshold test uses I=1 to avoid this.
+The committed sc_hodgkin_huxley.v is exactly the current equation compiler's
+signed-Q16.16 lowering of the RK4 schema profile. Over 20 macro steps at
+current 15, the hand RK4 model and paired schemas are event-exact and
+Icarus/VVP keeps the lookup-table RTL within one event. The object passes
+Yosys coarse synthesis and a depth-4 bounded public-port reset-safety proof
+under the enrolled current/reset protocol.
 
-## Native Cross-Validation
+This is the H2 terminal boundary for the present unit. It is not unrestricted
+fixed-point/real-number equivalence, a proof of the lookup-table error bound,
+timing closure, PPA, target-device validation, FPGA/board execution, physical
+silicon, spatial cable conduction, or reproduction of every original figure.
 
-| Test | Result |
-|------|--------|
-| HodgkinHuxleyNeuron fires at I=10 | 4 spikes/50ms |
-| HodgkinHuxleyNeuron resting potential | -65.00 mV |
+## Durable verification anchors
 
-## Test Files
-
-- `tests/test_hh_validation.py` — pytest suite
-- `benchmarks/results/credibility_validation_results.json` — measured data
+- Default runtime and receipt:
+  tests/test_bench_hodgkin_huxley_mojo.py
+- Python dynamics, integrators, failure atomicity, and pipeline:
+  tests/test_hodgkin_huxley_integrator_paths.py and the focused
+  tests/test_model_hodgkin_huxley_* files
+- Independent RK4 source feature trace:
+  tests/test_reference_hodgkin_huxley.py
+- Committed RTL identity, co-simulation, and synthesis:
+  tests/test_cosim_hodgkin_huxley_catalogue.py
+- Formal job:
+  hdl/formal/catalogue/sc_hodgkin_huxley.sby
