@@ -32,6 +32,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "PlantR15",
         "Prescott",
         "MihalasNiebur",
+        "SCScaledResetAdaptiveIF",
         "GLIF",
         "SCFourStateGLIF",
         "GIFPopulation",

@@ -3,49 +3,51 @@
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
     "numpy": "2.2.6",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 3498.868952039629,
-      "min_ms": 3352.2086299490184,
+      "median_ms": 864.4768490921706,
+      "min_ms": 851.893668062985,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
     {
       "backend": "rust",
-      "median_ms": 101.66428214870393,
-      "min_ms": 100.18942900933325,
+      "median_ms": 10.045101051218808,
+      "min_ms": 9.863378945738077,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 34.415911646549056
+      "speedup_vs_python": 86.05954730413394
     },
     {
       "backend": "julia",
-      "median_ms": 119.48704882524908,
-      "min_ms": 118.48635296337306,
+      "median_ms": 5.225191940553486,
+      "min_ms": 5.180635955184698,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 29.282411662512125
+      "speedup_vs_python": 165.4440370664354
     },
     {
       "backend": "go",
-      "median_ms": 107.49449697323143,
-      "min_ms": 100.78574204817414,
+      "median_ms": 9.028490982018411,
+      "min_ms": 8.86101892683655,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 32.54928438718986
+      "speedup_vs_python": 95.74987124801979
     },
     {
       "backend": "mojo",
-      "median_ms": 109.37761794775724,
-      "min_ms": 104.56793499179184,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 31.988893319205555
+      "median_ms": 5.090049002319574,
+      "min_ms": 4.857539897784591,
+      "parity_max_abs_diff": 2.7755575615628914e-17,
+      "speedup_vs_python": 169.83664571759954
     }
   ],
   "workload": {
-    "current": 2.0,
-    "n_steps": 2000000,
-    "repeats": 5
+    "current": 0.002,
+    "current_jump_1": 0.01,
+    "current_jump_2": -0.0006,
+    "n_steps": 200000,
+    "repeats": 3
   }
 }

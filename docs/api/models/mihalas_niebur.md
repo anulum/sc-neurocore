@@ -1,178 +1,63 @@
 # MihalasNieburNeuron
 
 **Module:** `sc_neurocore.neurons.models.mihalas_niebur`
-**Rust engine:** `sc_neurocore_engine::neurons::MihalasNieburNeuron`
-**Polyglot `simulate` backends:** Rust engine (PyO3, bit-exact), Julia `MihalasNieburAccel`, Go c-shared (`accel/go/neurons/mihalas_niebur`), Mojo FFI (`accel/mojo/neurons/mihalas_niebur.mojo`); standalone Rust safety mirror `MihalasNieburNeuron`
-**Reference:** Mihalas, S. & Niebur, E., Neural Comput. 21(3):704-718, 2009
-**Family:** Generalised integrate-and-fire
-**State variables:** `v`, `theta`, `i1`, `i2`
+**Reference:** Mihalaş & Niebur (2009), DOI `10.1162/neco.2008.12-07-680`, equations 2.1–2.2 and Table 1
+**State:** `v`, `theta`, `i1`, `i2`
 
 ## Mathematical contract
 
-The implementation advances the continuous four-state Mihalas-Niebur flow with a candidate-first fourth-order Runge-Kutta step. The spike reset is applied only after the candidate state is finite and the candidate membrane voltage crosses the adaptive threshold.
-
-Membrane flow:
+Rates are represented per millisecond, voltage in volts, and the input/current states after division by capacitance. The fixed-grid classical RK4 integrator and sampled candidate event are declared numerical specialisations.
 
 $$
-\frac{dV}{dt} = \frac{-(V - V_{rest}) + I_1 + I_2 + I_{ext}}{\tau_v}
+\dot I_j=-k_jI_j,\qquad
+\dot V=I+I_1+I_2-\frac{G}{C}(V-E_L),\qquad
+\dot\Theta=a(V-E_L)-b(\Theta-\Theta_\infty).
 $$
 
-Threshold flow:
+When the finite RK4 candidate satisfies $V\geq\Theta$, equation 2.2 is applied directly:
 
 $$
-\frac{d\theta}{dt} = \frac{\theta_\infty - \theta + a(V - V_{rest})}{\tau_\theta}
+I_j\leftarrow R_jI_j+A_j,\qquad
+V\leftarrow V_r,\qquad
+\Theta\leftarrow\max(\Theta_r,\Theta).
 $$
 
-After-spike current flow:
+`theta_reset > v_reset` is enforced as required below equation 2.2. The previous candidate-proportional voltage reset is not attributed to this paper; it remains available count-neutrally as `SCScaledResetAdaptiveIFNeuron`.
 
-$$
-\frac{dI_1}{dt} = -\frac{I_1}{\tau_1},\qquad
-\frac{dI_2}{dt} = -\frac{I_2}{\tau_2}
-$$
+## Parameters and defaults
 
-Candidate-first RK4 update:
+The default state is `(-0.07, -0.05, 0, 0)` for `(v, theta, i1, i2)`. Common
+Table-1 defaults are `E_L=V_r=-0.07 V`, `Theta_r=-0.06 V`,
+`Theta_inf=-0.05 V`, `G/C=0.05 ms^-1`, `b=0.01 ms^-1`,
+`k1=0.2 ms^-1`, `k2=0.02 ms^-1`, `R1=0`, and `R2=1`. The default
+`a=0.005 ms^-1` selects panel C; event jumps default to zero and panel M sets
+`A1/C=0.01 V/ms`, `A2/C=-0.0006 V/ms`.
 
-$$
-y_{n+1}^{candidate} = y_n + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)
-$$
+## Runtime and safety contract
 
-where `y = (v, theta, i1, i2)` and each `k` evaluates the same continuous vector field at the RK4 stage state.
+Python, production Rust/PyO3, Rust safety, Julia, Go, and Mojo implement the same four-state update. Constructor and step validation reject non-finite values, non-positive rates/timestep, and invalid reset ordering. A non-finite candidate raises `FloatingPointError`; one-step and batch failures preserve the caller-visible state.
 
-Spike reset:
+The independent panel-M receipt uses `I=0.002`, `A1/C=0.01`, and `A2/C=-0.0006` for 2,000 intervals. It records 14 events, first at zero-based index 146, and trace SHA-256 `fa3871a…d8d5`.
 
-$$
-V \leftarrow V_{reset} + b(V_{candidate} - V_{rest})
-$$
+## Hardware evidence
 
-$$
-\theta \leftarrow \max(\theta_{candidate}, \theta_{reset}),\qquad
-I_1 \leftarrow I_{1,candidate} + r_1,\qquad
-I_2 \leftarrow I_{2,candidate} + r_2
-$$
-
-The `b` parameter preserves a controlled fraction of the candidate voltage excursion after a spike and is required for burst-like reset semantics.
-
-## Fail-closed boundaries
-
-`step(current)` returns `0` and preserves state when:
-
-- `current` is non-finite.
-- Any state or parameter is non-finite before the step.
-- `tau_v`, `tau_theta`, `tau_1`, `tau_2`, or `dt` is non-positive.
-- The RK4 candidate contains a non-finite value.
-
-These boundaries are intentionally consistent across the Python reference, Rust engine, Go service, Julia mirror, and Rust safety surface.
-
-## Cross-language surfaces
-
-| Surface | Contract |
-| --- | --- |
-| Python | Authoritative reference class with candidate-first RK4 and fail-closed state preservation; also the `simulate` reference loop. |
-| Rust engine | PyO3-backed engine class uses the same RK4 state transition and spike reset, and exposes `py_mihalas_niebur_simulate` for the accelerated N-step path (bit-exact). |
-| Julia | `MihalasNieburAccel.simulate_trace` mirrors the N-step RK4 recurrence (bit-exact, linear arithmetic). |
-| Go | `accel/go/neurons/mihalas_niebur` builds a C-ABI shared library (`mihalas_niebur_simulate_c`) loaded via ctypes (bit-exact). |
-| Mojo | `accel/mojo/neurons/mihalas_niebur.mojo` builds an FFI kernel (`mihalas_niebur_simulate_c`); validated non-amplifying within a ULP band (FMA fusion). |
-| Rust safety | Standalone safety mirror validates the same single-`step` state transition and reset semantics. |
-
-## Behavioural invariants
-
-- A subthreshold default neuron with `current = 0.5` advances to `v = 0.04758125`, `theta = 1.0`, `i1 = 0.0`, and `i2 = 0.0` after one RK4 step.
-- A neuron with `v = 0.99`, `b = 0.5`, `r1 = 1.25`, `r2 = -0.25`, and `current = 2.0` spikes and resets to `v = 0.5430570625`.
-- Positive voltage-threshold coupling (`a > 0`) raises the adaptive threshold relative to the uncoupled case under the same starting state.
-- Fast after-spike current decays faster than slow after-spike current when `tau_1 < tau_2`.
-- Invalid inputs and invalid runtime parameters do not mutate state.
-
-## Hardware co-simulation
-
-The paired TOML and JSON schemas reproduce the hand model's event decision and all four
-post-step states exactly over a 1,600-step varied-current sequence containing 168 adaptive
-resets. The emitted Q16.16 RTL has exact three-way spike-count parity at ten 1,000-step
-operating points: 0/0/0/31/60/87/131/157/207/256 spikes at
-`I=0/0.5/1/1.5/2/2.5/3.5/4/5/6`. The former 300-step `I=3` window is also exact at
-36/36/36 after the compiler's candidate-reset/output correction.
-
-One longer-window boundary remains explicit: at `I=3` over 1,000 steps the hand model and
-schema runner report 111 spikes while Q16.16 RTL reports 112. Quantisation advances one
-marginal `v >= theta` crossing between two evolving fixed-point states. The tests pin that
-111/111/112 triplet directly; they do not hide it behind a general tolerance band or label
-the boundary as exact parity.
-
-The S5/H1 descriptor also registers the generated Q8.8 formal core and its depth-3
-SymbiYosys/Z3 reset-spike safety proof. That bounded proof is structural safety evidence;
-the Q16.16 operating set above remains the behavioural fidelity evidence.
+The paired TOML/JSON schemas match the public class state and complete event sequence. Committed Q32.32 RTL preserves the complete 2,000-step, 14-event panel-M vector and keeps all four states within `1.3e-6` of binary64. The RTL compiles in Icarus, synthesises for Xilinx 7-series in Yosys, and its source-profile depth-2 SymbiYosys/Z3 job proves the public reset-spike safety property. This is H2 evidence, not timing closure, formal numerical equivalence, PPA, board, device, or physical-silicon evidence.
 
 ## Usage
 
 ```python
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 
-neuron = MihalasNieburNeuron(b=0.5, r1=1.25, r2=-0.25)
-spikes = sum(neuron.step(2.0) for _ in range(1000))
-print(spikes, neuron.v, neuron.theta, neuron.i1, neuron.i2)
+neuron = MihalasNieburNeuron(current_jump_1=0.01, current_jump_2=-0.0006)
+trace, events = neuron.simulate(2_000, current=0.002, backend="auto")
 ```
 
-```rust
-use sc_neurocore_engine::neurons::MihalasNieburNeuron;
+`auto` selects the production Rust batch kernel when installed. The focused non-isolated 200,000-step panel-M benchmark measured exact Python/Rust/Julia/Go traces; Mojo differed by `2.78e-17` with identical events. See `benchmarks/results/bench_mihalas_niebur_simulate.json`.
 
-let mut neuron = MihalasNieburNeuron::new();
-neuron.b = 0.5;
-neuron.r1 = 1.25;
-neuron.r2 = -0.25;
-let spikes: i32 = (0..1000).map(|_| neuron.step(2.0)).sum();
-println!("{spikes} {} {} {} {}", neuron.v, neuron.theta, neuron.i1, neuron.i2);
-```
-
-## Polyglot acceleration
-
-A single `step` is trivial, but an N-step run is a sequential RK4 recurrence
-with a discontinuous spike reset that does not vectorise, so a compiled inner
-loop genuinely beats Python. `simulate(n_steps, current, backend="auto")`
-dispatches across the polyglot chain and returns `(trace, spikes)`:
-
-```python
-from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
-
-neuron = MihalasNieburNeuron()
-trace, spikes = neuron.simulate(2_000_000, current=2.0)   # auto → Rust
-```
-
-The Mihalas-Niebur 2009 right-hand side is purely linear — additions,
-multiplications and divisions, no transcendental functions — so every RK4 stage
-is exact arithmetic. The Rust engine, Julia and Go backends therefore reproduce
-the NumPy reference **bit-for-bit**: trace, spike count and the final
-`(v, theta, i1, i2)` state all match exactly. Mojo fuses multiply-add; on this
-platform it also matches bit-for-bit, but because FMA fusion is
-compiler/version dependent it is validated as non-amplifying within a tight ULP
-band (with identical spike counts) rather than asserted strictly exact. `auto`
-selects Rust (the bit-exact backend shipped in the wheel).
-
-### Measured throughput
-
-2,000,000 RK4 steps, default tonic regime (`current=2.0`, 2857 spikes), median
-of 5 repeats. Non-isolated loaded workstation per
-`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression
-evidence, not an isolated-core figure. Reproduce with
-`python benchmarks/bench_mihalas_niebur_simulate.py`.
-
-| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
-|---------|------------:|-------------------:|--------------------|
-| python  | 2381.79 | 1.0× | reference |
-| rust (`auto`) | 85.72 | 27.8× | bit-exact (0) |
-| go      | 86.21 | 27.6× | bit-exact (0) |
-| mojo    | 92.63 | 25.7× | 0 measured (FMA, ULP-validated) |
-| julia   | 95.83 | 24.9× | bit-exact (0) |
-
-Artefact: `benchmarks/results/bench_mihalas_niebur_simulate.json`.
-
-## Verification commands
+## Focused verification
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_mihalas_niebur.py -q
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_mihalas_niebur_backends.py -q
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_cosimulation.py -k mihalas_niebur -q
-cargo test --manifest-path engine/Cargo.toml mn_ --release
+PYTHONPATH=src .venv/bin/pytest -q tests/test_model_mihalas_niebur.py tests/test_mihalas_niebur_backends.py tests/test_mihalas_niebur_engine_binding.py tests/test_reference_mihalas_niebur.py tests/test_cosim_mihalas_niebur.py
+cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml mihalas_niebur
 (cd hdl/formal/catalogue && sby -f sc_mihalasnieburneuron.sby)
-(cd src/sc_neurocore/accel/go/neurons/mihalas_niebur && go build -buildmode=c-shared -o libmihalasniebur.so mihalas_niebur.go)
-(cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib -o libmihalasniebur.so mihalas_niebur.mojo)
-PYTHONPATH=src .venv/bin/python benchmarks/bench_mihalas_niebur_simulate.py --json benchmarks/results/bench_mihalas_niebur_simulate.json
 ```

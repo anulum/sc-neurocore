@@ -1,24 +1,24 @@
 {
   "meta": {
-    "timestamp_utc": "2026-06-01T15:04:33Z",
+    "timestamp_utc": "2026-08-28T10:24:29Z",
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-    "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "python": "3.12.3",
     "n_steps": 100000,
     "parity_steps": 10000,
-    "current": 2.0,
-    "integrator": "candidate_first_rk4"
+    "current": 0.002,
+    "integrator": "source_equations_2_1_2_2_sampled_rk4"
   },
   "backends": {
     "python": {
       "available": true,
       "used": true,
-      "wall_ms": 671.534,
-      "steps_per_s": 148913.0,
+      "wall_ms": 384.563,
+      "steps_per_s": 260036.0,
       "state": {
-        "spikes": 14285,
-        "v": 0.7869381311532402,
-        "theta": 1.0,
+        "spikes": 387,
+        "v": -0.05378082191887245,
+        "theta": -0.04132394040688365,
         "i1": 0.0,
         "i2": 0.0
       }
@@ -26,13 +26,13 @@
     "rust": {
       "available": true,
       "used": true,
-      "wall_ms": 22.369,
-      "steps_per_s": 4470483.0,
-      "speedup_over_python": 30.02,
+      "wall_ms": 13.344,
+      "steps_per_s": 7493889.0,
+      "speedup_over_python": 28.82,
       "state": {
-        "spikes": 14285,
-        "v": 0.7869381311532402,
-        "theta": 1.0,
+        "spikes": 387,
+        "v": -0.05378082191887245,
+        "theta": -0.04132394040688365,
         "i1": 0.0,
         "i2": 0.0
       }

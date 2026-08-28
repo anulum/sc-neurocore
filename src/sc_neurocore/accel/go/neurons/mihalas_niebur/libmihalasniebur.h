@@ -21,7 +21,7 @@ extern const char *_GoStringPtr(_GoString_ s);
 /* Start of preamble from import "C" comments.  */
 
 
-#line 22 "mihalas_niebur.go"
+#line 20 "mihalas_niebur.go"
 
 #include <stdint.h>
 
@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int mihalas_niebur_simulate_c(double v0, double theta0, double i1_0, double i2_0, double vRest, double vReset, double thetaReset, double thetaInf, double tauV, double tauTheta, double tau1, double tau2, double a, double b, double r1, double r2, double dt, int nSteps, double current, double* tracePtr);
+extern long long int mihalas_niebur_simulate_c(double v0, double theta0, double i1Initial, double i2Initial, double vRest, double vReset, double thetaReset, double thetaInf, double leakRate, double thresholdVoltageCoupling, double thresholdDecayRate, double currentDecayRate1, double currentDecayRate2, double currentRetention1, double currentRetention2, double currentJump1, double currentJump2, double dt, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
-# SymbiYosys job for retained project model sc_four_state_glif
-# Dual-axis perfect model formal (BMC)
+# SymbiYosys job for catalogue model sc_four_state_glif
+# Retained SC project model formal (BMC)
 
 [options]
 mode bmc

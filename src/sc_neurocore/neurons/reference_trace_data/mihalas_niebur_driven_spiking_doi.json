@@ -1,61 +1,42 @@
 {
   "schema_version": "sc-neurocore.reference-trace.v1",
   "name": "mihalas_niebur_driven_spiking_doi",
-  "model": {
-    "schema_name": "mihalas_niebur",
-    "runner": "universal_dsl"
-  },
+  "model": {"schema_name": "mihalas_niebur", "runner": "universal_dsl"},
   "protocol": {
-    "dt": 1.0,
-    "steps": 300,
-    "inputs": {
-      "I": 3.0
-    },
-    "state_variables": [
-      "v",
-      "theta",
-      "i1",
-      "i2"
-    ]
+    "dt": 0.1,
+    "steps": 2000,
+    "inputs": {"I": 0.002},
+    "state_variables": ["v", "theta", "i1", "i2"]
   },
   "provenance": {
     "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/mihalas_niebur.toml",
-    "equation": "Driven Mihalas-Niebur generalised integrate-and-fire trace with 36 v>=theta resets. The four-state linear flow dv/dt=(-(v-v_rest)+i1+i2+I)/tau_v, dtheta/dt=(theta_inf-theta+a*(v-v_rest))/tau_theta, di1/dt=-i1/tau_1, di2/dt=-i2/tau_2 is advanced with the classical fourth-order Runge-Kutta step, independently re-derived from Mihalas & Niebur (2009), including the adaptive-threshold reset v=v_reset+b*(v-v_rest), theta=max(theta, theta_reset), i1+=r1, i2+=r2. theta_reset (1.3) exceeds theta_inf (1.0), so the max() threshold floor engages on every spike.",
+    "equation": "Mihalas-Niebur equations (2.1)-(2.2), Table 1 common constants and panel M: dI_j/dt=-k_j I_j, dV/dt=I_e/C+sum(I_j)-G(V-E_L)/C, dTheta/dt=a(V-E_L)-b(Theta-Theta_inf); candidate V>=Theta installs I_j=R_j I_j+A_j, V=V_r, Theta=max(Theta_r,Theta). Classical fixed-grid RK4 with sampled candidate events is the declared numerical specialization.",
     "citation": "doi:10.1162/neco.2008.12-07-680"
   },
   "expected_features": {
-    "spike_count": 36.0,
-    "first_spike_step": 5.0,
-    "final.v": 1.0866503143770183,
-    "min.v": 0.11804071967298602,
-    "max.v": 1.2671500755001086,
-    "mean.v": 0.726489016478666,
-    "final.theta": 1.2627269840880608,
-    "min.theta": 1.00035978515625,
-    "max.theta": 1.3,
-    "mean.theta": 1.275429834095989,
-    "final.i1": 0.2746866157141232,
+    "spike_count": 14.0,
+    "first_spike_step": 147.0,
+    "final.v": -0.05875187249709728,
+    "min.v": -0.07,
+    "max.v": -0.04398861507118556,
+    "mean.v": -0.055712194964729185,
+    "final.theta": -0.04320389391752467,
+    "min.theta": -0.049999950099870835,
+    "max.theta": -0.04314807474133135,
+    "mean.theta": -0.04621270822120271,
+    "final.i1": 1.255777983935184e-05,
     "min.i1": 0.0,
-    "max.i1": 0.5697586579802576,
-    "mean.i1": 0.358851777520901,
-    "final.i2": -1.256053011923701,
-    "min.i2": -1.3747036687658543,
+    "max.i1": 0.01,
+    "mean.i1": 0.002134385742270277,
+    "final.i2": -0.0015969556080428617,
+    "min.i2": -0.0036893220464144735,
     "max.i2": 0.0,
-    "mean.i2": -1.116160340734743
+    "mean.i2": -0.00170326090381185
   },
   "tolerances": {
-    "default": {
-      "absolute": 1e-09,
-      "relative": 1e-12
-    },
-    "spike_count": {
-      "absolute": 0.0,
-      "relative": 0.0
-    },
-    "first_spike_step": {
-      "absolute": 0.0,
-      "relative": 0.0
-    }
+    "default": {"absolute": 1e-12, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
   }
 }

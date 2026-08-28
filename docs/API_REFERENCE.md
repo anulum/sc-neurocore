@@ -25079,18 +25079,25 @@ input_gain : float
 ## Module `neurons.models.mihalas_niebur`
 
 ### Class `MihalasNieburNeuron`
-Mihalas-Niebur generalised integrate-and-fire neuron.
+Source-form Mihalaş-Niebur generalized linear IF neuron.
 
-The continuous four-state flow is advanced with a candidate-first RK4
-integrator. Spike reset is applied only after the continuous candidate is
-finite and crosses the adaptive threshold.
+Defaults use the paper's common Figure 1 constants and the Figure 1C
+spike-frequency-adaptation value ``a = 5 s⁻¹``. Rates are expressed per
+millisecond, voltages in volts, and ``i1``, ``i2``, and ``current`` in volts
+per millisecond after division by capacitance.
 
-Reference: Mihalas, S. & Niebur, E. (2009). Neural Comput. 21:704-718.
+Reference
+---------
+Mihalaş, Ş. and Niebur, E. (2009), Neural Computation 21(3), 704–718,
+doi:10.1162/neco.2008.12-07-680, equations (2.1)–(2.2), Table 1.
 
+- **__post_init__**()
 - **step**(current)
+  - Advance one sampled RK4 interval and return one on a source event.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
+  - Advance a constant-current trajectory through the selected runtime.
 - **reset**()
+  - Restore the paper-profile resting state without changing parameters.
 
 ---
 
@@ -25998,6 +26005,21 @@ continuous Wilson (1999) equations, which are implemented by
   - Run a failure-atomic batch through a selected maintained runtime.
 - **reset**()
   - Restore the historical project state.
+
+---
+
+## Module `neurons.models.sc_scaled_reset_adaptive_if`
+
+### Class `SCScaledResetAdaptiveIFNeuron`
+Historical four-state project recurrence with a scaled voltage reset.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance the retained recurrence and return its level event.
+- **simulate**(n_steps, current, backend)
+  - Advance the retained trajectory through one explicit runtime.
+- **reset**()
+  - Restore the retained default state without changing parameters.
 
 ---
 

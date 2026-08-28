@@ -313,7 +313,11 @@ compute cycles for the 64x32 dense contract.
 | Prescott 2008 | 10k | 537 µs | **53.7 ns** | 1 | Type I/II/III excitability tuning |
 | GLIF (Allen) | 10k | 363 µs | **36.3 ns** | 1 | LIF + threshold adapt + ASC |
 | GIF population | 10k | 368 µs | **36.8 ns** | 1 | Escape-rate generalized IF |
-| Mihalas-Niebur 2009 | 10k | 123 µs | **12.3 ns** | 1 | Generalized IF, 20 spike patterns |
+| Mihalas-Niebur 2009 | 10k | 486 µs | **48.6 ns** | 1 | Source equations 2.1–2.2, panel-M profile |
+| SC scaled-reset adaptive IF | 10k | 570 µs | **57.0 ns** | 1 | Count-neutral retained project recurrence |
+
+The two Model 14 rows were remeasured on 2026-08-28 with Criterion (10 samples,
+one-second warm-up and measurement windows) after the source/SC identity split.
 
 > Models with sub-steps have larger per-step cost due to inner ODE integration
 > loops. HH is most expensive (100 sub-steps at dt=0.01 ms).

@@ -8,19 +8,19 @@
 
 `default_nettype none
 
-// Formal wrapper for equation-compiler RTL of a dual-axis perfect model.
+// Formal wrapper for equation-compiler RTL of a retained SC project model.
 // Properties use only public ports so default_nettype none stays clean.
 module sc_four_state_glif_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [31:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] v_out;
-    wire signed [15:0] theta_out;
-    wire signed [15:0] i_asc1_out;
-    wire signed [15:0] i_asc2_out;
+    wire signed [31:0] v_out;
+    wire signed [31:0] theta_out;
+    wire signed [31:0] i_asc1_out;
+    wire signed [31:0] i_asc2_out;
 
     sc_four_state_glif uut (
         .clk(clk),
@@ -49,8 +49,8 @@ module sc_four_state_glif_formal (
     // Saturation contract on the primary membrane / phase / current state.
     always @(posedge clk) begin
         if (past_valid && rst_n) begin
-            assert ($signed(v_out) >= -16'sd32768);
-            assert ($signed(v_out) <= 16'sd32767);
+            assert ($signed(v_out) >= -32'sd2147483648);
+            assert ($signed(v_out) <= 32'sd2147483647);
         end
     end
 `endif

@@ -1,8 +1,8 @@
-# Neuron Model Reference — 176 Python Classes / 203 Rust PyO3 Wrappers
+# Neuron Model Reference — 178 Python Classes / 205 Rust PyO3 Wrappers
 
-SC-NeuroCore currently exposes 178 lazy-loaded Python registry names, including
-176 static model classes across 172 Python model source modules in
-`src/sc_neurocore/neurons/models/`, plus 203 Rust PyO3 model wrappers in the
+SC-NeuroCore currently exposes 180 lazy-loaded Python registry names, including
+178 lazy-loaded Python model classes across 174 Python model source modules in
+`src/sc_neurocore/neurons/models/`, plus 205 Rust PyO3 model wrappers in the
 optional engine. The historical Kilinc-Bhatt module is alias-only and does not
 add a scientific catalogue model. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
@@ -40,8 +40,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 203 Rust PyO3 model wrappers,
-with 173 canonical models wired into the NetworkRunner pipeline.
+`HodgkinHuxleyNeuron`). The Rust engine provides 205 Rust PyO3 model wrappers,
+with 175 canonical models wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -290,6 +290,7 @@ raw TOML descriptor.
 | `PlantR15Neuron` | `PlantR15Neuron` | Plant & Kim 1976 |
 | `PrescottNeuron` | `PrescottNeuron` | Prescott et al. 2008 |
 | `MihalasNieburNeuron` | `MihalasNieburNeuron` | Mihalas & Niebur 2009 |
+| `SCScaledResetAdaptiveIFNeuron` | `SCScaledResetAdaptiveIFNeuron` | Count-neutral retained scaled-reset project recurrence |
 | `GLIFNeuron` | `GLIFNeuron` | Teeter 2018 five-state GLIF5 exact-flow specialization |
 | `SCFourStateGLIFNeuron` | `SCFourStateGLIFNeuron` | Count-neutral retained four-state project recurrence |
 | `GIFPopulationNeuron` | `GIFPopulationNeuron` | Mensi et al. 2012 |

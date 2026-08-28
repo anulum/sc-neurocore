@@ -60,6 +60,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "mckean": "McKeanNeuron",
     "mcculloch_pitts": "McCullochPittsNeuron",
     "mihalas_niebur": "MihalasNieburNeuron",
+    "sc_scaled_reset_adaptive_if": "SCScaledResetAdaptiveIFNeuron",
     "morris_lecar": "MorrisLecarNeuron",
     "perfect_integrator": "PerfectIntegratorNeuron",
     "quadratic_if": "QuadraticIFNeuron",

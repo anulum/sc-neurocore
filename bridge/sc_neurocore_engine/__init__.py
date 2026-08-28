@@ -121,6 +121,7 @@ try:
         PlantR15Neuron,
         PrescottNeuron,
         MihalasNieburNeuron,
+        SCScaledResetAdaptiveIFNeuron,
         GLIFNeuron,
         SCFourStateGLIFNeuron,
         GIFPopulationNeuron,
@@ -320,6 +321,7 @@ _NEURON_MODELS = [
     "PlantR15Neuron",
     "PrescottNeuron",
     "MihalasNieburNeuron",
+    "SCScaledResetAdaptiveIFNeuron",
     "GLIFNeuron",
     "SCFourStateGLIFNeuron",
     "GIFPopulationNeuron",
@@ -763,6 +765,16 @@ try:
     _mihalas_niebur_rust_available = True
 except ImportError:
     _mihalas_niebur_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_sc_scaled_reset_adaptive_if_simulate,
+    )
+
+    __all__ += ["py_sc_scaled_reset_adaptive_if_simulate"]
+    _sc_scaled_reset_adaptive_if_rust_available = True
+except ImportError:
+    _sc_scaled_reset_adaptive_if_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

@@ -4,55 +4,60 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
+# SC-NeuroCore — Mihalas-Niebur 2009 source schema
 
 [metadata]
-schema_version = 1
+schema_version = 2
 name = "MihalasNieburNeuron"
 author = "Mihalaş, Ş.; Niebur, E."
 year = 2009
 doi = "10.1162/neco.2008.12-07-680"
-description = "Mihalas-Niebur generalised linear integrate-and-fire neuron (Mihalaş & Niebur 2009) — four-state RK4 flow with an adaptive threshold and two spike-triggered currents"
+description = "Equations 2.1-2.2 generalised integrate-and-fire neuron with two internal currents and an adaptive threshold"
 
 [state]
-v = 0.0
-theta = 1.0
+v = -0.07
+theta = -0.05
 i1 = 0.0
 i2 = 0.0
 
 [parameters]
-v_rest = 0.0
-v_reset = 0.0
-theta_reset = 1.3
-theta_inf = 1.0
-tau_v = 10.0
-tau_theta = 40.0
-tau_1 = 15.0
-tau_2 = 80.0
-a = 0.1
-b = 0.1
-r1 = 0.2
-r2 = -0.15
+v_rest = -0.07
+v_reset = -0.07
+theta_reset = -0.06
+theta_inf = -0.05
+leak_rate = 0.05
+threshold_voltage_coupling = 0.005
+threshold_decay_rate = 0.01
+current_decay_rate_1 = 0.2
+current_decay_rate_2 = 0.02
+current_retention_1 = 0.0
+current_retention_2 = 1.0
+current_jump_1 = 0.0
+current_jump_2 = 0.0
 
 [integration]
-dt = 1.0
+dt = 0.1
 method = "rk4"
 
 [dynamics]
-v = "(-(v - v_rest) + i1 + i2 + I) / tau_v"
-theta = "(theta_inf - theta + a * (v - v_rest)) / tau_theta"
-i1 = "-i1 / tau_1"
-i2 = "-i2 / tau_2"
+v = "I + i1 + i2 - leak_rate * (v - v_rest)"
+theta = "threshold_voltage_coupling * (v - v_rest) - threshold_decay_rate * (theta - theta_inf)"
+i1 = "-current_decay_rate_1 * i1"
+i2 = "-current_decay_rate_2 * i2"
 
 [threshold]
 condition = "v >= theta"
 detection = "level"
 
 [reset]
-v = "v_reset + b * (v - v_rest)"
-theta = "max(theta, theta_reset)"
-i1 = "i1 + r1"
-i2 = "i2 + r2"
+i1 = "current_retention_1 * i1 + current_jump_1"
+i2 = "current_retention_2 * i2 + current_jump_2"
+v = "v_reset"
+theta = "max(theta_reset, theta)"
 
 [extensions]
-threshold_dynamics_note = "The threshold theta is a state variable, not a constant: it relaxes toward theta_inf while tracking the membrane through a*(v - v_rest), and each spike floors it up to theta_reset via max(theta, theta_reset). At the enrolled operating point theta_reset (1.3) exceeds theta_inf (1.0), so the max() floor engages on every spike and the state-to-state comparison v >= theta is a genuine adaptive threshold rather than a fixed level. The two spike-triggered currents i1, i2 decay with tau_1, tau_2 and are incremented by r1, r2 at each spike."
+source_equations = "Mihalas and Niebur 2009 equations 2.1-2.2 and Table 1"
+units_note = "Rates converted from per-second to per-millisecond; current-like states and input divided by capacitance."
+implementation_note = "Fixed-grid RK4 with sampled threshold detection is the declared numerical specialisation."
+reset_constraint = "theta_reset > v_reset, as required below equation 2.2"
+identity_note = "The former scaled-voltage-reset recurrence is retained count-neutrally as SCScaledResetAdaptiveIFNeuron."

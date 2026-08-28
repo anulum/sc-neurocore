@@ -83,9 +83,12 @@ from tests.cosim_reference_mckean import (
     _mckean_rk4_features as _mckean_rk4_features,
 )
 from tests.cosim_reference_mihalas_niebur import (
+    _features as _features,
     _MIHALAS_NIEBUR_PARAMS as _MIHALAS_NIEBUR_PARAMS,
     _mihalas_niebur_driven_rk4_features as _mihalas_niebur_driven_rk4_features,
     _mihalas_niebur_hand_spike_count as _mihalas_niebur_hand_spike_count,
+    _rk4 as _rk4,
+    _sc_scaled_reset_driven_rk4_features as _sc_scaled_reset_driven_rk4_features,
 )
 from tests.cosim_reference_morris_lecar import (
     _morris_lecar_hand_spike_count as _morris_lecar_hand_spike_count,
@@ -115,6 +118,7 @@ from tests.cosim_reference_theta import (
     _theta_constant_current_features as _theta_constant_current_features,
 )
 from tests.cosim_reference_wilson_hr import (
+    _sc_resetting_wilson_hr_rk4_features as _sc_resetting_wilson_hr_rk4_features,
     _wilson_hr_hand_spike_count as _wilson_hr_hand_spike_count,
     _wilson_hr_rk4_features as _wilson_hr_rk4_features,
 )

@@ -29,7 +29,9 @@ from __future__ import annotations
 import argparse
 import re
 import shutil
-import subprocess
+
+# Only the PATH-resolved SymbiYosys executable is invoked.
+import subprocess  # nosec B404
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -87,6 +89,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 # emitted alongside, but not counted as, source-literature S5 models.
 RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
     "SCFourStateGLIFNeuron": "sc_four_state_glif",
+    "SCScaledResetAdaptiveIFNeuron": "sc_scaled_reset_adaptive_if",
     "SCUpwardCrossingRulkovMapNeuron": "sc_upward_crossing_rulkov_map",
 }
 
@@ -167,12 +170,13 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "hindmarsh_rose": 4,
     "mckean": 4,
     "medvedev_map": 4,
-    "mihalas_niebur": 3,
+    "mihalas_niebur": 2,
     "pernarowski": 4,
     "poisson": 4,
     "rulkov_map": 4,
     "sc_upward_crossing_rulkov_map": 4,
     "sc_four_state_glif": 6,
+    "sc_scaled_reset_adaptive_if": 2,
     "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
@@ -215,6 +219,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "poisson",
         "rulkov_map",
         "sc_upward_crossing_rulkov_map",
+        "sc_scaled_reset_adaptive_if",
         "resonate_fire",
         "sigmoid_rate",
         "terman_wang",
@@ -278,12 +283,14 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "jansen_rit": (64, 32),
     "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
+    "mihalas_niebur": (64, 32),
     "morris_lecar": (32, 16),
     "poisson": (48, 24),
     "resonate_fire": (64, 32),
     "rulkov_map": (32, 16),
     "sc_upward_crossing_rulkov_map": (32, 16),
     "sc_four_state_glif": (32, 16),
+    "sc_scaled_reset_adaptive_if": (32, 16),
     "sigmoid_rate": (64, 32),
     "threshold_linear_rate": (32, 16),
     "wilson_cowan": (64, 32),
@@ -298,7 +305,9 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
 FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
     "connor_stevens": 100.0,
     "hodgkin_huxley": 15.0,
+    "mihalas_niebur": 0.002,
     "morris_lecar": 100.0,
+    "sc_scaled_reset_adaptive_if": 3.0,
 }
 
 # Schema display names are user-facing and may contain punctuation or
@@ -306,6 +315,7 @@ FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
 # would otherwise make a faithful schema impossible to commit as RTL.
 MODULE_NAME_BY_SCHEMA: dict[str, str] = {
     "sc_four_state_glif": "sc_four_state_glif",
+    "sc_scaled_reset_adaptive_if": "sc_scaled_reset_adaptive_if",
     "sc_upward_crossing_rulkov_map": "sc_upward_crossing_rulkov_map",
     "sc_resetting_wilson_hr": "sc_resetting_wilson_hr",
     "wang_buzsaki": "sc_wang_buzsaki",
@@ -683,7 +693,8 @@ def run_sby(results: list[EmitResult], *, timeout_s: int = 120) -> dict[str, str
     verdicts: dict[str, str] = {}
     for row in results:
         try:
-            proc = subprocess.run(
+            # The argument vector contains a fixed executable and generated basename only.
+            proc = subprocess.run(  # nosec B603
                 [sby, "-f", row.sby_path.name],
                 cwd=OUT_DIR,
                 capture_output=True,

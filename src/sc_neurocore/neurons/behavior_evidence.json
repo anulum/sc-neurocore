@@ -1027,7 +1027,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "b4622f5032651ed9d22e52621871b602e6bc354da7664e8684d4eed805607088",
+      "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
       "stochastic": false
     },
     "MorrisLecarNeuron": {
@@ -1419,6 +1419,16 @@
       ],
       "drivable": true,
       "result_sha256": "79e9f000f2ef917bd6246518ca2c84d2a566339652a91aa4efeb825eb3dcd542",
+      "stochastic": false
+    },
+    "SCScaledResetAdaptiveIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b4622f5032651ed9d22e52621871b602e6bc354da7664e8684d4eed805607088",
       "stochastic": false
     },
     "SCSigmaDeltaAccumulatorNeuron": {
@@ -1836,7 +1846,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "cc11591cb842cfa7f8f7325a62054c9fc187b71f87abf895eb6947a48ccbb639",
+  "result_sha256": "0b6a6d201249b529ee8e349148c6d2a964bb32a2d8d734f124d6ebe95c22872b",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

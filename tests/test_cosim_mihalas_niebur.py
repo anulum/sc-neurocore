@@ -4,133 +4,117 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mihalas-Niebur co-simulation contracts
+# SC-NeuroCore — source Mihalas-Niebur Q32.32 co-simulation
 
-"""Mihalas-Niebur schema, hand-model, and Q16.16 RTL parity contracts."""
+"""Execute committed Model 14 RTL against source and schema trajectories."""
 
 from __future__ import annotations
 
+import re
+import subprocess
 from pathlib import Path
 
-import pytest
+import numpy as np
+from numpy.typing import NDArray
 
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
-from tests.cosim_support import (
-    HAS_IVERILOG,
-    _MIHALAS_NIEBUR_PARAMS,
-    _mihalas_niebur_hand_spike_count,
-    _python_spike_count,
-    _verilog_spike_count_q1616,
-)
+from tests.toolchain_support import require_executable
+
+ROOT = Path(__file__).parents[1]
+RTL = ROOT / "hdl/formal/catalogue/sc_mihalasnieburneuron.v"
+SCALE = 1 << 32
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B Mihalas-Niebur enrolment."""
+def _literal(value: int) -> str:
+    return f"-64'sd{-value}" if value < 0 else f"64'sd{value}"
 
-    def test_mihalas_niebur_schema_matches_hand_rk4_sequence(self) -> None:
-        """Both schemas mirror the Mihalas-Niebur RK4 flow and adaptive reset.
 
-        The paired TOML/JSON ``mihalas_niebur`` schemas are the ``method="rk4"``
-        discretisation of the generalised integrate-and-fire neuron
-        (``MihalasNieburNeuron``, Mihalaş & Niebur 2009). The 1,600-step varied drive
-        exercises the four coupled states, every RK4 stage, silence, tonic firing, and
-        168 candidate-first resets. Both schema formats must reproduce every hand-model
-        event and post-step state exactly.
-        """
-        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
-        hand = MihalasNieburNeuron(dt=1.0, **_MIHALAS_NIEBUR_PARAMS)
-        toml_schema = UniversalNeuron.from_schema(schema_dir / "mihalas_niebur.toml")
-        json_schema = UniversalNeuron.from_schema(schema_dir / "mihalas_niebur.json")
-        currents = (0.0, 3.0, 5.0, 2.0, 4.0, 0.0, 6.0, 3.5) * 200
-        spike_count = 0
-
-        for current in currents:
-            hand_spike = hand.step(current)
-            spike_count += hand_spike
-            assert int(bool(toml_schema.step(I=current))) == hand_spike
-            assert int(bool(json_schema.step(I=current))) == hand_spike
-            for variable in ("v", "theta", "i1", "i2"):
-                expected = getattr(hand, variable)
-                assert toml_schema.state[variable] == expected
-                assert json_schema.state[variable] == expected
-
-        assert spike_count == 168
-
-    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-    def test_mihalas_niebur_q1616_legacy_window_is_exact(self) -> None:
-        """The corrected candidate-reset RTL exactly matches the former 300-step window.
-
-        At ``I=3.0`` the maintained hand model, schema runner, and emitted Q16.16 RTL now
-        produce the same 36-spike partial train. This guards the post-candidate reset/output
-        semantics that replaced the stale 36/36/35 evidence.
-        """
-        hand_spikes = _mihalas_niebur_hand_spike_count(300, 3.0)
-        schema_spikes = _python_spike_count("mihalas_niebur", 300, 3.0)
-        verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", 300, 3.0)
-
-        assert hand_spikes == schema_spikes == verilog_spikes == 36
-
-    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-    @pytest.mark.parametrize(
-        ("current", "expected_spikes"),
-        (
-            (0.0, 0),
-            (0.5, 0),
-            (1.0, 0),
-            (1.5, 31),
-            (2.0, 60),
-            (2.5, 87),
-            (3.5, 131),
-            (4.0, 157),
-            (5.0, 207),
-            (6.0, 256),
-        ),
-        ids=(
-            "rest",
-            "subthreshold-low",
-            "subthreshold-high",
-            "onset",
-            "low-train",
-            "medium-train",
-            "above-boundary",
-            "tonic",
-            "high-drive",
-            "strong-drive",
-        ),
+def _rtl_trace(tmp_path: Path, currents: tuple[float, ...]) -> NDArray[np.float64]:
+    drives = "\n".join(
+        f'I_t={_literal(round(current * SCALE))};@(posedge clk);#1;$display("MN %0d %0d %0d %0d %0d",spike_out,v_out,theta_out,i1_out,i2_out);'
+        for current in currents
     )
-    def test_mihalas_niebur_q1616_exact_operating_set(
-        self, current: float, expected_spikes: int
-    ) -> None:
-        """Mihalas-Niebur has exact Q16.16 parity at ten enrolled currents.
+    bench = tmp_path / "tb_mihalas_niebur.v"
+    binary = tmp_path / "tb_mihalas_niebur"
+    bench.write_text(
+        "`timescale 1ns/1ps\n"
+        "module tb; reg clk=0; reg rst_n=0; reg signed[63:0] I_t=0; "
+        "wire spike_out; wire signed[63:0] v_out,theta_out,i1_out,i2_out; "
+        "always #5 clk=~clk; "
+        "sc_mihalasnieburneuron #("
+        f".P_CURRENT_JUMP_1({_literal(round(0.01 * SCALE))}),"
+        f".P_CURRENT_JUMP_2({_literal(round(-0.0006 * SCALE))})"
+        ") dut(.*); "
+        f"initial begin #23; rst_n=1; {drives} $finish; end endmodule\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        [require_executable("iverilog"), "-g2012", "-o", str(binary), str(RTL), str(bench)],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    output = subprocess.run(
+        [require_executable("vvp"), str(binary)],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    ).stdout
+    rows = re.findall(r"^MN ([01]) (-?\d+) (-?\d+) (-?\d+) (-?\d+)$", output, re.M)
+    assert len(rows) == len(currents)
+    return np.asarray(
+        [
+            (int(event), int(v) / SCALE, int(theta) / SCALE, int(i1) / SCALE, int(i2) / SCALE)
+            for event, v, theta, i1, i2 in rows
+        ],
+        dtype=np.float64,
+    )
 
-        The set spans three silent regimes and seven partial trains over 1,000 RK4 steps.
-        Hand-model and schema equality anchors the float64 formulation; equality with the
-        emitted RTL proves fixed-point spike-count parity on both sides of the isolated
-        ``I=3.0`` crossing boundary.
-        """
-        n_steps = 1000
-        hand_spikes = _mihalas_niebur_hand_spike_count(n_steps, current)
-        schema_spikes = _python_spike_count("mihalas_niebur", n_steps, current)
-        verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", n_steps, current)
 
-        assert hand_spikes == schema_spikes == verilog_spikes == expected_spikes, (
-            f"Mihalas-Niebur exact Q16.16 mismatch at I={current}: "
-            f"hand={hand_spikes}, schema={schema_spikes}, verilog={verilog_spikes}"
-        )
+def _source_trace(currents: tuple[float, ...]) -> NDArray[np.float64]:
+    source = MihalasNieburNeuron(current_jump_1=0.01, current_jump_2=-0.0006)
+    toml = UniversalNeuron.from_schema(
+        "mihalas_niebur",
+        parameter_overrides={"current_jump_1": 0.01, "current_jump_2": -0.0006},
+    )
+    rows: list[tuple[int, float, float, float, float]] = []
+    for current in currents:
+        event = source.step(current)
+        assert int(bool(toml.step(I=current))) == event
+        assert toml.state == {
+            "v": source.v,
+            "theta": source.theta,
+            "i1": source.i1,
+            "i2": source.i2,
+        }
+        rows.append((event, source.v, source.theta, source.i1, source.i2))
+    return np.asarray(rows, dtype=np.float64)
 
-    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-    def test_mihalas_niebur_q1616_declares_i3_boundary(self) -> None:
-        """The 1,000-step ``I=3.0`` crossing boundary remains explicit and exact.
 
-        Q16.16 rounding advances one marginal adaptive-threshold crossing: the hand model
-        and schema runner produce 111 spikes while RTL produces 112. Pinning the complete
-        triplet prevents either hiding the boundary behind a loose tolerance or promoting
-        the operating point to exact parity.
-        """
-        n_steps = 1000
-        hand_spikes = _mihalas_niebur_hand_spike_count(n_steps, 3.0)
-        schema_spikes = _python_spike_count("mihalas_niebur", n_steps, 3.0)
-        verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", n_steps, 3.0)
+def test_q3232_complete_state_and_event_vector(tmp_path: Path) -> None:
+    currents = (0.002,) * 2000
+    expected = _source_trace(currents)
+    actual = _rtl_trace(tmp_path, currents)
+    np.testing.assert_array_equal(actual[:, 0], expected[:, 0])
+    assert int(actual[:, 0].sum()) == 14
+    np.testing.assert_allclose(actual[:, 1:], expected[:, 1:], rtol=0.0, atol=1.3e-6)
 
-        assert (hand_spikes, schema_spikes, verilog_spikes) == (111, 111, 112)
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {RTL}; synth -top sc_mihalasnieburneuron -run begin:coarse; check; stat",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr

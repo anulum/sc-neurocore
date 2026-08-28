@@ -63,6 +63,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "MihalasNiebur" | "MihalasNieburNeuron" => {
             Ok(NeuronVariant::MihalasNiebur(MihalasNieburNeuron::new()))
         }
+        "SCScaledResetAdaptiveIF" | "SCScaledResetAdaptiveIFNeuron" => Ok(
+            NeuronVariant::SCScaledResetAdaptiveIF(SCScaledResetAdaptiveIFNeuron::new()),
+        ),
         "GLIF" | "GLIFNeuron" => Ok(NeuronVariant::GLIF(GLIFNeuron::new())),
         "SCFourStateGLIF" | "SCFourStateGLIFNeuron" => {
             Ok(NeuronVariant::SCFourStateGLIF(SCFourStateGLIFNeuron::new()))

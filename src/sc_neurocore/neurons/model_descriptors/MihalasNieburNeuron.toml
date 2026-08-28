@@ -8,17 +8,22 @@
 
 [metadata]
 schema_version = 2
-name = "MihalasNieburNeuron"
+name = "Mihalas-Niebur generalised integrate-and-fire"
 class_name = "MihalasNieburNeuron"
 module = "mihalas_niebur"
-display_name = ""
-summary = "Mihalas-Niebur generalised integrate-and-fire neuron."
+display_name = "Mihalas-Niebur generalised integrate-and-fire neuron"
+summary = "Four-state linear flow with an adaptive threshold, two spike-induced currents, and the published event map"
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "source-faithful fixed-grid simulation",
+    "cross-runtime and fixed-point validation",
+]
+hardware_fit = [
+    "bounded signed Q32.32 co-simulation",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -27,16 +32,18 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Mihalas, S. & Niebur, E.",
+    "Mihalaş, Ş. & Niebur, E.",
 ]
 year = 2009
 doi = "10.1162/neco.2008.12-07-680"
+paper_title = "A generalized linear integrate-and-fire neural model produces diverse spiking behaviors"
+derivation_note = "Equations 2.1-2.2 with currents divided by capacitance and Table 1 rates converted from s^-1 to ms^-1; fixed-grid RK4 and sampled event detection are explicit numerical specialisations."
 
 [state.v]
-init = 0.0
+init = -0.07
 
 [state.theta]
-init = 1.0
+init = -0.05
 
 [state.i1]
 init = 0.0
@@ -45,122 +52,131 @@ init = 0.0
 init = 0.0
 
 [parameters.v_rest]
-default = 0.0
-unit = "1"
-meaning = "resting potential (normalised)"
+default = -0.07
+unit = "V"
+meaning = "leak reversal potential E_L"
 range = [
-    -5.0,
-    5.0,
+    -1.0,
+    1.0,
 ]
 
 [parameters.v_reset]
-default = 0.0
-unit = "1"
-meaning = "membrane potential reset to after a spike (normalised)"
+default = -0.07
+unit = "V"
+meaning = "published event-reset voltage V_r"
 range = [
-    -5.0,
-    5.0,
+    -1.0,
+    1.0,
 ]
 
 [parameters.theta_reset]
-default = 1.0
-unit = "1"
-meaning = "threshold value reset to after a spike (normalised)"
+default = -0.06
+unit = "V"
+meaning = "published lower threshold reset Theta_r"
 range = [
-    0.0,
-    10.0,
+    -1.0,
+    1.0,
 ]
 
 [parameters.theta_inf]
+default = -0.05
+unit = "V"
+meaning = "stationary threshold Theta_inf"
+range = [
+    -1.0,
+    1.0,
+]
+
+[parameters.leak_rate]
+default = 0.05
+unit = "1/ms"
+meaning = "capacitance-normalised leak rate G/C"
+range = [
+    1e-12,
+    10.0,
+]
+
+[parameters.threshold_voltage_coupling]
+default = 0.005
+unit = "1/ms"
+meaning = "voltage-to-threshold coupling a"
+range = [
+    -10.0,
+    10.0,
+]
+
+[parameters.threshold_decay_rate]
+default = 0.01
+unit = "1/ms"
+meaning = "threshold relaxation rate b"
+range = [
+    1e-12,
+    10.0,
+]
+
+[parameters.current_decay_rate_1]
+default = 0.2
+unit = "1/ms"
+meaning = "first spike-induced current decay rate k_1"
+range = [
+    1e-12,
+    10.0,
+]
+
+[parameters.current_decay_rate_2]
+default = 0.02
+unit = "1/ms"
+meaning = "second spike-induced current decay rate k_2"
+range = [
+    1e-12,
+    10.0,
+]
+
+[parameters.current_retention_1]
+default = 0.0
+unit = "1"
+meaning = "first event-map retention R_1"
+range = [
+    -100.0,
+    100.0,
+]
+
+[parameters.current_retention_2]
 default = 1.0
 unit = "1"
-meaning = "steady-state value of the adaptive threshold (normalised)"
+meaning = "second event-map retention R_2"
 range = [
-    0.0,
-    10.0,
-]
-
-[parameters.tau_v]
-default = 10.0
-unit = "ms"
-meaning = "membrane time constant"
-range = [
-    1.0,
+    -100.0,
     100.0,
 ]
 
-[parameters.tau_theta]
-default = 100.0
-unit = "ms"
-meaning = "threshold adaptation time constant"
+[parameters.current_jump_1]
+default = 0.0
+unit = "V/ms"
+meaning = "capacitance-normalised first event-map jump A_1/C"
 range = [
-    1.0,
-    500.0,
-]
-
-[parameters.tau_1]
-default = 10.0
-unit = "ms"
-meaning = "decay time constant of the first internal current"
-range = [
-    1.0,
+    -100.0,
     100.0,
 ]
 
-[parameters.tau_2]
-default = 200.0
-unit = "ms"
-meaning = "decay time constant of the second internal current"
-range = [
-    1.0,
-    500.0,
-]
-
-[parameters.a]
+[parameters.current_jump_2]
 default = 0.0
-unit = "1/ms"
-meaning = "coupling of the membrane potential to the threshold dynamics"
+unit = "V/ms"
+meaning = "capacitance-normalised second event-map jump A_2/C"
 range = [
-    0.0,
-    1.0,
-]
-
-[parameters.b]
-default = 0.0
-unit = "1/ms"
-meaning = "relaxation rate of the threshold toward its steady state"
-range = [
-    0.0,
-    1.0,
-]
-
-[parameters.r1]
-default = 0.0
-unit = "1"
-meaning = "normalised amplitude added to the first internal current at each spike"
-range = [
-    -10.0,
-    10.0,
-]
-
-[parameters.r2]
-default = 0.0
-unit = "1"
-meaning = "normalised amplitude added to the second internal current at each spike"
-range = [
-    -10.0,
-    10.0,
+    -100.0,
+    100.0,
 ]
 
 [integration]
-dt = 1.0
+dt = 0.1
 method = "rk4"
 
 [dynamics]
-v = "(-(v - v_rest) + i1 + i2 + I) / tau_v"
-theta = "(theta_inf - theta + a * (v - v_rest)) / tau_theta"
-i1 = "-i1 / tau_1"
-i2 = "-i2 / tau_2"
+v = "I + i1 + i2 - leak_rate * (v - v_rest)"
+theta = "threshold_voltage_coupling * (v - v_rest) - threshold_decay_rate * (theta - theta_inf)"
+i1 = "-current_decay_rate_1 * i1"
+i2 = "-current_decay_rate_2 * i2"
 
 [backends.python]
 status = "implemented"
@@ -180,26 +196,29 @@ parity = "exact"
 
 [backends.mojo]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "d92ed2edac56da363bc2ee6351d4b653415a7164c8759aaafe9059641efa6cb8"
+golden_trace_sha256 = "fa3871a113fc2b64d76f0fac8b547a34dbaf1bf054dcae7b65a4a42493e8d8d5"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/mihalas_niebur_2009.json"
 
 [documentation]
 slug = "models/mihalas_niebur"
-notes = ""
+notes = "The former candidate-proportional voltage reset is not equation 2.2 and remains count-neutral as SCScaledResetAdaptiveIFNeuron."
 
 [validation]
 dynamics_faithful = true
-metric = "parity"
-operating_point = "schema-DSL mihalas_niebur RK4; hand/schema/Q16.16 RTL; 1000 steps at I=0 through I=6"
-tolerance = "exact at ten enrolled currents; declared 111/112 RTL boundary at I=3 over 1000 steps"
-evidence = "tests/test_cosimulation.py::TestTierBModelCosim::test_mihalas_niebur_q1616_exact_operating_set; test_mihalas_niebur_q1616_declares_i3_boundary"
+metric = "trajectory"
+operating_point = "Table 1 common constants and panel M tonic-bursting parameters over 2000 source intervals"
+tolerance = "binary64 state/event parity across Python, Rust, Julia and Go; Mojo ULP-bounded; Q32.32 complete event-vector equality and four-state error at most 1.3e-6"
+evidence = "tests/test_model_mihalas_niebur.py; tests/test_mihalas_niebur_backends.py; tests/test_reference_mihalas_niebur.py; tests/test_cosim_mihalas_niebur.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestTierBModelCosim::test_mihalas_niebur_q1616_exact_operating_set; test_mihalas_niebur_q1616_declares_i3_boundary"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+synthesised = true
+cosim_evidence = "tests/test_cosim_mihalas_niebur.py"
+synth_report = "hdl/reports/yosys_mihalas_niebur_q3232_2026-08-28.json"
+target_device = "Xilinx 7-series (Yosys synth_xilinx)"
+target_tier = "H2"
+terminal_reason = "Bounded generated Q32.32 co-simulation, coarse synthesis, and formal port safety only; timing, PPA, board, device, and silicon evidence remain open."

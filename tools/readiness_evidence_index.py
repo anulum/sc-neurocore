@@ -9,15 +9,15 @@
 
 """Index committed co-simulation evidence and wire dual-axis descriptor facets.
 
-WC-A5 enrols schema models into ``tests/test_cosimulation.py`` with iverilog
-and spike-parity gates, but the dual-axis readiness ladder
+Schema co-simulation enrols models with Icarus Verilog and behavioural gates,
+but the dual-axis readiness ladder
 (:mod:`sc_neurocore.neurons.descriptor_tiers`) only climbs when
 :class:`~sc_neurocore.neurons.model_descriptor.Validation` and
 :class:`~sc_neurocore.neurons.model_descriptor.Silicon` facets are recorded on
 each descriptor. This tool:
 
 1. Inventories a curated, non-overlapping shortlist of **already enrolled**
-   models (not new schema enrolments — those stay the WC-A5 agent lane).
+   models; new schema enrolments remain a separate workflow.
 2. Reports live science/silicon tiers vs expected evidence.
 3. Optionally applies honest facet patches to on-disk descriptors.
 
@@ -89,14 +89,14 @@ class EnrolledEvidence:
     operating_point: str
     tolerance: str
     metric: ValidationMetric = "parity"
-    # Excluded from apply when True (active peer lane / WIP).
+    # Excluded from apply when the evidence owner is not ready for promotion.
     skip_apply: bool = False
     skip_reason: str = ""
 
 
-# Curated from tests/test_cosimulation.py enrolment (WC-A5). Do not add models
-# that still lack a committed cosim/compile gate. Wang-Buzsaki is deliberately
-# skip_apply while the peer agent rewrites its integrator (Gauss-Seidel).
+# Curated from committed schema co-simulation enrolments. Do not add models
+# that still lack a committed co-simulation or compile gate. Wang-Buzsaki is
+# deliberately excluded while its Gauss-Seidel re-enrolment remains open.
 ENROLLED: tuple[EnrolledEvidence, ...] = (
     EnrolledEvidence(
         schema_name="cazelles_map",
@@ -324,17 +324,30 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="mihalas_niebur",
         class_name="MihalasNieburNeuron",
         level="h1_cosim",
-        evidence=(
-            "tests/test_cosimulation.py::TestTierBModelCosim::"
-            "test_mihalas_niebur_q1616_exact_operating_set; "
-            "test_mihalas_niebur_q1616_declares_i3_boundary"
-        ),
+        evidence="tests/test_cosim_mihalas_niebur.py::test_q3232_complete_state_and_event_vector",
         operating_point=(
-            "schema-DSL mihalas_niebur RK4; hand/schema/Q16.16 RTL; 1000 steps at I=0 through I=6"
+            "Mihalas-Niebur Table 1 common constants and panel-M parameters; "
+            "Python/schema/Q32.32 RTL over 2000 intervals at I=0.002"
         ),
         tolerance=(
-            "exact at ten enrolled currents; declared 111/112 RTL boundary at I=3 over 1000 steps"
+            "complete 14-event vector exact; all four post-step state errors at most 1.3e-6"
         ),
+        metric="trajectory",
+    ),
+    EnrolledEvidence(
+        schema_name="sc_scaled_reset_adaptive_if",
+        class_name="SCScaledResetAdaptiveIFNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_sc_scaled_reset_adaptive_if.py::"
+            "test_q1616_complete_state_and_event_vector"
+        ),
+        operating_point=(
+            "retained candidate-proportional reset recurrence; "
+            "Python/schema/Q16.16 RTL over 250 steps at I=3"
+        ),
+        tolerance="complete 31-event vector exact; all four state errors at most 0.001",
+        metric="trajectory",
     ),
     EnrolledEvidence(
         schema_name="morris_lecar",
@@ -398,10 +411,10 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         class_name="WangBuzsakiNeuron",
         level="h1_cosim",
         evidence="tests/test_cosimulation.py::TestQ1616Precision::test_wang_buzsaki_q1616_parity",
-        operating_point="schema-DSL wang_buzsaki (peer lane rewriting integrator)",
+        operating_point="schema-DSL Wang-Buzsaki integrator awaiting Gauss-Seidel re-enrolment",
         tolerance="existing test; facets deferred",
         skip_apply=True,
-        skip_reason="Peer agent (WC-A5) owns Wang-Buzsaki Gauss-Seidel re-enrolment",
+        skip_reason="Wang-Buzsaki Gauss-Seidel re-enrolment remains outside this inventory pass",
     ),
 )
 

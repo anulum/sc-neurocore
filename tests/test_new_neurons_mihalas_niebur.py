@@ -1,31 +1,27 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestMihalasNiebur from former test_new_neurons.py
+# SC-NeuroCore — Mihalas-Niebur catalogue smoke contracts
 
-"""Focused suite: TestMihalasNiebur from former test_new_neurons.py."""
+"""Focused catalogue-level source-profile checks for MihalasNieburNeuron."""
 
-from __future__ import annotations
-
-from tests.new_neurons_support import *  # noqa: F403
+from sc_neurocore.neurons.models import MihalasNieburNeuron
 
 
-class TestMihalasNiebur:
-    def test_fires(self):
-        from sc_neurocore.neurons.models import MihalasNieburNeuron
+def test_source_profile_fires_under_table_1_panel_c_drive() -> None:
+    neuron = MihalasNieburNeuron()
+    events = sum(neuron.step(0.002) for _ in range(1000))
 
-        n = MihalasNieburNeuron()
-        spikes = sum(n.step(5.0) for _ in range(200))
-        assert spikes > 0
+    assert events == 5
 
-    def test_adaptation_currents(self):
-        from sc_neurocore.neurons.models import MihalasNieburNeuron
 
-        n = MihalasNieburNeuron(r1=1.0, r2=0.5)
-        for _ in range(50):
-            n.step(5.0)
-        # After spikes, adaptation currents should be non-zero
-        assert n.i1 != 0.0 or n.i2 != 0.0
+def test_table_1_panel_m_currents_are_exercised() -> None:
+    neuron = MihalasNieburNeuron(current_jump_1=0.01, current_jump_2=-0.0006)
+    events = sum(neuron.step(0.002) for _ in range(500))
+
+    assert events == 8
+    assert neuron.i1 > 0.0
+    assert neuron.i2 < 0.0

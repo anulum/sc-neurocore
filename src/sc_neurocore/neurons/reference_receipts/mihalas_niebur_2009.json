@@ -1,0 +1,22 @@
+{
+  "model": "MihalasNieburNeuron",
+  "source": "doi:10.1162/neco.2008.12-07-680 equations (2.1)-(2.2), Table 1 common constants and panel M",
+  "event": "candidate-level V >= Theta followed by I_j <- R_j I_j + A_j, V <- V_r, Theta <- max(Theta_r, Theta)",
+  "parameters": {
+    "current_jump_1": 0.01,
+    "current_jump_2": -0.0006
+  },
+  "drive": {
+    "pattern": [0.002],
+    "repeats": 2000
+  },
+  "oracle": {
+    "events": 14,
+    "first_event_index": 146,
+    "v_final": -0.05875187249709728,
+    "theta_final": -0.04320389391752467,
+    "i1_final": 1.255777983935184e-05,
+    "i2_final": -0.0015969556080428617,
+    "trace_sha256": "fa3871a113fc2b64d76f0fac8b547a34dbaf1bf054dcae7b65a4a42493e8d8d5"
+  }
+}

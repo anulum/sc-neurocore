@@ -126,6 +126,7 @@ _CLASS_TO_MODULE = {
     "MedvedevMapNeuron": "medvedev_map",
     "MetaPlasticNeuron": "ai_optimized",
     "MihalasNieburNeuron": "mihalas_niebur",
+    "SCScaledResetAdaptiveIFNeuron": "sc_scaled_reset_adaptive_if",
     "MorrisLecarNeuron": "morris_lecar",
     "MotorUnit": "motor_unit",
     "MultiTimescaleNeuron": "ai_optimized",

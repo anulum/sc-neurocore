@@ -26,8 +26,8 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 N_STEPS = 100_000
 PARITY_STEPS = 10_000
-CURRENT = 2.0
-INTEGRATOR = "candidate_first_rk4"
+CURRENT = 0.002
+INTEGRATOR = "source_equations_2_1_2_2_sampled_rk4"
 
 
 def _fixed(value: float, digits: int) -> float:

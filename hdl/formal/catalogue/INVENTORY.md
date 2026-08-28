@@ -31,7 +31,7 @@ Jobs: **40**
 | LapicqueNeuron | lapicque | `sc_lapicque` | `v_out` | Q8.8 | 20 |
 | McCullochPittsNeuron | mcculloch_pitts | `sc_mccullochpittsneuron` | — | Q32.0 | 4 |
 | MedvedevMapNeuron | medvedev_map | `sc_medvedev_map` | `u_out` | Q16.16 | 4 |
-| MihalasNieburNeuron | mihalas_niebur | `sc_mihalasnieburneuron` | `v_out` | Q8.8 | 3 |
+| MihalasNieburNeuron | mihalas_niebur | `sc_mihalasnieburneuron` | `v_out` | Q32.32 | 2 |
 | MorrisLecarNeuron | morris_lecar | `sc_morris_lecar` | `v_out` | Q16.16 | 4 |
 | PerfectIntegratorNeuron | perfect_integrator | `sc_perfect_integrator` | `v_out` | Q8.8 | 20 |
 | PernarowskiNeuron | pernarowski | `sc_pernarowski` | `v_out` | Q8.8 | 4 |
@@ -57,10 +57,5 @@ source-literature perfect-model count above.
 | --- | --- | --- | --- | --- | ---: |
 | SCResettingWilsonHRNeuron | sc_resetting_wilson_hr | `sc_resetting_wilson_hr` | `v_out` | Q8.8 | 4 |
 | SCFourStateGLIFNeuron | sc_four_state_glif | `sc_four_state_glif` | `v_out` | Q16.16 | 6 |
+| SCScaledResetAdaptiveIFNeuron | sc_scaled_reset_adaptive_if | `sc_scaled_reset_adaptive_if` | `v_out` | Q16.16 | 2 |
 | SCUpwardCrossingRulkovMapNeuron | sc_upward_crossing_rulkov_map | `sc_upward_crossing_rulkov_map` | `x_out` | Q16.16 | 4 |
-
-## Curated model-specific jobs
-
-`GLIFNeuron` uses the committed `sc_glif` Q32.32 default-profile RTL and its
-dedicated bounded reset-safety job. The generic schema emitter cannot represent
-the refractory hold and exact-flow coefficient custody at the same fidelity.

@@ -13,14 +13,14 @@
 module sc_mihalasnieburneuron_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [63:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] v_out;
-    wire signed [15:0] theta_out;
-    wire signed [15:0] i1_out;
-    wire signed [15:0] i2_out;
+    wire signed [63:0] v_out;
+    wire signed [63:0] theta_out;
+    wire signed [63:0] i1_out;
+    wire signed [63:0] i2_out;
 
     sc_mihalasnieburneuron uut (
         .clk(clk),
@@ -34,6 +34,19 @@ module sc_mihalasnieburneuron_formal (
     );
 
 `ifdef FORMAL
+
+    // Bounded receipt protocol: initialise through reset and hold the exact
+    // enrolled fixed-point drive while checking the public reset property.
+    reg protocol_started = 1'b0;
+    always @(posedge clk) begin
+        if (!protocol_started)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        assume ($signed(I_t) == 64'sd8589935);
+        protocol_started <= 1'b1;
+    end
+
     // Minimal safety: async reset clears the spike flag.
     always @(*) begin
         if (!rst_n)

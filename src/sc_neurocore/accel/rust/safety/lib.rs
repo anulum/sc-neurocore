@@ -375,6 +375,7 @@ pub mod sc_optimizer;
 pub mod sc_quantum_compiler;
 pub mod sc_resetting_wilson_hr;
 pub mod sc_runtime;
+pub mod sc_scaled_reset_adaptive_if;
 pub mod sc_scope;
 pub mod sc_sigma_delta_accumulator;
 pub mod sc_stochastic_rate_adaptation;

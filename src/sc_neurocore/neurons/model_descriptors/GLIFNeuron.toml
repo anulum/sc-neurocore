@@ -62,86 +62,154 @@ init = 0.0
 default = -70.0
 unit = "mV"
 meaning = "leak reversal potential"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.capacitance]
 default = 10.0
 unit = "pF"
 meaning = "membrane capacitance C"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.resistance]
 default = 1.0
 unit = "MOhm"
 meaning = "membrane resistance R"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.theta_inf]
 default = -50.0
 unit = "mV"
 meaning = "instantaneous threshold at rest"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.b_spike]
 default = 0.01
 unit = "1/ms"
 meaning = "spike-threshold decay rate"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.b_voltage]
 default = 0.01
 unit = "1/ms"
 meaning = "voltage-threshold decay rate"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.a_voltage]
 default = 0.0001
 unit = "1/ms"
 meaning = "voltage-threshold coupling coefficient"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.k_asc1]
 default = 0.1
 unit = "1/ms"
 meaning = "first after-spike-current decay rate"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.k_asc2]
 default = 0.005
 unit = "1/ms"
 meaning = "second after-spike-current decay rate"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.f_v]
 default = 0.0
 unit = "1"
 meaning = "affine voltage reset slope"
+range = [
+    -100.0,
+    100.0,
+]
 
 [parameters.delta_v]
 default = 0.0
 unit = "mV"
 meaning = "affine voltage reset offset"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.delta_theta_spike]
 default = 2.0
 unit = "mV"
 meaning = "spike-threshold reset increment"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.f_asc1]
 default = 1.0
 unit = "1"
 meaning = "first after-spike-current reset fraction"
+range = [
+    -100.0,
+    100.0,
+]
 
 [parameters.f_asc2]
 default = 1.0
 unit = "1"
 meaning = "second after-spike-current reset fraction"
+range = [
+    -100.0,
+    100.0,
+]
 
 [parameters.delta_i_asc1]
 default = 1.0
 unit = "pA"
 meaning = "first after-spike-current reset increment"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.delta_i_asc2]
 default = 0.5
 unit = "pA"
 meaning = "second after-spike-current reset increment"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.refractory_period]
 default = 2.0
 unit = "ms"
 meaning = "absolute refractory cut duration"
+range = [
+    0.0,
+    1000000.0,
+]
 
 [integration]
 dt = 1.0

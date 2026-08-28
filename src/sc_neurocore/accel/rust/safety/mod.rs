@@ -266,6 +266,7 @@ pub mod memristor_mapper;
 pub mod meta_plasticity;
 pub mod metrics;
 pub mod mihalas_niebur;
+pub mod sc_scaled_reset_adaptive_if;
 pub mod mismatch;
 pub mod mlir_emitter;
 pub mod model_bridge;

@@ -1,0 +1,213 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SC scaled-reset adaptive integrate-and-fire"
+class_name = "SCScaledResetAdaptiveIFNeuron"
+module = "sc_scaled_reset_adaptive_if"
+display_name = "SC scaled-reset adaptive integrate-and-fire recurrence"
+summary = "Retained four-state RK4 project recurrence with candidate-proportional voltage reset"
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "backward-compatible project recurrence",
+    "cross-runtime regression",
+]
+hardware_fit = [
+    "bounded signed Q16.16 co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+derivation_note = "Project recurrence retained without whole-model publication attribution."
+
+[state.v]
+init = 0.0
+
+[state.theta]
+init = 1.0
+
+[state.i1]
+init = 0.0
+
+[state.i2]
+init = 0.0
+
+[parameters.v_rest]
+default = 0.0
+unit = "1"
+meaning = "normalised resting potential"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.v_reset]
+default = 0.0
+unit = "1"
+meaning = "normalised reset offset"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.theta_reset]
+default = 1.0
+unit = "1"
+meaning = "adaptive-threshold floor"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.theta_inf]
+default = 1.0
+unit = "1"
+meaning = "steady adaptive-threshold target"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.tau_v]
+default = 10.0
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
+
+[parameters.tau_theta]
+default = 100.0
+unit = "ms"
+meaning = "threshold time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
+
+[parameters.tau_1]
+default = 10.0
+unit = "ms"
+meaning = "first current time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
+
+[parameters.tau_2]
+default = 200.0
+unit = "ms"
+meaning = "second current time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
+
+[parameters.a]
+default = 0.0
+unit = "1"
+meaning = "project voltage-threshold coupling"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.b]
+default = 0.0
+unit = "1"
+meaning = "candidate-proportional voltage-reset coefficient"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.r1]
+default = 0.0
+unit = "1"
+meaning = "first additive current kick"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.r2]
+default = 0.0
+unit = "1"
+meaning = "second additive current kick"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[integration]
+dt = 1.0
+method = "rk4"
+
+[dynamics]
+v = "(-(v - v_rest) + i1 + i2 + I) / tau_v"
+theta = "(theta_inf - theta + a * (v - v_rest)) / tau_theta"
+i1 = "-i1 / tau_1"
+i2 = "-i2 / tau_2"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+golden_trace_sha256 = "6d2aadb7c0d676ac5a7c7b1411b4f9d6dadc7fb233c1e22beeadae44d8be78cf"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/sc_scaled_reset_adaptive_if_project.json"
+
+[documentation]
+slug = "models/sc_scaled_reset_adaptive_if"
+notes = "Count-neutral identity preserving the former MihalasNieburNeuron implementation without whole-model publication attribution."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "retained mixed-drive receipt plus constant-current regimes"
+tolerance = "binary64 state/event parity across Python, Rust, Julia and Go; Mojo ULP-bounded; Q16.16 complete 250-step event-vector equality and four-state error at most 0.001"
+evidence = "tests/test_sc_scaled_reset_adaptive_if.py; tests/test_sc_scaled_reset_adaptive_if_backends.py; tests/test_reference_mihalas_niebur.py; tests/test_cosim_sc_scaled_reset_adaptive_if.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+synthesised = true
+cosim_evidence = "tests/test_cosim_sc_scaled_reset_adaptive_if.py"
+synth_report = "hdl/reports/yosys_sc_scaled_reset_adaptive_if_q1616_2026-08-28.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Bounded generated Q16.16 co-simulation, coarse synthesis, and formal port safety only; timing, PPA, board, device, and silicon evidence remain open."

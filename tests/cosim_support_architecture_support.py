@@ -153,8 +153,11 @@ _MCKEAN_NAMES = (
 
 
 _MIHALAS_NIEBUR_NAMES = (
+    "_features",
     "_mihalas_niebur_driven_rk4_features",
     "_mihalas_niebur_hand_spike_count",
+    "_rk4",
+    "_sc_scaled_reset_driven_rk4_features",
 )
 
 
@@ -201,6 +204,7 @@ _WANG_BUZSAKI_NAMES = (
 
 
 _WILSON_HR_NAMES = (
+    "_sc_resetting_wilson_hr_rk4_features",
     "_wilson_hr_hand_spike_count",
     "_wilson_hr_rk4_features",
 )

@@ -53,61 +53,109 @@ init = 0.0
 default = -50.0
 unit = "mV"
 meaning = "steady adaptive-threshold target"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.v_rest]
 default = -70.0
 unit = "mV"
 meaning = "resting membrane potential"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.v_reset]
 default = -70.0
 unit = "mV"
 meaning = "hard-reset membrane potential"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.tau_m]
 default = 10.0
 unit = "ms"
 meaning = "membrane time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.tau_theta]
 default = 100.0
 unit = "ms"
 meaning = "threshold adaptation time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.tau_asc1]
 default = 10.0
 unit = "ms"
 meaning = "first after-spike-current time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.tau_asc2]
 default = 200.0
 unit = "ms"
 meaning = "second after-spike-current time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.a_theta]
 default = 0.01
 unit = "1"
 meaning = "project voltage-threshold coupling"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.delta_theta]
 default = 2.0
 unit = "mV"
 meaning = "project threshold reset increment"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.r_asc1]
 default = 1.0
 unit = "mV"
 meaning = "first project after-spike-current increment"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.r_asc2]
 default = 0.5
 unit = "mV"
 meaning = "second project after-spike-current increment"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.resistance]
 default = 1.0
 unit = "1"
 meaning = "normalized current-to-voltage gain"
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [integration]
 dt = 1.0

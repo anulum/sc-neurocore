@@ -28,19 +28,20 @@ from __future__ import annotations
 
 import argparse
 import json
-import os as _os
 import platform
 import time
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import NDArray
 
 from sc_neurocore.neurons.models import mihalas_niebur
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 
-N_STEPS = 2_000_000
-CURRENT = 2.0
-N_REPEATS = 5
+N_STEPS = 200_000
+CURRENT = 0.002
+N_REPEATS = 3
+MODEL_KWARGS = {"current_jump_1": 0.01, "current_jump_2": -0.0006}
 
 
 def _probe_rust() -> tuple[bool, str]:
@@ -59,19 +60,21 @@ def _probe_go() -> tuple[bool, str]:
 
 
 def _probe_mojo() -> tuple[bool, str]:
-    if not _os.path.isfile(_os.path.expanduser("~/.pixi/bin/mojo")):
-        return False, "mojo binary not at ~/.pixi/bin/mojo"
     ok = mihalas_niebur._ensure_mojo_loaded()
     return (ok, "" if ok else "accel/mojo/neurons/libmihalasniebur.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray]:
-    MihalasNieburNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
+def _run(backend: str) -> tuple[float, float, NDArray[np.float64]]:
+    MihalasNieburNeuron(**MODEL_KWARGS).simulate(
+        N_STEPS, CURRENT, backend=backend
+    )  # warm-up (Julia JIT)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: NDArray[np.float64] = np.empty((0, 4), dtype=np.float64)
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
-        trace, _spikes = MihalasNieburNeuron().simulate(N_STEPS, CURRENT, backend=backend)
+        trace, _spikes = MihalasNieburNeuron(**MODEL_KWARGS).simulate(
+            N_STEPS, CURRENT, backend=backend
+        )
         times_ms.append((time.perf_counter() - t0) * 1000.0)
     times_ms.sort()
     return times_ms[len(times_ms) // 2], times_ms[0], trace
@@ -85,7 +88,7 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     print("# Mihalas-Niebur 2009 generalized IF N-step RK4 benchmark")
-    print(f"# Workload: {N_STEPS:,} steps, default tonic regime, current={CURRENT}")
+    print(f"# Workload: {N_STEPS:,} source-profile panel-M steps, current={CURRENT}")
     print(f"# Repeats per backend: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
@@ -106,7 +109,7 @@ def main(argv: list[str]) -> int:
         print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
     print()
 
-    reference: np.ndarray | None = None
+    reference: NDArray[np.float64] | None = None
     python_median: float | None = None
     rows: list[dict[str, object]] = []
 
@@ -123,7 +126,8 @@ def main(argv: list[str]) -> int:
             python_median = median_ms
             parity = 0.0
         else:
-            assert reference is not None
+            if reference is None:
+                raise RuntimeError("Python reference must run before optional backends")
             parity = float(np.max(np.abs(trace - reference)))
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")
@@ -140,12 +144,17 @@ def main(argv: list[str]) -> int:
     print()
     print("# Note: the Mihalas-Niebur right-hand side is purely linear (no transcendental")
     print("# functions), so rust, julia and go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo fuses multiply-add; on this platform it also matches bit-for-bit, but it")
-    print("# is validated as non-amplifying within a ULP band rather than asserted exact.")
+    print("# Mojo may fuse multiply-add and is validated within the measured ULP-scale band.")
 
     report = {
         "benchmark": "mihalas_niebur_simulate",
-        "workload": {"n_steps": N_STEPS, "current": CURRENT, "repeats": N_REPEATS},
+        "workload": {
+            "n_steps": N_STEPS,
+            "current": CURRENT,
+            "current_jump_1": MODEL_KWARGS["current_jump_1"],
+            "current_jump_2": MODEL_KWARGS["current_jump_2"],
+            "repeats": N_REPEATS,
+        },
         "environment": {
             "python": platform.python_version(),
             "numpy": np.__version__,

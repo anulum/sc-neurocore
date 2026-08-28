@@ -40,6 +40,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "LapicqueNeuron",
             "MATNeuron",
             "MihalasNieburNeuron",
+            "SCScaledResetAdaptiveIFNeuron",
             "NonResettingLIFNeuron",
             "SCNonResettingAdaptiveLIFNeuron",
             "SCSigmaDeltaAccumulatorNeuron",

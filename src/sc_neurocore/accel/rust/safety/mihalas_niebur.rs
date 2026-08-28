@@ -4,9 +4,17 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for Mihalas-Niebur RK4 dynamics
+// SC-NeuroCore — Rust safety mirror for source-faithful Mihalas-Niebur
 
-#[derive(Debug, Clone)]
+//! Mihalaş-Niebur equations 2.1–2.2 with capacitance-normalised currents.
+
+/// Four-state generalised integrate-and-fire neuron from Mihalaş and Niebur (2009).
+///
+/// Rates are per millisecond, voltages are volts, and currents are volts per
+/// millisecond after division by capacitance. The flow uses fixed-grid RK4 and
+/// sampled threshold detection; the published differential equations and event
+/// reset are otherwise unchanged.
+#[derive(Clone, Debug)]
 pub struct MihalasNieburNeuron {
     pub v: f64,
     pub theta: f64,
@@ -16,46 +24,49 @@ pub struct MihalasNieburNeuron {
     pub v_reset: f64,
     pub theta_reset: f64,
     pub theta_inf: f64,
-    pub tau_v: f64,
-    pub tau_theta: f64,
-    pub tau_1: f64,
-    pub tau_2: f64,
-    pub a: f64,
-    pub b: f64,
-    pub r1: f64,
-    pub r2: f64,
+    pub leak_rate: f64,
+    pub threshold_voltage_coupling: f64,
+    pub threshold_decay_rate: f64,
+    pub current_decay_rate_1: f64,
+    pub current_decay_rate_2: f64,
+    pub current_retention_1: f64,
+    pub current_retention_2: f64,
+    pub current_jump_1: f64,
+    pub current_jump_2: f64,
     pub dt: f64,
 }
 
 impl MihalasNieburNeuron {
+    /// Construct the paper's common Table 1 profile with Figure 1C coupling.
     pub fn new() -> Self {
         Self {
-            v: 0.0,
-            theta: 1.0,
+            v: -0.07,
+            theta: -0.05,
             i1: 0.0,
             i2: 0.0,
-            v_rest: 0.0,
-            v_reset: 0.0,
-            theta_reset: 1.0,
-            theta_inf: 1.0,
-            tau_v: 10.0,
-            tau_theta: 100.0,
-            tau_1: 10.0,
-            tau_2: 200.0,
-            a: 0.0,
-            b: 0.0,
-            r1: 0.0,
-            r2: 0.0,
-            dt: 1.0,
+            v_rest: -0.07,
+            v_reset: -0.07,
+            theta_reset: -0.06,
+            theta_inf: -0.05,
+            leak_rate: 0.05,
+            threshold_voltage_coupling: 0.005,
+            threshold_decay_rate: 0.01,
+            current_decay_rate_1: 0.2,
+            current_decay_rate_2: 0.02,
+            current_retention_1: 0.0,
+            current_retention_2: 1.0,
+            current_jump_1: 0.0,
+            current_jump_2: 0.0,
+            dt: 0.1,
         }
     }
 
-    fn finite_values(values: &[f64]) -> bool {
+    fn finite(values: &[f64]) -> bool {
         values.iter().all(|value| value.is_finite())
     }
 
-    fn valid_runtime(&self) -> bool {
-        Self::finite_values(&[
+    fn valid(&self) -> bool {
+        Self::finite(&[
             self.v,
             self.theta,
             self.i1,
@@ -64,28 +75,31 @@ impl MihalasNieburNeuron {
             self.v_reset,
             self.theta_reset,
             self.theta_inf,
-            self.tau_v,
-            self.tau_theta,
-            self.tau_1,
-            self.tau_2,
-            self.a,
-            self.b,
-            self.r1,
-            self.r2,
+            self.leak_rate,
+            self.threshold_voltage_coupling,
+            self.threshold_decay_rate,
+            self.current_decay_rate_1,
+            self.current_decay_rate_2,
+            self.current_retention_1,
+            self.current_retention_2,
+            self.current_jump_1,
+            self.current_jump_2,
             self.dt,
-        ]) && self.tau_v > 0.0
-            && self.tau_theta > 0.0
-            && self.tau_1 > 0.0
-            && self.tau_2 > 0.0
+        ]) && self.leak_rate > 0.0
+            && self.threshold_decay_rate > 0.0
+            && self.current_decay_rate_1 > 0.0
+            && self.current_decay_rate_2 > 0.0
             && self.dt > 0.0
+            && self.theta_reset > self.v_reset
     }
 
-    fn derivatives(&self, v: f64, theta: f64, i1: f64, i2: f64, i_ext: f64) -> [f64; 4] {
+    fn derivatives(&self, state: [f64; 4], current: f64) -> [f64; 4] {
         [
-            (-(v - self.v_rest) + i1 + i2 + i_ext) / self.tau_v,
-            (self.theta_inf - theta + self.a * (v - self.v_rest)) / self.tau_theta,
-            -i1 / self.tau_1,
-            -i2 / self.tau_2,
+            current + state[2] + state[3] - self.leak_rate * (state[0] - self.v_rest),
+            self.threshold_voltage_coupling * (state[0] - self.v_rest)
+                - self.threshold_decay_rate * (state[1] - self.theta_inf),
+            -self.current_decay_rate_1 * state[2],
+            -self.current_decay_rate_2 * state[3],
         ]
     }
 
@@ -98,54 +112,71 @@ impl MihalasNieburNeuron {
         ]
     }
 
-    fn rk4_candidate(&self, i_ext: f64) -> Option<[f64; 4]> {
+    fn candidate(&self, current: f64) -> Option<(Self, i32)> {
+        if !self.valid() || !current.is_finite() {
+            return None;
+        }
         let state = [self.v, self.theta, self.i1, self.i2];
         let half_dt = 0.5 * self.dt;
-        let k1 = self.derivatives(state[0], state[1], state[2], state[3], i_ext);
-        let s2 = Self::add_scaled(state, k1, half_dt);
-        let k2 = self.derivatives(s2[0], s2[1], s2[2], s2[3], i_ext);
-        let s3 = Self::add_scaled(state, k2, half_dt);
-        let k3 = self.derivatives(s3[0], s3[1], s3[2], s3[3], i_ext);
-        let s4 = Self::add_scaled(state, k3, self.dt);
-        let k4 = self.derivatives(s4[0], s4[1], s4[2], s4[3], i_ext);
-        let candidate = [
+        let k1 = self.derivatives(state, current);
+        let k2 = self.derivatives(Self::add_scaled(state, k1, half_dt), current);
+        let k3 = self.derivatives(Self::add_scaled(state, k2, half_dt), current);
+        let k4 = self.derivatives(Self::add_scaled(state, k3, self.dt), current);
+        let values = [
             state[0] + self.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
             state[1] + self.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
             state[2] + self.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
             state[3] + self.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
         ];
-        if Self::finite_values(&candidate) {
-            Some(candidate)
-        } else {
-            None
+        if !Self::finite(&values) {
+            return None;
         }
-    }
-
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !i_ext.is_finite() || !self.valid_runtime() {
-            return 0;
-        }
-        let Some(candidate) = self.rk4_candidate(i_ext) else {
-            return 0;
+        let mut next = Self {
+            v: values[0],
+            theta: values[1],
+            i1: values[2],
+            i2: values[3],
+            ..self.clone()
         };
-        self.v = candidate[0];
-        self.theta = candidate[1];
-        self.i1 = candidate[2];
-        self.i2 = candidate[3];
-        if self.v >= self.theta {
-            self.v = self.v_reset + self.b * (self.v - self.v_rest);
-            self.theta = self.theta.max(self.theta_reset);
-            self.i1 += self.r1;
-            self.i2 += self.r2;
-            1
-        } else {
-            0
+        let event = i32::from(next.v >= next.theta);
+        if event == 1 {
+            next.i1 = self.current_retention_1 * next.i1 + self.current_jump_1;
+            next.i2 = self.current_retention_2 * next.i2 + self.current_jump_2;
+            next.v = self.v_reset;
+            next.theta = self.theta_reset.max(next.theta);
         }
+        next.valid().then_some((next, event))
     }
 
+    /// Advance one sampled interval, returning `None` for an invalid candidate.
+    pub fn try_step(&mut self, current: f64) -> Option<i32> {
+        let (candidate, event) = self.candidate(current)?;
+        *self = candidate;
+        Some(event)
+    }
+
+    /// Advance one sampled interval and leave state unchanged on invalid input.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Simulate a constant-current trajectory atomically.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut events = 0_i64;
+        for _ in 0..n_steps {
+            events += i64::from(candidate.try_step(current)?);
+            trace.push(candidate.v);
+        }
+        *self = candidate;
+        Some((trace, events))
+    }
+
+    /// Restore the paper-profile resting state.
     pub fn reset(&mut self) {
         self.v = self.v_rest;
-        self.theta = self.theta_reset;
+        self.theta = self.theta_inf;
         self.i1 = 0.0;
         self.i2 = 0.0;
     }
@@ -157,8 +188,9 @@ impl Default for MihalasNieburNeuron {
     }
 }
 
+/// Return whether every state and parameter satisfies the runtime contract.
 pub fn validate_mihalas_niebur(state: &MihalasNieburNeuron) -> bool {
-    state.valid_runtime()
+    state.valid()
 }
 
 #[cfg(test)]
@@ -166,61 +198,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_mihalas_niebur_new() {
-        let state = MihalasNieburNeuron::new();
-        assert!(state.v.is_finite());
-        assert!(validate_mihalas_niebur(&state));
+    fn paper_profile_adapts_under_constant_drive() {
+        let mut neuron = MihalasNieburNeuron::new();
+        let (_, events) = neuron
+            .try_simulate(2500, 0.002)
+            .expect("valid source profile");
+        assert_eq!(events, 13);
+        assert!(neuron.theta > neuron.theta_inf);
     }
 
     #[test]
-    fn test_mihalas_niebur_rk4_reference_point() {
-        let mut state = MihalasNieburNeuron::new();
-        assert_eq!(state.step(0.5), 0);
-        assert!((state.v - 0.04758125).abs() < 1e-12);
-        assert!((state.theta - 1.0).abs() < 1e-15);
+    fn event_uses_published_reset_map() {
+        let mut neuron = MihalasNieburNeuron::new();
+        neuron.v = -0.049;
+        neuron.i1 = 0.003;
+        neuron.i2 = -0.001;
+        neuron.current_retention_1 = 0.25;
+        neuron.current_retention_2 = 0.5;
+        neuron.current_jump_1 = 0.004;
+        neuron.current_jump_2 = 0.002;
+        assert_eq!(neuron.step(0.02), 1);
+        assert_eq!(neuron.v, neuron.v_reset);
+        assert!(neuron.theta >= neuron.theta_reset);
+        assert!(neuron.i1 > neuron.current_jump_1);
+        assert!(neuron.i2 > 0.0);
     }
 
     #[test]
-    fn test_mihalas_niebur_spike_reset_uses_b() {
-        let mut state = MihalasNieburNeuron::new();
-        state.v = 0.99;
-        state.b = 0.5;
-        state.r1 = 1.25;
-        state.r2 = -0.25;
-        assert_eq!(state.step(2.0), 1);
-        assert!((state.v - 0.5430570625).abs() < 1e-12);
-        assert!((state.i1 - 1.25).abs() < 1e-15);
-        assert!((state.i2 - (-0.25)).abs() < 1e-15);
-    }
-
-    #[test]
-    fn test_mihalas_niebur_invalid_input_preserves_state() {
-        let mut state = MihalasNieburNeuron::new();
-        state.v = 0.2;
-        state.i1 = 0.3;
-        let before = (state.v, state.theta, state.i1, state.i2);
-        assert_eq!(state.step(f64::NAN), 0);
-        assert_eq!((state.v, state.theta, state.i1, state.i2), before);
-    }
-
-    #[test]
-    fn matches_python_golden_spike_count() {
-        // Parity with models/mihalas_niebur.py (RK4 integrator, default parameters). The
-        // Mihalas-Niebur 2009 right-hand side is entirely linear (leaky membrane, linearly-adapting
-        // threshold, two exponentially-decaying internal currents), with a spike (v >= theta) that
-        // resets v to v_reset + b*(v - v_rest), lifts theta to at least theta_reset, and increments
-        // the internal currents. No transcendentals, so the trajectory is bit-for-bit across
-        // languages and the spike count is an exact observable. At the default parameters the
-        // adaptation coefficient and after-spike increments are zero, so this exercises the
-        // sustained-firing regime of a fixed-threshold reset (the adaptation and b-scaled reset are
-        // covered exactly by test_mihalas_niebur_spike_reset_uses_b). Drive gates it cleanly around
-        // rheobase (~1): silent at I=0.0, a 142-spike train at I=2.0, a 333-spike train at I=5.0,
-        // each over 1000 macro steps. Verified python-vs-rust max|Δ|=0; the Go, Julia, Mojo and
-        // Rust-engine backends reproduce the same trajectory via test_mihalas_niebur_backends.py.
-        for (current, want) in [(0.0_f64, 0_usize), (2.0, 142), (5.0, 333)] {
-            let mut state = MihalasNieburNeuron::new();
-            let spikes = (0..1000).filter(|_| state.step(current) == 1).count();
-            assert_eq!(spikes, want, "I={current}");
-        }
+    fn invalid_batch_is_failure_atomic() {
+        let mut neuron = MihalasNieburNeuron::new();
+        let before = neuron.clone();
+        assert!(neuron.try_simulate(4, f64::NAN).is_none());
+        assert_eq!(neuron.v, before.v);
+        assert_eq!(neuron.theta, before.theta);
     }
 }

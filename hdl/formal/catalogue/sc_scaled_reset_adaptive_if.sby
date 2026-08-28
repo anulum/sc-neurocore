@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_scaled_reset_adaptive_if
+# Retained SC project model formal (BMC)
+
+[options]
+mode bmc
+depth 2
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_scaled_reset_adaptive_if_formal.v
+read -formal sc_scaled_reset_adaptive_if.v
+prep -top sc_scaled_reset_adaptive_if_formal
+
+[files]
+sc_scaled_reset_adaptive_if_formal.v
+sc_scaled_reset_adaptive_if.v

@@ -52,6 +52,7 @@ and event-hash fields into the deterministic trace schema.
 | `sc_triangular_mckean_project` | `sc_triangular_mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the retained project recurrence (no reset, rising-edge `v_peak` crossing); no paper attribution |
 | `medvedev_map_first_return_doi` | `medvedev_map` | `universal_dsl` | Independent scalar iteration of Medvedev (2005) Section 4's three-region slow-calcium first-return construction, with the disclosed global calibration and maintained pre-state event convention separated from the DOI-sourced equations |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
+| `sc_scaled_reset_adaptive_if_driven_project` | `sc_scaled_reset_adaptive_if` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the retained candidate-proportional-reset project recurrence; no whole-model publication attribution |
 | `morris_lecar_driven_oscillation_doi` | `morris_lecar` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven calcium-potassium relaxation oscillator (no reset, rising-edge `v >= 0` crossing) from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
 | `pernarowski_autonomous_bursting_doi` | `pernarowski` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the autonomous three-state beta-cell bursting flow (no reset, rising-edge `v >= 0.5` crossing) from `neurons/model_schemas/pernarowski.toml` with DOI-backed schema provenance |
 | `terman_wang_legion_oscillation_doi` | `terman_wang` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the two-state cubic and `tanh`-gated LEGION relaxation oscillator (no reset, rising-edge `v >= 1.5` crossing) from `neurons/model_schemas/terman_wang.toml` with DOI-backed schema provenance |
@@ -163,13 +164,12 @@ calling the hand model or schema runner. The separately named
 `SCResettingWilsonHRNeuron` retains the former unit-capacitance, level-detected,
 hard-reset project recurrence under a project-only compatibility anchor rather
 than reusing the Wilson publication receipt.
-The Mihalas-Niebur entry re-derives the exact classical fourth-order Runge-Kutta
-recurrence for its four linear states (membrane, adaptive threshold, and two
-spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,
-`theta = max(theta, theta_reset)`, `i1 += r1`, `i2 += r2` reset; because
-`theta_reset` exceeds `theta_inf` the `max()` threshold floor engages on every
-spike, so the state-to-state `v >= theta` comparison is a genuine adaptive
-threshold rather than a fixed level.
+The Mihalas-Niebur entry re-derives equations 2.1–2.2 and Table 1 directly:
+two exponentially decaying currents, the capacitance-normalised membrane and
+adaptive-threshold flows, and the event map `I_j = R_j*I_j + A_j`, `V = V_r`,
+`Theta = max(Theta_r, Theta)`. The separately named
+`SCScaledResetAdaptiveIFNeuron` retains the former candidate-proportional
+voltage-reset recurrence under a project-only compatibility anchor.
 The Benda-Herz entry re-derives equations (8) and (45) with the paper's Figure 8
 square-root/linear example and validates the complete deterministic adaptation,
 phase, and event receipt. The former stochastic project recurrence is separately

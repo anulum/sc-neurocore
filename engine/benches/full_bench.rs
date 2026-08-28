@@ -157,6 +157,7 @@ use sc_neurocore_engine::neurons::{
     RulkovMapNeuron,
     SCAdaptiveThresholdMapNeuron,
     SCResettingMATNeuron,
+    SCScaledResetAdaptiveIFNeuron,
     SFANeuron,
     SKNeuron,
     SSTNeuron,
@@ -1118,8 +1119,27 @@ fn bench_all(c: &mut Criterion) {
     c.bench_function("mihalas_niebur_10k_steps", |b| {
         b.iter(|| {
             let mut n = MihalasNieburNeuron::new();
+            n.current_jump_1 = 0.01;
+            n.current_jump_2 = -0.0006;
             for _ in 0..10_000 {
-                black_box(n.step(5.0));
+                black_box(n.step(0.002));
+            }
+        })
+    });
+
+    c.bench_function("sc_scaled_reset_adaptive_if_10k_steps", |b| {
+        b.iter(|| {
+            let mut n = SCScaledResetAdaptiveIFNeuron::new();
+            n.theta_reset = 1.3;
+            n.tau_theta = 40.0;
+            n.tau_1 = 15.0;
+            n.tau_2 = 80.0;
+            n.a = 0.1;
+            n.b = 0.1;
+            n.r1 = 0.2;
+            n.r2 = -0.15;
+            for _ in 0..10_000 {
+                black_box(n.step(3.0));
             }
         })
     });

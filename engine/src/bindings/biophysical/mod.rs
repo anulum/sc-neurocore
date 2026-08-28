@@ -29,6 +29,8 @@ mod pospischil;
 mod prescott;
 #[path = "../sc_four_state_glif.rs"]
 mod sc_four_state_glif;
+#[path = "../sc_scaled_reset_adaptive_if.rs"]
+mod sc_scaled_reset_adaptive_if;
 mod sc_six_state_thalamocortical;
 mod sc_three_state_phantom_burster;
 mod traub_miles;
@@ -53,6 +55,7 @@ pub use plant_r15::PyPlantR15Neuron;
 pub use pospischil::PyPospischilNeuron;
 pub use prescott::PyPrescottNeuron;
 pub use sc_four_state_glif::PySCFourStateGLIFNeuron;
+pub use sc_scaled_reset_adaptive_if::PySCScaledResetAdaptiveIFNeuron;
 pub use sc_six_state_thalamocortical::PySCSixStateThalamocorticalNeuron;
 pub use sc_three_state_phantom_burster::PySCThreeStatePhantomBurster;
 pub use traub_miles::PyTraubMilesNeuron;
@@ -74,6 +77,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     plant_r15::register(module)?;
     prescott::register(module)?;
     mihalas_niebur::register(module)?;
+    sc_scaled_reset_adaptive_if::register(module)?;
     glif::register(module)?;
     sc_four_state_glif::register(module)?;
     gif_population::register(module)?;

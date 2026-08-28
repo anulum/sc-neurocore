@@ -20,28 +20,7 @@ def _wilson_hr_hand_spike_count(n_steps: int, current: float) -> int:
 
 
 def _wilson_hr_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return classical-RK4 features for the Wilson-HR cortical model.
-
-    This independent recurrence re-derives Wilson's two-state polynomial flow,
-    advances ``v`` and ``r`` simultaneously through four Runge-Kutta stages, and
-    applies an observational upward crossing at ``v = 0`` without resetting the
-    continuous source flow. The helper does not call the hand model or schema runner.
-
-    Parameters
-    ----------
-    current:
-        Constant input current applied at every timestep.
-    dt:
-        Simulation timestep.
-    steps:
-        Number of timesteps to advance.
-
-    Returns
-    -------
-    dict of str to float
-        Reference features for post-reset ``v`` and candidate ``r``, plus the
-        spike count and first-spike step.
-    """
+    """Re-derive the source flow and observational upward crossings."""
     tau_r = 1.9
     capacitance = 0.8
     threshold = 0.0

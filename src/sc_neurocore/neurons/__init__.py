@@ -143,6 +143,7 @@ _MODEL_NAMES = {
     "MedvedevMapNeuron",
     "MetaPlasticNeuron",
     "MihalasNieburNeuron",
+    "SCScaledResetAdaptiveIFNeuron",
     "MorrisLecarNeuron",
     "MultiTimescaleNeuron",
     "NeuroGridNeuron",
