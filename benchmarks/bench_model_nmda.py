@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import statistics
@@ -41,7 +42,29 @@ SOURCES = [
     "src/sc_neurocore/accel/mojo/kernels/sc_wb_nmda_magnesium_block.mojo",
     "src/sc_neurocore/accel/rust/safety/nmda_neuron.rs",
     "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs",
+    "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml",
+    "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/nmda_neuron.json",
+    "src/sc_neurocore/neurons/model_schemas/nmda_neuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.json",
+    "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.toml",
+    "src/sc_neurocore/neurons/reference_receipts/nmda_neuron_wang_1999.json",
+    "src/sc_neurocore/neurons/reference_receipts/sc_wb_nmda_magnesium_block.json",
 ]
+
+
+def _source_hashes() -> dict[str, object]:
+    """Return flat digests plus suffix aliases consumed by the evidence gate."""
+    hashes: dict[str, object] = {}
+    for relative in SOURCES:
+        digest = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+        hashes[relative] = digest
+        stem, suffix = relative.rsplit(".", 1)
+        aliases = hashes.setdefault(stem, {})
+        if not isinstance(aliases, dict):
+            raise RuntimeError(f"source-hash alias collision at {stem}")
+        aliases[suffix] = digest
+    return hashes
 
 
 def _summary(
@@ -230,14 +253,17 @@ def main() -> None:
         )
     }
     payload = {
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "benchmark": "Wang NMDA source and retained SC dual-identity integration",
+        "models": ["NMDANeuron", "SCWBNMDAMagnesiumBlockNeuron"],
+        "evidence_class": "local_regression_non_isolated",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "steps": STEPS,
         "repeats": REPEATS,
         "source_current": 0.6,
         "sc_current": 5.0,
         "backends": backends,
-        "source_hashes": {
-            name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in SOURCES
-        },
+        "source_hashes": _source_hashes(),
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
         "notes": "Local loaded-host regression; state parity is tested separately; no comparative speed claim.",

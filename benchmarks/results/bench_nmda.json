@@ -1,21 +1,29 @@
 {
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "benchmark": "Wang NMDA source and retained SC dual-identity integration",
+  "models": [
+    "NMDANeuron",
+    "SCWBNMDAMagnesiumBlockNeuron"
+  ],
+  "evidence_class": "local_regression_non_isolated",
+  "timestamp_utc": "2026-08-28T00:42:22.483494+00:00",
   "steps": 20000,
   "repeats": 3,
   "source_current": 0.6,
   "sc_current": 5.0,
   "backends": {
     "python": {
-      "source_median_ns_per_step": 5918.4959,
-      "sc_median_ns_per_step": 84995.68575,
+      "source_median_ns_per_step": 5180.0315,
+      "sc_median_ns_per_step": 70181.01415,
       "source_results_ns_per_step": [
-        5992.24645,
-        5918.4959,
-        5851.76825
+        5100.81945,
+        5180.0315,
+        5515.0421
       ],
       "sc_results_ns_per_step": [
-        87011.21935,
-        84995.68575,
-        78518.25195
+        70219.1061,
+        70038.7555,
+        70181.01415
       ],
       "source_final_state": [
         -57.236651346510506,
@@ -32,17 +40,17 @@
       ]
     },
     "rust": {
-      "source_median_ns_per_step": 600.8884,
-      "sc_median_ns_per_step": 7093.7608,
+      "source_median_ns_per_step": 574.27705,
+      "sc_median_ns_per_step": 6402.204,
       "source_results_ns_per_step": [
-        599.4714,
-        600.8884,
-        664.0977
+        563.5682,
+        574.27705,
+        580.1633
       ],
       "sc_results_ns_per_step": [
-        6843.2718,
-        7093.7608,
-        8291.17145
+        6402.204,
+        6278.8525,
+        6448.695
       ],
       "source_final_state": [
         -57.236651346510506,
@@ -59,33 +67,33 @@
       ]
     },
     "go": {
-      "source_median_ns_per_step": 174.4,
-      "sc_median_ns_per_step": 7132.0,
+      "source_median_ns_per_step": 153.8,
+      "sc_median_ns_per_step": 4982.0,
       "source_results_ns_per_step": [
-        174.4,
-        175.3,
-        172.6
+        151.8,
+        160.2,
+        153.8
       ],
       "sc_results_ns_per_step": [
-        5845.0,
-        7159.0,
-        7132.0
+        5068.0,
+        4705.0,
+        4982.0
       ],
       "source_final_state": [],
       "sc_final_state": []
     },
     "julia": {
-      "source_median_ns_per_step": 699.6433,
-      "sc_median_ns_per_step": 3571.3152,
+      "source_median_ns_per_step": 420.5552,
+      "sc_median_ns_per_step": 2769.54795,
       "source_results_ns_per_step": [
-        637.61125,
-        699.6433,
-        4487.86545
+        419.97595,
+        420.5552,
+        3538.1004
       ],
       "sc_results_ns_per_step": [
-        3571.3152,
-        3461.35735,
-        3641.54135
+        2769.54795,
+        2732.68095,
+        2842.40875
       ],
       "source_final_state": [
         -57.236651346510506,
@@ -102,17 +110,17 @@
       ]
     },
     "mojo": {
-      "source_median_ns_per_step": 74.96565231122077,
-      "sc_median_ns_per_step": 3403.6587981972843,
+      "source_median_ns_per_step": 68.97759740240872,
+      "sc_median_ns_per_step": 3131.963947089389,
       "source_results_ns_per_step": [
-        76.80910057388246,
-        74.96565231122077,
-        72.94450188055634
+        68.47080076113343,
+        68.97759740240872,
+        69.02214954607189
       ],
       "sc_results_ns_per_step": [
-        3469.25409976393,
-        3403.6587981972843,
-        3263.080003671348
+        3175.8903001900762,
+        3074.099402874708,
+        3131.963947089389
       ],
       "source_final_state": [
         -57.23665134651192,
@@ -130,20 +138,90 @@
     }
   },
   "source_hashes": {
-    "benchmarks/bench_model_nmda.py": "2568ca51849a4735e1a94542a7aac264ecdb9eea0527a71c6c6544fc3b7f0cab",
+    "benchmarks/bench_model_nmda.py": "3953b6b21781137cdeb42d0871c1ec64b7ab6d1670f49d253e950075b7760676",
+    "benchmarks/bench_model_nmda": {
+      "py": "3953b6b21781137cdeb42d0871c1ec64b7ab6d1670f49d253e950075b7760676"
+    },
     "engine/examples/bench_nmda_rk2.rs": "49ac8d91e1eaaaa441b3ad16125fe497696c8f24a857dfe8017b5a962d18ff59",
+    "engine/examples/bench_nmda_rk2": {
+      "rs": "49ac8d91e1eaaaa441b3ad16125fe497696c8f24a857dfe8017b5a962d18ff59"
+    },
     "engine/src/neurons/channels/nmda.rs": "3979131640dae00409b638cb3e0464edc16c52345f1acb69dd77aa0354ca3484",
+    "engine/src/neurons/channels/nmda": {
+      "rs": "3979131640dae00409b638cb3e0464edc16c52345f1acb69dd77aa0354ca3484"
+    },
     "engine/src/neurons/channels/sc_wb_nmda_magnesium_block.rs": "ca2310405fa487426ce732ed328db4503b732603f8561bf30bc5feff58612e89",
+    "engine/src/neurons/channels/sc_wb_nmda_magnesium_block": {
+      "rs": "ca2310405fa487426ce732ed328db4503b732603f8561bf30bc5feff58612e89"
+    },
     "src/sc_neurocore/neurons/models/nmda_neuron.py": "8405408091514e236f04915607c92303d0f271fb71493192d6844f5a24a1f3d0",
+    "src/sc_neurocore/neurons/models/nmda_neuron": {
+      "py": "8405408091514e236f04915607c92303d0f271fb71493192d6844f5a24a1f3d0"
+    },
     "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py": "f7bbd7bdd6cbf4046996098997c515e4c8328a4373b6754f616233f0b42a4498",
+    "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block": {
+      "py": "f7bbd7bdd6cbf4046996098997c515e4c8328a4373b6754f616233f0b42a4498"
+    },
     "src/sc_neurocore/accel/go/services/nmda_neuron.go": "0244ce6a5347624906a05eee2e345b4f66ce8cbc7390c00947e8ea06103f8659",
+    "src/sc_neurocore/accel/go/services/nmda_neuron": {
+      "go": "0244ce6a5347624906a05eee2e345b4f66ce8cbc7390c00947e8ea06103f8659"
+    },
     "src/sc_neurocore/accel/go/services/sc_wb_nmda_magnesium_block.go": "e836c4c18c38040a25ded497623e74ff1d6935eac5d18ccdf1a061b2dc2cb843",
+    "src/sc_neurocore/accel/go/services/sc_wb_nmda_magnesium_block": {
+      "go": "e836c4c18c38040a25ded497623e74ff1d6935eac5d18ccdf1a061b2dc2cb843"
+    },
     "src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl": "97bfbe09b790e9f20693b6690f991edbbfdb219eb10046f1e5159933e72d9ab6",
+    "src/sc_neurocore/accel/julia/neurons/nmda_neuron": {
+      "jl": "97bfbe09b790e9f20693b6690f991edbbfdb219eb10046f1e5159933e72d9ab6"
+    },
     "src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block.jl": "9fda30ef9df1b7d625e19244578874ffeb75137f798f8a7d6db24143d34436b6",
+    "src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block": {
+      "jl": "9fda30ef9df1b7d625e19244578874ffeb75137f798f8a7d6db24143d34436b6"
+    },
     "src/sc_neurocore/accel/mojo/kernels/nmda_neuron.mojo": "21d6d1230141a67bfcb1e77236be60bd46459a9ea81491cab9d2005bd582e5b7",
+    "src/sc_neurocore/accel/mojo/kernels/nmda_neuron": {
+      "mojo": "21d6d1230141a67bfcb1e77236be60bd46459a9ea81491cab9d2005bd582e5b7"
+    },
     "src/sc_neurocore/accel/mojo/kernels/sc_wb_nmda_magnesium_block.mojo": "4bc894dc495a6eff5fc2a67b4064ff7837d267d78315004533f2b39331388dd1",
+    "src/sc_neurocore/accel/mojo/kernels/sc_wb_nmda_magnesium_block": {
+      "mojo": "4bc894dc495a6eff5fc2a67b4064ff7837d267d78315004533f2b39331388dd1"
+    },
     "src/sc_neurocore/accel/rust/safety/nmda_neuron.rs": "811207a3fb1219ac45afbd1c87ce41508ddd217a981bcc483eb7df02ee8f6496",
-    "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs": "86cfde58067a4dc423dbc36cfcbc4ef7b5abda4981931ab9679c41bab7532e33"
+    "src/sc_neurocore/accel/rust/safety/nmda_neuron": {
+      "rs": "811207a3fb1219ac45afbd1c87ce41508ddd217a981bcc483eb7df02ee8f6496"
+    },
+    "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs": "86cfde58067a4dc423dbc36cfcbc4ef7b5abda4981931ab9679c41bab7532e33",
+    "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block": {
+      "rs": "86cfde58067a4dc423dbc36cfcbc4ef7b5abda4981931ab9679c41bab7532e33"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml": "816c6e92878b52fcb35443609f03185d1b0d3fb63856922d20927e6004467a7a",
+    "src/sc_neurocore/neurons/model_descriptors/NMDANeuron": {
+      "toml": "816c6e92878b52fcb35443609f03185d1b0d3fb63856922d20927e6004467a7a"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml": "816965b611a4d8ae7c93e422f59483dfec933ccad117cd1bcdc45aac41d48ed8",
+    "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron": {
+      "toml": "816965b611a4d8ae7c93e422f59483dfec933ccad117cd1bcdc45aac41d48ed8"
+    },
+    "src/sc_neurocore/neurons/model_schemas/nmda_neuron.json": "8b329cc2cc45e1afdec0f017b2aa0e3dd3b62ecb36aaa5786721ef8893950dd8",
+    "src/sc_neurocore/neurons/model_schemas/nmda_neuron": {
+      "json": "8b329cc2cc45e1afdec0f017b2aa0e3dd3b62ecb36aaa5786721ef8893950dd8",
+      "toml": "f3d2574b14859568473d2c62431878b74448a16c2258f55d94ede3c9ef98da42"
+    },
+    "src/sc_neurocore/neurons/model_schemas/nmda_neuron.toml": "f3d2574b14859568473d2c62431878b74448a16c2258f55d94ede3c9ef98da42",
+    "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.json": "ecc77bfbc2ac234b76696735a3e6ab773dba661a353a05aba8ce2dcab0a36e74",
+    "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block": {
+      "json": "ecc77bfbc2ac234b76696735a3e6ab773dba661a353a05aba8ce2dcab0a36e74",
+      "toml": "0af15fd8e0942c54d545a52f81c102ab48d6eadcfcbb146cfc94fcafb9fe902f"
+    },
+    "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.toml": "0af15fd8e0942c54d545a52f81c102ab48d6eadcfcbb146cfc94fcafb9fe902f",
+    "src/sc_neurocore/neurons/reference_receipts/nmda_neuron_wang_1999.json": "e96751142cdb15d198c670df82f3d4bc8b36b050572abe1ace197c876eb4908f",
+    "src/sc_neurocore/neurons/reference_receipts/nmda_neuron_wang_1999": {
+      "json": "e96751142cdb15d198c670df82f3d4bc8b36b050572abe1ace197c876eb4908f"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/sc_wb_nmda_magnesium_block.json": "d4cf0ddb97d4fc9dad15d39bdd91796a17a6f317808e280f47a0be442c45b982",
+    "src/sc_neurocore/neurons/reference_receipts/sc_wb_nmda_magnesium_block": {
+      "json": "d4cf0ddb97d4fc9dad15d39bdd91796a17a6f317808e280f47a0be442c45b982"
+    }
   },
   "production_speed_claim": false,
   "hardware_measurement_claimed": false,

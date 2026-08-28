@@ -4048,6 +4048,87 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_nmda.json",
+      "description": "Wang NMDA source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "Wang NMDA source and retained SC dual-identity integration",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 3,
+        "sc_current": 5.0,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "source_current": 0.6,
+        "steps": 20000
+      },
+      "id": "wang-nmda-dual-identity-local-regression",
+      "required_numbers": [
+        "backends.python.source_median_ns_per_step",
+        "backends.python.sc_median_ns_per_step",
+        "backends.rust.source_median_ns_per_step",
+        "backends.rust.sc_median_ns_per_step",
+        "backends.go.source_median_ns_per_step",
+        "backends.go.sc_median_ns_per_step",
+        "backends.julia.source_median_ns_per_step",
+        "backends.julia.sc_median_ns_per_step",
+        "backends.mojo.source_median_ns_per_step",
+        "backends.mojo.sc_median_ns_per_step"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_nmda.py": "source_hashes.benchmarks/bench_model_nmda.py",
+        "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml",
+        "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/nmda_neuron.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/nmda_neuron.json",
+        "src/sc_neurocore/neurons/model_schemas/nmda_neuron.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/nmda_neuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_wb_nmda_magnesium_block.toml",
+        "src/sc_neurocore/neurons/models/nmda_neuron.py": "source_hashes.src/sc_neurocore/neurons/models/nmda_neuron.py",
+        "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py": "source_hashes.src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py",
+        "src/sc_neurocore/neurons/reference_receipts/nmda_neuron_wang_1999.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/nmda_neuron_wang_1999.json",
+        "src/sc_neurocore/neurons/reference_receipts/sc_wb_nmda_magnesium_block.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/sc_wb_nmda_magnesium_block.json"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_larter_breakspear.json",
+      "description": "Larter-Breakspear source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
+      "expected_values": {
+        "benchmark": "Larter-Breakspear source and retained SC dual-identity RK4",
+        "coupling": 0.0,
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "production_speed_claim": false,
+        "repeats": 3,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "steps": 20000
+      },
+      "id": "larter-breakspear-dual-identity-local-regression",
+      "required_numbers": [
+        "backends.python.source_median_ns_per_step",
+        "backends.python.sc_median_ns_per_step",
+        "backends.rust.source_median_ns_per_step",
+        "backends.rust.sc_median_ns_per_step",
+        "backends.go.source_median_ns_per_step",
+        "backends.go.sc_median_ns_per_step",
+        "backends.julia.source_median_ns_per_step",
+        "backends.julia.sc_median_ns_per_step",
+        "backends.mojo.source_median_ns_per_step",
+        "backends.mojo.sc_median_ns_per_step"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_larter_breakspear.py": "source_hashes.benchmarks/bench_model_larter_breakspear.py",
+        "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml",
+        "src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/larter_breakspear.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/larter_breakspear.json",
+        "src/sc_neurocore/neurons/model_schemas/larter_breakspear.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/larter_breakspear.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_decoupled_adaptation_ion_mass.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_decoupled_adaptation_ion_mass.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_decoupled_adaptation_ion_mass.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_decoupled_adaptation_ion_mass.toml",
+        "src/sc_neurocore/neurons/models/larter_breakspear.py": "source_hashes.src/sc_neurocore/neurons/models/larter_breakspear.py",
+        "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py": "source_hashes.src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py",
+        "src/sc_neurocore/neurons/reference_receipts/larter_breakspear_2003.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/larter_breakspear_2003.json",
+        "src/sc_neurocore/neurons/reference_receipts/sc_decoupled_adaptation_ion_mass.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/sc_decoupled_adaptation_ion_mass.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_mckean.json",
       "description": "McKean-Tonnelier source Heaviside RK4 parity across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

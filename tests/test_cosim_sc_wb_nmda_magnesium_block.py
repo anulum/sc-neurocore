@@ -21,6 +21,7 @@ import numpy.typing as npt
 
 from sc_neurocore.neurons.models import SCWBNMDAMagnesiumBlockNeuron
 from tests.cosim_support import HAS_IVERILOG
+from tests.toolchain_support import require_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _RTL = _ROOT / "hdl/formal/catalogue/sc_wb_nmda_magnesium_block.v"
@@ -190,6 +191,23 @@ def _source_trace(current: float, steps: int) -> npt.NDArray[np.float64]:
 
 def test_required_cosimulation_tool_is_available() -> None:
     assert HAS_IVERILOG
+
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {_RTL}; synth -top sc_wb_nmda_magnesium_block -run begin:coarse; check; stat",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_q3232_fsm_is_bit_exact_to_integer_oracle() -> None:

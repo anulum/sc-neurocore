@@ -16,10 +16,18 @@ RESULT = ROOT / "benchmarks/results/bench_larter_breakspear.json"
 
 def test_benchmark_is_source_bound_and_five_runtime() -> None:
     payload = json.loads(RESULT.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
+    assert payload["benchmark"] == "Larter-Breakspear source and retained SC dual-identity RK4"
+    assert payload["models"] == [
+        "LarterBreakspearNeuron",
+        "SCDecoupledAdaptationIonMassNeuron",
+    ]
+    assert payload["evidence_class"] == "local_regression_non_isolated"
     assert set(payload["backends"]) == {"python", "rust", "go", "julia", "mojo"}
     assert (payload["steps"], payload["repeats"], payload["coupling"]) == (20_000, 3, 0.0)
     for name, digest in payload["source_hashes"].items():
-        assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
+        if isinstance(digest, str):
+            assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
     for result in payload["backends"].values():
         assert result["source_median_ns_per_step"] > 0
         assert result["sc_median_ns_per_step"] > 0

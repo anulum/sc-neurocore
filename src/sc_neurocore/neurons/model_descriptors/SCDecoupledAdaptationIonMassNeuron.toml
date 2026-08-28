@@ -33,85 +33,106 @@ authors = [
     "SC-NeuroCore project",
 ]
 year = 2026
+derivation_note = "Count-neutral retained project recurrence; no external-paper attribution."
 
 [state.v]
 init = -0.5
+unit = "1"
+meaning = "normalised membrane-like project state"
 
 [state.w]
 init = 0.0
+unit = "1"
+meaning = "open potassium-channel fraction"
 
 [state.z]
 init = 0.0
+unit = "1"
+meaning = "decoupled adaptation state"
 
 [parameters.g_ca]
 default = 1.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive normalised calcium conductance"
+range = [1e-12, 1000000.0]
 
 [parameters.g_na]
 default = 6.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive normalised sodium conductance"
+range = [1e-12, 1000000.0]
 
 [parameters.g_k]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive normalised potassium conductance"
+range = [1e-12, 1000000.0]
 
 [parameters.v_ca]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised calcium reversal potential"
+range = [-1000000.0, 1000000.0]
 
 [parameters.v_na]
 default = 0.53
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised sodium reversal potential"
+range = [-1000000.0, 1000000.0]
 
 [parameters.v_k]
 default = -0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised potassium reversal potential"
+range = [-1000000.0, 1000000.0]
 
 [parameters.v_l]
 default = -0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised leak reversal potential"
+range = [-1000000.0, 1000000.0]
 
 [parameters.g_l]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive normalised leak conductance"
+range = [1e-12, 1000000.0]
 
 [parameters.phi]
 default = 0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive potassium-gate kinetic multiplier"
+range = [1e-12, 1000000.0]
 
 [parameters.tau_k]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive normalised potassium relaxation timescale"
+range = [1e-12, 1000000.0]
 
 [parameters.b]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive decoupled-adaptation rate"
+range = [1e-12, 1000000.0]
 
 [parameters.a_ee]
 default = 0.36
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "retained linear self-coupling coefficient"
+range = [-1000000.0, 1000000.0]
 
 [parameters.v0]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised potassium activation midpoint"
+range = [-1000000.0, 1000000.0]
 
 [parameters.i_ext]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised constant external drive"
+range = [-1000000.0, 1000000.0]
 
 [integration]
 dt = 0.01
@@ -142,10 +163,17 @@ status = "implemented"
 status = "implemented"
 
 [reproducibility]
-receipt = "src/sc_neurocore/neurons/reference_receipts/sc_decoupled_adaptation_ion_mass.json"
-benchmark = "benchmarks/results/bench_larter_breakspear.json"
-parity = "complete one-step state within 2e-12 across Python, Rust, Go, Julia, and Mojo"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/sc_decoupled_adaptation_ion_mass.json"
+golden_trace_sha256 = "66321150997406afb95ae4fc4dcae3766d8f6b4a85b159169581ea9c5439d75a"
+golden_citation = "SC-NeuroCore retained project recurrence complete-state receipt"
 
 [documentation]
 slug = "models/sc_decoupled_adaptation_ion_mass"
 notes = "Count-neutral SC identity preserving the former recurrence. No external-paper, RTL, formal-equivalence, timing, PPA, device, or silicon claim."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "512-step mixed-drive project receipt and five-runtime complete-state parity"
+tolerance = "binary64 2e-12 across native runtimes"
+evidence = "tests/test_model_larter_breakspear_source_fidelity.py; tests/test_larter_breakspear_native_parity.py"

@@ -35,15 +35,23 @@ authors = [
 ]
 year = 2003
 doi = "10.1088/0954-898X/14/4/305"
+paper_title = "Modulation of excitatory synaptic coupling facilitates synchronization and complex dynamics in a biophysical model of neuronal dynamics"
+derivation_note = "Source conductance and QV/QZ population equations with the maintained TVB parameter profile; fixed-step RK4 is the repository specialization."
 
 [state.v]
 init = 0.1
+unit = "1"
+meaning = "normalised mean excitatory membrane potential"
 
 [state.w]
 init = 0.1
+unit = "1"
+meaning = "open potassium-channel fraction"
 
 [state.z]
 init = 0.1
+unit = "1"
+meaning = "normalised mean inhibitory membrane potential"
 
 [parameters.g_ca]
 default = 1.1
@@ -119,40 +127,46 @@ range = [
 
 [parameters.t_ca]
 default = -0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised calcium activation midpoint"
+range = [-1000000.0, 1000000.0]
 
 [parameters.t_na]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised sodium activation midpoint"
+range = [-1000000.0, 1000000.0]
 
 [parameters.t_k]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised potassium activation midpoint"
+range = [-1000000.0, 1000000.0]
 
 [parameters.delta_ca]
 default = 0.15
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive calcium activation width"
+range = [1e-12, 1000000.0]
 
 [parameters.delta_na]
 default = 0.15
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive sodium activation width"
+range = [1e-12, 1000000.0]
 
 [parameters.delta_k]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive potassium activation width"
+range = [1e-12, 1000000.0]
 
 [parameters.phi]
 default = 0.7
 unit = "1"
 meaning = "temperature scaling factor of the potassium kinetics"
 range = [
-    0.0,
+    1e-12,
     2.0,
 ]
 
@@ -161,7 +175,7 @@ default = 1.0
 unit = "1"
 meaning = "normalised potassium relaxation timescale"
 range = [
-    0.0,
+    1e-12,
     2.0,
 ]
 
@@ -170,7 +184,7 @@ default = 0.1
 unit = "1"
 meaning = "calcium-current slope (sharpness) parameter"
 range = [
-    0.0,
+    1e-12,
     2.0,
 ]
 
@@ -185,63 +199,75 @@ range = [
 
 [parameters.a_ei]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "excitatory drive gain of the inhibitory population"
+range = [0.0, 1000000.0]
 
 [parameters.a_ie]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "inhibitory feedback gain onto excitatory voltage"
+range = [0.0, 1000000.0]
 
 [parameters.a_ne]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "external-drive gain onto the excitatory population"
+range = [0.0, 1000000.0]
 
 [parameters.a_ni]
 default = 0.4
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "external-drive gain onto the inhibitory population"
+range = [0.0, 1000000.0]
 
 [parameters.r_nmda]
 default = 0.25
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "non-negative NMDA modulation ratio of excitatory calcium conductance"
+range = [0.0, 1000000.0]
 
 [parameters.coupling_balance]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fraction of external versus local excitatory firing-rate drive"
+range = [0.0, 1.0]
 
 [parameters.v_t]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised excitatory firing-rate midpoint"
+range = [-1000000.0, 1000000.0]
 
 [parameters.z_t]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised inhibitory firing-rate midpoint"
+range = [-1000000.0, 1000000.0]
 
 [parameters.delta_v]
 default = 0.65
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive excitatory firing-rate width"
+range = [1e-12, 1000000.0]
 
 [parameters.delta_z]
 default = 0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive inhibitory firing-rate width"
+range = [1e-12, 1000000.0]
 
 [parameters.q_v_max]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "non-negative maximum excitatory population firing rate"
+range = [0.0, 1000000.0]
 
 [parameters.q_z_max]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "non-negative maximum inhibitory population firing rate"
+range = [0.0, 1000000.0]
 
 [parameters.i_ext]
 default = 0.3
@@ -254,8 +280,9 @@ range = [
 
 [parameters.t_scale]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "positive global derivative timescale multiplier"
+range = [1e-12, 1000000.0]
 
 [integration]
 dt = 0.01
@@ -286,10 +313,17 @@ status = "implemented"
 status = "implemented"
 
 [reproducibility]
-receipt = "src/sc_neurocore/neurons/reference_receipts/larter_breakspear_2003.json"
-benchmark = "benchmarks/results/bench_larter_breakspear.json"
-parity = "complete one-step state within 2e-12 across Python, Rust, Go, Julia, and Mojo"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/larter_breakspear_2003.json"
+golden_trace_sha256 = "21b29686fa8febb84c9b2299967f76237ca712a06bb61d0fa23edbe375ae7f71"
+golden_citation = "doi:10.1088/0954-898X/14/4/305; independent complete-state RK4 receipt"
 
 [documentation]
 slug = "models/larter_breakspear"
 notes = "Fixed-step RK4 is the repository specialization. SCDecoupledAdaptationIonMassNeuron retains the former project recurrence without publication attribution. No RTL or silicon claim."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "512-step mixed-drive receipt and five-runtime complete-state parity"
+tolerance = "binary64 2e-12 across native runtimes"
+evidence = "tests/test_model_larter_breakspear_source_fidelity.py; tests/test_larter_breakspear_native_parity.py"

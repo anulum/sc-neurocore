@@ -20,6 +20,7 @@ import numpy.typing as npt
 
 from sc_neurocore.neurons.models.nmda_neuron import NMDANeuron
 from tests.cosim_support import HAS_IVERILOG
+from tests.toolchain_support import require_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _RTL = _ROOT / "hdl/formal/catalogue/sc_nmda_autapse.v"
@@ -204,6 +205,23 @@ def _rtl_trace(steps: int) -> npt.NDArray[np.int64]:
 
 def test_required_cosimulation_tool_is_available() -> None:
     assert HAS_IVERILOG
+
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {_RTL}; synth -top sc_nmda_autapse -run begin:coarse; check; stat",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_q1616_rtl_is_bit_exact_to_independent_integer_oracle() -> None:

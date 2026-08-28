@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Descriptor and benchmark evidence fix-forward
+
+- Completed unit, valid-range, and semantic custody for every source and
+  retained-SC descriptor parameter, replaced ignored legacy reproducibility
+  keys with active receipt digests, and enrolled class-correct trajectory
+  validation without attributing the SC recurrence to the publication.
+- Bound the dual-identity five-runtime benchmark to both descriptors, paired
+  schemas, receipts, and runtimes; enrolled it in the fail-closed benchmark
+  evidence gate and replaced the public `this commit` marker with durable
+  artifact paths. No RTL or silicon claim was added.
+- Completed the 15 missing valid ranges in the retained SC Wang/NMDA descriptor
+  and enrolled its existing dual-identity five-runtime benchmark, paired
+  schemas, and receipts in the same fail-closed evidence gate.
+
 ### McKean dual-identity full-fidelity closure
 
 - Re-certified the catalogue-counted Tonnelier/McKean 2003 space-clamped

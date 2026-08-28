@@ -262,6 +262,14 @@
       "id": "sc-normalized-energy-lif-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_nmda.json",
+      "id": "wang-nmda-dual-identity-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_larter_breakspear.json",
+      "id": "larter-breakspear-dual-identity-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_mckean.json",
       "id": "mckean-tonnelier-multibackend-local-regression"
     },
@@ -280,7 +288,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 69,
+  "gate_count": 71,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"
