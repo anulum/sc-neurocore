@@ -8,10 +8,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.070542,
-      "minimum_call_ms": 0.064832,
+      "median_call_ms": 0.073094,
+      "minimum_call_ms": 0.067305,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 4.630957443792351,
+      "speedup_vs_python": 4.287848523818644,
       "used": true
     },
     "julia": {
@@ -22,10 +22,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.086707,
-      "minimum_call_ms": 0.081299,
+      "median_call_ms": 0.094144,
+      "minimum_call_ms": 0.084574,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 3.767596618496776,
+      "speedup_vs_python": 3.329112848402447,
       "used": true
     },
     "mojo": {
@@ -36,10 +36,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.05117,
-      "minimum_call_ms": 0.044088,
+      "median_call_ms": 0.053696,
+      "minimum_call_ms": 0.046119,
       "parity_max_abs_diff": 6.8833827526759706e-15,
-      "speedup_vs_python": 6.384150869650186,
+      "speedup_vs_python": 5.836859356376638,
       "used": true
     },
     "python": {
@@ -50,8 +50,8 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.326677,
-      "minimum_call_ms": 0.306761,
+      "median_call_ms": 0.313416,
+      "minimum_call_ms": 0.307733,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -64,37 +64,37 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.085792,
-      "minimum_call_ms": 0.077814,
+      "median_call_ms": 0.024818,
+      "minimum_call_ms": 0.020965,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 3.807779280119359,
+      "speedup_vs_python": 12.628576033524054,
       "used": true
     }
   },
   "kernel": "ibarz_tanaka_map_simulate",
   "measured_order": [
+    "rust",
     "mojo",
     "go",
-    "rust",
     "julia",
     "python"
   ],
   "meta": {
     "affinity": [
-      2
+      11
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      3.45556640625,
-      6.10009765625,
-      7.0087890625
+      3.25,
+      5.11279296875,
+      6.025390625
     ],
     "load_average_start": [
-      3.40771484375,
-      6.1357421875,
-      7.025390625
+      3.27197265625,
+      5.14892578125,
+      6.0419921875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -115,9 +115,9 @@
     },
     "benchmarks/bench_ibarz_tanaka_map.py": "6b8b02d8b60906931bfcda5adc5f145bef4dc7724a0cab1489f6f997bfc87b81",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "4e0076f3da2ead53b6f96706e81fad2dea258e1d945efb7d700d4040bd494c0d"
+      "py": "6c13aab872fe93d55145fba3e32b65b46d9a36a91d30a1dfdeafecff791f1048"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "4e0076f3da2ead53b6f96706e81fad2dea258e1d945efb7d700d4040bd494c0d",
+    "bridge/sc_neurocore_engine/__init__.py": "6c13aab872fe93d55145fba3e32b65b46d9a36a91d30a1dfdeafecff791f1048",
     "engine/src/neurons/ibarz_tanaka_map": {
       "rs": "7a813006e2d9e732411d120d4a3bb0403767be7708856c86e488032422863377"
     },
