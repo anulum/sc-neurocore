@@ -14,10 +14,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 4.959588295605499e-12,
-      "median_call_ms": 10.717102,
-      "minimum_call_ms": 10.538932,
+      "median_call_ms": 10.099426,
+      "minimum_call_ms": 9.828534,
       "parity_max_abs_diff": 4.959588295605499e-12,
-      "speedup_vs_python": 18.696317903851245,
+      "speedup_vs_python": 17.009668668298577,
       "used": true
     },
     "julia": {
@@ -34,10 +34,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.3713474800169934e-12,
-      "median_call_ms": 124.449936,
-      "minimum_call_ms": 116.660496,
+      "median_call_ms": 101.603145,
+      "minimum_call_ms": 96.5106,
       "parity_max_abs_diff": 1.6413537196058314e-12,
-      "speedup_vs_python": 1.6100478026762506,
+      "speedup_vs_python": 1.690773351553242,
       "used": true
     },
     "mojo": {
@@ -54,10 +54,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 4.480292332686986e-07,
-      "median_call_ms": 4.377701,
-      "minimum_call_ms": 4.236144,
+      "median_call_ms": 4.093957,
+      "minimum_call_ms": 3.988325,
       "parity_max_abs_diff": 7.910317325610094e-07,
-      "speedup_vs_python": 45.770678719263834,
+      "speedup_vs_python": 41.96133227583974,
       "used": true
     },
     "python": {
@@ -74,8 +74,8 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 200.370346,
-      "minimum_call_ms": 191.018676,
+      "median_call_ms": 171.78789,
+      "minimum_call_ms": 156.465607,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -94,10 +94,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.6342482922482304e-13,
-      "median_call_ms": 6.780457,
-      "minimum_call_ms": 6.015205,
+      "median_call_ms": 4.954686,
+      "minimum_call_ms": 4.846574,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 29.551156507592335,
+      "speedup_vs_python": 34.67180160357286,
       "used": true
     }
   },
@@ -113,20 +113,20 @@
   ],
   "meta": {
     "affinity": [
-      1
+      2
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      8.0625,
-      6.6826171875,
-      12.9130859375
+      6.22412109375,
+      6.70361328125,
+      7.80810546875
     ],
     "load_average_start": [
-      8.068359375,
-      6.66015625,
-      12.93994140625
+      6.3525390625,
+      6.7451171875,
+      7.833984375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -185,9 +185,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/connor_stevens.rs": "585c84439c576d755f1594e4a9404ac1d9aef5fb3225e8b19c134d522705a634",
     "src/sc_neurocore/neurons/model_descriptors/ConnorStevensNeuron": {
-      "toml": "5b994b21952cc9557472f2837d046e2b32a3eddb7ed18a26c0ec7ba33a8f378e"
+      "toml": "29bb942a37fbea0256c5ac027dbda3a8de3ccb3f7b62336ef8bdcb2427aa5638"
     },
-    "src/sc_neurocore/neurons/model_descriptors/ConnorStevensNeuron.toml": "5b994b21952cc9557472f2837d046e2b32a3eddb7ed18a26c0ec7ba33a8f378e",
+    "src/sc_neurocore/neurons/model_descriptors/ConnorStevensNeuron.toml": "29bb942a37fbea0256c5ac027dbda3a8de3ccb3f7b62336ef8bdcb2427aa5638",
     "src/sc_neurocore/neurons/model_schemas/connor_stevens": {
       "json": "792dc9f0b62d1c8dbc7ef8319cbecff03bc46b7ec5158f35536effbd0b05a97d",
       "toml": "10d8d58bb1e6dcc36f532a8c41e3217501dcdd2693ad1485ce64251b9c46f4fb"

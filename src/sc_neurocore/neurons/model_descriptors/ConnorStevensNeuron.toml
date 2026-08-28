@@ -25,9 +25,10 @@ hardware_fit = [
     "bounded compiler-generated Q16.16 event-count accelerator",
 ]
 behavior_tags = [
+    "chaotic",
     "excitable",
+    "irregular",
     "phasic",
-    "tonic",
 ]
 
 [provenance]

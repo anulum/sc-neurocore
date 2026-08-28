@@ -78,6 +78,10 @@ _DOI_IN_TEXT = re.compile(r"10\.\d{4,9}/[^\s,)]+")
 # names alone. These are narrow structural facts, not scientific curation.
 _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
     "GLMNeuron": {"dt": 1.0, "method": "map"},
+    # The public default is the gate-first Euler profile.  Its v1 schema is the
+    # separate simultaneous-RK4 compiler/cosimulation profile documented by the
+    # curated descriptor, so it must not silently replace the runtime default.
+    "HodgkinHuxleyNeuron": {"method": "baseline_euler"},
     "ParallelSpikingNeuron": {"dt": 1.0, "method": "map"},
     "TwoCompartmentLIFNeuron": {"dt": 1.0, "method": "map"},
     "SCResettingParallelSpikingNeuron": {

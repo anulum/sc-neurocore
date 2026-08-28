@@ -6,23 +6,23 @@
     "SCDecoupledAdaptationIonMassNeuron"
   ],
   "evidence_class": "local_regression_non_isolated",
-  "timestamp_utc": "2026-08-28T00:32:18.567288+00:00",
+  "timestamp_utc": "2026-08-28T04:00:23.763999+00:00",
   "steps": 20000,
   "repeats": 3,
   "coupling": 0.0,
   "backends": {
     "python": {
-      "source_median_ns_per_step": 13149.1011,
-      "sc_median_ns_per_step": 8086.34355,
+      "source_median_ns_per_step": 8979.1848,
+      "sc_median_ns_per_step": 5832.5071,
       "source_results_ns_per_step": [
-        13149.1011,
-        13901.28305,
-        12896.834
+        8979.1848,
+        9106.38725,
+        8931.29235
       ],
       "sc_results_ns_per_step": [
-        8086.34355,
-        8942.1351,
-        7956.3002
+        6142.0293,
+        5832.5071,
+        5645.75
       ],
       "source_final_state": [
         -0.1583605131330604,
@@ -36,17 +36,17 @@
       ]
     },
     "rust": {
-      "source_median_ns_per_step": 866.13385,
-      "sc_median_ns_per_step": 528.59645,
+      "source_median_ns_per_step": 689.6741,
+      "sc_median_ns_per_step": 405.3849,
       "source_results_ns_per_step": [
-        858.3414,
-        866.13385,
-        1019.9701
+        651.18985,
+        703.6542,
+        689.6741
       ],
       "sc_results_ns_per_step": [
-        528.59645,
-        566.80155,
-        510.90275
+        390.4277,
+        405.3849,
+        417.7484
       ],
       "source_final_state": [
         -0.1583605131344443,
@@ -60,33 +60,33 @@
       ]
     },
     "go": {
-      "source_median_ns_per_step": 467.9,
-      "sc_median_ns_per_step": 384.2,
+      "source_median_ns_per_step": 323.9,
+      "sc_median_ns_per_step": 235.3,
       "source_results_ns_per_step": [
-        467.9,
-        476.0,
-        415.7
+        330.2,
+        323.9,
+        320.0
       ],
       "sc_results_ns_per_step": [
-        351.5,
-        386.0,
-        384.2
+        239.1,
+        235.3,
+        233.1
       ],
       "source_final_state": [],
       "sc_final_state": []
     },
     "julia": {
-      "source_median_ns_per_step": 284.47895,
-      "sc_median_ns_per_step": 216.98415,
+      "source_median_ns_per_step": 217.85395,
+      "sc_median_ns_per_step": 176.7023,
       "source_results_ns_per_step": [
-        271.1612,
-        284.47895,
-        294.18185
+        217.85395,
+        220.6671,
+        216.4185
       ],
       "sc_results_ns_per_step": [
-        237.4848,
-        203.4253,
-        216.98415
+        179.9467,
+        176.7023,
+        169.47495
       ],
       "source_final_state": [
         -0.15836051313563493,
@@ -100,17 +100,17 @@
       ]
     },
     "mojo": {
-      "source_median_ns_per_step": 429.73950039595366,
-      "sc_median_ns_per_step": 327.2702044341713,
+      "source_median_ns_per_step": 302.66589601524174,
+      "sc_median_ns_per_step": 236.53690004721284,
       "source_results_ns_per_step": [
-        462.8831520676613,
-        429.73950039595366,
-        419.1932501271367
+        281.3865023199469,
+        302.66589601524174,
+        314.16210113093257
       ],
       "sc_results_ns_per_step": [
-        327.2702044341713,
-        293.4835501946509,
-        378.07690096087754
+        225.5613508168608,
+        236.53690004721284,
+        242.174748564139
       ],
       "source_final_state": [
         -0.15836051313740562,
@@ -181,13 +181,13 @@
     "src/sc_neurocore/accel/rust/safety/sc_decoupled_adaptation_ion_mass": {
       "rs": "1dbe0e504e227cda9fa5066ea53ef255b981b84c1c0364bd29a678f1d09d47b7"
     },
-    "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml": "63d6d1336c55ffb50e9d3d570b415975a991715137354f2aead9487631b2182c",
+    "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron.toml": "aef51816014ea8bc3cf0867f7cc766c2749ad54f49da5de297cea05509e3ab16",
     "src/sc_neurocore/neurons/model_descriptors/LarterBreakspearNeuron": {
-      "toml": "63d6d1336c55ffb50e9d3d570b415975a991715137354f2aead9487631b2182c"
+      "toml": "aef51816014ea8bc3cf0867f7cc766c2749ad54f49da5de297cea05509e3ab16"
     },
-    "src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron.toml": "7a9d7352e083ae73bb770356dae93e79d43cb9c34fbba8b98d686803a673f2ac",
+    "src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron.toml": "f85ae0df42e9a4c7c48651803bdd57705f50e28058a47c0023d161e6f8e9ec80",
     "src/sc_neurocore/neurons/model_descriptors/SCDecoupledAdaptationIonMassNeuron": {
-      "toml": "7a9d7352e083ae73bb770356dae93e79d43cb9c34fbba8b98d686803a673f2ac"
+      "toml": "f85ae0df42e9a4c7c48651803bdd57705f50e28058a47c0023d161e6f8e9ec80"
     },
     "src/sc_neurocore/neurons/model_schemas/larter_breakspear.json": "ac1ea36e416e9411cffb911b6db0e5c0b74c5c67e71a2cf91902c81f5889ffd1",
     "src/sc_neurocore/neurons/model_schemas/larter_breakspear": {

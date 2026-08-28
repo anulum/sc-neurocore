@@ -99,6 +99,17 @@ def test_schema_alias_and_event_only_integration_contracts_are_preserved() -> No
     assert (poisson.dt, poisson.integration_method) == (1.0, "poisson_interval")
 
 
+def test_hodgkin_huxley_descriptor_tracks_the_public_default_profile() -> None:
+    """The separate RK4 compiler schema must not replace the Python runtime default."""
+    from sc_neurocore.neurons.descriptor_generator import generate_descriptor
+    from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+
+    descriptor = generate_descriptor("HodgkinHuxleyNeuron")
+
+    assert HodgkinHuxleyNeuron().integrator == "baseline_euler"
+    assert descriptor.integration_method == "baseline_euler"
+
+
 def test_public_rng_state_properties_are_materialised() -> None:
     """Seeded stochastic descriptors expose replay state from their public property."""
     from sc_neurocore.neurons.descriptor_generator import generate_descriptor

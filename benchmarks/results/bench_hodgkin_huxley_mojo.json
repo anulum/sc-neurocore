@@ -12,10 +12,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.1102230246251565e-16,
-      "median_call_ms": 1.099861,
-      "minimum_call_ms": 1.089877,
+      "median_call_ms": 2.418032,
+      "minimum_call_ms": 2.271589,
       "parity_max_abs_diff": 6.554756737386924e-13,
-      "speedup_vs_python": 62.87519604750055,
+      "speedup_vs_python": 64.5637659054967,
       "used": true
     },
     "julia": {
@@ -30,10 +30,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.1102230246251565e-16,
-      "median_call_ms": 0.567575,
-      "minimum_call_ms": 0.560881,
+      "median_call_ms": 0.929595,
+      "minimum_call_ms": 0.734951,
       "parity_max_abs_diff": 6.394884621840902e-14,
-      "speedup_vs_python": 121.84112408051799,
+      "speedup_vs_python": 167.94114856469756,
       "used": true
     },
     "mojo": {
@@ -48,10 +48,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 7.716494110354688e-12,
-      "median_call_ms": 0.588323,
-      "minimum_call_ms": 0.576084,
+      "median_call_ms": 0.994224,
+      "minimum_call_ms": 0.935479,
       "parity_max_abs_diff": 1.6049739315349143e-10,
-      "speedup_vs_python": 117.54423335480679,
+      "speedup_vs_python": 157.0242239173466,
       "used": true
     },
     "python": {
@@ -66,8 +66,8 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 69.153976,
-      "minimum_call_ms": 57.300098,
+      "median_call_ms": 156.117252,
+      "minimum_call_ms": 141.251381,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -84,10 +84,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.842170943040401e-14,
-      "median_call_ms": 0.692945,
-      "minimum_call_ms": 0.620973,
+      "median_call_ms": 0.9592,
+      "minimum_call_ms": 0.91854,
       "parity_max_abs_diff": 9.485745522397337e-13,
-      "speedup_vs_python": 99.79720757058641,
+      "speedup_vs_python": 162.7577689741451,
       "used": true
     }
   },
@@ -96,27 +96,27 @@
   "kernel": "hodgkin_huxley_five_runtime",
   "measured_order": [
     "julia",
-    "mojo",
     "rust",
+    "mojo",
     "go",
     "python"
   ],
   "meta": {
     "affinity": [
-      1
+      2
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      14.60009765625,
-      33.64306640625,
-      21.94970703125
+      7.08349609375,
+      6.86376953125,
+      7.84814453125
     ],
     "load_average_start": [
-      14.91357421875,
-      34.025390625,
-      22.00927734375
+      7.08349609375,
+      6.86376953125,
+      7.84814453125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -175,9 +175,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs": "82b4e00ced8afad566c1ce694697e13f038238133de548a97eb33eb704aad4c2",
     "src/sc_neurocore/neurons/model_descriptors/HodgkinHuxleyNeuron": {
-      "toml": "0550ddc2b95a14a5f6e6e7949bc1cf5a819c943453b623573b95da76db9127c3"
+      "toml": "556ce9afe4f830e0d512a828ddea6bdc6589f30633caa612df1e55b5f2402704"
     },
-    "src/sc_neurocore/neurons/model_descriptors/HodgkinHuxleyNeuron.toml": "0550ddc2b95a14a5f6e6e7949bc1cf5a819c943453b623573b95da76db9127c3",
+    "src/sc_neurocore/neurons/model_descriptors/HodgkinHuxleyNeuron.toml": "556ce9afe4f830e0d512a828ddea6bdc6589f30633caa612df1e55b5f2402704",
     "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley": {
       "json": "9012d90321c113be8528dd4442db1de61e8ae834bfe9367d8c8c69381b0e3ba9",
       "toml": "331acf49de1aa32341302addfd4e11c78d63845c1f1087c284bad152825fe146"

@@ -26,8 +26,8 @@ hardware_fit = [
 ]
 behavior_tags = [
     "excitable",
+    "irregular",
     "phasic",
-    "tonic",
 ]
 
 [provenance]

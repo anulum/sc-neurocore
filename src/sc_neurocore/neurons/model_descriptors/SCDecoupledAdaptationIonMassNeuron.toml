@@ -54,85 +54,127 @@ meaning = "decoupled adaptation state"
 default = 1.1
 unit = "1"
 meaning = "positive normalised calcium conductance"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.g_na]
 default = 6.7
 unit = "1"
 meaning = "positive normalised sodium conductance"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.g_k]
 default = 2.0
 unit = "1"
 meaning = "positive normalised potassium conductance"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.v_ca]
 default = 1.0
 unit = "1"
 meaning = "normalised calcium reversal potential"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.v_na]
 default = 0.53
 unit = "1"
 meaning = "normalised sodium reversal potential"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.v_k]
 default = -0.7
 unit = "1"
 meaning = "normalised potassium reversal potential"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.v_l]
 default = -0.5
 unit = "1"
 meaning = "normalised leak reversal potential"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.g_l]
 default = 0.5
 unit = "1"
 meaning = "positive normalised leak conductance"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.phi]
 default = 0.7
 unit = "1"
 meaning = "positive potassium-gate kinetic multiplier"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.tau_k]
 default = 1.0
 unit = "1"
 meaning = "positive normalised potassium relaxation timescale"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.b]
 default = 0.1
 unit = "1"
 meaning = "positive decoupled-adaptation rate"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.a_ee]
 default = 0.36
 unit = "1"
 meaning = "retained linear self-coupling coefficient"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.v0]
 default = 0.0
 unit = "1"
 meaning = "normalised potassium activation midpoint"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.i_ext]
 default = 0.3
 unit = "1"
 meaning = "normalised constant external drive"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [integration]
 dt = 0.01

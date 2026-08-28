@@ -129,37 +129,55 @@ range = [
 default = -0.01
 unit = "1"
 meaning = "normalised calcium activation midpoint"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.t_na]
 default = 0.3
 unit = "1"
 meaning = "normalised sodium activation midpoint"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.t_k]
 default = 0.0
 unit = "1"
 meaning = "normalised potassium activation midpoint"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.delta_ca]
 default = 0.15
 unit = "1"
 meaning = "positive calcium activation width"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.delta_na]
 default = 0.15
 unit = "1"
 meaning = "positive sodium activation width"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.delta_k]
 default = 0.3
 unit = "1"
 meaning = "positive potassium activation width"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.phi]
 default = 0.7
@@ -201,73 +219,109 @@ range = [
 default = 2.0
 unit = "1"
 meaning = "excitatory drive gain of the inhibitory population"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.a_ie]
 default = 2.0
 unit = "1"
 meaning = "inhibitory feedback gain onto excitatory voltage"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.a_ne]
 default = 1.0
 unit = "1"
 meaning = "external-drive gain onto the excitatory population"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.a_ni]
 default = 0.4
 unit = "1"
 meaning = "external-drive gain onto the inhibitory population"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.r_nmda]
 default = 0.25
 unit = "1"
 meaning = "non-negative NMDA modulation ratio of excitatory calcium conductance"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.coupling_balance]
 default = 0.1
 unit = "1"
 meaning = "fraction of external versus local excitatory firing-rate drive"
-range = [0.0, 1.0]
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.v_t]
 default = 0.0
 unit = "1"
 meaning = "normalised excitatory firing-rate midpoint"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.z_t]
 default = 0.0
 unit = "1"
 meaning = "normalised inhibitory firing-rate midpoint"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.delta_v]
 default = 0.65
 unit = "1"
 meaning = "positive excitatory firing-rate width"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.delta_z]
 default = 0.7
 unit = "1"
 meaning = "positive inhibitory firing-rate width"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.q_v_max]
 default = 1.0
 unit = "1"
 meaning = "non-negative maximum excitatory population firing rate"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.q_z_max]
 default = 1.0
 unit = "1"
 meaning = "non-negative maximum inhibitory population firing rate"
-range = [0.0, 1000000.0]
+range = [
+    0.0,
+    1000000.0,
+]
 
 [parameters.i_ext]
 default = 0.3
@@ -282,7 +336,10 @@ range = [
 default = 1.0
 unit = "1"
 meaning = "positive global derivative timescale multiplier"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [integration]
 dt = 0.01

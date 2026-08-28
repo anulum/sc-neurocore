@@ -6,24 +6,24 @@
     "SCWBNMDAMagnesiumBlockNeuron"
   ],
   "evidence_class": "local_regression_non_isolated",
-  "timestamp_utc": "2026-08-28T00:42:22.483494+00:00",
+  "timestamp_utc": "2026-08-28T04:00:18.604099+00:00",
   "steps": 20000,
   "repeats": 3,
   "source_current": 0.6,
   "sc_current": 5.0,
   "backends": {
     "python": {
-      "source_median_ns_per_step": 5180.0315,
-      "sc_median_ns_per_step": 70181.01415,
+      "source_median_ns_per_step": 4796.5672,
+      "sc_median_ns_per_step": 66997.42865,
       "source_results_ns_per_step": [
-        5100.81945,
-        5180.0315,
-        5515.0421
+        4973.6657,
+        4796.5672,
+        4732.6149
       ],
       "sc_results_ns_per_step": [
-        70219.1061,
-        70038.7555,
-        70181.01415
+        66997.42865,
+        67924.19395,
+        66612.0586
       ],
       "source_final_state": [
         -57.236651346510506,
@@ -40,17 +40,17 @@
       ]
     },
     "rust": {
-      "source_median_ns_per_step": 574.27705,
-      "sc_median_ns_per_step": 6402.204,
+      "source_median_ns_per_step": 538.6597,
+      "sc_median_ns_per_step": 5864.0777,
       "source_results_ns_per_step": [
-        563.5682,
-        574.27705,
-        580.1633
+        538.6498,
+        538.6597,
+        547.8394
       ],
       "sc_results_ns_per_step": [
-        6402.204,
-        6278.8525,
-        6448.695
+        5884.5456,
+        5819.49395,
+        5864.0777
       ],
       "source_final_state": [
         -57.236651346510506,
@@ -67,33 +67,33 @@
       ]
     },
     "go": {
-      "source_median_ns_per_step": 153.8,
-      "sc_median_ns_per_step": 4982.0,
+      "source_median_ns_per_step": 148.7,
+      "sc_median_ns_per_step": 4741.0,
       "source_results_ns_per_step": [
-        151.8,
-        160.2,
-        153.8
+        150.4,
+        148.4,
+        148.7
       ],
       "sc_results_ns_per_step": [
-        5068.0,
-        4705.0,
-        4982.0
+        4859.0,
+        4713.0,
+        4741.0
       ],
       "source_final_state": [],
       "sc_final_state": []
     },
     "julia": {
-      "source_median_ns_per_step": 420.5552,
-      "sc_median_ns_per_step": 2769.54795,
+      "source_median_ns_per_step": 426.01025,
+      "sc_median_ns_per_step": 2777.76465,
       "source_results_ns_per_step": [
-        419.97595,
-        420.5552,
-        3538.1004
+        420.4544,
+        426.01025,
+        3533.9755
       ],
       "sc_results_ns_per_step": [
-        2769.54795,
-        2732.68095,
-        2842.40875
+        2717.958,
+        2777.76465,
+        2841.8301
       ],
       "source_final_state": [
         -57.236651346510506,
@@ -110,17 +110,17 @@
       ]
     },
     "mojo": {
-      "source_median_ns_per_step": 68.97759740240872,
-      "sc_median_ns_per_step": 3131.963947089389,
+      "source_median_ns_per_step": 67.9334974847734,
+      "sc_median_ns_per_step": 3046.377550344914,
       "source_results_ns_per_step": [
-        68.47080076113343,
-        68.97759740240872,
-        69.02214954607189
+        67.97285168431699,
+        67.79199466109276,
+        67.9334974847734
       ],
       "sc_results_ns_per_step": [
-        3175.8903001900762,
-        3074.099402874708,
-        3131.963947089389
+        3108.7387003935874,
+        3046.377550344914,
+        2993.5314028989524
       ],
       "source_final_state": [
         -57.23665134651192,
@@ -198,9 +198,9 @@
     "src/sc_neurocore/neurons/model_descriptors/NMDANeuron": {
       "toml": "816c6e92878b52fcb35443609f03185d1b0d3fb63856922d20927e6004467a7a"
     },
-    "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml": "816965b611a4d8ae7c93e422f59483dfec933ccad117cd1bcdc45aac41d48ed8",
+    "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron.toml": "2d4eb60af91a25e61d76a13e11a3cf0dc43b04508fdd2516bde846daf359694e",
     "src/sc_neurocore/neurons/model_descriptors/SCWBNMDAMagnesiumBlockNeuron": {
-      "toml": "816965b611a4d8ae7c93e422f59483dfec933ccad117cd1bcdc45aac41d48ed8"
+      "toml": "2d4eb60af91a25e61d76a13e11a3cf0dc43b04508fdd2516bde846daf359694e"
     },
     "src/sc_neurocore/neurons/model_schemas/nmda_neuron.json": "8b329cc2cc45e1afdec0f017b2aa0e3dd3b62ecb36aaa5786721ef8893950dd8",
     "src/sc_neurocore/neurons/model_schemas/nmda_neuron": {
