@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from sc_neurocore.neurons.models.medvedev_map import MedvedevMapNeuron
@@ -50,6 +52,39 @@ def test_failed_batch_preserves_state() -> None:
     neuron.d = float("inf")
     with pytest.raises(ValueError, match="parameters must be finite"):
         neuron.simulate(10, 2.0, backend="python")
+    assert neuron.u == before
+
+
+def test_non_finite_state_is_rejected_at_construction_and_runtime() -> None:
+    """Construction reports bad input while a corrupted live state fails closed."""
+    with pytest.raises(ValueError, match="state must be finite"):
+        MedvedevMapNeuron(u=float("nan"))
+
+    neuron = MedvedevMapNeuron()
+    neuron.u = float("inf")
+    with pytest.raises(FloatingPointError, match="state must be finite"):
+        neuron.step()
+
+
+def test_non_finite_branch_arithmetic_preserves_state() -> None:
+    """Finite-but-extreme inputs cannot commit invalid branch arithmetic."""
+    neuron = MedvedevMapNeuron(
+        u=0.5,
+        beta_0=1.0,
+        beta_sn=2.0,
+        beta_hc=3.0,
+        delta=4.0,
+        d=sys.float_info.max,
+    )
+    before = neuron.u
+    with pytest.raises(FloatingPointError, match="log argument is invalid"):
+        neuron.step()
+    assert neuron.u == before
+
+    neuron = MedvedevMapNeuron(u=0.0, input_gain=sys.float_info.max)
+    before = neuron.u
+    with pytest.raises(FloatingPointError, match="candidate became non-finite"):
+        neuron.step(sys.float_info.max)
     assert neuron.u == before
 
 
