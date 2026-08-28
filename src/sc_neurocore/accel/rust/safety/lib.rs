@@ -360,6 +360,7 @@ pub mod sc_adaptive_threshold_map_neuron;
 /// Project SC chaotic-map safety mirror.
 pub mod sc_chaotic_map_neuron;
 pub mod sc_clipped_logistic_bursting_map;
+pub mod sc_clipped_rational_recovery_map;
 pub mod sc_conv_layer;
 pub mod sc_decoupled_adaptation_ion_mass;
 pub mod sc_dense_layer;

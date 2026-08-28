@@ -167,11 +167,23 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         class_name="CourageNekorkinMapNeuron",
         level="h1_cosim",
         evidence=("tests/test_cosim_courage_nekorkin_map.py::test_q3232_short_window_trajectory"),
-        operating_point=("schema-DSL Courbage-Nekorkin map at I=-0.3,0,0.3 over 30 iterations"),
-        tolerance=(
-            "hand/TOML/JSON exact; Q32.32 event-exact with state error below "
-            "0.00003; Q16.16 autonomous 30-iteration boundary excluded"
+        operating_point=(
+            "Courbage-Nekorkin-Vdovin Figure-4 map at I=-0.3/0/0.3 over 128/620 steps"
         ),
+        tolerance=(
+            "hand/TOML/JSON exact; Q32.32 event-exact with state error below 0.00044; "
+            "Q16.16 autonomous 620-step 1/25-event boundary excluded"
+        ),
+    ),
+    EnrolledEvidence(
+        schema_name="sc_clipped_rational_recovery_map",
+        class_name="SCClippedRationalRecoveryMapNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_sc_clipped_rational_recovery_map.py::test_bounded_rtl_trajectory"
+        ),
+        operating_point="retained project recurrence over 128 autonomous iterations",
+        tolerance=("hand/TOML/JSON exact; Q32.32 event-exact with x/y error below 5e-8/3e-8"),
     ),
     EnrolledEvidence(
         schema_name="ermentrout_kopell_map_neuron",

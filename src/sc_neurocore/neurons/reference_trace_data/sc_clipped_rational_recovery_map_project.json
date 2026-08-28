@@ -1,0 +1,37 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "sc_clipped_rational_recovery_map_project",
+  "model": {
+    "schema_name": "sc_clipped_rational_recovery_map",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 512,
+    "inputs": {"I": 0.0},
+    "state_variables": ["x", "y"]
+  },
+  "provenance": {
+    "kind": "project_regression",
+    "source": "SC-NeuroCore retained project recurrence",
+    "equation": "Independent transcription of the historical piecewise rational fast map, slow recovery update, symmetric clipping, and upward-threshold observation.",
+    "citation": "SC-NeuroCore project recurrence"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.x": -1000000.0,
+    "min.x": -1000000.0,
+    "max.x": 0.7959888067116627,
+    "mean.x": -595818.7633400924,
+    "final.y": 304058.694830129,
+    "min.y": -0.30113959734309415,
+    "max.y": 304058.694830129,
+    "mean.y": 90582.78119938845
+  },
+  "tolerances": {
+    "default": {"absolute": 1e-08, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
+  }
+}

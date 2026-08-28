@@ -1,0 +1,125 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "median_ms": 27.980042970739305,
+      "min_ms": 26.624324033036828,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 50.254114960136825,
+      "spikes": 0
+    },
+    "julia": {
+      "backend": "julia",
+      "median_ms": 25.373746058903635,
+      "min_ms": 20.312053966335952,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 55.41603091545472,
+      "spikes": 0
+    },
+    "mojo": {
+      "backend": "mojo",
+      "median_ms": 19.19417001772672,
+      "min_ms": 18.213714938610792,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 73.25725961281422,
+      "spikes": 0
+    },
+    "python": {
+      "backend": "python",
+      "median_ms": 1406.1122960411012,
+      "min_ms": 1396.1560010211542,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 0
+    },
+    "rust": {
+      "backend": "rust",
+      "median_ms": 24.343554046936333,
+      "min_ms": 24.110127007588744,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 57.76117543601084,
+      "spikes": 0
+    }
+  },
+  "benchmark": "sc_clipped_rational_recovery_map_simulate",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ms": 1406.1122960411012,
+      "min_ms": 1396.1560010211542,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 0
+    },
+    {
+      "backend": "rust",
+      "median_ms": 24.343554046936333,
+      "min_ms": 24.110127007588744,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 57.76117543601084,
+      "spikes": 0
+    },
+    {
+      "backend": "julia",
+      "median_ms": 25.373746058903635,
+      "min_ms": 20.312053966335952,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 55.41603091545472,
+      "spikes": 0
+    },
+    {
+      "backend": "go",
+      "median_ms": 27.980042970739305,
+      "min_ms": 26.624324033036828,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 50.254114960136825,
+      "spikes": 0
+    },
+    {
+      "backend": "mojo",
+      "median_ms": 19.19417001772672,
+      "min_ms": 18.213714938610792,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 73.25725961281422,
+      "spikes": 0
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_sc_clipped_rational_recovery_map": {
+      "py": "b9058b5cca5703f64042f6db0e94af59bb4203bbbea43619edeb80036620b57c"
+    },
+    "benchmarks/bench_sc_clipped_rational_recovery_map.py": "b9058b5cca5703f64042f6db0e94af59bb4203bbbea43619edeb80036620b57c",
+    "engine/src/neurons/sc_clipped_rational_recovery_map": {
+      "rs": "1ae604856703b1d91aa34f4a61373fd0bd672327778f7f6635939247f4c22420"
+    },
+    "engine/src/neurons/sc_clipped_rational_recovery_map.rs": "1ae604856703b1d91aa34f4a61373fd0bd672327778f7f6635939247f4c22420",
+    "src/sc_neurocore/accel/go/neurons/sc_clipped_rational_recovery_map/sc_clipped_rational_recovery_map": {
+      "go": "2d5144ec6d9e14779ab17ef7c328defb023a6046892a081fe7cb42b5a9b30f5f"
+    },
+    "src/sc_neurocore/accel/go/neurons/sc_clipped_rational_recovery_map/sc_clipped_rational_recovery_map.go": "2d5144ec6d9e14779ab17ef7c328defb023a6046892a081fe7cb42b5a9b30f5f",
+    "src/sc_neurocore/accel/julia/neurons/sc_clipped_rational_recovery_map": {
+      "jl": "054f68684f636f2394158df657fa46414aa02c83e2ea70787a49fb82f7673419"
+    },
+    "src/sc_neurocore/accel/julia/neurons/sc_clipped_rational_recovery_map.jl": "054f68684f636f2394158df657fa46414aa02c83e2ea70787a49fb82f7673419",
+    "src/sc_neurocore/accel/mojo/neurons/sc_clipped_rational_recovery_map": {
+      "mojo": "efdb76a7c2d0594ebd5a4496dc82c71f064660d73990b44ee742cb93817de6dd"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/sc_clipped_rational_recovery_map.mojo": "efdb76a7c2d0594ebd5a4496dc82c71f064660d73990b44ee742cb93817de6dd",
+    "src/sc_neurocore/neurons/models/sc_clipped_rational_recovery_map": {
+      "py": "bb3c3036e61b2b7fb4f3bd32c1b20384c0c4eb14cd6423f8e1798148b601e647"
+    },
+    "src/sc_neurocore/neurons/models/sc_clipped_rational_recovery_map.py": "bb3c3036e61b2b7fb4f3bd32c1b20384c0c4eb14cd6423f8e1798148b601e647"
+  },
+  "workload": {
+    "current": 0.0,
+    "n_steps": 2000000,
+    "profile": "retained defaults",
+    "repeats": 5
+  }
+}

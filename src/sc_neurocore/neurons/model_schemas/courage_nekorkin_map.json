@@ -9,14 +9,14 @@
   },
   "state": { "x": 0.0, "y": 0.0 },
   "parameters": {
-    "m0": 0.0864,
+    "m0": 0.4,
     "m1": 0.65,
     "a": 0.2,
-    "d": 0.235,
-    "j": 0.2,
-    "beta": 0.085,
-    "eps": 0.02,
-    "x_threshold": 0.235
+    "d": 0.3,
+    "j": 0.13,
+    "beta": 0.25,
+    "eps": 0.002,
+    "x_threshold": 0.3
   },
   "integration": { "dt": 1.0, "method": "map" },
   "dynamics": {
@@ -28,6 +28,6 @@
     "model_type": "map",
     "discrete_time": true,
     "bursting": true,
-    "silicon_cosim_note": "Hand model and both schema formats agree exactly at I=-0.3, I=0, and I=0.3. Q32.32 RTL reproduces all three 30-iteration event vectors with state error below 0.00003. Q16.16 is event-exact at (I=-0.3, 30), (I=0, 20), and (I=0.3, 30); the autonomous I=0 30-iteration trace is an explicit excluded boundary at four float64 events, six RTL events, and six event-position mismatches."
+    "silicon_cosim_note": "Hand model and both schema formats reproduce the source Figure-4 profile. The committed co-simulation test defines the bounded fixed-point event and state envelope."
   }
 }

@@ -1,0 +1,52 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_courbage_nekorkin_map": {
+         "num_wires":         60,
+         "num_wire_bits":     3793,
+         "num_pub_wires":     39,
+         "num_pub_wire_bits": 2950,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         34,
+         "num_cells_by_type": {
+            "$add": 3,
+            "$adff": 4,
+            "$ge": 2,
+            "$gt": 2,
+            "$le": 1,
+            "$logic_and": 1,
+            "$logic_not": 1,
+            "$lt": 3,
+            "$mul": 4,
+            "$mux": 8,
+            "$sub": 5
+         }
+      }
+   },
+      "design": {
+         "num_wires":         60,
+         "num_wire_bits":     3793,
+         "num_pub_wires":     39,
+         "num_pub_wire_bits": 2950,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         34,
+         "num_cells_by_type": {
+            "$add": 3,
+            "$adff": 4,
+            "$ge": 2,
+            "$gt": 2,
+            "$le": 1,
+            "$logic_and": 1,
+            "$logic_not": 1,
+            "$lt": 3,
+            "$mul": 4,
+            "$mux": 8,
+            "$sub": 5
+         }
+      }
+}

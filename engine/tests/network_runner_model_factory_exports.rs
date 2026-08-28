@@ -17,7 +17,7 @@ fn public_model_catalogue_is_unique_and_fully_constructible() {
     let models = supported_models();
     let unique: BTreeSet<_> = models.iter().copied().collect();
 
-    assert_eq!(models.len(), 176);
+    assert_eq!(models.len(), 177);
     assert_eq!(unique.len(), models.len());
     for name in models {
         assert!(
@@ -72,6 +72,10 @@ fn public_model_factory_preserves_alias_and_error_contracts() {
     assert!(matches!(
         create_neuron("SCClippedLogisticBurstingMapNeuron"),
         Ok(NeuronVariant::SCClippedLogisticBurstingMap(_))
+    ));
+    assert!(matches!(
+        create_neuron("SCClippedRationalRecoveryMapNeuron"),
+        Ok(NeuronVariant::SCClippedRationalRecoveryMap(_))
     ));
     assert!(matches!(
         create_neuron("SCScaledResetAdaptiveIFNeuron"),

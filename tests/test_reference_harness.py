@@ -31,7 +31,9 @@ from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 _SUPPORTED_REFERENCE_RUNNERS = frozenset({"universal_dsl", "hand_model", "hand_and_universal_dsl"})
 _EXTERNAL_SOURCE_PREFIXES = {
     "coba_lif": "Brette et al. (2007)",
+    "courage_nekorkin_map": "doi:10.1063/1.2795435",
     "iqif": "https://github.com/twetto/iq-neuron/blob/",
+    "sc_clipped_rational_recovery_map": "SC-NeuroCore retained project recurrence",
 }
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adaptive_threshold_if": "adaptive_threshold_if_tonic_adaptation_doi",
@@ -41,6 +43,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "coba_lif": "coba_lif_conductance_rk4_doi",
     "connor_stevens": "connor_stevens_driven_spiking_doi",
     "courage_nekorkin_map": "courage_nekorkin_map_autonomous_doi",
+    "sc_clipped_rational_recovery_map": "sc_clipped_rational_recovery_map_project",
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
     "ermentrout_kopell_map_neuron": "ermentrout_kopell_theta_euler_doi",
     "exp_if": "exp_if_driven_rk4_doi",

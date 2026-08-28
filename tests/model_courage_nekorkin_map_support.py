@@ -22,9 +22,8 @@ arXiv:0712.2097, eqs. 3-5):
     H(z) = 1 for z >= 0, else 0
     Jmin = a*m1/(m0 + m1), Jmax = (m0 + a*m1)/(m0 + m1)
 
-The default parameters (m0=0.0864, m1=0.65, a=0.2 from figure 1; d=0.235, J=0.2,
-beta=0.085, eps=0.02 inside the B^+ invariant-region triangle) place the model in
-the published chaotic spiking-bursting regime. The map has NO clip: it stays
+The defaults reproduce the complete Figure-4 profile (m0=0.4, m1=0.65, a=0.2,
+d=0.3, J=0.13, beta=0.25, eps=0.002). The map has NO clip: it stays
 bounded by its own invariant attractor.
 """
 import time
@@ -43,7 +42,7 @@ def _run(neuron: CourageNekorkinMapNeuron, current: float, steps: int) -> list[i
     return [t for t in range(steps) if neuron.step(current) == 1]
 
 
-def _breakpoints(m0=0.0864, m1=0.65, a=0.2):
+def _breakpoints(m0: float = 0.4, m1: float = 0.65, a: float = 0.2) -> tuple[float, float]:
     am1 = a * m1
     den = m0 + m1
     return am1 / den, (m0 + am1) / den

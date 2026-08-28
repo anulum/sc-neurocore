@@ -1,0 +1,127 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Retained project-map descriptor
+
+[metadata]
+schema_version = 2
+name = "SC clipped rational-recovery map"
+class_name = "SCClippedRationalRecoveryMapNeuron"
+module = "sc_clipped_rational_recovery_map"
+display_name = "SC clipped rational-recovery map"
+summary = "Count-neutral retained project recurrence formerly carried by the Courbage-labelled class."
+family = "Map-based"
+category = "map-based"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "backward-compatible project recurrence",
+    "cross-runtime regression",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "irregular",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+derivation_note = "Project recurrence retained without whole-model publication attribution."
+
+[state.x]
+init = 0.0
+
+[state.y]
+init = 0.0
+
+[parameters.alpha]
+default = 3.0
+unit = "1"
+meaning = "piecewise fast-map gain"
+range = [0.000001, 100.0]
+
+[parameters.beta]
+default = 0.001
+unit = "1"
+meaning = "recovery decrement coefficient"
+range = [0.000000001, 1.0]
+
+[parameters.j]
+default = 0.1
+unit = "1"
+meaning = "constant fast-map offset"
+range = [-100.0, 100.0]
+
+[parameters.x_threshold]
+default = 1.0
+unit = "1"
+meaning = "upward-crossing observation threshold"
+range = [-1000000.0, 1000000.0]
+
+[parameters.clip_bound]
+default = 1000000.0
+unit = "1"
+meaning = "symmetric state saturation bound"
+range = [1.0, 1000000000.0]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "clip((alpha*x if x < 0 else alpha*x/(1+alpha*x))+y+I+j,-clip_bound,clip_bound)"
+y = "clip(y-beta*(x+1),-clip_bound,clip_bound)"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
+
+[reproducibility]
+reference_config = "{\"n_steps\":512,\"current\":0.0,\"backend\":\"python\",\"parameters\":\"retained defaults\"}"
+golden_trace_sha256 = "011b6ab2627c8ac9dccc55b2e5735376fc656a89f3b85c64d2cabf420dddb118"
+
+[documentation]
+slug = "models/sc_clipped_rational_recovery_map"
+notes = "Count-neutral identity preserving the former CourageNekorkinMapNeuron recurrence without publication attribution."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "retained defaults under autonomous and bounded driven protocols"
+tolerance = "binary64 exact for all five maintained runtimes; bounded fixed-point event-vector and state envelope"
+evidence = "tests/test_reference_sc_clipped_rational_recovery_map.py; tests/test_cosim_sc_clipped_rational_recovery_map.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+synthesised = true
+cosim_evidence = "tests/test_cosim_sc_clipped_rational_recovery_map.py"
+synth_report = "hdl/reports/yosys_sc_clipped_rational_recovery_map_q3232_2026-08-28.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Retained fixed-point co-simulation, coarse synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."

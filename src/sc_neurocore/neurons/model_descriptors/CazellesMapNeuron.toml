@@ -200,7 +200,7 @@ parity = "exact"
 
 [backends.mojo]
 status = "implemented"
-parity = "ulp-bounded"
+parity = "exact"
 
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":0.0,\"backend\":\"python\",\"parameters\":\"Figure 1 defaults\"}"
@@ -214,7 +214,7 @@ notes = "Slow-regime entry is the maintained burst-cycle event; current is an ad
 dynamics_faithful = true
 metric = "trajectory"
 operating_point = "Figure-1 source orbit at alpha=0 and bounded alpha/current probes"
-tolerance = "binary64 exact for Python/Rust/Julia/Go; Mojo one-step ULP-bounded with the 600-step burst count differing by at most one; Q16.16 event-exact through the first discontinuous return with state error at most 0.0062; longer chaotic trajectories are excluded"
+tolerance = "binary64 exact for all five maintained runtimes; Q16.16 event-exact through the first discontinuous return with state error at most 0.0062; longer fixed-point chaotic trajectories are excluded"
 evidence = "tests/test_reference_cazelles_map.py; tests/test_cazelles_map_backends.py; tests/test_cosim_cazelles_map.py"
 
 [silicon]

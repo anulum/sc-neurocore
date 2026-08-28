@@ -101,6 +101,7 @@ try:
         MedvedevMapNeuron,
         CazellesMapNeuron,
         SCClippedLogisticBurstingMapNeuron,
+        SCClippedRationalRecoveryMapNeuron,
         CourageNekorkinMapNeuron,
         AiharaMapNeuron,
         NagumoSatoMapNeuron,
@@ -307,6 +308,7 @@ _NEURON_MODELS = [
     "MedvedevMapNeuron",
     "CazellesMapNeuron",
     "SCClippedLogisticBurstingMapNeuron",
+    "SCClippedRationalRecoveryMapNeuron",
     "CourageNekorkinMapNeuron",
     "HodgkinHuxleyNeuron",
     "TraubMilesNeuron",
@@ -645,6 +647,16 @@ try:
     _sc_clipped_logistic_bursting_map_rust_available = True
 except ImportError:
     _sc_clipped_logistic_bursting_map_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_sc_clipped_rational_recovery_map_simulate,
+    )
+
+    __all__ += ["py_sc_clipped_rational_recovery_map_simulate"]
+    _sc_clipped_rational_recovery_map_rust_available = True
+except ImportError:
+    _sc_clipped_rational_recovery_map_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

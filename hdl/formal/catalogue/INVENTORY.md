@@ -12,10 +12,9 @@ Jobs: **40**
 | AlphaNeuron | alpha | `sc_alpha_synapse_lif` | `v_out` | Q32.32 | 4 |
 | COBALIFNeuron | coba_lif | `sc_cobalifneuron` | `v_out` | Q24.24 | 4 |
 | CazellesMapNeuron | cazelles_map | `sc_cazelles_map` | `x_out` | Q8.8 | 4 |
-| SCClippedLogisticBurstingMapNeuron | sc_clipped_logistic_bursting_map | `sc_clipped_logistic_bursting_map` | `x_out`, `y_out` | Q8.8 | 4 |
 | ChialvoMapNeuron | chialvo_map | `sc_chialvo_map` | `x_out` | Q8.8 | 4 |
 | ConnorStevensNeuron | connor_stevens | `sc_connor_stevens` | `v_out` | Q16.16 | 4 |
-| CourageNekorkinMapNeuron | courage_nekorkin_map | `sc_courbage_nekorkin_map` | `x_out` | Q8.8 | 4 |
+| CourageNekorkinMapNeuron | courage_nekorkin_map | `sc_courbage_nekorkin_map` | `x_out` | Q32.32 | 4 |
 | DPINeuron | dpi_neuron | `sc_dpineuron` | `i_mem_out` | Q16.16 | 4 |
 | ErmentroutKopellMapNeuron | ermentrout_kopell_map_neuron | `sc_ermentrout_kopell_map_neuron` | `theta_out` | Q8.8 | 4 |
 | ErmentroutKopellPopulation | ermentrout_kopell_pop | `sc_ermentroutkopellpopulation` | `v_out` | Q32.32 | 4 |
@@ -59,4 +58,5 @@ source-literature perfect-model count above.
 | SCResettingWilsonHRNeuron | sc_resetting_wilson_hr | `sc_resetting_wilson_hr` | `v_out` | Q8.8 | 4 |
 | SCFourStateGLIFNeuron | sc_four_state_glif | `sc_four_state_glif` | `v_out` | Q16.16 | 6 |
 | SCScaledResetAdaptiveIFNeuron | sc_scaled_reset_adaptive_if | `sc_scaled_reset_adaptive_if` | `v_out` | Q16.16 | 2 |
+| SCClippedRationalRecoveryMapNeuron | sc_clipped_rational_recovery_map | `sc_clipped_rational_recovery_map` | `x_out` | Q32.32 | 4 |
 | SCUpwardCrossingRulkovMapNeuron | sc_upward_crossing_rulkov_map | `sc_upward_crossing_rulkov_map` | `x_out` | Q16.16 | 4 |

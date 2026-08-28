@@ -9,6 +9,7 @@
 //! Python binding for the Courbage-Nekorkin-Vdovin spiking map.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -49,7 +50,7 @@ fn py_courage_nekorkin_map_simulate<'py>(
     x_threshold: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64, f64)> {
     let mut neuron = CourageNekorkinMapNeuron {
         x: x0,
         y: y0,
@@ -62,6 +63,8 @@ fn py_courage_nekorkin_map_simulate<'py>(
         eps,
         x_threshold,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+    let (trace, spikes) = neuron
+        .simulate(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((trace.into_pyarray(py), spikes, neuron.x, neuron.y))
 }

@@ -7,45 +7,31 @@
   },
   "protocol": {
     "dt": 1.0,
-    "steps": 30,
-    "inputs": {
-      "I": 0.0
-    },
-    "state_variables": [
-      "x",
-      "y"
-    ]
+    "steps": 2000,
+    "inputs": {"I": 0.0},
+    "state_variables": ["x", "y"]
   },
   "provenance": {
-    "kind": "map_iteration_reference",
-    "source": "src/sc_neurocore/neurons/model_schemas/courage_nekorkin_map.toml",
-    "equation": "Autonomous Courbage-Nekorkin-Vdovin 2007 discontinuous map iterated with method=map. Independently re-derived from x_{n+1}=x_n+F(x_n)-y_n-beta*H(x_n-d), y_{n+1}=y_n+eps*(x_n-J), the three published branches of F, and upward x >= x_threshold crossing detection.",
+    "kind": "source_equation_reference",
+    "source": "doi:10.1063/1.2795435 equations 3-5 and Figure 4",
+    "equation": "Autonomous source map using the complete Figure-4 parameter profile; x=y=0 and upward x>=d crossing are repository protocol choices.",
     "citation": "doi:10.1063/1.2795435"
   },
   "expected_features": {
-    "spike_count": 4.0,
-    "first_spike_step": 15.0,
-    "final.x": 0.2286237058826735,
+    "spike_count": 63.0,
+    "first_spike_step": 618.0,
+    "final.x": 0.1136918396313783,
     "min.x": 0.0,
-    "max.x": 0.28417967397221083,
-    "mean.x": 0.17376924426401227,
-    "final.y": -0.0203109275592461,
-    "min.y": -0.03514190656810467,
-    "max.y": -0.004,
-    "mean.y": -0.02603456827464166
+    "max.x": 0.4095756211908406,
+    "mean.x": 0.11866701536452236,
+    "final.y": -0.045559322221173267,
+    "min.y": -0.04964779746747334,
+    "max.y": -0.00026000000000000003,
+    "mean.y": -0.039939058164641245
   },
   "tolerances": {
-    "default": {
-      "absolute": 1e-09,
-      "relative": 1e-12
-    },
-    "spike_count": {
-      "absolute": 0.0,
-      "relative": 0.0
-    },
-    "first_spike_step": {
-      "absolute": 0.0,
-      "relative": 0.0
-    }
+    "default": {"absolute": 1e-09, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
   }
 }

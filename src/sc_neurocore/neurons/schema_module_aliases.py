@@ -62,6 +62,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "mihalas_niebur": "MihalasNieburNeuron",
     "sc_scaled_reset_adaptive_if": "SCScaledResetAdaptiveIFNeuron",
     "sc_clipped_logistic_bursting_map": "SCClippedLogisticBurstingMapNeuron",
+    "sc_clipped_rational_recovery_map": "SCClippedRationalRecoveryMapNeuron",
     "morris_lecar": "MorrisLecarNeuron",
     "perfect_integrator": "PerfectIntegratorNeuron",
     "quadratic_if": "QuadraticIFNeuron",

@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Retained project-map schema
+
+[metadata]
+schema_version = 1
+name = "SC clipped rational-recovery map"
+author = "SC-NeuroCore project"
+year = 2026
+description = "Count-neutral retained project recurrence without whole-model publication attribution"
+
+[state]
+x = 0.0
+y = 0.0
+
+[parameters]
+alpha = 3.0
+beta = 0.001
+j = 0.1
+x_threshold = 1.0
+clip_bound = 1000000.0
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "clip((alpha*x if x < 0 else alpha*x/(1+alpha*x))+y+I+j,-clip_bound,clip_bound)"
+y = "clip(y-beta*(x+1),-clip_bound,clip_bound)"
+
+[threshold]
+condition = "x >= x_threshold"
+detection = "crossing"
+
+[extensions]
+model_type = "map"
+discrete_time = true
+count_neutral = true
+silicon_cosim_note = "Paired schemas and hand recurrence share the retained project defaults; the committed test defines the bounded fixed-point envelope."

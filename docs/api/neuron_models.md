@@ -256,7 +256,7 @@ raw TOML descriptor.
 | `LearnableNeuronModel` | `LearnableNeuronModel` | — |
 | `PernarowskiNeuron` | `PernarowskiNeuron` | Pernarowski 1994 |
 
-### Discrete Maps (11 runtime identities; 9 source models)
+### Discrete Maps (12 runtime identities; 9 source models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -270,6 +270,7 @@ raw TOML descriptor.
 | `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 scalar four-branch map |
 | `SCClippedLogisticBurstingMapNeuron` | `SCClippedLogisticBurstingMapNeuron` | SC-NeuroCore retained clipped-logistic fast/slow recurrence; count-neutral |
 | `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage, Nekorkin & Vdovin 2007 |
+| `SCClippedRationalRecoveryMapNeuron` | `SCClippedRationalRecoveryMapNeuron` | SC-NeuroCore retained rational-recovery recurrence; count-neutral |
 | `ErmentroutKopellMapNeuron` | `ErmentroutKopellMapNeuron` | Ermentrout & Kopell 1986 (maintained Euler map) |
 
 ### Biophysical / Conductance-Based (23 runtime identities)

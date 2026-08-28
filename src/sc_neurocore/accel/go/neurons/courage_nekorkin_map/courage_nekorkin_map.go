@@ -26,7 +26,10 @@ package main
 */
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
 
 // courage_nekorkin_map_simulate_c runs n steps of the map under a constant
 // input. The caller allocates a trace buffer of length n+2: indices [0, n)
@@ -39,6 +42,9 @@ func courage_nekorkin_map_simulate_c(
 	nSteps C.int, current C.double,
 	tracePtr *C.double,
 ) C.longlong {
+	if nSteps < 0 || tracePtr == nil {
+		return -1
+	}
 	n := int(nSteps)
 	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+2)
 	x := float64(x0)
@@ -52,10 +58,23 @@ func courage_nekorkin_map_simulate_c(
 	peps := float64(eps)
 	thr := float64(xThreshold)
 	cur := float64(current)
+	values := [...]float64{x, y, pm0, pm1, pa, pd, pj, pbeta, peps, thr, cur}
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return -1
+		}
+	}
+	if !(pm0 > 0.0 && pm0 < 1.0 && pm1 > 0.0 && pa > 0.0 && pa < 1.0 &&
+		pd > 0.0 && pbeta > 0.0 && peps > 0.0 && pj > 0.0 && pj < pd) {
+		return -1
+	}
 	am1 := pa * pm1
 	den := pm0 + pm1
 	jmin := am1 / den
 	jmax := (pm0 + am1) / den
+	if !(jmin < pd && pd < jmax) {
+		return -1
+	}
 	var spikes int64
 	for t := 0; t < n; t++ {
 		xPrev := x
@@ -73,6 +92,10 @@ func courage_nekorkin_map_simulate_c(
 		}
 		xNew := x + fx - y - pbeta*h + cur
 		yNew := y + peps*(x-pj)
+		if math.IsNaN(xNew) || math.IsInf(xNew, 0) ||
+			math.IsNaN(yNew) || math.IsInf(yNew, 0) {
+			return -1
+		}
 		x = xNew
 		y = yNew
 		trace[t] = x

@@ -1,0 +1,52 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_clipped_rational_recovery_map": {
+         "num_wires":         51,
+         "num_wire_bits":     2643,
+         "num_pub_wires":     28,
+         "num_pub_wire_bits": 1926,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         35,
+         "num_cells_by_type": {
+            "$add": 5,
+            "$adff": 4,
+            "$div": 1,
+            "$ge": 1,
+            "$gt": 4,
+            "$logic_and": 1,
+            "$logic_not": 1,
+            "$lt": 5,
+            "$mul": 2,
+            "$mux": 10,
+            "$sub": 1
+         }
+      }
+   },
+      "design": {
+         "num_wires":         51,
+         "num_wire_bits":     2643,
+         "num_pub_wires":     28,
+         "num_pub_wire_bits": 1926,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         35,
+         "num_cells_by_type": {
+            "$add": 5,
+            "$adff": 4,
+            "$div": 1,
+            "$ge": 1,
+            "$gt": 4,
+            "$logic_and": 1,
+            "$logic_not": 1,
+            "$lt": 5,
+            "$mul": 2,
+            "$mux": 10,
+            "$sub": 1
+         }
+      }
+}

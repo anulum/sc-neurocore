@@ -34,6 +34,14 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    values = (x0, y0, m0, m1, a, d, j, beta, eps, x_threshold, current)
+    all(isfinite, values) || throw(ArgumentError("Courbage inputs must be finite"))
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
+    0.0 < m0 < 1.0 || throw(ArgumentError("m0 must satisfy 0 < m0 < 1"))
+    m1 > 0.0 || throw(ArgumentError("m1 must be positive"))
+    0.0 < a < 1.0 || throw(ArgumentError("a must satisfy 0 < a < 1"))
+    d > 0.0 && beta > 0.0 && eps > 0.0 || throw(ArgumentError("d, beta, and eps must be positive"))
+    0.0 < j < d || throw(ArgumentError("J must satisfy 0 < J < d"))
     trace = Vector{Float64}(undef, n_steps)
     x = x0
     y = y0
@@ -41,6 +49,7 @@ function simulate_trace(
     den = m0 + m1
     jmin = am1 / den
     jmax = (m0 + am1) / den
+    jmin < d < jmax || throw(ArgumentError("d must satisfy Jmin < d < Jmax"))
     spikes = 0
     @inbounds for t in 1:n_steps
         x_prev = x
@@ -54,6 +63,7 @@ function simulate_trace(
         h = (x - d) >= 0.0 ? 1.0 : 0.0
         x_new = x + fx - y - beta * h + current
         y_new = y + eps * (x - j)
+        isfinite(x_new) && isfinite(y_new) || throw(OverflowError("Courbage candidate became non-finite"))
         x = x_new
         y = y_new
         trace[t] = x

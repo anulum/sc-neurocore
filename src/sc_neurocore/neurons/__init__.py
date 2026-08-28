@@ -79,6 +79,7 @@ _MODEL_NAMES = {
     "COBALIFNeuron",
     "CazellesMapNeuron",
     "SCClippedLogisticBurstingMapNeuron",
+    "SCClippedRationalRecoveryMapNeuron",
     "ChayKeizerNeuron",
     "ChayNeuron",
     "ChialvoMapNeuron",

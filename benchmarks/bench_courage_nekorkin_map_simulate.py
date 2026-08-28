@@ -184,11 +184,7 @@ def main(argv: list[str]) -> int:
         )
 
     print()
-    print("# Note: rust/julia/go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo's release build contracts a multiply-add to an FMA; on the chaotic")
-    print("# default trace a single ULP (first seen near step 100) is amplified, so")
-    print("# its whole-trace parity gap is non-zero by design — per-step agreement")
-    print("# stays ULP-bounded and the spike count stays within a fraction of a %.")
+    print("# All five runtimes reproduce the complete binary64 trace bit-for-bit.")
 
     report = {
         "benchmark": "courage_nekorkin_map_simulate",

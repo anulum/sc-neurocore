@@ -32,14 +32,14 @@ def _direct(n_steps: int) -> tuple[NDArray[np.float64], int, float, float]:
     result: tuple[Any, int, float, float] = extension.py_courage_nekorkin_map_simulate(
         0.0,
         0.0,
-        0.0864,
+        0.4,
         0.65,
         0.2,
-        0.235,
-        0.2,
-        0.085,
-        0.02,
-        0.235,
+        0.3,
+        0.13,
+        0.25,
+        0.002,
+        0.3,
         n_steps,
         0.0,
     )
@@ -69,11 +69,14 @@ def test_empty_and_initial_updates_preserve_array_and_state_contracts() -> None:
     one_trace, one_spikes, one_x, one_y = _direct(1)
     np.testing.assert_array_equal(one_trace, np.array([0.0], dtype=np.float64))
     assert one_trace.flags.c_contiguous
-    assert (one_spikes, one_x, one_y) == (0, 0.0, -0.004)
+    first_y = 0.002 * (0.0 - 0.13)
+    assert (one_spikes, one_x, one_y) == (0, 0.0, first_y)
 
     two_trace, two_spikes, two_x, two_y = _direct(2)
-    np.testing.assert_array_equal(two_trace, np.array([0.0, 0.004], dtype=np.float64))
-    assert (two_spikes, two_x, two_y) == (0, 0.004, -0.008)
+    second_x = -first_y
+    np.testing.assert_array_equal(two_trace, np.array([0.0, second_x], dtype=np.float64))
+    second_y = first_y + 0.002 * (0.0 - 0.13)
+    assert (two_spikes, two_x, two_y) == (0, second_x, second_y)
 
 
 @pytest.mark.parametrize(
@@ -90,14 +93,14 @@ def test_step_count_conversion_errors_are_stable(
         extension.py_courage_nekorkin_map_simulate(
             0.0,
             0.0,
-            0.0864,
+            0.4,
             0.65,
             0.2,
-            0.235,
-            0.2,
-            0.085,
-            0.02,
-            0.235,
+            0.3,
+            0.13,
+            0.25,
+            0.002,
+            0.3,
             n_steps,
             0.0,
         )

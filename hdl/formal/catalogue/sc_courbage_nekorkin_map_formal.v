@@ -13,12 +13,12 @@
 module sc_courbage_nekorkin_map_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [63:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] x_out;
-    wire signed [15:0] y_out;
+    wire signed [63:0] x_out;
+    wire signed [63:0] y_out;
 
     sc_courbage_nekorkin_map uut (
         .clk(clk),

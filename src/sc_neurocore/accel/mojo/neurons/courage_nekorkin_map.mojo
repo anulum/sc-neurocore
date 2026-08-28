@@ -11,13 +11,10 @@
 #
 # Parity contract: `courage_nekorkin_map_simulate_c` reproduces
 # `sc_neurocore.neurons.models.courage_nekorkin_map.CourageNekorkinMapNeuron.simulate`.
-# The map is chaotic exact-arithmetic dynamics: each product is rounded into its
-# own variable before the following add/subtract so the compiler cannot contract
-# a multiply-add into a single-rounding FMA — that fusion is the one operation
-# that diverges from the IEEE-754 two-rounding path used by Python/Rust/Go/Julia.
-# Because the map is chaotic any residual single-ULP difference still amplifies
-# over a long trace, so the Mojo backend is validated per-step and on spike
-# counts rather than on the whole trace.
+# The map is chaotic exact-arithmetic dynamics. `_rounded_product` is deliberately
+# not inlined, preserving the IEEE-754 product rounding before each following
+# addition or subtraction. This prevents FMA contraction and reproduces the
+# Python/Rust/Go/Julia binary64 operation order over the complete trajectory.
 #
 # Mojo FFI rule (per feedback_mojo_026_ffi_pattern): @export rejects parametric
 # signatures, so the output trace buffer is passed as a raw `Int` address and the
@@ -28,6 +25,13 @@
 # Chaos 17:043109 (arXiv:0712.2097), eqs. 3-5.
 
 from std.memory import UnsafePointer
+from std.math import isfinite
+
+
+@no_inline
+def _rounded_product(lhs: Float64, rhs: Float64) -> Float64:
+    """Round a product before the caller performs its next operation."""
+    return lhs * rhs
 
 
 @export
@@ -46,6 +50,35 @@ def courage_nekorkin_map_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if n_steps < 0 or trace_addr == 0:
+        return -1
+    if not (
+        isfinite(x0)
+        and isfinite(y0)
+        and isfinite(m0)
+        and isfinite(m1)
+        and isfinite(a)
+        and isfinite(d)
+        and isfinite(j)
+        and isfinite(beta)
+        and isfinite(eps)
+        and isfinite(x_threshold)
+        and isfinite(current)
+    ):
+        return -1
+    if not (
+        m0 > 0.0
+        and m0 < 1.0
+        and m1 > 0.0
+        and a > 0.0
+        and a < 1.0
+        and d > 0.0
+        and beta > 0.0
+        and eps > 0.0
+        and j > 0.0
+        and j < d
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var x = x0
     var y = y0
@@ -53,24 +86,28 @@ def courage_nekorkin_map_simulate_c(
     var den = m0 + m1
     var jmin = am1 / den
     var jmax = (m0 + am1) / den
+    if not (jmin < d and d < jmax):
+        return -1
     var spikes: Int64 = 0
     for t in range(n_steps):
         var x_prev = x
         var fx: Float64
         if x <= jmin:
-            fx = -m0 * x
+            fx = _rounded_product(-m0, x)
         elif x < jmax:
             var x_minus_a = x - a
-            fx = m1 * x_minus_a
+            fx = _rounded_product(m1, x_minus_a)
         else:
             var x_minus_one = x - 1.0
-            fx = -m0 * x_minus_one
+            fx = _rounded_product(-m0, x_minus_one)
         var h: Float64 = 1.0 if (x - d) >= 0.0 else 0.0
-        var beta_h = beta * h
+        var beta_h = _rounded_product(beta, h)
         var x_minus_j = x - j
-        var eps_term = eps * x_minus_j
+        var eps_term = _rounded_product(eps, x_minus_j)
         var x_new = x + fx - y - beta_h + current
         var y_new = y + eps_term
+        if not (isfinite(x_new) and isfinite(y_new)):
+            return -1
         x = x_new
         y = y_new
         trace[t] = x

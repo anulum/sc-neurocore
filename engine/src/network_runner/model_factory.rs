@@ -202,6 +202,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "SCClippedLogisticBurstingMap" | "SCClippedLogisticBurstingMapNeuron" => Ok(
             NeuronVariant::SCClippedLogisticBurstingMap(SCClippedLogisticBurstingMapNeuron::new()),
         ),
+        "SCClippedRationalRecoveryMap" | "SCClippedRationalRecoveryMapNeuron" => Ok(
+            NeuronVariant::SCClippedRationalRecoveryMap(SCClippedRationalRecoveryMapNeuron::new()),
+        ),
         "CourageNekorkinMap" | "CourageNekorkinMapNeuron" => Ok(NeuronVariant::CourageNekorkinMap(
             CourageNekorkinMapNeuron::new(),
         )),

@@ -46,6 +46,7 @@ _CLASS_TO_MODULE = {
     "COBALIFNeuron": "coba_lif",
     "CazellesMapNeuron": "cazelles_map",
     "SCClippedLogisticBurstingMapNeuron": "sc_clipped_logistic_bursting_map",
+    "SCClippedRationalRecoveryMapNeuron": "sc_clipped_rational_recovery_map",
     "CerebellarBasketNeuron": "cerebellar_basket_neuron",
     "ChandelierNeuron": "chandelier_neuron",
     "ChayKeizerMinimalNeuron": "chay_keizer_minimal",

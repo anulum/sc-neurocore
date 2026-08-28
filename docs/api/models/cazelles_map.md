@@ -85,12 +85,11 @@ domain are rejected before state is mutated.
 
 ## Cross-runtime evidence
 
-Python, Rust, Julia, and Go reproduce the complete binary64 reference orbit
-exactly. The Figure-1 600-step orbit emits seven slow-regime-entry events, the
-first at step 56. Mojo is checked per step to an eight-ULP bound; fused
-multiply-add rounding is chaotically amplified over long trajectories, where
-the measured 600-step count differs by one. The limitation is pinned in tests
-instead of being hidden behind a long-horizon equality claim.
+Python, Rust, Julia, Go, and Mojo reproduce the complete binary64 reference
+orbit exactly. The Figure-1 600-step orbit emits seven slow-regime-entry
+events, the first at step 56. The Mojo kernel preserves each product rounding
+through a non-inlined product boundary, preventing FMA contraction from
+changing the chaotic orbit.
 
 The independent source receipt is
 `src/sc_neurocore/neurons/reference_receipts/cazelles_2001.json`. It records a
@@ -101,9 +100,9 @@ schema-runner reference validates the same complete feature set.
 
 The committed benchmark evidence is
 `benchmarks/results/bench_cazelles_map.json`. It records the pinned
-two-million-step Python, Rust, Julia, Go, and Mojo measurements together with
-the parity boundary described above; it is evidence for this implementation,
-not a general hardware-performance claim.
+two-million-step Python, Rust, Julia, Go, and Mojo measurements with complete
+bit-exact trace and event parity; it is evidence for this implementation, not
+a general hardware-performance claim.
 
 ## RTL, co-simulation, and formal boundary
 

@@ -1749,7 +1749,8 @@
             "backend_summary.python.spikes",
             "backend_summary.rust.spikes",
             "backend_summary.julia.spikes",
-            "backend_summary.go.spikes"
+            "backend_summary.go.spikes",
+            "backend_summary.mojo.spikes"
           ],
           "tolerance": 0.0
         }
@@ -1762,7 +1763,7 @@
           "max": 0.0
         },
         "backend_summary.mojo.parity_max_abs_diff": {
-          "max": 1.0
+          "max": 0.0
         },
         "backend_summary.rust.parity_max_abs_diff": {
           "max": 0.0
@@ -2021,16 +2022,10 @@
             "backend_summary.python.spikes",
             "backend_summary.rust.spikes",
             "backend_summary.julia.spikes",
-            "backend_summary.go.spikes"
-          ],
-          "tolerance": 0.0
-        },
-        {
-          "paths": [
-            "backend_summary.python.spikes",
+            "backend_summary.go.spikes",
             "backend_summary.mojo.spikes"
           ],
-          "tolerance": 100.0
+          "tolerance": 0.0
         }
       ],
       "regression_limits": {
@@ -2041,7 +2036,7 @@
           "max": 0.0
         },
         "backend_summary.mojo.parity_max_abs_diff": {
-          "max": 0.2
+          "max": 0.0
         },
         "backend_summary.rust.parity_max_abs_diff": {
           "max": 0.0
@@ -2076,6 +2071,75 @@
         "src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go",
         "src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl",
         "src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_clipped_rational_recovery_map.json",
+      "description": "Retained SC clipped rational-recovery map five-backend simulation evidence.",
+      "expected_values": {
+        "benchmark": "sc_clipped_rational_recovery_map_simulate",
+        "environment.isolation": "non-isolated (loaded workstation)",
+        "workload.current": 0.0,
+        "workload.n_steps": 2000000,
+        "workload.profile": "retained defaults",
+        "workload.repeats": 5
+      },
+      "id": "sc-clipped-rational-recovery-map-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backend_summary.go.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.julia.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.mojo.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.rust.parity_max_abs_diff": {
+          "max": 0.0
+        }
+      },
+      "required_numbers": [
+        "backend_summary.python.median_ms",
+        "backend_summary.python.min_ms",
+        "backend_summary.python.parity_max_abs_diff",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ms",
+        "backend_summary.rust.min_ms",
+        "backend_summary.rust.parity_max_abs_diff",
+        "backend_summary.rust.spikes",
+        "backend_summary.julia.median_ms",
+        "backend_summary.julia.min_ms",
+        "backend_summary.julia.parity_max_abs_diff",
+        "backend_summary.julia.spikes",
+        "backend_summary.go.median_ms",
+        "backend_summary.go.min_ms",
+        "backend_summary.go.parity_max_abs_diff",
+        "backend_summary.go.spikes",
+        "backend_summary.mojo.median_ms",
+        "backend_summary.mojo.min_ms",
+        "backend_summary.mojo.parity_max_abs_diff",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_sc_clipped_rational_recovery_map.py": "source_hashes.benchmarks/bench_sc_clipped_rational_recovery_map.py",
+        "engine/src/neurons/sc_clipped_rational_recovery_map.rs": "source_hashes.engine/src/neurons/sc_clipped_rational_recovery_map.rs",
+        "src/sc_neurocore/neurons/models/sc_clipped_rational_recovery_map.py": "source_hashes.src/sc_neurocore/neurons/models/sc_clipped_rational_recovery_map.py",
+        "src/sc_neurocore/accel/go/neurons/sc_clipped_rational_recovery_map/sc_clipped_rational_recovery_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/sc_clipped_rational_recovery_map/sc_clipped_rational_recovery_map.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_clipped_rational_recovery_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_clipped_rational_recovery_map.jl",
+        "src/sc_neurocore/accel/mojo/neurons/sc_clipped_rational_recovery_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/sc_clipped_rational_recovery_map.mojo"
       }
     },
     {

@@ -58,34 +58,31 @@ $$
 `I_n=0` therefore reproduces the published autonomous map. Both candidate
 coordinates are computed from `(x_n, y_n)` and committed simultaneously.
 
-## Maintained defaults and source boundary
+## Figure-4 defaults and source boundary
 
 | Name | Default | Meaning |
 | --- | ---: | --- |
 | `x` | `0.0` | initial fast coordinate |
 | `y` | `0.0` | initial recovery coordinate |
-| `m0` | `0.0864` | magnitude of the outer-branch slope |
+| `m0` | `0.4` | magnitude of the outer-branch slope |
 | `m1` | `0.65` | middle-branch slope |
 | `a` | `0.2` | middle-branch offset and breakpoint parameter |
-| `d` | `0.235` | Heaviside discontinuity |
-| `j` | `0.2` | constant external-stimulus parameter `J` |
-| `beta` | `0.085` | discontinuity jump magnitude |
-| `eps` | `0.02` | recovery-coordinate scale separation |
-| `x_threshold` | `0.235` | software event threshold |
+| `d` | `0.3` | Heaviside discontinuity |
+| `j` | `0.13` | constant external-stimulus parameter `J` |
+| `beta` | `0.25` | discontinuity jump magnitude |
+| `eps` | `0.002` | recovery-coordinate scale separation |
+| `x_threshold` | `0.3` | software event threshold |
 
-The paper's Figure 1 uses `m0=0.0864`, `m1=0.65`, and `a=0.2` to illustrate
-the admissible `B⁺` region. It does not publish the repository's complete
-default tuple as one experimental operating point. The maintained
-`d/J/β/ε` values are repository choices within the paper's analysed region:
+The complete dynamical tuple is the paper's Figure 4 chaotic-attractor and
+relaxation spike-bursting profile. The initial state `x=y=0` is the maintained
+reproducibility protocol because the caption does not prescribe an initial
+condition. The profile satisfies the paper's analysed-region conditions:
 
 $$
 0<J<d, \qquad J_{\min}<d<J_{\max}, \qquad m_0<1,
 $$
 
-with `J_min=0.1765344921`, `J_max=0.2938620315`, and
-`β₀=0.0762629006 < β=0.085 < β₁=0.0964680880` from equations 9 and 12.
-This statement does not identify the defaults with the paper's Figure 4
-bursting example, which uses a different parameter tuple.
+with `J_min=0.1238095238` and `J_max=0.5047619048`.
 
 ## Event observable
 
@@ -125,15 +122,15 @@ Python implementation.
 
 ## Polyglot acceleration
 
-The acceleration surface was completed in commit `63826b513` and is unchanged
-by the schema-to-RTL enrolment. Rust, Julia, and Go reproduce the Python golden
-trace bit-for-bit at the maintained test points. Mojo is checked per step
-because fused multiply-add rounding is amplified by this sensitive map.
+Rust, Julia, Go, and Mojo reproduce the Python golden trace bit-for-bit. The
+Mojo kernel preserves each binary64 product rounding with a non-inlined product
+boundary, preventing FMA contraction from changing the chaotic orbit.
 
 The committed benchmark artefact records 2,000,000 autonomous iterations,
-five repeats, and a non-isolated loaded workstation. Python, Rust, Julia, and
-Go each record 371,008 events; Mojo records 371,063 and is therefore not
-presented as event-exact on that long trajectory. Reproduce the artefact with:
+five repeats, and a non-isolated loaded workstation. Every runtime records
+88,435 events and zero full-trace state error. Median times in the recorded
+run were 874.69 ms (Python), 15.94 ms (Rust), 15.67 ms (Julia), 11.87 ms (Go),
+and 15.24 ms (Mojo). Reproduce the artefact with:
 
 ```bash
 PYTHONPATH=src .venv/bin/python \
@@ -157,45 +154,45 @@ Q16.16 RTL is event-exact on three bounded operating windows:
 
 | Input | Iterations | Branch counts `(low, middle, high)` | Events | Maximum state error `(x, y)` |
 | ---: | ---: | ---: | ---: | ---: |
-| `-0.3` | `30` | `(22, 1, 7)` | `1` | `(0.001969, 0.000163)` |
-| `0.0` | `20` | `(13, 7, 0)` | `2` | `(0.013687, 0.000304)` |
-| `0.3` | `30` | `(7, 1, 22)` | `1` | `(0.000491, 0.000051)` |
+| `-0.3` | `128` | `(128, 0, 0)` | `0` | `(<0.0016, <0.00066)` |
+| `0.0` | `512` | `(512, 0, 0)` | `0` | `(<0.0038, <0.0016)` |
+| `0.3` | `128` | `(1, 2, 125)` | `1` | `(<0.0020, <0.0008)` |
 
-Q32.32 RTL is event-exact at `I=-0.3/0/0.3` over 30 iterations. Across that
-set, the largest fast-coordinate error is `2.604e-5` and the largest recovery
-error is `8.379e-7`.
+Q32.32 RTL is event-exact at `I=-0.3` over 128 iterations, `I=0` over 620,
+and `I=0.3` over 128. The respective `(x,y)` error bounds are
+`(<5e-8,<2e-8)`, `(<4.4e-4,<1.4e-6)`, and `(<1e-8,<5e-9)`.
 
 ### Declared Q16.16 boundary
 
-The 30-iteration autonomous Q16.16 trajectory is deliberately excluded from
-the parity band. Float64 emits four events, Q16.16 emits six, and six event
-positions differ. Q32.32 resolves that same window at four events on both
-paths. The regression pins this boundary so the bounded evidence cannot be
-read as long-window fixed-point identity.
+The 620-iteration autonomous Q16.16 trajectory is deliberately excluded from
+the parity band. Float64 emits one event, Q16.16 emits 25, and 26 event
+positions differ. Q32.32 resolves the complete 620-step event vector. The
+regression pins this boundary so bounded Q16.16 evidence cannot be read as
+long-window fixed-point identity.
 
 The class-specific evidence lives in
 `tests/test_cosim_courage_nekorkin_map.py`.
 
 ## Independent reference trace
 
-`courage_nekorkin_map_autonomous_doi.json` records a 30-iteration autonomous
-trace. Its model-scoped test independently reimplements equations 3–5 rather
+`courage_nekorkin_map_autonomous_doi.json` records a 2,000-iteration autonomous
+Figure-4 trace. Its model-scoped test independently reimplements equations 3–5 rather
 than calling the hand class or schema expressions. The committed features cover
 event count, first event, and final/minimum/maximum/mean values for both state
 coordinates. The production schema runner then validates the same artefact.
 
 ## Silicon and formal scope
 
-The descriptor is science tier S5 and silicon tier H1:
+The descriptor is science tier S5 and silicon tier H2:
 
 - the paired schemas match the maintained hand implementation;
 - generated Q16.16 and Q32.32 RTL satisfy the bounded contracts above;
-- generated Q8.8 RTL is enrolled in the catalogue formal inventory;
+- generated Q32.32 RTL is enrolled in the catalogue formal inventory and
+  synthesises in Yosys;
 - a port-only depth-4 SymbiYosys/Z3 job proves reset-spike safety.
 
-The formal job is structural safety evidence. It does not replace the
-behavioural trajectories and does not claim FPGA synthesis, timing closure, or
-hardware deployment.
+The formal job is structural safety evidence. Coarse synthesis is not timing
+closure, PPA evidence, board deployment, or physical silicon.
 
 ## Reproducing the evidence
 

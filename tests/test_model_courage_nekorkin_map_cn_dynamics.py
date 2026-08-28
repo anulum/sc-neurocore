@@ -14,15 +14,15 @@ from tests.model_courage_nekorkin_map_support import *  # noqa: F403
 
 
 class TestCNDynamics:
-    def test_sustained_bounded_spiking(self):
+    def test_sustained_bounded_spiking(self) -> None:
         """Default regime fires repeatedly and stays bounded (no clip-pegging)."""
         n = CourageNekorkinMapNeuron()
         trace, spikes = n.simulate(20_000, backend="python")
-        assert spikes > 1000
+        assert spikes == 863
         assert np.all(np.isfinite(trace))
         assert trace.max() - trace.min() < 5.0
 
-    def test_burst_structure(self):
+    def test_burst_structure(self) -> None:
         """ISI distribution shows both in-burst (short) and inter-burst (long) gaps."""
         n = CourageNekorkinMapNeuron()
         prev = n.x
@@ -36,7 +36,7 @@ class TestCNDynamics:
         assert intervals.min() <= 3  # in-burst spikes
         assert intervals.max() >= 8  # inter-burst quiescence
 
-    def test_chaos_sensitivity(self):
+    def test_chaos_sensitivity(self) -> None:
         """Tiny initial offset amplifies — sensitive dependence on initial conditions."""
         a = CourageNekorkinMapNeuron(x=0.0)
         b = CourageNekorkinMapNeuron(x=1e-9)
@@ -44,7 +44,7 @@ class TestCNDynamics:
         tr_b, _ = b.simulate(2000, backend="python")
         assert abs(tr_a[-1] - tr_b[-1]) > 1e-3
 
-    def test_quiescent_below_threshold_regime(self):
+    def test_quiescent_below_threshold_regime(self) -> None:
         """J < Jmin gives the excitable (non-spiking-bursting) regime — far fewer spikes."""
         jmin, _ = _breakpoints()
         excitable = CourageNekorkinMapNeuron(j=jmin - 0.05)
@@ -53,12 +53,12 @@ class TestCNDynamics:
         assert spikes < spikes_default
 
     @pytest.mark.parametrize("current", [-0.02, 0.0, 0.05, 0.1])
-    def test_fi_sweep_finite(self, current: float):
+    def test_fi_sweep_finite(self, current: float) -> None:
         n = CourageNekorkinMapNeuron()
         trace, _ = n.simulate(5000, current, backend="python")
         assert np.all(np.isfinite(trace))
 
-    def test_upward_crossing_only(self):
+    def test_upward_crossing_only(self) -> None:
         n = CourageNekorkinMapNeuron()
         prev_x = n.x
         for _ in range(5000):

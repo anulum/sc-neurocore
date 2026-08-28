@@ -16,9 +16,14 @@ summary = "Courbage-Nekorkin-Vdovin 2007 discontinuous 2D spiking-bursting map."
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "source-profile spiking-bursting studies",
+    "cross-runtime regression",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
 behavior_tags = [
     "chaotic",
     "excitable",
@@ -38,7 +43,7 @@ init = 0.0
 init = 0.0
 
 [parameters.m0]
-default = 0.0864
+default = 0.4
 unit = "1"
 meaning = "slope of the resting branch of the piecewise fast map"
 range = [
@@ -65,7 +70,7 @@ range = [
 ]
 
 [parameters.d]
-default = 0.235
+default = 0.3
 unit = "1"
 meaning = "threshold of the slow regenerative (bursting) term"
 range = [
@@ -74,7 +79,7 @@ range = [
 ]
 
 [parameters.j]
-default = 0.2
+default = 0.13
 unit = "1"
 meaning = "set-point of the fast variable in the slow-variable update"
 range = [
@@ -83,7 +88,7 @@ range = [
 ]
 
 [parameters.beta]
-default = 0.085
+default = 0.25
 unit = "1"
 meaning = "strength of the slow regenerative (bursting) reinjection"
 range = [
@@ -92,7 +97,7 @@ range = [
 ]
 
 [parameters.eps]
-default = 0.02
+default = 0.002
 unit = "1"
 meaning = "slow-variable timescale; small values give slow bursting"
 range = [
@@ -101,7 +106,7 @@ range = [
 ]
 
 [parameters.x_threshold]
-default = 0.235
+default = 0.3
 unit = "1"
 meaning = "level on x at which a spike is registered"
 range = [
@@ -135,26 +140,29 @@ parity = "exact"
 
 [backends.mojo]
 status = "implemented"
-parity = "approximate"
+parity = "exact"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "60e2932556b46a5a5246b15ef7a0cb6b7445db3b1602135043716de727f1813f"
+reference_config = "{\"n_steps\":2000,\"current\":0.0,\"backend\":\"python\",\"parameters\":\"Figure 4 defaults\"}"
+golden_trace_sha256 = "fee02b5a56b095ce3f60b474a7cdc5d912f73f5d2049beb81a7ee7ac9b2e714f"
 
 [documentation]
 slug = "models/courage_nekorkin_map"
-notes = ""
+notes = "Historical class spelling retained for compatibility; defaults reproduce the complete source Figure-4 profile."
 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "Courbage-Nekorkin-Vdovin map at I=-0.3,0,0.3 over bounded 20-30 iteration windows"
-tolerance = "hand/TOML/JSON exact; Q32.32 event-exact over 30 iterations with state error below 0.00003; Q16.16 autonomous 30-iteration boundary excluded"
-evidence = "tests/test_cosim_courage_nekorkin_map.py::test_q3232_short_window_trajectory"
+operating_point = "Courbage-Nekorkin-Vdovin Figure-4 profile from x=y=0 under autonomous drive"
+tolerance = "binary64 exact for all five maintained runtimes; bounded fixed-point event-vector and state envelope"
+evidence = "tests/test_reference_courage_nekorkin_map.py; tests/test_cosim_courage_nekorkin_map.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_courage_nekorkin_map.py::test_q3232_short_window_trajectory"
-target_tier = "H1"
-terminal_reason = "Sensitive discontinuous map validated by bounded fixed-point trajectories; higher silicon rungs require synthesis and timing evidence."
+cosim_evidence = "tests/test_cosim_courage_nekorkin_map.py"
+synthesised = true
+synth_report = "hdl/reports/yosys_courbage_nekorkin_map_q3232_2026-08-28.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Generated fixed-point co-simulation, coarse synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."

@@ -185,9 +185,7 @@ def main(argv: list[str]) -> int:
         )
 
     print()
-    print("# Note: rust/julia/go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo is validated per step; FMA rounding is chaotically amplified")
-    print("# over the long orbit, so long-trace and event parity are not claimed.")
+    print("# All five runtimes reproduce the complete binary64 trace bit-for-bit.")
 
     report = {
         "benchmark": "cazelles_map_simulate",

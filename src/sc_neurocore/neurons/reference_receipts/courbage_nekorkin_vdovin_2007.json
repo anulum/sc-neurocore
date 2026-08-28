@@ -1,0 +1,15 @@
+{
+  "model": "CourageNekorkinMapNeuron",
+  "source": "doi:10.1063/1.2795435 equations 3-5 and Figure 4",
+  "profile": "Figure 4: J=0.13, m0=0.4, m1=0.65, a=0.2, d=0.3, beta=0.25, epsilon=0.002",
+  "protocol": "repository initial state x=y=0 and upward x>=d crossing observation",
+  "drive": {"current": 0.0, "steps": 2000},
+  "oracle": {
+    "events": 63,
+    "first_event_index": 617,
+    "x_final": 0.1136918396313783,
+    "y_final": -0.045559322221173267,
+    "trace_sha256": "fee02b5a56b095ce3f60b474a7cdc5d912f73f5d2049beb81a7ee7ac9b2e714f"
+  },
+  "encoding": "little-endian float64 post-step x values"
+}

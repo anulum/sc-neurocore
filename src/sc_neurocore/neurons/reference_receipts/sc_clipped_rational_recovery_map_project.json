@@ -1,0 +1,13 @@
+{
+  "model": "SCClippedRationalRecoveryMapNeuron",
+  "source": "SC-NeuroCore project recurrence retained from the former CourageNekorkinMapNeuron implementation",
+  "profile": "historical defaults alpha=3, beta=0.001, j=0.1, x_threshold=1, clip_bound=1000000",
+  "drive": {"current": 0.0, "steps": 512},
+  "oracle": {
+    "events": 0,
+    "x_final": -1000000.0,
+    "y_final": 304058.694830129,
+    "trace_sha256": "011b6ab2627c8ac9dccc55b2e5735376fc656a89f3b85c64d2cabf420dddb118"
+  },
+  "encoding": "little-endian float64 post-step x values"
+}

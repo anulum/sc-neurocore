@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 16.756267054006457,
-      "min_ms": 15.590692986734211,
+      "median_ms": 16.83332200627774,
+      "min_ms": 16.408709925599396,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 55.663816889648665,
+      "speedup_vs_python": 61.62917833745461,
       "spikes": 22747
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 18.598656984977424,
-      "min_ms": 13.16435495391488,
+      "median_ms": 18.4760739794001,
+      "min_ms": 14.165942091494799,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 50.14973832796886,
+      "speedup_vs_python": 56.149580538233714,
       "spikes": 22747
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 14.917394029907882,
-      "min_ms": 14.859204995445907,
-      "parity_max_abs_diff": 0.999603062087939,
-      "speedup_vs_python": 62.52551747163494,
-      "spikes": 22592
+      "median_ms": 19.934865995310247,
+      "min_ms": 19.727666047401726,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 52.0406710624866,
+      "spikes": 22747
     },
     "python": {
       "backend": "python",
-      "median_ms": 932.7177810482681,
-      "min_ms": 921.9939470058307,
+      "median_ms": 1037.42380393669,
+      "min_ms": 1023.4647149918601,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 22747
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 20.91048297006637,
-      "min_ms": 19.959062919951975,
+      "median_ms": 21.818186971358955,
+      "min_ms": 21.104580955579877,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 44.60527202472874,
+      "speedup_vs_python": 47.54857978339498,
       "spikes": 22747
     }
   },
@@ -51,50 +51,50 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 932.7177810482681,
-      "min_ms": 921.9939470058307,
+      "median_ms": 1037.42380393669,
+      "min_ms": 1023.4647149918601,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 22747
     },
     {
       "backend": "rust",
-      "median_ms": 20.91048297006637,
-      "min_ms": 19.959062919951975,
+      "median_ms": 21.818186971358955,
+      "min_ms": 21.104580955579877,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 44.60527202472874,
+      "speedup_vs_python": 47.54857978339498,
       "spikes": 22747
     },
     {
       "backend": "julia",
-      "median_ms": 18.598656984977424,
-      "min_ms": 13.16435495391488,
+      "median_ms": 18.4760739794001,
+      "min_ms": 14.165942091494799,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 50.14973832796886,
+      "speedup_vs_python": 56.149580538233714,
       "spikes": 22747
     },
     {
       "backend": "go",
-      "median_ms": 16.756267054006457,
-      "min_ms": 15.590692986734211,
+      "median_ms": 16.83332200627774,
+      "min_ms": 16.408709925599396,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 55.663816889648665,
+      "speedup_vs_python": 61.62917833745461,
       "spikes": 22747
     },
     {
       "backend": "mojo",
-      "median_ms": 14.917394029907882,
-      "min_ms": 14.859204995445907,
-      "parity_max_abs_diff": 0.999603062087939,
-      "speedup_vs_python": 62.52551747163494,
-      "spikes": 22592
+      "median_ms": 19.934865995310247,
+      "min_ms": 19.727666047401726,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 52.0406710624866,
+      "spikes": 22747
     }
   ],
   "source_hashes": {
     "benchmarks/bench_cazelles_map": {
-      "py": "9ef0ca3e9e15c35405254d97d8adaadba7625d283acf95bfe7a1ef6418e4080a"
+      "py": "d2ccc2dd9ea6883d1afea48b1316e6638b824bf35157394ebfbe7a7ab2f3882f"
     },
-    "benchmarks/bench_cazelles_map.py": "9ef0ca3e9e15c35405254d97d8adaadba7625d283acf95bfe7a1ef6418e4080a",
+    "benchmarks/bench_cazelles_map.py": "d2ccc2dd9ea6883d1afea48b1316e6638b824bf35157394ebfbe7a7ab2f3882f",
     "engine/src/neurons/cazelles_map": {
       "rs": "e405b482911b3b7deedd143cf7537269dd558d5b406eebfc3898e6e0b9680aba"
     },
@@ -108,9 +108,9 @@
     },
     "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl": "5740a102dbe19008b19d039565a442fd010e8e26dc3d57719dcf49768e01ef06",
     "src/sc_neurocore/accel/mojo/neurons/cazelles_map": {
-      "mojo": "533b6b2ef3819d75662e9bcd1765797e34ae3a31af8ed3b955ad13bb4ef4cec8"
+      "mojo": "e352ccfd5dd8496486482339d66d10597b6146a096ea559bd49ee727747a37b0"
     },
-    "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo": "533b6b2ef3819d75662e9bcd1765797e34ae3a31af8ed3b955ad13bb4ef4cec8",
+    "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo": "e352ccfd5dd8496486482339d66d10597b6146a096ea559bd49ee727747a37b0",
     "src/sc_neurocore/neurons/models/cazelles_map": {
       "py": "53c16b19f5d8a5411c86f0a90bbcefe7b0966787414805a0151df8c678137d21"
     },

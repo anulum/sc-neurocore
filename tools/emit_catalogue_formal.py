@@ -91,6 +91,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
     "SCFourStateGLIFNeuron": "sc_four_state_glif",
     "SCScaledResetAdaptiveIFNeuron": "sc_scaled_reset_adaptive_if",
+    "SCClippedRationalRecoveryMapNeuron": "sc_clipped_rational_recovery_map",
     "SCUpwardCrossingRulkovMapNeuron": "sc_upward_crossing_rulkov_map",
 }
 
@@ -179,6 +180,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "sc_upward_crossing_rulkov_map": 4,
     "sc_four_state_glif": 6,
     "sc_scaled_reset_adaptive_if": 2,
+    "sc_clipped_rational_recovery_map": 4,
     "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
@@ -223,6 +225,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "rulkov_map",
         "sc_upward_crossing_rulkov_map",
         "sc_scaled_reset_adaptive_if",
+        "sc_clipped_rational_recovery_map",
         "resonate_fire",
         "sigmoid_rate",
         "terman_wang",
@@ -275,6 +278,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "alpha": (64, 32),
     "coba_lif": (48, 24),
     "connor_stevens": (32, 16),
+    "courage_nekorkin_map": (64, 32),
     "dpi_neuron": (32, 16),
     "ermentrout_kopell_pop": (64, 32),
     "escape_rate": (48, 24),
@@ -294,6 +298,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "sc_upward_crossing_rulkov_map": (32, 16),
     "sc_four_state_glif": (32, 16),
     "sc_scaled_reset_adaptive_if": (32, 16),
+    "sc_clipped_rational_recovery_map": (64, 32),
     "sigmoid_rate": (64, 32),
     "threshold_linear_rate": (32, 16),
     "wilson_cowan": (64, 32),
@@ -319,6 +324,7 @@ FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
 MODULE_NAME_BY_SCHEMA: dict[str, str] = {
     "sc_four_state_glif": "sc_four_state_glif",
     "sc_scaled_reset_adaptive_if": "sc_scaled_reset_adaptive_if",
+    "sc_clipped_rational_recovery_map": "sc_clipped_rational_recovery_map",
     "sc_upward_crossing_rulkov_map": "sc_upward_crossing_rulkov_map",
     "sc_resetting_wilson_hr": "sc_resetting_wilson_hr",
     "wang_buzsaki": "sc_wang_buzsaki",

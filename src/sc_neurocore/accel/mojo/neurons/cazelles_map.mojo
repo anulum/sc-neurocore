@@ -10,6 +10,12 @@ from std.math import isfinite
 from std.memory import UnsafePointer
 
 
+@no_inline
+def _rounded_product(lhs: Float64, rhs: Float64) -> Float64:
+    """Round a product before the caller performs its next operation."""
+    return lhs * rhs
+
+
 @export
 def cazelles_map_simulate_c(
     x0_state: Float64,
@@ -65,17 +71,17 @@ def cazelles_map_simulate_c(
     for index in range(n_steps):
         var base: Float64
         if x < x1:
-            base = a1 + b1 * x
+            base = a1 + _rounded_product(b1, x)
         elif x < x2:
-            base = a2 + b2 * x
+            base = a2 + _rounded_product(b2, x)
         elif x < x3:
-            base = a3 + b3 * x
+            base = a3 + _rounded_product(b3, x)
         else:
-            base = a4 + b4 * x
+            base = a4 + _rounded_product(b4, x)
         var power = x
         if exponent == 2:
-            power = x * x
-        var alpha_term = alpha * power
+            power = _rounded_product(x, x)
+        var alpha_term = _rounded_product(alpha, power)
         var candidate = base + alpha_term + current
         var scale = max(1.0, max(abs(x0), abs(x4)))
         var tolerance = 8.0 * 2.220446049250313e-16 * scale

@@ -8,25 +8,29 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
 
 
-def _run(backend: str, *, n_steps: int = 600) -> tuple[np.ndarray, int, float]:
+def _run(backend: str, *, n_steps: int = 600) -> tuple[npt.NDArray[np.float64], int, float]:
     neuron = CazellesMapNeuron()
     trace, events = neuron.simulate(n_steps, 0.0, backend=backend)
     return trace, events, neuron.x
 
 
-@pytest.mark.parametrize("backend", ["rust", "julia", "go"])
+@pytest.mark.parametrize("backend", ["rust", "julia", "go", "mojo"])
 def test_exact_runtime_parity(backend: str) -> None:
     assert {
         "rust": cazelles_map._HAS_RUST,
         "julia": cazelles_map._ensure_julia_loaded(),
         "go": cazelles_map._ensure_go_loaded(),
+        "mojo": cazelles_map._ensure_mojo_loaded(),
     }[backend]
     expected = _run("python")
     observed = _run(backend)
@@ -36,13 +40,13 @@ def test_exact_runtime_parity(backend: str) -> None:
 
 def test_mojo_source_orbit_event_parity_and_one_step_ulp_bound() -> None:
     assert cazelles_map._ensure_mojo_loaded()
-    _reference, expected_events, _xf = _run("python")
-    _observed, events, _mojo_xf = _run("mojo")
+    reference, expected_events, _xf = _run("python")
+    observed, events, _mojo_xf = _run("mojo")
     assert expected_events == 7
-    assert abs(events - expected_events) <= 1
+    assert events == expected_events
+    np.testing.assert_array_equal(observed, reference)
 
     rng = np.random.default_rng(2026)
-    tolerance = 8.0 * float(np.spacing(1.0))
     for _ in range(2000):
         x = float(rng.uniform(0.001, 0.999))
         if min(abs(x - point) for point in (0.4, 0.6, 0.7)) < 1.0e-6:
@@ -50,7 +54,7 @@ def test_mojo_source_orbit_event_parity_and_one_step_ulp_bound() -> None:
         expected, expected_event = CazellesMapNeuron(x=x).simulate(1, backend="python")
         observed, event = CazellesMapNeuron(x=x).simulate(1, backend="mojo")
         assert event == expected_event
-        assert abs(float(observed[0]) - float(expected[0])) <= tolerance
+        assert float(observed[0]) == float(expected[0])
 
 
 def test_figure_one_parameters_and_all_four_branches() -> None:
@@ -96,7 +100,7 @@ def test_alpha_exponent_and_additive_input_extensions() -> None:
         {"x": -0.1},
     ),
 )
-def test_invalid_construction_is_rejected(kwargs: dict[str, float]) -> None:
+def test_invalid_construction_is_rejected(kwargs: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         CazellesMapNeuron(**kwargs)
 

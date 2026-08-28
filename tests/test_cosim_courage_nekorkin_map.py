@@ -176,27 +176,27 @@ def _state_errors(expected: list[TraceRow], observed: list[TraceRow]) -> tuple[f
     (
         (
             -0.3,
-            30,
-            1,
-            {"low": 22, "middle": 1, "high": 7, "heaviside0": 23, "heaviside1": 7},
-            0.002,
-            0.00021,
+            128,
+            0,
+            {"low": 128, "middle": 0, "high": 0, "heaviside0": 128, "heaviside1": 0},
+            0.0016,
+            0.00066,
         ),
         (
             0.0,
-            20,
-            2,
-            {"low": 13, "middle": 7, "high": 0, "heaviside0": 16, "heaviside1": 4},
-            0.014,
-            0.00031,
+            512,
+            0,
+            {"low": 512, "middle": 0, "high": 0, "heaviside0": 512, "heaviside1": 0},
+            0.0038,
+            0.0016,
         ),
         (
             0.3,
-            30,
+            128,
             1,
-            {"low": 7, "middle": 1, "high": 22, "heaviside0": 8, "heaviside1": 22},
-            0.0005,
-            0.00006,
+            {"low": 1, "middle": 2, "high": 125, "heaviside0": 1, "heaviside1": 127},
+            0.002,
+            0.0008,
         ),
     ),
     ids=("negative-drive", "autonomous", "positive-drive"),
@@ -227,13 +227,22 @@ def test_q1616_bounded_trajectory(
 
 
 @pytest.mark.parametrize(
-    ("current", "expected_events"),
-    ((-0.3, 1), (0.0, 4), (0.3, 1)),
+    ("current", "n_steps", "expected_events", "x_tolerance", "y_tolerance"),
+    (
+        (-0.3, 128, 0, 0.00000005, 0.00000002),
+        (0.0, 620, 1, 0.00044, 0.0000014),
+        (0.3, 128, 1, 0.00000001, 0.000000005),
+    ),
     ids=("negative-drive", "autonomous", "positive-drive"),
 )
-def test_q3232_short_window_trajectory(current: float, expected_events: int) -> None:
-    """Q32.32 must preserve all 30-step events with sub-3e-5 state error."""
-    n_steps = 30
+def test_q3232_short_window_trajectory(
+    current: float,
+    n_steps: int,
+    expected_events: int,
+    x_tolerance: float,
+    y_tolerance: float,
+) -> None:
+    """Q32.32 must preserve each enrolled bounded event vector."""
     hand_trace, _branch_counts = _hand_schema_trace(current=current, n_steps=n_steps)
     rtl_trace = _rtl_trace(
         n_steps=n_steps,
@@ -245,15 +254,15 @@ def test_q3232_short_window_trajectory(current: float, expected_events: int) -> 
     assert [row[0] for row in hand_trace] == [row[0] for row in rtl_trace]
     assert sum(row[0] for row in rtl_trace) == expected_events
     x_error, y_error = _state_errors(hand_trace, rtl_trace)
-    assert x_error < 0.00003
-    assert y_error < 0.000001
+    assert x_error < x_tolerance
+    assert y_error < y_tolerance
 
 
 def test_q1616_declares_autonomous_sensitive_boundary() -> None:
-    """The autonomous 30-step Q16.16 trajectory must stay outside the parity band."""
-    hand_trace, _branch_counts = _hand_schema_trace(current=0.0, n_steps=30)
+    """The first source-profile event must stay outside the Q16.16 parity band."""
+    hand_trace, _branch_counts = _hand_schema_trace(current=0.0, n_steps=620)
     rtl_trace = _rtl_trace(
-        n_steps=30,
+        n_steps=620,
         current=0.0,
         data_width=32,
         fraction=16,
@@ -262,6 +271,6 @@ def test_q1616_declares_autonomous_sensitive_boundary() -> None:
         expected[0] != observed[0] for expected, observed in zip(hand_trace, rtl_trace, strict=True)
     )
 
-    assert sum(row[0] for row in hand_trace) == 4
-    assert sum(row[0] for row in rtl_trace) == 6
-    assert event_mismatches == 6
+    assert sum(row[0] for row in hand_trace) == 1
+    assert sum(row[0] for row in rtl_trace) == 25
+    assert event_mismatches == 26
