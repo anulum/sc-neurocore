@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Re-closed `TermanWangOscillator` without changing its DOI-backed two-state
+  cubic/`tanh` equations or continuous no-reset identity. Python, production
+  Rust/PyO3, Julia, Go, and Mojo batches now reject invalid stages, candidates,
+  and results without partial state mutation; the five-runtime benchmark is
+  source-hash-bound and fail-closed; descriptor evidence resolves to current
+  tests; and committed Q16.16 co-simulation, real Yosys synthesis, and depth-4
+  bounded safety establish the honest H2 boundary without timing, PPA, device,
+  silicon, or formal-equivalence claims.
 - Re-closed `PernarowskiNeuron` without changing its DOI-backed three-state
   equations or continuous no-reset identity. Python, production Rust/PyO3,
   Julia, Go, and Mojo batches now reject invalid stages and candidates without

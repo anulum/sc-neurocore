@@ -13,9 +13,8 @@
 // Parity contract: `terman_wang_simulate_c` reproduces
 // `sc_neurocore.neurons.models.terman_wang.TermanWangOscillator.simulate`. The
 // cubic is exact (v*v*v, matching the engine v.powi(3)); the tanh gating uses
-// Go's math.Tanh, so the trace is within a per-step ULP band of the NumPy
-// reference (the 2D relaxation oscillator is non-chaotic, so it does not amplify)
-// with identical spike counts.
+// Go's math.Tanh, so focused parity tests bound the complete trace and require
+// identical spike counts on the enrolled operating regimes.
 //
 // Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 package main
@@ -30,6 +29,15 @@ import (
 	"unsafe"
 )
 
+func allFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
 // terman_wang_simulate_c runs n RK4 steps under a constant input. The caller
 // allocates a trace buffer of length n+2: indices [0, n) receive the v trace,
 // index n the final v, index n+1 the final w. Returns the upward-crossing spike
@@ -42,6 +50,9 @@ func terman_wang_simulate_c(
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
+	if n < 0 || tracePtr == nil {
+		return -1
+	}
 	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+2)
 	v := float64(v0)
 	w := float64(w0)
@@ -52,6 +63,9 @@ func terman_wang_simulate_c(
 	pdt := float64(dt)
 	thr := float64(vPeak)
 	cur := float64(current)
+	if !allFinite(v, w, pa, pb, pe, prho, pdt, thr, cur) || pb <= 0 || pe <= 0 || pdt <= 0 {
+		return -1
+	}
 	deriv := func(vv, ww float64) (float64, float64) {
 		f := 3.0*vv - vv*vv*vv + 2.0
 		g := pa * (1.0 + math.Tanh(vv/pb))
@@ -64,8 +78,15 @@ func terman_wang_simulate_c(
 		dv2, dw2 := deriv(v+0.5*pdt*dv1, w+0.5*pdt*dw1)
 		dv3, dw3 := deriv(v+0.5*pdt*dv2, w+0.5*pdt*dw2)
 		dv4, dw4 := deriv(v+pdt*dv3, w+pdt*dw3)
-		v = v + pdt*(dv1+2.0*dv2+2.0*dv3+dv4)/6.0
-		w = w + pdt*(dw1+2.0*dw2+2.0*dw3+dw4)/6.0
+		if !allFinite(dv1, dw1, dv2, dw2, dv3, dw3, dv4, dw4) {
+			return -1
+		}
+		nextV := v + pdt*(dv1+2.0*dv2+2.0*dv3+dv4)/6.0
+		nextW := w + pdt*(dw1+2.0*dw2+2.0*dw3+dw4)/6.0
+		if !allFinite(nextV, nextW) {
+			return -1
+		}
+		v, w = nextV, nextW
 		trace[t] = v
 		if v >= thr && vPrev < thr {
 			spikes++

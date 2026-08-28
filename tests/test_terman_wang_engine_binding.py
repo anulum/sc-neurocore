@@ -114,12 +114,18 @@ def test_step_count_conversion_errors_are_stable(
         (-1.5, -0.5, 3.0, 0.2, 0.02, 0.0, 0.0, 1.5, 3, 0.0),
     ),
 )
-def test_invalid_direct_numeric_inputs_preserve_the_initial_state(
+def test_invalid_direct_numeric_inputs_fail_explicitly(
     parameters: tuple[float, ...],
 ) -> None:
-    trace, spikes, final_v, final_w = extension.py_terman_wang_simulate(*parameters)
-    np.testing.assert_array_equal(trace, np.full(3, -1.5, dtype=np.float64))
-    assert (spikes, final_v, final_w) == (0, -1.5, -0.5)
+    with pytest.raises(FloatingPointError, match="rejected an invalid candidate"):
+        extension.py_terman_wang_simulate(*parameters)
+
+
+def test_direct_overflow_fails_explicitly() -> None:
+    parameters = list(_parameters())
+    parameters[0] = 1.0e103
+    with pytest.raises(FloatingPointError, match="rejected an invalid candidate"):
+        extension.py_terman_wang_simulate(*parameters, 2, 0.5)
 
 
 def test_production_rust_backend_is_exactly_the_installed_extension() -> None:

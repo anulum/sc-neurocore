@@ -4195,6 +4195,55 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_terman_wang_simulate.json",
+      "description": "Terman-Wang two-state RK4 execution across Python, Rust, Julia, Go, and Mojo.",
+      "expected_values": {
+        "benchmark": "terman_wang_simulate_rk4",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "model": "TermanWangOscillator",
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 0.5,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "terman-wang-five-runtime-local-regression",
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {"max": 1e-09},
+        "backends.julia.parity_max_abs_diff": {"max": 1e-09},
+        "backends.mojo.parity_max_abs_diff": {"max": 1e-08},
+        "backends.python.parity_max_abs_diff": {"max": 0.0},
+        "backends.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backends.python.median_ms",
+        "backends.python.min_ms",
+        "backends.rust.median_ms",
+        "backends.rust.min_ms",
+        "backends.julia.median_ms",
+        "backends.julia.min_ms",
+        "backends.go.median_ms",
+        "backends.go.min_ms",
+        "backends.mojo.median_ms",
+        "backends.mojo.min_ms"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_terman_wang_simulate.py": "source_hashes.benchmarks/bench_terman_wang_simulate.py",
+        "engine/src/bindings/terman_wang.rs": "source_hashes.engine/src/bindings/terman_wang.rs",
+        "engine/src/neurons/simple_spiking/terman_wang.rs": "source_hashes.engine/src/neurons/simple_spiking/terman_wang.rs",
+        "src/sc_neurocore/accel/go/neurons/terman_wang/terman_wang.go": "source_hashes.src/sc_neurocore/accel/go/neurons/terman_wang/terman_wang.go",
+        "src/sc_neurocore/accel/julia/neurons/terman_wang.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/terman_wang.jl",
+        "src/sc_neurocore/accel/mojo/neurons/terman_wang.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/terman_wang.mojo",
+        "src/sc_neurocore/accel/rust/safety/terman_wang.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/terman_wang.rs",
+        "src/sc_neurocore/neurons/model_descriptors/TermanWangOscillator.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/TermanWangOscillator.toml",
+        "src/sc_neurocore/neurons/model_schemas/terman_wang.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/terman_wang.json",
+        "src/sc_neurocore/neurons/model_schemas/terman_wang.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/terman_wang.toml",
+        "src/sc_neurocore/neurons/models/terman_wang.py": "source_hashes.src/sc_neurocore/neurons/models/terman_wang.py",
+        "src/sc_neurocore/neurons/reference_trace_data/terman_wang_legion_oscillation_doi.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/terman_wang_legion_oscillation_doi.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "description": "Wang NMDA source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

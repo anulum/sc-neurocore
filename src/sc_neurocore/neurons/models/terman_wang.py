@@ -25,9 +25,9 @@ import numpy.typing as npt
 # Julia juliacall, Go cgo, Mojo FFI) accelerates `simulate`. The cubic is exact
 # (`v*v*v`, matching the engine `v.powi(3)`); the `tanh` gating resolves to the
 # same glibc symbol as Python in the Rust engine, so Rust is bit-identical on
-# Linux, while Julia/Go/Mojo use their own libm `tanh` and stay ULP-bounded — the
-# two-dimensional relaxation oscillator is non-chaotic, so that band does not
-# amplify and spike counts match.
+# Linux. Julia, Go, and Mojo use their own libm `tanh`; focused parity tests
+# bound their complete traces and require exact event counts on the enrolled
+# operating regimes.
 
 _RustSimulate = Callable[..., "tuple[list[float], int, float, float]"]
 
@@ -150,21 +150,22 @@ class TermanWangOscillator:
     v_peak: float = 1.5
 
     def __post_init__(self) -> None:
+        validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise TypeError(f"{name} must be a real finite scalar")
-            value = float(value)
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
-            setattr(self, name, value)
+            validated[name] = float(value)
         for name in self._POSITIVE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise TypeError(f"{name} must be a real positive scalar")
-            value = float(value)
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
+            validated[name] = float(value)
+        for name, value in validated.items():
             setattr(self, name, value)
 
     @staticmethod
@@ -178,12 +179,16 @@ class TermanWangOscillator:
 
     def _validate_runtime_contract(self, current: float) -> float:
         current = self._finite_float("current", current)
+        validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
-            self._finite_float(name, getattr(self, name))
+            validated[name] = self._finite_float(name, getattr(self, name))
         for name in self._POSITIVE_FIELDS:
             value = self._finite_float(name, getattr(self, name))
             if value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
+            validated[name] = value
+        for name, value in validated.items():
+            setattr(self, name, value)
         return current
 
     def _derivatives(self, v: float, w: float, current: float) -> tuple[float, float]:
@@ -235,7 +240,9 @@ class TermanWangOscillator:
         counts the steps whose ``v`` crossed ``v_peak`` upward. The instance state
         ``(v, w)`` is advanced to the final step. The Rust backend is bit-identical
         to the pure-NumPy reference on Linux (shared glibc ``tanh``); Julia, Go and
-        Mojo stay within a measured per-step ULP band with identical spike counts.
+        Mojo stay within measured full-trace bounds with identical spike counts
+        on the enrolled regimes. A rejected derivative, candidate, or native
+        result leaves the complete pre-batch state unchanged.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
@@ -272,8 +279,36 @@ class TermanWangOscillator:
             trace, spikes, vf, wf = self._simulate_mojo(n_steps, current)
         else:
             trace, spikes, vf, wf = self._simulate_python(n_steps, current)
+        trace, spikes, vf, wf = self._validate_batch_result(
+            backend=backend,
+            n_steps=n_steps,
+            trace=trace,
+            spikes=spikes,
+            final_state=(vf, wf),
+        )
         self.v, self.w = vf, wf
         return trace, spikes
+
+    @staticmethod
+    def _validate_batch_result(
+        *,
+        backend: str,
+        n_steps: int,
+        trace: npt.NDArray[np.float64],
+        spikes: int,
+        final_state: tuple[float, float],
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        """Validate a complete backend result before committing instance state."""
+        values = np.asarray(trace, dtype=np.float64)
+        if (
+            spikes < 0
+            or spikes > n_steps
+            or values.shape != (n_steps,)
+            or not np.all(np.isfinite(values))
+            or not all(math.isfinite(value) for value in final_state)
+        ):
+            raise FloatingPointError(f"Terman-Wang {backend} batch produced an invalid candidate")
+        return values, int(spikes), final_state[0], final_state[1]
 
     def _simulate_python(
         self, n_steps: int, current: float
@@ -292,7 +327,10 @@ class TermanWangOscillator:
         def deriv(vv: float, ww: float) -> tuple[float, float]:
             f = 3.0 * vv - vv * vv * vv + 2.0
             g = alpha * (1.0 + math.tanh(vv / beta))
-            return f - ww + current + rho, eps * (g - ww)
+            candidate = f - ww + current + rho, eps * (g - ww)
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Terman-Wang Python batch derivative became non-finite")
+            return candidate
 
         spikes = 0
         for t in range(n_steps):
@@ -301,8 +339,13 @@ class TermanWangOscillator:
             dv2, dw2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1)
             dv3, dw3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2)
             dv4, dw4 = deriv(v + dt * dv3, w + dt * dw3)
-            v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
-            w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+            candidate = (
+                v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0,
+                w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0,
+            )
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Terman-Wang Python batch candidate became non-finite")
+            v, w = candidate
             trace[t] = v
             if v >= v_peak and v_prev < v_peak:
                 spikes += 1
@@ -330,18 +373,23 @@ class TermanWangOscillator:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _julia_module is not None
-        result = _julia_module.simulate_trace(
-            float(self.v),
-            float(self.w),
-            float(self.alpha),
-            float(self.beta),
-            float(self.epsilon),
-            float(self.rho),
-            float(self.dt),
-            float(self.v_peak),
-            int(n_steps),
-            float(current),
-        )
+        try:
+            result = _julia_module.simulate_trace(
+                float(self.v),
+                float(self.w),
+                float(self.alpha),
+                float(self.beta),
+                float(self.epsilon),
+                float(self.rho),
+                float(self.dt),
+                float(self.v_peak),
+                int(n_steps),
+                float(current),
+            )
+        except Exception as exc:
+            raise FloatingPointError(
+                "Terman-Wang Julia batch rejected an invalid candidate"
+            ) from exc
         trace = np.asarray(result.trace, dtype=np.float64)
         return trace, int(result.spikes), float(result.vf), float(result.wf)
 

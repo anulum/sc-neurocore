@@ -78,37 +78,45 @@ impl TermanWangOscillator {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.valid_numeric_contract() || !current.is_finite() {
-            return 0;
+            return None;
         }
         let v_prev = self.v;
-        let Some((next_v, next_w)) = self.rk4_candidate(current) else {
-            return 0;
-        };
+        let (next_v, next_w) = self.rk4_candidate(current)?;
         self.v = next_v;
         self.w = next_w;
-        if self.v >= self.v_peak && v_prev < self.v_peak {
+        Some(if self.v >= self.v_peak && v_prev < self.v_peak {
             1
         } else {
             0
-        }
+        })
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
     /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
     /// and the upward-`v_peak`-crossing spike count. Reuses `step`; the cubic uses
     /// `v.powi(3)` = `v*v*v` (matching the Python `v*v*v`). The hyperbolic-tangent
     /// gating resolves to the same glibc `tanh` as the Python reference on Linux,
     /// so this backend is bit-identical there. The final state is left in
-    /// `self.v` / `self.w`.
+    /// `self.v` / `self.w`. Invalid input returns an empty trace and preserves
+    /// the complete pre-batch state.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        self.try_simulate(n_steps, current).unwrap_or_default()
+    }
+    /// Run one failure-atomic batch, returning `None` on any invalid stage.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
-            trace.push(self.v);
+            let spiked = candidate.try_step(current)?;
+            trace.push(candidate.v);
             spikes += spiked as i64;
         }
-        (trace, spikes)
+        *self = candidate;
+        Some((trace, spikes))
     }
     pub fn reset(&mut self) {
         self.v = -1.5;
@@ -218,6 +226,17 @@ mod tests {
         let before = (n.v, n.w);
         assert_eq!(n.step(1.0), 0);
         assert_eq!((n.v, n.w), before);
+    }
+
+    #[test]
+    fn try_simulate_rejects_overflow_without_mutation() {
+        let mut neuron = TermanWangOscillator {
+            v: 1.0e103,
+            ..Default::default()
+        };
+        let before = (neuron.v, neuron.w);
+        assert!(neuron.try_simulate(2, 0.5).is_none());
+        assert_eq!((neuron.v, neuron.w), before);
     }
 
     #[test]

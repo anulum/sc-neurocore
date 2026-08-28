@@ -9,9 +9,8 @@
 # Parity contract: `simulate_trace` reproduces
 # `sc_neurocore.neurons.models.terman_wang.TermanWangOscillator.simulate`. The
 # cubic is exact (`v*v*v`, matching the engine `v.powi(3)`); the `tanh` gating uses
-# Julia's libm, so the trace is within a per-step ULP band of the NumPy reference
-# (the two-dimensional relaxation oscillator is non-chaotic, so it does not
-# amplify) with identical spike counts.
+# Julia's libm, so focused parity tests bound the complete trace and require
+# identical spike counts on the enrolled operating regimes.
 #
 # Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 
@@ -19,6 +18,12 @@ module TermanWangAccel
 
 export simulate_trace
 
+"""
+    simulate_trace(v0, w0, alpha, beta, eps, rho, dt, v_peak, n_steps, current)
+
+Run a failure-atomic Terman-Wang RK4 batch. Invalid inputs, stages, or
+candidates raise before a result is returned.
+"""
 function simulate_trace(
     v0::Float64,
     w0::Float64,
@@ -31,6 +36,12 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    if n_steps < 0 || !all(isfinite, (v0, w0, alpha, beta, eps, rho, dt, v_peak, current))
+        throw(ArgumentError("Terman-Wang batch inputs must be finite and n_steps non-negative"))
+    end
+    if beta <= 0.0 || eps <= 0.0 || dt <= 0.0
+        throw(ArgumentError("Terman-Wang beta, epsilon, and dt must be positive"))
+    end
     trace = Vector{Float64}(undef, n_steps)
     v = v0
     w = w0
@@ -45,8 +56,16 @@ function simulate_trace(
         dv2, dw2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1)
         dv3, dw3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2)
         dv4, dw4 = deriv(v + dt * dv3, w + dt * dw3)
-        v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
-        w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+        stages = (dv1, dw1, dv2, dw2, dv3, dw3, dv4, dw4)
+        if !all(isfinite, stages)
+            throw(DomainError(stages, "Terman-Wang RK4 stage became non-finite"))
+        end
+        next_v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+        next_w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+        if !all(isfinite, (next_v, next_w))
+            throw(DomainError((next_v, next_w), "Terman-Wang candidate became non-finite"))
+        end
+        v, w = next_v, next_w
         trace[t] = v
         if v >= v_peak && v_prev < v_peak
             spikes += 1

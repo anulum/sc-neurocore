@@ -971,7 +971,7 @@
     "python_model_classes": 174,
     "python_model_source_modules": 170,
     "rust_pyo3_model_wrappers": 201,
-    "test_files": 4748
+    "test_files": 4749
   },
   "documentation": {
     "public_pages": [
@@ -3725,6 +3725,7 @@
       "tests/test_bench_sc_unit_capacitance_respiratory.py",
       "tests/test_bench_sigma_delta_dual_identity.py",
       "tests/test_bench_sigmoid_rate.py",
+      "tests/test_bench_terman_wang.py",
       "tests/test_bench_theta.py",
       "tests/test_bench_threshold_linear_rate.py",
       "tests/test_bench_verilog_compiler.py",

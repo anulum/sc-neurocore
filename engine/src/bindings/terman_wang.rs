@@ -9,10 +9,13 @@
 //! Python binding for the Terman-Wang LEGION relaxation oscillator.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use crate::neurons::TermanWangOscillator;
+
+type PyTermanWangBatch<'py> = (Bound<'py, PyArray1<f64>>, i64, f64, f64);
 
 py_neuron_default!("TermanWangOscillator", PyTermanWangOscillator, TermanWangOscillator, state v, state w);
 
@@ -31,8 +34,9 @@ pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 /// spike count, and final `(v, w)` state match the Python RK4 reference. The cubic
 /// uses `v.powi(3)` = `v*v*v` (matching the Python `v*v*v`); the `tanh` gating
 /// resolves to the same glibc symbol as Python on Linux, so this backend is
-/// bit-identical there (Julia/Go/Mojo use their own libm `tanh`, ULP-bounded, and
-/// the two-dimensional relaxation oscillator is non-chaotic so it does not amplify).
+/// bit-identical there. Julia, Go, and Mojo use their own libm `tanh` and are
+/// validated against bounded full traces with exact event counts on enrolled
+/// operating regimes.
 #[pyfunction]
 #[pyo3(signature = (v0, w0, alpha, beta, epsilon, rho, dt, v_peak, n_steps, current))]
 #[allow(clippy::too_many_arguments)]
@@ -48,7 +52,7 @@ fn py_terman_wang_simulate<'py>(
     v_peak: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+) -> PyResult<PyTermanWangBatch<'py>> {
     let mut neuron = TermanWangOscillator {
         v: v0,
         w: w0,
@@ -59,6 +63,10 @@ fn py_terman_wang_simulate<'py>(
         dt,
         v_peak,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w)
+    let Some((trace, spikes)) = neuron.try_simulate(n_steps, current) else {
+        return Err(PyFloatingPointError::new_err(
+            "Terman-Wang Rust batch rejected an invalid candidate",
+        ));
+    };
+    Ok((trace.into_pyarray(py), spikes, neuron.v, neuron.w))
 }

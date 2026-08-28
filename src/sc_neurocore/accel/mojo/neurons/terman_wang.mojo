@@ -13,9 +13,8 @@
 # `sc_neurocore.neurons.models.terman_wang.TermanWangOscillator.simulate`. The
 # cubic is exact (v*v*v); each product is rounded into its own variable before the
 # following add/subtract to avoid FMA contraction, and the `tanh` gating uses
-# Mojo's libm. The two-dimensional relaxation oscillator is non-chaotic, so the
-# residual transcendental/FMA ULP stays bounded; the backend is validated
-# per-step and on spike counts.
+# Mojo's libm. Focused parity tests bound the complete trace and require exact
+# event counts on the enrolled operating regimes.
 #
 # Mojo FFI rule (per feedback_mojo_026_ffi_pattern): @export rejects parametric
 # signatures, so the output trace buffer is passed as a raw `Int` address and the
@@ -24,7 +23,7 @@
 #
 # Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 
-from std.math import tanh
+from std.math import isfinite, tanh
 from std.memory import UnsafePointer
 
 
@@ -56,6 +55,23 @@ def terman_wang_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(v0)
+        or not isfinite(w0)
+        or not isfinite(alpha)
+        or not isfinite(beta)
+        or not isfinite(eps)
+        or not isfinite(rho)
+        or not isfinite(dt)
+        or not isfinite(v_peak)
+        or not isfinite(current)
+        or beta <= 0.0
+        or eps <= 0.0
+        or dt <= 0.0
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var v = v0
     var w = w0
@@ -77,10 +93,25 @@ def terman_wang_simulate_c(
         var w4 = w + dt * dw3
         var dv4 = _dv(v4, w4, current, rho)
         var dw4 = _dw(v4, w4, alpha, beta, eps)
+        if (
+            not isfinite(dv1)
+            or not isfinite(dw1)
+            or not isfinite(dv2)
+            or not isfinite(dw2)
+            or not isfinite(dv3)
+            or not isfinite(dw3)
+            or not isfinite(dv4)
+            or not isfinite(dw4)
+        ):
+            return -1
         var sv = dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4
         var sw = dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4
-        v = v + dt * sv / 6.0
-        w = w + dt * sw / 6.0
+        var next_v = v + dt * sv / 6.0
+        var next_w = w + dt * sw / 6.0
+        if not isfinite(next_v) or not isfinite(next_w):
+            return -1
+        v = next_v
+        w = next_w
         trace[t] = v
         if v >= v_peak and v_prev < v_peak:
             spikes += 1

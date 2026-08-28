@@ -1,16 +1,65 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestQ1616Precision from former test_cosim_terman_wang.py
+# SC-NeuroCore — Terman-Wang Q16.16 co-simulation and synthesis tests
 
 """Focused suite: TestQ1616Precision from former test_cosim_terman_wang.py."""
 
 from __future__ import annotations
 
-from tests.cosim_terman_wang_support import *  # noqa: F403
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from tests.cosim_terman_wang_support import (
+    HAS_IVERILOG,
+    _python_spike_count,
+    _terman_wang_hand_spike_count,
+    _verilog_spike_count_q1616,
+)
+from tests.toolchain_support import require_executable
+
+_ROOT = Path(__file__).resolve().parents[1]
+_RTL = _ROOT / "hdl/formal/catalogue/sc_terman_wang.v"
+_SBY = _ROOT / "hdl/formal/catalogue/sc_terman_wang.sby"
+
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {_RTL}; synth -top sc_terman_wang -run begin:coarse; check; stat",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_symbiyosys_proves_the_committed_reset_contract(tmp_path: Path) -> None:
+    """The public catalogue SBY entrypoint must execute and reach PASS."""
+    require_executable("z3")
+    output = tmp_path / "terman_wang_bmc"
+    completed = subprocess.run(
+        [require_executable("sby"), "-f", "-d", str(output), _SBY.name],
+        cwd=_SBY.parent,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    status = (output / "status").read_text(encoding="utf-8").split()
+    assert status and status[0] == "PASS"
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
