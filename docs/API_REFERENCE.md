@@ -24148,19 +24148,22 @@ Reference: Mensi, S. et al. (2012). J. Neurophysiol. 107:1756-1775.
 ## Module `neurons.models.glif`
 
 ### Class `GLIFNeuron`
-Allen Institute GLIF5 generalised leaky integrate-and-fire neuron.
+Teeter et al. GLIF5 with five source states and fitted reset rules.
 
-The four dynamic states are advanced with candidate-first RK4 over the
-continuous GLIF flow. Spike reset is applied only after the candidate is
-finite and crosses the adaptive threshold.
-
-Reference: Teeter, C. et al. (2018). Nat. Commun. 9:709.
+The defaults form a source-consistent normalised operating profile. They
+are not attributed to one Allen Cell Types Atlas specimen. ``current`` is
+constant over each exact-flow interval and uses the same current units as
+``i_asc1`` and ``i_asc2``.
 
 - **__post_init__**()
+- **theta**()
+  - Return the instantaneous composite spike threshold.
 - **step**(current)
+  - Advance one exact-flow interval and return the strict GLIF5 event.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
+  - Run a failure-atomic constant-current batch and return voltage/events.
 - **reset**()
+  - Restore the source-consistent operating-profile state.
 
 ---
 
@@ -25752,19 +25755,20 @@ https://doi.org/10.1016/S0893-6080(01)00078-8
 ## Module `neurons.models.rulkov_map`
 
 ### Class `RulkovMapNeuron`
-Rulkov 2001 — discrete map-based neuron (no ODE, O(1) per step).
+Rulkov (2002) three-branch spiking-bursting map.
 
-x&#91;n+1&#93; = f(x&#91;n&#93;, y&#91;n&#93;) + I
-y&#91;n+1&#93; = y&#91;n&#93; - μ(x&#91;n&#93; + 1) + μσ
-Fast iteration, exhibits spiking and bursting.
-
-Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
+``current`` is the paper's fast ``beta_n`` input specialization. ``sigma``
+remains the slow-nullcline control parameter of the autonomous map. The
+default state and ``sigma=-1.6`` form SC-NeuroCore's quiescent operating
+profile; they are not represented as a source figure's unique defaults.
 
 - **__post_init__**()
 - **step**(current)
+  - Advance one source-map iteration and report the reset-branch event.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
+  - Advance a failure-atomic batch and return ``(x_trace, events)``.
 - **reset**()
+  - Restore the repository operating profile's initial state.
 
 ---
 
@@ -25848,6 +25852,23 @@ anchored to the pre-2026-08-27 built engine trajectories.
 
 - **__post_init__**()
 - **step**(i_soma, i_dend)
+- **reset**()
+
+---
+
+## Module `neurons.models.sc_four_state_glif`
+
+### Class `SCFourStateGLIFNeuron`
+Historical four-state GLIF project neuron.
+
+The four dynamic states are advanced with candidate-first RK4. Spike reset
+is applied only after the finite candidate reaches the adaptive threshold.
+This count-neutral project recurrence has no whole-model paper attribution.
+
+- **__post_init__**()
+- **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
 
 ---
@@ -26108,6 +26129,19 @@ the repository's RK4 recurrence. This count-neutral identity preserves
 that established timing and event behavior while the literature-labelled
 class uses the source ``C = 21 pF`` equation.
 
+
+---
+
+## Module `neurons.models.sc_upward_crossing_rulkov_map`
+
+### Class `SCUpwardCrossingRulkovMapNeuron`
+Retained configurable upward-crossing observation convention.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance once and report the historical rising threshold crossing.
+- **simulate**(n_steps, current, backend)
+  - Advance a failure-atomic retained batch and return trace plus events.
 
 ---
 

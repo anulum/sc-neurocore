@@ -1,61 +1,50 @@
 {
   "schema_version": "sc-neurocore.reference-trace.v1",
   "name": "glif_constant_current_threshold_adaptation",
-  "model": {
-    "schema_name": "glif",
-    "runner": "universal_dsl"
-  },
+  "model": {"schema_name": "glif", "runner": "universal_dsl"},
   "protocol": {
     "dt": 1.0,
     "steps": 1000,
-    "inputs": {
-      "I": 30.0
-    },
-    "state_variables": [
-      "v",
-      "theta",
-      "i_asc1",
-      "i_asc2"
-    ]
+    "inputs": {"I": 30.0},
+    "state_variables": ["v", "theta_spike", "i_asc1", "i_asc2", "theta_voltage", "refractory_remaining"]
   },
   "provenance": {
-    "kind": "independent_rk4_reference",
-    "source": "src/sc_neurocore/neurons/model_schemas/glif.toml",
-    "equation": "Driven GLIF5 trace independently re-derived from the Allen Institute four-state flow with simultaneous classical RK4, candidate-level v >= theta detection, and the candidate-first voltage, threshold, and after-spike-current reset increments.",
+    "kind": "independent_exact_flow_reference",
+    "source": "Teeter et al. 2018 equations 1-8 and the AllenSDK GLIF exact-dynamics update order",
+    "equation": "Five-state GLIF5 exact flow with pre-step after-spike currents held during the membrane and voltage-threshold interval, strict V > Theta_inf + Theta_s + Theta_v events, affine resets, and an explicit refractory cut.",
     "citation": "doi:10.1038/s41467-017-02717-4"
   },
   "expected_features": {
-    "spike_count": 54.0,
+    "spike_count": 49.0,
     "first_spike_step": 11.0,
-    "final.v": -66.51811704549482,
+    "final.v": -70.0,
     "min.v": -70.0,
-    "max.v": -40.289548021238076,
-    "mean.v": -51.68975714447121,
-    "final.theta": -38.35658698727918,
-    "min.theta": -49.99985536125,
-    "max.theta": -38.23974703626318,
-    "mean.theta": -40.11335570702817,
-    "final.i_asc1": 1.0639750535363472,
+    "max.v": -40.27694179659736,
+    "mean.v": -53.50729194846109,
+    "final.theta_spike": 11.55697443372317,
+    "min.theta_spike": 0.0,
+    "max.theta_spike": 11.55697443372317,
+    "mean.theta_spike": 9.718038159957613,
+    "final.i_asc1": 1.1758738242771765,
     "min.i_asc1": 0.0,
-    "max.i_asc1": 1.31380295378062,
-    "mean.i_asc1": 0.5573337761460219,
-    "final.i_asc2": 5.4573193867425225,
+    "max.i_asc1": 1.3138024766813559,
+    "mean.i_asc1": 0.6184441585543577,
+    "final.i_asc2": 5.465700419973189,
     "min.i_asc2": 0.0,
-    "max.i_asc2": 5.48467431400484,
-    "mean.i_asc2": 4.32477375848058
+    "max.i_asc2": 5.465700419973189,
+    "mean.i_asc2": 4.2495765894851925,
+    "final.theta_voltage": 0.2027501748859859,
+    "min.theta_voltage": 0.00014463601814261544,
+    "max.theta_voltage": 0.2027501748859859,
+    "mean.theta_voltage": 0.16845516629719104,
+    "final.refractory_remaining": 1.0,
+    "min.refractory_remaining": 0.0,
+    "max.refractory_remaining": 2.0,
+    "mean.refractory_remaining": 0.147
   },
   "tolerances": {
-    "default": {
-      "absolute": 1e-09,
-      "relative": 1e-12
-    },
-    "spike_count": {
-      "absolute": 0.0,
-      "relative": 0.0
-    },
-    "first_spike_step": {
-      "absolute": 0.0,
-      "relative": 0.0
-    }
+    "default": {"absolute": 1e-09, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
   }
 }

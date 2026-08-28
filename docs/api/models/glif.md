@@ -1,194 +1,131 @@
 # GLIFNeuron
 
 **Module:** `sc_neurocore.neurons.models.glif`
-**Rust engine:** `sc_neurocore_engine::neurons::GLIFNeuron`
-**Polyglot `simulate` backends:** Rust engine (PyO3, bit-exact), Julia `GlifAccel`, Go c-shared (`accel/go/neurons/glif`), Mojo FFI (`accel/mojo/neurons/glif.mojo`); standalone Rust safety mirror `GLIFNeuron`
-**Reference:** Teeter, C. et al., Nat. Commun. 9:709, 2018
-**Family:** Allen Institute generalised leaky integrate-and-fire level 5
-**State variables:** `v`, `theta`, `i_asc1`, `i_asc2`
 
-## Mathematical contract
+**Reference:** Teeter et al., *Nature Communications* 9, 709 (2018), [doi:10.1038/s41467-017-02717-4](https://doi.org/10.1038/s41467-017-02717-4)
 
-`GLIFNeuron` advances the continuous four-state GLIF5 flow with a candidate-first fourth-order Runge-Kutta step. The spike reset is applied only after the candidate state is finite and the candidate membrane voltage crosses the adaptive threshold.
+**States:** `v`, `theta_spike`, `i_asc1`, `i_asc2`, `theta_voltage`; runtime also exposes `refractory_remaining`
 
-Membrane flow:
+`GLIFNeuron` is the five-state GLIF5 point model. The former four-state project
+recurrence remains available without publication attribution as
+[`SCFourStateGLIFNeuron`](sc_four_state_glif.md).
 
-$$
-\frac{dV}{dt} = \frac{-(V - V_{rest}) + R I_{ext} + I_{asc1} + I_{asc2}}{\tau_m}
-$$
+## Equations
 
-Threshold flow:
+Between events,
 
 $$
-\frac{d\theta}{dt} = \frac{\theta_\infty - \theta + a_\theta(V - V_{rest})}{\tau_\theta}
-$$
-
-After-spike current flow:
-
-$$
-\frac{dI_{asc1}}{dt} = -\frac{I_{asc1}}{\tau_{asc1}},\qquad
-\frac{dI_{asc2}}{dt} = -\frac{I_{asc2}}{\tau_{asc2}}
-$$
-
-Candidate-first RK4 update:
-
-$$
-y_{n+1}^{candidate} = y_n + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)
-$$
-
-where `y = (v, theta, i_asc1, i_asc2)` and each `k` evaluates the same GLIF vector field at the RK4 stage state.
-
-Spike reset:
-
-$$
-V \leftarrow V_{reset}
+\dot V = \frac{I_e + I_1 + I_2 - (V-E_L)/R}{C},
+\qquad \dot\Theta_s=-b_s\Theta_s,
 $$
 
 $$
-\theta \leftarrow \theta_{candidate} + \Delta_\theta,
-\qquad I_{asc1} \leftarrow I_{asc1,candidate} + r_{asc1},
-\qquad I_{asc2} \leftarrow I_{asc2,candidate} + r_{asc2}
+\dot I_j=-k_jI_j,
+\qquad
+\dot\Theta_v=a_v(V-E_L)-b_v\Theta_v.
 $$
 
-This preserves the Allen GLIF additive threshold jump while avoiding direct Euler drift in the membrane, threshold, and after-spike current states.
+The fixed-grid implementation integrates the linear interval exactly. It holds
+the pre-step after-spike currents while evaluating the membrane and
+voltage-threshold flow, matching the official AllenSDK exact-dynamics update
+order. An event uses the strict source condition
 
-## Validation boundaries
+$$V > \Theta_\infty + \Theta_s + \Theta_v.$$
 
-The Python reference raises before mutation when:
+The finite candidate then receives the fitted affine cuts
 
-- `current` is non-finite.
-- Any state or scalar parameter is non-finite at runtime.
-- `tau_m`, `tau_theta`, `tau_asc1`, `tau_asc2`, or `dt` is non-positive.
-- `delta_theta` or `resistance` is negative.
-- The RK4 candidate contains a non-finite value.
+$$
+V^+=E_L+f_v(V^- - E_L)-\delta_V,\quad
+\Theta_s^+=\Theta_s^-+\delta_{\Theta_s},
+$$
 
-The non-throwing Go, Julia, Rust engine, and Rust safety mirrors preserve state and return no spike for the same invalid runtime boundaries.
+$$
+I_j^+=f_jI_j^-+\delta_{I_j},\quad
+\Theta_v^+=\Theta_v^-.
+$$
 
-## Co-simulation fidelity
+The public state exposes the post-cut values immediately and holds them during
+the configured refractory input-suppression interval. This sampled-state choice
+is an explicit implementation specialization; sub-step spike interpolation is
+not claimed.
 
-The paired TOML and JSON schemas now encode the same simultaneous classical RK4
-flow and candidate-level `v >= theta` reset as the maintained hand model. Across
-the varied 4,000-step drive `(0, 15, 22, 30, 45, 50, 30, 22) × 500`, both schema
-formats reproduce all 181 spike decisions and every post-step `v`, `theta`,
-`i_asc1`, and `i_asc2` value exactly.
+## Parameters and defaults
 
-The Q16.16 contract covers silent, subthreshold, onset, tonic, and high-drive
-regimes over 1,000 steps:
+The defaults are a source-consistent repository operating profile, not the fit
+of a particular Allen Cell Types specimen. State, current, and voltage fields
+use one internally consistent unit system.
 
-| Current | Hand / schema spikes | Q16.16 RTL spikes | Absolute gap |
-| ---: | ---: | ---: | ---: |
-| 0 | 0 | 0 | 0 |
-| 15 | 0 | 0 | 0 |
-| 22 | 23 | 23 | 0 |
-| 30 | 54 | 54 | 0 |
-| 45 | 86 | 86 | 0 |
-| 50 | 95 | 95 | 0 |
+| Field | Default | Contract |
+|---|---:|---|
+| `v` / `e_l` | -70 / -70 | initial voltage / leak reversal |
+| `theta_spike` / `theta_voltage` | 0 / 0 | initial threshold components |
+| `i_asc1` / `i_asc2` | 0 / 0 | initial after-spike currents |
+| `refractory_remaining` | 0 | initial input-suppression time |
+| `capacitance` / `resistance` | 10 / 1 | finite and strictly positive |
+| `theta_inf` | -50 | baseline threshold |
+| `b_spike` / `b_voltage` | 0.01 / 0.01 | strictly positive decay rates |
+| `a_voltage` | 0.0001 | finite voltage-threshold coupling |
+| `k_asc1` / `k_asc2` | 0.1 / 0.005 | strictly positive current-decay rates |
+| `f_v` / `delta_v` | 0 / 0 | finite affine voltage-reset coefficients |
+| `delta_theta_spike` | 2 | finite spike-threshold increment |
+| `f_asc1` / `f_asc2` | 1 / 1 | finite current-retention factors |
+| `delta_i_asc1` / `delta_i_asc2` | 1 / 0.5 | finite current increments |
+| `refractory_period` | 2 | finite and non-negative |
+| `dt` | 1 | finite and strictly positive |
 
-The right-hand side is linear, so no look-up table is involved. The compiler
-evaluates reset expressions from the integrated candidate and exposes that same
-post-reset state on the RTL outputs, matching the schema runner's
-integrate-detect-reset order. Q16.16 therefore preserves the spike count exactly
-across the full operating set despite quantising coefficients such as
-`a_theta = 0.01`; raw state identity is not claimed.
+## Runtime surfaces
 
-The S5/H1 descriptor also enrols generated Q8.8 RTL, a port-only formal harness,
-and a depth-6 SymbiYosys/Z3 reset-spike safety job. That bounded safety result does
-not replace the Q16.16 behavioural evidence. No synthesis or timing evidence is
-claimed, so the silicon tier remains H1.
-
-## Cross-language surfaces
-
-| Surface | Contract |
-| --- | --- |
-| Python | Authoritative reference class with candidate-first RK4 and explicit runtime validation; also the `simulate` reference loop. |
-| Rust engine | PyO3-backed class uses the same RK4 state transition and additive spike reset, and exposes `py_glif_simulate` for the accelerated N-step path (bit-exact). |
-| Julia | `GlifAccel.simulate_trace` mirrors the N-step RK4 recurrence (bit-exact, linear arithmetic). |
-| Go | `accel/go/neurons/glif` builds a C-ABI shared library (`glif_simulate_c`) loaded via ctypes (bit-exact). |
-| Mojo | `accel/mojo/neurons/glif.mojo` builds an FFI kernel (`glif_simulate_c`); validated non-amplifying within a ULP band (FMA fusion). |
-| Rust safety | Standalone safety mirror validates the same single-`step` state transition and reset semantics. |
-
-## Behavioural invariants
-
-- A neuron starting from `v = -68.0`, `theta = -45.0`, `i_asc1 = 0.4`, `i_asc2 = -0.2`, with `current = 4.0`, advances to `v = -67.7924658728125` and `theta = -45.049541282631253` after one RK4 step.
-- A neuron starting from `v = -51.0`, `theta = -50.5`, `delta_theta = 2.5`, `r_asc1 = 1.25`, `r_asc2 = -0.25`, with `current = 40.0`, spikes, resets voltage to `v_reset`, and updates threshold to `-47.9930331381625`.
-- Fast after-spike current decays faster than slow after-spike current when `tau_asc1 < tau_asc2`.
-- Positive voltage-threshold coupling raises the adaptive threshold relative to the uncoupled case under the same starting state.
-- Invalid runtime inputs do not mutate state on non-throwing mirrors.
-
-## Usage
-
-```python
-from sc_neurocore.neurons.models.glif import GLIFNeuron
-
-neuron = GLIFNeuron(delta_theta=2.5, r_asc1=1.25, r_asc2=-0.25)
-spikes = sum(neuron.step(40.0) for _ in range(1000))
-print(spikes, neuron.v, neuron.theta, neuron.i_asc1, neuron.i_asc2)
-```
-
-```rust
-use sc_neurocore_engine::neurons::GLIFNeuron;
-
-let mut neuron = GLIFNeuron::new();
-neuron.delta_theta = 2.5;
-neuron.r_asc1 = 1.25;
-neuron.r_asc2 = -0.25;
-let spikes: i32 = (0..1000).map(|_| neuron.step(40.0)).sum();
-println!("{spikes} {} {} {} {}", neuron.v, neuron.theta, neuron.i_asc1, neuron.i_asc2);
-```
-
-## Polyglot acceleration
-
-A single `step` is trivial, but an N-step run is a sequential RK4 recurrence
-with a discontinuous spike reset that does not vectorise, so a compiled inner
-loop genuinely beats Python. `simulate(n_steps, current, backend="auto")`
-dispatches across the polyglot chain and returns `(trace, spikes)`:
+The same complete state transition is implemented by Python, the production
+Rust engine/PyO3 class and `NetworkRunner`, the standalone Rust safety mirror,
+Julia, Go, and Mojo. `simulate(n_steps, current, backend=...)` returns the
+post-step voltage trace and event count while committing all six runtime-state
+fields. Invalid input and non-finite candidates fail before the Python object is
+mutated.
 
 ```python
 from sc_neurocore.neurons.models.glif import GLIFNeuron
 
 neuron = GLIFNeuron()
-trace, spikes = neuron.simulate(2_000_000, current=30.0)   # auto → Rust
+trace, events = neuron.simulate(1000, current=30.0, backend="auto")
+assert events == 49
+assert neuron.refractory_remaining == 1.0
 ```
 
-The Allen GLIF5 right-hand side is purely linear — additions, multiplications
-and divisions, no transcendental functions — so every RK4 stage is exact
-arithmetic. The Rust engine, Julia and Go backends therefore reproduce the
-NumPy reference **bit-for-bit**: trace, spike count and the final
-`(v, theta, i_asc1, i_asc2)` state all match exactly. Mojo fuses multiply-add;
-on this platform it also matches bit-for-bit, but because FMA fusion is
-compiler/version dependent it is validated as non-amplifying within a tight ULP
-band (with identical spike counts) rather than asserted strictly exact. `auto`
-selects Rust (the bit-exact backend shipped in the wheel).
+The 2,000,000-step loaded-host benchmark records 98,255 events in every lane.
+Rust, Julia, and Go reproduce the Python voltage trace and final state exactly
+on the measured host; Mojo's maximum complete-state/trace error is below
+`1.5e-14`. These timings are local regression evidence, not isolated-core or
+hardware performance claims. See `benchmarks/results/bench_glif_simulate.json`.
 
-### Measured throughput
+## Independent evidence
 
-2,000,000 RK4 steps, default tonic regime (`current=30.0`), median of 5
-repeats. Non-isolated loaded workstation per
-`BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression
-evidence, not an isolated-core figure. Reproduce with
-`python benchmarks/bench_glif_simulate.py`.
+- `glif5_teeter_2018.json` independently re-derives a 512-step mixed-drive
+  receipt from the five source equations. It records 15 strict events and hashes
+  every complete state plus event byte.
+- The paired TOML/JSON schemas reproduce the public five-state trajectory within
+  `1e-12` and all event decisions exactly.
+- The committed default-profile `sc_glif` RTL uses signed Q32.32 coefficients.
+  Its integer trajectory is bit-exact to an independent integer oracle, its
+  complete 512-step event vector matches the source model, and all five exposed
+  source states remain within `2e-7`.
+- Q32.32 RTL preserves the 1,000-step event counts `0/0/22/49/74/80` at
+  `I=0/15/22/30/45/50`.
+- Yosys `synth_xilinx` passes for `sc_glif`; the committed report records 2,129
+  LUTs, 323 flip-flops, and 64 DSP48E1 cells in the coarse default mapping.
+- The depth-6 SymbiYosys/Z3 job proves bounded reset, refractory-range, and
+  event-reset safety after an observed reset. It does not prove real-number
+  equation equivalence.
 
-| Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
-|---------|------------:|-------------------:|--------------------|
-| python  | 2316.01 | 1.0× | reference |
-| go      | 81.67 | 28.4× | bit-exact (0) |
-| mojo    | 88.34 | 26.2× | 0 measured (FMA, ULP-validated) |
-| rust (`auto`) | 89.08 | 26.0× | bit-exact (0) |
-| julia   | 92.17 | 25.1× | bit-exact (0) |
+Timing, PPA, board, device, and physical-silicon validation remain open.
 
-Artefact: `benchmarks/results/bench_glif_simulate.json`.
-
-## Verification commands
+## Verification
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_glif.py -q
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_glif_backends.py -q
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_cosimulation.py::TestTierBModelCosim::test_glif_schema_formats_match_hand_rk4_sequence -q
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity -q
-PYTHONPATH=src .venv/bin/python -m pytest tests/test_reference_traces.py -q
-cargo test --manifest-path engine/Cargo.toml glif_ --release
-(cd src/sc_neurocore/accel/go/neurons/glif && go build -buildmode=c-shared -o libglif.so glif.go)
-(cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib -o libglif.so glif.mojo)
-PYTHONPATH=src .venv/bin/python benchmarks/bench_glif_simulate.py --json benchmarks/results/bench_glif_simulate.json
+PYTHONPATH=src .venv/bin/pytest -q \
+  tests/test_model_glif.py tests/test_glif_backends.py \
+  tests/test_glif_engine_binding.py tests/test_reference_glif.py \
+  tests/test_cosim_glif_q3232.py
+cargo test --manifest-path engine/Cargo.toml glif --release
+cargo test --manifest-path src/sc_neurocore/accel/rust/safety/Cargo.toml glif --release
 (cd hdl/formal/catalogue && sby -f sc_glif.sby)
 ```

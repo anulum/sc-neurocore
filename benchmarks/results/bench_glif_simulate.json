@@ -3,46 +3,104 @@
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
     "numpy": "2.2.6",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 3521.3721259497106,
-      "min_ms": 3309.628263115883,
+      "event_delta_vs_python": 0,
+      "events": 95239,
+      "final_state": {
+        "i_asc1": 0.4780746206342485,
+        "i_asc2": 5.274348651937662,
+        "refractory_remaining": 0.0,
+        "theta_spike": 10.563183207510006,
+        "theta_voltage": 0.19665337905227775,
+        "v": -48.54566030821519
+      },
+      "median_ms": 4217.904840013944,
+      "min_ms": 4202.004501945339,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
     {
       "backend": "rust",
-      "median_ms": 106.3537779264152,
-      "min_ms": 101.78073984570801,
+      "event_delta_vs_python": 0,
+      "events": 95239,
+      "final_state": {
+        "i_asc1": 0.4780746206342485,
+        "i_asc2": 5.274348651937662,
+        "refractory_remaining": 0.0,
+        "theta_spike": 10.563183207510006,
+        "theta_voltage": 0.19665337905227775,
+        "v": -48.54566030821519
+      },
+      "median_ms": 501.4087710296735,
+      "min_ms": 488.28636505641043,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 33.109986261006185
+      "speedup_vs_python": 8.412108211334674
     },
     {
       "backend": "julia",
-      "median_ms": 112.05859598703682,
-      "min_ms": 109.11388788372278,
+      "event_delta_vs_python": 0,
+      "events": 95239,
+      "final_state": {
+        "i_asc1": 0.4780746206342485,
+        "i_asc2": 5.274348651937662,
+        "refractory_remaining": 0.0,
+        "theta_spike": 10.563183207510006,
+        "theta_voltage": 0.19665337905227775,
+        "v": -48.54566030821519
+      },
+      "median_ms": 14.107469003647566,
+      "min_ms": 9.925773949362338,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 31.424381993480182
+      "speedup_vs_python": 298.98381055619404
     },
     {
       "backend": "go",
-      "median_ms": 100.07353196851909,
-      "min_ms": 97.90398296900094,
+      "event_delta_vs_python": 0,
+      "events": 95239,
+      "final_state": {
+        "i_asc1": 0.4780746206342485,
+        "i_asc2": 5.274348651937662,
+        "refractory_remaining": 0.0,
+        "theta_spike": 10.563183207510006,
+        "theta_voltage": 0.19665337905227775,
+        "v": -48.54566030821519
+      },
+      "median_ms": 25.819569011218846,
+      "min_ms": 25.373069918714464,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.18784694296046
+      "speedup_vs_python": 163.36077640107874
     },
     {
       "backend": "mojo",
-      "median_ms": 106.29148106090724,
-      "min_ms": 104.31311000138521,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 33.12939184591746
+      "event_delta_vs_python": 0,
+      "events": 95239,
+      "final_state": {
+        "i_asc1": 0.4780746206342485,
+        "i_asc2": 5.274348651937662,
+        "refractory_remaining": 0.0,
+        "theta_spike": 10.563183207510006,
+        "theta_voltage": 0.19665337905227756,
+        "v": -48.54566030821519
+      },
+      "median_ms": 24.737187079153955,
+      "min_ms": 24.463261011987925,
+      "parity_max_abs_diff": 1.4210854715202004e-14,
+      "speedup_vs_python": 170.50866885218227
     }
   ],
+  "source_sha256": {
+    "go": "c638929d9a7f638acfc902ec449de0d0d9e66ee78ca3575ffad46cea54f321c5",
+    "julia": "d88c0dda7399cacc3418aeb0f35a74f72e5f19e349671332d08b508ea22e7543",
+    "mojo": "7982f225169d99e5bce62126c381b2293a1107a4c36b55ce49dbf68f0a324624",
+    "python": "9f63778871b020f5432d2c82fa3e05a616b01909875e8aeed89334057ae29429",
+    "receipt": "e24bf98393c3cb7b6a95105974331166d3e6ec742ffd9fc0b7946d012aa3d6ef",
+    "rust": "754d896946af720760770f124f30a0d5a493abc69aef7e19690829a97bb3a964"
+  },
   "workload": {
     "current": 30.0,
     "n_steps": 2000000,

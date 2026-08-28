@@ -4,152 +4,208 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for GLIF RK4 dynamics
+// SC-NeuroCore — standalone Rust safety GLIF5 model
 
-#[derive(Debug, Clone)]
+//! Five-state GLIF5 dynamics from Teeter et al. (2018), equations 1–8.
+
+/// Teeter GLIF5 membrane, threshold, after-spike-current, and reset state.
+#[derive(Clone, Debug)]
 pub struct GLIFNeuron {
     pub v: f64,
-    pub theta: f64,
-    pub theta_inf: f64,
+    pub theta_spike: f64,
     pub i_asc1: f64,
     pub i_asc2: f64,
-    pub v_rest: f64,
-    pub v_reset: f64,
-    pub tau_m: f64,
-    pub tau_theta: f64,
-    pub tau_asc1: f64,
-    pub tau_asc2: f64,
-    pub a_theta: f64,
-    pub delta_theta: f64,
-    pub r_asc1: f64,
-    pub r_asc2: f64,
+    pub theta_voltage: f64,
+    pub refractory_remaining: f64,
+    pub e_l: f64,
+    pub capacitance: f64,
     pub resistance: f64,
+    pub theta_inf: f64,
+    pub b_spike: f64,
+    pub b_voltage: f64,
+    pub a_voltage: f64,
+    pub k_asc1: f64,
+    pub k_asc2: f64,
+    pub f_v: f64,
+    pub delta_v: f64,
+    pub delta_theta_spike: f64,
+    pub f_asc1: f64,
+    pub f_asc2: f64,
+    pub delta_i_asc1: f64,
+    pub delta_i_asc2: f64,
+    pub refractory_period: f64,
     pub dt: f64,
 }
 
 impl GLIFNeuron {
+    /// Construct the source-consistent normalized operating profile.
     pub fn new() -> Self {
         Self {
             v: -70.0,
-            theta: -50.0,
-            theta_inf: -50.0,
+            theta_spike: 0.0,
             i_asc1: 0.0,
             i_asc2: 0.0,
-            v_rest: -70.0,
-            v_reset: -70.0,
-            tau_m: 10.0,
-            tau_theta: 100.0,
-            tau_asc1: 10.0,
-            tau_asc2: 200.0,
-            a_theta: 0.01,
-            delta_theta: 2.0,
-            r_asc1: 1.0,
-            r_asc2: 0.5,
+            theta_voltage: 0.0,
+            refractory_remaining: 0.0,
+            e_l: -70.0,
+            capacitance: 10.0,
             resistance: 1.0,
+            theta_inf: -50.0,
+            b_spike: 0.01,
+            b_voltage: 0.01,
+            a_voltage: 0.0001,
+            k_asc1: 0.1,
+            k_asc2: 0.005,
+            f_v: 0.0,
+            delta_v: 0.0,
+            delta_theta_spike: 2.0,
+            f_asc1: 1.0,
+            f_asc2: 1.0,
+            delta_i_asc1: 1.0,
+            delta_i_asc2: 0.5,
+            refractory_period: 2.0,
             dt: 1.0,
         }
     }
 
-    fn finite_values(values: &[f64]) -> bool {
+    fn finite(values: &[f64]) -> bool {
         values.iter().all(|value| value.is_finite())
     }
 
-    fn valid_runtime(&self) -> bool {
-        Self::finite_values(&[
+    fn valid(&self) -> bool {
+        Self::finite(&[
             self.v,
-            self.theta,
-            self.theta_inf,
+            self.theta_spike,
             self.i_asc1,
             self.i_asc2,
-            self.v_rest,
-            self.v_reset,
-            self.tau_m,
-            self.tau_theta,
-            self.tau_asc1,
-            self.tau_asc2,
-            self.a_theta,
-            self.delta_theta,
-            self.r_asc1,
-            self.r_asc2,
+            self.theta_voltage,
+            self.refractory_remaining,
+            self.e_l,
+            self.capacitance,
             self.resistance,
+            self.theta_inf,
+            self.b_spike,
+            self.b_voltage,
+            self.a_voltage,
+            self.k_asc1,
+            self.k_asc2,
+            self.f_v,
+            self.delta_v,
+            self.delta_theta_spike,
+            self.f_asc1,
+            self.f_asc2,
+            self.delta_i_asc1,
+            self.delta_i_asc2,
+            self.refractory_period,
             self.dt,
-        ]) && self.tau_m > 0.0
-            && self.tau_theta > 0.0
-            && self.tau_asc1 > 0.0
-            && self.tau_asc2 > 0.0
+        ]) && self.capacitance > 0.0
+            && self.resistance > 0.0
+            && self.b_spike > 0.0
+            && self.b_voltage > 0.0
+            && self.k_asc1 > 0.0
+            && self.k_asc2 > 0.0
             && self.dt > 0.0
-            && self.delta_theta >= 0.0
-            && self.resistance >= 0.0
+            && self.refractory_remaining >= 0.0
+            && self.refractory_period >= 0.0
     }
 
-    fn derivatives(&self, v: f64, theta: f64, i_asc1: f64, i_asc2: f64, i_ext: f64) -> [f64; 4] {
-        [
-            (-(v - self.v_rest) + self.resistance * i_ext + i_asc1 + i_asc2) / self.tau_m,
-            (self.theta_inf - theta + self.a_theta * (v - self.v_rest)) / self.tau_theta,
-            -i_asc1 / self.tau_asc1,
-            -i_asc2 / self.tau_asc2,
-        ]
+    fn decay(rate: f64, dt: f64) -> f64 {
+        (-rate * dt).exp()
     }
 
-    fn add_scaled(state: [f64; 4], slope: [f64; 4], scale: f64) -> [f64; 4] {
-        [
-            state[0] + scale * slope[0],
-            state[1] + scale * slope[1],
-            state[2] + scale * slope[2],
-            state[3] + scale * slope[3],
-        ]
-    }
-
-    fn rk4_candidate(&self, i_ext: f64) -> Option<[f64; 4]> {
-        let state = [self.v, self.theta, self.i_asc1, self.i_asc2];
-        let half_dt = 0.5 * self.dt;
-        let k1 = self.derivatives(state[0], state[1], state[2], state[3], i_ext);
-        let s2 = Self::add_scaled(state, k1, half_dt);
-        let k2 = self.derivatives(s2[0], s2[1], s2[2], s2[3], i_ext);
-        let s3 = Self::add_scaled(state, k2, half_dt);
-        let k3 = self.derivatives(s3[0], s3[1], s3[2], s3[3], i_ext);
-        let s4 = Self::add_scaled(state, k3, self.dt);
-        let k4 = self.derivatives(s4[0], s4[1], s4[2], s4[3], i_ext);
-        let candidate = [
-            state[0] + self.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
-            state[1] + self.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
-            state[2] + self.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
-            state[3] + self.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
-        ];
-        if Self::finite_values(&candidate) {
-            Some(candidate)
+    fn exponential_convolution(decay_rate: f64, forcing_rate: f64, dt: f64) -> f64 {
+        let difference = decay_rate - forcing_rate;
+        let scale = 1.0_f64.max(decay_rate.abs()).max(forcing_rate.abs());
+        if difference.abs() <= 1e-12 * scale {
+            dt * (-decay_rate * dt).exp()
         } else {
-            None
+            ((-forcing_rate * dt).exp() - (-decay_rate * dt).exp()) / difference
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !i_ext.is_finite() || !self.valid_runtime() {
-            return 0;
+    fn candidate(&self, current: f64) -> Option<(Self, i32)> {
+        if !self.valid() || !current.is_finite() {
+            return None;
         }
-        let Some(candidate) = self.rk4_candidate(i_ext) else {
-            return 0;
+        if self.refractory_remaining > 0.0 {
+            let mut next = self.clone();
+            next.refractory_remaining = (self.refractory_remaining - self.dt).max(0.0);
+            return Some((next, 0));
+        }
+
+        let total_current = current + self.i_asc1 + self.i_asc2;
+        let membrane_rate = 1.0 / (self.resistance * self.capacitance);
+        let membrane_decay = Self::decay(membrane_rate, self.dt);
+        let equilibrium_offset = self.resistance * total_current;
+        let voltage_offset = self.v - self.e_l;
+        let next_offset =
+            equilibrium_offset + (voltage_offset - equilibrium_offset) * membrane_decay;
+        let next_v = self.e_l + next_offset;
+        let next_theta_spike = self.theta_spike * Self::decay(self.b_spike, self.dt);
+        let next_i_asc1 = self.i_asc1 * Self::decay(self.k_asc1, self.dt);
+        let next_i_asc2 = self.i_asc2 * Self::decay(self.k_asc2, self.dt);
+        let threshold_forcing = equilibrium_offset * (1.0 - Self::decay(self.b_voltage, self.dt))
+            / self.b_voltage
+            + (voltage_offset - equilibrium_offset)
+                * Self::exponential_convolution(self.b_voltage, membrane_rate, self.dt);
+        let next_theta_voltage = self.theta_voltage * Self::decay(self.b_voltage, self.dt)
+            + self.a_voltage * threshold_forcing;
+        let mut next = Self {
+            v: next_v,
+            theta_spike: next_theta_spike,
+            i_asc1: next_i_asc1,
+            i_asc2: next_i_asc2,
+            theta_voltage: next_theta_voltage,
+            refractory_remaining: 0.0,
+            ..self.clone()
         };
-        self.v = candidate[0];
-        self.theta = candidate[1];
-        self.i_asc1 = candidate[2];
-        self.i_asc2 = candidate[3];
-        if self.v >= self.theta {
-            self.v = self.v_reset;
-            self.theta += self.delta_theta;
-            self.i_asc1 += self.r_asc1;
-            self.i_asc2 += self.r_asc2;
-            1
-        } else {
-            0
+        if !next.valid() {
+            return None;
         }
+        if next.v <= self.theta_inf + next.theta_spike + next.theta_voltage {
+            return Some((next, 0));
+        }
+        next.v = self.e_l + self.f_v * (next.v - self.e_l) - self.delta_v;
+        next.theta_spike += self.delta_theta_spike;
+        next.i_asc1 = self.f_asc1 * next.i_asc1 + self.delta_i_asc1;
+        next.i_asc2 = self.f_asc2 * next.i_asc2 + self.delta_i_asc2;
+        next.refractory_remaining = self.refractory_period;
+        next.valid().then_some((next, 1))
     }
 
+    /// Checked source update; invalid input leaves state unchanged.
+    pub fn try_step(&mut self, current: f64) -> Option<i32> {
+        let (candidate, event) = self.candidate(current)?;
+        *self = candidate;
+        Some(event)
+    }
+
+    /// Network-runner-compatible update with fail-closed invalid-input behavior.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Run a failure-atomic constant-current batch.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut events = 0_i64;
+        for _ in 0..n_steps {
+            events += i64::from(candidate.try_step(current)?);
+            trace.push(candidate.v);
+        }
+        *self = candidate;
+        Some((trace, events))
+    }
+
+    /// Restore the normalized source-profile state.
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
-        self.theta = self.theta_inf;
+        self.v = self.e_l;
+        self.theta_spike = 0.0;
         self.i_asc1 = 0.0;
         self.i_asc2 = 0.0;
+        self.theta_voltage = 0.0;
+        self.refractory_remaining = 0.0;
     }
 }
 
@@ -159,74 +215,47 @@ impl Default for GLIFNeuron {
     }
 }
 
-pub fn validate_glif(state: &GLIFNeuron) -> bool {
-    state.valid_runtime()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_glif_new() {
-        let state = GLIFNeuron::new();
-        assert!(state.v.is_finite());
-        assert!(validate_glif(&state));
+    fn default_profile_has_source_five_state_contract() {
+        let neuron = GLIFNeuron::new();
+        assert!(neuron.valid());
+        assert_eq!(
+            neuron.theta_inf + neuron.theta_spike + neuron.theta_voltage,
+            -50.0
+        );
     }
 
     #[test]
-    fn test_glif_rk4_reference_point() {
-        let mut state = GLIFNeuron::new();
-        state.v = -68.0;
-        state.theta = -45.0;
-        state.i_asc1 = 0.4;
-        state.i_asc2 = -0.2;
-        assert_eq!(state.step(4.0), 0);
-        assert!((state.v - (-67.7924658728125)).abs() < 1e-12);
-        assert!((state.theta - (-45.049_541_282_631_25)).abs() < 1e-12);
+    fn reset_rules_and_refractory_state_are_explicit() {
+        let mut neuron = GLIFNeuron::new();
+        neuron.v = -50.0;
+        assert_eq!(neuron.try_step(40.0), Some(1));
+        assert_eq!(neuron.v, -70.0);
+        assert_eq!(neuron.theta_spike, 2.0);
+        assert_eq!(neuron.i_asc1, 1.0);
+        assert_eq!(neuron.i_asc2, 0.5);
+        assert_eq!(neuron.refractory_remaining, 2.0);
     }
 
     #[test]
-    fn test_glif_spike_reset_adds_candidate_threshold() {
-        let mut state = GLIFNeuron::new();
-        state.v = -51.0;
-        state.theta = -50.5;
-        state.delta_theta = 2.5;
-        state.r_asc1 = 1.25;
-        state.r_asc2 = -0.25;
-        assert_eq!(state.step(40.0), 1);
-        assert!((state.v - (-70.0)).abs() < 1e-12);
-        assert!((state.theta - (-47.9930331381625)).abs() < 1e-12);
-        assert!((state.i_asc1 - 1.25).abs() < 1e-12);
-        assert!((state.i_asc2 - (-0.25)).abs() < 1e-12);
+    fn invalid_batch_is_failure_atomic() {
+        let mut neuron = GLIFNeuron::new();
+        let before = neuron.clone();
+        assert!(neuron.try_simulate(4, f64::NAN).is_none());
+        assert_eq!(neuron.v, before.v);
+        assert_eq!(neuron.theta_spike, before.theta_spike);
     }
 
     #[test]
-    fn test_glif_invalid_input_preserves_state() {
-        let mut state = GLIFNeuron::new();
-        state.v = -68.0;
-        state.i_asc1 = 0.4;
-        let before = (state.v, state.theta, state.i_asc1, state.i_asc2);
-        assert_eq!(state.step(f64::NAN), 0);
-        assert_eq!((state.v, state.theta, state.i_asc1, state.i_asc2), before);
-    }
-
-    #[test]
-    fn matches_python_golden_spike_count() {
-        // Parity with models/glif.py (RK4 integrator, default parameters). The GLIF (generalised
-        // leaky integrate-and-fire) right-hand side is entirely linear — a leaky membrane, a
-        // linearly-adapting threshold, and two exponentially-decaying after-spike currents — with
-        // an adaptive-threshold spike (v >= theta) that hard-resets v to v_reset and increments
-        // theta / the after-spike currents. No transcendentals, so the trajectory is bit-for-bit
-        // across languages and the spike count is an exact observable. Drive gates the regime
-        // cleanly around rheobase (~20-25): silent at I=0.0, a 54-spike regular train at I=30.0,
-        // a 95-spike train at I=50.0, each over 1000 macro steps. Verified python-vs-rust
-        // max|Δ|=0; the Go, Julia, Mojo and Rust-engine backends reproduce the same trajectory via
-        // test_glif_backends.py.
-        for (current, want) in [(0.0_f64, 0_usize), (30.0, 54), (50.0, 95)] {
-            let mut state = GLIFNeuron::new();
-            let spikes = (0..1000).filter(|_| state.step(current) == 1).count();
-            assert_eq!(spikes, want, "I={current}");
+    fn source_profile_regimes_are_pinned() {
+        for (current, expected) in [(0.0, 0), (22.0, 22), (30.0, 49), (50.0, 80)] {
+            let mut neuron = GLIFNeuron::new();
+            let (_, events) = neuron.try_simulate(1000, current).expect("valid profile");
+            assert_eq!(events, expected, "current={current}");
         }
     }
 }

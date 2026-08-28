@@ -68,6 +68,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "NonResettingLIFNeuron",
     "ParallelSpikingNeuron",
     "PersistentNaNeuron",
+    "RulkovMapNeuron",
     "SigmaDeltaNeuron",
     "SKNeuron",
     "TTypeCaNeuron",

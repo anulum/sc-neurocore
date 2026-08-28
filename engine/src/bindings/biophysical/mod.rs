@@ -27,6 +27,8 @@ mod mihalas_niebur;
 mod plant_r15;
 mod pospischil;
 mod prescott;
+#[path = "../sc_four_state_glif.rs"]
+mod sc_four_state_glif;
 mod sc_six_state_thalamocortical;
 mod sc_three_state_phantom_burster;
 mod traub_miles;
@@ -50,6 +52,7 @@ pub use mihalas_niebur::PyMihalasNieburNeuron;
 pub use plant_r15::PyPlantR15Neuron;
 pub use pospischil::PyPospischilNeuron;
 pub use prescott::PyPrescottNeuron;
+pub use sc_four_state_glif::PySCFourStateGLIFNeuron;
 pub use sc_six_state_thalamocortical::PySCSixStateThalamocorticalNeuron;
 pub use sc_three_state_phantom_burster::PySCThreeStatePhantomBurster;
 pub use traub_miles::PyTraubMilesNeuron;
@@ -72,6 +75,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     prescott::register(module)?;
     mihalas_niebur::register(module)?;
     glif::register(module)?;
+    sc_four_state_glif::register(module)?;
     gif_population::register(module)?;
     av_ron_cardiac::register(module)?;
     durstewitz_dopamine::register(module)?;

@@ -1,0 +1,100 @@
+{
+  "benchmark": "sc_four_state_glif",
+  "environment": {
+    "hardware_measurement_claimed": false,
+    "isolation": "non-isolated loaded workstation",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "results": [
+    {
+      "backend": "python",
+      "event_delta_vs_python": 0,
+      "events": 105264,
+      "final_state": {
+        "i_asc1": 0.3914149026754774,
+        "i_asc2": 5.221868006013567,
+        "theta": -39.44895721364708,
+        "v": -45.992032349537226
+      },
+      "median_ms": 2862.025626935065,
+      "min_ms": 2682.203485048376,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0
+    },
+    {
+      "backend": "rust",
+      "event_delta_vs_python": 0,
+      "events": 105264,
+      "final_state": {
+        "i_asc1": 0.3914149026754774,
+        "i_asc2": 5.221868006013567,
+        "theta": -39.44895721364708,
+        "v": -45.992032349537226
+      },
+      "median_ms": 614.0952510759234,
+      "min_ms": 587.9871749784797,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 4.660556521029372
+    },
+    {
+      "backend": "julia",
+      "event_delta_vs_python": 0,
+      "events": 105264,
+      "final_state": {
+        "i_asc1": 0.3914149026754774,
+        "i_asc2": 5.221868006013567,
+        "theta": -39.44895721364708,
+        "v": -45.992032349537226
+      },
+      "median_ms": 94.74155306816101,
+      "min_ms": 89.24683590885252,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 30.20876832023225
+    },
+    {
+      "backend": "go",
+      "event_delta_vs_python": 0,
+      "events": 105264,
+      "final_state": {
+        "i_asc1": 0.3914149026754774,
+        "i_asc2": 5.221868006013567,
+        "theta": -39.44895721364708,
+        "v": -45.992032349537226
+      },
+      "median_ms": 91.48826904129237,
+      "min_ms": 88.23842194397002,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 31.282979303535807
+    },
+    {
+      "backend": "mojo",
+      "event_delta_vs_python": 0,
+      "events": 105264,
+      "final_state": {
+        "i_asc1": 0.3914149026754774,
+        "i_asc2": 5.221868006013567,
+        "theta": -39.44895721364708,
+        "v": -45.992032349537226
+      },
+      "median_ms": 85.78081405721605,
+      "min_ms": 84.5844759605825,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 33.36440273259806
+    }
+  ],
+  "source_sha256": {
+    "go": "8a292bb24475f7f558bc22adafc182cc1993affc7e66077ad25d4b9386eb3334",
+    "julia": "5e347db7e35354f565727b57a6069599f44185fa0f9cb68003370925212039b9",
+    "mojo": "5f7e829772c0df63fbd6107fbb3672c335a12bab3030e78c7dfc370123ca2601",
+    "python": "7ae1bde7466cbae946d959deac7d31fccade9e7f2775973a1a60f35c0e9f60a6",
+    "receipt": "5224d3b710a8c72c4b7086f69b645aaed6ac9c0161b719d0e9842e14d42c54a2",
+    "rust": "cf353f44358b9b133ddffcb2b7b6e48f9996b60680ef2e06c5ad84d0a1ce9bea"
+  },
+  "workload": {
+    "current": 30.0,
+    "n_steps": 2000000,
+    "repeats": 3
+  }
+}

@@ -8,21 +8,27 @@
 
 [metadata]
 schema_version = 2
-name = "GLIF"
+name = "GLIF5"
 class_name = "GLIFNeuron"
 module = "glif"
-display_name = ""
-summary = "Allen Institute GLIF5 — Generalized LIF with threshold adaptation and after-spike currents"
+display_name = "Teeter GLIF5 point neuron"
+summary = "Five-state GLIF5 membrane, threshold, after-spike currents, refractory cut, and affine reset"
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "source-faithful GLIF5 simulation",
+    "cross-runtime and fixed-point validation",
+]
+hardware_fit = [
+    "bounded signed fixed-point co-simulation",
+]
 behavior_tags = [
     "adapting",
     "excitable",
     "rate-coded",
+    "tonic",
 ]
 
 [provenance]
@@ -31,12 +37,14 @@ authors = [
 ]
 year = 2018
 doi = "10.1038/s41467-017-02717-4"
+paper_title = "Generalized leaky integrate-and-fire models classify multiple neuron types"
+derivation_note = "Equations 1-8 with all GLIF5 state variables; fixed-grid exact dynamics matches the official AllenSDK old-current update order."
 
 [state.v]
 init = -70.0
 
-[state.theta]
-init = -50.0
+[state.theta_spike]
+init = 0.0
 
 [state.i_asc1]
 init = 0.0
@@ -44,123 +52,108 @@ init = 0.0
 [state.i_asc2]
 init = 0.0
 
-[parameters.theta_inf]
-default = -50.0
-unit = "mV"
-meaning = "steady-state value of the adaptive threshold"
-range = [
-    -70.0,
-    -20.0,
-]
+[state.theta_voltage]
+init = 0.0
 
-[parameters.v_rest]
+[state.refractory_remaining]
+init = 0.0
+
+[parameters.e_l]
 default = -70.0
 unit = "mV"
-meaning = "resting membrane potential"
-range = [
-    -90.0,
-    -40.0,
-]
+meaning = "leak reversal potential"
 
-[parameters.v_reset]
-default = -70.0
-unit = "mV"
-meaning = "membrane potential reset to after a spike"
-range = [
-    -90.0,
-    -40.0,
-]
-
-[parameters.tau_m]
+[parameters.capacitance]
 default = 10.0
-unit = "ms"
-meaning = "membrane time constant"
-range = [
-    1.0,
-    100.0,
-]
-
-[parameters.tau_theta]
-default = 100.0
-unit = "ms"
-meaning = "threshold adaptation time constant"
-range = [
-    5.0,
-    1000.0,
-]
-
-[parameters.tau_asc1]
-default = 10.0
-unit = "ms"
-meaning = "decay time constant of the first after-spike current"
-range = [
-    1.0,
-    100.0,
-]
-
-[parameters.tau_asc2]
-default = 200.0
-unit = "ms"
-meaning = "decay time constant of the second after-spike current"
-range = [
-    10.0,
-    1000.0,
-]
-
-[parameters.a_theta]
-default = 0.01
-unit = "1"
-meaning = "voltage coupling of the adaptive threshold to the membrane potential"
-range = [
-    0.0,
-    1.0,
-]
-
-[parameters.delta_theta]
-default = 2.0
-unit = "mV"
-meaning = "threshold increment added at each spike"
-range = [
-    0.0,
-    20.0,
-]
-
-[parameters.r_asc1]
-default = 1.0
-unit = "mV"
-meaning = "voltage-equivalent amplitude added to the first after-spike current at each spike"
-range = [
-    -50.0,
-    50.0,
-]
-
-[parameters.r_asc2]
-default = 0.5
-unit = "mV"
-meaning = "voltage-equivalent amplitude added to the second after-spike current at each spike"
-range = [
-    -50.0,
-    50.0,
-]
+unit = "pF"
+meaning = "membrane capacitance C"
 
 [parameters.resistance]
 default = 1.0
+unit = "MOhm"
+meaning = "membrane resistance R"
+
+[parameters.theta_inf]
+default = -50.0
+unit = "mV"
+meaning = "instantaneous threshold at rest"
+
+[parameters.b_spike]
+default = 0.01
+unit = "1/ms"
+meaning = "spike-threshold decay rate"
+
+[parameters.b_voltage]
+default = 0.01
+unit = "1/ms"
+meaning = "voltage-threshold decay rate"
+
+[parameters.a_voltage]
+default = 0.0001
+unit = "1/ms"
+meaning = "voltage-threshold coupling coefficient"
+
+[parameters.k_asc1]
+default = 0.1
+unit = "1/ms"
+meaning = "first after-spike-current decay rate"
+
+[parameters.k_asc2]
+default = 0.005
+unit = "1/ms"
+meaning = "second after-spike-current decay rate"
+
+[parameters.f_v]
+default = 0.0
 unit = "1"
-meaning = "normalised membrane resistance mapping injected current to a voltage offset (R=1 in the project's normalised-current convention, see docs/validation/lif_fi_curve.md)"
-range = [
-    0.0,
-    100.0,
-]
+meaning = "affine voltage reset slope"
+
+[parameters.delta_v]
+default = 0.0
+unit = "mV"
+meaning = "affine voltage reset offset"
+
+[parameters.delta_theta_spike]
+default = 2.0
+unit = "mV"
+meaning = "spike-threshold reset increment"
+
+[parameters.f_asc1]
+default = 1.0
+unit = "1"
+meaning = "first after-spike-current reset fraction"
+
+[parameters.f_asc2]
+default = 1.0
+unit = "1"
+meaning = "second after-spike-current reset fraction"
+
+[parameters.delta_i_asc1]
+default = 1.0
+unit = "pA"
+meaning = "first after-spike-current reset increment"
+
+[parameters.delta_i_asc2]
+default = 0.5
+unit = "pA"
+meaning = "second after-spike-current reset increment"
+
+[parameters.refractory_period]
+default = 2.0
+unit = "ms"
+meaning = "absolute refractory cut duration"
 
 [integration]
 dt = 1.0
-method = "rk4"
+method = "map"
 
 [dynamics]
-v = "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m"
-theta = "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta"
-i_asc1 = "-i_asc1 / tau_asc1"
-i_asc2 = "-i_asc2 / tau_asc2"
+v = "v if refractory_remaining > 0 else e_l + resistance * (I + i_asc1 + i_asc2) + ((v - e_l) - resistance * (I + i_asc1 + i_asc2)) * exp(-dt / (resistance * capacitance))"
+theta_spike = "theta_spike if refractory_remaining > 0 else theta_spike * exp(-b_spike * dt)"
+i_asc1 = "i_asc1 if refractory_remaining > 0 else i_asc1 * exp(-k_asc1 * dt)"
+i_asc2 = "i_asc2 if refractory_remaining > 0 else i_asc2 * exp(-k_asc2 * dt)"
+theta_voltage = "theta_voltage if refractory_remaining > 0 else theta_voltage * exp(-b_voltage * dt) + a_voltage * (resistance * (I + i_asc1 + i_asc2) * (1 - exp(-b_voltage * dt)) / b_voltage + ((v - e_l) - resistance * (I + i_asc1 + i_asc2)) * (dt * exp(-b_voltage * dt) if abs(b_voltage - 1 / (resistance * capacitance)) <= 1e-12 * max(1, abs(b_voltage), abs(1 / (resistance * capacitance))) else (exp(-dt / (resistance * capacitance)) - exp(-b_voltage * dt)) / (b_voltage - 1 / (resistance * capacitance))))"
+refractory_remaining = "max(0, refractory_remaining - dt) if refractory_remaining > 0 else 0"
 
 [backends.python]
 status = "implemented"
@@ -172,34 +165,36 @@ parity = "exact"
 
 [backends.julia]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.go]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.mojo]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":30.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "2212123f19a04efde6a67b012b08157c97d1d9d811e2468928da8e71830b8b77"
+golden_trace_sha256 = "1b9bff8da7b7bffbfcd193c9634740897688c5a41833318b87456cdf472fc654"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/glif5_teeter_2018.json"
 
 [documentation]
 slug = "models/glif"
-notes = ""
+notes = "Strict V > Theta_inf + Theta_s + Theta_v events and source affine reset maps. The former four-state recurrence remains count-neutral as SCFourStateGLIFNeuron."
 
 [validation]
 dynamics_faithful = true
-metric = "parity"
-operating_point = "schema-DSL GLIF four-state RK4 at I=0,15,22,30,45,50 over 1000 steps"
-tolerance = "exact hand/TOML/JSON state and event parity; exact hand/schema/Q16.16 spike counts at every operating point"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity"
+metric = "trajectory"
+operating_point = "five-state mixed-drive receipt plus constant-current regimes"
+tolerance = "complete state/event parity across five runtimes; Q32.32 integer exactness, exact events, and five-state error below 2e-7"
+evidence = "tests/test_model_glif.py; tests/test_glif_backends.py; tests/test_reference_glif.py; tests/test_cosim_glif_q3232.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synthesis, timing, and equivalence programmes."
+synthesised = true
+cosim_evidence = "tests/test_cosim_glif_q3232.py"
+target_device = "Xilinx 7-series (Yosys synth_xilinx)"
+target_tier = "H2"
+terminal_reason = "Default-profile Q32.32 co-simulation, coarse Xilinx synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."

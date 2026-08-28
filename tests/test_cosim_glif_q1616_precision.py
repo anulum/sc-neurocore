@@ -15,15 +15,15 @@ from tests.cosim_glif_support import *  # noqa: F403
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestQ1616Precision:
-    """Q16.16 GLIF co-simulation fidelity."""
+    """Q16.16 retained four-state GLIF co-simulation fidelity."""
 
     @pytest.mark.parametrize(
         ("current", "expected_spikes"),
         ((0.0, 0), (15.0, 0), (22.0, 23), (30.0, 54), (45.0, 86), (50.0, 95)),
         ids=("rest", "subthreshold", "onset", "tonic", "high-drive", "strong-drive"),
     )
-    def test_glif_q1616_parity(self, current: float, expected_spikes: int) -> None:
-        """GLIF has exact hand/schema/Q16.16 spike-count parity across six regimes.
+    def test_sc_four_state_glif_q1616_parity(self, current: float, expected_spikes: int) -> None:
+        """The retained identity has exact three-way counts across six regimes.
 
         The schema mirrors the maintained four-state, candidate-first classical-RK4
         hand model with level ``v >= theta`` detection and adaptive reset. Hand model
@@ -34,11 +34,12 @@ class TestQ1616Precision:
         and high-drive regimes are all enrolled rather than one selected current.
         """
         n_steps = 1000
-        hand_spikes = _glif_hand_spike_count(n_steps, current)
-        schema_spikes = _python_spike_count("glif", n_steps, current)
-        verilog_spikes = _verilog_spike_count_q1616("glif", n_steps, current)
+        hand = SCFourStateGLIFNeuron()
+        hand_spikes = sum(hand.step(current) for _ in range(n_steps))
+        schema_spikes = _python_spike_count("sc_four_state_glif", n_steps, current)
+        verilog_spikes = _verilog_spike_count_q1616("sc_four_state_glif", n_steps, current)
 
         assert hand_spikes == schema_spikes == verilog_spikes == expected_spikes, (
-            f"GLIF exact Q16.16 mismatch at I={current}: "
+            f"SC four-state GLIF exact Q16.16 mismatch at I={current}: "
             f"hand={hand_spikes}, schema={schema_spikes}, verilog={verilog_spikes}"
         )

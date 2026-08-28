@@ -4,136 +4,152 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo Allen GLIF5 (parity with glif.py)
+# SC-NeuroCore — Mojo Teeter 2018 GLIF5 source model
 #
-# Build:
-#   mojo build --emit shared-lib -o libglif.so glif.mojo
-#
-# Parity contract: `glif_simulate_c` reproduces
-# `sc_neurocore.neurons.models.glif.GLIFNeuron.simulate`. The Allen GLIF5
-# right-hand side is purely linear; each product is rounded into its own variable
-# before the following add/subtract to limit FMA contraction. The model is
-# validated per-step and on spike counts rather than bit-exactly, because Mojo
-# fuses multiply-add.
-#
-# Mojo FFI rule (per feedback_mojo_026_ffi_pattern): @export rejects parametric
-# signatures, so the output trace buffer is passed as a raw `Int` address and the
-# pointer is reconstructed inside. The caller allocates n+4 Float64 slots:
-# [0, n) receive the v trace, indices n..n+3 the final (v, theta, i_asc1, i_asc2).
-#
-# Reference: Teeter, C. et al. (2018). Nat. Commun. 9:709.
+# Build: mojo build --emit shared-lib -o libglif.so glif.mojo
+# The caller provides n+6 Float64 slots: voltage trace then complete final state.
 
+from std.math import exp, isfinite
 from std.memory import UnsafePointer
 
 
 @always_inline
-def _dv(
-    v: Float64,
-    a1: Float64,
-    a2: Float64,
-    current: Float64,
-    v_rest: Float64,
-    resistance: Float64,
-    tau_m: Float64,
-) -> Float64:
-    var drive = resistance * current
-    return (-(v - v_rest) + drive + a1 + a2) / tau_m
-
-
-@always_inline
-def _dtheta(
-    v: Float64,
-    theta: Float64,
-    theta_inf: Float64,
-    a_theta: Float64,
-    v_rest: Float64,
-    tau_theta: Float64,
-) -> Float64:
-    var coupling = a_theta * (v - v_rest)
-    return (theta_inf - theta + coupling) / tau_theta
+def _convolution(decay_rate: Float64, forcing_rate: Float64, dt: Float64) -> Float64:
+    var difference = decay_rate - forcing_rate
+    var scale = max(1.0, max(abs(decay_rate), abs(forcing_rate)))
+    if abs(difference) <= 1.0e-12 * scale:
+        return dt * exp(-decay_rate * dt)
+    return (exp(-forcing_rate * dt) - exp(-decay_rate * dt)) / difference
 
 
 @export
 def glif_simulate_c(
     v0: Float64,
-    theta0: Float64,
-    theta_inf: Float64,
+    theta_spike0: Float64,
     i_asc1_0: Float64,
     i_asc2_0: Float64,
-    v_rest: Float64,
-    v_reset: Float64,
-    tau_m: Float64,
-    tau_theta: Float64,
-    tau_asc1: Float64,
-    tau_asc2: Float64,
-    a_theta: Float64,
-    delta_theta: Float64,
-    r_asc1: Float64,
-    r_asc2: Float64,
+    theta_voltage0: Float64,
+    refractory_remaining0: Float64,
+    e_l: Float64,
+    capacitance: Float64,
     resistance: Float64,
+    theta_inf: Float64,
+    b_spike: Float64,
+    b_voltage: Float64,
+    a_voltage: Float64,
+    k_asc1: Float64,
+    k_asc2: Float64,
+    f_v: Float64,
+    delta_v: Float64,
+    delta_theta_spike: Float64,
+    f_asc1: Float64,
+    f_asc2: Float64,
+    delta_i_asc1: Float64,
+    delta_i_asc2: Float64,
+    refractory_period: Float64,
     dt: Float64,
     n_steps: Int,
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(v0)
+        or not isfinite(theta_spike0)
+        or not isfinite(i_asc1_0)
+        or not isfinite(i_asc2_0)
+        or not isfinite(theta_voltage0)
+        or not isfinite(refractory_remaining0)
+        or not isfinite(e_l)
+        or not isfinite(capacitance)
+        or not isfinite(resistance)
+        or not isfinite(theta_inf)
+        or not isfinite(b_spike)
+        or not isfinite(b_voltage)
+        or not isfinite(a_voltage)
+        or not isfinite(k_asc1)
+        or not isfinite(k_asc2)
+        or not isfinite(f_v)
+        or not isfinite(delta_v)
+        or not isfinite(delta_theta_spike)
+        or not isfinite(f_asc1)
+        or not isfinite(f_asc2)
+        or not isfinite(delta_i_asc1)
+        or not isfinite(delta_i_asc2)
+        or not isfinite(refractory_period)
+        or not isfinite(dt)
+        or not isfinite(current)
+        or capacitance <= 0.0
+        or resistance <= 0.0
+        or b_spike <= 0.0
+        or b_voltage <= 0.0
+        or k_asc1 <= 0.0
+        or k_asc2 <= 0.0
+        or dt <= 0.0
+        or refractory_remaining0 < 0.0
+        or refractory_period < 0.0
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var v = v0
-    var theta = theta0
-    var a1 = i_asc1_0
-    var a2 = i_asc2_0
-    var half_dt = 0.5 * dt
-    var spikes: Int64 = 0
-    for t in range(n_steps):
-        var k1v = _dv(v, a1, a2, current, v_rest, resistance, tau_m)
-        var k1t = _dtheta(v, theta, theta_inf, a_theta, v_rest, tau_theta)
-        var k1a = -a1 / tau_asc1
-        var k1b = -a2 / tau_asc2
-
-        var v2 = v + half_dt * k1v
-        var th2 = theta + half_dt * k1t
-        var a1_2 = a1 + half_dt * k1a
-        var a2_2 = a2 + half_dt * k1b
-        var k2v = _dv(v2, a1_2, a2_2, current, v_rest, resistance, tau_m)
-        var k2t = _dtheta(v2, th2, theta_inf, a_theta, v_rest, tau_theta)
-        var k2a = -a1_2 / tau_asc1
-        var k2b = -a2_2 / tau_asc2
-
-        var v3 = v + half_dt * k2v
-        var th3 = theta + half_dt * k2t
-        var a1_3 = a1 + half_dt * k2a
-        var a2_3 = a2 + half_dt * k2b
-        var k3v = _dv(v3, a1_3, a2_3, current, v_rest, resistance, tau_m)
-        var k3t = _dtheta(v3, th3, theta_inf, a_theta, v_rest, tau_theta)
-        var k3a = -a1_3 / tau_asc1
-        var k3b = -a2_3 / tau_asc2
-
-        var v4 = v + dt * k3v
-        var th4 = theta + dt * k3t
-        var a1_4 = a1 + dt * k3a
-        var a2_4 = a2 + dt * k3b
-        var k4v = _dv(v4, a1_4, a2_4, current, v_rest, resistance, tau_m)
-        var k4t = _dtheta(v4, th4, theta_inf, a_theta, v_rest, tau_theta)
-        var k4a = -a1_4 / tau_asc1
-        var k4b = -a2_4 / tau_asc2
-
-        var sv = k1v + 2.0 * k2v + 2.0 * k3v + k4v
-        var st = k1t + 2.0 * k2t + 2.0 * k3t + k4t
-        var sa = k1a + 2.0 * k2a + 2.0 * k3a + k4a
-        var sb = k1b + 2.0 * k2b + 2.0 * k3b + k4b
-        v = v + dt * sv / 6.0
-        theta = theta + dt * st / 6.0
-        a1 = a1 + dt * sa / 6.0
-        a2 = a2 + dt * sb / 6.0
-
-        if v >= theta:
-            v = v_reset
-            theta += delta_theta
-            a1 += r_asc1
-            a2 += r_asc2
-            spikes += 1
-        trace[t] = v
+    var theta_spike = theta_spike0
+    var i_asc1 = i_asc1_0
+    var i_asc2 = i_asc2_0
+    var theta_voltage = theta_voltage0
+    var refractory_remaining = refractory_remaining0
+    var membrane_rate = 1.0 / (resistance * capacitance)
+    var membrane_decay = exp(-membrane_rate * dt)
+    var spike_decay = exp(-b_spike * dt)
+    var voltage_decay = exp(-b_voltage * dt)
+    var asc1_decay = exp(-k_asc1 * dt)
+    var asc2_decay = exp(-k_asc2 * dt)
+    var voltage_convolution = _convolution(b_voltage, membrane_rate, dt)
+    var events: Int64 = 0
+    for index in range(n_steps):
+        if refractory_remaining > 0.0:
+            refractory_remaining = max(0.0, refractory_remaining - dt)
+            trace[index] = v
+            continue
+        var total_current = current + i_asc1 + i_asc2
+        var equilibrium_offset = resistance * total_current
+        var voltage_offset = v - e_l
+        var next_offset = equilibrium_offset + (voltage_offset - equilibrium_offset) * membrane_decay
+        v = e_l + next_offset
+        theta_spike *= spike_decay
+        i_asc1 *= asc1_decay
+        i_asc2 *= asc2_decay
+        var threshold_forcing = equilibrium_offset * (1.0 - voltage_decay) / b_voltage
+        threshold_forcing += (voltage_offset - equilibrium_offset) * voltage_convolution
+        theta_voltage = theta_voltage * voltage_decay + a_voltage * threshold_forcing
+        if (
+            not isfinite(v)
+            or not isfinite(theta_spike)
+            or not isfinite(i_asc1)
+            or not isfinite(i_asc2)
+            or not isfinite(theta_voltage)
+        ):
+            return -1
+        if v > theta_inf + theta_spike + theta_voltage:
+            v = e_l + f_v * (v - e_l) - delta_v
+            theta_spike += delta_theta_spike
+            i_asc1 = f_asc1 * i_asc1 + delta_i_asc1
+            i_asc2 = f_asc2 * i_asc2 + delta_i_asc2
+            refractory_remaining = refractory_period
+            events += 1
+        if (
+            not isfinite(v)
+            or not isfinite(theta_spike)
+            or not isfinite(i_asc1)
+            or not isfinite(i_asc2)
+            or not isfinite(theta_voltage)
+        ):
+            return -1
+        trace[index] = v
     trace[n_steps] = v
-    trace[n_steps + 1] = theta
-    trace[n_steps + 2] = a1
-    trace[n_steps + 3] = a2
-    return spikes
+    trace[n_steps + 1] = theta_spike
+    trace[n_steps + 2] = i_asc1
+    trace[n_steps + 3] = i_asc2
+    trace[n_steps + 4] = theta_voltage
+    trace[n_steps + 5] = refractory_remaining
+    return events

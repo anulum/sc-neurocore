@@ -290,7 +290,8 @@ raw TOML descriptor.
 | `PlantR15Neuron` | `PlantR15Neuron` | Plant & Kim 1976 |
 | `PrescottNeuron` | `PrescottNeuron` | Prescott et al. 2008 |
 | `MihalasNieburNeuron` | `MihalasNieburNeuron` | Mihalas & Niebur 2009 |
-| `GLIFNeuron` | `GLIFNeuron` | Allen Institute GLIF5 |
+| `GLIFNeuron` | `GLIFNeuron` | Teeter 2018 five-state GLIF5 exact-flow specialization |
+| `SCFourStateGLIFNeuron` | `SCFourStateGLIFNeuron` | Count-neutral retained four-state project recurrence |
 | `GIFPopulationNeuron` | `GIFPopulationNeuron` | Mensi et al. 2012 |
 | `AvRonCardiacNeuron` | `AvRonCardiacNeuron` | Av-Ron et al. 1991 |
 | `DurstewitzDopamineNeuron` | `DurstewitzDopamineNeuron` | Durstewitz et al. 2000 |

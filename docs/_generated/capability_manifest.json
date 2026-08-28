@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 193,
+    "model_documentation_pages": 194,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 618,
-    "python_model_classes": 176,
-    "python_model_source_modules": 172,
-    "rust_pyo3_model_wrappers": 203,
-    "test_files": 4760
+    "public_documentation_pages": 619,
+    "python_model_classes": 177,
+    "python_model_source_modules": 173,
+    "rust_pyo3_model_wrappers": 204,
+    "test_files": 4764
   },
   "documentation": {
     "public_pages": [
@@ -1222,6 +1222,7 @@
       "docs/api/models/sc_chaotic_map.md",
       "docs/api/models/sc_decoupled_adaptation_ion_mass.md",
       "docs/api/models/sc_exponential_tc_lif.md",
+      "docs/api/models/sc_four_state_glif.md",
       "docs/api/models/sc_leaky_tc_lif.md",
       "docs/api/models/sc_non_resetting_adaptive_lif.md",
       "docs/api/models/sc_normalized_energy_lif.md",
@@ -1760,6 +1761,7 @@
       "sc_chaotic_map.md",
       "sc_decoupled_adaptation_ion_mass.md",
       "sc_exponential_tc_lif.md",
+      "sc_four_state_glif.md",
       "sc_leaky_tc_lif.md",
       "sc_non_resetting_adaptive_lif.md",
       "sc_normalized_energy_lif.md",
@@ -2330,6 +2332,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py"
       },
       {
+        "name": "SCFourStateGLIFNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_four_state_glif.py"
+      },
+      {
         "name": "SCLeakyTwoCompartmentLIFNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py"
       },
@@ -2641,6 +2647,7 @@
       "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py",
       "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py",
       "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py",
+      "src/sc_neurocore/neurons/models/sc_four_state_glif.py",
       "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py",
       "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py",
       "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py",
@@ -2842,6 +2849,7 @@
       "SCChaoticMapNeuron",
       "SCDecoupledAdaptationIonMassNeuron",
       "SCExponentialTwoCompartmentLIF",
+      "SCFourStateGLIFNeuron",
       "SCNonResettingAdaptiveLIFNeuron",
       "SCNormalizedEnergyLIFNeuron",
       "SCResettingMATNeuron",
@@ -4236,6 +4244,7 @@
       "tests/test_cosim_fitzhugh_rinzel_q1616_precision.py",
       "tests/test_cosim_fitzhugh_rinzel_tier_b_model_cosim.py",
       "tests/test_cosim_glif_q1616_precision.py",
+      "tests/test_cosim_glif_q3232.py",
       "tests/test_cosim_glif_tier_b_model_cosim.py",
       "tests/test_cosim_glif_transcendental_co_simulation.py",
       "tests/test_cosim_hindmarsh_rose_q1616_precision.py",
@@ -6788,6 +6797,9 @@
       "tests/test_sc_forward_bit_identical.py",
       "tests/test_sc_forward_encoder_compatibility.py",
       "tests/test_sc_forward_validation.py",
+      "tests/test_sc_four_state_glif.py",
+      "tests/test_sc_four_state_glif_backends.py",
+      "tests/test_sc_four_state_glif_engine_binding.py",
       "tests/test_sc_inference_engine_binding.py",
       "tests/test_sc_neurocore_engine_reexports_dna.py",
       "tests/test_sc_neurocore_engine_reexports_domain_wrappers.py",

@@ -1,0 +1,17 @@
+{
+  "model": "GLIFNeuron",
+  "source": "doi:10.1038/s41467-017-02717-4 equations (1)-(8); AllenSDK exact-dynamics update order",
+  "event": "strict V > Theta_inf + Theta_s + Theta_v after the finite exact-flow candidate",
+  "drive": {"pattern": [30.0, 0.0, 45.0, -5.0, 20.0, 35.0, 0.0, 50.0], "repeats": 64},
+  "oracle": {
+    "events": 15,
+    "first_event_index": 18,
+    "v_final": -61.509981779010914,
+    "theta_spike_final": 6.733309644118998,
+    "i_asc1_final": 0.7718752996297663,
+    "i_asc2_final": 2.9094731997994647,
+    "theta_voltage_final": 0.17499482416034617,
+    "refractory_remaining_final": 0.0,
+    "trace_sha256": "1b9bff8da7b7bffbfcd193c9634740897688c5a41833318b87456cdf472fc654"
+  }
+}

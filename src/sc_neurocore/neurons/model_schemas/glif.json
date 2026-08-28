@@ -1,37 +1,65 @@
 {
   "metadata": {
-    "schema_version": 1,
-    "name": "GLIF",
+    "schema_version": 2,
+    "name": "GLIF5",
     "author": "Teeter, C. et al.",
     "year": 2018,
     "doi": "10.1038/s41467-017-02717-4",
-    "description": "Allen Institute GLIF5 — Generalized LIF with threshold adaptation and after-spike currents"
+    "description": "Five-state GLIF5 membrane, threshold, after-spike currents, refractory cut, and affine reset"
   },
   "state": {
     "v": -70.0,
-    "theta": -50.0,
+    "theta_spike": 0.0,
     "i_asc1": 0.0,
-    "i_asc2": 0.0
+    "i_asc2": 0.0,
+    "theta_voltage": 0.0,
+    "refractory_remaining": 0.0
   },
   "parameters": {
-    "v_rest": -70.0, "v_reset": -70.0, "theta_inf": -50.0,
-    "tau_m": 10.0, "tau_theta": 100.0, "tau_asc1": 10.0, "tau_asc2": 200.0,
-    "a_theta": 0.01, "delta_theta": 2.0,
-    "r_asc1": 1.0, "r_asc2": 0.5, "resistance": 1.0
+    "e_l": -70.0,
+    "capacitance": 10.0,
+    "resistance": 1.0,
+    "theta_inf": -50.0,
+    "b_spike": 0.01,
+    "b_voltage": 0.01,
+    "a_voltage": 0.0001,
+    "k_asc1": 0.1,
+    "k_asc2": 0.005,
+    "f_v": 0.0,
+    "delta_v": 0.0,
+    "delta_theta_spike": 2.0,
+    "f_asc1": 1.0,
+    "f_asc2": 1.0,
+    "delta_i_asc1": 1.0,
+    "delta_i_asc2": 0.5,
+    "refractory_period": 2.0,
+    "dt": 1.0
   },
-  "integration": { "dt": 1.0, "method": "rk4" },
+  "integration": {"dt": 1.0, "method": "map"},
   "dynamics": {
-    "v": "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m",
-    "theta": "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta",
-    "i_asc1": "-i_asc1 / tau_asc1",
-    "i_asc2": "-i_asc2 / tau_asc2"
+    "v": "v if refractory_remaining > 0 else e_l + resistance * (I + i_asc1 + i_asc2) + ((v - e_l) - resistance * (I + i_asc1 + i_asc2)) * exp(-dt / (resistance * capacitance))",
+    "theta_spike": "theta_spike if refractory_remaining > 0 else theta_spike * exp(-b_spike * dt)",
+    "i_asc1": "i_asc1 if refractory_remaining > 0 else i_asc1 * exp(-k_asc1 * dt)",
+    "i_asc2": "i_asc2 if refractory_remaining > 0 else i_asc2 * exp(-k_asc2 * dt)",
+    "theta_voltage": "theta_voltage if refractory_remaining > 0 else theta_voltage * exp(-b_voltage * dt) + a_voltage * (resistance * (I + i_asc1 + i_asc2) * (1 - exp(-b_voltage * dt)) / b_voltage + ((v - e_l) - resistance * (I + i_asc1 + i_asc2)) * (dt * exp(-b_voltage * dt) if abs(b_voltage - 1 / (resistance * capacitance)) <= 1e-12 * max(1, abs(b_voltage), abs(1 / (resistance * capacitance))) else (exp(-dt / (resistance * capacitance)) - exp(-b_voltage * dt)) / (b_voltage - 1 / (resistance * capacitance))))",
+    "refractory_remaining": "max(0, refractory_remaining - dt) if refractory_remaining > 0 else 0"
   },
-  "threshold": { "condition": "v >= theta", "detection": "crossing" },
+  "threshold": {
+    "condition": "refractory_remaining_prev <= 0 and v > theta_inf + theta_spike + theta_voltage",
+    "detection": "level"
+  },
   "reset": {
-    "v": "v_reset",
-    "theta": "theta + delta_theta",
-    "i_asc1": "i_asc1 + r_asc1",
-    "i_asc2": "i_asc2 + r_asc2"
+    "v": "e_l + f_v * (v - e_l) - delta_v",
+    "theta_spike": "theta_spike + delta_theta_spike",
+    "i_asc1": "f_asc1 * i_asc1 + delta_i_asc1",
+    "i_asc2": "f_asc2 * i_asc2 + delta_i_asc2",
+    "theta_voltage": "theta_voltage",
+    "refractory_remaining": "refractory_period"
   },
-  "extensions": { "hierarchy_level": 5, "source": "Allen Brain Atlas" }
+  "extensions": {
+    "hierarchy_level": 5,
+    "source_equations": "Teeter et al. 2018 equations 1-8",
+    "implementation_note": "Fixed-grid exact dynamics holds pre-step after-spike currents during the membrane and voltage-threshold interval, matching AllenSDK; the post-cut state is exposed during the refractory hold.",
+    "identity_note": "The former four-state RK4 recurrence is retained as count-neutral SCFourStateGLIFNeuron."
+  }
 }

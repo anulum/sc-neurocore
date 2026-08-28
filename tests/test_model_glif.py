@@ -4,151 +4,139 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — GLIFNeuron behavioural tests
+# SC-NeuroCore — Teeter GLIF5 behavioral contracts
 
-"""Module-specific behavioural contract for GLIFNeuron.
-
-The contract protects the Allen GLIF5 continuous flow, candidate-first RK4
-integration, additive threshold reset, after-spike current kicks, validation
-boundaries, and public population wiring.
-"""
+"""Independent equation and public-surface tests for canonical GLIF5."""
 
 from __future__ import annotations
 
-from math import inf, isclose, isfinite, nan
+import math
 
+import numpy as np
 import pytest
 
 from sc_neurocore.network.population import Population
 from sc_neurocore.neurons.models.glif import GLIFNeuron
 
 
-def _state(neuron: GLIFNeuron) -> tuple[float, float, float, float]:
-    return neuron.v, neuron.theta, neuron.i_asc1, neuron.i_asc2
-
-
-def _derivatives(
-    neuron: GLIFNeuron,
-    v: float,
-    theta: float,
-    i_asc1: float,
-    i_asc2: float,
-    current: float,
-) -> tuple[float, float, float, float]:
+def _state(neuron: GLIFNeuron) -> tuple[float, ...]:
     return (
-        (-(v - neuron.v_rest) + neuron.resistance * current + i_asc1 + i_asc2) / neuron.tau_m,
-        (neuron.theta_inf - theta + neuron.a_theta * (v - neuron.v_rest)) / neuron.tau_theta,
-        -i_asc1 / neuron.tau_asc1,
-        -i_asc2 / neuron.tau_asc2,
+        neuron.v,
+        neuron.theta_spike,
+        neuron.i_asc1,
+        neuron.i_asc2,
+        neuron.theta_voltage,
+        neuron.refractory_remaining,
     )
 
 
-def _add_scaled(
-    state: tuple[float, float, float, float],
-    slope: tuple[float, float, float, float],
-    scale: float,
-) -> tuple[float, float, float, float]:
+def _source_interval(neuron: GLIFNeuron, current: float) -> tuple[float, ...]:
+    """Evaluate the Allen exact-dynamics update without production helpers."""
+    membrane_rate = 1.0 / (neuron.resistance * neuron.capacitance)
+    membrane_decay = math.exp(-membrane_rate * neuron.dt)
+    voltage_decay = math.exp(-neuron.b_voltage * neuron.dt)
+    equilibrium = neuron.resistance * (current + neuron.i_asc1 + neuron.i_asc2)
+    offset = neuron.v - neuron.e_l
+    next_v = neuron.e_l + equilibrium + (offset - equilibrium) * membrane_decay
+    difference = neuron.b_voltage - membrane_rate
+    if abs(difference) <= 1e-12 * max(1.0, neuron.b_voltage, membrane_rate):
+        convolution = neuron.dt * math.exp(-neuron.b_voltage * neuron.dt)
+    else:
+        convolution = (math.exp(-membrane_rate * neuron.dt) - voltage_decay) / difference
+    forcing = (
+        equilibrium * (1.0 - voltage_decay) / neuron.b_voltage
+        + (offset - equilibrium) * convolution
+    )
     return (
-        state[0] + scale * slope[0],
-        state[1] + scale * slope[1],
-        state[2] + scale * slope[2],
-        state[3] + scale * slope[3],
+        next_v,
+        neuron.theta_spike * math.exp(-neuron.b_spike * neuron.dt),
+        neuron.i_asc1 * math.exp(-neuron.k_asc1 * neuron.dt),
+        neuron.i_asc2 * math.exp(-neuron.k_asc2 * neuron.dt),
+        neuron.theta_voltage * voltage_decay + neuron.a_voltage * forcing,
+        0.0,
     )
 
 
-def _rk4_reference(neuron: GLIFNeuron, current: float) -> tuple[float, float, float, float]:
-    state = _state(neuron)
-    half_dt = 0.5 * neuron.dt
-    k1 = _derivatives(neuron, *state, current)
-    k2 = _derivatives(neuron, *_add_scaled(state, k1, half_dt), current)
-    k3 = _derivatives(neuron, *_add_scaled(state, k2, half_dt), current)
-    k4 = _derivatives(neuron, *_add_scaled(state, k3, neuron.dt), current)
-    return (
-        state[0] + neuron.dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
-        state[1] + neuron.dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
-        state[2] + neuron.dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
-        state[3] + neuron.dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0,
+def test_five_source_states_match_independent_exact_interval() -> None:
+    neuron = GLIFNeuron(
+        v=-68.0,
+        theta_spike=1.25,
+        i_asc1=0.4,
+        i_asc2=-0.2,
+        theta_voltage=0.75,
     )
-
-
-def test_subthreshold_step_matches_independent_rk4_reference() -> None:
-    neuron = GLIFNeuron(v=-68.0, theta=-45.0, i_asc1=0.4, i_asc2=-0.2)
-    expected = _rk4_reference(neuron, current=4.0)
+    expected = _source_interval(neuron, 4.0)
 
     assert neuron.step(4.0) == 0
 
-    for observed, target in zip(_state(neuron), expected, strict=True):
-        assert isclose(observed, target, rel_tol=0.0, abs_tol=1e-14)
+    np.testing.assert_allclose(_state(neuron), expected, rtol=0.0, atol=2e-15)
 
 
-def test_after_spike_currents_decay_inside_continuous_flow() -> None:
-    neuron = GLIFNeuron(i_asc1=5.0, i_asc2=5.0)
-    expected = _rk4_reference(neuron, current=0.0)
+def test_event_condition_is_strict_at_equal_threshold() -> None:
+    neuron = GLIFNeuron(v=-50.0, theta_inf=-50.0, a_voltage=0.0)
 
-    assert neuron.step(0.0) == 0
-
-    assert isclose(neuron.i_asc1, expected[2], rel_tol=0.0, abs_tol=1e-14)
-    assert isclose(neuron.i_asc2, expected[3], rel_tol=0.0, abs_tol=1e-14)
-    assert neuron.i_asc1 < neuron.i_asc2
+    assert neuron.step(20.0) == 0
+    assert neuron.v == -50.0
+    assert neuron.theta == -50.0
 
 
-def test_spike_reset_is_candidate_first_and_additive() -> None:
-    neuron = GLIFNeuron(v=-51.0, theta=-50.5, delta_theta=2.5, r_asc1=1.25, r_asc2=-0.25)
-    candidate = _rk4_reference(neuron, current=40.0)
+def test_source_affine_reset_and_refractory_cut_are_explicit() -> None:
+    neuron = GLIFNeuron(
+        v=-51.0,
+        f_v=0.25,
+        delta_v=1.5,
+        delta_theta_spike=3.0,
+        f_asc1=0.5,
+        f_asc2=-0.5,
+        delta_i_asc1=1.25,
+        delta_i_asc2=-0.25,
+        refractory_period=2.0,
+    )
+    candidate = _source_interval(neuron, 50.0)
 
-    assert candidate[0] >= candidate[1]
-    assert neuron.step(40.0) == 1
-    assert neuron.v == neuron.v_reset
-    assert isclose(neuron.theta, candidate[1] + neuron.delta_theta, rel_tol=0.0, abs_tol=1e-14)
-    assert isclose(neuron.i_asc1, candidate[2] + neuron.r_asc1, rel_tol=0.0, abs_tol=1e-14)
-    assert isclose(neuron.i_asc2, candidate[3] + neuron.r_asc2, rel_tol=0.0, abs_tol=1e-14)
+    assert neuron.step(50.0) == 1
+    assert neuron.v == neuron.e_l + 0.25 * (candidate[0] - neuron.e_l) - 1.5
+    assert neuron.theta_spike == candidate[1] + 3.0
+    assert neuron.i_asc1 == 0.5 * candidate[2] + 1.25
+    assert neuron.i_asc2 == -0.5 * candidate[3] - 0.25
+    assert neuron.theta_voltage == candidate[4]
+    post_cut = _state(neuron)
+    assert neuron.step(1e6) == 0
+    assert _state(neuron)[:-1] == post_cut[:-1]
+    assert neuron.refractory_remaining == 1.0
 
 
-def test_reset_restores_rest_threshold_and_zero_currents() -> None:
-    neuron = GLIFNeuron(v=-51.0, theta=-50.5, i_asc1=0.5, i_asc2=-0.2)
-    assert neuron.step(40.0) == 1
+def test_reset_restores_normalized_source_profile_state() -> None:
+    neuron = GLIFNeuron()
+    neuron.simulate(100, 30.0, backend="python")
 
     neuron.reset()
 
-    assert _state(neuron) == (neuron.v_rest, neuron.theta_inf, 0.0, 0.0)
+    assert _state(neuron) == (neuron.e_l, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 
-@pytest.mark.parametrize("bad_current", [nan, inf, -inf])
-def test_invalid_current_raises_before_state_mutation(bad_current: float) -> None:
-    neuron = GLIFNeuron(v=-68.0, theta=-45.0, i_asc1=0.4, i_asc2=-0.2)
+@pytest.mark.parametrize("bad_current", [math.nan, math.inf, -math.inf])
+def test_invalid_current_is_failure_atomic(bad_current: float) -> None:
+    neuron = GLIFNeuron(v=-68.0, theta_spike=0.5, i_asc1=0.4)
     before = _state(neuron)
 
-    with pytest.raises(ValueError, match="current"):
+    with pytest.raises(ValueError, match="current must be finite"):
         neuron.step(bad_current)
 
     assert _state(neuron) == before
 
 
-@pytest.mark.parametrize("field", ["tau_m", "tau_theta", "tau_asc1", "tau_asc2", "dt"])
-def test_nonpositive_time_constants_are_rejected_at_construction(field: str) -> None:
+@pytest.mark.parametrize(
+    "field",
+    ["capacitance", "resistance", "b_spike", "b_voltage", "k_asc1", "k_asc2", "dt"],
+)
+def test_positive_parameters_are_enforced(field: str) -> None:
     with pytest.raises(ValueError, match=field):
         GLIFNeuron(**{field: 0.0})
 
 
-@pytest.mark.parametrize("field", ["resistance", "delta_theta"])
-def test_negative_nonnegative_parameters_are_rejected(field: str) -> None:
-    with pytest.raises(ValueError, match=field):
-        GLIFNeuron(**{field: -1.0})
-
-
-def test_corrupted_runtime_state_raises_before_mutation() -> None:
-    neuron = GLIFNeuron(v=-68.0, theta=-45.0, i_asc1=0.4, i_asc2=-0.2)
-    neuron.theta = nan
-    before = _state(neuron)
-
-    with pytest.raises(ValueError, match="theta"):
-        neuron.step(1.0)
-
-    assert _state(neuron) == before
-
-
-def test_nonfinite_candidate_raises_before_mutation() -> None:
-    neuron = GLIFNeuron(v=1e308, theta=-45.0, i_asc1=1e308, i_asc2=1e308)
+def test_nonfinite_candidate_is_failure_atomic() -> None:
+    neuron = GLIFNeuron(v=1e308, i_asc1=1e308, i_asc2=1e308)
     before = _state(neuron)
 
     with pytest.raises(FloatingPointError, match="candidate"):
@@ -157,23 +145,27 @@ def test_nonfinite_candidate_raises_before_mutation() -> None:
     assert _state(neuron) == before
 
 
-def test_voltage_coupling_raises_threshold_relative_to_uncoupled_case() -> None:
-    uncoupled = GLIFNeuron(v=-65.0, a_theta=0.0)
-    coupled = GLIFNeuron(v=-65.0, a_theta=0.2)
+def test_public_batch_equals_public_step_sequence() -> None:
+    batch = GLIFNeuron()
+    trace, events = batch.simulate(512, 30.0, backend="python")
+    stepped = GLIFNeuron()
+    expected = np.empty(512, dtype=np.float64)
+    expected_events = 0
+    for index in range(expected.size):
+        expected_events += stepped.step(30.0)
+        expected[index] = stepped.v
 
-    uncoupled.step(0.0)
-    coupled.step(0.0)
+    np.testing.assert_array_equal(trace, expected)
+    assert events == expected_events
+    assert _state(batch) == _state(stepped)
 
-    assert coupled.theta > uncoupled.theta
 
-
-def test_population_wires_public_glif_surface() -> None:
-    population = Population(GLIFNeuron, n=3, label="glif")
-    spikes = [
+def test_population_reaches_public_glif5_surface() -> None:
+    population = Population(GLIFNeuron, n=3, label="glif5")
+    events = [
         neuron.step(current)
-        for neuron, current in zip(population.neurons, [15.0, 15.0, 0.0], strict=True)
+        for neuron, current in zip(population.neurons, (30.0, 50.0, 0.0), strict=True)
     ]
 
-    assert len(spikes) == 3
-    assert all(spike in (0, 1) for spike in spikes)
-    assert all(isfinite(neuron.v) for neuron in population.neurons)
+    assert all(event in (0, 1) for event in events)
+    assert all(math.isfinite(neuron.theta) for neuron in population.neurons)

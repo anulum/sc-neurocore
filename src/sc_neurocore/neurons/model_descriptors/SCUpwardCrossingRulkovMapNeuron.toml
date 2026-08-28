@@ -27,6 +27,7 @@ hardware_fit = [
 behavior_tags = [
     "adapting",
     "excitable",
+    "rate-coded",
     "tonic",
 ]
 

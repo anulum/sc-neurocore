@@ -1,0 +1,164 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SC Four-State GLIF"
+class_name = "SCFourStateGLIFNeuron"
+module = "sc_four_state_glif"
+display_name = "SC four-state adaptive-threshold recurrence"
+summary = "Retained four-state adaptive-threshold RK4 project recurrence"
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "backward-compatible project recurrence",
+    "cross-runtime regression",
+]
+hardware_fit = [
+    "bounded signed fixed-point co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "rate-coded",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+derivation_note = "SC-NeuroCore project recurrence retained without whole-model publication attribution."
+
+[state.v]
+init = -70.0
+
+[state.theta]
+init = -50.0
+
+[state.i_asc1]
+init = 0.0
+
+[state.i_asc2]
+init = 0.0
+
+[parameters.theta_inf]
+default = -50.0
+unit = "mV"
+meaning = "steady adaptive-threshold target"
+
+[parameters.v_rest]
+default = -70.0
+unit = "mV"
+meaning = "resting membrane potential"
+
+[parameters.v_reset]
+default = -70.0
+unit = "mV"
+meaning = "hard-reset membrane potential"
+
+[parameters.tau_m]
+default = 10.0
+unit = "ms"
+meaning = "membrane time constant"
+
+[parameters.tau_theta]
+default = 100.0
+unit = "ms"
+meaning = "threshold adaptation time constant"
+
+[parameters.tau_asc1]
+default = 10.0
+unit = "ms"
+meaning = "first after-spike-current time constant"
+
+[parameters.tau_asc2]
+default = 200.0
+unit = "ms"
+meaning = "second after-spike-current time constant"
+
+[parameters.a_theta]
+default = 0.01
+unit = "1"
+meaning = "project voltage-threshold coupling"
+
+[parameters.delta_theta]
+default = 2.0
+unit = "mV"
+meaning = "project threshold reset increment"
+
+[parameters.r_asc1]
+default = 1.0
+unit = "mV"
+meaning = "first project after-spike-current increment"
+
+[parameters.r_asc2]
+default = 0.5
+unit = "mV"
+meaning = "second project after-spike-current increment"
+
+[parameters.resistance]
+default = 1.0
+unit = "1"
+meaning = "normalized current-to-voltage gain"
+
+[integration]
+dt = 1.0
+method = "rk4"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m"
+theta = "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta"
+i_asc1 = "-i_asc1 / tau_asc1"
+i_asc2 = "-i_asc2 / tau_asc2"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+golden_trace_sha256 = "1ad1d6ec4a17b07f02428bc98e506bec128c16aed601696589d76875652ab410"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/sc_four_state_glif_project.json"
+
+[documentation]
+slug = "models/sc_four_state_glif"
+notes = "Count-neutral identity preserving the former GLIFNeuron four-state RK4 behavior."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "project mixed-drive receipt plus I=0,30,50 constant-current regimes"
+tolerance = "complete binary64 state and event parity across five runtimes; bounded fixed-point state and exact enrolled events"
+evidence = "tests/test_sc_four_state_glif.py; tests/test_sc_four_state_glif_backends.py; tests/test_reference_glif.py; tests/test_cosim_glif_q1616_precision.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+synthesised = true
+cosim_evidence = "tests/test_cosim_glif_q1616_precision.py"
+target_device = "Xilinx 7-series (Yosys synth_xilinx)"
+target_tier = "H2"
+terminal_reason = "Bounded Q16.16 co-simulation, synthesis, and formal safety only; timing, PPA, board, device, and silicon evidence remain open."

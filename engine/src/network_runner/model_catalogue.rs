@@ -33,6 +33,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "Prescott",
         "MihalasNiebur",
         "GLIF",
+        "SCFourStateGLIF",
         "GIFPopulation",
         "AvRonCardiac",
         "DurstewitzDopamine",

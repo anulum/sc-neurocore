@@ -597,10 +597,11 @@
       "behavior_tags": [
         "adapting",
         "excitable",
-        "rate-coded"
+        "rate-coded",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "4bbd62dfbb6477d05782cf41a8b2690dbc2562a4fa20101f1a8fefe0f2bb92df",
+      "result_sha256": "886c81af8d80d597d61db241f8e35e3af24a1cec3a74761c3117390e2eeac070",
       "stochastic": false
     },
     "GLMNeuron": {
@@ -1350,6 +1351,16 @@
       "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
       "stochastic": false
     },
+    "SCFourStateGLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "4bbd62dfbb6477d05782cf41a8b2690dbc2562a4fa20101f1a8fefe0f2bb92df",
+      "stochastic": false
+    },
     "SCLeakyTwoCompartmentLIFNeuron": {
       "behavior_tags": [
         "excitable",
@@ -1379,6 +1390,15 @@
       ],
       "drivable": true,
       "result_sha256": "811c1e16e3e4d1203b499cc7c175514732b9ea144953c70934836482fd56447d",
+      "stochastic": false
+    },
+    "SCResettingWilsonHRNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "237c0f686f8a0ccb6cf141ac07a26f1432eee9c36bf80cd8b8770b4a80564d5b",
       "stochastic": false
     },
     "SCResettingMATNeuron": {
@@ -1458,6 +1478,17 @@
       ],
       "drivable": true,
       "result_sha256": "231f3816dd5ed6dbb1a5244fdf7358c17b435e4f2b25561bbdf9677310c59222",
+      "stochastic": false
+    },
+    "SCUpwardCrossingRulkovMapNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6582ac2c91a2bec16830f15daf69d2aa238ec805f388272394f72c7d54e0cd0a",
       "stochastic": false
     },
     "SCWBNMDAMagnesiumBlockNeuron": {
@@ -1805,7 +1836,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "a1f5da3ea6d5bf0ab9c91f5463c4d3cc9cc557e9034d26022e80bec3215bc7f9",
+  "result_sha256": "cc11591cb842cfa7f8f7325a62054c9fc187b71f87abf895eb6947a48ccbb639",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

@@ -74,7 +74,8 @@ table, validation commands, and external simulator boundary.
 | ExpIF | `expif.py` | Fourcaud-Trocme 2003 |
 | Lapicque | `lapicque.py` | Lapicque 1907 |
 | QIF | `quadratic_if.py` | Latham 2000 |
-| GLIF (5 levels) | `glif.py` | Teeter 2018, Allen Institute |
+| GLIF5 | `glif.py` | Teeter 2018 five-state source model |
+| SC four-state GLIF | `sc_four_state_glif.py` | Count-neutral retained project recurrence |
 | MAT | `mat.py` | Kobayashi 2009 |
 | SFA | `sfa.py` | Benda & Herz 2003 |
 | Stochastic IF | `stochastic_if.py` | Brunel & Hakim 1999 |

@@ -1,5 +1,11 @@
 # Changelog
 
+- Restored `GLIFNeuron` to the Teeter et al. five-state GLIF5 equations across
+  Python, production and safety Rust, Julia, Go, Mojo, paired schemas, receipts,
+  benchmarks, Q32.32 RTL, Yosys, and bounded formal evidence. The former
+  four-state RK4 recurrence remains available as the count-neutral
+  `SCFourStateGLIFNeuron` compatibility identity.
+
 All notable changes to the `sc-neurocore` project will be documented in this file.
 
 ## [Unreleased]

@@ -19,14 +19,13 @@ class TestTranscendentalCoSimulation:
 
     @pytest.mark.parametrize("model_name", _TRANSCENDENTAL_COMPILE_MODELS)
     def test_transcendental_model_lowers_to_valid_verilog(self, model_name: str) -> None:
-        """Non-baseline models lower to iverilog-valid Verilog without malformed literals.
+        """The retained schema lowers to valid Verilog without malformed literals.
 
         This is the emitter-fix verification: before the negative-LUT-literal,
         cosh, and empty-parameter fixes these models either raised
-        "Unsupported function" or emitted malformed `W'sd-N` literals. The GLIF
-        Q8.8 path is resolution-limited and the conductance-model look-up tables can
-        be too coarse for the dedicated Q16.16 behavioural claims, so this assertion
-        covers valid synthesisable RTL rather than spike parity.
+        "Unsupported function" or emitted malformed `W'sd-N` literals. The canonical
+        GLIF5 uses its dedicated committed Q32.32 lane; this generic compiler check
+        therefore covers the retained four-state project schema.
         """
         verilog = UniversalNeuron.from_schema(model_name).to_verilog(module_name=f"sc_{model_name}")
         assert "'sd-" not in verilog  # no malformed negative literals

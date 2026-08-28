@@ -9,7 +9,7 @@
 
 """Multi-language benchmark for ``GLIFNeuron.simulate``.
 
-Times the N-step RK4 recurrence across the polyglot backend chain
+Times the N-step five-state exact-flow recurrence across the polyglot backend chain
 (python / rust / julia / go / mojo), records the parity gap against the NumPy
 reference, and writes a JSON artefact.
 
@@ -27,6 +27,7 @@ numbers without an isolated-core rerun.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os as _os
 import platform
@@ -34,6 +35,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import glif
 from sc_neurocore.neurons.models.glif import GLIFNeuron
@@ -41,6 +43,15 @@ from sc_neurocore.neurons.models.glif import GLIFNeuron
 N_STEPS = 2_000_000
 CURRENT = 30.0
 N_REPEATS = 5
+REPOSITORY = Path(__file__).resolve().parents[1]
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _probe_rust() -> tuple[bool, str]:
@@ -65,16 +76,27 @@ def _probe_mojo() -> tuple[bool, str]:
     return (ok, "" if ok else "accel/mojo/neurons/libglif.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray]:
+def _run(
+    backend: str,
+) -> tuple[float, float, npt.NDArray[np.float64], int, dict[str, float]]:
     GLIFNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
-        trace, _spikes = GLIFNeuron().simulate(N_STEPS, CURRENT, backend=backend)
+        neuron = GLIFNeuron()
+        trace, events = neuron.simulate(N_STEPS, CURRENT, backend=backend)
         times_ms.append((time.perf_counter() - t0) * 1000.0)
     times_ms.sort()
-    return times_ms[len(times_ms) // 2], times_ms[0], trace
+    state = {
+        "v": neuron.v,
+        "theta_spike": neuron.theta_spike,
+        "i_asc1": neuron.i_asc1,
+        "i_asc2": neuron.i_asc2,
+        "theta_voltage": neuron.theta_voltage,
+        "refractory_remaining": neuron.refractory_remaining,
+    }
+    return times_ms[len(times_ms) // 2], times_ms[0], trace, events, state
 
 
 def main(argv: list[str]) -> int:
@@ -82,7 +104,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--json", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    print("# Allen GLIF5 N-step RK4 benchmark")
+    print("# Teeter GLIF5 N-step exact-flow benchmark")
     print(f"# Workload: {N_STEPS:,} steps, default tonic regime, current={CURRENT}")
     print(f"# Repeats per backend: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
@@ -104,7 +126,9 @@ def main(argv: list[str]) -> int:
         print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
     print()
 
-    reference: np.ndarray | None = None
+    reference: npt.NDArray[np.float64] | None = None
+    reference_state: dict[str, float] | None = None
+    reference_events: int | None = None
     python_median: float | None = None
     rows: list[dict[str, object]] = []
 
@@ -115,14 +139,21 @@ def main(argv: list[str]) -> int:
             print(f"{name:<8}  {'(skip)':>12}  {'(skip)':>12}  {'-':>12}  {'-':>9}")
             rows.append({"backend": name, "skipped": True, "unavailable_reason": reason})
             continue
-        median_ms, min_ms, trace = _run(name)
+        median_ms, min_ms, trace, events, state = _run(name)
         if name == "python":
             reference = trace
+            reference_state = state
+            reference_events = events
             python_median = median_ms
             parity = 0.0
         else:
             assert reference is not None
-            parity = float(np.max(np.abs(trace - reference)))
+            assert reference_state is not None
+            assert reference_events is not None
+            parity = max(
+                float(np.max(np.abs(trace - reference))),
+                max(abs(state[key] - reference_state[key]) for key in state),
+            )
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")
         rows.append(
@@ -132,14 +163,27 @@ def main(argv: list[str]) -> int:
                 "min_ms": min_ms,
                 "parity_max_abs_diff": parity,
                 "speedup_vs_python": speedup,
+                "events": events,
+                "final_state": state,
+                "event_delta_vs_python": 0
+                if reference_events is None
+                else events - reference_events,
             }
         )
 
     print()
-    print("# Note: the Allen GLIF5 right-hand side is purely linear (no transcendental")
-    print("# functions), so rust, julia and go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo fuses multiply-add; on this platform it also matches bit-for-bit, but it")
-    print("# is validated as non-amplifying within a ULP band rather than asserted exact.")
+    print("# Note: the GLIF5 exact-flow specialization includes exponential coefficients.")
+    print("# Complete voltage traces, final states, and event counts are compared to Python;")
+    print("# timing remains loaded-host local regression evidence, not a hardware claim.")
+
+    sources = {
+        "python": "src/sc_neurocore/neurons/models/glif.py",
+        "rust": "engine/src/neurons/biophysical/glif.rs",
+        "julia": "src/sc_neurocore/accel/julia/neurons/glif.jl",
+        "go": "src/sc_neurocore/accel/go/neurons/glif/glif.go",
+        "mojo": "src/sc_neurocore/accel/mojo/neurons/glif.mojo",
+        "receipt": "src/sc_neurocore/neurons/reference_receipts/glif5_teeter_2018.json",
+    }
 
     report = {
         "benchmark": "glif_simulate",
@@ -151,6 +195,7 @@ def main(argv: list[str]) -> int:
             "isolation": "non-isolated (loaded workstation)",
         },
         "results": rows,
+        "source_sha256": {name: _sha256(REPOSITORY / path) for name, path in sources.items()},
     }
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)

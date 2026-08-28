@@ -252,9 +252,20 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="glif",
         class_name="GLIFNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity",
-        operating_point="schema-DSL GLIF four-state RK4 at I=0,15,22,30,45,50 over 1000 steps",
-        tolerance="exact hand/schema/Q16.16 spike counts at every operating point",
+        evidence="tests/test_cosim_glif_q3232.py",
+        operating_point="Teeter GLIF5 default profile at I=0,15,22,30,45,50 and a 512-step mixed drive",
+        tolerance="Q32.32 integer-oracle exact; source event vector exact; five-state error below 2e-7",
+    ),
+    EnrolledEvidence(
+        schema_name="sc_four_state_glif",
+        class_name="SCFourStateGLIFNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_glif_q1616_precision.py::"
+            "TestQ1616Precision::test_sc_four_state_glif_q1616_parity"
+        ),
+        operating_point="retained four-state project recurrence at I=0,15,22,30,45,50 over 1000 steps",
+        tolerance="exact public/schema/Q16.16 event counts at every operating point",
     ),
     EnrolledEvidence(
         schema_name="izhikevich2007",

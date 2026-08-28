@@ -21,7 +21,7 @@ extern const char *_GoStringPtr(_GoString_ s);
 /* Start of preamble from import "C" comments.  */
 
 
-#line 22 "glif.go"
+#line 12 "glif.go"
 
 #include <stdint.h>
 
@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int glif_simulate_c(double v0, double theta0, double thetaInf, double iAsc1_0, double iAsc2_0, double vRest, double vReset, double tauM, double tauTheta, double tauAsc1, double tauAsc2, double aTheta, double deltaTheta, double rAsc1, double rAsc2, double resistance, double dt, int nSteps, double current, double* tracePtr);
+extern long long int glif_simulate_c(double v0, double thetaSpike0, double iAsc1_0, double iAsc2_0, double thetaVoltage0, double refractoryRemaining0, double eL, double capacitance, double resistance, double thetaInf, double bSpike, double bVoltage, double aVoltage, double kAsc1, double kAsc2, double fV, double deltaV, double deltaThetaSpike, double fAsc1, double fAsc2, double deltaIAsc1, double deltaIAsc2, double refractoryPeriod, double dt, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

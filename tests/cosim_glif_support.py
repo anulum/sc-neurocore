@@ -11,6 +11,7 @@ from __future__ import annotations
 """GLIF schema, hand-model, and Q16.16 RTL parity contracts."""
 from pathlib import Path
 from sc_neurocore.neurons.models.glif import GLIFNeuron
+from sc_neurocore.neurons.models.sc_four_state_glif import SCFourStateGLIFNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 import pytest
 from tests.cosim_support import (
@@ -21,11 +22,12 @@ from tests.cosim_support import (
     _verilog_spike_count_q1616,
 )
 
-_TRANSCENDENTAL_COMPILE_MODELS = ["glif"]
+_TRANSCENDENTAL_COMPILE_MODELS = ["sc_four_state_glif"]
 
 __all__ = [
     "Path",
     "GLIFNeuron",
+    "SCFourStateGLIFNeuron",
     "UniversalNeuron",
     "pytest",
     "HAS_IVERILOG",

@@ -80,6 +80,7 @@ _CLASS_TO_MODULE = {
     "FractionalLIFNeuron": "fractional_lif",
     "GIFPopulationNeuron": "gif_population",
     "GLIFNeuron": "glif",
+    "SCFourStateGLIFNeuron": "sc_four_state_glif",
     "GLMNeuron": "glm_neuron",
     "GalvesLocherbachNeuron": "galves_locherbach",
     "GammaMotorNeuron": "gamma_motor_neuron",

@@ -1,0 +1,42 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "sc_four_state_glif_constant_current_adaptation",
+  "model": {"schema_name": "sc_four_state_glif", "runner": "universal_dsl"},
+  "protocol": {
+    "dt": 1.0,
+    "steps": 1000,
+    "inputs": {"I": 30.0},
+    "state_variables": ["v", "theta", "i_asc1", "i_asc2"]
+  },
+  "provenance": {
+    "kind": "project_rk4_reference",
+    "source": "SC-NeuroCore retained four-state recurrence",
+    "equation": "Four-state project recurrence with simultaneous classical RK4, candidate-level V >= Theta detection, hard voltage reset, and additive threshold and after-spike-current increments.",
+    "citation": "project:sc-neurocore-four-state-glif"
+  },
+  "expected_features": {
+    "spike_count": 54.0,
+    "first_spike_step": 11.0,
+    "final.v": -66.51811704549482,
+    "min.v": -70.0,
+    "max.v": -40.289548021238076,
+    "mean.v": -51.68975714447121,
+    "final.theta": -38.35658698727918,
+    "min.theta": -49.99985536125,
+    "max.theta": -38.23974703626318,
+    "mean.theta": -40.11335570702817,
+    "final.i_asc1": 1.0639750535363472,
+    "min.i_asc1": 0.0,
+    "max.i_asc1": 1.31380295378062,
+    "mean.i_asc1": 0.5573337761460219,
+    "final.i_asc2": 5.4573193867425225,
+    "min.i_asc2": 0.0,
+    "max.i_asc2": 5.48467431400484,
+    "mean.i_asc2": 4.32477375848058
+  },
+  "tolerances": {
+    "default": {"absolute": 1e-09, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
+  }
+}

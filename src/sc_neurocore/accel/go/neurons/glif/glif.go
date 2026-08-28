@@ -4,19 +4,9 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go Allen GLIF5 (parity with glif.py)
+// SC-NeuroCore — Go Teeter 2018 GLIF5 source model
 
-// Package main exposes a C-ABI shared library
-// (`go build -buildmode=c-shared -o libglif.so glif.go`) that the Python
-// dispatcher loads via ctypes.
-//
-// Parity contract: `glif_simulate_c` reproduces
-// `sc_neurocore.neurons.models.glif.GLIFNeuron.simulate`. The Allen GLIF5
-// right-hand side is purely linear (no transcendental functions), so every RK4
-// stage is exact arithmetic and the trace, spike count and final
-// (v, theta, i_asc1, i_asc2) state are bit-identical to the NumPy reference.
-//
-// Reference: Teeter, C. et al. (2018). Nat. Commun. 9:709.
+// Package main exposes the canonical five-state GLIF5 constant-current batch.
 package main
 
 /*
@@ -25,72 +15,104 @@ package main
 import "C"
 
 import (
+	"math"
 	"unsafe"
 )
 
-// glif_simulate_c runs n RK4 steps under a constant input. The caller allocates a
-// trace buffer of length n+4: indices [0, n) receive the v trace (post-reset on
-// firing steps), and indices n, n+1, n+2, n+3 receive the final v, theta,
-// i_asc1, i_asc2. Returns the spike count.
+func finite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+func convolution(decayRate, forcingRate, dt float64) float64 {
+	difference := decayRate - forcingRate
+	scale := math.Max(1.0, math.Max(math.Abs(decayRate), math.Abs(forcingRate)))
+	if math.Abs(difference) <= 1e-12*scale {
+		return dt * math.Exp(-decayRate*dt)
+	}
+	return (math.Exp(-forcingRate*dt) - math.Exp(-decayRate*dt)) / difference
+}
+
+// glif_simulate_c runs n source-faithful GLIF5 steps. The caller owns n+6
+// doubles: the voltage trace followed by the complete final state. A negative
+// return reports invalid input or a non-finite candidate.
 //
 //export glif_simulate_c
 func glif_simulate_c(
-	v0, theta0, thetaInf, iAsc1_0, iAsc2_0, vRest, vReset, tauM, tauTheta C.double,
-	tauAsc1, tauAsc2, aTheta, deltaTheta, rAsc1, rAsc2, resistance, dt C.double,
-	nSteps C.int, current C.double,
-	tracePtr *C.double,
+	v0, thetaSpike0, iAsc1_0, iAsc2_0, thetaVoltage0, refractoryRemaining0 C.double,
+	eL, capacitance, resistance, thetaInf, bSpike, bVoltage, aVoltage C.double,
+	kAsc1, kAsc2, fV, deltaV, deltaThetaSpike, fAsc1, fAsc2 C.double,
+	deltaIAsc1, deltaIAsc2, refractoryPeriod, dt C.double,
+	nSteps C.int, current C.double, tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
-	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+4)
-	v := float64(v0)
-	theta := float64(theta0)
-	a1 := float64(iAsc1_0)
-	a2 := float64(iAsc2_0)
-	pThetaInf := float64(thetaInf)
-	pVRest := float64(vRest)
-	pVReset := float64(vReset)
-	pTauM := float64(tauM)
-	pTauTheta := float64(tauTheta)
-	pTauAsc1 := float64(tauAsc1)
-	pTauAsc2 := float64(tauAsc2)
-	pATheta := float64(aTheta)
-	pDeltaTheta := float64(deltaTheta)
-	pRAsc1 := float64(rAsc1)
-	pRAsc2 := float64(rAsc2)
-	pResistance := float64(resistance)
-	pdt := float64(dt)
-	cur := float64(current)
-	halfDt := 0.5 * pdt
-	deriv := func(vv, th, x1, x2 float64) (float64, float64, float64, float64) {
-		return (-(vv - pVRest) + pResistance*cur + x1 + x2) / pTauM,
-			(pThetaInf - th + pATheta*(vv-pVRest)) / pTauTheta,
-			-x1 / pTauAsc1,
-			-x2 / pTauAsc2
+	values := []float64{
+		float64(v0), float64(thetaSpike0), float64(iAsc1_0), float64(iAsc2_0),
+		float64(thetaVoltage0), float64(refractoryRemaining0), float64(eL),
+		float64(capacitance), float64(resistance), float64(thetaInf), float64(bSpike),
+		float64(bVoltage), float64(aVoltage), float64(kAsc1), float64(kAsc2),
+		float64(fV), float64(deltaV), float64(deltaThetaSpike), float64(fAsc1),
+		float64(fAsc2), float64(deltaIAsc1), float64(deltaIAsc2),
+		float64(refractoryPeriod), float64(dt), float64(current),
 	}
-	var spikes int64
-	for t := 0; t < n; t++ {
-		k1v, k1t, k1a, k1b := deriv(v, theta, a1, a2)
-		k2v, k2t, k2a, k2b := deriv(v+halfDt*k1v, theta+halfDt*k1t, a1+halfDt*k1a, a2+halfDt*k1b)
-		k3v, k3t, k3a, k3b := deriv(v+halfDt*k2v, theta+halfDt*k2t, a1+halfDt*k2a, a2+halfDt*k2b)
-		k4v, k4t, k4a, k4b := deriv(v+pdt*k3v, theta+pdt*k3t, a1+pdt*k3a, a2+pdt*k3b)
-		v = v + pdt*(k1v+2.0*k2v+2.0*k3v+k4v)/6.0
-		theta = theta + pdt*(k1t+2.0*k2t+2.0*k3t+k4t)/6.0
-		a1 = a1 + pdt*(k1a+2.0*k2a+2.0*k3a+k4a)/6.0
-		a2 = a2 + pdt*(k1b+2.0*k2b+2.0*k3b+k4b)/6.0
-		if v >= theta {
-			v = pVReset
-			theta += pDeltaTheta
-			a1 += pRAsc1
-			a2 += pRAsc2
-			spikes++
+	if n < 0 || tracePtr == nil || !finite(values...) || values[7] <= 0.0 ||
+		values[8] <= 0.0 || values[10] <= 0.0 || values[11] <= 0.0 ||
+		values[13] <= 0.0 || values[14] <= 0.0 || values[23] <= 0.0 ||
+		values[5] < 0.0 || values[22] < 0.0 {
+		return -1
+	}
+	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+6)
+	v, thetaSpike := values[0], values[1]
+	iAsc1, iAsc2 := values[2], values[3]
+	thetaVoltage, refractoryRemaining := values[4], values[5]
+	membraneRate := 1.0 / (values[8] * values[7])
+	membraneDecay := math.Exp(-membraneRate * values[23])
+	spikeDecay := math.Exp(-values[10] * values[23])
+	voltageDecay := math.Exp(-values[11] * values[23])
+	asc1Decay := math.Exp(-values[13] * values[23])
+	asc2Decay := math.Exp(-values[14] * values[23])
+	voltageConvolution := convolution(values[11], membraneRate, values[23])
+	var events int64
+	for index := 0; index < n; index++ {
+		if refractoryRemaining > 0.0 {
+			refractoryRemaining = math.Max(0.0, refractoryRemaining-values[23])
+			trace[index] = v
+			continue
 		}
-		trace[t] = v
+		totalCurrent := values[24] + iAsc1 + iAsc2
+		equilibriumOffset := values[8] * totalCurrent
+		voltageOffset := v - values[6]
+		nextOffset := equilibriumOffset + (voltageOffset-equilibriumOffset)*membraneDecay
+		v = values[6] + nextOffset
+		thetaSpike *= spikeDecay
+		iAsc1 *= asc1Decay
+		iAsc2 *= asc2Decay
+		forcing := equilibriumOffset*(1.0-voltageDecay)/values[11] +
+			(voltageOffset-equilibriumOffset)*voltageConvolution
+		thetaVoltage = thetaVoltage*voltageDecay + values[12]*forcing
+		if !finite(v, thetaSpike, iAsc1, iAsc2, thetaVoltage) {
+			return -1
+		}
+		if v > values[9]+thetaSpike+thetaVoltage {
+			v = values[6] + values[15]*(v-values[6]) - values[16]
+			thetaSpike += values[17]
+			iAsc1 = values[18]*iAsc1 + values[20]
+			iAsc2 = values[19]*iAsc2 + values[21]
+			refractoryRemaining = values[22]
+			events++
+		}
+		if !finite(v, thetaSpike, iAsc1, iAsc2, thetaVoltage) {
+			return -1
+		}
+		trace[index] = v
 	}
-	trace[n] = v
-	trace[n+1] = theta
-	trace[n+2] = a1
-	trace[n+3] = a2
-	return C.longlong(spikes)
+	trace[n], trace[n+1], trace[n+2] = v, thetaSpike, iAsc1
+	trace[n+3], trace[n+4], trace[n+5] = iAsc2, thetaVoltage, refractoryRemaining
+	return C.longlong(events)
 }
 
-func main() {} // required for c-shared
+func main() {}

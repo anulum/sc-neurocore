@@ -6,14 +6,14 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety acceleration for _jax_compat
 
-pub fn make_rng(seed: f64) -> f64 {
+pub fn make_rng(_seed: f64) -> f64 {
     // if HAS_JAX {
     // return jax.random.PRNGKey(seed)  # type_val: ignore[return-value]
     // return array([0, seed], dtype=uint32)
     0.0
 }
 
-pub fn split_rng(key: f64) -> f64 {
+pub fn split_rng(_key: f64) -> f64 {
     // if HAS_JAX {
     // return jax.random.split(key)  # type_val: ignore[return-value]
     // s = int(key[-1])
@@ -21,7 +21,7 @@ pub fn split_rng(key: f64) -> f64 {
     0.0
 }
 
-pub fn uniform(key: f64, shape: f64, minval: f64, maxval: f64) -> f64 {
+pub fn uniform(_key: f64, _shape: f64, _minval: f64, _maxval: f64) -> f64 {
     // if HAS_JAX {
     // return jax.random.uniform(key, shape, minval=minval, maxval=maxval)
     // rng = random.default_rng(int(key[-1]))
@@ -29,7 +29,7 @@ pub fn uniform(key: f64, shape: f64, minval: f64, maxval: f64) -> f64 {
     0.0
 }
 
-pub fn normal(key: f64, shape: f64) -> f64 {
+pub fn normal(_key: f64, _shape: f64) -> f64 {
     // if HAS_JAX {
     // return jax.random.normal(key, shape)
     // rng = random.default_rng(int(key[-1]))
@@ -37,9 +37,19 @@ pub fn normal(key: f64, shape: f64) -> f64 {
     0.0
 }
 
-pub fn maybe_jit(fn: f64) -> f64 {
+pub fn maybe_jit(function: f64) -> f64 {
     // if HAS_JAX {
     // return jax.jit(fn)
     // return fn
-    0.0
+    function
+}
+
+#[cfg(test)]
+mod tests {
+    use super::maybe_jit;
+
+    #[test]
+    fn fallback_preserves_the_callable_token() {
+        assert_eq!(maybe_jit(3.5), 3.5);
+    }
 }

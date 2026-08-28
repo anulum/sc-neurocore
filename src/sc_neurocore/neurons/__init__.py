@@ -105,6 +105,7 @@ _MODEL_NAMES = {
     "FractionalLIFNeuron",
     "GIFPopulationNeuron",
     "GLIFNeuron",
+    "SCFourStateGLIFNeuron",
     "GLMNeuron",
     "GalvesLocherbachNeuron",
     "GammaRenewalNeuron",

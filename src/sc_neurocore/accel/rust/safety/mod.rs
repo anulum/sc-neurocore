@@ -166,6 +166,7 @@ pub mod gap_junction;
 pub mod gated_lif;
 pub mod gif_population;
 pub mod glif;
+pub mod sc_four_state_glif;
 pub mod glm_neuron;
 pub mod gnn;
 pub mod golgi_cell;

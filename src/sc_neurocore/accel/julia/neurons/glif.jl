@@ -4,82 +4,125 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia Allen GLIF5 (parity with glif.py)
+# SC-NeuroCore — Julia Teeter 2018 GLIF5 source model
 
-# Parity contract: `simulate_trace` reproduces
-# `sc_neurocore.neurons.models.glif.GLIFNeuron.simulate`. The Allen GLIF5
-# right-hand side is purely linear (no transcendental functions), so every RK4
-# stage is exact arithmetic and the trace, spike count and final
-# `(v, theta, i_asc1, i_asc2)` state are bit-identical to the NumPy reference.
-#
-# Reference: Teeter, C. et al. (2018). Nat. Commun. 9:709.
+# Five-state exact-flow specialization of Teeter et al. (2018), Eqs. 1–8.
+# The pre-step ASCs are held during the membrane and voltage-threshold flow,
+# matching the official AllenSDK exact-dynamics update order.
 
-module GlifAccel
+module GLIF5Accel
 
 export simulate_trace
 
+decay(rate, dt) = exp(-rate * dt)
+
+function exponential_convolution(decay_rate, forcing_rate, dt)
+    difference = decay_rate - forcing_rate
+    scale = max(1.0, abs(decay_rate), abs(forcing_rate))
+    abs(difference) <= 1.0e-12 * scale && return dt * exp(-decay_rate * dt)
+    return (exp(-forcing_rate * dt) - exp(-decay_rate * dt)) / difference
+end
+
+"""Run a failure-atomic constant-current GLIF5 batch."""
 function simulate_trace(
     v0::Float64,
-    theta0::Float64,
-    theta_inf::Float64,
+    theta_spike0::Float64,
     i_asc1_0::Float64,
     i_asc2_0::Float64,
-    v_rest::Float64,
-    v_reset::Float64,
-    tau_m::Float64,
-    tau_theta::Float64,
-    tau_asc1::Float64,
-    tau_asc2::Float64,
-    a_theta::Float64,
-    delta_theta::Float64,
-    r_asc1::Float64,
-    r_asc2::Float64,
+    theta_voltage0::Float64,
+    refractory_remaining0::Float64,
+    e_l::Float64,
+    capacitance::Float64,
     resistance::Float64,
+    theta_inf::Float64,
+    b_spike::Float64,
+    b_voltage::Float64,
+    a_voltage::Float64,
+    k_asc1::Float64,
+    k_asc2::Float64,
+    f_v::Float64,
+    delta_v::Float64,
+    delta_theta_spike::Float64,
+    f_asc1::Float64,
+    f_asc2::Float64,
+    delta_i_asc1::Float64,
+    delta_i_asc2::Float64,
+    refractory_period::Float64,
     dt::Float64,
     n_steps::Int,
     current::Float64,
 )
+    values = (
+        v0, theta_spike0, i_asc1_0, i_asc2_0, theta_voltage0,
+        refractory_remaining0, e_l, capacitance, resistance, theta_inf,
+        b_spike, b_voltage, a_voltage, k_asc1, k_asc2, f_v, delta_v,
+        delta_theta_spike, f_asc1, f_asc2, delta_i_asc1, delta_i_asc2,
+        refractory_period, dt, current,
+    )
+    all(isfinite, values) || throw(ArgumentError("state, parameters and current must be finite"))
+    all(>(0.0), (capacitance, resistance, b_spike, b_voltage, k_asc1, k_asc2, dt)) ||
+        throw(ArgumentError("time constants, resistance, capacitance and dt must be positive"))
+    refractory_remaining0 >= 0.0 || throw(ArgumentError("refractory state must be non-negative"))
+    refractory_period >= 0.0 || throw(ArgumentError("refractory period must be non-negative"))
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
+
     trace = Vector{Float64}(undef, n_steps)
     v = v0
-    theta = theta0
-    a1 = i_asc1_0
-    a2 = i_asc2_0
-    half_dt = 0.5 * dt
-    deriv(vv, th, x1, x2) = (
-        (-(vv - v_rest) + resistance * current + x1 + x2) / tau_m,
-        (theta_inf - th + a_theta * (vv - v_rest)) / tau_theta,
-        -x1 / tau_asc1,
-        -x2 / tau_asc2,
-    )
-    spikes = 0
-    @inbounds for t in 1:n_steps
-        k1 = deriv(v, theta, a1, a2)
-        k2 = deriv(
-            v + half_dt * k1[1], theta + half_dt * k1[2],
-            a1 + half_dt * k1[3], a2 + half_dt * k1[4],
-        )
-        k3 = deriv(
-            v + half_dt * k2[1], theta + half_dt * k2[2],
-            a1 + half_dt * k2[3], a2 + half_dt * k2[4],
-        )
-        k4 = deriv(
-            v + dt * k3[1], theta + dt * k3[2],
-            a1 + dt * k3[3], a2 + dt * k3[4],
-        )
-        v = v + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
-        theta = theta + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
-        a1 = a1 + dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
-        a2 = a2 + dt * (k1[4] + 2.0 * k2[4] + 2.0 * k3[4] + k4[4]) / 6.0
-        if v >= theta
-            v = v_reset
-            theta += delta_theta
-            a1 += r_asc1
-            a2 += r_asc2
-            spikes += 1
+    theta_spike = theta_spike0
+    i_asc1 = i_asc1_0
+    i_asc2 = i_asc2_0
+    theta_voltage = theta_voltage0
+    refractory_remaining = refractory_remaining0
+    events = 0
+    membrane_rate = 1.0 / (resistance * capacitance)
+    membrane_decay = decay(membrane_rate, dt)
+    spike_decay = decay(b_spike, dt)
+    voltage_decay = decay(b_voltage, dt)
+    asc1_decay = decay(k_asc1, dt)
+    asc2_decay = decay(k_asc2, dt)
+    voltage_convolution = exponential_convolution(b_voltage, membrane_rate, dt)
+
+    for index in 1:n_steps
+        if refractory_remaining > 0.0
+            refractory_remaining = max(0.0, refractory_remaining - dt)
+            trace[index] = v
+            continue
         end
-        trace[t] = v
+        total_current = current + i_asc1 + i_asc2
+        equilibrium_offset = resistance * total_current
+        voltage_offset = v - e_l
+        next_offset = equilibrium_offset + (voltage_offset - equilibrium_offset) * membrane_decay
+        v = e_l + next_offset
+        theta_spike *= spike_decay
+        i_asc1 *= asc1_decay
+        i_asc2 *= asc2_decay
+        threshold_forcing = equilibrium_offset * (1.0 - voltage_decay) / b_voltage +
+            (voltage_offset - equilibrium_offset) * voltage_convolution
+        theta_voltage = theta_voltage * voltage_decay + a_voltage * threshold_forcing
+        all(isfinite, (v, theta_spike, i_asc1, i_asc2, theta_voltage)) ||
+            throw(OverflowError("GLIF5 candidate is non-finite"))
+        if v > theta_inf + theta_spike + theta_voltage
+            v = e_l + f_v * (v - e_l) - delta_v
+            theta_spike += delta_theta_spike
+            i_asc1 = f_asc1 * i_asc1 + delta_i_asc1
+            i_asc2 = f_asc2 * i_asc2 + delta_i_asc2
+            refractory_remaining = refractory_period
+            events += 1
+        end
+        all(isfinite, (v, theta_spike, i_asc1, i_asc2, theta_voltage)) ||
+            throw(OverflowError("GLIF5 reset is non-finite"))
+        trace[index] = v
     end
-    return (trace = trace, spikes = spikes, vf = v, theta_f = theta, a1_f = a1, a2_f = a2)
+    return (
+        trace = trace,
+        events = events,
+        vf = v,
+        theta_spike_f = theta_spike,
+        i_asc1_f = i_asc1,
+        i_asc2_f = i_asc2,
+        theta_voltage_f = theta_voltage,
+        refractory_f = refractory_remaining,
+    )
 end
 
-end # module GlifAccel
+end # module GLIF5Accel

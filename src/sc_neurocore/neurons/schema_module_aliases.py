@@ -49,6 +49,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "exp_if": "ExpIFNeuron",
     "fitzhugh_nagumo": "FitzHughNagumoNeuron",
     "glif": "GLIFNeuron",
+    "sc_four_state_glif": "SCFourStateGLIFNeuron",
     "hindmarsh_rose": "HindmarshRoseNeuron",
     "hodgkin_huxley": "HodgkinHuxleyNeuron",
     "iqif": "IntegerQIFNeuron",

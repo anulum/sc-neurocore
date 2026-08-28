@@ -1,0 +1,19 @@
+{
+  "schema_version": "sc-neurocore.yosys-synthesis.v1",
+  "date": "2026-08-28",
+  "tool": "Yosys 0.33",
+  "top": "sc_four_state_glif",
+  "source": "hdl/formal/catalogue/sc_four_state_glif.v",
+  "target": "synth_xilinx default 7-series mapping",
+  "command": "read_verilog -sv hdl/formal/catalogue/sc_four_state_glif.v; synth_xilinx -top sc_four_state_glif -flatten; stat",
+  "result": "pass",
+  "problems": 0,
+  "resources": {
+    "estimated_logic_cells": 24614,
+    "luts": 32474,
+    "flip_flops": 65,
+    "dsp48e1": 8,
+    "bram": 0
+  },
+  "claim_boundary": "Coarse synthesis evidence only; no timing, PPA, board, device, or silicon claim."
+}

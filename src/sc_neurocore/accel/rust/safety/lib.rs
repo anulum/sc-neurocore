@@ -10,6 +10,7 @@
 // blanket `Default` impls would create 359 public contracts absent upstream.
 #![allow(clippy::new_without_default)]
 
+pub mod _jax_compat;
 pub mod accountant;
 pub mod adaptive;
 pub mod adaptive_engine;
@@ -362,6 +363,7 @@ pub mod sc_conv_layer;
 pub mod sc_decoupled_adaptation_ion_mass;
 pub mod sc_dense_layer;
 pub mod sc_doctor;
+pub mod sc_four_state_glif;
 pub mod sc_izhikevich;
 pub mod sc_learning_layer;
 pub mod sc_nas_engine;

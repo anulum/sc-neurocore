@@ -1,5 +1,5 @@
-# SymbiYosys job for catalogue model sc_glif
-# Dual-axis perfect model formal (BMC)
+# SymbiYosys job for the Teeter 2018 GLIF5 default-profile RTL
+# Bounded reset, refractory and event-reset safety; not equation equivalence.
 
 [options]
 mode bmc

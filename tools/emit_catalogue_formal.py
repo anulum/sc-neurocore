@@ -55,7 +55,6 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "ExpIFNeuron": "exp_if",
     "FitzHughNagumoNeuron": "fitzhugh_nagumo",
     "FitzHughRinzelNeuron": "fitzhugh_rinzel",
-    "GLIFNeuron": "glif",
     "HindmarshRoseNeuron": "hindmarsh_rose",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
@@ -87,6 +86,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 # Count-neutral SC identities with dedicated generated formal jobs. They are
 # emitted alongside, but not counted as, source-literature S5 models.
 RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
+    "SCFourStateGLIFNeuron": "sc_four_state_glif",
     "SCUpwardCrossingRulkovMapNeuron": "sc_upward_crossing_rulkov_map",
 }
 
@@ -102,6 +102,7 @@ CURATED_CLASS_TO_MODULE: dict[str, str] = {
     "BrunelWangNeuron": "sc_brunel_wang",
     "CompteWMNeuron": "sc_compte_wm",
     "EnergyLIFNeuron": "energy_lif",
+    "GLIFNeuron": "sc_glif",
     "MATNeuron": "sc_mat",
     "McKeanNeuron": "mckean",
     "NagumoSatoMapNeuron": "sc_nagumo_sato_map",
@@ -124,6 +125,7 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
         "sc_brunel_wang",
         "sc_compte_wm",
         "sc_compte_wm_ring16",
+        "sc_glif",
         "sc_mat",
         "sc_nagumo_sato_map",
         "sc_nmda_autapse",
@@ -170,6 +172,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "poisson": 4,
     "rulkov_map": 4,
     "sc_upward_crossing_rulkov_map": 4,
+    "sc_four_state_glif": 6,
     "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
@@ -280,6 +283,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "resonate_fire": (64, 32),
     "rulkov_map": (32, 16),
     "sc_upward_crossing_rulkov_map": (32, 16),
+    "sc_four_state_glif": (32, 16),
     "sigmoid_rate": (64, 32),
     "threshold_linear_rate": (32, 16),
     "wilson_cowan": (64, 32),
@@ -301,6 +305,7 @@ FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
 # diacritics.  Pin an ASCII HDL identifier where sanitising the display name
 # would otherwise make a faithful schema impossible to commit as RTL.
 MODULE_NAME_BY_SCHEMA: dict[str, str] = {
+    "sc_four_state_glif": "sc_four_state_glif",
     "sc_upward_crossing_rulkov_map": "sc_upward_crossing_rulkov_map",
     "sc_resetting_wilson_hr": "sc_resetting_wilson_hr",
     "wang_buzsaki": "sc_wang_buzsaki",

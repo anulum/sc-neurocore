@@ -64,6 +64,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::MihalasNiebur(MihalasNieburNeuron::new()))
         }
         "GLIF" | "GLIFNeuron" => Ok(NeuronVariant::GLIF(GLIFNeuron::new())),
+        "SCFourStateGLIF" | "SCFourStateGLIFNeuron" => {
+            Ok(NeuronVariant::SCFourStateGLIF(SCFourStateGLIFNeuron::new()))
+        }
         "GIFPopulation" | "GIFPopulationNeuron" => {
             Ok(NeuronVariant::GIFPopulation(GIFPopulationNeuron::new(42)))
         }

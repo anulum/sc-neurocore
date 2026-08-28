@@ -122,6 +122,7 @@ try:
         PrescottNeuron,
         MihalasNieburNeuron,
         GLIFNeuron,
+        SCFourStateGLIFNeuron,
         GIFPopulationNeuron,
         AvRonCardiacNeuron,
         DurstewitzDopamineNeuron,
@@ -320,6 +321,7 @@ _NEURON_MODELS = [
     "PrescottNeuron",
     "MihalasNieburNeuron",
     "GLIFNeuron",
+    "SCFourStateGLIFNeuron",
     "GIFPopulationNeuron",
     "AvRonCardiacNeuron",
     "DurstewitzDopamineNeuron",
@@ -765,9 +767,10 @@ except ImportError:
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_glif_simulate,
+        py_sc_four_state_glif_simulate,
     )
 
-    __all__ += ["py_glif_simulate"]
+    __all__ += ["py_glif_simulate", "py_sc_four_state_glif_simulate"]
     _glif_rust_available = True
 except ImportError:
     _glif_rust_available = False
