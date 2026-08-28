@@ -6,13 +6,14 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Wilson HR Neuron Model
 
-//! Wilson HR polynomial cortical neuron dynamics.
+//! Wilson HR continuous polynomial cortical-neuron dynamics.
 
 /// Wilson HR — polynomial cortical neuron. Wilson 1999.
 #[derive(Clone, Debug)]
 pub struct WilsonHRNeuron {
     pub v: f64,
     pub r: f64,
+    pub capacitance: f64,
     pub tau_r: f64,
     pub v_peak: f64,
     pub dt: f64,
@@ -22,15 +23,18 @@ impl WilsonHRNeuron {
     pub fn new() -> Self {
         Self {
             v: -0.7,
-            r: 0.1,
+            r: 0.085,
+            capacitance: 0.8,
             tau_r: 1.9,
-            v_peak: 0.4,
+            v_peak: 0.0,
             dt: 0.05,
         }
     }
     fn valid_numeric_contract(&self) -> bool {
         self.v.is_finite()
             && self.r.is_finite()
+            && self.capacitance.is_finite()
+            && self.capacitance > 0.0
             && self.tau_r.is_finite()
             && self.tau_r > 0.0
             && self.v_peak.is_finite()
@@ -46,7 +50,7 @@ impl WilsonHRNeuron {
         }
         let poly = Self::poly(v);
         let syn = -26.0 * r * (v + 0.92);
-        let dv = poly + syn + current;
+        let dv = (poly + syn + current) / self.capacitance;
         let dr = (-r + 1.35 * v + 1.03) / self.tau_r;
         if poly.is_finite() && syn.is_finite() && dv.is_finite() && dr.is_finite() {
             Some((dv, dr))
@@ -70,42 +74,45 @@ impl WilsonHRNeuron {
             None
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.valid_numeric_contract() || !current.is_finite() {
-            return 0;
+            return None;
         }
-        let (next_v, next_r) = match self.rk4_candidate(current) {
-            Some(candidate) => candidate,
-            None => return 0,
-        };
+        let previous_v = self.v;
+        let (next_v, next_r) = self.rk4_candidate(current)?;
         self.v = next_v;
         self.r = next_r;
-        // Wilson 1999: hard reset on threshold (not crossing)
-        if self.v >= self.v_peak {
-            self.v = -0.7;
+        Some(if self.v >= self.v_peak && previous_v < self.v_peak {
             1
         } else {
             0
-        }
+        })
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
     /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
-    /// (already reset to `-0.7` on spiking steps) and the spike count. Reuses
-    /// `step`, so the trace is bit-identical to the per-step path and to the
-    /// Python reference (the right-hand side is exact polynomial arithmetic — no
-    /// transcendental functions). The final state is left in `self.v` / `self.r`.
+    /// and the sampled upward-crossing count. Invalid input returns an empty
+    /// trace and preserves the complete pre-batch state.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        self.try_simulate(n_steps, current).unwrap_or_default()
+    }
+    /// Run one failure-atomic batch, returning `None` on any invalid stage.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
-            trace.push(self.v);
+            let spiked = candidate.try_step(current)?;
+            trace.push(candidate.v);
             spikes += spiked as i64;
         }
-        (trace, spikes)
+        *self = candidate;
+        Some((trace, spikes))
     }
     pub fn reset(&mut self) {
         self.v = -0.7;
-        self.r = 0.1;
+        self.r = 0.085;
     }
 }
 impl Default for WilsonHRNeuron {
@@ -129,11 +136,11 @@ mod tests {
     fn simulate_matches_repeated_step() {
         let mut simulated = WilsonHRNeuron::new();
         let mut repeated = WilsonHRNeuron::new();
-        let (trace, spikes) = simulated.simulate(2_000, 10.0);
+        let (trace, spikes) = simulated.simulate(2_000, 0.1);
         let mut expected_trace = Vec::with_capacity(2_000);
         let mut expected_spikes = 0_i64;
         for _ in 0..2_000 {
-            if repeated.step(10.0) == 1 {
+            if repeated.step(0.1) == 1 {
                 expected_spikes += 1;
             }
             expected_trace.push(repeated.v);
@@ -145,7 +152,7 @@ mod tests {
     #[test]
     fn wilson_hr_fires() {
         let mut n = WilsonHRNeuron::new();
-        let t: i32 = (0..2000).map(|_| n.step(10.0)).sum();
+        let t: i32 = (0..2000).map(|_| n.step(0.1)).sum();
         assert!(t > 0);
     }
 
@@ -172,7 +179,7 @@ mod tests {
     fn wilson_hr_matches_rk4_candidate() {
         fn rhs(n: &WilsonHRNeuron, v: f64, r: f64, current: f64) -> (f64, f64) {
             (
-                WilsonHRNeuron::poly(v) - 26.0 * r * (v + 0.92) + current,
+                (WilsonHRNeuron::poly(v) - 26.0 * r * (v + 0.92) + current) / n.capacitance,
                 (-r + 1.35 * v + 1.03) / n.tau_r,
             )
         }
@@ -215,6 +222,17 @@ mod tests {
         let before = (n.v, n.r);
         assert_eq!(n.step(0.3), 0);
         assert_eq!((n.v, n.r), before);
+    }
+
+    #[test]
+    fn try_simulate_rejects_overflow_without_mutation() {
+        let mut neuron = WilsonHRNeuron {
+            v: 1.0e103,
+            ..Default::default()
+        };
+        let before = (neuron.v, neuron.r);
+        assert!(neuron.try_simulate(2, 0.1).is_none());
+        assert_eq!((neuron.v, neuron.r), before);
     }
 
     #[test]

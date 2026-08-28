@@ -185,6 +185,7 @@ _MODEL_NAMES = {
     "WendlingNeuron",
     "WilsonCowanUnit",
     "WilsonHRNeuron",
+    "SCResettingWilsonHRNeuron",
     "WongWangUnit",
     "YamadaNeuron",
 }

@@ -278,6 +278,14 @@
       "id": "terman-wang-five-runtime-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_wilson_hr_simulate.json",
+      "id": "wilson-hr-five-runtime-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_resetting_wilson_hr_simulate.json",
+      "id": "sc-resetting-wilson-hr-five-runtime-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "id": "wang-nmda-dual-identity-local-regression"
     },
@@ -304,7 +312,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 75,
+  "gate_count": 77,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

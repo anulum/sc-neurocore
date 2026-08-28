@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int wilson_hr_simulate_c(double v0, double r0, double tauR, double vPeak, double dt, int nSteps, double current, double* tracePtr);
+extern long long int wilson_hr_simulate_c(double v0, double r0, double capacitance, double tauR, double vPeak, double dt, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — dependency-free Compte safety kernel
 
-/// Independent fail-closed mirror of the source-bounded Compte cell.
+//! Independent fail-closed mirror of the source-bounded Compte cell.
 
 const V_MIN: f64 = -200.0;
 const V_MAX: f64 = 100.0;

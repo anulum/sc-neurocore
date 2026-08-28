@@ -43,6 +43,25 @@ def test_ci_builds_rk4_neuron_parity_backends() -> None:
     assert "mojo build --emit shared-lib --target-cpu x86-64-v3" in run_text
 
 
+def test_ci_builds_both_wilson_hr_runtime_identities() -> None:
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    build_step = next(
+        step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
+    )
+    run_text = build_step["run"]
+
+    for path in (
+        "src/sc_neurocore/accel/go/neurons/wilson_hr",
+        "src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr",
+        "src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo",
+        "src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr.mojo",
+    ):
+        assert path in run_text
+    assert "libwilsonhr.so" in run_text
+    assert "libsc_resetting_wilson_hr.so" in run_text
+
+
 def _tracked_files() -> set[str]:
     """Return repository-relative paths recorded in the Git index."""
     completed = subprocess.run(

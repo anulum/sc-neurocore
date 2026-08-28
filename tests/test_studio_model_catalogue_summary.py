@@ -123,11 +123,11 @@ def test_get_model_detail_serves_descriptor_parameters_and_dynamics() -> None:
 
 def test_model_detail_exposes_measured_golden_trace_digest_variants() -> None:
     """Studio clients can verify every typed platform-compatible trace digest."""
-    detail = get_model_detail("HodgkinHuxleyNeuron")
+    detail = get_model_detail("ChialvoMapNeuron")
     assert detail is not None
     reproducibility = cast(dict[str, object], detail["reproducibility"])
     assert reproducibility["golden_trace_sha256_variants"] == [
-        "4d626b852b03a1f029534b5f535af96f5f1b7b48da421d1ca482ae08eb71610c"
+        "e3fe85af7298f88f59be81d9d74a1ae6287387ffac31366ffcce89204c032725"
     ]
 
 

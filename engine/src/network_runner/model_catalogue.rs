@@ -51,6 +51,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "TermanWang",
         "GutkinErmentrout",
         "WilsonHR",
+        "SCResettingWilsonHR",
         "Akida",
         "StochasticLIF",
         "Chay",

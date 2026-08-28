@@ -155,11 +155,14 @@ transcendental through NumPy while the independent recurrence uses `math.tanh`,
 so the committed feature tolerance captures floating-point library differences;
 the spike count and first-spike step remain exact.
 The Wilson-HR entry independently advances its polynomial membrane and linear
-recovery coordinates with simultaneous classical RK4. It applies level
-`v >= 0.4` detection and hard-resets only `v` to `-0.7`, preserving the RK4
-candidate `r` state. The re-derivation reproduces both post-step state feature
-sets, the first spike at step 2, and the four-spike `I=10.0` protocol without
-calling the hand model or schema runner.
+recovery coordinates with source `C=0.8` and simultaneous classical RK4. It
+observes sampled upward `v=0` crossings without resetting the continuous state.
+The re-derivation reproduces both state feature sets, the first crossing at
+step 15, and all 46 crossings of the 5,000-step `I=0.1` protocol without
+calling the hand model or schema runner. The separately named
+`SCResettingWilsonHRNeuron` retains the former unit-capacitance, level-detected,
+hard-reset project recurrence under a project-only compatibility anchor rather
+than reusing the Wilson publication receipt.
 The Mihalas-Niebur entry re-derives the exact classical fourth-order Runge-Kutta
 recurrence for its four linear states (membrane, adaptive threshold, and two
 spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,

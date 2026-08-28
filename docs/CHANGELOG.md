@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wilson-HR dual-identity full-fidelity closure
+
+- Restored `WilsonHRNeuron` to Wilson's `C=0.8` continuous polynomial flow and
+  separated the repository's sampled event observation from the source
+  dynamics. The former unit-capacitance hard-reset recurrence remains intact as
+  count-neutral `SCResettingWilsonHRNeuron`, without publication attribution.
+- Completed both identities through Python, production and safety Rust, Julia,
+  Go, Mojo, PyO3, NetworkRunner, paired schemas, executable source-bound
+  benchmarks, Q16.16 co-simulation, Yosys synthesis, bounded formal safety, CI
+  backend construction, and native/public documentation. The existing source
+  catalogue count remains unchanged.
+
 ### Hindmarsh-Rose full-fidelity reclosure
 
 - Rebound Model 7 descriptor validation and co-simulation custody to collected

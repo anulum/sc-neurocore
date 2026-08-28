@@ -27,20 +27,51 @@ numbers without an isolated-core rerun.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import os as _os
 import platform
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import wilson_hr
 from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
 
 N_STEPS = 2_000_000
-CURRENT = 10.0  # suprathreshold spiking drive
+CURRENT = 0.1
 N_REPEATS = 5
+ROOT = Path(__file__).resolve().parents[1]
+SOURCES = (
+    "benchmarks/bench_wilson_hr_simulate.py",
+    "engine/src/bindings/wilson_hr.rs",
+    "engine/src/neurons/simple_spiking/wilson_hr.rs",
+    "src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go",
+    "src/sc_neurocore/accel/julia/neurons/wilson_hr.jl",
+    "src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo",
+    "src/sc_neurocore/accel/rust/safety/wilson_hr.rs",
+    "src/sc_neurocore/neurons/model_descriptors/WilsonHRNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/wilson_hr.json",
+    "src/sc_neurocore/neurons/model_schemas/wilson_hr.toml",
+    "src/sc_neurocore/neurons/models/wilson_hr.py",
+    "src/sc_neurocore/neurons/reference_trace_data/wilson_hr_driven_spiking_doi.json",
+)
+
+
+def _source_hashes() -> dict[str, object]:
+    """Return flat digests plus suffix aliases consumed by the evidence gate."""
+    hashes: dict[str, object] = {}
+    for relative in SOURCES:
+        digest = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+        hashes[relative] = digest
+        stem, suffix = relative.rsplit(".", 1)
+        aliases = hashes.setdefault(stem, {})
+        if not isinstance(aliases, dict):
+            raise RuntimeError(f"source-hash alias collision at {stem}")
+        aliases[suffix] = digest
+    return hashes
 
 
 def _probe_rust() -> tuple[bool, str]:
@@ -59,22 +90,21 @@ def _probe_go() -> tuple[bool, str]:
 
 
 def _probe_mojo() -> tuple[bool, str]:
-    if not _os.path.isfile(_os.path.expanduser("~/.pixi/bin/mojo")):
-        return False, "mojo binary not at ~/.pixi/bin/mojo"
     ok = wilson_hr._ensure_mojo_loaded()
     return (ok, "" if ok else "accel/mojo/neurons/libwilsonhr.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray]:
+def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64], int]:
     WilsonHRNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    events = 0
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
-        trace, _spikes = WilsonHRNeuron().simulate(N_STEPS, CURRENT, backend=backend)
+        trace, events = WilsonHRNeuron().simulate(N_STEPS, CURRENT, backend=backend)
         times_ms.append((time.perf_counter() - t0) * 1000.0)
     times_ms.sort()
-    return times_ms[len(times_ms) // 2], times_ms[0], trace
+    return times_ms[len(times_ms) // 2], times_ms[0], trace, events
 
 
 def main(argv: list[str]) -> int:
@@ -83,7 +113,7 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     print("# Wilson 1999 polynomial cortical N-step RK4 benchmark")
-    print(f"# Workload: {N_STEPS:,} steps, suprathreshold regime, current={CURRENT}")
+    print(f"# Workload: {N_STEPS:,} steps, continuous periodic regime, current={CURRENT}")
     print(f"# Repeats per backend: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
@@ -103,46 +133,53 @@ def main(argv: list[str]) -> int:
     for name, (avail, reason) in backends.items():
         print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
     print()
+    unavailable = {name: reason for name, (available, reason) in backends.items() if not available}
+    if unavailable:
+        print(f"Required backend unavailable; evidence was not written: {unavailable}")
+        return 2
 
-    reference: np.ndarray | None = None
+    reference: npt.NDArray[np.float64] | None = None
+    reference_events: int | None = None
     python_median: float | None = None
-    rows: list[dict[str, object]] = []
+    rows: dict[str, dict[str, float]] = {}
 
     print(f"{'backend':<8}  {'median ms':>12}  {'min ms':>12}  {'parity Δ':>12}  {'speedup':>9}")
     print(f"{'-' * 8}  {'-' * 12}  {'-' * 12}  {'-' * 12}  {'-' * 9}")
-    for name, (avail, reason) in backends.items():
-        if not avail:
-            print(f"{name:<8}  {'(skip)':>12}  {'(skip)':>12}  {'-':>12}  {'-':>9}")
-            rows.append({"backend": name, "skipped": True, "unavailable_reason": reason})
-            continue
-        median_ms, min_ms, trace = _run(name)
+    for name in backends:
+        median_ms, min_ms, trace, events = _run(name)
         if name == "python":
             reference = trace
+            reference_events = events
             python_median = median_ms
             parity = 0.0
         else:
             assert reference is not None
             parity = float(np.max(np.abs(trace - reference)))
+            if events != reference_events:
+                raise RuntimeError(
+                    f"Wilson-HR {name} event count {events} != Python {reference_events}"
+                )
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")
-        rows.append(
-            {
-                "backend": name,
-                "median_ms": median_ms,
-                "min_ms": min_ms,
-                "parity_max_abs_diff": parity,
-                "speedup_vs_python": speedup,
-            }
-        )
+        rows[name] = {
+            "median_ms": median_ms,
+            "min_ms": min_ms,
+            "parity_max_abs_diff": parity,
+            "event_count": events,
+            "speedup_vs_python": speedup,
+        }
 
     print()
-    print("# Note: rust/julia/go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo's release build contracts the RK4 multiply-adds to FMAs; the per-spike")
-    print("# hard reset re-anchors the trajectory and the 2D autonomous flow cannot be")
-    print("# chaotic, so the single-ULP difference does not accumulate and spikes match.")
+    print("# Note: Rust/Julia/Go reproduce the source trajectory bit-for-bit.")
+    print("# Mojo is measured on the complete continuous no-reset trajectory.")
+    print("# Focused parity tests independently require exact sampled event counts.")
 
     report = {
-        "benchmark": "wilson_hr_simulate",
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "benchmark": "wilson_hr_simulate_rk4",
+        "model": "WilsonHRNeuron",
+        "evidence_class": "local_regression_non_isolated",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "workload": {"n_steps": N_STEPS, "current": CURRENT, "repeats": N_REPEATS},
         "environment": {
             "python": platform.python_version(),
@@ -150,7 +187,10 @@ def main(argv: list[str]) -> int:
             "platform": platform.platform(),
             "isolation": "non-isolated (loaded workstation)",
         },
-        "results": rows,
+        "backends": rows,
+        "source_hashes": _source_hashes(),
+        "production_speed_claim": False,
+        "hardware_measurement_claimed": False,
     }
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)

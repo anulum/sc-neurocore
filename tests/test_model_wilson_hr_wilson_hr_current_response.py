@@ -1,47 +1,47 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestWilsonHRCurrentResponse from former test_model_wilson_hr.py
+# SC-NeuroCore — Wilson-HR current-response behaviour
 
-"""Focused suite: TestWilsonHRCurrentResponse from former test_model_wilson_hr.py."""
+"""Verify Wilson-HR firing regimes across physiologically useful drive levels."""
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *  # noqa: F403
+from tests.model_wilson_hr_support import *
 
 
 class TestWilsonHRCurrentResponse:
-    def test_low_current_regime_is_subthreshold(self):
-        for current in [0.0, 0.3, 1.0]:
+    def test_low_current_regime_is_subthreshold(self) -> None:
+        for current in [0.0, 0.01, 0.03]:
             n = WilsonHRNeuron()
             assert len(_run(n, current=current, steps=5_000)) == 0
 
-    def test_moderate_current_regime_stays_finite(self):
-        for current in [0.6, 0.8, 1.0]:
+    def test_moderate_current_regime_stays_finite(self) -> None:
+        for current in [0.07, 0.1, 0.14]:
             n = WilsonHRNeuron()
             for _ in range(5_000):
                 n.step(current)
             assert np.isfinite(n.v) and np.isfinite(n.r)
 
-    def test_drive_evokes_transient_spiking(self):
+    def test_drive_evokes_repetitive_spiking(self) -> None:
         n = WilsonHRNeuron()
-        spikes = _run(n, current=2.0, steps=5_000)
-        assert len(spikes) >= 1
+        spikes = _run(n, current=0.075, steps=5_000)
+        assert len(spikes) >= 40
 
-    def test_high_drive_produces_more_transient_spikes_than_threshold_drive(self):
+    def test_high_drive_produces_more_spikes_than_threshold_drive(self) -> None:
         n_low = WilsonHRNeuron()
         n = WilsonHRNeuron()
-        low_spikes = _run(n_low, current=2.0, steps=5_000)
-        high_spikes = _run(n, current=10.0, steps=5_000)
+        low_spikes = _run(n_low, current=0.075, steps=5_000)
+        high_spikes = _run(n, current=0.14, steps=5_000)
         assert len(high_spikes) > len(low_spikes)
 
-    def test_fi_5_point_sweep(self):
+    def test_fi_5_point_sweep(self) -> None:
         rates = {}
-        for current in [0.0, 0.3, 0.6, 2.0, 10.0]:
+        for current in [0.0, 0.03, 0.07, 0.1, 0.14]:
             n = WilsonHRNeuron()
             rates[current] = len(_run(n, current=current, steps=5_000))
-        assert rates[0.0] == rates[0.3] == rates[0.6] == 0
-        assert rates[10.0] > rates[2.0] > rates[0.6]
+        assert rates[0.0] == rates[0.03] == 0
+        assert rates[0.14] > rates[0.1] > rates[0.07] > rates[0.03]

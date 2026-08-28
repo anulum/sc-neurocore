@@ -186,8 +186,8 @@ _RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/lib.rs"),
 )
 _DOC_TOKENS = (
-    "176 public Python registry names",
-    "159 same-name Rust constructors",
+    "177 public Python registry names",
+    "160 same-name Rust constructors",
     "10 Rust-prefixed or core-only constructors",
     "7 Python-only registry names",
     "Python-only boundary rationale",
@@ -330,8 +330,8 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert model_names >= _STOCHASTIC
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
-    assert len(model_names) == 176
-    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 159
+    assert len(model_names) == 177
+    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 160
 
 
 def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:

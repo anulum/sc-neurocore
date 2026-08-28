@@ -12,7 +12,7 @@ import importlib as _importlib
 import math
 import os as _os
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Optional
+from typing import Callable, ClassVar, Optional, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -32,7 +32,7 @@ _RustSimulate = Callable[..., "tuple[list[float], int, float, float]"]
 
 def _load_rust_simulate() -> _RustSimulate:
     engine = _importlib.import_module("sc_neurocore_engine")
-    return engine.py_wilson_hr_simulate  # type: ignore[no-any-return]
+    return cast(_RustSimulate, engine.py_wilson_hr_simulate)
 
 
 try:
@@ -89,7 +89,7 @@ def _ensure_go_loaded() -> bool:
     fn = getattr(lib, "wilson_hr_simulate_c", None)
     if fn is None:
         return False
-    fn.argtypes = [ctypes.c_double] * 5 + [
+    fn.argtypes = [ctypes.c_double] * 6 + [
         ctypes.c_int,
         ctypes.c_double,
         ctypes.POINTER(ctypes.c_double),
@@ -116,7 +116,7 @@ def _ensure_mojo_loaded() -> bool:
     fn = getattr(lib, "wilson_hr_simulate_c", None)
     if fn is None:
         return False
-    fn.argtypes = [ctypes.c_double] * 5 + [ctypes.c_int64, ctypes.c_double, ctypes.c_int64]
+    fn.argtypes = [ctypes.c_double] * 6 + [ctypes.c_int64, ctypes.c_double, ctypes.c_int64]
     fn.restype = ctypes.c_int64
     _mojo_lib = lib
     _HAS_MOJO = True
@@ -125,26 +125,29 @@ def _ensure_mojo_loaded() -> bool:
 
 @dataclass
 class WilsonHRNeuron:
-    """Wilson 1999 polynomial cortical model.
+    """Wilson's 1999 continuous polynomial cortical-neuron model.
 
-    dV/dt = -(17.81 + 47.71*V + 32.63*V^2)*(V - 0.55) - 26*R*(V + 0.92) + I
+    C*dV/dt = -(17.81 + 47.71*V + 32.63*V^2)*(V - 0.55) - 26*R*(V + 0.92) + I
     dR/dt = (-R + 1.35*V + 1.03) / tau_R
 
     The maintained production path advances the coupled (V, R) state with
-    candidate-first RK4 and commits only finite candidates. Spike detection is
-    a threshold event followed by Wilson-HR hard voltage reset.
+    candidate-first RK4 and commits only finite candidates. Events are sampled
+    upward crossings of ``v_peak``; the source flow is continuous and never
+    resets either state variable.
     """
 
     _FINITE_FIELDS: ClassVar[tuple[str, ...]] = ("v", "r", "v_peak")
-    _POSITIVE_FIELDS: ClassVar[tuple[str, ...]] = ("tau_r", "dt")
+    _POSITIVE_FIELDS: ClassVar[tuple[str, ...]] = ("capacitance", "tau_r", "dt")
 
     v: float = -0.7
-    r: float = 0.1
+    r: float = 0.085
+    capacitance: float = 0.8
     tau_r: float = 1.9
-    v_peak: float = 0.4
+    v_peak: float = 0.0
     dt: float = 0.05
 
     def __post_init__(self) -> None:
+        validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -152,7 +155,7 @@ class WilsonHRNeuron:
             value = float(value)
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
-            setattr(self, name, value)
+            validated[name] = value
         for name in self._POSITIVE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -160,6 +163,8 @@ class WilsonHRNeuron:
             value = float(value)
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
+            validated[name] = value
+        for name, value in validated.items():
             setattr(self, name, value)
 
     @staticmethod
@@ -193,7 +198,7 @@ class WilsonHRNeuron:
             raise FloatingPointError("Wilson-HR runtime state and current must be finite")
         poly = self._poly(v)
         syn = -26.0 * r * (v + 0.92)
-        dv = poly + syn + current
+        dv = (poly + syn + current) / self.capacitance
         dr = (-r + 1.35 * v + 1.03) / self.tau_r
         if not math.isfinite(syn) or not math.isfinite(dv) or not math.isfinite(dr):
             raise FloatingPointError("Wilson-HR derivative must be finite")
@@ -220,26 +225,24 @@ class WilsonHRNeuron:
 
     def step(self, current: float) -> int:
         current = self._validate_runtime_contract(current)
+        v_previous = self.v
         next_v, next_r = self._rk4_candidate(current)
         self.v = next_v
         self.r = next_r
-        if self.v >= self.v_peak:
-            self.v = -0.7
-            return 1
-        return 0
+        return int(self.v >= self.v_peak and v_previous < self.v_peak)
 
     def simulate(
         self, n_steps: int, current: float = 0.0, backend: str = "auto"
     ) -> tuple[npt.NDArray[np.float64], int]:
         """Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
 
-        ``trace[t]`` is the membrane variable ``v`` after step ``t`` (already
-        hard-reset to ``-0.7`` on spiking steps); ``spikes`` counts the steps whose
-        post-RK4 ``v`` reached ``v_peak``. The instance state ``(v, r)`` is advanced
-        to the final step. The Rust/Julia/Go backends reproduce the pure-NumPy
-        reference bit-for-bit; the FMA-fusing Mojo backend stays within a measured
-        per-step ULP band with identical spike counts.
+        ``trace[t]`` is the continuous membrane variable ``v`` after step ``t``;
+        ``spikes`` counts sampled upward crossings of ``v_peak``. The instance
+        state ``(v, r)`` is advanced only after the complete backend result passes
+        shape, event-count, and finite-value validation.
         """
+        if isinstance(n_steps, bool) or not isinstance(n_steps, int):
+            raise TypeError("n_steps must be an integer")
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
         if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
@@ -275,31 +278,67 @@ class WilsonHRNeuron:
             trace, spikes, vf, rf = self._simulate_mojo(n_steps, current)
         else:
             trace, spikes, vf, rf = self._simulate_python(n_steps, current)
+        trace, spikes, vf, rf = self._validate_batch_result(
+            backend=backend,
+            n_steps=n_steps,
+            trace=trace,
+            spikes=spikes,
+            final_state=(vf, rf),
+        )
         self.v, self.r = vf, rf
         return trace, spikes
+
+    @staticmethod
+    def _validate_batch_result(
+        *,
+        backend: str,
+        n_steps: int,
+        trace: npt.NDArray[np.float64],
+        spikes: int,
+        final_state: tuple[float, float],
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        """Validate a complete backend result before committing instance state."""
+        values = np.asarray(trace, dtype=np.float64)
+        if (
+            spikes < 0
+            or spikes > n_steps
+            or values.shape != (n_steps,)
+            or not np.all(np.isfinite(values))
+            or not all(math.isfinite(value) for value in final_state)
+        ):
+            raise FloatingPointError(f"Wilson-HR {backend} batch produced an invalid candidate")
+        return values, int(spikes), final_state[0], final_state[1]
 
     def _simulate_python(
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         trace = np.empty(n_steps, dtype=np.float64)
         v, r = self.v, self.r
-        tau_r, v_peak, dt = self.tau_r, self.v_peak, self.dt
+        capacitance, tau_r, v_peak, dt = self.capacitance, self.tau_r, self.v_peak, self.dt
 
         def deriv(vv: float, rr: float) -> tuple[float, float]:
             poly = -(17.81 + 47.71 * vv + 32.63 * vv * vv) * (vv - 0.55)
             syn = -26.0 * rr * (vv + 0.92)
-            return poly + syn + current, (-rr + 1.35 * vv + 1.03) / tau_r
+            candidate = (poly + syn + current) / capacitance, (-rr + 1.35 * vv + 1.03) / tau_r
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Wilson-HR Python batch derivative became non-finite")
+            return candidate
 
         spikes = 0
         for t in range(n_steps):
+            v_previous = v
             dv1, dr1 = deriv(v, r)
             dv2, dr2 = deriv(v + 0.5 * dt * dv1, r + 0.5 * dt * dr1)
             dv3, dr3 = deriv(v + 0.5 * dt * dv2, r + 0.5 * dt * dr2)
             dv4, dr4 = deriv(v + dt * dv3, r + dt * dr3)
-            v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
-            r = r + dt * (dr1 + 2.0 * dr2 + 2.0 * dr3 + dr4) / 6.0
-            if v >= v_peak:
-                v = -0.7
+            candidate = (
+                v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0,
+                r + dt * (dr1 + 2.0 * dr2 + 2.0 * dr3 + dr4) / 6.0,
+            )
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Wilson-HR Python batch candidate became non-finite")
+            v, r = candidate
+            if v >= v_peak and v_previous < v_peak:
                 spikes += 1
             trace[t] = v
         return trace, spikes, v, r
@@ -309,7 +348,14 @@ class WilsonHRNeuron:
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _rust_simulate is not None
         trace_list, spikes, vf, rf = _rust_simulate(
-            self.v, self.r, self.tau_r, self.v_peak, self.dt, n_steps, current
+            self.v,
+            self.r,
+            self.capacitance,
+            self.tau_r,
+            self.v_peak,
+            self.dt,
+            n_steps,
+            current,
         )
         return np.asarray(trace_list, dtype=np.float64), int(spikes), float(vf), float(rf)
 
@@ -317,15 +363,19 @@ class WilsonHRNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _julia_module is not None
-        result = _julia_module.simulate_trace(
-            float(self.v),
-            float(self.r),
-            float(self.tau_r),
-            float(self.v_peak),
-            float(self.dt),
-            int(n_steps),
-            float(current),
-        )
+        try:
+            result = _julia_module.simulate_trace(
+                float(self.v),
+                float(self.r),
+                float(self.capacitance),
+                float(self.tau_r),
+                float(self.v_peak),
+                float(self.dt),
+                int(n_steps),
+                float(current),
+            )
+        except Exception as exc:
+            raise FloatingPointError("Wilson-HR Julia batch rejected an invalid candidate") from exc
         trace = np.asarray(result.trace, dtype=np.float64)
         return trace, int(result.spikes), float(result.vf), float(result.rf)
 
@@ -339,6 +389,7 @@ class WilsonHRNeuron:
         spikes = _go_lib.wilson_hr_simulate_c(
             ctypes.c_double(self.v),
             ctypes.c_double(self.r),
+            ctypes.c_double(self.capacitance),
             ctypes.c_double(self.tau_r),
             ctypes.c_double(self.v_peak),
             ctypes.c_double(self.dt),
@@ -358,6 +409,7 @@ class WilsonHRNeuron:
         spikes = _mojo_lib.wilson_hr_simulate_c(
             float(self.v),
             float(self.r),
+            float(self.capacitance),
             float(self.tau_r),
             float(self.v_peak),
             float(self.dt),
@@ -371,4 +423,4 @@ class WilsonHRNeuron:
 
     def reset(self) -> None:
         self.v = -0.7
-        self.r = 0.1
+        self.r = 0.085

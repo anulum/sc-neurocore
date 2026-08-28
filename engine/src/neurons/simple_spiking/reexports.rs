@@ -26,6 +26,7 @@ pub use super::mckean::McKeanNeuron;
 pub use super::morris_lecar::MorrisLecarNeuron;
 pub use super::pernarowski::PernarowskiNeuron;
 pub use super::resonate_and_fire::ResonateAndFireNeuron;
+pub use super::sc_resetting_wilson_hr::SCResettingWilsonHRNeuron;
 pub use super::sc_stochastic_rate_adaptation::SCStochasticRateAdaptationNeuron;
 pub use super::sc_triangular_mckean::SCTriangularMcKeanNeuron;
 pub use super::sc_unit_capacitance_respiratory::SCUnitCapacitanceRespiratoryNeuron;

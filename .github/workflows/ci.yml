@@ -308,6 +308,17 @@ jobs:
           mojo build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libsc_triangular_mckean.so \
             src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo
+          ( cd src/sc_neurocore/accel/go/neurons/wilson_hr \
+              && go build -buildmode=c-shared -o libwilsonhr.so wilson_hr.go )
+          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            -o src/sc_neurocore/accel/mojo/neurons/libwilsonhr.so \
+            src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo
+          ( cd src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr \
+              && go build -buildmode=c-shared \
+                -o libsc_resetting_wilson_hr.so sc_resetting_wilson_hr.go )
+          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            -o src/sc_neurocore/accel/mojo/neurons/libsc_resetting_wilson_hr.so \
+            src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr.mojo
           ( cd src/sc_neurocore/accel/mojo/sc_compte_wm_network \
               && mojo build --emit shared-lib --target-cpu x86-64-v3 \
                 -o libsc_compte_wm_network.so sc_compte_wm_network.mojo )

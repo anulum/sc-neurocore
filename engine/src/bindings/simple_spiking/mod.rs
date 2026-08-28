@@ -27,6 +27,8 @@ mod morris_lecar;
 mod pernarowski;
 #[path = "../resonate_and_fire.rs"]
 mod resonate_and_fire;
+#[path = "../sc_resetting_wilson_hr.rs"]
+mod sc_resetting_wilson_hr;
 #[path = "../sc_triangular_mckean.rs"]
 mod sc_triangular_mckean;
 mod sc_unit_capacitance_respiratory;
@@ -49,6 +51,7 @@ pub use mckean::PyMcKeanNeuron;
 pub use morris_lecar::PyMorrisLecarNeuron;
 pub use pernarowski::PyPernarowskiNeuron;
 pub use resonate_and_fire::PyResonateAndFireNeuron;
+pub use sc_resetting_wilson_hr::PySCResettingWilsonHRNeuron;
 pub use sc_triangular_mckean::PySCTriangularMcKeanNeuron;
 pub use sc_unit_capacitance_respiratory::PySCUnitCapacitanceRespiratoryNeuron;
 pub use sherman_rinzel_keizer::PyShermanRinzelKeizerNeuron;
@@ -73,6 +76,7 @@ pub(crate) fn register_primary(module: &Bound<'_, PyModule>) -> PyResult<()> {
 pub(crate) fn register_conductance_models(module: &Bound<'_, PyModule>) -> PyResult<()> {
     gutkin_ermentrout::register(module)?;
     wilson_hr::register(module)?;
+    sc_resetting_wilson_hr::register(module)?;
     chay::register(module)?;
     chay_keizer::register(module)?;
     sherman_rinzel_keizer::register(module)?;

@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 191,
+    "model_documentation_pages": 192,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 616,
-    "python_model_classes": 174,
-    "python_model_source_modules": 170,
-    "rust_pyo3_model_wrappers": 201,
-    "test_files": 4749
+    "public_documentation_pages": 617,
+    "python_model_classes": 175,
+    "python_model_source_modules": 171,
+    "rust_pyo3_model_wrappers": 202,
+    "test_files": 4754
   },
   "documentation": {
     "public_pages": [
@@ -1227,6 +1227,7 @@
       "docs/api/models/sc_normalized_energy_lif.md",
       "docs/api/models/sc_resetting_mat.md",
       "docs/api/models/sc_resetting_psn.md",
+      "docs/api/models/sc_resetting_wilson_hr.md",
       "docs/api/models/sc_sigma_delta_accumulator.md",
       "docs/api/models/sc_stochastic_rate_adaptation.md",
       "docs/api/models/sc_three_state_phantom.md",
@@ -1763,6 +1764,7 @@
       "sc_normalized_energy_lif.md",
       "sc_resetting_mat.md",
       "sc_resetting_psn.md",
+      "sc_resetting_wilson_hr.md",
       "sc_sigma_delta_accumulator.md",
       "sc_stochastic_rate_adaptation.md",
       "sc_three_state_phantom.md",
@@ -2346,6 +2348,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_resetting_psn.py"
       },
       {
+        "name": "SCResettingWilsonHRNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py"
+      },
+      {
         "name": "SCSigmaDeltaAccumulatorNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py"
       },
@@ -2634,6 +2640,7 @@
       "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py",
       "src/sc_neurocore/neurons/models/sc_resetting_mat.py",
       "src/sc_neurocore/neurons/models/sc_resetting_psn.py",
+      "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py",
       "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py",
       "src/sc_neurocore/neurons/models/sc_six_state_thalamocortical.py",
       "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py",
@@ -2831,6 +2838,7 @@
       "SCNonResettingAdaptiveLIFNeuron",
       "SCNormalizedEnergyLIFNeuron",
       "SCResettingMATNeuron",
+      "SCResettingWilsonHRNeuron",
       "SCSigmaDeltaAccumulatorNeuron",
       "SCSixStateThalamocorticalNeuron",
       "SCStochasticRateAdaptationNeuron",
@@ -3731,6 +3739,7 @@
       "tests/test_bench_verilog_compiler.py",
       "tests/test_bench_wang_buzsaki.py",
       "tests/test_bench_wilson_cowan.py",
+      "tests/test_bench_wilson_hr.py",
       "tests/test_bench_wong_wang.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
@@ -4258,6 +4267,7 @@
       "tests/test_cosim_sc_non_resetting_adaptive_lif.py",
       "tests/test_cosim_sc_normalized_energy_lif.py",
       "tests/test_cosim_sc_resetting_mat.py",
+      "tests/test_cosim_sc_resetting_wilson_hr_q1616_precision.py",
       "tests/test_cosim_sc_sigma_delta_accumulator.py",
       "tests/test_cosim_sc_triangular_mckean.py",
       "tests/test_cosim_sc_wb_nmda_magnesium_block.py",
@@ -5902,6 +5912,7 @@
       "tests/test_model_sc_normalized_energy_lif_compatibility.py",
       "tests/test_model_sc_resetting_mat_compatibility.py",
       "tests/test_model_sc_resetting_psn.py",
+      "tests/test_model_sc_resetting_wilson_hr.py",
       "tests/test_model_sc_sigma_delta_accumulator_compatibility.py",
       "tests/test_model_sfa_sfa_adaptation.py",
       "tests/test_model_sfa_sfa_analysis.py",
@@ -6790,6 +6801,8 @@
       "tests/test_sc_quantum_compiler_two_qubit_gate.py",
       "tests/test_sc_resetting_mat_backend_dispatch.py",
       "tests/test_sc_resetting_mat_schema_parity.py",
+      "tests/test_sc_resetting_wilson_hr_backends.py",
+      "tests/test_sc_resetting_wilson_hr_engine_binding.py",
       "tests/test_sc_sigma_delta_accumulator_backend_dispatch.py",
       "tests/test_sc_sigma_delta_accumulator_schema_parity.py",
       "tests/test_sc_stochastic_rate_adaptation_analysis.py",

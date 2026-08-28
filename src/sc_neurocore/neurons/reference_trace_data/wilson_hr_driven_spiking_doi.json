@@ -9,7 +9,7 @@
     "dt": 0.05,
     "steps": 5000,
     "inputs": {
-      "I": 10.0
+      "I": 0.1
     },
     "state_variables": [
       "v",
@@ -19,20 +19,20 @@
   "provenance": {
     "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/wilson_hr.toml",
-    "equation": "Wilson-HR two-state polynomial cortical flow advanced with an independently re-derived four-stage classical RK4 step, level v>=0.4 spike detection, and hard voltage reset to -0.7 while preserving the candidate recovery state; the equations follow Wilson's 1999 cortical-neuron model.",
+    "equation": "Wilson 1999 Eq. 9.7 advanced with an independently re-derived four-stage classical RK4 step: C*dV/dt with C=0.8, tau_R=1.9 ms, continuous no-reset state, and an observational sampled upward crossing at v=0.",
     "citation": "doi:10.1006/jtbi.1999.1002"
   },
   "expected_features": {
-    "spike_count": 4.0,
-    "first_spike_step": 2.0,
-    "final.v": -0.11034506497386841,
-    "min.v": -0.7,
-    "max.v": 0.3965892041754222,
-    "mean.v": -0.10862874904749902,
-    "final.r": 0.8810341622852762,
-    "min.r": 0.10955554189639057,
-    "max.r": 0.8810341622852762,
-    "mean.r": 0.8782143302368045
+    "spike_count": 46.0,
+    "first_spike_step": 15.0,
+    "final.v": -0.7371617774253472,
+    "min.v": -0.8273399675084645,
+    "max.v": 0.35165592925536804,
+    "mean.v": -0.6059252879871367,
+    "final.r": 0.11331541674897956,
+    "min.r": 0.08512760875374265,
+    "max.r": 0.48842530378313037,
+    "mean.r": 0.21217044116536155
   },
   "tolerances": {
     "default": {

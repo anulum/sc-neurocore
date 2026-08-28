@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestWilsonHRPerformance from former test_model_wilson_hr.py
+# SC-NeuroCore — Wilson-HR focused performance guards
 
-"""Focused suite: TestWilsonHRPerformance from former test_model_wilson_hr.py."""
+"""Protect Wilson-HR isolated and public-network throughput floors."""
 
 from __future__ import annotations
 
-from tests.model_wilson_hr_support import *  # noqa: F403
+from tests.model_wilson_hr_support import *
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWilsonHRPerformance:
-    def test_isolation_throughput(self):
+    def test_isolation_throughput(self) -> None:
         n = WilsonHRNeuron()
         steps = 50_000
         t0 = time.perf_counter()
@@ -28,7 +28,7 @@ class TestWilsonHRPerformance:
             strict_minimum_per_second=10_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
         pop = Population(WilsonHRNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=0.3, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

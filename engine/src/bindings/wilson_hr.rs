@@ -9,10 +9,13 @@
 //! Python binding for the Wilson-HR polynomial cortical neuron.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use crate::neurons::WilsonHRNeuron;
+
+type PyWilsonHRBatch<'py> = (Bound<'py, PyArray1<f64>>, i64, f64, f64);
 
 py_neuron_default!("WilsonHRNeuron", PyWilsonHRNeuron, WilsonHRNeuron, state v, state r);
 
@@ -27,30 +30,35 @@ pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 ///
 /// Parity contract with
 /// `sc_neurocore.neurons.models.wilson_hr.WilsonHRNeuron.simulate`: for the same
-/// parameters and constant input the returned `v` trace (already hard-reset to
-/// `-0.7` on spiking steps), spike count, and final `(v, r)` state are
-/// bit-identical to the Python RK4 reference (the right-hand side is exact
-/// polynomial arithmetic — no transcendental functions).
+/// parameters and constant input the returned continuous `v` trace, sampled
+/// upward-crossing count, and final `(v, r)` state are bit-identical to the
+/// Python RK4 reference.
 #[pyfunction]
-#[pyo3(signature = (v0, r0, tau_r, v_peak, dt, n_steps, current))]
+#[pyo3(signature = (v0, r0, capacitance, tau_r, v_peak, dt, n_steps, current))]
 #[allow(clippy::too_many_arguments)]
 fn py_wilson_hr_simulate<'py>(
     py: Python<'py>,
     v0: f64,
     r0: f64,
+    capacitance: f64,
     tau_r: f64,
     v_peak: f64,
     dt: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+) -> PyResult<PyWilsonHRBatch<'py>> {
     let mut neuron = WilsonHRNeuron {
         v: v0,
         r: r0,
+        capacitance,
         tau_r,
         v_peak,
         dt,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.r)
+    let Some((trace, spikes)) = neuron.try_simulate(n_steps, current) else {
+        return Err(PyFloatingPointError::new_err(
+            "Wilson-HR Rust batch rejected an invalid candidate",
+        ));
+    };
+    Ok((trace.into_pyarray(py), spikes, neuron.v, neuron.r))
 }

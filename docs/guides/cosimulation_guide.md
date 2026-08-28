@@ -168,8 +168,8 @@ therefore the robust crossing count. Over 8,000 steps the hand model, schema
 runner, and Q16.16 RTL agree exactly on the full silent/single/train set: zero
 crossings at `I=-1.0`, one at `I=0.0`, and three at `I=0.5`.
 
-The S5/H1 promotion also emits a Q8.8 formal-catalogue core and port-only
-harness. Its depth-4 SymbiYosys/Z3 job proves bounded reset-spike safety only;
+The S5/H2 promotion also emits a Q8.8 formal-catalogue core and port-only
+harness. Its depth-4 SymbiYosys/Z3 job proves bounded reset/output safety only;
 the three Q16.16 operating points remain the behavioural parity evidence.
 
 ### Rulkov map Q16.16 trajectory enrolment
@@ -406,17 +406,28 @@ the declared boundary remain the behavioural parity evidence.
 ### Wilson-HR Q16.16 enrolment
 
 The two-state `wilson_hr` schema mirrors the maintained polynomial cortical
-model: simultaneous classical RK4 over membrane `v` and recovery `r`, level
-`v >= 0.4` detection, and a hard `v = -0.7` reset that preserves the candidate
-recovery state. Five passes through eight 100-step current blocks produce 35
-spikes and resets while both schema formats reproduce every post-step hand-model
-state exactly. Over 5,000 constant-current steps the hand model, schema runner,
-and Q16.16 RTL agree exactly on the enrolled silent/single/train set: zero spikes
-at `I=0.0`, one at `I=2.0`, and four at `I=10.0`.
+model: source capacitance `C=0.8`, simultaneous classical RK4 over membrane `v`
+and recovery `r`, continuous state, and sampled upward `v=0` crossings without
+a reset. Over 5,000 constant-current steps the hand model, schema runner, and
+Q16.16 RTL agree exactly at the robust operating points: 0, 44, 46, 49, and 52
+crossings at `I=0`, `0.08`, `0.1`, `0.14`, and `0.2`. The nearby `I=0.07` and
+`I=0.075` points are explicit quantisation boundaries where binary64/schema
+counts of 42/43 become 43/44 in Q16.16.
 
 The S5/H1 promotion also emits a Q8.8 formal-catalogue core and port-only
 harness. Its depth-4 SymbiYosys/Z3 job proves bounded reset-spike safety only;
-the three Q16.16 operating points remain the behavioural parity evidence.
+the Q16.16 operating points remain the behavioural parity evidence.
+
+### Retained SC resetting Wilson-HR enrolment
+
+The separately named `sc_resetting_wilson_hr` schema preserves the former
+project recurrence: unit capacitance, `r=0.1`, level `v>=0.4` detection, and a
+hard `v=-0.7` reset that preserves the simultaneous RK4 recovery candidate. It
+does not attribute those specialisations to Wilson's source model. Hand,
+TOML/JSON schema, and generated Q16.16 RTL agree on 0, 1, and 4 events at
+`I=0`, `I=2`, and `I=10` over 5,000 steps. The committed Q8.8 core passes
+Yosys synthesis and a depth-4 public-port safety job; this retained SC identity
+does not increment the literature-model count.
 
 ## Adding a New Model to Co-Simulation
 

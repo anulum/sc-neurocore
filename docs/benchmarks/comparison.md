@@ -71,10 +71,10 @@ SC-NeuroCore-specific.
 
 | Category | SC-NeuroCore | snnTorch | Norse | Brian2 | Lava |
 |----------|:---:|:---:|:---:|:---:|:---:|
-| Python models | **159 lazy-loaded classes / 154 source modules** | 11 | 6 | Custom eq. | 3 |
-| Rust/compiled models | **187 Rust PyO3 wrappers / 163-model NetworkRunner** | — | — | C++ codegen | — |
+| Python models | **175 lazy-loaded classes / 171 source modules** | 11 | 6 | Custom eq. | 3 |
+| Rust/compiled models | **202 Rust PyO3 wrappers / 172-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **81 SymbiYosys proof jobs and 360 formal statements (249 assert, 79 assume, 32 cover)** | — | — | — | — |
+| Formal verification | **81 SymbiYosys proof jobs and 369 formal statements (249 assert, 88 assume, 32 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
 
 ## IQIF signed-integer polyglot batch loop

@@ -11,14 +11,20 @@ schema_version = 2
 name = "Wilson-HR"
 class_name = "WilsonHRNeuron"
 module = "wilson_hr"
-display_name = ""
-summary = "Wilson 1999 polynomial cortical model."
+display_name = "Wilson-HR continuous cortical neuron"
+summary = "Wilson 1999 continuous two-state polynomial cortical-neuron model."
 family = "Bursting"
 category = "bursting"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "continuous cortical action-potential dynamics",
+    "limit-cycle and firing-rate studies",
+    "cross-runtime and fixed-point reproducibility",
+]
+hardware_fit = [
+    "bounded signed fixed-point RK4 co-simulation",
+]
 behavior_tags = [
     "excitable",
     "phasic",
@@ -30,12 +36,23 @@ authors = [
 ]
 year = 1999
 doi = "10.1006/jtbi.1999.1002"
+paper_title = "Simplified dynamics of human and mammalian neocortical neurons"
+derivation_note = "Implements Eq. 9.7 as reproduced by Wilson's primary-author monograph: C=0.8, tau_R=1.9 ms, continuous limit-cycle spikes, and no threshold reset. Fixed-step RK4 and the sampled upward v=0 event are repository observation conventions."
 
 [state.v]
 init = -0.7
 
 [state.r]
-init = 0.1
+init = 0.085
+
+[parameters.capacitance]
+default = 0.8
+unit = "uF/cm^2"
+meaning = "source membrane capacitance C multiplying dV/dt"
+range = [
+    0.01,
+    10.0,
+]
 
 [parameters.tau_r]
 default = 1.9
@@ -47,9 +64,9 @@ range = [
 ]
 
 [parameters.v_peak]
-default = 0.4
+default = 0.0
 unit = "1"
-meaning = "normalised voltage level at which a spike is registered"
+meaning = "observational sampled upward-crossing level; not a source reset parameter"
 range = [
     -1.0,
     2.0,
@@ -60,7 +77,7 @@ dt = 0.05
 method = "rk4"
 
 [dynamics]
-v = "-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I"
+v = "(-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I) / capacitance"
 r = "(-r + 1.35 * v + 1.03) / tau_r"
 
 [backends.python]
@@ -84,23 +101,26 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "1ae3c36d9f71a6c62a060ca173126636d4ed5ed3a049651079cdf498bfde9177"
+reference_config = "{\"n_steps\":1000,\"current\":0.1,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "b7f7895493b16cf2be3919a0bf5ee9b47db8fbd3d8bd694790a4177a5461c028"
+golden_citation = "doi:10.1006/jtbi.1999.1002; continuous C=0.8 RK4 feature receipt"
 
 [documentation]
 slug = "models/wilson_hr"
-notes = ""
+notes = "Continuous source flow with no reset. The former unit-capacitance hard-reset recurrence is retained separately as SCResettingWilsonHRNeuron."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL Wilson-HR two-state RK4 polynomial cortical model"
-tolerance = "exact three-way spike-count parity at I=0.0, 2.0, and 10.0 over 5000 steps"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_wilson_hr_q1616_parity"
+operating_point = "source C=0.8 continuous two-state RK4 cortical model"
+tolerance = "source features to 1e-12; cross-runtime complete traces exact or enrolled ULP bound; sampled events exact"
+evidence = "tests/test_reference_wilson_hr.py; tests/test_wilson_hr_backends.py; tests/test_cosim_wilson_hr_q1616_precision.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_wilson_hr_q1616_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synthesis, timing, and equivalence programmes."
+cosim_evidence = "tests/test_cosim_wilson_hr_q1616_precision.py::TestQ1616Precision::test_wilson_hr_q1616_parity"
+synthesised = true
+synth_report = "tests/test_cosim_wilson_hr_q1616_precision.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Q16.16 co-simulation, Yosys coarse synthesis, and bounded Q8.8 formal safety cover the continuous source recurrence; timing, PPA, device evidence, and universal real-number equivalence remain open."

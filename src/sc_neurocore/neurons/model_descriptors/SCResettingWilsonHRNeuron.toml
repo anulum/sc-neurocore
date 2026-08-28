@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCResettingWilsonHRNeuron"
+class_name = "SCResettingWilsonHRNeuron"
+module = "sc_resetting_wilson_hr"
+display_name = "SC resetting Wilson-HR neuron"
+summary = "Historical unit-capacitance polynomial recurrence with a hard voltage reset."
+family = "Bursting"
+category = "bursting"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "historical SC-NeuroCore trace compatibility",
+    "hard-reset polynomial recurrence experiments",
+]
+hardware_fit = [
+    "bounded signed fixed-point RK4 co-simulation",
+]
+behavior_tags = [
+    "excitable",
+    "phasic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+paper_title = "SC resetting Wilson-HR project recurrence"
+derivation_note = "Project recurrence formerly carried under WilsonHRNeuron. Retained under an explicit SC identity after restoring Wilson's distinct C=0.8 continuous no-reset equations. No external paper attribution is claimed."
+
+[state.v]
+init = -0.7
+
+[state.r]
+init = 0.1
+
+[parameters.tau_r]
+default = 1.9
+unit = "ms"
+meaning = "recovery-variable time constant"
+range = [
+    0.1,
+    20.0,
+]
+
+[parameters.v_peak]
+default = 0.4
+unit = "1"
+meaning = "hard-reset event level"
+range = [
+    -1.0,
+    2.0,
+]
+
+[integration]
+dt = 0.05
+method = "rk4"
+
+[dynamics]
+v = "-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I"
+r = "(-r + 1.35 * v + 1.03) / tau_r"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "98ec5c69e93a62702b037c128167486bcd1050088db4240825d9ec009714f80f"
+golden_citation = "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_wilson_hr_project.json"
+
+[documentation]
+slug = "models/sc_resetting_wilson_hr"
+notes = "Project-defined model with no external publication attribution. It does not increment the literature-model fidelity count."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "1000-step historical compatibility anchor at I=2.0"
+tolerance = "exact Python/Rust/Julia/Go complete traces; Mojo <=2.5e-12; exact events; exact Q16.16 enrolled spike counts"
+evidence = "tests/test_reference_wilson_hr.py; tests/test_model_sc_resetting_wilson_hr.py; tests/test_sc_resetting_wilson_hr_backends.py; tests/test_cosim_sc_resetting_wilson_hr_q1616_precision.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_resetting_wilson_hr_q1616_precision.py::test_sc_resetting_wilson_hr_q1616_parity"
+synthesised = true
+synth_report = "tests/test_cosim_sc_resetting_wilson_hr_q1616_precision.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Q16.16 three-way spike-count co-simulation, Yosys coarse synthesis, and bounded Q8.8 formal safety cover the retained project recurrence; timing, PPA, device evidence, and universal real-number equivalence remain open."

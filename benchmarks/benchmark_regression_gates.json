@@ -4244,6 +4244,138 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_wilson_hr_simulate.json",
+      "description": "Wilson-HR source C=0.8 continuous RK4 execution across Python, Rust, Julia, Go, and Mojo.",
+      "expected_values": {
+        "benchmark": "wilson_hr_simulate_rk4",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "model": "WilsonHRNeuron",
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 0.1,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "wilson-hr-five-runtime-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {"max": 0.0},
+        "backends.julia.parity_max_abs_diff": {"max": 0.0},
+        "backends.mojo.parity_max_abs_diff": {"max": 1e-09},
+        "backends.python.parity_max_abs_diff": {"max": 0.0},
+        "backends.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backends.python.median_ms",
+        "backends.python.min_ms",
+        "backends.python.event_count",
+        "backends.rust.median_ms",
+        "backends.rust.min_ms",
+        "backends.rust.event_count",
+        "backends.julia.median_ms",
+        "backends.julia.min_ms",
+        "backends.julia.event_count",
+        "backends.go.median_ms",
+        "backends.go.min_ms",
+        "backends.go.event_count",
+        "backends.mojo.median_ms",
+        "backends.mojo.min_ms",
+        "backends.mojo.event_count"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_wilson_hr_simulate.py": "source_hashes.benchmarks/bench_wilson_hr_simulate.py",
+        "engine/src/bindings/wilson_hr.rs": "source_hashes.engine/src/bindings/wilson_hr.rs",
+        "engine/src/neurons/simple_spiking/wilson_hr.rs": "source_hashes.engine/src/neurons/simple_spiking/wilson_hr.rs",
+        "src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go": "source_hashes.src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go",
+        "src/sc_neurocore/accel/julia/neurons/wilson_hr.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/wilson_hr.jl",
+        "src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo",
+        "src/sc_neurocore/accel/rust/safety/wilson_hr.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/wilson_hr.rs",
+        "src/sc_neurocore/neurons/model_descriptors/WilsonHRNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/WilsonHRNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/wilson_hr.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_hr.json",
+        "src/sc_neurocore/neurons/model_schemas/wilson_hr.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_hr.toml",
+        "src/sc_neurocore/neurons/models/wilson_hr.py": "source_hashes.src/sc_neurocore/neurons/models/wilson_hr.py",
+        "src/sc_neurocore/neurons/reference_trace_data/wilson_hr_driven_spiking_doi.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/wilson_hr_driven_spiking_doi.json"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_resetting_wilson_hr_simulate.json",
+      "description": "Retained SC unit-capacitance hard-reset recurrence across Python, Rust, Julia, Go, and Mojo.",
+      "expected_values": {
+        "benchmark": "sc_resetting_wilson_hr_simulate_rk4",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "model": "SCResettingWilsonHRNeuron",
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 2.0,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "sc-resetting-wilson-hr-five-runtime-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {"max": 0.0},
+        "backends.julia.parity_max_abs_diff": {"max": 0.0},
+        "backends.mojo.parity_max_abs_diff": {"max": 2.5e-12},
+        "backends.python.parity_max_abs_diff": {"max": 0.0},
+        "backends.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backends.python.median_ms",
+        "backends.python.min_ms",
+        "backends.python.event_count",
+        "backends.rust.median_ms",
+        "backends.rust.min_ms",
+        "backends.rust.event_count",
+        "backends.julia.median_ms",
+        "backends.julia.min_ms",
+        "backends.julia.event_count",
+        "backends.go.median_ms",
+        "backends.go.min_ms",
+        "backends.go.event_count",
+        "backends.mojo.median_ms",
+        "backends.mojo.min_ms",
+        "backends.mojo.event_count"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_sc_resetting_wilson_hr_simulate.py": "source_hashes.benchmarks/bench_sc_resetting_wilson_hr_simulate.py",
+        "engine/src/bindings/sc_resetting_wilson_hr.rs": "source_hashes.engine/src/bindings/sc_resetting_wilson_hr.rs",
+        "engine/src/neurons/simple_spiking/sc_resetting_wilson_hr.rs": "source_hashes.engine/src/neurons/simple_spiking/sc_resetting_wilson_hr.rs",
+        "src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr/sc_resetting_wilson_hr.go": "source_hashes.src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr/sc_resetting_wilson_hr.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_resetting_wilson_hr.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_resetting_wilson_hr.jl",
+        "src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr.mojo",
+        "src/sc_neurocore/accel/rust/safety/sc_resetting_wilson_hr.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_resetting_wilson_hr.rs",
+        "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr.toml",
+        "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py": "source_hashes.src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py",
+        "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_wilson_hr_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_resetting_wilson_hr_project.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "description": "Wang NMDA source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

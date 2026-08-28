@@ -1,50 +1,104 @@
 {
-  "benchmark": "wilson_hr_simulate",
-  "environment": {
-    "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3"
-  },
-  "results": [
-    {
-      "backend": "python",
-      "median_ms": 4160.43441099464,
-      "min_ms": 3649.2676890047733,
+  "backends": {
+    "go": {
+      "event_count": 18300,
+      "median_ms": 101.70854802709073,
+      "min_ms": 97.19043900258839,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 43.92565801764174
+    },
+    "julia": {
+      "event_count": 18300,
+      "median_ms": 111.64322297554463,
+      "min_ms": 99.41202192567289,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 40.016892911516045
+    },
+    "mojo": {
+      "event_count": 18300,
+      "median_ms": 84.09680402837694,
+      "min_ms": 80.0426370697096,
+      "parity_max_abs_diff": 2.204425531004972e-11,
+      "speedup_vs_python": 53.124669239527364
+    },
+    "python": {
+      "event_count": 18300,
+      "median_ms": 4467.614898108877,
+      "min_ms": 4293.523194966838,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
-    {
-      "backend": "rust",
-      "median_ms": 129.89394599571824,
-      "min_ms": 115.26073899585754,
+    "rust": {
+      "event_count": 18300,
+      "median_ms": 108.61275193747133,
+      "min_ms": 108.00648399163038,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 32.02947126675004
-    },
-    {
-      "backend": "julia",
-      "median_ms": 138.62656100536697,
-      "min_ms": 130.14285900862888,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 30.0118128937323
-    },
-    {
-      "backend": "go",
-      "median_ms": 116.65251299564261,
-      "min_ms": 96.33648999442812,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.66519318062224
-    },
-    {
-      "backend": "mojo",
-      "median_ms": 82.818918992416,
-      "min_ms": 76.95288199465722,
-      "parity_max_abs_diff": 2.8449465006019636e-16,
-      "speedup_vs_python": 50.23531412400619
+      "speedup_vs_python": 41.13342879555152
     }
-  ],
+  },
+  "benchmark": "wilson_hr_simulate_rk4",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "model": "WilsonHRNeuron",
+  "production_speed_claim": false,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_wilson_hr_simulate": {
+      "py": "f3e504a2c5ec7bf941489432012c82cc83528c6b8c26ca366b787ca4cad35153"
+    },
+    "benchmarks/bench_wilson_hr_simulate.py": "f3e504a2c5ec7bf941489432012c82cc83528c6b8c26ca366b787ca4cad35153",
+    "engine/src/bindings/wilson_hr": {
+      "rs": "abe8c8754262ccc21185dfd9e45ec05f01f0e12280e418756250e008abfac54c"
+    },
+    "engine/src/bindings/wilson_hr.rs": "abe8c8754262ccc21185dfd9e45ec05f01f0e12280e418756250e008abfac54c",
+    "engine/src/neurons/simple_spiking/wilson_hr": {
+      "rs": "e3b7b0c19fd936ee93a180a11aac0a4df6e7b56043403d05aae5a83aac77101b"
+    },
+    "engine/src/neurons/simple_spiking/wilson_hr.rs": "e3b7b0c19fd936ee93a180a11aac0a4df6e7b56043403d05aae5a83aac77101b",
+    "src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr": {
+      "go": "bb2ae0a0c77dd2e1eba6b71c12601f9e7bb4d7609c64d726c1a92fbfb0175e5f"
+    },
+    "src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go": "bb2ae0a0c77dd2e1eba6b71c12601f9e7bb4d7609c64d726c1a92fbfb0175e5f",
+    "src/sc_neurocore/accel/julia/neurons/wilson_hr": {
+      "jl": "304c28a83003a703ce5a6ec24bfaac0b289240e8b96f064575d579a1ee73ecd0"
+    },
+    "src/sc_neurocore/accel/julia/neurons/wilson_hr.jl": "304c28a83003a703ce5a6ec24bfaac0b289240e8b96f064575d579a1ee73ecd0",
+    "src/sc_neurocore/accel/mojo/neurons/wilson_hr": {
+      "mojo": "8bb44e925116de21dc28b01d837469ece77697062154ec630c5589051ab36339"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo": "8bb44e925116de21dc28b01d837469ece77697062154ec630c5589051ab36339",
+    "src/sc_neurocore/accel/rust/safety/wilson_hr": {
+      "rs": "2a7f936f146a0a73e0097bd65868ac12dd699d66d5206fe874b8aa060ef03e83"
+    },
+    "src/sc_neurocore/accel/rust/safety/wilson_hr.rs": "2a7f936f146a0a73e0097bd65868ac12dd699d66d5206fe874b8aa060ef03e83",
+    "src/sc_neurocore/neurons/model_descriptors/WilsonHRNeuron": {
+      "toml": "a5a5daffb0b53ab4d9acc89fd7e5c2ecdccf5c70d805d193356326f95e3596c8"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/WilsonHRNeuron.toml": "a5a5daffb0b53ab4d9acc89fd7e5c2ecdccf5c70d805d193356326f95e3596c8",
+    "src/sc_neurocore/neurons/model_schemas/wilson_hr": {
+      "json": "e9189e26d1ccf69c6f1a95076a8c0fc71b3364b6e4a9fd9c653ad01ef2065440",
+      "toml": "3743fa686d584c4278ddf08053f48ae3b2c073a14cb35738492625305fe887d9"
+    },
+    "src/sc_neurocore/neurons/model_schemas/wilson_hr.json": "e9189e26d1ccf69c6f1a95076a8c0fc71b3364b6e4a9fd9c653ad01ef2065440",
+    "src/sc_neurocore/neurons/model_schemas/wilson_hr.toml": "3743fa686d584c4278ddf08053f48ae3b2c073a14cb35738492625305fe887d9",
+    "src/sc_neurocore/neurons/models/wilson_hr": {
+      "py": "4b517e97478fc932d51659cef7e6bf776a46304af9040267efcdb7dd06bfdacc"
+    },
+    "src/sc_neurocore/neurons/models/wilson_hr.py": "4b517e97478fc932d51659cef7e6bf776a46304af9040267efcdb7dd06bfdacc",
+    "src/sc_neurocore/neurons/reference_trace_data/wilson_hr_driven_spiking_doi": {
+      "json": "4bb60be4ecd3110575ae88a5fb7115a96a691efdf0e34f5dd71f238494e82ab3"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/wilson_hr_driven_spiking_doi.json": "4bb60be4ecd3110575ae88a5fb7115a96a691efdf0e34f5dd71f238494e82ab3"
+  },
+  "timestamp_utc": "2026-08-28T05:36:02.553602+00:00",
   "workload": {
-    "current": 10.0,
+    "current": 0.1,
     "n_steps": 2000000,
     "repeats": 5
   }

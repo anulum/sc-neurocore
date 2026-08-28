@@ -25961,6 +25961,25 @@ preserved bit-for-bit from the pre-2026-08-27 implementation.
 
 ---
 
+## Module `neurons.models.sc_resetting_wilson_hr`
+
+### Class `SCResettingWilsonHRNeuron`
+Preserve the former unit-capacitance, hard-reset project recurrence.
+
+This model is an SC-NeuroCore specialisation. It is not attributed to the
+continuous Wilson (1999) equations, which are implemented by
+:class:`~sc_neurocore.neurons.models.wilson_hr.WilsonHRNeuron`.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance one project-RK4 step and apply the historical hard reset.
+- **simulate**(n_steps, current, backend)
+  - Run a failure-atomic batch through a selected maintained runtime.
+- **reset**()
+  - Restore the historical project state.
+
+---
+
 ## Module `neurons.models.sc_sigma_delta_accumulator`
 
 ### Class `SCSigmaDeltaAccumulatorNeuron`
@@ -26734,14 +26753,15 @@ continuous rates with fixed-step RK4.
 ## Module `neurons.models.wilson_hr`
 
 ### Class `WilsonHRNeuron`
-Wilson 1999 polynomial cortical model.
+Wilson's 1999 continuous polynomial cortical-neuron model.
 
-dV/dt = -(17.81 + 47.71*V + 32.63*V^2)*(V - 0.55) - 26*R*(V + 0.92) + I
+C*dV/dt = -(17.81 + 47.71*V + 32.63*V^2)*(V - 0.55) - 26*R*(V + 0.92) + I
 dR/dt = (-R + 1.35*V + 1.03) / tau_R
 
 The maintained production path advances the coupled (V, R) state with
-candidate-first RK4 and commits only finite candidates. Spike detection is
-a threshold event followed by Wilson-HR hard voltage reset.
+candidate-first RK4 and commits only finite candidates. Events are sampled
+upward crossings of ``v_peak``; the source flow is continuous and never
+resets either state variable.
 
 - **__post_init__**()
 - **step**(current)

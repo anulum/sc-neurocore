@@ -110,6 +110,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             GutkinErmentroutNeuron::new(),
         )),
         "WilsonHR" | "WilsonHRNeuron" => Ok(NeuronVariant::WilsonHR(WilsonHRNeuron::new())),
+        "SCResettingWilsonHR" | "SCResettingWilsonHRNeuron" => Ok(
+            NeuronVariant::SCResettingWilsonHR(SCResettingWilsonHRNeuron::new()),
+        ),
         "Chay" | "ChayNeuron" => Ok(NeuronVariant::Chay(ChayNeuron::new())),
         "ChayKeizer" | "ChayKeizerNeuron" => Ok(NeuronVariant::ChayKeizer(ChayKeizerNeuron::new())),
         "ShermanRinzelKeizer" | "ShermanRinzelKeizerNeuron" => Ok(

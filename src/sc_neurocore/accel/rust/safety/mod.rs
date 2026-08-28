@@ -253,6 +253,7 @@ pub mod marder_stg;
 pub mod martinotti_neuron;
 pub mod mat;
 pub mod sc_resetting_mat;
+pub mod sc_resetting_wilson_hr;
 pub mod mcculloch_pitts;
 pub mod mckean;
 pub mod sc_triangular_mckean;

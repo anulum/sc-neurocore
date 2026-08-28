@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `WilsonHRNeuron` to Wilson's continuous 1999 polynomial cortical
+  equations with source `C=0.8`, `tau_R=1.9 ms`, no hard reset, and an explicit
+  sampled upward-crossing observation convention. The former unit-capacitance,
+  level-detected reset recurrence remains available as the count-neutral
+  `SCResettingWilsonHRNeuron`. Both identities now carry failure-atomic
+  Python/Rust/Julia/Go/Mojo execution, production PyO3 and NetworkRunner wiring,
+  paired schemas, source-bound benchmarks, generated Q16.16 co-simulation,
+  Yosys synthesis, bounded formal safety, and language-native documentation.
+  The source catalogue count remains 55/155.
 - Re-closed `TermanWangOscillator` without changing its DOI-backed two-state
   cubic/`tanh` equations or continuous no-reset identity. Python, production
   Rust/PyO3, Julia, Go, and Mojo batches now reject invalid stages, candidates,

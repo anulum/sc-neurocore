@@ -27,6 +27,7 @@ mod morris_lecar;
 mod pernarowski;
 mod reexports;
 pub mod resonate_and_fire;
+mod sc_resetting_wilson_hr;
 mod sc_stochastic_rate_adaptation;
 mod sc_triangular_mckean;
 pub mod sc_unit_capacitance_respiratory;

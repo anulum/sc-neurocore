@@ -69,6 +69,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "MorrisLecarNeuron": "morris_lecar",
     "PernarowskiNeuron": "pernarowski",
     "RulkovMapNeuron": "rulkov_map",
+    "SCResettingWilsonHRNeuron": "sc_resetting_wilson_hr",
     "TermanWangOscillator": "terman_wang",
     "WilsonHRNeuron": "wilson_hr",
     "WongWangUnit": "wong_wang",
@@ -124,6 +125,7 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
         "sc_non_resetting_lif",
         "sc_normalized_energy_lif",
         "sc_resetting_mat",
+        "sc_resetting_wilson_hr",
         "sc_sigma_delta",
         "sc_sigma_delta_accumulator",
         "sc_stochastic_rate_adaptation",
@@ -161,6 +163,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "pernarowski": 4,
     "poisson": 4,
     "rulkov_map": 4,
+    "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
     "terman_wang": 4,
@@ -288,6 +291,7 @@ FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
 # diacritics.  Pin an ASCII HDL identifier where sanitising the display name
 # would otherwise make a faithful schema impossible to commit as RTL.
 MODULE_NAME_BY_SCHEMA: dict[str, str] = {
+    "sc_resetting_wilson_hr": "sc_resetting_wilson_hr",
     "wang_buzsaki": "sc_wang_buzsaki",
 }
 
@@ -382,6 +386,7 @@ def _formal_wrapper(
     event_silent: bool = False,
     data_width: int = 16,
     fixed_current_word: int | None = None,
+    evidence_label: str = "dual-axis perfect model",
 ) -> str:
     """Build a port-only formal harness (no hierarchical probes)."""
     module = ports.name
@@ -473,7 +478,7 @@ def _formal_wrapper(
     return f"""{_spdx_header(f"Catalogue formal harness for {module}")}
 `default_nettype none
 
-// Formal wrapper for equation-compiler RTL of a dual-axis perfect model.
+// Formal wrapper for equation-compiler RTL of a {evidence_label}.
 // Properties use only public ports so default_nettype none stays clean.
 module {module}_formal (
     input wire clk,
@@ -491,11 +496,18 @@ endmodule
 """
 
 
-def _sby_script(module: str, depth: int, *, flatten: bool = False) -> str:
+def _sby_script(
+    module: str,
+    depth: int,
+    *,
+    flatten: bool = False,
+    evidence_label: str = "dual-axis perfect model",
+) -> str:
     prep = f"prep -top {module}_formal" + (" -flatten" if flatten else "")
+    sby_evidence_label = evidence_label[:1].upper() + evidence_label[1:]
     return (
         f"# SymbiYosys job for catalogue model {module}\n"
-        f"# Dual-axis perfect model formal (BMC)\n"
+        f"# {sby_evidence_label} formal (BMC)\n"
         "\n"
         "[options]\n"
         "mode bmc\n"
@@ -516,12 +528,16 @@ def _sby_script(module: str, depth: int, *, flatten: bool = False) -> str:
     )
 
 
-def emit_one(class_name: str) -> EmitResult:
-    """Emit RTL + formal wrapper + sby for one perfect class."""
+def _emit_schema(
+    class_name: str,
+    schema: str,
+    *,
+    evidence_label: str = "dual-axis perfect model",
+) -> EmitResult:
+    """Emit RTL, a formal wrapper, and an SBY job for one schema."""
     sys.path.insert(0, str(ROOT / "src"))
     from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
-    schema = CLASS_TO_SCHEMA[class_name]
     neuron = UniversalNeuron.from_schema(schema)
     data_width, fraction = PRECISION_BY_SCHEMA.get(schema, DEFAULT_PRECISION)
     rtl = neuron.to_verilog(
@@ -552,6 +568,7 @@ def emit_one(class_name: str) -> EmitResult:
                 if schema in FORMAL_FIXED_CURRENT_BY_SCHEMA
                 else None
             ),
+            evidence_label=evidence_label,
         ),
         encoding="utf-8",
     )
@@ -560,6 +577,7 @@ def emit_one(class_name: str) -> EmitResult:
             module,
             depth,
             flatten=schema in FLATTEN_FORMAL_SCHEMAS,
+            evidence_label=evidence_label,
         ),
         encoding="utf-8",
     )
@@ -578,11 +596,21 @@ def emit_one(class_name: str) -> EmitResult:
     )
 
 
+def emit_one(class_name: str) -> EmitResult:
+    """Emit RTL + formal wrapper + sby for one perfect class."""
+    return _emit_schema(class_name, CLASS_TO_SCHEMA[class_name])
+
+
 def emit_all() -> list[EmitResult]:
     """Emit formal jobs for every dual-axis perfect catalogue model."""
     results: list[EmitResult] = []
     for class_name in _perfect_class_names():
         results.append(emit_one(class_name))
+    _emit_schema(
+        "SCResettingWilsonHRNeuron",
+        "sc_resetting_wilson_hr",
+        evidence_label="retained SC project model",
+    )
     inventory = OUT_DIR / "INVENTORY.md"
     lines = [
         "# Catalogue formal inventory (dual-axis perfect models)",

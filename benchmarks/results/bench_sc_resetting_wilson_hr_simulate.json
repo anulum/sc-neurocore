@@ -1,0 +1,105 @@
+{
+  "backends": {
+    "go": {
+      "event_count": 1,
+      "median_ms": 74.915308970958,
+      "min_ms": 74.51329310424626,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 55.42885275443063
+    },
+    "julia": {
+      "event_count": 1,
+      "median_ms": 97.00444096233696,
+      "min_ms": 93.78266602288932,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 42.80700541964
+    },
+    "mojo": {
+      "event_count": 1,
+      "median_ms": 61.90190592315048,
+      "min_ms": 60.15313905663788,
+      "parity_max_abs_diff": 1.0648981696448345e-12,
+      "speedup_vs_python": 67.08145037018866
+    },
+    "python": {
+      "event_count": 1,
+      "median_ms": 4152.469630003907,
+      "min_ms": 4090.5159199610353,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0
+    },
+    "rust": {
+      "event_count": 1,
+      "median_ms": 81.38761902227998,
+      "min_ms": 79.25535703543574,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 51.0209007203806
+    }
+  },
+  "benchmark": "sc_resetting_wilson_hr_simulate_rk4",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "model": "SCResettingWilsonHRNeuron",
+  "production_speed_claim": false,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_sc_resetting_wilson_hr_simulate": {
+      "py": "f80c9dcd9ce891537f515b853e6a1ed31dd6d06717bf26146ece38578c35402a"
+    },
+    "benchmarks/bench_sc_resetting_wilson_hr_simulate.py": "f80c9dcd9ce891537f515b853e6a1ed31dd6d06717bf26146ece38578c35402a",
+    "engine/src/bindings/sc_resetting_wilson_hr": {
+      "rs": "6b4bcfa17b34390ad5a446978f9ee57c5a1487a24d2d4a1ee46e51dde2b379d4"
+    },
+    "engine/src/bindings/sc_resetting_wilson_hr.rs": "6b4bcfa17b34390ad5a446978f9ee57c5a1487a24d2d4a1ee46e51dde2b379d4",
+    "engine/src/neurons/simple_spiking/sc_resetting_wilson_hr": {
+      "rs": "d46c588e9bb45e9e760bd73da49581d949e9aa8ea87368eb5e2ef366b7fdd4f4"
+    },
+    "engine/src/neurons/simple_spiking/sc_resetting_wilson_hr.rs": "d46c588e9bb45e9e760bd73da49581d949e9aa8ea87368eb5e2ef366b7fdd4f4",
+    "src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr/sc_resetting_wilson_hr": {
+      "go": "be69569e5648a1c46be0efa9abe39d2b42c0f5e11b564e7fd2d89541fc3e714d"
+    },
+    "src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr/sc_resetting_wilson_hr.go": "be69569e5648a1c46be0efa9abe39d2b42c0f5e11b564e7fd2d89541fc3e714d",
+    "src/sc_neurocore/accel/julia/neurons/sc_resetting_wilson_hr": {
+      "jl": "ca25f45b0fb41f0fc9bd7629947fb80c12a2dbe55c4cd680a8e42b7c0f1644a5"
+    },
+    "src/sc_neurocore/accel/julia/neurons/sc_resetting_wilson_hr.jl": "ca25f45b0fb41f0fc9bd7629947fb80c12a2dbe55c4cd680a8e42b7c0f1644a5",
+    "src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr": {
+      "mojo": "23831d61ae47929e32c893396b0795a9a9d8956882803136f0c91c1b1b53dfc4"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr.mojo": "23831d61ae47929e32c893396b0795a9a9d8956882803136f0c91c1b1b53dfc4",
+    "src/sc_neurocore/accel/rust/safety/sc_resetting_wilson_hr": {
+      "rs": "d0fed3daab0f13555fb8afb84eb35fd5676595ed9ac2320b2677291be4d99bb1"
+    },
+    "src/sc_neurocore/accel/rust/safety/sc_resetting_wilson_hr.rs": "d0fed3daab0f13555fb8afb84eb35fd5676595ed9ac2320b2677291be4d99bb1",
+    "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron": {
+      "toml": "4cd88434283ae5e1bc20fa4a28b5418dce10ddfa0de48d8363fa8be67eb0f5a6"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron.toml": "4cd88434283ae5e1bc20fa4a28b5418dce10ddfa0de48d8363fa8be67eb0f5a6",
+    "src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr": {
+      "json": "47412eded54e72eaf2a2766b2c477d10502737b4c6915d8b157ec6426e33ae0a",
+      "toml": "fa03a0f799720224a168d8ab9fe0401e15cd6c7063de360c67316caea3e2a22d"
+    },
+    "src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr.json": "47412eded54e72eaf2a2766b2c477d10502737b4c6915d8b157ec6426e33ae0a",
+    "src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr.toml": "fa03a0f799720224a168d8ab9fe0401e15cd6c7063de360c67316caea3e2a22d",
+    "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr": {
+      "py": "28e8eb075c524ecbe4c2ac2e62d401140485df777193e7909cca2010072ee852"
+    },
+    "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py": "28e8eb075c524ecbe4c2ac2e62d401140485df777193e7909cca2010072ee852",
+    "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_wilson_hr_project": {
+      "json": "6164b47fdd1e49070c022ef61c9dd277b437dda5276c38e2cf64f998a66566c8"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_wilson_hr_project.json": "6164b47fdd1e49070c022ef61c9dd277b437dda5276c38e2cf64f998a66566c8"
+  },
+  "timestamp_utc": "2026-08-28T05:36:45.536018+00:00",
+  "workload": {
+    "current": 2.0,
+    "n_steps": 2000000,
+    "repeats": 5
+  }
+}

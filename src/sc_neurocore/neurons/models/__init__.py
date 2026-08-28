@@ -188,6 +188,7 @@ _CLASS_TO_MODULE = {
     "WendlingNeuron": "wendling",
     "WilsonCowanUnit": "wilson_cowan",
     "WilsonHRNeuron": "wilson_hr",
+    "SCResettingWilsonHRNeuron": "sc_resetting_wilson_hr",
     "WongWangUnit": "wong_wang",
     "YamadaNeuron": "yamada",
 }

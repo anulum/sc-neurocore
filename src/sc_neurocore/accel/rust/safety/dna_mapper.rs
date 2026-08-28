@@ -1356,7 +1356,7 @@ fn is_watson_crick(left: u8, right: u8) -> bool {
 fn weighted_base(state: &mut u64, weights: [f64; 4]) -> u8 {
     let total = weights.iter().sum::<f64>();
     let mut draw = next_f64(state) * total.max(f64::EPSILON);
-    let bases = [b'A', b'C', b'G', b'T'];
+    let bases = *b"ACGT";
     for (idx, weight) in weights.iter().enumerate() {
         draw -= *weight;
         if draw <= 0.0 && *weight > 0.0 {
