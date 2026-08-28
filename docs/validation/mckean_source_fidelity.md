@@ -1,7 +1,7 @@
 # McKean source-fidelity boundary
 
 The catalogue-counted `McKeanNeuron` is pinned to the space-clamped equations
-written by Tonnelier (2002), equations (1.3)-(1.6), following McKean (1970):
+published by Tonnelier (2003), equations (1.3)-(1.6), following McKean (1970):
 `dv/dt=-lambda*v+mu*H(v-a)-w+I` and `dw/dt=b*v`. The executable
 specialization declares `H(0)=1`, simultaneous classical RK4, an observational
 event on sampled upward crossing of `v=a`, and no reset.
@@ -13,7 +13,10 @@ attribution.
 
 Both identities execute in Python, Rust, Julia, Go, and Mojo and carry paired
 schemas, independent evidence, NetworkRunner dispatch, source/binary-bound local
-benchmarking, native-language documentation, and signed-Q32.32 co-simulation.
+benchmarking, native-language documentation, signed-Q32.32 co-simulation, and
+Yosys coarse synthesis.
+The retained SC trace is locked over all 3,000 rows by SHA-256
+`993226d5bf608aaf83f14e1e82a6b9df8278ccbc3326089551fd7bf2f19a8fca`.
 The RTL jobs prove bounded reset behavior only. They do not establish universal
 binary64 equivalence, timing, PPA, or device evidence.
 

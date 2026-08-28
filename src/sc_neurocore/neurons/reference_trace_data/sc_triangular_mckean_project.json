@@ -14,6 +14,10 @@
     "equation": "SC project three-branch recurrence independently advanced with classical RK4, upward v_peak detection, and no reset.",
     "citation": "SC-NeuroCore project recurrence"
   },
+  "oracle": {
+    "canonical_row_format": "little-endian float64 (v, w) plus uint8 event",
+    "trace_sha256": "993226d5bf608aaf83f14e1e82a6b9df8278ccbc3326089551fd7bf2f19a8fca"
+  },
   "expected_features": {
     "spike_count": 1.0,
     "first_spike_step": 12.0,

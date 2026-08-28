@@ -235,7 +235,7 @@ raw TOML descriptor.
 | `ResonateAndFireNeuron` | `ResonateAndFireNeuron` | Izhikevich 2001 |
 | `BalancedResonateAndFireNeuron` | `BalancedResonateAndFireNeuron` | Higuchi et al. 2024 |
 | `FitzHughRinzelNeuron` | `FitzHughRinzelNeuron` | Rinzel 1987 |
-| `McKeanNeuron` | `McKeanNeuron` | Tonnelier 2002 space-clamped equations, following McKean 1970 |
+| `McKeanNeuron` | `McKeanNeuron` | Tonnelier 2003 space-clamped equations, following McKean 1970 |
 | `SCTriangularMcKeanNeuron` | `SCTriangularMcKeanNeuron` | SC-NeuroCore retained project recurrence |
 | `SCLeakyTwoCompartmentLIFNeuron` | — (Python-only preserved identity) | SC-NeuroCore retained project recurrence |
 | `SCExponentialTwoCompartmentLIFNeuron` | `SCExponentialTwoCompartmentLIF` | SC-NeuroCore retained engine recurrence |

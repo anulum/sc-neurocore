@@ -51,8 +51,8 @@ default = 0.25
 unit = "1"
 meaning = "triangular breakpoint"
 range = [
-    -1000000.0,
-    1000000.0,
+    1e-12,
+    0.999999999999,
 ]
 
 [parameters.epsilon]
@@ -69,7 +69,7 @@ default = 0.5
 unit = "1"
 meaning = "slow-variable feedback gain"
 range = [
-    -1000000.0,
+    1e-12,
     1000000.0,
 ]
 
@@ -115,6 +115,9 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "src/sc_neurocore/neurons/reference_trace_data/sc_triangular_mckean_project.json"
+golden_trace_sha256 = "993226d5bf608aaf83f14e1e82a6b9df8278ccbc3326089551fd7bf2f19a8fca"
+golden_citation = "SC-NeuroCore retained project recurrence"
 
 [documentation]
 slug = "models/sc_triangular_mckean"
@@ -125,11 +128,13 @@ dynamics_faithful = true
 metric = "trajectory"
 operating_point = "deterministic mixed-current trace and five-runtime parity"
 tolerance = "binary64 2e-12 across native runtimes"
-evidence = "tests/test_model_mckean_source_fidelity.py; tests/test_mckean_backend_dispatch.py"
+evidence = "tests/test_reference_mckean.py::test_sc_triangular_receipt_matches_independent_reference; tests/test_mckean_backend_dispatch.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
 cosim_evidence = "tests/test_cosim_sc_triangular_mckean.py"
-target_tier = "H1"
-terminal_reason = "Pinned-profile fixed-point co-simulation and bounded safety proof only; timing, PPA, device evidence, and universal real-number equivalence remain open."
+synthesised = true
+synth_report = "tests/test_cosim_sc_triangular_mckean.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Pinned-profile fixed-point co-simulation, Yosys coarse synthesis, and bounded reset safety only; timing, PPA, device evidence, and universal real-number equivalence remain open."

@@ -8,7 +8,7 @@
 schema_version=2
 name="McKeanNeuron"
 author="McKean, H. P.; Tonnelier, A."
-year=2002
+year=2003
 doi="10.1137/S0036139901393500"
 description="Source-bound space-clamped McKean Heaviside system"
 [state]
@@ -32,7 +32,7 @@ condition="v >= a"
 detection="crossing"
 [extensions]
 family="piecewise-linear excitable system"
-source_equations="Tonnelier 2002 equations (1.3)-(1.6), following McKean 1970"
+source_equations="Tonnelier 2003 equations (1.3)-(1.6), following McKean 1970"
 identity_note="SCTriangularMcKeanNeuron retains the prior project recurrence"
 reset="none"
 heaviside_convention="H(0)=1"

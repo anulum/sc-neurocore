@@ -59,6 +59,26 @@ def test_catalogue_formal_inventory_matches_perfect_count() -> None:
         assert "smtbmc " in text
 
 
+def test_mckean_uses_only_the_curated_q3232_formal_lane() -> None:
+    """The source McKean identity must not acquire a competing generated core."""
+    import importlib.util
+    import sys
+
+    name = "emit_catalogue_formal_mckean_routing"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+
+    assert "McKeanNeuron" not in mod.CLASS_TO_SCHEMA
+    assert mod.CURATED_CLASS_TO_MODULE["McKeanNeuron"] == "mckean"
+    assert not list(CATALOGUE.glob("sc_mckeanneuron*"))
+    for suffix in (".v", "_formal.v", ".sby"):
+        assert (CATALOGUE / f"mckean{suffix}").is_file()
+    assert "| McKeanNeuron |" not in (CATALOGUE / "INVENTORY.md").read_text(encoding="utf-8")
+
+
 def test_catalogue_formal_rtl_is_equation_compiler_output() -> None:
     """Generic RTL is compiler output; curated RTL remains explicit and real."""
     import importlib.util

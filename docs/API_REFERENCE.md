@@ -23552,7 +23552,7 @@ own evidence boundary.
 ## Module `neurons.models.connor_stevens`
 
 ### Class `ConnorStevensNeuron`
-Connor-Stevens 1977 A-type potassium current model.
+Connor-Stevens-family A-current model with the 1977 parameterization.
 
 State variables are membrane voltage ``v`` plus sodium activation ``m``,
 sodium inactivation ``h``, delayed-rectifier potassium activation ``n``,
@@ -24412,6 +24412,11 @@ dn/dt = α_n(1-n) - β_n·n
 
 Reference: Hodgkin, A.L. & Huxley, A.F. (1952). J. Physiol. 117:500–544.
 
+The source rest-relative voltage is shifted to the maintained modern
+absolute-voltage coordinate. The default production recurrence is the
+historical gate-first explicit-Euler profile; paired schemas separately
+represent simultaneous RK4. Public steps validate and commit atomically.
+
 Integrator options:
 - ``baseline_euler`` preserves the historical explicit-Euler sub-step path
 - ``rk4`` is an explicit higher-order alternative path over the same
@@ -24421,6 +24426,7 @@ Integrator options:
 
 - **__post_init__**()
 - **step**(current)
+  - Advance one macro step and commit only a finite physical candidate.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
@@ -25022,7 +25028,7 @@ rule for every valid input.
 McKean's discontinuous FitzHugh-Nagumo caricature.
 
 The equations are the source-bound space-clamped system of Tonnelier
-(2002), equations (1.3)-(1.6), following McKean (1970):
+(2003), equations (1.3)-(1.6), following McKean (1970):
 ``dv/dt=-lambda*v+mu*H(v-a)-w+I`` and ``dw/dt=b*v``.
 The numerical specialization declares ``H(0)=1`` and samples an event on
 upward crossing of the switching line; the ODE has no spike reset.

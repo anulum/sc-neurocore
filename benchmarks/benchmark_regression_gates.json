@@ -4068,6 +4068,10 @@
         "src/sc_neurocore/accel/julia/neurons/mckean.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/mckean.jl",
         "src/sc_neurocore/accel/mojo/kernels/mckean.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/mckean.mojo",
         "src/sc_neurocore/accel/rust/safety/mckean.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/mckean.rs",
+        "src/sc_neurocore/neurons/model_descriptors/McKeanNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/McKeanNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/mckean.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/mckean.json",
+        "src/sc_neurocore/neurons/model_schemas/mckean.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/mckean.toml",
+        "src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json",
         "src/sc_neurocore/neurons/models/mckean.py": "source_hashes.src/sc_neurocore/neurons/models/mckean.py"
       }
     },
@@ -4092,6 +4096,10 @@
         "src/sc_neurocore/accel/julia/neurons/sc_triangular_mckean.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_triangular_mckean.jl",
         "src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo",
         "src/sc_neurocore/accel/rust/safety/sc_triangular_mckean.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/sc_triangular_mckean.rs",
+        "src/sc_neurocore/neurons/model_descriptors/SCTriangularMcKeanNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/SCTriangularMcKeanNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_triangular_mckean.toml",
+        "src/sc_neurocore/neurons/reference_trace_data/sc_triangular_mckean_project.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/sc_triangular_mckean_project.json",
         "src/sc_neurocore/neurons/models/sc_triangular_mckean.py": "source_hashes.src/sc_neurocore/neurons/models/sc_triangular_mckean.py"
       }
     },

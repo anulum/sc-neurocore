@@ -20,8 +20,9 @@ ODE has no spike reset.
 Primary references:
 
 - H. P. McKean (1970), *Nagumo's equation*, DOI `10.1016/0001-8708(70)90023-X`.
-- A. Tonnelier (2002), *McKean caricature of the FitzHugh-Nagumo model: traveling
-  pulses in a discrete diffusive medium*, DOI `10.1137/S0036139901393500`.
+- A. Tonnelier (2003), *The McKean's Caricature of the FitzHugh--Nagumo Model I.
+  The Space-Clamped System*, DOI `10.1137/S0036139901393500`. A 2002 preprint is
+  preserved separately as HAL `hal-00393725`.
 
 ## Runtime and evidence contract
 
@@ -30,7 +31,8 @@ through `sc_neurocore.accel.mckean`. Every runtime rejects non-finite input and
 preserves state when a candidate leaves the enrolled safety envelope. A
 deterministic independent-oracle receipt anchors trajectory parity; focused
 tests cover the source equations, event semantics, schema parity, NetworkRunner,
-native backends, and RTL co-simulation.
+native backends, signed-Q32.32 RTL co-simulation, Yosys coarse synthesis, and
+bounded reset safety.
 
 `SCTriangularMcKeanNeuron` separately preserves the prior three-branch project
 recurrence and is count-neutral. Spatial diffusion, traveling waves, and network

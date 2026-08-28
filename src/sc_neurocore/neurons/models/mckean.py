@@ -21,7 +21,7 @@ class McKeanNeuron:
     """McKean's discontinuous FitzHugh-Nagumo caricature.
 
     The equations are the source-bound space-clamped system of Tonnelier
-    (2002), equations (1.3)-(1.6), following McKean (1970):
+    (2003), equations (1.3)-(1.6), following McKean (1970):
     ``dv/dt=-lambda*v+mu*H(v-a)-w+I`` and ``dw/dt=b*v``.
     The numerical specialization declares ``H(0)=1`` and samples an event on
     upward crossing of the switching line; the ODE has no spike reset.
@@ -40,6 +40,7 @@ class McKeanNeuron:
         self._validate_state()
 
     def _validate_state(self) -> None:
+        validated: dict[str, float] = {}
         for field in ("v", "w", "a", "lambda_", "mu", "b", "dt"):
             value = getattr(self, field)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -47,15 +48,17 @@ class McKeanNeuron:
             value = float(value)
             if not math.isfinite(value):
                 raise ValueError(f"{field} must be finite")
-            setattr(self, field, value)
-        if abs(self.v) > _STATE_BOUND or abs(self.w) > _STATE_BOUND:
+            validated[field] = value
+        if abs(validated["v"]) > _STATE_BOUND or abs(validated["w"]) > _STATE_BOUND:
             raise ValueError("McKean state is outside the safety envelope")
-        if self.a <= 0.0 or self.lambda_ <= 0.0 or self.mu <= 0.0 or self.b <= 0.0:
+        if any(validated[field] <= 0.0 for field in ("a", "lambda_", "mu", "b")):
             raise ValueError("a, lambda_, mu, and b must be positive")
-        if self.mu <= self.lambda_ * self.a:
+        if validated["mu"] <= validated["lambda_"] * validated["a"]:
             raise ValueError("source constraint mu > lambda_ * a is required")
-        if self.dt <= 0.0 or self.dt > 1.0:
+        if validated["dt"] <= 0.0 or validated["dt"] > 1.0:
             raise ValueError("dt must be in the enrolled interval (0, 1]")
+        for field, value in validated.items():
+            setattr(self, field, value)
 
     def _derivatives(self, v: float, w: float, current: float) -> tuple[float, float]:
         """Evaluate the right-continuous Heaviside source equations."""

@@ -89,6 +89,16 @@ def test_failure_is_atomic() -> None:
     assert (n.v, n.w) == before
 
 
+def test_corrupted_state_validation_is_atomic() -> None:
+    n = McKeanNeuron()
+    n.v = 1
+    n.w = "invalid"  # type: ignore[assignment]
+    before = (n.v, n.w, n.a, n.lambda_, n.mu, n.b, n.dt)
+    with pytest.raises(TypeError, match="w"):
+        n.step(0.0)
+    assert (n.v, n.w, n.a, n.lambda_, n.mu, n.b, n.dt) == before
+
+
 def test_source_and_sc_identities_are_distinct() -> None:
     from sc_neurocore.neurons.models.sc_triangular_mckean import SCTriangularMcKeanNeuron
 

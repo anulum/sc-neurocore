@@ -27,7 +27,12 @@ Python, Rust, Julia, Go, and Mojo execute the same recurrence through
 one-dimensional current trace. Candidate failure preserves the previous state.
 The descriptor, reference receipt, focused tests, benchmark result, Rustdoc,
 Julia docstrings, GoDoc, Mojo comments, RTL co-simulation, and bounded formal
-harness are all enrolled under the SC identity.
+harness are all enrolled under the SC identity. The complete 3,000-step
+`<float64 v, float64 w, uint8 event>` trace is locked by SHA-256
+`993226d5bf608aaf83f14e1e82a6b9df8278ccbc3326089551fd7bf2f19a8fca`;
+the signed-Q32.32 RTL also passes Yosys coarse synthesis, establishing the
+declared H2 terminal tier without a timing, PPA, device, or universal-equivalence
+claim.
 
 This scalar unit does not include a spatial medium, network topology, or
 population statistics. Those are separate model surfaces.

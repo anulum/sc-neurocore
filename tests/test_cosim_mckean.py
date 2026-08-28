@@ -59,3 +59,20 @@ def test_source_mckean_q3232_tracks_python(tmp_path: Path) -> None:
     actual = _rtl_trace(tmp_path, currents)
     np.testing.assert_array_equal(actual[:, 2], np.asarray(expected)[:, 2])
     np.testing.assert_allclose(actual[:, :2], np.asarray(expected)[:, :2], atol=2e-6, rtol=0)
+
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {RTL}; synth -top mckean -run begin:coarse; check; stat",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr

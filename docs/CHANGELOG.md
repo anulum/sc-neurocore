@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### McKean dual-identity full-fidelity closure
+
+- Re-certified the catalogue-counted Tonnelier/McKean 2003 space-clamped
+  Heaviside system without altering the separate count-neutral
+  `SCTriangularMcKeanNeuron` recurrence. Corrected the journal provenance,
+  parameter envelopes, failure-atomic Python validation, durable public
+  evidence anchors, and source-bound five-runtime benchmark packets; the SC
+  identity now also carries a SHA-256-locked 3,000-row project receipt.
+- Routed `McKeanNeuron` exclusively to its curated signed-Q32.32 formal lane so
+  the catalogue emitter cannot create a competing Q8.8 identity. Both retained
+  RTL cores preserve their enrolled event/state traces, pass Yosys coarse
+  synthesis, and pass bounded reset-safety BMC at the honestly declared H2
+  terminal tier; timing, PPA, device, and universal equivalence remain open.
+
 ### Hodgkin-Huxley full-fidelity closure
 
 - Recorded the original rest-relative to modern absolute-voltage coordinate

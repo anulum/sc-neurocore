@@ -53,7 +53,7 @@ default = 0.25
 unit = "1"
 meaning = "piecewise-linear breakpoint"
 range = [
-    -1000000.0,
+    1e-12,
     1000000.0,
 ]
 
@@ -62,7 +62,7 @@ default = 1.0
 unit = "1"
 meaning = "right-branch gain"
 range = [
-    -1000000.0,
+    1e-12,
     1000000.0,
 ]
 
@@ -71,7 +71,7 @@ default = 1.0
 unit = "1"
 meaning = "left-branch gain"
 range = [
-    -1000000.0,
+    1e-12,
     1000000.0,
 ]
 
@@ -80,7 +80,7 @@ default = 0.01
 unit = "1"
 meaning = "slow-variable coupling"
 range = [
-    -1000000.0,
+    1e-12,
     1000000.0,
 ]
 
@@ -119,7 +119,7 @@ parity = "ulp-bounded"
 [reproducibility]
 reference_config = "src/sc_neurocore/neurons/reference_receipts/mckean_tonnelier.json"
 golden_trace_sha256 = "19c575db5481027819df46f30bb0463ddfeba7815393c5ee25eb4d846611fff5"
-golden_citation = "Tonnelier 2002 equations (1.3)-(1.6), following McKean 1970"
+golden_citation = "Tonnelier 2003 equations (1.3)-(1.6), following McKean 1970"
 
 [documentation]
 slug = "models/mckean"
@@ -136,5 +136,7 @@ evidence = "tests/test_model_mckean_source_fidelity.py; tests/test_reference_mck
 compiles = true
 cosim_validated = true
 cosim_evidence = "tests/test_cosim_mckean.py"
-target_tier = "H1"
-terminal_reason = "Pinned-profile fixed-point co-simulation and bounded safety proof only; timing, PPA, device evidence, and universal real-number equivalence remain open."
+synthesised = true
+synth_report = "tests/test_cosim_mckean.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Pinned-profile fixed-point co-simulation, Yosys coarse synthesis, and bounded reset safety only; timing, PPA, device evidence, and universal real-number equivalence remain open."

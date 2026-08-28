@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models.sc_triangular_mckean import SCTriangularMcKeanNeuron
 from sc_neurocore.neurons.reference_traces import reference_trace_spec_from_payload
 from tests.cosim_support import _mckean_rk4_features
 
@@ -58,3 +59,13 @@ def test_sc_triangular_receipt_matches_independent_reference() -> None:
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+    neuron = SCTriangularMcKeanNeuron(dt=spec.protocol.dt)
+    digest = hashlib.sha256()
+    events = 0
+    for _ in range(spec.protocol.steps):
+        event = neuron.step(spec.protocol.inputs["I"])
+        events += event
+        digest.update(struct.pack("<ddB", neuron.v, neuron.w, event))
+    assert events == int(spec.expected_features["spike_count"])
+    assert digest.hexdigest() == payload["oracle"]["trace_sha256"]
