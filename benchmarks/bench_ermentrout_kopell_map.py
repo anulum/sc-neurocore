@@ -48,9 +48,14 @@ SOURCE_HASH_PATHS = (
     "benchmarks/bench_ermentrout_kopell_map.py",
     "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py",
     "engine/src/neurons/ermentrout_kopell_map.rs",
+    "engine/src/bindings/ermentrout_kopell_map.rs",
+    "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_map_neuron.rs",
     "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go",
     "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl",
     "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo",
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.json",
+    "src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json",
 )
 
 
@@ -176,6 +181,10 @@ def main(argv: list[str]) -> int:
                 "parity_max_abs_diff": parity,
                 "speedup_vs_python": speedup,
                 "spikes": spikes,
+                "theta_final": float(trace[-1]) if trace.size else 0.0,
+                "trace_sha256": hashlib.sha256(
+                    np.asarray(trace, dtype="<f8").tobytes(order="C")
+                ).hexdigest(),
             }
         )
 

@@ -25,7 +25,7 @@
 # Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233-253.
 
 from std.memory import UnsafePointer
-from std.math import cos, floor
+from std.math import cos, floor, isfinite
 
 
 @always_inline
@@ -44,9 +44,24 @@ def ermentrout_kopell_map_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
-    var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(theta0)
+        or not isfinite(dt)
+        or dt <= 0.0
+        or not isfinite(gain)
+        or not isfinite(theta_threshold)
+        or not isfinite(current)
+    ):
+        return -1
+    var trace = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=trace_addr
+    )
     var theta = theta0
     var inp = gain * current
+    if not isfinite(inp):
+        return -1
     var two_pi = 2.0 * 3.141592653589793
     var spikes: Int64 = 0
     for t in range(n_steps):
@@ -54,10 +69,12 @@ def ermentrout_kopell_map_simulate_c(
         var cos_theta = cos(theta)
         var d_theta = (1.0 - cos_theta) + (1.0 + cos_theta) * inp
         var theta_next = theta + dt * d_theta
+        if not isfinite(d_theta) or not isfinite(theta_next):
+            trace[n_steps] = theta
+            return -2
         if theta_next >= theta_threshold and theta_prev < theta_threshold:
             spikes += 1
         theta = _fold_two_pi(theta_next, two_pi)
         trace[t] = theta
-    if n_steps > 0:
-        trace[n_steps] = theta
+    trace[n_steps] = theta
     return spikes

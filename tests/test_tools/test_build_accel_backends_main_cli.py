@@ -30,6 +30,18 @@ def test_main_required_never_discovered_returns_one(monkeypatch: pytest.MonkeyPa
     assert MOD.main(["--language", "go", "--require", "adex"]) == 1
 
 
+def test_main_accepts_shared_name_for_ermentrout_mojo_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        MOD,
+        "discover_targets",
+        lambda lang, **k: _stub_targets(MOD, ["ermentrout_kopell_map_neuron"]),
+    )
+    monkeypatch.setattr(MOD, "build_target", lambda t, **k: MOD.BuildResult(t, True, "ok"))
+    assert MOD.main(["--language", "mojo", "--require", "ermentrout_kopell_map"]) == 0
+
+
 def test_main_all_languages_and_mojo_command(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[str] = []
 

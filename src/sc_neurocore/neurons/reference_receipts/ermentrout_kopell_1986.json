@@ -1,0 +1,14 @@
+{
+  "model": "ErmentroutKopellMapNeuron",
+  "source": "doi:10.1137/0146017 canonical Type-I theta flow",
+  "source_equation": "dtheta/dt = (1 - cos(theta)) + (1 + cos(theta)) * I",
+  "maintained_conventions": "gain=1, forward Euler dt=0.1, upward theta=pi crossing before modulo 2*pi",
+  "drive": {"current": 0.5, "steps": 2000},
+  "oracle": {
+    "events": 45,
+    "first_event_index": 22,
+    "theta_final": 0.09049711399184002,
+    "trace_sha256": "c1b69af1044da32f42874cc6129bfed5548bdfe5fbab5771f2224b223e3de3db"
+  },
+  "encoding": "little-endian float64 post-step theta values"
+}

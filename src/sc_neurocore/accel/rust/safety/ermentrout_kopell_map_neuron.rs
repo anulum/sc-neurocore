@@ -57,6 +57,21 @@ impl ErmentroutKopellMapNeuron {
         // phase state, never the parameters (dt/gain/theta_threshold are config).
         self.theta = 0.0_f64;
     }
+
+    /// Checked complete-trace execution; rejected updates are atomic.
+    pub fn simulate(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, i64), &'static str> {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut events = 0_i64;
+        for _ in 0..n_steps {
+            events += i64::from(self.step(current)?);
+            trace.push(self.theta);
+        }
+        Ok((trace, events))
+    }
 }
 
 impl Default for ErmentroutKopellMapNeuron {
@@ -130,5 +145,33 @@ mod tests {
                 .count();
             assert_eq!(spikes, want, "I={current}");
         }
+    }
+
+    #[test]
+    fn complete_trace_and_reset_preserve_the_public_contract() {
+        let mut state = ErmentroutKopellMapNeuron {
+            theta: 0.25,
+            dt: 0.05,
+            gain: 1.5,
+            theta_threshold: 2.75,
+        };
+        let (trace, events) = state.simulate(512, 0.3).unwrap();
+        assert_eq!(trace.len(), 512);
+        assert!(events > 0);
+        assert_eq!(trace.last().copied(), Some(state.theta));
+        state.reset();
+        assert_eq!(state.theta, 0.0);
+        assert_eq!(
+            (state.dt, state.gain, state.theta_threshold),
+            (0.05, 1.5, 2.75)
+        );
+    }
+
+    #[test]
+    fn failed_batch_is_atomic_at_the_rejected_step() {
+        let mut state = ErmentroutKopellMapNeuron::new();
+        let before = state.theta;
+        assert!(state.simulate(1, f64::NAN).is_err());
+        assert_eq!(state.theta, before);
     }
 }

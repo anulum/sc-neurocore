@@ -1,0 +1,54 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_ermentrout_kopell_map_neuron": {
+         "num_wires":         60,
+         "num_wire_bits":     938,
+         "num_pub_wires":     40,
+         "num_pub_wire_bits": 664,
+         "num_memories":      4,
+         "num_memory_bits":   16384,
+         "num_processes":     0,
+         "num_cells":         39,
+         "num_cells_by_type": {
+            "$add": 8,
+            "$adff": 2,
+            "$gt": 2,
+            "$le": 1,
+            "$logic_and": 1,
+            "$lt": 4,
+            "$meminit": 4,
+            "$memrd_v2": 4,
+            "$mod": 1,
+            "$mul": 4,
+            "$mux": 6,
+            "$sub": 2
+         }
+      }
+   },
+      "design": {
+         "num_wires":         60,
+         "num_wire_bits":     938,
+         "num_pub_wires":     40,
+         "num_pub_wire_bits": 664,
+         "num_memories":      4,
+         "num_memory_bits":   16384,
+         "num_processes":     0,
+         "num_cells":         39,
+         "num_cells_by_type": {
+            "$add": 8,
+            "$adff": 2,
+            "$gt": 2,
+            "$le": 1,
+            "$logic_and": 1,
+            "$lt": 4,
+            "$meminit": 4,
+            "$memrd_v2": 4,
+            "$mod": 1,
+            "$mul": 4,
+            "$mux": 6,
+            "$sub": 2
+         }
+      }
+}

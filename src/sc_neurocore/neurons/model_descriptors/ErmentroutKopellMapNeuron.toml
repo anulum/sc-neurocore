@@ -20,7 +20,6 @@ maturity = "experimental"
 intended_use = []
 hardware_fit = []
 behavior_tags = [
-    "chaotic",
     "excitable",
     "tonic",
 ]
@@ -81,12 +80,13 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "a1a8eb94a2a3318964722901c46b7006533780e790ae7c666df43961b1a8a113"
+reference_config = "{\"n_steps\":2000,\"current\":0.5,\"backend\":\"python\",\"parameters\":\"defaults\",\"row_encoding\":\"<d\"}"
+golden_trace_sha256 = "c1b69af1044da32f42874cc6129bfed5548bdfe5fbab5771f2224b223e3de3db"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json"
 
 [documentation]
 slug = "models/ermentrout_kopell_map"
-notes = "The sourced 1986 object is the continuous theta equation. dt=0.1, gain, forward Euler, modulo 2*pi, and the pi event convention are maintained implementation choices, so the schema lowers the complete recurrence with method=map rather than presenting it as a paper-discrete map. The 'chaotic' behaviour tag is a controlled-vocabulary label for the measured pattern under extreme drive only (reproducible high-ISI-variability at I=256 and I=1024 in the coarse forward-Euler sweep); it does NOT assert Lyapunov chaos. The canonical theta flow remains non-chaotic in the bounded regime; at I=1/4/16/64 the measured behaviour is tonic."
+notes = "The sourced 1986 object is the continuous theta equation. dt=0.1, gain, forward Euler, modulo 2*pi, and the pi event convention are maintained implementation choices, so the schema lowers the complete recurrence with method=map rather than presenting it as a paper-discrete map. The canonical one-dimensional theta flow is non-chaotic; coarse-Euler instability under extreme out-of-regime drive is numerical behaviour and is not advertised as a source-model property."
 
 [validation]
 dynamics_faithful = true
@@ -98,6 +98,9 @@ evidence = "tests/test_cosim_ermentrout_kopell_map_neuron.py::test_q1616_class_c
 [silicon]
 compiles = true
 cosim_validated = true
+synthesised = true
 cosim_evidence = "tests/test_cosim_ermentrout_kopell_map_neuron.py::test_q1616_class_correct_spike_count_and_circular_phase_bound; tests/test_bit_true_cosim.py"
-target_tier = "H1"
-terminal_reason = "The point-phase recurrence has bounded Q16.16 class-metric co-simulation; higher rungs require synthesis, timing, and equivalence programmes."
+synth_report = "hdl/reports/yosys_ermentrout_kopell_map_q88_2026-08-28.json"
+target_device = "generic synchronous logic (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Q16.16 bounded co-simulation preserves the enrolled class metric, while the tracked Q8.8 catalogue RTL passes Yosys synthesis and depth-4 reset safety. Timing, PPA, device, board, full formal equivalence, and physical silicon remain unclaimed."

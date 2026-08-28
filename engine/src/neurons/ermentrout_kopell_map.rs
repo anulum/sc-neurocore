@@ -11,7 +11,7 @@
 /// Ermentrout-Kopell canonical Type I — theta neuron in map form.
 ///
 /// The canonical model for Type I (saddle-node) excitability.
-/// theta(n+1) = theta(n) + dt * (1 - cos(theta)) + (1 + cos(theta)) * I
+/// theta(n+1) = theta(n) + dt * [(1 - cos(theta)) + (1 + cos(theta)) * gain * I]
 /// Spike when theta crosses pi.
 ///
 /// Ermentrout & Kopell, SIAM J Appl Math 46:233, 1986.
@@ -39,34 +39,48 @@ impl ErmentroutKopellMapNeuron {
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
-        let input = self.gain * current;
-        let theta_prev = self.theta;
+    fn parameters_are_valid(&self) -> bool {
+        self.theta.is_finite()
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.gain.is_finite()
+            && self.theta_threshold.is_finite()
+    }
 
-        let d_theta = (1.0 - self.theta.cos()) + (1.0 + self.theta.cos()) * input;
-        self.theta += self.dt * d_theta;
+    /// Checked update. Rejected input or candidates leave phase unchanged.
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !self.parameters_are_valid() {
+            return Err("invalid Ermentrout-Kopell runtime state");
+        }
+        if !current.is_finite() {
+            return Err("invalid Ermentrout-Kopell current");
+        }
+        let input = self.gain * current;
+        if !input.is_finite() {
+            return Err("invalid Ermentrout-Kopell input drive");
+        }
+        let theta_prev = self.theta;
+        let cos_theta = theta_prev.cos();
+        let d_theta = (1.0 - cos_theta) + (1.0 + cos_theta) * input;
+        let theta_next = theta_prev + self.dt * d_theta;
+        if !d_theta.is_finite() || !theta_next.is_finite() {
+            return Err("invalid Ermentrout-Kopell candidate phase");
+        }
 
         // Spike detection: crossing pi
-        let fired = if self.theta >= self.theta_threshold && theta_prev < self.theta_threshold {
+        let fired = if theta_next >= self.theta_threshold && theta_prev < self.theta_threshold {
             1
         } else {
             0
         };
 
-        // Wrap theta to [0, 2*pi)
-        let two_pi = 2.0 * std::f64::consts::PI;
-        if self.theta >= two_pi {
-            self.theta -= two_pi;
-        }
-        if self.theta < 0.0 {
-            self.theta += two_pi;
-        }
+        self.theta = theta_next.rem_euclid(2.0 * std::f64::consts::PI);
+        Ok(fired)
+    }
 
-        if !self.theta.is_finite() {
-            self.theta = 0.0;
-        }
-
-        fired
+    /// Infallible NetworkRunner adapter; invalid updates are event-silent and atomic.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     /// Run `n_steps` under a constant input, returning the `theta` trace
@@ -75,19 +89,23 @@ impl ErmentroutKopellMapNeuron {
     /// matches the Python reference bit-for-bit (the only transcendental is
     /// `cos`, and the non-chaotic phase flow does not amplify ULP differences).
     /// The final state is left in `self.theta`.
-    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+    pub fn simulate(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, i64), &'static str> {
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
+            let spiked = self.try_step(current)?;
             trace.push(self.theta);
             spikes += spiked as i64;
         }
-        (trace, spikes)
+        Ok((trace, spikes))
     }
 
     pub fn reset(&mut self) {
-        *self = Self::new();
+        self.theta = 0.0;
     }
 }
 
@@ -148,10 +166,12 @@ mod tests {
     }
 
     #[test]
-    fn ek_nan_input_stays_finite() {
+    fn ek_nan_input_is_event_silent_and_atomic() {
         let mut n = ErmentroutKopellMapNeuron::new();
-        n.step(f64::NAN);
-        assert!(n.theta.is_finite());
+        let before = n.theta;
+        assert!(n.try_step(f64::NAN).is_err());
+        assert_eq!(n.step(f64::NAN), 0);
+        assert_eq!(n.theta, before);
     }
 
     #[test]
@@ -166,11 +186,31 @@ mod tests {
     #[test]
     fn ek_reset_clears_state() {
         let mut n = ErmentroutKopellMapNeuron::new();
+        n.dt = 0.05;
+        n.gain = 1.5;
+        n.theta_threshold = 2.75;
         for _ in 0..100 {
             n.step(0.5);
         }
         n.reset();
         assert_eq!(n.theta, 0.0);
+        assert_eq!((n.dt, n.gain, n.theta_threshold), (0.05, 1.5, 2.75));
+    }
+
+    #[test]
+    fn ek_uses_true_circular_modulo_for_large_finite_steps() {
+        let mut n = ErmentroutKopellMapNeuron::new();
+        n.try_step(1.0e6).unwrap();
+        assert!((0.0..2.0 * std::f64::consts::PI).contains(&n.theta));
+    }
+
+    #[test]
+    fn ek_checked_simulation_returns_complete_trace() {
+        let mut n = ErmentroutKopellMapNeuron::new();
+        let (trace, events) = n.simulate(2_000, 0.5).unwrap();
+        assert_eq!(trace.len(), 2_000);
+        assert_eq!(events, 45);
+        assert_eq!(trace.last().copied(), Some(n.theta));
     }
 
     #[test]

@@ -52,11 +52,26 @@ func ermentrout_kopell_map_simulate_c(
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
-	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+1)
+	if n < 0 || tracePtr == nil {
+		return -1
+	}
 	theta := float64(theta0)
 	d := float64(dt)
+	g := float64(gain)
 	thr := float64(thetaThreshold)
-	inp := float64(gain) * float64(current)
+	cur := float64(current)
+	if math.IsNaN(theta) || math.IsInf(theta, 0) ||
+		math.IsNaN(d) || math.IsInf(d, 0) || d <= 0.0 ||
+		math.IsNaN(g) || math.IsInf(g, 0) ||
+		math.IsNaN(thr) || math.IsInf(thr, 0) ||
+		math.IsNaN(cur) || math.IsInf(cur, 0) {
+		return -1
+	}
+	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+1)
+	inp := g * cur
+	if math.IsNaN(inp) || math.IsInf(inp, 0) {
+		return -1
+	}
 	twoPi := 2.0 * math.Pi
 	var spikes int64
 	for t := 0; t < n; t++ {
@@ -64,15 +79,18 @@ func ermentrout_kopell_map_simulate_c(
 		cosTheta := math.Cos(theta)
 		dTheta := (1.0 - cosTheta) + (1.0+cosTheta)*inp
 		thetaNext := theta + d*dTheta
+		if math.IsNaN(dTheta) || math.IsInf(dTheta, 0) ||
+			math.IsNaN(thetaNext) || math.IsInf(thetaNext, 0) {
+			trace[n] = theta
+			return -2
+		}
 		if thetaNext >= thr && thetaPrev < thr {
 			spikes++
 		}
 		theta = foldTwoPi(thetaNext, twoPi)
 		trace[t] = theta
 	}
-	if n > 0 {
-		trace[n] = theta
-	}
+	trace[n] = theta
 	return C.longlong(spikes)
 }
 

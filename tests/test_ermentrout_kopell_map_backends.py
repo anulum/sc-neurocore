@@ -20,6 +20,7 @@ crossings of ``pi`` are robust to those sub-ULP phase perturbations.
 
 from __future__ import annotations
 
+import ctypes
 import math
 
 import numpy as np
@@ -135,8 +136,14 @@ def test_invalid_backend_raises() -> None:
 
 
 def test_negative_n_steps_raises() -> None:
-    with pytest.raises(ValueError, match="n_steps must be non-negative"):
+    with pytest.raises(ValueError, match="n_steps must be between"):
         ErmentroutKopellMapNeuron().simulate(-1, 0.0)
+
+
+@pytest.mark.parametrize("n_steps", (True, 1.5, 1 << 31))
+def test_invalid_step_count_raises(n_steps: object) -> None:
+    with pytest.raises(ValueError, match="n_steps"):
+        ErmentroutKopellMapNeuron().simulate(n_steps, 0.0)  # type: ignore[arg-type]
 
 
 def test_non_finite_current_raises() -> None:
@@ -185,3 +192,59 @@ def test_phase_confined_to_circle() -> None:
     trace, _spikes = ErmentroutKopellMapNeuron().simulate(50000, 0.5, backend="python")
     two_pi = 2.0 * math.pi
     assert np.all(trace >= 0.0) and np.all(trace < two_pi)
+
+
+@pytest.mark.parametrize(
+    ("backend", "available"),
+    (("python", lambda: True), ("rust", _rust), ("julia", _julia), ("go", _go), ("mojo", _mojo)),
+)
+def test_public_dispatch_rejects_mutated_configuration_atomically(backend: str, available) -> None:
+    if not available():
+        pytest.skip(f"{backend} Ermentrout-Kopell backend unavailable")
+    neuron = ErmentroutKopellMapNeuron(theta=0.25)
+    neuron.dt = 0.0
+    with pytest.raises(ValueError, match="dt must be positive"):
+        neuron.simulate(1, 0.1, backend=backend)
+    assert neuron.theta == 0.25
+
+
+def test_go_c_abi_rejects_invalid_input_without_writing_trace() -> None:
+    if not _go():
+        pytest.skip("Go Ermentrout-Kopell backend unavailable")
+    trace = np.full(2, 123.0, dtype=np.float64)
+    result = ek._go_lib.ermentrout_kopell_map_simulate_c(
+        ctypes.c_double(0.0),
+        ctypes.c_double(0.1),
+        ctypes.c_double(1.0),
+        ctypes.c_double(math.pi),
+        ctypes.c_int(1),
+        ctypes.c_double(math.nan),
+        trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+    )
+    assert result == -1
+    np.testing.assert_array_equal(trace, np.array([123.0, 123.0]))
+
+
+def test_mojo_c_abi_rejects_invalid_input_without_writing_trace() -> None:
+    if not _mojo():
+        pytest.skip("Mojo Ermentrout-Kopell backend unavailable")
+    trace = np.full(2, 123.0, dtype=np.float64)
+    result = ek._mojo_lib.ermentrout_kopell_map_simulate_c(
+        0.0,
+        0.1,
+        1.0,
+        math.pi,
+        1,
+        math.nan,
+        int(trace.ctypes.data),
+    )
+    assert result == -1
+    np.testing.assert_array_equal(trace, np.array([123.0, 123.0]))
+
+
+def test_julia_native_api_rejects_invalid_input() -> None:
+    if not _julia():
+        pytest.skip("Julia Ermentrout-Kopell backend unavailable")
+    juliacall = pytest.importorskip("juliacall")
+    with pytest.raises(juliacall.JuliaError, match="inputs must be finite"):
+        ek._julia_module.simulate_trace(0.0, 0.1, 1.0, math.pi, 1, math.nan)

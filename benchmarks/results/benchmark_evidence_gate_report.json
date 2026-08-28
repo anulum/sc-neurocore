@@ -126,6 +126,10 @@
       "id": "courage-nekorkin-map-five-backend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_sc_clipped_rational_recovery_map.json",
+      "id": "sc-clipped-rational-recovery-map-five-backend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_ermentrout_kopell_map.json",
       "id": "ermentrout-kopell-map-five-backend-local-regression"
     },
@@ -320,7 +324,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 79,
+  "gate_count": 80,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

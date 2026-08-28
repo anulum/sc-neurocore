@@ -2,43 +2,53 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 61.15901895100251,
-      "min_ms": 60.52294198889285,
+      "median_ms": 58.41019004583359,
+      "min_ms": 58.208285947330296,
       "parity_max_abs_diff": 3.97237798210881e-12,
-      "speedup_vs_python": 5.571434170260016,
-      "spikes": 20137
+      "speedup_vs_python": 5.447238585332468,
+      "spikes": 20137,
+      "theta_final": 5.172500520618708,
+      "trace_sha256": "d5642e37c7b4ccc11b36ac31a2f9ee1a94e2c25f0a46e9c9e23fa820e572d9d2"
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 46.73861199989915,
-      "min_ms": 45.09839101228863,
+      "median_ms": 42.23593196365982,
+      "min_ms": 41.05353995691985,
       "parity_max_abs_diff": 8.539835505416704e-13,
-      "speedup_vs_python": 7.290405799896892,
-      "spikes": 20137
+      "speedup_vs_python": 7.533259625193713,
+      "spikes": 20137,
+      "theta_final": 5.172500520620015,
+      "trace_sha256": "e65774fbc6f81ff5dc3548a6daa2bdbfcb6a93173e159eb550a851a23dc938b7"
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 52.645540970843285,
-      "min_ms": 52.163471991661936,
+      "median_ms": 51.08153691980988,
+      "min_ms": 49.64110895525664,
       "parity_max_abs_diff": 1.836397700571979e-11,
-      "speedup_vs_python": 6.472408521586081,
-      "spikes": 20137
+      "speedup_vs_python": 6.2287523081725515,
+      "spikes": 20137,
+      "theta_final": 5.172500520626687,
+      "trace_sha256": "30bb872c3dfec71e8c1b9565c269b59d2c4d755ae2af46977327cf1ee565676b"
     },
     "python": {
       "backend": "python",
-      "median_ms": 340.7434480031952,
-      "min_ms": 328.3388330019079,
+      "median_ms": 318.17424099426717,
+      "min_ms": 303.489270969294,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
-      "spikes": 20137
+      "spikes": 20137,
+      "theta_final": 5.172500520620015,
+      "trace_sha256": "b4e83668c37c442d46abdac6e1e6b1aaa5c0338497ca58a24e92d9a7386342e0"
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 76.76298497244716,
-      "min_ms": 73.88939202064648,
+      "median_ms": 44.26280106417835,
+      "min_ms": 43.94924105145037,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 4.438903048461438,
-      "spikes": 20137
+      "speedup_vs_python": 7.18829882756254,
+      "spikes": 20137,
+      "theta_final": 5.172500520620015,
+      "trace_sha256": "b4e83668c37c442d46abdac6e1e6b1aaa5c0338497ca58a24e92d9a7386342e0"
     }
   },
   "benchmark": "ermentrout_kopell_map_simulate",
@@ -51,70 +61,97 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 340.7434480031952,
-      "min_ms": 328.3388330019079,
+      "median_ms": 318.17424099426717,
+      "min_ms": 303.489270969294,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
-      "spikes": 20137
+      "spikes": 20137,
+      "theta_final": 5.172500520620015,
+      "trace_sha256": "b4e83668c37c442d46abdac6e1e6b1aaa5c0338497ca58a24e92d9a7386342e0"
     },
     {
       "backend": "rust",
-      "median_ms": 76.76298497244716,
-      "min_ms": 73.88939202064648,
+      "median_ms": 44.26280106417835,
+      "min_ms": 43.94924105145037,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 4.438903048461438,
-      "spikes": 20137
+      "speedup_vs_python": 7.18829882756254,
+      "spikes": 20137,
+      "theta_final": 5.172500520620015,
+      "trace_sha256": "b4e83668c37c442d46abdac6e1e6b1aaa5c0338497ca58a24e92d9a7386342e0"
     },
     {
       "backend": "julia",
-      "median_ms": 46.73861199989915,
-      "min_ms": 45.09839101228863,
+      "median_ms": 42.23593196365982,
+      "min_ms": 41.05353995691985,
       "parity_max_abs_diff": 8.539835505416704e-13,
-      "speedup_vs_python": 7.290405799896892,
-      "spikes": 20137
+      "speedup_vs_python": 7.533259625193713,
+      "spikes": 20137,
+      "theta_final": 5.172500520620015,
+      "trace_sha256": "e65774fbc6f81ff5dc3548a6daa2bdbfcb6a93173e159eb550a851a23dc938b7"
     },
     {
       "backend": "go",
-      "median_ms": 61.15901895100251,
-      "min_ms": 60.52294198889285,
+      "median_ms": 58.41019004583359,
+      "min_ms": 58.208285947330296,
       "parity_max_abs_diff": 3.97237798210881e-12,
-      "speedup_vs_python": 5.571434170260016,
-      "spikes": 20137
+      "speedup_vs_python": 5.447238585332468,
+      "spikes": 20137,
+      "theta_final": 5.172500520618708,
+      "trace_sha256": "d5642e37c7b4ccc11b36ac31a2f9ee1a94e2c25f0a46e9c9e23fa820e572d9d2"
     },
     {
       "backend": "mojo",
-      "median_ms": 52.645540970843285,
-      "min_ms": 52.163471991661936,
+      "median_ms": 51.08153691980988,
+      "min_ms": 49.64110895525664,
       "parity_max_abs_diff": 1.836397700571979e-11,
-      "speedup_vs_python": 6.472408521586081,
-      "spikes": 20137
+      "speedup_vs_python": 6.2287523081725515,
+      "spikes": 20137,
+      "theta_final": 5.172500520626687,
+      "trace_sha256": "30bb872c3dfec71e8c1b9565c269b59d2c4d755ae2af46977327cf1ee565676b"
     }
   ],
   "source_hashes": {
     "benchmarks/bench_ermentrout_kopell_map": {
-      "py": "b1ac3fdceda6c32238100f4467085341afa9779e85bf15f082a9488a9930a8fa"
+      "py": "acacaffc04d48cbcf5d01765c446becb41fb29d7d6c29ea4aa8603f6c403240c"
     },
-    "benchmarks/bench_ermentrout_kopell_map.py": "b1ac3fdceda6c32238100f4467085341afa9779e85bf15f082a9488a9930a8fa",
+    "benchmarks/bench_ermentrout_kopell_map.py": "acacaffc04d48cbcf5d01765c446becb41fb29d7d6c29ea4aa8603f6c403240c",
+    "engine/src/bindings/ermentrout_kopell_map": {
+      "rs": "14f88bcedabaa071907c91f816526005b1b977cf360166f35eea50195aed6d11"
+    },
+    "engine/src/bindings/ermentrout_kopell_map.rs": "14f88bcedabaa071907c91f816526005b1b977cf360166f35eea50195aed6d11",
     "engine/src/neurons/ermentrout_kopell_map": {
-      "rs": "b2dde8eb0b745eed748eaffe8bf0f0743750bb6c5572cbafd53e4ca8e4a29740"
+      "rs": "a3070039bb667945d25891d2b1524b893c9b3b2ab1d45f3fb810259845db3e3e"
     },
-    "engine/src/neurons/ermentrout_kopell_map.rs": "b2dde8eb0b745eed748eaffe8bf0f0743750bb6c5572cbafd53e4ca8e4a29740",
+    "engine/src/neurons/ermentrout_kopell_map.rs": "a3070039bb667945d25891d2b1524b893c9b3b2ab1d45f3fb810259845db3e3e",
     "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map": {
-      "go": "b6da0d40c4a384d65c05767e21f82c72f3ff5c33682f51dc04d05bfbbb73d2cc"
+      "go": "4c0279b6e0afcc3d9fe7d687a22586ea7b88a94eb3c15aebbbe6cf5086770b0c"
     },
-    "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go": "b6da0d40c4a384d65c05767e21f82c72f3ff5c33682f51dc04d05bfbbb73d2cc",
+    "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go": "4c0279b6e0afcc3d9fe7d687a22586ea7b88a94eb3c15aebbbe6cf5086770b0c",
     "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron": {
-      "jl": "565d99e4684737acc8dd50f91f08060af8f3f7faf786a488d2343c97fb954e7b"
+      "jl": "5104cfc84cc37afb8b5c3398df27f64032b3f090fdc00cf445e6b0cc4c211e66"
     },
-    "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl": "565d99e4684737acc8dd50f91f08060af8f3f7faf786a488d2343c97fb954e7b",
+    "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl": "5104cfc84cc37afb8b5c3398df27f64032b3f090fdc00cf445e6b0cc4c211e66",
     "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron": {
-      "mojo": "ad73fb6b6ecef2e40f33f701c233b19cb304a801a9da62e53f99a96b38b8633b"
+      "mojo": "25f52558e90c938d457a1a66382fbeca3bb6faff271bb85cb872ffe7fe13c754"
     },
-    "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo": "ad73fb6b6ecef2e40f33f701c233b19cb304a801a9da62e53f99a96b38b8633b",
+    "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo": "25f52558e90c938d457a1a66382fbeca3bb6faff271bb85cb872ffe7fe13c754",
+    "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_map_neuron": {
+      "rs": "1ea3c4bbf8dcb9e1687a5b8bcf0b032cfe49dc4a6abf92d099dde7b5c6ceb4ce"
+    },
+    "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_map_neuron.rs": "1ea3c4bbf8dcb9e1687a5b8bcf0b032cfe49dc4a6abf92d099dde7b5c6ceb4ce",
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron": {
+      "json": "9870378b9ae5402822d4832f179258542847ed17f3e8624c2b6d1880e8c2d1d7"
+    },
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.json": "9870378b9ae5402822d4832f179258542847ed17f3e8624c2b6d1880e8c2d1d7",
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.toml": "cb88145a09b03877b2cd66bc121470c02d51173254cb1370b0303003b88572df",
     "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron": {
-      "py": "dd3b6bce62e0207b08b6277f15b1bdcb8faa34e3bb8495c8fb830eccc4b0c6f8"
+      "py": "336b9bf144b66055f28f74d8e292860606978e9fa200ecf23dd98ecc2f506e57"
     },
-    "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py": "dd3b6bce62e0207b08b6277f15b1bdcb8faa34e3bb8495c8fb830eccc4b0c6f8"
+    "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py": "336b9bf144b66055f28f74d8e292860606978e9fa200ecf23dd98ecc2f506e57",
+    "src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986": {
+      "json": "ee17a17be3c1892604fb4a3dd1a50c46d0ffc36f66ae8ad4150f1610359ee674"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json": "ee17a17be3c1892604fb4a3dd1a50c46d0ffc36f66ae8ad4150f1610359ee674"
   },
   "workload": {
     "current": 0.1,

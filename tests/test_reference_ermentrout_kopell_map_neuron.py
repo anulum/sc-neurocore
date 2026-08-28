@@ -10,14 +10,20 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
+from pathlib import Path
 
+import numpy as np
 import pytest
 
 from sc_neurocore.neurons.reference_traces import (
     load_reference_trace_spec,
     validate_reference_trace_spec,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _independent_features(*, current: float, steps: int) -> dict[str, float]:
@@ -76,3 +82,35 @@ def test_committed_trace_validates_through_schema_runner() -> None:
 
     assert report.passed
     assert report.mismatches == ()
+
+
+def test_source_receipt_trace_digest_is_independently_reproducible() -> None:
+    """The primary-equation receipt must bind the complete maintained orbit."""
+    receipt = json.loads(
+        (
+            ROOT / "src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json"
+        ).read_text()
+    )
+    steps = int(receipt["drive"]["steps"])
+    current = float(receipt["drive"]["current"])
+    dt = 0.1
+    theta = 0.0
+    values: list[float] = []
+    events: list[int] = []
+    for _ in range(steps):
+        previous = theta
+        candidate = previous + dt * (
+            (1.0 - math.cos(previous)) + (1.0 + math.cos(previous)) * current
+        )
+        events.append(int(previous < math.pi <= candidate))
+        theta = candidate % (2.0 * math.pi)
+        values.append(theta)
+
+    digest = hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+    assert sum(events) == receipt["oracle"]["events"]
+    assert (
+        next(index for index, event in enumerate(events) if event)
+        == receipt["oracle"]["first_event_index"]
+    )
+    assert theta == receipt["oracle"]["theta_final"]
+    assert digest == receipt["oracle"]["trace_sha256"]

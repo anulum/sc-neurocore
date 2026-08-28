@@ -36,6 +36,10 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
+    all(isfinite, (theta0, dt, gain, theta_threshold, current)) ||
+        throw(ArgumentError("Ermentrout-Kopell inputs must be finite"))
+    dt > 0.0 || throw(ArgumentError("dt must be positive"))
     trace = Vector{Float64}(undef, n_steps)
     theta = theta0
     inp = gain * current
@@ -46,6 +50,8 @@ function simulate_trace(
         cos_theta = cos(theta)
         d_theta = (1.0 - cos_theta) + (1.0 + cos_theta) * inp
         theta_next = theta + dt * d_theta
+        isfinite(d_theta) && isfinite(theta_next) ||
+            throw(OverflowError("Ermentrout-Kopell candidate phase became non-finite"))
         if theta_next >= theta_threshold && theta_prev < theta_threshold
             spikes += 1
         end

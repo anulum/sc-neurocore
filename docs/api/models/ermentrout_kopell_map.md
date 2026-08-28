@@ -114,6 +114,8 @@ hardware fidelity.
 - The independent `I=0.5`, 2,000-step reference derives the Euler recurrence
   without calling model code: 45 events, first event at step 23, and final phase
   `0.09049711399184002`.
+- The companion source receipt binds all 2,000 post-step binary64 phase words
+  to SHA-256 `c1b69af1044da32f42874cc6129bfed5548bdfe5fbab5771f2224b223e3de3db`.
 - The reference is tied to DOI `10.1137/0146017`; its provenance text identifies
   the maintained numerical and event conventions separately from the paper.
 
@@ -137,12 +139,17 @@ The catalogue job `sc_ermentrout_kopell_map_neuron.sby` passes a depth-4 Z3
 bounded model check over its public reset/spike safety property. That check is
 formal safety evidence, not Python-to-RTL formal equivalence.
 
+The tracked Q8.8 catalogue RTL also passes Yosys coarse synthesis. This raises
+the honest hardware evidence to H2 while keeping precision boundaries explicit:
+Q16.16 supplies the class-metric co-simulation and Q8.8 supplies the committed
+synthesis/formal object. Neither result is a device timing or PPA claim.
+
 ## Known limits
 
 - The cosine hardware path uses a quantised lookup table. Event timing and full
   fixed-point trajectories are therefore not claimed exact.
-- H1 records bounded co-simulation only. Synthesis, timing closure, and formal
-  equivalence are not yet credited.
+- H2 records bounded co-simulation plus coarse synthesis. Timing closure, PPA,
+  device/board execution, and formal equivalence are not credited.
 - The older `theta` schema is a separate catalogue entry with different `dt`,
   threshold, and reset conventions. Its evidence does not substitute for this
   hand-class enrolment.
@@ -155,4 +162,6 @@ formal safety evidence, not Python-to-RTL formal equivalence.
 - `tests/test_reference_ermentrout_kopell_map_neuron.py`
 - `tests/test_cosim_ermentrout_kopell_map_neuron.py`
 - `tests/test_bit_true_cosim.py`
+- `src/sc_neurocore/neurons/reference_receipts/ermentrout_kopell_1986.json`
 - `hdl/formal/catalogue/sc_ermentrout_kopell_map_neuron.sby`
+- `hdl/reports/yosys_ermentrout_kopell_map_q88_2026-08-28.json`

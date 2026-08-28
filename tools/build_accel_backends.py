@@ -49,6 +49,11 @@ _PRUNED_DIRS = frozenset({".pixi", "__pycache__", ".git", "node_modules", "targe
 # Authoritative build recipes embedded in the model / accel modules.
 _GO_HINT = re.compile(r"buildmode=c-shared -o (lib[a-z0-9_]+\.so) ([a-z0-9_]+\.go)")
 _MOJO_HINT = re.compile(r"emit shared-lib -o (lib[a-z0-9_]+\.so) ([a-z0-9_]+\.mojo)")
+_REQUIRED_NAME_ALIASES = {
+    # The maintained public model is `ermentrout_kopell_map`; its historical
+    # Mojo source retains the explicit `_neuron` suffix.
+    "ermentrout_kopell_map_neuron": "ermentrout_kopell_map",
+}
 
 
 @dataclass(frozen=True)
@@ -285,6 +290,11 @@ def _target_name(source: Path, output: Path, suffix: str) -> str:
     return source_stem
 
 
+def _required_name(target_name: str) -> str:
+    """Return the shared CI requirement name for a language-specific target."""
+    return _REQUIRED_NAME_ALIASES.get(target_name, target_name)
+
+
 def _go_command(target: BackendTarget) -> list[str]:
     # Package mode ("." rather than the single source file) is the reproducible
     # build the loaders document: it compiles every non-test file in the
@@ -407,13 +417,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     failed = [r for r in results if not r.ok]
     print(f"built {built}/{len(results)} backend libraries; {len(failed)} failed")
 
-    required_failures = [r for r in failed if r.target.name in required]
+    required_failures = [r for r in failed if _required_name(r.target.name) in required]
     if required_failures:
         names = ", ".join(sorted(r.target.name for r in required_failures))
         print(f"REQUIRED backends failed to build: {names}", file=sys.stderr)
         return 1
     if required:
-        missing = required - {r.target.name for r in results}
+        missing = required - {_required_name(r.target.name) for r in results}
         if missing:
             print(f"REQUIRED backends were never discovered: {sorted(missing)}", file=sys.stderr)
             return 1

@@ -68,6 +68,7 @@ _mojo_lib = None
 _HAS_MOJO = False
 
 _ACCEL_ROOT = _os.path.join(_os.path.dirname(__file__), "..", "..", "accel")
+_MAX_C_STEPS = (1 << 31) - 1
 
 
 def _ensure_julia_loaded() -> bool:
@@ -170,6 +171,16 @@ class ErmentroutKopellMapNeuron:
         if self.dt <= 0.0:
             raise ValueError("dt must be positive")
 
+    def _validate_runtime(self) -> None:
+        """Reject invalid mutable state/configuration before any update."""
+        self._validate_theta(self.theta)
+        for name in ("dt", "gain", "theta_threshold"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+
     @staticmethod
     def _validate_theta(theta: float) -> float:
         value = float(theta)
@@ -178,11 +189,12 @@ class ErmentroutKopellMapNeuron:
         return value
 
     def step(self, current: float = 0.0) -> int:
+        self._validate_runtime()
         drive = float(current)
         if not math.isfinite(drive):
             raise ValueError("current must be finite")
 
-        theta = self._validate_theta(self.theta)
+        theta = self.theta
         inp = self.gain * drive
         if not math.isfinite(inp):
             raise FloatingPointError("Ermentrout-Kopell input drive became non-finite")
@@ -212,8 +224,11 @@ class ErmentroutKopellMapNeuron:
         reference bit-for-bit; Julia, Go and Mojo agree to a small,
         non-amplifying ULP bound with identical spike counts.
         """
-        if n_steps < 0:
-            raise ValueError("n_steps must be non-negative")
+        if isinstance(n_steps, bool) or not isinstance(n_steps, int):
+            raise ValueError("n_steps must be an integer")
+        if not 0 <= n_steps <= _MAX_C_STEPS:
+            raise ValueError(f"n_steps must be between 0 and {_MAX_C_STEPS}")
+        self._validate_runtime()
         if not math.isfinite(float(current)):
             raise ValueError("current must be finite")
         if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
@@ -309,6 +324,8 @@ class ErmentroutKopellMapNeuron:
             ctypes.c_double(current),
             trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
         )
+        if spikes < 0:
+            raise FloatingPointError("Go Ermentrout-Kopell backend rejected the simulation")
         tf = float(trace[n_steps]) if n_steps > 0 else self.theta
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), tf
 
@@ -326,6 +343,8 @@ class ErmentroutKopellMapNeuron:
             float(current),
             int(trace.ctypes.data),
         )
+        if spikes < 0:
+            raise FloatingPointError("Mojo Ermentrout-Kopell backend rejected the simulation")
         tf = float(trace[n_steps]) if n_steps > 0 else self.theta
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), tf
 

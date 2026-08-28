@@ -9,6 +9,7 @@
 //! Python binding for the Ermentrout-Kopell Type-I theta map.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -40,13 +41,15 @@ fn py_ermentrout_kopell_map_simulate<'py>(
     theta_threshold: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64)> {
     let mut neuron = ErmentroutKopellMapNeuron {
         theta: theta0,
         dt,
         gain,
         theta_threshold,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.theta)
+    let (trace, spikes) = neuron
+        .simulate(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((trace.into_pyarray(py), spikes, neuron.theta))
 }

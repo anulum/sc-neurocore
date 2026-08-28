@@ -101,3 +101,27 @@ def test_production_rust_backend_is_exactly_the_installed_extension() -> None:
     np.testing.assert_array_equal(rust_trace, python_trace)
     assert rust_spikes == python_spikes
     assert rust_neuron.theta == python_neuron.theta
+
+
+def test_direct_binding_rejects_invalid_input_and_uses_true_modulo() -> None:
+    with pytest.raises(FloatingPointError, match="invalid Ermentrout-Kopell current"):
+        extension.py_ermentrout_kopell_map_simulate(0.0, 0.1, 1.0, math.pi, 1, math.nan)
+
+    reference = ErmentroutKopellMapNeuron()
+    expected_trace, expected_events = reference.simulate(1, 1.0e6, backend="python")
+    trace, events, final_theta = extension.py_ermentrout_kopell_map_simulate(
+        0.0, 0.1, 1.0, math.pi, 1, 1.0e6
+    )
+    np.testing.assert_array_equal(np.asarray(trace), expected_trace)
+    assert int(events) == expected_events
+    assert float(final_theta) == reference.theta
+    assert 0.0 <= float(final_theta) < 2.0 * math.pi
+
+
+def test_network_runner_executes_the_theta_map_identity() -> None:
+    assert "ErmentroutKopellMap" in extension.NetworkRunner.supported_models()
+    runner = extension.NetworkRunner()
+    population = runner.add_population("ErmentroutKopellMap", 1)
+    result = runner.step_population(population, np.array([0.5], dtype=np.float64))
+    assert result["spikes"].tolist() == [0]
+    assert result["voltages"].tolist() == [0.1]
