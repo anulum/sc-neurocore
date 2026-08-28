@@ -1,8 +1,8 @@
-# Neuron Model Reference — 178 Python Classes / 205 Rust PyO3 Wrappers
+# Neuron Model Reference — 179 Python Classes / 206 Rust PyO3 Wrappers
 
-SC-NeuroCore currently exposes 180 lazy-loaded Python registry names, including
-178 lazy-loaded Python model classes across 174 Python model source modules in
-`src/sc_neurocore/neurons/models/`, plus 205 Rust PyO3 model wrappers in the
+SC-NeuroCore currently exposes 181 lazy-loaded Python registry names, including
+179 lazy-loaded Python model classes across 175 Python model source modules in
+`src/sc_neurocore/neurons/models/`, plus 206 Rust PyO3 model wrappers in the
 optional engine. The historical Kilinc-Bhatt module is alias-only and does not
 add a scientific catalogue model. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
@@ -40,8 +40,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 205 Rust PyO3 model wrappers,
-with 175 canonical models wired into the NetworkRunner pipeline.
+`HodgkinHuxleyNeuron`). The Rust engine provides 206 Rust PyO3 model wrappers,
+with 176 runtime identities wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -256,7 +256,7 @@ raw TOML descriptor.
 | `LearnableNeuronModel` | `LearnableNeuronModel` | — |
 | `PernarowskiNeuron` | `PernarowskiNeuron` | Pernarowski 1994 |
 
-### Discrete Maps (10 runtime identities; 9 source models)
+### Discrete Maps (11 runtime identities; 9 source models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -267,7 +267,8 @@ raw TOML descriptor.
 | `SCUpwardCrossingRulkovMapNeuron` | `SCUpwardCrossingRulkovMapNeuron` | SC-NeuroCore retained upward-crossing observation identity; count-neutral |
 | `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz, Tanaka, Sanjuan & Aihara 2007, Eqs. 2–3 |
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 slow-calcium first-return reduction |
-| `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 |
+| `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 scalar four-branch map |
+| `SCClippedLogisticBurstingMapNeuron` | `SCClippedLogisticBurstingMapNeuron` | SC-NeuroCore retained clipped-logistic fast/slow recurrence; count-neutral |
 | `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage, Nekorkin & Vdovin 2007 |
 | `ErmentroutKopellMapNeuron` | `ErmentroutKopellMapNeuron` | Ermentrout & Kopell 1986 (maintained Euler map) |
 

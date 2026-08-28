@@ -4,54 +4,67 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia acceleration for the Cazelles 2001 bursting map
-
-# Parity contract: `simulate_trace` reproduces
-# `sc_neurocore.neurons.models.cazelles_map.CazellesMapNeuron.simulate`
-# bit-for-bit — the map is exact floating-point arithmetic (a*x*(1-x),
-# additions, a clamp), so identical operation order yields identical results.
-#
-# Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001).
-# Europhys. Lett. 56(4):504-509.
+# SC-NeuroCore — Julia Cazelles four-branch map
 
 module CazellesMapAccel
 
 export simulate_trace
 
-"""
-    simulate_trace(x0, y0, a, epsilon, sigma, x_threshold, n_steps, current)
-
-Run `n_steps` of the Cazelles bursting map from state `(x0, y0)` under a
-constant input `current`. Returns a named tuple `(trace, spikes, xf, yf)`
-where `trace[t]` is `x` after step `t`, `spikes` counts threshold crossings,
-and `(xf, yf)` is the final state.
-"""
 function simulate_trace(
+    x::Float64,
+    alpha::Float64,
     x0::Float64,
-    y0::Float64,
-    a::Float64,
-    epsilon::Float64,
-    sigma::Float64,
-    x_threshold::Float64,
+    x1::Float64,
+    x2::Float64,
+    x3::Float64,
+    x4::Float64,
+    a1::Float64,
+    a2::Float64,
+    a3::Float64,
+    a4::Float64,
+    b1::Float64,
+    b2::Float64,
+    b3::Float64,
+    b4::Float64,
+    exponent::Int,
     n_steps::Int,
     current::Float64,
 )
+    values = (x, alpha, x0, x1, x2, x3, x4, a1, a2, a3, a4, b1, b2, b3, b4, current)
+    all(isfinite, values) || throw(ArgumentError("Cazelles inputs must be finite"))
+    0.0 <= alpha < 1.0 || throw(ArgumentError("alpha must satisfy 0 <= alpha < 1"))
+    exponent in (1, 2) || throw(ArgumentError("exponent must be 1 or 2"))
+    x0 < x1 < x2 < x3 < x4 || throw(ArgumentError("branch bounds must increase"))
+    x0 <= x <= x4 || throw(ArgumentError("x lies outside the map domain"))
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
+
     trace = Vector{Float64}(undef, n_steps)
-    x = x0
-    y = y0
-    spikes = 0
-    for t in 1:n_steps
-        f = a * x * (1.0 - x)
-        x_new = f - y + current
-        y_new = y + epsilon * (x - sigma)
-        x = min(2.0, max(-2.0, x_new))
-        y = y_new
-        trace[t] = x
-        if x >= x_threshold
-            spikes += 1
+    events = 0
+    for index in 1:n_steps
+        base = if x < x1
+            a1 + b1 * x
+        elseif x < x2
+            a2 + b2 * x
+        elseif x < x3
+            a3 + b3 * x
+        else
+            a4 + b4 * x
         end
+        power = exponent == 1 ? x : x * x
+        candidate = base + alpha * power + current
+        isfinite(candidate) || throw(DomainError(candidate, "non-finite Cazelles candidate"))
+        tolerance = 8.0 * eps(max(1.0, abs(x0), abs(x4)))
+        if x0 - tolerance <= candidate < x0
+            candidate = x0
+        elseif x4 < candidate <= x4 + tolerance
+            candidate = x4
+        end
+        x0 <= candidate <= x4 || throw(DomainError(candidate, "Cazelles candidate left domain"))
+        events += x >= x1 && candidate < x1 ? 1 : 0
+        x = candidate
+        trace[index] = x
     end
-    return (trace = trace, spikes = spikes, xf = x, yf = y)
+    return (trace = trace, events = events, xf = x)
 end
 
 end # module CazellesMapAccel

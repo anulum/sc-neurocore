@@ -7,45 +7,27 @@
   },
   "protocol": {
     "dt": 1.0,
-    "steps": 30,
-    "inputs": {
-      "I": 0.5
-    },
-    "state_variables": [
-      "x",
-      "y"
-    ]
+    "steps": 600,
+    "inputs": {"I": 0.0},
+    "state_variables": ["x"]
   },
   "provenance": {
-    "kind": "map_iteration_reference",
+    "kind": "source_equation_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/cazelles_map.toml",
-    "equation": "Driving-current Cazelles-Courbage-Rabinovich 2001 simultaneous clipped logistic fast/slow map iterated with method=map. Independently re-derived from x_{n+1}=clip(a*x_n*(1-x_n)-y_n+I,-2,2), y_{n+1}=y_n+epsilon*(x_n-sigma), with level x >= x_threshold event detection.",
+    "equation": "x[n+1] = f(x[n]) + alpha*x[n]^m with the four Figure-1 piecewise-linear branches; alpha=0, right-continuous exact-breakpoint convention, and slow-regime entry event.",
     "citation": "doi:10.1209/epl/i2001-00548-y"
   },
   "expected_features": {
-    "spike_count": 2.0,
-    "first_spike_step": 2.0,
-    "final.x": -2.0,
-    "min.x": -2.0,
-    "max.x": 1.4405583401908113,
-    "mean.x": -1.6053245197447905,
-    "final.y": -0.6105973559234374,
-    "min.y": -0.6105973559234374,
-    "max.y": 0.013560896880846999,
-    "mean.y": -0.2582427439908715
+    "spike_count": 7.0,
+    "first_spike_step": 56.0,
+    "final.x": 0.5158386955157878,
+    "min.x": 0.016874126060391625,
+    "max.x": 0.9973915444701996,
+    "mean.x": 0.3842921424384428
   },
   "tolerances": {
-    "default": {
-      "absolute": 1e-09,
-      "relative": 1e-12
-    },
-    "spike_count": {
-      "absolute": 0.0,
-      "relative": 0.0
-    },
-    "first_spike_step": {
-      "absolute": 0.0,
-      "relative": 0.0
-    }
+    "default": {"absolute": 1e-12, "relative": 1e-12},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
   }
 }

@@ -27,6 +27,8 @@ mod nagumo_sato_map;
 mod rulkov_map;
 mod sc_adaptive_threshold_map;
 mod sc_chaotic_map;
+#[path = "../sc_clipped_logistic_bursting_map.rs"]
+mod sc_clipped_logistic_bursting_map;
 #[path = "../sc_upward_crossing_rulkov_map.rs"]
 mod sc_upward_crossing_rulkov_map;
 
@@ -42,6 +44,7 @@ pub use nagumo_sato_map::PyNagumoSatoMapNeuron;
 pub use rulkov_map::PyRulkovMapNeuron;
 pub use sc_adaptive_threshold_map::PySCAdaptiveThresholdMapNeuron;
 pub use sc_chaotic_map::PySCChaoticMapNeuron;
+pub use sc_clipped_logistic_bursting_map::PySCClippedLogisticBurstingMapNeuron;
 pub use sc_upward_crossing_rulkov_map::PySCUpwardCrossingRulkovMapNeuron;
 
 /// Register the model-owned map-neuron bindings in stable class order.
@@ -52,6 +55,7 @@ pub(crate) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     ibarz_tanaka_map::register(module)?;
     medvedev_map::register(module)?;
     cazelles_map::register(module)?;
+    sc_clipped_logistic_bursting_map::register(module)?;
     courage_nekorkin_map::register(module)?;
     aihara_map::register(module)?;
     sc_chaotic_map::register(module)?;

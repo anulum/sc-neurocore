@@ -195,29 +195,29 @@ trajectory.
 
 ### Cazelles map Q16.16 trajectory enrolment
 
-The `cazelles_map` schema mirrors the maintained Cazelles, Courbage, and
-Rabinovich (2001) hand model as a simultaneous discrete recurrence. The fast
-coordinate commits
-`clip(a*x*(1-x) - y + I, -2, 2)`, the slow coordinate commits
-`y + epsilon*(x - sigma)` from the old state, and each committed
-`x >= x_threshold` value emits a level event. It is not a crossing detector and
-receives no ODE timestep scaling.
+The `cazelles_map` schema mirrors equation (1) and the Figure-1 parameters of
+Cazelles, Courbage, and Rabinovich (2001): one scalar state, four
+piecewise-linear branches, and the optional `alpha*x^m` term. `I` is a
+maintained additive perturbation; zero input recovers the source map. Because
+the paper leaves exact breakpoints open, the implementation discloses a
+right-continuous convention. A crossing into `x < x1` marks the slow-regime
+minimum used as a burst-cycle observation.
 
-The enrolled Q16.16 evidence uses three bounded 30-iteration trajectories. At
-`I=0.5`, `1.0`, and `2.0`, the hand model and paired TOML/JSON schemas agree
-exactly on all states and events. The RTL reproduces the complete event vectors
-of two, one, and one events respectively, while both state coordinates remain
-within `0.0004` absolute error of float64. Together the points exercise the
-interior expression and both fast-state clip bounds.
+The hand model and paired TOML/JSON schemas agree exactly for the complete
+600-step source orbit and visit every branch. Q16.16 RTL is event-exact through
+the first 55 iterations, with maximum scalar-state error at most `0.0062`.
+That bounded window reaches the approach to the first discontinuous return.
 
-The sensitive `I=0.05` trajectory is an explicit exclusion: over 30 iterations,
-the hand/schema path emits seven level events while Q16.16 emits eight, with
-seven event-position mismatches. Pinning that observation prevents the bounded
-trajectory evidence from being read as long-window chaotic identity.
+The 600-step fixed-point orbit is an explicit exclusion: binary64 emits seven
+slow-regime entries while Q16.16 emits two. Chaotic amplification of
+quantisation is expected, and the test pins the measured divergence so the
+bounded co-simulation result cannot be read as long-window identity.
 
-The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
-Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; the three Q16.16
-trajectories remain the behavioural evidence.
+The S5/H2 descriptor also carries a Q8.8 Yosys coarse-synthesis report. Its
+depth-4 SymbiYosys/Z3 port-only harness proves reset-spike safety; neither
+artefact claims timing, PPA, board, device, or physical-silicon evidence. The
+former clipped-logistic fast/slow recurrence remains independently enrolled as
+the count-neutral `SCClippedLogisticBurstingMapNeuron` identity.
 
 ### Chialvo map Q16.16 event-class enrolment
 

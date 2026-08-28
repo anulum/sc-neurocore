@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
+# SC-NeuroCore — Cazelles et al. 2001 scalar piecewise-linear map
 
 [metadata]
 schema_version = 1
@@ -12,34 +12,43 @@ name = "Cazelles Map"
 author = "Cazelles, B., Courbage, M. & Rabinovich, M."
 year = 2001
 doi = "10.1209/epl/i2001-00548-y"
-description = "Discrete-time clipped logistic fast/slow bursting map"
+description = "Scalar four-branch piecewise-linear chaotic bursting map"
 
 [state]
 x = 0.1
-y = 0.0
 
 [parameters]
-a = 3.8
-epsilon = 0.01
-sigma = 0.5
-x_threshold = 0.9
+alpha = 0.0
+exponent = 2.0
+x0 = 0.0
+x1 = 0.4
+x2 = 0.6
+x3 = 0.7
+x4 = 1.0
+a1 = 0.0
+a2 = 1.5
+a3 = -0.9
+a4 = 1.4
+b1 = 1.05
+b2 = -1.25
+b3 = 1.5
+b4 = -1.0
 
 [integration]
 dt = 1.0
 method = "map"
 
 [dynamics]
-# Cazelles, Courbage & Rabinovich (2001): simultaneous two-dimensional map.
-# `method = "map"` commits these expressions directly without timestep scaling.
-x = "min(2.0, max(-2.0, a * x * (1.0 - x) - y + I))"
-y = "y + epsilon * (x - sigma)"
+x = "((a1 + b1 * x) if x < x1 else ((a2 + b2 * x) if x < x2 else ((a3 + b3 * x) if x < x3 else (a4 + b4 * x)))) + alpha * (x if exponent < 1.5 else x * x) + I"
 
 [threshold]
-condition = "x >= x_threshold"
-detection = "level"
+condition = "x < x1"
+detection = "crossing"
 
 [extensions]
 model_type = "map"
 discrete_time = true
 bursting = true
-silicon_cosim_note = "At I=0.5, I=1.0, and I=2.0 over 30 iterations, hand model and both schemas agree exactly on states and events; Q16.16 RTL reproduces the complete event vectors with maximum state error below 0.0004. The chaotic I=0.05 trace is an explicit excluded boundary."
+breakpoint_convention = "right-continuous: [x0,x1), [x1,x2), [x2,x3), [x3,x4]"
+event_convention = "entry into slow regime; not a source-defined action-potential threshold"
+input_convention = "additive maintained perturbation; I=0 recovers the source map"

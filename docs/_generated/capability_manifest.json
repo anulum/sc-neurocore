@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 195,
+    "model_documentation_pages": 196,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 620,
-    "python_model_classes": 178,
-    "python_model_source_modules": 174,
-    "rust_pyo3_model_wrappers": 205,
-    "test_files": 4768
+    "public_documentation_pages": 621,
+    "python_model_classes": 179,
+    "python_model_source_modules": 175,
+    "rust_pyo3_model_wrappers": 206,
+    "test_files": 4772
   },
   "documentation": {
     "public_pages": [
@@ -1220,6 +1220,7 @@
       "docs/api/models/rulkov_map.md",
       "docs/api/models/sc_adaptive_threshold_map.md",
       "docs/api/models/sc_chaotic_map.md",
+      "docs/api/models/sc_clipped_logistic_bursting_map.md",
       "docs/api/models/sc_decoupled_adaptation_ion_mass.md",
       "docs/api/models/sc_exponential_tc_lif.md",
       "docs/api/models/sc_four_state_glif.md",
@@ -1760,6 +1761,7 @@
       "rulkov_map.md",
       "sc_adaptive_threshold_map.md",
       "sc_chaotic_map.md",
+      "sc_clipped_logistic_bursting_map.md",
       "sc_decoupled_adaptation_ion_mass.md",
       "sc_exponential_tc_lif.md",
       "sc_four_state_glif.md",
@@ -2326,6 +2328,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py"
       },
       {
+        "name": "SCClippedLogisticBurstingMapNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py"
+      },
+      {
         "name": "SCDecoupledAdaptationIonMassNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py"
       },
@@ -2651,6 +2657,7 @@
       "src/sc_neurocore/neurons/models/rulkov_map.py",
       "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py",
       "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py",
+      "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py",
       "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py",
       "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py",
       "src/sc_neurocore/neurons/models/sc_four_state_glif.py",
@@ -2854,6 +2861,7 @@
       "RustTripletStdpSynapse",
       "SCAdaptiveThresholdMapNeuron",
       "SCChaoticMapNeuron",
+      "SCClippedLogisticBurstingMapNeuron",
       "SCDecoupledAdaptationIonMassNeuron",
       "SCExponentialTwoCompartmentLIF",
       "SCFourStateGLIFNeuron",
@@ -4290,6 +4298,7 @@
       "tests/test_cosim_rulkov_map.py",
       "tests/test_cosim_sc_adaptive_threshold_map.py",
       "tests/test_cosim_sc_chaotic_map.py",
+      "tests/test_cosim_sc_clipped_logistic_bursting_map.py",
       "tests/test_cosim_sc_non_resetting_adaptive_lif.py",
       "tests/test_cosim_sc_normalized_energy_lif.py",
       "tests/test_cosim_sc_resetting_mat.py",
@@ -6667,6 +6676,7 @@
       "tests/test_reference_rulkov_map.py",
       "tests/test_reference_sc_adaptive_threshold_map.py",
       "tests/test_reference_sc_chaotic_map.py",
+      "tests/test_reference_sc_clipped_logistic_bursting_map.py",
       "tests/test_reference_sc_non_resetting_adaptive_lif.py",
       "tests/test_reference_sc_normalized_energy_lif.py",
       "tests/test_reference_sc_resetting_mat.py",
@@ -6773,6 +6783,8 @@
       "tests/test_sby_runner_run_sby_task_end_to_end.py",
       "tests/test_sc_adaptive_threshold_map_backends.py",
       "tests/test_sc_chaotic_map_backends.py",
+      "tests/test_sc_clipped_logistic_bursting_map_backends.py",
+      "tests/test_sc_clipped_logistic_bursting_map_engine_binding.py",
       "tests/test_sc_compte_wm_backends.py",
       "tests/test_sc_compte_wm_behavior.py",
       "tests/test_sc_compte_wm_drive.py",

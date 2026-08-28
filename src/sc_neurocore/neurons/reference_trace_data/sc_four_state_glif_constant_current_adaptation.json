@@ -10,7 +10,7 @@
   },
   "provenance": {
     "kind": "project_rk4_reference",
-    "source": "SC-NeuroCore retained four-state recurrence",
+    "source": "src/sc_neurocore/neurons/model_schemas/sc_four_state_glif.toml",
     "equation": "Four-state project recurrence with simultaneous classical RK4, candidate-level V >= Theta detection, hard voltage reset, and additive threshold and after-spike-current increments.",
     "citation": "project:sc-neurocore-four-state-glif"
   },

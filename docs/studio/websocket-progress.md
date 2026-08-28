@@ -89,7 +89,7 @@ session token through the `studio-bearer.<token>` subprotocol.
 **Operations:**
 - `characterize` — full model characterisation with f-I + sensitivity
 - `heatmap` — 2D parameter sweep (requires `param_x`, `param_y`, `x_min`/`x_max`/`x_steps`, `y_min`/`y_max`/`y_steps` in config)
-- `scan` — scan all 159 runtime catalogue entries (no config needed)
+- `scan` — scan all 179 runtime catalogue entries (no config needed)
 
 ## Implementation
 

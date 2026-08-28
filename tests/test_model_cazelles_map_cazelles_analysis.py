@@ -18,7 +18,7 @@ class TestCazellesAnalysis:
         n = CazellesMapNeuron()
         train = np.zeros(5000, dtype=np.int8)
         for t in range(5000):
-            train[t] = n.step(0.2)
+            train[t] = n.step(0.0)
         return train
 
     def test_firing_rate(self):
@@ -28,7 +28,7 @@ class TestCazellesAnalysis:
 
     def test_spike_count(self):
         train = self._get_train()
-        assert spike_count(train) > 100
+        assert spike_count(train) > 50
 
     def test_isi(self):
         train = self._get_train()

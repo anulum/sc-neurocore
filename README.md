@@ -95,13 +95,13 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 |---|---:|
 | Package version | 3.16.0 |
 | Public API exports | 45 |
-| Python model source modules | 174 |
-| Python model classes | 178 |
-| Model documentation pages | 195 |
-| Rust PyO3 model wrappers | 205 |
+| Python model source modules | 175 |
+| Python model classes | 179 |
+| Model documentation pages | 196 |
+| Rust PyO3 model wrappers | 206 |
 | Optional extras | 28 |
-| Python test files | 4768 |
-| Public documentation pages | 620 |
+| Python test files | 4772 |
+| Public documentation pages | 621 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -176,8 +176,8 @@ dependency matrix and research-only boundaries.
 
 ### Rust Engine and Benchmark Evidence
 
-The optional Rust engine provides SIMD-accelerated simulation, 205 Rust PyO3
-model wrappers, a 175-model NetworkRunner dispatch list, and fused E-I network
+The optional Rust engine provides SIMD-accelerated simulation, 206 Rust PyO3
+model wrappers, a 176-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
 Use a matching release wheel first:
@@ -250,7 +250,7 @@ rate, no-spike, and no-RTL boundaries.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
-- **NetworkRunner:** 175-model fused Rayon-parallel simulation loop
+- **NetworkRunner:** 176-model fused Rayon-parallel simulation loop
 - **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
 - **Batch simulate:** model dispatch loop in compiled Rust
 - **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
@@ -381,7 +381,7 @@ issue certification or regulatory approval.
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[178 Python model classes<br/>174 Python model source modules]
+        B --> C[179 Python model classes<br/>175 Python model source modules]
         C --> NET[Network Engine<br/>Population · Projection · 3 Backends]
         C --> ID[Identity Substrate<br/>Persistent SNN · Checkpoint · Director]
         C --> D[STDP / R-STDP Synapses]
@@ -392,7 +392,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>205 Rust PyO3 wrappers · 175-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>206 Rust PyO3 wrappers · 176-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -691,8 +691,8 @@ pip install -r requirements-dev.txt   # runtime + dev tools
 
 ## Rust Engine (205 PyO3 Wrappers, 175-Model NetworkRunner)
 
-The `sc_neurocore_engine` crate provides 205 Rust PyO3 model wrappers callable
-from Python (including ArcaneNeuron), a 175-model NetworkRunner with
+The `sc_neurocore_engine` crate provides 206 Rust PyO3 model wrappers callable
+from Python (including ArcaneNeuron), a 176-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
 RISC-V V). Rust test totals are maintained by the Rust workspace; public
@@ -712,7 +712,7 @@ evidence before publication.
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
 | Neurons | 205 PyO3 model wrappers; 175 canonical models wired into NetworkRunner |
-| NetworkRunner | 175-model fused simulation loop with CSR projections and Rayon parallelism |
+| NetworkRunner | 176-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |

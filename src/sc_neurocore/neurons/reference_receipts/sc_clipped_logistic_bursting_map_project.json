@@ -1,0 +1,12 @@
+{
+  "model": "SCClippedLogisticBurstingMapNeuron",
+  "source": "SC-NeuroCore project recurrence retained without whole-model publication attribution",
+  "event": "post-step level x >= x_threshold",
+  "parameters": {"x": 0.1, "y": 0.0, "a": 3.8, "epsilon": 0.01, "sigma": 0.5, "x_threshold": 0.9},
+  "drive": {"current": 2.0, "steps": 1000},
+  "oracle": {
+    "events": 244,
+    "x_final": 2.0,
+    "trace_sha256": "4264c3f9f94eef93e4f641afc91b0f97aff57f492838b2cfd32ce17335099967"
+  }
+}

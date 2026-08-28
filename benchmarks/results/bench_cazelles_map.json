@@ -2,43 +2,43 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 8.989554014988244,
-      "min_ms": 8.89627099968493,
+      "median_ms": 16.756267054006457,
+      "min_ms": 15.590692986734211,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 95.68468897844838,
-      "spikes": 24
+      "speedup_vs_python": 55.663816889648665,
+      "spikes": 22747
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 24.02508701197803,
-      "min_ms": 23.73244403861463,
+      "median_ms": 18.598656984977424,
+      "min_ms": 13.16435495391488,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.80268739714725,
-      "spikes": 24
+      "speedup_vs_python": 50.14973832796886,
+      "spikes": 22747
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 9.579843026585877,
-      "min_ms": 9.368441998958588,
-      "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 89.78880735227058,
-      "spikes": 24
+      "median_ms": 14.917394029907882,
+      "min_ms": 14.859204995445907,
+      "parity_max_abs_diff": 0.999603062087939,
+      "speedup_vs_python": 62.52551747163494,
+      "spikes": 22592
     },
     "python": {
       "backend": "python",
-      "median_ms": 860.162679979112,
-      "min_ms": 796.5023200376891,
+      "median_ms": 932.7177810482681,
+      "min_ms": 921.9939470058307,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
-      "spikes": 24
+      "spikes": 22747
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 28.294242976699024,
-      "min_ms": 26.329890999477357,
+      "median_ms": 20.91048297006637,
+      "min_ms": 19.959062919951975,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 30.400625338782742,
-      "spikes": 24
+      "speedup_vs_python": 44.60527202472874,
+      "spikes": 22747
     }
   },
   "benchmark": "cazelles_map_simulate",
@@ -51,75 +51,76 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 860.162679979112,
-      "min_ms": 796.5023200376891,
+      "median_ms": 932.7177810482681,
+      "min_ms": 921.9939470058307,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
-      "spikes": 24
+      "spikes": 22747
     },
     {
       "backend": "rust",
-      "median_ms": 28.294242976699024,
-      "min_ms": 26.329890999477357,
+      "median_ms": 20.91048297006637,
+      "min_ms": 19.959062919951975,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 30.400625338782742,
-      "spikes": 24
+      "speedup_vs_python": 44.60527202472874,
+      "spikes": 22747
     },
     {
       "backend": "julia",
-      "median_ms": 24.02508701197803,
-      "min_ms": 23.73244403861463,
+      "median_ms": 18.598656984977424,
+      "min_ms": 13.16435495391488,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.80268739714725,
-      "spikes": 24
+      "speedup_vs_python": 50.14973832796886,
+      "spikes": 22747
     },
     {
       "backend": "go",
-      "median_ms": 8.989554014988244,
-      "min_ms": 8.89627099968493,
+      "median_ms": 16.756267054006457,
+      "min_ms": 15.590692986734211,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 95.68468897844838,
-      "spikes": 24
+      "speedup_vs_python": 55.663816889648665,
+      "spikes": 22747
     },
     {
       "backend": "mojo",
-      "median_ms": 9.579843026585877,
-      "min_ms": 9.368441998958588,
-      "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 89.78880735227058,
-      "spikes": 24
+      "median_ms": 14.917394029907882,
+      "min_ms": 14.859204995445907,
+      "parity_max_abs_diff": 0.999603062087939,
+      "speedup_vs_python": 62.52551747163494,
+      "spikes": 22592
     }
   ],
   "source_hashes": {
     "benchmarks/bench_cazelles_map": {
-      "py": "d675230df45c202859c7431479c0fc1c84d42454798ca6cf4e76b309b11641b5"
+      "py": "9ef0ca3e9e15c35405254d97d8adaadba7625d283acf95bfe7a1ef6418e4080a"
     },
-    "benchmarks/bench_cazelles_map.py": "d675230df45c202859c7431479c0fc1c84d42454798ca6cf4e76b309b11641b5",
+    "benchmarks/bench_cazelles_map.py": "9ef0ca3e9e15c35405254d97d8adaadba7625d283acf95bfe7a1ef6418e4080a",
     "engine/src/neurons/cazelles_map": {
-      "rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85"
+      "rs": "e405b482911b3b7deedd143cf7537269dd558d5b406eebfc3898e6e0b9680aba"
     },
-    "engine/src/neurons/cazelles_map.rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85",
+    "engine/src/neurons/cazelles_map.rs": "e405b482911b3b7deedd143cf7537269dd558d5b406eebfc3898e6e0b9680aba",
     "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map": {
-      "go": "edf95baa85c18aeade3e186e6cb11b73e04adc97a8c160fa1144ee41885cbdd5"
+      "go": "3124334e0322f714d6580de4d3b4066b886ee09437f598b0b5e2366c58c5280b"
     },
-    "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go": "edf95baa85c18aeade3e186e6cb11b73e04adc97a8c160fa1144ee41885cbdd5",
+    "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go": "3124334e0322f714d6580de4d3b4066b886ee09437f598b0b5e2366c58c5280b",
     "src/sc_neurocore/accel/julia/neurons/cazelles_map": {
-      "jl": "a28528b9fe21e6ba2b5eddbdf1d1a7af2720b79f619ff139708c455609471f01"
+      "jl": "5740a102dbe19008b19d039565a442fd010e8e26dc3d57719dcf49768e01ef06"
     },
-    "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl": "a28528b9fe21e6ba2b5eddbdf1d1a7af2720b79f619ff139708c455609471f01",
+    "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl": "5740a102dbe19008b19d039565a442fd010e8e26dc3d57719dcf49768e01ef06",
     "src/sc_neurocore/accel/mojo/neurons/cazelles_map": {
-      "mojo": "4d1ab49084c9f3170f863a334e78e0300076d544fa81da7b8cf6493eaef71326"
+      "mojo": "533b6b2ef3819d75662e9bcd1765797e34ae3a31af8ed3b955ad13bb4ef4cec8"
     },
-    "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo": "4d1ab49084c9f3170f863a334e78e0300076d544fa81da7b8cf6493eaef71326",
+    "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo": "533b6b2ef3819d75662e9bcd1765797e34ae3a31af8ed3b955ad13bb4ef4cec8",
     "src/sc_neurocore/neurons/models/cazelles_map": {
-      "py": "c46acd1475fc68d02efbdc0807f064e36b1f6f46017efca19ed2029c1e4162e5"
+      "py": "53c16b19f5d8a5411c86f0a90bbcefe7b0966787414805a0151df8c678137d21"
     },
-    "src/sc_neurocore/neurons/models/cazelles_map.py": "c46acd1475fc68d02efbdc0807f064e36b1f6f46017efca19ed2029c1e4162e5"
+    "src/sc_neurocore/neurons/models/cazelles_map.py": "53c16b19f5d8a5411c86f0a90bbcefe7b0966787414805a0151df8c678137d21"
   },
   "workload": {
-    "a": 3.8,
-    "current": 0.05,
+    "alpha": 0.0,
+    "current": 0.0,
     "n_steps": 2000000,
+    "profile": "Figure 1 defaults",
     "repeats": 5
   }
 }

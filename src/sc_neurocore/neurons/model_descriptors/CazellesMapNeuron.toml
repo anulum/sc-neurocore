@@ -11,21 +11,22 @@ schema_version = 2
 name = "Cazelles Map"
 class_name = "CazellesMapNeuron"
 module = "cazelles_map"
-display_name = ""
-summary = "Cazelles et al. 2001 — simple 2D bursting map neuron."
+display_name = "Cazelles four-branch bursting map"
+summary = "Cazelles et al. 2001 scalar piecewise-linear fast/slow chaotic map"
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "burst-cycle dynamics",
+    "coupled-map studies",
+]
+hardware_fit = [
+    "piecewise-affine fixed-point datapath",
+]
 behavior_tags = [
-    "adapting",
-    "chaotic",
     "excitable",
     "irregular",
-    "rate-coded",
-    "tonic",
 ]
 
 [provenance]
@@ -34,47 +35,144 @@ authors = [
 ]
 year = 2001
 doi = "10.1209/epl/i2001-00548-y"
+derivation_note = "Equation and Figure-1 parameters from the primary paper. Exact breakpoints use the disclosed right-continuous convention because the source lists strict open intervals."
 
 [state.x]
 init = 0.1
 
-[state.y]
-init = 0.0
-
-[parameters.a]
-default = 3.8
+[parameters.alpha]
+default = 0.0
 unit = "1"
-meaning = "fast-map control parameter"
+meaning = "source self-feedback coefficient"
 range = [
     0.0,
-    5.0,
+    0.999999999999,
 ]
 
-[parameters.epsilon]
-default = 0.01
+[parameters.exponent]
+default = 2.0
 unit = "1"
-meaning = "slow-variable timescale; small values give slow bursting"
+meaning = "source exponent m, restricted to 1 or 2"
 range = [
-    0.0001,
-    0.5,
-]
-
-[parameters.sigma]
-default = 0.5
-unit = "1"
-meaning = "set-point of the fast variable in the slow-variable update"
-range = [
-    -2.0,
+    1.0,
     2.0,
 ]
 
-[parameters.x_threshold]
-default = 0.9
+[parameters.x0]
+default = 0.0
 unit = "1"
-meaning = "level on x at which a spike is registered"
+meaning = "lower map-domain boundary"
 range = [
-    -2.0,
-    2.0,
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.x1]
+default = 0.4
+unit = "1"
+meaning = "first branch breakpoint and slow-regime boundary"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.x2]
+default = 0.6
+unit = "1"
+meaning = "second branch breakpoint"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.x3]
+default = 0.7
+unit = "1"
+meaning = "third branch breakpoint"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.x4]
+default = 1.0
+unit = "1"
+meaning = "upper map-domain boundary"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.a1]
+default = 0.0
+unit = "1"
+meaning = "branch-1 intercept"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.a2]
+default = 1.5
+unit = "1"
+meaning = "branch-2 intercept"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.a3]
+default = -0.9
+unit = "1"
+meaning = "branch-3 intercept"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.a4]
+default = 1.4
+unit = "1"
+meaning = "branch-4 intercept"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.b1]
+default = 1.05
+unit = "1"
+meaning = "branch-1 slope"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.b2]
+default = -1.25
+unit = "1"
+meaning = "branch-2 slope"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.b3]
+default = 1.5
+unit = "1"
+meaning = "branch-3 slope"
+range = [
+    -1000000.0,
+    1000000.0,
+]
+
+[parameters.b4]
+default = -1.0
+unit = "1"
+meaning = "branch-4 slope"
+range = [
+    -1000000.0,
+    1000000.0,
 ]
 
 [integration]
@@ -82,8 +180,7 @@ dt = 1.0
 method = "map"
 
 [dynamics]
-x = "min(2.0, max(-2.0, a * x * (1.0 - x) - y + I))"
-y = "y + epsilon * (x - sigma)"
+x = "f_branch(x) + alpha * x^m + I"
 
 [backends.python]
 status = "implemented"
@@ -106,23 +203,26 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "4264c3f9f94eef93e4f641afc91b0f97aff57f492838b2cfd32ce17335099967"
+reference_config = "{\"n_steps\":1000,\"current\":0.0,\"backend\":\"python\",\"parameters\":\"Figure 1 defaults\"}"
+golden_trace_sha256 = "4b796bfdfe67be814057bcaa30d2c3d035e8d701f11c4d1aeaabb260b971ce7f"
 
 [documentation]
 slug = "models/cazelles_map"
-notes = ""
+notes = "Slow-regime entry is the maintained burst-cycle event; current is an additive extension and exact breakpoints are right-continuous."
 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "schema-DSL Cazelles map at I=0.5,1.0,2.0 over 30 iterations"
-tolerance = "hand/TOML/JSON exact; Q16.16 event-exact with state error below 0.0004; I=0.05 excluded"
-evidence = "tests/test_cosim_cazelles_map.py::test_q1616_short_window_trajectory"
+operating_point = "Figure-1 source orbit at alpha=0 and bounded alpha/current probes"
+tolerance = "binary64 exact for Python/Rust/Julia/Go; Mojo one-step ULP-bounded with the 600-step burst count differing by at most one; Q16.16 event-exact through the first discontinuous return with state error at most 0.0062; longer chaotic trajectories are excluded"
+evidence = "tests/test_reference_cazelles_map.py; tests/test_cazelles_map_backends.py; tests/test_cosim_cazelles_map.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_cazelles_map.py::test_q1616_short_window_trajectory"
-target_tier = "H1"
-terminal_reason = "Sensitive discrete map validated by bounded Q16.16 trajectories; higher silicon rungs need synthesis and timing evidence."
+synthesised = true
+cosim_evidence = "tests/test_cosim_cazelles_map.py"
+synth_report = "hdl/reports/yosys_cazelles_map_q88_2026-08-28.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Generated fixed-point co-simulation, coarse synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."

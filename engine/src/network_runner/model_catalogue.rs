@@ -89,6 +89,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "IbarzTanakaMap",
         "MedvedevMap",
         "CazellesMap",
+        "SCClippedLogisticBurstingMap",
         "CourageNekorkinMap",
         "AiharaMap",
         "SCChaoticMap",

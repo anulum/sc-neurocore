@@ -4,19 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Polyglot parity tests for the Cazelles 2001 bursting map
-
-"""Cross-backend parity for ``CazellesMapNeuron.simulate``.
-
-The map is exact floating-point arithmetic, so Rust, Julia and Go reproduce
-the NumPy reference **bit-for-bit** even in the chaotic regime (a = 3.8). Mojo's
-release build contracts ``y + epsilon*(x - sigma)`` into a fused multiply-add
-(one rounding instead of two); each step therefore agrees to within a couple of
-ULP, which in the chaotic regime the map amplifies into a visible trace gap.
-That is correct numerical behaviour, not a defect — the per-step physical-state
-agreement stays tightly ULP-bounded and the spike counts match — and matches the
-documented Mojo FMA-parity precedent for wong_wang / wilson_cowan.
-"""
+# SC-NeuroCore — Cazelles source-map runtime parity
 
 from __future__ import annotations
 
@@ -26,138 +14,113 @@ import pytest
 from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
 
-# 2 ULP at the order-1 magnitudes the map visits.
-_ULP = float(np.spacing(1.0))
-_STEP_TOL = 8.0 * _ULP
+
+def _run(backend: str, *, n_steps: int = 600) -> tuple[np.ndarray, int, float]:
+    neuron = CazellesMapNeuron()
+    trace, events = neuron.simulate(n_steps, 0.0, backend=backend)
+    return trace, events, neuron.x
 
 
-def _run(backend: str, *, a: float = 3.8, n: int = 4000, current: float = 0.05) -> tuple:
-    neuron = CazellesMapNeuron(a=a)
-    trace, spikes = neuron.simulate(n, current, backend=backend)
-    return trace, spikes, neuron.x, neuron.y
+@pytest.mark.parametrize("backend", ["rust", "julia", "go"])
+def test_exact_runtime_parity(backend: str) -> None:
+    assert {
+        "rust": cazelles_map._HAS_RUST,
+        "julia": cazelles_map._ensure_julia_loaded(),
+        "go": cazelles_map._ensure_go_loaded(),
+    }[backend]
+    expected = _run("python")
+    observed = _run(backend)
+    np.testing.assert_array_equal(observed[0], expected[0])
+    assert observed[1:] == expected[1:]
 
 
-def _rust() -> bool:
-    return cazelles_map._HAS_RUST
+def test_mojo_source_orbit_event_parity_and_one_step_ulp_bound() -> None:
+    assert cazelles_map._ensure_mojo_loaded()
+    _reference, expected_events, _xf = _run("python")
+    _observed, events, _mojo_xf = _run("mojo")
+    assert expected_events == 7
+    assert abs(events - expected_events) <= 1
+
+    rng = np.random.default_rng(2026)
+    tolerance = 8.0 * float(np.spacing(1.0))
+    for _ in range(2000):
+        x = float(rng.uniform(0.001, 0.999))
+        if min(abs(x - point) for point in (0.4, 0.6, 0.7)) < 1.0e-6:
+            continue
+        expected, expected_event = CazellesMapNeuron(x=x).simulate(1, backend="python")
+        observed, event = CazellesMapNeuron(x=x).simulate(1, backend="mojo")
+        assert event == expected_event
+        assert abs(float(observed[0]) - float(expected[0])) <= tolerance
 
 
-def _julia() -> bool:
-    return cazelles_map._ensure_julia_loaded()
+def test_figure_one_parameters_and_all_four_branches() -> None:
+    probes = (
+        (0.2, 0.21),
+        (0.5, 0.875),
+        (0.65, 0.07500000000000007),
+        (0.8, 0.5999999999999999),
+    )
+    for x, expected in probes:
+        neuron = CazellesMapNeuron(x=x)
+        assert neuron.step(0.0) == int(x >= 0.4 and expected < 0.4)
+        assert neuron.x == pytest.approx(expected, abs=2.0e-16)
 
 
-def _go() -> bool:
-    return cazelles_map._ensure_go_loaded()
+@pytest.mark.parametrize(
+    ("x", "expected"),
+    ((0.0, 0.0), (0.4, 1.0), (0.6, 0.0), (0.7, 0.7), (1.0, 0.3999999999999999)),
+)
+def test_disclosed_right_continuous_breakpoints(x: float, expected: float) -> None:
+    neuron = CazellesMapNeuron(x=x)
+    neuron.step(0.0)
+    assert neuron.x == expected
 
 
-def _mojo() -> bool:
-    return cazelles_map._ensure_mojo_loaded()
+def test_alpha_exponent_and_additive_input_extensions() -> None:
+    linear = CazellesMapNeuron(x=0.2, alpha=0.1, exponent=1)
+    quadratic = CazellesMapNeuron(x=0.2, alpha=0.1, exponent=2)
+    linear.step(0.01)
+    quadratic.step(0.01)
+    assert linear.x == pytest.approx(0.24)
+    assert quadratic.x == pytest.approx(0.224)
 
 
-_BIT_EXACT = [("rust", _rust), ("julia", _julia), ("go", _go)]
-_CHAOTIC_AND_REGULAR = [1.5, 2.0, 2.8, 3.2, 3.8]
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        {"x": float("nan")},
+        {"alpha": 1.0},
+        {"exponent": 3},
+        {"exponent": True},
+        {"x1": 0.6, "x2": 0.4},
+        {"x": -0.1},
+    ),
+)
+def test_invalid_construction_is_rejected(kwargs: dict[str, float]) -> None:
+    with pytest.raises(ValueError):
+        CazellesMapNeuron(**kwargs)
 
 
-# ───────────────────── bit-exact backends (rust/julia/go) ─────────────────────
+def test_nonfinite_and_out_of_domain_updates_are_atomic() -> None:
+    neuron = CazellesMapNeuron()
+    before = neuron.x
+    with pytest.raises(ValueError, match="current must be finite"):
+        neuron.step(float("nan"))
+    assert neuron.x == before
+    with pytest.raises(FloatingPointError, match="left its configured domain"):
+        neuron.step(2.0)
+    assert neuron.x == before
 
 
-@pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
-@pytest.mark.parametrize("a", _CHAOTIC_AND_REGULAR)
-def test_bit_exact_trace(backend: str, available, a: float) -> None:
-    if not available():
-        pytest.skip(f"{backend} Cazelles backend unavailable")
-    ref_trace, ref_spikes, rx, ry = _run("python", a=a)
-    trace, spikes, xf, yf = _run(backend, a=a)
-    np.testing.assert_array_equal(trace, ref_trace)
-    assert spikes == ref_spikes
-    assert xf == rx and yf == ry
-
-
-@pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
-def test_bit_exact_empty_and_single(backend: str, available) -> None:
-    if not available():
-        pytest.skip(f"{backend} Cazelles backend unavailable")
-    for n in (0, 1, 2):
-        ref, rs, rx, ry = _run("python", n=n)
-        got, gs, gx, gy = _run(backend, n=n)
-        np.testing.assert_array_equal(got, ref)
-        assert (gs, gx, gy) == (rs, rx, ry)
-
-
-# ───────────────────────────── Mojo (FMA, ULP-bounded) ─────────────────────────
-
-
-@pytest.mark.skipif(not _mojo(), reason="Mojo Cazelles backend unavailable")
-@pytest.mark.parametrize("a", [1.5, 2.0, 2.8, 3.2])
-def test_mojo_regular_regime_ulp_bounded(a: float) -> None:
-    # Outside the chaotic regime, single-ULP FMA differences do not amplify.
-    ref, _ref_spikes, _rx, _ry = _run("python", a=a, n=2000)
-    got, _spikes, _xf, _yf = _run("mojo", a=a, n=2000)
-    np.testing.assert_allclose(got, ref, atol=1e-12, rtol=0.0)
-
-
-@pytest.mark.skipif(not _mojo(), reason="Mojo Cazelles backend unavailable")
-def test_mojo_per_step_within_two_ulp() -> None:
-    rng = np.random.default_rng(7)
-    worst = 0.0
-    for _ in range(5000):
-        x = float(rng.uniform(-1.0, 1.0))
-        y = float(rng.uniform(-1.0, 1.0))
-        cur = float(rng.uniform(-0.5, 0.5))
-        ref, _rs, rx, ry = CazellesMapNeuron(x=x, y=y)._simulate_python(1, cur)
-        got, _gs, gx, gy = CazellesMapNeuron(x=x, y=y)._simulate_mojo(1, cur)
-        worst = max(worst, abs(ref[0] - got[0]), abs(rx - gx), abs(ry - gy))
-    assert worst <= _STEP_TOL, f"per-step Mojo gap {worst} exceeds {_STEP_TOL}"
-
-
-@pytest.mark.skipif(not _mojo(), reason="Mojo Cazelles backend unavailable")
-def test_mojo_spike_count_matches_in_chaotic_regime() -> None:
-    # The chaotic trace diverges by ULP amplification, but the coarse spike
-    # count (threshold crossings) is robust and must still agree.
-    _ref, ref_spikes, _rx, _ry = _run("python", a=3.8, n=4000)
-    _got, spikes, _xf, _yf = _run("mojo", a=3.8, n=4000)
-    assert spikes == ref_spikes
-
-
-# ───────────────────────────── dispatch + algorithm ───────────────────────────
-
-
-def test_auto_matches_python() -> None:
-    ref, ref_spikes, _rx, _ry = _run("python")
-    got, spikes, _xf, _yf = _run("auto")
-    np.testing.assert_allclose(got, ref, atol=1e-12, rtol=0.0)
-    assert spikes == ref_spikes
-
-
-def test_invalid_backend_raises() -> None:
-    with pytest.raises(ValueError, match="backend must be"):
-        CazellesMapNeuron().simulate(10, 0.0, backend="cuda")
-
-
-def test_negative_n_steps_raises() -> None:
-    with pytest.raises(ValueError, match="n_steps must be non-negative"):
-        CazellesMapNeuron().simulate(-1, 0.0)
-
-
-def test_simulate_matches_repeated_step() -> None:
-    # The N-step path must equal calling step() N times (same state evolution).
-    trace_a, spikes_a = CazellesMapNeuron().simulate(50, 0.05, backend="python")
-    manual = []
-    spikes_b = 0
-    stepper = CazellesMapNeuron()
-    for _ in range(50):
-        spikes_b += stepper.step(0.05)
-        manual.append(stepper.x)
-    np.testing.assert_array_equal(trace_a, np.asarray(manual, dtype=np.float64))
-    assert spikes_a == spikes_b
-
-
-def test_bursting_produces_spikes() -> None:
-    # a = 3.8 with drive must produce threshold crossings (bursting dynamics).
-    _trace, spikes = CazellesMapNeuron(a=3.8).simulate(2000, 0.05, backend="python")
-    assert spikes > 0
-
-
-def test_long_run_is_finite() -> None:
-    trace, _spikes = CazellesMapNeuron(a=3.8).simulate(100_000, 0.05, backend="python")
-    assert np.all(np.isfinite(trace))
-    assert np.all(trace >= -2.0) and np.all(trace <= 2.0)
+def test_simulation_validation_and_state_commit() -> None:
+    with pytest.raises(ValueError, match="integer"):
+        CazellesMapNeuron().simulate(True)
+    with pytest.raises(ValueError, match="between"):
+        CazellesMapNeuron().simulate(-1)
+    with pytest.raises(ValueError, match="backend"):
+        CazellesMapNeuron().simulate(1, backend="cuda")
+    neuron = CazellesMapNeuron()
+    trace, events = neuron.simulate(600, backend="python")
+    assert events == 7
+    assert neuron.x == trace[-1]
+    assert np.all((trace >= 0.0) & (trace <= 1.0))

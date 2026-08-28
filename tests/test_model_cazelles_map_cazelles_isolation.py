@@ -17,7 +17,7 @@ class TestCazellesIsolation:
     def test_construction(self):
         n = CazellesMapNeuron()
         assert n.x == 0.1
-        assert n.y == 0.0
+        assert n.alpha == 0.0
 
     def test_step_returns_binary(self):
         n = CazellesMapNeuron()
@@ -25,35 +25,32 @@ class TestCazellesIsolation:
 
     def test_spikes_under_drive(self):
         n = CazellesMapNeuron()
-        spikes = sum(n.step(0.2) for _ in range(5000))
-        assert spikes > 100
+        spikes = sum(n.step(0.0) for _ in range(5000))
+        assert spikes > 50
 
-    def test_slow_variable_modulates(self):
-        """y should change from initial under sustained drive."""
+    def test_source_orbit_visits_fast_and_slow_regimes(self):
         n = CazellesMapNeuron()
-        y_init = n.y
-        for _ in range(1000):
-            n.step(0.2)
-        assert n.y != y_init
+        trace, events = n.simulate(600, backend="python")
+        assert events == 7
+        assert np.any(trace < n.x1)
+        assert np.any(trace >= n.x1)
 
     def test_x_clipped(self):
-        """x should stay in [-2, 2] (np.clip in step)."""
+        """The source orbit stays in the Figure-1 domain."""
         n = CazellesMapNeuron()
         for _ in range(10000):
-            n.step(1.0)
-        assert -2.0 <= n.x <= 2.0
+            n.step(0.0)
+        assert n.x0 <= n.x <= n.x4
 
     def test_state_finite(self):
         n = CazellesMapNeuron()
         for _ in range(10000):
-            n.step(0.5)
+            n.step(0.0)
         assert np.isfinite(n.x)
-        assert np.isfinite(n.y)
 
     def test_reset(self):
         n = CazellesMapNeuron()
         for _ in range(100):
-            n.step(0.2)
+            n.step(0.0)
         n.reset()
         assert n.x == 0.1
-        assert n.y == 0.0

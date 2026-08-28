@@ -12,6 +12,7 @@ Jobs: **40**
 | AlphaNeuron | alpha | `sc_alpha_synapse_lif` | `v_out` | Q32.32 | 4 |
 | COBALIFNeuron | coba_lif | `sc_cobalifneuron` | `v_out` | Q24.24 | 4 |
 | CazellesMapNeuron | cazelles_map | `sc_cazelles_map` | `x_out` | Q8.8 | 4 |
+| SCClippedLogisticBurstingMapNeuron | sc_clipped_logistic_bursting_map | `sc_clipped_logistic_bursting_map` | `x_out`, `y_out` | Q8.8 | 4 |
 | ChialvoMapNeuron | chialvo_map | `sc_chialvo_map` | `x_out` | Q8.8 | 4 |
 | ConnorStevensNeuron | connor_stevens | `sc_connor_stevens` | `v_out` | Q16.16 | 4 |
 | CourageNekorkinMapNeuron | courage_nekorkin_map | `sc_courbage_nekorkin_map` | `x_out` | Q8.8 | 4 |

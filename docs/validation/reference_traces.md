@@ -30,7 +30,8 @@ and event-hash fields into the deterministic trace schema.
 |-------|--------|--------|------------|
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | Independent explicit-Euler re-derivation of the subthreshold equations from `neurons/model_schemas/adex.toml` with DOI-backed schema provenance |
 | `aihara_map_primary` | `aihara_map` | `hand_and_universal_dsl` | Independent literal iteration of Aihara (1989), Eqs. 10–12, using the Figure 4 chaotic parameters and Eq. 12 level waveform shaper; publisher article DOI `10.1016/0375-9601(90)90136-C` |
-| `cazelles_map_bursting_doi` | `cazelles_map` | `universal_dsl` | Independent simultaneous clipped logistic fast/slow map iteration (Cazelles, Courbage & Rabinovich 2001, `method="map"`, level `x >= x_threshold` event) from `neurons/model_schemas/cazelles_map.toml` with DOI-backed schema provenance |
+| `cazelles_map_bursting_doi` | `cazelles_map` | `universal_dsl` | Independent iteration of Cazelles, Courbage & Rabinovich (2001), equation (1) and Figure-1 scalar four-branch map, with the maintained slow-regime-entry event and disclosed right-continuous exact-breakpoint convention |
+| `sc_clipped_logistic_bursting_map_project` | `sc_clipped_logistic_bursting_map` | `universal_dsl` | Independent simultaneous iteration of the retained two-state clipped-logistic project recurrence without whole-model publication attribution |
 | `chialvo_map_doi` | `chialvo_map` | `universal_dsl` | Independent simultaneous iteration of Chialvo (1995), Eq. 1 (`method="map"`), with the maintained upward `x_threshold` observation separated from DOI-sourced dynamics |
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `courage_nekorkin_map_autonomous_doi` | `courage_nekorkin_map` | `universal_dsl` | Independent simultaneous iteration of Courbage, Nekorkin & Vdovin (2007), equations 3–5 (`method="map"`, three fast branches, Heaviside discontinuity, upward `x >= x_threshold` crossing), with DOI-backed schema provenance |
@@ -241,9 +242,9 @@ reset). Its event marks pre-update occupancy of the rightmost branch that commit
 the hard reset; it is not a rising crossing or a positive-level count. The former
 upward-crossing convention remains a separate count-neutral SC identity with its
 own project receipt and is not substituted into this DOI-backed record. The Cazelles entry independently iterates
-the simultaneous clipped logistic fast/slow map at `I=0.5`; the 30-step window exercises interior
-and lower-clip branches and records two level events. The reference is deliberately bounded because
-the `a=3.8` fast map amplifies fixed-point perturbations on longer chaotic trajectories. The
+the scalar four-branch source map at `I=0` for 600 steps, records seven slow-regime entries, and
+visits every published branch. The former two-state clipped-logistic recurrence has its own
+count-neutral project receipt and is not substituted into the DOI-backed record. The
 Chialvo entry independently iterates the DOI-sourced exponential two-state map for 100 iterations,
 records two maintained upward crossings with the first at iteration 33, and derives both state
 feature sets without calling the hand model or schema runner. The threshold observation is

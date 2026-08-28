@@ -10,7 +10,7 @@ return (state stored in `localStorage`).
 | Step | Title | What It Explains |
 |------|-------|-----------------|
 | 1 | Welcome | What the Studio does — design, train, compile, deploy SNNs |
-| 2 | Model Browser | 159 runtime catalogue entries with parameter sliders |
+| 2 | Model Browser | 179 runtime catalogue entries with parameter sliders |
 | 3 | ODE Mode | Custom equations with syntax highlighting |
 | 4 | Analysis Views | 18+ views: trace, phase, ISI, f-I, bifurcation, heatmap |
 | 5 | FPGA Pipeline | Compiler Inspector → Synthesis Dashboard |

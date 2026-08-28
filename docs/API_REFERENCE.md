@@ -23259,21 +23259,15 @@ state.
 ## Module `neurons.models.cazelles_map`
 
 ### Class `CazellesMapNeuron`
-Cazelles et al. 2001 — simple 2D bursting map neuron.
+Cazelles et al. (2001) scalar four-branch bursting map.
 
-x(n+1) = f(x(n)) - y(n) + I
-y(n+1) = y(n) + epsilon * (x(n) - sigma)
-
-f(x) = a*x*(1 - x)    (logistic-like fast dynamics)
-
-Bursting arises from slow y modulation of fast x.
-
-Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001). Europhys. Lett. 56(4):504-509.
-
+- **__post_init__**()
 - **step**(current)
+  - Advance once; rejected candidates leave ``x`` unchanged.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
+  - Return the post-step scalar trace and slow-regime entry count.
 - **reset**()
+  - Restore Figure 1's initial state while preserving parameters.
 
 ---
 
@@ -25823,6 +25817,28 @@ source-faithful paper model.
 
 ---
 
+## Module `neurons.models.sc_clipped_logistic_bursting_map`
+
+### Class `SCClippedLogisticBurstingMapNeuron`
+Retained project-defined two-state clipped-logistic bursting recurrence.
+
+x(n+1) = f(x(n)) - y(n) + I
+y(n+1) = y(n) + epsilon * (x(n) - sigma)
+
+f(x) = a*x*(1 - x)    (logistic-like fast dynamics)
+
+Bursting arises from slow y modulation of fast x.
+
+This is a project-defined recurrence without whole-model publication
+attribution.
+
+- **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
+- **reset**()
+
+---
+
 ## Module `neurons.models.sc_decoupled_adaptation_ion_mass`
 
 ### Class `SCDecoupledAdaptationIonMassNeuron`
@@ -26937,6 +26953,9 @@ state_variables:
     State variables to record after each timestep. May be empty for a
     genuinely stateless deterministic threshold model; event features are
     still recorded.
+parameter_overrides:
+    Optional schema parameter values that define the enrolled operating
+    profile without changing the bundled schema defaults.
 
 
 ### Class `ReferenceTraceSpec`

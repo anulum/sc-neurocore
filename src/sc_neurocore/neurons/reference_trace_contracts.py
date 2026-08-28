@@ -11,8 +11,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
+from types import MappingProxyType
 
 REFERENCE_TRACE_SCHEMA_VERSION = "sc-neurocore.reference-trace.v1"
 
@@ -90,12 +91,16 @@ class ReferenceTraceProtocol:
         State variables to record after each timestep. May be empty for a
         genuinely stateless deterministic threshold model; event features are
         still recorded.
+    parameter_overrides:
+        Optional schema parameter values that define the enrolled operating
+        profile without changing the bundled schema defaults.
     """
 
     dt: float
     steps: int
     inputs: Mapping[str, float]
     state_variables: tuple[str, ...]
+    parameter_overrides: Mapping[str, float] = field(default_factory=lambda: MappingProxyType({}))
 
 
 @dataclass(frozen=True, slots=True)

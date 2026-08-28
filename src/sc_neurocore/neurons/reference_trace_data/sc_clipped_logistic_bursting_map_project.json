@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "sc_clipped_logistic_bursting_map_project",
+  "model": {
+    "schema_name": "sc_clipped_logistic_bursting_map",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 30,
+    "inputs": {
+      "I": 0.5
+    },
+    "state_variables": [
+      "x",
+      "y"
+    ]
+  },
+  "provenance": {
+    "kind": "project_recurrence_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/sc_clipped_logistic_bursting_map.toml",
+    "equation": "Retained project-defined simultaneous clipped-logistic fast/slow recurrence iterated with method=map; no whole-model publication attribution.",
+    "citation": "project:sc-neurocore-clipped-logistic-bursting-map"
+  },
+  "expected_features": {
+    "spike_count": 2.0,
+    "first_spike_step": 2.0,
+    "final.x": -2.0,
+    "min.x": -2.0,
+    "max.x": 1.4405583401908113,
+    "mean.x": -1.6053245197447905,
+    "final.y": -0.6105973559234374,
+    "min.y": -0.6105973559234374,
+    "max.y": 0.013560896880846999,
+    "mean.y": -0.2582427439908715
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

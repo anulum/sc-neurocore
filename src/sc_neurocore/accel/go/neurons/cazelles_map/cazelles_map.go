@@ -4,20 +4,8 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go Cazelles 2001 bursting map (parity with cazelles_map.py)
+// SC-NeuroCore — Go Cazelles four-branch map
 
-// Package main exposes a C-ABI shared library
-// (`go build -buildmode=c-shared -o libcazelles.so cazelles_map.go`) that the
-// Python dispatcher loads via ctypes.
-//
-// Parity contract: `cazelles_map_simulate_c` reproduces
-// `sc_neurocore.neurons.models.cazelles_map.CazellesMapNeuron.simulate`
-// bit-for-bit. The map is exact floating-point arithmetic (a*x*(1-x),
-// additions, a clamp), so an identical operation order yields an identical
-// trace, spike count, and final state.
-//
-// Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001).
-// Europhys. Lett. 56(4):504-509.
 package main
 
 /*
@@ -25,53 +13,81 @@ package main
 */
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
 
-func clampUnit(v float64) float64 {
-	if v < -2.0 {
-		return -2.0
+func finite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
 	}
-	if v > 2.0 {
-		return 2.0
-	}
-	return v
+	return true
 }
 
-// cazelles_map_simulate_c runs n steps of the map under a constant input.
-// The caller allocates a trace buffer of length n+2: indices [0, n) receive
-// the x trace, index n the final x, index n+1 the final y. Returns the spike
-// count.
-//
 //export cazelles_map_simulate_c
 func cazelles_map_simulate_c(
-	x0, y0, a, epsilon, sigma, xThreshold C.double,
-	nSteps C.int, current C.double,
+	x, alpha, x0, x1, x2, x3, x4 C.double,
+	a1, a2, a3, a4, b1, b2, b3, b4 C.double,
+	exponent, nSteps C.int, current C.double,
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
-	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+2)
-	x := float64(x0)
-	y := float64(y0)
-	aa := float64(a)
-	eps := float64(epsilon)
-	sig := float64(sigma)
-	thr := float64(xThreshold)
-	cur := float64(current)
-	var spikes int64
-	for t := 0; t < n; t++ {
-		f := aa * x * (1.0 - x)
-		xNew := f - y + cur
-		yNew := y + eps*(x-sig)
-		x = clampUnit(xNew)
-		y = yNew
-		trace[t] = x
-		if x >= thr {
-			spikes++
-		}
+	if n < 0 {
+		return -1
 	}
-	trace[n] = x
-	trace[n+1] = y
-	return C.longlong(spikes)
+	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+1)
+	xv := float64(x)
+	av := float64(alpha)
+	lo0, lo1, lo2 := float64(x0), float64(x1), float64(x2)
+	lo3, lo4 := float64(x3), float64(x4)
+	aa1, aa2, aa3, aa4 := float64(a1), float64(a2), float64(a3), float64(a4)
+	bb1, bb2, bb3, bb4 := float64(b1), float64(b2), float64(b3), float64(b4)
+	cur := float64(current)
+	exp := int(exponent)
+	if !finite(xv, av, lo0, lo1, lo2, lo3, lo4, aa1, aa2, aa3, aa4, bb1, bb2, bb3, bb4, cur) ||
+		av < 0.0 || av >= 1.0 || (exp != 1 && exp != 2) ||
+		!(lo0 < lo1 && lo1 < lo2 && lo2 < lo3 && lo3 < lo4) || xv < lo0 || xv > lo4 {
+		trace[n] = xv
+		return -1
+	}
+	var events int64
+	for index := 0; index < n; index++ {
+		var base float64
+		if xv < lo1 {
+			base = aa1 + bb1*xv
+		} else if xv < lo2 {
+			base = aa2 + bb2*xv
+		} else if xv < lo3 {
+			base = aa3 + bb3*xv
+		} else {
+			base = aa4 + bb4*xv
+		}
+		power := xv
+		if exp == 2 {
+			power = xv * xv
+		}
+		candidate := base + av*power + cur
+		tolerance := 8.0 * 2.220446049250313e-16 * math.Max(1.0, math.Max(math.Abs(lo0), math.Abs(lo4)))
+		if candidate < lo0 && candidate >= lo0-tolerance {
+			candidate = lo0
+		} else if candidate > lo4 && candidate <= lo4+tolerance {
+			candidate = lo4
+		}
+		if !finite(candidate) || candidate < lo0 || candidate > lo4 {
+			trace[n] = xv
+			return -2
+		}
+		if xv >= lo1 && candidate < lo1 {
+			events++
+		}
+		xv = candidate
+		trace[index] = xv
+	}
+	trace[n] = xv
+	return C.longlong(events)
 }
 
-func main() {} // required for c-shared
+func main() {}

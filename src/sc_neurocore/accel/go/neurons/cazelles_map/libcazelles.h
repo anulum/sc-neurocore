@@ -21,7 +21,7 @@ extern const char *_GoStringPtr(_GoString_ s);
 /* Start of preamble from import "C" comments.  */
 
 
-#line 23 "cazelles_map.go"
+#line 11 "cazelles_map.go"
 
 #include <stdint.h>
 
@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int cazelles_map_simulate_c(double x0, double y0, double a, double epsilon, double sigma, double xThreshold, int nSteps, double current, double* tracePtr);
+extern long long int cazelles_map_simulate_c(double x, double alpha, double x0, double x1, double x2, double x3, double x4, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, int exponent, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

@@ -102,8 +102,25 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="cazelles_map",
         class_name="CazellesMapNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosim_cazelles_map.py::test_q1616_short_window_trajectory",
-        operating_point=("schema-DSL Cazelles map at I=0.5,1.0,2.0 over 30 iterations"),
+        evidence=(
+            "tests/test_cosim_cazelles_map.py::"
+            "test_q1616_tracks_source_orbit_until_first_discontinuous_return"
+        ),
+        operating_point=("Figure-1 source orbit over the first 55 iterations"),
+        tolerance=(
+            "hand/TOML/JSON exact; Q16.16 event-exact with state error at most "
+            "0.0062; the long chaotic orbit is an explicit excluded boundary"
+        ),
+    ),
+    EnrolledEvidence(
+        schema_name="sc_clipped_logistic_bursting_map",
+        class_name="SCClippedLogisticBurstingMapNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_sc_clipped_logistic_bursting_map.py::"
+            "test_q1616_short_window_trajectory"
+        ),
+        operating_point=("retained recurrence at I=0.5,1.0,2.0 over 30 iterations"),
         tolerance=(
             "hand/TOML/JSON exact; Q16.16 event-exact with state error below "
             "0.0004; I=0.05 excluded"

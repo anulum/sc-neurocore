@@ -67,6 +67,10 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "quadratic_if": "quadratic_if_zero_current_analytic",
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
     "rulkov_map": "rulkov_map_driven_spiking_doi",
+    "sc_clipped_logistic_bursting_map": "sc_clipped_logistic_bursting_map_project",
+    "sc_four_state_glif": "sc_four_state_glif_constant_current_adaptation",
+    "sc_resetting_wilson_hr": "sc_resetting_wilson_hr_project",
+    "sc_scaled_reset_adaptive_if": "sc_scaled_reset_adaptive_if_driven_project",
     "sigmoid_rate": "sigmoid_rate_exact_relaxation_doi",
     "theta": "theta_constant_current_phase_analytic",
     "threshold_linear_rate": "threshold_linear_rate_rectifier_doi",
@@ -103,6 +107,7 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
     assert spec.provenance.kind == "analytic_closed_form"
     assert spec.protocol.state_variables == ("v",)
     assert spec.protocol.inputs["I"] == 1.0
+    assert spec.protocol.parameter_overrides == {}
 
 
 def test_reference_trace_corpus_dispatches_every_artefact_by_runner_class() -> None:

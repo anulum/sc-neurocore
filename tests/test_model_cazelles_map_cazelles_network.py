@@ -20,17 +20,14 @@ class TestCazellesNetwork:
 
     def test_network_spikes(self):
         pop = Population(CazellesMapNeuron, n=20, label="caz")
-        drive = PoissonInput(n=20, rate_hz=500.0, weight=0.3, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=0.5, dt=0.001, backend="python")
+        net = Network(pop, mon)
+        net.run(duration=0.6, dt=0.001, backend="python")
         assert mon.count > 0
 
     def test_with_projection(self):
         pop = Population(CazellesMapNeuron, n=10, label="caz")
         proj = Projection(pop, pop, weight=0.05, probability=0.3, seed=42)
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=0.3, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
-        net = Network(pop, proj, drive, mon)
-        net.run(duration=0.3, dt=0.001, backend="python")
+        net = Network(pop, proj, mon)
         assert isinstance(mon.spike_trains, dict)

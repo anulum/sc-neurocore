@@ -5,9 +5,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Cazelles bursting-map multi-language benchmark
+# SC-NeuroCore — Cazelles source-map multi-language benchmark
 
-"""Multi-language benchmark for ``CazellesMapNeuron.simulate``.
+"""Multi-language benchmark for the Cazelles four-branch source map.
 
 Times the N-step bursting-map recurrence across the polyglot backend chain
 (python / rust / julia / go / mojo), records the parity gap against the NumPy
@@ -41,7 +41,7 @@ from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
 
 N_STEPS = 2_000_000
-CURRENT = 0.05
+CURRENT = 0.0
 N_REPEATS = 5
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_HASH_PATHS = (
@@ -120,8 +120,8 @@ def main(argv: list[str]) -> int:
     )
     args = parser.parse_args(argv)
 
-    print("# Cazelles 2001 bursting-map N-step benchmark")
-    print(f"# Workload: {N_STEPS:,} steps, a=3.8 (chaotic), current={CURRENT}")
+    print("# Cazelles 2001 four-branch source-map N-step benchmark")
+    print(f"# Workload: {N_STEPS:,} Figure-1 steps, alpha=0, current={CURRENT}")
     print(f"# Repeats per backend: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
@@ -186,13 +186,18 @@ def main(argv: list[str]) -> int:
 
     print()
     print("# Note: rust/julia/go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo's release build contracts the multiply-add to an FMA; on the")
-    print("# chaotic a=3.8 trace a per-step ULP is amplified, so its parity gap")
-    print("# is non-zero by design (per-step agreement stays <=2 ULP).")
+    print("# Mojo is validated per step; FMA rounding is chaotically amplified")
+    print("# over the long orbit, so long-trace and event parity are not claimed.")
 
     report = {
         "benchmark": "cazelles_map_simulate",
-        "workload": {"n_steps": N_STEPS, "a": 3.8, "current": CURRENT, "repeats": N_REPEATS},
+        "workload": {
+            "n_steps": N_STEPS,
+            "profile": "Figure 1 defaults",
+            "alpha": 0.0,
+            "current": CURRENT,
+            "repeats": N_REPEATS,
+        },
         "environment": {
             "python": platform.python_version(),
             "numpy": np.__version__,

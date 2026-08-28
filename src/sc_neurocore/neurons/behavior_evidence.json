@@ -252,15 +252,11 @@
     },
     "CazellesMapNeuron": {
       "behavior_tags": [
-        "adapting",
-        "chaotic",
         "excitable",
-        "irregular",
-        "rate-coded",
-        "tonic"
+        "irregular"
       ],
       "drivable": true,
-      "result_sha256": "30663825111a670a8cfceedfbd1b46aeea9a4bf270c888211e03ccfb140e7de7",
+      "result_sha256": "7d5a5031409b68e222d2fc5f727f8de5bd235f9d87e745be902767aa90b6315f",
       "stochastic": false
     },
     "CerebellarBasketNeuron": {
@@ -1330,6 +1326,19 @@
       ],
       "drivable": true,
       "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
+    },
+    "SCClippedLogisticBurstingMapNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "chaotic",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "30663825111a670a8cfceedfbd1b46aeea9a4bf270c888211e03ccfb140e7de7",
       "stochastic": false
     },
     "SCDecoupledAdaptationIonMassNeuron": {

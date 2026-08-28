@@ -1733,12 +1733,12 @@
     },
     {
       "artefact": "benchmarks/results/bench_cazelles_map.json",
-      "description": "Cazelles 2001 bursting-map five-backend simulation evidence.",
+      "description": "Cazelles 2001 Figure-1 four-branch map five-backend simulation evidence.",
       "expected_values": {
         "benchmark": "cazelles_map_simulate",
         "environment.isolation": "non-isolated (loaded workstation)",
-        "workload.a": 3.8,
-        "workload.current": 0.05,
+        "workload.alpha": 0.0,
+        "workload.current": 0.0,
         "workload.n_steps": 2000000,
         "workload.repeats": 5
       },
@@ -1749,8 +1749,7 @@
             "backend_summary.python.spikes",
             "backend_summary.rust.spikes",
             "backend_summary.julia.spikes",
-            "backend_summary.go.spikes",
-            "backend_summary.mojo.spikes"
+            "backend_summary.go.spikes"
           ],
           "tolerance": 0.0
         }
@@ -1763,7 +1762,7 @@
           "max": 0.0
         },
         "backend_summary.mojo.parity_max_abs_diff": {
-          "max": 0.001
+          "max": 1.0
         },
         "backend_summary.rust.parity_max_abs_diff": {
           "max": 0.0
@@ -1798,6 +1797,67 @@
         "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go",
         "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/cazelles_map.jl",
         "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_clipped_logistic_bursting_map.json",
+      "description": "Retained clipped-logistic bursting-map five-backend simulation evidence.",
+      "expected_values": {
+        "benchmark": "sc_clipped_logistic_bursting_map_simulate",
+        "environment.isolation": "non-isolated (loaded workstation)",
+        "workload.a": 3.8,
+        "workload.current": 0.05,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "sc-clipped-logistic-bursting-map-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backend_summary.go.parity_max_abs_diff": {"max": 0.0},
+        "backend_summary.julia.parity_max_abs_diff": {"max": 0.0},
+        "backend_summary.mojo.parity_max_abs_diff": {"max": 0.001},
+        "backend_summary.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backend_summary.python.median_ms",
+        "backend_summary.python.min_ms",
+        "backend_summary.python.parity_max_abs_diff",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ms",
+        "backend_summary.rust.min_ms",
+        "backend_summary.rust.parity_max_abs_diff",
+        "backend_summary.rust.spikes",
+        "backend_summary.julia.median_ms",
+        "backend_summary.julia.min_ms",
+        "backend_summary.julia.parity_max_abs_diff",
+        "backend_summary.julia.spikes",
+        "backend_summary.go.median_ms",
+        "backend_summary.go.min_ms",
+        "backend_summary.go.parity_max_abs_diff",
+        "backend_summary.go.spikes",
+        "backend_summary.mojo.median_ms",
+        "backend_summary.mojo.min_ms",
+        "backend_summary.mojo.parity_max_abs_diff",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_sc_clipped_logistic_bursting_map.py": "source_hashes.benchmarks/bench_sc_clipped_logistic_bursting_map.py",
+        "engine/src/neurons/sc_clipped_logistic_bursting_map.rs": "source_hashes.engine/src/neurons/sc_clipped_logistic_bursting_map.rs",
+        "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py": "source_hashes.src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py",
+        "src/sc_neurocore/accel/go/neurons/sc_clipped_logistic_bursting_map/sc_clipped_logistic_bursting_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/sc_clipped_logistic_bursting_map/sc_clipped_logistic_bursting_map.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_clipped_logistic_bursting_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_clipped_logistic_bursting_map.jl",
+        "src/sc_neurocore/accel/mojo/neurons/sc_clipped_logistic_bursting_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/sc_clipped_logistic_bursting_map.mojo"
       }
     },
     {

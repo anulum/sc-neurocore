@@ -78,6 +78,7 @@ _MODEL_NAMES = {
     "SCUnitCapacitanceRespiratoryNeuron",
     "COBALIFNeuron",
     "CazellesMapNeuron",
+    "SCClippedLogisticBurstingMapNeuron",
     "ChayKeizerNeuron",
     "ChayNeuron",
     "ChialvoMapNeuron",

@@ -8,9 +8,7 @@
 
 from __future__ import annotations
 
-"""Full pipeline test for CazellesMapNeuron (Cazelles et al. 2001).
-
-2D bursting map neuron. Logistic-like fast dynamics x, slow modulation y."""
+"""Full-pipeline support for the scalar Cazelles et al. (2001) map."""
 import numpy as np
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
 from sc_neurocore.network.population import Population

@@ -4,59 +4,68 @@
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
-<!-- SC-NeuroCore — Cazelles fast/slow map model -->
+<!-- SC-NeuroCore — Cazelles source-faithful scalar map -->
 
 # Cazelles map
 
-`CazellesMapNeuron` is the maintained two-state discrete map based on Cazelles,
-Courbage, and Rabinovich (2001). One `step()` call advances one map iteration;
-there is no ODE timestep or numerical integrator.
+`CazellesMapNeuron` implements the one-dimensional map introduced by Cazelles,
+Courbage, and Rabinovich (2001). One `step()` call is one map iteration; no ODE
+integrator or physical timestep is implied.
 
 - Module: `sc_neurocore.neurons.models.cazelles_map`
-- Family: discrete fast/slow bursting map
-- State: fast coordinate `x`, slow coordinate `y`
-- Reference: [Cazelles, Courbage & Rabinovich (2001)](https://doi.org/10.1209/epl/i2001-00548-y)
+- State: scalar `x`
+- Primary source: [Cazelles, Courbage & Rabinovich (2001)](https://doi.org/10.1209/epl/i2001-00548-y)
 
-## Recurrence
+## Published recurrence
 
-Both state coordinates are computed from the old state and committed
-simultaneously:
+The source defines
 
 $$
-\begin{aligned}
-x_{n+1} &= \operatorname{clip}\left(
-    a x_n(1-x_n) - y_n + I_n, -2, 2
-\right), \\
-y_{n+1} &= y_n + \varepsilon(x_n-\sigma).
-\end{aligned}
+x_{n+1}=f(x_n)+\alpha x_n^m,
 $$
 
-After the candidate state is committed, the model emits a level event:
+where $m\in\{1,2\}$ and $f$ is the four-branch map
 
 $$
-s_{n+1} = \mathbf{1}[x_{n+1} \geq x_{\mathrm{threshold}}].
+f(x)=
+\begin{cases}
+a_1+b_1x & x_0 < x < x_1,\\
+a_2+b_2x & x_1 < x < x_2,\\
+a_3+b_3x & x_2 < x < x_3,\\
+a_4+b_4x & x_3 < x < x_4.
+\end{cases}
 $$
 
-This is level detection, not rising-edge detection. Consecutive iterations above
-the threshold each emit an event. An event does not reset either coordinate.
+Figure 1 supplies the default uncoupled orbit:
 
-The paired TOML and JSON schemas use `method = "map"`; their `dt = 1.0` value is
-the iteration unit required by the schema contract and is not physical time.
+| Quantity | Values |
+| --- | --- |
+| `alpha` | `0` |
+| `x0..x4` | `0`, `0.4`, `0.6`, `0.7`, `1` |
+| `a1..a4` | `0`, `1.5`, `-0.9`, `1.4` |
+| `b1..b4` | `1.05`, `-1.25`, `1.5`, `-1` |
 
-## Defaults
+The paper writes strict inequalities, so it does not define values at exact
+breakpoints. SC-NeuroCore makes that measure-zero boundary deterministic with
+the right-continuous intervals `[x0,x1)`, `[x1,x2)`, `[x2,x3)`, and
+`[x3,x4]`. Round-off no larger than eight binary64 ULP at a domain edge is
+projected back to the exact edge; larger excursions fail atomically.
 
-| Name | Default | Meaning |
-| --- | ---: | --- |
-| `x` | `0.1` | initial fast coordinate |
-| `y` | `0.0` | initial slow coordinate |
-| `a` | `3.8` | logistic nonlinearity coefficient |
-| `epsilon` | `0.01` | slow-coordinate increment scale |
-| `sigma` | `0.5` | slow feedback reference |
-| `x_threshold` | `0.9` | committed-state event threshold |
+`current` is an additive maintained perturbation. `current=0` recovers the
+published uncoupled recurrence. This extension is not attributed to equation
+(1).
 
-The fast coordinate is clipped to `[-2, 2]`. The slow coordinate is not
-clipped. `reset()` restores only `x=0.1` and `y=0.0`; it does not replace the
-configured parameters.
+## Burst-cycle event
+
+The source analyses burst phase through the minima that begin the slow regime.
+The catalogue event therefore marks entry into that regime:
+
+$$
+s_{n+1}=\mathbf{1}[x_n\ge x_1 \land x_{n+1}<x_1].
+$$
+
+This is an explicit observation convention, not a paper-defined
+action-potential threshold. It does not modify or reset `x`.
 
 ## Python use
 
@@ -64,123 +73,73 @@ configured parameters.
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
 
 neuron = CazellesMapNeuron()
-event = neuron.step(current=0.5)
-
-trace, events = neuron.simulate(
-    n_steps=2_000,
-    current=0.5,
+trace, burst_entries = neuron.simulate(
+    n_steps=600,
+    current=0.0,
     backend="auto",
 )
 ```
 
-`simulate()` accepts `python`, `rust`, `julia`, `go`, `mojo`, or `auto`.
-`auto` selects the compiled Rust path when available and otherwise falls back
-to the Python implementation.
+Invalid parameters, non-finite input, and candidates outside the configured
+domain are rejected before state is mutated.
 
-## Polyglot acceleration
+## Cross-runtime evidence
 
-The acceleration surface was completed in commit `22110c66d` and is unchanged
-by the schema-to-RTL enrolment. Rust, Julia, and Go reproduce the Python golden
-trace bit-for-bit at the enrolled acceleration points. Mojo is checked with a
-per-step ULP bound because its fused multiply-add changes rounding; the tested
-spike counts still agree.
+Python, Rust, Julia, and Go reproduce the complete binary64 reference orbit
+exactly. The Figure-1 600-step orbit emits seven slow-regime-entry events, the
+first at step 56. Mojo is checked per step to an eight-ULP bound; fused
+multiply-add rounding is chaotically amplified over long trajectories, where
+the measured 600-step count differs by one. The limitation is pinned in tests
+instead of being hidden behind a long-horizon equality claim.
 
-The committed golden set runs 1,000 iterations and reports `5/182/204` events
-at `I=0/0.5/1.0`. The model-scoped backend suite exercises all five backends,
-error paths, reset behaviour, deterministic continuation, and long-run finite
-state.
+The independent source receipt is
+`src/sc_neurocore/neurons/reference_receipts/cazelles_2001.json`. It records a
+600-step trace digest derived without calling production model code. The
+schema-runner reference validates the same complete feature set.
 
-The performance artefact is generated by a committed runner rather than copied
-from an interactive timing:
+## Benchmark
 
-```bash
-PYTHONPATH=src .venv/bin/python benchmarks/bench_cazelles_map.py \
-  --json benchmarks/results/bench_cazelles_map.json
-```
+The committed benchmark evidence is
+`benchmarks/results/bench_cazelles_map.json`. It records the pinned
+two-million-step Python, Rust, Julia, Go, and Mojo measurements together with
+the parity boundary described above; it is evidence for this implementation,
+not a general hardware-performance claim.
 
-Its recorded workload is 2,000,000 iterations at `a=3.8`, `I=0.05`, median of
-five repeats on a non-isolated workstation. The result file carries source
-hashes for the benchmark, Python model, and all four compiled kernels.
+## RTL, co-simulation, and formal boundary
 
-| Backend | Median (ms) | Maximum trace difference | Events |
-| --- | ---: | ---: | ---: |
-| Python | `838.755` | `0` | `24` |
-| Rust | `13.882` | `0` | `24` |
-| Julia | `25.508` | `0` | `24` |
-| Go | `9.956` | `0` | `24` |
-| Mojo | `9.618` | `2.959e-4` | `24` |
+The hand implementation and paired TOML/JSON schemas are state- and
+event-exact over the complete 600-step source orbit and visit all four
+branches. Generated Q16.16 RTL is event-exact through the first 55 iterations,
+including the first discontinuous-return approach, with maximum state error at
+most `0.0062`.
 
-These numbers are regression evidence for that recorded environment, not an
-isolated-core release claim.
+Long fixed-point trajectories are an explicit excluded boundary: the chaotic
+map amplifies quantisation, and the measured 600-step Q16.16 orbit emits two
+events rather than seven. This does not weaken the bounded silicon claim; it
+prevents it from being overstated.
 
-## Python-to-Verilog validation
+The committed Q8.8 core:
 
-The schema-to-RTL contract uses 32-bit Q16.16 fixed point and 30-iteration
-windows. For each enrolled drive, the maintained hand model and both schema
-formats agree exactly on every post-step state and event. The emitted RTL
-reproduces the complete event vector, while both committed state coordinates
-remain within `0.0004` absolute error of float64.
+- synthesises with Yosys and has a machine-readable cell report;
+- passes the depth-4 SymbiYosys/Z3 reset-port safety job;
+- carries no timing, PPA, board, device, or physical-silicon claim.
 
-| Current | Fast-map branches `(low, interior, high)` | Events | Contract |
-| ---: | ---: | ---: | --- |
-| `0.5` | `(25, 5, 0)` | `2` | hand/TOML/JSON exact; RTL event-exact |
-| `1.0` | `(28, 2, 0)` | `1` | hand/TOML/JSON exact; RTL event-exact |
-| `2.0` | `(29, 0, 1)` | `1` | hand/TOML/JSON exact; RTL event-exact |
+## Preserved historical recurrence
 
-The three points exercise the interior expression and both clip bounds.
+The former two-state clipped-logistic implementation was not deleted. It is
+preserved with its historical trace digest unchanged under the explicit count-neutral identity
+[`SCClippedLogisticBurstingMapNeuron`](sc_clipped_logistic_bursting_map.md),
+without whole-model publication attribution.
 
-### Declared sensitive boundary
-
-`I=0.05` over 30 iterations is deliberately excluded from the parity band.
-The hand model and both schemas still agree exactly, but Q16.16 perturbations
-are amplified by the fast map: float64 emits seven level events, RTL emits
-eight, and seven event positions differ. The test pins this observation so a
-long-window chaotic identity claim cannot be inferred from the bounded
-operating set.
-
-The class-specific evidence lives in:
-
-- `tests/test_cosim_cazelles_map.py::test_q1616_short_window_trajectory`
-- `tests/test_cosim_cazelles_map.py::test_q1616_declares_sensitive_boundary`
-
-## Independent reference trace
-
-`cazelles_map_bursting_doi.json` records a 30-iteration `I=0.5` trace. Its test
-uses an independently written simultaneous recurrence rather than calling the
-hand model or schema runner. The committed feature set includes both
-coordinates' final/minimum/maximum/mean values, two events, and first event at
-step 2. Schema-runner validation then checks those features with exact event
-tolerances.
-
-## Silicon and formal scope
-
-The descriptor is science tier S5 and silicon tier H1:
-
-- schema dynamics match the maintained hand class;
-- paired TOML/JSON runners are state- and event-exact against the hand class;
-- generated Q16.16 RTL has the bounded trajectory contract above;
-- generated Q8.8 RTL is enrolled in the catalogue formal inventory.
-
-The depth-4 SymbiYosys/Z3 job uses a port-only harness and proves reset-spike
-safety for the generated Q8.8 core. It is structural safety evidence; it does
-not replace the Q16.16 behavioural comparison and does not claim synthesis or
-timing closure.
-
-## Reproducing the evidence
+## Focused reproduction
 
 ```bash
-.venv/bin/pytest -q \
+PYTHONPATH=src:bridge .venv/bin/pytest -q \
   tests/test_cazelles_map_backends.py \
+  tests/test_cazelles_map_engine_binding.py \
   tests/test_cosim_cazelles_map.py \
   tests/test_reference_cazelles_map.py
-
-PYTHONPATH=src:. .venv/bin/python tools/readiness_evidence_index.py --check
 
 cd hdl/formal/catalogue
 sby -f sc_cazelles_map.sby
 ```
-
-See the [co-simulation guide](../../guides/cosimulation_guide.md),
-[reference-trace contract](../../validation/reference_traces.md), and
-[model fidelity status](../model_fidelity_status.md) for the catalogue-wide
-context.

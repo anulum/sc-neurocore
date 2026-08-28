@@ -110,6 +110,10 @@
       "id": "cazelles-map-five-backend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_sc_clipped_logistic_bursting_map.json",
+      "id": "sc-clipped-logistic-bursting-map-five-backend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_rulkov_map.json",
       "id": "rulkov-map-five-backend-local-regression"
     },
@@ -316,7 +320,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 78,
+  "gate_count": 79,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

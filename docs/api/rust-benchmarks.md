@@ -430,7 +430,8 @@ voltage-dependent rate functions). Other rows are earlier criterion medians.
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
 | Ibarz-Tanaka | 1k | 0.079827 ms | **79.8 ns** | Controlled PyO3 batch; source four-branch map |
-| Cazelles | 100k | 955 µs | **9.6 ns** | Coupled map lattice |
+| Cazelles | 2M | 20.910 ms | **10.5 ns** | Controlled PyO3 batch; source scalar four-branch map |
+| SC clipped-logistic bursting map | 2M | 12.467 ms | **6.2 ns** | Controlled PyO3 batch; retained project recurrence |
 | Medvedev | 500k | 10.799 ms | **21.6 ns** | Controlled PyO3 batch; slow-calcium first-return map |
 | Courage-Nekorkin | 100k | 1.34 ms | **13.4 ns** | FHN-like map |
 | Rulkov | 100k | 1.67 ms | **16.7 ns** | Slow-fast bursting map |
@@ -443,6 +444,15 @@ The source-derived recurrence produces 375,000 events in every Python, Rust,
 Julia, Go, and Mojo lane over 500,000 iterations at `I=2`. Rust's recorded
 median is 10.799 ms; the complete host metadata, source hashes, measured order,
 and parity fields are in `benchmarks/results/bench_medvedev_map.json`.
+
+The Cazelles rows likewise supersede the former misattributed Criterion row.
+They come from separate five-repeat controlled batch artefacts. The source
+Cazelles packet records 22,747 events identically in Python, Rust, Julia, and
+Go; Mojo's chaotic long orbit is deliberately excluded from that parity group.
+The retained SC packet records 24 events in every runtime. Full host metadata,
+source hashes, and numerical boundaries are in
+`benchmarks/results/bench_cazelles_map.json` and
+`benchmarks/results/bench_sc_clipped_logistic_bursting_map.json`.
 
 The corrected Ibarz-Tanaka row supersedes the earlier rational/linear-kernel
 Criterion result. It comes from the 21-call controlled parity artefact at

@@ -1,0 +1,46 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_clipped_logistic_bursting_map": {
+         "num_wires":         35,
+         "num_wire_bits":     477,
+         "num_pub_wires":     20,
+         "num_pub_wire_bits": 325,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         25,
+         "num_cells_by_type": {
+            "$add": 2,
+            "$adff": 3,
+            "$ge": 1,
+            "$gt": 3,
+            "$lt": 3,
+            "$mul": 3,
+            "$mux": 7,
+            "$sub": 3
+         }
+      }
+   },
+      "design": {
+         "num_wires":         35,
+         "num_wire_bits":     477,
+         "num_pub_wires":     20,
+         "num_pub_wire_bits": 325,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         25,
+         "num_cells_by_type": {
+            "$add": 2,
+            "$adff": 3,
+            "$ge": 1,
+            "$gt": 3,
+            "$lt": 3,
+            "$mul": 3,
+            "$mux": 7,
+            "$sub": 3
+         }
+      }
+}

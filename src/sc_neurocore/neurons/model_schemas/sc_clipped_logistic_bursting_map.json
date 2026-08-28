@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "SCClippedLogisticBurstingMapNeuron",
+    "author": "SC-NeuroCore project",
+    "year": 2026,
+    "doi": "",
+    "description": "Retained two-state clipped-logistic fast/slow project recurrence"
+  },
+  "state": {"x": 0.1, "y": 0.0},
+  "parameters": {"a": 3.8, "epsilon": 0.01, "sigma": 0.5, "x_threshold": 0.9},
+  "integration": {"dt": 1.0, "method": "map"},
+  "dynamics": {
+    "x": "min(2.0, max(-2.0, a * x * (1.0 - x) - y + I))",
+    "y": "y + epsilon * (x - sigma)"
+  },
+  "threshold": {"condition": "x >= x_threshold", "detection": "level"},
+  "extensions": {
+    "model_type": "map",
+    "discrete_time": true,
+    "bursting": true,
+    "count_neutral": true,
+    "derivation_note": "Project recurrence retained without whole-model publication attribution."
+  }
+}

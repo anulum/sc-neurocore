@@ -205,6 +205,11 @@ def test_trace_features_match_independent_reference(
     assert spec.schema_name == schema_name
     assert spec.provenance.kind == kind
     assert spec.provenance.citation == citation
+    if schema_name == "mihalas_niebur":
+        assert spec.protocol.parameter_overrides == {
+            "current_jump_1": 0.01,
+            "current_jump_2": -0.0006,
+        }
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)

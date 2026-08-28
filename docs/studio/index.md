@@ -568,7 +568,7 @@ tests are not accepted.
 
 ### Equation Editor & Model Browser
 
-Browse 159 runtime catalogue entries by category (integrate-and-fire, biophysical,
+Browse 179 runtime catalogue entries by category (integrate-and-fire, biophysical,
 stochastic, hardware emulators, AI-optimised). Select a model and
 adjust parameters with sliders — the trace view updates live.
 

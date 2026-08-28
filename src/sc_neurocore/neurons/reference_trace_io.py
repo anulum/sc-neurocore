@@ -93,6 +93,9 @@ def reference_trace_spec_from_payload(payload: Mapping[str, object]) -> Referenc
             steps=_positive_int_field(protocol_payload, "steps"),
             inputs=_float_mapping_field(protocol_payload, "inputs"),
             state_variables=_string_tuple_field(protocol_payload, "state_variables"),
+            parameter_overrides=_optional_float_mapping_field(
+                protocol_payload, "parameter_overrides"
+            ),
         ),
         provenance=ReferenceTraceProvenance(
             kind=_string_field(provenance_payload, "kind"),
@@ -257,6 +260,21 @@ def _float_mapping_field(payload: Mapping[str, object], key: str) -> Mapping[str
         values[item_key] = result
     if not values:
         raise ValueError(f"reference trace field {key!r} must not be empty")
+    return MappingProxyType(values)
+
+
+def _optional_float_mapping_field(payload: Mapping[str, object], key: str) -> Mapping[str, float]:
+    if key not in payload:
+        return MappingProxyType({})
+    mapping = _mapping_field(payload, key)
+    values: dict[str, float] = {}
+    for item_key, value in mapping.items():
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            raise ValueError(f"reference trace field {key!r}.{item_key} must be numeric")
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError(f"reference trace field {key!r}.{item_key} must be finite")
+        values[item_key] = result
     return MappingProxyType(values)
 
 

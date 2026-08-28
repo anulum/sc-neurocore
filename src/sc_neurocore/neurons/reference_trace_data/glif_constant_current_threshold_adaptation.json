@@ -10,7 +10,7 @@
   },
   "provenance": {
     "kind": "independent_exact_flow_reference",
-    "source": "Teeter et al. 2018 equations 1-8 and the AllenSDK GLIF exact-dynamics update order",
+    "source": "src/sc_neurocore/neurons/model_schemas/glif.toml",
     "equation": "Five-state GLIF5 exact flow with pre-step after-spike currents held during the membrane and voltage-threshold interval, strict V > Theta_inf + Theta_s + Theta_v events, affine resets, and an explicit refractory cut.",
     "citation": "doi:10.1038/s41467-017-02717-4"
   },

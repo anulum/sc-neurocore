@@ -1,0 +1,20 @@
+{
+  "model": "CazellesMapNeuron",
+  "source": "doi:10.1209/epl/i2001-00548-y equation (1) and Figure 1",
+  "boundary_convention": "right-continuous exact breakpoints: [x0,x1), [x1,x2), [x2,x3), [x3,x4]",
+  "event": "entry into the source slow regime: x_pre >= x1 and x_post < x1",
+  "parameters": {
+    "alpha": 0.0,
+    "exponent": 2,
+    "bounds": [0.0, 0.4, 0.6, 0.7, 1.0],
+    "intercepts": [0.0, 1.5, -0.9, 1.4],
+    "slopes": [1.05, -1.25, 1.5, -1.0]
+  },
+  "drive": {"current": 0.0, "steps": 600},
+  "oracle": {
+    "events": 7,
+    "first_event_index": 55,
+    "x_final": 0.5158386955157878,
+    "trace_sha256": "ab9298076085f7378a32388a37dab72dcbdafc152ff2cf529af5109a368e93bb"
+  }
+}

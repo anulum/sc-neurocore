@@ -44,7 +44,11 @@ def simulate_reference_trace(spec_or_name: ReferenceTraceSpec | str) -> TraceSim
     if spec.runner != "universal_dsl":
         raise ValueError(f"unsupported reference-trace runner {spec.runner!r}")
 
-    neuron = UniversalNeuron.from_schema(spec.schema_name, dt_override=spec.protocol.dt)
+    neuron = UniversalNeuron.from_schema(
+        spec.schema_name,
+        dt_override=spec.protocol.dt,
+        parameter_overrides=dict(spec.protocol.parameter_overrides),
+    )
     recorded: dict[str, list[float]] = {name: [] for name in spec.protocol.state_variables}
     spikes: list[int] = []
     for _ in range(spec.protocol.steps):

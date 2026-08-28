@@ -1,0 +1,125 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "median_ms": 10.172717971727252,
+      "min_ms": 9.89880901761353,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 85.22598349870917,
+      "spikes": 24
+    },
+    "julia": {
+      "backend": "julia",
+      "median_ms": 26.958124013617635,
+      "min_ms": 25.13235993683338,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 32.16024577813732,
+      "spikes": 24
+    },
+    "mojo": {
+      "backend": "mojo",
+      "median_ms": 10.523549048230052,
+      "min_ms": 10.200883960351348,
+      "parity_max_abs_diff": 0.00029589556250742,
+      "speedup_vs_python": 82.38474397012153,
+      "spikes": 24
+    },
+    "python": {
+      "backend": "python",
+      "median_ms": 866.979893995449,
+      "min_ms": 849.0172320744023,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 24
+    },
+    "rust": {
+      "backend": "rust",
+      "median_ms": 12.467358959838748,
+      "min_ms": 12.430567061528563,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 69.53998010230247,
+      "spikes": 24
+    }
+  },
+  "benchmark": "sc_clipped_logistic_bursting_map_simulate",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ms": 866.979893995449,
+      "min_ms": 849.0172320744023,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 24
+    },
+    {
+      "backend": "rust",
+      "median_ms": 12.467358959838748,
+      "min_ms": 12.430567061528563,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 69.53998010230247,
+      "spikes": 24
+    },
+    {
+      "backend": "julia",
+      "median_ms": 26.958124013617635,
+      "min_ms": 25.13235993683338,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 32.16024577813732,
+      "spikes": 24
+    },
+    {
+      "backend": "go",
+      "median_ms": 10.172717971727252,
+      "min_ms": 9.89880901761353,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 85.22598349870917,
+      "spikes": 24
+    },
+    {
+      "backend": "mojo",
+      "median_ms": 10.523549048230052,
+      "min_ms": 10.200883960351348,
+      "parity_max_abs_diff": 0.00029589556250742,
+      "speedup_vs_python": 82.38474397012153,
+      "spikes": 24
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_sc_clipped_logistic_bursting_map": {
+      "py": "714f5c77a45c78add31496981ea746d08a2c7a6feb32e1e0b6710a899cfa1450"
+    },
+    "benchmarks/bench_sc_clipped_logistic_bursting_map.py": "714f5c77a45c78add31496981ea746d08a2c7a6feb32e1e0b6710a899cfa1450",
+    "engine/src/neurons/sc_clipped_logistic_bursting_map": {
+      "rs": "5a0077462e692648c7e89f86b51be2c88e2b172af79186e76c1ede0e9341fd8c"
+    },
+    "engine/src/neurons/sc_clipped_logistic_bursting_map.rs": "5a0077462e692648c7e89f86b51be2c88e2b172af79186e76c1ede0e9341fd8c",
+    "src/sc_neurocore/accel/go/neurons/sc_clipped_logistic_bursting_map/sc_clipped_logistic_bursting_map": {
+      "go": "a8c7e04fed629eba9d478ca088846f99a524b8bda65d7d2aea497ffea270334c"
+    },
+    "src/sc_neurocore/accel/go/neurons/sc_clipped_logistic_bursting_map/sc_clipped_logistic_bursting_map.go": "a8c7e04fed629eba9d478ca088846f99a524b8bda65d7d2aea497ffea270334c",
+    "src/sc_neurocore/accel/julia/neurons/sc_clipped_logistic_bursting_map": {
+      "jl": "7409bc40b5123729d5b63d08cffcce569727b72e56aa09b32627103423e4279b"
+    },
+    "src/sc_neurocore/accel/julia/neurons/sc_clipped_logistic_bursting_map.jl": "7409bc40b5123729d5b63d08cffcce569727b72e56aa09b32627103423e4279b",
+    "src/sc_neurocore/accel/mojo/neurons/sc_clipped_logistic_bursting_map": {
+      "mojo": "eac60f6175af844362f9829c646aa77b6d501944be731d3aca071fdaaa802f20"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/sc_clipped_logistic_bursting_map.mojo": "eac60f6175af844362f9829c646aa77b6d501944be731d3aca071fdaaa802f20",
+    "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map": {
+      "py": "7aa9622dd9c703b40f629eadc2cf107950cc7dc54314182c21a3d54de9811fe8"
+    },
+    "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py": "7aa9622dd9c703b40f629eadc2cf107950cc7dc54314182c21a3d54de9811fe8"
+  },
+  "workload": {
+    "a": 3.8,
+    "current": 0.05,
+    "n_steps": 2000000,
+    "repeats": 5
+  }
+}

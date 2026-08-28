@@ -2,7 +2,7 @@
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version 3.16.0** | 178 lazy-loaded Python model classes | 205 Rust PyO3 model wrappers | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.16.0** | 179 lazy-loaded Python model classes | 206 Rust PyO3 model wrappers | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 SC-NeuroCore helps research and engineering teams build spiking and stochastic neural systems, validate their numerical behaviour, and move selected workflows toward hardware evidence. It is designed for people who need more than a simulator: bounded stochastic arithmetic, reproducible benchmark artefacts, generated RTL, synthesis evidence, and explicit readiness gaps.
 
@@ -34,7 +34,7 @@ Start here if you need to understand what the software is for:
 ## Key Features
 
 - **178 lazy-loaded Python model classes** — 174 Python model source modules spanning McCulloch-Pitts (1943) through ArcaneNeuron (2026), hardware chip emulators, and AI-optimised research paths
-- **205 Rust PyO3 model wrappers** — optional acceleration wrappers with a 175-model NetworkRunner dispatch list and Rayon parallelism
+- **206 Rust PyO3 model wrappers** — optional acceleration wrappers with a 176-model NetworkRunner dispatch list and Rayon parallelism
 - **ArcaneNeuron** — primary self-referential cognition model with 3 coupled compartments (fast / working / deep) + attention gate + self-model predictor
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)

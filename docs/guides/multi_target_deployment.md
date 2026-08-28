@@ -6,7 +6,7 @@
 
 # Multi-Target Deployment Guide
 
-SC-NeuroCore can deploy a single SNN model to **any combination** of 175
+SC-NeuroCore can deploy a single SNN model to **any combination** of 176
 hardware profiles across 38 platform classes.  This guide covers the
 complete multi-target deployment workflow from portability scoring through
 target recommendation, heterogeneous dispatch, multi-die floorplanning,
@@ -412,7 +412,7 @@ for target in ["artix7", "loihi2", "sifive_x280_ai"]:
 | 3 | ~150 ms | ~100 ms |
 | 5 | ~250 ms | ~120 ms |
 | 10 | ~500 ms | ~150 ms |
-| All 175 | ~8 s | ~2 s |
+| All 176 | ~8 s | ~2 s |
 
 ### 7.2 Platform Comparison (LIF Q8.8)
 

@@ -1,0 +1,136 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SC clipped-logistic bursting map"
+class_name = "SCClippedLogisticBurstingMapNeuron"
+module = "sc_clipped_logistic_bursting_map"
+display_name = "SC clipped-logistic bursting recurrence"
+summary = "Retained two-state clipped-logistic fast/slow project recurrence"
+family = "Map-based"
+category = "map-based"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "backward-compatible project recurrence",
+    "cross-runtime regression",
+]
+hardware_fit = [
+    "bounded fixed-point co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "chaotic",
+    "excitable",
+    "irregular",
+    "rate-coded",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+derivation_note = "Project recurrence retained without whole-model publication attribution."
+
+[state.x]
+init = 0.1
+
+[state.y]
+init = 0.0
+
+[parameters.a]
+default = 3.8
+unit = "1"
+meaning = "clipped-logistic fast-map coefficient"
+range = [
+    0.0,
+    5.0,
+]
+
+[parameters.epsilon]
+default = 0.01
+unit = "1"
+meaning = "slow-variable update coefficient"
+range = [
+    0.0001,
+    0.5,
+]
+
+[parameters.sigma]
+default = 0.5
+unit = "1"
+meaning = "slow-variable set point"
+range = [
+    -2.0,
+    2.0,
+]
+
+[parameters.x_threshold]
+default = 0.9
+unit = "1"
+meaning = "maintained level-event threshold"
+range = [
+    -2.0,
+    2.0,
+]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "clip(a*x*(1-x)-y+I,-2,2)"
+y = "y + epsilon*(x-sigma)"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "4264c3f9f94eef93e4f641afc91b0f97aff57f492838b2cfd32ce17335099967"
+
+[documentation]
+slug = "models/sc_clipped_logistic_bursting_map"
+notes = "Count-neutral identity preserving the former CazellesMapNeuron implementation without whole-model publication attribution."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "retained default and driven regimes"
+tolerance = "binary64 exact for Python/Rust/Julia/Go; Mojo ULP-bounded; Q16.16 bounded trajectory and event-vector agreement"
+evidence = "tests/test_sc_clipped_logistic_bursting_map_backends.py; tests/test_reference_sc_clipped_logistic_bursting_map.py; tests/test_cosim_sc_clipped_logistic_bursting_map.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+synthesised = true
+cosim_evidence = "tests/test_cosim_sc_clipped_logistic_bursting_map.py"
+synth_report = "hdl/reports/yosys_sc_clipped_logistic_bursting_map_q88_2026-08-28.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Retained generated fixed-point co-simulation, coarse synthesis, and bounded formal safety only; timing, PPA, board, device, and silicon evidence remain open."

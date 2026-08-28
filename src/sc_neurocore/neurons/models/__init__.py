@@ -45,6 +45,7 @@ _CLASS_TO_MODULE = {
     "SCUnitCapacitanceRespiratoryNeuron": "sc_unit_capacitance_respiratory",
     "COBALIFNeuron": "coba_lif",
     "CazellesMapNeuron": "cazelles_map",
+    "SCClippedLogisticBurstingMapNeuron": "sc_clipped_logistic_bursting_map",
     "CerebellarBasketNeuron": "cerebellar_basket_neuron",
     "ChandelierNeuron": "chandelier_neuron",
     "ChayKeizerMinimalNeuron": "chay_keizer_minimal",

@@ -4,14 +4,16 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Independent Cazelles map reference trace
-
-"""Independent feature derivation for the committed Cazelles map trace."""
+# SC-NeuroCore — Independent Cazelles source-map reference
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
+from pathlib import Path
 
+import numpy as np
 import pytest
 
 from sc_neurocore.neurons.reference_traces import (
@@ -19,65 +21,60 @@ from sc_neurocore.neurons.reference_traces import (
     validate_reference_trace_spec,
 )
 
+ROOT = Path(__file__).resolve().parents[1]
 
-def _independent_features(*, current: float, steps: int) -> dict[str, float]:
-    """Iterate the simultaneous clipped map without calling model code."""
-    a = 3.8
-    epsilon = 0.01
-    sigma = 0.5
-    threshold = 0.9
+
+def _independent_source_orbit(steps: int) -> tuple[list[float], list[int]]:
     x = 0.1
-    y = 0.0
-    x_values: list[float] = []
-    y_values: list[float] = []
+    values: list[float] = []
     events: list[int] = []
+    for _ in range(steps):
+        previous = x
+        if x < 0.4:
+            x = 1.05 * x
+        elif x < 0.6:
+            x = 1.5 - 1.25 * x
+        elif x < 0.7:
+            x = -0.9 + 1.5 * x
+        else:
+            x = 1.4 - x
+        events.append(int(previous >= 0.4 and x < 0.4))
+        values.append(x)
+    return values, events
 
-    for _step in range(steps):
-        x_next = min(2.0, max(-2.0, a * x * (1.0 - x) - y + current))
-        y_next = y + epsilon * (x - sigma)
-        x, y = x_next, y_next
-        events.append(1 if x >= threshold else 0)
-        x_values.append(x)
-        y_values.append(y)
 
-    return {
+def test_committed_features_match_independent_primary_equation() -> None:
+    spec = load_reference_trace_spec("cazelles_map_bursting_doi")
+    values, events = _independent_source_orbit(spec.protocol.steps)
+    expected = {
         "spike_count": float(math.fsum(events)),
-        "first_spike_step": float(
-            next((index for index, event in enumerate(events, start=1) if event), -1)
-        ),
-        "final.x": x_values[-1],
-        "min.x": min(x_values),
-        "max.x": max(x_values),
-        "mean.x": math.fsum(x_values) / len(x_values),
-        "final.y": y_values[-1],
-        "min.y": min(y_values),
-        "max.y": max(y_values),
-        "mean.y": math.fsum(y_values) / len(y_values),
+        "first_spike_step": float(next(index for index, event in enumerate(events, 1) if event)),
+        "final.x": values[-1],
+        "min.x": min(values),
+        "max.x": max(values),
+        "mean.x": math.fsum(values) / len(values),
     }
-
-
-def test_features_match_independent_map_iteration() -> None:
-    """Committed features must match an independent simultaneous recurrence."""
-    spec = load_reference_trace_spec("cazelles_map_bursting_doi")
-    expected = _independent_features(
-        current=spec.protocol.inputs["I"],
-        steps=spec.protocol.steps,
-    )
-
     assert spec.schema_name == "cazelles_map"
-    assert spec.provenance.kind == "map_iteration_reference"
+    assert spec.provenance.kind == "source_equation_reference"
     assert spec.provenance.citation == "doi:10.1209/epl/i2001-00548-y"
-    assert expected["spike_count"] == 2.0
+    assert expected["spike_count"] == 7.0
+    assert expected["first_spike_step"] == 56.0
     assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+    for feature, value in expected.items():
+        assert spec.expected_features[feature] == pytest.approx(value, abs=1.0e-12)
 
 
-def test_committed_trace_validates_through_schema_runner() -> None:
-    """The committed feature contract must pass the production schema runner."""
-    spec = load_reference_trace_spec("cazelles_map_bursting_doi")
+def test_source_receipt_trace_digest_is_independently_reproducible() -> None:
+    receipt = json.loads(
+        (ROOT / "src/sc_neurocore/neurons/reference_receipts/cazelles_2001.json").read_text()
+    )
+    values, events = _independent_source_orbit(receipt["drive"]["steps"])
+    digest = hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+    assert sum(events) == receipt["oracle"]["events"]
+    assert digest == receipt["oracle"]["trace_sha256"]
 
-    report = validate_reference_trace_spec(spec)
 
+def test_committed_reference_validates_through_schema_runner() -> None:
+    report = validate_reference_trace_spec(load_reference_trace_spec("cazelles_map_bursting_doi"))
     assert report.passed
     assert report.mismatches == ()

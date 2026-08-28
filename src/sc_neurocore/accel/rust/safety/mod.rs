@@ -63,6 +63,7 @@ pub mod callbacks;
 pub mod category_theory;
 pub mod causality;
 pub mod cazelles_map;
+pub mod sc_clipped_logistic_bursting_map;
 pub mod ccw_bridge;
 pub mod cerebellar_basket_neuron;
 pub mod cfc;
