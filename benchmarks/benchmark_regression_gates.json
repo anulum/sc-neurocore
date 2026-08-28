@@ -4097,6 +4097,55 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_fitzhugh_rinzel_simulate.json",
+      "description": "FitzHugh-Rinzel three-timescale RK4 execution across Python, Rust, Julia, Go, and Mojo.",
+      "expected_values": {
+        "benchmark": "fitzhugh_rinzel_simulate_rk4",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "model": "FitzHughRinzelNeuron",
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 0.5,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "fitzhugh-rinzel-five-runtime-local-regression",
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {"max": 0.0},
+        "backends.julia.parity_max_abs_diff": {"max": 0.0},
+        "backends.mojo.parity_max_abs_diff": {"max": 1e-06},
+        "backends.python.parity_max_abs_diff": {"max": 0.0},
+        "backends.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backends.python.median_ms",
+        "backends.python.min_ms",
+        "backends.rust.median_ms",
+        "backends.rust.min_ms",
+        "backends.julia.median_ms",
+        "backends.julia.min_ms",
+        "backends.go.median_ms",
+        "backends.go.min_ms",
+        "backends.mojo.median_ms",
+        "backends.mojo.min_ms"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_fitzhugh_rinzel_simulate.py": "source_hashes.benchmarks/bench_fitzhugh_rinzel_simulate.py",
+        "engine/src/bindings/fitzhugh_rinzel.rs": "source_hashes.engine/src/bindings/fitzhugh_rinzel.rs",
+        "engine/src/neurons/simple_spiking/fitzhugh_rinzel.rs": "source_hashes.engine/src/neurons/simple_spiking/fitzhugh_rinzel.rs",
+        "src/sc_neurocore/accel/go/neurons/fitzhugh_rinzel/fitzhugh_rinzel.go": "source_hashes.src/sc_neurocore/accel/go/neurons/fitzhugh_rinzel/fitzhugh_rinzel.go",
+        "src/sc_neurocore/accel/julia/neurons/fitzhugh_rinzel.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/fitzhugh_rinzel.jl",
+        "src/sc_neurocore/accel/mojo/neurons/fitzhugh_rinzel.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/fitzhugh_rinzel.mojo",
+        "src/sc_neurocore/accel/rust/safety/fitzhugh_rinzel.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/fitzhugh_rinzel.rs",
+        "src/sc_neurocore/neurons/model_descriptors/FitzHughRinzelNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/FitzHughRinzelNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel.json",
+        "src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel.toml",
+        "src/sc_neurocore/neurons/models/fitzhugh_rinzel.py": "source_hashes.src/sc_neurocore/neurons/models/fitzhugh_rinzel.py",
+        "src/sc_neurocore/neurons/reference_trace_data/fitzhugh_rinzel_driven_bursting_doi.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/fitzhugh_rinzel_driven_bursting_doi.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "description": "Wang NMDA source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

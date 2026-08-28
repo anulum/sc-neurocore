@@ -4,7 +4,7 @@
 **Module:** `sc_neurocore.neurons.models.fitzhugh_rinzel`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::FitzHughRinzelNeuron`
 **Polyglot `simulate` chain (RK4):** Rust (`py_fitzhugh_rinzel_simulate`), Julia (`FitzHughRinzelAccel`), Go (`accel/go/neurons/fitzhugh_rinzel`, c-shared), Mojo (`accel/mojo/neurons/fitzhugh_rinzel.mojo`) — see *Polyglot acceleration* below
-**Reference:** FitzHugh-Rinzel three-state qualitative bursting model after Rinzel's fast-slow classification work.
+**Reference:** Rinzel, *A Formal Classification of Bursting Mechanisms in Excitable Systems* (1987), equations (3.4)–(3.6), DOI `10.1007/978-3-642-93360-8_26`.
 **Family:** cubic fast-slow burster: FitzHugh-Nagumo fast subsystem plus ultra-slow modulation.
 
 ---
@@ -35,6 +35,13 @@ The event does **not** reset any state. The continuous three-variable flow remai
 intact, and a new event is reported only after `v` falls below the threshold and
 crosses upward again.
 
+Rinzel records the system as an unpublished 1976 FitzHugh–Rinzel model and gives
+`I=0.3125`, `a=0.7`, `b=0.8`, `c=-0.775`, `d=1`, `delta=0.08`, and
+`mu=0.0001` for the illustrated profile. The maintained `a`–`mu` defaults
+preserve that profile. Fixed-step classical RK4 at `dt=0.1`, caller-supplied
+current, and sampled upward `v_threshold=1` crossings are repository
+specialisations; they are not attributed to the source chapter.
+
 ---
 
 ## Numerical integration contract
@@ -47,18 +54,26 @@ All maintained implementations now use the same candidate-first fourth-order Run
 4. Reject non-finite derivative or candidate values before mutation.
 5. Commit the candidate and report the rising-edge threshold decision without a reset.
 
-The RK4 candidate is equivalent to applying the standard four-stage integrator to the coupled ODE above, not to three independent scalar updates. The same contract is implemented in the Python reference, Rust engine benchmark path, Julia mirror, Go mirror, and Rust safety mirror.
+The RK4 candidate is equivalent to applying the standard four-stage integrator
+to the coupled ODE above, not to three independent scalar updates. The Python,
+production Rust/PyO3, Go, Julia, and Mojo batch paths compute into private
+state, validate the complete trace and final state, and only then update the
+Python object. The scalar Python and Rust safety paths use the same
+candidate-first rule.
 
 Invalid runtime input fails closed:
 
-| Condition | Python behavior | Julia / Go / Rust safety behavior | Rust engine behavior |
-|-----------|-----------------|------------------------------------|----------------------|
-| non-finite current | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
-| corrupted non-finite state | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
-| derivative overflow | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
-| non-finite candidate | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
+| Surface | Invalid configuration/input | Non-finite stage or candidate | State result |
+|---------|-----------------------------|-------------------------------|--------------|
+| Python reference | `ValueError` | `FloatingPointError` | unchanged |
+| production Rust/PyO3 | Python conversion error or `FloatingPointError` | `FloatingPointError` | unchanged |
+| Julia batch | `ArgumentError`, normalised by the dispatcher | `DomainError`, normalised by the dispatcher | unchanged |
+| Go/Mojo C ABI | negative sentinel, rejected by the dispatcher | negative sentinel, rejected by the dispatcher | unchanged |
+| scalar Rust engine/safety API | zero event sentinel | zero event sentinel | unchanged |
 
-The language-specific error channel differs because Python exposes exceptions while the low-level service surfaces are non-throwing adapter paths.
+The public Python dispatcher presents batch divergence uniformly as
+`FloatingPointError`; low-level non-throwing adapters retain their native
+sentinel contracts.
 
 ---
 
@@ -90,7 +105,10 @@ The default timescale hierarchy is:
 
 ## Physics invariants covered by tests
 
-Module-specific tests in `tests/test_model_fitzhugh_rinzel.py` assert the following contracts:
+The dedicated `tests/test_model_fitzhugh_rinzel_fhr_*.py`,
+`tests/test_fitzhugh_rinzel_backends.py`, and
+`tests/test_fitzhugh_rinzel_engine_binding.py` surfaces assert the following
+contracts:
 
 | Contract | Evidence |
 |----------|----------|
@@ -100,28 +118,21 @@ Module-specific tests in `tests/test_model_fitzhugh_rinzel.py` assert the follow
 | slow-variable physics | changing `mu` changes the long-horizon `y` drift while preserving finite state |
 | current regimes | moderate current produces repeated threshold events; quiescent and high-drive regimes remain deterministic |
 | boundedness | long integrations remain finite and inside broad model-specific envelopes |
-| edge semantics | a spike is reported only on an upward threshold crossing and leaves `(v, w, y)` unchanged |
+| edge semantics | a spike is reported only on an upward threshold crossing and applies no reset beyond the continuous RK4 candidate |
 | reproducibility | identical models under identical current sequences produce identical state and spike traces |
 | public integration surfaces | population, network, projection, and analysis paths preserve the model contract |
 
-The focused module evidence on 2026-05-31 was:
+The focused runtime commands are:
 
 ```text
-PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null --source=src/sc_neurocore/neurons/models -m pytest tests/test_model_fitzhugh_rinzel.py -q
-42 passed
-src/sc_neurocore/neurons/models/fitzhugh_rinzel.py: 100% statement coverage
+PYTHONPATH=bridge:src .venv/bin/pytest -q $(rg --files tests | rg 'fitzhugh_rinzel' | sort)
+cargo test --manifest-path engine/Cargo.toml fitzhugh_rinzel --no-default-features
+tmp_bin=$(mktemp /tmp/scn-fhr-safety-XXXXXX)
+trap 'rm -f "$tmp_bin"' EXIT
+rustc --test src/sc_neurocore/accel/rust/safety/fitzhugh_rinzel.rs -o "$tmp_bin" && "$tmp_bin"
+(cd src/sc_neurocore/accel/go/neurons/fitzhugh_rinzel && go build -buildmode=c-shared -o libfhr.so fitzhugh_rinzel.go)
+mojo build --emit shared-lib -o src/sc_neurocore/accel/mojo/neurons/libfhr.so src/sc_neurocore/accel/mojo/neurons/fitzhugh_rinzel.mojo
 ```
-
-Polyglot and engine checks on the same hardening pass:
-
-```text
-julia --project=. -e 'include("src/sc_neurocore/accel/julia/neurons/fitzhugh_rinzel.jl"); ...'
-go test src/sc_neurocore/accel/go/services/fitzhugh_rinzel.go
-rustc --test src/sc_neurocore/accel/rust/safety/fitzhugh_rinzel.rs -o "$tmp/fhr_safety_test" && "$tmp/fhr_safety_test"
-cargo test --manifest-path engine/Cargo.toml fhr_ -- --nocapture
-```
-
-Observed results: Julia valid-step check passed, Go compile/test passed, Rust safety tests passed with 5 tests, and Rust engine FHR tests passed with 8 tests.
 
 ---
 
@@ -147,22 +158,15 @@ final/minimum/maximum/mean of `v`, `w`, and `y`. Its provenance is Rinzel's 1987
 Focused evidence:
 
 ```text
-tests/test_cosimulation.py::TestQ1616Precision::test_fitzhugh_rinzel_q1616_parity
-tests/test_reference_traces.py::test_trace_features_match_independent_reference[fitzhugh_rinzel]
+tests/test_cosim_fitzhugh_rinzel_q1616_precision.py::TestQ1616Precision::test_fitzhugh_rinzel_q1616_parity
+tests/test_reference_fitzhugh_rinzel.py
 ```
 
----
-
-## Benchmark evidence
-
-Benchmark artefacts are stored under `benchmarks/results/`.
-
-| Surface | Command | Result |
-|---------|---------|--------|
-| Python reference | `FitzHughRinzelNeuron.step(0.5)`, 7 repeats of 100,000 steps | median `1.1091808029450476e-05` seconds per step, deterministic 228 spikes per repeat |
-| Rust engine | `cargo bench --manifest-path engine/Cargo.toml --bench full_bench fitzhugh_rinzel_10k_steps -- --sample-size 10` | Criterion estimate `572.65 µs` per 10k steps, `57.265 ns` per step |
-
-The RK4 path is intentionally slower than the previous Euler benchmark because it evaluates the coupled ODE four times per step and validates the candidate before mutation.
+The committed Q16.16 RTL passes real Yosys coarse synthesis. Its paired Q8.8
+catalogue formal harness passes depth-4 SymbiYosys/Z3 reset and output safety.
+This establishes bounded H2 evidence; it does not claim timing closure, PPA,
+target-device execution, physical silicon, or universal real-number
+equivalence.
 
 ---
 
@@ -203,24 +207,25 @@ spike counts. Mojo is validated on that bound, not whole-trace equality.
 
 ### Measured backends
 
-Reproduce with `python benchmarks/bench_fitzhugh_rinzel_simulate.py --json
+Reproduce with `PYTHONPATH=bridge:src .venv/bin/python benchmarks/bench_fitzhugh_rinzel_simulate.py --json
 benchmarks/results/bench_fitzhugh_rinzel_simulate.json`. Workload: 2,000,000 RK4
 steps, default parameters, current = 0.5, median of 5 repeats. **Non-isolated**
-(loaded workstation, Python 3.12 / NumPy 2.3) — functional/regression evidence,
+(loaded workstation, Python 3.12.3 / NumPy 2.2.6) — functional/regression evidence,
 not isolated-core release numbers.
 
 | backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
 |---|---:|---:|---:|
-| python (NumPy) | 1905.59 | 1.00× | 0 |
-| mojo | 87.96 | 21.66× | 2.19e-08 (slow-growing FMA band) |
-| go | 95.19 | 20.02× | 0 (bit-exact) |
-| julia | 101.13 | 18.84× | 0 (bit-exact) |
-| rust | 101.70 | 18.74× | 0 (bit-exact) |
+| python (NumPy) | 7513.29 | 1.00× | 0 |
+| mojo | 103.10 | 72.88× | 1.55e-08 (slow-growing FMA band) |
+| go | 129.67 | 57.94× | 0 (bit-exact) |
+| julia | 131.30 | 57.22× | 0 (bit-exact) |
+| rust | 120.71 | 62.24× | 0 (bit-exact) |
 
 Mojo is fastest in raw throughput, but it is not bit-exact, so `auto` selects
-Rust — the fastest backend that is both bit-exact and ships in the wheel. The
-four derivative stages over three states keep the absolute per-step cost high, so
-the speedups settle around 19–22×.
+Rust — a bit-exact backend that ships in the wheel. The JSON packet binds the
+driver, model, production and safety Rust, Go, Julia, Mojo, descriptor, paired
+schemas, and independent trace by SHA-256. It is local-regression evidence only:
+`production_speed_claim=false` and `hardware_measurement_claimed=false`.
 
 ---
 

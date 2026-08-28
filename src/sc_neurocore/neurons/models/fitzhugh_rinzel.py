@@ -170,11 +170,14 @@ class FitzHughRinzelNeuron:
         return tuple((name, getattr(self, name)) for name in (*_STATE_NAMES, *_PARAMETER_NAMES))
 
     def _validate_numeric_contract(self) -> None:
-        for name, value in self._numeric_fields():
-            setattr(self, name, self._finite_float(name, value))
+        validated = {
+            name: self._finite_float(name, value) for name, value in self._numeric_fields()
+        }
         for name in _POSITIVE_PARAMETERS:
-            if getattr(self, name) <= 0.0:
+            if validated[name] <= 0.0:
                 raise ValueError(f"FitzHugh-Rinzel parameter {name} must be positive")
+        for name, value in validated.items():
+            setattr(self, name, value)
 
     def _derivatives(
         self, v: float, w: float, y: float, current: float
@@ -245,6 +248,8 @@ class FitzHughRinzelNeuron:
         ``(v, w, y)`` is advanced to the final step. The right-hand side is exact
         arithmetic, so Rust, Julia and Go reproduce the pure-NumPy reference
         bit-for-bit; Mojo agrees to a documented, non-amplifying ULP bound.
+        A rejected derivative, candidate, or native result leaves the complete
+        pre-batch state unchanged.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
@@ -280,8 +285,37 @@ class FitzHughRinzelNeuron:
             trace, spikes, vf, wf, yf = self._simulate_mojo(n_steps, current)
         else:
             trace, spikes, vf, wf, yf = self._simulate_python(n_steps, current)
+        trace, spikes, vf, wf, yf = self._validate_batch_result(
+            backend=backend,
+            n_steps=n_steps,
+            trace=trace,
+            spikes=spikes,
+            final_state=(vf, wf, yf),
+        )
         self.v, self.w, self.y = vf, wf, yf
         return trace, spikes
+
+    @staticmethod
+    def _validate_batch_result(
+        *,
+        backend: str,
+        n_steps: int,
+        trace: npt.NDArray[np.float64],
+        spikes: int,
+        final_state: tuple[float, float, float],
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        """Validate a complete native result before the caller commits state."""
+        values = np.asarray(trace, dtype=np.float64)
+        if (
+            spikes < 0
+            or values.shape != (n_steps,)
+            or not np.all(np.isfinite(values))
+            or not all(math.isfinite(value) for value in final_state)
+        ):
+            raise FloatingPointError(
+                f"FitzHugh-Rinzel {backend} batch produced an invalid candidate"
+            )
+        return values, int(spikes), final_state[0], final_state[1], final_state[2]
 
     def _simulate_python(
         self, n_steps: int, current: float
@@ -293,11 +327,21 @@ class FitzHughRinzelNeuron:
         spikes = 0
 
         def deriv(vv: float, ww: float, yy: float) -> tuple[float, float, float]:
-            return (
-                vv - vv * vv * vv / 3.0 - ww + yy + current,
-                delta * (a + vv - b * ww),
-                mu * (c - vv - d * yy),
-            )
+            try:
+                candidate = (
+                    vv - vv * vv * vv / 3.0 - ww + yy + current,
+                    delta * (a + vv - b * ww),
+                    mu * (c - vv - d * yy),
+                )
+            except OverflowError as exc:
+                raise FloatingPointError(
+                    "FitzHugh-Rinzel Python batch derivative overflowed"
+                ) from exc
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError(
+                    "FitzHugh-Rinzel Python batch derivative became non-finite"
+                )
+            return candidate
 
         for t in range(n_steps):
             v_prev = v
@@ -305,9 +349,14 @@ class FitzHughRinzelNeuron:
             k2v, k2w, k2y = deriv(v + 0.5 * dt * k1v, w + 0.5 * dt * k1w, y + 0.5 * dt * k1y)
             k3v, k3w, k3y = deriv(v + 0.5 * dt * k2v, w + 0.5 * dt * k2w, y + 0.5 * dt * k2y)
             k4v, k4w, k4y = deriv(v + dt * k3v, w + dt * k3w, y + dt * k3y)
-            v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
-            w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
-            y = y + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0
+            candidate = (
+                v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0,
+                w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0,
+                y + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0,
+            )
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("FitzHugh-Rinzel Python batch candidate became non-finite")
+            v, w, y = candidate
             trace[t] = v
             if v >= thr and v_prev < thr:
                 spikes += 1
@@ -344,21 +393,26 @@ class FitzHughRinzelNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
         assert _julia_module is not None
-        result = _julia_module.simulate_trace(
-            float(self.v),
-            float(self.w),
-            float(self.y),
-            float(self.a),
-            float(self.b),
-            float(self.c),
-            float(self.d),
-            float(self.delta),
-            float(self.mu),
-            float(self.dt),
-            float(self.v_threshold),
-            int(n_steps),
-            float(current),
-        )
+        try:
+            result = _julia_module.simulate_trace(
+                float(self.v),
+                float(self.w),
+                float(self.y),
+                float(self.a),
+                float(self.b),
+                float(self.c),
+                float(self.d),
+                float(self.delta),
+                float(self.mu),
+                float(self.dt),
+                float(self.v_threshold),
+                int(n_steps),
+                float(current),
+            )
+        except Exception as exc:
+            raise FloatingPointError(
+                "FitzHugh-Rinzel Julia batch rejected an invalid candidate"
+            ) from exc
         trace = np.asarray(result.trace, dtype=np.float64)
         return trace, int(result.spikes), float(result.vf), float(result.wf), float(result.yf)
 

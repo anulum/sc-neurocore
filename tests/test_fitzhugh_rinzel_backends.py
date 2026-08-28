@@ -19,7 +19,10 @@ that per-step ULP stays a small non-amplifying band (measured ~1.5e-12 over
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from sc_neurocore.neurons.models import fitzhugh_rinzel as fhr
@@ -28,7 +31,9 @@ from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
 _MOJO_ATOL = 1e-9  # non-amplifying Mojo FMA band (measured ~1.5e-12 at 50k steps)
 
 
-def _run(backend: str, *, current: float = 0.5, n: int = 8000, **kw) -> tuple:
+def _run(
+    backend: str, *, current: float = 0.5, n: int = 8000, **kw: float
+) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
     neuron = FitzHughRinzelNeuron(**kw)
     trace, spikes = neuron.simulate(n, current, backend=backend)
     return trace, spikes, neuron.v, neuron.w, neuron.y
@@ -59,7 +64,7 @@ _CURRENTS = [0.0, 0.3, 0.5, 1.0]
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
 @pytest.mark.parametrize("current", _CURRENTS)
-def test_bit_exact_trace(backend: str, available, current: float) -> None:
+def test_bit_exact_trace(backend: str, available: Callable[[], bool], current: float) -> None:
     if not available():
         pytest.skip(f"{backend} FitzHugh-Rinzel backend unavailable")
     ref_trace, ref_spikes, rv, rw, ry = _run("python", current=current)
@@ -70,7 +75,7 @@ def test_bit_exact_trace(backend: str, available, current: float) -> None:
 
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
-def test_bit_exact_empty_and_single(backend: str, available) -> None:
+def test_bit_exact_empty_and_single(backend: str, available: Callable[[], bool]) -> None:
     if not available():
         pytest.skip(f"{backend} FitzHugh-Rinzel backend unavailable")
     for n in (0, 1, 2):
@@ -81,7 +86,7 @@ def test_bit_exact_empty_and_single(backend: str, available) -> None:
 
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
-def test_bit_exact_slow_burst_long_run(backend: str, available) -> None:
+def test_bit_exact_slow_burst_long_run(backend: str, available: Callable[[], bool]) -> None:
     # The slow y variable (mu=1e-4) shapes bursts over tens of thousands of
     # steps; the exact RHS keeps the bit-exact backends locked to the reference.
     if not available():
@@ -135,6 +140,33 @@ def test_negative_n_steps_raises() -> None:
 def test_non_finite_current_raises() -> None:
     with pytest.raises(ValueError, match="must be finite"):
         FitzHughRinzelNeuron().simulate(10, np.inf)
+
+
+def test_numeric_contract_validation_is_failure_atomic() -> None:
+    neuron = FitzHughRinzelNeuron()
+    object.__setattr__(neuron, "v", 1)
+    neuron.mu = float("nan")
+
+    with pytest.raises(ValueError, match="mu must be finite"):
+        neuron.simulate(1, 0.5, backend="python")
+
+    assert type(neuron.v) is int
+
+
+@pytest.mark.parametrize(
+    ("backend", "available"),
+    (("python", lambda: True), ("rust", _rust), ("julia", _julia), ("go", _go), ("mojo", _mojo)),
+)
+def test_batch_overflow_is_failure_atomic(backend: str, available: Callable[[], bool]) -> None:
+    if not available():
+        pytest.skip(f"{backend} FitzHugh-Rinzel backend unavailable")
+    neuron = FitzHughRinzelNeuron(v=1.0e103, w=0.0, y=0.0)
+    before = (neuron.v, neuron.w, neuron.y)
+
+    with pytest.raises(FloatingPointError, match="invalid|overflow|non-finite|rejected"):
+        neuron.simulate(2, 0.5, backend=backend)
+
+    assert (neuron.v, neuron.w, neuron.y) == before
 
 
 def test_simulate_matches_repeated_step() -> None:

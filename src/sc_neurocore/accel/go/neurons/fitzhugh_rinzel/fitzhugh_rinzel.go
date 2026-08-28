@@ -25,7 +25,19 @@ package main
 */
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
+
+func allFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
 
 func deriv(v, w, y, a, b, c, d, delta, mu, cur float64) (float64, float64, float64) {
 	dv := v - v*v*v/3.0 - w + y + cur
@@ -46,6 +58,9 @@ func fitzhugh_rinzel_simulate_c(
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
+	if n < 0 || tracePtr == nil {
+		return -1
+	}
 	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+3)
 	v := float64(v0)
 	w := float64(w0)
@@ -59,6 +74,9 @@ func fitzhugh_rinzel_simulate_c(
 	dtt := float64(dt)
 	thr := float64(vThreshold)
 	cur := float64(current)
+	if !allFinite(v, w, y, aa, bb, cc, dd, del, muu, dtt, thr, cur) || bb <= 0 || dd <= 0 || del <= 0 || muu <= 0 || dtt <= 0 {
+		return -1
+	}
 	var spikes int64
 	for t := 0; t < n; t++ {
 		vPrev := v
@@ -66,9 +84,16 @@ func fitzhugh_rinzel_simulate_c(
 		k2v, k2w, k2y := deriv(v+0.5*dtt*k1v, w+0.5*dtt*k1w, y+0.5*dtt*k1y, aa, bb, cc, dd, del, muu, cur)
 		k3v, k3w, k3y := deriv(v+0.5*dtt*k2v, w+0.5*dtt*k2w, y+0.5*dtt*k2y, aa, bb, cc, dd, del, muu, cur)
 		k4v, k4w, k4y := deriv(v+dtt*k3v, w+dtt*k3w, y+dtt*k3y, aa, bb, cc, dd, del, muu, cur)
-		v = v + dtt*(k1v+2.0*k2v+2.0*k3v+k4v)/6.0
-		w = w + dtt*(k1w+2.0*k2w+2.0*k3w+k4w)/6.0
-		y = y + dtt*(k1y+2.0*k2y+2.0*k3y+k4y)/6.0
+		if !allFinite(k1v, k1w, k1y, k2v, k2w, k2y, k3v, k3w, k3y, k4v, k4w, k4y) {
+			return -1
+		}
+		nextV := v + dtt*(k1v+2.0*k2v+2.0*k3v+k4v)/6.0
+		nextW := w + dtt*(k1w+2.0*k2w+2.0*k3w+k4w)/6.0
+		nextY := y + dtt*(k1y+2.0*k2y+2.0*k3y+k4y)/6.0
+		if !allFinite(nextV, nextW, nextY) {
+			return -1
+		}
+		v, w, y = nextV, nextW, nextY
 		trace[t] = v
 		if v >= thr && vPrev < thr {
 			spikes++

@@ -9,10 +9,13 @@
 //! Python binding for the FitzHugh-Rinzel three-timescale bursting model.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use crate::neurons::FitzHughRinzelNeuron;
+
+type PyFitzHughRinzelBatch<'py> = (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64);
 
 py_neuron_default!("FitzHughRinzelNeuron", PyFitzHughRinzelNeuron, FitzHughRinzelNeuron, state v, state w, state y);
 
@@ -47,7 +50,7 @@ fn py_fitzhugh_rinzel_simulate<'py>(
     v_threshold: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
+) -> PyResult<PyFitzHughRinzelBatch<'py>> {
     let mut neuron = FitzHughRinzelNeuron {
         v: v0,
         w: w0,
@@ -61,6 +64,10 @@ fn py_fitzhugh_rinzel_simulate<'py>(
         dt,
         v_threshold,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.y)
+    let Some((trace, spikes)) = neuron.try_simulate(n_steps, current) else {
+        return Err(PyFloatingPointError::new_err(
+            "FitzHugh-Rinzel Rust batch rejected an invalid candidate",
+        ));
+    };
+    Ok((trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.y))
 }

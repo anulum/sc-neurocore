@@ -26,6 +26,7 @@
 #
 # Reference: FitzHugh, R. (1976); Rinzel, J. (1987).
 
+from std.math import isfinite
 from std.memory import UnsafePointer
 
 
@@ -62,6 +63,28 @@ def fitzhugh_rinzel_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(v0)
+        or not isfinite(w0)
+        or not isfinite(y0)
+        or not isfinite(a)
+        or not isfinite(b)
+        or not isfinite(c)
+        or not isfinite(d)
+        or not isfinite(delta)
+        or not isfinite(mu)
+        or not isfinite(dt)
+        or not isfinite(v_threshold)
+        or not isfinite(current)
+        or b <= 0.0
+        or d <= 0.0
+        or delta <= 0.0
+        or mu <= 0.0
+        or dt <= 0.0
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var v = v0
     var w = w0
@@ -90,9 +113,29 @@ def fitzhugh_rinzel_simulate_c(
         var k4v = _dv(b4v, b4w, b4y, current)
         var k4w = _dw(b4v, b4w, a, b, delta)
         var k4y = _dy(b4v, b4y, c, d, mu)
-        v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
-        w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
-        y = y + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0
+        if (
+            not isfinite(k1v)
+            or not isfinite(k1w)
+            or not isfinite(k1y)
+            or not isfinite(k2v)
+            or not isfinite(k2w)
+            or not isfinite(k2y)
+            or not isfinite(k3v)
+            or not isfinite(k3w)
+            or not isfinite(k3y)
+            or not isfinite(k4v)
+            or not isfinite(k4w)
+            or not isfinite(k4y)
+        ):
+            return -1
+        var next_v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
+        var next_w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
+        var next_y = y + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0
+        if not isfinite(next_v) or not isfinite(next_w) or not isfinite(next_y):
+            return -1
+        v = next_v
+        w = next_w
+        y = next_y
         trace[t] = v
         if v >= v_threshold and v_prev < v_threshold:
             spikes += 1

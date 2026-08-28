@@ -1,16 +1,47 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - TestQ1616Precision from former test_cosim_fitzhugh_rinzel.py
+# SC-NeuroCore — FitzHugh-Rinzel Q16.16 co-simulation and synthesis tests
 
 """Focused suite: TestQ1616Precision from former test_cosim_fitzhugh_rinzel.py."""
 
 from __future__ import annotations
 
-from tests.cosim_fitzhugh_rinzel_support import *  # noqa: F403
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from tests.cosim_fitzhugh_rinzel_support import (
+    HAS_IVERILOG,
+    _fitzhugh_rinzel_hand_spike_count,
+    _python_spike_count,
+    _verilog_spike_count_q1616,
+)
+from tests.toolchain_support import require_executable
+
+_ROOT = Path(__file__).resolve().parents[1]
+_RTL = _ROOT / "hdl/formal/catalogue/sc_fitzhugh_rinzel.v"
+
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {_RTL}; synth -top sc_fitzhugh_rinzel -run begin:coarse; check; stat",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

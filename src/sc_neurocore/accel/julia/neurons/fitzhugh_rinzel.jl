@@ -52,6 +52,12 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    if n_steps < 0 || !all(isfinite, (v0, w0, y0, a, b, c, d, delta, mu, dt, v_threshold, current))
+        throw(ArgumentError("FitzHugh-Rinzel batch inputs must be finite and n_steps non-negative"))
+    end
+    if b <= 0.0 || d <= 0.0 || delta <= 0.0 || mu <= 0.0 || dt <= 0.0
+        throw(ArgumentError("FitzHugh-Rinzel b, d, delta, mu, and dt must be positive"))
+    end
     trace = Vector{Float64}(undef, n_steps)
     v = v0
     w = w0
@@ -72,9 +78,17 @@ function simulate_trace(
             v + dt * k3v, w + dt * k3w, y + dt * k3y,
             a, b, c, d, delta, mu, current,
         )
-        v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
-        w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
-        y = y + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0
+        stages = (k1v, k1w, k1y, k2v, k2w, k2y, k3v, k3w, k3y, k4v, k4w, k4y)
+        if !all(isfinite, stages)
+            throw(DomainError(stages, "FitzHugh-Rinzel RK4 stage became non-finite"))
+        end
+        next_v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
+        next_w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
+        next_y = y + dt * (k1y + 2.0 * k2y + 2.0 * k3y + k4y) / 6.0
+        if !all(isfinite, (next_v, next_w, next_y))
+            throw(DomainError((next_v, next_w, next_y), "FitzHugh-Rinzel candidate became non-finite"))
+        end
+        v, w, y = next_v, next_w, next_y
         trace[t] = v
         if v >= v_threshold && v_prev < v_threshold
             spikes += 1

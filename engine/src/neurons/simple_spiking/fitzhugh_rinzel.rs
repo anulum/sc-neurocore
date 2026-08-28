@@ -98,25 +98,27 @@ impl FitzHughRinzelNeuron {
         ))
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.valid_numeric_contract() || !current.is_finite() {
-            return 0;
+            return None;
         }
         let v_prev = self.v;
-        let Some((next_v, next_w, next_y)) = self.rk4_candidate(current) else {
-            return 0;
-        };
+        let (next_v, next_w, next_y) = self.rk4_candidate(current)?;
         if !(next_v.is_finite() && next_w.is_finite() && next_y.is_finite()) {
-            return 0;
+            return None;
         }
         self.v = next_v;
         self.w = next_w;
         self.y = next_y;
-        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+        Some(if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
             0
-        }
+        })
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
@@ -126,21 +128,28 @@ impl FitzHughRinzelNeuron {
     }
 
     /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
-    /// and the upward-crossing spike count. Reuses `step` (RK4) so the trace is
-    /// bit-identical to the per-step path and — because the right-hand side is
+    /// and the upward-crossing spike count. Uses the same RK4 candidate path as
+    /// `step`, so the trace is bit-identical to the per-step path and — because the right-hand side is
     /// exact arithmetic (`v.powi(3)` = `v*v*v`) — to the Python reference. The
     /// final state is left in `self.v` / `self.w` / `self.y`.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        self.try_simulate(n_steps, current).unwrap_or_default()
+    }
+
+    /// Run one failure-atomic batch, returning `None` on any invalid stage.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
-            trace.push(self.v);
+            let spiked = candidate.try_step(current)?;
+            trace.push(candidate.v);
             if spiked == 1 {
                 spikes += 1;
             }
         }
-        (trace, spikes)
+        *self = candidate;
+        Some((trace, spikes))
     }
 }
 impl Default for FitzHughRinzelNeuron {
@@ -233,6 +242,17 @@ mod tests {
         let before = (n.v, n.w, n.y);
         assert_eq!(n.step(0.5), 0);
         assert_eq!((n.v, n.w, n.y), before);
+    }
+
+    #[test]
+    fn try_simulate_rejects_overflow_without_mutation() {
+        let mut neuron = FitzHughRinzelNeuron {
+            v: 1.0e103,
+            ..Default::default()
+        };
+        let before = (neuron.v, neuron.w, neuron.y);
+        assert!(neuron.try_simulate(2, 0.5).is_none());
+        assert_eq!((neuron.v, neuron.w, neuron.y), before);
     }
 
     #[test]

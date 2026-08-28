@@ -1,48 +1,97 @@
 {
-  "benchmark": "fitzhugh_rinzel_simulate_rk4",
-  "environment": {
-    "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3"
-  },
-  "results": [
-    {
-      "backend": "python",
-      "median_ms": 1905.586998007493,
-      "min_ms": 1895.0348640064476,
+  "backends": {
+    "go": {
+      "median_ms": 129.66738000977784,
+      "min_ms": 125.37941499613225,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 57.942760789234185
+    },
+    "julia": {
+      "median_ms": 131.29797403234988,
+      "min_ms": 115.37600390147418,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 57.22316766458348
+    },
+    "mojo": {
+      "median_ms": 103.09782100375742,
+      "min_ms": 102.45700599625707,
+      "parity_max_abs_diff": 1.5530945862707313e-08,
+      "speedup_vs_python": 72.87531306601971
+    },
+    "python": {
+      "median_ms": 7513.285982073285,
+      "min_ms": 7050.814385060221,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
-    {
-      "backend": "rust",
-      "median_ms": 101.70191500219516,
-      "min_ms": 99.89503699762281,
+    "rust": {
+      "median_ms": 120.70737301837653,
+      "min_ms": 117.44680406991392,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 18.736982464552042
-    },
-    {
-      "backend": "julia",
-      "median_ms": 101.12937800295185,
-      "min_ms": 91.28967400465626,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 18.84306059859155
-    },
-    {
-      "backend": "go",
-      "median_ms": 95.1933089963859,
-      "min_ms": 91.72718800255097,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 20.018077090689648
-    },
-    {
-      "backend": "mojo",
-      "median_ms": 87.95965999888722,
-      "min_ms": 85.82720800768584,
-      "parity_max_abs_diff": 2.187063330438832e-08,
-      "speedup_vs_python": 21.664328830188758
+      "speedup_vs_python": 62.24380329219375
     }
-  ],
+  },
+  "benchmark": "fitzhugh_rinzel_simulate_rk4",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "model": "FitzHughRinzelNeuron",
+  "production_speed_claim": false,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_fitzhugh_rinzel_simulate": {
+      "py": "64b8d2416633647fcf4e209031fe3d9522fa5fdea9731fe481e4f5473feab533"
+    },
+    "benchmarks/bench_fitzhugh_rinzel_simulate.py": "64b8d2416633647fcf4e209031fe3d9522fa5fdea9731fe481e4f5473feab533",
+    "engine/src/bindings/fitzhugh_rinzel": {
+      "rs": "7115cc8a634e987f76bcfffdbea04587194b5ba8292e779c7e3b8067f2240d81"
+    },
+    "engine/src/bindings/fitzhugh_rinzel.rs": "7115cc8a634e987f76bcfffdbea04587194b5ba8292e779c7e3b8067f2240d81",
+    "engine/src/neurons/simple_spiking/fitzhugh_rinzel": {
+      "rs": "031d72db3916b54e699569c8e2a11faf427a0259b66ed4e3b780a4a2a26a127c"
+    },
+    "engine/src/neurons/simple_spiking/fitzhugh_rinzel.rs": "031d72db3916b54e699569c8e2a11faf427a0259b66ed4e3b780a4a2a26a127c",
+    "src/sc_neurocore/accel/go/neurons/fitzhugh_rinzel/fitzhugh_rinzel": {
+      "go": "cc680287fd53a7a32280d7ebc79b36e6e91401cbc6354c8c18ed4ac9b38639f1"
+    },
+    "src/sc_neurocore/accel/go/neurons/fitzhugh_rinzel/fitzhugh_rinzel.go": "cc680287fd53a7a32280d7ebc79b36e6e91401cbc6354c8c18ed4ac9b38639f1",
+    "src/sc_neurocore/accel/julia/neurons/fitzhugh_rinzel": {
+      "jl": "f1a9f7b532e190f4f58f034beddea48aec96aba7dc0064f25f3cbb76fcca0fcf"
+    },
+    "src/sc_neurocore/accel/julia/neurons/fitzhugh_rinzel.jl": "f1a9f7b532e190f4f58f034beddea48aec96aba7dc0064f25f3cbb76fcca0fcf",
+    "src/sc_neurocore/accel/mojo/neurons/fitzhugh_rinzel": {
+      "mojo": "e4f7dc83446a12211479d26cf6e1d208466ec73bedba41600fddcb847230a813"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/fitzhugh_rinzel.mojo": "e4f7dc83446a12211479d26cf6e1d208466ec73bedba41600fddcb847230a813",
+    "src/sc_neurocore/accel/rust/safety/fitzhugh_rinzel": {
+      "rs": "15033a59d12628928c89485379e2aecdd2010c5da996fd911498f5864216eb00"
+    },
+    "src/sc_neurocore/accel/rust/safety/fitzhugh_rinzel.rs": "15033a59d12628928c89485379e2aecdd2010c5da996fd911498f5864216eb00",
+    "src/sc_neurocore/neurons/model_descriptors/FitzHughRinzelNeuron": {
+      "toml": "803f9b3e31290d35b64c6dc792379e34331ddce1781d1cf4e6dabccdca529ae6"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/FitzHughRinzelNeuron.toml": "803f9b3e31290d35b64c6dc792379e34331ddce1781d1cf4e6dabccdca529ae6",
+    "src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel": {
+      "json": "76a298922c79df064bb7833b2091d2777700132e9c1e2545d1b1d7ff3bdfdb1c",
+      "toml": "f7143aec336faec3524e8f181c051f131dc265b690707b7298bb4be65a738927"
+    },
+    "src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel.json": "76a298922c79df064bb7833b2091d2777700132e9c1e2545d1b1d7ff3bdfdb1c",
+    "src/sc_neurocore/neurons/model_schemas/fitzhugh_rinzel.toml": "f7143aec336faec3524e8f181c051f131dc265b690707b7298bb4be65a738927",
+    "src/sc_neurocore/neurons/models/fitzhugh_rinzel": {
+      "py": "3beb9044b6f6c7a85940f885554fa75a35f757ab03d37bf12e68fdee54d3565f"
+    },
+    "src/sc_neurocore/neurons/models/fitzhugh_rinzel.py": "3beb9044b6f6c7a85940f885554fa75a35f757ab03d37bf12e68fdee54d3565f",
+    "src/sc_neurocore/neurons/reference_trace_data/fitzhugh_rinzel_driven_bursting_doi": {
+      "json": "74c024fb58adf7d623bf349de85421a37eb1798f3dd4cf163416703fbf72db4f"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/fitzhugh_rinzel_driven_bursting_doi.json": "74c024fb58adf7d623bf349de85421a37eb1798f3dd4cf163416703fbf72db4f"
+  },
+  "timestamp_utc": "2026-08-28T02:33:38.883053+00:00",
   "workload": {
     "current": 0.5,
     "n_steps": 2000000,
