@@ -28,35 +28,14 @@ mod mihalas_niebur;
 mod plant_r15;
 mod pospischil;
 mod prescott;
+mod reexports;
 mod sc_four_state_glif;
 mod sc_scaled_reset_adaptive_if;
 mod sc_six_state_thalamocortical;
 mod traub_miles;
 mod wang_buzsaki;
 mod yamada;
-pub use av_ron_cardiac::AvRonCardiacNeuron;
-pub use bertram_phantom::{BertramPhantomBurster, SCThreeStatePhantomBurster};
-pub use connor_stevens::ConnorStevensNeuron;
-pub use de_schutter_purkinje::DeSchutterPurkinjeNeuron;
-pub use destexhe_thalamic::DestexheThalamicNeuron;
-pub use durstewitz_dopamine::DurstewitzDopamineNeuron;
-pub use gif_population::GIFPopulationNeuron;
-pub use glif::GLIFNeuron;
-pub use golomb_fs::GolombFSNeuron;
-pub use hill_tononi::HillTononiNeuron;
-pub use hodgkin_huxley::HodgkinHuxleyNeuron;
-pub use huber_braun::HuberBraunNeuron;
-pub use mainen_sejnowski::MainenSejnowskiNeuron;
-pub use mihalas_niebur::MihalasNieburNeuron;
-pub use plant_r15::PlantR15Neuron;
-pub use pospischil::PospischilNeuron;
-pub use prescott::PrescottNeuron;
-pub use sc_four_state_glif::SCFourStateGLIFNeuron;
-pub use sc_scaled_reset_adaptive_if::SCScaledResetAdaptiveIFNeuron;
-pub use sc_six_state_thalamocortical::SCSixStateThalamocorticalNeuron;
-pub use traub_miles::TraubMilesNeuron;
-pub use wang_buzsaki::WangBuzsakiNeuron;
-pub use yamada::YamadaNeuron;
+pub use reexports::*;
 // ── Helper: safe alpha/beta kinetics avoiding division-by-zero ──
 
 pub fn safe_rate(

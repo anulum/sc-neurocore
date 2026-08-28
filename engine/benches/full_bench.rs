@@ -156,6 +156,7 @@ use sc_neurocore_engine::neurons::{
     RodPhotoreceptor,
     RulkovMapNeuron,
     SCAdaptiveThresholdMapNeuron,
+    SCDecoupledAdaptationIonMassNeuron,
     SCResettingMATNeuron,
     SCScaledResetAdaptiveIFNeuron,
     SFANeuron,
@@ -1693,9 +1694,18 @@ fn bench_all(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("larter_breakspear_100k_steps", |b| {
+    c.bench_function("larter_breakspear_2003_rk4_100k_steps", |b| {
         b.iter(|| {
             let mut n = LarterBreakspearNeuron::new();
+            for _ in 0..100_000 {
+                black_box(n.step(0.0));
+            }
+        })
+    });
+
+    c.bench_function("sc_decoupled_adaptation_ion_mass_100k_steps", |b| {
+        b.iter(|| {
+            let mut n = SCDecoupledAdaptationIonMassNeuron::new();
             for _ in 0..100_000 {
                 black_box(n.step(0.0));
             }

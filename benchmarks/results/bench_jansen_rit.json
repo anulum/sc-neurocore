@@ -1,8 +1,8 @@
 {
   "auto_backend_order": [
     "rust",
-    "julia",
     "mojo",
+    "julia",
     "go",
     "python"
   ],
@@ -20,19 +20,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.9203306439740118e-12,
-      "max_call_ns": 10367366,
-      "median_call_ms": 4.564101,
-      "median_call_ns": 4564101.0,
-      "median_ns_per_step": 91.28202,
-      "min_call_ns": 4436368,
+      "max_call_ns": 13505518,
+      "median_call_ms": 9.465037,
+      "median_call_ns": 9465037.0,
+      "median_ns_per_step": 189.30074,
+      "min_call_ns": 8621013,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 6.188827228470473e-12,
       "samples_ns": [
-        5371988,
-        10367366,
-        4564101,
-        4436368,
-        4449057
+        13505518,
+        11728757,
+        8727937,
+        9465037,
+        8621013
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -51,19 +51,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 3.552713678800501e-15,
-      "max_call_ns": 4211348,
-      "median_call_ms": 3.432256,
-      "median_call_ns": 3432256.0,
-      "median_ns_per_step": 68.64512,
-      "min_call_ns": 3101272,
+      "max_call_ns": 7507842,
+      "median_call_ms": 6.881014,
+      "median_call_ns": 6881014.0,
+      "median_ns_per_step": 137.62028,
+      "min_call_ns": 6161345,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 1.4210854715202004e-14,
       "samples_ns": [
-        3101272,
-        4211348,
-        3820104,
-        3432256,
-        3404715
+        6161345,
+        7507842,
+        6881014,
+        7326278,
+        6610644
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -82,19 +82,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.0981437981172348e-11,
-      "max_call_ns": 4552750,
-      "median_call_ms": 3.753209,
-      "median_call_ns": 3753209.0,
-      "median_ns_per_step": 75.06418,
-      "min_call_ns": 3264722,
+      "max_call_ns": 6311468,
+      "median_call_ms": 5.331519,
+      "median_call_ns": 5331519.0,
+      "median_ns_per_step": 106.63038,
+      "min_call_ns": 4886776,
       "parity_atol": 1e-08,
       "parity_max_abs_diff": 2.660414111232967e-10,
       "samples_ns": [
-        3753209,
-        4552750,
-        4129499,
-        3532855,
-        3264722
+        5331519,
+        5882484,
+        5133591,
+        4886776,
+        6311468
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -113,19 +113,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 329810871,
-      "median_call_ms": 305.225157,
-      "median_call_ns": 305225157.0,
-      "median_ns_per_step": 6104.50314,
-      "min_call_ns": 300561144,
+      "max_call_ns": 449653926,
+      "median_call_ms": 368.508465,
+      "median_call_ns": 368508465.0,
+      "median_ns_per_step": 7370.1693,
+      "min_call_ns": 361068121,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        329810871,
-        319740679,
-        304231461,
-        305225157,
-        300561144
+        449653926,
+        365237784,
+        361068121,
+        377489595,
+        368508465
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -144,19 +144,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 3597115,
-      "median_call_ms": 2.993882,
-      "median_call_ns": 2993882.0,
-      "median_ns_per_step": 59.87764,
-      "min_call_ns": 2873481,
+      "max_call_ns": 4511136,
+      "median_call_ms": 4.076637,
+      "median_call_ns": 4076637.0,
+      "median_ns_per_step": 81.53274,
+      "min_call_ns": 3757361,
       "parity_atol": 1e-11,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2873481,
-        3469317,
-        3597115,
-        2993882,
-        2923088
+        4076637,
+        4511136,
+        4339057,
+        3757361,
+        3971930
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -178,27 +178,27 @@
     },
     "rust_extension": {
       "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "e2229701382272474a91ad35b8b58c7069e44f2bda1c73ca05c287661abaedc4",
-      "size_bytes": 34153913
+      "sha256": "4f2c0ad4381441e510138658e6a907bddb5f9c508669b9591c47e8cd6b8c44c1",
+      "size_bytes": 34788513
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_jansen_rit.py --json benchmarks/results/bench_jansen_rit.json",
   "environment": {
     "affinity": [
-      11
+      0
     ],
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      5.404296875,
-      4.5537109375,
-      4.71435546875
+      14.06689453125,
+      10.16796875,
+      9.2802734375
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
     "python": "3.12.3",
-    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
   },
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
   "hardware_measurement_claimed": false,
@@ -233,13 +233,13 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_jansen_rit": {
-      "py": "59caac4c40ed4aa954f8e71676317804091f51679c9ebe1cd9230115b1e3fe7a"
+      "py": "92f4dd1b47345e7c976476d49e97b1777c21e97a5a412ed0ce9971baf3654ba6"
     },
-    "benchmarks/bench_jansen_rit.py": "59caac4c40ed4aa954f8e71676317804091f51679c9ebe1cd9230115b1e3fe7a",
+    "benchmarks/bench_jansen_rit.py": "92f4dd1b47345e7c976476d49e97b1777c21e97a5a412ed0ce9971baf3654ba6",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168"
+      "py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "fb14c5d33c203813a9fa0c95c814fd8d3f7c297ddf972f517b030e5b4a350168",
+    "bridge/sc_neurocore_engine/__init__.py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d",
     "engine/src/bindings/jansen_rit": {
       "rs": "20b40e5c40e241041abb5e455fc8fb42e58a2ada331be48006900b869e34a888"
     },
@@ -249,13 +249,13 @@
     },
     "engine/src/neurons/jansen_rit.rs": "ed43dd179734ab3df1e5bd36c7f3dfb797509e1013ec8af71461ba074ae4eced",
     "engine/src/neurons/mod": {
-      "rs": "8adb2f86a729c08317589c30551d85b25817b3f5ad548d47b3eb5d8b5b3561cd"
+      "rs": "21bd9cc14d4bd42af078959a6fcd30e6b8781f80193a1ed71dd54a024c672e22"
     },
-    "engine/src/neurons/mod.rs": "8adb2f86a729c08317589c30551d85b25817b3f5ad548d47b3eb5d8b5b3561cd",
+    "engine/src/neurons/mod.rs": "21bd9cc14d4bd42af078959a6fcd30e6b8781f80193a1ed71dd54a024c672e22",
     "engine/src/neurons/special": {
-      "rs": "24472635b8b2878b96a955763dcd9934a6699204118ff8fbb71435d1f2e5e680"
+      "rs": "973ab2368ecc09889b2577ccf23f80c979fcb2d0107eaa05f3adfbe21b349bbf"
     },
-    "engine/src/neurons/special.rs": "24472635b8b2878b96a955763dcd9934a6699204118ff8fbb71435d1f2e5e680",
+    "engine/src/neurons/special.rs": "973ab2368ecc09889b2577ccf23f80c979fcb2d0107eaa05f3adfbe21b349bbf",
     "src/sc_neurocore/accel/go/jansen_rit/__init__": {
       "py": "8600f7c183c2b4dae62fc259f6a38fddd4a9b4bffd8590c779f059aa489eaf63"
     },
@@ -319,7 +319,7 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/jansen_rit_eq6_euler_brian2.json": "6a5895a51159ea469a8109a9984e03e6aa55a4c7a19657f6c9a945b80883a464"
   },
-  "timestamp_utc": "2026-08-26T07:44:20+00:00",
+  "timestamp_utc": "2026-08-28T16:22:04+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -327,9 +327,9 @@
         "--edition",
         "2021",
         "--test",
-        "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/src/sc_neurocore/accel/rust/safety/jansen_rit.rs",
+        "src/sc_neurocore/accel/rust/safety/jansen_rit.rs",
         "-o",
-        "/tmp/jansen-rit-rust-bheu71dx/jansen_rit_tests"
+        "<temporary-directory>/jansen_rit_tests"
       ],
       "output_tail": [
         "",

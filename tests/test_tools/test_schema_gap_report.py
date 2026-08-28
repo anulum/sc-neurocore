@@ -47,7 +47,7 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
     assert counts["model_modules"] == len(modules)
-    assert counts["schema_models"] == 67
+    assert counts["schema_models"] == 77
     assert counts["schema_only_models"] == 6
     assert report["schema_only_models"] == [
         "aihara_map",

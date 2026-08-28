@@ -187,17 +187,19 @@ println("[",be,",",b.v,",",b.h,",",b.n,",",b.s_nmda,"]")
 def test_mojo_dual_identity_parity(tmp_path: Path, filename: str, expected: np.ndarray) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels" / filename
     binary = tmp_path / kernel.stem
-    command = [
-        "mojo",
-        "build",
-        "--disable-warnings",
-        "-Xlinker",
-        "-lm",
-        str(kernel),
-        "-o",
-        str(binary),
-    ]
-    subprocess.run(pin_isa(command), check=True, timeout=120)
+    command = pin_isa(
+        [
+            "mojo",
+            "build",
+            "--disable-warnings",
+            "-Xlinker",
+            "-lm",
+            str(kernel),
+            "-o",
+            str(binary),
+        ]
+    )
+    subprocess.run(command, check=True, timeout=120)
     values = [
         float(value)
         for value in subprocess.run(

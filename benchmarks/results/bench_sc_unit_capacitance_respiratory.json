@@ -1,7 +1,7 @@
 {
   "spdx_license": "AGPL-3.0-or-later",
   "benchmark": "SCUnitCapacitanceRespiratoryNeuron retained RK4 profile",
-  "timestamp_utc": "2026-08-26T05:00:21+00:00",
+  "timestamp_utc": "2026-08-28T16:13:20+00:00",
   "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_sc_unit_capacitance_respiratory.py",
   "evidence_class": "local_regression_non_isolated",
   "production_speed_claim": false,
@@ -15,15 +15,15 @@
   "results": [
     {
       "backend": "python",
-      "median_ns_per_step": 30366.7744,
-      "min_ns_per_step": 24315.4626,
-      "max_ns_per_step": 40391.51855,
+      "median_ns_per_step": 57450.78735,
+      "min_ns_per_step": 43541.34815,
+      "max_ns_per_step": 81841.4058,
       "results_ns_per_step": [
-        40391.51855,
-        29245.6376,
-        32228.2687,
-        30366.7744,
-        24315.4626
+        81841.4058,
+        57450.78735,
+        76705.81185,
+        53277.6531,
+        43541.34815
       ],
       "spikes": 5,
       "spike_counts": [
@@ -63,18 +63,18 @@
     },
     {
       "backend": "rust",
-      "timestamp_unix": 1787720416,
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "timestamp_unix": 1787933593,
+      "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
       "measurement_context": {
         "host_load": "workstation under concurrent load during capture",
         "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
-        "cpu_affinity": "0-11",
+        "cpu_affinity": "0",
         "cgroup_effective_cpuset": "unavailable",
         "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "23.31 13.06 10.22 4/4824 770027",
-        "load_average_after": "22.00 12.96 10.20 1/4824 770037",
+        "load_average_before": "13.35 10.69 9.77 9/3816 1966320",
+        "load_average_after": "13.35 10.69 9.77 8/3816 1966326",
         "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=4599.860,max=4610.454,sampled_cpu_count=12",
+        "cpu_frequency_mhz": "min=4099.911,max=4105.750,sampled_cpu_count=12",
         "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
         "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
@@ -82,15 +82,15 @@
       "steps": 20000,
       "repeats": 5,
       "current": 20,
-      "median_ns_per_step": 209.9043,
-      "min_ns_per_step": 207.1662,
-      "max_ns_per_step": 255.33035,
+      "median_ns_per_step": 242.5562,
+      "min_ns_per_step": 234.0697,
+      "max_ns_per_step": 245.30945,
       "results_ns_per_step": [
-        207.9753,
-        233.638,
-        207.1662,
-        255.33035,
-        209.9043
+        240.7036,
+        244.97725,
+        234.0697,
+        242.5562,
+        245.30945
       ],
       "spike_counts": [
         5,
@@ -130,15 +130,15 @@
     },
     {
       "backend": "go",
-      "median_ns_per_step": 562.2,
-      "min_ns_per_step": 560.0,
-      "max_ns_per_step": 636.9,
+      "median_ns_per_step": 618.7,
+      "min_ns_per_step": 583.6,
+      "max_ns_per_step": 639.9,
       "results_ns_per_step": [
-        560.0,
-        562.2,
-        586.2,
-        562.0,
-        636.9
+        632.9,
+        612.1,
+        583.6,
+        639.9,
+        618.7
       ],
       "spikes": 5,
       "spike_counts": [
@@ -152,15 +152,15 @@
     },
     {
       "backend": "julia",
-      "median_ns_per_step": 337.0801,
-      "min_ns_per_step": 334.36135,
-      "max_ns_per_step": 348.92545,
+      "median_ns_per_step": 274.9764,
+      "min_ns_per_step": 258.54115,
+      "max_ns_per_step": 302.76745,
       "results_ns_per_step": [
-        335.1724,
-        334.36135,
-        337.0801,
-        348.92545,
-        337.76185
+        302.76745,
+        292.1836,
+        274.9764,
+        258.54115,
+        271.66075
       ],
       "spikes": 5,
       "spike_counts": [
@@ -174,15 +174,15 @@
     },
     {
       "backend": "mojo",
-      "median_ns_per_step": 322.2350496798754,
-      "min_ns_per_step": 315.44860103167593,
-      "max_ns_per_step": 361.6425994550809,
+      "median_ns_per_step": 363.95019851624966,
+      "min_ns_per_step": 348.70614763349295,
+      "max_ns_per_step": 940.9976482857019,
       "results_ns_per_step": [
-        361.6425994550809,
-        322.2350496798754,
-        317.3768491251394,
-        342.64895075466484,
-        315.44860103167593
+        348.70614763349295,
+        355.5139002855867,
+        363.95019851624966,
+        940.9976482857019,
+        391.5295994374901
       ],
       "spikes": 4,
       "spike_counts": [
@@ -197,10 +197,10 @@
   ],
   "source_hashes": {
     "benchmarks/bench_model_sc_unit_capacitance_respiratory.py": "8be9f8889af80fb735d9d71baa32c1632dc238c49e33acadd82a9544ae2063c5",
-    "engine/Cargo.toml": "f539d821a6203bfddff9c207c8f0eda570d1a450958c4918e1de7a49f742429c",
+    "engine/Cargo.toml": "18987357c785befcdfac0970e51114dcbd396a286c9b7e1b3355865c57e5771a",
     "engine/examples/bench_sc_unit_capacitance_respiratory_rk4.rs": "9024ae98d60c83ade54770452882f4a596959e091002b12d2d710f60e6fc5715",
-    "engine/src/neurons/simple_spiking.rs": "9d399cd4e2032cfda2ddbac8c2ed217532e537805864ad53eee66799f0fb6de8",
-    "engine/src/neurons/simple_spiking/reexports.rs": "6e7f6757881f1e0bf54becbc54f0120e6ba44538d70d73fb2f03b3e833c5116a",
+    "engine/src/neurons/simple_spiking.rs": "442309aa5871768b3626b11d125a4f5cfe39f5d2cb949baaeeca6e6352ee9905",
+    "engine/src/neurons/simple_spiking/reexports.rs": "51341bd5508329546700a620d653eb75226477f34680daba7094794f3b02fee3",
     "engine/src/neurons/simple_spiking/butera_respiratory.rs": "a0271376a3b5a0d8400296b45f5d59fbe3c8d1a8e7c7c61f1f5cea29697db5ba",
     "engine/src/neurons/simple_spiking/sc_unit_capacitance_respiratory.rs": "95c8b88898ec769f711b81f6f301cc779e285e2d346dfebc8663cf4d1826cc7d",
     "src/sc_neurocore/neurons/models/butera_respiratory.py": "0bb00886d6829d13367ca3b3e4f39e4ff8f4d8ea766ba0fa8a642a056548e150",

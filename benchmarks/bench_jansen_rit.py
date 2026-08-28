@@ -202,6 +202,15 @@ def _environment() -> dict[str, object]:
 
 def _verify_rust_safety() -> dict[str, object]:
     source = REPOSITORY / "src/sc_neurocore/accel/rust/safety/jansen_rit.rs"
+    recorded_command = [
+        "rustc",
+        "--edition",
+        "2021",
+        "--test",
+        str(source.relative_to(REPOSITORY)),
+        "-o",
+        "<temporary-directory>/jansen_rit_tests",
+    ]
     with tempfile.TemporaryDirectory(prefix="jansen-rit-rust-") as directory:
         binary = Path(directory) / "jansen_rit_tests"
         command = ["rustc", "--edition", "2021", "--test", str(source), "-o", str(binary)]
@@ -223,7 +232,7 @@ def _verify_rust_safety() -> dict[str, object]:
                 timeout=60,
             )
     return {
-        "command": command,
+        "command": recorded_command,
         "passed": executed.returncode == 0,
         "returncode": executed.returncode,
         "output_tail": (executed.stdout + executed.stderr).splitlines()[-20:],

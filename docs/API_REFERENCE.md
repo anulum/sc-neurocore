@@ -23566,22 +23566,15 @@ sub-steps and commits only finite, physically bounded candidates.
 ## Module `neurons.models.courage_nekorkin_map`
 
 ### Class `CourageNekorkinMapNeuron`
-Courbage-Nekorkin-Vdovin 2007 discontinuous 2D spiking-bursting map.
+Courbage-Nekorkin-Vdovin map with the source Figure-4 profile.
 
-x(n+1) = x(n) + F(x(n)) - y(n) - beta*H(x(n) - d) + I
-y(n+1) = y(n) + eps*(x(n) - J)
-
-with the piecewise-linear ``F`` and the Heaviside ``H`` of the module
-docstring. Defaults sit in the published chaotic spiking-bursting regime.
-
-Reference: Courbage, M., Nekorkin, V.I. & Vdovin, L.V. (2007).
-"Chaotic oscillations in a map-based model of neural activity."
-Chaos 17:043109 (arXiv:0712.2097), eqs. 3-6.
-
+- **__post_init__**()
 - **step**(current)
+  - Advance one map iteration; rejected candidates leave state unchanged.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
+  - Return the post-step x trace and upward-crossing event count.
 - **reset**()
+  - Restore the source-profile protocol initial state.
 
 ---
 
@@ -25836,6 +25829,21 @@ attribution.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 - **reset**()
+
+---
+
+## Module `neurons.models.sc_clipped_rational_recovery_map`
+
+### Class `SCClippedRationalRecoveryMapNeuron`
+Retained clipped rational-recovery project recurrence.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance once; rejected candidates leave both states unchanged.
+- **simulate**(n_steps, current, backend)
+  - Return the post-step x trace and upward-crossing event count.
+- **reset**()
+  - Restore the retained project initial state.
 
 ---
 

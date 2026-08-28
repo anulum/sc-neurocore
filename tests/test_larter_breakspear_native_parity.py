@@ -27,6 +27,14 @@ _SOURCE = np.array([0.10851023903311285, 0.10395561081677293, 0.1002408296371192
 _SC = np.array([-0.4987593419078305, 0.0002412377194581311, 6.202934920494744e-7])
 
 
+def test_criterion_series_keep_source_and_sc_identities_separate() -> None:
+    benchmark = (_ROOT / "engine/benches/full_bench.rs").read_text()
+
+    assert '"larter_breakspear_100k_steps"' not in benchmark
+    assert '"larter_breakspear_2003_rk4_100k_steps"' in benchmark
+    assert '"sc_decoupled_adaptation_ion_mass_100k_steps"' in benchmark
+
+
 def test_python_dual_identity_anchors() -> None:
     source = LarterBreakspearNeuron()
     retained = SCDecoupledAdaptationIonMassNeuron()
@@ -77,17 +85,19 @@ def test_julia_dual_identity_parity(
 def test_mojo_dual_identity_parity(tmp_path: Path, filename: str, expected: np.ndarray) -> None:
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels" / filename
     binary = tmp_path / kernel.stem
-    command = [
-        "mojo",
-        "build",
-        "--disable-warnings",
-        "-Xlinker",
-        "-lm",
-        str(kernel),
-        "-o",
-        str(binary),
-    ]
-    subprocess.run(pin_isa(command), check=True, timeout=60)
+    command = pin_isa(
+        [
+            "mojo",
+            "build",
+            "--disable-warnings",
+            "-Xlinker",
+            "-lm",
+            str(kernel),
+            "-o",
+            str(binary),
+        ]
+    )
+    subprocess.run(command, check=True, timeout=60)
     values = [
         float(value)
         for value in subprocess.run(

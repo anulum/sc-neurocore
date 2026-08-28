@@ -47,7 +47,7 @@ max_lines = 33
 max_pyfunctions = 0
 
 [targets."engine/src/network_runner/model_factory.rs"]
-max_lines = 553
+max_lines = 432
 max_pyfunctions = 0
 
 [targets."engine/src/neuron.rs"]
@@ -91,7 +91,7 @@ max_lines = 35
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/biophysical.rs"]
-max_lines = 71
+max_lines = 54
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/cerebellar.rs"]
@@ -99,7 +99,7 @@ max_lines = 26
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/channels.rs"]
-max_lines = 28
+max_lines = 24
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/hardware.rs"]
@@ -187,11 +187,11 @@ max_lines = 38
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/simple_spiking.rs"]
-max_lines = 60
+max_lines = 38
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/trivial.rs"]
-max_lines = 53
+max_lines = 35
 max_pyfunctions = 0
 
 [targets."engine/src/pyo3_neurons.rs"]
