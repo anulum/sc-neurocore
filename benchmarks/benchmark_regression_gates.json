@@ -4146,6 +4146,55 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_pernarowski_simulate.json",
+      "description": "Pernarowski three-state RK4 execution across Python, Rust, Julia, Go, and Mojo.",
+      "expected_values": {
+        "benchmark": "pernarowski_simulate_rk4",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "model": "PernarowskiNeuron",
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 0.0,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "pernarowski-five-runtime-local-regression",
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {"max": 0.0},
+        "backends.julia.parity_max_abs_diff": {"max": 0.0},
+        "backends.mojo.parity_max_abs_diff": {"max": 1e-06},
+        "backends.python.parity_max_abs_diff": {"max": 0.0},
+        "backends.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backends.python.median_ms",
+        "backends.python.min_ms",
+        "backends.rust.median_ms",
+        "backends.rust.min_ms",
+        "backends.julia.median_ms",
+        "backends.julia.min_ms",
+        "backends.go.median_ms",
+        "backends.go.min_ms",
+        "backends.mojo.median_ms",
+        "backends.mojo.min_ms"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_pernarowski_simulate.py": "source_hashes.benchmarks/bench_pernarowski_simulate.py",
+        "engine/src/bindings/pernarowski.rs": "source_hashes.engine/src/bindings/pernarowski.rs",
+        "engine/src/neurons/simple_spiking/pernarowski.rs": "source_hashes.engine/src/neurons/simple_spiking/pernarowski.rs",
+        "src/sc_neurocore/accel/go/neurons/pernarowski/pernarowski.go": "source_hashes.src/sc_neurocore/accel/go/neurons/pernarowski/pernarowski.go",
+        "src/sc_neurocore/accel/julia/neurons/pernarowski.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/pernarowski.jl",
+        "src/sc_neurocore/accel/mojo/neurons/pernarowski.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/pernarowski.mojo",
+        "src/sc_neurocore/accel/rust/safety/pernarowski.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/pernarowski.rs",
+        "src/sc_neurocore/neurons/model_descriptors/PernarowskiNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/PernarowskiNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/pernarowski.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/pernarowski.json",
+        "src/sc_neurocore/neurons/model_schemas/pernarowski.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/pernarowski.toml",
+        "src/sc_neurocore/neurons/models/pernarowski.py": "source_hashes.src/sc_neurocore/neurons/models/pernarowski.py",
+        "src/sc_neurocore/neurons/reference_trace_data/pernarowski_autonomous_bursting_doi.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/pernarowski_autonomous_bursting_doi.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "description": "Wang NMDA source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

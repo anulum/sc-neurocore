@@ -270,6 +270,10 @@
       "id": "fitzhugh-rinzel-five-runtime-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_pernarowski_simulate.json",
+      "id": "pernarowski-five-runtime-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "id": "wang-nmda-dual-identity-local-regression"
     },
@@ -296,7 +300,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 73,
+  "gate_count": 74,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

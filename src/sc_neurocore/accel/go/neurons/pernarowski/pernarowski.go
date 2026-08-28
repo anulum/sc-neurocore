@@ -24,7 +24,19 @@ package main
 */
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
+
+func allFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
 
 // pernarowski_simulate_c runs n RK4 steps under a constant input. The caller
 // allocates a trace buffer of length n+3: indices [0, n) receive the v trace,
@@ -38,6 +50,9 @@ func pernarowski_simulate_c(
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
+	if n < 0 || tracePtr == nil {
+		return -1
+	}
 	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+3)
 	v := float64(v0)
 	w := float64(w0)
@@ -50,6 +65,9 @@ func pernarowski_simulate_c(
 	pdt := float64(dt)
 	thr := float64(vThreshold)
 	cur := float64(current)
+	if !allFinite(v, w, z, pa, pb, pe1, pe2, pg, pdt, thr, cur) || pe1 <= 0 || pe2 <= 0 || pg <= 0 || pdt <= 0 {
+		return -1
+	}
 	deriv := func(vv, ww, zz float64) (float64, float64, float64) {
 		dv := vv - vv*vv*vv/3.0 - ww - zz + cur
 		dw := pe1 * (vv - pg*ww + pa)
@@ -63,9 +81,16 @@ func pernarowski_simulate_c(
 		dv2, dw2, dz2 := deriv(v+0.5*pdt*dv1, w+0.5*pdt*dw1, z+0.5*pdt*dz1)
 		dv3, dw3, dz3 := deriv(v+0.5*pdt*dv2, w+0.5*pdt*dw2, z+0.5*pdt*dz2)
 		dv4, dw4, dz4 := deriv(v+pdt*dv3, w+pdt*dw3, z+pdt*dz3)
-		v = v + pdt*(dv1+2.0*dv2+2.0*dv3+dv4)/6.0
-		w = w + pdt*(dw1+2.0*dw2+2.0*dw3+dw4)/6.0
-		z = z + pdt*(dz1+2.0*dz2+2.0*dz3+dz4)/6.0
+		if !allFinite(dv1, dw1, dz1, dv2, dw2, dz2, dv3, dw3, dz3, dv4, dw4, dz4) {
+			return -1
+		}
+		nextV := v + pdt*(dv1+2.0*dv2+2.0*dv3+dv4)/6.0
+		nextW := w + pdt*(dw1+2.0*dw2+2.0*dw3+dw4)/6.0
+		nextZ := z + pdt*(dz1+2.0*dz2+2.0*dz3+dz4)/6.0
+		if !allFinite(nextV, nextW, nextZ) {
+			return -1
+		}
+		v, w, z = nextV, nextW, nextZ
 		if v >= thr && vPrev < thr {
 			spikes++
 		}

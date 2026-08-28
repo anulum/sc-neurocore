@@ -117,6 +117,18 @@ def test_step_count_conversion_errors_are_stable(
         assert captured.value.__notes__ == ["while processing 'n_steps'"]
 
 
+def test_invalid_direct_input_fails_explicitly() -> None:
+    with pytest.raises(FloatingPointError, match="rejected an invalid candidate"):
+        extension.py_pernarowski_simulate(*_parameters(), 4, float("nan"))
+
+
+def test_direct_overflow_fails_explicitly() -> None:
+    parameters = list(_parameters())
+    parameters[0] = 1.0e103
+    with pytest.raises(FloatingPointError, match="rejected an invalid candidate"):
+        extension.py_pernarowski_simulate(*parameters, 2, 0.5)
+
+
 def test_production_rust_backend_is_exactly_the_installed_extension() -> None:
     assert pernarowski._HAS_RUST is True
     assert pernarowski._rust_simulate is engine.py_pernarowski_simulate

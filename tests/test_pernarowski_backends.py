@@ -19,7 +19,11 @@ stays bounded over long horizons and the spike counts match.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import TypedDict
+
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from sc_neurocore.neurons.models import pernarowski
@@ -29,7 +33,9 @@ _ULP = float(np.spacing(1.0))
 _STEP_TOL = 8.0 * _ULP
 
 
-def _run(backend: str, *, n: int = 4000, current: float = 0.0, **params) -> tuple:
+def _run(
+    backend: str, *, n: int = 4000, current: float = 0.0, **params: float
+) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
     neuron = PernarowskiNeuron(**params)
     trace, spikes = neuron.simulate(n, current, backend=backend)
     return trace, spikes, neuron.v, neuron.w, neuron.z
@@ -53,7 +59,16 @@ def _mojo() -> bool:
 
 _BIT_EXACT = [("rust", _rust), ("julia", _julia), ("go", _go)]
 _CURRENTS = [0.0, 0.2, 0.5, 1.0]
-_REGIMES = [
+
+
+class _Regime(TypedDict, total=False):
+    eps1: float
+    eps2: float
+    beta: float
+    gamma: float
+
+
+_REGIMES: list[_Regime] = [
     dict(eps1=0.1, eps2=0.001),
     dict(eps1=0.08, eps2=0.0015, beta=0.4),
     dict(eps1=0.12, eps2=0.0008, gamma=0.6),
@@ -65,7 +80,9 @@ _REGIMES = [
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
 @pytest.mark.parametrize("current", _CURRENTS)
-def test_bit_exact_trace_currents(backend: str, available, current: float) -> None:
+def test_bit_exact_trace_currents(
+    backend: str, available: Callable[[], bool], current: float
+) -> None:
     if not available():
         pytest.skip(f"{backend} Pernarowski backend unavailable")
     ref_trace, ref_spikes, rv, rw, rz = _run("python", current=current)
@@ -77,7 +94,9 @@ def test_bit_exact_trace_currents(backend: str, available, current: float) -> No
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
 @pytest.mark.parametrize("regime", _REGIMES, ids=["e1", "e2", "e3"])
-def test_bit_exact_trace_regimes(backend: str, available, regime: dict) -> None:
+def test_bit_exact_trace_regimes(
+    backend: str, available: Callable[[], bool], regime: _Regime
+) -> None:
     if not available():
         pytest.skip(f"{backend} Pernarowski backend unavailable")
     ref_trace, ref_spikes, rv, rw, rz = _run("python", current=0.3, **regime)
@@ -88,7 +107,7 @@ def test_bit_exact_trace_regimes(backend: str, available, regime: dict) -> None:
 
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
-def test_bit_exact_empty_and_single(backend: str, available) -> None:
+def test_bit_exact_empty_and_single(backend: str, available: Callable[[], bool]) -> None:
     if not available():
         pytest.skip(f"{backend} Pernarowski backend unavailable")
     for n in (0, 1, 2):
@@ -99,7 +118,7 @@ def test_bit_exact_empty_and_single(backend: str, available) -> None:
 
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
-def test_bit_exact_long_horizon(backend: str, available) -> None:
+def test_bit_exact_long_horizon(backend: str, available: Callable[[], bool]) -> None:
     if not available():
         pytest.skip(f"{backend} Pernarowski backend unavailable")
     ref, rs, rv, rw, rz = _run("python", n=60_000, current=0.0)
@@ -155,6 +174,38 @@ def test_invalid_backend_raises() -> None:
 def test_negative_n_steps_raises() -> None:
     with pytest.raises(ValueError, match="n_steps must be non-negative"):
         PernarowskiNeuron().simulate(-1, 0.0)
+
+
+def test_non_finite_current_raises() -> None:
+    with pytest.raises(FloatingPointError, match="must be finite"):
+        PernarowskiNeuron().simulate(10, np.inf)
+
+
+def test_numeric_contract_validation_is_failure_atomic() -> None:
+    neuron = PernarowskiNeuron()
+    object.__setattr__(neuron, "v", 1)
+    neuron.eps1 = float("nan")
+
+    with pytest.raises(FloatingPointError, match="eps1 must be finite"):
+        neuron.simulate(1, 0.0, backend="python")
+
+    assert type(neuron.v) is int
+
+
+@pytest.mark.parametrize(
+    ("backend", "available"),
+    (("python", lambda: True), ("rust", _rust), ("julia", _julia), ("go", _go), ("mojo", _mojo)),
+)
+def test_batch_overflow_is_failure_atomic(backend: str, available: Callable[[], bool]) -> None:
+    if not available():
+        pytest.skip(f"{backend} Pernarowski backend unavailable")
+    neuron = PernarowskiNeuron(v=1.0e103, w=0.0, z=0.0)
+    before = (neuron.v, neuron.w, neuron.z)
+
+    with pytest.raises(FloatingPointError, match="invalid|overflow|non-finite|rejected"):
+        neuron.simulate(2, 0.5, backend=backend)
+
+    assert (neuron.v, neuron.w, neuron.z) == before
 
 
 def test_simulate_matches_repeated_step() -> None:

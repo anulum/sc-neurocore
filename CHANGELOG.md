@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Re-closed `PernarowskiNeuron` without changing its DOI-backed three-state
+  equations or continuous no-reset identity. Python, production Rust/PyO3,
+  Julia, Go, and Mojo batches now reject invalid stages and candidates without
+  partial state mutation; the five-runtime benchmark is source-hash-bound and
+  fail-closed; descriptor evidence resolves to current tests; and committed
+  Q16.16 co-simulation, real Yosys synthesis, and depth-4 bounded safety
+  establish the honest H2 boundary without timing, PPA, device, or silicon
+  claims.
 - Re-closed `FitzHughRinzelNeuron` against Rinzel's 1987 equations (3.4)–(3.6)
   and parameter profile while keeping fixed-step RK4 and sampled no-reset
   threshold crossings explicit as repository specialisations. Python,

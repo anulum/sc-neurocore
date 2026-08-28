@@ -25,6 +25,7 @@
 #
 # Reference: Pernarowski, M. (1994). SIAM J. Appl. Math. 54:814-832.
 
+from std.math import isfinite
 from std.memory import UnsafePointer
 
 
@@ -64,6 +65,26 @@ def pernarowski_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(v0)
+        or not isfinite(w0)
+        or not isfinite(z0)
+        or not isfinite(alpha)
+        or not isfinite(beta)
+        or not isfinite(eps1)
+        or not isfinite(eps2)
+        or not isfinite(gamma)
+        or not isfinite(dt)
+        or not isfinite(v_threshold)
+        or not isfinite(current)
+        or eps1 <= 0.0
+        or eps2 <= 0.0
+        or gamma <= 0.0
+        or dt <= 0.0
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var v = v0
     var w = w0
@@ -93,12 +114,32 @@ def pernarowski_simulate_c(
         var dv4 = _dv(v4, w4, z4, current)
         var dw4 = _dw(v4, w4, eps1, gamma, alpha)
         var dz4 = _dz(v4, z4, eps2, beta)
+        if (
+            not isfinite(dv1)
+            or not isfinite(dw1)
+            or not isfinite(dz1)
+            or not isfinite(dv2)
+            or not isfinite(dw2)
+            or not isfinite(dz2)
+            or not isfinite(dv3)
+            or not isfinite(dw3)
+            or not isfinite(dz3)
+            or not isfinite(dv4)
+            or not isfinite(dw4)
+            or not isfinite(dz4)
+        ):
+            return -1
         var sv = dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4
         var sw = dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4
         var sz = dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4
-        v = v + dt * sv / 6.0
-        w = w + dt * sw / 6.0
-        z = z + dt * sz / 6.0
+        var next_v = v + dt * sv / 6.0
+        var next_w = w + dt * sw / 6.0
+        var next_z = z + dt * sz / 6.0
+        if not isfinite(next_v) or not isfinite(next_w) or not isfinite(next_z):
+            return -1
+        v = next_v
+        w = next_w
+        z = next_z
         if v >= v_threshold and v_prev < v_threshold:
             spikes += 1
         trace[t] = v

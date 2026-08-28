@@ -4,7 +4,7 @@
 **Module:** `sc_neurocore.neurons.models.pernarowski`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::PernarowskiNeuron`
 **Polyglot `simulate` backends:** Rust engine (PyO3), Julia `PernarowskiAccel`, Go c-shared (`accel/go/neurons/pernarowski`), Mojo FFI (`accel/mojo/neurons/pernarowski.mojo`); standalone Rust safety mirror `PernarowskiNeuron`
-**Reference:** Pernarowski, M. (1994). SIAM Journal on Applied Mathematics, 54, 814-832.
+**Reference:** Pernarowski, M. (1994), *Fast Subsystem Bifurcations in a Slowly Varying Liénard System Exhibiting Bursting*, SIAM Journal on Applied Mathematics 54(3), 814–832, DOI `10.1137/S003613999223449X`.
 **Family:** three-state beta-cell burster with fast cubic voltage and two slower recovery/adaptation variables.
 
 ---
@@ -33,11 +33,18 @@ $$v_{new} \geq v_{threshold} \land v_{old} < v_{threshold}$$
 
 `step()` does not reset the state after a spike. The trajectory remains the continuous Pernarowski flow; `reset()` is an explicit caller action only.
 
+The three-state cubic slow-fast dynamics and the autonomous bursting reference
+are source-anchored. Fixed-step classical RK4, `dt=0.1`, caller-supplied `I`,
+and sampled upward `v_threshold=0.5` events are explicit repository
+specialisations; they are not attributed to the paper.
+
 ---
 
 ## Numerical integration contract
 
-Python, Rust engine, Julia, Go, and Rust safety surfaces now use the same candidate-first RK4 update over the coupled `(v, w, z)` system:
+Python, production Rust/PyO3, Julia, Go, Mojo, and the scalar Rust safety
+surface use the same candidate-first RK4 update over the coupled `(v, w, z)`
+system:
 
 1. Validate finite state, finite offsets, finite threshold, positive timescale/coupling parameters, and finite current.
 2. Evaluate all four RK4 derivative stages against the same coupled ODE.
@@ -47,13 +54,17 @@ Python, Rust engine, Julia, Go, and Rust safety surfaces now use the same candid
 
 Invalid runtime input fails closed:
 
-| Condition | Python behavior | Julia / Go / Rust safety behavior | Rust engine behavior |
-|-----------|-----------------|------------------------------------|----------------------|
-| non-finite current | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
-| non-scalar current | raises `TypeError` before mutation | adapter type boundary rejects non-float input | Rust type boundary rejects non-float input |
-| corrupted non-finite state | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
-| non-positive timescale/coupling | raises `ValueError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
-| derivative overflow or non-finite candidate | raises `FloatingPointError` before mutation | returns `0` and preserves state | returns `0` and preserves state |
+| Surface | Invalid configuration/input | Non-finite stage or candidate | State result |
+|---------|-----------------------------|-------------------------------|--------------|
+| Python reference | `TypeError`, `ValueError`, or `FloatingPointError` | `FloatingPointError` | unchanged |
+| production Rust/PyO3 | Python conversion error or `FloatingPointError` | `FloatingPointError` | unchanged |
+| Julia batch | `ArgumentError`, normalised by the dispatcher | `DomainError`, normalised by the dispatcher | unchanged |
+| Go/Mojo C ABI | negative sentinel, rejected by the dispatcher | negative sentinel, rejected by the dispatcher | unchanged |
+| scalar Rust engine/safety API | zero event sentinel | zero event sentinel | unchanged |
+
+The public Python dispatcher validates the complete trace and final state before
+updating the object and presents native batch divergence uniformly as
+`FloatingPointError`.
 
 ---
 
@@ -78,7 +89,9 @@ The default hierarchy keeps `z` about 100 times slower than `w`, so `z` modulate
 
 ## Behavioural evidence
 
-Module-specific tests in `tests/test_model_pernarowski.py` assert:
+The dedicated `tests/test_model_pernarowski_pernarowski_*.py`,
+`tests/test_pernarowski_backends.py`, and
+`tests/test_pernarowski_engine_binding.py` surfaces assert:
 
 | Contract | Evidence |
 |----------|----------|
@@ -91,23 +104,17 @@ Module-specific tests in `tests/test_model_pernarowski.py` assert:
 | finite-domain safety | invalid construction, invalid current, corrupted state, invalid runtime scales, derivative overflow, and non-finite candidates fail before mutation |
 | public integration | population, network, monitor, Poisson input, and spike-count analysis contracts remain wired |
 
-Focused evidence from 2026-05-31:
+Focused runtime commands are:
 
 ```text
-PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null --source=src/sc_neurocore/neurons/models -m pytest tests/test_model_pernarowski.py -q
-87 passed
-src/sc_neurocore/neurons/models/pernarowski.py: 100% statement coverage
+PYTHONPATH=bridge:src .venv/bin/pytest -q $(rg --files tests | rg 'pernarowski' | sort)
+cargo test --manifest-path engine/Cargo.toml pernarowski --no-default-features
+tmp_bin=$(mktemp /tmp/scn-pernarowski-safety-XXXXXX)
+trap 'rm -f "$tmp_bin"' EXIT
+rustc --test src/sc_neurocore/accel/rust/safety/pernarowski.rs -o "$tmp_bin" && "$tmp_bin"
+(cd src/sc_neurocore/accel/go/neurons/pernarowski && go build -buildmode=c-shared -o libpernarowski.so pernarowski.go)
+mojo build --emit shared-lib -o src/sc_neurocore/accel/mojo/neurons/libpernarowski.so src/sc_neurocore/accel/mojo/neurons/pernarowski.mojo
 ```
-
-Polyglot and engine checks from the same pass:
-
-```text
-cargo test --manifest-path engine/Cargo.toml pernarowski -- --nocapture
-pytest tests/test_pernarowski_backends.py
-```
-
-Observed results: Rust engine Pernarowski tests pass (9 tests); the cross-backend
-parity suite confirms Rust/Julia/Go bit-exactness and the Mojo ULP band.
 
 ---
 
@@ -130,8 +137,9 @@ written `v*v*v` so it matches the engine's `v.powi(3)` to the last bit, with no
 transcendental functions — so **Rust, Julia and Go reproduce the NumPy reference
 bit-for-bit**. Mojo's release build contracts the RK4 multiply-adds into fused
 multiply-adds; the model is a periodic slow-fast burster (not chaotic), so the
-single-ULP difference stays bounded over millions of steps and the spike counts
-match. `auto` selects Rust (the fastest bit-exact backend, shipped in the wheel).
+ULP-scale difference stays bounded on the enrolled periodic workloads and the
+spike counts match. `auto` selects the wheel-shipped, bit-exact Rust backend;
+the local timing order is not part of that dispatch contract.
 
 ### Measured throughput
 
@@ -139,19 +147,20 @@ match. `auto` selects Rust (the fastest bit-exact backend, shipped in the wheel)
 Non-isolated loaded workstation (Intel i5-11600K) per
 `BROADCAST_2026-06-04_benchmark_core_isolation` — functional/regression evidence,
 not an isolated-core figure. Reproduce with
-`python benchmarks/bench_pernarowski_simulate.py`.
+`PYTHONPATH=bridge:src .venv/bin/python benchmarks/bench_pernarowski_simulate.py --json benchmarks/results/bench_pernarowski_simulate.json`.
 
 | Backend | Median (ms) | Speed-up vs Python | Whole-trace parity |
 |---------|------------:|-------------------:|--------------------|
-| python  | 2224.59 | 1.0× | reference |
-| mojo    | 102.34 | 21.7× | 1.6×10⁻¹² (FMA, non-amplifying) |
-| go      | 109.63 | 20.3× | bit-exact (0) |
-| julia   | 112.26 | 19.8× | bit-exact (0) |
-| rust (`auto`) | 124.82 | 17.8× | bit-exact (0) |
+| python  | 5776.71 | 1.0× | reference |
+| mojo    | 107.20 | 53.89× | 1.06×10⁻¹² (observed FMA band) |
+| go      | 107.54 | 53.71× | bit-exact (0) |
+| julia   | 142.78 | 40.46× | bit-exact (0) |
+| rust (`auto`) | 125.30 | 46.10× | bit-exact (0) |
 
-Artefact: `benchmarks/results/bench_pernarowski_simulate.json`. The earlier
-single-language step-level criterion/Python figures remain valid regression
-evidence for the per-step `step` path.
+The JSON artefact binds the driver, model, production and safety Rust, Go,
+Julia, Mojo, descriptor, paired schemas, and independent DOI-backed trace by
+SHA-256. It is local regression evidence only:
+`production_speed_claim=false` and `hardware_measurement_claimed=false`.
 
 ---
 
@@ -172,17 +181,19 @@ step, and the final/minimum/maximum/mean of every state variable. Its provenance
 is Pernarowski's 1994 *Fast Subsystem Bifurcations in a Slowly Varying Liénard
 System Exhibiting Bursting*, DOI `10.1137/S003613999223449X`.
 
-The S5/H1 descriptor also enrols the model in the generated formal catalogue.
-Its Q8.8 equation-compiler RTL and port-only harness pass a four-cycle
-SymbiYosys/Z3 bounded check that asynchronous reset clears the spike output.
-This is a bounded reset-spike safety proof; behavioural trace equivalence is
-established separately by the Q16.16 co-simulation evidence above.
+The committed Q16.16 RTL passes real Yosys coarse synthesis. The paired Q8.8
+equation-compiler RTL and port-only harness pass a depth-4 SymbiYosys/Z3 bounded
+check that asynchronous reset clears the spike output. Together with
+co-simulation, this establishes an honest H2 boundary. It does not establish
+timing closure, PPA, target-device execution, physical silicon, universal
+real-number equivalence, or a formal functional-equivalence proof.
 
 Focused evidence:
 
 ```text
-tests/test_cosimulation.py::TestQ1616Precision::test_pernarowski_q1616_parity
-tests/test_reference_traces.py::test_trace_features_match_independent_reference[pernarowski]
+tests/test_cosim_pernarowski_q1616_precision.py::TestQ1616Precision::test_pernarowski_q1616_parity
+tests/test_cosim_pernarowski_q1616_precision.py::test_yosys_synthesises_committed_rtl
+tests/test_reference_pernarowski.py
 tests/test_catalogue_formal.py::test_catalogue_formal_inventory_matches_perfect_count
 ```
 
@@ -193,11 +204,12 @@ tests/test_catalogue_formal.py::test_catalogue_formal_inventory_matches_perfect_
 ```text
 PernarowskiNeuron
 ├── Python reference: candidate-first RK4, continuous threshold-crossing event
-├── Rust engine: candidate-first RK4 benchmark and production path
-├── Julia mirror: candidate-first RK4 adapter path
-├── Go mirror: candidate-first RK4 service path
+├── Rust engine/PyO3: fallible, failure-atomic candidate-first RK4 batch
+├── Julia mirror: validated candidate-first RK4 batch
+├── Go mirror: validated C-ABI candidate-first RK4 batch
+├── Mojo mirror: validated C-ABI candidate-first RK4 batch
 ├── Rust safety mirror: candidate-first RK4 fail-closed path
-├── Schema-to-RTL: Q16.16 exact spike-count co-simulation
+├── Schema-to-RTL: Q16.16 exact spike-count co-simulation and Yosys synthesis
 ├── Formal catalogue: Q8.8 depth-4 reset-spike safety BMC
 ├── Population / Network / Monitor integration
 └── Spike-count analysis integration

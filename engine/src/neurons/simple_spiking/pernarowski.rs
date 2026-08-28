@@ -8,7 +8,7 @@
 
 //! Pernarowski beta-cell bursting dynamics.
 
-/// Pernarowski 1994 — simplified beta cell burster (3 ODE).
+/// Pernarowski 1994 three-state pancreatic beta-cell burster.
 #[derive(Clone, Debug)]
 pub struct PernarowskiNeuron {
     pub v: f64,
@@ -97,38 +97,46 @@ impl PernarowskiNeuron {
             None
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.is_valid() || !current.is_finite() {
-            return 0;
+            return None;
         }
         let v_prev = self.v;
-        let Some((v, w, z)) = self.rk4_candidate(current) else {
-            return 0;
-        };
+        let (v, w, z) = self.rk4_candidate(current)?;
         self.v = v;
         self.w = w;
         self.z = z;
-        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+        Some(if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
             0
-        }
+        })
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
     /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
-    /// and the upward-`v_threshold`-crossing spike count. Reuses `step`, so the
+    /// and the upward-`v_threshold`-crossing spike count. Uses the same RK4
+    /// candidate path as `step`, so the
     /// trace is bit-identical to the per-step path and to the Python reference
     /// (the cubic uses `v.powi(3)` = `v*v*v`, matching the Python `v*v*v`; no
     /// transcendental functions). The final state is left in `self.v` / `self.w`
     /// / `self.z`.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        self.try_simulate(n_steps, current).unwrap_or_default()
+    }
+    /// Run one failure-atomic batch, returning `None` on any invalid stage.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
-            trace.push(self.v);
+            let spiked = candidate.try_step(current)?;
+            trace.push(candidate.v);
             spikes += spiked as i64;
         }
-        (trace, spikes)
+        *self = candidate;
+        Some((trace, spikes))
     }
     pub fn reset(&mut self) {
         self.v = -1.0;
@@ -260,6 +268,17 @@ mod tests {
         let before = (n.v, n.w, n.z);
         assert_eq!(n.step(0.5), 0);
         assert_eq!((n.v, n.w, n.z), before);
+    }
+
+    #[test]
+    fn try_simulate_rejects_overflow_without_mutation() {
+        let mut neuron = PernarowskiNeuron {
+            v: 1.0e103,
+            ..Default::default()
+        };
+        let before = (neuron.v, neuron.w, neuron.z);
+        assert!(neuron.try_simulate(2, 0.5).is_none());
+        assert_eq!((neuron.v, neuron.w, neuron.z), before);
     }
 
     #[test]

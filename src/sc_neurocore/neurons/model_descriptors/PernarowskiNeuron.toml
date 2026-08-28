@@ -31,15 +31,23 @@ authors = [
 ]
 year = 1994
 doi = "10.1137/S003613999223449X"
+paper_title = "Fast Subsystem Bifurcations in a Slowly Varying Liénard System Exhibiting Bursting"
+derivation_note = "The three-state cubic slow-fast dynamics follow the DOI-backed historical source verification. Fixed-step RK4, dt=0.1, caller-supplied external current, and sampled upward v-threshold observation are repository specialisations and are not attributed to the paper."
 
 [state.v]
 init = -1.0
+unit = "1"
+meaning = "dimensionless fast voltage-like state"
 
 [state.w]
 init = 0.0
+unit = "1"
+meaning = "dimensionless fast recovery state"
 
 [state.z]
 init = 0.0
+unit = "1"
+meaning = "dimensionless ultra-slow bursting-control state"
 
 [parameters.alpha]
 default = 0.1
@@ -127,21 +135,24 @@ parity = "ulp-bounded"
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "f29ed3c0db7738c8afb12355f6c2006caf03ae361f7be5ddb12aa37be137b9cc"
+golden_citation = "doi:10.1137/S003613999223449X; autonomous three-state RK4 feature receipt"
 
 [documentation]
 slug = "models/pernarowski"
-notes = ""
+notes = "The source dynamics are continuous and have no reset. The external-current term, fixed-step RK4 integrator, dt, and v_threshold crossing are maintained runtime conventions."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
 operating_point = "schema-DSL Pernarowski three-state RK4 autonomous burster"
 tolerance = "exact three-way spike-count parity at I=-0.1, 0.0, 0.1, and 0.2 over 5000 steps"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_pernarowski_q1616_parity"
+evidence = "tests/test_cosim_pernarowski_q1616_precision.py::TestQ1616Precision::test_pernarowski_q1616_parity"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_pernarowski_q1616_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+cosim_evidence = "tests/test_cosim_pernarowski_q1616_precision.py::TestQ1616Precision::test_pernarowski_q1616_parity"
+synthesised = true
+synth_report = "tests/test_cosim_pernarowski_q1616_precision.py::test_yosys_synthesises_committed_rtl"
+target_tier = "H2"
+terminal_reason = "Q16.16 RK4 co-simulation preserves 17 upward crossings at I=-0.1/0/0.1/0.2, the committed RTL passes Yosys coarse synthesis, and the paired Q8.8 formal lane carries depth-4 reset/output safety. Timing, PPA, device evidence, physical silicon, and universal real-number equivalence remain open."

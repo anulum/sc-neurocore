@@ -158,20 +158,23 @@ class PernarowskiNeuron:
     v_threshold: float = 0.5
 
     def __post_init__(self) -> None:
+        validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise TypeError(f"{name} must be a real finite scalar")
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
-            setattr(self, name, float(value))
+            validated[name] = float(value)
         for name in self._POSITIVE_FIELDS:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise TypeError(f"{name} must be a real positive scalar")
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
-            setattr(self, name, float(value))
+            validated[name] = float(value)
+        for name, value in validated.items():
+            setattr(self, name, value)
 
     @staticmethod
     def _finite_float(name: str, value: float) -> float:
@@ -184,12 +187,16 @@ class PernarowskiNeuron:
 
     def _validate_runtime_contract(self, current: float) -> float:
         current = self._finite_float("current", current)
+        validated: dict[str, float] = {}
         for name in self._FINITE_FIELDS:
-            self._finite_float(name, getattr(self, name))
+            validated[name] = self._finite_float(name, getattr(self, name))
         for name in self._POSITIVE_FIELDS:
             value = self._finite_float(name, getattr(self, name))
             if value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
+            validated[name] = value
+        for name, value in validated.items():
+            setattr(self, name, value)
         return current
 
     def _derivatives(
@@ -257,6 +264,8 @@ class PernarowskiNeuron:
         ``(v, w, z)`` is advanced to the final step. The Rust/Julia/Go backends
         reproduce the pure-NumPy reference bit-for-bit; the FMA-fusing Mojo backend
         stays within a measured per-step ULP band with identical spike counts.
+        A rejected derivative, candidate, or native result leaves the complete
+        pre-batch state unchanged.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
@@ -293,8 +302,35 @@ class PernarowskiNeuron:
             trace, spikes, vf, wf, zf = self._simulate_mojo(n_steps, current)
         else:
             trace, spikes, vf, wf, zf = self._simulate_python(n_steps, current)
+        trace, spikes, vf, wf, zf = self._validate_batch_result(
+            backend=backend,
+            n_steps=n_steps,
+            trace=trace,
+            spikes=spikes,
+            final_state=(vf, wf, zf),
+        )
         self.v, self.w, self.z = vf, wf, zf
         return trace, spikes
+
+    @staticmethod
+    def _validate_batch_result(
+        *,
+        backend: str,
+        n_steps: int,
+        trace: npt.NDArray[np.float64],
+        spikes: int,
+        final_state: tuple[float, float, float],
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        """Validate a complete backend result before committing instance state."""
+        values = np.asarray(trace, dtype=np.float64)
+        if (
+            spikes < 0
+            or values.shape != (n_steps,)
+            or not np.all(np.isfinite(values))
+            or not all(math.isfinite(value) for value in final_state)
+        ):
+            raise FloatingPointError(f"Pernarowski {backend} batch produced an invalid candidate")
+        return values, int(spikes), final_state[0], final_state[1], final_state[2]
 
     def _simulate_python(
         self, n_steps: int, current: float
@@ -305,10 +341,17 @@ class PernarowskiNeuron:
         dt, v_threshold = self.dt, self.v_threshold
 
         def deriv(vv: float, ww: float, zz: float) -> tuple[float, float, float]:
-            dv = vv - vv * vv * vv / 3.0 - ww - zz + current
-            dw = eps1 * (vv - gamma * ww + alpha)
-            dz = eps2 * (beta * (vv + 0.7) - zz)
-            return dv, dw, dz
+            try:
+                candidate = (
+                    vv - vv * vv * vv / 3.0 - ww - zz + current,
+                    eps1 * (vv - gamma * ww + alpha),
+                    eps2 * (beta * (vv + 0.7) - zz),
+                )
+            except OverflowError as exc:
+                raise FloatingPointError("Pernarowski Python batch derivative overflowed") from exc
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Pernarowski Python batch derivative became non-finite")
+            return candidate
 
         spikes = 0
         for t in range(n_steps):
@@ -317,9 +360,14 @@ class PernarowskiNeuron:
             dv2, dw2, dz2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1, z + 0.5 * dt * dz1)
             dv3, dw3, dz3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2, z + 0.5 * dt * dz2)
             dv4, dw4, dz4 = deriv(v + dt * dv3, w + dt * dw3, z + dt * dz3)
-            v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
-            w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
-            z = z + dt * (dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4) / 6.0
+            candidate = (
+                v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0,
+                w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0,
+                z + dt * (dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4) / 6.0,
+            )
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Pernarowski Python batch candidate became non-finite")
+            v, w, z = candidate
             trace[t] = v
             if v >= v_threshold and v_prev < v_threshold:
                 spikes += 1
@@ -355,20 +403,25 @@ class PernarowskiNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
         assert _julia_module is not None
-        result = _julia_module.simulate_trace(
-            float(self.v),
-            float(self.w),
-            float(self.z),
-            float(self.alpha),
-            float(self.beta),
-            float(self.eps1),
-            float(self.eps2),
-            float(self.gamma),
-            float(self.dt),
-            float(self.v_threshold),
-            int(n_steps),
-            float(current),
-        )
+        try:
+            result = _julia_module.simulate_trace(
+                float(self.v),
+                float(self.w),
+                float(self.z),
+                float(self.alpha),
+                float(self.beta),
+                float(self.eps1),
+                float(self.eps2),
+                float(self.gamma),
+                float(self.dt),
+                float(self.v_threshold),
+                int(n_steps),
+                float(current),
+            )
+        except Exception as exc:
+            raise FloatingPointError(
+                "Pernarowski Julia batch rejected an invalid candidate"
+            ) from exc
         trace = np.asarray(result.trace, dtype=np.float64)
         return trace, int(result.spikes), float(result.vf), float(result.wf), float(result.zf)
 

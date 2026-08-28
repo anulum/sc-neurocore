@@ -27,13 +27,15 @@ numbers without an isolated-core rerun.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import os as _os
 import platform
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import pernarowski
 from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
@@ -41,6 +43,35 @@ from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
 N_STEPS = 2_000_000
 CURRENT = 0.0
 N_REPEATS = 5
+ROOT = Path(__file__).resolve().parents[1]
+SOURCES = (
+    "benchmarks/bench_pernarowski_simulate.py",
+    "engine/src/bindings/pernarowski.rs",
+    "engine/src/neurons/simple_spiking/pernarowski.rs",
+    "src/sc_neurocore/accel/go/neurons/pernarowski/pernarowski.go",
+    "src/sc_neurocore/accel/julia/neurons/pernarowski.jl",
+    "src/sc_neurocore/accel/mojo/neurons/pernarowski.mojo",
+    "src/sc_neurocore/accel/rust/safety/pernarowski.rs",
+    "src/sc_neurocore/neurons/model_descriptors/PernarowskiNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/pernarowski.json",
+    "src/sc_neurocore/neurons/model_schemas/pernarowski.toml",
+    "src/sc_neurocore/neurons/models/pernarowski.py",
+    "src/sc_neurocore/neurons/reference_trace_data/pernarowski_autonomous_bursting_doi.json",
+)
+
+
+def _source_hashes() -> dict[str, object]:
+    """Return flat digests plus suffix aliases consumed by the evidence gate."""
+    hashes: dict[str, object] = {}
+    for relative in SOURCES:
+        digest = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+        hashes[relative] = digest
+        stem, suffix = relative.rsplit(".", 1)
+        aliases = hashes.setdefault(stem, {})
+        if not isinstance(aliases, dict):
+            raise RuntimeError(f"source-hash alias collision at {stem}")
+        aliases[suffix] = digest
+    return hashes
 
 
 def _probe_rust() -> tuple[bool, str]:
@@ -59,16 +90,14 @@ def _probe_go() -> tuple[bool, str]:
 
 
 def _probe_mojo() -> tuple[bool, str]:
-    if not _os.path.isfile(_os.path.expanduser("~/.pixi/bin/mojo")):
-        return False, "mojo binary not at ~/.pixi/bin/mojo"
     ok = pernarowski._ensure_mojo_loaded()
     return (ok, "" if ok else "accel/mojo/neurons/libpernarowski.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray]:
+def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64]]:
     PernarowskiNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
         trace, _spikes = PernarowskiNeuron().simulate(N_STEPS, CURRENT, backend=backend)
@@ -105,18 +134,18 @@ def main(argv: list[str]) -> int:
     for name, (avail, reason) in backends.items():
         print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
     print()
+    unavailable = {name: reason for name, (available, reason) in backends.items() if not available}
+    if unavailable:
+        print(f"Required backend unavailable; evidence was not written: {unavailable}")
+        return 2
 
-    reference: np.ndarray | None = None
+    reference: npt.NDArray[np.float64] | None = None
     python_median: float | None = None
-    rows: list[dict[str, object]] = []
+    rows: dict[str, dict[str, float]] = {}
 
     print(f"{'backend':<8}  {'median ms':>12}  {'min ms':>12}  {'parity Δ':>12}  {'speedup':>9}")
     print(f"{'-' * 8}  {'-' * 12}  {'-' * 12}  {'-' * 12}  {'-' * 9}")
-    for name, (avail, reason) in backends.items():
-        if not avail:
-            print(f"{name:<8}  {'(skip)':>12}  {'(skip)':>12}  {'-':>12}  {'-':>9}")
-            rows.append({"backend": name, "skipped": True, "unavailable_reason": reason})
-            continue
+    for name in backends:
         median_ms, min_ms, trace = _run(name)
         if name == "python":
             reference = trace
@@ -127,24 +156,25 @@ def main(argv: list[str]) -> int:
             parity = float(np.max(np.abs(trace - reference)))
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")
-        rows.append(
-            {
-                "backend": name,
-                "median_ms": median_ms,
-                "min_ms": min_ms,
-                "parity_max_abs_diff": parity,
-                "speedup_vs_python": speedup,
-            }
-        )
+        rows[name] = {
+            "median_ms": median_ms,
+            "min_ms": min_ms,
+            "parity_max_abs_diff": parity,
+            "speedup_vs_python": speedup,
+        }
 
     print()
     print("# Note: rust/julia/go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo's release build contracts the RK4 multiply-adds to FMAs; the periodic")
-    print("# slow-fast burster is not chaotic, so the single-ULP difference stays bounded")
-    print("# and the spike counts match.")
+    print("# Mojo's release build contracts RK4 multiply-adds to FMAs; on this enrolled")
+    print("# periodic slow-fast workload the observed ULP-scale gap stays bounded and")
+    print("# the independently tested spike counts match.")
 
     report = {
-        "benchmark": "pernarowski_simulate",
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "benchmark": "pernarowski_simulate_rk4",
+        "model": "PernarowskiNeuron",
+        "evidence_class": "local_regression_non_isolated",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "workload": {"n_steps": N_STEPS, "current": CURRENT, "repeats": N_REPEATS},
         "environment": {
             "python": platform.python_version(),
@@ -152,7 +182,10 @@ def main(argv: list[str]) -> int:
             "platform": platform.platform(),
             "isolation": "non-isolated (loaded workstation)",
         },
-        "results": rows,
+        "backends": rows,
+        "source_hashes": _source_hashes(),
+        "production_speed_claim": False,
+        "hardware_measurement_claimed": False,
     }
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)

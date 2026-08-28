@@ -33,6 +33,12 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    if n_steps < 0 || !all(isfinite, (v0, w0, z0, alpha, beta, eps1, eps2, gamma, dt, v_threshold, current))
+        throw(ArgumentError("Pernarowski batch inputs must be finite and n_steps non-negative"))
+    end
+    if eps1 <= 0.0 || eps2 <= 0.0 || gamma <= 0.0 || dt <= 0.0
+        throw(ArgumentError("Pernarowski eps1, eps2, gamma, and dt must be positive"))
+    end
     trace = Vector{Float64}(undef, n_steps)
     v = v0
     w = w0
@@ -49,9 +55,17 @@ function simulate_trace(
         dv2, dw2, dz2 = deriv(v + 0.5 * dt * dv1, w + 0.5 * dt * dw1, z + 0.5 * dt * dz1)
         dv3, dw3, dz3 = deriv(v + 0.5 * dt * dv2, w + 0.5 * dt * dw2, z + 0.5 * dt * dz2)
         dv4, dw4, dz4 = deriv(v + dt * dv3, w + dt * dw3, z + dt * dz3)
-        v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
-        w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
-        z = z + dt * (dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4) / 6.0
+        stages = (dv1, dw1, dz1, dv2, dw2, dz2, dv3, dw3, dz3, dv4, dw4, dz4)
+        if !all(isfinite, stages)
+            throw(DomainError(stages, "Pernarowski RK4 stage became non-finite"))
+        end
+        next_v = v + dt * (dv1 + 2.0 * dv2 + 2.0 * dv3 + dv4) / 6.0
+        next_w = w + dt * (dw1 + 2.0 * dw2 + 2.0 * dw3 + dw4) / 6.0
+        next_z = z + dt * (dz1 + 2.0 * dz2 + 2.0 * dz3 + dz4) / 6.0
+        if !all(isfinite, (next_v, next_w, next_z))
+            throw(DomainError((next_v, next_w, next_z), "Pernarowski candidate became non-finite"))
+        end
+        v, w, z = next_v, next_w, next_z
         trace[t] = v
         if v >= v_threshold && v_prev < v_threshold
             spikes += 1

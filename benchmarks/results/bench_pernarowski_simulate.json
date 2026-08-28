@@ -1,48 +1,97 @@
 {
-  "benchmark": "pernarowski_simulate",
-  "environment": {
-    "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3"
-  },
-  "results": [
-    {
-      "backend": "python",
-      "median_ms": 2224.588330995175,
-      "min_ms": 2222.8024850046495,
+  "backends": {
+    "go": {
+      "median_ms": 107.54376195836812,
+      "min_ms": 104.90501800086349,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 53.71497186611047
+    },
+    "julia": {
+      "median_ms": 142.78301608283073,
+      "min_ms": 139.51631693635136,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 40.45796416443719
+    },
+    "mojo": {
+      "median_ms": 107.2034640237689,
+      "min_ms": 104.12547294981778,
+      "parity_max_abs_diff": 1.063815702195825e-12,
+      "speedup_vs_python": 53.885480292769515
+    },
+    "python": {
+      "median_ms": 5776.710147969425,
+      "min_ms": 4892.4052061047405,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
-    {
-      "backend": "rust",
-      "median_ms": 124.81733098684344,
-      "min_ms": 123.60502600495238,
+    "rust": {
+      "median_ms": 125.29681401792914,
+      "min_ms": 122.23275401629508,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 17.82275196406548
-    },
-    {
-      "backend": "julia",
-      "median_ms": 112.25900899444241,
-      "min_ms": 109.99496400472708,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 19.81656840659717
-    },
-    {
-      "backend": "go",
-      "median_ms": 109.62967699742876,
-      "min_ms": 107.5509369984502,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 20.291844251692453
-    },
-    {
-      "backend": "mojo",
-      "median_ms": 102.34285298793111,
-      "min_ms": 100.59076000470668,
-      "parity_max_abs_diff": 1.5658585539313208e-12,
-      "speedup_vs_python": 21.736626115528672
+      "speedup_vs_python": 46.104206186302676
     }
-  ],
+  },
+  "benchmark": "pernarowski_simulate_rk4",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "evidence_class": "local_regression_non_isolated",
+  "hardware_measurement_claimed": false,
+  "model": "PernarowskiNeuron",
+  "production_speed_claim": false,
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_pernarowski_simulate": {
+      "py": "f2d2490bdcf2c8f6a2df601f2f79d8b85bf2bce22842d9f04112db0af3fbe34e"
+    },
+    "benchmarks/bench_pernarowski_simulate.py": "f2d2490bdcf2c8f6a2df601f2f79d8b85bf2bce22842d9f04112db0af3fbe34e",
+    "engine/src/bindings/pernarowski": {
+      "rs": "fb029e1ecbb452f5603d7c9ec8240aa451f59c3e9e88f9c6894cb48a02ae9df6"
+    },
+    "engine/src/bindings/pernarowski.rs": "fb029e1ecbb452f5603d7c9ec8240aa451f59c3e9e88f9c6894cb48a02ae9df6",
+    "engine/src/neurons/simple_spiking/pernarowski": {
+      "rs": "6dbc91895d3f4918cf8833d804e5439fa8434099592d70274a8092a79899f872"
+    },
+    "engine/src/neurons/simple_spiking/pernarowski.rs": "6dbc91895d3f4918cf8833d804e5439fa8434099592d70274a8092a79899f872",
+    "src/sc_neurocore/accel/go/neurons/pernarowski/pernarowski": {
+      "go": "ae54a4746c32da35b3a7636811a3f1c265634a3ecfa6e35fafbe0eda03f1b75d"
+    },
+    "src/sc_neurocore/accel/go/neurons/pernarowski/pernarowski.go": "ae54a4746c32da35b3a7636811a3f1c265634a3ecfa6e35fafbe0eda03f1b75d",
+    "src/sc_neurocore/accel/julia/neurons/pernarowski": {
+      "jl": "fbafb3711847295e249ab6edb9bc486e4794e17e27b873fc8175e27f0d604c50"
+    },
+    "src/sc_neurocore/accel/julia/neurons/pernarowski.jl": "fbafb3711847295e249ab6edb9bc486e4794e17e27b873fc8175e27f0d604c50",
+    "src/sc_neurocore/accel/mojo/neurons/pernarowski": {
+      "mojo": "a4cf91d0d3c1d1740d33a9f9d5919105c7529e073a64bacbc6001079878ad7b5"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/pernarowski.mojo": "a4cf91d0d3c1d1740d33a9f9d5919105c7529e073a64bacbc6001079878ad7b5",
+    "src/sc_neurocore/accel/rust/safety/pernarowski": {
+      "rs": "a744fd9f0f3f889ab435970d21cbac624cebb2bd4143b582193b0ce7ebb25ce4"
+    },
+    "src/sc_neurocore/accel/rust/safety/pernarowski.rs": "a744fd9f0f3f889ab435970d21cbac624cebb2bd4143b582193b0ce7ebb25ce4",
+    "src/sc_neurocore/neurons/model_descriptors/PernarowskiNeuron": {
+      "toml": "b78d890043f37dfae593c5531f6600b99b1d4ea07f2833ec63b228c54ded1680"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/PernarowskiNeuron.toml": "b78d890043f37dfae593c5531f6600b99b1d4ea07f2833ec63b228c54ded1680",
+    "src/sc_neurocore/neurons/model_schemas/pernarowski": {
+      "json": "d1465826d4a779f866e4fbd1df56803f5beeb377d3102f23d24a339bf60d6613",
+      "toml": "d0745e1f9dc9e683773d021b9a1173a21b193f5e045ecd6b98a5f25ba956c46b"
+    },
+    "src/sc_neurocore/neurons/model_schemas/pernarowski.json": "d1465826d4a779f866e4fbd1df56803f5beeb377d3102f23d24a339bf60d6613",
+    "src/sc_neurocore/neurons/model_schemas/pernarowski.toml": "d0745e1f9dc9e683773d021b9a1173a21b193f5e045ecd6b98a5f25ba956c46b",
+    "src/sc_neurocore/neurons/models/pernarowski": {
+      "py": "d861fe1a9c3659d1fcef249368e73bb4b7038c8701913b9448426be68240f6f9"
+    },
+    "src/sc_neurocore/neurons/models/pernarowski.py": "d861fe1a9c3659d1fcef249368e73bb4b7038c8701913b9448426be68240f6f9",
+    "src/sc_neurocore/neurons/reference_trace_data/pernarowski_autonomous_bursting_doi": {
+      "json": "df71e164eb012e76d9db844a68311b52b137dbf043eee79933bae3c27979be91"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/pernarowski_autonomous_bursting_doi.json": "df71e164eb012e76d9db844a68311b52b137dbf043eee79933bae3c27979be91"
+  },
+  "timestamp_utc": "2026-08-28T03:00:46.321521+00:00",
   "workload": {
     "current": 0.0,
     "n_steps": 2000000,
