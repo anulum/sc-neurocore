@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Hindmarsh-Rose full-fidelity reclosure
+
+- Rebound Model 7 descriptor validation and co-simulation custody to collected
+  tests, completed state semantics and source derivation metadata, and promoted
+  the bounded RTL packet to H2 with an executable Yosys synthesis receipt.
+- Made Python, Rust-engine, Go, Julia, and Mojo batch execution fail explicitly
+  before Python object state commits when an RK4 stage becomes non-finite.
+- Bound the five-runtime benchmark to implementation, descriptor, paired
+  schemas, independent receipt, and native sources; enrolled it in the
+  fail-closed benchmark gate and replaced the public temporary evidence marker
+  with durable artefact paths.
+
 ### Descriptor and benchmark evidence fix-forward
 
 - Completed unit, valid-range, and semantic custody for every source and

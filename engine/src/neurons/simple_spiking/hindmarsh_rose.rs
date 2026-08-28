@@ -65,50 +65,44 @@ impl HindmarshRoseNeuron {
             None
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn try_step(&mut self, current: f64) -> Option<i32> {
         if !self.valid_state() || !current.is_finite() {
-            return 0;
+            return None;
         }
         let x_prev = self.x;
         let (x0, y0, z0) = (self.x, self.y, self.z);
         let dt = self.dt;
-        let Some(k1) = self.derivatives(x0, y0, z0, current) else {
-            return 0;
-        };
-        let Some(k2) = self.derivatives(
+        let k1 = self.derivatives(x0, y0, z0, current)?;
+        let k2 = self.derivatives(
             x0 + 0.5 * dt * k1.0,
             y0 + 0.5 * dt * k1.1,
             z0 + 0.5 * dt * k1.2,
             current,
-        ) else {
-            return 0;
-        };
-        let Some(k3) = self.derivatives(
+        )?;
+        let k3 = self.derivatives(
             x0 + 0.5 * dt * k2.0,
             y0 + 0.5 * dt * k2.1,
             z0 + 0.5 * dt * k2.2,
             current,
-        ) else {
-            return 0;
-        };
-        let Some(k4) = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current)
-        else {
-            return 0;
-        };
+        )?;
+        let k4 = self.derivatives(x0 + dt * k3.0, y0 + dt * k3.1, z0 + dt * k3.2, current)?;
         let next_x = x0 + (dt / 6.0) * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0);
         let next_y = y0 + (dt / 6.0) * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1);
         let next_z = z0 + (dt / 6.0) * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2);
         if !(next_x.is_finite() && next_y.is_finite() && next_z.is_finite()) {
-            return 0;
+            return None;
         }
         self.x = next_x;
         self.y = next_y;
         self.z = next_z;
-        if self.x >= self.x_threshold && x_prev < self.x_threshold {
+        Some(if self.x >= self.x_threshold && x_prev < self.x_threshold {
             1
         } else {
             0
-        }
+        })
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
     pub fn reset(&mut self) {
         self.x = -1.6;
@@ -123,16 +117,23 @@ impl HindmarshRoseNeuron {
     /// Python reference, even though the bursting dynamics are chaotic. The
     /// final state is left in `self.x` / `self.y` / `self.z`.
     pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+        self.try_simulate(n_steps, current).unwrap_or_default()
+    }
+
+    /// Run one failure-atomic batch, returning `None` on any invalid stage.
+    pub fn try_simulate(&mut self, n_steps: usize, current: f64) -> Option<(Vec<f64>, i64)> {
+        let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
-            trace.push(self.x);
+            let spiked = candidate.try_step(current)?;
+            trace.push(candidate.x);
             if spiked == 1 {
                 spikes += 1;
             }
         }
-        (trace, spikes)
+        *self = candidate;
+        Some((trace, spikes))
     }
 }
 impl Default for HindmarshRoseNeuron {
@@ -167,6 +168,15 @@ mod tests {
         }
         assert_eq!(trace, expected_trace);
         assert_eq!(spikes, expected_spikes);
+    }
+
+    #[test]
+    fn try_simulate_rejects_overflow_without_mutation() {
+        let mut neuron = HindmarshRoseNeuron::new();
+        neuron.x = 1.0e103;
+        let before = (neuron.x, neuron.y, neuron.z);
+        assert!(neuron.try_simulate(2, 0.0).is_none());
+        assert_eq!((neuron.x, neuron.y, neuron.z), before);
     }
 
     #[test]

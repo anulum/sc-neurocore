@@ -9,10 +9,13 @@
 //! Python binding for the Hindmarsh-Rose three-state bursting model.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use crate::neurons::HindmarshRoseNeuron;
+
+type PyHindmarshRoseBatch<'py> = (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64);
 
 py_neuron_default!("HindmarshRoseNeuron", PyHindmarshRoseNeuron, HindmarshRoseNeuron, state x, state y, state z);
 
@@ -46,7 +49,7 @@ fn py_hindmarsh_rose_simulate<'py>(
     x_threshold: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
+) -> PyResult<PyHindmarshRoseBatch<'py>> {
     let mut neuron = HindmarshRoseNeuron {
         x: x0,
         y: y0,
@@ -58,6 +61,10 @@ fn py_hindmarsh_rose_simulate<'py>(
         dt,
         x_threshold,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.x, neuron.y, neuron.z)
+    let Some((trace, spikes)) = neuron.try_simulate(n_steps, current) else {
+        return Err(PyFloatingPointError::new_err(
+            "Hindmarsh-Rose Rust batch rejected an invalid candidate",
+        ));
+    };
+    Ok((trace.into_pyarray(py), spikes, neuron.x, neuron.y, neuron.z))
 }

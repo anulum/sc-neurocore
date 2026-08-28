@@ -25,7 +25,19 @@ package main
 */
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
+
+func allFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
 
 func deriv(x, y, z, b, r, s, xRest, cur float64) (float64, float64, float64) {
 	x2 := x * x
@@ -48,6 +60,9 @@ func hindmarsh_rose_simulate_c(
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
+	if n < 0 || tracePtr == nil {
+		return -1
+	}
 	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+3)
 	x := float64(x0)
 	y := float64(y0)
@@ -59,6 +74,9 @@ func hindmarsh_rose_simulate_c(
 	d := float64(dt)
 	thr := float64(xThreshold)
 	cur := float64(current)
+	if !allFinite(x, y, z, bb, rr, ss, xRestF, d, thr, cur) || rr <= 0 || ss <= 0 || d <= 0 {
+		return -1
+	}
 	dt6 := d / 6.0
 	var spikes int64
 	for t := 0; t < n; t++ {
@@ -67,9 +85,16 @@ func hindmarsh_rose_simulate_c(
 		k2x, k2y, k2z := deriv(x+0.5*d*k1x, y+0.5*d*k1y, z+0.5*d*k1z, bb, rr, ss, xRestF, cur)
 		k3x, k3y, k3z := deriv(x+0.5*d*k2x, y+0.5*d*k2y, z+0.5*d*k2z, bb, rr, ss, xRestF, cur)
 		k4x, k4y, k4z := deriv(x+d*k3x, y+d*k3y, z+d*k3z, bb, rr, ss, xRestF, cur)
-		x = x + dt6*(k1x+2.0*k2x+2.0*k3x+k4x)
-		y = y + dt6*(k1y+2.0*k2y+2.0*k3y+k4y)
-		z = z + dt6*(k1z+2.0*k2z+2.0*k3z+k4z)
+		if !allFinite(k1x, k1y, k1z, k2x, k2y, k2z, k3x, k3y, k3z, k4x, k4y, k4z) {
+			return -1
+		}
+		nextX := x + dt6*(k1x+2.0*k2x+2.0*k3x+k4x)
+		nextY := y + dt6*(k1y+2.0*k2y+2.0*k3y+k4y)
+		nextZ := z + dt6*(k1z+2.0*k2z+2.0*k3z+k4z)
+		if !allFinite(nextX, nextY, nextZ) {
+			return -1
+		}
+		x, y, z = nextX, nextY, nextZ
 		trace[t] = x
 		if x >= thr && xPrev < thr {
 			spikes++

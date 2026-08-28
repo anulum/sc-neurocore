@@ -105,10 +105,15 @@ def test_step_count_conversion_errors_are_stable(
 
 
 def test_invalid_direct_input_preserves_state() -> None:
-    trace, spikes, final_x, final_y, final_z = _direct(4, float("nan"))
+    with pytest.raises(FloatingPointError, match="rejected an invalid candidate"):
+        _direct(4, float("nan"))
 
-    np.testing.assert_array_equal(trace, np.full(4, -1.6))
-    assert (spikes, final_x, final_y, final_z) == (0, -1.6, -10.0, 2.0)
+
+def test_direct_overflow_fails_explicitly() -> None:
+    parameters = list(_parameters())
+    parameters[0] = 1.0e103
+    with pytest.raises(FloatingPointError, match="rejected an invalid candidate"):
+        extension.py_hindmarsh_rose_simulate(*parameters, 2, 0.0)
 
 
 def test_production_rust_dispatcher_is_installed_and_bit_exact() -> None:

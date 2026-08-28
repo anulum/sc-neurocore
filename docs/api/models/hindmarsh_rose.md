@@ -86,11 +86,11 @@ variable is updated. State is committed only after every RK4 stage and
 the final candidate are finite.
 
 All runtime surfaces reject non-finite input current and non-physical
-time-step or slow-adaptation parameters before updating state. The
-Python RK4/Euler paths, Rust engine, Rust safety surface, Go service, and
-Julia surface also fail closed if the cubic derivative overflows or an
-intermediate RK4 stage becomes non-finite; the previous state is preserved
-in that case.
+time-step or slow-adaptation parameters before updating state. The Python,
+Rust-engine, Go, Julia, and Mojo batch paths signal any non-finite RK4 stage;
+the public Python dispatcher validates the complete trace and final state
+before committing the instance. The scalar Python and Rust safety paths use
+the same candidate-first rule, so the previous state is preserved on failure.
 
 ### 1.6 Schema and silicon contract
 
@@ -113,7 +113,9 @@ is explicitly outside the claim.
 
 The generated Q8.8 catalogue module has a port-only depth-4 SymbiYosys/Z3
 bounded safety job. That proof covers reset/spike safety; it does not replace
-the Q16.16 behavioural co-simulation evidence.
+the Q16.16 behavioural co-simulation evidence. The same committed RTL also
+passes a real Yosys coarse-synthesis check, establishing bounded H2 evidence;
+no timing, PPA, target-device, or physical-silicon claim follows from it.
 
 ---
 
@@ -262,6 +264,7 @@ sc_neurocore Pipeline
 | Population wrapping | ✅ | via NeuronVariant | — |
 | Network integration | ✅ | ✅ | — |
 | Spike analysis | ✅ | — | — |
+| Failure-atomic batch | ✅ | ✅ | ✅ |
 
 ### 4.3 Parameter Sensitivity
 
@@ -383,6 +386,7 @@ print(f"Bursts: {len(bursts)}, Mean spikes/burst: {sum(len(b) for b in bursts)/l
 | `reset` | `() → ()` | — | Reset x=-1.6, y=-10.0, z=2.0 |
 | `new` | `() → Self` | — | Rust constructor with defaults |
 | `get_state` | `() → dict` | x, y, z | PyO3 only: state inspection |
+| `simulate` | `(n_steps, current, backend) → (trace, spikes)` | x trace and events | Five-runtime failure-atomic RK4 batch |
 
 ### 6.3 Python/Rust Implementation Comparison
 
@@ -491,16 +495,16 @@ structural invariants, not whole-trace equality.
 Reproduce with `python benchmarks/bench_hindmarsh_rose_simulate.py --json
 benchmarks/results/bench_hindmarsh_rose_simulate.json`. Workload: 2,000,000 RK4
 steps, default parameters, current = 3.0 (bursting), median of 5 repeats.
-**Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.3) —
+**Non-isolated** (loaded workstation, Python 3.12 / NumPy 2.2.6) —
 functional/regression evidence, not isolated-core release numbers.
 
 | backend | median (ms) | speedup vs NumPy | parity Δ vs NumPy |
 |---|---:|---:|---:|
-| python (NumPy) | 1711.68 | 1.00× | 0 |
-| mojo | 46.02 | 37.20× | 1.23e-08 (chaotic FMA amplification) |
-| go | 64.48 | 26.55× | 0 (bit-exact) |
-| julia | 66.78 | 25.63× | 0 (bit-exact) |
-| rust | 71.68 | 23.88× | 0 (bit-exact) |
+| python (NumPy) | 4796.78 | 1.00× | 0 |
+| mojo | 52.55 | 91.28× | 1.01e-08 (chaotic FMA amplification) |
+| go | 70.40 | 68.14× | 0 (bit-exact) |
+| julia | 89.72 | 53.47× | 0 (bit-exact) |
+| rust | 82.22 | 58.34× | 0 (bit-exact) |
 
 Mojo is fastest in raw throughput (the FMA contraction helps the cube-heavy RHS),
 but because the chaotic flow amplifies its FMA ULP it is **not** chosen by
@@ -665,5 +669,5 @@ The HR model rapidly became the standard testbed for:
 
 ---
 
-*SC-NeuroCore v3.14.0 — ANULUM / Fortis Studio*
+*SC-NeuroCore v3.16.0 — ANULUM / Fortis Studio*
 *© 2020–2026 Miroslav Šotek. All rights reserved.*

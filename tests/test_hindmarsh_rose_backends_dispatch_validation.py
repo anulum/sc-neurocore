@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
-from tests.hindmarsh_rose_backends_support import _run
+from tests.hindmarsh_rose_backends_support import _go, _julia, _mojo, _run, _rust
 
 
 def test_auto_matches_python_bit_exact() -> None:
@@ -42,3 +42,19 @@ def test_non_finite_current_raises() -> None:
 def test_non_rk4_integrator_rejected() -> None:
     with pytest.raises(ValueError, match="RK4 integrator only"):
         HindmarshRoseNeuron(integrator="euler").simulate(10, 3.0)
+
+
+@pytest.mark.parametrize(
+    ("backend", "available"),
+    (("python", lambda: True), ("rust", _rust), ("julia", _julia), ("go", _go), ("mojo", _mojo)),
+)
+def test_batch_overflow_is_failure_atomic(backend: str, available) -> None:  # type: ignore[no-untyped-def]
+    if not available():
+        pytest.skip(f"{backend} Hindmarsh-Rose backend unavailable")
+    neuron = HindmarshRoseNeuron(x=1.0e103, y=0.0, z=0.0)
+    before = (neuron.x, neuron.y, neuron.z)
+
+    with pytest.raises(FloatingPointError, match="invalid|overflow|non-finite|rejected"):
+        neuron.simulate(2, 0.0, backend=backend)
+
+    assert (neuron.x, neuron.y, neuron.z) == before

@@ -52,6 +52,12 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    if n_steps < 0 || !all(isfinite, (x0, y0, z0, b, r, s, x_rest, dt, x_threshold, current))
+        throw(ArgumentError("Hindmarsh-Rose batch inputs must be finite and n_steps non-negative"))
+    end
+    if r <= 0.0 || s <= 0.0 || dt <= 0.0
+        throw(ArgumentError("Hindmarsh-Rose r, s, and dt must be positive"))
+    end
     trace = Vector{Float64}(undef, n_steps)
     x = x0
     y = y0
@@ -73,9 +79,17 @@ function simulate_trace(
             x + dt * k3x, y + dt * k3y, z + dt * k3z,
             b, r, s, x_rest, current,
         )
-        x = x + dt6 * (k1x + 2.0 * k2x + 2.0 * k3x + k4x)
-        y = y + dt6 * (k1y + 2.0 * k2y + 2.0 * k3y + k4y)
-        z = z + dt6 * (k1z + 2.0 * k2z + 2.0 * k3z + k4z)
+        stages = (k1x, k1y, k1z, k2x, k2y, k2z, k3x, k3y, k3z, k4x, k4y, k4z)
+        if !all(isfinite, stages)
+            throw(DomainError(stages, "Hindmarsh-Rose RK4 stage became non-finite"))
+        end
+        next_x = x + dt6 * (k1x + 2.0 * k2x + 2.0 * k3x + k4x)
+        next_y = y + dt6 * (k1y + 2.0 * k2y + 2.0 * k3y + k4y)
+        next_z = z + dt6 * (k1z + 2.0 * k2z + 2.0 * k3z + k4z)
+        if !all(isfinite, (next_x, next_y, next_z))
+            throw(DomainError((next_x, next_y, next_z), "Hindmarsh-Rose candidate became non-finite"))
+        end
+        x, y, z = next_x, next_y, next_z
         trace[t] = x
         if x >= x_threshold && x_prev < x_threshold
             spikes += 1

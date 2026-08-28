@@ -283,8 +283,37 @@ class HindmarshRoseNeuron:
             trace, spikes, xf, yf, zf = self._simulate_mojo(n_steps, current)
         else:
             trace, spikes, xf, yf, zf = self._simulate_python(n_steps, current)
+        trace, spikes, xf, yf, zf = self._validate_batch_result(
+            backend=backend,
+            n_steps=n_steps,
+            trace=trace,
+            spikes=spikes,
+            final_state=(xf, yf, zf),
+        )
         self.x, self.y, self.z = xf, yf, zf
         return trace, spikes
+
+    @staticmethod
+    def _validate_batch_result(
+        *,
+        backend: str,
+        n_steps: int,
+        trace: npt.NDArray[np.float64],
+        spikes: int,
+        final_state: tuple[float, float, float],
+    ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
+        """Validate a complete native result before the caller commits state."""
+        values = np.asarray(trace, dtype=np.float64)
+        if (
+            spikes < 0
+            or values.shape != (n_steps,)
+            or not np.all(np.isfinite(values))
+            or not all(math.isfinite(value) for value in final_state)
+        ):
+            raise FloatingPointError(
+                f"Hindmarsh-Rose {backend} batch produced an invalid candidate"
+            )
+        return values, int(spikes), final_state[0], final_state[1], final_state[2]
 
     def _simulate_python(
         self, n_steps: int, current: float
@@ -296,13 +325,21 @@ class HindmarshRoseNeuron:
         spikes = 0
 
         def deriv(xx: float, yy: float, zz: float) -> tuple[float, float, float]:
-            x2 = xx * xx
-            x3 = x2 * xx
-            return (
-                yy - x3 + b * x2 - zz + current,
-                1.0 - 5.0 * x2 - yy,
-                r * (s * (xx - x_rest) - zz),
-            )
+            try:
+                x2 = xx * xx
+                x3 = x2 * xx
+                candidate = (
+                    yy - x3 + b * x2 - zz + current,
+                    1.0 - 5.0 * x2 - yy,
+                    r * (s * (xx - x_rest) - zz),
+                )
+            except OverflowError as exc:
+                raise FloatingPointError(
+                    "Hindmarsh-Rose Python batch derivative overflowed"
+                ) from exc
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Hindmarsh-Rose Python batch derivative became non-finite")
+            return candidate
 
         for t in range(n_steps):
             x_prev = x
@@ -310,9 +347,14 @@ class HindmarshRoseNeuron:
             k2x, k2y, k2z = deriv(x + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z)
             k3x, k3y, k3z = deriv(x + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z)
             k4x, k4y, k4z = deriv(x + dt * k3x, y + dt * k3y, z + dt * k3z)
-            x = x + dt6 * (k1x + 2.0 * k2x + 2.0 * k3x + k4x)
-            y = y + dt6 * (k1y + 2.0 * k2y + 2.0 * k3y + k4y)
-            z = z + dt6 * (k1z + 2.0 * k2z + 2.0 * k3z + k4z)
+            candidate = (
+                x + dt6 * (k1x + 2.0 * k2x + 2.0 * k3x + k4x),
+                y + dt6 * (k1y + 2.0 * k2y + 2.0 * k3y + k4y),
+                z + dt6 * (k1z + 2.0 * k2z + 2.0 * k3z + k4z),
+            )
+            if not all(math.isfinite(value) for value in candidate):
+                raise FloatingPointError("Hindmarsh-Rose Python batch candidate became non-finite")
+            x, y, z = candidate
             trace[t] = x
             if x >= thr and x_prev < thr:
                 spikes += 1
@@ -347,19 +389,24 @@ class HindmarshRoseNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float, float]:
         assert _julia_module is not None
-        result = _julia_module.simulate_trace(
-            float(self.x),
-            float(self.y),
-            float(self.z),
-            float(self.b),
-            float(self.r),
-            float(self.s),
-            float(self.x_rest),
-            float(self.dt),
-            float(self.x_threshold),
-            int(n_steps),
-            float(current),
-        )
+        try:
+            result = _julia_module.simulate_trace(
+                float(self.x),
+                float(self.y),
+                float(self.z),
+                float(self.b),
+                float(self.r),
+                float(self.s),
+                float(self.x_rest),
+                float(self.dt),
+                float(self.x_threshold),
+                int(n_steps),
+                float(current),
+            )
+        except Exception as exc:
+            raise FloatingPointError(
+                "Hindmarsh-Rose Julia batch rejected an invalid candidate"
+            ) from exc
         trace = np.asarray(result.trace, dtype=np.float64)
         return trace, int(result.spikes), float(result.xf), float(result.yf), float(result.zf)
 

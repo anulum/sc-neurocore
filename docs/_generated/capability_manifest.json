@@ -971,7 +971,7 @@
     "python_model_classes": 174,
     "python_model_source_modules": 170,
     "rust_pyo3_model_wrappers": 201,
-    "test_files": 4745
+    "test_files": 4746
   },
   "documentation": {
     "public_pages": [
@@ -3696,6 +3696,7 @@
       "tests/test_bench_expif.py",
       "tests/test_bench_fitzhugh_nagumo.py",
       "tests/test_bench_hill_tononi.py",
+      "tests/test_bench_hindmarsh_rose.py",
       "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_iqif_evidence_and_hashes.py",
       "tests/test_bench_iqif_gates_and_rejects.py",

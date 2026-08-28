@@ -4048,6 +4048,55 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_hindmarsh_rose_simulate.json",
+      "description": "Hindmarsh-Rose three-state RK4 execution across Python, Rust, Julia, Go, and Mojo.",
+      "expected_values": {
+        "benchmark": "hindmarsh_rose_simulate_rk4",
+        "evidence_class": "local_regression_non_isolated",
+        "hardware_measurement_claimed": false,
+        "model": "HindmarshRoseNeuron",
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 3.0,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "hindmarsh-rose-five-runtime-local-regression",
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {"max": 0.0},
+        "backends.julia.parity_max_abs_diff": {"max": 0.0},
+        "backends.mojo.parity_max_abs_diff": {"max": 1e-06},
+        "backends.python.parity_max_abs_diff": {"max": 0.0},
+        "backends.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backends.python.median_ms",
+        "backends.python.min_ms",
+        "backends.rust.median_ms",
+        "backends.rust.min_ms",
+        "backends.julia.median_ms",
+        "backends.julia.min_ms",
+        "backends.go.median_ms",
+        "backends.go.min_ms",
+        "backends.mojo.median_ms",
+        "backends.mojo.min_ms"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_hindmarsh_rose_simulate.py": "source_hashes.benchmarks/bench_hindmarsh_rose_simulate.py",
+        "engine/src/bindings/hindmarsh_rose.rs": "source_hashes.engine/src/bindings/hindmarsh_rose.rs",
+        "engine/src/neurons/simple_spiking/hindmarsh_rose.rs": "source_hashes.engine/src/neurons/simple_spiking/hindmarsh_rose.rs",
+        "src/sc_neurocore/accel/go/neurons/hindmarsh_rose/hindmarsh_rose.go": "source_hashes.src/sc_neurocore/accel/go/neurons/hindmarsh_rose/hindmarsh_rose.go",
+        "src/sc_neurocore/accel/julia/neurons/hindmarsh_rose.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/hindmarsh_rose.jl",
+        "src/sc_neurocore/accel/mojo/neurons/hindmarsh_rose.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/hindmarsh_rose.mojo",
+        "src/sc_neurocore/accel/rust/safety/hindmarsh_rose.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/hindmarsh_rose.rs",
+        "src/sc_neurocore/neurons/model_descriptors/HindmarshRoseNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/HindmarshRoseNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.json",
+        "src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.toml",
+        "src/sc_neurocore/neurons/models/hindmarsh_rose.py": "source_hashes.src/sc_neurocore/neurons/models/hindmarsh_rose.py",
+        "src/sc_neurocore/neurons/reference_trace_data/hindmarsh_rose_short_bursting_prefix.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/hindmarsh_rose_short_bursting_prefix.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "description": "Wang NMDA source and retained SC recurrence execution across Python, Rust, Go, Julia, and Mojo.",
       "expected_values": {

@@ -10,7 +10,30 @@
 
 from __future__ import annotations
 
+import subprocess
+
 from tests.cosim_hindmarsh_rose_support import *  # noqa: F403
+from tests.toolchain_support import require_executable
+
+_ROOT = Path(__file__).resolve().parents[1]
+_RTL = _ROOT / "hdl/formal/catalogue/sc_hindmarsh_rose.v"
+
+
+def test_yosys_synthesises_committed_rtl() -> None:
+    completed = subprocess.run(
+        [
+            require_executable("yosys"),
+            "-q",
+            "-p",
+            f"read_verilog {_RTL}; synth -top sc_hindmarsh_rose -run begin:coarse; check; stat",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

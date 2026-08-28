@@ -262,6 +262,10 @@
       "id": "sc-normalized-energy-lif-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_hindmarsh_rose_simulate.json",
+      "id": "hindmarsh-rose-five-runtime-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_nmda.json",
       "id": "wang-nmda-dual-identity-local-regression"
     },
@@ -288,7 +292,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 71,
+  "gate_count": 72,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

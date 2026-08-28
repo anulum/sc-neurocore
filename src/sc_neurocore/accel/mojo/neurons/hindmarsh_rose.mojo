@@ -28,6 +28,7 @@
 #
 # Reference: Hindmarsh, J.L. & Rose, R.M. (1984). Proc. R. Soc. Lond. B 221:87-102.
 
+from std.math import isfinite
 from std.memory import UnsafePointer
 
 
@@ -64,6 +65,23 @@ def hindmarsh_rose_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if (
+        n_steps < 0
+        or not isfinite(x0)
+        or not isfinite(y0)
+        or not isfinite(z0)
+        or not isfinite(b)
+        or not isfinite(r)
+        or not isfinite(s)
+        or not isfinite(x_rest)
+        or not isfinite(dt)
+        or not isfinite(x_threshold)
+        or not isfinite(current)
+        or r <= 0.0
+        or s <= 0.0
+        or dt <= 0.0
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var x = x0
     var y = y0
@@ -93,9 +111,29 @@ def hindmarsh_rose_simulate_c(
         var k4x = _dx(a4x, a4y, a4z, b, current)
         var k4y = _dy(a4x, a4y)
         var k4z = _dz(a4x, a4z, r, s, x_rest)
-        x = x + dt6 * (k1x + 2.0 * k2x + 2.0 * k3x + k4x)
-        y = y + dt6 * (k1y + 2.0 * k2y + 2.0 * k3y + k4y)
-        z = z + dt6 * (k1z + 2.0 * k2z + 2.0 * k3z + k4z)
+        if (
+            not isfinite(k1x)
+            or not isfinite(k1y)
+            or not isfinite(k1z)
+            or not isfinite(k2x)
+            or not isfinite(k2y)
+            or not isfinite(k2z)
+            or not isfinite(k3x)
+            or not isfinite(k3y)
+            or not isfinite(k3z)
+            or not isfinite(k4x)
+            or not isfinite(k4y)
+            or not isfinite(k4z)
+        ):
+            return -1
+        var next_x = x + dt6 * (k1x + 2.0 * k2x + 2.0 * k3x + k4x)
+        var next_y = y + dt6 * (k1y + 2.0 * k2y + 2.0 * k3y + k4y)
+        var next_z = z + dt6 * (k1z + 2.0 * k2z + 2.0 * k3z + k4z)
+        if not isfinite(next_x) or not isfinite(next_y) or not isfinite(next_z):
+            return -1
+        x = next_x
+        y = next_y
+        z = next_z
         trace[t] = x
         if x >= x_threshold and x_prev < x_threshold:
             spikes += 1

@@ -27,10 +27,11 @@ numbers without an isolated-core rerun.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import os as _os
 import platform
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -41,6 +42,35 @@ from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
 N_STEPS = 2_000_000
 CURRENT = 3.0
 N_REPEATS = 5
+ROOT = Path(__file__).resolve().parents[1]
+SOURCES = (
+    "benchmarks/bench_hindmarsh_rose_simulate.py",
+    "engine/src/bindings/hindmarsh_rose.rs",
+    "engine/src/neurons/simple_spiking/hindmarsh_rose.rs",
+    "src/sc_neurocore/accel/go/neurons/hindmarsh_rose/hindmarsh_rose.go",
+    "src/sc_neurocore/accel/julia/neurons/hindmarsh_rose.jl",
+    "src/sc_neurocore/accel/mojo/neurons/hindmarsh_rose.mojo",
+    "src/sc_neurocore/accel/rust/safety/hindmarsh_rose.rs",
+    "src/sc_neurocore/neurons/model_descriptors/HindmarshRoseNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.json",
+    "src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.toml",
+    "src/sc_neurocore/neurons/models/hindmarsh_rose.py",
+    "src/sc_neurocore/neurons/reference_trace_data/hindmarsh_rose_short_bursting_prefix.json",
+)
+
+
+def _source_hashes() -> dict[str, object]:
+    """Return flat digests plus suffix aliases consumed by the evidence gate."""
+    hashes: dict[str, object] = {}
+    for relative in SOURCES:
+        digest = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+        hashes[relative] = digest
+        stem, suffix = relative.rsplit(".", 1)
+        aliases = hashes.setdefault(stem, {})
+        if not isinstance(aliases, dict):
+            raise RuntimeError(f"source-hash alias collision at {stem}")
+        aliases[suffix] = digest
+    return hashes
 
 
 def _probe_rust() -> tuple[bool, str]:
@@ -58,8 +88,6 @@ def _probe_go() -> tuple[bool, str]:
 
 
 def _probe_mojo() -> tuple[bool, str]:
-    if not _os.path.isfile(_os.path.expanduser("~/.pixi/bin/mojo")):
-        return False, "mojo binary not at ~/.pixi/bin/mojo"
     ok = hr._ensure_mojo_loaded()
     return (ok, "" if ok else "accel/mojo/neurons/libhr.so not built")
 
@@ -102,18 +130,18 @@ def main(argv: list[str]) -> int:
     for name, (avail, reason) in backends.items():
         print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
     print()
+    unavailable = {name: reason for name, (available, reason) in backends.items() if not available}
+    if unavailable:
+        print(f"Required backend unavailable; evidence was not written: {unavailable}")
+        return 2
 
     reference: np.ndarray | None = None
     python_median: float | None = None
-    rows: list[dict[str, object]] = []
+    rows: dict[str, dict[str, float]] = {}
 
     print(f"{'backend':<8}  {'median ms':>12}  {'min ms':>12}  {'parity Δ':>12}  {'speedup':>9}")
     print(f"{'-' * 8}  {'-' * 12}  {'-' * 12}  {'-' * 12}  {'-' * 9}")
-    for name, (avail, reason) in backends.items():
-        if not avail:
-            print(f"{name:<8}  {'(skip)':>12}  {'(skip)':>12}  {'-':>12}  {'-':>9}")
-            rows.append({"backend": name, "skipped": True, "unavailable_reason": reason})
-            continue
+    for name in backends:
         median_ms, min_ms, trace = _run(name)
         if name == "python":
             reference = trace
@@ -124,15 +152,12 @@ def main(argv: list[str]) -> int:
             parity = float(np.max(np.abs(trace - reference)))
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")
-        rows.append(
-            {
-                "backend": name,
-                "median_ms": median_ms,
-                "min_ms": min_ms,
-                "parity_max_abs_diff": parity,
-                "speedup_vs_python": speedup,
-            }
-        )
+        rows[name] = {
+            "median_ms": median_ms,
+            "min_ms": min_ms,
+            "parity_max_abs_diff": parity,
+            "speedup_vs_python": speedup,
+        }
 
     print()
     print("# Note: the RHS is exact arithmetic (x*x / (x*x)*x, no transcendentals),")
@@ -142,7 +167,11 @@ def main(argv: list[str]) -> int:
     print("# (per-step agreement stays <=8 ULP). auto -> Rust (fastest bit-exact).")
 
     report = {
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "benchmark": "hindmarsh_rose_simulate_rk4",
+        "model": "HindmarshRoseNeuron",
+        "evidence_class": "local_regression_non_isolated",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "workload": {"n_steps": N_STEPS, "current": CURRENT, "repeats": N_REPEATS},
         "environment": {
             "python": platform.python_version(),
@@ -150,7 +179,10 @@ def main(argv: list[str]) -> int:
             "platform": platform.platform(),
             "isolation": "non-isolated (loaded workstation)",
         },
-        "results": rows,
+        "backends": rows,
+        "source_hashes": _source_hashes(),
+        "production_speed_claim": False,
+        "hardware_measurement_claimed": False,
     }
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)
