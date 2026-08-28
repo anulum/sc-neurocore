@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-85 SymbiYosys proof jobs and 384 formal statements (258 assert, 94 assume,
+87 SymbiYosys proof jobs and 386 formal statements (260 assert, 94 assume,
 32 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -24,13 +24,13 @@ The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
-| SymbiYosys `.sby` proof jobs | 85 |
-| `assert(...)` statements | 258 |
+| SymbiYosys `.sby` proof jobs | 87 |
+| `assert(...)` statements | 260 |
 | `assume(...)` statements | 94 |
 | `cover(...)` statements | 32 |
-| Total formal statements | 384 |
+| Total formal statements | 386 |
 
-**Total: 85 SymbiYosys proof jobs and 384 formal statements (258 assert, 94 assume, 32 cover).**
+**Total: 87 SymbiYosys proof jobs and 386 formal statements (260 assert, 94 assume, 32 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the

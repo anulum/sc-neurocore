@@ -25,7 +25,10 @@ package main
 */
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
 
 func rhs(v, u, cap, k, vr, vt, a, b, cur float64) (float64, float64) {
 	dv := (k*(v-vr)*(v-vt) - u + cur) / cap
@@ -44,7 +47,6 @@ func izhikevich2007_simulate_c(
 	tracePtr *C.double,
 ) C.longlong {
 	n := int(nSteps)
-	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+2)
 	v := float64(v0)
 	u := float64(u0)
 	cp := float64(cap)
@@ -58,6 +60,11 @@ func izhikevich2007_simulate_c(
 	dd := float64(d)
 	dtt := float64(dt)
 	cur := float64(current)
+	if n < 0 || tracePtr == nil || cp <= 0.0 || dtt <= 0.0 ||
+		!allFinite(v, u, cp, kk, vrf, vtf, vpk, aa, bb, cc, dd, dtt, cur) {
+		return -1
+	}
+	trace := unsafe.Slice((*float64)(unsafe.Pointer(tracePtr)), n+2)
 	dt6 := dtt / 6.0
 	var spikes int64
 	for t := 0; t < n; t++ {
@@ -72,13 +79,23 @@ func izhikevich2007_simulate_c(
 			u = u + dd
 			spikes++
 		}
+		if !allFinite(v, u) {
+			return -2
+		}
 		trace[t] = v
 	}
-	if n > 0 {
-		trace[n] = v
-		trace[n+1] = u
-	}
+	trace[n] = v
+	trace[n+1] = u
 	return C.longlong(spikes)
+}
+
+func allFinite(values ...float64) bool {
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return false
+		}
+	}
+	return true
 }
 
 func main() {} // required for c-shared

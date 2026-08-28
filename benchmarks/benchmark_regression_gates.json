@@ -2143,6 +2143,57 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_izhikevich2007_simulate.json",
+      "description": "Izhikevich 2007 biophysical RK4 five-backend simulation evidence.",
+      "expected_values": {
+        "benchmark": "izhikevich2007_simulate_rk4",
+        "environment.isolation": "non-isolated (loaded workstation)",
+        "workload.current": 300.0,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "izhikevich-2007-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backend_summary.go.parity_max_abs_diff": {"max": 0.0},
+        "backend_summary.julia.parity_max_abs_diff": {"max": 0.0},
+        "backend_summary.mojo.parity_max_abs_diff": {"max": 1.0e-6},
+        "backend_summary.rust.parity_max_abs_diff": {"max": 0.0}
+      },
+      "required_numbers": [
+        "backend_summary.python.median_ms", "backend_summary.python.min_ms", "backend_summary.python.spikes", "backend_summary.python.v_final", "backend_summary.python.u_final",
+        "backend_summary.rust.median_ms", "backend_summary.rust.min_ms", "backend_summary.rust.spikes", "backend_summary.rust.v_final", "backend_summary.rust.u_final",
+        "backend_summary.julia.median_ms", "backend_summary.julia.min_ms", "backend_summary.julia.spikes", "backend_summary.julia.v_final", "backend_summary.julia.u_final",
+        "backend_summary.go.median_ms", "backend_summary.go.min_ms", "backend_summary.go.spikes", "backend_summary.go.v_final", "backend_summary.go.u_final",
+        "backend_summary.mojo.median_ms", "backend_summary.mojo.min_ms", "backend_summary.mojo.spikes", "backend_summary.mojo.v_final", "backend_summary.mojo.u_final"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_izhikevich2007_simulate.py": "source_hashes.benchmarks/bench_izhikevich2007_simulate.py",
+        "engine/src/rk4_neurons.rs": "source_hashes.engine/src/rk4_neurons.rs",
+        "engine/src/bindings/izhikevich2007.rs": "source_hashes.engine/src/bindings/izhikevich2007.rs",
+        "src/sc_neurocore/accel/rust/safety/izhikevich2007.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/izhikevich2007.rs",
+        "src/sc_neurocore/neurons/models/izhikevich2007.py": "source_hashes.src/sc_neurocore/neurons/models/izhikevich2007.py",
+        "src/sc_neurocore/accel/go/neurons/izhikevich2007/izhikevich2007.go": "source_hashes.src/sc_neurocore/accel/go/neurons/izhikevich2007/izhikevich2007.go",
+        "src/sc_neurocore/accel/julia/neurons/izhikevich2007.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/izhikevich2007.jl",
+        "src/sc_neurocore/accel/mojo/neurons/izhikevich2007.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/izhikevich2007.mojo",
+        "src/sc_neurocore/neurons/model_schemas/izhikevich2007.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/izhikevich2007.toml",
+        "src/sc_neurocore/neurons/model_schemas/izhikevich2007.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/izhikevich2007.json",
+        "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/izhikevich_2007.json",
+        "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4.json"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_ermentrout_kopell_map.json",
       "description": "Ermentrout-Kopell theta-map five-backend simulation evidence.",
       "expected_values": {

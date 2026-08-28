@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import importlib
+import math
 import sys
 from typing import Any
 
@@ -127,3 +128,18 @@ def test_production_rust_dispatcher_is_installed_and_bit_exact() -> None:
     np.testing.assert_array_equal(rust_trace, python_trace)
     assert rust_spikes == python_spikes
     assert (rust_neuron.v, rust_neuron.u) == (python_neuron.v, python_neuron.u)
+
+
+def test_direct_binding_rejects_invalid_input() -> None:
+    with pytest.raises(FloatingPointError, match="invalid Izhikevich 2007"):
+        extension.py_izhikevich2007_simulate(*_parameters(), 1, math.nan)
+
+
+def test_network_runner_exposes_the_distinct_2007_identity() -> None:
+    assert "Izhikevich" in extension.NetworkRunner.supported_models()
+    assert "Izhikevich2007" in extension.NetworkRunner.supported_models()
+    runner = extension.NetworkRunner()
+    population = runner.add_population("Izhikevich2007", 1)
+    result = runner.step_population(population, np.array([300.0], dtype=np.float64))
+    assert result["spikes"].tolist() == [0]
+    assert result["voltages"].tolist() == [-59.70206922640671]

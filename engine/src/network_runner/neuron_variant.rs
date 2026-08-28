@@ -11,6 +11,7 @@
 use super::input_adapters::*;
 use crate::neuron::*;
 use crate::neurons::*;
+use crate::rk4_neurons::Izhikevich2007Rk4;
 
 /// Enum dispatch across all neuron models.
 ///
@@ -20,6 +21,7 @@ use crate::neurons::*;
 pub enum NeuronVariant {
     // neuron.rs
     Izhikevich(Izhikevich),
+    Izhikevich2007(Izhikevich2007Rk4),
     AdEx(AdExNeuron),
     ExpIF(ExpIfNeuron),
     Lapicque(LapicqueNeuron),
@@ -260,7 +262,7 @@ macro_rules! dispatch_reset {
 macro_rules! all_variants {
     ($mac:ident, $($args:tt)*) => {
         $mac!($($args)*
-            Izhikevich, AdEx, ExpIF, Lapicque, HomeostaticLif,
+            Izhikevich, Izhikevich2007, AdEx, ExpIF, Lapicque, HomeostaticLif,
             HodgkinHuxley, TraubMiles, WangBuzsaki, ConnorStevens,
             DestexheThalamic, HuberBraun, GolombFS,
             Pospischil, MainenSejnowski, DeSchutterPurkinje,
@@ -318,6 +320,7 @@ impl NeuronVariant {
     pub fn soma_voltage(&self) -> f64 {
         match self {
             NeuronVariant::Izhikevich(n) => n.v,
+            NeuronVariant::Izhikevich2007(n) => n.v,
             NeuronVariant::AdEx(n) => n.v,
             NeuronVariant::ExpIF(n) => n.v,
             NeuronVariant::Lapicque(n) => n.v,

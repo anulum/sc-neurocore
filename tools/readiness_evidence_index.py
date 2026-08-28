@@ -300,7 +300,10 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="izhikevich2007",
         class_name="Izhikevich2007Neuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py izhikevich2007 three-way enrolment",
+        evidence=(
+            "tests/test_cosim_izhikevich2007.py::"
+            "TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog"
+        ),
         operating_point="schema-DSL izhikevich2007; Euler; hand/schema/RTL",
         tolerance="exact Q16.16 spike parity per enrolment",
     ),

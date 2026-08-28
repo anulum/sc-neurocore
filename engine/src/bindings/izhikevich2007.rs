@@ -9,6 +9,7 @@
 //! Python binding for the NeuroML Izhikevich 2007 model.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 
 /// Register the Izhikevich 2007 batch simulator with the extension module.
@@ -42,7 +43,7 @@ fn py_izhikevich2007_simulate<'py>(
     dt: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64, f64)> {
     let mut neuron = crate::rk4_neurons::Izhikevich2007Rk4 {
         v: v0,
         u: u0,
@@ -57,6 +58,8 @@ fn py_izhikevich2007_simulate<'py>(
         d,
         dt,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.u)
+    let (trace, spikes) = neuron
+        .simulate(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((trace.into_pyarray(py), spikes, neuron.v, neuron.u))
 }

@@ -28,6 +28,12 @@ $$v \geq v_{peak} \Rightarrow v \leftarrow c,\quad u \leftarrow u + d$$
 Units use the NeuroML base convention used by the importer: `C` in pF,
 `k` in nS/mV, voltages in mV, `a` in 1/ms, `b` in nS, and current terms in pA.
 
+The continuous equations and regular-spiking defaults are independently bound
+to the MIT Press source and the NeuroML component definition. Numerical
+integration is an implementation choice: the production runtime defaults to
+coupled RK4 at `dt=0.1 ms`, while the schema/RTL lane uses simultaneous forward
+Euler at the same step and is labelled separately throughout the evidence.
+
 ## Parameters
 
 | Parameter | Default | Unit | Description |
@@ -66,6 +72,25 @@ prefers Rust (it ships in the `sc_neurocore_engine` wheel). `trace[t]` is `v`
 after step `t` (reset to `c` on a spiking step); `spikes` counts the steps that
 reached `vpeak`. The Rust backend is a dedicated `Izhikevich2007Rk4` integrator
 in the engine — distinct from the dimensionless 2003 `IzhikevichRk4`.
+
+Invalid mutable configuration, non-finite drive, and non-finite RK4/reset
+candidates are rejected before the public neuron state is committed. Stateful
+Python and Rust reset operations preserve configuration. The NetworkRunner
+catalogue exposes this identity as `Izhikevich2007`, separately from its legacy
+dimensionless `Izhikevich` entry.
+
+## Reproducibility and hardware evidence
+
+The independent Euler receipt at `I=1000 pA` covers both state variables for
+300 steps: five events, first zero-based event index 56, final state
+`(-32.307032839095, 297.93434614720854)`, and complete `(v,u)` row digest
+`c87bb4e4e43ee1ee9f8008e0001c3559e1c6188766874e177155ff3e4c6bc958`.
+
+Generated Q16.16 RTL preserves the enrolled event vector against the hand and
+schema paths. The tracked Q8.8 catalogue object passes Yosys coarse synthesis
+and its depth-20 Z3 job proves bounded reset/output safety. These establish H2,
+not timing closure, PPA, device/board execution, physical silicon, or universal
+real-number equivalence.
 
 The NeuroML right-hand side `k (v-vr)(v-vt)/C` is **exact arithmetic** — products,
 a sum and a division, no transcendental functions and no `pow` — so **Rust,
@@ -108,3 +133,12 @@ the 2003 parameter set.
 ## API
 
 ::: sc_neurocore.neurons.models.izhikevich2007.Izhikevich2007Neuron
+
+## Evidence paths
+
+- `src/sc_neurocore/neurons/reference_receipts/izhikevich_2007.json`
+- `benchmarks/results/bench_izhikevich2007_simulate.json`
+- `tests/test_reference_izhikevich2007.py`
+- `tests/test_cosim_izhikevich2007.py`
+- `hdl/formal/catalogue/sc_izhikevich2007.sby`
+- `hdl/reports/yosys_izhikevich2007_q88_2026-08-28.json`

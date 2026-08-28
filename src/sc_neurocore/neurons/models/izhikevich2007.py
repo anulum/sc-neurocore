@@ -51,6 +51,7 @@ _mojo_lib = None
 _HAS_MOJO = False
 
 _ACCEL_ROOT = _os.path.join(_os.path.dirname(__file__), "..", "..", "accel")
+_MAX_C_STEPS = (1 << 31) - 1
 
 
 def _ensure_julia_loaded() -> bool:
@@ -181,18 +182,39 @@ class Izhikevich2007Neuron(BaseNeuron):
             raise ValueError(f"{name} must be positive")
         return result
 
+    def _validate_config(self) -> None:
+        if self.integrator not in {"euler", "rk4"}:
+            raise ValueError(f"Unsupported integrator for Izhikevich2007Neuron: {self.integrator}")
+        for name in ("k", "vr", "vt", "vpeak", "a", "b", "c", "d"):
+            self._require_finite(name, getattr(self, name))
+        self._require_positive("C", self.C)
+        self._require_positive("dt", self.dt)
+        if self.v0 is not None:
+            self._require_finite("v0", self.v0)
+
+    def _validate_runtime(self) -> None:
+        self._validate_config()
+        self._require_finite("v", self.v)
+        self._require_finite("u", self.u)
+
     def _rhs(self, v: float, u: float, input_current: float) -> tuple[float, float]:
         dv = (self.k * (v - self.vr) * (v - self.vt) - u + input_current) / self.C
         du = self.a * (self.b * (v - self.vr) - u)
         return dv, du
 
     def step(self, input_current: float) -> int:
+        self._validate_runtime()
         input_current = self._require_finite("input_current", input_current)
+        before = (self.v, self.u)
         if self.integrator == "euler":
             self._step_euler(input_current)
         else:
             self._step_rk4(input_current)
-        return self._apply_threshold_reset()
+        event = self._apply_threshold_reset()
+        if not (math.isfinite(self.v) and math.isfinite(self.u)):
+            self.v, self.u = before
+            raise FloatingPointError("Izhikevich 2007 candidate state became non-finite")
+        return event
 
     def simulate(
         self, n_steps: int, current: float = 0.0, backend: str = "auto"
@@ -208,8 +230,11 @@ class Izhikevich2007Neuron(BaseNeuron):
         pure-NumPy reference bit-for-bit; Mojo agrees to a non-amplifying ULP
         bound.
         """
-        if n_steps < 0:
-            raise ValueError("n_steps must be non-negative")
+        if isinstance(n_steps, bool) or not isinstance(n_steps, int):
+            raise ValueError("n_steps must be an integer")
+        if not 0 <= n_steps <= _MAX_C_STEPS:
+            raise ValueError(f"n_steps must be between 0 and {_MAX_C_STEPS}")
+        self._validate_runtime()
         current = self._require_finite("current", current)
         if self.integrator != "rk4":
             raise ValueError(
@@ -276,6 +301,8 @@ class Izhikevich2007Neuron(BaseNeuron):
                 v = c
                 u = u + d
                 spikes += 1
+            if not (math.isfinite(v) and math.isfinite(u)):
+                raise FloatingPointError("Izhikevich 2007 candidate state became non-finite")
             trace[t] = v
         return trace, spikes, v, u
 
@@ -348,6 +375,8 @@ class Izhikevich2007Neuron(BaseNeuron):
             ctypes.c_double(current),
             trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
         )
+        if spikes < 0:
+            raise FloatingPointError("Go Izhikevich 2007 backend rejected the simulation")
         vf = float(trace[n_steps]) if n_steps > 0 else self.v
         uf = float(trace[n_steps + 1]) if n_steps > 0 else self.u
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, uf
@@ -374,6 +403,8 @@ class Izhikevich2007Neuron(BaseNeuron):
             float(current),
             int(trace.ctypes.data),
         )
+        if spikes < 0:
+            raise FloatingPointError("Mojo Izhikevich 2007 backend rejected the simulation")
         vf = float(trace[n_steps]) if n_steps > 0 else self.v
         uf = float(trace[n_steps + 1]) if n_steps > 0 else self.u
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), vf, uf
@@ -406,9 +437,14 @@ class Izhikevich2007Neuron(BaseNeuron):
         return 0
 
     def reset_state(self) -> None:
+        self._validate_config()
         v0 = self.vr if self.v0 is None else self.v0
-        self.v = float(v0)
-        self.u = self.b * (self.v - self.vr)
+        v_next = float(v0)
+        u_next = self.b * (v_next - self.vr)
+        if not (math.isfinite(v_next) and math.isfinite(u_next)):
+            raise FloatingPointError("Izhikevich 2007 reset state became non-finite")
+        self.v = v_next
+        self.u = u_next
 
     def get_state(self) -> dict[str, Any]:
         return {"v": float(self.v), "u": float(self.u)}

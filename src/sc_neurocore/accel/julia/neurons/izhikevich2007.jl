@@ -52,6 +52,11 @@ function simulate_trace(
     n_steps::Int,
     current::Float64,
 )
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
+    all(isfinite, (v0, u0, cap, k, vr, vt, vpeak, a, b, c, d, dt, current)) ||
+        throw(ArgumentError("Izhikevich 2007 inputs must be finite"))
+    cap > 0.0 || throw(ArgumentError("cap must be positive"))
+    dt > 0.0 || throw(ArgumentError("dt must be positive"))
     trace = Vector{Float64}(undef, n_steps)
     v = v0
     u = u0
@@ -69,6 +74,8 @@ function simulate_trace(
             u = u + d
             spikes += 1
         end
+        isfinite(v) && isfinite(u) ||
+            throw(OverflowError("Izhikevich 2007 candidate state became non-finite"))
         trace[t] = v
     end
     return (trace = trace, spikes = spikes, vf = v, uf = u)

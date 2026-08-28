@@ -15,6 +15,7 @@
 pub fn supported_models() -> Vec<&'static str> {
     vec![
         "Izhikevich",
+        "Izhikevich2007",
         "AdEx",
         "ExpIF",
         "Lapicque",

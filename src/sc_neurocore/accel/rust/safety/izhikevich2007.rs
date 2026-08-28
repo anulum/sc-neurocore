@@ -93,29 +93,66 @@ impl Izhikevich2007Neuron {
     /// Advance one RK4 step. Returns `1` when the post-integration voltage reaches
     /// `vpeak` (emitting one spike and applying the reset `v <- c`, `u <- u + d`),
     /// `0` otherwise, and leaves the state untouched on a fail-closed rejection.
-    pub fn step(&mut self, input_current: f64) -> i32 {
+    pub fn try_step(&mut self, input_current: f64) -> Result<i32, &'static str> {
         if !validate_izhikevich2007(self) || !input_current.is_finite() {
-            return 0;
+            return Err("invalid Izhikevich 2007 runtime state or current");
         }
         let Some((v_new, u_new)) = self.rk4_candidate(input_current) else {
-            return 0;
+            return Err("Izhikevich 2007 RK4 candidate became non-finite");
         };
-        self.v = v_new;
-        self.u = u_new;
-        if self.v >= self.vpeak {
-            self.v = self.c_reset;
-            self.u += self.d;
+        let mut v_commit = v_new;
+        let mut u_commit = u_new;
+        let event = if v_commit >= self.vpeak {
+            v_commit = self.c_reset;
+            u_commit += self.d;
             1
         } else {
             0
+        };
+        if !v_commit.is_finite() || !u_commit.is_finite() {
+            return Err("Izhikevich 2007 reset candidate became non-finite");
         }
+        self.v = v_commit;
+        self.u = u_commit;
+        Ok(event)
+    }
+
+    pub fn step(&mut self, input_current: f64) -> i32 {
+        self.try_step(input_current).unwrap_or(0)
+    }
+
+    pub fn simulate(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, i64), &'static str> {
+        let mut trace = Vec::with_capacity(n_steps);
+        let mut events = 0_i64;
+        for _ in 0..n_steps {
+            events += i64::from(self.try_step(current)?);
+            trace.push(self.v);
+        }
+        Ok((trace, events))
+    }
+
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        // Mirror models/izhikevich2007.py reset_state() at the default v0 (= vr):
+        // restore only the state variables, never the parameters.
+        if !validate_izhikevich2007(self) {
+            return Err("invalid Izhikevich 2007 parameters for reset");
+        }
+        let v_next = self.vr;
+        let u_next = self.b * (v_next - self.vr);
+        if !v_next.is_finite() || !u_next.is_finite() {
+            return Err("Izhikevich 2007 reset state became non-finite");
+        }
+        self.v = v_next;
+        self.u = u_next;
+        Ok(())
     }
 
     pub fn reset(&mut self) {
-        // Mirror models/izhikevich2007.py reset_state() at the default v0 (= vr):
-        // restore only the state variables, never the parameters.
-        self.v = self.vr;
-        self.u = self.b * (self.v - self.vr);
+        let _ = self.try_reset();
     }
 }
 
@@ -209,6 +246,7 @@ mod tests {
         state.v = -55.0;
         state.u = 5.0;
         let before = (state.v, state.u);
+        assert!(state.try_step(f64::NAN).is_err());
         assert_eq!(state.step(f64::NAN), 0);
         assert_eq!((state.v, state.u), before);
     }
@@ -219,6 +257,7 @@ mod tests {
         state.v = 1.0e200;
         let before = (state.v, state.u);
         // The quadratic drive term overflows, so the RK4 candidate is non-finite → fail-closed.
+        assert!(state.try_step(0.0).is_err());
         assert_eq!(state.step(0.0), 0);
         assert_eq!((state.v, state.u), before);
     }
@@ -237,5 +276,22 @@ mod tests {
             let spikes = (0..2000).filter(|_| state.step(current) == 1).count();
             assert_eq!(spikes, want, "I={current}");
         }
+    }
+
+    #[test]
+    fn complete_trace_and_reset_preserve_contract() {
+        let mut state = Izhikevich2007Neuron::new();
+        let (trace, events) = state.simulate(2_000, 100.0).unwrap();
+        assert_eq!(trace.len(), 2_000);
+        assert_eq!(events, 3);
+        assert_eq!(trace.last().copied(), Some(state.v));
+        state.dt = 0.05;
+        state.reset();
+        assert_eq!((state.v, state.u, state.dt), (-60.0, -0.0, 0.05));
+
+        let before = (state.v, state.u);
+        state.vr = f64::NAN;
+        assert!(state.try_reset().is_err());
+        assert_eq!((state.v, state.u), before);
     }
 }

@@ -96,13 +96,44 @@ pub struct Izhikevich2007Rk4 {
 }
 
 impl Izhikevich2007Rk4 {
+    pub fn new() -> Self {
+        Self {
+            v: -60.0,
+            u: 0.0,
+            cap: 100.0,
+            k: 0.7,
+            vr: -60.0,
+            vt: -40.0,
+            vpeak: 35.0,
+            a: 0.03,
+            b: -2.0,
+            c: -50.0,
+            d: 100.0,
+            dt: 0.1,
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        [
+            self.v, self.u, self.cap, self.k, self.vr, self.vt, self.vpeak, self.a, self.b, self.c,
+            self.d, self.dt,
+        ]
+        .iter()
+        .all(|value| value.is_finite())
+            && self.cap > 0.0
+            && self.dt > 0.0
+    }
+
     fn rhs(&self, v: f64, u: f64, current: f64) -> (f64, f64) {
         let dv = (self.k * (v - self.vr) * (v - self.vt) - u + current) / self.cap;
         let du = self.a * (self.b * (v - self.vr) - u);
         (dv, du)
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !self.is_valid() || !current.is_finite() {
+            return Err("invalid Izhikevich 2007 runtime state or current");
+        }
         let (k1v, k1u) = self.rhs(self.v, self.u, current);
         let (k2v, k2u) = self.rhs(
             self.v + 0.5 * self.dt * k1v,
@@ -116,15 +147,25 @@ impl Izhikevich2007Rk4 {
         );
         let (k4v, k4u) = self.rhs(self.v + self.dt * k3v, self.u + self.dt * k3u, current);
         let dt6 = self.dt / 6.0;
-        self.v += dt6 * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
-        self.u += dt6 * (k1u + 2.0 * k2u + 2.0 * k3u + k4u);
-        if self.v >= self.vpeak {
-            self.v = self.c;
-            self.u += self.d;
+        let mut v_next = self.v + dt6 * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
+        let mut u_next = self.u + dt6 * (k1u + 2.0 * k2u + 2.0 * k3u + k4u);
+        let event = if v_next >= self.vpeak {
+            v_next = self.c;
+            u_next += self.d;
             1
         } else {
             0
+        };
+        if !v_next.is_finite() || !u_next.is_finite() {
+            return Err("Izhikevich 2007 candidate state became non-finite");
         }
+        self.v = v_next;
+        self.u = u_next;
+        Ok(event)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     /// Run `n_steps` RK4 updates under a constant input, returning the `v` trace
@@ -132,17 +173,45 @@ impl Izhikevich2007Rk4 {
     /// `step`, so the trace is bit-identical to the per-step path and to the
     /// Python reference (the right-hand side is exact arithmetic). The final
     /// state is left in `self.v` / `self.u`.
-    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+    pub fn simulate(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, i64), &'static str> {
         let mut trace = Vec::with_capacity(n_steps);
         let mut spikes: i64 = 0;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
+            let spiked = self.try_step(current)?;
             trace.push(self.v);
             if spiked == 1 {
                 spikes += 1;
             }
         }
-        (trace, spikes)
+        Ok((trace, spikes))
+    }
+
+    pub fn try_reset(&mut self) -> Result<(), &'static str> {
+        if !self.is_valid() {
+            return Err("invalid Izhikevich 2007 parameters for reset");
+        }
+        let v_next = self.vr;
+        let u_next = self.b * (v_next - self.vr);
+        if !v_next.is_finite() || !u_next.is_finite() {
+            return Err("Izhikevich 2007 reset state became non-finite");
+        }
+        self.v = v_next;
+        self.u = u_next;
+        Ok(())
+    }
+
+    pub fn reset(&mut self) {
+        let _ = self.try_reset();
+    }
+}
+
+impl Default for Izhikevich2007Rk4 {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -473,6 +542,23 @@ mod tests {
         assert!(spikes > 0);
         assert_eq!(a.v, b.v);
         assert_eq!(a.u, b.u);
+    }
+
+    #[test]
+    fn izhikevich2007_checked_trace_and_reset_are_fail_closed() {
+        let mut neuron = Izhikevich2007Rk4::new();
+        let (trace, events) = neuron.simulate(2_000, 100.0).unwrap();
+        assert_eq!(trace.len(), 2_000);
+        assert_eq!(events, 3);
+        assert_eq!(trace.last().copied(), Some(neuron.v));
+
+        let before = (neuron.v, neuron.u);
+        assert!(neuron.try_step(f64::NAN).is_err());
+        assert_eq!((neuron.v, neuron.u), before);
+
+        neuron.vr = f64::NAN;
+        assert!(neuron.try_reset().is_err());
+        assert_eq!((neuron.v, neuron.u), before);
     }
 
     #[test]

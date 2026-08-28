@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+import math
 from collections.abc import Callable
+from pathlib import Path
 
+import numpy as np
 import pytest
 
 from sc_neurocore.neurons.reference_traces import ReferenceTraceSpec, load_reference_trace_spec
 from tests.cosim_support import _izhikevich2007_euler_features
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dict[str, float]]]] = [
@@ -61,3 +68,68 @@ def test_trace_features_match_independent_reference(
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_complete_source_receipt_is_independently_reproducible() -> None:
+    receipt = json.loads(
+        (ROOT / "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007.json").read_text()
+    )
+    v, u = -60.0, 0.0
+    rows: list[tuple[float, float]] = []
+    events: list[int] = []
+    for _ in range(int(receipt["drive"]["steps"])):
+        dv = (0.7 * (v + 60.0) * (v + 40.0) - u + 1000.0) / 100.0
+        du = 0.03 * (-2.0 * (v + 60.0) - u)
+        v_next, u_next = v + 0.1 * dv, u + 0.1 * du
+        event = int(v_next >= 35.0)
+        if event:
+            v_next, u_next = -50.0, u_next + 100.0
+        v, u = v_next, u_next
+        rows.append((v, u))
+        events.append(event)
+    digest = hashlib.sha256(np.asarray(rows, dtype="<f8").tobytes()).hexdigest()
+    assert sum(events) == receipt["oracle"]["events"]
+    assert events.index(1) == receipt["oracle"]["first_event_index"]
+    assert math.isclose(v, receipt["oracle"]["v_final"], rel_tol=0.0, abs_tol=0.0)
+    assert math.isclose(u, receipt["oracle"]["u_final"], rel_tol=0.0, abs_tol=0.0)
+    assert digest == receipt["oracle"]["trace_sha256"]
+
+
+def test_complete_rk4_receipt_is_independently_reproducible() -> None:
+    receipt = json.loads(
+        (ROOT / "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4.json").read_text()
+    )
+    v, u = -60.0, 0.0
+    rows: list[tuple[float, float]] = []
+    voltages: list[float] = []
+    events: list[int] = []
+
+    def rhs(v_value: float, u_value: float) -> tuple[float, float]:
+        return (
+            (0.7 * (v_value + 60.0) * (v_value + 40.0) - u_value + 1000.0) / 100.0,
+            0.03 * (-2.0 * (v_value + 60.0) - u_value),
+        )
+
+    for _ in range(int(receipt["drive"]["steps"])):
+        k1v, k1u = rhs(v, u)
+        k2v, k2u = rhs(v + 0.05 * k1v, u + 0.05 * k1u)
+        k3v, k3u = rhs(v + 0.05 * k2v, u + 0.05 * k2u)
+        k4v, k4u = rhs(v + 0.1 * k3v, u + 0.1 * k3u)
+        v_next = v + (0.1 / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v)
+        u_next = u + (0.1 / 6.0) * (k1u + 2.0 * k2u + 2.0 * k3u + k4u)
+        event = int(v_next >= 35.0)
+        if event:
+            v_next, u_next = -50.0, u_next + 100.0
+        v, u = v_next, u_next
+        rows.append((v, u))
+        voltages.append(v)
+        events.append(event)
+
+    state_digest = hashlib.sha256(np.asarray(rows, dtype="<f8").tobytes()).hexdigest()
+    voltage_digest = hashlib.sha256(np.asarray(voltages, dtype="<f8").tobytes()).hexdigest()
+    assert sum(events) == receipt["oracle"]["events"]
+    assert events.index(1) == receipt["oracle"]["first_event_index"]
+    assert math.isclose(v, receipt["oracle"]["v_final"], rel_tol=0.0, abs_tol=0.0)
+    assert math.isclose(u, receipt["oracle"]["u_final"], rel_tol=0.0, abs_tol=0.0)
+    assert state_digest == receipt["oracle"]["state_trace_sha256"]
+    assert voltage_digest == receipt["oracle"]["voltage_trace_sha256"]

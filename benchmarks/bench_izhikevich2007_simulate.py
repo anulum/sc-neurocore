@@ -27,6 +27,7 @@ numbers without an isolated-core rerun.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os as _os
 import platform
@@ -34,6 +35,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import izhikevich2007 as izh
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
@@ -41,6 +43,36 @@ from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 N_STEPS = 2_000_000
 CURRENT = 300.0
 N_REPEATS = 5
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_HASH_PATHS = (
+    "benchmarks/bench_izhikevich2007_simulate.py",
+    "src/sc_neurocore/neurons/models/izhikevich2007.py",
+    "engine/src/rk4_neurons.rs",
+    "engine/src/bindings/izhikevich2007.rs",
+    "src/sc_neurocore/accel/rust/safety/izhikevich2007.rs",
+    "src/sc_neurocore/accel/go/neurons/izhikevich2007/izhikevich2007.go",
+    "src/sc_neurocore/accel/julia/neurons/izhikevich2007.jl",
+    "src/sc_neurocore/accel/mojo/neurons/izhikevich2007.mojo",
+    "src/sc_neurocore/neurons/model_schemas/izhikevich2007.toml",
+    "src/sc_neurocore/neurons/model_schemas/izhikevich2007.json",
+    "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007.json",
+    "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4.json",
+)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _source_hashes() -> dict[str, object]:
+    flat: dict[str, object] = {path: _sha256(REPO_ROOT / path) for path in SOURCE_HASH_PATHS}
+    nested: dict[str, object] = {}
+    for path, digest in flat.items():
+        stem, suffix = path.rsplit(".", 1)
+        by_suffix = nested.setdefault(stem, {})
+        assert isinstance(by_suffix, dict)
+        by_suffix[suffix] = digest
+    return {**flat, **nested}
 
 
 def _probe_rust() -> tuple[bool, str]:
@@ -64,16 +96,21 @@ def _probe_mojo() -> tuple[bool, str]:
     return (ok, "" if ok else "accel/mojo/neurons/libizh2007.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray]:
+def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64], int, float, float]:
     Izhikevich2007Neuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    spikes = 0
+    final_v = -60.0
+    final_u = 0.0
     for _ in range(N_REPEATS):
+        neuron = Izhikevich2007Neuron()
         t0 = time.perf_counter()
-        trace, _spikes = Izhikevich2007Neuron().simulate(N_STEPS, CURRENT, backend=backend)
+        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
         times_ms.append((time.perf_counter() - t0) * 1000.0)
+        final_v, final_u = neuron.v, neuron.u
     times_ms.sort()
-    return times_ms[len(times_ms) // 2], times_ms[0], trace
+    return times_ms[len(times_ms) // 2], times_ms[0], trace, spikes, final_v, final_u
 
 
 def main(argv: list[str]) -> int:
@@ -103,7 +140,7 @@ def main(argv: list[str]) -> int:
         print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
     print()
 
-    reference: np.ndarray | None = None
+    reference: npt.NDArray[np.float64] | None = None
     python_median: float | None = None
     rows: list[dict[str, object]] = []
 
@@ -114,7 +151,7 @@ def main(argv: list[str]) -> int:
             print(f"{name:<8}  {'(skip)':>12}  {'(skip)':>12}  {'-':>12}  {'-':>9}")
             rows.append({"backend": name, "skipped": True, "unavailable_reason": reason})
             continue
-        median_ms, min_ms, trace = _run(name)
+        median_ms, min_ms, trace, spikes, final_v, final_u = _run(name)
         if name == "python":
             reference = trace
             python_median = median_ms
@@ -131,6 +168,12 @@ def main(argv: list[str]) -> int:
                 "min_ms": min_ms,
                 "parity_max_abs_diff": parity,
                 "speedup_vs_python": speedup,
+                "spikes": int(spikes),
+                "v_final": float(final_v),
+                "u_final": float(final_u),
+                "trace_sha256": hashlib.sha256(
+                    np.asarray(trace, dtype="<f8").tobytes(order="C")
+                ).hexdigest(),
             }
         )
 
@@ -151,6 +194,10 @@ def main(argv: list[str]) -> int:
             "isolation": "non-isolated (loaded workstation)",
         },
         "results": rows,
+        "backend_summary": {
+            str(row["backend"]): row for row in rows if isinstance(row.get("backend"), str)
+        },
+        "source_hashes": _source_hashes(),
     }
     if args.json is not None:
         args.json.parent.mkdir(parents=True, exist_ok=True)

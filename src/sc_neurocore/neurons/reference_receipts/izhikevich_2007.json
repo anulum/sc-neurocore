@@ -1,0 +1,15 @@
+{
+  "model": "Izhikevich2007Neuron",
+  "source": "doi:10.7551/mitpress/2526.001.0001 and NeuroML izhikevich2007Cell",
+  "source_equations": "C*dv/dt=k*(v-vr)*(v-vt)-u+I; du/dt=a*(b*(v-vr)-u)",
+  "maintained_conventions": "simultaneous forward Euler dt=0.1; post-step v>=vpeak event; v=c and u=u+d reset",
+  "drive": {"current": 1000.0, "steps": 300},
+  "oracle": {
+    "events": 5,
+    "first_event_index": 56,
+    "v_final": -32.307032839095,
+    "u_final": 297.93434614720854,
+    "trace_sha256": "c87bb4e4e43ee1ee9f8008e0001c3559e1c6188766874e177155ff3e4c6bc958"
+  },
+  "encoding": "little-endian float64 post-step (v,u) rows"
+}

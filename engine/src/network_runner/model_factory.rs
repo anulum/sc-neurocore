@@ -12,6 +12,7 @@ use super::input_adapters::*;
 use super::{NeuronVariant, PopulationRunner};
 use crate::neuron::*;
 use crate::neurons::*;
+use crate::rk4_neurons::Izhikevich2007Rk4;
 
 #[path = "model_catalogue.rs"]
 mod model_catalogue;
@@ -28,6 +29,9 @@ pub fn create_population(model_name: &str, n: usize) -> Result<PopulationRunner,
 pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
     match name {
         "Izhikevich" => Ok(NeuronVariant::Izhikevich(Izhikevich::regular_spiking())),
+        "Izhikevich2007" | "Izhikevich2007Neuron" => {
+            Ok(NeuronVariant::Izhikevich2007(Izhikevich2007Rk4::new()))
+        }
         "AdEx" | "AdExNeuron" => Ok(NeuronVariant::AdEx(AdExNeuron::new())),
         "ExpIF" | "ExpIfNeuron" => Ok(NeuronVariant::ExpIF(ExpIfNeuron::new())),
         "Lapicque" | "LapicqueNeuron" => Ok(NeuronVariant::Lapicque(LapicqueNeuron::new(

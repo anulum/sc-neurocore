@@ -26,12 +26,19 @@
 #
 # Reference: Izhikevich, E.M. (2007), Dynamical Systems in Neuroscience.
 
+from std.math import isfinite
 from std.memory import UnsafePointer
 
 
 @always_inline
 def _dv(
-    v: Float64, u: Float64, cap: Float64, k: Float64, vr: Float64, vt: Float64, cur: Float64
+    v: Float64,
+    u: Float64,
+    cap: Float64,
+    k: Float64,
+    vr: Float64,
+    vt: Float64,
+    cur: Float64,
 ) -> Float64:
     var dvr = v - vr
     var dvt = v - vt
@@ -63,7 +70,29 @@ def izhikevich2007_simulate_c(
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
-    var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(v0)
+        or not isfinite(u0)
+        or not isfinite(cap)
+        or cap <= 0.0
+        or not isfinite(k)
+        or not isfinite(vr)
+        or not isfinite(vt)
+        or not isfinite(vpeak)
+        or not isfinite(a)
+        or not isfinite(b)
+        or not isfinite(c)
+        or not isfinite(d)
+        or not isfinite(dt)
+        or dt <= 0.0
+        or not isfinite(current)
+    ):
+        return -1
+    var trace = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=trace_addr
+    )
     var v = v0
     var u = u0
     var dt6 = dt / 6.0
@@ -89,8 +118,9 @@ def izhikevich2007_simulate_c(
             v = c
             u = u + d
             spikes += 1
+        if not isfinite(v) or not isfinite(u):
+            return -2
         trace[t] = v
-    if n_steps > 0:
-        trace[n_steps] = v
-        trace[n_steps + 1] = u
+    trace[n_steps] = v
+    trace[n_steps + 1] = u
     return spikes

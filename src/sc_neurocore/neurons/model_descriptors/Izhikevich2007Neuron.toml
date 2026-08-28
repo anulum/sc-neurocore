@@ -146,26 +146,30 @@ parity = "exact"
 
 [backends.mojo]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "cad92108ee99cecc3aac70089d8b9d07046c7d44490ef5431c724e388c7a298a"
+reference_config = "{\"n_steps\":300,\"current\":1000.0,\"integrator\":\"rk4\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "9f5efda50694f217a032b02094017eef351e14d5d4a28d5d373873c73f48b9fd"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4.json"
 
 [documentation]
 slug = "models/izhikevich2007"
-notes = ""
+notes = "The source identity is the continuous 2007 biophysical quadratic model with the NeuroML regular-spiking parameter profile. The schema/RTL lane uses simultaneous forward Euler at dt=0.1; the public runtime defaults to maintained coupled RK4 at the same dt. Both integrate the same source equations and keep separate executable evidence."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
 operating_point = "schema-DSL izhikevich2007; Euler; hand/schema/RTL"
 tolerance = "exact Q16.16 spike parity per enrolment"
-evidence = "tests/test_cosimulation.py izhikevich2007 three-way enrolment"
+evidence = "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py izhikevich2007 three-way enrolment"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+synthesised = true
+cosim_evidence = "tests/test_cosim_izhikevich2007.py::TestTierBModelCosim::test_izhikevich2007_q1616_matches_hand_and_verilog"
+synth_report = "hdl/reports/yosys_izhikevich2007_q88_2026-08-28.json"
+target_device = "generic synchronous logic (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Generated Q16.16 preserves the enrolled Euler event vector and tracked Q8.8 RTL passes coarse synthesis plus depth-20 bounded safety. Timing, PPA, device/board execution, full formal equivalence, and physical silicon remain unclaimed."

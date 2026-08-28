@@ -1,48 +1,173 @@
 {
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "median_ms": 99.62831798475236,
+      "min_ms": 96.03900695219636,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 18.901797933136855,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
+    },
+    "julia": {
+      "backend": "julia",
+      "median_ms": 100.95792694482952,
+      "min_ms": 98.06814696639776,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 18.65286255328104,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
+    },
+    "mojo": {
+      "backend": "mojo",
+      "median_ms": 78.33425200078636,
+      "min_ms": 74.38658294267952,
+      "parity_max_abs_diff": 8.775202786637237e-12,
+      "speedup_vs_python": 24.039986172934785,
+      "spikes": 10695,
+      "trace_sha256": "2d9fbb2c141fbf0b06b303701c5eb56275d3cb0d6d2ce49b88723080591bbc86",
+      "u_final": 83.08976063199837,
+      "v_final": 10.923995837594244
+    },
+    "python": {
+      "backend": "python",
+      "median_ms": 1883.1543349660933,
+      "min_ms": 1669.39543094486,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
+    },
+    "rust": {
+      "backend": "rust",
+      "median_ms": 86.22330497018993,
+      "min_ms": 84.70493508502841,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 21.840433228779137,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
+    }
+  },
   "benchmark": "izhikevich2007_simulate_rk4",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 1773.102684004698,
-      "min_ms": 1741.8031970009906,
+      "median_ms": 1883.1543349660933,
+      "min_ms": 1669.39543094486,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 1.0
+      "speedup_vs_python": 1.0,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
     },
     {
       "backend": "rust",
-      "median_ms": 88.97621699725278,
-      "min_ms": 88.25098999659531,
+      "median_ms": 86.22330497018993,
+      "min_ms": 84.70493508502841,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 19.9278272761298
+      "speedup_vs_python": 21.840433228779137,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
     },
     {
       "backend": "julia",
-      "median_ms": 93.47848300240003,
-      "min_ms": 90.99102301115636,
+      "median_ms": 100.95792694482952,
+      "min_ms": 98.06814696639776,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 18.968030150416265
+      "speedup_vs_python": 18.65286255328104,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
     },
     {
       "backend": "go",
-      "median_ms": 92.86261200031731,
-      "min_ms": 92.03307899588253,
+      "median_ms": 99.62831798475236,
+      "min_ms": 96.03900695219636,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 19.093827384465982
+      "speedup_vs_python": 18.901797933136855,
+      "spikes": 10695,
+      "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
+      "u_final": 83.08976063199837,
+      "v_final": 10.92399583759426
     },
     {
       "backend": "mojo",
-      "median_ms": 73.12470799661241,
-      "min_ms": 70.08204401063267,
+      "median_ms": 78.33425200078636,
+      "min_ms": 74.38658294267952,
       "parity_max_abs_diff": 8.775202786637237e-12,
-      "speedup_vs_python": 24.247654897806072
+      "speedup_vs_python": 24.039986172934785,
+      "spikes": 10695,
+      "trace_sha256": "2d9fbb2c141fbf0b06b303701c5eb56275d3cb0d6d2ce49b88723080591bbc86",
+      "u_final": 83.08976063199837,
+      "v_final": 10.923995837594244
     }
   ],
+  "source_hashes": {
+    "benchmarks/bench_izhikevich2007_simulate": {
+      "py": "9335b3a6525abf5a91281472cc1af89e248c38422ed7d4d5ff915b749fd448cc"
+    },
+    "benchmarks/bench_izhikevich2007_simulate.py": "9335b3a6525abf5a91281472cc1af89e248c38422ed7d4d5ff915b749fd448cc",
+    "engine/src/bindings/izhikevich2007": {
+      "rs": "aa36d039ea9660bf47e16c1d5eeffe56ea1f84dffefaaf680b31448743027219"
+    },
+    "engine/src/bindings/izhikevich2007.rs": "aa36d039ea9660bf47e16c1d5eeffe56ea1f84dffefaaf680b31448743027219",
+    "engine/src/rk4_neurons": {
+      "rs": "e9e86d2935a22d47b3ad223d0085a8147ff9672b87484ff66b85aceb10a23202"
+    },
+    "engine/src/rk4_neurons.rs": "e9e86d2935a22d47b3ad223d0085a8147ff9672b87484ff66b85aceb10a23202",
+    "src/sc_neurocore/accel/go/neurons/izhikevich2007/izhikevich2007": {
+      "go": "a5dbbc7e2525435112cc7b874581c083381afc2438e8da771615bdc4484e7bc8"
+    },
+    "src/sc_neurocore/accel/go/neurons/izhikevich2007/izhikevich2007.go": "a5dbbc7e2525435112cc7b874581c083381afc2438e8da771615bdc4484e7bc8",
+    "src/sc_neurocore/accel/julia/neurons/izhikevich2007": {
+      "jl": "2ce439a6654e80b39e7b36ef15b806580df46cefd44f1481455ad195e344d6db"
+    },
+    "src/sc_neurocore/accel/julia/neurons/izhikevich2007.jl": "2ce439a6654e80b39e7b36ef15b806580df46cefd44f1481455ad195e344d6db",
+    "src/sc_neurocore/accel/mojo/neurons/izhikevich2007": {
+      "mojo": "4f809ba3a397b63bb6b90ad4acd21fef3b68e97f3dc289925f785e61e7d64cca"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/izhikevich2007.mojo": "4f809ba3a397b63bb6b90ad4acd21fef3b68e97f3dc289925f785e61e7d64cca",
+    "src/sc_neurocore/accel/rust/safety/izhikevich2007": {
+      "rs": "58e154e7c911b0d43a00c0e978e86504a075c2d221e0b8ae4cbbab754b25f507"
+    },
+    "src/sc_neurocore/accel/rust/safety/izhikevich2007.rs": "58e154e7c911b0d43a00c0e978e86504a075c2d221e0b8ae4cbbab754b25f507",
+    "src/sc_neurocore/neurons/model_schemas/izhikevich2007": {
+      "json": "cce5c2940154cfef4412efec7d191cd5420bcb5d292fbe2a969aa23d8bac57c9",
+      "toml": "b9ec3c8108bdf62cb9a89c932dd6f0040bcfc14205d5cae2fecf43aeba79dbde"
+    },
+    "src/sc_neurocore/neurons/model_schemas/izhikevich2007.json": "cce5c2940154cfef4412efec7d191cd5420bcb5d292fbe2a969aa23d8bac57c9",
+    "src/sc_neurocore/neurons/model_schemas/izhikevich2007.toml": "b9ec3c8108bdf62cb9a89c932dd6f0040bcfc14205d5cae2fecf43aeba79dbde",
+    "src/sc_neurocore/neurons/models/izhikevich2007": {
+      "py": "fa81a3d4393043b650b10b35f01dd79b6659cce640d0741454d0a25efd3ca7e8"
+    },
+    "src/sc_neurocore/neurons/models/izhikevich2007.py": "fa81a3d4393043b650b10b35f01dd79b6659cce640d0741454d0a25efd3ca7e8",
+    "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007": {
+      "json": "591623de23b47f6dcb6c8c0772677ebe84c8c11afbc2a2823cf20d3b63efbf8c"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007.json": "591623de23b47f6dcb6c8c0772677ebe84c8c11afbc2a2823cf20d3b63efbf8c",
+    "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4": {
+      "json": "daad9a7387535648e4feff22c0902a793b7a4bdb6e6f08c24d9200f33ca1faeb"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/izhikevich_2007_rk4.json": "daad9a7387535648e4feff22c0902a793b7a4bdb6e6f08c24d9200f33ca1faeb"
+  },
   "workload": {
     "current": 300.0,
     "n_steps": 2000000,
