@@ -61,7 +61,7 @@ and event-hash fields into the deterministic trace schema.
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Independent exact constant-input matrix flow with sampled voltage-coordinate crossing and source reset from `neurons/model_schemas/resonate_fire.toml`, with DOI-backed schema provenance |
 | `adaptive_threshold_if_tonic_adaptation_doi` | `adaptive_threshold_if` | `universal_dsl` | Independent exact constant-input relaxations with candidate-crossing reset and fixed post-spike threshold shift from `neurons/model_schemas/adaptive_threshold_if.toml`, with composite Mihalas-Niebur/Platkiewicz-Brette DOI provenance |
 | `alpha_dual_synapse_doi` | `alpha` | `universal_dsl` | Independent exact piecewise-constant-input alpha-filter relaxation and alpha-current convolution with somatic-only reset from `neurons/model_schemas/alpha.toml`, with Rall 1967 and Gerstner-Kistler DOI provenance |
-| `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration (Rulkov 2002, `method="map"`, rising `x >= 0` crossing) from `neurons/model_schemas/rulkov_map.toml` with DOI-backed schema provenance |
+| `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration of Rulkov 2002 Equations 1–2 with `method="map"` and the source pre-update rightmost/reset-branch event, from `neurons/model_schemas/rulkov_map.toml` with DOI-backed provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
@@ -229,7 +229,7 @@ Euler resting-gate schema could not.
 The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Chialvo, Ibarz-Tanaka, Medvedev, Courbage-Nekorkin, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,
+they validate reset (or, for Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, McKean, Morris-Lecar,
 Hodgkin-Huxley, and Connor-Stevens, rising-edge crossing) and first-spike features,
 not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
@@ -237,8 +237,10 @@ Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 map rather than integrated as an ODE), so the trajectory is bounded and its
 committed features are independently re-derived exactly; a driving current
 exercises all three fast-map branches (rational subthreshold, spike plateau, hard
-reset). Its rising-crossing reference counts ten events rather than the twenty
-positive-level steps produced by the superseded schema. The Cazelles entry independently iterates
+reset). Its event marks pre-update occupancy of the rightmost branch that commits
+the hard reset; it is not a rising crossing or a positive-level count. The former
+upward-crossing convention remains a separate count-neutral SC identity with its
+own project receipt and is not substituted into this DOI-backed record. The Cazelles entry independently iterates
 the simultaneous clipped logistic fast/slow map at `I=0.5`; the 30-step window exercises interior
 and lower-clip branches and records two level events. The reference is deliberately bounded because
 the `a=3.8` fast map amplifies fixed-point perturbations on longer chaotic trajectories. The

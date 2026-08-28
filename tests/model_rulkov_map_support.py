@@ -1,18 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Support for former test_model_rulkov_map.py
+# SC-NeuroCore — Shared Rulkov map test support
 
 from __future__ import annotations
 
-"""Full pipeline test for RulkovMapNeuron (Rulkov 2001).
+"""Shared public-surface support for the Rulkov 2002 piecewise map.
 
-Discrete map-based neuron: x[n+1] = f(x[n], y[n]) + I (3 branches),
-y[n+1] = y[n] - μ(x[n]+1) + μσ. No ODE — O(1) per step.
-Exhibits spiking and bursting depending on parameters."""
+The source event is entry into the rightmost reset branch. The state recurrence
+uses ``I`` as the paper's fast control ``beta_n`` and ``sigma`` as its slow
+control. No ODE integration is involved.
+"""
 import numpy as np
 import pytest
 from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron

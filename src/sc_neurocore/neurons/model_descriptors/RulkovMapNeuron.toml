@@ -11,14 +11,20 @@ schema_version = 2
 name = "Rulkov Map"
 class_name = "RulkovMapNeuron"
 module = "rulkov_map"
-display_name = ""
-summary = "Discrete-time map neuron — fast/slow dynamics via 2D iteration"
+display_name = "Rulkov 2002 piecewise fast/slow map"
+summary = "Three-branch discrete map with source reset-branch spike events."
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "spiking and bursting map dynamics",
+    "short-window chaotic-map reproducibility",
+    "cross-runtime and fixed-point validation",
+]
+hardware_fit = [
+    "bounded signed fixed-point map co-simulation",
+]
 behavior_tags = [
     "adapting",
     "excitable",
@@ -32,6 +38,8 @@ authors = [
 ]
 year = 2002
 doi = "10.1103/PhysRevE.65.041922"
+paper_title = "Modeling of spiking-bursting neural behavior using two-dimensional map"
+derivation_note = "Implements Rulkov 2002 equations (1)-(2). The scalar current is the paper's fast beta_n input channel; sigma is the static slow control. A source spike event is occupancy of the rightmost reset branch before the simultaneous update. The default state and sigma=-1.6 are a repository quiescent operating profile, not a claimed unique source-figure profile."
 
 [state.x]
 init = -1.0
@@ -66,15 +74,6 @@ range = [
     0.05,
 ]
 
-[parameters.x_threshold]
-default = 0.0
-unit = "1"
-meaning = "level on x at which a spike is registered"
-range = [
-    -1.0,
-    2.0,
-]
-
 [integration]
 dt = 1.0
 method = "map"
@@ -104,26 +103,27 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "d79d2acc23996089ca0b4195544c211734b235f67ac09ef66acaa9ad9d9c7691"
+reference_config = "{\"n_steps\":512,\"drive_pattern\":[0.0,0.25,1.5,-0.1],\"parameters\":\"defaults\",\"row_encoding\":\"<ddB\"}"
+golden_trace_sha256 = "83ffbbdf6fe825fd6cb1833078ed2aa3836ffbad876ca38af95780914a16c3db"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/rulkov_2002.json"
 
 [documentation]
 slug = "models/rulkov_map"
-notes = ""
+notes = "The event is the source rightmost reset branch. The former configurable upward-x crossing remains separately available as count-neutral SCUpwardCrossingRulkovMapNeuron."
 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "schema-DSL Rulkov three-branch fast/slow map at I=1.5 over 30 iterations"
-tolerance = "hand/TOML/JSON states exact; Q16.16 RTL spike vector exact and x/y absolute error below 0.001"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_rulkov_map_q1616_short_window_trajectory"
+operating_point = "Rulkov 2002 three-branch map under bounded mixed and constant fast-input traces"
+tolerance = "independent binary64 receipt and complete runtime traces exact or enrolled ULP bound; source reset-branch events exact; Q16.16 short-window event vector exact with bounded state error"
+evidence = "tests/test_reference_rulkov_map.py; tests/test_rulkov_map_backends_bit_exact.py; tests/test_cosim_rulkov_map.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
 synthesised = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_rulkov_map_q1616_short_window_trajectory"
-synth_report = "hdl/reports/yosys_rulkov_map_q1616_2026-07-11.json"
+cosim_evidence = "tests/test_cosim_rulkov_map.py::TestQ1616Precision::test_rulkov_map_q1616_short_window_trajectory"
+synth_report = "hdl/reports/yosys_rulkov_map_q1616_2026-08-28.json"
 target_device = "Xilinx 7-series (Yosys synth_xilinx)"
 target_tier = "H2"
-terminal_reason = "Discrete bursting map; H2 is the documented terminal because long-window fixed-point trajectory identity is not a valid metric for sensitive map dynamics."
+terminal_reason = "Q16.16 short-window co-simulation, Yosys synthesis, and bounded formal safety cover the source map. H2 is terminal because long-window fixed-point trajectory identity is not a valid metric for sensitive map dynamics; timing, PPA, device, board, and silicon evidence remain open."

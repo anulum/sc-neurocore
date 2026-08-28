@@ -192,6 +192,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "RulkovMapNeuron",
             "SCAdaptiveThresholdMapNeuron",
             "SCChaoticMapNeuron",
+            "SCUpwardCrossingRulkovMapNeuron",
         ),
     ),
     "Rate / mean-field": (

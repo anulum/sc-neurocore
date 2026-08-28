@@ -13,7 +13,6 @@ pub struct RulkovMapNeuron {
     pub alpha: f64,
     pub sigma: f64,
     pub mu: f64,
-    pub x_threshold: f64,
 }
 
 impl RulkovMapNeuron {
@@ -24,7 +23,6 @@ impl RulkovMapNeuron {
             alpha: 4.0_f64,
             sigma: -1.6_f64,
             mu: 0.001_f64,
-            x_threshold: 0.0_f64,
         }
     }
 
@@ -36,11 +34,11 @@ impl RulkovMapNeuron {
             return Err("invalid Rulkov map current");
         }
 
-        let x_prev = self.x;
         let branch_boundary = self.alpha + self.y + i_ext;
         if !branch_boundary.is_finite() {
             return Err("invalid Rulkov map branch boundary");
         }
+        let event = i32::from(self.x > 0.0 && self.x >= branch_boundary);
         let x_new = if self.x <= 0.0 {
             let denominator = 1.0 - self.x;
             if denominator <= 0.0 || !denominator.is_finite() {
@@ -59,11 +57,7 @@ impl RulkovMapNeuron {
 
         self.x = x_new;
         self.y = y_new;
-        Ok(if self.x >= self.x_threshold && x_prev < self.x_threshold {
-            1
-        } else {
-            0
-        })
+        Ok(event)
     }
 
     pub fn reset(&mut self) {
@@ -88,7 +82,6 @@ pub fn validate_rulkov_map(state: &RulkovMapNeuron) -> bool {
         && state.sigma.is_finite()
         && state.mu.is_finite()
         && state.mu > 0.0
-        && state.x_threshold.is_finite()
 }
 
 #[cfg(test)]
@@ -118,8 +111,9 @@ mod tests {
     // Independent re-derivation of one Rulkov map iteration, mirroring
     // models/rulkov_map.py step() exactly, to cross-check step() on all three
     // fast-map branches.
-    fn map_reference(n: &RulkovMapNeuron, current: f64) -> (f64, f64) {
+    fn map_reference(n: &RulkovMapNeuron, current: f64) -> (f64, f64, i32) {
         let branch_boundary = n.alpha + n.y + current;
+        let event = i32::from(n.x > 0.0 && n.x >= branch_boundary);
         let x_new = if n.x <= 0.0 {
             n.alpha / (1.0 - n.x) + n.y + current
         } else if n.x < branch_boundary {
@@ -128,7 +122,7 @@ mod tests {
             -1.0
         };
         let y_new = n.y - n.mu * (n.x + 1.0) + n.mu * n.sigma;
-        (x_new, y_new)
+        (x_new, y_new, event)
     }
 
     #[test]
@@ -141,8 +135,8 @@ mod tests {
                 x: x0,
                 ..RulkovMapNeuron::new()
             };
-            let (xe, ye) = map_reference(&state, current);
-            state.step(current).unwrap();
+            let (xe, ye, event) = map_reference(&state, current);
+            assert_eq!(state.step(current).unwrap(), event);
             assert!((state.x - xe).abs() < 1e-15, "x0={x0}");
             assert!((state.y - ye).abs() < 1e-15, "x0={x0}");
         }
@@ -150,11 +144,11 @@ mod tests {
 
     #[test]
     fn matches_python_golden_spike_count() {
-        // Parity with models/rulkov_map.py (default parameters). The Rulkov 2001 map is a
+        // Parity with models/rulkov_map.py (default parameters). The Rulkov 2002 map is a
         // discrete-time 2-D fast-slow iterated map (a piecewise-rational fast variable plus a
         // slow linear adaptation) — not an ODE, so there is no integrator; each `step` is one
         // exact map iteration. All arithmetic is a rational function plus linear updates, so the
-        // orbit is bit-for-bit across languages and the spike count is an exact observable. The
+        // orbit is bit-for-bit across languages and reset-branch events are exact observables. The
         // slow adaptation carries the neuron out of the firing regime after an initial transient,
         // so the count saturates early (identical at 500 and 2000 iterations); drive gates it
         // cleanly: silent at I=0.0, four spikes at I=0.1, a 34-spike burst at I=0.5, each over

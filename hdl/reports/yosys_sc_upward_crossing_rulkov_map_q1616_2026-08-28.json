@@ -1,0 +1,62 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_upward_crossing_rulkov_map": {
+         "num_wires":         16803,
+         "num_wire_bits":     82944,
+         "num_pub_wires":     20,
+         "num_pub_wire_bits": 597,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         26692,
+         "num_cells_by_type": {
+            "BUFG": 1,
+            "CARRY4": 2636,
+            "DSP48E1": 2,
+            "FDCE": 35,
+            "FDPE": 31,
+            "IBUF": 34,
+            "INV": 2152,
+            "LUT1": 1881,
+            "LUT2": 2345,
+            "LUT3": 2900,
+            "LUT4": 217,
+            "LUT5": 430,
+            "LUT6": 5811,
+            "MUXF7": 5662,
+            "MUXF8": 2490,
+            "OBUF": 65
+         }
+      }
+   },
+      "design": {
+         "num_wires":         16803,
+         "num_wire_bits":     82944,
+         "num_pub_wires":     20,
+         "num_pub_wire_bits": 597,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         26692,
+         "num_cells_by_type": {
+            "BUFG": 1,
+            "CARRY4": 2636,
+            "DSP48E1": 2,
+            "FDCE": 35,
+            "FDPE": 31,
+            "IBUF": 34,
+            "INV": 2152,
+            "LUT1": 1881,
+            "LUT2": 2345,
+            "LUT3": 2900,
+            "LUT4": 217,
+            "LUT5": 430,
+            "LUT6": 5811,
+            "MUXF7": 5662,
+            "MUXF8": 2490,
+            "OBUF": 65
+         }
+      }
+}

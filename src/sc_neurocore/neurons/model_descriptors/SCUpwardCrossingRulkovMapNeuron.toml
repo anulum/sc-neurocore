@@ -1,0 +1,134 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SC Upward-Crossing Rulkov Map"
+class_name = "SCUpwardCrossingRulkovMapNeuron"
+module = "sc_upward_crossing_rulkov_map"
+display_name = "SC upward-crossing Rulkov map"
+summary = "Retained three-branch map with a configurable upward-x event convention."
+family = "Map-based"
+category = "map-based"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "historical SC-NeuroCore trace compatibility",
+    "configurable upward-crossing observations",
+]
+hardware_fit = [
+    "bounded signed fixed-point map co-simulation",
+]
+behavior_tags = [
+    "adapting",
+    "excitable",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+paper_title = "SC upward-crossing Rulkov-map observation convention"
+derivation_note = "Preserves the state recurrence and configurable upward-x event historically exposed under RulkovMapNeuron. The state recurrence is based on Rulkov 2002, but the event convention is an SC-NeuroCore project behavior and is not attributed to the paper."
+
+[state.x]
+init = -1.0
+
+[state.y]
+init = -3.0
+
+[parameters.alpha]
+default = 4.0
+unit = "1"
+meaning = "fast-map nonlinearity control parameter"
+range = [
+    1.0,
+    10.0,
+]
+
+[parameters.sigma]
+default = -1.6
+unit = "1"
+meaning = "slow-map control parameter"
+range = [
+    -3.0,
+    1.0,
+]
+
+[parameters.mu]
+default = 0.001
+unit = "1"
+meaning = "slow-map timescale"
+range = [
+    0.0001,
+    0.05,
+]
+
+[parameters.x_threshold]
+default = 0.0
+unit = "1"
+meaning = "configurable rising-event level on the post-update fast state"
+range = [
+    -1.0,
+    2.0,
+]
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+x = "(alpha / (1.0 - x) + y + I) if x <= 0 else (alpha + y + I if x < alpha + y + I else -1.0)"
+y = "y - mu * (x + 1.0) + mu * sigma"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[reproducibility]
+reference_config = "{\"n_steps\":512,\"drive_pattern\":[0.0,0.25,1.5,-0.1],\"parameters\":\"defaults\",\"row_encoding\":\"<ddB\"}"
+golden_trace_sha256 = "b50ca7c0fdfa3cd17c1ad5676951921f5df6dc18a298e3909ff065fa37b6f68e"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/sc_upward_crossing_rulkov_project.json"
+
+[documentation]
+slug = "models/sc_upward_crossing_rulkov_map"
+notes = "Count-neutral project identity. It preserves the former public event behavior and does not add a literature model."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "historical three-branch state recurrence with configurable x=0 upward events"
+tolerance = "independent complete-state receipt and exact event vector; cross-runtime exact or enrolled ULP bound; Q16.16 events exact with x/y errors below 0.006/0.001 over enrolled 30-step currents"
+evidence = "tests/test_reference_rulkov_map.py; tests/test_sc_upward_crossing_rulkov_map.py; tests/test_sc_upward_crossing_rulkov_map_backends.py; tests/test_cosim_sc_upward_crossing_rulkov_map_q1616_precision.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sc_upward_crossing_rulkov_map_q1616_precision.py"
+synthesised = true
+synth_report = "hdl/reports/yosys_sc_upward_crossing_rulkov_map_q1616_2026-08-28.json"
+target_tier = "H2"
+terminal_reason = "Q16.16 short-window co-simulation, Yosys synthesis, and bounded formal safety cover the retained project map. Timing, PPA, device, board, silicon, and long-window fixed-point trajectory claims remain open."

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo Rulkov 2001 fast/slow map (parity with rulkov_map.py)
+# SC-NeuroCore — Mojo Rulkov 2002 fast/slow map (parity with rulkov_map.py)
 #
 # Build:
 #   mojo build --emit shared-lib -o librulkov.so rulkov_map.mojo
@@ -27,6 +27,7 @@
 #
 # Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
 
+from std.math import isfinite
 from std.memory import UnsafePointer
 
 
@@ -37,21 +38,38 @@ def rulkov_map_simulate_c(
     alpha: Float64,
     sigma: Float64,
     mu: Float64,
-    x_threshold: Float64,
     n_steps: Int,
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if (
+        n_steps < 0
+        or trace_addr == 0
+        or not isfinite(x0)
+        or not isfinite(y0)
+        or not isfinite(alpha)
+        or not isfinite(sigma)
+        or not isfinite(mu)
+        or not isfinite(current)
+        or alpha <= 0.0
+        or mu <= 0.0
+    ):
+        return -1
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
     var x = x0
     var y = y0
-    var spikes: Int64 = 0
+    var events: Int64 = 0
     for t in range(n_steps):
-        var x_prev = x
         var branch_boundary = alpha + y + current
+        if not isfinite(branch_boundary):
+            return -1
+        var reset_event = x > 0.0 and x >= branch_boundary
         var x_new: Float64
         if x <= 0.0:
-            x_new = alpha / (1.0 - x) + y + current
+            var denominator = 1.0 - x
+            if not isfinite(denominator) or denominator <= 0.0:
+                return -1
+            x_new = alpha / denominator + y + current
         elif x < branch_boundary:
             x_new = branch_boundary
         else:
@@ -65,12 +83,13 @@ def rulkov_map_simulate_c(
         var mu_term = mu * x_plus_one
         var mu_sigma = mu * sigma
         var y_new = y - mu_term + mu_sigma
+        if not isfinite(x_new) or not isfinite(y_new):
+            return -1
         x = x_new
         y = y_new
         trace[t] = x
-        if x >= x_threshold and x_prev < x_threshold:
-            spikes += 1
-    if n_steps > 0:
-        trace[n_steps] = x
-        trace[n_steps + 1] = y
-    return spikes
+        if reset_event:
+            events += 1
+    trace[n_steps] = x
+    trace[n_steps + 1] = y
+    return events

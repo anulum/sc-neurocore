@@ -12,17 +12,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 13132971,
-      "median_call_ns": 8391025.0,
-      "median_ns_per_step": 41.955125,
-      "min_call_ns": 6988390,
+      "max_call_ns": 12814345,
+      "median_call_ns": 7689653.0,
+      "median_ns_per_step": 38.448265,
+      "min_call_ns": 7483031,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        8762321,
-        13132971,
-        6988390,
-        8391025,
-        7404081
+        8307353,
+        12814345,
+        7689653,
+        7611624,
+        7483031
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -33,17 +33,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 3935850,
-      "median_call_ns": 3777337.0,
-      "median_ns_per_step": 18.886685,
-      "min_call_ns": 3281897,
+      "max_call_ns": 3651876,
+      "median_call_ns": 3408737.0,
+      "median_ns_per_step": 17.043685,
+      "min_call_ns": 3358435,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3935850,
-        3777337,
-        3472743,
-        3850759,
-        3281897
+        3651876,
+        3408737,
+        3359616,
+        3559052,
+        3358435
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -54,17 +54,17 @@
       "available": true,
       "final_rate": 0.9820137900379374,
       "final_rate_matches_python": true,
-      "max_call_ns": 1641492,
-      "median_call_ns": 828723.0,
-      "median_ns_per_step": 4.143615,
-      "min_call_ns": 814055,
+      "max_call_ns": 1335110,
+      "median_call_ns": 992392.0,
+      "median_ns_per_step": 4.96196,
+      "min_call_ns": 889220,
       "parity_max_abs_diff": 3.0753177782116836e-14,
       "samples_ns": [
-        1641492,
-        1333113,
-        814055,
-        828723,
-        818924
+        1335110,
+        1235727,
+        889220,
+        992392,
+        972574
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -75,17 +75,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 15759735,
-      "median_call_ns": 14781126.0,
-      "median_ns_per_step": 73.90563,
-      "min_call_ns": 14604068,
+      "max_call_ns": 17740095,
+      "median_call_ns": 17502204.0,
+      "median_ns_per_step": 87.51102,
+      "min_call_ns": 16206889,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        14604068,
-        15713308,
-        14688039,
-        15759735,
-        14781126
+        17502204,
+        17740095,
+        17720055,
+        16206889,
+        16639166
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -96,17 +96,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 4559818,
-      "median_call_ns": 3843501.0,
-      "median_ns_per_step": 19.217505,
-      "min_call_ns": 3459561,
+      "max_call_ns": 4305452,
+      "median_call_ns": 3957978.0,
+      "median_ns_per_step": 19.78989,
+      "min_call_ns": 3745093,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4559818,
-        4550663,
-        3813338,
-        3843501,
-        3459561
+        4305452,
+        4102967,
+        3745093,
+        3819845,
+        3957978
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -127,22 +127,22 @@
       "size_bytes": 15400
     },
     "rust_extension": {
-      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "849462788d0e621f4a0bda02c471e09c6c64d40b962160f3edd1d24fb8c25d93",
-      "size_bytes": 34706873
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "9ba21fdfa469062814b3ebfb20748e3544e29a101b80dd183ec0c17a70135fd0",
+      "size_bytes": 34731169
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_sigmoid_rate.py --json benchmarks/results/local_python_2026-07-14_sigmoid_rate.json",
   "environment": {
     "affinity": [
-      0
+      2
     ],
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      5.01611328125,
-      9.0859375,
-      10.59814453125
+      3.42578125,
+      3.2275390625,
+      3.140625
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -180,9 +180,9 @@
     },
     "benchmarks/bench_model_sigmoid_rate.py": "1f21ae34ee681e62f4d1f93047afe663aa4dc1665282165711d0031050650a69",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "adc011839ac8064c7d41408b3b68ecb742c11ad7969bd06885b1538d5071bc7b"
+      "py": "819dd75ebf6098010ef5830f1a87266972b8dac92613e90036ef4b79e327dbac"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "adc011839ac8064c7d41408b3b68ecb742c11ad7969bd06885b1538d5071bc7b",
+    "bridge/sc_neurocore_engine/__init__.py": "819dd75ebf6098010ef5830f1a87266972b8dac92613e90036ef4b79e327dbac",
     "engine/src/bindings/sigmoid_rate": {
       "rs": "b6487c31e845fdd2790dda584c6a856a0da7507723b68d2f5959262b8990c667"
     },
@@ -236,7 +236,7 @@
     },
     "src/sc_neurocore/neurons/models/sigmoid_rate.py": "3340acd62fd8a8a9eceea20903b4375f2fbddbcc00c6572bda965839041f2fec"
   },
-  "timestamp_utc": "2026-08-28T05:41:20+00:00",
+  "timestamp_utc": "2026-08-28T07:17:05+00:00",
   "verification": {
     "rust_safety": {
       "command": [

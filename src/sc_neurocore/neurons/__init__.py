@@ -163,6 +163,7 @@ _MODEL_NAMES = {
     "RallCableNeuron",
     "ResonateAndFireNeuron",
     "RulkovMapNeuron",
+    "SCUpwardCrossingRulkovMapNeuron",
     "SFANeuron",
     "SelfReferentialNeuron",
     "ShermanRinzelKeizerNeuron",

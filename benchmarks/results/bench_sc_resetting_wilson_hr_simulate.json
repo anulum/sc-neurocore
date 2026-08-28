@@ -2,38 +2,38 @@
   "backends": {
     "go": {
       "event_count": 1,
-      "median_ms": 74.915308970958,
-      "min_ms": 74.51329310424626,
+      "median_ms": 75.75743098277599,
+      "min_ms": 73.60976003110409,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 55.42885275443063
+      "speedup_vs_python": 62.909081830494536
     },
     "julia": {
       "event_count": 1,
-      "median_ms": 97.00444096233696,
-      "min_ms": 93.78266602288932,
+      "median_ms": 94.48571200482547,
+      "min_ms": 88.50313199218363,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 42.80700541964
+      "speedup_vs_python": 50.439694254726064
     },
     "mojo": {
       "event_count": 1,
-      "median_ms": 61.90190592315048,
-      "min_ms": 60.15313905663788,
+      "median_ms": 61.71373010147363,
+      "min_ms": 59.31492010131478,
       "parity_max_abs_diff": 1.0648981696448345e-12,
-      "speedup_vs_python": 67.08145037018866
+      "speedup_vs_python": 77.22479936194452
     },
     "python": {
       "event_count": 1,
-      "median_ms": 4152.469630003907,
-      "min_ms": 4090.5159199610353,
+      "median_ms": 4765.830424963497,
+      "min_ms": 4242.373758926988,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0
     },
     "rust": {
       "event_count": 1,
-      "median_ms": 81.38761902227998,
-      "min_ms": 79.25535703543574,
+      "median_ms": 82.08195690531284,
+      "min_ms": 77.95375597197562,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 51.0209007203806
+      "speedup_vs_python": 58.06185189348262
     }
   },
   "benchmark": "sc_resetting_wilson_hr_simulate_rk4",
@@ -78,9 +78,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/sc_resetting_wilson_hr.rs": "d0fed3daab0f13555fb8afb84eb35fd5676595ed9ac2320b2677291be4d99bb1",
     "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron": {
-      "toml": "4cd88434283ae5e1bc20fa4a28b5418dce10ddfa0de48d8363fa8be67eb0f5a6"
+      "toml": "da2f162a844895a287885f00e9dc241bbe738ed4759a3a2ba6c9929c5a23e178"
     },
-    "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron.toml": "4cd88434283ae5e1bc20fa4a28b5418dce10ddfa0de48d8363fa8be67eb0f5a6",
+    "src/sc_neurocore/neurons/model_descriptors/SCResettingWilsonHRNeuron.toml": "da2f162a844895a287885f00e9dc241bbe738ed4759a3a2ba6c9929c5a23e178",
     "src/sc_neurocore/neurons/model_schemas/sc_resetting_wilson_hr": {
       "json": "47412eded54e72eaf2a2766b2c477d10502737b4c6915d8b157ec6426e33ae0a",
       "toml": "fa03a0f799720224a168d8ab9fe0401e15cd6c7063de360c67316caea3e2a22d"
@@ -96,7 +96,7 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/sc_resetting_wilson_hr_project.json": "6164b47fdd1e49070c022ef61c9dd277b437dda5276c38e2cf64f998a66566c8"
   },
-  "timestamp_utc": "2026-08-28T05:36:45.536018+00:00",
+  "timestamp_utc": "2026-08-28T07:17:52.696018+00:00",
   "workload": {
     "current": 2.0,
     "n_steps": 2000000,

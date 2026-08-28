@@ -114,6 +114,10 @@
       "id": "rulkov-map-five-backend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_sc_upward_crossing_rulkov_map.json",
+      "id": "sc-upward-crossing-rulkov-map-five-backend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_courage_nekorkin_map_simulate.json",
       "id": "courage-nekorkin-map-five-backend-local-regression"
     },
@@ -312,7 +316,7 @@
   ],
   "failure_count": 0,
   "failures": [],
-  "gate_count": 77,
+  "gate_count": 78,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": true,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

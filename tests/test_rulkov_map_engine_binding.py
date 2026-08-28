@@ -35,7 +35,6 @@ def _direct(n_steps: int) -> tuple[NDArray[np.float64], int, float, float]:
         4.0,
         -1.6,
         0.001,
-        0.0,
         n_steps,
         0.0,
     )
@@ -48,9 +47,7 @@ def test_exported_name_signature_and_top_level_identity_are_stable() -> None:
 
     assert function.__name__ == "py_rulkov_map_simulate"
     assert function.__module__ == "sc_neurocore_engine.sc_neurocore_engine"
-    assert function.__text_signature__ == (
-        "(x0, y0, alpha, sigma, mu, x_threshold, n_steps, current)"
-    )
+    assert function.__text_signature__ == "(x0, y0, alpha, sigma, mu, n_steps, current)"
     assert engine.py_rulkov_map_simulate is function
     assert "py_rulkov_map_simulate" in engine.__all__
 
@@ -96,7 +93,6 @@ def test_step_count_conversion_errors_are_stable(
             4.0,
             -1.6,
             0.001,
-            0.0,
             n_steps,
             0.0,
         )

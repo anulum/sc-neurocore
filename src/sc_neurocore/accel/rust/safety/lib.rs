@@ -379,6 +379,7 @@ pub mod sc_stochastic_rate_adaptation;
 pub mod sc_synapse;
 pub mod sc_three_state_phantom;
 pub mod sc_triangular_mckean;
+pub mod sc_upward_crossing_rulkov_map;
 pub mod sc_wb_nmda_magnesium_block;
 pub mod schedulers;
 pub mod search;

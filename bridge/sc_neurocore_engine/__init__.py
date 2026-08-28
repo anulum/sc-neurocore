@@ -96,6 +96,7 @@ try:
         PernarowskiNeuron,
         ChialvoMapNeuron,
         RulkovMapNeuron,
+        SCUpwardCrossingRulkovMapNeuron,
         IbarzTanakaMapNeuron,
         MedvedevMapNeuron,
         CazellesMapNeuron,
@@ -298,6 +299,7 @@ _NEURON_MODELS = [
     "PernarowskiNeuron",
     "ChialvoMapNeuron",
     "RulkovMapNeuron",
+    "SCUpwardCrossingRulkovMapNeuron",
     "IbarzTanakaMapNeuron",
     "MedvedevMapNeuron",
     "CazellesMapNeuron",
@@ -779,6 +781,16 @@ try:
     _rulkov_rust_available = True
 except ImportError:
     _rulkov_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_sc_upward_crossing_rulkov_map_simulate,
+    )
+
+    __all__ += ["py_sc_upward_crossing_rulkov_map_simulate"]
+    _sc_upward_crossing_rulkov_rust_available = True
+except ImportError:
+    _sc_upward_crossing_rulkov_rust_available = False
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

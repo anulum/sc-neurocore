@@ -17,7 +17,7 @@ fn public_model_catalogue_is_unique_and_fully_constructible() {
     let models = supported_models();
     let unique: BTreeSet<_> = models.iter().copied().collect();
 
-    assert_eq!(models.len(), 172);
+    assert_eq!(models.len(), 173);
     assert_eq!(unique.len(), models.len());
     for name in models {
         assert!(
@@ -65,6 +65,10 @@ fn public_model_factory_preserves_alias_and_error_contracts() {
         create_neuron("SCResettingWilsonHRNeuron"),
         Ok(NeuronVariant::SCResettingWilsonHR(_))
     ));
+    assert!(matches!(
+        create_neuron("SCUpwardCrossingRulkovMapNeuron"),
+        Ok(NeuronVariant::SCUpwardCrossingRulkovMap(_))
+    ));
     assert_eq!(
         create_neuron("not-a-neuron").err().as_deref(),
         Some("Unsupported model: 'not-a-neuron'")
@@ -77,4 +81,20 @@ fn public_model_factory_preserves_alias_and_error_contracts() {
         create_population("not-a-neuron", 2).err().as_deref(),
         Some("Unsupported model: 'not-a-neuron'")
     );
+}
+
+#[test]
+fn network_runner_preserves_both_rulkov_event_contracts() {
+    let mut source = create_neuron("RulkovMapNeuron").expect("source model must construct");
+    let mut retained =
+        create_neuron("SCUpwardCrossingRulkovMapNeuron").expect("retained SC model must construct");
+
+    assert_eq!(source.step(2.0), 0);
+    assert_eq!(retained.step(2.0), 1);
+    assert_eq!(source.soma_voltage(), retained.soma_voltage());
+    assert_eq!(source.step(2.0), 0);
+    assert_eq!(retained.step(2.0), 0);
+    assert_eq!(source.step(2.0), 1);
+    assert_eq!(retained.step(2.0), 0);
+    assert_eq!(source.soma_voltage(), retained.soma_voltage());
 }

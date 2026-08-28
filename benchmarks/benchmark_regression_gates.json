@@ -1806,6 +1806,8 @@
       "expected_values": {
         "benchmark": "rulkov_map_simulate",
         "environment.isolation": "non-isolated (loaded workstation)",
+        "event_semantics": "pre_update_rightmost_reset_branch",
+        "model": "RulkovMapNeuron",
         "workload.current": 0.5,
         "workload.n_steps": 2000000,
         "workload.repeats": 5
@@ -1861,11 +1863,85 @@
       ],
       "source_hashes": {
         "benchmarks/bench_rulkov_map.py": "source_hashes.benchmarks/bench_rulkov_map.py",
+        "benchmarks/rulkov_map_benchmark_support.py": "source_hashes.benchmarks/rulkov_map_benchmark_support.py",
+        "engine/src/bindings/rulkov_map.rs": "source_hashes.engine/src/bindings/rulkov_map.rs",
         "engine/src/neurons/rulkov_map.rs": "source_hashes.engine/src/neurons/rulkov_map.rs",
         "src/sc_neurocore/neurons/models/rulkov_map.py": "source_hashes.src/sc_neurocore/neurons/models/rulkov_map.py",
         "src/sc_neurocore/accel/go/neurons/rulkov_map/rulkov_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/rulkov_map/rulkov_map.go",
         "src/sc_neurocore/accel/julia/neurons/rulkov_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/rulkov_map.jl",
         "src/sc_neurocore/accel/mojo/neurons/rulkov_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/rulkov_map.mojo"
+      }
+    },
+    {
+      "artefact": "benchmarks/results/bench_sc_upward_crossing_rulkov_map.json",
+      "description": "Retained SC upward-crossing Rulkov map five-backend simulation evidence.",
+      "expected_values": {
+        "benchmark": "sc_upward_crossing_rulkov_map_simulate",
+        "environment.isolation": "non-isolated (loaded workstation)",
+        "event_semantics": "post_update_configurable_upward_x_crossing",
+        "model": "SCUpwardCrossingRulkovMapNeuron",
+        "workload.current": 0.5,
+        "workload.n_steps": 2000000,
+        "workload.repeats": 5
+      },
+      "id": "sc-upward-crossing-rulkov-map-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backend_summary.python.spikes",
+            "backend_summary.rust.spikes",
+            "backend_summary.julia.spikes",
+            "backend_summary.go.spikes",
+            "backend_summary.mojo.spikes"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backend_summary.go.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.julia.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backend_summary.mojo.parity_max_abs_diff": {
+          "max": 1.0e-12
+        },
+        "backend_summary.rust.parity_max_abs_diff": {
+          "max": 0.0
+        }
+      },
+      "required_numbers": [
+        "backend_summary.python.median_ms",
+        "backend_summary.python.min_ms",
+        "backend_summary.python.parity_max_abs_diff",
+        "backend_summary.python.spikes",
+        "backend_summary.rust.median_ms",
+        "backend_summary.rust.min_ms",
+        "backend_summary.rust.parity_max_abs_diff",
+        "backend_summary.rust.spikes",
+        "backend_summary.julia.median_ms",
+        "backend_summary.julia.min_ms",
+        "backend_summary.julia.parity_max_abs_diff",
+        "backend_summary.julia.spikes",
+        "backend_summary.go.median_ms",
+        "backend_summary.go.min_ms",
+        "backend_summary.go.parity_max_abs_diff",
+        "backend_summary.go.spikes",
+        "backend_summary.mojo.median_ms",
+        "backend_summary.mojo.min_ms",
+        "backend_summary.mojo.parity_max_abs_diff",
+        "backend_summary.mojo.spikes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_sc_upward_crossing_rulkov_map.py": "source_hashes.benchmarks/bench_sc_upward_crossing_rulkov_map.py",
+        "benchmarks/rulkov_map_benchmark_support.py": "source_hashes.benchmarks/rulkov_map_benchmark_support.py",
+        "engine/src/bindings/sc_upward_crossing_rulkov_map.rs": "source_hashes.engine/src/bindings/sc_upward_crossing_rulkov_map.rs",
+        "engine/src/neurons/sc_upward_crossing_rulkov_map.rs": "source_hashes.engine/src/neurons/sc_upward_crossing_rulkov_map.rs",
+        "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py": "source_hashes.src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py",
+        "src/sc_neurocore/accel/go/neurons/sc_upward_crossing_rulkov_map/sc_upward_crossing_rulkov_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/sc_upward_crossing_rulkov_map/sc_upward_crossing_rulkov_map.go",
+        "src/sc_neurocore/accel/julia/neurons/sc_upward_crossing_rulkov_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/sc_upward_crossing_rulkov_map.jl",
+        "src/sc_neurocore/accel/mojo/neurons/sc_upward_crossing_rulkov_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/sc_upward_crossing_rulkov_map.mojo"
       }
     },
     {

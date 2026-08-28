@@ -1,0 +1,17 @@
+{
+  "model": "SCUpwardCrossingRulkovMapNeuron",
+  "source": "SC-NeuroCore project event convention over the Rulkov 2002 state recurrence",
+  "identity": "count-neutral retained project model",
+  "event": "post-update x rises through configurable x_threshold=0",
+  "drive": {
+    "pattern": [0.0, 0.25, 1.5, -0.1],
+    "repeats": 128
+  },
+  "oracle": {
+    "events": 22,
+    "first_event_index": 2,
+    "x_final": -2.0005062893863803,
+    "y_final": -3.795415634023709,
+    "trace_sha256": "b50ca7c0fdfa3cd17c1ad5676951921f5df6dc18a298e3909ff065fa37b6f68e"
+  }
+}

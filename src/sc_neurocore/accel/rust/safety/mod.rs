@@ -355,6 +355,7 @@ pub mod resonate_and_fire;
 pub mod resource_optimizer;
 pub mod rng;
 pub mod rulkov_map;
+pub mod sc_upward_crossing_rulkov_map;
 /// Project SC chaotic-map safety mirror.
 pub mod sc_chaotic_map_neuron;
 pub mod sc_adaptive_threshold_map_neuron;

@@ -158,7 +158,9 @@ Alpha, Synaptic (dual-exp), Tsodyks-Markram (STP)
 
 ### Map-Based / Discrete (6)
 
-Rulkov, Chialvo, Courbage-Nekorkin, Medvedev, Ibarz-Tanaka, Cazelles
+Rulkov, Chialvo, Courbage-Nekorkin, Medvedev, Ibarz-Tanaka, Cazelles.
+`SCUpwardCrossingRulkovMapNeuron` separately retains the former configurable
+upward-crossing event convention without adding a literature-model identity.
 
 ### Stochastic (4)
 

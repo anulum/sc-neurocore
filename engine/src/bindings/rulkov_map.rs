@@ -9,6 +9,7 @@
 //! Python binding for the Rulkov spiking map.
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyFloatingPointError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -25,11 +26,11 @@ pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 
 /// Parity contract with `sc_neurocore.neurons.models.rulkov_map.RulkovMapNeuron.simulate`:
 /// for the same parameters and constant input the returned `x` trace, upward-
-/// crossing spike count, and final `(x, y)` state are bit-identical to the
+/// reset-branch event count, and final `(x, y)` state are bit-identical to the
 /// Python reference (the map is exact floating-point arithmetic — one division,
 /// additions and multiplications, no transcendental functions).
 #[pyfunction]
-#[pyo3(signature = (x0, y0, alpha, sigma, mu, x_threshold, n_steps, current))]
+#[pyo3(signature = (x0, y0, alpha, sigma, mu, n_steps, current))]
 #[allow(clippy::too_many_arguments)]
 fn py_rulkov_map_simulate<'py>(
     py: Python<'py>,
@@ -38,18 +39,20 @@ fn py_rulkov_map_simulate<'py>(
     alpha: f64,
     sigma: f64,
     mu: f64,
-    x_threshold: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64, f64)> {
     let mut neuron = RulkovMapNeuron {
         x: x0,
         y: y0,
         alpha,
         sigma,
         mu,
-        x_threshold,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+    let Some((trace, events)) = neuron.try_simulate(n_steps, current) else {
+        return Err(PyFloatingPointError::new_err(
+            "Rulkov Rust batch rejected an invalid candidate",
+        ));
+    };
+    Ok((trace.into_pyarray(py), events, neuron.x, neuron.y))
 }

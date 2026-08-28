@@ -98,9 +98,8 @@ def _rulkov_map_features(*, current: float, steps: int) -> dict[str, float]:
     The Rulkov (2002) fast/slow model is a discrete map, so an independent
     implementation of its three-branch fast map (rational subthreshold, spike
     plateau, hard reset) and slow drift reproduces the runner exactly — a map has no
-    integration error, so independent parity is exact ground truth. Upward-crossing
-    detection (post-update ``x >= 0`` with pre-update ``x < 0``) matches the hand
-    model and schema runner.
+    integration error, so independent parity is exact ground truth. The source event
+    is occupancy of the rightmost reset branch before the simultaneous update.
 
     Parameters
     ----------
@@ -124,16 +123,17 @@ def _rulkov_map_features(*, current: float, steps: int) -> dict[str, float]:
     y_values: list[float] = []
     spikes: list[int] = []
     for _ in range(steps):
-        x_previous = x
+        branch_boundary = alpha + y + current
+        event = int(x > 0.0 and x >= branch_boundary)
         if x <= 0:
             x_next = alpha / (1.0 - x) + y + current
-        elif x < alpha + y + current:
-            x_next = alpha + y + current
+        elif x < branch_boundary:
+            x_next = branch_boundary
         else:
             x_next = -1.0
         y_next = y - mu * (x + 1.0) + mu * sigma
         x, y = x_next, y_next
-        spikes.append(1 if x >= 0.0 and x_previous < 0.0 else 0)
+        spikes.append(event)
         x_values.append(x)
         y_values.append(y)
 

@@ -8,10 +8,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.073223,
-      "minimum_call_ms": 0.063931,
+      "median_call_ms": 0.085245,
+      "minimum_call_ms": 0.067041,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 4.501263264274886,
+      "speedup_vs_python": 3.718904334565077,
       "used": true
     },
     "julia": {
@@ -22,10 +22,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.090338,
-      "minimum_call_ms": 0.077992,
+      "median_call_ms": 0.095899,
+      "minimum_call_ms": 0.086457,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 3.648475724501317,
+      "speedup_vs_python": 3.305748756504239,
       "used": true
     },
     "mojo": {
@@ -36,10 +36,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.050621,
-      "minimum_call_ms": 0.043634,
+      "median_call_ms": 0.053231,
+      "minimum_call_ms": 0.049111,
       "parity_max_abs_diff": 6.8833827526759706e-15,
-      "speedup_vs_python": 6.511052725153593,
+      "speedup_vs_python": 5.955514643722643,
       "used": true
     },
     "python": {
@@ -50,8 +50,8 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.329596,
-      "minimum_call_ms": 0.300123,
+      "median_call_ms": 0.317018,
+      "minimum_call_ms": 0.309382,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -64,10 +64,10 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.026803,
-      "minimum_call_ms": 0.021755,
+      "median_call_ms": 0.028699,
+      "minimum_call_ms": 0.02465,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 12.296981681155094,
+      "speedup_vs_python": 11.046308233736369,
       "used": true
     }
   },
@@ -81,20 +81,20 @@
   ],
   "meta": {
     "affinity": [
-      0
+      2
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      3.4541015625,
-      9.40869140625,
-      10.76318359375
+      3.74609375,
+      3.25341796875,
+      3.1455078125
     ],
     "load_average_start": [
-      3.18798828125,
-      9.56005859375,
-      10.826171875
+      3.37548828125,
+      3.1728515625,
+      3.119140625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -115,9 +115,9 @@
     },
     "benchmarks/bench_ibarz_tanaka_map.py": "6b8b02d8b60906931bfcda5adc5f145bef4dc7724a0cab1489f6f997bfc87b81",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "adc011839ac8064c7d41408b3b68ecb742c11ad7969bd06885b1538d5071bc7b"
+      "py": "819dd75ebf6098010ef5830f1a87266972b8dac92613e90036ef4b79e327dbac"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "adc011839ac8064c7d41408b3b68ecb742c11ad7969bd06885b1538d5071bc7b",
+    "bridge/sc_neurocore_engine/__init__.py": "819dd75ebf6098010ef5830f1a87266972b8dac92613e90036ef4b79e327dbac",
     "engine/src/neurons/ibarz_tanaka_map": {
       "rs": "7a813006e2d9e732411d120d4a3bb0403767be7708856c86e488032422863377"
     },

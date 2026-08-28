@@ -64,6 +64,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "quadratic_if": "QuadraticIFNeuron",
     "resonate_fire": "ResonateAndFireNeuron",
     "rulkov_map": "RulkovMapNeuron",
+    "sc_upward_crossing_rulkov_map": "SCUpwardCrossingRulkovMapNeuron",
     "theta": "ThetaNeuron",
     "wang_buzsaki": "WangBuzsakiNeuron",
     "escape_rate": "EscapeRateNeuron",

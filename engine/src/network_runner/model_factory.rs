@@ -181,6 +181,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         ),
         "ChialvoMap" | "ChialvoMapNeuron" => Ok(NeuronVariant::ChialvoMap(ChialvoMapNeuron::new())),
         "RulkovMap" | "RulkovMapNeuron" => Ok(NeuronVariant::RulkovMap(RulkovMapNeuron::new())),
+        "SCUpwardCrossingRulkovMap" | "SCUpwardCrossingRulkovMapNeuron" => Ok(
+            NeuronVariant::SCUpwardCrossingRulkovMap(SCUpwardCrossingRulkovMapNeuron::new()),
+        ),
         "IbarzTanakaMap" | "IbarzTanakaMapNeuron" => {
             Ok(NeuronVariant::IbarzTanakaMap(IbarzTanakaMapNeuron::new()))
         }

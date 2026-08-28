@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 192,
+    "model_documentation_pages": 193,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 617,
-    "python_model_classes": 175,
-    "python_model_source_modules": 171,
-    "rust_pyo3_model_wrappers": 202,
-    "test_files": 4754
+    "public_documentation_pages": 618,
+    "python_model_classes": 176,
+    "python_model_source_modules": 172,
+    "rust_pyo3_model_wrappers": 203,
+    "test_files": 4760
   },
   "documentation": {
     "public_pages": [
@@ -1233,6 +1233,7 @@
       "docs/api/models/sc_three_state_phantom.md",
       "docs/api/models/sc_triangular_mckean.md",
       "docs/api/models/sc_unit_capacitance_respiratory.md",
+      "docs/api/models/sc_upward_crossing_rulkov_map.md",
       "docs/api/models/sc_wb_nmda_magnesium_block.md",
       "docs/api/models/sfa.md",
       "docs/api/models/sherman_rinzel_keizer.md",
@@ -1770,6 +1771,7 @@
       "sc_three_state_phantom.md",
       "sc_triangular_mckean.md",
       "sc_unit_capacitance_respiratory.md",
+      "sc_upward_crossing_rulkov_map.md",
       "sc_wb_nmda_magnesium_block.md",
       "sfa.md",
       "sherman_rinzel_keizer.md",
@@ -2376,6 +2378,10 @@
         "path": "src/sc_neurocore/neurons/models/sc_unit_capacitance_respiratory.py"
       },
       {
+        "name": "SCUpwardCrossingRulkovMapNeuron",
+        "path": "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py"
+      },
+      {
         "name": "SCWBNMDAMagnesiumBlockNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py"
       },
@@ -2647,6 +2653,7 @@
       "src/sc_neurocore/neurons/models/sc_three_state_phantom.py",
       "src/sc_neurocore/neurons/models/sc_triangular_mckean.py",
       "src/sc_neurocore/neurons/models/sc_unit_capacitance_respiratory.py",
+      "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py",
       "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py",
       "src/sc_neurocore/neurons/models/sfa.py",
       "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py",
@@ -2845,6 +2852,7 @@
       "SCThreeStatePhantomBurster",
       "SCTriangularMcKeanNeuron",
       "SCUnitCapacitanceRespiratoryNeuron",
+      "SCUpwardCrossingRulkovMapNeuron",
       "SCWBNMDAMagnesiumBlockNeuron",
       "SFANeuron",
       "SKNeuron",
@@ -3105,6 +3113,7 @@
       "tests/cosim_reference_pernarowski.py",
       "tests/cosim_reference_quadratic_if.py",
       "tests/cosim_reference_rulkov_map.py",
+      "tests/cosim_reference_sc_upward_crossing_rulkov_map.py",
       "tests/cosim_reference_statistics.py",
       "tests/cosim_reference_terman_wang.py",
       "tests/cosim_reference_theta.py",
@@ -4270,6 +4279,7 @@
       "tests/test_cosim_sc_resetting_wilson_hr_q1616_precision.py",
       "tests/test_cosim_sc_sigma_delta_accumulator.py",
       "tests/test_cosim_sc_triangular_mckean.py",
+      "tests/test_cosim_sc_upward_crossing_rulkov_map_q1616_precision.py",
       "tests/test_cosim_sc_wb_nmda_magnesium_block.py",
       "tests/test_cosim_sigma_delta.py",
       "tests/test_cosim_sigmoid_rate.py",
@@ -6682,6 +6692,7 @@
       "tests/test_rulkov_map_backends_dynamics.py",
       "tests/test_rulkov_map_backends_mojo.py",
       "tests/test_rulkov_map_engine_binding.py",
+      "tests/test_rulkov_map_formal.py",
       "tests/test_run_experimental_suite.py",
       "tests/test_rust_attention_softmax.py",
       "tests/test_rust_graph_sparse.py",
@@ -6810,6 +6821,9 @@
       "tests/test_sc_stochastic_rate_adaptation_isolation.py",
       "tests/test_sc_stochastic_rate_adaptation_network.py",
       "tests/test_sc_stochastic_rate_adaptation_validation.py",
+      "tests/test_sc_upward_crossing_rulkov_map.py",
+      "tests/test_sc_upward_crossing_rulkov_map_backends.py",
+      "tests/test_sc_upward_crossing_rulkov_map_engine_binding.py",
       "tests/test_schema_module_aliases.py",
       "tests/test_schema_validator_error_rendering.py",
       "tests/test_schema_validator_file_discovery.py",

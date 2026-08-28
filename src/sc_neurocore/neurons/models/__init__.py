@@ -155,6 +155,7 @@ _CLASS_TO_MODULE = {
     "RenshawCell": "renshaw_cell",
     "ResonateAndFireNeuron": "resonate_and_fire",
     "RulkovMapNeuron": "rulkov_map",
+    "SCUpwardCrossingRulkovMapNeuron": "sc_upward_crossing_rulkov_map",
     "SFANeuron": "sfa",
     "SKNeuron": "sk_neuron",
     "SRM0Neuron": "srm0",

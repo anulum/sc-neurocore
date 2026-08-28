@@ -31,6 +31,7 @@ pub mod rate;
 pub mod rulkov_map;
 pub mod sc_adaptive_threshold_map;
 pub mod sc_chaotic_map;
+pub mod sc_upward_crossing_rulkov_map;
 pub mod sensory;
 pub mod simple_spiking;
 pub mod special;
@@ -49,6 +50,7 @@ pub mod maps {
     pub use super::rulkov_map::RulkovMapNeuron;
     pub use super::sc_adaptive_threshold_map::SCAdaptiveThresholdMapNeuron;
     pub use super::sc_chaotic_map::SCChaoticMapNeuron;
+    pub use super::sc_upward_crossing_rulkov_map::SCUpwardCrossingRulkovMapNeuron;
 }
 
 pub use ai_optimized::*;
@@ -75,6 +77,7 @@ pub use rate::*;
 pub use rulkov_map::*;
 pub use sc_adaptive_threshold_map::*;
 pub use sc_chaotic_map::*;
+pub use sc_upward_crossing_rulkov_map::*;
 pub use sensory::*;
 pub use simple_spiking::*;
 pub use special::*;

@@ -62,6 +62,23 @@ def test_ci_builds_both_wilson_hr_runtime_identities() -> None:
     assert "libsc_resetting_wilson_hr.so" in run_text
 
 
+def test_ci_requires_both_rulkov_event_identities() -> None:
+    """CI must execute every compiled lane for both Rulkov event contracts."""
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    build_step = next(
+        step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
+    )
+    required_line = next(
+        line.strip()
+        for line in build_step["run"].splitlines()
+        if line.strip().startswith("REQUIRED=")
+    )
+    required = set(required_line.removeprefix("REQUIRED=").split(","))
+
+    assert {"rulkov_map", "sc_upward_crossing_rulkov_map"} <= required
+
+
 def _tracked_files() -> set[str]:
     """Return repository-relative paths recorded in the Git index."""
     completed = subprocess.run(

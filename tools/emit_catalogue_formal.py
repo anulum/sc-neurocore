@@ -84,6 +84,12 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "WangBuzsakiNeuron": "wang_buzsaki",
 }
 
+# Count-neutral SC identities with dedicated generated formal jobs. They are
+# emitted alongside, but not counted as, source-literature S5 models.
+RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
+    "SCUpwardCrossingRulkovMapNeuron": "sc_upward_crossing_rulkov_map",
+}
+
 # Perfect models whose committed formal lane is intentionally curated rather
 # than regenerated through ``UniversalNeuron.to_verilog``.  These designs carry
 # model-specific fixed-point recurrences, network structure, or proof contracts
@@ -163,6 +169,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "pernarowski": 4,
     "poisson": 4,
     "rulkov_map": 4,
+    "sc_upward_crossing_rulkov_map": 4,
     "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
@@ -204,6 +211,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "pernarowski",
         "poisson",
         "rulkov_map",
+        "sc_upward_crossing_rulkov_map",
         "resonate_fire",
         "sigmoid_rate",
         "terman_wang",
@@ -270,6 +278,8 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "morris_lecar": (32, 16),
     "poisson": (48, 24),
     "resonate_fire": (64, 32),
+    "rulkov_map": (32, 16),
+    "sc_upward_crossing_rulkov_map": (32, 16),
     "sigmoid_rate": (64, 32),
     "threshold_linear_rate": (32, 16),
     "wilson_cowan": (64, 32),
@@ -291,6 +301,7 @@ FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
 # diacritics.  Pin an ASCII HDL identifier where sanitising the display name
 # would otherwise make a faithful schema impossible to commit as RTL.
 MODULE_NAME_BY_SCHEMA: dict[str, str] = {
+    "sc_upward_crossing_rulkov_map": "sc_upward_crossing_rulkov_map",
     "sc_resetting_wilson_hr": "sc_resetting_wilson_hr",
     "wang_buzsaki": "sc_wang_buzsaki",
 }
@@ -606,11 +617,17 @@ def emit_all() -> list[EmitResult]:
     results: list[EmitResult] = []
     for class_name in _perfect_class_names():
         results.append(emit_one(class_name))
-    _emit_schema(
-        "SCResettingWilsonHRNeuron",
-        "sc_resetting_wilson_hr",
-        evidence_label="retained SC project model",
-    )
+    retained_results = [
+        _emit_schema(
+            "SCResettingWilsonHRNeuron",
+            "sc_resetting_wilson_hr",
+            evidence_label="retained SC project model",
+        )
+    ]
+    for class_name, schema in RETAINED_SC_CLASS_TO_SCHEMA.items():
+        retained_results.append(
+            _emit_schema(class_name, schema, evidence_label="retained SC project model")
+        )
     inventory = OUT_DIR / "INVENTORY.md"
     lines = [
         "# Catalogue formal inventory (dual-axis perfect models)",
@@ -624,6 +641,25 @@ def emit_all() -> list[EmitResult]:
         "| --- | --- | --- | --- | --- | ---: |",
     ]
     for row in results:
+        state_port = f"`{row.state_port}`" if row.state_port is not None else "—"
+        lines.append(
+            f"| {row.class_name} | {row.schema} | `{row.module}` | "
+            f"{state_port} | Q{row.data_width - row.fraction}.{row.fraction} | "
+            f"{row.depth} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Retained count-neutral SC project jobs",
+            "",
+            "These jobs are emitted and maintained by the same tool but are not included in the",
+            "source-literature perfect-model count above.",
+            "",
+            "| Class | Schema | Module | State port | Q format | Depth |",
+            "| --- | --- | --- | --- | --- | ---: |",
+        ]
+    )
+    for row in retained_results:
         state_port = f"`{row.state_port}`" if row.state_port is not None else "—"
         lines.append(
             f"| {row.class_name} | {row.schema} | `{row.module}` | "

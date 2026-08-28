@@ -19,12 +19,12 @@
   "provenance": {
     "kind": "map_iteration_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/rulkov_map.toml",
-    "equation": "Driving-current Rulkov 2002 piecewise map trace iterated with method=\"map\" (x_{n+1}=f(x_n,y_n)); every branch (rational subthreshold, spike plateau, hard reset) is exercised. Independently re-derived from the Rulkov (2002) piecewise fast/slow map with upward x >= 0 crossing detection.",
+    "equation": "Driving-current Rulkov 2002 piecewise map trace iterated with method=\"map\" (x_{n+1}=f(x_n,y_n)); every branch (rational subthreshold, spike plateau, hard reset) is exercised. The source event is the pre-update trajectory occupying the rightmost reset branch.",
     "citation": "doi:10.1103/PhysRevE.65.041922"
   },
   "expected_features": {
     "spike_count": 10.0,
-    "first_spike_step": 1.0,
+    "first_spike_step": 3.0,
     "final.x": -1.0,
     "min.x": -1.0,
     "max.x": 2.4984,

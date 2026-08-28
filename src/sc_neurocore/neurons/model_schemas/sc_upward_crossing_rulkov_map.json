@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "SC Upward-Crossing Rulkov Map",
+    "author": "SC-NeuroCore project",
+    "year": 2026,
+    "description": "Retained three-branch map with configurable upward-x event detection"
+  },
+  "state": { "x": -1.0, "y": -3.0 },
+  "parameters": { "alpha": 4.0, "sigma": -1.6, "mu": 0.001, "x_threshold": 0.0 },
+  "integration": { "dt": 1.0, "method": "map" },
+  "dynamics": {
+    "x": "(alpha / (1.0 - x) + y + I) if x <= 0 else (alpha + y + I if x < alpha + y + I else -1.0)",
+    "y": "y - mu * (x + 1.0) + mu * sigma"
+  },
+  "threshold": { "condition": "x >= x_threshold", "detection": "crossing" },
+  "extensions": {
+    "model_type": "sc_upward_crossing_rulkov_map",
+    "discrete_time": true,
+    "bursting": true,
+    "input_contract": "I is the fast-map input channel.",
+    "identity_note": "Count-neutral project identity preserving the former configurable upward-x observation convention; no source attribution is claimed for the event definition.",
+    "silicon_cosim_note": "Class-correct validation uses exact upward-crossing event vectors and bounded Q16.16 state error over 30-step I=0.0, 0.5, and 1.5 trajectories."
+  }
+}

@@ -39,7 +39,7 @@ Jobs: **41**
 | PoissonNeuron | poisson | `sc_poissonneuron` | — | Q24.24 | 4 |
 | QuadraticIFNeuron | quadratic_if | `sc_quadratic_if` | `v_out` | Q8.8 | 20 |
 | ResonateAndFireNeuron | resonate_fire | `sc_resonate_and_fire` | `x_out` | Q32.32 | 4 |
-| RulkovMapNeuron | rulkov_map | `sc_rulkov_map` | `x_out` | Q8.8 | 4 |
+| RulkovMapNeuron | rulkov_map | `sc_rulkov_map` | `x_out` | Q16.16 | 4 |
 | SigmoidRateNeuron | sigmoid_rate | `sc_sigmoidrateneuron` | `r_out` | Q32.32 | 4 |
 | TermanWangOscillator | terman_wang | `sc_terman_wang` | `v_out` | Q8.8 | 4 |
 | ThetaNeuron | theta | `sc_theta` | `theta_out` | Q8.8 | 6 |
@@ -48,3 +48,13 @@ Jobs: **41**
 | WilsonCowanUnit | wilson_cowan | `sc_wilsoncowanunit` | `e_out` | Q32.32 | 4 |
 | WilsonHRNeuron | wilson_hr | `sc_wilson_hr` | `v_out` | Q8.8 | 4 |
 | WongWangUnit | wong_wang | `sc_wongwangunit` | `s1_out` | Q32.32 | 4 |
+
+## Retained count-neutral SC project jobs
+
+These jobs are emitted and maintained by the same tool but are not included in the
+source-literature perfect-model count above.
+
+| Class | Schema | Module | State port | Q format | Depth |
+| --- | --- | --- | --- | --- | ---: |
+| SCResettingWilsonHRNeuron | sc_resetting_wilson_hr | `sc_resetting_wilson_hr` | `v_out` | Q8.8 | 4 |
+| SCUpwardCrossingRulkovMapNeuron | sc_upward_crossing_rulkov_map | `sc_upward_crossing_rulkov_map` | `x_out` | Q16.16 | 4 |

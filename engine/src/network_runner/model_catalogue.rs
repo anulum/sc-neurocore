@@ -83,6 +83,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "ClosedFormContinuous",
         "ChialvoMap",
         "RulkovMap",
+        "SCUpwardCrossingRulkovMap",
         "IbarzTanakaMap",
         "MedvedevMap",
         "CazellesMap",

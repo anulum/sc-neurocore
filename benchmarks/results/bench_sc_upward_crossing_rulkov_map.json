@@ -1,0 +1,134 @@
+{
+  "backend_summary": {
+    "go": {
+      "backend": "go",
+      "median_ms": 13.381286058574915,
+      "min_ms": 13.17347795702517,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 52.63094779446879,
+      "spikes": 34
+    },
+    "julia": {
+      "backend": "julia",
+      "median_ms": 16.26116898842156,
+      "min_ms": 15.521584078669548,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 43.30991015917555,
+      "spikes": 34
+    },
+    "mojo": {
+      "backend": "mojo",
+      "median_ms": 12.779594981111586,
+      "min_ms": 12.756090029142797,
+      "parity_max_abs_diff": 1.7763568394002505e-15,
+      "speedup_vs_python": 55.10892708357578,
+      "spikes": 34
+    },
+    "python": {
+      "backend": "python",
+      "median_ms": 704.2697679717094,
+      "min_ms": 699.6325290529057,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 34
+    },
+    "rust": {
+      "backend": "rust",
+      "median_ms": 13.049748027697206,
+      "min_ms": 12.939285952597857,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 53.968074056061816,
+      "spikes": 34
+    }
+  },
+  "benchmark": "sc_upward_crossing_rulkov_map_simulate",
+  "environment": {
+    "isolation": "non-isolated (loaded workstation)",
+    "numpy": "2.2.6",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "event_semantics": "post_update_configurable_upward_x_crossing",
+  "model": "SCUpwardCrossingRulkovMapNeuron",
+  "results": [
+    {
+      "backend": "python",
+      "median_ms": 704.2697679717094,
+      "min_ms": 699.6325290529057,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "spikes": 34
+    },
+    {
+      "backend": "rust",
+      "median_ms": 13.049748027697206,
+      "min_ms": 12.939285952597857,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 53.968074056061816,
+      "spikes": 34
+    },
+    {
+      "backend": "julia",
+      "median_ms": 16.26116898842156,
+      "min_ms": 15.521584078669548,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 43.30991015917555,
+      "spikes": 34
+    },
+    {
+      "backend": "go",
+      "median_ms": 13.381286058574915,
+      "min_ms": 13.17347795702517,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 52.63094779446879,
+      "spikes": 34
+    },
+    {
+      "backend": "mojo",
+      "median_ms": 12.779594981111586,
+      "min_ms": 12.756090029142797,
+      "parity_max_abs_diff": 1.7763568394002505e-15,
+      "speedup_vs_python": 55.10892708357578,
+      "spikes": 34
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_sc_upward_crossing_rulkov_map": {
+      "py": "ad4a860925367a1c740b08105cd0f7bf8cb1a9a5ed207c102099ec8728715acb"
+    },
+    "benchmarks/bench_sc_upward_crossing_rulkov_map.py": "ad4a860925367a1c740b08105cd0f7bf8cb1a9a5ed207c102099ec8728715acb",
+    "benchmarks/rulkov_map_benchmark_support": {
+      "py": "d542042ec9ee159c157d72a03af6cdd57ab568c66d16fbd7b2ec3f2c37671864"
+    },
+    "benchmarks/rulkov_map_benchmark_support.py": "d542042ec9ee159c157d72a03af6cdd57ab568c66d16fbd7b2ec3f2c37671864",
+    "engine/src/bindings/sc_upward_crossing_rulkov_map": {
+      "rs": "4204ca24f1521f50062139681f11df086a3c176a68ce81d818468e2efed022f6"
+    },
+    "engine/src/bindings/sc_upward_crossing_rulkov_map.rs": "4204ca24f1521f50062139681f11df086a3c176a68ce81d818468e2efed022f6",
+    "engine/src/neurons/sc_upward_crossing_rulkov_map": {
+      "rs": "8420afc0ed41580bd7f9d489c06766cfc4a951703942a27d8a9cc298ad762a8d"
+    },
+    "engine/src/neurons/sc_upward_crossing_rulkov_map.rs": "8420afc0ed41580bd7f9d489c06766cfc4a951703942a27d8a9cc298ad762a8d",
+    "src/sc_neurocore/accel/go/neurons/sc_upward_crossing_rulkov_map/sc_upward_crossing_rulkov_map": {
+      "go": "112af4fffb91a7beb947075c8fa60ac7cbffeccaa11f1a668ceaa9887e6bb170"
+    },
+    "src/sc_neurocore/accel/go/neurons/sc_upward_crossing_rulkov_map/sc_upward_crossing_rulkov_map.go": "112af4fffb91a7beb947075c8fa60ac7cbffeccaa11f1a668ceaa9887e6bb170",
+    "src/sc_neurocore/accel/julia/neurons/sc_upward_crossing_rulkov_map": {
+      "jl": "cd534b9fdd1b57ff2071e72b87e8e3357ae90fc3fab8166cf4e543688a1eb296"
+    },
+    "src/sc_neurocore/accel/julia/neurons/sc_upward_crossing_rulkov_map.jl": "cd534b9fdd1b57ff2071e72b87e8e3357ae90fc3fab8166cf4e543688a1eb296",
+    "src/sc_neurocore/accel/mojo/neurons/sc_upward_crossing_rulkov_map": {
+      "mojo": "6393b3ce3571e47333aa80d1e4301598a3892e7cd140521a46b37a6ed04f64a0"
+    },
+    "src/sc_neurocore/accel/mojo/neurons/sc_upward_crossing_rulkov_map.mojo": "6393b3ce3571e47333aa80d1e4301598a3892e7cd140521a46b37a6ed04f64a0",
+    "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map": {
+      "py": "d2bbce0bc672fdc5aff63e226b69d3b7d990ed63ea3e72b50dc0deb2e1de92c4"
+    },
+    "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py": "d2bbce0bc672fdc5aff63e226b69d3b7d990ed63ea3e72b50dc0deb2e1de92c4"
+  },
+  "workload": {
+    "current": 0.5,
+    "n_steps": 2000000,
+    "repeats": 5
+  }
+}

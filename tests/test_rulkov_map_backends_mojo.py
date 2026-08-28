@@ -29,8 +29,10 @@ def test_mojo_per_step_within_tolerance() -> None:
         x = float(rng.uniform(-2.0, 0.5))
         y = float(rng.uniform(-4.0, -2.0))
         cur = float(rng.uniform(0.0, 2.0))
-        ref, _rs, rx, ry = RulkovMapNeuron(x=x, y=y)._simulate_python(1, cur)
-        got, _gs, gx, gy = RulkovMapNeuron(x=x, y=y)._simulate_mojo(1, cur)
+        reference = RulkovMapNeuron(x=x, y=y)
+        candidate = RulkovMapNeuron(x=x, y=y)
+        ref, _rs, rx, ry = reference._simulate_python(1, cur, reference._parameters())
+        got, _gs, gx, gy = candidate._simulate_mojo(1, cur, candidate._parameters())
         worst = max(worst, abs(ref[0] - got[0]), abs(rx - gx), abs(ry - gy))
     assert worst <= _STEP_TOL, f"per-step Mojo gap {worst} exceeds {_STEP_TOL}"
 

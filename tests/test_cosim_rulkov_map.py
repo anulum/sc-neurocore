@@ -31,18 +31,31 @@ class TestQ1616Precision:
     hardware neuron fidelity, suitable for all model dynamics.
     """
 
-    def test_rulkov_map_q1616_short_window_trajectory(self) -> None:
+    @pytest.mark.parametrize(
+        ("current", "expected_events", "x_tolerance", "y_tolerance"),
+        (
+            (0.0, 0, 0.0011, 0.0003),
+            (0.5, 7, 0.0055, 0.0006),
+            (1.5, 10, 0.001, 0.0008),
+        ),
+    )
+    def test_rulkov_map_q1616_short_window_trajectory(
+        self,
+        current: float,
+        expected_events: int,
+        x_tolerance: float,
+        y_tolerance: float,
+    ) -> None:
         """Rulkov has class-correct three-way short-window trajectory parity.
 
         The maintained hand model and both schema formats execute the published
-        simultaneous fast/slow map with rising ``x >= 0`` crossing detection.
-        At ``I=1.5`` the 30-step window visits the rational, plateau, and hard-reset
-        branches ten times each. Hand/TOML/JSON decisions and states must be exact;
-        the emitted Q16.16 RTL must reproduce the complete ten-event vector while
-        each committed state stays within 0.001 of float64. The bounded trajectory
-        is the map-appropriate observable; no long-window spike-count claim is made.
+        simultaneous fast/slow map with source rightmost-branch event detection.
+        The three enrolled drives cover quiescent, moderate, and rapid map
+        regimes. At ``I=1.5`` the window visits every branch ten times.
+        Hand/TOML/JSON decisions and states must be exact; emitted Q16.16 RTL
+        must reproduce each complete event vector within measured state bounds.
+        No long-window fixed-point trajectory identity is claimed.
         """
-        current = 1.5
         n_steps = 30
         schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
         hand = RulkovMapNeuron()
@@ -67,11 +80,12 @@ class TestQ1616Precision:
             hand_trace.append((hand_spike, hand.x, hand.y))
 
         rtl_trace = _rulkov_map_verilog_q1616_trace(n_steps, current)
-        assert branch_counts == {"rational": 10, "plateau": 10, "reset": 10}
+        if current == 1.5:
+            assert branch_counts == {"rational": 10, "plateau": 10, "reset": 10}
         assert [row[0] for row in hand_trace] == [row[0] for row in rtl_trace]
-        assert sum(row[0] for row in rtl_trace) == 10
+        assert sum(row[0] for row in rtl_trace) == expected_events
         for (_spike, expected_x, expected_y), (_rtl_spike, rtl_x, rtl_y) in zip(
             hand_trace, rtl_trace, strict=True
         ):
-            assert rtl_x == pytest.approx(expected_x, abs=0.001)
-            assert rtl_y == pytest.approx(expected_y, abs=0.001)
+            assert rtl_x == pytest.approx(expected_x, abs=x_tolerance)
+            assert rtl_y == pytest.approx(expected_y, abs=y_tolerance)

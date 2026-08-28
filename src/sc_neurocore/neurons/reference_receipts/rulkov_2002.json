@@ -1,0 +1,16 @@
+{
+  "model": "RulkovMapNeuron",
+  "source": "doi:10.1103/PhysRevE.65.041922 equations (1)-(2)",
+  "event": "pre-update state occupies the rightmost reset branch",
+  "drive": {
+    "pattern": [0.0, 0.25, 1.5, -0.1],
+    "repeats": 128
+  },
+  "oracle": {
+    "events": 22,
+    "first_event_index": 7,
+    "x_final": -2.0005062893863803,
+    "y_final": -3.795415634023709,
+    "trace_sha256": "83ffbbdf6fe825fd6cb1833078ed2aa3836ffbad876ca38af95780914a16c3db"
+  }
+}

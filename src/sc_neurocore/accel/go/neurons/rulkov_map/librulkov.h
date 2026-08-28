@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int rulkov_map_simulate_c(double x0, double y0, double alpha, double sigma, double mu, double xThreshold, int nSteps, double current, double* tracePtr);
+extern long long int rulkov_map_simulate_c(double x0, double y0, double alpha, double sigma, double mu, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

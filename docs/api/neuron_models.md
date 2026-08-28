@@ -1,8 +1,8 @@
-# Neuron Model Reference — 175 Python Classes / 202 Rust PyO3 Wrappers
+# Neuron Model Reference — 176 Python Classes / 203 Rust PyO3 Wrappers
 
-SC-NeuroCore currently exposes 177 lazy-loaded Python registry names, including
-175 static model classes across 171 Python model source modules in
-`src/sc_neurocore/neurons/models/`, plus 202 Rust PyO3 model wrappers in the
+SC-NeuroCore currently exposes 178 lazy-loaded Python registry names, including
+176 static model classes across 172 Python model source modules in
+`src/sc_neurocore/neurons/models/`, plus 203 Rust PyO3 model wrappers in the
 optional engine. The historical Kilinc-Bhatt module is alias-only and does not
 add a scientific catalogue model. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
@@ -40,8 +40,8 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 202 Rust PyO3 model wrappers,
-with 172 canonical models wired into the NetworkRunner pipeline.
+`HodgkinHuxleyNeuron`). The Rust engine provides 203 Rust PyO3 model wrappers,
+with 173 canonical models wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -53,9 +53,9 @@ caches the resolved Python class for later imports.
 
 `tests/test_rust_python_neuron_parity.py` is the live coverage map for the
 Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
-capability inventory above counts 175 static classes in
+capability inventory above counts 176 static classes in
 `src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
-177 public Python registry names because `HybridFisherPosnerLIFNeuron` and
+178 public Python registry names because `HybridFisherPosnerLIFNeuron` and
 `StochasticLIFNeuron` are re-exported (from
 `sc_neurocore.quantum_cognition.fisher_posner` for population dispatch and
 `sc_neurocore.neurons.stochastic_lif` for the torch-free public root import,
@@ -63,12 +63,12 @@ respectively) rather than defined as static classes under `neurons/models/`.
 
 Current binding disposition:
 
-The current registry map records 160 same-name Rust constructors,
+The current registry map records 161 same-name Rust constructors,
 10 Rust-prefixed or core-only constructors, and 7 Python-only registry names.
 
 | Disposition | Count | Contract |
 |-------------|------:|----------|
-| Same-name Rust constructors | 160 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
+| Same-name Rust constructors | 161 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 10 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
 | Python-only registry names | 7 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 
@@ -256,14 +256,15 @@ raw TOML descriptor.
 | `LearnableNeuronModel` | `LearnableNeuronModel` | — |
 | `PernarowskiNeuron` | `PernarowskiNeuron` | Pernarowski 1994 |
 
-### Discrete Maps (9 models)
+### Discrete Maps (10 runtime identities; 9 source models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
 | `ChialvoMapNeuron` | `ChialvoMapNeuron` | Chialvo 1995 |
 | `AiharaMapNeuron` | `AiharaMapNeuron` | Aihara, Takabe & Toyoda 1990; reduced map in Aihara 1989, Eqs. 10–12 |
 | `SCChaoticMapNeuron` | `SCChaoticMapNeuron` | SC-NeuroCore project model; no Aihara attribution |
-| `RulkovMapNeuron` | `RulkovMapNeuron` | Rulkov 2001 |
+| `RulkovMapNeuron` | `RulkovMapNeuron` | Rulkov 2002, Equations 1–2 and source reset-branch event |
+| `SCUpwardCrossingRulkovMapNeuron` | `SCUpwardCrossingRulkovMapNeuron` | SC-NeuroCore retained upward-crossing observation identity; count-neutral |
 | `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz, Tanaka, Sanjuan & Aihara 2007, Eqs. 2–3 |
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 slow-calcium first-return reduction |
 | `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 |
