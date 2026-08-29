@@ -61,7 +61,11 @@ _ALL_BACKENDS: tuple[tuple[str, BackendAvailable], ...] = (
 )
 
 
-@pytest.mark.parametrize("backend,available", _EXACT_BACKENDS, ids=lambda value: str(value))
+@pytest.mark.parametrize(
+    "backend,available",
+    _EXACT_BACKENDS,
+    ids=[backend for backend, _ in _EXACT_BACKENDS],
+)
 @pytest.mark.parametrize("current", (0.0, 2.0, 10.0))
 def test_exact_backends_match_complete_python_trajectory(
     backend: str, available: BackendAvailable, current: float
@@ -74,7 +78,11 @@ def test_exact_backends_match_complete_python_trajectory(
     assert actual[1:] == expected[1:]
 
 
-@pytest.mark.parametrize("backend,available", _ALL_BACKENDS, ids=lambda value: str(value))
+@pytest.mark.parametrize(
+    "backend,available",
+    _ALL_BACKENDS,
+    ids=[backend for backend, _ in _ALL_BACKENDS],
+)
 @pytest.mark.parametrize("n_steps", (0, 1, 2))
 def test_every_backend_preserves_empty_and_initial_update_contracts(
     backend: str, available: BackendAvailable, n_steps: int
@@ -108,7 +116,11 @@ def test_auto_dispatch_matches_python_reference() -> None:
     assert actual[1:] == expected[1:]
 
 
-@pytest.mark.parametrize("backend,available", _ALL_BACKENDS, ids=lambda value: str(value))
+@pytest.mark.parametrize(
+    "backend,available",
+    _ALL_BACKENDS,
+    ids=[backend for backend, _ in _ALL_BACKENDS],
+)
 def test_native_batch_rejection_is_failure_atomic(
     backend: str, available: BackendAvailable
 ) -> None:
