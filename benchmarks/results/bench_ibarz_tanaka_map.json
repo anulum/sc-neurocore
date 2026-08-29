@@ -8,10 +8,15 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.075108,
-      "minimum_call_ms": 0.069072,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 0.182359,
+      "minimum_call_ms": 0.125194,
+      "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
+      "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 4.436664536400916,
+      "parity_passed": true,
+      "speedup_vs_python": 1.987376548456616,
+      "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     },
     "julia": {
@@ -22,10 +27,15 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.086777,
-      "minimum_call_ms": 0.080332,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 0.226963,
+      "minimum_call_ms": 0.164142,
+      "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
+      "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 3.8400613065674083,
+      "parity_passed": true,
+      "speedup_vs_python": 1.5968065279362715,
+      "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     },
     "mojo": {
@@ -36,10 +46,15 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.050638,
-      "minimum_call_ms": 0.045882,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 0.162366,
+      "minimum_call_ms": 0.101239,
+      "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
+      "output_packet_sha256": "6bdd4425ee31d7a3bb00fe785be6eefe5caa05bd4afd8202512811f03b6a1fad",
       "parity_max_abs_diff": 6.8833827526759706e-15,
-      "speedup_vs_python": 6.580611398554445,
+      "parity_passed": true,
+      "speedup_vs_python": 2.232092925858862,
+      "trace_sha256": "0e0c4a451f20843b63afc5d74c19da1b62859d3137fb1c940ce233518931f314",
       "used": true
     },
     "python": {
@@ -50,10 +65,15 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.333229,
-      "minimum_call_ms": 0.319571,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 0.362416,
+      "minimum_call_ms": 0.3344,
+      "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
+      "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
+      "parity_passed": true,
       "speedup_vs_python": 1.0,
+      "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     },
     "rust": {
@@ -64,10 +84,15 @@
         "u": -0.199138284637132,
         "v": -1.017019564883986
       },
-      "median_call_ms": 0.025885,
-      "minimum_call_ms": 0.022393,
+      "final_state_max_abs_diff": 0.0,
+      "median_call_ms": 0.083427,
+      "minimum_call_ms": 0.056925,
+      "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
+      "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 12.87344021634151,
+      "parity_passed": true,
+      "speedup_vs_python": 4.344109221235332,
+      "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     }
   },
@@ -87,14 +112,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      3.255859375,
-      4.3330078125,
-      4.9951171875
+      5.7802734375,
+      6.5029296875,
+      6.5576171875
     ],
     "load_average_start": [
-      3.365234375,
-      4.37255859375,
-      5.01171875
+      5.28955078125,
+      6.4345703125,
+      6.5361328125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -111,46 +136,63 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_ibarz_tanaka_map": {
-      "py": "6b8b02d8b60906931bfcda5adc5f145bef4dc7724a0cab1489f6f997bfc87b81"
+      "py": "a2633226d75624fc2b7d7df5611e8c5af3f5b19e0d594ca80d9eb2caa54dd433"
     },
-    "benchmarks/bench_ibarz_tanaka_map.py": "6b8b02d8b60906931bfcda5adc5f145bef4dc7724a0cab1489f6f997bfc87b81",
+    "benchmarks/bench_ibarz_tanaka_map.py": "a2633226d75624fc2b7d7df5611e8c5af3f5b19e0d594ca80d9eb2caa54dd433",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d"
     },
     "bridge/sc_neurocore_engine/__init__.py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d",
+    "engine/src/bindings/ibarz_tanaka_map": {
+      "rs": "db26b33ac995a12352f0f3d82dbe346d3a0b1d597542860c223e3d16d3bdc71c"
+    },
+    "engine/src/bindings/ibarz_tanaka_map.rs": "db26b33ac995a12352f0f3d82dbe346d3a0b1d597542860c223e3d16d3bdc71c",
     "engine/src/neurons/ibarz_tanaka_map": {
-      "rs": "7a813006e2d9e732411d120d4a3bb0403767be7708856c86e488032422863377"
+      "rs": "41a029274c9559b9e45768b76d1657f234fa422ab60d14cf9a6770e8ade5ac97"
     },
-    "engine/src/neurons/ibarz_tanaka_map.rs": "7a813006e2d9e732411d120d4a3bb0403767be7708856c86e488032422863377",
+    "engine/src/neurons/ibarz_tanaka_map.rs": "41a029274c9559b9e45768b76d1657f234fa422ab60d14cf9a6770e8ade5ac97",
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map": {
-      "go": "11749f09e33a88a9c1c423283ffc66959202afe016b32ad0723754a790bbf9c5"
+      "go": "79b98fbdc32f199322fc39327f56ed9a4c8ed6a64892227d8e9a8bbe62e443d8"
     },
-    "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go": "11749f09e33a88a9c1c423283ffc66959202afe016b32ad0723754a790bbf9c5",
+    "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go": "79b98fbdc32f199322fc39327f56ed9a4c8ed6a64892227d8e9a8bbe62e443d8",
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz": {
       "h": "1ceb832698e6e6ecd10eca280c970d80271565d9c949d2f810a45bb96bf8c18d"
     },
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h": "1ceb832698e6e6ecd10eca280c970d80271565d9c949d2f810a45bb96bf8c18d",
     "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map": {
-      "jl": "5ce113800f72b209109049584080fcf8fc3f5ff7ba0f696dfaa004d421772ea1"
+      "jl": "50a6c68e8635632cb920a02006577e81cb736695b8abccbb11c84e128a3f6f43"
     },
-    "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl": "5ce113800f72b209109049584080fcf8fc3f5ff7ba0f696dfaa004d421772ea1",
+    "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl": "50a6c68e8635632cb920a02006577e81cb736695b8abccbb11c84e128a3f6f43",
     "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map": {
-      "mojo": "8d957539450980e4c49b2d057e80b64e0175aad6d457236bbb9d1e0cdd163e56"
+      "mojo": "583abe648d91e41387fb9b48b9186145368239bd205d111b75a9df8f36cb82f4"
     },
-    "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map.mojo": "8d957539450980e4c49b2d057e80b64e0175aad6d457236bbb9d1e0cdd163e56",
+    "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map.mojo": "583abe648d91e41387fb9b48b9186145368239bd205d111b75a9df8f36cb82f4",
     "src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map": {
-      "rs": "1925c611cff020b936ffd99f6408858f762f1d02d2602255f55a26588ed3ed02"
+      "rs": "e0d63fcc8dad6b83b4aad80ce5d1beee7a80de0e2ae90c2eeefff1a9d5ea6885"
     },
-    "src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map.rs": "1925c611cff020b936ffd99f6408858f762f1d02d2602255f55a26588ed3ed02",
+    "src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map.rs": "e0d63fcc8dad6b83b4aad80ce5d1beee7a80de0e2ae90c2eeefff1a9d5ea6885",
+    "src/sc_neurocore/neurons/model_descriptors/IbarzTanakaMapNeuron": {
+      "toml": "761618eb99b60a7b2e513fa067456d7a7ba802fcf64680fb21a2924ff22b0dd1"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/IbarzTanakaMapNeuron.toml": "761618eb99b60a7b2e513fa067456d7a7ba802fcf64680fb21a2924ff22b0dd1",
+    "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map": {
+      "toml": "3d7dc1afe78bd1a2e7fe434588bd4331ef57f73b04cb202cde8726a768f96816"
+    },
+    "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.json": "9f049335f8ea60a10f0faeac4d147d5c20b9bb4b22fc3068a0aa42c5a5cb27f4",
+    "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.toml": "3d7dc1afe78bd1a2e7fe434588bd4331ef57f73b04cb202cde8726a768f96816",
     "src/sc_neurocore/neurons/models/ibarz_tanaka_map": {
-      "py": "113f8dcb38b73af788b656b6f6e472f06a14500b61d0c311804a9d988cb7a6d6"
+      "py": "0ff9f5c4e42cd7f1cedc7d02aedee0bd888864d2a0d69b8efe8716dd27f7e80e"
     },
-    "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py": "113f8dcb38b73af788b656b6f6e472f06a14500b61d0c311804a9d988cb7a6d6"
+    "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py": "0ff9f5c4e42cd7f1cedc7d02aedee0bd888864d2a0d69b8efe8716dd27f7e80e",
+    "src/sc_neurocore/neurons/reference_receipts/ibarz_tanaka_shilnikov_rulkov": {
+      "json": "eef9cb57cbf30acce43cd4105345624ced0ffc45d0125fdce35d0092b92223a0"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/ibarz_tanaka_shilnikov_rulkov.json": "eef9cb57cbf30acce43cd4105345624ced0ffc45d0125fdce35d0092b92223a0"
   },
   "workload": {
     "current": 0.2,
     "n_steps": 1000,
-    "parameters": "Ibarz et al. 2007 Eqs. 2-3 defaults; committed parity horizon",
+    "parameters": "Shilnikov-Rulkov 2004 map; Ibarz et al. 2007 Eqs. 2-3 analysis-profile defaults; committed parity horizon",
     "repeats": 21
   }
 }

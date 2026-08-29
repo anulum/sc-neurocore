@@ -19,7 +19,7 @@
   "provenance": {
     "kind": "map_iteration_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.toml",
-    "equation": "Ibarz et al. (2007), Eqs. 2-3, with the paper's Figure 1 parameters alpha=1, mu=0.001, sigma=0.1 and Iv=0. The initial u=-0.1 places the fast map as in Figure 2(a). Reset events are executions of Eq. 3's fourth branch.",
+    "equation": "Shilnikov and Rulkov (2004) introduced this four-branch map; Ibarz et al. (2007), Eqs. 2-3, analyse it with Figure 1 parameters alpha=1, mu=0.001, sigma=0.1 and Iv=0. The initial u=-0.1 places the fast map as in Figure 2(a). Reset events are executions of Eq. 3's fourth branch. The complete state/event receipt is reference_receipts/ibarz_tanaka_shilnikov_rulkov.json.",
     "citation": "doi:10.1103/PhysRevE.75.041902"
   },
   "expected_features": {

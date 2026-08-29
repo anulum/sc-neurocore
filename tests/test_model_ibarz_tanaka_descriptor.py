@@ -31,3 +31,9 @@ def test_descriptor_structure_matches_the_discrete_map() -> None:
     assert set(payload["state"]) == {"v", "u"}
     assert set(payload["parameters"]) == {"alpha", "mu", "sigma"}
     assert payload["integration"] == {"dt": 1.0, "method": "map"}
+    assert "Shilnikov and Rulkov introduced" in payload["documentation"]["notes"]
+    assert payload["silicon"]["synthesised"] is True
+    assert payload["silicon"]["target_tier"] == "H2"
+    assert payload["silicon"]["synth_report"].endswith(
+        "yosys_ibarz_tanaka_rulkov_map_q1616_2026-08-29.json"
+    )

@@ -24464,7 +24464,7 @@ window_size : int
 ## Module `neurons.models.ibarz_tanaka_map`
 
 ### Class `IbarzTanakaMapNeuron`
-Ibarz et al. (2007) four-branch Rulkov map.
+Ibarz et al. (2007) analysis profile of the Shilnikov-Rulkov map.
 
 Parameters
 ----------

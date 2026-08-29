@@ -4,13 +4,14 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Ibarz-Tanaka 2007 four-branch Rulkov map
+# SC-NeuroCore — Ibarz analysis profile of the Shilnikov-Rulkov map
 
-r"""Source-derived Ibarz-Tanaka spiking-bursting map.
+r"""Source-derived Ibarz analysis profile of the Shilnikov-Rulkov map.
 
 Ibarz, Tanaka, Sanjuan and Aihara analyse the self-sustained-oscillation
-variant of the Rulkov map. Their Eqs. 2-3 define a simultaneous two-state
-recurrence. For ``h = I + u`` the fast state is
+variant introduced by Shilnikov and Rulkov (2004). Ibarz et al.'s Eqs. 2-3
+restate its simultaneous two-state recurrence. For ``h = I + u`` the fast
+state is
 
 .. math::
 
@@ -29,6 +30,10 @@ reset parameter belongs to this model.
 
 Reference
 ---------
+Shilnikov, A. L. & Rulkov, N. F. (2004). *Subthreshold oscillations in a
+map-based neuron model*. Physics Letters A, 328, 177-184.
+https://doi.org/10.1016/j.physleta.2004.05.062
+
 Ibarz, B., Tanaka, G., Sanjuan, M. A. F. & Aihara, K. (2007). *Sensitivity
 versus resonance in two-dimensional spiking-bursting neuron models*.
 Physical Review E, 75, 041902. https://doi.org/10.1103/PhysRevE.75.041902
@@ -69,16 +74,20 @@ class _MapParameters:
         upper = 1.0 + current + u
         if v < lower:
             v_next = -(self.alpha * self.alpha) / 4.0 - self.alpha + current + u
+            event = 0
         elif v <= 0.0:
             v_next = self.alpha * v + (v + 1.0) * (v + 1.0) + current + u
+            event = 0
         elif v < upper:
             v_next = upper
+            event = 0
         else:
             v_next = -1.0
+            event = 1
         u_next = u - self.mu * (v + 1.0 - self.sigma)
         if not math.isfinite(v_next) or not math.isfinite(u_next):
             raise FloatingPointError("Ibarz-Tanaka map candidate became non-finite")
-        return v_next, u_next, int(v >= upper)
+        return v_next, u_next, event
 
 
 class _RustSimulate(Protocol):
@@ -230,7 +239,7 @@ def _auto_backend() -> str:
 
 @dataclass
 class IbarzTanakaMapNeuron:
-    """Ibarz et al. (2007) four-branch Rulkov map.
+    """Ibarz et al. (2007) analysis profile of the Shilnikov-Rulkov map.
 
     Parameters
     ----------
@@ -268,9 +277,10 @@ class IbarzTanakaMapNeuron:
 
     def step(self, current: float) -> int:
         """Advance Eqs. 2-3 once and return the reset-branch event."""
-        if not math.isfinite(float(current)):
+        current_value = float(current)
+        if not math.isfinite(current_value):
             raise ValueError("current must be finite")
-        v_next, u_next, event = self._parameters().candidate(self.v, self.u, current)
+        v_next, u_next, event = self._parameters().candidate(self.v, self.u, current_value)
         self.v, self.u = v_next, u_next
         return event
 
@@ -282,7 +292,8 @@ class IbarzTanakaMapNeuron:
             raise ValueError("n_steps must be an integer")
         if not 0 <= n_steps <= _MAX_C_STEPS:
             raise ValueError(f"n_steps must be between 0 and {_MAX_C_STEPS}")
-        if not math.isfinite(float(current)):
+        current_value = float(current)
+        if not math.isfinite(current_value):
             raise ValueError("current must be finite")
         if backend not in {"auto", "rust", "julia", "go", "mojo", "python"}:
             raise ValueError(f"unsupported backend: {backend}")
@@ -294,17 +305,39 @@ class IbarzTanakaMapNeuron:
         if selected != "python" and not _backend_available(selected):
             raise RuntimeError(f"{selected} Ibarz-Tanaka backend is unavailable")
         if selected == "rust":
-            trace, events, v_final, u_final = self._simulate_rust(n_steps, current, parameters)
+            result = self._simulate_rust(n_steps, current_value, parameters)
         elif selected == "julia":
-            trace, events, v_final, u_final = self._simulate_julia(n_steps, current, parameters)
+            result = self._simulate_julia(n_steps, current_value, parameters)
         elif selected == "go":
-            trace, events, v_final, u_final = self._simulate_go(n_steps, current, parameters)
+            result = self._simulate_go(n_steps, current_value, parameters)
         elif selected == "mojo":
-            trace, events, v_final, u_final = self._simulate_mojo(n_steps, current, parameters)
+            result = self._simulate_mojo(n_steps, current_value, parameters)
         else:
-            trace, events, v_final, u_final = self._simulate_python(n_steps, current, parameters)
+            result = self._simulate_python(n_steps, current_value, parameters)
+        trace, events, v_final, u_final = self._validate_batch_result(n_steps, result)
         self.v, self.u = v_final, u_final
         return trace, events
+
+    @staticmethod
+    def _validate_batch_result(
+        n_steps: int,
+        result: tuple[npt.NDArray[np.float64], int, float, float],
+    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        """Validate an entire backend packet before committing mutable state."""
+        trace_raw, events_raw, v_final_raw, u_final_raw = result
+        trace = np.ascontiguousarray(trace_raw, dtype=np.float64)
+        events = int(events_raw)
+        v_final = float(v_final_raw)
+        u_final = float(u_final_raw)
+        if trace.shape != (n_steps,):
+            raise RuntimeError(
+                f"Ibarz-Tanaka backend returned trace shape {trace.shape}; expected {(n_steps,)}"
+            )
+        if events < 0 or events > n_steps:
+            raise FloatingPointError("Ibarz-Tanaka backend reported a failed batch")
+        if not np.isfinite(trace).all() or not math.isfinite(v_final) or not math.isfinite(u_final):
+            raise FloatingPointError("Ibarz-Tanaka backend returned non-finite state")
+        return trace, events, v_final, u_final
 
     def _simulate_python(
         self, n_steps: int, current: float, parameters: _MapParameters
@@ -354,6 +387,8 @@ class IbarzTanakaMapNeuron:
             ctypes.c_double(current),
             trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
         )
+        if events < 0:
+            raise FloatingPointError("Go Ibarz-Tanaka backend rejected the batch")
         return (
             np.ascontiguousarray(trace[:n_steps]),
             int(events),
@@ -374,6 +409,8 @@ class IbarzTanakaMapNeuron:
             current,
             int(trace.ctypes.data),
         )
+        if events < 0:
+            raise FloatingPointError("Mojo Ibarz-Tanaka backend rejected the batch")
         return (
             np.ascontiguousarray(trace[:n_steps]),
             int(events),

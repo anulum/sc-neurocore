@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
+import ctypes
 from collections.abc import Callable
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -94,3 +96,68 @@ def test_explicit_unavailable_backend_fails_closed(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(ibarz_tanaka_map, "_HAS_RUST", False)
     with pytest.raises(RuntimeError, match="rust Ibarz-Tanaka backend is unavailable"):
         IbarzTanakaMapNeuron().simulate(1, 0.2, backend="rust")
+
+
+@pytest.mark.parametrize("backend", ("go", "mojo"))
+def test_negative_native_status_is_failure_atomic(
+    monkeypatch: pytest.MonkeyPatch, backend: str
+) -> None:
+    """A rejected C-ABI batch cannot be committed as a negative event count."""
+
+    def reject(*_args: object) -> int:
+        return -2
+
+    library = SimpleNamespace(ibarz_tanaka_map_simulate_c=reject)
+    monkeypatch.setattr(ibarz_tanaka_map, f"_{backend}_lib", library)
+    monkeypatch.setattr(ibarz_tanaka_map, f"_HAS_{backend.upper()}", True)
+    neuron = IbarzTanakaMapNeuron()
+    before = (neuron.v, neuron.u)
+
+    with pytest.raises(FloatingPointError, match=f"{backend.title()} Ibarz-Tanaka"):
+        neuron.simulate(8, 0.2, backend=backend)
+    assert (neuron.v, neuron.u) == before
+
+
+def test_malformed_accelerator_packet_is_failure_atomic(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Trace shape and final-state validation precede object mutation."""
+
+    def malformed(*_args: object) -> tuple[list[float], int, float, float]:
+        return [1.0], 0, 1.0, 2.0
+
+    monkeypatch.setattr(ibarz_tanaka_map, "_rust_simulate", malformed)
+    monkeypatch.setattr(ibarz_tanaka_map, "_HAS_RUST", True)
+    neuron = IbarzTanakaMapNeuron()
+    before = (neuron.v, neuron.u)
+
+    with pytest.raises(RuntimeError, match="trace shape"):
+        neuron.simulate(2, 0.2, backend="rust")
+    assert (neuron.v, neuron.u) == before
+
+
+@pytest.mark.parametrize("backend", ("go", "mojo"))
+def test_real_c_abi_overflow_is_failure_atomic(backend: str) -> None:
+    """The compiled C ABI validates the complete orbit before touching output."""
+    available = _go() if backend == "go" else _mojo()
+    if not available:
+        pytest.skip(f"{backend} backend is not built")
+    library = ibarz_tanaka_map._go_lib if backend == "go" else ibarz_tanaka_map._mojo_lib
+    assert library is not None
+    output = np.full(6, 123.5, dtype=np.float64)
+    output_argument: object
+    if backend == "go":
+        output_argument = output.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+    else:
+        output_argument = int(output.ctypes.data)
+
+    status = library.ibarz_tanaka_map_simulate_c(
+        1.0e308,
+        1.0e308,
+        1.0e308,
+        1.0,
+        0.0,
+        4,
+        0.0,
+        output_argument,
+    )
+    assert status == -2
+    np.testing.assert_array_equal(output, np.full(6, 123.5, dtype=np.float64))

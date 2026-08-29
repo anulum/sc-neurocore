@@ -6,9 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Ibarz-Tanaka discrete map neuron
 
-//! Ibarz-Tanaka discrete map neuron.
+//! Ibarz analysis profile of the Shilnikov-Rulkov discrete map neuron.
 
-/// Ibarz-Tanaka (2007) four-branch Rulkov map.
+/// Ibarz et al. (2007) analysis profile of the Shilnikov-Rulkov (2004) map.
 #[derive(Clone, Debug)]
 pub struct IbarzTanakaMapNeuron {
     pub v: f64,
@@ -40,20 +40,26 @@ impl IbarzTanakaMapNeuron {
     fn candidate(&self, current: f64) -> Result<(f64, f64, i32), &'static str> {
         let lower = -1.0 - self.alpha / 2.0;
         let upper = 1.0 + current + self.u;
-        let v_next = if self.v < lower {
-            -(self.alpha * self.alpha) / 4.0 - self.alpha + current + self.u
+        let (v_next, event) = if self.v < lower {
+            (
+                -(self.alpha * self.alpha) / 4.0 - self.alpha + current + self.u,
+                0,
+            )
         } else if self.v <= 0.0 {
-            self.alpha * self.v + (self.v + 1.0) * (self.v + 1.0) + current + self.u
+            (
+                self.alpha * self.v + (self.v + 1.0) * (self.v + 1.0) + current + self.u,
+                0,
+            )
         } else if self.v < upper {
-            upper
+            (upper, 0)
         } else {
-            -1.0
+            (-1.0, 1)
         };
         let u_next = self.u - self.mu * (self.v + 1.0 - self.sigma);
         if !v_next.is_finite() || !u_next.is_finite() {
             return Err("invalid Ibarz-Tanaka map candidate");
         }
-        Ok((v_next, u_next, i32::from(self.v >= upper)))
+        Ok((v_next, u_next, event))
     }
 
     /// Checked source-derived update; a rejected step leaves the state intact.
@@ -81,12 +87,15 @@ impl IbarzTanakaMapNeuron {
         n_steps: usize,
         current: f64,
     ) -> Result<(Vec<f64>, i64), &'static str> {
+        let mut candidate = self.clone();
         let mut trace = Vec::with_capacity(n_steps);
         let mut events = 0_i64;
         for _ in 0..n_steps {
-            events += i64::from(self.try_step(current)?);
-            trace.push(self.v);
+            events += i64::from(candidate.try_step(current)?);
+            trace.push(candidate.v);
         }
+        self.v = candidate.v;
+        self.u = candidate.u;
         Ok((trace, events))
     }
 
@@ -110,5 +119,26 @@ mod tests {
         let mut n = IbarzTanakaMapNeuron::new();
         let t: i32 = (0..2000).map(|_| n.step(2.0)).sum();
         assert!(t > 0);
+    }
+
+    #[test]
+    fn checked_batch_is_complete_and_failure_atomic() {
+        let mut neuron = IbarzTanakaMapNeuron::new();
+        let (trace, events) = neuron.simulate(1_000, 0.2).unwrap();
+        assert_eq!(trace.len(), 1_000);
+        assert_eq!(events, 33);
+        assert_eq!(trace.last().copied(), Some(neuron.v));
+
+        let before = (neuron.v, neuron.u);
+        assert!(neuron.simulate(4, f64::NAN).is_err());
+        assert_eq!((neuron.v, neuron.u), before);
+    }
+
+    #[test]
+    fn earlier_branch_precedence_prevents_false_reset_events() {
+        let mut neuron = IbarzTanakaMapNeuron::new();
+        assert!(neuron.v >= 1.0 - 5.0 + neuron.u);
+        assert_eq!(neuron.try_step(-5.0), Ok(0));
+        assert_ne!(neuron.v, -1.0);
     }
 }

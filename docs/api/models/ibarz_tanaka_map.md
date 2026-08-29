@@ -1,21 +1,29 @@
 # IbarzTanakaMapNeuron
 
-`IbarzTanakaMapNeuron` implements the four-branch fast/slow map analysed by
-Ibarz, Tanaka, Sanjuan, and Aihara (2007). It is a simultaneous discrete map,
-not the rational/linear hybrid formerly stored under this class name.
+`IbarzTanakaMapNeuron` is the compatibility identity for the four-branch
+fast/slow map introduced by Shilnikov and Rulkov (2004), using the parameter
+profile analysed by Ibarz, Tanaka, Sanjuan, and Aihara (2007). It is a
+simultaneous discrete map, not the rational/linear hybrid formerly stored under
+this class name.
 
 **Python:** `sc_neurocore.neurons.models.ibarz_tanaka_map.IbarzTanakaMapNeuron`
 
-**Rust engine:** `engine/src/neurons/maps.rs::IbarzTanakaMapNeuron`
+**Rust engine:** `engine/src/neurons/ibarz_tanaka_map.rs::IbarzTanakaMapNeuron`
 
-**Reference:** B. Ibarz, G. Tanaka, M. A. F. Sanjuan, and K. Aihara,
+**Equation source:** A. L. Shilnikov and N. F. Rulkov, *Subthreshold
+oscillations in a map-based neuron model*, Physics Letters A 328, 177–184
+(2004),
+[DOI 10.1016/j.physleta.2004.05.062](https://doi.org/10.1016/j.physleta.2004.05.062).
+
+**Analysis profile:** B. Ibarz, G. Tanaka, M. A. F. Sanjuan, and K. Aihara,
 *Sensitivity versus resonance in two-dimensional spiking-bursting neuron
 models*, Physical Review E 75, 041902 (2007),
 [DOI 10.1103/PhysRevE.75.041902](https://doi.org/10.1103/PhysRevE.75.041902).
 
 ## Source recurrence
 
-For the paper's external input (I_v), let (h_n=I_v+u_n). Equations 2–3 give
+For the analysis paper's external input (I_v), let (h_n=I_v+u_n). Its
+Equations 2–3 restate the Shilnikov–Rulkov recurrence:
 
 \[
 v_{n+1}=
@@ -46,12 +54,14 @@ is (I_v).
 An event is execution of the fourth source branch:
 
 \[
-e_n=\mathbf{1}[v_n\ge 1+I_v+u_n].
+e_n=\mathbf{1}[v_n>0\;\land\;v_n\ge 1+I_v+u_n].
 \]
 
 This is a level decision on the pre-step state and produces the source's fixed
-`v_next = -1` return. There is no separate threshold, configurable reset, or
-`beta` parameter.
+`v_next = -1` return. The `v_n>0` term preserves the piecewise branch order: a
+low value of the upper guard cannot override the earlier `v_n<=0` parabolic
+branch. There is no separate threshold or configurable reset; the public
+`current` argument carries the source `beta`/analysis `I_v` input.
 
 ## Defaults
 
@@ -64,8 +74,10 @@ This is a level decision on the pre-step state and produces the source's fixed
 | `sigma` | `0.1` | Slow-nullcline offset |
 
 Construction, `step()`, and `simulate()` reject non-finite state, parameters,
-or input. `alpha` and `mu` must be positive. Candidate validation happens
-before mutation, so a rejected step preserves both states.
+or input. `alpha` and `mu` must be positive. Python, production Rust, safety
+Rust, Julia, Go, and Mojo validate a complete batch before committing caller
+state or output; negative C-ABI statuses and malformed result packets fail
+closed.
 
 ## Python API
 
@@ -97,12 +109,16 @@ retains final `(v, u)`.
 
 The DOI-backed `ibarz_tanaka_map_2007_doi` contract independently re-derives
 the four branches and slow update without importing the hand model or schema
-expressions.
+expressions. The paired-source receipt
+`src/sc_neurocore/neurons/reference_receipts/ibarz_tanaka_shilnikov_rulkov.json`
+binds every post-step `(v,u)` pair and reset decision over 1,000 iterations:
+state digest `9fef084b…03cb`, event digest `03426e93…68f`, nine events, first
+event index 394, and the exact final state.
 
 ## Compiled parity
 
 Python, the Rust engine, the independent Rust safety crate, Julia, Go, and Mojo
-implement the same five-float state/parameter ABI. Across the committed
+implement the same five-float state/parameter order. Across the committed
 1,000-step `I=0/0.2/1.0` envelope, Rust, Julia, and Go reproduce every Python
 trace bit and final state. Mojo preserves the complete event vector and stays
 below the measured `1.5e-8` absolute trace/state bound; at the benchmark's
@@ -116,36 +132,41 @@ their operation ordering matches the Python reference.
 ## Controlled benchmark
 
 `benchmarks/results/bench_ibarz_tanaka_map.json` records 1,000 iterations at
-`I=0.2`, median of 21 calls, on logical CPU 10 of an Intel i5-11600K. The
+`I=0.2`, median of 21 calls, on logical CPU 2 of an Intel i5-11600K. The
 process was affinity-pinned, but the host had no kernel-isolated CPU set and
 reported high concurrent load; these are local regression timings, not portable
 latency claims.
 
 | Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
 |---|---:|---:|---:|---:|
-| Rust | 0.079827 ms | 11.28× | `0` | 33 |
-| Mojo | 0.148605 ms | 6.06× | `6.883e-15` | 33 |
-| Go | 0.242630 ms | 3.71× | `0` | 33 |
-| Julia | 0.249030 ms | 3.62× | `0` | 33 |
-| Python | 0.900612 ms | 1.00× | `0` | 33 |
+| Rust | 0.083427 ms | 4.34× | `0` | 33 |
+| Mojo | 0.162366 ms | 2.23× | `6.883e-15` | 33 |
+| Go | 0.182359 ms | 1.99× | `0` | 33 |
+| Julia | 0.226963 ms | 1.60× | `0` | 33 |
+| Python | 0.362416 ms | 1.00× | `0` | 33 |
 
-The artefact includes runtime versions, affinity, governor, load, final states,
-and SHA-256 digests for every maintained kernel and ABI source. Its evidence
-gate is `ibarz-tanaka-map-five-backend-controlled-regression`.
+The artefact includes runtime versions, affinity, governor, load, final-state
+parity, complete fast-trace and output-packet SHA-256 digests, and hashes for 14
+maintained implementation, ABI, schema, descriptor, and receipt sources. Its
+evidence gate is `ibarz-tanaka-map-five-backend-controlled-regression`.
 
 ## Schema, RTL, and formal boundary
 
 The paired TOML and JSON schemas reproduce the hand recurrence exactly. A
-30-step `I=0.2` co-simulation covers all four branches: 23 parabolic, 4 plateau,
-3 reset, and the initial constant branch. Hand, TOML, and JSON trajectories are
-identical. Generated Q16.16 RTL preserves the full reset-event vector with
+4-step `I=-0.5` protocol covers the parabolic and constant branches; a separate
+30-step `I=0.2` protocol covers 23 parabolic, 4 plateau, and 3 reset branches.
+Together they visit every source branch. Hand, TOML, and JSON trajectories are
+identical, and generated Q16.16 RTL preserves both complete event vectors with
 maximum errors below `0.003` for `v` and `0.0001` for `u`.
 
-Q16.16 is required because `mu=0.001` rounds to zero in Q8.8. The S5/H1
-descriptor therefore emits a Q16.16 catalogue core and port-only harness. The
-depth-4 SymbiYosys/Z3 job `sc_ibarz_tanaka_rulkov_map.sby` proves the bounded
-reset-spike safety property; the 30-step co-simulation remains the behavioural
-fidelity evidence.
+Q16.16 is required because `mu=0.001` rounds to zero in Q8.8. The S5/H2
+descriptor therefore emits a Q16.16 catalogue core. The depth-4
+SymbiYosys/Z3 job `sc_ibarz_tanaka_rulkov_map.sby` proves exact public event
+equivalence to the ordered fourth-branch guard and proves that every event
+commits `v=-1`. Coarse synthesis is tracked in
+`hdl/reports/yosys_ibarz_tanaka_rulkov_map_q1616_2026-08-29.json` (33 cells,
+zero residual processes). Timing, PPA, device/board, physical silicon, and
+universal Python-to-RTL equivalence remain unclaimed.
 
 ## Focused verification
 

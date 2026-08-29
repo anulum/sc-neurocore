@@ -264,7 +264,7 @@ raw TOML descriptor.
 | `SCChaoticMapNeuron` | `SCChaoticMapNeuron` | SC-NeuroCore project model; no Aihara attribution |
 | `RulkovMapNeuron` | `RulkovMapNeuron` | Rulkov 2002, Equations 1–2 and source reset-branch event |
 | `SCUpwardCrossingRulkovMapNeuron` | `SCUpwardCrossingRulkovMapNeuron` | SC-NeuroCore retained upward-crossing observation identity; count-neutral |
-| `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz, Tanaka, Sanjuan & Aihara 2007, Eqs. 2–3 |
+| `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Compatibility identity for the Shilnikov-Rulkov 2004 map in the Ibarz, Tanaka, Sanjuan & Aihara 2007, Eqs. 2–3 profile |
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 slow-calcium first-return reduction |
 | `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 scalar four-branch map |
 | `SCClippedLogisticBurstingMapNeuron` | `SCClippedLogisticBurstingMapNeuron` | SC-NeuroCore retained clipped-logistic fast/slow recurrence; count-neutral |

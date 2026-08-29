@@ -45,6 +45,14 @@ def test_event_marks_the_source_reset_branch() -> None:
     assert neuron.v == -1.0
 
 
+def test_reset_guard_does_not_override_an_earlier_source_branch() -> None:
+    """A low upper guard cannot fabricate a reset while v<=0 selects branch two."""
+    neuron = IbarzTanakaMapNeuron(v=-1.0, u=-0.1)
+    assert neuron.v >= 1.0 - 5.0 + neuron.u
+    assert neuron.step(-5.0) == 0
+    assert neuron.v != -1.0
+
+
 @pytest.mark.parametrize("current, expected", ((0.0, 9), (0.2, 33), (1.0, 195)))
 def test_source_protocol_event_counts(current: float, expected: int) -> None:
     """The published default parameter set has stable derived event counts."""

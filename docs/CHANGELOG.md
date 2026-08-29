@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Ibarz-Tanaka analysis-profile full-fidelity reclosure
+
+- Preserved the public `IbarzTanakaMapNeuron` compatibility identity while
+  correcting provenance: Shilnikov and Rulkov (2004) introduced the
+  four-branch recurrence, and Ibarz et al. (2007) restated and analysed the
+  maintained parameter profile. A paired-source receipt now binds every
+  `(v,u)` state and reset decision over the 1,000-step reference protocol.
+- Corrected a branch-order bug that could report a false reset event under a
+  sufficiently low upper guard while the earlier `v<=0` branch executed.
+  Python, production and safety Rust, Julia, Go, and Mojo now agree on actual
+  fourth-branch execution; stateful and C-ABI batches validate completely
+  before caller-state or output mutation, and NetworkRunner has direct identity
+  coverage.
+- Re-ran the source-hashed five-runtime benchmark with complete trace/output
+  packet custody. Two Q16.16 co-simulation protocols now genuinely cover all
+  four branches, tracked RTL passes 33-cell Yosys coarse synthesis, and a
+  depth-4 Z3 proof establishes exact ordered event logic and
+  `event => v_next=-1`. The descriptor advances from H1 to its honest H2
+  terminal boundary; timing and higher silicon claims remain open.
+
 ### Wilson-HR dual-identity full-fidelity closure
 
 - Restored `WilsonHRNeuron` to Wilson's `C=0.8` continuous polynomial flow and

@@ -12,7 +12,7 @@ name = "Ibarz-Tanaka Rulkov Map"
 class_name = "IbarzTanakaMapNeuron"
 module = "ibarz_tanaka_map"
 display_name = "Ibarz-Tanaka Rulkov Map"
-summary = "Four-branch fast/slow spiking-bursting map from Ibarz et al. (2007), Eqs. 2-3."
+summary = "Shilnikov-Rulkov four-branch fast/slow map in the parameter profile analysed by Ibarz et al. (2007), Eqs. 2-3."
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
@@ -104,18 +104,21 @@ golden_trace_sha256 = "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0
 
 [documentation]
 slug = "models/ibarz_tanaka_map"
-notes = "Implements Ibarz et al. (2007), Eqs. 2-3. An event is execution of the fourth, fixed -1 reset branch. The prior beta-based rational/linear hybrid and its 2011 review citation were removed as unsupported."
+notes = "Compatibility name retained. Shilnikov and Rulkov introduced the recurrence (DOI 10.1016/j.physleta.2004.05.062); Ibarz et al. restated and analysed it with the maintained parameter profile. An event is execution of the fourth, fixed -1 reset branch."
 
 [validation]
 dynamics_faithful = true
 metric = "trajectory"
-operating_point = "Ibarz-Tanaka four-branch map at I=0.2 over 30 iterations"
-tolerance = "hand/TOML/JSON exact; Q16.16 reset-event vector exact with v error below 0.003 and u error below 0.0001"
-evidence = "tests/test_cosim_ibarz_tanaka_map.py::test_q1616_source_trajectory_and_reset_events"
+operating_point = "Shilnikov-Rulkov map at I=-0.5 over 4 iterations and I=0.2 over 30 iterations"
+tolerance = "complete independent binary64 state/event receipt; hand/TOML/JSON exact; Q16.16 all-branch event vectors exact with v error below 0.003 and u error below 0.0001"
+evidence = "tests/test_reference_ibarz_tanaka_map.py; tests/test_cosim_ibarz_tanaka_map.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
 cosim_evidence = "tests/test_cosim_ibarz_tanaka_map.py::test_q1616_source_trajectory_and_reset_events"
-target_tier = "H1"
-terminal_reason = "Q16.16 is required because mu quantises to zero in Q8.8; higher tiers require synthesis and timing evidence."
+synthesised = true
+synth_report = "hdl/reports/yosys_ibarz_tanaka_rulkov_map_q1616_2026-08-29.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Q16.16 co-simulation, coarse synthesis, and bounded reset/event formal safety are complete; timing, PPA, board, device, physical silicon, and universal formal equivalence remain open."

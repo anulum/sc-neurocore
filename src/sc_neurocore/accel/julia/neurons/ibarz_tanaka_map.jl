@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia Ibarz-Tanaka 2007 four-branch map
+# SC-NeuroCore — Julia Ibarz analysis profile of the Shilnikov-Rulkov map
 
 module IbarzTanakaMapAccel
 
@@ -13,7 +13,8 @@ export simulate_trace
 """
     simulate_trace(v0, u0, alpha, mu, sigma, n_steps, current)
 
-Run Ibarz et al. (2007), Eqs. 2-3, and return
+Run the Shilnikov-Rulkov (2004) map as profiled by Ibarz et al. (2007),
+Eqs. 2-3, and return
 `(trace, events, vf, uf)`. The trace stores the fast state after each
 simultaneous map iteration; events count executions of the reset branch.
 """

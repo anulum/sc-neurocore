@@ -2274,7 +2274,7 @@
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "workload.current": 0.2,
         "workload.n_steps": 1000,
-        "workload.parameters": "Ibarz et al. 2007 Eqs. 2-3 defaults; committed parity horizon",
+        "workload.parameters": "Shilnikov-Rulkov 2004 map; Ibarz et al. 2007 Eqs. 2-3 analysis-profile defaults; committed parity horizon",
         "workload.repeats": 21
       },
       "id": "ibarz-tanaka-map-five-backend-controlled-regression",

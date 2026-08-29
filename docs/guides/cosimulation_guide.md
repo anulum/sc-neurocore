@@ -286,21 +286,27 @@ behavioural evidence.
 
 ### Ibarz-Tanaka four-branch Q16.16 enrolment
 
-The `ibarz_tanaka_map` schema implements Ibarz et al. (2007), Eqs. 2–3:
+The `ibarz_tanaka_map` schema implements the Shilnikov-Rulkov (2004) map in
+the profile restated by Ibarz et al. (2007), Eqs. 2–3:
 constant, parabolic, plateau, and fixed `-1` reset branches for `v`, plus the
 simultaneous `u - mu*(v + 1 - sigma)` slow update. `I` is the paper's `I_v`.
-The reset event is a pre-state level decision `v >= 1 + I + u`; no separate
-threshold, reset parameter, or `beta` belongs to this model.
+The reset event is the branch-ordered pre-state decision
+`v > 0 and v >= 1 + I + u`; the first term prevents a low upper guard from
+overriding the earlier `v <= 0` branch. There is no separate threshold or reset
+parameter; `I` carries the source `beta`/analysis `I_v` input.
 
-At `I=0.2` over 30 iterations, hand Python and paired TOML/JSON schema traces
-are identical. The protocol visits the constant branch initially, then 23
-parabolic, four plateau, and three reset branches. Generated Q16.16 RTL
-preserves the complete three-event vector with maximum errors below `0.003`
+Hand Python and paired TOML/JSON schema traces are identical in both enrolled
+protocols. `I=-0.5` over four iterations visits one parabolic and three constant
+branches; `I=0.2` over 30 iterations visits 23 parabolic, four plateau, and
+three reset branches. Together they cover all four branches. Generated Q16.16
+RTL preserves both complete event vectors with maximum errors below `0.003`
 for `v` and `0.0001` for `u`.
 
-Q8.8 is invalid because `mu=0.001` quantises to zero. The S5/H1 catalogue job
-therefore uses Q16.16; its depth-4 SymbiYosys/Z3 proof establishes bounded
-reset-spike safety, while this 30-step trajectory is the behavioural evidence.
+Q8.8 is invalid because `mu=0.001` quantises to zero. The S5/H2 catalogue job
+therefore uses Q16.16; its depth-4 SymbiYosys/Z3 proof establishes exact event
+equivalence to the ordered fourth-branch guard and `event => v_next=-1`.
+The tracked Yosys coarse-synthesis report contains 33 cells and no residual
+processes; timing and higher silicon claims remain open.
 
 ### Courbage-Nekorkin map fixed-point trajectory enrolment
 

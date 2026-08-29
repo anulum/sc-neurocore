@@ -28,7 +28,8 @@ pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
 /// `sc_neurocore.neurons.models.ibarz_tanaka_map.IbarzTanakaMapNeuron.simulate`:
 /// for the same parameters and constant input the returned `v` trace, reset-
 /// branch event count, and final `(v, u)` state are bit-identical to the Python
-/// reference. The implementation follows Eqs. 2-3 of Ibarz et al. (2007).
+/// reference. The implementation follows the Shilnikov-Rulkov (2004) map as
+/// restated and profiled in Eqs. 2-3 of Ibarz et al. (2007).
 #[pyfunction]
 #[pyo3(signature = (v0, u0, alpha, mu, sigma, n_steps, current))]
 fn py_ibarz_tanaka_map_simulate<'py>(

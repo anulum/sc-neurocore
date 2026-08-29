@@ -43,7 +43,7 @@ and event-hash fields into the deterministic trace schema.
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven three-state bursting flow (no reset, rising-edge `x >= 1` crossing) from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
 | `hodgkin_huxley_driven_spiking_doi` | `hodgkin_huxley` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven repetitive-spiking membrane (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/hodgkin_huxley.toml` with DOI-backed schema provenance |
-| `ibarz_tanaka_map_2007_doi` | `ibarz_tanaka_map` | `universal_dsl` | Independent simultaneous iteration of Ibarz et al. (2007), Eqs. 2–3 (four fast branches, slow `u` update, source reset-branch event), without importing the hand model or schema expressions |
+| `ibarz_tanaka_map_2007_doi` | `ibarz_tanaka_map` | `universal_dsl` | Independent simultaneous iteration of the Shilnikov-Rulkov (2004) four-branch map in the Ibarz et al. (2007), Eqs. 2–3 profile, including the branch-ordered reset event; the paired-source receipt binds the complete 1,000-step `(v,u)` and event traces without importing the hand model or schema expressions |
 | `iqif_a8752eb_tutorial` | `iqif` | `universal_dsl` | Independent literal iteration of the pinned `twetto/iq-neuron@a8752eba49` C++ tutorial: C++-truncated branch point, Q0.3 arithmetic shift, strict upper event, hard reset, and lower clamp; DOI and both source-file hashes are pinned |
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
@@ -194,10 +194,13 @@ Its `I=2`, 100-iteration protocol reproduces the exact four-state cycle and 75
 maintained pre-state events without importing the hand model or schema expressions.
 The reference explicitly records that non-zero current and event labelling are
 maintained conventions rather than equations or spike semantics asserted by the paper.
-The Ibarz-Tanaka entry independently evaluates all four fast-map branches and
-the simultaneous slow update from Eqs. 2–3. Its zero-current 1,000-iteration
-protocol reproduces nine source reset events, the first at step 395, and all
-committed `v`/`u` features without importing the hand model or schema runner.
+The Ibarz-Tanaka compatibility entry independently evaluates all four
+Shilnikov-Rulkov fast-map branches and the simultaneous slow update in the
+Ibarz et al. Eqs. 2–3 profile. Its zero-current 1,000-iteration protocol
+reproduces nine source reset events, the first at step 395, and all committed
+`v`/`u` features without importing the hand model or schema runner. The
+paired-source receipt additionally fixes the complete two-state digest, event
+digest, exact final state, and branch-ordered event convention.
 The Morris-Lecar entry re-derives the exact classical fourth-order Runge-Kutta
 recurrence for its calcium-potassium conductance oscillator — sigmoidal `tanh`
 calcium activation and `cosh`/`tanh` potassium gating, reusing the runner's numpy

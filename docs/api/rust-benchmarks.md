@@ -429,7 +429,7 @@ voltage-dependent rate functions). Other rows are earlier criterion medians.
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
-| Ibarz-Tanaka | 1k | 0.079827 ms | **79.8 ns** | Controlled PyO3 batch; source four-branch map |
+| Ibarz-Tanaka analysis profile | 1k | 0.083427 ms | **83.4 ns** | Controlled PyO3 batch; Shilnikov-Rulkov four-branch map |
 | Cazelles | 2M | 20.910 ms | **10.5 ns** | Controlled PyO3 batch; source scalar four-branch map |
 | SC clipped-logistic bursting map | 2M | 12.467 ms | **6.2 ns** | Controlled PyO3 batch; retained project recurrence |
 | Medvedev | 500k | 10.799 ms | **21.6 ns** | Controlled PyO3 batch; slow-calcium first-return map |
@@ -457,7 +457,7 @@ source hashes, and numerical boundaries are in
 The corrected Ibarz-Tanaka row supersedes the earlier rational/linear-kernel
 Criterion result. It comes from the 21-call controlled parity artefact at
 `I=0.2`, where all five lanes report 33 source reset events over 1,000
-iterations. Rust's median is 0.079827 ms; the recorded process is CPU-pinned,
+iterations. Rust's median is 0.083427 ms; the recorded process is CPU-pinned,
 but the host is loaded and has no kernel-isolated CPU set. Source hashes and
 the complete environment are in
 `benchmarks/results/bench_ibarz_tanaka_map.json`.

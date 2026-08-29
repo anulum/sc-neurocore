@@ -54,6 +54,25 @@ def test_request_validation() -> None:
         neuron.simulate(1, backend="cuda")
 
 
+def test_float_coercible_current_is_normalized_once() -> None:
+    """Every backend receives the same validated binary64 current value."""
+
+    class Current:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def __float__(self) -> float:
+            self.calls += 1
+            return 0.2
+
+    current = Current()
+    neuron = IbarzTanakaMapNeuron()
+    trace, events = neuron.simulate(10, current, backend="python")  # type: ignore[arg-type]
+    assert current.calls == 1
+    assert trace.shape == (10,)
+    assert events == 1
+
+
 def test_reset_restores_only_the_source_initial_state() -> None:
     """Reset preserves parameters while restoring the published state placement."""
     neuron = IbarzTanakaMapNeuron(alpha=0.95)

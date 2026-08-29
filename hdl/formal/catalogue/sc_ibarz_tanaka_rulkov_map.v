@@ -55,7 +55,7 @@ always @(posedge clk or negedge rst_n) begin
         u_out <= 32'sd4294960742;
         spike_out <= 1'b0;
     end else begin
-        if ((v_reg >= ((32'sd65536 + I_t) + u_reg))) begin
+        if ((32'sd0 < v_reg) && (v_reg >= ((32'sd65536 + I_t) + u_reg))) begin
             spike_out <= 1'b1;
             v_reg <= v_next;
             v_out <= v_next;

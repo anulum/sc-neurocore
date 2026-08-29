@@ -61,8 +61,10 @@ cd hdl/formal/catalogue
 sby -f sc_medvedev_map.sby
 ```
 
-The Ibarz-Tanaka job is also Q16.16: the source timescale `mu=0.001`
-quantises to zero in Q8.8. Its depth-4 Z3 job is:
+The Ibarz-Tanaka analysis-profile job is also Q16.16: the source timescale
+`mu=0.001` quantises to zero in Q8.8. Its depth-4 Z3 job proves that the public
+event output exactly matches the ordered fourth-branch guard
+`v>0 && v>=1+I+u`, and that every such event commits `v=-1`:
 
 ```bash
 sby -f sc_ibarz_tanaka_rulkov_map.sby

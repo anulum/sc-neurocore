@@ -1,0 +1,26 @@
+{
+  "model": "IbarzTanakaMapNeuron",
+  "compatibility_identity": "Ibarz-Tanaka analysis profile of the Shilnikov-Rulkov map",
+  "equation_origin": {
+    "citation": "doi:10.1016/j.physleta.2004.05.062",
+    "authors": "A. L. Shilnikov and N. F. Rulkov",
+    "equations": "x_next=f_alpha(x,y+beta); y_next=y-mu*(x+1-sigma), with the constant, parabolic, plateau, and fixed -1 reset branches"
+  },
+  "analysis_profile": {
+    "citation": "doi:10.1103/PhysRevE.75.041902",
+    "authors": "B. Ibarz, G. Tanaka, M. A. F. Sanjuan, and K. Aihara",
+    "equations": "Eqs. 2-3",
+    "parameters": {"alpha": 1.0, "mu": 0.001, "sigma": 0.1, "Iv": 0.0},
+    "initial_state": {"v": -1.0, "u": -0.1}
+  },
+  "drive": {"current": 0.0, "steps": 1000},
+  "event_convention": "one event only when v>0 and the pre-step state executes the fixed -1 fourth branch; an upper guard below v does not override either earlier v<=0 branch",
+  "oracle": {
+    "events": 9,
+    "first_event_index": 394,
+    "final_state": {"v": -0.8454679433223471, "u": 0.0031285392461751927},
+    "state_trace_sha256": "9fef084b57a3f0feb47e5a9c33a75412f21eec7d390721062729ca86f6ef03cb",
+    "event_trace_sha256": "03426e93a747f0dbb30b57bc5fb525b0c5018d74da5537a424719390575ce68f"
+  },
+  "encoding": "1000 row-major pairs of little-endian float64 post-step (v,u), plus 1000 uint8 reset-branch event values"
+}

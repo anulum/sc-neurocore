@@ -101,3 +101,17 @@ def test_production_rust_backend_is_exactly_the_installed_extension() -> None:
     np.testing.assert_array_equal(rust_trace, python_trace)
     assert rust_events == python_events
     assert (rust_neuron.v, rust_neuron.u) == (python_neuron.v, python_neuron.u)
+
+
+def test_direct_binding_rejects_invalid_input() -> None:
+    with pytest.raises(FloatingPointError, match="invalid Ibarz-Tanaka"):
+        extension.py_ibarz_tanaka_map_simulate(-1.0, -0.1, 1.0, 0.001, 0.1, 4, np.nan)
+
+
+def test_network_runner_executes_the_distinct_map_identity() -> None:
+    assert "IbarzTanakaMap" in extension.NetworkRunner.supported_models()
+    runner = extension.NetworkRunner()
+    population = runner.add_population("IbarzTanakaMap", 1)
+    result = runner.step_population(population, np.array([0.2], dtype=np.float64))
+    assert result["spikes"].tolist() == [0]
+    assert result["voltages"].tolist() == [-0.9]

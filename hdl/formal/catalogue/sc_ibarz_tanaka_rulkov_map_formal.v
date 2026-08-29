@@ -30,10 +30,43 @@ module sc_ibarz_tanaka_rulkov_map_formal (
     );
 
 `ifdef FORMAL
-    // Minimal safety: async reset clears the spike flag.
+    reg past_valid = 1'b0;
+    initial assume (!rst_n);
+    always @(posedge clk) begin
+        if (!past_valid)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        past_valid <= 1'b1;
+    end
+
+    // The generated asynchronous reset restores the source profile's exact
+    // Q16.16 state and clears the event output.
     always @(*) begin
-        if (!rst_n)
+        if (!rst_n) begin
             assert (spike_out == 1'b0);
+            assert ($signed(v_out) == -32'sd65536);
+            assert ($signed(u_out) == -32'sd6554);
+        end
+    end
+
+    // At a committed cycle, the public event output is exactly the previous
+    // pre-state fourth-branch guard. Executing that branch commits v=-1.
+    always @(posedge clk) begin
+        if (past_valid && rst_n && $past(rst_n)) begin
+            assert (
+                spike_out
+                == (
+                    ($signed($past(v_out)) > 32'sd0)
+                    && (
+                        $signed($past(v_out))
+                        >= ((32'sd65536 + $signed($past(I_t))) + $signed($past(u_out)))
+                    )
+                )
+            );
+            if (spike_out)
+                assert ($signed(v_out) == -32'sd65536);
+        end
     end
 `endif
 

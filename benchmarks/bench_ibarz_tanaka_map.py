@@ -24,6 +24,7 @@ import os
 import platform
 import shutil
 import statistics
+import struct
 import subprocess
 import time
 from pathlib import Path
@@ -44,13 +45,18 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_ibarz_tanaka_map.py",
     "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/ibarz_tanaka_map.rs",
     "engine/src/neurons/ibarz_tanaka_map.rs",
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go",
     "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h",
     "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl",
     "src/sc_neurocore/accel/mojo/neurons/ibarz_tanaka_map.mojo",
     "src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map.rs",
+    "src/sc_neurocore/neurons/model_descriptors/IbarzTanakaMapNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.json",
+    "src/sc_neurocore/neurons/model_schemas/ibarz_tanaka_map.toml",
     "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py",
+    "src/sc_neurocore/neurons/reference_receipts/ibarz_tanaka_shilnikov_rulkov.json",
 )
 
 
@@ -216,6 +222,7 @@ def main(argv: list[str]) -> int:
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
     reference_events: int | None = None
+    reference_final_state: tuple[float, float] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
@@ -230,11 +237,26 @@ def main(argv: list[str]) -> int:
             reference = trace
             reference_ms = median_ms
             reference_events = events
+            reference_final_state = (final_v, final_u)
             parity = 0.0
+            final_state_difference = 0.0
         else:
-            if reference is None or reference_ms is None or reference_events is None:
+            if (
+                reference is None
+                or reference_ms is None
+                or reference_events is None
+                or reference_final_state is None
+            ):
                 raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference)))
+            final_state_difference = max(
+                abs(final_v - reference_final_state[0]),
+                abs(final_u - reference_final_state[1]),
+            )
+        tolerance = 1.5e-8 if backend == "mojo" else 0.0
+        packet = np.asarray(trace, dtype="<f8").tobytes(order="C") + struct.pack(
+            "<qdd", events, final_v, final_u
+        )
         rows[backend] = {
             "available": True,
             "used": True,
@@ -247,6 +269,20 @@ def main(argv: list[str]) -> int:
                 True if reference_events is None else events == reference_events
             ),
             "final_state": {"v": final_v, "u": final_u},
+            "final_state_max_abs_diff": final_state_difference,
+            "trace_sha256": hashlib.sha256(
+                np.asarray(trace, dtype="<f8").tobytes(order="C")
+            ).hexdigest(),
+            "output_packet_sha256": hashlib.sha256(packet).hexdigest(),
+            "output_packet_encoding": (
+                "little-endian float64 post-step v trace, int64 event count, "
+                "float64 final v, float64 final u"
+            ),
+            "parity_passed": (
+                parity <= tolerance
+                and final_state_difference <= tolerance
+                and (reference_events is None or events == reference_events)
+            ),
         }
 
     measured_order = sorted(
@@ -260,7 +296,10 @@ def main(argv: list[str]) -> int:
             "n_steps": N_STEPS,
             "repeats": N_REPEATS,
             "current": CURRENT,
-            "parameters": "Ibarz et al. 2007 Eqs. 2-3 defaults; committed parity horizon",
+            "parameters": (
+                "Shilnikov-Rulkov 2004 map; Ibarz et al. 2007 Eqs. 2-3 "
+                "analysis-profile defaults; committed parity horizon"
+            ),
         },
         "meta": _environment(load_start),
         "backends": rows,
@@ -282,7 +321,7 @@ def main(argv: list[str]) -> int:
     print(f"Measured order: {', '.join(measured_order)}")
     print(f"Wrote {args.json}")
 
-    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+    if any(not bool(row.get("parity_passed", True)) for row in rows.values()):
         return 3
     return 0
 
