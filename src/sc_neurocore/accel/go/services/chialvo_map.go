@@ -84,25 +84,42 @@ func (state *ChialvoMapNeuronState) Step(current float64) (int, error) {
 	return 0, nil
 }
 
-// Simulate runs checked iterations and leaves the final state in the receiver.
+// SimulateComplete runs a failure-atomic batch and returns both state traces.
+func (state *ChialvoMapNeuronState) SimulateComplete(
+	nSteps int,
+	current float64,
+) ([]float64, []float64, int64, error) {
+	if nSteps < 0 {
+		return nil, nil, 0, errors.New("nSteps must be non-negative")
+	}
+	if !ValidateChialvoMap(state) || !finiteChialvoMap(current) {
+		return nil, nil, 0, errors.New("invalid Chialvo map batch input")
+	}
+	candidate := *state
+	xTrace := make([]float64, nSteps)
+	yTrace := make([]float64, nSteps)
+	var spikes int64
+	for index := range xTrace {
+		spiked, err := candidate.Step(current)
+		if err != nil {
+			return nil, nil, 0, err
+		}
+		xTrace[index] = candidate.X
+		yTrace[index] = candidate.Y
+		spikes += int64(spiked)
+	}
+	state.X = candidate.X
+	state.Y = candidate.Y
+	return xTrace, yTrace, spikes, nil
+}
+
+// Simulate runs the complete checked batch and returns its fast-state trace.
 func (state *ChialvoMapNeuronState) Simulate(
 	nSteps int,
 	current float64,
 ) ([]float64, int64, error) {
-	if nSteps < 0 {
-		return nil, 0, errors.New("nSteps must be non-negative")
-	}
-	trace := make([]float64, nSteps)
-	var spikes int64
-	for index := range trace {
-		spiked, err := state.Step(current)
-		if err != nil {
-			return nil, 0, err
-		}
-		trace[index] = state.X
-		spikes += int64(spiked)
-	}
-	return trace, spikes, nil
+	xTrace, _, spikes, err := state.SimulateComplete(nSteps, current)
+	return xTrace, spikes, err
 }
 
 // Reset restores state variables while preserving configured parameters.

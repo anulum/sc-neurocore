@@ -26,7 +26,7 @@ def test_import_without_rust_extension_keeps_python_floor(
     real_import = importlib.import_module
 
     def import_without_engine(name: str, package: str | None = None) -> object:
-        if name == "sc_neurocore_engine":
+        if name == "sc_neurocore_engine.sc_neurocore_engine":
             raise ImportError("extension absent")
         return real_import(name, package)
 
@@ -97,7 +97,7 @@ def test_compiled_error_sentinel_becomes_floating_point_error(
             return -1
 
     class RejectingLibrary:
-        chialvo_map_simulate_c = RejectingFunction()
+        chialvo_map_simulate_complete_c = RejectingFunction()
 
     monkeypatch.setattr(chialvo_map, "_backend_available", lambda _name: True)
     monkeypatch.setattr(chialvo_map, "_mojo_lib", RejectingLibrary())

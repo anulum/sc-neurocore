@@ -11,6 +11,10 @@
 from __future__ import annotations
 
 import math
+import hashlib
+import json
+import struct
+from pathlib import Path
 
 import pytest
 
@@ -58,6 +62,31 @@ def _independent_features(*, current: float, steps: int) -> dict[str, float]:
     }
 
 
+def _independent_receipt(*, current: float, steps: int) -> dict[str, object]:
+    """Derive byte-level state and event evidence without production code."""
+    x = y = 0.0
+    state_bytes = bytearray()
+    event_bytes = bytearray()
+    first_event: int | None = None
+    for index in range(steps):
+        x_previous = x
+        x_next = x * x * math.exp(y - x) + 0.04 + current
+        y_next = 0.89 * y - 0.6 * x + 0.28
+        x, y = x_next, y_next
+        event = int(x_previous < 1.0 <= x)
+        if event and first_event is None:
+            first_event = index
+        state_bytes.extend(struct.pack("<dd", x, y))
+        event_bytes.append(event)
+    return {
+        "events": sum(event_bytes),
+        "first_event_index_zero_based": first_event,
+        "final_state": {"x": x, "y": y},
+        "state_trace_sha256": hashlib.sha256(state_bytes).hexdigest(),
+        "event_trace_sha256": hashlib.sha256(event_bytes).hexdigest(),
+    }
+
+
 def test_features_match_independent_source_iteration() -> None:
     """Committed features must match a fresh Eq. 1 re-derivation."""
     spec = load_reference_trace_spec("chialvo_map_doi")
@@ -82,3 +111,14 @@ def test_committed_trace_validates_through_schema_runner() -> None:
     report = validate_reference_trace_spec(spec)
     assert report.passed
     assert report.mismatches == ()
+
+
+def test_full_state_and_event_receipt_matches_independent_iteration() -> None:
+    receipt_path = (
+        Path(__file__).resolve().parents[1]
+        / "src/sc_neurocore/neurons/reference_receipts/chialvo_1995.json"
+    )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["equation_origin"]["citation"] == "doi:10.1016/0960-0779(93)E0056-H"
+    expected = _independent_receipt(**receipt["drive"])
+    assert receipt["oracle"] == expected

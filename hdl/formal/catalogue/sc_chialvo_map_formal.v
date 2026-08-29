@@ -8,8 +8,7 @@
 
 `default_nettype none
 
-// Formal wrapper for equation-compiler RTL of a dual-axis perfect model.
-// Properties use only public ports so default_nettype none stays clean.
+// Formal wrapper for equation-compiler RTL of the Q8.8 Chialvo map.
 module sc_chialvo_map_formal (
     input wire clk,
     input wire rst_n,
@@ -30,11 +29,42 @@ module sc_chialvo_map_formal (
     );
 
 `ifdef FORMAL
-    // Minimal safety: async reset clears the spike flag.
+    reg past_valid = 1'b0;
+    initial assume (!rst_n);
+    always @(posedge clk) begin
+        if (!past_valid)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        past_valid <= 1'b1;
+    end
+
+    // The generated asynchronous reset clears both public states and the
+    // maintained event output.
     always @(*) begin
-        if (!rst_n)
+        if (!rst_n) begin
             assert (spike_out == 1'b0);
+            assert ($signed(x_out) == 16'sd0);
+            assert ($signed(y_out) == 16'sd0);
+        end
+    end
+
+    // At every committed cycle the event output is exactly the maintained
+    // upward crossing of the public fast-variable state at Q8.8 threshold 1.
+    always @(posedge clk) begin
+        if (past_valid && rst_n && $past(rst_n)) begin
+            assert (
+                spike_out
+                == (
+                    ($signed($past(x_out)) < 16'sd256)
+                    && ($signed(x_out) >= 16'sd256)
+                )
+            );
+        end
+        cover (past_valid && rst_n && spike_out);
     end
 `endif
 
 endmodule
+
+`default_nettype wire

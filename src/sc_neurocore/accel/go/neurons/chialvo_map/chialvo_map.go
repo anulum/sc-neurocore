@@ -47,13 +47,44 @@ func chialvo_map_simulate_c(
 	}
 	xTrace, spikes, err := state.Simulate(n, float64(current))
 	if err != nil {
-		trace[n] = state.X
-		trace[n+1] = state.Y
 		return -1
 	}
 	copy(trace, xTrace)
 	trace[n] = state.X
 	trace[n+1] = state.Y
+	return C.longlong(spikes)
+}
+
+// chialvo_map_simulate_complete_c writes aligned post-step x and y traces,
+// then returns the maintained event count. Neither output buffer is modified
+// when validation or any candidate step fails.
+//
+//export chialvo_map_simulate_complete_c
+func chialvo_map_simulate_complete_c(
+	x0, y0, a, b, c, k, xThreshold C.double,
+	nSteps C.int,
+	current C.double,
+	xTracePointer *C.double,
+	yTracePointer *C.double,
+) C.longlong {
+	n := int(nSteps)
+	if n < 0 || xTracePointer == nil || yTracePointer == nil {
+		return -1
+	}
+	state := &services.ChialvoMapNeuronState{
+		X: float64(x0), Y: float64(y0), A: float64(a), B: float64(b),
+		C: float64(c), K: float64(k), XThreshold: float64(xThreshold),
+	}
+	xTrace, yTrace, spikes, err := state.SimulateComplete(n, float64(current))
+	if err != nil {
+		return -1
+	}
+	xOutput := unsafe.Slice((*float64)(unsafe.Pointer(xTracePointer)), n+1)
+	yOutput := unsafe.Slice((*float64)(unsafe.Pointer(yTracePointer)), n+1)
+	copy(xOutput, xTrace)
+	copy(yOutput, yTrace)
+	xOutput[n] = state.X
+	yOutput[n] = state.Y
 	return C.longlong(spikes)
 }
 

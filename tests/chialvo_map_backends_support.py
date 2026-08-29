@@ -38,7 +38,13 @@ from sc_neurocore.neurons.models.chialvo_map import ChialvoMapNeuron
 
 Availability = Callable[[], bool]
 
-RunResult = tuple[npt.NDArray[np.float64], int, float, float]
+RunResult = tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    int,
+    float,
+    float,
+]
 
 
 def _rust_available() -> bool:
@@ -78,8 +84,8 @@ def _run(
     y: float = 0.0,
 ) -> RunResult:
     neuron = ChialvoMapNeuron(x=x, y=y)
-    trace, spikes = neuron.simulate(n_steps, current, backend=backend)
-    return trace, spikes, neuron.x, neuron.y
+    x_trace, y_trace, spikes = neuron.simulate_complete(n_steps, current, backend=backend)
+    return x_trace, y_trace, spikes, neuron.x, neuron.y
 
 
 def _assert_source_equation_one_step_envelope(backend: str) -> None:
@@ -92,9 +98,10 @@ def _assert_source_equation_one_step_envelope(backend: str) -> None:
         reference = _run("python", n_steps=1, current=current, x=x, y=y)
         observed = _run(backend, n_steps=1, current=current, x=x, y=y)
         np.testing.assert_allclose(observed[0], reference[0], atol=tolerance, rtol=0.0)
-        assert observed[1] == reference[1]
-        assert observed[2] == pytest.approx(reference[2], abs=tolerance)
+        np.testing.assert_allclose(observed[1], reference[1], atol=tolerance, rtol=0.0)
+        assert observed[2] == reference[2]
         assert observed[3] == pytest.approx(reference[3], abs=tolerance)
+        assert observed[4] == pytest.approx(reference[4], abs=tolerance)
 
 
 def _assert_enrolled_event_counts_and_trace_envelope(backend: str) -> None:
@@ -102,10 +109,11 @@ def _assert_enrolled_event_counts_and_trace_envelope(backend: str) -> None:
         reference = _run("python", current=current)
         observed = _run(backend, current=current)
         tolerance = _TRACE_TOLERANCE[backend]
-        assert observed[1] == reference[1]
+        np.testing.assert_allclose(observed[1], reference[1], atol=tolerance, rtol=0.0)
+        assert observed[2] == reference[2]
         np.testing.assert_allclose(observed[0], reference[0], atol=tolerance, rtol=0.0)
-        assert observed[2] == pytest.approx(reference[2], abs=tolerance)
         assert observed[3] == pytest.approx(reference[3], abs=tolerance)
+        assert observed[4] == pytest.approx(reference[4], abs=tolerance)
 
 
 def _assert_empty_and_single_step_preserve_state_contract(backend: str) -> None:
@@ -114,9 +122,10 @@ def _assert_empty_and_single_step_preserve_state_contract(backend: str) -> None:
         observed = _run(backend, n_steps=n_steps, current=0.01, x=0.2, y=0.7)
         tolerance = _STEP_TOLERANCE[backend]
         np.testing.assert_allclose(observed[0], reference[0], atol=tolerance, rtol=0.0)
-        assert observed[1] == reference[1]
-        assert observed[2] == pytest.approx(reference[2], abs=tolerance)
+        np.testing.assert_allclose(observed[1], reference[1], atol=tolerance, rtol=0.0)
+        assert observed[2] == reference[2]
         assert observed[3] == pytest.approx(reference[3], abs=tolerance)
+        assert observed[4] == pytest.approx(reference[4], abs=tolerance)
 
 
 def _assert_backend_contract(backend: str, available: Availability) -> None:

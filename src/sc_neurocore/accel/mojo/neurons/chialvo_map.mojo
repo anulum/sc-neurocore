@@ -53,12 +53,12 @@ def chialvo_map_simulate_c(
     ):
         return -1
 
-    var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
+    # Validate the complete trajectory before exposing any output. This dry
+    # pass makes the C ABI failure-atomic without allocator ownership crossing
+    # the shared-library boundary.
     var x = x0
     var y = y0
-    var spikes: Int64 = 0
-    for index in range(n_steps):
-        var x_previous = x
+    for _index in range(n_steps):
         var x_squared = x * x
         var exponential = _safe_exp_chialvo(y - x)
         var x_next = x_squared * exponential + k + current
@@ -67,9 +67,81 @@ def chialvo_map_simulate_c(
             return -1
         x = x_next
         y = y_next
+
+    var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
+    x = x0
+    y = y0
+    var spikes: Int64 = 0
+    for index in range(n_steps):
+        var x_previous = x
+        var x_squared = x * x
+        var exponential = _safe_exp_chialvo(y - x)
+        var x_next = x_squared * exponential + k + current
+        var y_next = a * y - b * x + c
+        x = x_next
+        y = y_next
         trace[index] = x
         if x_previous < x_threshold and x >= x_threshold:
             spikes += 1
     trace[n_steps] = x
     trace[n_steps + 1] = y
+    return spikes
+
+
+@export
+def chialvo_map_simulate_complete_c(
+    x0: Float64,
+    y0: Float64,
+    a: Float64,
+    b: Float64,
+    c: Float64,
+    k: Float64,
+    x_threshold: Float64,
+    n_steps: Int,
+    current: Float64,
+    x_trace_addr: Int,
+    y_trace_addr: Int,
+) -> Int64:
+    if n_steps < 0 or x_trace_addr == 0 or y_trace_addr == 0:
+        return -1
+    if (
+        not isfinite(x0)
+        or not isfinite(y0)
+        or not isfinite(a)
+        or not isfinite(b)
+        or not isfinite(c)
+        or not isfinite(k)
+        or not isfinite(x_threshold)
+        or not isfinite(current)
+    ):
+        return -1
+
+    # First pass validates every candidate and leaves caller buffers untouched.
+    var x = x0
+    var y = y0
+    for _index in range(n_steps):
+        var x_next = x * x * _safe_exp_chialvo(y - x) + k + current
+        var y_next = a * y - b * x + c
+        if not isfinite(x_next) or not isfinite(y_next):
+            return -1
+        x = x_next
+        y = y_next
+
+    var x_trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=x_trace_addr)
+    var y_trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=y_trace_addr)
+    x = x0
+    y = y0
+    var spikes: Int64 = 0
+    for index in range(n_steps):
+        var x_previous = x
+        var x_next = x * x * _safe_exp_chialvo(y - x) + k + current
+        var y_next = a * y - b * x + c
+        x = x_next
+        y = y_next
+        x_trace[index] = x
+        y_trace[index] = y
+        if x_previous < x_threshold and x >= x_threshold:
+            spikes += 1
+    x_trace[n_steps] = x
+    y_trace[n_steps] = y
     return spikes

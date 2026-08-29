@@ -26,7 +26,13 @@ def test_auto_uses_measured_first_available_backend(monkeypatch: pytest.MonkeyPa
     def rust_simulate(_neuron: ChialvoMapNeuron, n_steps: int, current: float) -> RunResult:
         assert n_steps == 1
         assert current == 0.0
-        return np.array([0.5], dtype=np.float64), 0, 0.5, 0.0
+        return (
+            np.array([0.5], dtype=np.float64),
+            np.array([0.0], dtype=np.float64),
+            0,
+            0.5,
+            0.0,
+        )
 
     monkeypatch.setattr(chialvo_map, "select_backend_order", order)
     monkeypatch.setattr(chialvo_map, "_backend_available", available)
@@ -43,7 +49,8 @@ def test_auto_python_floor_matches_explicit_python(monkeypatch: pytest.MonkeyPat
     explicit = _run("python", n_steps=100, current=0.01)
     automatic = _run("auto", n_steps=100, current=0.01)
     np.testing.assert_array_equal(automatic[0], explicit[0])
-    assert automatic[1:] == explicit[1:]
+    np.testing.assert_array_equal(automatic[1], explicit[1])
+    assert automatic[2:] == explicit[2:]
 
 
 def test_auto_empty_order_and_loaded_backend_loss_keep_fail_closed(
@@ -65,7 +72,7 @@ def test_auto_empty_order_and_loaded_backend_loss_keep_fail_closed(
         assert trace.shape == (2,)
 
     for backend, attribute in (
-        ("rust", "_rust_simulate"),
+        ("rust", "_rust_simulate_complete"),
         ("julia", "_julia_module"),
         ("go", "_go_lib"),
         ("mojo", "_mojo_lib"),

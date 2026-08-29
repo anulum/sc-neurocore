@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Chialvo map complete-state full-fidelity reclosure
+
+- Bound the DOI-sourced Eq. 1 recurrence to an independent 1,000-step receipt
+  containing complete binary64 `(x,y)` and maintained event digests; the
+  threshold crossing remains explicitly separated from the paper's dynamics.
+- Added failure-atomic complete-state batches across Python, production and
+  safety Rust, Julia, Go, Mojo, and both native C ABIs. PyO3 exports both state
+  traces, NetworkRunner directly exercises the Chialvo identity, and the
+  source-hashed five-runtime benchmark now retains state, event, final-state,
+  and complete output-packet custody.
+- Promoted the honest hardware boundary to H2: Q16.16 co-simulation retains
+  its declared event/state envelope, tracked Q8.8 RTL synthesizes to 117 coarse
+  Yosys cells, and depth-4 Z3 proves exact reset and public upward-crossing
+  event safety. Timing, PPA, device, physical-silicon, and universal numerical
+  equivalence remain open.
+
 ### Ibarz-Tanaka analysis-profile full-fidelity reclosure
 
 - Preserved the public `IbarzTanakaMapNeuron` compatibility identity while

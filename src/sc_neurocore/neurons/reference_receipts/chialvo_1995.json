@@ -1,0 +1,35 @@
+{
+  "model": "ChialvoMapNeuron",
+  "equation_origin": {
+    "citation": "doi:10.1016/0960-0779(93)E0056-H",
+    "author": "D. R. Chialvo",
+    "equation": "Eq. 1: x[n+1]=x[n]^2*exp(y[n]-x[n])+k; y[n+1]=a*y[n]-b*x[n]+c"
+  },
+  "parameters": {
+    "a": 0.89,
+    "b": 0.6,
+    "c": 0.28,
+    "k": 0.04,
+    "x_threshold": 1.0
+  },
+  "initial_state": {
+    "x": 0.0,
+    "y": 0.0
+  },
+  "drive": {
+    "current": 0.0,
+    "steps": 1000
+  },
+  "event_convention": "maintained SC-NeuroCore upward crossing x_previous < x_threshold <= x_next; not attributed to the paper",
+  "oracle": {
+    "events": 26,
+    "first_event_index_zero_based": 32,
+    "final_state": {
+      "x": 1.810925680773745,
+      "y": 0.8788289817995028
+    },
+    "state_trace_sha256": "ccd95d8035517d0684efbc35c60a1e0769954a77f54b77b3aecdf5d8d5352ff4",
+    "event_trace_sha256": "d880d810780b741a48917bd01add4fb16932a26c603c5bd2d6c5da89d24851e0"
+  },
+  "encoding": "1000 row-major pairs of little-endian float64 post-step (x,y), plus 1000 uint8 upward-crossing event values"
+}

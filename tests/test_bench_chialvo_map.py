@@ -47,10 +47,13 @@ def test_committed_evidence_is_complete_source_bound_and_within_parity() -> None
         assert row["available"] is True
         assert row["used"] is True
         assert row["event_count_matches_python"] is True
+        assert row["event_trace_matches_python"] is True
         assert row["final_state_matches_python"] is True
         assert row["parity_atol"] == benchmark.PARITY_ATOL[backend]
         assert row["parity_max_abs_diff"] <= benchmark.PARITY_ATOL[backend]
         assert row["final_state_max_abs_diff"] <= benchmark.PARITY_ATOL[backend]
+        for key in ("state_trace_sha256", "event_trace_sha256", "output_packet_sha256"):
+            assert len(row[key]) == 64
 
 
 def test_unpinned_run_is_rejected_before_measurement(
@@ -97,7 +100,7 @@ def test_explicit_partial_backend_run_is_labelled_diagnostic(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.zeros(4), 1, 0.0, 0.0),
+        lambda _backend: (1.0, 1.0, np.zeros(4), np.zeros(4), 1, 0.0, 0.0),
     )
     output = tmp_path / "diagnostic.json"
     assert benchmark.main(["--json", str(output), "--allow-unavailable-backends"]) == 0
@@ -156,7 +159,7 @@ def test_native_measurement_before_python_reference_is_rejected(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.zeros(4), 1, 0.0, 0.0),
+        lambda _backend: (1.0, 1.0, np.zeros(4), np.zeros(4), 1, 0.0, 0.0),
     )
     output = tmp_path / "unused.json"
     with pytest.raises(RuntimeError, match="Python reference must be measured first"):
@@ -177,12 +180,22 @@ def test_fidelity_failure_is_not_published(
     monkeypatch.setattr(benchmark, "_environment", lambda _load: {})
     monkeypatch.setattr(benchmark, "_source_hashes", lambda: {})
 
-    def measured(backend: str) -> tuple[float, float, np.ndarray, int, float, float]:
+    def measured(
+        backend: str,
+    ) -> tuple[float, float, np.ndarray, np.ndarray, int, float, float]:
         is_failing_backend = backend == "mojo"
         trace_value = 2.0e-6 if is_failing_backend and failure == "trace" else 0.0
         event_count = 2 if is_failing_backend and failure == "event_count" else 1
         x_final = 2.0e-6 if is_failing_backend and failure == "final_state" else 0.0
-        return 1.0, 1.0, np.full(4, trace_value), event_count, x_final, 0.0
+        return (
+            1.0,
+            1.0,
+            np.full(4, trace_value),
+            np.zeros(4),
+            event_count,
+            x_final,
+            0.0,
+        )
 
     monkeypatch.setattr(benchmark, "_measure_backend", measured)
     output = tmp_path / "unused.json"

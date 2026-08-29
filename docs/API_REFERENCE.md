@@ -23411,6 +23411,8 @@ x_threshold : float
   - Advance one simultaneous map iteration.
 - **simulate**(n_steps, current, backend)
   - Advance several map iterations through a selected backend.
+- **simulate_complete**(n_steps, current, backend)
+  - Advance several iterations and expose both dynamical states.
 - **reset**()
   - Restore the two state variables while preserving configured parameters.
 

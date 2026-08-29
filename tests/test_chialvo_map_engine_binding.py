@@ -37,6 +37,22 @@ def _direct(n_steps: int) -> tuple[NDArray[np.float64], int, float, float]:
     return np.asarray(trace, dtype=np.float64), int(spikes), float(x_final), float(y_final)
 
 
+def _direct_complete(
+    n_steps: int,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], int, float, float]:
+    result: tuple[Any, Any, int, float, float] = extension.py_chialvo_map_simulate_complete(
+        0.0, 0.0, 0.89, 0.6, 0.28, 0.04, 1.0, n_steps, 0.0
+    )
+    x_trace, y_trace, spikes, x_final, y_final = result
+    return (
+        np.asarray(x_trace, dtype=np.float64),
+        np.asarray(y_trace, dtype=np.float64),
+        int(spikes),
+        float(x_final),
+        float(y_final),
+    )
+
+
 def test_exported_name_signature_and_top_level_identity_are_stable() -> None:
     function = extension.py_chialvo_map_simulate
 
@@ -45,6 +61,8 @@ def test_exported_name_signature_and_top_level_identity_are_stable() -> None:
     assert function.__text_signature__ == ("(x0, y0, a, b, c, k, x_threshold, n_steps, current)")
     assert engine.py_chialvo_map_simulate is function
     assert "py_chialvo_map_simulate" in engine.__all__
+    complete = extension.py_chialvo_map_simulate_complete
+    assert complete.__text_signature__ == ("(x0, y0, a, b, c, k, x_threshold, n_steps, current)")
 
 
 def test_empty_and_single_step_results_preserve_array_and_state_contracts() -> None:
@@ -58,6 +76,11 @@ def test_empty_and_single_step_results_preserve_array_and_state_contracts() -> N
     np.testing.assert_array_equal(trace, np.array([0.04], dtype=np.float64))
     assert trace.flags.c_contiguous
     assert (spikes, x_final, y_final) == (0, 0.04, 0.28)
+
+    x_trace, y_trace, spikes, x_final, y_final = _direct_complete(2)
+    np.testing.assert_array_equal(x_trace, np.array([0.04, 0.04203399864051425]))
+    np.testing.assert_array_equal(y_trace, np.array([0.28, 0.5052000000000001]))
+    assert (spikes, x_final, y_final) == (0, x_trace[-1], y_trace[-1])
 
 
 @pytest.mark.parametrize(
@@ -112,3 +135,12 @@ def test_production_rust_backend_uses_the_installed_extension() -> None:
     )
     assert rust_spikes == python_spikes
     assert (rust_neuron.x, rust_neuron.y) == (python_neuron.x, python_neuron.y)
+
+
+def test_network_runner_executes_the_distinct_chialvo_identity() -> None:
+    assert "ChialvoMap" in extension.NetworkRunner.supported_models()
+    runner = extension.NetworkRunner()
+    population = runner.add_population("ChialvoMap", 1)
+    result = runner.step_population(population, np.array([0.0], dtype=np.float64))
+    assert result["spikes"].tolist() == [0]
+    assert result["voltages"].tolist() == [0.04]

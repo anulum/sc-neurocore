@@ -1,0 +1,48 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_chialvo_map": {
+         "num_wires":         137,
+         "num_wire_bits":     1987,
+         "num_pub_wires":     34,
+         "num_pub_wire_bits": 583,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         117,
+         "num_cells_by_type": {
+            "$add": 4,
+            "$adff": 3,
+            "$gt": 3,
+            "$le": 1,
+            "$logic_and": 1,
+            "$lt": 4,
+            "$mul": 4,
+            "$mux": 95,
+            "$sub": 2
+         }
+      }
+   },
+      "design": {
+         "num_wires":         137,
+         "num_wire_bits":     1987,
+         "num_pub_wires":     34,
+         "num_pub_wire_bits": 583,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         117,
+         "num_cells_by_type": {
+            "$add": 4,
+            "$adff": 3,
+            "$gt": 3,
+            "$le": 1,
+            "$logic_and": 1,
+            "$lt": 4,
+            "$mul": 4,
+            "$mux": 95,
+            "$sub": 2
+         }
+      }
+}

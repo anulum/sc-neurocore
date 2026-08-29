@@ -48,6 +48,10 @@ _RustSimulate = Callable[
     [float, float, float, float, float, float, float, int, float],
     tuple[list[float], int, float, float],
 ]
+_RustSimulateComplete = Callable[
+    [float, float, float, float, float, float, float, int, float],
+    tuple[list[float], list[float], int, float, float],
+]
 _AUTO_BACKENDS = with_floor("python")
 _BENCHMARK_KERNEL = "chialvo_map_simulate"
 
@@ -56,6 +60,7 @@ class _JuliaResult(Protocol):
     """Shape returned by the Julia ``simulate_trace`` function."""
 
     trace: Any
+    y_trace: Any
     spikes: int
     xf: float
     yf: float
@@ -78,16 +83,22 @@ class _JuliaAccel(Protocol):
     ) -> _JuliaResult: ...
 
 
-def _load_rust_simulate() -> _RustSimulate:
-    engine = importlib.import_module("sc_neurocore_engine")
-    return cast(_RustSimulate, engine.py_chialvo_map_simulate)
+def _load_rust_simulate() -> tuple[_RustSimulate, _RustSimulateComplete]:
+    engine = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
+    return (
+        cast(_RustSimulate, engine.py_chialvo_map_simulate),
+        cast(_RustSimulateComplete, engine.py_chialvo_map_simulate_complete),
+    )
 
 
+_rust_simulate: _RustSimulate | None
+_rust_simulate_complete: _RustSimulateComplete | None
 try:
-    _rust_simulate: _RustSimulate | None = _load_rust_simulate()
+    _rust_simulate, _rust_simulate_complete = _load_rust_simulate()
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _rust_simulate = None
+    _rust_simulate_complete = None
     _HAS_RUST = False
 
 _julia_module: _JuliaAccel | None = None
@@ -140,6 +151,24 @@ def _load_c_backend(path: str, symbol: str, *, mojo: bool) -> ctypes.CDLL | None
             ctypes.POINTER(ctypes.c_double),
         ]
     function.restype = ctypes.c_longlong
+    complete = getattr(lib, "chialvo_map_simulate_complete_c", None)
+    if complete is None:
+        return None
+    if mojo:
+        complete.argtypes = [ctypes.c_double] * 7 + [
+            ctypes.c_int64,
+            ctypes.c_double,
+            ctypes.c_int64,
+            ctypes.c_int64,
+        ]
+    else:
+        complete.argtypes = [ctypes.c_double] * 7 + [
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.POINTER(ctypes.c_double),
+            ctypes.POINTER(ctypes.c_double),
+        ]
+    complete.restype = ctypes.c_longlong
     return lib
 
 
@@ -302,6 +331,21 @@ class ChialvoMapNeuron:
         FloatingPointError
             If a backend rejects a non-finite candidate state.
         """
+        x_trace, _y_trace, spikes = self.simulate_complete(n_steps, current, backend)
+        return x_trace, spikes
+
+    def simulate_complete(
+        self,
+        n_steps: int,
+        current: float = 0.0,
+        backend: str = "auto",
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int]:
+        """Advance several iterations and expose both dynamical states.
+
+        The returned arrays contain aligned post-step ``x`` and ``y`` values.
+        State is committed only after every requested step succeeds, including
+        for compiled backends.
+        """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
         self._validate_runtime()
@@ -316,17 +360,17 @@ class ChialvoMapNeuron:
             raise RuntimeError(self._unavailable_message(selected))
 
         if selected == "rust":
-            trace, spikes, x_final, y_final = self._simulate_rust(n_steps, drive)
+            x_trace, y_trace, spikes, x_final, y_final = self._simulate_rust(n_steps, drive)
         elif selected == "julia":
-            trace, spikes, x_final, y_final = self._simulate_julia(n_steps, drive)
+            x_trace, y_trace, spikes, x_final, y_final = self._simulate_julia(n_steps, drive)
         elif selected == "go":
-            trace, spikes, x_final, y_final = self._simulate_go(n_steps, drive)
+            x_trace, y_trace, spikes, x_final, y_final = self._simulate_go(n_steps, drive)
         elif selected == "mojo":
-            trace, spikes, x_final, y_final = self._simulate_mojo(n_steps, drive)
+            x_trace, y_trace, spikes, x_final, y_final = self._simulate_mojo(n_steps, drive)
         else:
-            trace, spikes, x_final, y_final = self._simulate_python(n_steps, drive)
+            x_trace, y_trace, spikes, x_final, y_final = self._simulate_python(n_steps, drive)
         self.x, self.y = x_final, y_final
-        return trace, spikes
+        return x_trace, y_trace, spikes
 
     @staticmethod
     def _unavailable_message(backend: str) -> str:
@@ -344,23 +388,25 @@ class ChialvoMapNeuron:
 
     def _simulate_python(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
-        trace: npt.NDArray[np.float64] = np.empty(n_steps, dtype=np.float64)
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
+        x_trace: npt.NDArray[np.float64] = np.empty(n_steps, dtype=np.float64)
+        y_trace: npt.NDArray[np.float64] = np.empty(n_steps, dtype=np.float64)
         x, y = self.x, self.y
         spikes = 0
         for index in range(n_steps):
             x_previous = x
             x, y = self._candidate(x, y, current)
-            trace[index] = x
+            x_trace[index] = x
+            y_trace[index] = y
             spikes += int(x_previous < self.x_threshold <= x)
-        return trace, spikes, x, y
+        return x_trace, y_trace, spikes, x, y
 
     def _simulate_rust(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
-        if _rust_simulate is None:
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
+        if _rust_simulate_complete is None:
             raise RuntimeError(self._unavailable_message("rust"))
-        trace, spikes, x_final, y_final = _rust_simulate(
+        x_trace, y_trace, spikes, x_final, y_final = _rust_simulate_complete(
             self.x,
             self.y,
             self.a,
@@ -371,11 +417,17 @@ class ChialvoMapNeuron:
             n_steps,
             current,
         )
-        return np.asarray(trace, dtype=np.float64), int(spikes), float(x_final), float(y_final)
+        return (
+            np.asarray(x_trace, dtype=np.float64),
+            np.asarray(y_trace, dtype=np.float64),
+            int(spikes),
+            float(x_final),
+            float(y_final),
+        )
 
     def _simulate_julia(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
         if _julia_module is None:
             raise RuntimeError(self._unavailable_message("julia"))
         result = _julia_module.simulate_trace(
@@ -391,6 +443,7 @@ class ChialvoMapNeuron:
         )
         return (
             np.asarray(result.trace, dtype=np.float64),
+            np.asarray(result.y_trace, dtype=np.float64),
             int(result.spikes),
             float(result.xf),
             float(result.yf),
@@ -398,14 +451,14 @@ class ChialvoMapNeuron:
 
     def _simulate_go(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
         if _go_lib is None:
             raise RuntimeError(self._unavailable_message("go"))
         return self._simulate_c(_go_lib, n_steps, current, mojo=False)
 
     def _simulate_mojo(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
         if _mojo_lib is None:
             raise RuntimeError(self._unavailable_message("mojo"))
         return self._simulate_c(_mojo_lib, n_steps, current, mojo=True)
@@ -417,8 +470,9 @@ class ChialvoMapNeuron:
         current: float,
         *,
         mojo: bool,
-    ) -> tuple[npt.NDArray[np.float64], int, float, float]:
-        trace: npt.NDArray[np.float64] = np.empty(n_steps + 2, dtype=np.float64)
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
+        x_trace: npt.NDArray[np.float64] = np.empty(n_steps + 1, dtype=np.float64)
+        y_trace: npt.NDArray[np.float64] = np.empty(n_steps + 1, dtype=np.float64)
         args: list[Any] = [
             self.x,
             self.y,
@@ -431,17 +485,23 @@ class ChialvoMapNeuron:
             current,
         ]
         if mojo:
-            args.append(int(trace.ctypes.data))
+            args.extend((int(x_trace.ctypes.data), int(y_trace.ctypes.data)))
         else:
-            args.append(trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-        spikes = int(library.chialvo_map_simulate_c(*args))
+            args.extend(
+                (
+                    x_trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                    y_trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                )
+            )
+        spikes = int(library.chialvo_map_simulate_complete_c(*args))
         if spikes < 0:
             raise FloatingPointError("Chialvo compiled backend rejected the candidate state")
         return (
-            np.ascontiguousarray(trace[:n_steps]),
+            np.ascontiguousarray(x_trace[:n_steps]),
+            np.ascontiguousarray(y_trace[:n_steps]),
             spikes,
-            float(trace[n_steps]),
-            float(trace[n_steps + 1]),
+            float(x_trace[n_steps]),
+            float(y_trace[n_steps]),
         )
 
     def reset(self) -> None:

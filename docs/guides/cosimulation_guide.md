@@ -239,9 +239,11 @@ The exponential LUT phase-shifts four event positions at `I=0` and six at
 oscillatory trajectory identity are therefore explicit exclusions rather than
 hidden inside a loose tolerance.
 
-The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
-Its depth-4 SymbiYosys/Z3 job proves the bounded reset/spike safety property;
-the Q16.16 operating set remains the behavioural evidence.
+The S5/H2 closure adds a tracked Q8.8 formal-catalogue core and a 117-cell
+coarse-synthesis receipt. Its depth-4 SymbiYosys/Z3 job proves exact reset
+state and the maintained upward-crossing relation on public ports; the Q16.16
+operating set remains the behavioural evidence. Timing, PPA, device, physical
+silicon, and universal float64 equivalence remain outside the claim.
 
 ### Aihara map Q8.24 bounded chaotic shadowing
 

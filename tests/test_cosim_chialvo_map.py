@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import tempfile
@@ -21,6 +22,7 @@ from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from tests.cosim_support import HAS_IVERILOG
 
 SCHEMA_DIRECTORY = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
+REPOSITORY = Path(__file__).resolve().parents[1]
 TraceRow = tuple[int, float, float]
 _CURRENTS = (-0.05, 0.0, 0.01, 0.1, 1.0)
 _EXPECTED_EVENTS = {-0.05: 0, 0.0: 2, 0.01: 3, 0.1: 0, 1.0: 1}
@@ -160,3 +162,16 @@ def test_q1616_oscillatory_event_timing_is_declared_boundary() -> None:
             for expected, observed in zip(hand_trace, rtl_trace, strict=True)
         )
         assert mismatches == expected_count
+
+
+def test_committed_yosys_report_proves_nontrivial_coarse_synthesis() -> None:
+    report = json.loads(
+        (REPOSITORY / "hdl/reports/yosys_chialvo_map_q1616_2026-08-30.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    module = report["modules"]["\\sc_chialvo_map"]
+    assert module["num_processes"] == 0
+    assert module["num_cells"] == 117
+    assert module["num_cells_by_type"]["$adff"] == 3
+    assert module["num_cells_by_type"]["$mul"] == 4

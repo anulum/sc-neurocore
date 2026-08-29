@@ -28,6 +28,38 @@ def test_invalid_batch_arguments_and_mutable_configuration_rejected() -> None:
         neuron.simulate(1)
 
 
+def test_complete_python_batch_is_failure_atomic() -> None:
+    neuron = ChialvoMapNeuron(x=1.0e308, y=0.0)
+    initial = (neuron.x, neuron.y)
+    with pytest.raises(FloatingPointError, match="candidate state"):
+        neuron.simulate_complete(2, backend="python")
+    assert (neuron.x, neuron.y) == initial
+
+
+@pytest.mark.parametrize("backend", ("go", "mojo"))
+def test_complete_c_abi_failure_leaves_output_buffers_untouched(backend: str) -> None:
+    available = _go_available if backend == "go" else _mojo_available
+    _require(backend, available)
+    library = chialvo_map._go_lib if backend == "go" else chialvo_map._mojo_lib
+    assert library is not None
+    x_output = np.full(3, 17.0, dtype=np.float64)
+    y_output = np.full(3, -23.0, dtype=np.float64)
+    arguments: list[object] = [0.0, 0.0, 0.89, 0.6, 0.28, 0.04, 1.0, 2, 1.0e308]
+    if backend == "go":
+        arguments.extend(
+            (
+                x_output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                y_output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            )
+        )
+    else:
+        arguments.extend((int(x_output.ctypes.data), int(y_output.ctypes.data)))
+    result = library.chialvo_map_simulate_complete_c(*arguments)
+    assert result == -1
+    np.testing.assert_array_equal(x_output, np.full(3, 17.0))
+    np.testing.assert_array_equal(y_output, np.full(3, -23.0))
+
+
 def test_reset_preserves_configuration() -> None:
     neuron = ChialvoMapNeuron(a=0.8, b=0.4, c=0.2, k=0.03, x_threshold=0.75)
     neuron.step(0.01)

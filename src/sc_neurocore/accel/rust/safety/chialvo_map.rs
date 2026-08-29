@@ -58,19 +58,36 @@ impl ChialvoMapNeuron {
         ))
     }
 
+    /// Run checked iterations and return both state traces.
+    ///
+    /// The receiver is updated only after every candidate succeeds.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, Vec<f64>, i64), &'static str> {
+        let mut candidate = self.clone();
+        let mut x_trace = Vec::with_capacity(n_steps);
+        let mut y_trace = Vec::with_capacity(n_steps);
+        let mut spikes = 0_i64;
+        for _ in 0..n_steps {
+            spikes += i64::from(candidate.step(current)?);
+            x_trace.push(candidate.x);
+            y_trace.push(candidate.y);
+        }
+        self.x = candidate.x;
+        self.y = candidate.y;
+        Ok((x_trace, y_trace, spikes))
+    }
+
     /// Run checked iterations, leaving the final state in this instance.
     pub fn simulate(
         &mut self,
         n_steps: usize,
         current: f64,
     ) -> Result<(Vec<f64>, i64), &'static str> {
-        let mut trace = Vec::with_capacity(n_steps);
-        let mut spikes = 0_i64;
-        for _ in 0..n_steps {
-            spikes += i64::from(self.step(current)?);
-            trace.push(self.x);
-        }
-        Ok((trace, spikes))
+        let (x_trace, _y_trace, spikes) = self.simulate_complete(n_steps, current)?;
+        Ok((x_trace, spikes))
     }
 
     /// Restore only state variables; preserve configured parameters.
@@ -163,5 +180,19 @@ mod tests {
             (state.a, state.b, state.c, state.k, state.x_threshold),
             (0.8, 0.4, 0.2, 0.03, 0.75)
         );
+    }
+
+    #[test]
+    fn checked_batch_is_atomic_and_returns_complete_state() {
+        let mut state = ChialvoMapNeuron::default();
+        let initial = (state.x, state.y);
+        assert!(state.simulate_complete(2, 1.0e308).is_err());
+        assert_eq!((state.x, state.y), initial);
+
+        let (x_trace, y_trace, events) = state
+            .simulate_complete(3, 0.0)
+            .expect("finite source regime");
+        assert_eq!((x_trace.len(), y_trace.len(), events), (3, 3, 0));
+        assert_eq!((state.x, state.y), (x_trace[2], y_trace[2]));
     }
 }

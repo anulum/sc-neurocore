@@ -71,12 +71,14 @@ function simulate_trace(
     state = ChialvoMapNeuronState(x0, y0, a, b, c, k, x_threshold)
     validate(state) || throw(ArgumentError("invalid Chialvo map configuration"))
     trace = Vector{Float64}(undef, n_steps)
+    y_trace = Vector{Float64}(undef, n_steps)
     spikes = Int64(0)
     for index in eachindex(trace)
         spikes += step!(state, current)
         trace[index] = state.x
+        y_trace[index] = state.y
     end
-    return (; trace, spikes, xf = state.x, yf = state.y)
+    return (; trace, y_trace, spikes, xf = state.x, yf = state.y)
 end
 
 """Run the default Chialvo parameter set for compatibility callers."""

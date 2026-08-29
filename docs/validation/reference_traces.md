@@ -250,7 +250,8 @@ visits every published branch. The former two-state clipped-logistic recurrence 
 count-neutral project receipt and is not substituted into the DOI-backed record. The
 Chialvo entry independently iterates the DOI-sourced exponential two-state map for 100 iterations,
 records two maintained upward crossings with the first at iteration 33, and derives both state
-feature sets without calling the hand model or schema runner. The threshold observation is
+feature sets without calling the hand model or schema runner. Its companion 1,000-step receipt
+SHA-256-binds every post-step `(x,y)` pair and event decision. The threshold observation is
 separated explicitly from the paper's recurrence. The Courbage-Nekorkin entry independently iterates the published three-branch fast map and recovery
 recurrence for 30 autonomous iterations, including the Heaviside discontinuity and upward event
 crossing. It records four events and features for both coordinates without importing the hand model

@@ -15,13 +15,63 @@ use pyo3::types::PyDict;
 
 use crate::neurons::ChialvoMapNeuron;
 
+type CompleteTracePacket<'py> = (
+    Bound<'py, PyArray1<f64>>,
+    Bound<'py, PyArray1<f64>>,
+    i64,
+    f64,
+    f64,
+);
+
 py_neuron_default!("ChialvoMapNeuron", PyChialvoMapNeuron, ChialvoMapNeuron, state x, state y);
 
 /// Register the Chialvo-map class and simulator with the extension module.
 pub(super) fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyChialvoMapNeuron>()?;
     module.add_function(wrap_pyfunction!(py_chialvo_map_simulate, module)?)?;
+    module.add_function(wrap_pyfunction!(py_chialvo_map_simulate_complete, module)?)?;
     Ok(())
+}
+
+/// N-step Chialvo simulation with complete fast and recovery traces.
+///
+/// The returned packet contains post-step `x` and `y` arrays, the maintained
+/// upward-crossing count, and both final states. The underlying engine batch
+/// is failure-atomic.
+#[pyfunction]
+#[pyo3(signature = (x0, y0, a, b, c, k, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_chialvo_map_simulate_complete<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    a: f64,
+    b: f64,
+    c: f64,
+    k: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> PyResult<CompleteTracePacket<'py>> {
+    let mut neuron = ChialvoMapNeuron {
+        x: x0,
+        y: y0,
+        a,
+        b,
+        c,
+        k,
+        x_threshold,
+    };
+    let (x_trace, y_trace, spikes) = neuron
+        .simulate_complete(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((
+        x_trace.into_pyarray(py),
+        y_trace.into_pyarray(py),
+        spikes,
+        neuron.x,
+        neuron.y,
+    ))
 }
 
 /// N-step Chialvo (1995) two-dimensional-map simulation.

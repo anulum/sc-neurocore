@@ -429,18 +429,18 @@ canonical model and accelerator sources and keeps the two identities separate.
 The committed `benchmarks/bench_chialvo_map.py` runs the same
 500,000-iteration recurrence through every production lane. Its recorded
 `benchmarks/results/bench_chialvo_map.json` contains the
-source hashes, toolchain versions, CPU affinity, governor, load, parity, and
-event counts. The 2026-07-11 run was pinned to logical CPU 4 on an Intel
-i5-11600K under the `powersave` governor; the host reported no kernel-isolated
-CPU set.
+source hashes, toolchain versions, CPU affinity, governor, load, complete
+two-state/output-packet digests, parity, final state, and event trace. The
+2026-08-30 run was pinned to logical CPU 4; the exact host conditions remain in
+the machine-readable artefact.
 
 | Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
 |---|---:|---:|---:|---:|
-| Rust | 7.270 ms | 299.30x | `5.195e-12` | 12,935 |
-| Julia | 9.576 ms | 227.22x | `1.736e-12` | 12,935 |
-| Mojo | 11.373 ms | 191.32x | `6.839e-7` | 12,935 |
-| Go | 20.524 ms | 106.01x | `3.542e-12` | 12,935 |
-| Python | 2,175.866 ms | 1.00x | `0` | 12,935 |
+| Rust | 7.896 ms | 458.07x | `5.195e-12` | 12,935 |
+| Julia | 14.446 ms | 250.39x | `1.736e-12` | 12,935 |
+| Mojo | 25.116 ms | 144.02x | `6.839e-7` | 12,935 |
+| Go | 31.117 ms | 116.24x | `3.542e-12` | 12,935 |
+| Python | 3,617.089 ms | 1.00x | `0` | 12,935 |
 
 These timings describe that recorded host and workload. They are used for the
 host-matched fastest-first dispatcher, not presented as portable latency or

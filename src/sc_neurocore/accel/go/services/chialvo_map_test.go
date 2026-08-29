@@ -85,3 +85,25 @@ func TestChialvoSimulationRejectsNegativeLength(t *testing.T) {
 		t.Fatal("expected negative length to fail")
 	}
 }
+
+func TestChialvoCompleteBatchIsAtomic(t *testing.T) {
+	state := NewChialvoMapNeuron()
+	initialX, initialY := state.X, state.Y
+	if _, _, _, err := state.SimulateComplete(2, 1.0e308); err == nil {
+		t.Fatal("expected late candidate overflow")
+	}
+	if state.X != initialX || state.Y != initialY {
+		t.Fatal("failed batch mutated receiver state")
+	}
+
+	xTrace, yTrace, spikes, err := state.SimulateComplete(3, 0.0)
+	if err != nil {
+		t.Fatalf("finite complete batch failed: %v", err)
+	}
+	if len(xTrace) != 3 || len(yTrace) != 3 || spikes != 0 {
+		t.Fatalf("unexpected complete packet: x=%d y=%d spikes=%d", len(xTrace), len(yTrace), spikes)
+	}
+	if state.X != xTrace[2] || state.Y != yTrace[2] {
+		t.Fatal("final state does not match complete traces")
+	}
+}

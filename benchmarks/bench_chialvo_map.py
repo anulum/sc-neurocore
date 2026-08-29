@@ -24,6 +24,7 @@ import os
 import platform
 import shutil
 import statistics
+import struct
 import subprocess
 import time
 from pathlib import Path
@@ -51,13 +52,26 @@ PARITY_ATOL = {
 SOURCE_PATHS = (
     "benchmarks/bench_chialvo_map.py",
     "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/chialvo_map.rs",
     "engine/src/neurons/chialvo_map.rs",
+    "engine/src/network_runner/model_catalogue.rs",
+    "engine/src/network_runner/model_factory.rs",
+    "engine/src/network_runner/neuron_variant.rs",
+    "hdl/formal/catalogue/sc_chialvo_map.sby",
+    "hdl/formal/catalogue/sc_chialvo_map.v",
+    "hdl/formal/catalogue/sc_chialvo_map_formal.v",
+    "hdl/reports/yosys_chialvo_map_q1616_2026-08-30.json",
     "src/sc_neurocore/accel/go/neurons/chialvo_map/chialvo_map.go",
     "src/sc_neurocore/accel/go/services/chialvo_map.go",
     "src/sc_neurocore/accel/julia/neurons/chialvo_map.jl",
     "src/sc_neurocore/accel/mojo/neurons/chialvo_map.mojo",
     "src/sc_neurocore/accel/rust/safety/chialvo_map.rs",
+    "src/sc_neurocore/neurons/model_descriptors/ChialvoMapNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/chialvo_map.json",
+    "src/sc_neurocore/neurons/model_schemas/chialvo_map.toml",
     "src/sc_neurocore/neurons/models/chialvo_map.py",
+    "src/sc_neurocore/neurons/reference_receipts/chialvo_1995.json",
+    "src/sc_neurocore/neurons/reference_trace_data/chialvo_map_doi.json",
 )
 
 
@@ -131,10 +145,19 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, float, float]:
-    ChialvoMapNeuron().simulate(2_000, CURRENT, backend=backend)
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    int,
+    float,
+    float,
+]:
+    ChialvoMapNeuron().simulate_complete(2_000, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
     trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    y_trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     spikes = 0
     x_final = 0.0
     y_final = 0.0
@@ -142,13 +165,14 @@ def _measure_backend(
         gc.collect()
         neuron = ChialvoMapNeuron()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        trace, y_trace, spikes = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         x_final, y_final = neuron.x, neuron.y
     return (
         statistics.median(elapsed_ms),
         min(elapsed_ms),
         trace,
+        y_trace,
         spikes,
         x_final,
         y_final,
@@ -213,9 +237,10 @@ def main(argv: list[str]) -> int:
         return 2
 
     rows: dict[str, dict[str, Any]] = {}
-    reference: npt.NDArray[np.float64] | None = None
+    reference: tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]] | None = None
     reference_ms: float | None = None
     reference_spikes: int | None = None
+    reference_event_trace: npt.NDArray[np.uint8] | None = None
     reference_final: tuple[float, float] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
@@ -226,11 +251,17 @@ def main(argv: list[str]) -> int:
                 "unavailable_reason": reason,
             }
             continue
-        median_ms, minimum_ms, trace, spikes, x_final, y_final = _measure_backend(backend)
+        median_ms, minimum_ms, x_trace, y_trace, spikes, x_final, y_final = _measure_backend(
+            backend
+        )
+        event_trace = (
+            (np.concatenate((np.array([0.0]), x_trace[:-1])) < 1.0) & (x_trace >= 1.0)
+        ).astype(np.uint8)
         if backend == "python":
-            reference = trace
+            reference = (x_trace, y_trace)
             reference_ms = median_ms
             reference_spikes = spikes
+            reference_event_trace = event_trace
             reference_final = (x_final, y_final)
             parity = 0.0
             final_state_delta = 0.0
@@ -242,11 +273,18 @@ def main(argv: list[str]) -> int:
                 or reference_final is None
             ):
                 raise RuntimeError("Python reference must be measured first")
-            parity = float(np.max(np.abs(trace - reference)))
+            parity_x = float(np.max(np.abs(x_trace - reference[0])))
+            parity_y = float(np.max(np.abs(y_trace - reference[1])))
+            parity = max(parity_x, parity_y)
             final_state_delta = max(
                 abs(x_final - reference_final[0]),
                 abs(y_final - reference_final[1]),
             )
+        if backend == "python":
+            parity_x = parity_y = 0.0
+        state_packet = np.column_stack((x_trace, y_trace)).astype("<f8", copy=False)
+        output_packet = state_packet.tobytes(order="C") + event_trace.tobytes(order="C")
+        output_packet += struct.pack("<qdd", spikes, x_final, y_final)
         rows[backend] = {
             "available": True,
             "used": True,
@@ -254,14 +292,28 @@ def main(argv: list[str]) -> int:
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": (reference_ms / median_ms) if reference_ms is not None else 1.0,
             "parity_max_abs_diff": parity,
+            "x_trace_max_abs_diff": parity_x,
+            "y_trace_max_abs_diff": parity_y,
             "parity_atol": PARITY_ATOL[backend],
             "event_count": spikes,
             "event_count_matches_python": (
                 True if reference_spikes is None else spikes == reference_spikes
             ),
+            "event_trace_matches_python": (
+                True
+                if reference_event_trace is None
+                else bool(np.array_equal(event_trace, reference_event_trace))
+            ),
             "final_state": {"x": x_final, "y": y_final},
             "final_state_max_abs_diff": final_state_delta,
             "final_state_matches_python": final_state_delta <= PARITY_ATOL[backend],
+            "state_trace_sha256": hashlib.sha256(state_packet.tobytes(order="C")).hexdigest(),
+            "event_trace_sha256": hashlib.sha256(event_trace.tobytes(order="C")).hexdigest(),
+            "output_packet_sha256": hashlib.sha256(output_packet).hexdigest(),
+            "output_packet_encoding": (
+                "row-major little-endian float64 post-step (x,y), uint8 upward-crossing "
+                "events, then little-endian int64 event count and float64 final (x,y)"
+            ),
         }
 
     measured_order = sorted(
@@ -296,6 +348,7 @@ def main(argv: list[str]) -> int:
         row.get("used") is True
         and (
             not bool(row.get("event_count_matches_python"))
+            or not bool(row.get("event_trace_matches_python"))
             or not bool(row.get("final_state_matches_python"))
             or float(row["parity_max_abs_diff"]) > PARITY_ATOL[backend]
         )
