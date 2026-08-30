@@ -11,7 +11,7 @@ using Test
 include(joinpath(@__DIR__, "neurons", "lapicque.jl"))
 using .LapicqueAccel
 
-@testset "Lapicque source defaults and exact flow" begin
+@testset "Lapicque SC compatibility defaults and exact flow" begin
     state = LapicqueNeuronState()
     @test state.v == 0.0
     @test state.v_threshold == 1.0
@@ -29,6 +29,33 @@ using .LapicqueAccel
     @test step!(state, current) == 0
     @test state.v ≈ expected atol = 1.0e-15
     @test abs(state.v - euler) > 1.0e-4
+end
+
+@testset "Lapicque 1907 source polarization and event latch" begin
+    state = LapicqueAccel.lapicque_1907()
+    @test state.source_profile
+    @test state.dt == 0.01
+    result = simulate_complete(
+        state.v,
+        state.v_rest,
+        state.v_reset,
+        state.v_threshold,
+        state.tau,
+        state.resistance,
+        state.dt,
+        state.capacitance,
+        state.series_resistance,
+        state.polarization_resistance,
+        state.excited,
+        state.source_profile,
+        2000,
+        22.0,
+    )
+    @test sum(result.events) == 1
+    @test findall(!iszero, result.events) == [70]
+    @test result.excited
+    @test result.vf == result.trace[end]
+    @test result.vf ≈ 2.0 * (1.0 - exp(-20.0)) atol = 1.0e-15
 end
 
 @testset "Lapicque event goldens and full contract" begin

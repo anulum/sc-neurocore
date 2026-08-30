@@ -1,25 +1,21 @@
 {
   "schema_version": "sc-neurocore.reference-trace.v1",
-  "name": "lapicque_constant_current_closed_form",
+  "name": "sc_lapicque_lif_constant_current_closed_form",
   "model": {
-    "schema_name": "lapicque",
+    "schema_name": "sc_lapicque_lif",
     "runner": "universal_dsl"
   },
   "protocol": {
     "dt": 0.1,
     "steps": 200,
-    "inputs": {
-      "I": 0.5
-    },
-    "state_variables": [
-      "v"
-    ]
+    "inputs": {"I": 0.5},
+    "state_variables": ["v"]
   },
   "provenance": {
     "kind": "analytic_closed_form",
-    "source": "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
+    "source": "SC-NeuroCore retained project recurrence: src/sc_neurocore/neurons/model_schemas/sc_lapicque_lif.toml",
     "equation": "v(t)=v_inf+(v0-v_inf)*exp(-t/tau), v_inf=v_rest+resistance*I",
-    "citation": "doi:10.1007/s00422-007-0189-6"
+    "citation": "SC-NeuroCore count-neutral compatibility profile"
   },
   "expected_features": {
     "spike_count": 0.0,
@@ -30,17 +26,8 @@
     "mean.v": 0.1847292128256158
   },
   "tolerances": {
-    "default": {
-      "absolute": 1e-12,
-      "relative": 0.0
-    },
-    "spike_count": {
-      "absolute": 0.0,
-      "relative": 0.0
-    },
-    "first_spike_step": {
-      "absolute": 0.0,
-      "relative": 0.0
-    }
+    "default": {"absolute": 1e-12, "relative": 0.0},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
   }
 }

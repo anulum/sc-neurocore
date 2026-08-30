@@ -15,6 +15,11 @@ pub struct LapicqueNeuron {
     pub tau: f64,
     pub resistance: f64,
     pub dt: f64,
+    pub capacitance: f64,
+    pub series_resistance: f64,
+    pub polarization_resistance: f64,
+    pub excited: bool,
+    pub source_profile: bool,
 }
 
 impl LapicqueNeuron {
@@ -27,7 +32,20 @@ impl LapicqueNeuron {
             tau: 20.0_f64,
             resistance: 1.0_f64,
             dt: 1.0_f64,
+            capacitance: 1.1_f64,
+            series_resistance: 10.0_f64,
+            polarization_resistance: 1.0_f64,
+            excited: false,
+            source_profile: false,
         }
+    }
+
+    /// Construct the normalized one-shot Lapicque 1907 polarization profile.
+    pub fn lapicque_1907() -> Self {
+        let mut state = Self::new();
+        state.dt = 0.01;
+        state.source_profile = true;
+        state
     }
 
     pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
@@ -38,15 +56,39 @@ impl LapicqueNeuron {
             return Err("lapicque state must satisfy finite positive-RC threshold contract");
         }
 
-        let v_inf = self.v_rest + self.resistance * i_ext;
-        let decay = (-self.dt / self.tau).exp();
+        let (v_inf, decay) = if self.source_profile {
+            let total_resistance = self.series_resistance + self.polarization_resistance;
+            let beta = self.capacitance
+                * self.series_resistance
+                * self.polarization_resistance
+                / total_resistance;
+            (
+                i_ext * self.polarization_resistance / total_resistance,
+                (-self.dt / beta).exp(),
+            )
+        } else {
+            (
+                self.v_rest + self.resistance * i_ext,
+                (-self.dt / self.tau).exp(),
+            )
+        };
         let next_v = v_inf + (self.v - v_inf) * decay;
         if !v_inf.is_finite() || !decay.is_finite() || !next_v.is_finite() {
             return Err("lapicque voltage candidate must remain finite");
         }
 
+        if self.source_profile {
+            let event = !self.excited && next_v >= self.v_threshold;
+            self.v = next_v;
+            if event {
+                self.excited = true;
+                return Ok(1);
+            }
+            return Ok(0);
+        }
+
         self.v = next_v;
-        if self.v >= self.v_threshold {
+        if next_v >= self.v_threshold {
             self.v = self.v_reset;
             Ok(1)
         } else {
@@ -55,7 +97,8 @@ impl LapicqueNeuron {
     }
 
     pub fn reset(&mut self) {
-        self.v = self.v_rest;
+        self.v = if self.source_profile { 0.0 } else { self.v_rest };
+        self.excited = false;
     }
 }
 
@@ -66,10 +109,26 @@ impl Default for LapicqueNeuron {
 }
 
 pub fn validate_lapicque(state: &LapicqueNeuron) -> bool {
-    state.v.is_finite()
+    let common = state.v.is_finite()
+        && state.v_threshold.is_finite()
+        && state.v_threshold > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0;
+    if !common {
+        return false;
+    }
+    if state.source_profile {
+        return (state.excited || state.v < state.v_threshold)
+            && state.capacitance.is_finite()
+            && state.capacitance > 0.0
+            && state.series_resistance.is_finite()
+            && state.series_resistance > 0.0
+            && state.polarization_resistance.is_finite()
+            && state.polarization_resistance > 0.0;
+    }
+    !state.excited
         && state.v_rest.is_finite()
         && state.v_reset.is_finite()
-        && state.v_threshold.is_finite()
         && state.v_threshold > state.v_rest
         && state.v_threshold > state.v_reset
         && state.v < state.v_threshold
@@ -77,8 +136,6 @@ pub fn validate_lapicque(state: &LapicqueNeuron) -> bool {
         && state.tau > 0.0
         && state.resistance.is_finite()
         && state.resistance > 0.0
-        && state.dt.is_finite()
-        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -167,6 +224,11 @@ mod tests {
             tau: 10.0,
             resistance: 2.0,
             dt: 0.25,
+            capacitance: 1.1,
+            series_resistance: 10.0,
+            polarization_resistance: 1.0,
+            excited: false,
+            source_profile: false,
         };
         state.reset();
         assert_eq!(state.v, -0.25);
@@ -175,5 +237,19 @@ mod tests {
         assert_eq!(state.tau, 10.0);
         assert_eq!(state.resistance, 2.0);
         assert_eq!(state.dt, 0.25);
+    }
+
+    #[test]
+    fn test_source_profile_matches_equation_and_latches_once() {
+        let mut state = LapicqueNeuron::lapicque_1907();
+        let mut events = 0;
+        for _ in 0..200 {
+            events += state.step(22.0).expect("source step must succeed");
+        }
+        assert_eq!(events, 1);
+        assert!(state.excited);
+        assert!(state.v > state.v_threshold);
+        state.reset();
+        assert_eq!((state.v, state.excited), (0.0, false));
     }
 }

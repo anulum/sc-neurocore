@@ -48,7 +48,8 @@ and event-hash fields into the deterministic trace schema.
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
-| `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Independent exact constant-current RC solution with provenance bound to the 2007 English translation of Lapicque (1907), DOI `10.1007/s00422-007-0189-6` |
+| `lapicque_1907_constant_voltage_closed_form` | `lapicque` | `universal_dsl` | Independent exact source-voltage polarization solution and first-attainment latch, bound to the 2007 English translation of Lapicque (1907) |
+| `sc_lapicque_lif_constant_current_closed_form` | `sc_lapicque_lif` | `universal_dsl` | Count-neutral retained SC exact-flow hard-reset LIF trace without publication attribution |
 | `mcculloch_pitts_1943_truth_table` | `mcculloch_pitts` | `universal_dsl` | Independent all-or-none excitatory-count rule from McCulloch and Pitts (1943): fixed positive threshold, absolute inhibitory veto, no fabricated cell state, and a network-scoped one-synaptic-delay boundary; the eight canonical source rows are SHA-256 pinned |
 | `sc_triangular_mckean_project` | `sc_triangular_mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the retained project recurrence (no reset, rising-edge `v_peak` crossing); no paper attribution |
 | `medvedev_map_first_return_doi` | `medvedev_map` | `universal_dsl` | Independent scalar iteration of Medvedev (2005) Section 4's three-region slow-calcium first-return construction, with the disclosed global calibration and maintained pre-state event convention separated from the DOI-sourced equations |
@@ -182,12 +183,13 @@ linear recovery, with rising-edge `v >= v_peak` crossing detection and no reset;
 enrolled sustained-oscillation regime (`epsilon = 0.2`, `gamma = 0.5`, `I = 0.6`) it is a
 robust limit cycle whose sixteen upward crossings survive Q16.16 rounding, so the
 min/max branch selection lowers to fixed point without a look-up table.
-The Lapicque entry independently evaluates
-`v(t)=v_inf+(v0-v_inf)*exp(-t/tau)` for its 200-sample subthreshold protocol,
-without importing the hand model or schema recurrence. It reproduces every
-committed voltage feature within `1e-12`; event count and first-event sentinel
-remain exact. The provenance points to the English translation DOI while the
-exact-flow discretisation is stated as the maintained implementation contract.
+The Lapicque source entry independently evaluates
+`v(t)=V*rho/(R+rho)*(1-exp(-t/beta))` for its 200-sample constant-voltage
+protocol and re-derives the first threshold attainment without importing the
+hand model or schema recurrence. It reproduces every polarization/latch feature
+within `1e-12` and the exact event step. The former constant-current hard-reset
+trace remains separately enrolled under `sc_lapicque_lif` with project-only
+provenance.
 The Medvedev entry independently reconstructs the Section 4 slow-calcium return
 from its three source regions and the disclosed SC-NeuroCore global calibration.
 Its `I=2`, 100-iteration protocol reproduces the exact four-state cycle and 75

@@ -8,22 +8,22 @@
         "rng_state": 46746,
         "v": -55.300095182899156
       },
-      "maximum_call_ms": 30.769558,
-      "median_call_ms": 28.183869,
-      "median_ns_per_step": 140.919345,
-      "minimum_call_ms": 25.583302,
+      "maximum_call_ms": 27.367981,
+      "median_call_ms": 26.109279,
+      "median_ns_per_step": 130.546395,
+      "minimum_call_ms": 25.451146,
       "parity_max_abs_diff": 0.0,
       "rng_state_matches_python": true,
       "samples_call_ms": [
-        28.183869,
-        26.325723,
-        27.897587,
-        25.583302,
-        29.036669,
-        30.769558,
-        28.946571
+        27.367981,
+        26.517096,
+        25.799708,
+        25.451146,
+        26.109279,
+        27.228887,
+        25.874677
       ],
-      "speedup_vs_python": 80.40201542236802,
+      "speedup_vs_python": 79.58139253864498,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 0.0,
       "trace_sha256": "32cbc2f55bc37d2d719b7218122c3439d512b37fffc75b993ced96ec7f7959c4",
@@ -37,22 +37,22 @@
         "rng_state": 46746,
         "v": -55.300095182899156
       },
-      "maximum_call_ms": 13.274399,
-      "median_call_ms": 11.56286,
-      "median_ns_per_step": 57.8143,
-      "minimum_call_ms": 11.296435,
+      "maximum_call_ms": 17.27961,
+      "median_call_ms": 11.803382,
+      "median_ns_per_step": 59.01691,
+      "minimum_call_ms": 11.37534,
       "parity_max_abs_diff": 0.0,
       "rng_state_matches_python": true,
       "samples_call_ms": [
-        12.264532,
-        13.274399,
-        11.56286,
-        11.373025,
-        12.672475,
-        11.401301,
-        11.296435
+        11.37534,
+        11.439007,
+        12.35973,
+        17.27961,
+        12.065831,
+        11.803382,
+        11.480256
       ],
-      "speedup_vs_python": 195.97572486391775,
+      "speedup_vs_python": 176.03537536953394,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 0.0,
       "trace_sha256": "32cbc2f55bc37d2d719b7218122c3439d512b37fffc75b993ced96ec7f7959c4",
@@ -66,22 +66,22 @@
         "rng_state": 46746,
         "v": -55.300095182899156
       },
-      "maximum_call_ms": 22.155854,
-      "median_call_ms": 20.009294,
-      "median_ns_per_step": 100.04647,
-      "minimum_call_ms": 18.187635,
+      "maximum_call_ms": 19.660637,
+      "median_call_ms": 17.591123,
+      "median_ns_per_step": 87.955615,
+      "minimum_call_ms": 17.278936,
       "parity_max_abs_diff": 1.4210854715202004e-14,
       "rng_state_matches_python": true,
       "samples_call_ms": [
-        20.501105,
-        21.139654,
-        19.155748,
-        22.155854,
-        19.095121,
-        20.009294,
-        18.187635
+        19.660637,
+        19.343613,
+        17.537882,
+        17.892506,
+        17.591123,
+        17.278936,
+        17.573996
       ],
-      "speedup_vs_python": 113.24936651937844,
+      "speedup_vs_python": 118.1171196972473,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 1.4210854715202004e-14,
       "trace_sha256": "c98b5af756ec6dd578bb2d1a7b744c020c83b8a796fd857efd71e987b6f7ea33",
@@ -95,20 +95,20 @@
         "rng_state": 46746,
         "v": -55.300095182899156
       },
-      "maximum_call_ms": 2735.048815,
-      "median_call_ms": 2266.03987,
-      "median_ns_per_step": 11330.19935,
-      "minimum_call_ms": 1891.420434,
+      "maximum_call_ms": 2282.733548,
+      "median_call_ms": 2077.812781,
+      "median_ns_per_step": 10389.063905,
+      "minimum_call_ms": 1863.055718,
       "parity_max_abs_diff": 0.0,
       "rng_state_matches_python": true,
       "samples_call_ms": [
-        2735.048815,
-        2159.246261,
-        2310.556751,
-        2299.618489,
-        2045.034707,
-        2266.03987,
-        1891.420434
+        2096.970601,
+        2282.733548,
+        2077.812781,
+        2077.246799,
+        2084.378697,
+        1863.055718,
+        1914.300141
       ],
       "speedup_vs_python": 1.0,
       "state_max_abs_diff": 0.0,
@@ -124,22 +124,22 @@
         "rng_state": 46746,
         "v": -55.300095182899156
       },
-      "maximum_call_ms": 15.610003,
-      "median_call_ms": 13.126886,
-      "median_ns_per_step": 65.63443,
-      "minimum_call_ms": 12.484408,
+      "maximum_call_ms": 14.019514,
+      "median_call_ms": 13.073479,
+      "median_ns_per_step": 65.367395,
+      "minimum_call_ms": 12.586005,
       "parity_max_abs_diff": 0.0,
       "rng_state_matches_python": true,
       "samples_call_ms": [
-        12.484408,
-        12.72868,
-        13.002276,
-        14.013113,
-        13.161895,
-        13.126886,
-        15.610003
+        12.586005,
+        14.019514,
+        12.859667,
+        13.073479,
+        13.227114,
+        12.955652,
+        13.451684
       ],
-      "speedup_vs_python": 172.62585124910814,
+      "speedup_vs_python": 158.93342399525022,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 0.0,
       "trace_sha256": "32cbc2f55bc37d2d719b7218122c3439d512b37fffc75b993ced96ec7f7959c4",
@@ -159,7 +159,7 @@
   ],
   "meta": {
     "affinity": [
-      5
+      10
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "exclusive_cpu_isolation_claimed": false,
@@ -167,14 +167,14 @@
     "kernel_isolated_cpus": "",
     "kernel_nohz_full_cpus": "",
     "load_average_end": [
-      6.78662109375,
-      14.1982421875,
-      14.4033203125
+      6.4140625,
+      6.96923828125,
+      7.880859375
     ],
     "load_average_start": [
-      6.3134765625,
-      14.759765625,
-      14.5849609375
+      6.48095703125,
+      7.03564453125,
+      7.92724609375
     ],
     "measurement_scope": "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -197,9 +197,9 @@
     },
     "benchmarks/bench_model_escape_rate.py": "e033492b348b18b5a6829919d053f81161e84850b663aca19bcc3d9b9ac0b2fa",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "62487e1d80a110a95340dab8d9ab5bf8eb4fa34ffb6107a3ec1a89fa74a99546"
+      "py": "9f27c2b64bd5ec50c310decf121373c8ee69fcd723c27134011ef22167d9bce5"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "62487e1d80a110a95340dab8d9ab5bf8eb4fa34ffb6107a3ec1a89fa74a99546",
+    "bridge/sc_neurocore_engine/__init__.py": "9f27c2b64bd5ec50c310decf121373c8ee69fcd723c27134011ef22167d9bce5",
     "engine/src/bindings/escape_rate": {
       "rs": "76ad76dae9ba9d60dff5bb1c94352fa428a33c15fef6fc77e9900a490110bb2b"
     },
@@ -255,7 +255,7 @@
     },
     "src/sc_neurocore/neurons/models/escape_rate.py": "792bcb47ea6c1e099044f7c2bd634b1a18a141f7730dc5806fa1920729d6eed9"
   },
-  "timestamp_utc": "2026-08-30T04:25:28Z",
+  "timestamp_utc": "2026-08-30T06:13:01Z",
   "verification": {
     "rust_safety": {
       "command": "rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/escape_rate.rs -O -o <temp-binary> && <temp-binary>",

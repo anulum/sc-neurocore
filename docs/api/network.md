@@ -444,8 +444,10 @@ net.run(duration=0.2, dt=0.001, backend="python")
 ```
 
 with 200 timesteps, recurrent random connectivity at p=0.2, Poisson input
-(500 Hz, w=2.0, seed=11), `LapicqueNeuron` populations (default
-parameters: tau=20 ms, threshold=1.0). Hardware: Intel i5-11600K, 32 GB,
+(500 Hz, w=2.0, seed=11), historical SC-profile `LapicqueNeuron` class
+populations (default parameters: tau=20 ms, threshold=1.0). This predates the
+explicit source/SC routing split and is not a benchmark of the 1907
+polarization profile. Hardware: Intel i5-11600K, 32 GB,
 Python 3.12.3.
 
 | Population n | Synapses | 200-step wall | steps / s | Recorded spikes |
@@ -483,7 +485,7 @@ uniform delay when the biological detail tolerates it.
 | Surface | How it's wired | Verifier |
 |---------|---------------|----------|
 | `from sc_neurocore.network import Network, Population, ...` | `__init__.py` re-exports 18 symbols | `tests/test_network_basic.py` |
-| `Population(model="LapicqueNeuron", n=...)` | resolves through `sc_neurocore.neurons.models._CLASS_TO_MODULE` | `Population._resolve_model` (population.py:19) |
+| `Population(model="LapicqueNeuron", n=...)` | exact string selects the source profile; SC-only parameters preserve legacy compatibility; `SCLapicqueLIFNeuron` is explicit | `tests/test_model_lapicque_source_contract.py` |
 | `net.run(backend="rust")` | imports `sc_neurocore_engine.NetworkRunner` lazily | `_get_rust_engine` (network.py:25) |
 | `net.run(backend="mpi")` | imports `mpi4py.MPI` lazily, raises if absent | `_require_mpi` (mpi_runner.py:36) |
 | `Projection(plasticity="stdp")` | activates `update_plasticity` per timestep | tested in `test_network_basic.py` |

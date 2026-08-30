@@ -1,22 +1,33 @@
 {
   "metadata": {
-    "schema_version": 1,
-    "name": "Lapicque",
+    "schema_version": 2,
+    "name": "LapicqueNeuron",
     "author": "Lapicque, L.",
     "year": 1907,
-    "description": "Classical RC integrate-and-fire — the original neuron model (1907)"
+    "doi": "10.1007/s00422-007-0189-6",
+    "description": "Leaky-capacitor polarization threshold; no source-defined post-event reset"
   },
-  "state": { "v": 0.0 },
+  "state": {"v": 0.0, "excited": 0.0},
   "parameters": {
-    "v_rest": 0.0, "v_reset": 0.0, "v_threshold": 1.0,
-    "tau": 20.0, "resistance": 1.0
+    "v_threshold": 1.0,
+    "capacitance": 1.1,
+    "series_resistance": 10.0,
+    "polarization_resistance": 1.0,
+    "dt": 0.01
   },
-  "integration": { "dt": 1.0, "method": "exp_euler" },
-  "dynamics": { "v": "(-(v - v_rest) + resistance * I) / tau" },
-  "threshold": { "condition": "v >= v_threshold", "detection": "crossing" },
-  "reset": { "v": "v_reset" },
+  "integration": {"dt": 0.01, "method": "map"},
+  "dynamics": {
+    "v": "I * polarization_resistance / (series_resistance + polarization_resistance) + (v - I * polarization_resistance / (series_resistance + polarization_resistance)) * exp(-dt * (series_resistance + polarization_resistance) / (capacitance * series_resistance * polarization_resistance))",
+    "excited": "excited"
+  },
+  "threshold": {"condition": "v >= v_threshold if excited < 0.5 else 0.0", "detection": "level"},
+  "reset": {"v": "v", "excited": "1.0"},
   "extensions": {
-    "historical_note": "Historical RC threshold model and precursor to LIF",
-    "maintained_discretisation": "Exact constant-current RC flow via exponential Euler"
+    "family": "polarization-threshold",
+    "source_equation": "K*dv/dt=(V-v)/R-v/rho; beta=K*R*rho/(R+rho)",
+    "input_contract": "I is Lapicque's source voltage V, not injected membrane current",
+    "event_contract": "first threshold attainment is latched; no automatic source reset",
+    "default_scope": "normalized maintained R/rho=10 and beta=1 ms reproducibility point",
+    "identity_note": "sc_lapicque_lif preserves the historical SC hard-reset periodic LIF recurrence"
   }
 }

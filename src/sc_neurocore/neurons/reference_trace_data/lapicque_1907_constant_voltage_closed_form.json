@@ -1,0 +1,41 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "lapicque_1907_constant_voltage_closed_form",
+  "model": {
+    "schema_name": "lapicque",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 200,
+    "inputs": {"I": 22.0},
+    "state_variables": ["v", "excited"]
+  },
+  "provenance": {
+    "kind": "analytic_closed_form",
+    "source": "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
+    "equation": "v(t)=V*rho/(R+rho)*(1-exp(-t/beta)), beta=K*R*rho/(R+rho); first threshold attainment latches excited",
+    "citation": "doi:10.1007/s00422-007-0189-6"
+  },
+  "expected_features": {
+    "spike_count": 1.0,
+    "first_spike_step": 70.0,
+    "final.v": 1.7293294335267784,
+    "min.v": 0.01990033250166401,
+    "max.v": 1.7293294335267784,
+    "mean.v": 1.1396514012931367,
+    "final.excited": 1.0,
+    "min.excited": 0.0,
+    "max.excited": 1.0,
+    "mean.excited": 0.655
+  },
+  "tolerances": {
+    "default": {"absolute": 1e-12, "relative": 0.0},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0},
+    "final.excited": {"absolute": 0.0, "relative": 0.0},
+    "min.excited": {"absolute": 0.0, "relative": 0.0},
+    "max.excited": {"absolute": 0.0, "relative": 0.0},
+    "mean.excited": {"absolute": 0.0, "relative": 0.0}
+  }
+}

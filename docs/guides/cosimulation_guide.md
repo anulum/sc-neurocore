@@ -106,7 +106,7 @@ Q16.16 parity at the same operating point:
 | Model | State Variables | Complexity | Spikes (I=50, 200 steps) |
 |-------|:-:|:-:|:-:|
 | **LIF** | v | Linear | 200 |
-| **Lapicque** | v | Linear | 200 |
+| **SC Lapicque LIF compatibility** | v | Linear hard-reset recurrence | 200 |
 | **Quadratic IF** | v | Quadratic | 50 |
 | **Izhikevich** | v, u | Quadratic (2-var) | 25 float64 / 24 Q8.8; 25 Q16.16 |
 | **Resonate-and-Fire** | v, w | Linear (2-var) | 200 |

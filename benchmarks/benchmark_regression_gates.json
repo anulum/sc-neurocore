@@ -705,20 +705,20 @@
       }
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json",
-      "description": "Controlled Lapicque exact constant-current RC flow five-backend public-dispatch evidence.",
+      "artefact": "benchmarks/results/bench_lapicque.json",
+      "description": "Controlled Lapicque 1907 exact polarization-flow five-backend complete-packet evidence.",
       "expected_values": {
-        "backends.go.event_count_matches_python": true,
-        "backends.julia.event_count_matches_python": true,
-        "backends.mojo.event_count_matches_python": true,
-        "backends.rust.event_count_matches_python": true,
-        "kernel": "lapicque_exact_constant_current_flow",
+        "backends.go.event_vector_matches_python": true,
+        "backends.julia.event_vector_matches_python": true,
+        "backends.mojo.event_vector_matches_python": true,
+        "backends.rust.event_vector_matches_python": true,
+        "kernel": "lapicque_1907_exact_polarization_complete_packet",
         "meta.single_cpu_pinned": true,
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
-        "workload.current": 5.0,
         "workload.n_steps": 100000,
         "workload.repeats": 7,
-        "workload.trace_atol": 2e-15
+        "workload.source_voltage": 22.0,
+        "workload.trace_atol": 5e-15
       },
       "id": "lapicque-exact-flow-multibackend-local-regression",
       "parity_groups": [
@@ -735,16 +735,16 @@
       ],
       "regression_limits": {
         "backends.go.parity_max_abs_diff": {
-          "max": 2e-15
+          "max": 5e-15
         },
         "backends.julia.parity_max_abs_diff": {
-          "max": 2e-15
+          "max": 5e-15
         },
         "backends.mojo.parity_max_abs_diff": {
-          "max": 2e-15
+          "max": 5e-15
         },
         "backends.rust.parity_max_abs_diff": {
-          "max": 2e-15
+          "max": 5e-15
         }
       },
       "required_numbers": [
@@ -771,13 +771,23 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_lapicque.py": "source_hashes.benchmarks/bench_model_lapicque.py",
+        "engine/src/bindings/lapicque_neuron.rs": "source_hashes.engine/src/bindings/lapicque_neuron.rs",
+        "engine/src/network_runner/model_factory.rs": "source_hashes.engine/src/network_runner/model_factory.rs",
         "engine/src/neuron/lapicque.rs": "source_hashes.engine/src/neuron/lapicque.rs",
+        "hdl/formal/catalogue/sc_lapicque_1907.sby": "source_hashes.hdl/formal/catalogue/sc_lapicque_1907.sby",
+        "hdl/formal/catalogue/sc_lapicque_1907.v": "source_hashes.hdl/formal/catalogue/sc_lapicque_1907.v",
+        "hdl/formal/catalogue/sc_lapicque_1907_formal.v": "source_hashes.hdl/formal/catalogue/sc_lapicque_1907_formal.v",
+        "hdl/reports/yosys_lapicque_1907_q3232_2026-08-30.json": "source_hashes.hdl/reports/yosys_lapicque_1907_q3232_2026-08-30.json",
         "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go": "source_hashes.src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
         "src/sc_neurocore/accel/go/services/lapicque.go": "source_hashes.src/sc_neurocore/accel/go/services/lapicque.go",
         "src/sc_neurocore/accel/julia/neurons/lapicque.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/lapicque.jl",
         "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
         "src/sc_neurocore/accel/rust/safety/lapicque.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/lapicque.rs",
+        "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/lapicque.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/lapicque.json",
+        "src/sc_neurocore/neurons/model_schemas/lapicque.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/lapicque.toml",
         "src/sc_neurocore/neurons/models/lapicque.py": "source_hashes.src/sc_neurocore/neurons/models/lapicque.py",
+        "src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json",
         "src/sc_neurocore/accel/lapicque.py": "source_hashes.src/sc_neurocore/accel/lapicque.py"
       }
     },

@@ -73,10 +73,12 @@ def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleTyp
     lapicque = next(e for e in tool.ENROLLED if e.class_name == "LapicqueNeuron")
     assert lapicque.level == "h1_cosim"
     assert lapicque.evidence == (
-        "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+        "tests/test_cosim_lapicque.py::"
+        "test_source_q3232_preserves_first_attainment_and_polarization_bound"
     )
-    assert "I=0.333,2.3,20.25" in lapicque.operating_point
-    assert "Q16.16 event vectors exact" in lapicque.tolerance
+    assert "V=5.5,11,12,22" in lapicque.operating_point
+    assert "Q32.32 event vectors exact" in lapicque.tolerance
+    assert lapicque.metric == "trajectory"
 
 
 def test_quadratic_if_is_enrolled_with_dedicated_exact_flow_evidence(

@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Lapicque 1907 source-identity correction and dual-profile reclosure
+
+- Corrected the catalogue identity to Lapicque's leaky-capacitor polarization
+  experiment and strength-duration law. The source profile emits one latched
+  threshold-attainment event and does not invent an automatic reset or
+  repetitive spike generator. The previous exact-flow hard-reset recurrence
+  remains fully available as count-neutral `SCLapicqueLIFNeuron` and through
+  the legacy zero-argument constructor.
+- Added failure-atomic complete polarization/event packets across Python,
+  production and safety Rust, Julia, Go, Mojo, PyO3, and both native C ABIs.
+  Paired source/SC schemas, explicit NetworkRunner routing, an independent
+  source receipt, and a controlled source-hashed five-runtime benchmark retain
+  the complete parameter, state, event, and identity boundary.
+- Added a dedicated source-specialized Q32.32 core: four-drive co-simulation
+  preserves exact event vectors with state error below `7e-8`, Yosys reports
+  11,511 coarse cells, and depth-20 Z3 proves reset, permanent latch, and no
+  repeated post-latch event. The historical SC Q16.16 core and evidence remain
+  separate and intact.
+
 ### ExpIF dual-profile full-fidelity reclosure
 
 - Restored the Fourcaud-Trocmé fitted source protocol as an explicit factory:

@@ -113,7 +113,7 @@ dt = 0.02
 method = "rk4"
 
 [dynamics]
-v = "source-aligned profile: zero-noise Heun RK2 below -30 mV with the analytical exponential-only tail duration exposed separately; SC compatibility profile: candidate-first stage-clipped RK4 to +30 mV"
+v = "source profile: source-aligned zero-noise Heun RK2 below -30 mV with the analytical exponential-only tail duration exposed separately; SC compatibility profile: candidate-first stage-clipped RK4 to +30 mV"
 refractory_remaining = "hold v at v_reset while positive; decrement by dt; load refractory_period on a spike"
 
 [backends.python]

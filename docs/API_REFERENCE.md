@@ -1118,14 +1118,26 @@ Load the compiled Lapicque Mojo C ABI when available.
 ### Function `simulate_rust(n_steps, current)`
 Run the factory-default Rust engine recurrence.
 
+### Function `simulate_rust_complete(v, v_rest, v_reset, v_threshold, tau, resistance, dt, capacitance, series_resistance, polarization_resistance, excited, source_profile, n_steps, drive)`
+Run the complete profile-explicit Rust production batch.
+
 ### Function `simulate_julia(v, v_rest, v_reset, v_threshold, tau, resistance, dt, n_steps, current)`
 Run the Julia recurrence with the complete numeric contract.
+
+### Function `simulate_julia_complete(v, v_rest, v_reset, v_threshold, tau, resistance, dt, capacitance, series_resistance, polarization_resistance, excited, source_profile, n_steps, drive)`
+Run the complete profile-explicit Julia batch.
 
 ### Function `simulate_go(v, v_rest, v_reset, v_threshold, tau, resistance, dt, n_steps, current)`
 Run the Go service recurrence through its C ABI.
 
+### Function `simulate_go_complete(v, v_rest, v_reset, v_threshold, tau, resistance, dt, capacitance, series_resistance, polarization_resistance, excited, source_profile, n_steps, drive)`
+Run the complete Go batch through its mutation-free C ABI.
+
 ### Function `simulate_mojo(v, v_rest, v_reset, v_threshold, tau, resistance, dt, n_steps, current)`
 Run the Mojo recurrence through its C ABI.
+
+### Function `simulate_mojo_complete(v, v_rest, v_reset, v_threshold, tau, resistance, dt, capacitance, series_resistance, polarization_resistance, excited, source_profile, n_steps, drive)`
+Run the complete Mojo batch through its mutation-free C ABI.
 
 ---
 
@@ -24689,26 +24701,61 @@ Reference: Jiang, C. & Zhang, Y. (2024). Neural Comput. 36(8):1546–1564.
 ## Module `neurons.models.lapicque`
 
 ### Class `LapicqueNeuron`
-Lapicque 1907 — classical RC integrate-and-fire.
+Lapicque 1907 polarization threshold with an explicit SC LIF profile.
 
-tau * dv/dt = -(v - v_rest) + R * I
+For the source profile, with source voltage ``V``, series resistance
+``R``, membrane/polarization resistance ``rho``, capacitance ``K``, and
+polarization ``v``, Lapicque derives
 
-Constant-current steps use the exact RC flow:
-V(t + dt) = V_inf + (V(t) - V_inf) * exp(-dt / tau)
-where V_inf = V_rest + R * I.
+``K dv/dt = (V - v) / R - v / rho``.
 
-Reference: Lapicque, L. (1907). J. Physiol. Pathol. Gén. 9:620–635.
+A constant-voltage pulse has the exact flow
 
-``simulate`` exposes the Python reference and all four compiled acceleration
-lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
-Mojo transport the complete numeric state and parameter contract.
+``v(t+h) = v_inf + (v(t)-v_inf) exp(-h/beta)``,
+
+where ``v_inf = V*rho/(R+rho)`` and ``beta = K*R*rho/(R+rho)``.
+The first threshold attainment emits one latched excitation. There is no
+source-defined automatic reset.
+
+``LapicqueNeuron()`` preserves the historical SC exact-flow LIF recurrence
+``tau*dv/dt = -(v-v_rest) + resistance*current`` with hard reset.
+``LapicqueNeuron.lapicque_1907()`` constructs the count-bearing source
+profile. Its normalized defaults preserve the paper's ``R > rho`` regime
+and ``beta=1 ms``; they are maintained reproducibility choices rather than
+claimed experimental constants.
+
+Reference
+---------
+Lapicque, L. (1907). *Journal de Physiologie et de Pathologie Generale*,
+9, 620-635. English translation: doi:10.1007/s00422-007-0189-6.
 
 - **__post_init__**()
-- **step**(current)
+- **lapicque_1907**(cls)
+  - Construct the source-equation polarization-threshold profile.
+- **sc_lif_compatibility**(cls)
+  - Construct the preserved hard-reset SC exact-flow LIF profile.
+- **source_beta**()
+  - Return Lapicque's physical time constant ``K R rho/(R+rho)``.
+- **source_alpha**()
+  - Return the infinite-duration threshold voltage ``v*(R+rho)/rho``.
+- **source_threshold_voltage**(duration)
+  - Return the source voltage required to reach threshold in ``duration``.
+- **step**(drive)
+  - Advance one exact constant-drive step and return a binary event.
 - **simulate**(n_steps, current, backend)
-  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
+  - Advance a complete batch and return its state trace and event count.
+- **simulate_complete**(n_steps, drive, backend)
+  - Return aligned post-step state and event traces, committing atomically.
 - **reset**()
-  - Restore the membrane voltage to the maintained resting state.
+  - Re-arm the experiment or restore the SC membrane to rest.
+
+### Class `SCLapicqueLIFNeuron`
+Count-neutral preserved exact-flow, hard-reset SC LIF identity.
+
+This explicit name prevents the later repetitive reset convention from
+being mistaken for the complete Lapicque 1907 source experiment.
+
+- **__init__**(v, v_rest, v_reset, v_threshold, tau, resistance, dt)
 
 ---
 
@@ -38096,7 +38143,11 @@ w&#91;t&#93; = rho * w&#91;t-1&#93; + a * (v&#91;t-1&#93; - v_rest) + b * spike&
 - **forward**(current, v, w)
 
 ### Class `LapicqueCell`
-Lapicque IF with membrane resistance. Lapicque 1907.
+SC hard-reset RC training cell with a historical public name.
+
+This differentiable recurrent cell preserves the project's later LIF
+compatibility convention; it is not the complete Lapicque 1907
+polarization-threshold experiment.
 
 tau * dv/dt = -(v - v_rest) + R * I
 Discretised: v&#91;t&#93; = (1 - dt/tau) * v&#91;t-1&#93; + (R * dt / tau) * I&#91;t&#93;

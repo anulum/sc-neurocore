@@ -108,7 +108,7 @@ PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
 # Lapicque five-backend exact-flow closure
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_model_lapicque.py \
-  --json benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json
+  --json benchmarks/results/bench_lapicque.json
 
 # Perfect Integrator five-backend candidate-first Euler closure
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \

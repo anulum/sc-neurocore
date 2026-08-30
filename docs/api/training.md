@@ -316,8 +316,11 @@ class.
 
 ### LapicqueCell
 
-Lapicque IF with membrane resistance (Lapicque, 1907). The original
-integrate-and-fire model with explicit RC circuit parameters.
+SC-NeuroCore's differentiable hard-reset RC compatibility cell with explicit
+`tau`, resistance, and timestep parameters. The historical public name is
+retained, but this recurrence is not presented as the complete Lapicque 1907
+polarization-threshold experiment; see the source/SC split on the
+[Lapicque model page](models/lapicque.md).
 
 ```
 v[t] = (1 - dt/tau) * (v[t-1] - v_rest) + v_rest + (R * dt / tau) * I[t]

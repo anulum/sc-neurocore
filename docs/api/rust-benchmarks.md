@@ -162,7 +162,7 @@ compute cycles for the 64x32 dense contract.
 
 | Model | 1k steps | 10k steps | Per step |
 |-------|----------|-----------|----------|
-| Lapicque | 2.99 µs | 19.5 µs | **2.0 ns** |
+| Lapicque SC compatibility profile | 2.99 µs | 19.5 µs | **2.0 ns** |
 | ExpIF | 25.0 µs | 237 µs | **24 ns** |
 | AdEx | 29.1 µs | 291 µs | **29 ns** |
 

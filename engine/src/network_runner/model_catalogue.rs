@@ -19,6 +19,8 @@ pub fn supported_models() -> Vec<&'static str> {
         "AdEx",
         "ExpIF",
         "Lapicque",
+        "LapicqueNeuron",
+        "SCLapicqueLIF",
         "HomeostaticLif",
         "HodgkinHuxley",
         "TraubMiles",

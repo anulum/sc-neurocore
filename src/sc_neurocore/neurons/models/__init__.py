@@ -109,6 +109,7 @@ _CLASS_TO_MODULE = {
     "JansenRitUnit": "jansen_rit",
     "KLIFNeuron": "klif",
     "LapicqueNeuron": "lapicque",
+    "SCLapicqueLIFNeuron": "lapicque",
     "LarterBreakspearNeuron": "larter_breakspear",
     "SCDecoupledAdaptationIonMassNeuron": "sc_decoupled_adaptation_ion_mass",
     "LeakyCompeteFireNeuron": "leaky_compete_fire",

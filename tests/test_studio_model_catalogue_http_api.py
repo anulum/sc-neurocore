@@ -58,3 +58,17 @@ def test_api_expif_detail_serves_source_receipt(client: TestClient) -> None:
         "reference_receipts/expif_fourcaud_trocme_2003.json"
     )
     assert "source profile" in detail["dynamics"]["v"]
+
+
+def test_api_lapicque_detail_serves_source_receipt_and_h2_boundary(
+    client: TestClient,
+) -> None:
+    response = client.get("/api/models/LapicqueNeuron")
+    assert response.status_code == 200
+    detail = response.json()
+    assert detail["reproducibility"]["reference_config"].endswith(
+        "reference_receipts/lapicque_1907.json"
+    )
+    assert "first candidate" in detail["dynamics"]["excited"]
+    assert detail["silicon_label"] == "H2"
+    assert detail["readiness"]["terminal_silicon_tier"] == "H2"

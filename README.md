@@ -96,12 +96,12 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Package version | 3.16.0 |
 | Public API exports | 45 |
 | Python model source modules | 176 |
-| Python model classes | 180 |
-| Model documentation pages | 197 |
+| Python model classes | 181 |
+| Model documentation pages | 198 |
 | Rust PyO3 model wrappers | 207 |
 | Optional extras | 28 |
-| Python test files | 4782 |
-| Public documentation pages | 622 |
+| Python test files | 4784 |
+| Public documentation pages | 623 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -230,13 +230,14 @@ exact-relaxation behavior is preserved separately as
 `SCNonResettingAdaptiveLIFNeuron`; the [MAT(1) model page](docs/api/models/non_resetting_lif.md)
 states the identity, benchmark, Q32.32, and bounded-formal evidence boundaries.
 
-The Lapicque model exposes its exact constant-current RC flow through Python,
-the factory-default Rust engine boundary, Julia, Go, and Mojo. The measured
-dispatcher order is Mojo, Julia, Go, compatible Rust, then Python. Its committed
-`benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json` artefact
-records 20,000 events in every lane over 100,000 steps and a maximum voltage
-difference of `4.44e-16`; the [Lapicque model page](docs/api/models/lapicque.md)
-states the loaded-host benchmark boundary and Q16.16 co-simulation evidence.
+The Lapicque catalogue identity implements the 1907 polarization-threshold
+circuit and its strength-duration law without inventing automatic reset or
+repetitive spikes. Python, Rust, Julia, Go, and Mojo preserve the complete
+polarization/event/latch packet; the committed source-hashed benchmark records
+one identical first-attainment event in every lane with maximum state difference
+`1.222e-15`. The former periodic hard-reset recurrence remains intact as
+count-neutral `SCLapicqueLIFNeuron`; the [Lapicque model page](docs/api/models/lapicque.md)
+states both identities and the Q32.32 source versus Q16.16 SC silicon boundaries.
 
 The Perfect Integrator exposes its candidate-first non-leaky Euler recurrence
 through Python, the factory-default Rust engine boundary, Julia, Go, and Mojo.

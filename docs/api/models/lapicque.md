@@ -2,173 +2,115 @@
 
 **Module:** `sc_neurocore.neurons.models.lapicque`
 
-**Reference:** Lapicque 1907; English translation DOI `10.1007/s00422-007-0189-6`
+**Primary source:** Lapicque (1907); English translation DOI
+[`10.1007/s00422-007-0189-6`](https://doi.org/10.1007/s00422-007-0189-6)
 
-**Family:** Integrate-and-fire (classical)
+**Interpretive companion:** Brunel and van Rossum (2007), DOI
+[`10.1007/s00422-007-0190-0`](https://doi.org/10.1007/s00422-007-0190-0)
 
-**State variables:** `v` (voltage)
+## Identity boundary
 
-## Equations
+Lapicque's paper treats nerve excitation as the first attainment of a
+polarization threshold in a leaky-capacitor circuit. It does not define an
+automatic post-event reset or a repetitive spike generator. SC-NeuroCore
+therefore exposes two deliberately separate profiles:
 
-$$\tau \frac{dV}{dt} = -(V - V_r) + R \cdot I$$
+```python
+from sc_neurocore.neurons.models import LapicqueNeuron, SCLapicqueLIFNeuron
 
-Spike: $V \geq V_\theta$, hard reset $V \to V_{reset}$.
-
-For constant current over a timestep, maintained runtime surfaces use the exact
-RC flow rather than forward Euler:
-
-$$V_{t+\Delta t} = V_\infty + (V_t - V_\infty)e^{-\Delta t/\tau}$$
-
-where $V_\infty = V_r + R \cdot I$.
-
-## Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `tau` | 20.0 | Membrane time constant (ms) |
-| `resistance` | 1.0 | Membrane resistance |
-| `v_threshold` | 1.0 | Spike threshold |
-| `v_reset` | 0.0 | Post-spike reset |
-| `dt` | 1.0 | Integration step |
-
-## Validation contract
-
-The implementation rejects invalid state before mutation:
-
-- `v`, `v_rest`, `v_reset`, `v_threshold`, `tau`, `resistance`, `dt`, and input current must be finite;
-- `tau`, `resistance`, and `dt` must be positive;
-- `v_threshold` must be greater than both `v_rest` and `v_reset`;
-- initial `v` must be below `v_threshold`;
-- exact-flow steady voltage, decay, and candidate voltage must remain finite
-  before assignment.
-
-These guards preserve the positive-rheobase RC contract and prevent overflowing
-inputs or time constants from poisoning membrane state.
-
-Python re-validates mutable runtime state on every `step()` call. Julia, Go, and
-Mojo expose the complete state-and-parameter contract through executable native
-ABIs. Go and Mojo validate the complete run before writing the caller-visible
-trace, so rejected input cannot partially commit output or instance state. The
-Rust engine path is executable at factory defaults and rejects non-default
-instances explicitly instead of silently changing their parameters.
-
-## Behaviour
-
-- **Historical RC formulation:** the maintained recurrence follows Lapicque's
-  1907 polarisation model with a threshold and hard reset.
-- **Analytical rheobase:** I_rh = V_θ / R. Below rheobase, v settles to
-  steady state R·I < V_θ. Above, periodic spiking.
-- **Deterministic:** Fully deterministic exact constant-current RC integration.
-- **Hard reset:** v → v_reset (not subtract-reset).
-- **Conductance-free point model:** no gating, adaptation, or noise state.
-
-## Execution and silicon pipeline
-
-```
-LapicqueNeuron
-├── step(current) → int {0,1}
-├── simulate(..., backend="auto|python|rust|julia|go|mojo")
-├── measured auto order: Mojo → Julia → Go → compatible Rust → Python
-├── paired TOML/JSON schema: exp_euler + inclusive candidate threshold
-├── generated Q16.16 RTL: event-vector parity at three operating points
-└── catalogue formal job: SymbiYosys/Z3 bounded proof, depth 20
+source = LapicqueNeuron.lapicque_1907()  # counted source identity
+compat = SCLapicqueLIFNeuron()           # count-neutral SC hard-reset LIF
+legacy = LapicqueNeuron()                # preserved alias of the SC profile
 ```
 
-## Verification evidence
+The zero-argument legacy constructor remains compatible with existing network,
+training, and user code. In the compiled `NetworkRunner`, the exact canonical
+name `LapicqueNeuron` selects the source profile; `Lapicque`,
+`SCLapicqueLIF`, and `SCLapicqueLIFNeuron` select the retained SC profile.
+Python `Population("LapicqueNeuron", ...)` follows the same canonical source
+route. Existing calls that pass SC-only parameters such as `tau`, `resistance`,
+`v_rest`, or `v_reset` remain on the compatibility profile.
 
-| Surface | Evidence | Contract |
-|---------|----------|----------|
-| Python model | `tests/test_model_lapicque.py` | exact flow, rheobase, reset, validation, analysis, network use, and timing guard |
-| Public native dispatch | `tests/test_lapicque_backend_parity.py`, `tests/test_lapicque_backend_auto_dispatch.py`, `tests/test_lapicque_backend_validation.py`, `tests/test_lapicque_backend_c_abi.py`, `tests/test_lapicque_backend_unavailability.py` | executable Rust/Julia/Go/Mojo paths, complete parity, measured fall-through order, and mutation-free rejection |
-| Native loading | `tests/test_lapicque_backend_loading.py` | build/load separation, ABI declarations, cache behaviour, and actionable failures |
-| Reference | `tests/test_reference_lapicque.py` | independent closed-form feature re-derivation at `1e-12` absolute tolerance |
-| Python-to-Verilog | `tests/test_cosim_lapicque.py` | paired-schema event exactness, `2e-15` state envelope, and Q16.16 event-vector parity |
-| Benchmark | `tests/test_bench_lapicque.py` | public-path measurement, source hashes, environment metadata, partial-run disclosure, and fail-closed parity exits |
+## Lapicque 1907 source profile
 
-The model and native-dispatch modules reach 100 percent statement and branch
-coverage under the focused closure cohort. The benchmark module reaches the
-same configured threshold; its command-line entry point is also exercised by
-the committed real measurement.
+With source voltage $V$, series resistance $R$, polarization resistance
+$\rho$, capacitance $K$, and polarization $v$, the maintained source equation is
 
+$$K\frac{dv}{dt}=\frac{V-v}{R}-\frac{v}{\rho}.$$
 
----
+For a constant pulse over one timestep,
 
-## Measured Performance (2026-07-13)
+$$
+v_{n+1}=v_\infty+(v_n-v_\infty)e^{-\Delta t/\beta},\qquad
+v_\infty=\frac{V\rho}{R+\rho},\qquad
+\beta=\frac{KR\rho}{R+\rho}.
+$$
 
-The committed run was pinned to logical CPU 10, but that CPU was not reserved
-and the kernel isolated-CPU set was empty. The powersave-governor host load was
-29.73 at the start and 30.47 at the end. These are local regression timings,
-not production throughput claims.
+The first candidate with $v_{n+1}\geq v_\mathrm{threshold}$ emits one event and
+latches `excited=True`. Polarization continues evolving; it is not reset.
+Calling `reset()` explicitly re-arms a new experiment.
 
-| Metric | Value |
-|--------|-------|
-| Evidence class | Local regression, non-isolated workstation |
-| Benchmark artefact | `benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json` |
-| Workload | 100,000 steps, 7 repeats, I=5.0 |
-| Polyglot contract | Five public dispatch paths; 20,000 events in every lane; maximum voltage difference `4.44e-16` |
+Lapicque's strength-duration relation follows directly:
 
-| Backend | Median ms/call | Speedup vs Python | Maximum voltage difference | Events |
-|---------|---------------:|------------------:|---------------------------:|-------:|
-| Mojo | 1.075 | 256.07× | `4.44e-16` | 20,000 |
-| Julia | 6.147 | 44.77× | `0` | 20,000 |
-| Go | 8.138 | 33.82× | `0` | 20,000 |
-| Rust engine | 70.889 | 3.88× | `0` | 20,000 |
-| Python | 275.196 | 1.00× | `0` | 20,000 |
+$$
+V(t)=\frac{\alpha}{1-e^{-t/\beta}},\qquad
+\alpha=v_\mathrm{threshold}\frac{R+\rho}{\rho}.
+$$
 
----
+The maintained defaults $K=1.1$, $R=10$, $\rho=1$, $\Delta t=0.01$ ms, and
+$v_\mathrm{threshold}=1$ give $\beta=1$ ms and $\alpha=11$. They are a
+normalized reproducibility point, not claimed experimental constants from the
+paper. Input to `step()` is source voltage for this profile.
 
-## Pipeline Verification (End-to-End)
+## Preserved SC profile
 
-### 1. Construction
-`LapicqueNeuron()` instantiates with documented defaults.
-**Status: PASS**
+`SCLapicqueLIFNeuron` retains the historical exact-flow hard-reset recurrence
 
-### 2. step() → correct type
-Returns an integer spike indicator in `{0, 1}`.
-**Status: PASS**
+$$
+\tau\frac{dv}{dt}=-(v-v_\mathrm{rest})+RI,
+$$
 
-### 3. Spiking behaviour
-2000 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
+with constant-current exact flow and reset $v\to v_\mathrm{reset}$ at the
+threshold. This profile supports repetitive events, but that reset convention
+is not attributed to the complete 1907 experiment. See
+[SC exact-flow hard-reset LIF](sc_lapicque_lif.md).
 
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
+## Execution contract
 
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
+`simulate_complete(n_steps, drive, backend=...)` returns aligned post-step
+`float64` polarization/voltage and `uint8` event arrays. Python, Rust/PyO3,
+Julia, Go, and Mojo accept the complete profile and parameter packet. Every
+batch validates fully before caller-visible state commits; Go and Mojo also
+validate before writing either C-ABI output buffer.
 
-### 6. Population
-`Population(LapicqueNeuron, n=10)` creates correct instances.
-**Status: PASS**
+The independent source receipt uses $V=22$ for 2,000 steps. It records one
+event at zero-based index 69, preserves the complete polarization and event
+digests, and separately re-derives five strength-duration points. The
+100,000-step controlled benchmark reports the same complete event vector in all
+five runtimes; maximum measured state difference is `1.222e-15`.
 
-### 7. Public polyglot dispatch
-Rust, Julia, Go, and Mojo execute the same exact-flow event contract. Julia,
-Go, and Mojo carry non-default state and parameters; Rust retains its stated
-factory-default boundary.
-**Status: PASS**
+## Hardware boundary
 
-### 8. Python-to-Verilog parity
-Hand, TOML, and JSON traces agree to `2e-15`. Q16.16 RTL preserves the complete
-event vectors at I=0.333/2.3/20.25 over 1,000 steps (0/83/500 events) with
-maximum voltage error below `0.04`.
-**Status: PASS**
+The source-specialized `sc_lapicque_1907` core implements the normalized exact
+flow in Q32.32. Co-simulation preserves the complete event vector at source
+voltages 5.5, 11, 12, and 22; the two suprathreshold cases emit at indices 248
+and 69, and maximum state error stays below `7e-8`. Yosys coarse synthesis
+reports 11,511 cells. A depth-20 SymbiYosys/Z3 job proves reset hygiene,
+permanent excitation latch, and absence of repeated events after latching.
 
-### 9. Formal catalogue job
-The generated exponential-Euler RTL and inclusive threshold contract pass the
-depth-20 SymbiYosys/Z3 bounded proof.
-**Status: PASS**
+The old `sc_lapicque` Q16.16 path remains the separate SC compatibility core.
+Timing, PPA, target-device, board, physical-silicon, and universal fixed-point
+equivalence evidence remain open; the source profile therefore stays at the
+honest H2 boundary.
 
----
+## Evidence
 
-## Findings (measured 2026-07-13)
-
-1. Constant-current integration uses the closed-form RC update on every public
-   runtime path.
-2. The measured public dispatcher order is Mojo, Julia, Go, compatible Rust,
-   then Python.
-3. All enrolled acceleration events match Python exactly; the largest measured
-   trace difference is `4.44e-16`.
-4. Paired schemas, Q16.16 RTL, readiness evidence, and the depth-20 formal job
-   describe the same inclusive candidate-first event contract.
+| Surface | Durable evidence |
+| --- | --- |
+| Primary-source identity and schemas | `tests/test_model_lapicque_source_contract.py` |
+| Independent oracle and receipt | `tests/test_reference_lapicque_source_receipt.py`; `src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json` |
+| Five-runtime complete parity | `tests/test_lapicque_backend_parity.py`; `tests/test_lapicque_engine_binding.py` |
+| C-ABI failure atomicity | `tests/test_lapicque_backend_c_abi.py` |
+| Source and SC co-simulation | `tests/test_cosim_lapicque.py` |
+| Synthesis and formal | `hdl/reports/yosys_lapicque_1907_q3232_2026-08-30.json`; `hdl/formal/catalogue/sc_lapicque_1907.sby` |
+| Controlled measurement | `benchmarks/results/bench_lapicque.json`; `tests/test_bench_lapicque.py` |

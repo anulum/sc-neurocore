@@ -65,6 +65,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "HillTononiNeuron",
     "IhNeuron",
     "LarterBreakspearNeuron",
+    "LapicqueNeuron",
     "MainenSejnowskiNeuron",
     "MATNeuron",
     "McKeanNeuron",

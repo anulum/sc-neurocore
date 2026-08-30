@@ -436,7 +436,11 @@ class AdExCell(nn.Module):
 
 
 class LapicqueCell(nn.Module):
-    """Lapicque IF with membrane resistance. Lapicque 1907.
+    """SC hard-reset RC training cell with a historical public name.
+
+    This differentiable recurrent cell preserves the project's later LIF
+    compatibility convention; it is not the complete Lapicque 1907
+    polarization-threshold experiment.
 
     tau * dv/dt = -(v - v_rest) + R * I
     Discretised: v[t] = (1 - dt/tau) * v[t-1] + (R * dt / tau) * I[t]

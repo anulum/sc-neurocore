@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Preserved hard-reset exact-flow LIF compatibility schema
+
+[metadata]
+schema_version = 2
+name = "SCLapicqueLIFNeuron"
+author = "SC-NeuroCore"
+year = 2026
+description = "Count-neutral exact-flow hard-reset LIF formerly attributed directly to Lapicque 1907"
+
+[state]
+v = 0.0
+
+[parameters]
+v_rest = 0.0
+v_reset = 0.0
+v_threshold = 1.0
+tau = 20.0
+resistance = 1.0
+
+[integration]
+dt = 1.0
+method = "exp_euler"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I) / tau"
+
+[threshold]
+condition = "v >= v_threshold"
+detection = "level"
+
+[reset]
+v = "v_reset"
+
+[extensions]
+family = "sc-compatibility-lif"
+maintained_discretisation = "Exact constant-current RC flow via exponential Euler"
+identity_note = "Later hard-reset repetitive LIF convention; not claimed as the complete 1907 source model"

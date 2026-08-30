@@ -8,86 +8,67 @@
 
 [metadata]
 schema_version = 2
-name = "Lapicque"
+name = "LapicqueNeuron"
 class_name = "LapicqueNeuron"
 module = "lapicque"
-display_name = ""
-summary = "Classical RC integrate-and-fire — the original neuron model (1907)"
+display_name = "Lapicque polarization threshold"
+summary = "Source-aligned 1907 leaky-capacitor polarization experiment, with the later SC hard-reset LIF recurrence preserved under an explicit count-neutral identity."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = []
-hardware_fit = []
-behavior_tags = [
-    "excitable",
-    "rate-coded",
-    "tonic",
-]
+intended_use = ["source-equation reference", "strength-duration experiments"]
+hardware_fit = ["fixed-point polarization-threshold core"]
+behavior_tags = ["excitable", "single-event"]
 
 [provenance]
-authors = [
-    "Lapicque, L.",
-]
+authors = ["Lapicque, L."]
 year = 1907
 doi = "10.1007/s00422-007-0189-6"
 doi_is_translation = true
 paper_title = "Recherches quantitatives sur l'excitation electrique des nerfs traitee comme une polarisation"
+source_scope = "Leaky-capacitor polarization and first threshold attainment; the source does not specify repetitive spikes or an automatic reset."
 
 [state.v]
 init = 0.0
+unit = "normalized polarization"
 
-[parameters.v_rest]
-default = 0.0
-unit = "1"
-meaning = "resting potential (normalised, R=1)"
-range = [
-    -1.0,
-    1.0,
-]
-
-[parameters.v_reset]
-default = 0.0
-unit = "1"
-meaning = "post-spike reset potential (normalised)"
-range = [
-    -1.0,
-    1.0,
-]
+[state.excited]
+init = 0.0
+meaning = "latched first threshold attainment"
 
 [parameters.v_threshold]
 default = 1.0
-unit = "1"
-meaning = "firing threshold (normalised)"
-range = [
-    0.0,
-    5.0,
-]
+unit = "normalized polarization"
+meaning = "excitation polarization threshold"
+range = [1e-12, 1000000.0]
 
-[parameters.tau]
-default = 20.0
-unit = "ms"
-meaning = "membrane (RC) time constant"
-range = [
-    1.0,
-    100.0,
-]
+[parameters.capacitance]
+default = 1.1
+unit = "normalized capacitance"
+meaning = "Lapicque circuit capacitance K"
+range = [1e-12, 1000000.0]
 
-[parameters.resistance]
+[parameters.series_resistance]
+default = 10.0
+unit = "normalized resistance"
+meaning = "Lapicque source-series resistance R"
+range = [1e-12, 1000000.0]
+
+[parameters.polarization_resistance]
 default = 1.0
-unit = "1"
-meaning = "membrane resistance (normalised, R=1)"
-range = [
-    0.1,
-    10.0,
-]
+unit = "normalized resistance"
+meaning = "Lapicque polarization leakage resistance rho"
+range = [1e-12, 1000000.0]
 
 [integration]
-dt = 1.0
-method = "exp_euler"
+dt = 0.01
+method = "exact_constant_voltage_flow"
 
 [dynamics]
-v = "(-(v - v_rest) + resistance * I) / tau"
+v = "v_inf + (v-v_inf)*exp(-dt/beta), v_inf=V*rho/(R+rho), beta=K*R*rho/(R+rho)"
+excited = "latch on the first candidate v >= v_threshold; never reset implicitly"
+strength_duration = "V(t)=alpha/(1-exp(-t/beta)), alpha=v_threshold*(R+rho)/rho"
 
 [backends.python]
 status = "implemented"
@@ -110,23 +91,27 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "4604bc3e85a75bc2c97152abdb61292a4cb61fe249560480e24c88ab6308a190"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json"
+golden_trace_sha256 = "5c601e200ba751ad2a28eda26950cbc68ef42b17624d1db0b6d3f0af1ce9408f"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json"
 
 [documentation]
 slug = "models/lapicque"
-notes = ""
+notes = "LapicqueNeuron.lapicque_1907() is the source profile. LapicqueNeuron() and SCLapicqueLIFNeuron preserve the historical SC hard-reset exact-flow LIF contract without attributing its repetitive reset to the paper."
 
 [validation]
 dynamics_faithful = true
-metric = "parity"
-operating_point = "exact constant-current RC flow; varied hand/TOML/JSON drive; Q16.16 at I=0.333,2.3,20.25 for 1000 steps"
-tolerance = "hand/TOML/JSON event-exact and <=2e-15 state error; Q16.16 event vectors exact with maximum voltage error below 0.04"
-evidence = "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+metric = "trajectory"
+operating_point = "normalized R/rho=10, beta=1 ms; multi-duration analytical thresholds and constant-voltage complete traces"
+tolerance = "receipt digests and event index exact; five native packets event-exact and <=5e-15; paired source schemas <=8e-15; source Q32.32 event-exact with <7e-8 state error"
+evidence = "tests/test_model_lapicque_source_contract.py; tests/test_reference_lapicque_source_receipt.py; tests/test_lapicque_backend_parity.py; tests/test_lapicque_engine_binding.py; tests/test_cosim_lapicque.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
-target_tier = "H1"
-terminal_reason = "Q16.16 point-neuron event-vector parity is enrolled; higher silicon rungs require synthesis, timing, and hardware programmes."
+cosim_evidence = "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound"
+synthesised = true
+synth_report = "hdl/reports/yosys_lapicque_1907_q3232_2026-08-30.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "The normalized source Q32.32 core preserves four complete enrolled event vectors with <7e-8 state error, synthesizes to 11,511 Yosys coarse cells, and passes depth-20 reset/latch/no-repeat safety. Timing, PPA, target-device, board, physical-silicon, and universal fixed-point equivalence evidence remain open."

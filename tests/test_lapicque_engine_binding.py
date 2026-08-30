@@ -13,8 +13,10 @@ from __future__ import annotations
 import importlib
 import math
 
+import numpy as np
 import pytest
 
+from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 from tests.engine_requirement import require_engine
 
 require_engine()
@@ -51,3 +53,73 @@ def test_threshold_crossing_and_reset_restore_zero_state() -> None:
     neuron.step(0.5)
     neuron.reset()
     assert neuron.get_state() == pytest.approx({"v": 0.0})
+
+
+def test_complete_binding_is_exported_through_the_public_bridge() -> None:
+    assert engine.lapicque_simulate_complete is extension.lapicque_simulate_complete
+    assert "lapicque_simulate_complete" in engine.__all__
+
+
+def test_complete_binding_transports_source_profile_and_event_latch() -> None:
+    voltage, events, final_v, excited = extension.lapicque_simulate_complete(
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        20.0,
+        1.0,
+        0.01,
+        1.1,
+        10.0,
+        1.0,
+        False,
+        True,
+        2_000,
+        22.0,
+    )
+    assert voltage.shape == events.shape == (2_000,)
+    assert events.dtype == np.uint8
+    assert np.flatnonzero(events).tolist() == [69]
+    assert final_v == voltage[-1]
+    assert excited is True
+
+
+def test_complete_binding_rejection_is_failure_atomic() -> None:
+    with pytest.raises(FloatingPointError, match="Lapicque batch rejected"):
+        extension.lapicque_simulate_complete(
+            0.25,
+            0.0,
+            0.0,
+            1.0,
+            20.0,
+            1.0,
+            0.01,
+            1.1,
+            10.0,
+            1.0,
+            False,
+            True,
+            2,
+            math.nan,
+        )
+
+
+def test_network_runner_canonical_spelling_selects_the_source_profile() -> None:
+    python = LapicqueNeuron.lapicque_1907()
+    expected_event = python.step(22.0)
+    runner = extension.NetworkRunner()
+    population = runner.add_population("LapicqueNeuron", 1)
+    result = runner.step_population(population, np.array([22.0], dtype=np.float64))
+    assert result["spikes"].tolist() == [expected_event]
+    assert result["voltages"].tolist() == pytest.approx([python.v], abs=1.0e-15)
+
+
+@pytest.mark.parametrize("alias", ("Lapicque", "SCLapicqueLIF", "SCLapicqueLIFNeuron"))
+def test_network_runner_aliases_preserve_the_sc_profile(alias: str) -> None:
+    python = LapicqueNeuron.sc_lif_compatibility()
+    expected_event = python.step(5.0)
+    runner = extension.NetworkRunner()
+    population = runner.add_population(alias, 1)
+    result = runner.step_population(population, np.array([5.0], dtype=np.float64))
+    assert result["spikes"].tolist() == [expected_event]
+    assert result["voltages"].tolist() == pytest.approx([python.v], abs=1.0e-15)

@@ -10,21 +10,21 @@
         "refractory_time": 0.8999999999999979,
         "v": -62.0
       },
-      "maximum_call_ms": 18.183134,
-      "median_call_ms": 12.149179,
-      "median_ns_per_step": 60.745895,
-      "minimum_call_ms": 11.71203,
+      "maximum_call_ms": 17.367788,
+      "median_call_ms": 14.954321,
+      "median_ns_per_step": 74.771605,
+      "minimum_call_ms": 13.475891,
       "parity_max_abs_diff": 0.0,
       "samples_call_ms": [
-        12.799578,
-        18.183134,
-        12.149179,
-        11.799894,
-        12.610148,
-        11.757524,
-        11.71203
+        14.954321,
+        17.367788,
+        13.511645,
+        14.280099,
+        15.564966,
+        15.938831,
+        13.475891
       ],
-      "speedup_vs_python": 85.79057621918321,
+      "speedup_vs_python": 87.75862354432542,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 0.0,
       "trace_sha256": "7eee415533da933efcd3f2811cc1e448442fed397b065367d0f68dd11a43b0aa",
@@ -40,21 +40,21 @@
         "refractory_time": 0.8999999999999979,
         "v": -62.0
       },
-      "maximum_call_ms": 9.098304,
-      "median_call_ms": 8.975796,
-      "median_ns_per_step": 44.87898,
-      "minimum_call_ms": 8.172337,
+      "maximum_call_ms": 12.750402,
+      "median_call_ms": 10.374402,
+      "median_ns_per_step": 51.87201,
+      "minimum_call_ms": 9.500511,
       "parity_max_abs_diff": 0.0,
       "samples_call_ms": [
-        8.172337,
-        8.537266,
-        8.822542,
-        9.098304,
-        9.067937,
-        8.985921,
-        8.975796
+        9.500511,
+        9.60259,
+        10.186947,
+        10.374402,
+        12.053268,
+        12.057311,
+        12.750402
       ],
-      "speedup_vs_python": 116.12174196026736,
+      "speedup_vs_python": 126.50084573549397,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 0.0,
       "trace_sha256": "7eee415533da933efcd3f2811cc1e448442fed397b065367d0f68dd11a43b0aa",
@@ -70,21 +70,21 @@
         "refractory_time": 0.8999999999999979,
         "v": -62.0
       },
-      "maximum_call_ms": 11.692527,
-      "median_call_ms": 11.192221,
-      "median_ns_per_step": 55.961105,
-      "minimum_call_ms": 10.842275,
+      "maximum_call_ms": 15.626752,
+      "median_call_ms": 13.703614,
+      "median_ns_per_step": 68.51807,
+      "minimum_call_ms": 13.258518,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_call_ms": [
-        11.192221,
-        11.692527,
-        11.012616,
-        11.281101,
-        10.878331,
-        10.842275,
-        11.332414
+        13.54809,
+        14.027528,
+        13.258518,
+        13.703614,
+        13.399006,
+        15.626752,
+        13.871211
       ],
-      "speedup_vs_python": 93.12584758646206,
+      "speedup_vs_python": 95.76821318814146,
       "state_max_abs_diff": 3.552713678800501e-15,
       "trace_max_abs_diff": 7.105427357601002e-15,
       "trace_sha256": "3c48c2193976156cff6081243ec6c9dfdb9ea0cc9e48a1bd527bb794082469dc",
@@ -100,19 +100,19 @@
         "refractory_time": 0.8999999999999979,
         "v": -62.0
       },
-      "maximum_call_ms": 1214.574002,
-      "median_call_ms": 1042.285067,
-      "median_ns_per_step": 5211.425335,
-      "minimum_call_ms": 915.67809,
+      "maximum_call_ms": 1360.84305,
+      "median_call_ms": 1312.370627,
+      "median_ns_per_step": 6561.853135,
+      "minimum_call_ms": 1172.964201,
       "parity_max_abs_diff": 0.0,
       "samples_call_ms": [
-        1042.285067,
-        1214.574002,
-        1058.344705,
-        984.548524,
-        1005.994707,
-        915.67809,
-        1090.772342
+        1172.964201,
+        1312.370627,
+        1360.84305,
+        1354.252475,
+        1286.90215,
+        1290.528691,
+        1355.576186
       ],
       "speedup_vs_python": 1.0,
       "state_max_abs_diff": 0.0,
@@ -130,21 +130,21 @@
         "refractory_time": 0.8999999999999979,
         "v": -62.0
       },
-      "maximum_call_ms": 12.09275,
-      "median_call_ms": 10.825386,
-      "median_ns_per_step": 54.12693,
-      "minimum_call_ms": 10.357637,
+      "maximum_call_ms": 13.499432,
+      "median_call_ms": 12.431839,
+      "median_ns_per_step": 62.159195,
+      "minimum_call_ms": 11.427967,
       "parity_max_abs_diff": 0.0,
       "samples_call_ms": [
-        11.106494,
-        12.09275,
-        10.863079,
-        10.483378,
-        10.68159,
-        10.825386,
-        10.357637
+        12.644295,
+        13.499432,
+        12.431839,
+        12.007018,
+        12.153965,
+        11.427967,
+        12.530678
       ],
-      "speedup_vs_python": 96.28156141499251,
+      "speedup_vs_python": 105.56528499122294,
       "state_max_abs_diff": 0.0,
       "trace_max_abs_diff": 0.0,
       "trace_sha256": "7eee415533da933efcd3f2811cc1e448442fed397b065367d0f68dd11a43b0aa",
@@ -164,7 +164,7 @@
   ],
   "meta": {
     "affinity": [
-      5
+      10
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "exclusive_cpu_isolation_claimed": false,
@@ -172,14 +172,14 @@
     "kernel_isolated_cpus": "",
     "kernel_nohz_full_cpus": "",
     "load_average_end": [
-      8.32421875,
-      13.0625,
-      13.9892578125
+      9.58056640625,
+      7.673828125,
+      8.04296875
     ],
     "load_average_start": [
-      7.43359375,
-      13.04931640625,
-      13.99462890625
+      9.537109375,
+      7.5439453125,
+      8.01220703125
     ],
     "measurement_scope": "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -202,9 +202,9 @@
     },
     "benchmarks/bench_model_coba_lif.py": "f1900a16bd48a121ff8509aeb2a3ea01a61e1526449e156ec7f45deeeb36bbba",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "62487e1d80a110a95340dab8d9ab5bf8eb4fa34ffb6107a3ec1a89fa74a99546"
+      "py": "9f27c2b64bd5ec50c310decf121373c8ee69fcd723c27134011ef22167d9bce5"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "62487e1d80a110a95340dab8d9ab5bf8eb4fa34ffb6107a3ec1a89fa74a99546",
+    "bridge/sc_neurocore_engine/__init__.py": "9f27c2b64bd5ec50c310decf121373c8ee69fcd723c27134011ef22167d9bce5",
     "engine/src/neurons/simple_spiking": {
       "rs": "442309aa5871768b3626b11d125a4f5cfe39f5d2cb949baaeeca6e6352ee9905"
     },
@@ -252,7 +252,7 @@
     },
     "src/sc_neurocore/neurons/models/coba_lif.py": "b75bfbe0ebdf0dccf568884ff593b3d886875c8ee2ed4ca265268c607df3cf2d"
   },
-  "timestamp_utc": "2026-08-30T04:26:39Z",
+  "timestamp_utc": "2026-08-30T06:14:17Z",
   "verification": {
     "rust_safety": {
       "command": "rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/coba_lif.rs -O -o <temp-binary> && <temp-binary>",

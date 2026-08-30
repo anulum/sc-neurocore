@@ -89,13 +89,13 @@ or `learn_threshold=True` to make them trainable parameters.
 
 | Cell | States | Key feature | Citation |
 |---|---|---|---|
-| `LIFCell` | v | Leaky integrate-and-fire (default) | Lapicque 1907 |
+| `LIFCell` | v | Leaky integrate-and-fire (default) | Later LIF convention |
 | `IFCell` | v | No leak (beta=1), simplest model | — |
 | `SynapticCell` | i_syn, v | Dual-exponential synaptic current | — |
 | `ALIFCell` | v, a | Adaptive threshold (spike-frequency adaptation) | Bellec et al. 2020 |
 | `ExpIFCell` | v | Exponential upstroke near threshold | Fourcaud-Trocmé et al. 2003 |
 | `AdExCell` | v, w | Adaptive exponential IF (tonic/bursting/adapting) | Brette & Gerstner 2005 |
-| `LapicqueCell` | v | Explicit RC parameters (tau, R, dt) | Lapicque 1907 |
+| `LapicqueCell` | v | Explicit RC parameters (tau, R, dt) | Retained SC compatibility cell; historical name |
 | `AlphaCell` | i_exc, i_inh, v | Separate excitatory/inhibitory synapses | Rall 1967 |
 | `SecondOrderLIFCell` | a, v | Inertial acceleration term | Dayan & Abbott 2001 |
 | `RecurrentLIFCell` | v, spike_prev | Trainable recurrent weights | — |

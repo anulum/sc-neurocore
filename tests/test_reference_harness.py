@@ -34,6 +34,7 @@ _EXTERNAL_SOURCE_PREFIXES = {
     "courage_nekorkin_map": "doi:10.1063/1.2795435",
     "iqif": "https://github.com/twetto/iq-neuron/blob/",
     "sc_clipped_rational_recovery_map": "SC-NeuroCore retained project recurrence",
+    "sc_lapicque_lif": "SC-NeuroCore retained project recurrence",
 }
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adaptive_threshold_if": "adaptive_threshold_if_tonic_adaptation_doi",
@@ -56,7 +57,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "izhikevich2007": "izhikevich2007_regular_spiking_doi",
     "ibarz_tanaka_map": "ibarz_tanaka_map_2007_doi",
     "iqif": "iqif_a8752eb_tutorial",
-    "lapicque": "lapicque_constant_current_closed_form",
+    "lapicque": "lapicque_1907_constant_voltage_closed_form",
     "lif": "lif_constant_current_closed_form",
     "sc_triangular_mckean": "sc_triangular_mckean_project",
     "mcculloch_pitts": "mcculloch_pitts_1943_truth_table",
@@ -72,6 +73,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "rulkov_map": "rulkov_map_driven_spiking_doi",
     "sc_clipped_logistic_bursting_map": "sc_clipped_logistic_bursting_map_project",
     "sc_four_state_glif": "sc_four_state_glif_constant_current_adaptation",
+    "sc_lapicque_lif": "sc_lapicque_lif_constant_current_closed_form",
     "sc_resetting_wilson_hr": "sc_resetting_wilson_hr_project",
     "sc_scaled_reset_adaptive_if": "sc_scaled_reset_adaptive_if_driven_project",
     "sigmoid_rate": "sigmoid_rate_exact_relaxation_doi",
@@ -149,18 +151,18 @@ def test_reference_trace_corpus_dispatches_every_artefact_by_runner_class() -> N
 
 def test_simulation_exercises_universal_schema_runner() -> None:
     """The harness must execute the committed schema through UniversalNeuron."""
-    spec = load_reference_trace_spec("lapicque_constant_current_closed_form")
+    spec = load_reference_trace_spec("lapicque_1907_constant_voltage_closed_form")
 
     simulation = simulate_reference_trace(spec)
 
     assert simulation.name == spec.name
     assert simulation.steps == spec.protocol.steps
-    assert tuple(simulation.trace) == ("v",)
+    assert tuple(simulation.trace) == ("v", "excited")
     assert len(simulation.trace["v"]) == spec.protocol.steps
     assert simulation.trace["v"][0] > 0.0
-    assert simulation.spikes == tuple(0 for _ in range(spec.protocol.steps))
-    assert simulation.features["spike_count"] == 0.0
-    assert simulation.features["first_spike_step"] == -1.0
+    assert sum(simulation.spikes) == 1
+    assert simulation.features["spike_count"] == 1.0
+    assert simulation.features["first_spike_step"] == 70.0
     assert simulation.features["max.v"] == max(simulation.trace["v"])
 
 

@@ -137,6 +137,20 @@ def test_expif_detail_exposes_source_receipt_and_profile_split() -> None:
     assert "source profile" in cast(dict[str, str], detail["dynamics"])["v"]
 
 
+def test_lapicque_detail_exposes_source_receipt_and_no_reset_boundary() -> None:
+    detail = get_model_detail("LapicqueNeuron")
+    assert detail is not None
+    reproducibility = cast(dict[str, object], detail["reproducibility"])
+    assert str(reproducibility["reference_config"]).endswith(
+        "reference_receipts/lapicque_1907.json"
+    )
+    dynamics = cast(dict[str, str], detail["dynamics"])
+    assert "first candidate" in dynamics["excited"]
+    assert "strength_duration" in dynamics
+    assert detail["silicon_label"] == "H2"
+    assert cast(dict[str, object], detail["readiness"])["terminal_silicon_tier"] == "H2"
+
+
 def test_model_detail_exposes_measured_golden_trace_digest_variants() -> None:
     """Studio clients can verify every typed platform-compatible trace digest."""
     detail = get_model_detail("ChialvoMapNeuron")

@@ -17,9 +17,11 @@ from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 from tests.lapicque_backends_support import (
     COMPILED_BACKENDS,
     GOLDENS,
+    SOURCE_TRACE_ATOL,
     TRACE_ATOL,
     configured,
     run_backend,
+    source_configured,
 )
 
 
@@ -60,6 +62,20 @@ def test_full_parameter_contract_matches_python(backend: str) -> None:
 
 
 @pytest.mark.parametrize("backend", COMPILED_BACKENDS)
+def test_source_profile_complete_packet_matches_python(backend: str) -> None:
+    """Carry the source circuit, latch, and every aligned event across each lane."""
+    python = source_configured()
+    native = source_configured()
+    expected_voltage, expected_events = python.simulate_complete(4_000, 24.0, backend="python")
+    voltage, events = native.simulate_complete(4_000, 24.0, backend=backend)
+    np.testing.assert_allclose(voltage, expected_voltage, atol=SOURCE_TRACE_ATOL, rtol=0.0)
+    np.testing.assert_array_equal(events, expected_events)
+    assert int(events.sum()) == 1
+    assert native.v == pytest.approx(python.v, abs=SOURCE_TRACE_ATOL)
+    assert native.excited is python.excited is True
+
+
+@pytest.mark.parametrize("backend", COMPILED_BACKENDS)
 def test_empty_run_preserves_state(backend: str) -> None:
     """Return an empty trace without discarding the initial voltage."""
     neuron = LapicqueNeuron() if backend == "rust" else configured()
@@ -70,10 +86,12 @@ def test_empty_run_preserves_state(backend: str) -> None:
     assert neuron.v == before
 
 
-def test_rust_rejects_non_default_contract() -> None:
-    """Keep the Rust engine class's factory-only parameter boundary explicit."""
+def test_rust_complete_binding_accepts_the_full_sc_contract() -> None:
+    """Keep Rust on the same explicit full-parameter path as every native lane."""
     neuron = configured()
-    before = neuron.v
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert neuron.v == before
+    expected = configured()
+    trace, events = neuron.simulate_complete(300, 2.2, backend="rust")
+    expected_trace, expected_events = expected.simulate_complete(300, 2.2, backend="python")
+    np.testing.assert_allclose(trace, expected_trace, atol=TRACE_ATOL, rtol=0.0)
+    np.testing.assert_array_equal(events, expected_events)
+    assert neuron.v == pytest.approx(expected.v, abs=TRACE_ATOL)

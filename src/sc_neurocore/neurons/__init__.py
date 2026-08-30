@@ -128,6 +128,7 @@ _MODEL_NAMES = {
     "JansenRitUnit",
     "KLIFNeuron",
     "LapicqueNeuron",
+    "SCLapicqueLIFNeuron",
     "LarterBreakspearNeuron",
     "SCDecoupledAdaptationIonMassNeuron",
     "LeakyCompeteFireNeuron",

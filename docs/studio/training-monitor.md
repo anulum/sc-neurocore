@@ -67,7 +67,7 @@ neuron models:
 - **ALIFCell** — adaptive LIF (Bellec et al. 2020)
 - **ExpIFCell** — exponential IF (Fourcaud-Trocme et al. 2003)
 - **AdExCell** — adaptive exponential IF (Brette & Gerstner 2005)
-- **LapicqueCell** — classical Lapicque neuron
+- **LapicqueCell** — retained SC hard-reset RC training cell (historical name)
 - **AlphaCell** — alpha synaptic conductance
 - **SecondOrderLIFCell** — LIF with second-order dynamics
 - **RecurrentLIFCell** — LIF with within-layer recurrence

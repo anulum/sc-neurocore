@@ -58,7 +58,7 @@
       "id": "morris-lecar-rk4-multibackend-local-regression"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json",
+      "artefact": "benchmarks/results/bench_lapicque.json",
       "id": "lapicque-exact-flow-multibackend-local-regression"
     },
     {

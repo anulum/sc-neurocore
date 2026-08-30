@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.source-receipt.v1",
+  "model": "LapicqueNeuron",
+  "source_profile": "lapicque_1907",
+  "reference": {
+    "author": "Louis Lapicque",
+    "year": 1907,
+    "original_title": "Recherches quantitatives sur l'excitation electrique des nerfs traitee comme une polarisation",
+    "translation_doi": "10.1007/s00422-007-0189-6",
+    "interpretation_doi": "10.1007/s00422-007-0190-0",
+    "source_scope": "polarization threshold under electrical stimulation; no automatic reset or repetitive spike generator"
+  },
+  "equations": {
+    "differential": "K*dv/dt=(V-v)/R-v/rho",
+    "constant_pulse": "v(t)=V*rho/(R+rho)*(1-exp(-t/beta)) for v(0)=0",
+    "beta": "K*R*rho/(R+rho)",
+    "alpha": "v_threshold*(R+rho)/rho",
+    "strength_duration": "V(t)=alpha/(1-exp(-t/beta))"
+  },
+  "numerical_specialization": {
+    "v_initial": 0.0,
+    "v_threshold": 1.0,
+    "capacitance_K": 1.1,
+    "series_resistance_R": 10.0,
+    "polarization_resistance_rho": 1.0,
+    "dt_ms": 0.01,
+    "beta_ms": 1.0,
+    "scope_note": "normalized reproducibility point, not a claim about measured 1907 constants"
+  },
+  "protocol": {
+    "source_voltage_V": 22.0,
+    "steps": 2000,
+    "total_duration_ms": 20.0,
+    "sample_contract": "post-step polarization and binary first-attainment event"
+  },
+  "expected": {
+    "steady_polarization": 2.0,
+    "event_count": 1,
+    "event_indices_zero_based": [69],
+    "final_polarization": 1.9999999958776924,
+    "little_endian_float64_polarization_sha256": "5c601e200ba751ad2a28eda26950cbc68ef42b17624d1db0b6d3f0af1ce9408f",
+    "uint8_event_sha256": "7b6096011a5643376bb7c11987ae704c4a72b668d8667260bee960bbf27f970e"
+  },
+  "strength_duration_points": [
+    {"duration_ms": 0.1, "threshold_source_voltage": 115.59165139252555},
+    {"duration_ms": 0.5, "threshold_source_voltage": 27.956434907904782},
+    {"duration_ms": 1.0, "threshold_source_voltage": 17.40174377556259},
+    {"duration_ms": 2.0, "threshold_source_voltage": 12.721694070246322},
+    {"duration_ms": 5.0, "threshold_source_voltage": 11.074620203969346}
+  ]
+}

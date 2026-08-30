@@ -16,6 +16,7 @@ import numpy.typing as npt
 from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 
 TRACE_ATOL = 2.0e-15
+SOURCE_TRACE_ATOL = 5.0e-15
 GOLDENS = ((0.0, 0), (0.5, 0), (2.0, 71), (5.0, 200), (20.0, 500))
 COMPILED_BACKENDS = ("rust", "julia", "go", "mojo")
 
@@ -35,6 +36,17 @@ def run_backend(
 def configured() -> LapicqueNeuron:
     return LapicqueNeuron(
         v=0.25, v_rest=-0.1, v_reset=-0.2, v_threshold=1.3, tau=7.5, resistance=1.7, dt=0.37
+    )
+
+
+def source_configured() -> LapicqueNeuron:
+    return LapicqueNeuron.lapicque_1907(
+        v=0.125,
+        v_threshold=1.25,
+        capacitance=1.7,
+        series_resistance=8.0,
+        polarization_resistance=1.5,
+        dt=0.0075,
     )
 
 

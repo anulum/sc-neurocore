@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -40,7 +41,27 @@ class Population:
         """Create *n* neurons of *model* (class or string name)."""
         cls = _resolve_model(model)
         kw = params or {}
-        self.neurons = [cls(**kw) for _ in range(n)]
+        factory: Callable[..., Any] = cls
+        if isinstance(model, str) and model == "LapicqueNeuron":
+            source_fields = {
+                "v",
+                "v_threshold",
+                "capacitance",
+                "series_resistance",
+                "polarization_resistance",
+                "dt",
+                "excited",
+            }
+            sc_only_fields = {"v_rest", "v_reset", "tau", "resistance"}
+            if not (set(kw) & sc_only_fields):
+                if not set(kw) <= source_fields:
+                    unexpected = sorted(set(kw) - source_fields)
+                    raise TypeError(
+                        "LapicqueNeuron source profile received unsupported parameters: "
+                        + ", ".join(unexpected)
+                    )
+                factory = cls.lapicque_1907
+        self.neurons = [factory(**kw) for _ in range(n)]
         self.n = n
         self.model_name = cls.__name__
         self.label = label or cls.__name__

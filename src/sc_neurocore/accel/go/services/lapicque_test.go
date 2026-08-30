@@ -84,6 +84,46 @@ func TestLapicqueRejectsOverflowingIncrementBeforeMutation(t *testing.T) {
 	}
 }
 
+func TestLapicque1907MatchesPolarizationFlowAndLatchesOnce(t *testing.T) {
+	state := NewLapicque1907()
+	trace, events, final, err := SimulateLapicqueComplete(*state, 2000, 22.0)
+	if err != nil {
+		t.Fatalf("unexpected source batch error: %v", err)
+	}
+	count := 0
+	index := -1
+	for i, event := range events {
+		if event != 0 {
+			count++
+			index = i
+		}
+	}
+	if count != 1 || index != 69 {
+		t.Fatalf("source events mismatch: count=%d index=%d", count, index)
+	}
+	if !final.Excited || final.V != trace[len(trace)-1] {
+		t.Fatalf("source final state lost: v=%v excited=%v", final.V, final.Excited)
+	}
+	expected := 2.0 * (1.0 - math.Exp(-20.0))
+	if math.Abs(final.V-expected) > 1e-15 {
+		t.Fatalf("source polarization mismatch: got %.17g want %.17g", final.V, expected)
+	}
+}
+
+func TestLapicqueCompleteFailureReturnsOriginalStateAndNoRows(t *testing.T) {
+	initial := *NewLapicque1907()
+	trace, events, final, err := SimulateLapicqueComplete(initial, 2, math.NaN())
+	if err == nil {
+		t.Fatal("expected invalid source drive to fail")
+	}
+	if trace != nil || events != nil {
+		t.Fatal("failed batch exposed partial output")
+	}
+	if final != initial {
+		t.Fatalf("failed batch mutated state: got %+v want %+v", final, initial)
+	}
+}
+
 func BenchmarkLapicqueExactFlow(b *testing.B) {
 	state := NewLapicqueNeuron()
 	spikes := 0

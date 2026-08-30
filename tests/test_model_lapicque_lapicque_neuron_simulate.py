@@ -33,8 +33,12 @@ class TestLapicqueNeuronSimulate:
         max_diff = float(np.max(np.abs(tr_py - tr_rs)))
         assert max_diff < 1e-9
 
-    def test_simulate_rust_rejects_non_default(self) -> None:
+    def test_simulate_rust_carries_non_default_complete_contract(self) -> None:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
-        n = LapicqueNeuron(dt=0.02)
-        with pytest.raises(RuntimeError, match="factory-default"):
-            n.simulate(10, current=0.0, backend="rust")
+        python = LapicqueNeuron(v=0.2, tau=7.0, resistance=1.5, dt=0.02)
+        rust = LapicqueNeuron(v=0.2, tau=7.0, resistance=1.5, dt=0.02)
+        expected_trace, expected_events = python.simulate_complete(100, 2.0, backend="python")
+        trace, events = rust.simulate_complete(100, 2.0, backend="rust")
+        np.testing.assert_allclose(trace, expected_trace, atol=2.0e-15, rtol=0.0)
+        np.testing.assert_array_equal(events, expected_events)
+        assert rust.v == pytest.approx(python.v, abs=2.0e-15)

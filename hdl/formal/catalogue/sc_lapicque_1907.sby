@@ -1,0 +1,18 @@
+# SymbiYosys job for the Lapicque 1907 polarization-threshold core
+# Q32.32 bounded reset, first-attainment, and permanent-latch safety
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_lapicque_1907_formal.v
+read -formal sc_lapicque_1907.v
+prep -top sc_lapicque_1907_formal
+
+[files]
+sc_lapicque_1907_formal.v
+sc_lapicque_1907.v

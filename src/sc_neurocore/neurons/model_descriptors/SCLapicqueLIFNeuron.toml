@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCLapicqueLIFNeuron"
+class_name = "SCLapicqueLIFNeuron"
+module = "lapicque"
+display_name = "SC exact-flow hard-reset LIF"
+summary = "Count-neutral preservation of the historical SC repetitive hard-reset recurrence formerly presented as the complete Lapicque model."
+family = "Integrate-and-Fire"
+category = "project-compatibility"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = ["project compatibility", "repetitive exact-flow LIF experiments"]
+hardware_fit = ["Q16.16 exact-flow approximation"]
+behavior_tags = ["excitable", "tonic", "resetting"]
+
+[provenance]
+authors = ["SC-NeuroCore project"]
+year = 2026
+doi = ""
+derivation_note = "Historical SC exact-flow hard-reset LIF recurrence retained without claiming that Lapicque 1907 specified repetitive spike generation or reset."
+
+[state.v]
+init = 0.0
+
+[parameters.v_rest]
+default = 0.0
+unit = "normalized voltage"
+meaning = "resting voltage"
+
+[parameters.v_reset]
+default = 0.0
+unit = "normalized voltage"
+meaning = "post-event reset voltage"
+
+[parameters.v_threshold]
+default = 1.0
+unit = "normalized voltage"
+meaning = "event threshold"
+
+[parameters.tau]
+default = 20.0
+unit = "ms"
+meaning = "RC time constant"
+
+[parameters.resistance]
+default = 1.0
+unit = "normalized resistance"
+meaning = "current-to-voltage gain"
+
+[integration]
+dt = 1.0
+method = "exact_constant_current_flow"
+
+[dynamics]
+v = "v_inf + (v-v_inf)*exp(-dt/tau), v_inf=v_rest+resistance*I; hard reset to v_reset at threshold"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
+[documentation]
+slug = "models/sc_lapicque_lif"
+notes = "Count-neutral SC compatibility model; LapicqueNeuron is the catalogue-counted source identity."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+evidence = "tests/test_model_lapicque_lapicque_analytical.py; tests/test_lapicque_backend_parity.py; tests/test_cosim_lapicque.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_lapicque.py"
+target_tier = "H1"
+terminal_reason = "The preserved SC profile has Q16.16 co-simulation and bounded formal evidence; timing, PPA, board, and physical-silicon evidence remain open."

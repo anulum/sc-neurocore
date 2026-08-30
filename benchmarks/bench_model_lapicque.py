@@ -7,7 +7,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Controlled Lapicque five-backend benchmark
 
-"""Measure the maintained Lapicque exact RC flow through public dispatch.
+"""Measure the source-aligned Lapicque 1907 flow through public dispatch.
 
 The evidence record binds public-API timings to source hashes, CPU affinity,
 host load, runtime versions, event parity, and voltage-trace error. Missing
@@ -39,13 +39,15 @@ from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 REPOSITORY = Path(__file__).resolve().parents[1]
 N_STEPS = 100_000
 N_REPEATS = 7
-CURRENT = 5.0
-TRACE_ATOL = 2.0e-15
-KERNEL = "lapicque_exact_constant_current_flow"
+SOURCE_VOLTAGE = 22.0
+TRACE_ATOL = 5.0e-15
+KERNEL = "lapicque_1907_exact_polarization_complete_packet"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_lapicque.py",
     "engine/src/neuron/lapicque.rs",
+    "engine/src/bindings/lapicque_neuron.rs",
+    "engine/src/network_runner/model_factory.rs",
     "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
     "src/sc_neurocore/accel/go/services/lapicque.go",
     "src/sc_neurocore/accel/julia/neurons/lapicque.jl",
@@ -53,6 +55,14 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/rust/safety/lapicque.rs",
     "src/sc_neurocore/neurons/models/lapicque.py",
     "src/sc_neurocore/accel/lapicque.py",
+    "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
+    "src/sc_neurocore/neurons/model_schemas/lapicque.json",
+    "src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json",
+    "hdl/formal/catalogue/sc_lapicque_1907.v",
+    "hdl/formal/catalogue/sc_lapicque_1907_formal.v",
+    "hdl/formal/catalogue/sc_lapicque_1907.sby",
+    "hdl/reports/yosys_lapicque_1907_q3232_2026-08-30.json",
 )
 
 
@@ -138,21 +148,27 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    tuple[float, bool],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    LapicqueNeuron().simulate(20, CURRENT, backend=backend)
+    LapicqueNeuron.lapicque_1907().simulate_complete(20, SOURCE_VOLTAGE, backend=backend)
     elapsed_ms: list[float] = []
     trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
-    spikes = 0
-    final_state = (0.0,)
+    events: npt.NDArray[np.uint8] = np.empty(0, dtype=np.uint8)
+    final_state = (0.0, False)
     for _repeat in range(N_REPEATS):
         gc.collect()
-        neuron = LapicqueNeuron()
+        neuron = LapicqueNeuron.lapicque_1907()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        trace, events = neuron.simulate_complete(N_STEPS, SOURCE_VOLTAGE, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
-        final_state = (neuron.v,)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+        final_state = (neuron.v, neuron.excited)
+    return statistics.median(elapsed_ms), min(elapsed_ms), trace, events, final_state
 
 
 def _runtime_versions() -> dict[str, str]:
@@ -217,7 +233,7 @@ def main(argv: list[str]) -> int:
     rows: dict[str, dict[str, Any]] = {}
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
-    reference_spikes: int | None = None
+    reference_events: npt.NDArray[np.uint8] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
@@ -227,14 +243,14 @@ def main(argv: list[str]) -> int:
                 "unavailable_reason": reason,
             }
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        median_ms, minimum_ms, trace, events, final_state = _measure_backend(backend)
         if backend == "python":
             reference = trace
             reference_ms = median_ms
-            reference_spikes = spikes
+            reference_events = events
             parity = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if reference is None or reference_ms is None or reference_events is None:
                 raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
         rows[backend] = {
@@ -244,11 +260,12 @@ def main(argv: list[str]) -> int:
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": (reference_ms / median_ms if reference_ms is not None else 1.0),
             "parity_max_abs_diff": parity,
-            "event_count": spikes,
-            "event_count_matches_python": (
-                True if reference_spikes is None else spikes == reference_spikes
+            "event_count": int(events.sum()),
+            "uint8_event_sha256": hashlib.sha256(events.tobytes()).hexdigest(),
+            "event_vector_matches_python": (
+                True if reference_events is None else bool(np.array_equal(events, reference_events))
             ),
-            "final_state": dict(zip(("v",), final_state, strict=True)),
+            "final_state": dict(zip(("v", "excited"), final_state, strict=True)),
         }
 
     measured_order = sorted(
@@ -261,10 +278,10 @@ def main(argv: list[str]) -> int:
         "workload": {
             "n_steps": N_STEPS,
             "repeats": N_REPEATS,
-            "current": CURRENT,
+            "source_voltage": SOURCE_VOLTAGE,
             "parameters": (
-                "Lapicque factory defaults; exact constant-current RC flow; "
-                "candidate-first threshold and hard reset"
+                "Lapicque 1907 normalized profile; K=1.1, R=10, rho=1, beta=1 ms; "
+                "exact constant-source-voltage flow; first-attainment latch; no automatic reset"
             ),
             "trace_atol": TRACE_ATOL,
         },
@@ -288,7 +305,7 @@ def main(argv: list[str]) -> int:
     print(f"Measured order: {', '.join(measured_order)}")
     print(f"Wrote {args.json}")
 
-    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+    if any(not bool(row.get("event_vector_matches_python", True)) for row in rows.values()):
         return 3
     if any(
         float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL

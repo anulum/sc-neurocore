@@ -372,6 +372,7 @@ raw TOML descriptor.
 | `AdExNeuron` | `AdExNeuron` | Brette & Gerstner 2005 |
 | `ExpIFNeuron` | `ExpIFNeuron` | Fourcaud-Trocmé et al. 2003 |
 | `LapicqueNeuron` | `LapicqueNeuron` | Lapicque 1907 |
+| `SCLapicqueLIFNeuron` | `LapicqueNeuron` compatibility profile | Count-neutral retained SC recurrence |
 
 ## Common Interface
 

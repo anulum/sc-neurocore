@@ -964,14 +964,14 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 197,
+    "model_documentation_pages": 198,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 622,
-    "python_model_classes": 180,
+    "public_documentation_pages": 623,
+    "python_model_classes": 181,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4782
+    "test_files": 4784
   },
   "documentation": {
     "public_pages": [
@@ -1225,6 +1225,7 @@
       "docs/api/models/sc_decoupled_adaptation_ion_mass.md",
       "docs/api/models/sc_exponential_tc_lif.md",
       "docs/api/models/sc_four_state_glif.md",
+      "docs/api/models/sc_lapicque_lif.md",
       "docs/api/models/sc_leaky_tc_lif.md",
       "docs/api/models/sc_non_resetting_adaptive_lif.md",
       "docs/api/models/sc_normalized_energy_lif.md",
@@ -1767,6 +1768,7 @@
       "sc_decoupled_adaptation_ion_mass.md",
       "sc_exponential_tc_lif.md",
       "sc_four_state_glif.md",
+      "sc_lapicque_lif.md",
       "sc_leaky_tc_lif.md",
       "sc_non_resetting_adaptive_lif.md",
       "sc_normalized_energy_lif.md",
@@ -2348,6 +2350,10 @@
       {
         "name": "SCFourStateGLIFNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_four_state_glif.py"
+      },
+      {
+        "name": "SCLapicqueLIFNeuron",
+        "path": "src/sc_neurocore/neurons/models/lapicque.py"
       },
       {
         "name": "SCLeakyTwoCompartmentLIFNeuron",
@@ -5710,6 +5716,7 @@
       "tests/test_model_lapicque_lapicque_performance.py",
       "tests/test_model_lapicque_lapicque_pipeline.py",
       "tests/test_model_lapicque_lapicque_validation.py",
+      "tests/test_model_lapicque_source_contract.py",
       "tests/test_model_larter_breakspear_lb_analytical.py",
       "tests/test_model_larter_breakspear_lb_dynamics.py",
       "tests/test_model_larter_breakspear_lb_isolation.py",
@@ -6674,6 +6681,7 @@
       "tests/test_reference_izhikevich2007.py",
       "tests/test_reference_jansen_rit.py",
       "tests/test_reference_lapicque.py",
+      "tests/test_reference_lapicque_source_receipt.py",
       "tests/test_reference_lif.py",
       "tests/test_reference_mat.py",
       "tests/test_reference_mcculloch_pitts.py",

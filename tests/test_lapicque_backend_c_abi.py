@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ctypes
 import math
+from typing import Any
 
 import numpy as np
 import pytest
@@ -60,3 +61,43 @@ def test_c_abi_rejection_does_not_commit_instance_state(backend: str) -> None:
     with pytest.raises(FloatingPointError, match="kernel rejected"):
         neuron.simulate(1, 1.0e308, backend=backend)
     assert neuron.v == 0.25
+
+
+@pytest.mark.parametrize("backend", ("go", "mojo"))
+def test_complete_c_abi_rejects_source_batch_without_writing_either_buffer(
+    backend: str,
+) -> None:
+    """Prove two-pass atomicity for the state and event custody buffers."""
+    loader = backends.ensure_go_loaded if backend == "go" else backends.ensure_mojo_loaded
+    if not loader():
+        pytest.skip(f"{backend} Lapicque backend is not built in this environment")
+    library = backends._go_lib if backend == "go" else backends._mojo_lib
+    assert library is not None
+    voltage = np.full(3, -777.0, dtype=np.float64)
+    events = np.full(2, 255, dtype=np.uint8)
+    tail: tuple[Any, Any] = (
+        voltage.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+    )
+    if backend == "mojo":
+        tail = (int(voltage.ctypes.data), int(events.ctypes.data))
+    result = library.lapicque_simulate_complete_c(
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        20.0,
+        1.0,
+        0.01,
+        1.1,
+        10.0,
+        1.0,
+        0,
+        1,
+        2,
+        math.nan,
+        *tail,
+    )
+    assert result == -1
+    np.testing.assert_array_equal(voltage, np.full(3, -777.0, dtype=np.float64))
+    np.testing.assert_array_equal(events, np.full(2, 255, dtype=np.uint8))

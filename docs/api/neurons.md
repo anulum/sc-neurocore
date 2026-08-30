@@ -73,6 +73,7 @@ table, validation commands, and external simulator boundary.
 | AdEx | `adex.py` | Brette & Gerstner 2005 |
 | ExpIF | `expif.py` | Fourcaud-Trocme 2003 |
 | Lapicque | `lapicque.py` | Lapicque 1907 |
+| SC exact-flow hard-reset LIF | `lapicque.py` | Count-neutral retained project recurrence |
 | QIF | `quadratic_if.py` | Latham 2000 |
 | GLIF5 | `glif.py` | Teeter 2018 five-state source model |
 | SC four-state GLIF | `sc_four_state_glif.py` | Count-neutral retained project recurrence |
@@ -200,6 +201,6 @@ Differentiable spiking neurons for surrogate gradient training:
 | RecurrentLIFCell | `training.snn_modules` | Orthogonal init |
 | ExpIFCell | `training.snn_modules` | Exponential |
 | AdExCell | `training.snn_modules` | Adaptive exponential |
-| LapicqueCell | `training.snn_modules` | RC circuit |
+| LapicqueCell | `training.snn_modules` | Retained SC hard-reset RC training cell |
 | AlphaCell | `training.snn_modules` | Alpha synapse |
 | SecondOrderLIFCell | `training.snn_modules` | Inertial term |

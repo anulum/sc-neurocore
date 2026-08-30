@@ -204,15 +204,18 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         class_name="LapicqueNeuron",
         level="h1_cosim",
         evidence=(
-            "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+            "tests/test_cosim_lapicque.py::"
+            "test_source_q3232_preserves_first_attainment_and_polarization_bound"
         ),
         operating_point=(
-            "Lapicque exact constant-current RC flow at I=0.333,2.3,20.25 over 1000 steps"
+            "Lapicque 1907 exact source-voltage polarization at V=5.5,11,12,22 "
+            "over 1000 steps"
         ),
         tolerance=(
-            "hand/TOML/JSON event-exact with state error at or below 2e-15; "
-            "Q16.16 event vectors exact with voltage error below 0.04"
+            "source hand/TOML/JSON event-exact with state error at or below 8e-15; "
+            "Q32.32 event vectors exact with polarization error below 7e-8"
         ),
+        metric="trajectory",
     ),
     EnrolledEvidence(
         schema_name="perfect_integrator",
