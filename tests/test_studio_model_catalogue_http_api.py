@@ -27,8 +27,8 @@ def test_api_models_endpoint_serves_family(client: TestClient) -> None:
     assert adex["family"] == "Integrate-and-Fire"
     assert adex["validation_metric"] == "parity"
     assert adex["integration_method"] == "euler"
-    assert adex["terminal_silicon_tier"] == "H1"
-    assert adex["terminal_reason"].startswith("Point-neuron schema")
+    assert adex["terminal_silicon_tier"] == "H2"
+    assert adex["terminal_reason"].startswith("Q16.16 co-simulation")
 
 
 def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None:

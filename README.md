@@ -100,7 +100,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 197 |
 | Rust PyO3 model wrappers | 207 |
 | Optional extras | 28 |
-| Python test files | 4776 |
+| Python test files | 4778 |
 | Public documentation pages | 622 |
 | GitHub Actions workflows | 20 |
 
@@ -209,7 +209,9 @@ and 0.75x (slower than Brian2) at 10,000.
 The AdEx model also exposes source-bound baseline-Euler simulation through
 Python, the Rust engine, Julia, Go, and Mojo. Its committed
 `benchmarks/results/bench_adex.json` artefact records exact event parity and a
-`5e-12` voltage-trace envelope; see the
+`5e-12` complete `(v,w)` trace envelope. The separate source-fit receipt,
+four-current Q16.16 co-simulation, Yosys synthesis receipt, and bounded formal
+safety establish its honest H2 boundary; see the
 [AdEx model page](docs/api/models/adex.md) for backend and evidence boundaries.
 
 The ExpIF model exposes the Fourcaud-Trocmé candidate-first RK4 recurrence

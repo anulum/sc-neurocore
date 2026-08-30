@@ -105,6 +105,36 @@ func TestAdExResetPreservesParameters(t *testing.T) {
 	}
 }
 
+func TestAdExCompleteBatchIsAtomicAndReturnsAllState(t *testing.T) {
+	state := NewAdExNeuron()
+	vTrace, wTrace, events, spikes, err := state.SimulateComplete(1_000, 500.0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(vTrace) != 1_000 || len(wTrace) != 1_000 || len(events) != 1_000 {
+		t.Fatalf("trace lengths = (%d, %d, %d)", len(vTrace), len(wTrace), len(events))
+	}
+	if spikes != 12 {
+		t.Fatalf("spikes = %d, want 12", spikes)
+	}
+	if state.V != vTrace[999] || state.W != wTrace[999] {
+		t.Fatal("final state disagrees with complete trace")
+	}
+
+	rejected := NewAdExNeuron()
+	rejected.Dt = 1.0e308
+	beforeV, beforeW := rejected.V, rejected.W
+	if _, _, _, _, err := rejected.SimulateComplete(2, 1.0e308); !errors.Is(err, ErrAdExNonFiniteUpdate) {
+		t.Fatalf("overflow batch error = %v", err)
+	}
+	if rejected.V != beforeV || rejected.W != beforeW {
+		t.Fatal("rejected batch mutated state")
+	}
+	if _, _, _, _, err := rejected.SimulateComplete(-1, 0.0); !errors.Is(err, ErrAdExInvalidSteps) {
+		t.Fatalf("negative-step error = %v", err)
+	}
+}
+
 func BenchmarkAdExStep(b *testing.B) {
 	state := NewAdExNeuron()
 	for b.Loop() {

@@ -10,12 +10,24 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+import struct
 from collections.abc import Callable
+from pathlib import Path
 
+import numpy as np
 import pytest
 
+from sc_neurocore.neurons.models.adex import AdExNeuron
 from sc_neurocore.neurons.reference_traces import ReferenceTraceSpec, load_reference_trace_spec
-from tests.cosim_support import _adex_subthreshold_euler_features
+from tests.cosim_reference_adex import (
+    _adex_published_euler_trace,
+    _adex_subthreshold_euler_features,
+)
+
+
+REPOSITORY = Path(__file__).resolve().parents[1]
 
 
 _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dict[str, float]]]] = [
@@ -72,3 +84,49 @@ def test_suprathreshold_reference_records_reset_and_adaptation_jump() -> None:
     assert features["min.v"] == -68.0
     assert features["max.v"] == pytest.approx(-50.13975601026277, abs=1e-12)
     assert features["max.w"] == pytest.approx(7.0260215674765565, abs=1e-12)
+
+
+def test_published_regular_spiking_receipt_reproduces_complete_source_orbit() -> None:
+    """Bind the full 2005 fit to independent state and event digests."""
+    receipt = json.loads(
+        (
+            REPOSITORY
+            / "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json"
+        ).read_text(encoding="utf-8")
+    )
+    protocol = receipt["numerical_protocol"]
+    v_trace, w_trace, events = _adex_published_euler_trace(
+        current=protocol["current_pA"],
+        dt=protocol["dt_ms"],
+        steps=protocol["steps"],
+    )
+    state_payload = b"".join(
+        struct.pack("<dd", v, w) for v, w in zip(v_trace, w_trace, strict=True)
+    )
+    event_payload = bytes(events)
+    oracle = receipt["oracle"]
+
+    assert sum(events) == oracle["events"] == 3
+    assert events.index(1) == oracle["first_event_index_zero_based"] == 179
+    assert (v_trace[-1], w_trace[-1]) == pytest.approx(
+        (oracle["final_state"]["v_mV"], oracle["final_state"]["w_pA"]),
+        rel=0.0,
+        abs=1e-12,
+    )
+    assert hashlib.sha256(state_payload).hexdigest() == oracle["source_equation_state_trace_sha256"]
+    assert hashlib.sha256(event_payload).hexdigest() == oracle["event_trace_sha256"]
+
+    runtime = AdExNeuron.brette_gerstner_2005(dt=protocol["dt_ms"])
+    runtime_v, runtime_w, runtime_events = runtime.simulate_complete(
+        protocol["steps"], protocol["current_pA"], backend="python"
+    )
+    runtime_payload = b"".join(
+        struct.pack("<dd", float(v), float(w)) for v, w in zip(runtime_v, runtime_w, strict=True)
+    )
+    assert (
+        hashlib.sha256(runtime_payload).hexdigest()
+        == oracle["normalised_runtime_state_trace_sha256"]
+    )
+    assert np.array_equal(runtime_events, np.asarray(events, dtype=np.uint8))
+    np.testing.assert_allclose(runtime_v, v_trace, rtol=0.0, atol=2.0e-12)
+    np.testing.assert_array_equal(runtime_w, w_trace)

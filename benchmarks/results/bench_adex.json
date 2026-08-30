@@ -2,152 +2,157 @@
   "backends": {
     "go": {
       "available": true,
+      "complete_packet_sha256": "01adea084d978de9fad894a3638009b63db7a97022cd5363b5008fa43fc25559",
       "event_count": 1065,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 7.369811,
-      "minimum_call_ms": 5.993087,
-      "parity_max_abs_diff": 7.105427357601002e-15,
-      "speedup_vs_python": 145.4121367562886,
-      "used": true
+      "median_call_ms": 5.700088,
+      "minimum_call_ms": 5.141834,
+      "speedup_vs_python": 136.27761343333648,
+      "used": true,
+      "v_parity_max_abs_diff": 7.105427357601002e-15,
+      "w_parity_max_abs_diff": 0.0
     },
     "julia": {
       "available": true,
+      "complete_packet_sha256": "67e1bf625b1126035dbda6f7dad0d00cbc0b66f267e4398471a53c9fa034c869",
       "event_count": 1065,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.67351,
-      "minimum_call_ms": 3.283177,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 291.72643194111356,
-      "used": true
+      "median_call_ms": 3.454241,
+      "minimum_call_ms": 3.247095,
+      "speedup_vs_python": 224.8813528065934,
+      "used": true,
+      "v_parity_max_abs_diff": 0.0,
+      "w_parity_max_abs_diff": 0.0
     },
     "mojo": {
       "available": true,
+      "complete_packet_sha256": "2615c8148335d1100f4d90814d8e802a4bb28b7f21e28ffe12f1a3487fb1bcef",
       "event_count": 1065,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "v": -52.37869326736917,
         "w": 74.95731155256478
       },
-      "median_call_ms": 3.80119,
-      "minimum_call_ms": 3.49809,
-      "parity_max_abs_diff": 7.389644451905042e-13,
-      "speedup_vs_python": 281.927492443156,
-      "used": true
+      "median_call_ms": 7.119938,
+      "minimum_call_ms": 7.030694,
+      "speedup_vs_python": 109.10128557299235,
+      "used": true,
+      "v_parity_max_abs_diff": 7.389644451905042e-13,
+      "w_parity_max_abs_diff": 5.684341886080802e-14
     },
     "python": {
       "available": true,
+      "complete_packet_sha256": "67e1bf625b1126035dbda6f7dad0d00cbc0b66f267e4398471a53c9fa034c869",
       "event_count": 1065,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 1071.659965,
-      "minimum_call_ms": 920.071988,
-      "parity_max_abs_diff": 0.0,
+      "median_call_ms": 776.794389,
+      "minimum_call_ms": 712.216241,
       "speedup_vs_python": 1.0,
-      "used": true
+      "used": true,
+      "v_parity_max_abs_diff": 0.0,
+      "w_parity_max_abs_diff": 0.0
     },
     "rust": {
       "available": true,
+      "complete_packet_sha256": "67e1bf625b1126035dbda6f7dad0d00cbc0b66f267e4398471a53c9fa034c869",
       "event_count": 1065,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 51.32451,
-      "minimum_call_ms": 37.115829,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 20.880081758208703,
-      "used": true
+      "median_call_ms": 3.06484,
+      "minimum_call_ms": 2.824328,
+      "speedup_vs_python": 253.45348827344986,
+      "used": true,
+      "v_parity_max_abs_diff": 0.0,
+      "w_parity_max_abs_diff": 0.0
     }
   },
   "kernel": "adex_baseline_euler_simulate",
   "measured_order": [
-    "julia",
-    "mojo",
-    "go",
     "rust",
+    "julia",
+    "go",
+    "mojo",
     "python"
   ],
   "meta": {
     "affinity": [
-      10
+      11
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      14.92041015625,
-      14.193359375,
-      13.01025390625
+      7.24169921875,
+      7.984375,
+      8.59326171875
     ],
     "load_average_start": [
-      15.75390625,
-      14.29248046875,
-      13.015625
+      7.85693359375,
+      8.1376953125,
+      8.65234375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
       "go": "go version go1.24.0 linux/amd64",
       "julia": "julia version 1.12.6",
       "mojo": "Mojo 1.0.0b1 (a9591de6)",
       "numpy": "2.2.6",
       "python": "3.12.3",
-      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
     },
     "single_cpu_pinned": true
   },
-  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "schema_version": "sc-neurocore.polyglot-benchmark.v2",
   "source_hashes": {
-    "benchmarks/bench_adex": {
-      "py": "5f9a33605c233b7d4c43d17ad86450657de929d07b24e6c3f134043eb898d45a"
-    },
-    "benchmarks/bench_adex.py": "5f9a33605c233b7d4c43d17ad86450657de929d07b24e6c3f134043eb898d45a",
-    "engine/src/neuron/adex": {
-      "rs": "8d0ab8268cc950eb3b4df061c5e82707b4fef6ed3f9096c78d4046212c7d2ef1"
-    },
-    "engine/src/neuron/adex.rs": "8d0ab8268cc950eb3b4df061c5e82707b4fef6ed3f9096c78d4046212c7d2ef1",
-    "src/sc_neurocore/accel/go/neurons/adex/adex": {
-      "go": "74b7afd5c8e15fda980b1b499cb0ea2b789e8d70f6fe1347514def48d52b4044"
-    },
-    "src/sc_neurocore/accel/go/neurons/adex/adex.go": "74b7afd5c8e15fda980b1b499cb0ea2b789e8d70f6fe1347514def48d52b4044",
-    "src/sc_neurocore/accel/go/services/adex": {
-      "go": "a0a74107083164e51c09bb53a37a7936b79fb269ff1247a6ebc1357d5257abe3"
-    },
-    "src/sc_neurocore/accel/go/services/adex.go": "a0a74107083164e51c09bb53a37a7936b79fb269ff1247a6ebc1357d5257abe3",
-    "src/sc_neurocore/accel/julia/neurons/adex": {
-      "jl": "c25b58406a56faf36f71c59406ac30c0eb394dabf899ece41d171e06220ff52f"
-    },
-    "src/sc_neurocore/accel/julia/neurons/adex.jl": "c25b58406a56faf36f71c59406ac30c0eb394dabf899ece41d171e06220ff52f",
-    "src/sc_neurocore/accel/mojo/kernels/adex": {
-      "mojo": "f873a93e8e8d711c4e1f4b706774a69116585e2ef46cf970dcbe2bb99f988ab9"
-    },
-    "src/sc_neurocore/accel/mojo/kernels/adex.mojo": "f873a93e8e8d711c4e1f4b706774a69116585e2ef46cf970dcbe2bb99f988ab9",
-    "src/sc_neurocore/accel/rust/safety/adex": {
-      "rs": "1aeb3e8c481321c78b5beb13847cd1c576416d929d1191e916ee4e9cc2fe3cae"
-    },
-    "src/sc_neurocore/accel/rust/safety/adex.rs": "1aeb3e8c481321c78b5beb13847cd1c576416d929d1191e916ee4e9cc2fe3cae",
-    "src/sc_neurocore/neurons/models/adex": {
-      "py": "718bd4bf1d015c9dbc8325247c4f8d3b94bb22742fe855cab1850ece0bb35fc1"
-    },
-    "src/sc_neurocore/neurons/models/adex.py": "718bd4bf1d015c9dbc8325247c4f8d3b94bb22742fe855cab1850ece0bb35fc1"
+    "benchmarks/bench_adex.py": "b021bbfe1ac9559bce836fb5f83596a94111a3f49e09cd3f19f3e7c651d157d5",
+    "bridge/sc_neurocore_engine/__init__.py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c",
+    "engine/src/bindings/adex_neuron.rs": "c10a0e6e9033e6113b977ffdc44d98d59523dc9f53232ef7c3f5464d26e129f1",
+    "engine/src/network_runner/model_catalogue.rs": "e37c4690ec8f3fdefc22a5e1ba4d0c2fd23b121015fa6a83ade7a084bdb2e5e9",
+    "engine/src/network_runner/model_factory.rs": "d078af7c447076646cca36c46ee8265344b55efd8d6199024ca47dd0cece1203",
+    "engine/src/network_runner/neuron_variant.rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed",
+    "engine/src/neuron/adex.rs": "7d8221ade59f05ac01c8057c555cb5326f3dc13c7462867ccea364f7941b0452",
+    "hdl/formal/catalogue/sc_adex.sby": "1f66fbaf7de689662aff7b6f0d7163ed9a045c213b1fc3435f875a4ab19878c4",
+    "hdl/formal/catalogue/sc_adex.v": "748b85dc5d30653332b8249fe09a06f81b1fa1264b219d918c8dd5b771b9a2be",
+    "hdl/formal/catalogue/sc_adex_formal.v": "112b5e631e9e12ea5535aa96202da8178ce44cad93754f799ccf4f07d199f768",
+    "hdl/reports/yosys_adex_q1616_2026-08-30.json": "c1faf824958d767fb08a547ae8932975fa12a7db4ff42f75408885ee2c9cc27d",
+    "src/sc_neurocore/accel/go/neurons/adex/adex.go": "cbfc88e549f8f67dfb50f915122dbf5b9b8d9f1447c513f7f07bddb02c7f9ff7",
+    "src/sc_neurocore/accel/go/services/adex.go": "971e5554082393d046a405999b1519e70954fb7808e92e9f50a7055e26f3a3b1",
+    "src/sc_neurocore/accel/julia/neurons/adex.jl": "85168c66fac1a8e5ac0e0c19bd07cacc4da8e0cfcfceaea002d90899084fab43",
+    "src/sc_neurocore/accel/mojo/kernels/adex.mojo": "972f189171a83f7e76582c9f197e094659a6d0b3d91d468f0ad5753bbb625319",
+    "src/sc_neurocore/accel/rust/safety/adex.rs": "073ac7e19bbd2a069933a8452c5f03a06115468c29ab320f788c562f3d4c07f6",
+    "src/sc_neurocore/neurons/model_descriptors/AdExNeuron.toml": "098acc2eca46847584172d00c4c149b8dc1bbdca60e059e01d64729ddc982fc1",
+    "src/sc_neurocore/neurons/model_schemas/adex.json": "5485589e2fe09d0ad858991966740c359f71bf02cf8d5899de0d05f641ee6a7c",
+    "src/sc_neurocore/neurons/model_schemas/adex.toml": "f146a06d7a7cdf6f467e3a29294ca09042f7ca35d57570f9f9a520f3a0290363",
+    "src/sc_neurocore/neurons/models/adex.py": "f4599bd6235ca863357b8e02537b5d87bda14a7121ae7df9645d29787e263140",
+    "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json": "e6b747d6e0db330b9e5ed9ddb9df7655810d9e5af54ed8653753b60889c7e50c",
+    "src/sc_neurocore/neurons/reference_trace_data/adex_resting_adaptation_doi.json": "5a5c2b5df423e07dd47066619a677bd0b1cc1a13bfbcea9989e933b914a1fcd0"
   },
   "workload": {
     "current": 500.0,
     "n_steps": 100000,
     "parameters": "AdEx maintained defaults; candidate-first baseline Euler",
     "repeats": 7,
-    "trace_atol": 5e-12
+    "state_trace_atol": 5e-12
   }
 }

@@ -15,6 +15,51 @@ import math
 from tests.cosim_reference_statistics import _summarise
 
 
+def _adex_published_euler_trace(
+    *, current: float, dt: float, steps: int
+) -> tuple[list[float], list[float], list[int]]:
+    """Evaluate the source-paper regular-spiking fit without runtime imports.
+
+    This uses the dimensional equations and parameter fit printed in Brette and
+    Gerstner (2005), including the numerical ``Vpeak=20 mV`` cutoff, ``Vr=EL``
+    reset, and ``w <- w+b`` event update.  Explicit Euler and ``dt`` are stated
+    evidence-protocol choices rather than source-model claims.
+    """
+    capacitance = 281.0
+    leak_conductance = 30.0
+    rest = -70.6
+    rheobase = -50.4
+    slope = 2.0
+    tau_w = 144.0
+    adaptation = 4.0
+    spike_increment = 80.5
+    peak = 20.0
+    v = rest
+    w = 0.0
+    v_trace: list[float] = []
+    w_trace: list[float] = []
+    events: list[int] = []
+    for _ in range(steps):
+        dv = (
+            -leak_conductance * (v - rest)
+            + leak_conductance * slope * math.exp((v - rheobase) / slope)
+            - w
+            + current
+        ) / capacitance
+        dw = (adaptation * (v - rest) - w) / tau_w
+        v_next = v + dt * dv
+        w_next = w + dt * dw
+        event = int(v_next >= peak)
+        if event:
+            v_next = rest
+            w_next += spike_increment
+        v, w = v_next, w_next
+        v_trace.append(v)
+        w_trace.append(w)
+        events.append(event)
+    return v_trace, w_trace, events
+
+
 def _adex_subthreshold_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
     """Return exact explicit-Euler features for the subthreshold AdEx recurrence.
 

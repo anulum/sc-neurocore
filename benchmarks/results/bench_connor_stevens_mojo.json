@@ -14,10 +14,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 4.959588295605499e-12,
-      "median_call_ms": 10.935843,
-      "minimum_call_ms": 10.387365,
+      "median_call_ms": 9.77461,
+      "minimum_call_ms": 9.597321,
       "parity_max_abs_diff": 4.959588295605499e-12,
-      "speedup_vs_python": 16.710721615151204,
+      "speedup_vs_python": 18.20607349040013,
       "used": true
     },
     "julia": {
@@ -34,10 +34,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.3713474800169934e-12,
-      "median_call_ms": 126.136447,
-      "minimum_call_ms": 117.855872,
+      "median_call_ms": 124.236763,
+      "minimum_call_ms": 105.158255,
       "parity_max_abs_diff": 1.6413537196058314e-12,
-      "speedup_vs_python": 1.4487947960037275,
+      "speedup_vs_python": 1.4324042554135124,
       "used": true
     },
     "mojo": {
@@ -45,19 +45,19 @@
       "event_count": 9,
       "event_count_matches_python": true,
       "final_state": {
-        "a": 0.7477258134908733,
-        "b": 0.049111674678896475,
-        "h": 0.37426918857366137,
-        "m": 0.9352218688849814,
-        "n": 0.5162641019382902,
-        "v": 43.41446053940109
+        "a": 0.7477258134908654,
+        "b": 0.04911167467889706,
+        "h": 0.3742691885736774,
+        "m": 0.935221868884962,
+        "n": 0.5162641019382804,
+        "v": 43.414460539399464
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 4.480292332686986e-07,
-      "median_call_ms": 4.1368,
-      "minimum_call_ms": 4.039229,
-      "parity_max_abs_diff": 7.910317325610094e-07,
-      "speedup_vs_python": 44.17564977760588,
+      "final_state_max_abs_diff": 4.480276061258337e-07,
+      "median_call_ms": 3.426832,
+      "minimum_call_ms": 3.165968,
+      "parity_max_abs_diff": 7.9102448768964e-07,
+      "speedup_vs_python": 51.93054926532727,
       "used": true
     },
     "python": {
@@ -74,8 +74,8 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 182.745828,
-      "minimum_call_ms": 174.109427,
+      "median_call_ms": 177.957268,
+      "minimum_call_ms": 168.760277,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -94,10 +94,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.6342482922482304e-13,
-      "median_call_ms": 5.460788,
-      "minimum_call_ms": 5.332865,
+      "median_call_ms": 5.699827,
+      "minimum_call_ms": 5.297544,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 33.46510210614292,
+      "speedup_vs_python": 31.221520933880974,
       "used": true
     }
   },
@@ -113,20 +113,20 @@
   ],
   "meta": {
     "affinity": [
-      2
+      11
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      7.21435546875,
-      5.14990234375,
-      5.2470703125
+      6.11181640625,
+      7.31396484375,
+      8.1630859375
     ],
     "load_average_start": [
-      6.275390625,
-      4.9326171875,
-      5.177734375
+      5.927734375,
+      7.32421875,
+      8.17529296875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -149,9 +149,9 @@
     },
     "benchmarks/bench_connor_stevens_mojo.py": "92ef9f64a19e7689e2aa3a2e5bf96a12128e6753393c79e2a9c2bd37424f860a",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d"
+      "py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d",
+    "bridge/sc_neurocore_engine/__init__.py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c",
     "engine/src/bindings/biophysical/connor_stevens": {
       "rs": "733b09113412f1067aadfe4eb6f5758e2595f28490be36ed3522d55cf2da12fa"
     },

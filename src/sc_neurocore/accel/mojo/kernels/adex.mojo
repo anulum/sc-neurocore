@@ -137,7 +137,36 @@ def adex_simulate_c(
     if not model.parameters_valid() or not _state_valid(v, w):
         return -1
 
+    # Validate the complete trajectory before exposing caller-owned output.
+    # This dry pass makes the compatibility ABI failure-atomic.
+    for _step in range(n_steps):
+        var dry_argument = _clip((v - model.v_rh) / model.delta_t, -20.0, 20.0)
+        var dry_exp_term = model.delta_t * exp(dry_argument)
+        var dry_dv = (
+            (-(v - model.v_rest) + dry_exp_term) / model.tau
+            + (-w + current) / model.c_m
+        )
+        var dry_dw = (model.a * (v - model.v_rest) - w) / model.tau_w
+        var dry_next_v = v + dry_dv * model.dt
+        var dry_next_w = w + dry_dw * model.dt
+        if not (
+            isfinite(dry_exp_term)
+            and isfinite(dry_dv)
+            and isfinite(dry_dw)
+            and _state_valid(dry_next_v, dry_next_w)
+        ):
+            return -1
+        if dry_next_v >= model.v_threshold:
+            dry_next_w += model.b
+            if not isfinite(dry_next_w):
+                return -1
+            dry_next_v = model.v_reset
+        v = dry_next_v
+        w = dry_next_w
+
     var output = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=output_addr)
+    v = v0
+    w = w0
     var spikes: Int64 = 0
     for step in range(n_steps):
         var argument = _clip((v - model.v_rh) / model.delta_t, -20.0, 20.0)
@@ -170,4 +199,111 @@ def adex_simulate_c(
 
     output[n_steps] = v
     output[n_steps + 1] = w
+    return spikes
+
+
+@export
+def adex_simulate_complete_c(
+    v0: Float64,
+    w0: Float64,
+    v_rest: Float64,
+    v_reset: Float64,
+    v_threshold: Float64,
+    v_rh: Float64,
+    delta_t: Float64,
+    tau: Float64,
+    tau_w: Float64,
+    a: Float64,
+    b: Float64,
+    c_m: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    v_trace_addr: Int,
+    w_trace_addr: Int,
+    event_trace_addr: Int,
+) -> Int64:
+    if (
+        n_steps < 0
+        or v_trace_addr == 0
+        or w_trace_addr == 0
+        or (n_steps > 0 and event_trace_addr == 0)
+        or not isfinite(current)
+    ):
+        return -1
+
+    var model = AdEx(
+        v_rest,
+        v_reset,
+        v_threshold,
+        v_rh,
+        delta_t,
+        tau,
+        tau_w,
+        a,
+        b,
+        c_m,
+        dt,
+    )
+    var v = v0
+    var w = w0
+    if not model.parameters_valid() or not _state_valid(v, w):
+        return -1
+
+    # First pass validates the full orbit and leaves every caller buffer intact.
+    for _step in range(n_steps):
+        var argument = _clip((v - model.v_rh) / model.delta_t, -20.0, 20.0)
+        var exp_term = model.delta_t * exp(argument)
+        var dv = (
+            (-(v - model.v_rest) + exp_term) / model.tau
+            + (-w + current) / model.c_m
+        )
+        var dw = (model.a * (v - model.v_rest) - w) / model.tau_w
+        var next_v = v + dv * model.dt
+        var next_w = w + dw * model.dt
+        if not (
+            isfinite(exp_term)
+            and isfinite(dv)
+            and isfinite(dw)
+            and _state_valid(next_v, next_w)
+        ):
+            return -1
+        if next_v >= model.v_threshold:
+            next_w += model.b
+            if not isfinite(next_w):
+                return -1
+            next_v = model.v_reset
+        v = next_v
+        w = next_w
+
+    var v_trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=v_trace_addr)
+    var w_trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=w_trace_addr)
+    var events = UnsafePointer[UInt8, MutAnyOrigin](unsafe_from_address=event_trace_addr)
+    v = v0
+    w = w0
+    var spikes: Int64 = 0
+    for step in range(n_steps):
+        var argument = _clip((v - model.v_rh) / model.delta_t, -20.0, 20.0)
+        var exp_term = model.delta_t * exp(argument)
+        var dv = (
+            (-(v - model.v_rest) + exp_term) / model.tau
+            + (-w + current) / model.c_m
+        )
+        var dw = (model.a * (v - model.v_rest) - w) / model.tau_w
+        var next_v = v + dv * model.dt
+        var next_w = w + dw * model.dt
+        var event: UInt8 = 0
+        if next_v >= model.v_threshold:
+            next_v = model.v_reset
+            next_w += model.b
+            event = 1
+            spikes += 1
+        v = next_v
+        w = next_w
+        v_trace[step] = v
+        w_trace[step] = w
+        events[step] = event
+
+    v_trace[n_steps] = v
+    w_trace[n_steps] = w
     return spikes

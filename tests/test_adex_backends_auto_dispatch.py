@@ -12,12 +12,12 @@ from tests.adex_backends_support import *  # noqa: F403
 
 
 def test_auto_prefers_measured_fastest_backend() -> None:
-    """Route baseline Euler through Mojo before slower compiled lanes."""
-    _require_adex_backend("mojo")
+    """Route baseline Euler through Rust before slower compiled lanes."""
+    assert adex._HAS_RUST, "Rust AdEx backend must be built for the fidelity gate"
     auto = AdExNeuron(v=-60.0, w=3.0)
     expected = AdExNeuron(v=-60.0, w=3.0)
     auto_trace, auto_spikes = auto.simulate(100, 250.0, backend="auto")
-    expected_trace, expected_spikes = expected.simulate(100, 250.0, backend="mojo")
+    expected_trace, expected_spikes = expected.simulate(100, 250.0, backend="rust")
     np.testing.assert_array_equal(auto_trace, expected_trace)
     assert (auto_spikes, auto.v, auto.w) == (expected_spikes, expected.v, expected.w)
 
@@ -25,9 +25,9 @@ def test_auto_prefers_measured_fastest_backend() -> None:
 def test_auto_falls_through_to_go_backend(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Continue through measured order when Mojo and Julia are unavailable."""
+    """Continue through measured order when Rust and Julia are unavailable."""
     _require_adex_backend("go")
-    monkeypatch.setattr(adex, "_ensure_mojo_loaded", lambda: False)
+    monkeypatch.setattr(adex, "_HAS_RUST", False)
     monkeypatch.setattr(adex, "_ensure_julia_loaded", lambda: False)
     auto = AdExNeuron(v=-60.0, w=3.0)
     expected = AdExNeuron(v=-60.0, w=3.0)
@@ -38,9 +38,9 @@ def test_auto_falls_through_to_go_backend(
 
 
 def test_auto_falls_through_to_julia(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Use Julia when the measured Mojo lane is unavailable."""
+    """Use Julia when the measured Rust lane is unavailable."""
     _require_adex_backend("julia")
-    monkeypatch.setattr(adex, "_ensure_mojo_loaded", lambda: False)
+    monkeypatch.setattr(adex, "_HAS_RUST", False)
     auto = AdExNeuron(v=-60.0, w=3.0)
     expected = AdExNeuron(v=-60.0, w=3.0)
     auto_trace, auto_spikes = auto.simulate(100, 250.0, backend="auto")
@@ -49,15 +49,16 @@ def test_auto_falls_through_to_julia(monkeypatch: pytest.MonkeyPatch) -> None:
     assert (auto_spikes, auto.v, auto.w) == (expected_spikes, expected.v, expected.w)
 
 
-def test_auto_falls_through_to_factory_rust(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Use Rust after every full-parameter compiled lane is unavailable."""
+def test_auto_falls_through_to_mojo(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Use Mojo after the faster full-parameter lanes are unavailable."""
+    _require_adex_backend("mojo")
+    monkeypatch.setattr(adex, "_HAS_RUST", False)
     monkeypatch.setattr(adex, "_ensure_julia_loaded", lambda: False)
-    monkeypatch.setattr(adex, "_ensure_mojo_loaded", lambda: False)
     monkeypatch.setattr(adex, "_ensure_go_loaded", lambda: False)
     auto = AdExNeuron()
     expected = AdExNeuron()
     auto_trace, auto_spikes = auto.simulate(100, 250.0, backend="auto")
-    expected_trace, expected_spikes = expected.simulate(100, 250.0, backend="rust")
+    expected_trace, expected_spikes = expected.simulate(100, 250.0, backend="mojo")
     np.testing.assert_array_equal(auto_trace, expected_trace)
     assert (auto_spikes, auto.v, auto.w) == (expected_spikes, expected.v, expected.w)
 

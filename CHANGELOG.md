@@ -11,6 +11,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Re-closed `AdExNeuron` against the Brette–Gerstner equations and separated
+  the paper's regular-spiking fit from backwards-compatible maintained
+  defaults. Python, production and safety Rust, Julia, Go, and Mojo now expose
+  failure-atomic complete `(v,w,event)` batches with full parameter transport;
+  paired schemas and an independent source-fit receipt bind the published
+  equations. The source-hashed five-runtime benchmark retains complete packet
+  custody, while four-current Q16.16 co-simulation, a 52,014-cell Yosys receipt,
+  and depth-6 reset/event safety establish the honest H2 boundary without
+  timing, PPA, device, physical-silicon, or formal-equivalence claims.
 - Corrected `WilsonHRNeuron` to Wilson's continuous 1999 polynomial cortical
   equations with source `C=0.8`, `tau_R=1.9 ms`, no hard reset, and an explicit
   sampled upward-crossing observation convention. The former unit-capacitance,

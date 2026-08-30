@@ -6,6 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Adaptive exponential integrate-and-fire neuron
 
+/// Aligned voltage, adaptation, and event traces from one AdEx batch.
+pub type AdExSimulation = (Vec<f64>, Vec<f64>, Vec<u8>);
+
 /// Adaptive Exponential IF neuron. Brette & Gerstner 2005.
 /// PyO3 wrapper: `pyo3_neurons::PyAdExNeuron`
 #[derive(Clone, Debug)]
@@ -50,7 +53,17 @@ impl AdExNeuron {
         }
     }
 
+    /// Advance one maintained baseline-Euler step.
+    ///
+    /// This compatibility surface retains the historical zero-event result on
+    /// invalid input. New batch and binding code uses [`Self::try_step`] so a
+    /// rejected update cannot be mistaken for a valid quiet timestep.
     pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Advance one checked baseline-Euler step without partial mutation.
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.v.is_finite()
             || !self.w.is_finite()
             || !self.v_rest.is_finite()
@@ -71,7 +84,7 @@ impl AdExNeuron {
             || self.c_m <= 0.0
             || self.dt <= 0.0
         {
-            return 0;
+            return Err("invalid AdEx state, parameters, timestep, or input");
         }
 
         let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
@@ -87,22 +100,45 @@ impl AdExNeuron {
             || !next_v.is_finite()
             || !next_w.is_finite()
         {
-            return 0;
+            return Err("non-finite AdEx integrator candidate");
         }
 
         if next_v >= self.v_threshold {
             let spike_w = next_w + self.b;
             if !spike_w.is_finite() {
-                return 0;
+                return Err("non-finite AdEx spike-adaptation candidate");
             }
             self.v = self.v_reset;
             self.w = spike_w;
-            1
+            Ok(1)
         } else {
             self.v = next_v;
             self.w = next_w;
-            0
+            Ok(0)
         }
+    }
+
+    /// Return aligned voltage, adaptation, and event traces atomically.
+    ///
+    /// The receiver is committed only after every candidate step succeeds.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<AdExSimulation, &'static str> {
+        let mut candidate = self.clone();
+        let mut v_trace = Vec::with_capacity(n_steps);
+        let mut w_trace = Vec::with_capacity(n_steps);
+        let mut event_trace = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.try_step(current)?;
+            v_trace.push(candidate.v);
+            w_trace.push(candidate.w);
+            event_trace.push(u8::try_from(event).map_err(|_| "invalid AdEx event value")?);
+        }
+        self.v = candidate.v;
+        self.w = candidate.w;
+        Ok((v_trace, w_trace, event_trace))
     }
 
     pub fn reset(&mut self) {
@@ -143,7 +179,7 @@ mod tests {
     fn invalid_input_is_mutation_free() {
         let mut neuron = AdExNeuron::new();
         let before = (neuron.v, neuron.w);
-        assert_eq!(neuron.step(f64::INFINITY), 0);
+        assert!(neuron.try_step(f64::INFINITY).is_err());
         assert_eq!((neuron.v, neuron.w), before);
     }
 
@@ -152,7 +188,7 @@ mod tests {
         let mut neuron = AdExNeuron::new();
         neuron.dt = 1.0e308;
         let before = (neuron.v, neuron.w);
-        assert_eq!(neuron.step(1.0e308), 0);
+        assert!(neuron.try_step(1.0e308).is_err());
         assert_eq!((neuron.v, neuron.w), before);
     }
 
@@ -213,5 +249,45 @@ mod tests {
             neuron.step(500.0);
         }
         assert!(start.elapsed().as_millis() < 50);
+    }
+
+    #[test]
+    fn complete_batch_is_full_parameter_and_failure_atomic() {
+        let mut neuron = AdExNeuron {
+            v: -60.0,
+            w: 3.0,
+            v_rest: -64.0,
+            v_reset: -69.0,
+            v_threshold: -49.0,
+            v_rh: -54.0,
+            delta_t: 2.5,
+            tau: 18.0,
+            tau_w: 120.0,
+            a: 0.7,
+            b: 8.0,
+            c_m: 180.0,
+            dt: 0.2,
+        };
+        let (v_trace, w_trace, events) = neuron
+            .simulate_complete(250, 410.0)
+            .expect("finite configured AdEx trajectory");
+        assert_eq!(
+            (v_trace.len(), w_trace.len(), events.len()),
+            (250, 250, 250)
+        );
+        assert_eq!(
+            events
+                .iter()
+                .map(|event| usize::from(*event))
+                .sum::<usize>(),
+            5
+        );
+        assert_eq!((neuron.v, neuron.w), (v_trace[249], w_trace[249]));
+
+        let mut rejected = AdExNeuron::new();
+        rejected.dt = 1.0e308;
+        let before = (rejected.v, rejected.w);
+        assert!(rejected.simulate_complete(2, 1.0e308).is_err());
+        assert_eq!((rejected.v, rejected.w), before);
     }
 }

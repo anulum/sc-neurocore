@@ -9,13 +9,13 @@
         "v": -1.017019564883986
       },
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 0.182359,
-      "minimum_call_ms": 0.125194,
+      "median_call_ms": 0.176626,
+      "minimum_call_ms": 0.122364,
       "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
       "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
       "parity_passed": true,
-      "speedup_vs_python": 1.987376548456616,
+      "speedup_vs_python": 2.0240451575645713,
       "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     },
@@ -28,13 +28,13 @@
         "v": -1.017019564883986
       },
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 0.226963,
-      "minimum_call_ms": 0.164142,
+      "median_call_ms": 0.173959,
+      "minimum_call_ms": 0.11396,
       "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
       "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
       "parity_passed": true,
-      "speedup_vs_python": 1.5968065279362715,
+      "speedup_vs_python": 2.0550761961151767,
       "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     },
@@ -47,13 +47,13 @@
         "v": -1.017019564883986
       },
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 0.162366,
-      "minimum_call_ms": 0.101239,
+      "median_call_ms": 0.126627,
+      "minimum_call_ms": 0.086879,
       "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
       "output_packet_sha256": "6bdd4425ee31d7a3bb00fe785be6eefe5caa05bd4afd8202512811f03b6a1fad",
       "parity_max_abs_diff": 6.8833827526759706e-15,
       "parity_passed": true,
-      "speedup_vs_python": 2.232092925858862,
+      "speedup_vs_python": 2.82324464766598,
       "trace_sha256": "0e0c4a451f20843b63afc5d74c19da1b62859d3137fb1c940ce233518931f314",
       "used": true
     },
@@ -66,8 +66,8 @@
         "v": -1.017019564883986
       },
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 0.362416,
-      "minimum_call_ms": 0.3344,
+      "median_call_ms": 0.357499,
+      "minimum_call_ms": 0.318603,
       "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
       "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
@@ -85,13 +85,13 @@
         "v": -1.017019564883986
       },
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 0.083427,
-      "minimum_call_ms": 0.056925,
+      "median_call_ms": 0.094889,
+      "minimum_call_ms": 0.056822,
       "output_packet_encoding": "little-endian float64 post-step v trace, int64 event count, float64 final v, float64 final u",
       "output_packet_sha256": "0c513bdba6283ab6982e615858559650ceb5f66149e20a440dfbe413e1b8478f",
       "parity_max_abs_diff": 0.0,
       "parity_passed": true,
-      "speedup_vs_python": 4.344109221235332,
+      "speedup_vs_python": 3.7675494525182054,
       "trace_sha256": "68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed",
       "used": true
     }
@@ -100,26 +100,26 @@
   "measured_order": [
     "rust",
     "mojo",
-    "go",
     "julia",
+    "go",
     "python"
   ],
   "meta": {
     "affinity": [
-      2
+      11
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      5.7802734375,
-      6.5029296875,
-      6.5576171875
+      6.970703125,
+      7.6064453125,
+      8.28369140625
     ],
     "load_average_start": [
-      5.28955078125,
-      6.4345703125,
-      6.5361328125
+      7.51806640625,
+      7.72998046875,
+      8.33056640625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -140,9 +140,9 @@
     },
     "benchmarks/bench_ibarz_tanaka_map.py": "a2633226d75624fc2b7d7df5611e8c5af3f5b19e0d594ca80d9eb2caa54dd433",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d"
+      "py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d",
+    "bridge/sc_neurocore_engine/__init__.py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c",
     "engine/src/bindings/ibarz_tanaka_map": {
       "rs": "db26b33ac995a12352f0f3d82dbe346d3a0b1d597542860c223e3d16d3bdc71c"
     },

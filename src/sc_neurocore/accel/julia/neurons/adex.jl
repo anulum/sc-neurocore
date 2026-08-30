@@ -8,7 +8,7 @@
 
 module AdexAccel
 
-export step!, simulate, simulate_trace, reset!, AdExNeuronState
+export step!, simulate, simulate_trace, simulate_complete, reset!, AdExNeuronState
 
 mutable struct AdExNeuronState
     v::Float64
@@ -72,8 +72,8 @@ function reset!(s::AdExNeuronState)
     return nothing
 end
 
-"""Run the full maintained baseline-Euler contract and return trace and final state."""
-function simulate_trace(
+"""Run the full maintained contract and return both state traces plus events."""
+function simulate_complete(
     v::Float64,
     w::Float64,
     v_rest::Float64,
@@ -108,16 +108,52 @@ function simulate_trace(
         c_m,
         dt,
     )
-    trace = zeros(n_steps)
+    v_trace = zeros(n_steps)
+    w_trace = zeros(n_steps)
+    events = zeros(UInt8, n_steps)
     spikes = 0
     for t in 1:n_steps
         result = step!(s, I_ext; dt=dt)
-        trace[t] = s.v
+        v_trace[t] = s.v
+        w_trace[t] = s.w
+        events[t] = UInt8(result)
         if result > 0
             spikes += 1
         end
     end
-    return (trace=trace, spikes=spikes, vf=s.v, wf=s.w)
+    return (
+        v_trace=v_trace,
+        w_trace=w_trace,
+        events=events,
+        spikes=spikes,
+        vf=s.v,
+        wf=s.w,
+    )
+end
+
+"""Run the compatibility voltage-trace surface."""
+function simulate_trace(
+    v::Float64,
+    w::Float64,
+    v_rest::Float64,
+    v_reset::Float64,
+    v_threshold::Float64,
+    v_rh::Float64,
+    delta_t::Float64,
+    tau::Float64,
+    tau_w::Float64,
+    a::Float64,
+    b::Float64,
+    c_m::Float64,
+    dt::Float64,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    result = simulate_complete(
+        v, w, v_rest, v_reset, v_threshold, v_rh, delta_t,
+        tau, tau_w, a, b, c_m, dt, n_steps, I_ext,
+    )
+    return (trace=result.v_trace, spikes=result.spikes, vf=result.vf, wf=result.wf)
 end
 
 """Run the default AdEx neuron under a constant current."""

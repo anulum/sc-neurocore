@@ -15,6 +15,7 @@ import (
 
 var (
 	ErrAdExInvalidInput    = errors.New("adex input current must be finite")
+	ErrAdExInvalidSteps    = errors.New("adex step count must be non-negative")
 	ErrAdExInvalidState    = errors.New("adex state parameters must be finite with positive delta_t, tau, tau_w, c_m, and dt")
 	ErrAdExNonFiniteUpdate = errors.New("adex integrator update must remain finite")
 )
@@ -116,20 +117,38 @@ func (s *AdExNeuronState) Reset() {
 	s.W = 0.0
 }
 
+// SimulateComplete returns aligned post-step voltage, adaptation, and event traces.
+// The receiver is committed only after every candidate step succeeds.
+func (s *AdExNeuronState) SimulateComplete(nSteps int, iExt float64) ([]float64, []float64, []uint8, int, error) {
+	if nSteps < 0 {
+		return nil, nil, nil, 0, ErrAdExInvalidSteps
+	}
+	candidate := *s
+	vTrace := make([]float64, nSteps)
+	wTrace := make([]float64, nSteps)
+	events := make([]uint8, nSteps)
+	spikes := 0
+	for index := range vTrace {
+		event, err := candidate.Step(iExt)
+		if err != nil {
+			return nil, nil, nil, 0, err
+		}
+		vTrace[index] = candidate.V
+		wTrace[index] = candidate.W
+		events[index] = uint8(event)
+		spikes += event
+	}
+	s.V = candidate.V
+	s.W = candidate.W
+	return vTrace, wTrace, events, spikes, nil
+}
+
 // SimulateAdExNeuron runs the default neuron for n steps under a constant current.
 func SimulateAdExNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewAdExNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
-		if err != nil {
-			panic(err)
-		}
-		trace[t] = s.V
-		if result > 0 {
-			spikes++
-		}
+	trace, _, _, spikes, err := s.SimulateComplete(nSteps, iExt)
+	if err != nil {
+		panic(err)
 	}
 	return trace, spikes
 }

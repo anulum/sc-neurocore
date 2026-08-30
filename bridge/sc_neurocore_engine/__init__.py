@@ -176,6 +176,7 @@ try:
         BrunelWangNeuron,
         LeakyCompeteFireNeuron,
         AdExNeuron,
+        adex_simulate_complete,
         ExpIFNeuron,
         LapicqueNeuron,
     )

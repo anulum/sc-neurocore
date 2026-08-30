@@ -43,14 +43,18 @@ class TestAdExSimulate:
         assert np.array_equal(tr_py, tr_rs)
         assert (rs.v, rs.w) == (py.v, py.w)
 
-    def test_simulate_rust_rejects_non_default_contract(self) -> None:
+    def test_simulate_rust_accepts_nondefault_baseline_and_rejects_other_integrators(self) -> None:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         n = AdExNeuron(integrator="rk4")
-        with pytest.raises(RuntimeError, match="factory-default"):
+        with pytest.raises(RuntimeError, match="baseline_euler"):
             n.simulate(10, current=0.0, backend="rust")
-        n2 = AdExNeuron(v=-70.0)
-        with pytest.raises(RuntimeError, match="factory-default"):
-            n2.simulate(10, current=0.0, backend="rust")
+        rust = AdExNeuron(v=-60.0, w=3.0, dt=0.2)
+        python = AdExNeuron(v=-60.0, w=3.0, dt=0.2)
+        rust_trace, rust_spikes = rust.simulate(100, current=410.0, backend="rust")
+        python_trace, python_spikes = python.simulate(100, current=410.0, backend="python")
+        np.testing.assert_allclose(rust_trace, python_trace, rtol=0.0, atol=1e-12)
+        assert rust_spikes == python_spikes
+        assert (rust.v, rust.w) == pytest.approx((python.v, python.w), abs=1e-12)
 
     def test_simulate_zero_steps_is_empty(self) -> None:
         n = AdExNeuron()

@@ -7,7 +7,7 @@
 # SC-NeuroCore — Source/config provenance header
 
 [metadata]
-schema_version = 1
+schema_version = 2
 name = "AdEx"
 author = "Brette, R. & Gerstner, W."
 year = 2005
@@ -21,6 +21,7 @@ w = 0.0
 [parameters]
 v_rest = -65.0
 v_reset = -68.0
+v_threshold = -50.0
 v_rh = -55.0
 delta_T = 2.0
 tau = 20.0
@@ -38,7 +39,7 @@ v = "(-(v - v_rest) + delta_T * exp((v - v_rh) / delta_T)) / tau + (-w + I) / C"
 w = "(a * (v - v_rest) - w) / tau_w"
 
 [threshold]
-condition = "v > -50"
+condition = "v >= v_threshold"
 detection = "level"
 
 [reset]
@@ -47,3 +48,41 @@ w = "w + b_adapt"
 
 [extensions]
 integrator_options = ["euler", "rk4", "rosenbrock"]
+runtime_profile = "backwards-compatible maintained defaults; not the fitted parameter set in the source paper"
+source_profile_factory = "AdExNeuron.brette_gerstner_2005"
+event_order = "Compute simultaneous v and w candidates; if candidate v >= v_threshold, emit one event, set v=v_reset, then set w=w_candidate+b_adapt."
+binary64_guard = "The hand and polyglot runtimes clip the exponential argument to [-20,20]; this is a declared numerical guard, not a source equation."
+
+[science]
+equations_as_published = "C*dV/dt = -gL*(V-EL) + gL*DeltaT*exp((V-VT)/DeltaT) - w + I; tau_w*dw/dt = a*(V-EL) - w"
+derivation_note = "The executable membrane equation substitutes tau=C/gL, so the leak and exponential terms divide by tau while (-w+I) divides by C."
+assumptions = ["point neuron", "current-based drive", "continuous-time source dynamics"]
+known_limitations = ["The runtime factory defaults are a maintained compatibility profile.", "Explicit Euler, the binary64 exponential clamp, and fixed-point LUTs are numerical profiles."]
+
+[science.published_regular_spiking_parameters]
+C_pF = 281.0
+gL_nS = 30.0
+EL_mV = -70.6
+VT_mV = -50.4
+DeltaT_mV = 2.0
+tau_w_ms = 144.0
+a_nS = 4.0
+b_pA = 80.5
+Vpeak_mV = 20.0
+Vr_mV = -70.6
+
+[validation]
+model_class = "conductance_transcendental"
+metric = "spike_count_and_complete_state_parity"
+reference = "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json"
+tolerance = "binary64 backend traces <= 5e-12; Q16.16 event-count gap <= 2 percent"
+evidence = "tests/test_reference_adex.py; tests/test_cosim_adex.py"
+
+[provenance]
+model_version = "2.0.0"
+contributors = ["Miroslav Šotek"]
+changelog = ["2.0.0: separated the published 2005 fit from maintained defaults and bound complete-state evidence"]
+
+[hints]
+recommended_precision = "Q16.16 or wider"
+integrator_rationale = "Explicit Euler is the maintained compatibility profile; RK4 and Rosenbrock are optional numerical alternatives over the same ODE."

@@ -36,11 +36,13 @@ def test_real_benchmark_writes_complete_parity_evidence(
 
     assert benchmark.main(["--json", str(output), "--allow-unpinned"]) == 0
     payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
+    assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v2"
     assert payload["kernel"] == "adex_baseline_euler_simulate"
     assert payload["workload"]["n_steps"] == 3
     assert set(payload["measured_order"]) == {"python", "rust", "julia", "go", "mojo"}
     assert all(row["event_count_matches_python"] for row in payload["backends"].values())
+    assert all(row["event_trace_matches_python"] for row in payload["backends"].values())
+    assert all(len(row["complete_packet_sha256"]) == 64 for row in payload["backends"].values())
 
 
 def test_source_hashes_cover_declared_implementation_surfaces() -> None:
@@ -101,14 +103,17 @@ def test_explicit_partial_run_records_unavailable_backend(
 
 
 @pytest.mark.parametrize(
-    ("compiled_trace", "compiled_spikes", "expected"),
-    [(np.array([0.0]), 1, 3), (np.array([6.0e-12]), 0, 4)],
+    ("compiled_trace", "compiled_events", "expected"),
+    [
+        (np.array([0.0]), np.array([1], dtype=np.uint8), 3),
+        (np.array([6.0e-12]), np.array([0], dtype=np.uint8), 4),
+    ],
 )
 def test_parity_contract_failures_have_distinct_exit_codes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     compiled_trace: npt.NDArray[np.float64],
-    compiled_spikes: int,
+    compiled_events: npt.NDArray[np.uint8],
     expected: int,
 ) -> None:
     """Distinguish event failure from bounded-state failure."""
@@ -120,10 +125,34 @@ def test_parity_contract_failures_have_distinct_exit_codes(
 
     def measured(
         backend: str,
-    ) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, float]]:
+    ) -> tuple[
+        float,
+        float,
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.uint8],
+        int,
+        tuple[float, float],
+    ]:
         if backend == "python":
-            return 1.0, 1.0, np.array([0.0]), 0, (0.0, 0.0)
-        return 0.5, 0.5, compiled_trace, compiled_spikes, (0.0, 0.0)
+            return (
+                1.0,
+                1.0,
+                np.array([0.0]),
+                np.array([0.0]),
+                np.array([0], dtype=np.uint8),
+                0,
+                (0.0, 0.0),
+            )
+        return (
+            0.5,
+            0.5,
+            compiled_trace,
+            np.array([0.0]),
+            compiled_events,
+            int(compiled_events.sum()),
+            (float(compiled_trace[-1]), 0.0),
+        )
 
     monkeypatch.setattr(benchmark, "_measure_backend", measured)
     assert benchmark.main(["--json", str(tmp_path / f"failure-{expected}.json")]) == expected
@@ -184,7 +213,15 @@ def test_backend_order_requires_python_reference_first(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0, 0.0)),
+        lambda _backend: (
+            1.0,
+            1.0,
+            np.array([0.0]),
+            np.array([0.0]),
+            np.array([0], dtype=np.uint8),
+            0,
+            (0.0, 0.0),
+        ),
     )
 
     with pytest.raises(RuntimeError, match="Python reference must be measured first"):

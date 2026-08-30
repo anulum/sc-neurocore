@@ -62,12 +62,15 @@ def _write_json(path: Path, payload: Any) -> None:
 
 def _path_value(payload: Any, dotted_path: str) -> Any:
     current = payload
-    for part in dotted_path.split("."):
-        if isinstance(current, dict) and part in current:
-            current = current[part]
-        else:
-            raise KeyError(dotted_path)
-    return current
+    remaining = dotted_path
+    while isinstance(current, dict):
+        if remaining in current:
+            return current[remaining]
+        part, separator, remaining = remaining.partition(".")
+        if not separator or part not in current:
+            break
+        current = current[part]
+    raise KeyError(dotted_path)
 
 
 def _is_finite_number(value: Any) -> bool:

@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### AdEx complete-state full-fidelity reclosure
+
+- Separated the Brette–Gerstner 2005 regular-spiking fit from the maintained
+  compatibility defaults and bound the as-published equations, exact fit
+  parameters, three-event source trajectory, and complete-state digests in an
+  independent receipt.
+- Added failure-atomic complete-state/event batches across Python, production
+  and safety Rust, Julia, Go, Mojo, and both native C ABIs. Every compiled lane
+  now accepts the full maintained numeric contract; the source-hashed benchmark
+  retains both state traces, exact event vectors, final state, and complete
+  packet digests.
+- Promoted the honest hardware boundary to H2: Q16.16 co-simulation preserves
+  exact event counts across four drives, the committed design synthesizes to
+  52,014 Yosys coarse cells, and depth-6 Z3 proves exact reset plus public
+  event/reset safety. Timing, PPA, device, physical silicon, and universal
+  numerical equivalence remain open.
+
 ### Chialvo map complete-state full-fidelity reclosure
 
 - Bound the DOI-sourced Eq. 1 recurrence to an independent 1,000-step receipt

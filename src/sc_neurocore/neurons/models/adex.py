@@ -11,8 +11,8 @@ from __future__ import annotations
 import importlib as _importlib
 import math
 import os as _os
-from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from dataclasses import dataclass, replace
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -23,24 +23,25 @@ from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
 #
 # ``step`` advances one integrator update. ``simulate`` is an N-step sequential
 # recurrence and therefore benefits from a compiled inner loop. The Rust engine
-# class implements the factory-default baseline-Euler contract. Julia, Go and
-# Mojo accept the complete maintained numeric state and parameter surface. RK4
+# binding and Julia, Go, and Mojo accept the complete maintained numeric state
+# and parameter surface through failure-atomic batches. RK4
 # and Rosenbrock remain on their already-established polyglot dispatcher and the
 # local Python path; these model-specific kernels implement baseline Euler.
 
-_EngineAdEx = Any
 
-
-def _load_engine_adex() -> type[Any]:
+def _load_engine_adex() -> tuple[type[Any], Any]:
     engine = _importlib.import_module("sc_neurocore_engine")
-    return engine.AdExNeuron  # type: ignore[no-any-return]
+    return engine.AdExNeuron, engine.adex_simulate_complete
 
 
+_EngineAdExCls: type[Any] | None
+_EngineAdExSimulateFn: Any | None
 try:
-    _EngineAdExCls: Optional[type[Any]] = _load_engine_adex()
+    _EngineAdExCls, _EngineAdExSimulateFn = _load_engine_adex()
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _EngineAdExCls = None
+    _EngineAdExSimulateFn = None
     _HAS_RUST = False
 
 _julia_module: Any | None = None
@@ -90,15 +91,25 @@ def _ensure_go_loaded() -> bool:
         library = ctypes.CDLL(library_path)
     except OSError:
         return False
-    simulate = getattr(library, "adex_simulate_c", None)
+    simulate = getattr(library, "adex_simulate_complete_c", None)
     if simulate is None:
         return False
     simulate.argtypes = [ctypes.c_double] * 13 + [
         ctypes.c_int64,
         ctypes.c_double,
         ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_uint8),
     ]
     simulate.restype = ctypes.c_int64
+    compatibility = getattr(library, "adex_simulate_c", None)
+    if compatibility is not None:
+        compatibility.argtypes = [ctypes.c_double] * 13 + [
+            ctypes.c_int64,
+            ctypes.c_double,
+            ctypes.POINTER(ctypes.c_double),
+        ]
+        compatibility.restype = ctypes.c_int64
     _go_lib = library
     _HAS_GO = True
     return True
@@ -118,36 +129,28 @@ def _ensure_mojo_loaded() -> bool:
         library = ctypes.CDLL(library_path)
     except OSError:
         return False
-    simulate = getattr(library, "adex_simulate_c", None)
+    simulate = getattr(library, "adex_simulate_complete_c", None)
     if simulate is None:
         return False
     simulate.argtypes = [ctypes.c_double] * 13 + [
         ctypes.c_int64,
         ctypes.c_double,
         ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_int64,
     ]
     simulate.restype = ctypes.c_int64
+    compatibility = getattr(library, "adex_simulate_c", None)
+    if compatibility is not None:
+        compatibility.argtypes = [ctypes.c_double] * 13 + [
+            ctypes.c_int64,
+            ctypes.c_double,
+            ctypes.c_int64,
+        ]
+        compatibility.restype = ctypes.c_int64
     _mojo_lib = library
     _HAS_MOJO = True
     return True
-
-
-# Factory defaults for the Rust engine path (no parameter/state injection).
-_RUST_ENGINE_DEFAULTS: dict[str, float] = {
-    "v": -65.0,
-    "w": 0.0,
-    "v_rest": -65.0,
-    "v_reset": -68.0,
-    "v_threshold": -50.0,
-    "v_rh": -55.0,
-    "delta_t": 2.0,
-    "tau": 20.0,
-    "tau_w": 100.0,
-    "a": 0.5,
-    "b": 7.0,
-    "c_m": 200.0,
-    "dt": 0.1,
-}
 
 
 @dataclass
@@ -167,8 +170,8 @@ class AdExNeuron:
       AdEx ODEs
 
     ``simulate`` exposes the baseline-Euler Python, Rust, Julia, Go and Mojo
-    paths. ``auto`` follows the committed measured order Mojo, Julia, Go,
-    compatible Rust, then Python.
+    paths. ``auto`` follows the committed measured order Rust, Julia, Go,
+    Mojo, then Python.
     """
 
     v: float = -65.0
@@ -197,18 +200,41 @@ class AdExNeuron:
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{field} must be finite and positive")
 
-    def _matches_rust_engine_contract(self) -> bool:
-        """Return whether the instance matches the Rust engine default contract.
+    @classmethod
+    def brette_gerstner_2005(
+        cls,
+        *,
+        dt: float = 0.1,
+        integrator: Literal["baseline_euler", "rk4", "rosenbrock"] = "baseline_euler",
+    ) -> AdExNeuron:
+        """Return the regular-spiking fit reported by Brette and Gerstner (2005).
 
-        The engine ``AdExNeuron`` class has no parameter or state injection; it
-        only reproduces the factory-default baseline-Euler trajectory.
+        The paper reports ``C=281 pF``, ``gL=30 nS``, ``EL=-70.6 mV``,
+        ``VT=-50.4 mV``, ``DeltaT=2 mV``, ``tau_w=144 ms``, ``a=4 nS``,
+        ``b=80.5 pA``, numerical spike cutoff ``Vpeak=20 mV``, and reset
+        ``Vr=EL``.  This implementation stores ``tau=C/gL``.  ``dt`` and the
+        integrator are explicit numerical choices because the paper defines a
+        continuous-time model, not a discrete timestep.
         """
-        if self.integrator != "baseline_euler":
-            return False
-        for name, expected in _RUST_ENGINE_DEFAULTS.items():
-            if float(getattr(self, name)) != expected:
-                return False
-        return True
+        capacitance = 281.0
+        leak_conductance = 30.0
+        rest = -70.6
+        return cls(
+            v=rest,
+            w=0.0,
+            v_rest=rest,
+            v_reset=rest,
+            v_threshold=20.0,
+            v_rh=-50.4,
+            delta_t=2.0,
+            tau=capacitance / leak_conductance,
+            tau_w=144.0,
+            a=4.0,
+            b=80.5,
+            c_m=capacitance,
+            dt=dt,
+            integrator=integrator,
+        )
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):
@@ -300,10 +326,9 @@ class AdExNeuron:
         current:
             Constant injected current for every step (must be finite).
         backend:
-            ``"python"`` always uses the local ``step`` loop. ``"rust"`` uses
-            the engine ``AdExNeuron`` under its factory-default baseline-Euler
-            contract. ``"julia"``, ``"go"`` and ``"mojo"`` run their compiled
-            baseline-Euler kernels with the complete maintained numeric state
+            ``"python"`` always uses the local ``step`` loop. ``"rust"``,
+            ``"julia"``, ``"go"`` and ``"mojo"`` run their checked compiled
+            baseline-Euler batches with the complete maintained numeric state
             and parameter surface. ``"auto"`` chooses an available compiled
             baseline-Euler path before the Python floor.
 
@@ -321,6 +346,26 @@ class AdExNeuron:
             If a requested compiled backend is unavailable or the selected
             backend does not support the configured integrator contract.
         """
+        v_trace, _w_trace, event_trace = self.simulate_complete(n_steps, current, backend)
+        return v_trace, int(np.sum(event_trace, dtype=np.int64))
+
+    def simulate_complete(
+        self,
+        n_steps: int,
+        current: float = 0.0,
+        backend: str = "auto",
+    ) -> tuple[
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.uint8],
+    ]:
+        """Return aligned post-step voltage, adaptation, and event traces.
+
+        The receiver is updated only after the complete selected-backend batch
+        has succeeded and its packet has passed shape, finiteness, event-domain,
+        and final-state validation.  A rejected later step therefore cannot
+        leave a partially advanced neuron.
+        """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
         if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
@@ -329,7 +374,7 @@ class AdExNeuron:
             raise ValueError("current must be finite")
         self._validate_runtime_state()
 
-        if backend in {"julia", "go", "mojo"} and self.integrator != "baseline_euler":
+        if backend in {"rust", "julia", "go", "mojo"} and self.integrator != "baseline_euler":
             raise RuntimeError(
                 f"{backend.title()} AdEx backend requires baseline_euler integrator."
             )
@@ -338,35 +383,29 @@ class AdExNeuron:
         if backend == "auto":
             if self.integrator != "baseline_euler":
                 selected = "python"
-            elif _ensure_mojo_loaded():
-                selected = "mojo"
+            elif _HAS_RUST:
+                selected = "rust"
             elif _ensure_julia_loaded():
                 selected = "julia"
             elif _ensure_go_loaded():
                 selected = "go"
-            elif _HAS_RUST and self._matches_rust_engine_contract():
-                selected = "rust"
+            elif _ensure_mojo_loaded():
+                selected = "mojo"
             else:
                 selected = "python"
 
         if selected == "rust":
-            if not _HAS_RUST or _EngineAdExCls is None:
+            if not _HAS_RUST or _EngineAdExSimulateFn is None:
                 raise RuntimeError(
                     "Rust AdEx backend requested but sc_neurocore_engine is unavailable."
                 )
-            if not self._matches_rust_engine_contract():
-                raise RuntimeError(
-                    "Rust AdEx engine backend requires factory-default parameters, "
-                    "baseline_euler integrator, and factory-default initial state "
-                    f"(v={_RUST_ENGINE_DEFAULTS['v']}, w={_RUST_ENGINE_DEFAULTS['w']})."
-                )
-            trace, spikes, state = self._simulate_rust(n_steps, current)
+            packet = self._simulate_rust_complete(n_steps, current)
         elif selected == "julia":
             if not _ensure_julia_loaded():
                 raise RuntimeError(
                     "Julia AdEx backend requested but juliacall or the AdEx module is unavailable."
                 )
-            trace, spikes, state = self._simulate_julia(n_steps, current)
+            packet = self._simulate_julia_complete(n_steps, current)
         elif selected == "go":
             if not _ensure_go_loaded():
                 raise RuntimeError(
@@ -374,7 +413,7 @@ class AdExNeuron:
                     "go build -buildmode=c-shared -o libadex.so adex.go in "
                     "accel/go/neurons/adex."
                 )
-            trace, spikes, state = self._simulate_go(n_steps, current)
+            packet = self._simulate_go_complete(n_steps, current)
         elif selected == "mojo":
             if not _ensure_mojo_loaded():
                 raise RuntimeError(
@@ -382,44 +421,72 @@ class AdExNeuron:
                     "mojo build --emit shared-lib -o libadex.so adex.mojo in "
                     "accel/mojo/kernels."
                 )
-            trace, spikes, state = self._simulate_mojo(n_steps, current)
+            packet = self._simulate_mojo_complete(n_steps, current)
         else:
-            trace, spikes, state = self._simulate_python(n_steps, current)
-        self.v, self.w = state
-        return trace, spikes
+            packet = self._simulate_python_complete(n_steps, current)
 
-    def _simulate_python(
-        self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
-        """Run the pure-Python step loop and return ``(trace, spikes, (v, w))``."""
-        trace = np.empty(n_steps, dtype=np.float64)
-        spikes = 0
-        for t in range(n_steps):
-            spikes += self.step(current)
-            trace[t] = self.v
-        return trace, spikes, (self.v, self.w)
+        v_trace, w_trace, event_trace, final_state = self._validated_complete_packet(
+            packet, n_steps
+        )
+        self.v, self.w = final_state
+        return v_trace, w_trace, event_trace
 
-    def _simulate_rust(
-        self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
-        """Run the engine AdEx step loop under the default Euler contract."""
-        assert _EngineAdExCls is not None
-        neuron = _EngineAdExCls()
-        trace = np.empty(n_steps, dtype=np.float64)
-        spikes = 0
-        for t in range(n_steps):
-            spikes += int(neuron.step(float(current)))
-            state = neuron.get_state()
-            trace[t] = float(state["v"])
-        final = neuron.get_state()
-        return trace, spikes, (float(final["v"]), float(final["w"]))
+    @staticmethod
+    def _validated_complete_packet(
+        packet: tuple[object, object, object, tuple[float, float]],
+        n_steps: int,
+    ) -> tuple[
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.uint8],
+        tuple[float, float],
+    ]:
+        """Normalise one backend packet and reject malformed output atomically."""
+        raw_v, raw_w, raw_events, final_state = packet
+        v_trace = np.ascontiguousarray(np.asarray(raw_v, dtype=np.float64))
+        w_trace = np.ascontiguousarray(np.asarray(raw_w, dtype=np.float64))
+        event_values = np.asarray(raw_events)
+        if v_trace.shape != (n_steps,) or w_trace.shape != (n_steps,):
+            raise FloatingPointError("AdEx backend returned malformed state trace shapes.")
+        if event_values.shape != (n_steps,):
+            raise FloatingPointError("AdEx backend returned a malformed event trace shape.")
+        if not np.all(np.isfinite(v_trace)) or not np.all(np.isfinite(w_trace)):
+            raise FloatingPointError("AdEx backend returned non-finite trace state.")
+        if not np.all((event_values == 0) | (event_values == 1)):
+            raise FloatingPointError("AdEx backend returned events outside the binary domain.")
+        event_trace = np.ascontiguousarray(event_values, dtype=np.uint8)
+        final_v, final_w = map(float, final_state)
+        if not math.isfinite(final_v) or not math.isfinite(final_w):
+            raise FloatingPointError("AdEx backend returned a non-finite final state.")
+        if n_steps and (final_v != float(v_trace[-1]) or final_w != float(w_trace[-1])):
+            raise FloatingPointError("AdEx backend final state disagrees with its trace packet.")
+        return v_trace, w_trace, event_trace, (final_v, final_w)
 
-    def _simulate_julia(
+    def _simulate_python_complete(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
-        """Run the Julia baseline-Euler kernel with the full numeric contract."""
-        assert _julia_module is not None
-        result = _julia_module.simulate_trace(
+    ) -> tuple[
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.uint8],
+        tuple[float, float],
+    ]:
+        """Run a checked candidate copy so the Python batch is failure-atomic."""
+        candidate = replace(self)
+        v_trace = np.empty(n_steps, dtype=np.float64)
+        w_trace = np.empty(n_steps, dtype=np.float64)
+        events = np.empty(n_steps, dtype=np.uint8)
+        for index in range(n_steps):
+            events[index] = candidate.step(current)
+            v_trace[index] = candidate.v
+            w_trace[index] = candidate.w
+        return v_trace, w_trace, events, (candidate.v, candidate.w)
+
+    def _simulate_rust_complete(
+        self, n_steps: int, current: float
+    ) -> tuple[object, object, object, tuple[float, float]]:
+        """Run the checked production-Rust full-parameter batch."""
+        assert _EngineAdExSimulateFn is not None
+        result = _EngineAdExSimulateFn(
             float(self.v),
             float(self.w),
             float(self.v_rest),
@@ -436,19 +503,44 @@ class AdExNeuron:
             int(n_steps),
             float(current),
         )
-        trace = np.ascontiguousarray(np.asarray(result.trace, dtype=np.float64))
-        return trace, int(result.spikes), (float(result.vf), float(result.wf))
+        return result[0], result[1], result[2], (float(result[3]), float(result[4]))
 
-    def _simulate_go(
+    def _simulate_julia_complete(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
-        """Run the Go service recurrence through its C-ABI bridge."""
+    ) -> tuple[object, object, object, tuple[float, float]]:
+        """Run the Julia full-state baseline-Euler batch."""
+        assert _julia_module is not None
+        result = _julia_module.simulate_complete(
+            float(self.v),
+            float(self.w),
+            float(self.v_rest),
+            float(self.v_reset),
+            float(self.v_threshold),
+            float(self.v_rh),
+            float(self.delta_t),
+            float(self.tau),
+            float(self.tau_w),
+            float(self.a),
+            float(self.b),
+            float(self.c_m),
+            float(self.dt),
+            int(n_steps),
+            float(current),
+        )
+        return result.v_trace, result.w_trace, result.events, (float(result.vf), float(result.wf))
+
+    def _simulate_go_complete(
+        self, n_steps: int, current: float
+    ) -> tuple[object, object, object, tuple[float, float]]:
+        """Run the checked Go complete-state C-ABI batch."""
         assert _go_lib is not None
         import ctypes
 
-        output = np.empty(n_steps + 2, dtype=np.float64)
+        v_trace = np.empty(n_steps + 1, dtype=np.float64)
+        w_trace = np.empty(n_steps + 1, dtype=np.float64)
+        events = np.empty(n_steps, dtype=np.uint8)
         spikes = int(
-            _go_lib.adex_simulate_c(
+            _go_lib.adex_simulate_complete_c(
                 self.v,
                 self.w,
                 self.v_rest,
@@ -464,25 +556,35 @@ class AdExNeuron:
                 self.dt,
                 n_steps,
                 current,
-                output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                v_trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                w_trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
             )
         )
         if spikes < 0:
             raise FloatingPointError("Go AdEx kernel rejected the simulation contract.")
+        if spikes != int(np.sum(events, dtype=np.int64)):
+            raise FloatingPointError("Go AdEx event count disagrees with its event trace.")
         return (
-            np.ascontiguousarray(output[:n_steps]),
-            spikes,
-            (float(output[n_steps]), float(output[n_steps + 1])),
+            v_trace[:n_steps],
+            w_trace[:n_steps],
+            events,
+            (
+                float(v_trace[n_steps]),
+                float(w_trace[n_steps]),
+            ),
         )
 
-    def _simulate_mojo(
+    def _simulate_mojo_complete(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
-        """Run the Mojo baseline-Euler recurrence through its C ABI."""
+    ) -> tuple[object, object, object, tuple[float, float]]:
+        """Run the failure-atomic Mojo complete-state C-ABI batch."""
         assert _mojo_lib is not None
-        output = np.empty(n_steps + 2, dtype=np.float64)
+        v_trace = np.empty(n_steps + 1, dtype=np.float64)
+        w_trace = np.empty(n_steps + 1, dtype=np.float64)
+        events = np.empty(n_steps, dtype=np.uint8)
         spikes = int(
-            _mojo_lib.adex_simulate_c(
+            _mojo_lib.adex_simulate_complete_c(
                 self.v,
                 self.w,
                 self.v_rest,
@@ -498,15 +600,23 @@ class AdExNeuron:
                 self.dt,
                 n_steps,
                 current,
-                int(output.ctypes.data),
+                int(v_trace.ctypes.data),
+                int(w_trace.ctypes.data),
+                int(events.ctypes.data),
             )
         )
         if spikes < 0:
             raise FloatingPointError("Mojo AdEx kernel rejected the simulation contract.")
+        if spikes != int(np.sum(events, dtype=np.int64)):
+            raise FloatingPointError("Mojo AdEx event count disagrees with its event trace.")
         return (
-            np.ascontiguousarray(output[:n_steps]),
-            spikes,
-            (float(output[n_steps]), float(output[n_steps + 1])),
+            v_trace[:n_steps],
+            w_trace[:n_steps],
+            events,
+            (
+                float(v_trace[n_steps]),
+                float(w_trace[n_steps]),
+            ),
         )
 
     def reset(self) -> None:

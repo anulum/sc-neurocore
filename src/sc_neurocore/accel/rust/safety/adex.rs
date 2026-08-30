@@ -6,6 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for adex
 
+/// Aligned voltage, adaptation, and event traces from one checked batch.
+pub type AdExSimulation = (Vec<f64>, Vec<f64>, Vec<u8>);
+
 #[derive(Debug, Clone)]
 pub struct AdExNeuron {
     pub v: f64,
@@ -89,6 +92,29 @@ impl AdExNeuron {
         self.v = next_v;
         self.w = next_w;
         Ok(0)
+    }
+
+    /// Run a checked batch and return aligned voltage, adaptation, and event traces.
+    ///
+    /// State is committed only after every candidate succeeds.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        i_ext: f64,
+    ) -> Result<AdExSimulation, AdExError> {
+        let mut candidate = self.clone();
+        let mut v_trace = Vec::with_capacity(n_steps);
+        let mut w_trace = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step(i_ext)?;
+            v_trace.push(candidate.v);
+            w_trace.push(candidate.w);
+            events.push(u8::try_from(event).map_err(|_| AdExError::NonFiniteUpdate)?);
+        }
+        self.v = candidate.v;
+        self.w = candidate.w;
+        Ok((v_trace, w_trace, events))
     }
 
     pub fn reset(&mut self) {
@@ -202,5 +228,32 @@ mod tests {
         state.reset();
         assert_eq!((state.v, state.w), (-63.0, 0.0));
         assert_eq!((state.dt, state.a), (0.2, 0.75));
+    }
+
+    #[test]
+    fn test_adex_complete_batch_is_atomic_and_returns_both_states() {
+        let mut state = AdExNeuron::new();
+        let (v_trace, w_trace, events) = state.simulate_complete(1_000, 500.0).unwrap();
+        assert_eq!(
+            (v_trace.len(), w_trace.len(), events.len()),
+            (1_000, 1_000, 1_000)
+        );
+        assert_eq!(
+            events
+                .iter()
+                .map(|event| usize::from(*event))
+                .sum::<usize>(),
+            12
+        );
+        assert_eq!((state.v, state.w), (v_trace[999], w_trace[999]));
+
+        let mut rejected = AdExNeuron::new();
+        rejected.dt = 1.0e308;
+        let before = (rejected.v, rejected.w);
+        assert_eq!(
+            rejected.simulate_complete(2, 1.0e308),
+            Err(AdExError::NonFiniteUpdate)
+        );
+        assert_eq!((rejected.v, rejected.w), before);
     }
 }

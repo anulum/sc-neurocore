@@ -3511,19 +3511,23 @@
     },
     {
       "artefact": "benchmarks/results/bench_adex.json",
-      "description": "Source-bound AdEx baseline-Euler five-backend simulation evidence.",
+      "description": "Source-bound AdEx baseline-Euler five-backend complete-state/event evidence.",
       "expected_values": {
         "backends.go.event_count_matches_python": true,
+        "backends.go.event_trace_matches_python": true,
         "backends.julia.event_count_matches_python": true,
+        "backends.julia.event_trace_matches_python": true,
         "backends.mojo.event_count_matches_python": true,
+        "backends.mojo.event_trace_matches_python": true,
         "backends.rust.event_count_matches_python": true,
+        "backends.rust.event_trace_matches_python": true,
         "kernel": "adex_baseline_euler_simulate",
         "meta.single_cpu_pinned": true,
-        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "schema_version": "sc-neurocore.polyglot-benchmark.v2",
         "workload.current": 500.0,
         "workload.n_steps": 100000,
         "workload.repeats": 7,
-        "workload.trace_atol": 5e-12
+        "workload.state_trace_atol": 5e-12
       },
       "id": "adex-five-backend-closure-local-regression",
       "parity_groups": [
@@ -3539,50 +3543,81 @@
         }
       ],
       "regression_limits": {
-        "backends.go.parity_max_abs_diff": {
+        "backends.go.v_parity_max_abs_diff": {
           "max": 5e-12
         },
-        "backends.julia.parity_max_abs_diff": {
+        "backends.go.w_parity_max_abs_diff": {
           "max": 5e-12
         },
-        "backends.mojo.parity_max_abs_diff": {
+        "backends.julia.v_parity_max_abs_diff": {
           "max": 5e-12
         },
-        "backends.rust.parity_max_abs_diff": {
+        "backends.julia.w_parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.mojo.v_parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.mojo.w_parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.rust.v_parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.rust.w_parity_max_abs_diff": {
           "max": 5e-12
         }
       },
       "required_numbers": [
         "backends.python.median_call_ms",
         "backends.python.minimum_call_ms",
-        "backends.python.parity_max_abs_diff",
+        "backends.python.v_parity_max_abs_diff",
+        "backends.python.w_parity_max_abs_diff",
         "backends.python.event_count",
         "backends.rust.median_call_ms",
         "backends.rust.minimum_call_ms",
-        "backends.rust.parity_max_abs_diff",
+        "backends.rust.v_parity_max_abs_diff",
+        "backends.rust.w_parity_max_abs_diff",
         "backends.rust.event_count",
         "backends.julia.median_call_ms",
         "backends.julia.minimum_call_ms",
-        "backends.julia.parity_max_abs_diff",
+        "backends.julia.v_parity_max_abs_diff",
+        "backends.julia.w_parity_max_abs_diff",
         "backends.julia.event_count",
         "backends.go.median_call_ms",
         "backends.go.minimum_call_ms",
-        "backends.go.parity_max_abs_diff",
+        "backends.go.v_parity_max_abs_diff",
+        "backends.go.w_parity_max_abs_diff",
         "backends.go.event_count",
         "backends.mojo.median_call_ms",
         "backends.mojo.minimum_call_ms",
-        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.v_parity_max_abs_diff",
+        "backends.mojo.w_parity_max_abs_diff",
         "backends.mojo.event_count"
       ],
       "source_hashes": {
         "benchmarks/bench_adex.py": "source_hashes.benchmarks/bench_adex.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/bindings/adex_neuron.rs": "source_hashes.engine/src/bindings/adex_neuron.rs",
         "engine/src/neuron/adex.rs": "source_hashes.engine/src/neuron/adex.rs",
+        "engine/src/network_runner/model_catalogue.rs": "source_hashes.engine/src/network_runner/model_catalogue.rs",
+        "engine/src/network_runner/model_factory.rs": "source_hashes.engine/src/network_runner/model_factory.rs",
+        "engine/src/network_runner/neuron_variant.rs": "source_hashes.engine/src/network_runner/neuron_variant.rs",
+        "hdl/formal/catalogue/sc_adex.sby": "source_hashes.hdl/formal/catalogue/sc_adex.sby",
+        "hdl/formal/catalogue/sc_adex.v": "source_hashes.hdl/formal/catalogue/sc_adex.v",
+        "hdl/formal/catalogue/sc_adex_formal.v": "source_hashes.hdl/formal/catalogue/sc_adex_formal.v",
+        "hdl/reports/yosys_adex_q1616_2026-08-30.json": "source_hashes.hdl/reports/yosys_adex_q1616_2026-08-30.json",
         "src/sc_neurocore/accel/go/neurons/adex/adex.go": "source_hashes.src/sc_neurocore/accel/go/neurons/adex/adex.go",
         "src/sc_neurocore/accel/go/services/adex.go": "source_hashes.src/sc_neurocore/accel/go/services/adex.go",
         "src/sc_neurocore/accel/julia/neurons/adex.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/adex.jl",
         "src/sc_neurocore/accel/mojo/kernels/adex.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/adex.mojo",
         "src/sc_neurocore/accel/rust/safety/adex.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/adex.rs",
-        "src/sc_neurocore/neurons/models/adex.py": "source_hashes.src/sc_neurocore/neurons/models/adex.py"
+        "src/sc_neurocore/neurons/model_descriptors/AdExNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/AdExNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/adex.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/adex.json",
+        "src/sc_neurocore/neurons/model_schemas/adex.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/adex.toml",
+        "src/sc_neurocore/neurons/models/adex.py": "source_hashes.src/sc_neurocore/neurons/models/adex.py",
+        "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json",
+        "src/sc_neurocore/neurons/reference_trace_data/adex_resting_adaptation_doi.json": "source_hashes.src/sc_neurocore/neurons/reference_trace_data/adex_resting_adaptation_doi.json"
       }
     },
     {

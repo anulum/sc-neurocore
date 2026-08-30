@@ -24,6 +24,7 @@ import os
 import platform
 import shutil
 import statistics
+import struct
 import subprocess
 import time
 from pathlib import Path
@@ -44,13 +45,27 @@ KERNEL = "adex_baseline_euler_simulate"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_adex.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/adex_neuron.rs",
     "engine/src/neuron/adex.rs",
+    "engine/src/network_runner/model_catalogue.rs",
+    "engine/src/network_runner/model_factory.rs",
+    "engine/src/network_runner/neuron_variant.rs",
+    "hdl/formal/catalogue/sc_adex.sby",
+    "hdl/formal/catalogue/sc_adex.v",
+    "hdl/formal/catalogue/sc_adex_formal.v",
+    "hdl/reports/yosys_adex_q1616_2026-08-30.json",
     "src/sc_neurocore/accel/go/neurons/adex/adex.go",
     "src/sc_neurocore/accel/go/services/adex.go",
     "src/sc_neurocore/accel/julia/neurons/adex.jl",
     "src/sc_neurocore/accel/mojo/kernels/adex.mojo",
     "src/sc_neurocore/accel/rust/safety/adex.rs",
+    "src/sc_neurocore/neurons/model_descriptors/AdExNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/adex.json",
+    "src/sc_neurocore/neurons/model_schemas/adex.toml",
     "src/sc_neurocore/neurons/models/adex.py",
+    "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json",
+    "src/sc_neurocore/neurons/reference_trace_data/adex_resting_adaptation_doi.json",
 )
 
 
@@ -102,17 +117,25 @@ def _tool_version(command: list[str]) -> str:
     return output.splitlines()[0] if output else f"exit {result.returncode}"
 
 
-def _source_hashes() -> dict[str, object]:
+def _source_hashes() -> dict[str, str]:
     """Hash every implementation and ABI surface relevant to this closure."""
-    flat = {
+    return {
         relative: hashlib.sha256((REPOSITORY / relative).read_bytes()).hexdigest()
         for relative in SOURCE_PATHS
     }
-    nested: dict[str, object] = {}
-    for relative, digest in flat.items():
-        stem, suffix = relative.rsplit(".", 1)
-        nested[stem] = {suffix: digest}
-    return {**flat, **nested}
+
+
+def _trace_digest(
+    v_trace: npt.NDArray[np.float64],
+    w_trace: npt.NDArray[np.float64],
+    event_trace: npt.NDArray[np.uint8],
+) -> str:
+    """Digest the complete aligned state/event packet."""
+    payload = b"".join(
+        struct.pack("<ddB", float(v), float(w), int(event))
+        for v, w, event in zip(v_trace, w_trace, event_trace, strict=True)
+    )
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _probe_backend(backend: str) -> tuple[bool, str]:
@@ -133,21 +156,40 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, float]]:
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    int,
+    tuple[float, float],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    AdExNeuron().simulate(20, CURRENT, backend=backend)
+    AdExNeuron().simulate_complete(20, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
-    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    v_trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    w_trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    event_trace: npt.NDArray[np.uint8] = np.empty(0, dtype=np.uint8)
     spikes = 0
     final_state = (0.0, 0.0)
     for _repeat in range(N_REPEATS):
         gc.collect()
         neuron = AdExNeuron()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        v_trace, w_trace, event_trace = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
+        spikes = int(np.sum(event_trace, dtype=np.int64))
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         final_state = (neuron.v, neuron.w)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+    return (
+        statistics.median(elapsed_ms),
+        min(elapsed_ms),
+        v_trace,
+        w_trace,
+        event_trace,
+        spikes,
+        final_state,
+    )
 
 
 def _runtime_versions() -> dict[str, str]:
@@ -210,7 +252,14 @@ def main(argv: list[str]) -> int:
         return 2
 
     rows: dict[str, dict[str, Any]] = {}
-    reference: npt.NDArray[np.float64] | None = None
+    reference: (
+        tuple[
+            npt.NDArray[np.float64],
+            npt.NDArray[np.float64],
+            npt.NDArray[np.uint8],
+        ]
+        | None
+    ) = None
     reference_ms: float | None = None
     reference_spikes: int | None = None
     for backend in BACKENDS:
@@ -222,27 +271,43 @@ def main(argv: list[str]) -> int:
                 "unavailable_reason": reason,
             }
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        (
+            median_ms,
+            minimum_ms,
+            v_trace,
+            w_trace,
+            event_trace,
+            spikes,
+            final_state,
+        ) = _measure_backend(backend)
         if backend == "python":
-            reference = trace
+            reference = (v_trace, w_trace, event_trace)
             reference_ms = median_ms
             reference_spikes = spikes
-            parity = 0.0
+            v_parity = 0.0
+            w_parity = 0.0
         else:
             if reference is None or reference_ms is None or reference_spikes is None:
                 raise RuntimeError("Python reference must be measured first")
-            parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
+            reference_v, reference_w, _reference_events = reference
+            v_parity = float(np.max(np.abs(v_trace - reference_v))) if v_trace.size else 0.0
+            w_parity = float(np.max(np.abs(w_trace - reference_w))) if w_trace.size else 0.0
         rows[backend] = {
             "available": True,
             "used": True,
             "median_call_ms": median_ms,
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": (reference_ms / median_ms) if reference_ms is not None else 1.0,
-            "parity_max_abs_diff": parity,
+            "v_parity_max_abs_diff": v_parity,
+            "w_parity_max_abs_diff": w_parity,
             "event_count": spikes,
             "event_count_matches_python": (
                 True if reference_spikes is None else spikes == reference_spikes
             ),
+            "event_trace_matches_python": (
+                True if reference is None else bool(np.array_equal(event_trace, reference[2]))
+            ),
+            "complete_packet_sha256": _trace_digest(v_trace, w_trace, event_trace),
             "final_state": dict(zip(("v", "w"), final_state, strict=True)),
         }
 
@@ -251,14 +316,14 @@ def main(argv: list[str]) -> int:
         key=lambda backend: float(rows[backend]["median_call_ms"]),
     )
     report: dict[str, Any] = {
-        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "schema_version": "sc-neurocore.polyglot-benchmark.v2",
         "kernel": KERNEL,
         "workload": {
             "n_steps": N_STEPS,
             "repeats": N_REPEATS,
             "current": CURRENT,
             "parameters": "AdEx maintained defaults; candidate-first baseline Euler",
-            "trace_atol": TRACE_ATOL,
+            "state_trace_atol": TRACE_ATOL,
         },
         "meta": _environment(load_start),
         "backends": rows,
@@ -274,7 +339,8 @@ def main(argv: list[str]) -> int:
         print(
             f"{backend:>7}: {float(row['median_call_ms']):10.3f} ms  "
             f"{float(row['speedup_vs_python']):8.2f}x  "
-            f"max|delta|={float(row['parity_max_abs_diff']):.3e}  "
+            f"max|dv|={float(row['v_parity_max_abs_diff']):.3e}  "
+            f"max|dw|={float(row['w_parity_max_abs_diff']):.3e}  "
             f"events={int(row['event_count'])}"
         )
     print(f"Measured order: {', '.join(measured_order)}")
@@ -282,8 +348,14 @@ def main(argv: list[str]) -> int:
 
     if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
         return 3
+    if any(not bool(row.get("event_trace_matches_python", True)) for row in rows.values()):
+        return 3
     if any(
-        float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL
+        max(
+            float(row.get("v_parity_max_abs_diff", 0.0)),
+            float(row.get("w_parity_max_abs_diff", 0.0)),
+        )
+        > TRACE_ATOL
         for row in rows.values()
         if row.get("used") is True
     ):

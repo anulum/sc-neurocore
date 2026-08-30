@@ -58,7 +58,7 @@ end
 end
 
 @testset "AdEx Julia complete simulation surface" begin
-    result = simulate_trace(
+    result = simulate_complete(
         -60.0,
         3.0,
         -65.0,
@@ -75,12 +75,16 @@ end
         200,
         500.0,
     )
-    @test length(result.trace) == 200
+    @test length(result.v_trace) == 200
+    @test length(result.w_trace) == 200
+    @test length(result.events) == 200
+    @test sum(result.events) == result.spikes
     @test result.spikes > 0
     @test isfinite(result.vf)
     @test isfinite(result.wf)
+    @test (result.vf, result.wf) == (result.v_trace[end], result.w_trace[end])
 
-    empty = simulate_trace(
+    empty = simulate_complete(
         -60.0,
         3.0,
         -65.0,
@@ -97,9 +101,11 @@ end
         0,
         500.0,
     )
-    @test isempty(empty.trace)
+    @test isempty(empty.v_trace)
+    @test isempty(empty.w_trace)
+    @test isempty(empty.events)
     @test (empty.spikes, empty.vf, empty.wf) == (0, -60.0, 3.0)
-    @test_throws DomainError simulate_trace(
+    @test_throws DomainError simulate_complete(
         -65.0,
         0.0,
         -65.0,

@@ -50,6 +50,7 @@ _AVX512_FEATURES = (
     "AVX512_ICL",
 )
 _DEDICATED_REPRODUCIBILITY_MODELS = {
+    "AdExNeuron",
     "AiharaMapNeuron",
     "BendaHerzNeuron",
     "ChialvoMapNeuron",

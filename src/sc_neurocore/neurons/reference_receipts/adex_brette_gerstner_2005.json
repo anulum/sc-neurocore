@@ -1,0 +1,46 @@
+{
+  "model": "AdExNeuron",
+  "equation_origin": {
+    "citation": "doi:10.1152/jn.00686.2005",
+    "authors": "Romain Brette and Wulfram Gerstner",
+    "equations": "C*dV/dt=-gL*(V-EL)+gL*DeltaT*exp((V-VT)/DeltaT)-w+I; tau_w*dw/dt=a*(V-EL)-w",
+    "event": "At Vpeak=20 mV: V<-Vr=EL and w<-w+b"
+  },
+  "published_regular_spiking_parameters": {
+    "C_pF": 281.0,
+    "gL_nS": 30.0,
+    "EL_mV": -70.6,
+    "VT_mV": -50.4,
+    "DeltaT_mV": 2.0,
+    "tau_w_ms": 144.0,
+    "a_nS": 4.0,
+    "b_pA": 80.5,
+    "Vpeak_mV": 20.0,
+    "Vr_mV": -70.6
+  },
+  "numerical_protocol": {
+    "integrator": "simultaneous explicit Euler",
+    "dt_ms": 0.1,
+    "steps": 1000,
+    "current_pA": 800.0,
+    "initial_state": {
+      "v_mV": -70.6,
+      "w_pA": 0.0
+    }
+  },
+  "oracle": {
+    "events": 3,
+    "first_event_index_zero_based": 179,
+    "final_state": {
+      "v_mV": -51.096677265901604,
+      "w_pA": 196.16523126998544
+    },
+    "source_equation_state_trace_sha256": "4bed5c262791267ec0667263b6d80d2931f01d97fb2e1237d219f9ec72cd8f6c",
+    "normalised_runtime_state_trace_sha256": "9965fe9bfc0ff2c67f894e39ae7f88ae3fa9b7aa11517e783a51178d0e6ca219",
+    "event_trace_sha256": "4d2dec6dbac9935ac8116674c39e1caae9532792cbd94ddde85bf0ff5c5e0e14",
+    "normalisation_max_abs_v_error_mV": 1.6413537196058314e-12,
+    "normalisation_max_abs_w_error_pA": 0.0
+  },
+  "encoding": "1000 row-major pairs of little-endian float64 post-step (v,w), plus 1000 uint8 event values",
+  "boundary": "The source oracle evaluates the as-published C/gL equation without an exponential clamp. The maintained runtime stores tau=C/gL and clips the binary64 exponential argument to [-20,20]. Under this protocol the event sequence is exact and the complete-state difference remains within 2e-12 mV."
+}

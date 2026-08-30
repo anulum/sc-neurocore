@@ -35,6 +35,7 @@ def test_missing_rust_engine_is_detected_at_import(monkeypatch: pytest.MonkeyPat
             reloaded = importlib.reload(adex)
             assert reloaded._HAS_RUST is False
             assert reloaded._EngineAdExCls is None
+            assert reloaded._EngineAdExSimulateFn is None
         importlib.reload(adex)
         assert adex._HAS_RUST is True
     finally:
@@ -76,7 +77,7 @@ def test_compiled_backends_match_python_golden(
     np.testing.assert_allclose(state, reference_state, atol=_TRACE_ATOL, rtol=0.0)
 
 
-@pytest.mark.parametrize("backend", ("julia", "go", "mojo"))
+@pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_full_parameter_contract_matches_python(backend: str) -> None:
     """Carry every maintained numeric field across non-default native ABIs."""
 
@@ -109,7 +110,7 @@ def test_full_parameter_contract_matches_python(backend: str) -> None:
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_empty_run_preserves_state(backend: str) -> None:
     """Return an empty trace without discarding either state variable."""
-    neuron = AdExNeuron() if backend == "rust" else AdExNeuron(v=-60.0, w=3.0)
+    neuron = AdExNeuron(v=-60.0, w=3.0)
     before = (neuron.v, neuron.w)
     trace, spikes = neuron.simulate(0, 250.0, backend=backend)
     assert trace.shape == (0,)

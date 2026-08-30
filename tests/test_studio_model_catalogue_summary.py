@@ -45,9 +45,9 @@ def test_summary_exposes_dual_readiness_axes() -> None:
     # S5: S3 kernel + dynamics_faithful + class-validated parity evidence.
     assert adex["science_tier"] == 5
     assert adex["science_label"] == "S5"
-    # AdEx is enrolled in schema→RTL cosim; H1 is the honest floor.
-    assert adex["silicon_tier"] == 1
-    assert adex["silicon_label"] == "H1"
+    # AdEx has schema→RTL cosim plus a checked coarse-synthesis report.
+    assert adex["silicon_tier"] == 2
+    assert adex["silicon_label"] == "H2"
 
 
 def test_summary_exposes_studio_consumption_contract() -> None:
@@ -64,9 +64,11 @@ def test_summary_exposes_studio_consumption_contract() -> None:
     adex = _adex_summary()
     assert adex["validation_metric"] == "parity"
     assert adex["integration_method"] == "euler"
-    assert adex["terminal_silicon_tier"] == "H1"
+    assert adex["terminal_silicon_tier"] == "H2"
     assert adex["terminal_reason"] == (
-        "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+        "Q16.16 co-simulation, coarse synthesis, and bounded reset/event formal safety are "
+        "complete; timing, PPA, board, device, physical silicon, and universal formal "
+        "equivalence remain open."
     )
 
 
@@ -90,9 +92,9 @@ def test_detail_readiness_block_is_auditable() -> None:
     readiness = cast(dict[str, object], detail["readiness"])
     assert readiness["science_label"] == f"S{readiness['science_tier']}"
     assert readiness["science_tier"] == 5
-    assert readiness["silicon_tier"] == 1
-    assert readiness["silicon_label"] == "H1"
-    # Perfect: S5 plus declared terminal H-tier (H1) is met via cosim evidence.
+    assert readiness["silicon_tier"] == 2
+    assert readiness["silicon_label"] == "H2"
+    # Perfect: S5 plus declared terminal H-tier (H2) is met via synth evidence.
     assert readiness["is_perfect"] is True
     validation = cast(dict[str, object], readiness["validation"])
     assert validation["metric"] == "parity"
@@ -126,9 +128,10 @@ def test_model_detail_exposes_measured_golden_trace_digest_variants() -> None:
     detail = get_model_detail("ChialvoMapNeuron")
     assert detail is not None
     reproducibility = cast(dict[str, object], detail["reproducibility"])
-    assert reproducibility["golden_trace_sha256_variants"] == [
-        "e3fe85af7298f88f59be81d9d74a1ae6287387ffac31366ffcce89204c032725"
-    ]
+    assert reproducibility["golden_trace_sha256"] == (
+        "ccd95d8035517d0684efbc35c60a1e0769954a77f54b77b3aecdf5d8d5352ff4"
+    )
+    assert reproducibility["golden_trace_sha256_variants"] == []
 
 
 def test_model_facets_cover_the_whole_catalogue() -> None:

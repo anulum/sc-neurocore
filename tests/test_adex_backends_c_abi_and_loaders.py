@@ -59,6 +59,7 @@ def test_requested_rust_backend_reports_unavailable(monkeypatch: pytest.MonkeyPa
     """Keep explicit Rust requests fail-closed when the engine wheel is absent."""
     monkeypatch.setattr(adex, "_HAS_RUST", False)
     monkeypatch.setattr(adex, "_EngineAdExCls", None)
+    monkeypatch.setattr(adex, "_EngineAdExSimulateFn", None)
     with pytest.raises(RuntimeError, match="Rust AdEx backend"):
         AdExNeuron().simulate(1, 0.0, backend="rust")
 

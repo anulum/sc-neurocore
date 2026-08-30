@@ -11,14 +11,19 @@ schema_version = 2
 name = "AdEx"
 class_name = "AdExNeuron"
 module = "adex"
-display_name = ""
-summary = "Adaptive Exponential Integrate-and-Fire — exponential spike initiation with subthreshold adaptation"
+display_name = "Adaptive exponential integrate-and-fire"
+summary = "Source-identified Brette–Gerstner AdEx equations with a separately exposed published regular-spiking fit."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = []
-hardware_fit = []
+intended_use = [
+    "source-equation reference",
+    "adaptive point-neuron simulation",
+]
+hardware_fit = [
+    "fixed-point exponential-LUT co-simulation",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -70,7 +75,7 @@ unit = "mV"
 meaning = "voltage cutoff at which a spike is registered and reset applied"
 range = [
     -60.0,
-    -20.0,
+    50.0,
 ]
 
 [parameters.v_rh]
@@ -160,24 +165,40 @@ parity = "exact"
 status = "implemented"
 parity = "exact"
 
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":250.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "5413312b873921d2ef9aa6d50d8087d8962cf431ac0f6db2899cb5579ee46dfb"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json"
+golden_trace_sha256 = "9965fe9bfc0ff2c67f894e39ae7f88ae3fa9b7aa11517e783a51178d0e6ca219"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/adex_brette_gerstner_2005.json"
 
 [documentation]
 slug = "models/adex"
-notes = ""
+notes = "Maintained defaults remain backwards-compatible. AdExNeuron.brette_gerstner_2005() exposes the paper's regular-spiking fit without relabelling those defaults as source-fitted."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL adex; Q16.16 RTL vs Python spike count"
-tolerance = "class-correct Q16.16 gap bound in test"
-evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_adex_q1616_parity"
+operating_point = "published regular-spiking fit at I=800 pA for 1000 steps; maintained defaults at I=0/200/500 pA; Q16.16 RTL event envelope"
+tolerance = "source-normalised complete state below 2e-12; compiled state below 5e-12 with exact events; Q16.16 event-count gap at most two percent"
+evidence = "tests/test_reference_adex.py; tests/test_model_adex_source_contract.py; tests/test_adex_backends_backend_parity.py; tests/test_cosim_adex.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_adex_q1616_parity"
-target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+cosim_evidence = "tests/test_cosim_adex.py::TestQ1616Precision::test_adex_q1616_parity"
+synthesised = true
+synth_report = "hdl/reports/yosys_adex_q1616_2026-08-30.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Q16.16 co-simulation, coarse synthesis, and bounded reset/event formal safety are complete; timing, PPA, board, device, physical silicon, and universal formal equivalence remain open."

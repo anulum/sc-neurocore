@@ -1,0 +1,44 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_adex": {
+         "num_wires":         18878,
+         "num_wire_bits":     85246,
+         "num_pub_wires":     46,
+         "num_pub_wire_bits": 1742,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         52014,
+         "num_cells_by_type": {
+            "$_AND_": 19446,
+            "$_DFF_PN0_": 50,
+            "$_DFF_PN1_": 15,
+            "$_MUX_": 6732,
+            "$_NOT_": 6133,
+            "$_OR_": 11958,
+            "$_XOR_": 7680
+         }
+      }
+   },
+      "design": {
+         "num_wires":         18878,
+         "num_wire_bits":     85246,
+         "num_pub_wires":     46,
+         "num_pub_wire_bits": 1742,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         52014,
+         "num_cells_by_type": {
+            "$_AND_": 19446,
+            "$_DFF_PN0_": 50,
+            "$_DFF_PN1_": 15,
+            "$_MUX_": 6732,
+            "$_NOT_": 6133,
+            "$_OR_": 11958,
+            "$_XOR_": 7680
+         }
+      }
+}

@@ -8,8 +8,7 @@
 
 `default_nettype none
 
-// Formal wrapper for equation-compiler RTL of a dual-axis perfect model.
-// Properties use only public ports so default_nettype none stays clean.
+// Formal wrapper for the generated Q8.8 AdEx recurrence.
 module sc_adex_formal (
     input wire clk,
     input wire rst_n,
@@ -31,24 +30,32 @@ module sc_adex_formal (
 
 `ifdef FORMAL
     reg past_valid = 1'b0;
-    always @(posedge clk)
+    initial assume (!rst_n);
+    always @(posedge clk) begin
+        if (!past_valid)
+            assume (!rst_n);
+        else
+            assume (rst_n);
         past_valid <= 1'b1;
+    end
 
-    // Reset hygiene: async reset clears the spike flag. Primary state may reset
-    // to a non-zero rest / init (e.g. QIF v=-1, Izhikevich vr) — do not force 0.
+    // The generated asynchronous reset restores the maintained initial state.
     always @(*) begin
         if (!rst_n) begin
             assert (spike_out == 1'b0);
+            assert ($signed(v_out) == -16'sd16640);
+            assert ($signed(w_out) == 16'sd0);
         end
     end
 
-    // Saturation contract on the primary membrane / phase / current state.
+    // A public event and the public reset state are committed atomically.
     always @(posedge clk) begin
-        if (past_valid && rst_n) begin
-            assert ($signed(v_out) >= -16'sd32768);
-            assert ($signed(v_out) <= 16'sd32767);
-        end
+        if (past_valid && rst_n && spike_out)
+            assert ($signed(v_out) == -16'sd17408);
+        cover (past_valid && rst_n && spike_out);
     end
 `endif
 
 endmodule
+
+`default_nettype wire

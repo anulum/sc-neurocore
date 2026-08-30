@@ -149,6 +149,45 @@ def test_benchmark_evidence_gate_rejects_stale_source_hash(tmp_path: Path) -> No
     assert report["failures"][0]["reason"] == "source_hash_mismatch"
 
 
+def test_benchmark_evidence_gate_accepts_dotted_source_filename(tmp_path: Path) -> None:
+    """Flat source-hash keys retain filename suffixes such as ``.py``."""
+    tool = _load_tool()
+    source = tmp_path / "benchmarks" / "bench_demo.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("print('bench')\n", encoding="utf-8")
+    source_hash = tool._sha256(source)
+    _write_json(
+        tmp_path / "benchmarks" / "results" / "demo.json",
+        {"latency_ns": 1.0, "source_hashes": {"benchmarks/bench_demo.py": source_hash}},
+    )
+    manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"
+    _write_json(
+        manifest,
+        {
+            "SPDX-License-Identifier": "AGPL-3.0-or-later",
+            "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
+            "gates": [
+                {
+                    "id": "dotted-source-filename",
+                    "artefact": "benchmarks/results/demo.json",
+                    "required_numbers": ["latency_ns"],
+                    "source_hashes": {
+                        "benchmarks/bench_demo.py": "source_hashes.benchmarks/bench_demo.py"
+                    },
+                }
+            ],
+        },
+    )
+
+    report = tool.evaluate_benchmark_evidence_gate(
+        manifest_path=manifest,
+        output_path=tmp_path / "gate.json",
+        repo_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+
+
 def test_benchmark_evidence_gate_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
     tool = _load_tool()
     manifest = tmp_path / "benchmarks" / "benchmark_regression_gates.json"

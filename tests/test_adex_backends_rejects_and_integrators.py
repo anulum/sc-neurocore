@@ -21,13 +21,14 @@ def test_compiled_backends_reject_non_baseline_integrators(backend: str) -> None
     assert (neuron.v, neuron.w) == before
 
 
-def test_rust_rejects_non_default_contract() -> None:
-    """Keep the engine class's factory-only parameter boundary explicit."""
-    neuron = AdExNeuron(v=-60.0)
-    before = (neuron.v, neuron.w)
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert (neuron.v, neuron.w) == before
+def test_rust_accepts_the_complete_baseline_parameter_surface() -> None:
+    """The production Rust batch must no longer be factory-default-only."""
+    reference = AdExNeuron(v=-60.0, w=3.0, v_rest=-64.0, dt=0.2)
+    candidate = AdExNeuron(v=-60.0, w=3.0, v_rest=-64.0, dt=0.2)
+    expected = reference.simulate_complete(100, 410.0, backend="python")
+    observed = candidate.simulate_complete(100, 410.0, backend="rust")
+    for expected_trace, observed_trace in zip(expected, observed, strict=True):
+        np.testing.assert_allclose(observed_trace, expected_trace, rtol=0.0, atol=_TRACE_ATOL)
 
 
 def test_auto_uses_python_for_alternative_integrators() -> None:

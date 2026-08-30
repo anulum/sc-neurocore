@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.2898349882893854e-15,
-      "max_call_ns": 32147126,
-      "median_call_ms": 30.754087,
-      "median_call_ns": 30754087.0,
-      "median_ns_per_step": 307.54087,
-      "min_call_ns": 29837209,
+      "max_call_ns": 34719695,
+      "median_call_ms": 28.739643,
+      "median_call_ns": 28739643.0,
+      "median_ns_per_step": 287.39643,
+      "min_call_ns": 26577961,
       "parity_atol": 1e-09,
       "parity_max_abs_diff": 8.870681966755001e-14,
       "samples_ns": [
-        29837209,
-        31130997,
-        30754087,
-        30501377,
-        32147126
+        26577961,
+        30577945,
+        34719695,
+        28739643,
+        28082690
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -43,19 +43,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 3.0531133177191805e-16,
-      "max_call_ns": 17414549,
-      "median_call_ms": 16.591082,
-      "median_call_ns": 16591082.0,
-      "median_ns_per_step": 165.91082,
-      "min_call_ns": 16489329,
+      "max_call_ns": 17912911,
+      "median_call_ms": 15.764035,
+      "median_call_ns": 15764035.0,
+      "median_ns_per_step": 157.64035,
+      "min_call_ns": 15247788,
       "parity_atol": 1e-09,
       "parity_max_abs_diff": 1.6986412276764895e-14,
       "samples_ns": [
-        16591082,
-        17414549,
-        17295965,
-        16511622,
-        16489329
+        17912911,
+        15534903,
+        16583878,
+        15247788,
+        15764035
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -70,19 +70,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.3616616995347783e-10,
-      "max_call_ns": 35799028,
-      "median_call_ms": 35.303626,
-      "median_call_ns": 35303626.0,
-      "median_ns_per_step": 353.03626,
-      "min_call_ns": 34553114,
+      "max_call_ns": 33219453,
+      "median_call_ms": 31.181602,
+      "median_call_ns": 31181602.0,
+      "median_ns_per_step": 311.81602,
+      "min_call_ns": 30138240,
       "parity_atol": 1e-08,
       "parity_max_abs_diff": 4.8150621267950555e-09,
       "samples_ns": [
-        35799028,
-        35422809,
-        34553114,
-        35303626,
-        34906069
+        33219453,
+        32407524,
+        31181602,
+        30540635,
+        30138240
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -97,19 +97,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 1235622682,
-      "median_call_ms": 940.258368,
-      "median_call_ns": 940258368.0,
-      "median_ns_per_step": 9402.58368,
-      "min_call_ns": 841590745,
+      "max_call_ns": 988853158,
+      "median_call_ms": 889.079483,
+      "median_call_ns": 889079483.0,
+      "median_ns_per_step": 8890.79483,
+      "min_call_ns": 852214785,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        865591435,
-        940258368,
-        841590745,
-        1013710238,
-        1235622682
+        889079483,
+        981372058,
+        988853158,
+        852214785,
+        870816543
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -124,19 +124,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 14397714,
-      "median_call_ms": 13.667275,
-      "median_call_ns": 13667275.0,
-      "median_ns_per_step": 136.67275,
-      "min_call_ns": 13180632,
+      "max_call_ns": 13455974,
+      "median_call_ms": 12.89964,
+      "median_call_ns": 12899640.0,
+      "median_ns_per_step": 128.9964,
+      "min_call_ns": 12537616,
       "parity_atol": 1e-09,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        14209606,
-        14397714,
-        13667275,
-        13277001,
-        13180632
+        13455974,
+        13277725,
+        12537616,
+        12827624,
+        12899640
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -158,21 +158,21 @@
     },
     "rust_extension": {
       "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "4f2c0ad4381441e510138658e6a907bddb5f9c508669b9591c47e8cd6b8c44c1",
-      "size_bytes": 34788513
+      "sha256": "fa09c299adc2694d145de3230c4cc876df6487139f3110cc2c1efb0fa0fc4638",
+      "size_bytes": 34788793
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_wilson_cowan.py --json benchmarks/results/bench_wilson_cowan.json",
   "environment": {
     "affinity": [
-      2
+      11
     ],
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      9.82763671875,
-      6.056640625,
-      5.55029296875
+      6.07470703125,
+      7.15673828125,
+      8.07763671875
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -217,9 +217,9 @@
     },
     "benchmarks/bench_wilson_cowan.py": "24c08a08b2aafbbe3f4fa9ebb29f4036d78a7acf1696c014f610c3058ca879f5",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d"
+      "py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "3fbafb08a5bbc3c107395db10aae8a05a5bd035f0ea37d45be08ce1d6b193c7d",
+    "bridge/sc_neurocore_engine/__init__.py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c",
     "engine/src/bindings/wilson_cowan": {
       "rs": "b96579ececbecbb570f76cd4aa5d877900ef8666267e5a683b5ab662850b0004"
     },
@@ -275,7 +275,7 @@
     },
     "src/sc_neurocore/neurons/models/wilson_cowan.py": "a61840a8f24d62caea859ebdcb94cdbb160a2055440bf96e2a83d46594f4523f"
   },
-  "timestamp_utc": "2026-08-28T14:28:21+00:00",
+  "timestamp_utc": "2026-08-30T01:29:12+00:00",
   "verification": {
     "rust_safety": {
       "command": [

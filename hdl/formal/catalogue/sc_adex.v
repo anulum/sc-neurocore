@@ -13,6 +13,7 @@
 module sc_adex #(
     parameter signed [15:0] P_V_REST = 16'sd48896,
     parameter signed [15:0] P_V_RESET = 16'sd48128,
+    parameter signed [15:0] P_V_THRESHOLD = 16'sd52736,
     parameter signed [15:0] P_V_RH = 16'sd51456,
     parameter signed [15:0] P_DELTA_T = 16'sd512,
     parameter signed [15:0] P_TAU = 16'sd5120,
@@ -341,7 +342,7 @@ always @(posedge clk or negedge rst_n) begin
         w_out <= 16'sd0;
         spike_out <= 1'b0;
     end else begin
-        if ((v_next > (-16'sd12800))) begin
+        if ((v_next >= P_V_THRESHOLD)) begin
             spike_out <= 1'b1;
             v_reg <= P_V_RESET;
             v_out <= P_V_RESET;

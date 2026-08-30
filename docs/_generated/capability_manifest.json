@@ -971,7 +971,7 @@
     "python_model_classes": 180,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4776
+    "test_files": 4778
   },
   "documentation": {
     "public_pages": [
@@ -3590,6 +3590,7 @@
       "tests/test_adc_to_spike_quantiser_synth.py",
       "tests/test_adex_backends_auto_dispatch.py",
       "tests/test_adex_backends_backend_parity.py",
+      "tests/test_adex_backends_batch_atomicity.py",
       "tests/test_adex_backends_c_abi_and_loaders.py",
       "tests/test_adex_backends_rejects_and_integrators.py",
       "tests/test_adex_engine_binding.py",
@@ -5380,6 +5381,7 @@
       "tests/test_model_adex_ad_ex_pipeline.py",
       "tests/test_model_adex_ad_ex_simulate.py",
       "tests/test_model_adex_ad_ex_validation.py",
+      "tests/test_model_adex_source_contract.py",
       "tests/test_model_ai_optimized_ai_optimized_analysis.py",
       "tests/test_model_ai_optimized_ai_optimized_common.py",
       "tests/test_model_ai_optimized_ai_optimized_network.py",
