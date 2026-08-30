@@ -51,6 +51,7 @@ try:
         QuadraticIFNeuron,
         ThetaNeuron,
         PerfectIntegratorNeuron,
+        perfect_integrator_simulate_complete,
         GatedLIFNeuron,
         NonlinearLIFNeuron,
         SFANeuron,
@@ -438,7 +439,11 @@ __all__ = [
     "PySpikingControllerPool",
     *(_NEURON_MODELS if _neurons_available else []),
     *(
-        ["expif_simulate_complete", "lapicque_simulate_complete"]
+        [
+            "expif_simulate_complete",
+            "lapicque_simulate_complete",
+            "perfect_integrator_simulate_complete",
+        ]
         if _neurons_available
         else []
     ),

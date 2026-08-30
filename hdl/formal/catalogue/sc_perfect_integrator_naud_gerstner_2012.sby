@@ -1,0 +1,17 @@
+# SymbiYosys job for Naud-Gerstner 2012 perfect integrator
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_perfect_integrator_naud_gerstner_2012_formal.v
+read -formal sc_perfect_integrator_naud_gerstner_2012.v
+prep -top sc_perfect_integrator_naud_gerstner_2012_formal
+
+[files]
+sc_perfect_integrator_naud_gerstner_2012_formal.v
+sc_perfect_integrator_naud_gerstner_2012.v

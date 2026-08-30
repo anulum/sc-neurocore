@@ -17,11 +17,17 @@ class TestPerfectIntegratorThreshold:
     """Threshold, reset, and spike timing."""
 
     def test_exact_threshold_fires(self):
-        """When V reaches exactly threshold, a spike must occur."""
+        """The preserved SC profile fires when V reaches threshold exactly."""
         # Use I=10 so dV=1.0/step → hits threshold=1.0 exactly at step 1
         n = PerfectIntegratorNeuron(dt=0.1, c_m=1.0, v_threshold=1.0)
         s = n.step(10.0)
         assert s == 1
+
+    def test_source_exact_threshold_waits_for_strict_crossing(self):
+        """Naud-Gerstner's written > rule retains equality until the next drive."""
+        n = PerfectIntegratorNeuron.naud_gerstner_2012()
+        assert [n.step(5.0) for _ in range(3)] == [0, 0, 1]
+        assert n.v == n.v_reset
 
     def test_reset_to_v_reset(self):
         n = PerfectIntegratorNeuron()

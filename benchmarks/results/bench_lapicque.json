@@ -8,10 +8,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 5.302171,
-      "minimum_call_ms": 4.869606,
+      "median_call_ms": 5.677174,
+      "minimum_call_ms": 5.169144,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 37.94773178760172,
+      "speedup_vs_python": 53.491518843706395,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -23,10 +23,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 2.662112,
-      "minimum_call_ms": 2.422879,
+      "median_call_ms": 2.819917,
+      "minimum_call_ms": 2.550149,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 75.58110365003427,
+      "speedup_vs_python": 107.69134694389942,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -38,10 +38,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 0.962747,
-      "minimum_call_ms": 0.888211,
+      "median_call_ms": 1.086362,
+      "minimum_call_ms": 0.961305,
       "parity_max_abs_diff": 1.2212453270876722e-15,
-      "speedup_vs_python": 208.9909010363055,
+      "speedup_vs_python": 279.53910390827366,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -53,8 +53,8 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 201.205363,
-      "minimum_call_ms": 155.887553,
+      "median_call_ms": 303.68066,
+      "minimum_call_ms": 219.347694,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
@@ -68,10 +68,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 2.522324,
-      "minimum_call_ms": 2.081065,
+      "median_call_ms": 3.553709,
+      "minimum_call_ms": 3.452822,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 79.76983250367519,
+      "speedup_vs_python": 85.45456591971937,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     }
@@ -79,8 +79,8 @@
   "kernel": "lapicque_1907_exact_polarization_complete_packet",
   "measured_order": [
     "mojo",
-    "rust",
     "julia",
+    "rust",
     "go",
     "python"
   ],
@@ -92,14 +92,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      9.4990234375,
-      8.68115234375,
-      8.41015625
+      11.86572265625,
+      10.380859375,
+      13.06494140625
     ],
     "load_average_start": [
-      7.98828125,
-      8.3779296875,
-      8.31103515625
+      11.11474609375,
+      10.17431640625,
+      13.04443359375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -124,9 +124,9 @@
     },
     "engine/src/bindings/lapicque_neuron.rs": "baec33982f8a5f34ffc50aa7d700950d5b44ef18b60e5b7bc2d3d057e39854e0",
     "engine/src/network_runner/model_factory": {
-      "rs": "3e3268ea20f256e1c570ee5abddaae4a20dd12ac87abc4ea960e5cc12352899f"
+      "rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69"
     },
-    "engine/src/network_runner/model_factory.rs": "3e3268ea20f256e1c570ee5abddaae4a20dd12ac87abc4ea960e5cc12352899f",
+    "engine/src/network_runner/model_factory.rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69",
     "engine/src/neuron/lapicque": {
       "rs": "11bd56778011b24c1afc7f4ed03c67306fe980827f5338a8ffff57ccb1d2f1e6"
     },

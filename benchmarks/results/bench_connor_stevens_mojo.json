@@ -14,10 +14,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 4.959588295605499e-12,
-      "median_call_ms": 12.96271,
-      "minimum_call_ms": 11.237486,
+      "median_call_ms": 12.269113,
+      "minimum_call_ms": 11.070495,
       "parity_max_abs_diff": 4.959588295605499e-12,
-      "speedup_vs_python": 18.44744362868567,
+      "speedup_vs_python": 15.84579105270283,
       "used": true
     },
     "julia": {
@@ -34,10 +34,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.3713474800169934e-12,
-      "median_call_ms": 127.014373,
-      "minimum_call_ms": 120.154414,
+      "median_call_ms": 126.104837,
+      "minimum_call_ms": 115.884816,
       "parity_max_abs_diff": 1.6413537196058314e-12,
-      "speedup_vs_python": 1.882691354938232,
+      "speedup_vs_python": 1.5416839323934894,
       "used": true
     },
     "mojo": {
@@ -54,10 +54,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 4.480276061258337e-07,
-      "median_call_ms": 3.914436,
-      "minimum_call_ms": 3.481669,
+      "median_call_ms": 4.016662,
+      "minimum_call_ms": 3.588611,
       "parity_max_abs_diff": 7.9102448768964e-07,
-      "speedup_vs_python": 61.08896964977841,
+      "speedup_vs_python": 48.40183241706671,
       "used": true
     },
     "python": {
@@ -74,8 +74,8 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 239.128862,
-      "minimum_call_ms": 201.295567,
+      "median_call_ms": 194.413801,
+      "minimum_call_ms": 180.193074,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -94,10 +94,10 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.6342482922482304e-13,
-      "median_call_ms": 5.935817,
-      "minimum_call_ms": 5.701369,
+      "median_call_ms": 5.891244,
+      "minimum_call_ms": 5.68126,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 40.28575375554873,
+      "speedup_vs_python": 33.000466624706085,
       "used": true
     }
   },
@@ -119,14 +119,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      9.21337890625,
-      7.62939453125,
-      8.0263671875
+      8.50146484375,
+      9.85107421875,
+      12.5888671875
     ],
     "load_average_start": [
-      9.58056640625,
-      7.673828125,
-      8.04296875
+      8.71923828125,
+      9.91650390625,
+      12.62451171875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -149,9 +149,9 @@
     },
     "benchmarks/bench_connor_stevens_mojo.py": "92ef9f64a19e7689e2aa3a2e5bf96a12128e6753393c79e2a9c2bd37424f860a",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "9f27c2b64bd5ec50c310decf121373c8ee69fcd723c27134011ef22167d9bce5"
+      "py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "9f27c2b64bd5ec50c310decf121373c8ee69fcd723c27134011ef22167d9bce5",
+    "bridge/sc_neurocore_engine/__init__.py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260",
     "engine/src/bindings/biophysical/connor_stevens": {
       "rs": "733b09113412f1067aadfe4eb6f5758e2595f28490be36ed3522d55cf2da12fa"
     },

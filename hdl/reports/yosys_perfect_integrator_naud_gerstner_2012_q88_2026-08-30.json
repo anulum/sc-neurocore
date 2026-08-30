@@ -1,0 +1,52 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_perfect_integrator_naud_gerstner_2012": {
+         "num_wires":         3011,
+         "num_wire_bits":     3164,
+         "num_pub_wires":     9,
+         "num_pub_wire_bits": 147,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         3034,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 1048,
+            "$_AND_": 46,
+            "$_DFF_PN0_": 17,
+            "$_MUX_": 490,
+            "$_NAND_": 13,
+            "$_NOR_": 202,
+            "$_NOT_": 166,
+            "$_ORNOT_": 226,
+            "$_OR_": 315,
+            "$_XNOR_": 96,
+            "$_XOR_": 415
+         }
+      }
+   },
+      "design": {
+         "num_wires":         3011,
+         "num_wire_bits":     3164,
+         "num_pub_wires":     9,
+         "num_pub_wire_bits": 147,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         3034,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 1048,
+            "$_AND_": 46,
+            "$_DFF_PN0_": 17,
+            "$_MUX_": 490,
+            "$_NAND_": 13,
+            "$_NOR_": 202,
+            "$_NOT_": 166,
+            "$_ORNOT_": 226,
+            "$_OR_": 315,
+            "$_XNOR_": 96,
+            "$_XOR_": 415
+         }
+      }
+}

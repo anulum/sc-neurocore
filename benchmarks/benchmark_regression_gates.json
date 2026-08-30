@@ -792,14 +792,14 @@
       }
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-07-13_perfect_integrator_euler.json",
-      "description": "Controlled Perfect Integrator candidate-first Euler five-backend public-dispatch evidence.",
+      "artefact": "benchmarks/results/bench_perfect_integrator.json",
+      "description": "Controlled Naud-Gerstner 2012 Perfect Integrator exact-integral five-backend complete-packet evidence.",
       "expected_values": {
-        "backends.go.event_count_matches_python": true,
-        "backends.julia.event_count_matches_python": true,
-        "backends.mojo.event_count_matches_python": true,
-        "backends.rust.event_count_matches_python": true,
-        "kernel": "perfect_integrator_candidate_first_euler",
+        "backends.go.event_vector_matches_python": true,
+        "backends.julia.event_vector_matches_python": true,
+        "backends.mojo.event_vector_matches_python": true,
+        "backends.rust.event_vector_matches_python": true,
+        "kernel": "perfect_integrator_naud_gerstner_2012_exact_complete_packet",
         "meta.single_cpu_pinned": true,
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "workload.current": 5.0,
@@ -807,7 +807,7 @@
         "workload.repeats": 7,
         "workload.trace_atol": 0.0
       },
-      "id": "perfect-integrator-euler-multibackend-local-regression",
+      "id": "perfect-integrator-naud-gerstner-2012-multibackend-local-regression",
       "parity_groups": [
         {
           "paths": [
@@ -858,13 +858,25 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_perfect_integrator.py": "source_hashes.benchmarks/bench_model_perfect_integrator.py",
+        "engine/src/bindings/trivial/perfect_integrator.rs": "source_hashes.engine/src/bindings/trivial/perfect_integrator.rs",
+        "engine/src/network_runner/model_factory.rs": "source_hashes.engine/src/network_runner/model_factory.rs",
         "engine/src/neurons/trivial/perfect_integrator.rs": "source_hashes.engine/src/neurons/trivial/perfect_integrator.rs",
+        "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.sby": "source_hashes.hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.sby",
+        "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.v": "source_hashes.hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.v",
+        "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v": "source_hashes.hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v",
+        "hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30.json": "source_hashes.hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30.json",
         "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go": "source_hashes.src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go",
         "src/sc_neurocore/accel/go/services/perfect_integrator.go": "source_hashes.src/sc_neurocore/accel/go/services/perfect_integrator.go",
         "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl",
         "src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo",
         "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/perfect_integrator.rs",
+        "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/perfect_integrator.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/perfect_integrator.json",
+        "src/sc_neurocore/neurons/model_schemas/perfect_integrator.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/perfect_integrator.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.toml",
         "src/sc_neurocore/neurons/models/perfect_integrator.py": "source_hashes.src/sc_neurocore/neurons/models/perfect_integrator.py",
+        "src/sc_neurocore/neurons/reference_receipts/perfect_integrator_naud_gerstner_2012.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/perfect_integrator_naud_gerstner_2012.json",
         "src/sc_neurocore/accel/perfect_integrator.py": "source_hashes.src/sc_neurocore/accel/perfect_integrator.py"
       }
     },

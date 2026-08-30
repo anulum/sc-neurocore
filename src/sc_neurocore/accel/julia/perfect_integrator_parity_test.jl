@@ -30,7 +30,7 @@ end
 @testset "Perfect Integrator complete contract" begin
     result = simulate_trace(0.25, 1.7, 1.3, -0.2, 0.37, 300, 2.2)
     @test result.spikes == 75
-    @test result.vf == 0.2788235294117647
+    @test result.vf == 0.27882352941176475
     @test result.trace[end] == result.vf
 
     empty = simulate_trace(0.25, 1.7, 1.3, -0.2, 0.37, 0, 2.2)

@@ -35,10 +35,10 @@ def test_real_benchmark_writes_complete_parity_evidence(
     assert benchmark.main(["--json", str(output), "--allow-unpinned"]) == 0
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
-    assert payload["kernel"] == "perfect_integrator_candidate_first_euler"
+    assert payload["kernel"] == "perfect_integrator_naud_gerstner_2012_exact_complete_packet"
     assert payload["workload"]["n_steps"] == 3
     assert set(payload["measured_order"]) == {"python", "rust", "julia", "go", "mojo"}
-    assert all(row["event_count_matches_python"] for row in payload["backends"].values())
+    assert all(row["event_vector_matches_python"] for row in payload["backends"].values())
     assert set(payload["backends"]["python"]["final_state"]) == {"v"}
 
 
@@ -75,14 +75,17 @@ def test_missing_backend_is_rejected_by_default(
 
 
 @pytest.mark.parametrize(
-    ("compiled_trace", "compiled_spikes", "expected"),
-    [(np.array([0.0]), 1, 3), (np.array([1.0]), 0, 4)],
+    ("compiled_trace", "compiled_events", "expected"),
+    [
+        (np.array([0.0]), np.array([1], dtype=np.uint8), 3),
+        (np.array([1.0]), np.array([0], dtype=np.uint8), 4),
+    ],
 )
 def test_parity_contract_failures_have_distinct_exit_codes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     compiled_trace: npt.NDArray[np.float64],
-    compiled_spikes: int,
+    compiled_events: npt.NDArray[np.uint8],
     expected: int,
 ) -> None:
     """Distinguish event failure from bit-exact state failure."""
@@ -94,10 +97,16 @@ def test_parity_contract_failures_have_distinct_exit_codes(
 
     def measured(
         backend: str,
-    ) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+    ) -> tuple[
+        float,
+        float,
+        npt.NDArray[np.float64],
+        npt.NDArray[np.uint8],
+        tuple[float],
+    ]:
         if backend == "python":
-            return 1.0, 1.0, np.array([0.0]), 0, (0.0,)
-        return 0.5, 0.5, compiled_trace, compiled_spikes, (0.0,)
+            return 1.0, 1.0, np.array([0.0]), np.array([0], dtype=np.uint8), (0.0,)
+        return 0.5, 0.5, compiled_trace, compiled_events, (0.0,)
 
     monkeypatch.setattr(benchmark, "_measure_backend", measured)
     assert benchmark.main(["--json", str(tmp_path / f"failure-{expected}.json")]) == expected

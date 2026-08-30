@@ -38,6 +38,19 @@
     "verified_utc": "2026-08-28T03:06:45+00:00",
     "year_match": true
   },
+  "10.1007/978-94-007-3858-4_6": {
+    "author_match": true,
+    "model": "PerfectIntegratorNeuron",
+    "registry": "crossref",
+    "registry_first_author": "naud",
+    "registry_year": 2012,
+    "resolves": true,
+    "title": "The Performance (and Limits) of Simple Neuron Models: Generalizations of the Leaky Integrate-and-Fire Model",
+    "translation": false,
+    "verified": true,
+    "verified_utc": "2026-08-30T07:03:50+00:00",
+    "year_match": true
+  },
   "10.1007/BF00199471": {
     "author_match": true,
     "model": "JansenRitUnit",

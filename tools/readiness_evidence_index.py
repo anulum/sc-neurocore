@@ -221,9 +221,19 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="perfect_integrator",
         class_name="PerfectIntegratorNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py perfect_integrator enrolment",
-        operating_point="schema-DSL perfect_integrator; hand/schema/RTL path",
-        tolerance="exact or suite-defined band",
+        evidence=(
+            "tests/test_cosim_perfect_integrator.py::"
+            "TestTierBModelCosim::test_source_strict_boundary_matches_curated_q88_rtl"
+        ),
+        operating_point=(
+            "Naud-Gerstner 2012 strict-threshold exact integral at the equality-sensitive "
+            "I=5, dt=0.1, C=1 operating point over 1000 steps"
+        ),
+        tolerance=(
+            "hand/TOML/JSON and curated source Q8.8 event count exact at 333; "
+            "five native complete packets bit-exact"
+        ),
+        metric="trajectory",
     ),
     EnrolledEvidence(
         schema_name="quadratic_if",

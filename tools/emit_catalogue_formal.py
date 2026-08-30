@@ -44,10 +44,7 @@ DESC_DIR = ROOT / "src" / "sc_neurocore" / "neurons" / "model_descriptors"
 CLASS_TO_SCHEMA: dict[str, str] = {
     "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
     "AlphaNeuron": "alpha",
-    "AdExNeuron": "adex",
-    "CazellesMapNeuron": "cazelles_map",
     "SCClippedLogisticBurstingMapNeuron": "sc_clipped_logistic_bursting_map",
-    "ChialvoMapNeuron": "chialvo_map",
     "COBALIFNeuron": "coba_lif",
     "ConnorStevensNeuron": "connor_stevens",
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
@@ -55,12 +52,10 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "ErmentroutKopellMapNeuron": "ermentrout_kopell_map_neuron",
     "ErmentroutKopellPopulation": "ermentrout_kopell_pop",
     "EscapeRateNeuron": "escape_rate",
-    "ExpIFNeuron": "exp_if",
     "FitzHughNagumoNeuron": "fitzhugh_nagumo",
     "FitzHughRinzelNeuron": "fitzhugh_rinzel",
     "HindmarshRoseNeuron": "hindmarsh_rose",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
-    "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
     "IntegerQIFNeuron": "iqif",
     "Izhikevich2007Neuron": "izhikevich2007",
     "JansenRitUnit": "jansen_rit",
@@ -74,7 +69,6 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "TermanWangOscillator": "terman_wang",
     "WilsonHRNeuron": "wilson_hr",
     "WongWangUnit": "wong_wang",
-    "PerfectIntegratorNeuron": "perfect_integrator",
     "PoissonNeuron": "poisson",
     "QuadraticIFNeuron": "quadratic_if",
     "ResonateAndFireNeuron": "resonate_fire",
@@ -88,6 +82,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 # Count-neutral SC identities with dedicated generated formal jobs. They are
 # emitted alongside, but not counted as, source-literature S5 models.
 RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
+    "SCInclusivePerfectIntegratorNeuron": "sc_perfect_integrator",
     "SCFourStateGLIFNeuron": "sc_four_state_glif",
     "SCScaledResetAdaptiveIFNeuron": "sc_scaled_reset_adaptive_if",
     "SCClippedRationalRecoveryMapNeuron": "sc_clipped_rational_recovery_map",
@@ -101,19 +96,35 @@ RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
 # Keeping the mapping explicit prevents the inventory gate from overwriting
 # higher-grade RTL merely to make every artefact look generator-produced.
 CURATED_CLASS_TO_MODULE: dict[str, str] = {
+    "AdExNeuron": "sc_adex",
     "AiharaMapNeuron": "sc_aihara_map",
     "AmariNeuralField": "sc_amari_field",
     "BrunelWangNeuron": "sc_brunel_wang",
+    "CazellesMapNeuron": "sc_cazelles_map",
+    "ChialvoMapNeuron": "sc_chialvo_map",
     "CompteWMNeuron": "sc_compte_wm",
     "EnergyLIFNeuron": "energy_lif",
+    "ExpIFNeuron": "sc_exponential_if",
     "GLIFNeuron": "sc_glif",
+    "IbarzTanakaMapNeuron": "sc_ibarz_tanaka_rulkov_map",
     "LapicqueNeuron": "sc_lapicque_1907",
+    "PerfectIntegratorNeuron": "sc_perfect_integrator_naud_gerstner_2012",
+    "SCInclusivePerfectIntegratorNeuron": "sc_perfect_integrator",
     "MATNeuron": "sc_mat",
     "McKeanNeuron": "mckean",
     "NagumoSatoMapNeuron": "sc_nagumo_sato_map",
     "NMDANeuron": "sc_nmda_autapse",
     "NonResettingLIFNeuron": "sc_non_resetting_lif",
     "SigmaDeltaNeuron": "sc_sigma_delta",
+}
+
+CURATED_CLASS_TO_SCHEMA: dict[str, str] = {
+    "AdExNeuron": "adex",
+    "CazellesMapNeuron": "cazelles_map",
+    "ChialvoMapNeuron": "chialvo_map",
+    "ExpIFNeuron": "exp_if",
+    "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
+    "PerfectIntegratorNeuron": "perfect_integrator",
 }
 
 # Other committed curated jobs cover retained SC variants or dedicated
@@ -138,6 +149,7 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
         "sc_nmda_autapse",
         "sc_non_resetting_adaptive_lif",
         "sc_non_resetting_lif",
+        "sc_perfect_integrator_naud_gerstner_2012",
         "sc_normalized_energy_lif",
         "sc_resetting_mat",
         "sc_resetting_wilson_hr",
@@ -633,9 +645,51 @@ def _emit_schema(
     )
 
 
+def _curated_schema(class_name: str, schema: str, module: str) -> EmitResult:
+    """Validate and inventory a curated job without overwriting its stronger RTL."""
+    rtl_path = OUT_DIR / f"{module}.v"
+    formal_path = OUT_DIR / f"{module}_formal.v"
+    sby_path = OUT_DIR / f"{module}.sby"
+    for path in (rtl_path, formal_path, sby_path):
+        if not path.is_file():
+            raise FileNotFoundError(f"curated formal artefact is missing: {path}")
+    ports = _parse_module_ports(rtl_path.read_text(encoding="utf-8"))
+    if ports.name != module or "spike_out" not in ports.bit_outputs:
+        raise ValueError(f"curated module {module} has an invalid public-port contract")
+    data_width, fraction = PRECISION_BY_SCHEMA.get(schema, DEFAULT_PRECISION)
+    return EmitResult(
+        schema=schema,
+        class_name=class_name,
+        module=module,
+        state_port=ports.primary_state,
+        rtl_path=rtl_path,
+        formal_path=formal_path,
+        sby_path=sby_path,
+        depth=DEPTH_BY_SCHEMA.get(schema, 20),
+        data_width=data_width,
+        fraction=fraction,
+    )
+
+
+def _emit_or_inventory(
+    class_name: str,
+    schema: str,
+    *,
+    evidence_label: str = "dual-axis perfect model",
+) -> EmitResult:
+    module = CURATED_CLASS_TO_MODULE.get(class_name)
+    if module is not None:
+        return _curated_schema(class_name, schema, module)
+    return _emit_schema(class_name, schema, evidence_label=evidence_label)
+
+
 def emit_one(class_name: str) -> EmitResult:
     """Emit RTL + formal wrapper + sby for one perfect class."""
-    return _emit_schema(class_name, CLASS_TO_SCHEMA[class_name])
+    if class_name in CLASS_TO_SCHEMA:
+        schema = CLASS_TO_SCHEMA[class_name]
+    else:
+        schema = CURATED_CLASS_TO_SCHEMA[class_name]
+    return _emit_or_inventory(class_name, schema)
 
 
 def emit_all() -> list[EmitResult]:
@@ -652,7 +706,9 @@ def emit_all() -> list[EmitResult]:
     ]
     for class_name, schema in RETAINED_SC_CLASS_TO_SCHEMA.items():
         retained_results.append(
-            _emit_schema(class_name, schema, evidence_label="retained SC project model")
+            _emit_or_inventory(
+                class_name, schema, evidence_label="retained SC project model"
+            )
         )
     inventory = OUT_DIR / "INVENTORY.md"
     lines = [

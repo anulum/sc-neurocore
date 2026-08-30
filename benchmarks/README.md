@@ -58,7 +58,7 @@ same checkout.
 | `bench_adex.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the maintained AdEx baseline-Euler recurrence, including exact event vectors, bounded voltage/adaptation traces, complete packet digests, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_expif.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the deterministic zero-noise Fourcaud-Trocmé ExpIF source profile, including complete voltage/refractory/event packets, exact events, bounded state traces, affinity, runtime versions, governor, and host load |
 | `bench_model_lapicque.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Lapicque exact constant-current RC flow, including exact events, bounded voltage traces, measured order, final state, affinity, runtime versions, governor, and host load |
-| `bench_model_perfect_integrator.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Perfect Integrator candidate-first Euler recurrence, including bit-exact traces and events, measured order, final state, affinity, runtime versions, governor, and host load |
+| `bench_model_perfect_integrator.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Naud-Gerstner 2012 exact held-current integral, including strict-boundary complete voltage/event packets, digests, measured order, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_quadratic_if.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Quadratic IF exact constant-current Riccati flow, including exact events, bounded voltage traces, executable Rust-safety evidence, measured warm-call order, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_theta.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Theta tangent-half-angle exact constant-current flow, including exact events, bounded circular phase, executable Rust-safety evidence, stable dispatcher and measured warm-call orders, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_dpi_neuron.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the coupled Indiveri-Stefanini-Chicca (2010) DPI equations, including exact events, bounded membrane traces, all final states, executable Rust-safety evidence, stable dispatcher and measured warm-call orders, affinity, runtime versions, governor, and host load |
@@ -110,10 +110,10 @@ PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_model_lapicque.py \
   --json benchmarks/results/bench_lapicque.json
 
-# Perfect Integrator five-backend candidate-first Euler closure
+# Perfect Integrator five-backend source-equation closure
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_model_perfect_integrator.py \
-  --json benchmarks/results/local_python_2026-07-13_perfect_integrator_euler.json
+  --json benchmarks/results/bench_perfect_integrator.json
 
 # Quadratic IF five-backend exact-flow closure
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \

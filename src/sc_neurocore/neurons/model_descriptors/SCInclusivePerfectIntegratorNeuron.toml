@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCInclusivePerfectIntegratorNeuron"
+class_name = "SCInclusivePerfectIntegratorNeuron"
+module = "perfect_integrator"
+display_name = "SC inclusive perfect integrator"
+summary = "Count-neutral preservation of the historical SC exact-integral recurrence with an inclusive threshold comparator."
+family = "Integrate-and-Fire"
+category = "project-compatibility"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = ["project compatibility", "inclusive-threshold perfect-integrator experiments"]
+hardware_fit = ["fixed-point accumulator and reset core"]
+behavior_tags = ["excitable", "tonic", "resetting"]
+
+[provenance]
+authors = ["SC-NeuroCore project"]
+year = 2026
+doi = ""
+derivation_note = "Historical SC exact-integral recurrence retained without claiming that Naud and Gerstner 2012 specified an inclusive threshold comparator."
+
+[state.v]
+init = 0.0
+
+[parameters.c_m]
+default = 1.0
+unit = "1"
+meaning = "normalised membrane capacitance"
+range = [0.1, 10.0]
+
+[parameters.v_threshold]
+default = 1.0
+unit = "1"
+meaning = "inclusive event threshold"
+range = [0.0, 10.0]
+
+[parameters.v_reset]
+default = 0.0
+unit = "1"
+meaning = "post-event reset voltage"
+range = [-5.0, 5.0]
+
+[integration]
+dt = 0.1
+method = "exact_piecewise_constant_integral"
+
+[dynamics]
+v = "v[n+1]=v[n]+I[n]*dt/c_m; reset when candidate>=v_threshold"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
+
+[documentation]
+slug = "models/sc_inclusive_perfect_integrator"
+notes = "Count-neutral SC compatibility identity; PerfectIntegratorNeuron.naud_gerstner_2012() is the catalogue-counted source profile."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "normalized SC profile; exact equality sequence at I=5 for 1000 steps"
+tolerance = "five native complete packets bit-exact; reference voltage and event sequences exact"
+evidence = "tests/test_reference_perfect_integrator_source_receipt.py; tests/test_perfect_integrator_backend_parity.py; tests/test_cosim_perfect_integrator.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_perfect_integrator.py::TestTierBModelCosim::test_source_and_sc_rtl_keep_distinct_equality_events"
+target_tier = "H1"
+terminal_reason = "The preserved SC profile has dedicated Q8.8 RTL, co-simulation, and depth-20 formal reset/event safety; synthesis, timing, PPA, device, board, and physical-silicon evidence remain open."

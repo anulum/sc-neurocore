@@ -35,6 +35,7 @@ _EXTERNAL_SOURCE_PREFIXES = {
     "iqif": "https://github.com/twetto/iq-neuron/blob/",
     "sc_clipped_rational_recovery_map": "SC-NeuroCore retained project recurrence",
     "sc_lapicque_lif": "SC-NeuroCore retained project recurrence",
+    "sc_perfect_integrator": "SC-NeuroCore retained project recurrence",
 }
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adaptive_threshold_if": "adaptive_threshold_if_tonic_adaptation_doi",
@@ -74,6 +75,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "sc_clipped_logistic_bursting_map": "sc_clipped_logistic_bursting_map_project",
     "sc_four_state_glif": "sc_four_state_glif_constant_current_adaptation",
     "sc_lapicque_lif": "sc_lapicque_lif_constant_current_closed_form",
+    "sc_perfect_integrator": "sc_perfect_integrator_constant_current_sawtooth",
     "sc_resetting_wilson_hr": "sc_resetting_wilson_hr_project",
     "sc_scaled_reset_adaptive_if": "sc_scaled_reset_adaptive_if_driven_project",
     "sigmoid_rate": "sigmoid_rate_exact_relaxation_doi",

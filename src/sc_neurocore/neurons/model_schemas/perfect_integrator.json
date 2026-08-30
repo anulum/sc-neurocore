@@ -1,36 +1,29 @@
 {
   "metadata": {
-    "schema_version": 1,
-    "name": "Perfect Integrator",
-    "author": "Gerstner, W., Kistler, W.M., Naud, R. & Paninski, L.",
-    "year": 2014,
-    "doi": "10.1017/CBO9781107447615",
-    "description": "Non-leaky integrate-and-fire model with linear voltage accumulation"
+    "schema_version": 2,
+    "name": "PerfectIntegratorNeuron",
+    "author": "Naud, R. and Gerstner, W.",
+    "year": 2012,
+    "doi": "10.1007/978-94-007-3858-4_6",
+    "description": "Perfect integrator with the source-defined strict threshold boundary"
   },
-  "state": {
-    "v": 0.0
-  },
+  "state": {"v": 0.0},
   "parameters": {
     "c_m": 1.0,
     "v_threshold": 1.0,
-    "v_reset": 0.0
+    "v_reset": 0.0,
+    "dt": 0.1
   },
-  "integration": {
-    "dt": 0.1,
-    "method": "euler"
-  },
-  "dynamics": {
-    "v": "I / c_m"
-  },
-  "threshold": {
-    "condition": "v >= v_threshold",
-    "detection": "level"
-  },
-  "reset": {
-    "v": "v_reset"
-  },
+  "integration": {"dt": 0.1, "method": "map"},
+  "dynamics": {"v": "v + I * dt / c_m"},
+  "threshold": {"condition": "v > v_threshold", "detection": "level"},
+  "reset": {"v": "v_reset"},
   "extensions": {
     "family": "integrate-and-fire",
+    "source_equation": "dV/dt=I(t)/C; when V(t)>V_T then V(t)->V_r",
+    "maintained_discretisation": "Exact integral for piecewise-constant current samples",
+    "default_scope": "Normalized maintained reproducibility point; not a measured source parameter set",
+    "identity_note": "sc_perfect_integrator preserves the historical inclusive SC comparator",
     "source_module": "sc_neurocore.neurons.models.perfect_integrator"
   }
 }

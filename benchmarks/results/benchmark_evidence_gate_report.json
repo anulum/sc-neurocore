@@ -62,8 +62,8 @@
       "id": "lapicque-exact-flow-multibackend-local-regression"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-07-13_perfect_integrator_euler.json",
-      "id": "perfect-integrator-euler-multibackend-local-regression"
+      "artefact": "benchmarks/results/bench_perfect_integrator.json",
+      "id": "perfect-integrator-naud-gerstner-2012-multibackend-local-regression"
     },
     {
       "artefact": "benchmarks/results/local_python_2026-06-18_gutkin_ermentrout_rk4.json",

@@ -1,0 +1,201 @@
+{
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 33333,
+      "event_sha256": "1a0bfacb934636b3b0e18cd9aa81c77ac1580b6752b78401d68507a85737b3e0",
+      "event_vector_matches_python": true,
+      "final_state": {
+        "v": 0.5
+      },
+      "median_call_ms": 3.005382,
+      "minimum_call_ms": 2.368394,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 39.76119474995192,
+      "used": true,
+      "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
+    },
+    "julia": {
+      "available": true,
+      "event_count": 33333,
+      "event_sha256": "1a0bfacb934636b3b0e18cd9aa81c77ac1580b6752b78401d68507a85737b3e0",
+      "event_vector_matches_python": true,
+      "final_state": {
+        "v": 0.5
+      },
+      "median_call_ms": 1.370757,
+      "minimum_call_ms": 1.190455,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 87.17634051841428,
+      "used": true,
+      "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 33333,
+      "event_sha256": "1a0bfacb934636b3b0e18cd9aa81c77ac1580b6752b78401d68507a85737b3e0",
+      "event_vector_matches_python": true,
+      "final_state": {
+        "v": 0.5
+      },
+      "median_call_ms": 1.232178,
+      "minimum_call_ms": 1.027719,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 96.98077631640884,
+      "used": true,
+      "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
+    },
+    "python": {
+      "available": true,
+      "event_count": 33333,
+      "event_sha256": "1a0bfacb934636b3b0e18cd9aa81c77ac1580b6752b78401d68507a85737b3e0",
+      "event_vector_matches_python": true,
+      "final_state": {
+        "v": 0.5
+      },
+      "median_call_ms": 119.497579,
+      "minimum_call_ms": 105.014484,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "used": true,
+      "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
+    },
+    "rust": {
+      "available": true,
+      "event_count": 33333,
+      "event_sha256": "1a0bfacb934636b3b0e18cd9aa81c77ac1580b6752b78401d68507a85737b3e0",
+      "event_vector_matches_python": true,
+      "final_state": {
+        "v": 0.5
+      },
+      "median_call_ms": 0.446801,
+      "minimum_call_ms": 0.377192,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 267.45145825546496,
+      "used": true,
+      "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
+    }
+  },
+  "kernel": "perfect_integrator_naud_gerstner_2012_exact_complete_packet",
+  "measured_order": [
+    "rust",
+    "mojo",
+    "julia",
+    "go",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      10
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      12.76416015625,
+      12.67822265625,
+      12.9208984375
+    ],
+    "load_average_start": [
+      11.5673828125,
+      12.4423828125,
+      12.84912109375
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_model_perfect_integrator": {
+      "py": "4e204575c587b8b716ffd3e10c1880947f9f249945fcedca2ccac523b9bccf7d"
+    },
+    "benchmarks/bench_model_perfect_integrator.py": "4e204575c587b8b716ffd3e10c1880947f9f249945fcedca2ccac523b9bccf7d",
+    "engine/src/bindings/trivial/perfect_integrator": {
+      "rs": "a490b48d658e4e3bbcb7685a5607aba97d211247b2684e69e29ace8669902b4b"
+    },
+    "engine/src/bindings/trivial/perfect_integrator.rs": "a490b48d658e4e3bbcb7685a5607aba97d211247b2684e69e29ace8669902b4b",
+    "engine/src/network_runner/model_factory": {
+      "rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69"
+    },
+    "engine/src/network_runner/model_factory.rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69",
+    "engine/src/neurons/trivial/perfect_integrator": {
+      "rs": "e388fde43c8b842d11dcaf4f611225ef6c5ad49d1380f43f42da971c877229b5"
+    },
+    "engine/src/neurons/trivial/perfect_integrator.rs": "e388fde43c8b842d11dcaf4f611225ef6c5ad49d1380f43f42da971c877229b5",
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012": {
+      "sby": "a53c377cb2202b4dd283c58163e5d61db66bea7dcc7314c557d0f7cb2a8df56e"
+    },
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.sby": "a53c377cb2202b4dd283c58163e5d61db66bea7dcc7314c557d0f7cb2a8df56e",
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.v": "adac25d79d448187f21654012d4b088ddbd0dab94f7345cc9bbce555634a1c6e",
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal": {
+      "v": "4dfbd4bf0fda2f12c95ef421303c24017f297207d8ba4e3245be2da9b0fe7301"
+    },
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v": "4dfbd4bf0fda2f12c95ef421303c24017f297207d8ba4e3245be2da9b0fe7301",
+    "hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30": {
+      "json": "f746a47ff279f02f84a0f1cfd515a22d66006b809348cb554a52c08afb4b93b9"
+    },
+    "hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30.json": "f746a47ff279f02f84a0f1cfd515a22d66006b809348cb554a52c08afb4b93b9",
+    "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator": {
+      "go": "d007f361b96d9703d5298c143827603f6bd4c884a6ed25e61b1995044612a867"
+    },
+    "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go": "d007f361b96d9703d5298c143827603f6bd4c884a6ed25e61b1995044612a867",
+    "src/sc_neurocore/accel/go/services/perfect_integrator": {
+      "go": "6d8c684396da6bc83d9444b842cbc7fe64f5cc2524cd06d02bd3ca517d96da05"
+    },
+    "src/sc_neurocore/accel/go/services/perfect_integrator.go": "6d8c684396da6bc83d9444b842cbc7fe64f5cc2524cd06d02bd3ca517d96da05",
+    "src/sc_neurocore/accel/julia/neurons/perfect_integrator": {
+      "jl": "8919bcd614563b59ef6924d4bbd5c72ee0e8229687d15f632e292e24200fddc2"
+    },
+    "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl": "8919bcd614563b59ef6924d4bbd5c72ee0e8229687d15f632e292e24200fddc2",
+    "src/sc_neurocore/accel/mojo/kernels/perfect_integrator": {
+      "mojo": "bb99b0411f0c183f6255bf78b72809c926854eb68e0a542d971890cc24fe9c7f"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo": "bb99b0411f0c183f6255bf78b72809c926854eb68e0a542d971890cc24fe9c7f",
+    "src/sc_neurocore/accel/perfect_integrator": {
+      "py": "40be5b04064baaedbb979698ad33f7c6e1f5450559d15416db77f14f0f7139b3"
+    },
+    "src/sc_neurocore/accel/perfect_integrator.py": "40be5b04064baaedbb979698ad33f7c6e1f5450559d15416db77f14f0f7139b3",
+    "src/sc_neurocore/accel/rust/safety/perfect_integrator": {
+      "rs": "3c4bf71060529c9cc3023dc8f8001f91a8405daec3faa62fcb1a41fc583cb020"
+    },
+    "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs": "3c4bf71060529c9cc3023dc8f8001f91a8405daec3faa62fcb1a41fc583cb020",
+    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron": {
+      "toml": "00f7ccebebe81122b2ccb05d585552aa40d7f1f7a90d3cd1784c31b0caac31af"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml": "00f7ccebebe81122b2ccb05d585552aa40d7f1f7a90d3cd1784c31b0caac31af",
+    "src/sc_neurocore/neurons/model_schemas/perfect_integrator": {
+      "json": "9eed850785d6230282f8d9c9c2444cd7ba60cde287d3b1da80cd2e55503c7c19"
+    },
+    "src/sc_neurocore/neurons/model_schemas/perfect_integrator.json": "9eed850785d6230282f8d9c9c2444cd7ba60cde287d3b1da80cd2e55503c7c19",
+    "src/sc_neurocore/neurons/model_schemas/perfect_integrator.toml": "beb8b3ee110544e139321829fc4ee3ce3f71d6058ddc63d5d958f593b69d6ceb",
+    "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator": {
+      "json": "a739f24161ab9150ccc51406b7779be7114970782be0b547a5810ce04e736134"
+    },
+    "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.json": "a739f24161ab9150ccc51406b7779be7114970782be0b547a5810ce04e736134",
+    "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.toml": "c5ccb343127d0492e7ce67bbcac48924fda9eecdbf0b0443509f32b9e4aaca0a",
+    "src/sc_neurocore/neurons/models/perfect_integrator": {
+      "py": "cad81695afc0fedae3fbf03d52b4d1e22c9957583638ba0734ea5ff8e767592b"
+    },
+    "src/sc_neurocore/neurons/models/perfect_integrator.py": "cad81695afc0fedae3fbf03d52b4d1e22c9957583638ba0734ea5ff8e767592b",
+    "src/sc_neurocore/neurons/reference_receipts/perfect_integrator_naud_gerstner_2012": {
+      "json": "9fa0d1c8fa73993a2d8efa4ea4ea63c95afa4b2cc0028a3ffc018ffd4b111545"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/perfect_integrator_naud_gerstner_2012.json": "9fa0d1c8fa73993a2d8efa4ea4ea63c95afa4b2cc0028a3ffc018ffd4b111545"
+  },
+  "workload": {
+    "current": 5.0,
+    "n_steps": 100000,
+    "parameters": "Naud-Gerstner 2012 source profile; exact held-current integral; strict > reset",
+    "repeats": 7,
+    "trace_atol": 0.0
+  }
+}

@@ -1,137 +1,117 @@
 # PerfectIntegratorNeuron
 
 **Module:** `sc_neurocore.neurons.models.perfect_integrator`
-**Reference:** Lapicque 1907 (no-leak variant)
-**Family:** Integrate-and-fire (non-leaky)
-**State variables:** `v` (voltage)
 
-## Equations
+**Source:** Naud and Gerstner (2012), section 1.1, [doi:10.1007/978-94-007-3858-4_6](https://doi.org/10.1007/978-94-007-3858-4_6)
+**Family:** non-leaky integrate-and-fire
 
-$$C_m \frac{dV}{dt} = I$$
+## Source equation and boundary
 
-Discrete: $V(t+1) = V(t) + \frac{I}{C_m} \cdot dt$
+Naud and Gerstner define
 
-Spike when $V \geq V_\theta$, then $V \leftarrow V_{\text{reset}}$.
+$$\frac{dV}{dt}=\frac{I(t)}{C}$$
 
-## Parameters
+and reset when $V(t)>V_T$. For SC-NeuroCore's piecewise-constant input sample,
+the implemented update is the exact integral
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `v` | 0.0 | Membrane voltage |
-| `c_m` | 1.0 | Membrane capacitance |
-| `v_threshold` | 1.0 | Spike threshold |
-| `v_reset` | 0.0 | Reset potential |
-| `dt` | 0.1 | Time step |
+$$V_{n+1}=V_n+\frac{I_n\,\Delta t}{C},$$
 
-## Validation contract
+not an Euler approximation. Equality with the threshold does not emit a source
+event: a candidate must be strictly greater than $V_T$.
 
-The implementation rejects invalid state before mutation:
+`PerfectIntegratorNeuron.naud_gerstner_2012()` constructs this count-bearing
+source profile. The normalized defaults are maintained reproducibility choices,
+not measured source constants.
 
-- `v`, `v_threshold`, `v_reset`, `c_m`, `dt`, and input current must be finite;
-- `c_m` and `dt` must be positive;
-- `v_threshold` must be greater than `v_reset`;
-- initial `v` must be below `v_threshold`;
-- each voltage increment and candidate voltage must remain finite before assignment.
-- runtime `v`, `c_m`, `dt`, `v_threshold`, and `v_reset` are revalidated before
-  the `I / C_m` division so corrupted objects fail closed without mutating
-  voltage.
+## Preserved SC compatibility
 
-These guards preserve the analytical positive-excursion ISI contract and
-prevent overflowing currents or capacitance scales from poisoning the state.
-Julia, Go, and Mojo transport the complete numeric contract through executable
-native paths. Go and Mojo validate a complete run before writing the caller's
-trace, so rejection cannot leave partial output. The Rust engine path is
-executable at factory defaults and rejects non-default instances explicitly.
+`PerfectIntegratorNeuron()` remains backward compatible with the historical
+inclusive `candidate >= v_threshold` recurrence. The same recurrence is exposed
+unambiguously as `SCInclusivePerfectIntegratorNeuron`. Its paired schema and
+formal RTL retain the `sc_perfect_integrator` name. No SC variant was removed or
+silently relabelled.
 
-The schema-level reference corpus pins the spike-bearing constant-current
-protocol `perfect_integrator_constant_current_sawtooth`. Its features are
-re-derived independently from the analytic reset sawtooth in
-`tests/test_reference_perfect_integrator.py`.
+The compatibility identity has its own
+[descriptor and public model page](sc_inclusive_perfect_integrator.md).
 
-## Behaviour
+At the exact-boundary protocol `I=5`, `dt=0.1`, `C=1`, `V_T=1`, the distinction
+is executable:
 
-- **No leak:** zero-input steps leave voltage unchanged; unlike LIF, there is no
-  drift toward a resting potential.
-- **Candidate-first threshold:** the Euler candidate is computed and checked
-  before an inclusive threshold comparison and hard reset.
-- **Linear f–I relation:** below the one-event-per-step ceiling, firing rate is
-  proportional to current and inversely proportional to capacitance and the
-  threshold excursion.
-- **Deterministic:** identical state and inputs produce bit-identical traces.
-- **Floating-point boundary:** decimal increments need not reach a decimal
-  threshold on the algebraically expected step. The tests retain this IEEE 754
-  behaviour instead of replacing it with an epsilon threshold.
+| Profile | First three events | First three post-step voltages |
+| --- | --- | --- |
+| Naud-Gerstner source (`>`) | `0, 0, 1` | `0.5, 1.0, 0.0` |
+| Preserved SC (`>=`) | `0, 1, 0` | `0.5, 0.0, 0.5` |
 
-## Analytical predictions
+## Public API
 
-| Property | Formula |
-|----------|---------|
-| ISI (steps) | $\lceil (\theta - V_{\text{reset}}) / (I \cdot dt / C_m) \rceil$ |
-| Rate | $I / (C_m \cdot (\theta - V_{\text{reset}}))$ before the discrete ceiling |
-| Linearity | $f(2I) = 2 f(I)$ away from quantisation boundaries |
-| Capacitance scaling | $f \propto 1/C_m$ |
-| Threshold scaling | $f \propto 1/(\theta - V_{\text{reset}})$ |
+```python
+from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 
-## Execution and silicon pipeline
-
-```
-PerfectIntegratorNeuron
-├── step(current) → int {0,1}
-├── simulate(..., backend="auto|python|rust|julia|go|mojo")
-├── measured auto order: Mojo → Julia → Go → compatible Rust → Python
-├── paired TOML/JSON schema: Euler + inclusive candidate threshold
-├── generated Q8.8 RTL: 66-event parity at I=0.7 over 1,000 steps
-└── catalogue formal job: SymbiYosys/Z3 bounded proof, depth 20
+neuron = PerfectIntegratorNeuron.naud_gerstner_2012()
+voltage, events = neuron.simulate_complete(1_000, 5.0, backend="auto")
+trace, event_count = neuron.simulate(1_000, 5.0, backend="python")
 ```
 
-## Verification evidence
+`simulate_complete` returns aligned post-step `float64` voltage and `uint8`
+event vectors. Python, Rust/PyO3, Julia, Go, and Mojo transport the complete
+numeric contract, source selector, event vector, and final state. A backend
+packet is validated before the Python instance commits its final voltage.
+Go and Mojo also validate a complete dry run before writing caller buffers.
 
-| Surface | Evidence | Contract |
-|---------|----------|----------|
-| Python model | `tests/test_model_perfect_integrator.py` | dynamics, f–I/ISI laws, reset, validation, analysis, and network use |
-| Public native dispatch | `tests/test_perfect_integrator_backend_parity.py`, `tests/test_perfect_integrator_backend_auto_dispatch.py`, `tests/test_perfect_integrator_backend_validation.py`, `tests/test_perfect_integrator_backend_c_abi.py`, `tests/test_perfect_integrator_backend_unavailability.py` | executable Rust/Julia/Go/Mojo paths, bit-exact parity, full numeric contract, and mutation-free rejection |
-| Native loading | `tests/test_perfect_integrator_backend_loading.py` | fail-closed optional-runtime and C-symbol boundaries |
-| Analytic reference | `tests/test_reference_perfect_integrator.py` | independent reset-sawtooth feature re-derivation |
-| Python-to-Verilog | `tests/test_cosim_perfect_integrator.py` | hand/schema/Q8.8 parity plus an explicit fractional-current boundary |
-| Benchmark | `tests/test_bench_perfect_integrator.py` | public-path measurement, source hashes, environment metadata, and fail-closed parity exits |
+## Validation and evidence
 
-The acceleration goldens cover 1,000 steps at I=0/0.333/0.7/2/3/5/20,
-producing 0/32/66/200/250/500/1,000 events. Every Rust, Julia, Go, and Mojo
-trace is bit-identical to Python. At I=0.7, hand Python, schema Python, and
-Q8.8 RTL all produce 66 events over 1,000 steps. At I=0.333, fixed-point
-quantisation produces 31 RTL events versus 32 in both floating-point paths;
-that one-event boundary is a declared exclusion, not a failed parity claim.
+- The DOI-bound source receipt pins the exact-integral voltage and event-vector
+  SHA-256 digests for 1,000 equality-sensitive steps.
+- The five public backends preserve the complete source packet, including the
+  strict equality sequence and non-default state/parameter contracts.
+- `perfect_integrator` TOML/JSON schemas encode the strict source boundary;
+  `sc_perfect_integrator` TOML/JSON schemas preserve the inclusive SC boundary.
+- Canonical NetworkRunner aliases select the source profile, while
+  `SCInclusivePerfectIntegratorNeuron` selects the retained SC profile.
+- Curated Q8.8 source RTL keeps `dt=1/10` as an exact rational so fixed-point
+  rounding cannot erase the equality test. The original inclusive SC RTL remains
+  tracked separately.
+- The source core has tracked depth-20 formal safety and Yosys synthesis
+  evidence (H2). Timing, PPA, target-device, board, and physical-silicon claims
+  remain outside the evidence envelope.
 
-## Measured performance (2026-07-13)
+Focused evidence lives in
+`tests/test_reference_perfect_integrator_source_receipt.py`,
+`tests/test_perfect_integrator_backend_parity.py`,
+`tests/test_cosim_perfect_integrator.py`, and
+`tests/test_bench_perfect_integrator.py`. The split Python behavioural cohort is
+`tests/test_model_perfect_integrator_perfect_integrator_*.py`; the former
+monolithic `tests/test_model_perfect_integrator.py` path no longer exists.
 
-The committed run was pinned to logical CPU 10, but that CPU was not reserved
-and the kernel isolated-CPU set was empty. The powersave-governor host load was
-30.28 at the start and 30.76 at the end. These are local regression timings,
-not production throughput claims.
+## Parameters and failure contract
 
-| Metric | Value |
-|--------|-------|
-| Evidence class | Local regression, non-isolated workstation |
-| Benchmark artefact | `benchmarks/results/local_python_2026-07-13_perfect_integrator_euler.json` |
-| Workload | 100,000 steps, 7 repeats, I=5.0 |
-| Polyglot contract | Five public dispatch paths; 50,000 events and bit-exact voltage traces in every lane |
+| Parameter | Default | Contract |
+| --- | ---: | --- |
+| `v` | `0.0` | finite; source permits `v == v_threshold`, SC requires `v < v_threshold` |
+| `c_m` | `1.0` | finite and positive |
+| `v_threshold` | `1.0` | finite and greater than `v_reset` |
+| `v_reset` | `0.0` | finite |
+| `dt` | `0.1` | finite and positive |
 
-| Backend | Median ms/call | Speedup vs Python | Maximum voltage difference | Events |
-|---------|---------------:|------------------:|---------------------------:|-------:|
-| Mojo | 0.965 | 152.42× | `0` | 50,000 |
-| Julia | 1.633 | 90.10× | `0` | 50,000 |
-| Go | 2.644 | 55.64× | `0` | 50,000 |
-| Rust engine | 60.268 | 2.44× | `0` | 50,000 |
-| Python | 147.137 | 1.00× | `0` | 50,000 |
+Non-finite input, invalid runtime state, overflow, malformed output shape,
+non-binary events, or trace/final-state disagreement fail before instance-state
+commit. Explicit unavailable backend requests never fall back silently.
 
-## Pipeline verification
+## Controlled local performance
 
-1. Construction, scalar stepping, reset, population use, and long-run state
-   stability pass through the maintained Python model suite.
-2. Rust, Julia, Go, and Mojo execute the same candidate-first recurrence. Julia,
-   Go, and Mojo carry non-default state and parameters; Rust retains its stated
-   factory-default boundary.
-3. Hand/schema/Q8.8 RTL preserve the enrolled 66-event operating point, and the
-   I=0.333 quantisation boundary remains explicit.
-4. The generated inclusive-threshold RTL passes the depth-20 SymbiYosys/Z3
-   bounded proof.
+The committed 2026-08-30 evidence ran 100,000 source-profile steps at `I=5`
+for seven repeats, pinned to logical CPU 10 on an i5-11600K. The CPU was not
+kernel-isolated and used the powersave governor, so these are reproducible local
+regression timings rather than production-throughput claims. Every lane returned
+33,333 identical events and bit-exact voltage traces.
+
+| Backend | Median ms/call | Speedup vs Python | Maximum voltage difference |
+| --- | ---: | ---: | ---: |
+| Rust | 0.447 | 267.45x | `0` |
+| Mojo | 1.232 | 96.98x | `0` |
+| Julia | 1.371 | 87.18x | `0` |
+| Go | 3.005 | 39.76x | `0` |
+| Python | 119.498 | 1.00x | `0` |
+
+The source-hashed artefact is
+`benchmarks/results/bench_perfect_integrator.json`.

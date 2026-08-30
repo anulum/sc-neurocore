@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Perfect Integrator source-boundary correction and dual-profile reclosure
+
+- Restored Naud and Gerstner's 2012 perfect-integrator equation with its
+  written strict `V > V_T` reset boundary and exact piecewise-constant-current
+  integral. The former inclusive comparator remains fully available through
+  the legacy zero-argument constructor and the explicit count-neutral
+  `SCInclusivePerfectIntegratorNeuron`; no SC schema or RTL variant was removed.
+- Added failure-atomic complete voltage/event packets across Python,
+  production and safety Rust, Julia, Go, Mojo, PyO3, and both native C ABIs.
+  Canonical NetworkRunner aliases now select the source profile, explicit SC
+  aliases select the retained profile, and an independent DOI-bound receipt
+  pins the equality-sensitive voltage and event-vector digests.
+- Added dedicated rational-`dt` Q8.8 source RTL that preserves the strict
+  equality protocol exactly, synthesizes to 3,034 Yosys coarse cells, and
+  passes depth-20 reset/event safety. The source-hashed five-runtime benchmark
+  records 33,333 bit-exact events over 100,000 steps; timing, PPA, device,
+  board, physical silicon, and universal fixed-point equivalence remain open.
+
 ### Lapicque 1907 source-identity correction and dual-profile reclosure
 
 - Corrected the catalogue identity to Lapicque's leaky-capacitor polarization

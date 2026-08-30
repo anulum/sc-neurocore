@@ -1,0 +1,47 @@
+{
+  "schema_version": "sc-neurocore.source-receipt.v1",
+  "model": "PerfectIntegratorNeuron",
+  "source_profile": "naud_gerstner_2012",
+  "reference": {
+    "authors": "Richard Naud and Wulfram Gerstner",
+    "year": 2012,
+    "title": "The Performance (and Limits) of Simple Neuron Models: Generalizations of the Leaky Integrate-and-Fire Model",
+    "doi": "10.1007/978-94-007-3858-4_6",
+    "source_scope": "section 1.1 perfect-integrator differential equation, strict threshold rule, and reset"
+  },
+  "equations": {
+    "differential": "dV/dt=I(t)/C",
+    "threshold_reset": "when V(t)>V_T then V(t)->V_r",
+    "integral": "V(t)=V_r+(1/C)*integral(I(s),s,0,t)",
+    "held_current_step": "V[n+1]=V[n]+I[n]*dt/C"
+  },
+  "numerical_specialization": {
+    "v_initial": 0.0,
+    "capacitance_C": 1.0,
+    "v_threshold": 1.0,
+    "v_reset": 0.0,
+    "dt": 0.1,
+    "scope_note": "normalized maintained reproducibility point, not a measured source parameter set"
+  },
+  "protocol": {
+    "current": 5.0,
+    "steps": 1000,
+    "sample_contract": "post-step voltage and binary strict-threshold event"
+  },
+  "expected": {
+    "event_count": 333,
+    "first_event_index_zero_based": 2,
+    "event_period_steps": 3,
+    "last_event_index_zero_based": 998,
+    "final_voltage": 0.5,
+    "little_endian_float64_voltage_sha256": "eb9d22ec1882907c49cfbb11614c156569510490ed34b066d87e09a218803629",
+    "uint8_event_sha256": "6adf4a43b07906b1f2eb5e86e6aa2e2a299d83f4ad295f89b9e27108a21aa3f7"
+  },
+  "compatibility_identity": {
+    "profile": "sc_inclusive",
+    "boundary": "candidate>=V_T",
+    "same_protocol_event_count": 500,
+    "explicit_class": "SCInclusivePerfectIntegratorNeuron",
+    "schema": "sc_perfect_integrator"
+  }
+}

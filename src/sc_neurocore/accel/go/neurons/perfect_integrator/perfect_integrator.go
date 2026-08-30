@@ -65,4 +65,53 @@ func perfect_integrator_simulate_c(
 	return C.int64_t(spikes)
 }
 
+//export perfect_integrator_simulate_complete_c
+func perfect_integrator_simulate_complete_c(
+	v C.double,
+	cM C.double,
+	vThreshold C.double,
+	vReset C.double,
+	dt C.double,
+	sourceProfile C.int64_t,
+	nSteps C.int64_t,
+	current C.double,
+	voltageOutput *C.double,
+	eventOutput *C.uint8_t,
+) C.int64_t {
+	if nSteps < 0 || voltageOutput == nil || (nSteps > 0 && eventOutput == nil) ||
+		(sourceProfile != 0 && sourceProfile != 1) {
+		return -1
+	}
+	n := int(nSteps)
+	if C.int64_t(n) != nSteps || n > int(^uint(0)>>1)-1 {
+		return -1
+	}
+	state := services.PerfectIntegratorNeuronState{
+		V:             float64(v),
+		CM:            float64(cM),
+		VThreshold:    float64(vThreshold),
+		VReset:        float64(vReset),
+		Dt:            float64(dt),
+		SourceProfile: sourceProfile == 1,
+	}
+	trace, events, finalV, err := services.SimulatePerfectIntegratorComplete(
+		state, n, float64(current),
+	)
+	if err != nil {
+		return -1
+	}
+	voltage := make([]float64, n+1)
+	copy(voltage, trace)
+	voltage[n] = finalV
+	copy(unsafe.Slice((*float64)(unsafe.Pointer(voltageOutput)), n+1), voltage)
+	if n > 0 {
+		copy(unsafe.Slice((*uint8)(unsafe.Pointer(eventOutput)), n), events)
+	}
+	count := 0
+	for _, event := range events {
+		count += int(event)
+	}
+	return C.int64_t(count)
+}
+
 func main() {}

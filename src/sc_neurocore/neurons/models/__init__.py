@@ -146,6 +146,7 @@ _CLASS_TO_MODULE = {
     "SCResettingParallelSpikingNeuron": "sc_resetting_psn",
     "ParametricLIFNeuron": "plif",
     "PerfectIntegratorNeuron": "perfect_integrator",
+    "SCInclusivePerfectIntegratorNeuron": "perfect_integrator",
     "PernarowskiNeuron": "pernarowski",
     "PersistentNaNeuron": "persistent_na_neuron",
     "PinskyRinzelNeuron": "pinsky_rinzel",

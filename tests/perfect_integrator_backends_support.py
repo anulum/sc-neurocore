@@ -17,7 +17,7 @@ import numpy.typing as npt
 
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 
-GOLDENS = ((0.0, 0), (0.333, 32), (0.7, 66), (2.0, 200), (3.0, 250), (5.0, 500), (20.0, 1000))
+GOLDENS = ((0.0, 0), (0.333, 32), (0.7, 66), (2.0, 166), (3.0, 250), (5.0, 333), (20.0, 1000))
 COMPILED_BACKENDS = ("rust", "julia", "go", "mojo")
 
 
@@ -26,7 +26,7 @@ def run_backend(
     *,
     current: float,
     n_steps: int = 1_000,
-    factory: Callable[[], PerfectIntegratorNeuron] = PerfectIntegratorNeuron,
+    factory: Callable[[], PerfectIntegratorNeuron] = PerfectIntegratorNeuron.naud_gerstner_2012,
 ) -> tuple[npt.NDArray[np.float64], int, float]:
     """Run one backend and return its trace, event count, and final state."""
     neuron = factory()
@@ -36,7 +36,9 @@ def run_backend(
 
 def configured_neuron() -> PerfectIntegratorNeuron:
     """Return a non-default state that exercises the complete native ABI."""
-    return PerfectIntegratorNeuron(v=0.25, c_m=1.7, v_threshold=1.3, v_reset=-0.2, dt=0.37)
+    return PerfectIntegratorNeuron.naud_gerstner_2012(
+        v=0.25, c_m=1.7, v_threshold=1.3, v_reset=-0.2, dt=0.37
+    )
 
 
 def c_arguments(neuron: PerfectIntegratorNeuron) -> tuple[float, ...]:

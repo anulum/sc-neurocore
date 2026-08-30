@@ -8,7 +8,8 @@
 
 module PerfectIntegratorAccel
 
-export step!, simulate, simulate_trace, PerfectIntegratorNeuronState, valid, reset!
+export step!, simulate, simulate_trace, simulate_complete, naud_gerstner_2012,
+    PerfectIntegratorNeuronState, valid, reset!
 
 mutable struct PerfectIntegratorNeuronState
     v::Float64
@@ -16,10 +17,19 @@ mutable struct PerfectIntegratorNeuronState
     v_threshold::Float64
     v_reset::Float64
     dt::Float64
+    source_profile::Bool
 end
 
 function PerfectIntegratorNeuronState()
-    PerfectIntegratorNeuronState(0.0, 1.0, 1.0, 0.0, 0.1)
+    PerfectIntegratorNeuronState(0.0, 1.0, 1.0, 0.0, 0.1, false)
+end
+
+function PerfectIntegratorNeuronState(v, c_m, v_threshold, v_reset, dt)
+    PerfectIntegratorNeuronState(v, c_m, v_threshold, v_reset, dt, false)
+end
+
+function naud_gerstner_2012()
+    PerfectIntegratorNeuronState(0.0, 1.0, 1.0, 0.0, 0.1, true)
 end
 
 function valid(s::PerfectIntegratorNeuronState)::Bool
@@ -27,7 +37,7 @@ function valid(s::PerfectIntegratorNeuronState)::Bool
         isfinite(s.c_m) && s.c_m > 0.0 &&
         isfinite(s.v_threshold) &&
         isfinite(s.v_reset) && s.v_threshold > s.v_reset &&
-        s.v < s.v_threshold &&
+        (s.source_profile ? s.v <= s.v_threshold : s.v < s.v_threshold) &&
         isfinite(s.dt) && s.dt > 0.0
 end
 
@@ -42,17 +52,18 @@ function step!(s::PerfectIntegratorNeuronState, I_ext::Float64=0.0; dt::Float64=
         throw(DomainError((s.v, s.c_m, s.v_threshold, s.v_reset, s.dt), "PerfectIntegrator state must be finite and physically ordered"))
     end
 
-    voltage_increment = I_ext / s.c_m * dt
+    voltage_increment = I_ext * dt / s.c_m
     next_v = s.v + voltage_increment
     if !isfinite(voltage_increment) || !isfinite(next_v)
         throw(DomainError((voltage_increment, next_v), "PerfectIntegrator voltage increment must remain finite"))
     end
 
-    s.v = next_v
-    if s.v >= s.v_threshold
+    crossed = s.source_profile ? next_v > s.v_threshold : next_v >= s.v_threshold
+    if crossed
         s.v = s.v_reset
         return 1
     end
+    s.v = next_v
     return 0
 end
 
@@ -81,7 +92,7 @@ function simulate_trace(
     if !isfinite(I_ext)
         throw(DomainError(I_ext, "PerfectIntegrator input current must be finite"))
     end
-    s = PerfectIntegratorNeuronState(v, c_m, v_threshold, v_reset, dt)
+    s = PerfectIntegratorNeuronState(v, c_m, v_threshold, v_reset, dt, false)
     if !valid(s)
         throw(DomainError(v, "PerfectIntegrator state must be finite and physically ordered"))
     end
@@ -95,6 +106,34 @@ function simulate_trace(
         end
     end
     return (trace=trace, spikes=spikes, vf=s.v)
+end
+
+function simulate_complete(
+    v::Float64,
+    c_m::Float64,
+    v_threshold::Float64,
+    v_reset::Float64,
+    dt::Float64,
+    source_profile::Bool,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    if n_steps < 0 || !isfinite(I_ext)
+        throw(ArgumentError("PerfectIntegrator complete-batch contract is invalid"))
+    end
+    s = PerfectIntegratorNeuronState(
+        v, c_m, v_threshold, v_reset, dt, source_profile,
+    )
+    if !valid(s)
+        throw(DomainError(v, "PerfectIntegrator state violates its selected profile"))
+    end
+    trace = zeros(Float64, n_steps)
+    events = zeros(UInt8, n_steps)
+    for t in 1:n_steps
+        events[t] = UInt8(step!(s, I_ext))
+        trace[t] = s.v
+    end
+    return (trace=trace, events=events, vf=s.v)
 end
 
 end # module PerfectIntegratorAccel

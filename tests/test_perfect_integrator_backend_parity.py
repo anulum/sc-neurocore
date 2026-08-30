@@ -70,10 +70,21 @@ def test_empty_run_preserves_state(backend: str) -> None:
     assert neuron.v == before
 
 
-def test_rust_rejects_non_default_contract() -> None:
-    """Keep the Rust engine class's factory-only parameter boundary explicit."""
+def test_rust_accepts_complete_non_default_source_contract() -> None:
+    """Carry every maintained numeric field and source selector through PyO3."""
     neuron = configured_neuron()
-    before = neuron.v
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert neuron.v == before
+    expected = configured_neuron()
+    trace, events = neuron.simulate_complete(20, 2.2, backend="rust")
+    expected_trace, expected_events = expected.simulate_complete(20, 2.2, backend="python")
+    np.testing.assert_array_equal(trace, expected_trace)
+    np.testing.assert_array_equal(events, expected_events)
+    assert neuron.v == expected.v
+
+
+@pytest.mark.parametrize("backend", COMPILED_BACKENDS)
+def test_source_exact_threshold_packet_is_preserved(backend: str) -> None:
+    """Prove strict equality custody across every compiled complete packet."""
+    neuron = PerfectIntegratorNeuron.naud_gerstner_2012()
+    voltage, events = neuron.simulate_complete(6, 5.0, backend=backend)
+    np.testing.assert_array_equal(voltage, [0.5, 1.0, 0.0, 0.5, 1.0, 0.0])
+    np.testing.assert_array_equal(events, [0, 0, 1, 0, 0, 1])

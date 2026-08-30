@@ -20,6 +20,15 @@ type PerfectIntegratorNeuronState struct {
 	VThreshold float64
 	VReset     float64
 	Dt         float64
+	// SourceProfile selects Naud-Gerstner's strict > threshold boundary.
+	SourceProfile bool
+}
+
+// NewNaudGerstnerPerfectIntegrator creates the strict source-equation profile.
+func NewNaudGerstnerPerfectIntegrator() *PerfectIntegratorNeuronState {
+	state := NewPerfectIntegratorNeuron()
+	state.SourceProfile = true
+	return state
 }
 
 // NewPerfectIntegratorNeuron creates a new PerfectIntegratorNeuron neuron with default parameters.
@@ -39,7 +48,8 @@ func (s PerfectIntegratorNeuronState) Valid() bool {
 		finitePerfectIntegrator(s.CM) && s.CM > 0.0 &&
 		finitePerfectIntegrator(s.VThreshold) &&
 		finitePerfectIntegrator(s.VReset) && s.VThreshold > s.VReset &&
-		s.V < s.VThreshold &&
+		((s.SourceProfile && s.V <= s.VThreshold) ||
+			(!s.SourceProfile && s.V < s.VThreshold)) &&
 		finitePerfectIntegrator(s.Dt) && s.Dt > 0.0
 }
 
@@ -49,17 +59,21 @@ func (s *PerfectIntegratorNeuronState) Step(iExt float64) (int, error) {
 		return 0, ErrPerfectIntegratorInvalidState
 	}
 
-	voltageIncrement := iExt / s.CM * s.Dt
+	voltageIncrement := iExt * s.Dt / s.CM
 	nextV := s.V + voltageIncrement
 	if !finitePerfectIntegrator(voltageIncrement) || !finitePerfectIntegrator(nextV) {
 		return 0, ErrPerfectIntegratorNonFiniteUpdate
 	}
 
-	s.V = nextV
-	if s.V >= s.VThreshold {
+	crossed := nextV >= s.VThreshold
+	if s.SourceProfile {
+		crossed = nextV > s.VThreshold
+	}
+	if crossed {
 		s.V = s.VReset
 		return 1, nil
 	}
+	s.V = nextV
 	return 0, nil
 }
 
@@ -100,6 +114,29 @@ func SimulatePerfectIntegratorTrace(
 		trace[index] = state.V
 	}
 	return trace, spikes, nil
+}
+
+// SimulatePerfectIntegratorComplete returns an aligned, failure-atomic packet.
+func SimulatePerfectIntegratorComplete(
+	initial PerfectIntegratorNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, []uint8, float64, error) {
+	if nSteps < 0 || !finitePerfectIntegrator(iExt) || !initial.Valid() {
+		return nil, nil, initial.V, ErrPerfectIntegratorInvalidState
+	}
+	state := initial
+	trace := make([]float64, nSteps)
+	events := make([]uint8, nSteps)
+	for index := 0; index < nSteps; index++ {
+		event, err := state.Step(iExt)
+		if err != nil {
+			return nil, nil, initial.V, err
+		}
+		trace[index] = state.V
+		events[index] = uint8(event)
+	}
+	return trace, events, state.V, nil
 }
 
 func finitePerfectIntegrator(value float64) bool {

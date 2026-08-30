@@ -7,7 +7,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Controlled Perfect Integrator five-backend benchmark
 
-"""Measure the maintained Perfect Integrator recurrence through public dispatch.
+"""Measure the source-aligned perfect integrator through public dispatch.
 
 The evidence record binds public-API timings to source hashes, CPU affinity,
 host load, runtime versions, bit-exact event/trace parity, and final state.
@@ -40,11 +40,13 @@ N_STEPS = 100_000
 N_REPEATS = 7
 CURRENT = 5.0
 TRACE_ATOL = 0.0
-KERNEL = "perfect_integrator_candidate_first_euler"
+KERNEL = "perfect_integrator_naud_gerstner_2012_exact_complete_packet"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_perfect_integrator.py",
     "engine/src/neurons/trivial/perfect_integrator.rs",
+    "engine/src/bindings/trivial/perfect_integrator.rs",
+    "engine/src/network_runner/model_factory.rs",
     "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go",
     "src/sc_neurocore/accel/go/services/perfect_integrator.go",
     "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl",
@@ -52,6 +54,16 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs",
     "src/sc_neurocore/neurons/models/perfect_integrator.py",
     "src/sc_neurocore/accel/perfect_integrator.py",
+    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/perfect_integrator.toml",
+    "src/sc_neurocore/neurons/model_schemas/perfect_integrator.json",
+    "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.toml",
+    "src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.json",
+    "src/sc_neurocore/neurons/reference_receipts/perfect_integrator_naud_gerstner_2012.json",
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.v",
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012_formal.v",
+    "hdl/formal/catalogue/sc_perfect_integrator_naud_gerstner_2012.sby",
+    "hdl/reports/yosys_perfect_integrator_naud_gerstner_2012_q88_2026-08-30.json",
 )
 
 
@@ -140,21 +152,27 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    tuple[float],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    PerfectIntegratorNeuron().simulate(20, CURRENT, backend=backend)
+    PerfectIntegratorNeuron.naud_gerstner_2012().simulate_complete(20, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
     trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
-    spikes = 0
+    events: npt.NDArray[np.uint8] = np.empty(0, dtype=np.uint8)
     final_state = (0.0,)
     for _repeat in range(N_REPEATS):
         gc.collect()
-        neuron = PerfectIntegratorNeuron()
+        neuron = PerfectIntegratorNeuron.naud_gerstner_2012()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        trace, events = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         final_state = (neuron.v,)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+    return statistics.median(elapsed_ms), min(elapsed_ms), trace, events, final_state
 
 
 def _runtime_versions() -> dict[str, str]:
@@ -221,20 +239,20 @@ def main(argv: list[str]) -> int:
     rows: dict[str, dict[str, Any]] = {}
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
-    reference_spikes: int | None = None
+    reference_events: npt.NDArray[np.uint8] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
             rows[backend] = {"available": False, "used": False, "unavailable_reason": reason}
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        median_ms, minimum_ms, trace, events, final_state = _measure_backend(backend)
         if backend == "python":
             reference = trace
             reference_ms = median_ms
-            reference_spikes = spikes
+            reference_events = events
             parity = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if reference is None or reference_ms is None or reference_events is None:
                 raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
         rows[backend] = {
@@ -244,10 +262,12 @@ def main(argv: list[str]) -> int:
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": reference_ms / median_ms if reference_ms is not None else 1.0,
             "parity_max_abs_diff": parity,
-            "event_count": spikes,
-            "event_count_matches_python": (
-                True if reference_spikes is None else spikes == reference_spikes
+            "event_count": int(np.sum(events, dtype=np.int64)),
+            "event_vector_matches_python": (
+                True if reference_events is None else bool(np.array_equal(events, reference_events))
             ),
+            "event_sha256": hashlib.sha256(events.tobytes()).hexdigest(),
+            "voltage_sha256": hashlib.sha256(trace.astype("<f8", copy=False).tobytes()).hexdigest(),
             "final_state": dict(zip(("v",), final_state, strict=True)),
         }
 
@@ -263,7 +283,7 @@ def main(argv: list[str]) -> int:
             "repeats": N_REPEATS,
             "current": CURRENT,
             "parameters": (
-                "Perfect Integrator factory defaults; candidate-first Euler; hard reset"
+                "Naud-Gerstner 2012 source profile; exact held-current integral; strict > reset"
             ),
             "trace_atol": TRACE_ATOL,
         },
@@ -287,7 +307,7 @@ def main(argv: list[str]) -> int:
     print(f"Measured order: {', '.join(measured_order)}")
     print(f"Wrote {args.json}")
 
-    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+    if any(not bool(row.get("event_vector_matches_python", True)) for row in rows.values()):
         return 3
     if any(
         float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL

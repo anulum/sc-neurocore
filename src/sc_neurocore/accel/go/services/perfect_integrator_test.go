@@ -57,7 +57,7 @@ func TestPerfectIntegratorCompleteContract(t *testing.T) {
 	if len(trace) != 300 || spikes != 75 {
 		t.Fatalf("got len=%d spikes=%d, want len=300 spikes=75", len(trace), spikes)
 	}
-	if trace[len(trace)-1] != 0.2788235294117647 {
+	if trace[len(trace)-1] != 0.27882352941176475 {
 		t.Fatalf("final voltage mismatch: %.17g", trace[len(trace)-1])
 	}
 

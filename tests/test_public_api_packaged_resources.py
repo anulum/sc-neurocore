@@ -56,6 +56,8 @@ def test_dsl_schema_assets_are_packaged() -> None:
 
     assert "neurons/model_schemas/perfect_integrator.json" in matched
     assert "neurons/model_schemas/perfect_integrator.toml" in matched
+    assert "neurons/model_schemas/sc_perfect_integrator.json" in matched
+    assert "neurons/model_schemas/sc_perfect_integrator.toml" in matched
     assert "neurons/model_schemas/lif.toml" in matched
 
 

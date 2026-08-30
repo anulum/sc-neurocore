@@ -7,27 +7,27 @@
   },
   "protocol": {
     "dt": 0.1,
-    "steps": 48,
+    "steps": 6,
     "inputs": {
-      "I": 0.25
+      "I": 5.0
     },
     "state_variables": [
       "v"
     ]
   },
   "provenance": {
-    "kind": "analytic_sawtooth",
+    "kind": "analytic_exact_integral",
     "source": "src/sc_neurocore/neurons/model_schemas/perfect_integrator.toml",
-    "equation": "v[n+1]=v[n]+I*dt/c_m until v>=v_threshold, then spike=1 and v=v_reset; features are computed from post-reset recorded states.",
-    "citation": "doi:10.1017/CBO9781107447615"
+    "equation": "v[n+1]=v[n]+I*dt/c_m; reset only when the candidate is strictly greater than v_threshold.",
+    "citation": "doi:10.1007/978-94-007-3858-4_6, section 1.1"
   },
   "expected_features": {
-    "spike_count": 1.0,
-    "first_spike_step": 40.0,
-    "final.v": 0.19999999999999998,
+    "spike_count": 2.0,
+    "first_spike_step": 3.0,
+    "final.v": 0.0,
     "min.v": 0.0,
-    "max.v": 0.9750000000000005,
-    "mean.v": 0.4250000000000001
+    "max.v": 1.0,
+    "mean.v": 0.5
   },
   "tolerances": {
     "default": {

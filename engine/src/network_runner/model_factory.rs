@@ -148,8 +148,11 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         }
         "Theta" | "ThetaNeuron" => Ok(NeuronVariant::Theta(ThetaNeuron::default())),
         "PerfectIntegrator" | "PerfectIntegratorNeuron" => Ok(NeuronVariant::PerfectIntegrator(
-            PerfectIntegratorNeuron::default(),
+            PerfectIntegratorNeuron::naud_gerstner_2012(),
         )),
+        "SCInclusivePerfectIntegrator" | "SCInclusivePerfectIntegratorNeuron" => Ok(
+            NeuronVariant::PerfectIntegrator(PerfectIntegratorNeuron::default()),
+        ),
         "GatedLIF" | "GatedLIFNeuron" => Ok(NeuronVariant::GatedLIF(GatedLIFNeuron::default())),
         "NonlinearLIF" | "NonlinearLIFNeuron" => {
             Ok(NeuronVariant::NonlinearLIF(NonlinearLIFNeuron::new()))

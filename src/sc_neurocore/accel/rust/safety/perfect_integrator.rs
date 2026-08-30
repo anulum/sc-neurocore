@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for perfect_integrator
+// SC-NeuroCore — Profile-explicit Rust safety for perfect_integrator
 
 #[derive(Debug, Clone)]
 pub struct PerfectIntegratorNeuron {
@@ -13,37 +13,64 @@ pub struct PerfectIntegratorNeuron {
     pub v_threshold: f64,
     pub v_reset: f64,
     pub dt: f64,
+    pub source_profile: bool,
 }
+
+pub type PerfectIntegratorCompleteTrace = (Vec<f64>, Vec<u8>, f64);
 
 impl PerfectIntegratorNeuron {
     pub fn new() -> Self {
         Self {
-            v: 0.0_f64,
-            c_m: 1.0_f64,
-            v_threshold: 1.0_f64,
-            v_reset: 0.0_f64,
-            dt: 0.1_f64,
+            v: 0.0,
+            c_m: 1.0,
+            v_threshold: 1.0,
+            v_reset: 0.0,
+            dt: 0.1,
+            source_profile: false,
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
-        if !i_ext.is_finite() || !validate_perfect_integrator(self) {
-            return Err("perfect-integrator state/current must be finite and physically ordered");
-        }
+    pub fn naud_gerstner_2012() -> Self {
+        let mut state = Self::new();
+        state.source_profile = true;
+        state
+    }
 
-        let voltage_increment = i_ext / self.c_m * self.dt;
-        let next_v = self.v + voltage_increment;
-        if !voltage_increment.is_finite() || !next_v.is_finite() {
-            return Err("perfect-integrator voltage increment became non-finite");
+    pub fn step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !current.is_finite() || !validate_perfect_integrator(self) {
+            return Err("perfect-integrator state/current violates its finite profile contract");
         }
-
-        self.v = next_v;
-        if self.v >= self.v_threshold {
-            self.v = self.v_reset;
-            Ok(1)
+        let increment = current * self.dt / self.c_m;
+        let candidate = self.v + increment;
+        if !increment.is_finite() || !candidate.is_finite() {
+            return Err("perfect-integrator voltage candidate became non-finite");
+        }
+        let crossed = if self.source_profile {
+            candidate > self.v_threshold
         } else {
-            Ok(0)
+            candidate >= self.v_threshold
+        };
+        self.v = if crossed { self.v_reset } else { candidate };
+        Ok(i32::from(crossed))
+    }
+
+    pub fn simulate_complete(
+        &self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<PerfectIntegratorCompleteTrace, &'static str> {
+        if !current.is_finite() || !validate_perfect_integrator(self) {
+            return Err("invalid perfect-integrator batch contract");
         }
+        let mut candidate = self.clone();
+        let mut voltage = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step(current)?;
+            voltage.push(candidate.v);
+            events.push(event as u8);
+        }
+        Ok((voltage, events, candidate.v))
     }
 
     pub fn reset(&mut self) {
@@ -64,85 +91,58 @@ pub fn validate_perfect_integrator(state: &PerfectIntegratorNeuron) -> bool {
         && state.v_threshold.is_finite()
         && state.v_reset.is_finite()
         && state.v_threshold > state.v_reset
-        && state.v < state.v_threshold
+        && if state.source_profile {
+            state.v <= state.v_threshold
+        } else {
+            state.v < state.v_threshold
+        }
         && state.dt.is_finite()
         && state.dt > 0.0
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{validate_perfect_integrator, PerfectIntegratorNeuron};
 
     #[test]
-    fn test_perfect_integrator_new() {
-        let state = PerfectIntegratorNeuron::new();
-        assert!(state.v.is_finite());
-        assert!(validate_perfect_integrator(&state));
+    fn source_and_sc_exact_thresholds_diverge_as_documented() {
+        let mut source = PerfectIntegratorNeuron::naud_gerstner_2012();
+        let mut sc = PerfectIntegratorNeuron::new();
+        assert_eq!(source.step(5.0), Ok(0));
+        assert_eq!(sc.step(5.0), Ok(0));
+        assert_eq!(source.step(5.0), Ok(0));
+        assert!(validate_perfect_integrator(&source));
+        assert_eq!(sc.step(5.0), Ok(1));
+        assert_eq!(source.step(5.0), Ok(1));
     }
 
     #[test]
-    fn test_source_golden_event_counts() {
-        let goldens = [
-            (0.0, 0),
-            (0.333, 32),
-            (0.7, 66),
-            (2.0, 200),
-            (3.0, 250),
-            (5.0, 500),
-            (20.0, 1000),
-        ];
-        for (current, expected) in goldens {
-            let mut state = PerfectIntegratorNeuron::new();
-            let mut spikes = 0;
-            for _ in 0..1000 {
-                spikes += state.step(current).unwrap();
-            }
-            assert_eq!(spikes, expected, "current={current}");
-        }
+    fn source_complete_packet_is_aligned() {
+        let source = PerfectIntegratorNeuron::naud_gerstner_2012();
+        let (trace, events, final_v) = source.simulate_complete(6, 5.0).unwrap();
+        assert_eq!(trace, vec![0.5, 1.0, 0.0, 0.5, 1.0, 0.0]);
+        assert_eq!(events, vec![0, 0, 1, 0, 0, 1]);
+        assert_eq!(final_v, 0.0);
     }
 
     #[test]
-    fn test_positive_current_spikes_and_resets() {
-        let mut state = PerfectIntegratorNeuron::new();
-        let mut spikes = 0;
-        for _ in 0..100 {
-            spikes += state.step(10.0).unwrap();
-        }
-        assert_eq!(spikes, 100);
-        assert_eq!(state.v, state.v_reset);
-    }
-
-    #[test]
-    fn test_invalid_current_does_not_mutate_state() {
+    fn invalid_update_and_batch_are_atomic() {
         let mut state = PerfectIntegratorNeuron::new();
         state.v = 0.25;
         assert!(state.step(f64::NAN).is_err());
         assert_eq!(state.v, 0.25);
-    }
-
-    #[test]
-    fn test_invalid_increment_does_not_mutate_state() {
-        let mut state = PerfectIntegratorNeuron::new();
-        state.v = 0.25;
-        state.v_threshold = 1.0e308;
-        state.c_m = 1.0e-308;
-        assert!(state.step(1.0e308).is_err());
+        state.c_m = f64::MIN_POSITIVE;
+        state.v_threshold = f64::MAX;
+        assert!(state.simulate_complete(2, f64::MAX).is_err());
         assert_eq!(state.v, 0.25);
     }
 
     #[test]
-    fn test_reset_preserves_parameters() {
-        let mut state = PerfectIntegratorNeuron {
-            v: 0.5,
-            c_m: 2.0,
-            v_threshold: 3.0,
-            v_reset: -1.0,
-            dt: 0.05,
-        };
+    fn reset_preserves_profile_and_parameters() {
+        let mut state = PerfectIntegratorNeuron::naud_gerstner_2012();
+        state.v = 0.5;
         state.reset();
-        assert_eq!(state.v, -1.0);
-        assert_eq!(state.c_m, 2.0);
-        assert_eq!(state.v_threshold, 3.0);
-        assert_eq!(state.dt, 0.05);
+        assert_eq!(state.v, state.v_reset);
+        assert!(state.source_profile);
     }
 }

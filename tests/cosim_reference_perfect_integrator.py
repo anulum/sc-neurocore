@@ -16,7 +16,7 @@ from tests.cosim_reference_statistics import _summarise
 
 def _perfect_integrator_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored perfect-integrator spike count for comparison."""
-    neuron = PerfectIntegratorNeuron()
+    neuron = PerfectIntegratorNeuron.naud_gerstner_2012()
     return sum(neuron.step(current) for _ in range(n_steps))
 
 
@@ -36,7 +36,7 @@ def _perfect_integrator_sawtooth_features(
     increment = current * dt / c_m
     for _ in range(steps):
         voltage += increment
-        if voltage >= v_threshold:
+        if voltage > v_threshold:
             spikes.append(1)
             voltage = v_reset
         else:

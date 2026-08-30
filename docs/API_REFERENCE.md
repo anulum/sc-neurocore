@@ -1309,25 +1309,25 @@ Run the complete configured source MAT(1) contract on one backend.
 ## Module `accel.perfect_integrator`
 
 ### Function `ensure_julia_loaded()`
-Load the executable Perfect Integrator Julia module when available.
+Load the executable perfect-integrator Julia module when available.
 
 ### Function `ensure_go_loaded()`
-Load the compiled Perfect Integrator Go C ABI when available.
+Load the compiled perfect-integrator Go C ABI when available.
 
 ### Function `ensure_mojo_loaded()`
-Load the compiled Perfect Integrator Mojo C ABI when available.
+Load the compiled perfect-integrator Mojo C ABI when available.
 
-### Function `simulate_rust(n_steps, current)`
-Run the factory-default Rust engine recurrence.
+### Function `simulate_rust_complete(v, c_m, v_threshold, v_reset, dt, source_profile, n_steps, current)`
+Run the complete profile-explicit Rust production batch.
 
-### Function `simulate_julia(v, c_m, v_threshold, v_reset, dt, n_steps, current)`
-Run the Julia recurrence with the complete numeric contract.
+### Function `simulate_julia_complete(v, c_m, v_threshold, v_reset, dt, source_profile, n_steps, current)`
+Run the complete profile-explicit Julia batch.
 
-### Function `simulate_go(v, c_m, v_threshold, v_reset, dt, n_steps, current)`
-Run the Go recurrence through its C ABI.
+### Function `simulate_go_complete(v, c_m, v_threshold, v_reset, dt, source_profile, n_steps, current)`
+Run the complete Go batch through its mutation-free C ABI.
 
-### Function `simulate_mojo(v, c_m, v_threshold, v_reset, dt, n_steps, current)`
-Run the Mojo recurrence through its C ABI.
+### Function `simulate_mojo_complete(v, c_m, v_threshold, v_reset, dt, source_profile, n_steps, current)`
+Run the complete Mojo batch through its mutation-free C ABI.
 
 ---
 
@@ -25376,21 +25376,41 @@ Computational Neuroscience 3:9 (2009), doi:10.3389/neuro.10.009.2009.
 ## Module `neurons.models.perfect_integrator`
 
 ### Class `PerfectIntegratorNeuron`
-Non-leaky integrate-and-fire. Lapicque 1907 (no leak).
+Perfect integrator with source and preserved SC threshold profiles.
 
-dV/dt = I / C
+The source profile implements Naud and Gerstner's equations
+``dV/dt = I(t)/C`` and ``V > V_T -> V_r``.  The exact held-current update is
+``V(t+h) = V(t) + I*h/C``.  ``PerfectIntegratorNeuron()`` preserves the
+historical inclusive SC comparator; use :meth:`naud_gerstner_2012` for the
+count-bearing source profile.
 
-Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §1.3.
+The normalized defaults are maintained reproducibility choices, not
+experimental measurements reported by the source.
 
-``simulate`` exposes the Python reference and all four compiled acceleration
-lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
-Mojo transport the complete numeric state and parameter contract.
+Reference
+---------
+Naud, R. and Gerstner, W. (2012). *The Performance (and Limits) of Simple
+Neuron Models: Generalizations of the Leaky Integrate-and-Fire Model*,
+section 1.1. doi:10.1007/978-94-007-3858-4_6.
 
 - **__post_init__**()
+- **naud_gerstner_2012**(cls)
+  - Construct the source-equation profile with a strict threshold.
+- **sc_inclusive_compatibility**(cls)
+  - Construct the preserved inclusive-threshold SC profile.
 - **step**(current)
+  - Advance one exact held-current step and return a binary event.
 - **simulate**(n_steps, current, backend)
-  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
+  - Advance a batch and return its post-step trace and event count.
+- **simulate_complete**(n_steps, current, backend)
+  - Return aligned state/event traces and commit valid state atomically.
 - **reset**()
+  - Apply the source-defined reset operation explicitly.
+
+### Class `SCInclusivePerfectIntegratorNeuron`
+Count-neutral identity for the preserved inclusive SC recurrence.
+
+- **__init__**(v, c_m, v_threshold, v_reset, dt)
 
 ---
 

@@ -157,6 +157,7 @@ _MODEL_NAMES = {
     "ParallelSpikingNeuron",
     "ParametricLIFNeuron",
     "PerfectIntegratorNeuron",
+    "SCInclusivePerfectIntegratorNeuron",
     "PernarowskiNeuron",
     "PinskyRinzelNeuron",
     "PlantR15Neuron",

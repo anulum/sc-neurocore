@@ -33,6 +33,7 @@ def test_missing_rust_engine_is_detected_at_import(monkeypatch: pytest.MonkeyPat
         reloaded = importlib.reload(backends)
         assert reloaded._HAS_RUST is False
         assert reloaded._EnginePerfectIntegratorCls is None
+        assert reloaded._EnginePerfectIntegratorCompleteFn is None
     importlib.reload(backends)
     assert backends._HAS_RUST is True
 

@@ -33,8 +33,12 @@ class TestPerfectIntegratorSimulate:
         assert sp_py == sp_rs
         assert np.array_equal(tr_py, tr_rs)
 
-    def test_simulate_rust_rejects_non_default(self) -> None:
+    def test_simulate_rust_carries_non_default_contract(self) -> None:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
-        n = PerfectIntegratorNeuron(c_m=2.0)
-        with pytest.raises(RuntimeError, match="factory-default"):
-            n.simulate(10, current=0.0, backend="rust")
+        py = PerfectIntegratorNeuron(c_m=2.0, v=0.25)
+        rust = PerfectIntegratorNeuron(c_m=2.0, v=0.25)
+        expected = py.simulate(10, current=1.0, backend="python")
+        actual = rust.simulate(10, current=1.0, backend="rust")
+        assert np.array_equal(actual[0], expected[0])
+        assert actual[1] == expected[1]
+        assert rust.v == py.v

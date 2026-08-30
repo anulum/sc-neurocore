@@ -1,0 +1,33 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "sc_perfect_integrator_constant_current_sawtooth",
+  "model": {
+    "schema_name": "sc_perfect_integrator",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 48,
+    "inputs": {"I": 0.25},
+    "state_variables": ["v"]
+  },
+  "provenance": {
+    "kind": "sc_project_compatibility",
+    "source": "SC-NeuroCore retained project recurrence: src/sc_neurocore/neurons/model_schemas/sc_perfect_integrator.toml",
+    "equation": "v[n+1]=v[n]+I*dt/c_m until v>=v_threshold, then spike=1 and v=v_reset.",
+    "citation": "SC-NeuroCore retained project recurrence"
+  },
+  "expected_features": {
+    "spike_count": 1.0,
+    "first_spike_step": 40.0,
+    "final.v": 0.19999999999999998,
+    "min.v": 0.0,
+    "max.v": 0.9750000000000005,
+    "mean.v": 0.4250000000000001
+  },
+  "tolerances": {
+    "default": {"absolute": 0.000000000001, "relative": 0.0},
+    "spike_count": {"absolute": 0.0, "relative": 0.0},
+    "first_spike_step": {"absolute": 0.0, "relative": 0.0}
+  }
+}

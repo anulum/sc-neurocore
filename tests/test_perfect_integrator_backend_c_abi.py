@@ -32,25 +32,34 @@ def test_c_abi_rejects_invalid_run_without_writing_output(
         c_m=1.0e-308 if math.isfinite(current) else 1.0,
     )
     output = np.full(2, -999.0, dtype=np.float64)
+    events = np.full(1, 255, dtype=np.uint8)
     if backend == "go":
         if not backends.ensure_go_loaded():
             pytest.skip("Go Perfect Integrator backend is not built in this environment")
         assert backends._go_lib is not None
-        result = backends._go_lib.perfect_integrator_simulate_c(
+        result = backends._go_lib.perfect_integrator_simulate_complete_c(
             *c_arguments(neuron),
+            1,
             1,
             current,
             output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
         )
     else:
         if not backends.ensure_mojo_loaded():
             pytest.skip("Mojo Perfect Integrator backend is not built in this environment")
         assert backends._mojo_lib is not None
-        result = backends._mojo_lib.perfect_integrator_simulate_c(
-            *c_arguments(neuron), 1, current, int(output.ctypes.data)
+        result = backends._mojo_lib.perfect_integrator_simulate_complete_c(
+            *c_arguments(neuron),
+            1,
+            1,
+            current,
+            int(output.ctypes.data),
+            int(events.ctypes.data),
         )
     assert result == -1
     np.testing.assert_array_equal(output, np.full(2, -999.0, dtype=np.float64))
+    np.testing.assert_array_equal(events, np.full(1, 255, dtype=np.uint8))
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))

@@ -27,7 +27,7 @@ def test_perfect_integrator_trace_features_match_independent_sawtooth_solution()
     )
 
     assert spec.schema_name == "perfect_integrator"
-    assert spec.provenance.kind == "analytic_sawtooth"
-    assert spec.provenance.citation == "doi:10.1017/CBO9781107447615"
+    assert spec.provenance.kind == "analytic_exact_integral"
+    assert spec.provenance.citation == "doi:10.1007/978-94-007-3858-4_6, section 1.1"
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
