@@ -56,8 +56,8 @@ def test_real_benchmark_writes_pinned_parity_evidence(
     assert payload["hardware_measurement_claimed"] is False
 
 
-def test_reference_receipt_replays_complete_state_and_events() -> None:
-    """Bind the default 1952 coordinate profile to a complete binary receipt."""
+def test_reference_receipt_replays_bounded_state_and_exact_events() -> None:
+    """Bind the 1952 profile to exact events and a cross-libm state bound."""
     receipt = json.loads(_RECEIPT.read_text(encoding="utf-8"))
     neuron = HodgkinHuxleyNeuron()
     digest = hashlib.sha256()
@@ -69,8 +69,11 @@ def test_reference_receipt_replays_complete_state_and_events() -> None:
         digest.update(struct.pack("<4dq", neuron.v, neuron.m, neuron.h, neuron.n, event))
     assert event_indices == receipt["oracle"]["event_indices"]
     assert len(event_indices) == receipt["oracle"]["events"]
-    assert [neuron.v, neuron.m, neuron.h, neuron.n] == receipt["oracle"]["final_state"]
-    assert digest.hexdigest() == receipt["oracle"]["trace_sha256"]
+    final_state = [neuron.v, neuron.m, neuron.h, neuron.n]
+    binary_trace_matches = digest.hexdigest() == receipt["oracle"]["trace_sha256"]
+    assert binary_trace_matches or final_state == pytest.approx(
+        receipt["oracle"]["final_state"], rel=0.0, abs=5.0e-13
+    )
 
 
 def test_source_hashes_cover_the_declared_implementation_surfaces() -> None:

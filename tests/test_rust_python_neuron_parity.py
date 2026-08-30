@@ -93,6 +93,7 @@ _INT_INPUT = frozenset(
 )
 _VEC_INPUT = frozenset({"AmariNeuralField", "LeakyCompeteFireNeuron"})
 _RATE_OVERRIDE = frozenset({"PoissonNeuron", "InhomogeneousPoissonNeuron", "GammaRenewalNeuron"})
+_CURRENT_OVERRIDE = {"CazellesMapNeuron": 0.0}
 
 _PYTHON_ONLY_MODELS = frozenset(
     {
@@ -186,8 +187,8 @@ _RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/lib.rs"),
 )
 _DOC_TOKENS = (
-    "178 public Python registry names",
-    "161 same-name Rust constructors",
+    "182 public Python registry names",
+    "165 same-name Rust constructors",
     "10 Rust-prefixed or core-only constructors",
     "7 Python-only registry names",
     "Python-only boundary rationale",
@@ -313,7 +314,7 @@ def _run_steps(model: StepModel, name: str, n: int = 500) -> list[int]:
             current = 200.0 if name == "InhomogeneousPoissonNeuron" else -1.0
             spikes.append(_spike_count(model.step(current)))
         else:
-            spikes.append(_spike_count(model.step(5.0)))
+            spikes.append(_spike_count(model.step(_CURRENT_OVERRIDE.get(name, 5.0))))
     return spikes
 
 
@@ -330,8 +331,8 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert model_names >= _STOCHASTIC
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
-    assert len(model_names) == 178
-    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 161
+    assert len(model_names) == 182
+    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 165
 
 
 def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:

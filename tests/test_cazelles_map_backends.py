@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -16,6 +17,9 @@ import pytest
 
 from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
+
+
+_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _run(backend: str, *, n_steps: int = 600) -> tuple[npt.NDArray[np.float64], int, float]:
@@ -36,6 +40,15 @@ def test_exact_runtime_parity(backend: str) -> None:
     observed = _run(backend)
     np.testing.assert_array_equal(observed[0], expected[0])
     assert observed[1:] == expected[1:]
+
+
+def test_ci_builds_the_required_go_and_mojo_libraries() -> None:
+    """Keep both strict runtime loaders enrolled in the aggregate CI build."""
+    workflow = (_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert "go/neurons/cazelles_map" in workflow
+    assert "go build -buildmode=c-shared -o libcazelles.so cazelles_map.go" in workflow
+    assert "-o src/sc_neurocore/accel/mojo/neurons/libcazelles.so" in workflow
+    assert "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo" in workflow
 
 
 def test_mojo_source_orbit_event_parity_and_one_step_ulp_bound() -> None:

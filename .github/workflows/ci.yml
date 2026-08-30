@@ -216,7 +216,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys
+          sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys z3
           python -m pip install --require-hashes -r requirements/sby.txt
           # Build SBY from a PINNED SOURCE COMMIT, not an unverified release
           # archive. The GitHub-generated tarball carried no upstream
@@ -313,6 +313,11 @@ jobs:
           mojo build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libwilsonhr.so \
             src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo
+          ( cd src/sc_neurocore/accel/go/neurons/cazelles_map \
+              && go build -buildmode=c-shared -o libcazelles.so cazelles_map.go )
+          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            -o src/sc_neurocore/accel/mojo/neurons/libcazelles.so \
+            src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo
           ( cd src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr \
               && go build -buildmode=c-shared \
                 -o libsc_resetting_wilson_hr.so sc_resetting_wilson_hr.go )

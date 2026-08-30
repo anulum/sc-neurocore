@@ -43,7 +43,7 @@
       "size_bytes": 34788513
     }
   },
-  "command": "/usr/bin/python3.12 benchmarks/bench_predictive_model.py --json benchmarks/results/bench_predictive_model.json --other-heavy-jobs-running yes --other-heavy-jobs-note 'SC-NeuroCore focused CI restoration active on shared host' --isolation-note 'CPU 0 affinity on shared host; no exclusive reservation'",
+  "command": "python benchmarks/bench_predictive_model.py --json benchmarks/results/bench_predictive_model.json --other-heavy-jobs-running yes --other-heavy-jobs-note 'SC-NeuroCore focused CI restoration active on shared host' --isolation-note 'CPU 0 affinity on shared host; no exclusive reservation'",
   "dispatch_order": [
     "mojo",
     "go",

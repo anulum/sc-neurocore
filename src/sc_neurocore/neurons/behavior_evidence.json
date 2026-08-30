@@ -1341,6 +1341,16 @@
       "result_sha256": "30663825111a670a8cfceedfbd1b46aeea9a4bf270c888211e03ccfb140e7de7",
       "stochastic": false
     },
+    "SCClippedRationalRecoveryMapNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
+    },
     "SCDecoupledAdaptationIonMassNeuron": {
       "behavior_tags": [
         "excitable",
@@ -1855,7 +1865,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "0b6a6d201249b529ee8e349148c6d2a964bb32a2d8d734f124d6ebe95c22872b",
+  "result_sha256": "9425be321436dc94b0dc5cdde6f94c2ae03d874723af18649be5c017e6bd2741",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

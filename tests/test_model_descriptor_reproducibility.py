@@ -52,6 +52,7 @@ _AVX512_FEATURES = (
 _DEDICATED_REPRODUCIBILITY_MODELS = {
     "AiharaMapNeuron",
     "BendaHerzNeuron",
+    "ChialvoMapNeuron",
     "CompteWMNeuron",
     "ConnorStevensNeuron",
     "EnergyLIFNeuron",

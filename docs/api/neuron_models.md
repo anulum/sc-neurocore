@@ -54,7 +54,7 @@ caches the resolved Python class for later imports.
 Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
 capability inventory above counts 176 static classes in
 `src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
-178 public Python registry names because `HybridFisherPosnerLIFNeuron` and
+182 public Python registry names because `HybridFisherPosnerLIFNeuron` and
 `StochasticLIFNeuron` are re-exported (from
 `sc_neurocore.quantum_cognition.fisher_posner` for population dispatch and
 `sc_neurocore.neurons.stochastic_lif` for the torch-free public root import,
@@ -62,12 +62,12 @@ respectively) rather than defined as static classes under `neurons/models/`.
 
 Current binding disposition:
 
-The current registry map records 161 same-name Rust constructors,
+The current registry map records 165 same-name Rust constructors,
 10 Rust-prefixed or core-only constructors, and 7 Python-only registry names.
 
 | Disposition | Count | Contract |
 |-------------|------:|----------|
-| Same-name Rust constructors | 161 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
+| Same-name Rust constructors | 165 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 10 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
 | Python-only registry names | 7 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 

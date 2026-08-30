@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Retained project-map descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -25,9 +25,9 @@ hardware_fit = [
     "bounded fixed-point co-simulation",
 ]
 behavior_tags = [
-    "adapting",
     "excitable",
-    "irregular",
+    "phasic",
+    "rate-coded",
 ]
 
 [provenance]
@@ -47,31 +47,46 @@ init = 0.0
 default = 3.0
 unit = "1"
 meaning = "piecewise fast-map gain"
-range = [0.000001, 100.0]
+range = [
+    1e-06,
+    100.0,
+]
 
 [parameters.beta]
 default = 0.001
 unit = "1"
 meaning = "recovery decrement coefficient"
-range = [0.000000001, 1.0]
+range = [
+    1e-09,
+    1.0,
+]
 
 [parameters.j]
 default = 0.1
 unit = "1"
 meaning = "constant fast-map offset"
-range = [-100.0, 100.0]
+range = [
+    -100.0,
+    100.0,
+]
 
 [parameters.x_threshold]
 default = 1.0
 unit = "1"
 meaning = "upward-crossing observation threshold"
-range = [-1000000.0, 1000000.0]
+range = [
+    -1000000.0,
+    1000000.0,
+]
 
 [parameters.clip_bound]
 default = 1000000.0
 unit = "1"
 meaning = "symmetric state saturation bound"
-range = [1.0, 1000000000.0]
+range = [
+    1.0,
+    1000000000.0,
+]
 
 [integration]
 dt = 1.0
