@@ -144,6 +144,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::Pernarowski(PernarowskiNeuron::new()))
         }
         "QuadraticIF" | "QuadraticIFNeuron" => {
+            Ok(NeuronVariant::QuadraticIF(QuadraticIFNeuron::latham_2000()))
+        }
+        "SCSymmetricQuadraticIF" | "SCSymmetricQuadraticIFNeuron" => {
             Ok(NeuronVariant::QuadraticIF(QuadraticIFNeuron::default()))
         }
         "Theta" | "ThetaNeuron" => Ok(NeuronVariant::Theta(ThetaNeuron::default())),

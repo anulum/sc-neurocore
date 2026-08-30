@@ -964,11 +964,11 @@
   },
   "counts": {
     "github_workflows": 20,
-    "model_documentation_pages": 199,
+    "model_documentation_pages": 200,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 624,
-    "python_model_classes": 182,
+    "public_documentation_pages": 625,
+    "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "test_files": 4785
@@ -1236,6 +1236,7 @@
       "docs/api/models/sc_scaled_reset_adaptive_if.md",
       "docs/api/models/sc_sigma_delta_accumulator.md",
       "docs/api/models/sc_stochastic_rate_adaptation.md",
+      "docs/api/models/sc_symmetric_quadratic_if.md",
       "docs/api/models/sc_three_state_phantom.md",
       "docs/api/models/sc_triangular_mckean.md",
       "docs/api/models/sc_unit_capacitance_respiratory.md",
@@ -1780,6 +1781,7 @@
       "sc_scaled_reset_adaptive_if.md",
       "sc_sigma_delta_accumulator.md",
       "sc_stochastic_rate_adaptation.md",
+      "sc_symmetric_quadratic_if.md",
       "sc_three_state_phantom.md",
       "sc_triangular_mckean.md",
       "sc_unit_capacitance_respiratory.md",
@@ -2400,6 +2402,10 @@
       {
         "name": "SCStochasticRateAdaptationNeuron",
         "path": "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py"
+      },
+      {
+        "name": "SCSymmetricQuadraticIFNeuron",
+        "path": "src/sc_neurocore/neurons/models/quadratic_if.py"
       },
       {
         "name": "SCThreeStatePhantomBurster",

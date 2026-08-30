@@ -81,17 +81,18 @@ def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleTyp
     assert lapicque.metric == "trajectory"
 
 
-def test_quadratic_if_is_enrolled_with_dedicated_exact_flow_evidence(
+def test_quadratic_if_is_enrolled_with_source_euler_rtl_evidence(
     tool: ModuleType,
 ) -> None:
-    """Replace the removed generic-suite pointer with measured QIF evidence."""
+    """Keep source Euler RTL distinct from the exact-flow runtime specialization."""
     quadratic_if = next(e for e in tool.ENROLLED if e.class_name == "QuadraticIFNeuron")
     assert quadratic_if.level == "h1_cosim"
     assert quadratic_if.evidence == (
-        "tests/test_cosim_quadratic_if.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+        "tests/test_cosim_quadratic_if.py::test_latham_source_rtl_tracks_source_euler_schema"
     )
-    assert "I=0,0.333,0.5,1,2,5,20,50" in quadratic_if.operating_point
-    assert "Q16.16 event vectors exact" in quadratic_if.tolerance
+    assert "eta=0,2,4,8" in quadratic_if.operating_point
+    assert "voltage error below 0.003" in quadratic_if.tolerance
+    assert "one-cycle displacements" in quadratic_if.tolerance
 
 
 def test_theta_is_enrolled_with_dedicated_exact_flow_evidence(

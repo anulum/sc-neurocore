@@ -18,6 +18,7 @@ from tests.catalogue_formal_support import *  # noqa: F403
         "sc_perfect_integrator.sby",
         "sc_perfect_integrator_naud_gerstner_2012.sby",
         "sc_quadratic_if.sby",
+        "sc_quadratic_if_latham_2000.sby",
         "sc_dpineuron.sby",
         "sc_integerqifneuron.sby",
         "sc_mccullochpittsneuron.sby",

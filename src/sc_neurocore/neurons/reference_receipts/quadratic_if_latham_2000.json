@@ -1,0 +1,53 @@
+{
+  "schema_version": "sc-neurocore.source-receipt.v1",
+  "model": "QuadraticIFNeuron",
+  "source_profile": "latham_2000",
+  "reference": {
+    "authors": "Peter E. Latham, Barry J. Richmond, Philip G. Nelson, and Sheila Nirenberg",
+    "year": 2000,
+    "title": "Intrinsic Dynamics in Neuronal Networks. I. Theory",
+    "doi": "10.1152/jn.2000.83.2.808",
+    "pdf_url": "https://physiology.med.cornell.edu/faculty/nirenberg/lab/pel/papers/idyn-th.pdf",
+    "pdf_sha256": "be4c439a06b5609d499b2b3f8d631ed8b3adf233e66defd3957487300d5d42a0",
+    "source_scope": "equations (1), (2), and (5a), isolated from AHP/synaptic terms, plus Table 1 numerical boundaries"
+  },
+  "equations": {
+    "source_voltage": "dV/dt=(1/tau_cell)*((V-V_r)*(V-V_t)/DeltaV+I_hat_a)",
+    "normalization": "x=2*(V-(V_r+V_t)/2)/DeltaV; s=t/(2*tau_cell); eta=4*I_hat_a/DeltaV-1",
+    "normalized": "dx/ds=x^2+eta"
+  },
+  "numerical_specialization": {
+    "V_r_mV": -65.0,
+    "V_t_mV": -50.0,
+    "V_apex_mV": 20.0,
+    "V_repol_mV": -80.0,
+    "tau_cell_ms": 10.0,
+    "source_timestep_ms": 1.0,
+    "x_initial": -1.0,
+    "x_reset": -3.0,
+    "x_peak": 10.333333333333334,
+    "normalized_dt": 0.05,
+    "integration_note": "SC-NeuroCore exact held-current Riccati flow is a maintained numerical specialization, not the paper's claimed algorithm"
+  },
+  "protocol": {
+    "eta": 4.0,
+    "steps": 240,
+    "sample_contract": "post-step normalized voltage and binary apex event",
+    "little_endian_float64_input_sha256": "6b0131f2679230be4a5caeaf29296fcebe8b16cc269b7ea06dba30bd26536be9"
+  },
+  "expected": {
+    "event_count": 10,
+    "first_event_index_zero_based": 18,
+    "event_period_steps": 24,
+    "last_event_index_zero_based": 234,
+    "final_voltage": -1.0483338948753533,
+    "little_endian_float64_voltage_sha256": "3f1f32fb898b5931ae28433b80307d91304829d121dc7844f288d956147d1fd0",
+    "uint8_event_sha256": "ecf5f3f4f4843cc16677d11fdaf39c9eca5711975b735cd3d0e780442ba798c0"
+  },
+  "compatibility_identity": {
+    "profile": "sc_symmetric",
+    "boundaries": "v_reset=-1; v_peak=+1; dt=0.01",
+    "explicit_class": "SCSymmetricQuadraticIFNeuron",
+    "schema": "sc_symmetric_quadratic_if"
+  }
+}

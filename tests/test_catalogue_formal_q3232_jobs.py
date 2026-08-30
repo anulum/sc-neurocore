@@ -22,7 +22,7 @@ def test_expif_formal_job_uses_enrolled_q3232_precision() -> None:
     sys.modules[name] = module
     spec.loader.exec_module(module)
 
-    assert module.CLASS_TO_SCHEMA["ExpIFNeuron"] == "exp_if"
+    assert module.CURATED_CLASS_TO_SCHEMA["ExpIFNeuron"] == "exp_if"
     assert module.PRECISION_BY_SCHEMA["exp_if"] == (64, 32)
     assert module.DEPTH_BY_SCHEMA["exp_if"] == 4
     assert "exp_if" in module.MINIMAL_SAFETY_SCHEMAS

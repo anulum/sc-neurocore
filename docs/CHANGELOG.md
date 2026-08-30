@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Quadratic IF source-normalisation correction and dual-profile reclosure
+
+- Restored Latham et al.'s 2000 isolated scalar QIF identity from equations
+  (1), (2), and (5a). Their numerical `V_r/V_t/V_apex/V_repol/tau/dt` values
+  normalize to `-1/+1/(31/3)/-3/.05`; the unstable `+1` threshold is no longer
+  mislabeled as the source spike apex. The former `-1/+1/.01` recurrence remains
+  fully available as count-neutral `SCSymmetricQuadraticIFNeuron` and through
+  the legacy zero-argument constructor.
+- Added failure-atomic complete voltage/event packets across Python, production
+  and safety Rust, Julia, Go, Mojo, PyO3, and both native C ABIs. Paired
+  source/SC schemas, explicit NetworkRunner routing, an independent DOI/PDF-
+  bound receipt, and a source-hashed controlled benchmark retain complete
+  parameter, state, event, final-state, and identity custody.
+- Added dedicated source Q16.16 Euler RTL using the paper's numerical timestep
+  and finite apex/reset boundaries. It is cycle-exact against the source schema
+  at `eta=0/2/4/8`, explicitly records the `eta=1` one-cycle quantization
+  boundary, synthesizes to 9,379 Yosys coarse cells, and passes depth-20
+  reset/event safety. The original `sc_quadratic_if` RTL remains assigned to
+  the SC profile; timing, PPA, device, board, physical silicon, and universal
+  real-valued equivalence remain open.
+
 ### Perfect Integrator source-boundary correction and dual-profile reclosure
 
 - Restored Naud and Gerstner's 2012 perfect-integrator equation with its

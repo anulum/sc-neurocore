@@ -1,0 +1,54 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_quadratic_if_latham_2000": {
+         "num_wires": 9326,
+         "num_wire_bits": 9765,
+         "num_pub_wires": 11,
+         "num_pub_wire_bits": 419,
+         "num_memories": 0,
+         "num_memory_bits": 0,
+         "num_processes": 0,
+         "num_cells": 9379,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 3025,
+            "$_AND_": 605,
+            "$_DFF_PN0_": 17,
+            "$_DFF_PN1_": 16,
+            "$_MUX_": 4,
+            "$_NAND_": 217,
+            "$_NOR_": 623,
+            "$_NOT_": 401,
+            "$_ORNOT_": 463,
+            "$_OR_": 913,
+            "$_XNOR_": 983,
+            "$_XOR_": 2112
+         }
+      }
+   },
+   "design": {
+      "num_wires": 9326,
+      "num_wire_bits": 9765,
+      "num_pub_wires": 11,
+      "num_pub_wire_bits": 419,
+      "num_memories": 0,
+      "num_memory_bits": 0,
+      "num_processes": 0,
+      "num_cells": 9379,
+      "num_cells_by_type": {
+         "$_ANDNOT_": 3025,
+         "$_AND_": 605,
+         "$_DFF_PN0_": 17,
+         "$_DFF_PN1_": 16,
+         "$_MUX_": 4,
+         "$_NAND_": 217,
+         "$_NOR_": 623,
+         "$_NOT_": 401,
+         "$_ORNOT_": 463,
+         "$_OR_": 913,
+         "$_XNOR_": 983,
+         "$_XOR_": 2112
+      }
+   }
+}

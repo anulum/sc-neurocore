@@ -240,15 +240,18 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         class_name="QuadraticIFNeuron",
         level="h1_cosim",
         evidence=(
-            "tests/test_cosim_quadratic_if.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+            "tests/test_cosim_quadratic_if.py::"
+            "test_latham_source_rtl_tracks_source_euler_schema"
         ),
         operating_point=(
-            "Quadratic IF exact Riccati flow at I=0,0.333,0.5,1,2,5,20,50 over 1000 steps"
+            "Latham 2000 normalized source Euler schema/RTL at eta=0,2,4,8 over "
+            "240 steps, separately from the exact-flow production specialization"
         ),
         tolerance=(
-            "hand/TOML/JSON event-exact with schema state error below 0.006; "
-            "Q16.16 event vectors exact with voltage error below 0.011; "
-            "I=0.1 reset-timing boundary declared"
+            "Q16.16 source events cycle-exact with schema and voltage error below "
+            "0.003 at eta=0,2,4,8; eta=1 preserves four aggregate events with "
+            "four one-cycle displacements; five exact-flow runtime packets retain "
+            "exact events within 2e-12 voltage"
         ),
     ),
     EnrolledEvidence(

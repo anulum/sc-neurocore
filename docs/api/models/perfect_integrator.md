@@ -107,11 +107,11 @@ regression timings rather than production-throughput claims. Every lane returned
 
 | Backend | Median ms/call | Speedup vs Python | Maximum voltage difference |
 | --- | ---: | ---: | ---: |
-| Rust | 0.447 | 267.45x | `0` |
-| Mojo | 1.232 | 96.98x | `0` |
-| Julia | 1.371 | 87.18x | `0` |
-| Go | 3.005 | 39.76x | `0` |
-| Python | 119.498 | 1.00x | `0` |
+| Rust | 0.437 | 217.55x | `0` |
+| Mojo | 0.941 | 101.12x | `0` |
+| Julia | 1.294 | 73.47x | `0` |
+| Go | 2.466 | 38.56x | `0` |
+| Python | 95.102 | 1.00x | `0` |
 
 The source-hashed artefact is
 `benchmarks/results/bench_perfect_integrator.json`.

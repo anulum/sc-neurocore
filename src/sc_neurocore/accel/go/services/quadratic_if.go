@@ -15,20 +15,27 @@ import (
 
 // QuadraticIFNeuronState holds the neuron state.
 type QuadraticIFNeuronState struct {
-	V      float64
-	VReset float64
-	VPeak  float64
-	Dt     float64
+	V             float64
+	VReset        float64
+	VPeak         float64
+	Dt            float64
+	SourceProfile bool
 }
 
 // NewQuadraticIFNeuron creates a new QuadraticIFNeuron neuron with default parameters.
 func NewQuadraticIFNeuron() *QuadraticIFNeuronState {
 	return &QuadraticIFNeuronState{
-		V:      -1.0,
-		VReset: -1.0,
-		VPeak:  1.0,
-		Dt:     0.01,
+		V:             -1.0,
+		VReset:        -1.0,
+		VPeak:         1.0,
+		Dt:            0.01,
+		SourceProfile: false,
 	}
+}
+
+// NewLatham2000QuadraticIF constructs the normalized source profile.
+func NewLatham2000QuadraticIF() *QuadraticIFNeuronState {
+	return &QuadraticIFNeuronState{V: -1.0, VReset: -3.0, VPeak: 31.0 / 3.0, Dt: 0.05, SourceProfile: true}
 }
 
 func quadraticIFFinite(values ...float64) bool {
@@ -141,6 +148,29 @@ func SimulateQuadraticIFTrace(
 		spikes += result
 	}
 	return trace, spikes, s.V, nil
+}
+
+// SimulateQuadraticIFComplete returns aligned post-step voltage and events.
+func SimulateQuadraticIFComplete(
+	initial QuadraticIFNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, []uint8, float64, error) {
+	if nSteps < 0 || !quadraticIFFinite(iExt) || !initial.Valid() {
+		return nil, nil, initial.V, ErrQuadraticIFInvalidState
+	}
+	s := initial
+	trace := make([]float64, nSteps)
+	events := make([]uint8, nSteps)
+	for t := 0; t < nSteps; t++ {
+		result, err := s.Step(iExt)
+		if err != nil {
+			return nil, nil, initial.V, err
+		}
+		trace[t] = s.V
+		events[t] = uint8(result)
+	}
+	return trace, events, s.V, nil
 }
 
 var (

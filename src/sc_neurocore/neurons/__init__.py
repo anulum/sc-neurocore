@@ -166,6 +166,7 @@ _MODEL_NAMES = {
     "PredictiveCodingNeuron",
     "PrescottNeuron",
     "QuadraticIFNeuron",
+    "SCSymmetricQuadraticIFNeuron",
     "RallCableNeuron",
     "ResonateAndFireNeuron",
     "RulkovMapNeuron",

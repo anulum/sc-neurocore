@@ -17,12 +17,23 @@ family = "Integrate-and-Fire"
 category = "project-compatibility"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["project compatibility", "inclusive-threshold perfect-integrator experiments"]
-hardware_fit = ["fixed-point accumulator and reset core"]
-behavior_tags = ["excitable", "tonic", "resetting"]
+intended_use = [
+    "project compatibility",
+    "inclusive-threshold perfect-integrator experiments",
+]
+hardware_fit = [
+    "fixed-point accumulator and reset core",
+]
+behavior_tags = [
+    "excitable",
+    "tonic",
+    "resetting",
+]
 
 [provenance]
-authors = ["SC-NeuroCore project"]
+authors = [
+    "SC-NeuroCore project",
+]
 year = 2026
 doi = ""
 derivation_note = "Historical SC exact-integral recurrence retained without claiming that Naud and Gerstner 2012 specified an inclusive threshold comparator."
@@ -34,19 +45,28 @@ init = 0.0
 default = 1.0
 unit = "1"
 meaning = "normalised membrane capacitance"
-range = [0.1, 10.0]
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
 unit = "1"
 meaning = "inclusive event threshold"
-range = [0.0, 10.0]
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.v_reset]
 default = 0.0
 unit = "1"
 meaning = "post-event reset voltage"
-range = [-5.0, 5.0]
+range = [
+    -5.0,
+    5.0,
+]
 
 [integration]
 dt = 0.1
@@ -74,6 +94,8 @@ parity = "exact"
 [backends.mojo]
 status = "implemented"
 parity = "exact"
+
+[reproducibility]
 
 [documentation]
 slug = "models/sc_inclusive_perfect_integrator"

@@ -9,11 +9,11 @@
         "refractory_remaining": 0.4199999999999988,
         "v": -68.0
       },
-      "median_call_ms": 9.827019,
-      "minimum_call_ms": 8.857511,
+      "median_call_ms": 9.828582,
+      "minimum_call_ms": 9.400116,
       "refractory_parity_max_abs_diff": 0.0,
       "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
-      "speedup_vs_python": 13.909515998697062,
+      "speedup_vs_python": 13.165271755376308,
       "used": true,
       "voltage_parity_max_abs_diff": 0.0,
       "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
@@ -27,11 +27,11 @@
         "refractory_remaining": 0.4199999999999988,
         "v": -68.0
       },
-      "median_call_ms": 6.741656,
-      "minimum_call_ms": 6.461806,
+      "median_call_ms": 6.330888,
+      "minimum_call_ms": 6.003675,
       "refractory_parity_max_abs_diff": 0.0,
       "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
-      "speedup_vs_python": 20.275297048677654,
+      "speedup_vs_python": 20.43883148777865,
       "used": true,
       "voltage_parity_max_abs_diff": 0.0,
       "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
@@ -45,11 +45,11 @@
         "refractory_remaining": 0.4199999999999988,
         "v": -68.0
       },
-      "median_call_ms": 10.319213,
-      "minimum_call_ms": 9.813356,
+      "median_call_ms": 10.910992,
+      "minimum_call_ms": 10.606622,
       "refractory_parity_max_abs_diff": 0.0,
       "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
-      "speedup_vs_python": 13.246075839310615,
+      "speedup_vs_python": 11.859229023355528,
       "used": true,
       "voltage_parity_max_abs_diff": 4.303686296225351e-10,
       "voltage_sha256": "4ccf82b08119cc005e0cac2f039dc14e94c22447f7e4a68cfb6cfbefdd6cda20"
@@ -63,8 +63,8 @@
         "refractory_remaining": 0.4199999999999988,
         "v": -68.0
       },
-      "median_call_ms": 136.689078,
-      "minimum_call_ms": 130.036752,
+      "median_call_ms": 129.395953,
+      "minimum_call_ms": 122.138405,
       "refractory_parity_max_abs_diff": 0.0,
       "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
       "speedup_vs_python": 1.0,
@@ -81,11 +81,11 @@
         "refractory_remaining": 0.4199999999999988,
         "v": -68.0
       },
-      "median_call_ms": 3.959769,
-      "minimum_call_ms": 3.694776,
+      "median_call_ms": 3.879988,
+      "minimum_call_ms": 3.726913,
       "refractory_parity_max_abs_diff": 0.0,
       "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
-      "speedup_vs_python": 34.519457574419114,
+      "speedup_vs_python": 33.34957556569763,
       "used": true,
       "voltage_parity_max_abs_diff": 0.0,
       "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
@@ -107,14 +107,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      7.58984375,
-      9.091796875,
-      12.04345703125
+      6.5009765625,
+      7.341796875,
+      10.67529296875
     ],
     "load_average_start": [
-      7.427734375,
-      9.1123046875,
-      12.08203125
+      6.544921875,
+      7.36474609375,
+      10.70068359375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -135,9 +135,9 @@
     },
     "benchmarks/bench_model_expif.py": "ab911a9ad53b0086a6bae87c8841a8c1fc52419fba8261d906baaf412fdb41f4",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260"
+      "py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260",
+    "bridge/sc_neurocore_engine/__init__.py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40",
     "docs/api/models/expif": {
       "md": "8b7dc1a09fb44897bc80f709b094ea4cebf8f80d517a4183460f386ef06891ca"
     },
@@ -151,9 +151,9 @@
     },
     "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
     "engine/src/network_runner/model_factory": {
-      "rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69"
+      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
     },
-    "engine/src/network_runner/model_factory.rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69",
+    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
     "engine/src/network_runner/neuron_variant": {
       "rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed"
     },

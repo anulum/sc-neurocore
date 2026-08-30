@@ -10,9 +10,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 6.894401,
-      "minimum_call_ms": 5.678832,
-      "speedup_vs_python": 117.81201485089133,
+      "median_call_ms": 6.047299,
+      "minimum_call_ms": 5.538739,
+      "speedup_vs_python": 121.93673225021618,
       "used": true,
       "v_parity_max_abs_diff": 7.105427357601002e-15,
       "w_parity_max_abs_diff": 0.0
@@ -27,9 +27,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.604603,
-      "minimum_call_ms": 3.460239,
-      "speedup_vs_python": 225.33501553430435,
+      "median_call_ms": 3.482628,
+      "minimum_call_ms": 3.44689,
+      "speedup_vs_python": 211.73317362635342,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -44,9 +44,9 @@
         "v": -52.37869326736917,
         "w": 74.95731155256478
       },
-      "median_call_ms": 7.343575,
-      "minimum_call_ms": 7.195055,
-      "speedup_vs_python": 110.60597501897918,
+      "median_call_ms": 7.602042,
+      "minimum_call_ms": 7.481672,
+      "speedup_vs_python": 96.9986589129605,
       "used": true,
       "v_parity_max_abs_diff": 7.389644451905042e-13,
       "w_parity_max_abs_diff": 5.684341886080802e-14
@@ -61,8 +61,8 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 812.243273,
-      "minimum_call_ms": 745.505379,
+      "median_call_ms": 737.387879,
+      "minimum_call_ms": 685.773033,
       "speedup_vs_python": 1.0,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
@@ -78,9 +78,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.161621,
-      "minimum_call_ms": 2.936835,
-      "speedup_vs_python": 256.90722354134164,
+      "median_call_ms": 3.10681,
+      "minimum_call_ms": 2.896206,
+      "speedup_vs_python": 237.34566291469386,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -102,14 +102,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      7.88232421875,
-      9.6181640625,
-      12.45263671875
+      7.4267578125,
+      7.4892578125,
+      10.2509765625
     ],
     "load_average_start": [
-      8.220703125,
-      9.7705078125,
-      12.5478515625
+      7.49658203125,
+      7.505859375,
+      10.28662109375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -126,10 +126,10 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v2",
   "source_hashes": {
     "benchmarks/bench_adex.py": "2a41179927562aa73bd737ce4d8ebf8ca7ed7fb7729c34c6455e8a57c058c50d",
-    "bridge/sc_neurocore_engine/__init__.py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260",
+    "bridge/sc_neurocore_engine/__init__.py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40",
     "engine/src/bindings/adex_neuron.rs": "c10a0e6e9033e6113b977ffdc44d98d59523dc9f53232ef7c3f5464d26e129f1",
     "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
-    "engine/src/network_runner/model_factory.rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69",
+    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
     "engine/src/network_runner/neuron_variant.rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed",
     "engine/src/neuron/adex.rs": "d91aaab348984697ec7f54077a9b78a3dcff1cb37bb89347c227c6f3ee55ed57",
     "engine/src/neuron/adex/simulation.rs": "23ea4e27f902502eb755c3403d6c91d0ea494a756a35ea18b5042bde1748122d",

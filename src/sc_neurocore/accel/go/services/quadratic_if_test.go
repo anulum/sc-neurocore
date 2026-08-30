@@ -107,6 +107,24 @@ func TestQuadraticIFTraceRejectsBeforeEmission(t *testing.T) {
 	}
 }
 
+func TestLathamQuadraticIFCompletePacket(t *testing.T) {
+	initial := *NewLatham2000QuadraticIF()
+	trace, events, finalV, err := SimulateQuadraticIFComplete(initial, 240, 4.0)
+	if err != nil {
+		t.Fatalf("unexpected source-profile error: %v", err)
+	}
+	count := 0
+	for _, event := range events {
+		count += int(event)
+	}
+	if len(trace) != 240 || len(events) != 240 || count != 10 {
+		t.Fatalf("bad source packet: trace=%d events=%d count=%d", len(trace), len(events), count)
+	}
+	if finalV != trace[len(trace)-1] || initial.V != -1.0 {
+		t.Fatalf("batch mutation/final-state contract failed: initial=%v final=%v", initial.V, finalV)
+	}
+}
+
 func BenchmarkQuadraticIFExactFlow(b *testing.B) {
 	s := NewQuadraticIFNeuron()
 	spikes := 0

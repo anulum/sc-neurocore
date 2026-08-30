@@ -1505,6 +1505,18 @@ Run the Go recurrence through its C ABI.
 ### Function `simulate_mojo(v, v_reset, v_peak, dt, n_steps, current)`
 Run the Mojo recurrence through its C ABI.
 
+### Function `simulate_rust_complete(v, v_reset, v_peak, dt, source_profile, n_steps, current)`
+Run the checked profile-explicit production Rust batch.
+
+### Function `simulate_julia_complete(v, v_reset, v_peak, dt, source_profile, n_steps, current)`
+Run the checked profile-explicit Julia batch.
+
+### Function `simulate_go_complete(v, v_reset, v_peak, dt, source_profile, n_steps, current)`
+Run the failure-atomic Go complete C-ABI packet.
+
+### Function `simulate_mojo_complete(v, v_reset, v_peak, dt, source_profile, n_steps, current)`
+Run the failure-atomic Mojo complete C-ABI packet.
+
 ---
 
 ## Module `accel.resonate_and_fire`
@@ -25710,25 +25722,40 @@ inhibition in a hippocampal interneuronal network model. J. Neurosci.
 ## Module `neurons.models.quadratic_if`
 
 ### Class `QuadraticIFNeuron`
-Quadratic Integrate-and-Fire — canonical Type-I excitability.
+Quadratic IF with Latham-source and preserved SC profiles.
 
 dv/dt = v² + I
 Reset when v >= v_peak.
 
-Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
+``QuadraticIFNeuron()`` preserves the historical symmetric SC boundary.
+:meth:`latham_2000` constructs the count-bearing isolated scalar
+normalisation of Latham et al. equations (1), (2), and (5a):
+``v=-1``, ``v_reset=-3``, ``v_peak=31/3``, and ``dt=0.05``.  Here ``+1`` is
+the unstable equilibrium, not the event apex.  The exact held-current
+Riccati map is a catalogue numerical specialisation of the source ODE.
 
-``simulate`` exposes the Python reference and all four compiled acceleration
-lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
-Mojo transport the complete numeric state and parameter contract.
+Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
+doi:10.1152/jn.2000.83.2.808.
 
 - **__post_init__**()
   - Validate the finite ordered state and integration contract.
+- **latham_2000**(cls)
+  - Construct Latham et al.'s normalized numerical source profile.
+- **sc_symmetric_compatibility**(cls)
+  - Construct the preserved symmetric finite-boundary SC profile.
 - **step**(current)
   - Advance one exact constant-current Riccati-flow update.
 - **simulate**(n_steps, current, backend)
-  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
+  - Advance a batch and return its post-step trace and event count.
+- **simulate_complete**(n_steps, current, backend)
+  - Return aligned voltage/events and commit valid final state atomically.
 - **reset**()
   - Restore the runtime voltage while preserving configured parameters.
+
+### Class `SCSymmetricQuadraticIFNeuron`
+Count-neutral explicit identity for the preserved symmetric SC profile.
+
+- **__init__**(v, v_reset, v_peak, dt)
 
 ---
 

@@ -11,14 +11,19 @@ schema_version = 2
 name = "Quadratic IF"
 class_name = "QuadraticIFNeuron"
 module = "quadratic_if"
-display_name = ""
-summary = "Canonical Type-I excitable model — simplest model exhibiting saddle-node bifurcation"
+display_name = "Latham 2000 quadratic integrate-and-fire"
+summary = "Source-aligned isolated scalar QIF with Latham's normalized numerical apex, repolarization, and timestep; the historical symmetric SC recurrence is preserved separately."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "source-equation reference",
+    "Type-I excitability experiments",
+]
+hardware_fit = [
+    "fixed-point quadratic accumulator and reset core",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -31,31 +36,33 @@ authors = [
 ]
 year = 2000
 doi = "10.1152/jn.2000.83.2.808"
+paper_title = "Intrinsic Dynamics in Neuronal Networks. I. Theory"
+source_scope = "Equations (1), (2), and (5a), isolated from AHP/synaptic terms, with Table 1 numerical boundaries."
 
 [state.v]
 init = -1.0
 
 [parameters.v_reset]
-default = -1.0
+default = -3.0
 unit = "1"
 meaning = "dimensionless value v is reset to after reaching the peak"
 range = [
-    -5.0,
+    -10.0,
     0.0,
 ]
 
 [parameters.v_peak]
-default = 1.0
+default = 10.333333333333334
 unit = "1"
 meaning = "dimensionless peak at which a spike is registered and reset applied"
 range = [
-    0.5,
-    10.0,
+    1.0,
+    20.0,
 ]
 
 [integration]
-dt = 0.01
-method = "euler"
+dt = 0.05
+method = "exact_held_current_riccati_flow"
 
 [dynamics]
 v = "v**2 + I"
@@ -81,23 +88,27 @@ status = "implemented"
 parity = "approximate"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":1.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "0cdd4f22b117015a2fd1710be5912c3bd68b4bfbb0e41b5cabb83d4099d3a38e"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json"
+golden_trace_sha256 = "3f1f32fb898b5931ae28433b80307d91304829d121dc7844f288d956147d1fd0"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json"
 
 [documentation]
 slug = "models/quadratic_if"
-notes = ""
+notes = "QuadraticIFNeuron.latham_2000() is source-counted. QuadraticIFNeuron() and SCSymmetricQuadraticIFNeuron preserve the old -1/+1/.01 SC profile."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "exact Riccati flow; accel I=0/0.333/0.5/1/2/5/20/50 over 1000 steps; hand/schema/Q16.16 RTL at the same envelope; schema candidate equality at configured v_peak"
-tolerance = "accel events exact and voltage <=2e-12; schema state <0.006 and configured peak equality exact; Q16.16 event vectors exact and voltage <0.011; I=0.1 reset timing boundary declared"
-evidence = "tests/test_quadratic_if_backends.py::test_compiled_backends_match_python_golden"
+operating_point = "normalized source profile at eta=4 for 240 exact held-current steps; five complete native packets and independent digest receipt"
+tolerance = "exact-runtime events and receipt digests exact; native voltage <=2e-12; source Euler Q16.16 is cycle-exact at eta=0/2/4/8 with voltage <0.003, while eta=1 preserves four aggregate events with four one-cycle displacements"
+evidence = "tests/test_quadratic_if_backends_rejects_and_flow.py::test_source_complete_packet_matches_python; tests/test_reference_quadratic_if.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_quadratic_if.py::test_q1616_preserves_event_vectors_and_voltage_bound"
-target_tier = "H1"
-terminal_reason = "Q16.16 event parity and depth-20 BMC are enrolled; higher silicon rungs require synthesis, timing, and hardware programmes."
+cosim_evidence = "tests/test_cosim_quadratic_if.py::test_latham_source_rtl_tracks_source_euler_schema"
+synthesised = true
+synth_report = "hdl/reports/yosys_quadratic_if_latham_2000_q1616_2026-08-30.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "Dedicated source-profile synthesis and depth-20 reset/event safety close H2; timing, PPA, board, physical-silicon, and universal real-valued equivalence remain open."

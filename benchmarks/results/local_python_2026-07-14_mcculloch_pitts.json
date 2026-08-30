@@ -1,9 +1,9 @@
 {
   "auto_backend_order": [
-    "rust",
     "mojo",
     "go",
     "julia",
+    "rust",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -12,20 +12,20 @@
       "available": true,
       "event_count": 102273,
       "event_count_matches_python": true,
-      "maximum_call_ms": 264.483505,
-      "median_call_ms": 227.365908,
-      "median_ns_per_row": 1136.82954,
-      "minimum_call_ms": 213.33702,
+      "maximum_call_ms": 230.218231,
+      "median_call_ms": 203.556915,
+      "median_ns_per_row": 1017.784575,
+      "minimum_call_ms": 184.872563,
       "samples_call_ms": [
-        231.384714,
-        226.333608,
-        264.483505,
-        227.365908,
-        231.059723,
-        223.781957,
-        213.33702
+        222.139154,
+        200.185394,
+        184.872563,
+        193.733814,
+        226.6646,
+        203.556915,
+        230.218231
       ],
-      "speedup_vs_python": 0.9971789702086735,
+      "speedup_vs_python": 1.3226625683534259,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "52a05b62f801b9a9856ccac9f6d79f2821d564239b85fd06d454d1d44e28aee4",
@@ -35,20 +35,20 @@
       "available": true,
       "event_count": 102273,
       "event_count_matches_python": true,
-      "maximum_call_ms": 328.971188,
-      "median_call_ms": 255.665692,
-      "median_ns_per_row": 1278.32846,
-      "minimum_call_ms": 214.095001,
+      "maximum_call_ms": 241.318605,
+      "median_call_ms": 211.992049,
+      "median_ns_per_row": 1059.960245,
+      "minimum_call_ms": 208.183864,
       "samples_call_ms": [
-        322.334658,
-        328.971188,
-        263.976388,
-        255.665692,
-        214.095001,
-        226.702223,
-        238.203799
+        208.183864,
+        208.314937,
+        224.784342,
+        241.318605,
+        211.992049,
+        217.72355,
+        209.346698
       ],
-      "speedup_vs_python": 0.8868006505933538,
+      "speedup_vs_python": 1.270034009624578,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "52a05b62f801b9a9856ccac9f6d79f2821d564239b85fd06d454d1d44e28aee4",
@@ -58,20 +58,20 @@
       "available": true,
       "event_count": 102273,
       "event_count_matches_python": true,
-      "maximum_call_ms": 277.368187,
-      "median_call_ms": 222.186479,
-      "median_ns_per_row": 1110.932395,
-      "minimum_call_ms": 211.311516,
+      "maximum_call_ms": 217.260381,
+      "median_call_ms": 201.077328,
+      "median_ns_per_row": 1005.38664,
+      "minimum_call_ms": 194.741033,
       "samples_call_ms": [
-        250.840303,
-        219.840981,
-        222.186479,
-        221.314088,
-        211.311516,
-        277.368187,
-        227.871032
+        201.077328,
+        196.871451,
+        194.741033,
+        201.996986,
+        201.248236,
+        196.880145,
+        217.260381
       ],
-      "speedup_vs_python": 1.0204243886505804,
+      "speedup_vs_python": 1.3389729945088589,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "52a05b62f801b9a9856ccac9f6d79f2821d564239b85fd06d454d1d44e28aee4",
@@ -81,18 +81,18 @@
       "available": true,
       "event_count": 102273,
       "event_count_matches_python": true,
-      "maximum_call_ms": 298.653402,
-      "median_call_ms": 226.724502,
-      "median_ns_per_row": 1133.62251,
-      "minimum_call_ms": 213.450093,
+      "maximum_call_ms": 286.680962,
+      "median_call_ms": 269.237112,
+      "median_ns_per_row": 1346.18556,
+      "minimum_call_ms": 244.384351,
       "samples_call_ms": [
-        298.653402,
-        231.738209,
-        213.450093,
-        250.131509,
-        214.451839,
-        226.724502,
-        224.353547
+        246.981667,
+        249.492759,
+        286.680962,
+        244.384351,
+        283.57001,
+        283.578506,
+        269.237112
       ],
       "speedup_vs_python": 1.0,
       "trace_matches_python": true,
@@ -104,20 +104,20 @@
       "available": true,
       "event_count": 102273,
       "event_count_matches_python": true,
-      "maximum_call_ms": 226.375057,
-      "median_call_ms": 216.514647,
-      "median_ns_per_row": 1082.573235,
-      "minimum_call_ms": 208.354959,
+      "maximum_call_ms": 330.828534,
+      "median_call_ms": 241.666013,
+      "median_ns_per_row": 1208.330065,
+      "minimum_call_ms": 226.243099,
       "samples_call_ms": [
-        208.354959,
-        226.375057,
-        216.514647,
-        211.980073,
-        226.16003,
-        213.819332,
-        220.609776
+        241.666013,
+        248.301127,
+        249.759112,
+        226.243099,
+        237.345045,
+        233.531022,
+        330.828534
       ],
-      "speedup_vs_python": 1.047155493364844,
+      "speedup_vs_python": 1.1140876147942245,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "52a05b62f801b9a9856ccac9f6d79f2821d564239b85fd06d454d1d44e28aee4",
@@ -136,22 +136,22 @@
       "size_bytes": 14936
     },
     "rust_extension": {
-      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "7173346fe1ec424fe5447204bc89fc18d748f6af4c874381699456edddfa2052",
-      "size_bytes": 34809273
+      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "89d80d939712ac702dc0cc58dce64ff1b3d42ef1db0c400292a0e54cc7c7349f",
+      "size_bytes": 34813369
     }
   },
   "command": "taskset --cpu-list <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_mcculloch_pitts.py --json <artifact>",
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
-  "fastest_measured_native_backend": "rust",
+  "fastest_measured_native_backend": "mojo",
   "hardware_measurement_claimed": false,
   "kernel": "mcculloch_pitts_absolute_inhibition_batch",
   "measured_order": [
-    "rust",
     "mojo",
-    "python",
     "go",
-    "julia"
+    "julia",
+    "rust",
+    "python"
   ],
   "meta": {
     "affinity": [
@@ -163,14 +163,14 @@
     "kernel_isolated_cpus": "",
     "kernel_nohz_full_cpus": "",
     "load_average_end": [
-      10.2626953125,
-      10.3291015625,
-      12.8583984375
+      7.60107421875,
+      7.49560546875,
+      10.43798828125
     ],
     "load_average_start": [
-      11.12060546875,
-      10.48486328125,
-      12.94921875
+      6.82275390625,
+      7.3486328125,
+      10.439453125
     ],
     "measurement_scope": "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -185,7 +185,7 @@
     "single_cpu_pinned": true
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "rust",
+  "recommended_auto_backend": "mojo",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_mcculloch_pitts": {
@@ -193,9 +193,9 @@
     },
     "benchmarks/bench_model_mcculloch_pitts.py": "30bfc2305f00d8910c6fd1381b3852badd11d3678fe93a8800c70d1a8c2e4573",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260"
+      "py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "0a681ac247ad0b6e9fb6c3637ee8884d53a2e0c3b6acdad24062ab67670dd260",
+    "bridge/sc_neurocore_engine/__init__.py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40",
     "engine/src/bindings/mcculloch_pitts": {
       "rs": "eedb685291fad7422af8753c58f57566cc03d75b0dbf4c63514f0b778604b06d"
     },
@@ -255,7 +255,7 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/mcculloch_pitts_1943_truth_table.json": "852fee187a500b8ca589538023eb7659a553643b4c1df45d599093559930b4f1"
   },
-  "timestamp_utc": "2026-08-30T07:08:31Z",
+  "timestamp_utc": "2026-08-30T08:09:36Z",
   "verification": {
     "rust_safety": {
       "command": "rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/mcculloch_pitts.rs -O -o <temp-binary> && <temp-binary>",

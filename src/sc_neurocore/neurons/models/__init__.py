@@ -156,6 +156,7 @@ _CLASS_TO_MODULE = {
     "PredictiveCodingNeuron": "ai_optimized",
     "PrescottNeuron": "prescott",
     "QuadraticIFNeuron": "quadratic_if",
+    "SCSymmetricQuadraticIFNeuron": "quadratic_if",
     "QuantumInspiredLIFNeuron": "quantum_inspired_lif",
     "RallCableNeuron": "rall_cable",
     "RenshawCell": "renshaw_cell",

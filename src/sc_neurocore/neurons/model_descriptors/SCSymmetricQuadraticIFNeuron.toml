@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "SCSymmetricQuadraticIFNeuron"
+class_name = "SCSymmetricQuadraticIFNeuron"
+module = "quadratic_if"
+display_name = "SC symmetric quadratic integrate-and-fire"
+summary = "Count-neutral preservation of the historical -1/+1/.01 exact-flow QIF recurrence."
+family = "Integrate-and-Fire"
+category = "project-compatibility"
+biophysical_detail = "point"
+maturity = "validated"
+intended_use = [
+    "project compatibility",
+    "symmetric normalized QIF experiments",
+]
+hardware_fit = [
+    "fixed-point quadratic accumulator and reset core",
+]
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+]
+
+[provenance]
+authors = [
+    "SC-NeuroCore project",
+]
+year = 2026
+doi = ""
+derivation_note = "Historical symmetric SC normalization retained without attributing its finite boundaries to Latham et al. 2000."
+
+[state.v]
+init = -1.0
+
+[parameters.v_reset]
+default = -1.0
+unit = "1"
+meaning = "symmetric-profile reset"
+range = [
+    -5.0,
+    0.0,
+]
+
+[parameters.v_peak]
+default = 1.0
+unit = "1"
+meaning = "symmetric-profile finite event boundary"
+range = [
+    0.5,
+    10.0,
+]
+
+[integration]
+dt = 0.01
+method = "exact_held_current_riccati_flow"
+
+[dynamics]
+v = "v**2 + I"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sc_symmetric_quadratic_if"
+notes = "Count-neutral SC compatibility identity; QuadraticIFNeuron.latham_2000() is the source-counted profile."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "historical -1/+1/.01 profile across five complete native packets"
+tolerance = "events exact and native voltage <=2e-12"
+evidence = "tests/test_quadratic_if_backends_backend_parity.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_quadratic_if.py"
+target_tier = "H1"
+terminal_reason = "Preserved SC QIF retains its dedicated RTL, co-simulation, and depth-20 formal safety; synthesis evidence remains assigned only to the source profile."

@@ -11,13 +11,39 @@ from __future__ import annotations
 from tests.quadratic_if_backends_support import *  # noqa: F403
 
 
-def test_rust_rejects_non_default_contract() -> None:
-    """Keep the Rust engine class's factory-only parameter boundary explicit."""
+def test_rust_accepts_complete_non_default_contract() -> None:
+    """Carry arbitrary valid parameters through the checked production batch."""
     neuron = _configured()
-    before = neuron.v
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert neuron.v == before
+    reference = _configured()
+    expected_voltage, expected_events = reference.simulate_complete(64, 2.2, "python")
+    voltage, events = neuron.simulate_complete(64, 2.2, "rust")
+    np.testing.assert_allclose(voltage, expected_voltage, rtol=0.0, atol=_TRACE_ATOL)
+    np.testing.assert_array_equal(events, expected_events)
+    assert neuron.v == pytest.approx(reference.v, rel=0.0, abs=_TRACE_ATOL)
+
+
+def test_source_factory_preserves_latham_numerical_boundaries() -> None:
+    """Do not conflate the unstable equilibrium with Latham's event apex."""
+    source = QuadraticIFNeuron.latham_2000()
+    assert source.v == -1.0
+    assert source.v_reset == -3.0
+    assert source.v_peak == pytest.approx(31.0 / 3.0)
+    assert source.dt == 0.05
+    assert source.profile == "latham_2000"
+
+
+@pytest.mark.parametrize("backend", ("python", "rust", "julia", "go", "mojo"))
+def test_source_complete_packet_matches_python(backend: str) -> None:
+    """Require aligned per-step events for the count-bearing source profile."""
+    if backend in ("julia", "go", "mojo"):
+        _require_qif_backend(backend)
+    reference = QuadraticIFNeuron.latham_2000()
+    expected_voltage, expected_events = reference.simulate_complete(240, 4.0, "python")
+    candidate = QuadraticIFNeuron.latham_2000()
+    voltage, events = candidate.simulate_complete(240, 4.0, backend)
+    np.testing.assert_allclose(voltage, expected_voltage, rtol=0.0, atol=_TRACE_ATOL)
+    np.testing.assert_array_equal(events, expected_events)
+    assert candidate.v == pytest.approx(reference.v, rel=0.0, abs=_TRACE_ATOL)
 
 
 @pytest.mark.parametrize("n_steps", [-1, 1.0, True])

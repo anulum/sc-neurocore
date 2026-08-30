@@ -20,17 +20,20 @@ import numpy as np
 import numpy.typing as npt
 
 
-def _load_engine_quadratic_if() -> type[Any]:
-    """Return the Rust engine's factory-default Quadratic IF class."""
+def _load_engine_quadratic_if() -> tuple[type[Any], Any]:
+    """Return the Rust compatibility class and checked complete batch."""
     engine = importlib.import_module("sc_neurocore_engine")
-    return cast(type[Any], engine.QuadraticIFNeuron)
+    return cast(type[Any], engine.QuadraticIFNeuron), engine.quadratic_if_simulate_complete
 
 
+_EngineQuadraticIFCls: type[Any] | None
+_EngineQuadraticIFCompleteFn: Any | None
 try:
-    _EngineQuadraticIFCls: type[Any] | None = _load_engine_quadratic_if()
+    _EngineQuadraticIFCls, _EngineQuadraticIFCompleteFn = _load_engine_quadratic_if()
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _EngineQuadraticIFCls = None
+    _EngineQuadraticIFCompleteFn = None
     _HAS_RUST = False
 
 _julia_module: Any | None = None
@@ -83,7 +86,8 @@ def ensure_go_loaded() -> bool:
     except OSError:
         return False
     simulate = getattr(library, "quadratic_if_simulate_c", None)
-    if simulate is None:
+    complete = getattr(library, "quadratic_if_simulate_complete_c", None)
+    if simulate is None or complete is None:
         return False
     simulate.argtypes = [ctypes.c_double] * 4 + [
         ctypes.c_int64,
@@ -91,6 +95,14 @@ def ensure_go_loaded() -> bool:
         ctypes.POINTER(ctypes.c_double),
     ]
     simulate.restype = ctypes.c_int64
+    complete.argtypes = [ctypes.c_double] * 4 + [
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_uint8),
+    ]
+    complete.restype = ctypes.c_int64
     _go_lib = library
     _HAS_GO = True
     return True
@@ -109,7 +121,8 @@ def ensure_mojo_loaded() -> bool:
     except OSError:
         return False
     simulate = getattr(library, "quadratic_if_simulate_c", None)
-    if simulate is None:
+    complete = getattr(library, "quadratic_if_simulate_complete_c", None)
+    if simulate is None or complete is None:
         return False
     simulate.argtypes = [ctypes.c_double] * 4 + [
         ctypes.c_int64,
@@ -117,6 +130,14 @@ def ensure_mojo_loaded() -> bool:
         ctypes.c_int64,
     ]
     simulate.restype = ctypes.c_int64
+    complete.argtypes = [ctypes.c_double] * 4 + [
+        ctypes.c_int64,
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.c_int64,
+        ctypes.c_int64,
+    ]
+    complete.restype = ctypes.c_int64
     _mojo_lib = library
     _HAS_MOJO = True
     return True
@@ -216,3 +237,101 @@ def simulate_mojo(
     if spikes < 0:
         raise FloatingPointError("Mojo Quadratic IF kernel rejected the simulation contract.")
     return np.ascontiguousarray(output[:n_steps]), spikes, float(output[n_steps])
+
+
+def simulate_rust_complete(
+    v: float,
+    v_reset: float,
+    v_peak: float,
+    dt: float,
+    source_profile: bool,
+    n_steps: int,
+    current: float,
+) -> tuple[object, object, float]:
+    """Run the checked profile-explicit production Rust batch."""
+    if _EngineQuadraticIFCompleteFn is None:
+        raise RuntimeError("Rust Quadratic IF complete batch is unavailable.")
+    result = _EngineQuadraticIFCompleteFn(v, v_reset, v_peak, dt, source_profile, n_steps, current)
+    return result[0], result[1], float(result[2])
+
+
+def simulate_julia_complete(
+    v: float,
+    v_reset: float,
+    v_peak: float,
+    dt: float,
+    source_profile: bool,
+    n_steps: int,
+    current: float,
+) -> tuple[object, object, float]:
+    """Run the checked profile-explicit Julia batch."""
+    if _julia_module is None:
+        raise RuntimeError("Julia Quadratic IF module is unavailable.")
+    result = _julia_module.simulate_complete(
+        v, v_reset, v_peak, dt, source_profile, n_steps, current
+    )
+    return result.trace, result.events, float(result.vf)
+
+
+def simulate_go_complete(
+    v: float,
+    v_reset: float,
+    v_peak: float,
+    dt: float,
+    source_profile: bool,
+    n_steps: int,
+    current: float,
+) -> tuple[object, object, float]:
+    """Run the failure-atomic Go complete C-ABI packet."""
+    if _go_lib is None:
+        raise RuntimeError("Go Quadratic IF library is unavailable.")
+    voltage = np.empty(n_steps + 1, dtype=np.float64)
+    events = np.empty(n_steps, dtype=np.uint8)
+    count = int(
+        _go_lib.quadratic_if_simulate_complete_c(
+            v,
+            v_reset,
+            v_peak,
+            dt,
+            int(source_profile),
+            n_steps,
+            current,
+            voltage.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+        )
+    )
+    if count < 0 or count != int(np.sum(events, dtype=np.int64)):
+        raise FloatingPointError("Go Quadratic IF kernel rejected its packet.")
+    return np.ascontiguousarray(voltage[:n_steps]), events, float(voltage[n_steps])
+
+
+def simulate_mojo_complete(
+    v: float,
+    v_reset: float,
+    v_peak: float,
+    dt: float,
+    source_profile: bool,
+    n_steps: int,
+    current: float,
+) -> tuple[object, object, float]:
+    """Run the failure-atomic Mojo complete C-ABI packet."""
+    if _mojo_lib is None:
+        raise RuntimeError("Mojo Quadratic IF library is unavailable.")
+    voltage = np.empty(n_steps + 1, dtype=np.float64)
+    events = np.empty(n_steps, dtype=np.uint8)
+    count = int(
+        _mojo_lib.quadratic_if_simulate_complete_c(
+            v,
+            v_reset,
+            v_peak,
+            dt,
+            int(source_profile),
+            n_steps,
+            current,
+            int(voltage.ctypes.data),
+            int(events.ctypes.data),
+        )
+    )
+    if count < 0 or count != int(np.sum(events, dtype=np.int64)):
+        raise FloatingPointError("Mojo Quadratic IF kernel rejected its packet.")
+    return np.ascontiguousarray(voltage[:n_steps]), events, float(voltage[n_steps])

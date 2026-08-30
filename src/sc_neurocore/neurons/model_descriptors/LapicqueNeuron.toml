@@ -17,12 +17,22 @@ family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = ["source-equation reference", "strength-duration experiments"]
-hardware_fit = ["fixed-point polarization-threshold core"]
-behavior_tags = ["excitable", "single-event"]
+intended_use = [
+    "source-equation reference",
+    "strength-duration experiments",
+]
+hardware_fit = [
+    "fixed-point polarization-threshold core",
+]
+behavior_tags = [
+    "excitable",
+    "single-event",
+]
 
 [provenance]
-authors = ["Lapicque, L."]
+authors = [
+    "Lapicque, L.",
+]
 year = 1907
 doi = "10.1007/s00422-007-0189-6"
 doi_is_translation = true
@@ -41,25 +51,37 @@ meaning = "latched first threshold attainment"
 default = 1.0
 unit = "normalized polarization"
 meaning = "excitation polarization threshold"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.capacitance]
 default = 1.1
 unit = "normalized capacitance"
 meaning = "Lapicque circuit capacitance K"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.series_resistance]
 default = 10.0
 unit = "normalized resistance"
 meaning = "Lapicque source-series resistance R"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.polarization_resistance]
 default = 1.0
 unit = "normalized resistance"
 meaning = "Lapicque polarization leakage resistance rho"
-range = [1e-12, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [integration]
 dt = 0.01

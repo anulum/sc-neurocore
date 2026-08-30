@@ -403,13 +403,13 @@
     },
     {
       "artefact": "benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json",
-      "description": "Controlled Quadratic IF exact constant-current Riccati-flow five-backend public-dispatch evidence.",
+      "description": "Controlled Latham 2000 normalized Quadratic IF exact-flow complete-packet five-backend evidence.",
       "expected_values": {
-        "backends.go.event_count_matches_python": true,
-        "backends.julia.event_count_matches_python": true,
-        "backends.mojo.event_count_matches_python": true,
-        "backends.rust.event_count_matches_python": true,
-        "kernel": "quadratic_if_exact_constant_current_flow",
+        "backends.go.event_vector_matches_python": true,
+        "backends.julia.event_vector_matches_python": true,
+        "backends.mojo.event_vector_matches_python": true,
+        "backends.rust.event_vector_matches_python": true,
+        "kernel": "quadratic_if_latham_2000_exact_complete_packet",
         "meta.single_cpu_pinned": true,
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "verification.rust_safety.passed": true,
@@ -469,7 +469,13 @@
       ],
       "source_hashes": {
         "benchmarks/bench_model_quadratic_if.py": "source_hashes.benchmarks/bench_model_quadratic_if.py",
+        "engine/src/bindings/trivial/quadratic_if.rs": "source_hashes.engine/src/bindings/trivial/quadratic_if.rs",
+        "engine/src/network_runner/model_factory.rs": "source_hashes.engine/src/network_runner/model_factory.rs",
         "engine/src/neurons/trivial/quadratic_if.rs": "source_hashes.engine/src/neurons/trivial/quadratic_if.rs",
+        "hdl/formal/catalogue/sc_quadratic_if_latham_2000.sby": "source_hashes.hdl/formal/catalogue/sc_quadratic_if_latham_2000.sby",
+        "hdl/formal/catalogue/sc_quadratic_if_latham_2000.v": "source_hashes.hdl/formal/catalogue/sc_quadratic_if_latham_2000.v",
+        "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v": "source_hashes.hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v",
+        "hdl/reports/yosys_quadratic_if_latham_2000_q1616_2026-08-30.json": "source_hashes.hdl/reports/yosys_quadratic_if_latham_2000_q1616_2026-08-30.json",
         "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if.go": "source_hashes.src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if.go",
         "src/sc_neurocore/accel/go/services/quadratic_if.go": "source_hashes.src/sc_neurocore/accel/go/services/quadratic_if.go",
         "src/sc_neurocore/accel/go/services/quadratic_if_test.go": "source_hashes.src/sc_neurocore/accel/go/services/quadratic_if_test.go",
@@ -479,7 +485,13 @@
         "src/sc_neurocore/accel/quadratic_if.py": "source_hashes.src/sc_neurocore/accel/quadratic_if.py",
         "src/sc_neurocore/accel/rust/examples/quadratic_if_trace.rs": "source_hashes.src/sc_neurocore/accel/rust/examples/quadratic_if_trace.rs",
         "src/sc_neurocore/accel/rust/safety/quadratic_if.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/quadratic_if.rs",
-        "src/sc_neurocore/neurons/models/quadratic_if.py": "source_hashes.src/sc_neurocore/neurons/models/quadratic_if.py"
+        "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/quadratic_if.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/quadratic_if.json",
+        "src/sc_neurocore/neurons/model_schemas/quadratic_if.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/quadratic_if.toml",
+        "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.json",
+        "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.toml",
+        "src/sc_neurocore/neurons/models/quadratic_if.py": "source_hashes.src/sc_neurocore/neurons/models/quadratic_if.py",
+        "src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json"
       }
     },
     {

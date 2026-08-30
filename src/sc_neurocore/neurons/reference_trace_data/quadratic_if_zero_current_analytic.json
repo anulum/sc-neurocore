@@ -6,7 +6,7 @@
     "runner": "universal_dsl"
   },
   "protocol": {
-    "dt": 0.01,
+    "dt": 0.05,
     "steps": 120,
     "inputs": {
       "I": 0.0
@@ -18,20 +18,20 @@
   "provenance": {
     "kind": "analytic_closed_form",
     "source": "src/sc_neurocore/neurons/model_schemas/quadratic_if.toml",
-    "equation": "For dv/dt=v^2 at I=0 and v0=-1, v(t)=v0/(1-v0*t)=-1/(1+t); tolerance admits the schema runner's explicit-Euler discretisation error.",
+    "equation": "For the Latham-normalized isolated source equation dx/ds=x^2 at eta=0 and x0=-1, x(s)=-1/(1+s); tolerance admits the schema runner's explicit-Euler discretisation error.",
     "citation": "doi:10.1152/jn.2000.83.2.808"
   },
   "expected_features": {
     "spike_count": 0.0,
     "first_spike_step": -1.0,
-    "final.v": -0.45454545454545453,
-    "min.v": -0.9900990099009901,
-    "max.v": -0.45454545454545453,
-    "mean.v": -0.6547805826062277
+    "final.v": -0.14285714285714285,
+    "min.v": -0.9523809523809523,
+    "max.v": -0.14285714285714285,
+    "mean.v": -0.3207809345432659
   },
   "tolerances": {
     "default": {
-      "absolute": 0.0025,
+      "absolute": 0.012,
       "relative": 0.0
     },
     "spike_count": {

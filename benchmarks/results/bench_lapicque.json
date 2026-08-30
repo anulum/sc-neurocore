@@ -8,10 +8,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 5.677174,
-      "minimum_call_ms": 5.169144,
+      "median_call_ms": 4.227214,
+      "minimum_call_ms": 3.678037,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 53.491518843706395,
+      "speedup_vs_python": 34.8000458457982,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -23,10 +23,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 2.819917,
-      "minimum_call_ms": 2.550149,
+      "median_call_ms": 2.35865,
+      "minimum_call_ms": 1.885988,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 107.69134694389942,
+      "speedup_vs_python": 62.36925402242808,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -38,10 +38,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 1.086362,
-      "minimum_call_ms": 0.961305,
+      "median_call_ms": 0.776455,
+      "minimum_call_ms": 0.575649,
       "parity_max_abs_diff": 1.2212453270876722e-15,
-      "speedup_vs_python": 279.53910390827366,
+      "speedup_vs_python": 189.46009878228614,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -53,8 +53,8 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 303.68066,
-      "minimum_call_ms": 219.347694,
+      "median_call_ms": 147.107241,
+      "minimum_call_ms": 136.849225,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
@@ -68,10 +68,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 3.553709,
-      "minimum_call_ms": 3.452822,
+      "median_call_ms": 1.921957,
+      "minimum_call_ms": 1.844508,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 85.45456591971937,
+      "speedup_vs_python": 76.54033935202504,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     }
@@ -79,8 +79,8 @@
   "kernel": "lapicque_1907_exact_polarization_complete_packet",
   "measured_order": [
     "mojo",
-    "julia",
     "rust",
+    "julia",
     "go",
     "python"
   ],
@@ -92,14 +92,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      11.86572265625,
-      10.380859375,
-      13.06494140625
+      4.3818359375,
+      5.6953125,
+      7.39013671875
     ],
     "load_average_start": [
-      11.11474609375,
-      10.17431640625,
-      13.04443359375
+      4.58935546875,
+      5.7578125,
+      7.41943359375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -124,9 +124,9 @@
     },
     "engine/src/bindings/lapicque_neuron.rs": "baec33982f8a5f34ffc50aa7d700950d5b44ef18b60e5b7bc2d3d057e39854e0",
     "engine/src/network_runner/model_factory": {
-      "rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69"
+      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
     },
-    "engine/src/network_runner/model_factory.rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69",
+    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
     "engine/src/neuron/lapicque": {
       "rs": "11bd56778011b24c1afc7f4ed03c67306fe980827f5338a8ffff57ccb1d2f1e6"
     },
@@ -169,9 +169,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/lapicque.rs": "290eba81455a1f3a5e4b8364979032fc572db39480c542fe395c9bef8bde4db1",
     "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron": {
-      "toml": "7d496c5ce4aabf5e1554afba44a958413bd1619fed9bd1b86dd8bb574dced97b"
+      "toml": "9afc4195a9fca56fecf682a49dddcaf7f425b1d38d3c2fd9475cea03d354261c"
     },
-    "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml": "7d496c5ce4aabf5e1554afba44a958413bd1619fed9bd1b86dd8bb574dced97b",
+    "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml": "9afc4195a9fca56fecf682a49dddcaf7f425b1d38d3c2fd9475cea03d354261c",
     "src/sc_neurocore/neurons/model_schemas/lapicque": {
       "json": "76854bc8be1d52866f1470999700e5f39370e85dfb25c70c1fbc77ade4c6b79f"
     },

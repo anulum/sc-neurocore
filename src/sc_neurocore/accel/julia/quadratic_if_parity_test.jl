@@ -47,4 +47,12 @@ end
 @assert rejected.v == -1.0
 @assert rejected.dt == 0.01
 
-println("quadratic-if Julia parity assertions passed: ", length(GOLDENS) * 3 + 9)
+source = QuadraticIfAccel.simulate_complete(
+    -1.0, -3.0, 31.0 / 3.0, 0.05, true, 240, 4.0,
+)
+@assert length(source.trace) == 240
+@assert length(source.events) == 240
+@assert sum(source.events) == 10
+@assert source.vf == source.trace[end]
+
+println("quadratic-if Julia parity assertions passed: ", length(GOLDENS) * 3 + 13)

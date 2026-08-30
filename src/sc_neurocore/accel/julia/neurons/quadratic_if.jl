@@ -8,24 +8,56 @@
 
 module QuadraticIfAccel
 
-export step!, simulate, simulate_trace, QuadraticIFNeuronState, valid, reset!
+export step!, simulate, simulate_trace, simulate_complete, latham_2000,
+    QuadraticIFNeuronState, valid, reset!
 
 mutable struct QuadraticIFNeuronState
     v::Float64
     v_reset::Float64
     v_peak::Float64
     dt::Float64
+    source_profile::Bool
 end
 
 function QuadraticIFNeuronState()
-    QuadraticIFNeuronState(-1.0, -1.0, 1.0, 0.01)
+    QuadraticIFNeuronState(-1.0, -1.0, 1.0, 0.01, false)
 end
+
+QuadraticIFNeuronState(v, v_reset, v_peak, dt) =
+    QuadraticIFNeuronState(v, v_reset, v_peak, dt, false)
+
+latham_2000() = QuadraticIFNeuronState(-1.0, -3.0, 31.0 / 3.0, 0.05, true)
 
 function valid(s::QuadraticIFNeuronState)::Bool
     return all(isfinite, (s.v, s.v_reset, s.v_peak, s.dt)) &&
         s.v < s.v_peak &&
         s.v_reset < s.v_peak &&
         s.dt > 0.0
+end
+
+function simulate_complete(
+    v::Float64,
+    v_reset::Float64,
+    v_peak::Float64,
+    dt::Float64,
+    source_profile::Bool,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    if n_steps < 0 || !isfinite(I_ext)
+        throw(ArgumentError("QuadraticIF complete-batch contract is invalid"))
+    end
+    s = QuadraticIFNeuronState(v, v_reset, v_peak, dt, source_profile)
+    if !valid(s)
+        throw(DomainError(v, "QuadraticIF state violates its selected profile"))
+    end
+    trace = zeros(Float64, n_steps)
+    events = zeros(UInt8, n_steps)
+    for t in 1:n_steps
+        events[t] = UInt8(step!(s, I_ext))
+        trace[t] = s.v
+    end
+    return (trace=trace, events=events, vf=s.v)
 end
 
 function _exact_candidate(s::QuadraticIFNeuronState, I_ext::Float64)

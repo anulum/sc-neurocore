@@ -8,10 +8,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 3.005382,
-      "minimum_call_ms": 2.368394,
+      "median_call_ms": 2.466393,
+      "minimum_call_ms": 1.895658,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 39.76119474995192,
+      "speedup_vs_python": 38.559316783659376,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     },
@@ -23,10 +23,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 1.370757,
-      "minimum_call_ms": 1.190455,
+      "median_call_ms": 1.294444,
+      "minimum_call_ms": 1.017093,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 87.17634051841428,
+      "speedup_vs_python": 73.46971286513747,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     },
@@ -38,10 +38,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 1.232178,
-      "minimum_call_ms": 1.027719,
+      "median_call_ms": 0.94051,
+      "minimum_call_ms": 0.813604,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 96.98077631640884,
+      "speedup_vs_python": 101.11793495018661,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     },
@@ -53,8 +53,8 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 119.497579,
-      "minimum_call_ms": 105.014484,
+      "median_call_ms": 95.102429,
+      "minimum_call_ms": 92.405945,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true,
@@ -68,10 +68,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 0.446801,
-      "minimum_call_ms": 0.377192,
+      "median_call_ms": 0.43715,
+      "minimum_call_ms": 0.348836,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 267.45145825546496,
+      "speedup_vs_python": 217.55102138853943,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     }
@@ -92,14 +92,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      12.76416015625,
-      12.67822265625,
-      12.9208984375
+      4.17529296875,
+      5.6064453125,
+      7.3427734375
     ],
     "load_average_start": [
-      11.5673828125,
-      12.4423828125,
-      12.84912109375
+      4.3818359375,
+      5.6953125,
+      7.39013671875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -124,9 +124,9 @@
     },
     "engine/src/bindings/trivial/perfect_integrator.rs": "a490b48d658e4e3bbcb7685a5607aba97d211247b2684e69e29ace8669902b4b",
     "engine/src/network_runner/model_factory": {
-      "rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69"
+      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
     },
-    "engine/src/network_runner/model_factory.rs": "11b2c92d93c2499490d4d329a3aa90342395d1d8eba2b56e43db3b99fef07b69",
+    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
     "engine/src/neurons/trivial/perfect_integrator": {
       "rs": "e388fde43c8b842d11dcaf4f611225ef6c5ad49d1380f43f42da971c877229b5"
     },
@@ -169,9 +169,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs": "3c4bf71060529c9cc3023dc8f8001f91a8405daec3faa62fcb1a41fc583cb020",
     "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron": {
-      "toml": "00f7ccebebe81122b2ccb05d585552aa40d7f1f7a90d3cd1784c31b0caac31af"
+      "toml": "ba273d17c9d57064517fea021665b26c223413b7444f029206242f179c242f8e"
     },
-    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml": "00f7ccebebe81122b2ccb05d585552aa40d7f1f7a90d3cd1784c31b0caac31af",
+    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml": "ba273d17c9d57064517fea021665b26c223413b7444f029206242f179c242f8e",
     "src/sc_neurocore/neurons/model_schemas/perfect_integrator": {
       "json": "9eed850785d6230282f8d9c9c2444cd7ba60cde287d3b1da80cd2e55503c7c19"
     },

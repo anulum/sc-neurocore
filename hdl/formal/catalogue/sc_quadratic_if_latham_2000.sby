@@ -1,0 +1,17 @@
+# SymbiYosys job for Latham 2000 normalized QIF
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_quadratic_if_latham_2000_formal.v
+read -formal sc_quadratic_if_latham_2000.v
+prep -top sc_quadratic_if_latham_2000_formal
+
+[files]
+sc_quadratic_if_latham_2000_formal.v
+sc_quadratic_if_latham_2000.v

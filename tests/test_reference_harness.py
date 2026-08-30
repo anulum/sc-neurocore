@@ -70,6 +70,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "wilson_hr": "wilson_hr_driven_spiking_doi",
     "perfect_integrator": "perfect_integrator_constant_current_sawtooth",
     "quadratic_if": "quadratic_if_zero_current_analytic",
+    "sc_symmetric_quadratic_if": "sc_symmetric_quadratic_if_zero_current_analytic",
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
     "rulkov_map": "rulkov_map_driven_spiking_doi",
     "sc_clipped_logistic_bursting_map": "sc_clipped_logistic_bursting_map_project",

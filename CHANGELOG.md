@@ -11,6 +11,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Corrected `QuadraticIFNeuron` to Latham et al.'s normalized source numerical
+  boundaries (`v=-1`, apex `31/3`, reset `-3`, `dt=.05`) while retaining the
+  historical `-1/+1/.01` recurrence as count-neutral
+  `SCSymmetricQuadraticIFNeuron`. Five failure-atomic complete runtimes, paired
+  schemas, a DOI/PDF-bound receipt, NetworkRunner routing, source-hashed
+  benchmark, dedicated Q16.16 source RTL, 9,379-cell Yosys synthesis, and
+  depth-20 reset/event safety now establish the honest H2 envelope without
+  timing, PPA, device, board, physical-silicon, or universal-equivalence claims.
 - Re-closed `ExpIFNeuron` against the Fourcaud-Trocmé et al. (2003) fitted
   exponential integrate-and-fire protocol. The catalogue-counted source
   factory now keeps the paper's -30 mV numerical handoff, deterministic

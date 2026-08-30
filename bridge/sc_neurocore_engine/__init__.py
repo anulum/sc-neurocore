@@ -49,6 +49,7 @@ else:
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         QuadraticIFNeuron,
+        quadratic_if_simulate_complete,
         ThetaNeuron,
         PerfectIntegratorNeuron,
         perfect_integrator_simulate_complete,
@@ -443,6 +444,7 @@ __all__ = [
             "expif_simulate_complete",
             "lapicque_simulate_complete",
             "perfect_integrator_simulate_complete",
+            "quadratic_if_simulate_complete",
         ]
         if _neurons_available
         else []

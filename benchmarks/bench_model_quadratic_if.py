@@ -41,11 +41,13 @@ N_STEPS = 100_000
 N_REPEATS = 7
 CURRENT = 5.0
 TRACE_ATOL = 2.0e-12
-KERNEL = "quadratic_if_exact_constant_current_flow"
+KERNEL = "quadratic_if_latham_2000_exact_complete_packet"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_quadratic_if.py",
     "engine/src/neurons/trivial/quadratic_if.rs",
+    "engine/src/bindings/trivial/quadratic_if.rs",
+    "engine/src/network_runner/model_factory.rs",
     "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if.go",
     "src/sc_neurocore/accel/go/services/quadratic_if.go",
     "src/sc_neurocore/accel/go/services/quadratic_if_test.go",
@@ -56,6 +58,16 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/rust/safety/quadratic_if.rs",
     "src/sc_neurocore/neurons/models/quadratic_if.py",
     "src/sc_neurocore/accel/quadratic_if.py",
+    "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/quadratic_if.toml",
+    "src/sc_neurocore/neurons/model_schemas/quadratic_if.json",
+    "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.toml",
+    "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.json",
+    "src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json",
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000.v",
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v",
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000.sby",
+    "hdl/reports/yosys_quadratic_if_latham_2000_q1616_2026-08-30.json",
 )
 
 
@@ -141,21 +153,27 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    tuple[float],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    QuadraticIFNeuron().simulate(20, CURRENT, backend=backend)
+    QuadraticIFNeuron.latham_2000().simulate_complete(20, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
     trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
-    spikes = 0
+    events: npt.NDArray[np.uint8] = np.empty(0, dtype=np.uint8)
     final_state = (-1.0,)
     for _repeat in range(N_REPEATS):
         gc.collect()
-        neuron = QuadraticIFNeuron()
+        neuron = QuadraticIFNeuron.latham_2000()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        trace, events = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         final_state = (neuron.v,)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+    return statistics.median(elapsed_ms), min(elapsed_ms), trace, events, final_state
 
 
 def _verify_rust_safety() -> dict[str, Any]:
@@ -247,20 +265,20 @@ def main(argv: list[str]) -> int:
     rows: dict[str, dict[str, Any]] = {}
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
-    reference_spikes: int | None = None
+    reference_events: npt.NDArray[np.uint8] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
             rows[backend] = {"available": False, "used": False, "unavailable_reason": reason}
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        median_ms, minimum_ms, trace, events, final_state = _measure_backend(backend)
         if backend == "python":
             reference = trace
             reference_ms = median_ms
-            reference_spikes = spikes
+            reference_events = events
             parity = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if reference is None or reference_ms is None or reference_events is None:
                 raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
         rows[backend] = {
@@ -270,10 +288,12 @@ def main(argv: list[str]) -> int:
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": reference_ms / median_ms if reference_ms is not None else 1.0,
             "parity_max_abs_diff": parity,
-            "event_count": spikes,
-            "event_count_matches_python": (
-                True if reference_spikes is None else spikes == reference_spikes
+            "event_count": int(np.sum(events, dtype=np.int64)),
+            "event_vector_matches_python": (
+                True if reference_events is None else bool(np.array_equal(events, reference_events))
             ),
+            "event_sha256": hashlib.sha256(events.tobytes()).hexdigest(),
+            "voltage_sha256": hashlib.sha256(trace.astype("<f8", copy=False).tobytes()).hexdigest(),
             "final_state": dict(zip(("v",), final_state, strict=True)),
         }
 
@@ -289,7 +309,10 @@ def main(argv: list[str]) -> int:
             "n_steps": N_STEPS,
             "repeats": N_REPEATS,
             "current": CURRENT,
-            "parameters": "Quadratic IF factory defaults; exact constant-current Riccati flow",
+            "parameters": (
+                "Latham 2000 normalized source profile; v=-1, reset=-3, "
+                "apex=31/3, dt=.05; exact held-current Riccati flow"
+            ),
             "trace_atol": TRACE_ATOL,
         },
         "meta": _environment(load_start),
@@ -316,7 +339,7 @@ def main(argv: list[str]) -> int:
 
     if not rust_safety["passed"]:
         return 5
-    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+    if any(not bool(row.get("event_vector_matches_python", True)) for row in rows.values()):
         return 3
     if any(
         float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL

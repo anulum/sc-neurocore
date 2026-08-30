@@ -96,12 +96,12 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Package version | 3.16.0 |
 | Public API exports | 45 |
 | Python model source modules | 176 |
-| Python model classes | 182 |
-| Model documentation pages | 199 |
+| Python model classes | 183 |
+| Model documentation pages | 200 |
 | Rust PyO3 model wrappers | 207 |
 | Optional extras | 28 |
 | Python test files | 4785 |
-| Public documentation pages | 624 |
+| Public documentation pages | 625 |
 | GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -177,7 +177,7 @@ dependency matrix and research-only boundaries.
 ### Rust Engine and Benchmark Evidence
 
 The optional Rust engine provides SIMD-accelerated simulation, 207 Rust PyO3
-model wrappers, a 178-model NetworkRunner dispatch list, and fused E-I network
+model wrappers, a 180-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
 Use a matching release wheel first:
@@ -239,12 +239,18 @@ one identical first-attainment event in every lane with maximum state difference
 count-neutral `SCLapicqueLIFNeuron`; the [Lapicque model page](docs/api/models/lapicque.md)
 states both identities and the Q32.32 source versus Q16.16 SC silicon boundaries.
 
-The Perfect Integrator exposes its candidate-first non-leaky Euler recurrence
-through Python, the factory-default Rust engine boundary, Julia, Go, and Mojo.
-Its source-bound benchmark records bit-exact traces and event counts across all
-five paths; the [Perfect Integrator model page](docs/api/models/perfect_integrator.md)
-states the loaded-host timing boundary, complete native numeric contract, Q8.8
-co-simulation operating point, and the declared fractional-current boundary.
+The Perfect Integrator exposes the Naud-Gerstner strict source boundary through
+five complete failure-atomic runtimes while retaining the former inclusive SC
+profile under an explicit count-neutral identity. Its
+[model page](docs/api/models/perfect_integrator.md) documents the DOI receipt,
+source/SC schemas, controlled benchmark, and dedicated source RTL evidence.
+
+The Quadratic IF source profile now uses Latham et al.'s actual normalized
+numerical apex/reset/timestep (`31/3`, `-3`, `.05`) across Python, Rust/PyO3,
+Julia, Go, and Mojo complete packets. The former symmetric `-1/+1/.01` profile
+remains intact as count-neutral `SCSymmetricQuadraticIFNeuron`; the
+[Quadratic IF model page](docs/api/models/quadratic_if.md) documents the exact
+normalisation, DOI receipt, source/SC split, and silicon evidence boundary.
 
 The threshold-linear rate model exposes its memoryless
 `gain * max(0, current - theta)` transfer through Python, a configurable Rust
@@ -256,7 +262,7 @@ rate, no-spike, and no-RTL boundaries.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
-- **NetworkRunner:** 178-model fused Rayon-parallel simulation loop
+- **NetworkRunner:** 180-model fused Rayon-parallel simulation loop
 - **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
 - **Batch simulate:** model dispatch loop in compiled Rust
 - **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
@@ -387,7 +393,7 @@ issue certification or regulatory approval.
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[180 lazy-loaded Python model classes<br/>176 Python model source modules]
+        B --> C[183 lazy-loaded Python model classes<br/>176 Python model source modules]
         C --> NET[Network Engine<br/>Population · Projection · 3 Backends]
         C --> ID[Identity Substrate<br/>Persistent SNN · Checkpoint · Director]
         C --> D[STDP / R-STDP Synapses]
@@ -398,7 +404,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>207 Rust PyO3 wrappers · 178-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>non-parity fixed-point lane - parity lane is NumPy<br/>207 Rust PyO3 wrappers · 180-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -474,11 +480,11 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (87 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (89 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **87 SymbiYosys proof jobs and 413 formal
-statements (272 assert, 106 assume, 35 cover)** under `hdl/formal/` (18
+Formal verification inventory: **89 SymbiYosys proof jobs and 424 formal
+statements (282 assert, 106 assume, 36 cover)** under `hdl/formal/` (18
 non-catalogue jobs + **69 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
@@ -695,10 +701,10 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (207 PyO3 Wrappers, 178-Model NetworkRunner)
+## Rust Engine (207 PyO3 Wrappers, 180-Model NetworkRunner)
 
 The `sc_neurocore_engine` crate provides 207 Rust PyO3 model wrappers callable
-from Python (including ArcaneNeuron), a 178-model NetworkRunner with
+from Python (including ArcaneNeuron), a 180-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
 RISC-V V). Rust test totals are maintained by the Rust workspace; public
@@ -717,8 +723,8 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 207 PyO3 model wrappers; 178 canonical models wired into NetworkRunner |
-| NetworkRunner | 178-model fused simulation loop with CSR projections and Rayon parallelism |
+| Neurons | 207 PyO3 model wrappers; 180 canonical models wired into NetworkRunner |
+| NetworkRunner | 180-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |

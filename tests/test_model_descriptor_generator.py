@@ -213,3 +213,51 @@ def test_schema_less_compatibility_parameters_are_not_reclassified_as_state() ->
         assert "theta" not in payload["state"]
     assert "kernel_size" in resetting["parameters"]
     assert "kernel_size" not in resetting["state"]
+
+
+@pytest.mark.parametrize(
+    ("source_class", "compatibility_class", "source_parameters", "compatibility_parameters"),
+    [
+        (
+            "LapicqueNeuron",
+            "SCLapicqueLIFNeuron",
+            {"v_threshold", "capacitance", "series_resistance", "polarization_resistance"},
+            {"v_rest", "v_reset", "v_threshold", "tau", "resistance"},
+        ),
+        (
+            "QuadraticIFNeuron",
+            "SCSymmetricQuadraticIFNeuron",
+            {"v_reset", "v_peak"},
+            {"v_reset", "v_peak"},
+        ),
+    ],
+)
+def test_source_and_sc_compatibility_descriptors_keep_distinct_profiles(
+    source_class: str,
+    compatibility_class: str,
+    source_parameters: set[str],
+    compatibility_parameters: set[str],
+) -> None:
+    """Count-bearing source descriptors never inherit inactive SC profile fields."""
+    source = generate_descriptor_payload(source_class)
+    compatibility = generate_descriptor_payload(compatibility_class)
+
+    assert set(source["parameters"]) == source_parameters
+    assert set(compatibility["parameters"]) == compatibility_parameters
+
+
+def test_quadratic_if_source_descriptor_uses_latham_numeric_profile() -> None:
+    """The count-bearing QIF descriptor follows the named Latham source constructor."""
+    source = generate_descriptor_payload("QuadraticIFNeuron")
+    compatibility = generate_descriptor_payload("SCSymmetricQuadraticIFNeuron")
+
+    assert source["parameters"]["v_reset"]["default"] == -3.0
+    assert source["parameters"]["v_peak"]["default"] == pytest.approx(31.0 / 3.0)
+    assert source["integration"] == {
+        "dt": 0.05,
+        "method": "exact_held_current_riccati_flow",
+    }
+    assert compatibility["integration"] == {
+        "dt": 0.01,
+        "method": "exact_held_current_riccati_flow",
+    }

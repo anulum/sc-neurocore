@@ -17,12 +17,23 @@ family = "Integrate-and-Fire"
 category = "project-compatibility"
 biophysical_detail = "point"
 maturity = "validated"
-intended_use = ["project compatibility", "repetitive exact-flow LIF experiments"]
-hardware_fit = ["Q16.16 exact-flow approximation"]
-behavior_tags = ["excitable", "tonic", "resetting"]
+intended_use = [
+    "project compatibility",
+    "repetitive exact-flow LIF experiments",
+]
+hardware_fit = [
+    "Q16.16 exact-flow approximation",
+]
+behavior_tags = [
+    "excitable",
+    "tonic",
+    "resetting",
+]
 
 [provenance]
-authors = ["SC-NeuroCore project"]
+authors = [
+    "SC-NeuroCore project",
+]
 year = 2026
 doi = ""
 derivation_note = "Historical SC exact-flow hard-reset LIF recurrence retained without claiming that Lapicque 1907 specified repetitive spike generation or reset."
@@ -34,26 +45,46 @@ init = 0.0
 default = 0.0
 unit = "normalized voltage"
 meaning = "resting voltage"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.v_reset]
 default = 0.0
 unit = "normalized voltage"
 meaning = "post-event reset voltage"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
 unit = "normalized voltage"
 meaning = "event threshold"
+range = [
+    -1000.0,
+    1000.0,
+]
 
 [parameters.tau]
 default = 20.0
 unit = "ms"
 meaning = "RC time constant"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.resistance]
 default = 1.0
 unit = "normalized resistance"
 meaning = "current-to-voltage gain"
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [integration]
 dt = 1.0
@@ -81,6 +112,8 @@ parity = "ulp-bounded"
 [backends.mojo]
 status = "implemented"
 parity = "ulp-bounded"
+
+[reproducibility]
 
 [documentation]
 slug = "models/sc_lapicque_lif"

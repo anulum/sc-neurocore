@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "schema_version": 2,
+    "name": "SCSymmetricQuadraticIFNeuron",
+    "author": "SC-NeuroCore project",
+    "year": 2026,
+    "doi": "",
+    "description": "Count-neutral historical -1/+1/.01 symmetric QIF profile"
+  },
+  "state": { "v": -1.0 },
+  "parameters": { "v_reset": -1.0, "v_peak": 1.0 },
+  "integration": { "dt": 0.01, "method": "euler" },
+  "dynamics": { "v": "v**2 + I" },
+  "threshold": { "condition": "v >= v_peak", "detection": "crossing" },
+  "reset": { "v": "v_reset" },
+  "extensions": {
+    "family": "integrate-and-fire",
+    "maintained_discretisation": "Schema/retained RTL use explicit Euler; production runtimes use an exact held-current Riccati flow",
+    "identity_note": "Preserved SC compatibility profile; not counted as a second literature model",
+    "source_module": "sc_neurocore.neurons.models.quadratic_if"
+  }
+}

@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Quadratic Integrate-and-Fire Neuron
+// SC-NeuroCore — Latham QIF + preserved symmetric SC profile
 
 /// Quadratic Integrate-and-Fire — canonical Type-I excitability.
 /// dv/dt = v² + I, reset at v_peak.
@@ -14,7 +14,10 @@ pub struct QuadraticIFNeuron {
     pub v_reset: f64,
     pub v_peak: f64,
     pub dt: f64,
+    pub source_profile: bool,
 }
+
+pub type QuadraticIFCompleteTrace = (Vec<f64>, Vec<u8>, f64);
 
 impl QuadraticIFNeuron {
     pub fn new(v_reset: f64, v_peak: f64, dt: f64) -> Self {
@@ -23,6 +26,18 @@ impl QuadraticIFNeuron {
             v_reset,
             v_peak,
             dt,
+            source_profile: false,
+        }
+    }
+
+    /// Construct the normalized numerical profile from Latham et al. (2000).
+    pub fn latham_2000() -> Self {
+        Self {
+            v: -1.0,
+            v_reset: -3.0,
+            v_peak: 31.0 / 3.0,
+            dt: 0.05,
+            source_profile: true,
         }
     }
 
@@ -36,20 +51,40 @@ impl QuadraticIFNeuron {
             && self.dt > 0.0
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.valid_numeric_contract() || !current.is_finite() {
-            return 0;
+            return Err("quadratic-IF state/current violates its finite profile contract");
         }
         let (next_v, spiked) = self.exact_candidate(current);
         if !next_v.is_finite() {
-            return 0;
+            return Err("quadratic-IF exact-flow candidate became non-finite");
         }
         self.v = next_v;
-        if spiked {
-            1
-        } else {
-            0
+        Ok(i32::from(spiked))
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Execute a complete failure-atomic batch against a cloned state.
+    pub fn simulate_complete(
+        &self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<QuadraticIFCompleteTrace, &'static str> {
+        if !self.valid_numeric_contract() || !current.is_finite() {
+            return Err("invalid quadratic-IF batch contract");
         }
+        let mut candidate = self.clone();
+        let mut voltage = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.try_step(current)?;
+            voltage.push(candidate.v);
+            events.push(event as u8);
+        }
+        Ok((voltage, events, candidate.v))
     }
 
     pub fn reset(&mut self) {
@@ -143,6 +178,25 @@ mod tests {
         let before = n.v;
         assert_eq!(n.step(f64::NAN), 0);
         assert_eq!(n.v, before);
+    }
+    #[test]
+    fn latham_profile_has_source_boundaries_and_complete_events() {
+        let n = QuadraticIFNeuron::latham_2000();
+        assert_eq!(n.v_reset, -3.0);
+        assert_eq!(n.v_peak, 31.0 / 3.0);
+        assert_eq!(n.dt, 0.05);
+        assert!(n.source_profile);
+        let (trace, events, final_v) = n.simulate_complete(8, 4.0).unwrap();
+        assert_eq!(trace.len(), 8);
+        assert_eq!(events.len(), 8);
+        assert_eq!(trace.last().copied(), Some(final_v));
+    }
+    #[test]
+    fn complete_batch_rejects_without_mutating_source() {
+        let mut n = QuadraticIFNeuron::latham_2000();
+        n.v = -0.25;
+        assert!(n.simulate_complete(2, f64::NAN).is_err());
+        assert_eq!(n.v, -0.25);
     }
     #[test]
     fn qif_nonfinite_increment_preserves_state() {

@@ -33,8 +33,12 @@ class TestQuadraticIFSimulate:
         assert sp_py == sp_rs
         assert np.array_equal(tr_py, tr_rs)
 
-    def test_simulate_rust_rejects_non_default(self) -> None:
+    def test_simulate_rust_accepts_non_default_complete_contract(self) -> None:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
-        n = QuadraticIFNeuron(v_peak=2.0)
-        with pytest.raises(RuntimeError, match="factory-default"):
-            n.simulate(10, current=0.0, backend="rust")
+        py = QuadraticIFNeuron(v=-0.5, v_reset=-2.0, v_peak=2.0, dt=0.02)
+        rs = QuadraticIFNeuron(v=-0.5, v_reset=-2.0, v_peak=2.0, dt=0.02)
+        py_voltage, py_events = py.simulate_complete(100, current=1.5, backend="python")
+        rs_voltage, rs_events = rs.simulate_complete(100, current=1.5, backend="rust")
+        np.testing.assert_allclose(rs_voltage, py_voltage, rtol=0.0, atol=2.0e-12)
+        np.testing.assert_array_equal(rs_events, py_events)
+        assert rs.v == pytest.approx(py.v, abs=2.0e-12)

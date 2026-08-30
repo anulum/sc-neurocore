@@ -70,7 +70,6 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "WilsonHRNeuron": "wilson_hr",
     "WongWangUnit": "wong_wang",
     "PoissonNeuron": "poisson",
-    "QuadraticIFNeuron": "quadratic_if",
     "ResonateAndFireNeuron": "resonate_fire",
     "SigmoidRateNeuron": "sigmoid_rate",
     "ThetaNeuron": "theta",
@@ -83,6 +82,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 # emitted alongside, but not counted as, source-literature S5 models.
 RETAINED_SC_CLASS_TO_SCHEMA: dict[str, str] = {
     "SCInclusivePerfectIntegratorNeuron": "sc_perfect_integrator",
+    "SCSymmetricQuadraticIFNeuron": "sc_symmetric_quadratic_if",
     "SCFourStateGLIFNeuron": "sc_four_state_glif",
     "SCScaledResetAdaptiveIFNeuron": "sc_scaled_reset_adaptive_if",
     "SCClippedRationalRecoveryMapNeuron": "sc_clipped_rational_recovery_map",
@@ -109,7 +109,9 @@ CURATED_CLASS_TO_MODULE: dict[str, str] = {
     "IbarzTanakaMapNeuron": "sc_ibarz_tanaka_rulkov_map",
     "LapicqueNeuron": "sc_lapicque_1907",
     "PerfectIntegratorNeuron": "sc_perfect_integrator_naud_gerstner_2012",
+    "QuadraticIFNeuron": "sc_quadratic_if_latham_2000",
     "SCInclusivePerfectIntegratorNeuron": "sc_perfect_integrator",
+    "SCSymmetricQuadraticIFNeuron": "sc_quadratic_if",
     "MATNeuron": "sc_mat",
     "McKeanNeuron": "mckean",
     "NagumoSatoMapNeuron": "sc_nagumo_sato_map",
@@ -125,6 +127,8 @@ CURATED_CLASS_TO_SCHEMA: dict[str, str] = {
     "ExpIFNeuron": "exp_if",
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
     "PerfectIntegratorNeuron": "perfect_integrator",
+    "QuadraticIFNeuron": "quadratic_if",
+    "SCSymmetricQuadraticIFNeuron": "sc_symmetric_quadratic_if",
 }
 
 # Other committed curated jobs cover retained SC variants or dedicated
@@ -150,6 +154,7 @@ CURATED_FORMAL_MODULES: frozenset[str] = frozenset(
         "sc_non_resetting_adaptive_lif",
         "sc_non_resetting_lif",
         "sc_perfect_integrator_naud_gerstner_2012",
+        "sc_quadratic_if_latham_2000",
         "sc_normalized_energy_lif",
         "sc_resetting_mat",
         "sc_resetting_wilson_hr",
@@ -307,6 +312,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "mihalas_niebur": (64, 32),
     "morris_lecar": (32, 16),
     "poisson": (48, 24),
+    "quadratic_if": (32, 16),
     "resonate_fire": (64, 32),
     "rulkov_map": (32, 16),
     "sc_upward_crossing_rulkov_map": (32, 16),

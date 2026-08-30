@@ -183,3 +183,71 @@ def quadratic_if_simulate_c(
     return _run_quadratic_if(
         v0, v_reset, v_peak, dt, n_steps, current, output_addr, True
     )
+
+
+def _run_quadratic_if_complete(
+    v0: Float64,
+    v_reset: Float64,
+    v_peak: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    voltage_addr: Int,
+    event_addr: Int,
+    write_output: Bool,
+) -> Int64:
+    var v = v0
+    if not _finite(current) or not quadratic_if_valid(v, v_reset, v_peak, dt):
+        return -1
+    var voltage = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=voltage_addr
+    )
+    var events = UnsafePointer[UInt8, MutAnyOrigin](unsafe_from_address=event_addr)
+    var event_count: Int64 = 0
+    for index in range(n_steps):
+        var event = quadratic_if_step_spike(v, current, v_reset, v_peak, dt)
+        if event < 0:
+            return -1
+        var next_v = quadratic_if_next_v(v, current, v_reset, v_peak, dt)
+        if not _finite(next_v):
+            return -1
+        v = next_v
+        event_count += Int64(event)
+        if write_output:
+            voltage[index] = v
+            events[index] = UInt8(event)
+    if write_output:
+        voltage[n_steps] = v
+    return event_count
+
+
+@export
+def quadratic_if_simulate_complete_c(
+    v0: Float64,
+    v_reset: Float64,
+    v_peak: Float64,
+    dt: Float64,
+    source_profile: Int,
+    n_steps: Int,
+    current: Float64,
+    voltage_addr: Int,
+    event_addr: Int,
+) -> Int64:
+    if (
+        n_steps < 0
+        or voltage_addr == 0
+        or (n_steps > 0 and event_addr == 0)
+        or (source_profile != 0 and source_profile != 1)
+        or not _finite(current)
+    ):
+        return -1
+    var validated = _run_quadratic_if_complete(
+        v0, v_reset, v_peak, dt, n_steps, current,
+        voltage_addr, event_addr, False,
+    )
+    if validated < 0:
+        return -1
+    return _run_quadratic_if_complete(
+        v0, v_reset, v_peak, dt, n_steps, current,
+        voltage_addr, event_addr, True,
+    )

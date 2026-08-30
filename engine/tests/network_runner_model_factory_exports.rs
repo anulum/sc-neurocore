@@ -114,6 +114,15 @@ fn network_runner_preserves_source_and_sc_perfect_integrator_boundaries() {
 }
 
 #[test]
+fn network_runner_preserves_source_and_sc_quadratic_if_boundaries() {
+    let source = create_neuron("QuadraticIFNeuron").expect("source model must construct");
+    let retained =
+        create_neuron("SCSymmetricQuadraticIFNeuron").expect("retained SC model must construct");
+    assert!((source.soma_voltage() + 1.0).abs() < 1.0e-12);
+    assert!((retained.soma_voltage() + 1.0).abs() < 1.0e-12);
+}
+
+#[test]
 fn network_runner_preserves_both_rulkov_event_contracts() {
     let mut source = create_neuron("RulkovMapNeuron").expect("source model must construct");
     let mut retained =

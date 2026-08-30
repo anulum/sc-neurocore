@@ -24,6 +24,36 @@ impl QuadraticIFNeuron {
         }
     }
 
+    /// Construct Latham et al.'s normalized numerical source profile.
+    pub fn latham_2000() -> Self {
+        Self {
+            v: -1.0,
+            v_reset: -3.0,
+            v_peak: 31.0 / 3.0,
+            dt: 0.05,
+        }
+    }
+
+    /// Return aligned voltage/events from a checked, failure-atomic clone.
+    pub fn simulate_complete(
+        &self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, Vec<u8>, f64), &'static str> {
+        if !current.is_finite() || !validate_quadratic_if(self) {
+            return Err("invalid quadratic-if batch contract");
+        }
+        let mut candidate = self.clone();
+        let mut voltage = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step(current)?;
+            voltage.push(candidate.v);
+            events.push(event as u8);
+        }
+        Ok((voltage, events, candidate.v))
+    }
+
     pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
         if !i_ext.is_finite() || !validate_quadratic_if(self) {
             return Err("quadratic-if state/current must be finite and well-formed");
@@ -192,5 +222,15 @@ mod tests {
             let spikes: i32 = (0..1_000).map(|_| state.step(current).unwrap()).sum();
             assert_eq!(spikes, expected, "current={current}");
         }
+    }
+
+    #[test]
+    fn test_latham_source_complete_packet() {
+        let state = QuadraticIFNeuron::latham_2000();
+        let (voltage, events, final_v) = state.simulate_complete(240, 4.0).unwrap();
+        assert_eq!(voltage.len(), 240);
+        assert_eq!(events.len(), 240);
+        assert_eq!(voltage.last().copied(), Some(final_v));
+        assert_eq!(state.v, -1.0);
     }
 }

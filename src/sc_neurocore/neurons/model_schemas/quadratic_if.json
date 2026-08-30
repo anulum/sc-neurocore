@@ -1,21 +1,24 @@
 {
   "metadata": {
-    "schema_version": 1,
-    "name": "Quadratic IF",
+    "schema_version": 2,
+    "name": "QuadraticIFNeuron",
     "author": "Latham, P.E. et al.",
     "year": 2000,
     "doi": "10.1152/jn.2000.83.2.808",
-    "description": "Canonical Type-I excitable model — simplest model exhibiting saddle-node bifurcation"
+    "description": "Latham 2000 isolated QIF with normalized numerical apex and repolarization boundaries"
   },
   "state": { "v": -1.0 },
-  "parameters": { "v_reset": -1.0, "v_peak": 1.0 },
-  "integration": { "dt": 0.01, "method": "euler" },
+  "parameters": { "v_reset": -3.0, "v_peak": 10.333333333333334 },
+  "integration": { "dt": 0.05, "method": "euler" },
   "dynamics": { "v": "v**2 + I" },
   "threshold": { "condition": "v >= v_peak", "detection": "crossing" },
-  "reset": { "v": "-1.0" },
+  "reset": { "v": "v_reset" },
   "extensions": {
     "bifurcation": "saddle-node",
     "excitability": "Type-I",
-    "maintained_discretisation": "Python uses the exact constant-current Riccati flow; schema and RTL use candidate-first Euler with an enrolled Q16.16 event-exact envelope"
+    "source_equation": "dx/ds=x**2+eta from equations (1), (2), and (5a) with x=2(V-M)/DeltaV, s=t/(2*tau_cell), eta=4*I_hat_a/DeltaV-1",
+    "source_boundaries": "V_r=-65mV -> -1; V_t=-50mV -> +1; V_apex=+20mV -> 31/3; V_repol=-80mV -> -3; 1ms -> ds=0.05",
+    "maintained_discretisation": "Schema/RTL use explicit Euler at the source timestep; production runtimes use a separately validated exact held-current Riccati flow",
+    "identity_note": "sc_symmetric_quadratic_if preserves the historical -1/+1/.01 SC profile"
   }
 }

@@ -1,321 +1,143 @@
 # QuadraticIFNeuron
 
 **Module:** `sc_neurocore.neurons.models.quadratic_if`
-**Reference:** Ermentrout & Kopell 1986; Latham et al. 2000
-**Family:** Integrate-and-fire (Type-I canonical form)
-**State variables:** `v` (membrane voltage)
 
----
+**Source:** Latham et al. (2000), equations (1), (2), and (5a),
+[doi:10.1152/jn.2000.83.2.808](https://doi.org/10.1152/jn.2000.83.2.808)
 
-## Equations
+**Family:** quadratic integrate-and-fire / Type-I excitability
+
+## Source equation and normalisation
 
-### Continuous dynamics
+After removing the paper's AHP and synaptic terms, the isolated voltage equation
+is
+
+$$
+\frac{dV}{dt}=\frac{1}{\tau_{cell}}
+\left[\frac{(V-V_r)(V-V_t)}{\Delta V}+\hat I_a\right],
+\qquad \Delta V=V_t-V_r.
+$$
 
-$$\frac{dV}{dt} = V^2 + I$$
-
-This is the canonical form for Type-I excitability near a saddle-node
-bifurcation (Ermentrout 1996). The quadratic nonlinearity is the normal
-form of the bifurcation — any conductance-based model with a saddle-node
-on an invariant circle reduces to this via coordinate transform.
-
-### Exact constant-current flow (as implemented)
-
-For constant input over one timestep, SC-NEUROCORE advances the QIF state with
-the closed-form Riccati flow rather than a forward-Euler increment:
-
-| Current regime | Candidate voltage after one `dt` |
-|----------------|-----------------------------------|
-| $I > 0$ | $a \tan(a\,dt + \arctan(V/a))$, $a=\sqrt{I}$ |
-| $I = 0$ | $V/(1 - V\,dt)$ |
-| $I < 0$ | $a(1 + q)/(1 - q)$, $a=\sqrt{-I}$, $q=((V-a)/(V+a))\exp(2a\,dt)$ |
-
-The candidate is computed before mutation. If the candidate is non-finite,
-the call fails without changing state. If the candidate reaches or crosses
-`v_peak`, the membrane resets to `v_reset` and emits one spike. Python, Rust
-engine, Rust safety, Go service, Julia, and Mojo surfaces use the same
-candidate-first exact-flow contract.
-
-### Phase-plane structure
-
-For $I < 0$: two fixed points at $V^* = \pm\sqrt{-I}$. The lower one
-is stable; the upper is unstable. Neuron rests silently.
-
-For $I = 0$: fixed points coalesce at $V = 0$ (saddle-node bifurcation).
-
-For $I > 0$: no fixed points. $V$ increases monotonically until hitting
-$V_{\text{peak}}$, resets to $V_{\text{reset}}$, and repeats.
-
----
-
-## Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `v` | −1.0 | Membrane voltage (dimensionless) |
-| `v_reset` | −1.0 | Post-spike reset potential |
-| `v_peak` | 1.0 | Spike detection threshold |
-| `dt` | 0.01 | Integration time step |
-
-All quantities are dimensionless. To map to biophysical units, rescale
-V and I according to the parent conductance model's parameters.
-
----
-
-### Validation contract
-
-The implementation rejects invalid state before mutation:
-
-- `v`, `v_reset`, `v_peak`, `dt`, and input current must be finite;
-- initial `v` and `v_reset` must be below `v_peak`;
-- `dt` must be positive;
-- exact-flow candidate voltages must remain finite before assignment.
-
-These guards prevent a finite but numerically explosive quadratic flow from
-poisoning the membrane state.
-
-## Behaviour
-
-### Saddle-node bifurcation at I=0
-
-The defining property of QIF. Below the bifurcation ($I < 0$), the neuron
-is absolutely silent — tested with 50,000 steps at $I = -0.5$: zero spikes.
-At $I = 0$: also zero spikes (half-stable fixed point at $V = 0$, approached
-asymptotically from $V_0 = -1$). Above ($I > 0$): periodic spiking — tested
-at $I = 0.5$: 184 spikes in 50,000 steps.
-
-### Type-I continuous f–I onset
-
-Firing rate rises continuously from zero at $I = 0^+$. Measured:
-- $I = 0.1$: ~62 spikes/50k steps
-- $I = 1.0$: ~316 spikes/50k steps
-- Ratio ≈ 5.1
-
-In the continuous QIF without reset, $f \propto \sqrt{I}$ giving a ratio of
-$\sqrt{10} \approx 3.16$. The measured ratio is higher because the discrete
-reset transit from $V_{\text{peak}}$ to $V_{\text{reset}}$ adds a constant
-time component to the ISI.
-
-### Quadratic divergence
-
-Once $V > 0$, the $V^2$ term creates positive feedback — voltage accelerates
-upward. This is verified directly: starting from $V = 0.5$ with $I = 1.0$,
-one step yields $\Delta V = (0.25 + 1.0) \times 0.01 = 0.0125 > 0$.
-
-### Constant ISI
-
-Deterministic model with no adaptation. After discarding initial transient
-(first 5 spikes), measured CV(ISI) < 0.02 at $I = 1.0$.
-
----
-
-## Measured Dynamics (from test probing)
-
-| Current | Spikes (50k steps) | Mean ISI (steps) | Regime |
-|---------|--------------------|-------------------|--------|
-| $I = -0.5$ | 0 | — | Quiescent (stable FP at $V^* = -0.707$) |
-| $I = 0.0$ | 0 | — | Marginal (half-stable FP at $V = 0$) |
-| $I = 0.5$ | 184 | 271 | Slow periodic firing |
-| $I = 1.0$ | 316 | 158 | Moderate periodic firing |
-| $I = 2.0$ | 568 | 88 | Fast firing |
-| $I = 5.0$ | 1,315 | 38 | Rapid firing |
-
-f–I is monotonic. The measured ratio $f(4I)/f(I) \approx 3.4$ for
-$I_1 = 1.0$, $I_2 = 4.0$: sub-linear but above the continuous $\sqrt{4} = 2.0$
-prediction.
-
----
-
-## Analytical Properties (continuous QIF, no reset)
-
-| Property | Formula |
-|----------|---------|
-| Stable fixed point ($I < 0$) | $V^* = -\sqrt{-I}$ |
-| Unstable fixed point ($I < 0$) | $V^{**} = +\sqrt{-I}$ |
-| ISI | $T = \pi / \sqrt{I}$ |
-| Firing rate | $f = \sqrt{I} / \pi$ |
-| f–I ratio | $f(kI) / f(I) = \sqrt{k}$ |
-
-These hold exactly only in the limit $V_{\text{peak}} \to +\infty$,
-$V_{\text{reset}} \to -\infty$. With finite reset boundaries ($V_{\text{peak}} = 1$,
-$V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
-
----
-
-## Comparison with Other IF Models
-
-| Property | LIF | QIF | EIF |
-|----------|-----|-----|-----|
-| f–I onset | Linear from $I_\theta$ | Continuous from $I = 0$ (√I) | Can be continuous or discontinuous |
-| Spike upstroke | Linear ramp | Quadratic acceleration | Exponential blow-up |
-| Canonical bifurcation | None | Saddle-node on invariant circle | Saddle-node (with sharpness param) |
-| State variables | 1 | 1 | 1 |
-| Computational cost | Lowest (1 add, 1 compare) | Low (1 multiply, 1 add, 1 compare) | Medium (1 exp, adds) |
-
----
-
-## Numerical Considerations
-
-- **dt sensitivity:** Tested stable at dt = 0.005, 0.01, 0.02 with $I = 1.0$
-  over 50,000 steps. All produced finite states.
-- **V_peak placement:** Lower V_peak → fewer steps per ISI → faster simulation
-  but less of the quadratic acceleration region is traversed. Measured:
-  V_peak = 0.5 fires more often than V_peak = 2.0 at same current.
-- **Exact-flow peak crossing:** The closed-form candidate may pass
-  `v_peak` within one timestep. The comparator `>=` catches the first
-  discrete sample crossing and immediately resets, so the overshoot voltage is
-  discarded rather than retained.
-
----
-
-## Implementation Notes
-
-- **Source:** `src/sc_neurocore/neurons/models/quadratic_if.py`.
-- **No sub-stepping:** Single exact constant-current flow step per `step()`
-  call.
-- **Polyglot surfaces:** Rust engine, Rust safety, Go, Julia, and Mojo QIF
-  surfaces use the same finite-state, reset-below-peak, positive-`dt`,
-  candidate-first exact-flow, and spike/reset contract as the Python model.
-  Invalid native scalar paths return explicit errors or a dedicated invalid
-  sentinel rather than silently converting numerical corruption into a no-spike
-  event.
-
----
-
-## Test Coverage
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 5 | construction defaults, step returns 0 or 1, voltage evolves under current, state finite after 50k steps, reset() restores v_reset |
-| Bifurcation | 4 | I=−0.5 stable (0 spikes/50k), I=0 stable (0 spikes/50k), I=0.5 periodic (≥50 spikes), Type-I onset ratio I=0.1 vs I=1.0 |
-| f–I curve | 2 | monotonic 4-point sweep (0.5, 1.0, 2.0, 5.0), sub-linear scaling f(4I)/f(I) ∈ (1.5, 4.0) |
-| ISI | 2 | constant ISI at steady state (CV < 0.02, first 5 spikes excluded), ISI shortens monotonically with current |
-| Edge cases | 7 | V² positive feedback, exact-flow/Euler separation, within-step peak crossing, custom V_peak, and dt stability at 0.005/0.01/0.02 |
-| Determinism | 1 | bit-exact reproducibility across 2 independent runs (200 steps each) |
-| Network | 2 | Population(n=10) construction, Network produces spikes with PoissonInput(rate=500Hz, weight=2.0) |
-| Analysis | 2 | spike_count ≥ 100 in 50k steps at I=1.0, spike_count matches manual np.sum |
-| Validation | 15 | finite parameters, peak/reset geometry, initial voltage below peak, finite current, finite exact-flow candidate before mutation |
-| Public simulation | 3 | Python trace contract, Rust/Python parity, and explicit non-default Rust boundary |
-| **Total** | **43** | |
-
----
-
-## Findings
-
-1. **Saddle-node bifurcation at I=0 confirmed:** Clean transition from
-   0 spikes (I≤0) to sustained periodic firing (I>0). No transient
-   spikes at I=0.
-2. **Discrete reset modifies sqrt scaling:** Measured f(4)/f(1) ≈ 3.4
-   vs. theoretical 2.0. The V_peak → V_reset transit contributes a
-   constant ISI component that inflates the ratio.
-3. **ISI perfectly constant:** CV effectively zero after transient.
-   No adaptation, no noise, no slow variables.
-4. **V_peak affects rate as expected:** Lower peak → shorter path →
-   faster cycling. Verified with V_peak=0.5 vs V_peak=2.0.
-5. **Numerically robust:** All three tested dt values (0.005–0.02)
-   maintained finite state over 50k steps at I=1.0.
-6. **Custom V_peak effect confirmed:** V_peak=0.5 fires more frequently
-   than V_peak=2.0 at the same current — the shorter integration path
-   reduces the ISI proportionally.
-
----
-
-## Relationship to Other Models
-
-The QIF is the **canonical form** for all Type-I neurons near the
-bifurcation. Any conductance-based model exhibiting a saddle-node on
-an invariant circle (SNIC) bifurcation can be reduced to the QIF via
-a change of variables. This includes:
-
-- **Connor-Stevens** near threshold (saddle-node via A-current)
-- **Wang-Buzsaki** near threshold (SNIC in gamma interneurons)
-- **Morris-Lecar** in Type-I parameter regime (I < saddle-node)
-
-The QIF thus serves as a **universal reference model** for Type-I
-excitability, analogous to how the theta neuron (which is the QIF in
-phase coordinates) serves as the canonical phase model.
-
-
----
-
-## Measured Performance (2026-07-13)
-
-This is a single-logical-CPU public-dispatch regression run on a loaded,
-non-isolated workstation. The affinity, powersave governor, empty kernel
-isolation set, runtime versions, and host load are retained in the artefact.
-These timings are local regression context, not production throughput claims.
-
-| Metric | Value |
-|--------|-------|
-| Evidence class | CPU-10 affinity, non-isolated loaded workstation |
-| Benchmark artefact | `benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json` |
-| Workload | 100,000 steps, 7 repeats, I=5.0 |
-| Polyglot contract | Python, Rust engine, Julia, Go, and Mojo through public dispatch; independent executable Rust-safety gate |
-| Parity | 2,631 events in every lane; observed maximum trace difference 0.0 |
-
-| Backend | Median call ms | Minimum call ms | Speedup vs Python | Events |
-|---------|---------------:|----------------:|------------------:|-------:|
-| Go | 10.886287 | 9.736645 | 9.33x | 2,631 |
-| Julia | 11.118205 | 8.717117 | 9.14x | 2,631 |
-| Mojo | 19.905727 | 12.312144 | 5.10x | 2,631 |
-| Rust engine | 58.509447 | 36.265872 | 1.74x | 2,631 |
-| Python | 101.614219 | 89.947513 | 1.00x | 2,631 |
-
----
-
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`QuadraticIFNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-263 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(QuadraticIFNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Polyglot safety surfaces
-Rust engine, Rust safety, Go, Julia, and Mojo carry the same exact-flow,
-candidate-first spike/reset contract. Julia, Go, and Mojo transport every
-maintained numeric field; the Rust engine's factory-default boundary is explicit.
-**Status: PASS**
-
-### 8. Python-to-Verilog co-simulation
-The paired Euler schemas preserve the exact-flow hand model's event sequence
-over a varied 1,000-step drive with state error below `0.006`. Q16.16 RTL is
-cycle/event exact at I=0/0.333/0.5/1/2/5/20/50 with voltage error below
-`0.011`. At I=0.1, total events remain 1/1 but the RTL reset is displaced by
-one cycle; that boundary is excluded from the cycle-exact envelope. TOML,
-JSON, and generated RTL use the configured `v_peak` with an inclusive `>=`
-comparison, so an exactly-equal candidate resets in the same cycle. The
-generated depth-20 Z3 job proves its public-port safety contract.
-**Status: PASS with declared I=0.1 boundary**
-
----
-
-## Findings (measured 2026-07-13)
-
-1. All five public-dispatch lanes record 2,631 events and the same final
-   voltage; the measured trace difference is zero on this host.
-2. The actual `accel/rust/safety` module passes eight focused tests and an
-   executable trace probe independently of the Rust engine dispatcher.
-3. Go, Julia, and Mojo execute the complete numeric contract. Failed Julia
-   candidates preserve state, while rejected C-ABI work leaves caller buffers untouched.
-4. Auto dispatch uses Go, Julia, Mojo, Rust engine, then Python so a present Go
-   shared library avoids Julia runtime initialisation. Warm-call ordering is
-   retained separately in the artefact; heavy host load, powersave governor,
-   and no reserved CPUs prohibit a production speed claim.
+With
+
+$$
+M=\frac{V_r+V_t}{2},\quad
+x=\frac{2(V-M)}{\Delta V},\quad
+s=\frac{t}{2\tau_{cell}},\quad
+\eta=\frac{4\hat I_a}{\Delta V}-1,
+$$
+
+this becomes exactly
+
+$$\frac{dx}{ds}=x^2+\eta.$$
+
+The source's numerical values are `V_r=-65 mV`, `V_t=-50 mV`,
+`V_apex=+20 mV`, `V_repol=-80 mV`, `tau_cell=10 ms`, and a `1 ms`
+timestep. They map to:
+
+| Meaning | Source value | Normalized value |
+| --- | ---: | ---: |
+| initial/rest | `-65 mV` | `-1` |
+| unstable threshold | `-50 mV` | `+1` |
+| event apex | `+20 mV` | `31/3` |
+| reset/repolarization | `-80 mV` | `-3` |
+| timestep | `1 ms` | `0.05` |
+
+The important boundary is that `+1` is the unstable equilibrium, not the spike
+apex. A source event occurs when the flow reaches the finite normalized apex
+`31/3`, after which the state resets to `-3`.
+
+## Public API and preserved compatibility
+
+```python
+from sc_neurocore.neurons.models.quadratic_if import (
+    QuadraticIFNeuron,
+    SCSymmetricQuadraticIFNeuron,
+)
+
+source = QuadraticIFNeuron.latham_2000()
+voltage, events = source.simulate_complete(240, 4.0, backend="auto")
+
+# Historical -1/+1/.01 SC behavior remains available.
+retained = SCSymmetricQuadraticIFNeuron()
+```
+
+`QuadraticIFNeuron()` remains backward compatible with the historical
+`v_reset=-1`, `v_peak=+1`, `dt=0.01` recurrence. The same recurrence has the
+explicit count-neutral `SCSymmetricQuadraticIFNeuron` identity, paired
+`sc_symmetric_quadratic_if` schemas, its original RTL/formal lane, and a
+[separate public page](sc_symmetric_quadratic_if.md). No SC variant was removed
+or silently relabelled.
+
+Canonical NetworkRunner aliases construct `QuadraticIFNeuron.latham_2000()`;
+`SCSymmetricQuadraticIFNeuron` selects the retained SC profile.
+
+## Integration and failure contract
+
+All five production runtimes use the exact analytic Riccati flow for a current
+held constant over one step. This is a maintained higher-grade numerical
+specialisation of the paper's ODE; the paper is not claimed to have used that
+algorithm. The schema/RTL lane separately uses explicit Euler at the source
+timestep and declares its fixed-point approximation envelope.
+
+`simulate_complete()` returns aligned post-step `float64` voltage and `uint8`
+binary event arrays. Python, production Rust/PyO3, Julia, Go, and Mojo carry the
+same arbitrary finite state/parameter contract. Invalid step counts, parameters,
+currents, intermediate values, packet shapes, non-binary events, or inconsistent
+final state fail before the Python instance commits any mutation. The Go and
+Mojo C ABIs validate a complete dry run before writing caller buffers.
+
+## Independent source custody
+
+The DOI-bound receipt
+`src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json`
+records the inspected PDF SHA-256, exact normalisation, numerical source values,
+input digest, complete voltage digest, and event-vector digest. At `eta=4` for
+240 exact held-current steps it records ten events at indices
+`18, 42, ..., 234` and final state `-1.0483338948753533`.
+
+The source `quadratic_if` TOML/JSON schemas and the preserved
+`sc_symmetric_quadratic_if` pair are independently exercised. The source and SC
+zero-current traces use the analytic solution `x(s)=-1/(1+s)` at their
+respective timesteps.
+
+## Polyglot and silicon evidence
+
+The five runtime complete packets have exact event-vector parity and a maximum
+enrolled cross-libm voltage tolerance of `2e-12`. Rust safety is exercised as a
+separate executable lane.
+
+The original `sc_quadratic_if` RTL remains assigned to the preserved symmetric
+SC identity. A dedicated source-profile fixed-point core carries the Latham
+apex/reset/timestep constants, co-simulation, tracked Yosys synthesis evidence,
+and depth-20 reset/event safety. Yosys 0.33 reports 9,379 coarse cells. This
+establishes H2 only inside the declared
+fixed-point envelope; timing, PPA, target-device, board, physical-silicon, and
+universal real-valued equivalence claims remain open.
+
+## Controlled local benchmark
+
+The source-hashed 100,000-step, seven-repeat run at `eta=5` produced 4,762
+events in every lane. It was pinned to one logical CPU on a loaded, non-isolated
+workstation, so these values are regression evidence rather than production
+throughput claims.
+
+| Backend | Median call ms | Speedup vs Python | Maximum voltage difference |
+| --- | ---: | ---: | ---: |
+| Rust | 4.141 | 27.47x | `0` |
+| Julia | 6.011 | 18.92x | `0` |
+| Go | 6.932 | 16.41x | `9.77e-15` |
+| Mojo | 10.444 | 10.89x | `0` |
+| Python | 113.738 | 1.00x | `0` |
+
+The committed artefact is
+`benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json`.
+
+Focused executable evidence is in:
+
+- `tests/test_reference_quadratic_if.py`
+- `tests/test_quadratic_if_backends_rejects_and_flow.py`
+- `tests/test_quadratic_if_backends_backend_parity.py`
+- `tests/test_quadratic_if_backends_c_abi.py`
+- `tests/test_cosim_quadratic_if.py`
+- `tests/test_bench_quadratic_if.py`

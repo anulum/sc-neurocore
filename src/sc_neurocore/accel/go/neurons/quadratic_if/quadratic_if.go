@@ -60,4 +60,44 @@ func quadratic_if_simulate_c(
 	return C.int64_t(spikes)
 }
 
+//export quadratic_if_simulate_complete_c
+func quadratic_if_simulate_complete_c(
+	v C.double,
+	vReset C.double,
+	vPeak C.double,
+	dt C.double,
+	sourceProfile C.int64_t,
+	nSteps C.int64_t,
+	current C.double,
+	voltage *C.double,
+	events *C.uint8_t,
+) C.int64_t {
+	if nSteps < 0 || voltage == nil || (nSteps > 0 && events == nil) || (sourceProfile != 0 && sourceProfile != 1) {
+		return -1
+	}
+	n := int(nSteps)
+	if C.int64_t(n) != nSteps || n > int(^uint(0)>>1)-1 {
+		return -1
+	}
+	state := services.QuadraticIFNeuronState{
+		V: float64(v), VReset: float64(vReset), VPeak: float64(vPeak), Dt: float64(dt), SourceProfile: sourceProfile == 1,
+	}
+	trace, eventTrace, finalV, err := services.SimulateQuadraticIFComplete(state, n, float64(current))
+	if err != nil {
+		return -1
+	}
+	stagedVoltage := make([]float64, n+1)
+	copy(stagedVoltage, trace)
+	stagedVoltage[n] = finalV
+	copy(unsafe.Slice((*float64)(unsafe.Pointer(voltage)), n+1), stagedVoltage)
+	if n > 0 {
+		copy(unsafe.Slice((*uint8)(unsafe.Pointer(events)), n), eventTrace)
+	}
+	count := 0
+	for _, event := range eventTrace {
+		count += int(event)
+	}
+	return C.int64_t(count)
+}
+
 func main() {}

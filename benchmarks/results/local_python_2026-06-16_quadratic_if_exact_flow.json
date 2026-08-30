@@ -2,76 +2,86 @@
   "backends": {
     "go": {
       "available": true,
-      "event_count": 2631,
-      "event_count_matches_python": true,
+      "event_count": 4762,
+      "event_sha256": "c7dddd6daf87be02c482ef9570e7777854a2b0372aeb561d8705c23b71818b7d",
+      "event_vector_matches_python": true,
       "final_state": {
-        "v": 0.15992850627251137
+        "v": -1.5129750387601124
       },
-      "median_call_ms": 10.886287,
-      "minimum_call_ms": 9.736645,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 9.334148456677655,
-      "used": true
+      "median_call_ms": 6.932071,
+      "minimum_call_ms": 6.583411,
+      "parity_max_abs_diff": 9.769962616701378e-15,
+      "speedup_vs_python": 16.407503616163194,
+      "used": true,
+      "voltage_sha256": "f90be6310fc0ce72cf07adbaf3fe83184c7bad0bdb4b29157e5b42ac7666e15f"
     },
     "julia": {
       "available": true,
-      "event_count": 2631,
-      "event_count_matches_python": true,
+      "event_count": 4762,
+      "event_sha256": "c7dddd6daf87be02c482ef9570e7777854a2b0372aeb561d8705c23b71818b7d",
+      "event_vector_matches_python": true,
       "final_state": {
-        "v": 0.15992850627251137
+        "v": -1.5129750387601126
       },
-      "median_call_ms": 11.118205,
-      "minimum_call_ms": 8.717117,
+      "median_call_ms": 6.010864,
+      "minimum_call_ms": 5.795918,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 9.139444631574971,
-      "used": true
+      "speedup_vs_python": 18.922068441408754,
+      "used": true,
+      "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     },
     "mojo": {
       "available": true,
-      "event_count": 2631,
-      "event_count_matches_python": true,
+      "event_count": 4762,
+      "event_sha256": "c7dddd6daf87be02c482ef9570e7777854a2b0372aeb561d8705c23b71818b7d",
+      "event_vector_matches_python": true,
       "final_state": {
-        "v": 0.15992850627251137
+        "v": -1.5129750387601126
       },
-      "median_call_ms": 19.905727,
-      "minimum_call_ms": 12.312144,
+      "median_call_ms": 10.443539,
+      "minimum_call_ms": 10.225396,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 5.104773063551008,
-      "used": true
+      "speedup_vs_python": 10.89075073114583,
+      "used": true,
+      "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     },
     "python": {
       "available": true,
-      "event_count": 2631,
-      "event_count_matches_python": true,
+      "event_count": 4762,
+      "event_sha256": "c7dddd6daf87be02c482ef9570e7777854a2b0372aeb561d8705c23b71818b7d",
+      "event_vector_matches_python": true,
       "final_state": {
-        "v": 0.15992850627251137
+        "v": -1.5129750387601126
       },
-      "median_call_ms": 101.614219,
-      "minimum_call_ms": 89.947513,
+      "median_call_ms": 113.73798,
+      "minimum_call_ms": 106.180457,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
-      "used": true
+      "used": true,
+      "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     },
     "rust": {
       "available": true,
-      "event_count": 2631,
-      "event_count_matches_python": true,
+      "event_count": 4762,
+      "event_sha256": "c7dddd6daf87be02c482ef9570e7777854a2b0372aeb561d8705c23b71818b7d",
+      "event_vector_matches_python": true,
       "final_state": {
-        "v": 0.15992850627251137
+        "v": -1.5129750387601126
       },
-      "median_call_ms": 58.509447,
-      "minimum_call_ms": 36.265872,
+      "median_call_ms": 4.140633,
+      "minimum_call_ms": 4.06297,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 1.7367147394163545,
-      "used": true
+      "speedup_vs_python": 27.468742098128473,
+      "used": true,
+      "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     }
   },
-  "kernel": "quadratic_if_exact_constant_current_flow",
+  "kernel": "quadratic_if_latham_2000_exact_complete_packet",
   "measured_order": [
-    "go",
-    "julia",
-    "mojo",
     "rust",
+    "julia",
+    "go",
+    "mojo",
     "python"
   ],
   "meta": {
@@ -82,94 +92,133 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      26.08544921875,
-      25.44384765625,
-      28.65478515625
+      4.07470703125,
+      6.06396484375,
+      7.6533203125
     ],
     "load_average_start": [
-      24.7353515625,
-      25.177734375,
-      28.6416015625
+      3.90673828125,
+      6.0654296875,
+      7.66259765625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
       "go": "go version go1.24.0 linux/amd64",
       "julia": "julia version 1.12.6",
       "mojo": "Mojo 1.0.0b1 (a9591de6)",
       "numpy": "2.2.6",
       "python": "3.12.3",
-      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
     },
     "single_cpu_pinned": true
   },
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_quadratic_if": {
-      "py": "224118b6ab2f61966dcea69e396d8cb45986b78d4eb67e7ebd0c68202673114e"
+      "py": "c02bc3d31875fe7edc968c5b535b6d9a93c4c898900bf7bd6fc1af11b596975b"
     },
-    "benchmarks/bench_model_quadratic_if.py": "224118b6ab2f61966dcea69e396d8cb45986b78d4eb67e7ebd0c68202673114e",
+    "benchmarks/bench_model_quadratic_if.py": "c02bc3d31875fe7edc968c5b535b6d9a93c4c898900bf7bd6fc1af11b596975b",
+    "engine/src/bindings/trivial/quadratic_if": {
+      "rs": "57e873939d17d875b96bba52ff75813a10512b40c8535fb48a040ab9831eda1d"
+    },
+    "engine/src/bindings/trivial/quadratic_if.rs": "57e873939d17d875b96bba52ff75813a10512b40c8535fb48a040ab9831eda1d",
+    "engine/src/network_runner/model_factory": {
+      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
+    },
+    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
     "engine/src/neurons/trivial/quadratic_if": {
-      "rs": "722d277b78c555def0bc80d848fc0d17b37d1f382e80fc19d711fce51eb8e2b8"
+      "rs": "20f55bf94955642d607d7c6bac11e3cd69ef585010ef99ce4357c8f5694e9a23"
     },
-    "engine/src/neurons/trivial/quadratic_if.rs": "722d277b78c555def0bc80d848fc0d17b37d1f382e80fc19d711fce51eb8e2b8",
+    "engine/src/neurons/trivial/quadratic_if.rs": "20f55bf94955642d607d7c6bac11e3cd69ef585010ef99ce4357c8f5694e9a23",
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000": {
+      "sby": "082367f11d6a04194a75855c6152a5f3d7eede73fbc0efd148bbcdad4fa47d55"
+    },
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000.sby": "082367f11d6a04194a75855c6152a5f3d7eede73fbc0efd148bbcdad4fa47d55",
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000.v": "81fde21150f87930b494b584298287d0b893a5327763d39a7fe07bf4d23955e2",
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal": {
+      "v": "4fc11a0c7fc7fe062fb49f94f972be0619e4994c199cce84c532abb8a9bfdf79"
+    },
+    "hdl/formal/catalogue/sc_quadratic_if_latham_2000_formal.v": "4fc11a0c7fc7fe062fb49f94f972be0619e4994c199cce84c532abb8a9bfdf79",
+    "hdl/reports/yosys_quadratic_if_latham_2000_q1616_2026-08-30": {
+      "json": "52a8111e3ef6efe357927aa0827323b5735b39fbf197773c62e63594b8291265"
+    },
+    "hdl/reports/yosys_quadratic_if_latham_2000_q1616_2026-08-30.json": "52a8111e3ef6efe357927aa0827323b5735b39fbf197773c62e63594b8291265",
     "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if": {
-      "go": "16f09c0ef9e8fe3d1dc89d6bb80e194c00a8e08801506574818b4b17b559df24"
+      "go": "3fdd4ea8afa19d2cc6aa3b5a21cdff08b0e922d1cd939bd7473bf2f46214b6ea"
     },
-    "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if.go": "16f09c0ef9e8fe3d1dc89d6bb80e194c00a8e08801506574818b4b17b559df24",
+    "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if.go": "3fdd4ea8afa19d2cc6aa3b5a21cdff08b0e922d1cd939bd7473bf2f46214b6ea",
     "src/sc_neurocore/accel/go/services/quadratic_if": {
-      "go": "378b95c05e262387cb4281093a013e6beeaac8c8153722a13fdc5fdcdc3c6113"
+      "go": "ec578aec91a93e7b13e6b664fa01078e27f058e55b01a0a7cf0ac07cd601f964"
     },
-    "src/sc_neurocore/accel/go/services/quadratic_if.go": "378b95c05e262387cb4281093a013e6beeaac8c8153722a13fdc5fdcdc3c6113",
+    "src/sc_neurocore/accel/go/services/quadratic_if.go": "ec578aec91a93e7b13e6b664fa01078e27f058e55b01a0a7cf0ac07cd601f964",
     "src/sc_neurocore/accel/go/services/quadratic_if_test": {
-      "go": "7c5e12fbfac53f27e0c5cdcbfe2f12ae8e5fafbd7f697de10dbf5184abcceeec"
+      "go": "33f7be654c845d6c48a34d2c8470eef4b0cc63a775868a7f4029a11528ef0007"
     },
-    "src/sc_neurocore/accel/go/services/quadratic_if_test.go": "7c5e12fbfac53f27e0c5cdcbfe2f12ae8e5fafbd7f697de10dbf5184abcceeec",
+    "src/sc_neurocore/accel/go/services/quadratic_if_test.go": "33f7be654c845d6c48a34d2c8470eef4b0cc63a775868a7f4029a11528ef0007",
     "src/sc_neurocore/accel/julia/neurons/quadratic_if": {
-      "jl": "d537d6c04f35d2a6885f14c92712f9f53da52911efb20267ef5ff0610f57f259"
+      "jl": "d1da7b628fa15d796fff8502124238a4087ef002ddfc808b97314c33a5275d6f"
     },
-    "src/sc_neurocore/accel/julia/neurons/quadratic_if.jl": "d537d6c04f35d2a6885f14c92712f9f53da52911efb20267ef5ff0610f57f259",
+    "src/sc_neurocore/accel/julia/neurons/quadratic_if.jl": "d1da7b628fa15d796fff8502124238a4087ef002ddfc808b97314c33a5275d6f",
     "src/sc_neurocore/accel/julia/quadratic_if_parity_test": {
-      "jl": "9abe49c27dfce6f092f4b1d7661e39619247dab87d4f2e5ecef592bd62679513"
+      "jl": "dea1cdeb95978f7042b0eb9647e892dee8cc079526b4f6895e62b10e041cf611"
     },
-    "src/sc_neurocore/accel/julia/quadratic_if_parity_test.jl": "9abe49c27dfce6f092f4b1d7661e39619247dab87d4f2e5ecef592bd62679513",
+    "src/sc_neurocore/accel/julia/quadratic_if_parity_test.jl": "dea1cdeb95978f7042b0eb9647e892dee8cc079526b4f6895e62b10e041cf611",
     "src/sc_neurocore/accel/mojo/kernels/quadratic_if": {
-      "mojo": "8e1c908ddb66ec9d2f6d3858bfb17ef2bf5a249b7036008e97b2f378153c1976"
+      "mojo": "3a1538b72ad4c31394039a559af1324dd14a8e7825081492da89a600ed13809d"
     },
-    "src/sc_neurocore/accel/mojo/kernels/quadratic_if.mojo": "8e1c908ddb66ec9d2f6d3858bfb17ef2bf5a249b7036008e97b2f378153c1976",
+    "src/sc_neurocore/accel/mojo/kernels/quadratic_if.mojo": "3a1538b72ad4c31394039a559af1324dd14a8e7825081492da89a600ed13809d",
     "src/sc_neurocore/accel/quadratic_if": {
-      "py": "93be1ed7dee0e1819e5ca4ed6d17ef402d8c99bc050f603ac4fc80df25b83272"
+      "py": "7586bd6735abb3145e8319d28b1f42111526bfa39732c1b3bd6eea9ac4f7a6b0"
     },
-    "src/sc_neurocore/accel/quadratic_if.py": "93be1ed7dee0e1819e5ca4ed6d17ef402d8c99bc050f603ac4fc80df25b83272",
+    "src/sc_neurocore/accel/quadratic_if.py": "7586bd6735abb3145e8319d28b1f42111526bfa39732c1b3bd6eea9ac4f7a6b0",
     "src/sc_neurocore/accel/rust/examples/quadratic_if_trace": {
       "rs": "2f5d34ba3c6df79f0f5845b6196fded5f54a5eb66776409497ccd0b7fae8521f"
     },
     "src/sc_neurocore/accel/rust/examples/quadratic_if_trace.rs": "2f5d34ba3c6df79f0f5845b6196fded5f54a5eb66776409497ccd0b7fae8521f",
     "src/sc_neurocore/accel/rust/safety/quadratic_if": {
-      "rs": "1cd24365b890b269d64ea2ffe0ca52a819885b9dcb6e26f1f6e044b811a5f40c"
+      "rs": "252c641cb0c87d593a1620e7e6a3732090922a4e90e1d9cb122b37db4a0b2eee"
     },
-    "src/sc_neurocore/accel/rust/safety/quadratic_if.rs": "1cd24365b890b269d64ea2ffe0ca52a819885b9dcb6e26f1f6e044b811a5f40c",
+    "src/sc_neurocore/accel/rust/safety/quadratic_if.rs": "252c641cb0c87d593a1620e7e6a3732090922a4e90e1d9cb122b37db4a0b2eee",
+    "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron": {
+      "toml": "d81ffac79cec00cb1f5fa4eb36aa188dba92373faefd400406af062e5f26a270"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/QuadraticIFNeuron.toml": "d81ffac79cec00cb1f5fa4eb36aa188dba92373faefd400406af062e5f26a270",
+    "src/sc_neurocore/neurons/model_schemas/quadratic_if": {
+      "json": "8705990ed85b22c25e72829537b6965de4b3322224d3ba76a21b5a3be10f435e"
+    },
+    "src/sc_neurocore/neurons/model_schemas/quadratic_if.json": "8705990ed85b22c25e72829537b6965de4b3322224d3ba76a21b5a3be10f435e",
+    "src/sc_neurocore/neurons/model_schemas/quadratic_if.toml": "511b2505f21d4cacb51a2fb1e51582dcb754fe361587e4b24ae574c02b2abadd",
+    "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if": {
+      "json": "52c7a3ba95aed27d5bda4a5a93fe706cf87479bb75f8515c9d1c24b49047eb47"
+    },
+    "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.json": "52c7a3ba95aed27d5bda4a5a93fe706cf87479bb75f8515c9d1c24b49047eb47",
+    "src/sc_neurocore/neurons/model_schemas/sc_symmetric_quadratic_if.toml": "58de676dc2221d43ab55c73ead163b7b596da3743ae1f7c2784aa80a3a0863c8",
     "src/sc_neurocore/neurons/models/quadratic_if": {
-      "py": "5ec6ed5479033a1fd147c0ea451f8d692176fb6cba74129ad78e4d2759c3f2aa"
+      "py": "c907f7e3bb529c1e001b3a9471767f23e0b619dacfc854fa08eedea5ad94567f"
     },
-    "src/sc_neurocore/neurons/models/quadratic_if.py": "5ec6ed5479033a1fd147c0ea451f8d692176fb6cba74129ad78e4d2759c3f2aa"
+    "src/sc_neurocore/neurons/models/quadratic_if.py": "c907f7e3bb529c1e001b3a9471767f23e0b619dacfc854fa08eedea5ad94567f",
+    "src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000": {
+      "json": "31ab933814c0c44fba1fe9ec254c2aaedbdfdaab0cb66c89af131699427ecb75"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/quadratic_if_latham_2000.json": "31ab933814c0c44fba1fe9ec254c2aaedbdfdaab0cb66c89af131699427ecb75"
   },
   "verification": {
     "rust_safety": {
       "command": "cargo test --release --manifest-path src/sc_neurocore/accel/rust/Cargo.toml quadratic_if::tests",
       "output_tail": [
-        "test quadratic_if::tests::test_invalid_current_does_not_mutate_state ... ok",
         "test quadratic_if::tests::test_invalid_exact_flow_candidate_does_not_mutate_state ... ok",
+        "test quadratic_if::tests::test_latham_source_complete_packet ... ok",
         "test quadratic_if::tests::test_positive_current_spikes_and_resets ... ok",
         "test quadratic_if::tests::test_quadratic_if_new ... ok",
         "test quadratic_if::tests::test_quadratic_if_step ... ok",
         "test quadratic_if::tests::test_reset_preserves_parameters ... ok",
         "",
-        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 975 filtered out; finished in 0.00s",
+        "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1046 filtered out; finished in 0.00s",
         "",
         "",
-        "    Finished `release` profile [optimized] target(s) in 0.02s",
-        "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-cbe1a14dec3b0ed8)"
+        "    Finished `release` profile [optimized] target(s) in 0.01s",
+        "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-bc252670c4103a9c)"
       ],
       "passed": true,
       "returncode": 0
@@ -178,7 +227,7 @@
   "workload": {
     "current": 5.0,
     "n_steps": 100000,
-    "parameters": "Quadratic IF factory defaults; exact constant-current Riccati flow",
+    "parameters": "Latham 2000 normalized source profile; v=-1, reset=-3, apex=31/3, dt=.05; exact held-current Riccati flow",
     "repeats": 7,
     "trace_atol": 2e-12
   }

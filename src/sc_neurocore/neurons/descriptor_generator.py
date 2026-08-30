@@ -77,6 +77,36 @@ _DOI_IN_TEXT = re.compile(r"10\.\d{4,9}/[^\s,)]+")
 # Models without a v1 schema whose public contract cannot be inferred from field
 # names alone. These are narrow structural facts, not scientific curation.
 _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
+    # Count-bearing source identities can preserve a zero-argument SC
+    # compatibility profile while exposing their literature profile through a
+    # named constructor.  Their descriptor must follow the count-bearing
+    # profile, not the compatibility constructor's inactive fields/defaults.
+    "LapicqueNeuron": {
+        "dt": 0.01,
+        "method": "exact_constant_voltage_flow",
+        "exclude_fields": {"v_rest", "v_reset", "tau", "resistance"},
+    },
+    "SCLapicqueLIFNeuron": {
+        "dt": 1.0,
+        "method": "exact_constant_current_flow",
+        "exclude_fields": {
+            "capacitance",
+            "series_resistance",
+            "polarization_resistance",
+        },
+        "exclude_dynamics": {"excited"},
+    },
+    "PerfectIntegratorNeuron": {"method": "exact_piecewise_constant_integral"},
+    "SCInclusivePerfectIntegratorNeuron": {"method": "exact_piecewise_constant_integral"},
+    "QuadraticIFNeuron": {
+        "dt": 0.05,
+        "method": "exact_held_current_riccati_flow",
+        "field_defaults": {"v_reset": -3.0, "v_peak": 31.0 / 3.0},
+    },
+    "SCSymmetricQuadraticIFNeuron": {
+        "dt": 0.01,
+        "method": "exact_held_current_riccati_flow",
+    },
     "GLMNeuron": {"dt": 1.0, "method": "map"},
     # The public default is the gate-first Euler profile.  Its v1 schema is the
     # separate simultaneous-RK4 compiler/cosimulation profile documented by the
@@ -353,9 +383,17 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     if _is_number(structural.get("dt")):
         dt = float(structural["dt"])
     forced_parameters = structural.get("parameters", set())
+    excluded_fields = structural.get("exclude_fields", set())
+    field_defaults = structural.get("field_defaults", {})
     for name, default in specs:
+        if name in excluded_fields:
+            continue
+        overridden_default = field_defaults.get(name)
+        if _is_number(overridden_default):
+            default = float(overridden_default)
         if name == "dt" and name not in forced_parameters:
-            dt = default
+            structural_dt = structural.get("dt")
+            dt = float(structural_dt) if _is_number(structural_dt) else default
             continue
         if name in v1_state:
             state[name] = {"init": float(v1_state[name]) if _is_number(v1_state[name]) else default}
@@ -429,8 +467,9 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     dynamics: dict[str, Any] = {}
     v1_dyn = v1.get("dynamics")
     if isinstance(v1_dyn, Mapping):
+        excluded_dynamics = structural.get("exclude_dynamics", set())
         for var, expr in v1_dyn.items():
-            if isinstance(expr, str):
+            if var not in excluded_dynamics and isinstance(expr, str):
                 dynamics[var] = expr
 
     payload: dict[str, Any] = {
