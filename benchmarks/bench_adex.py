@@ -48,6 +48,7 @@ SOURCE_PATHS = (
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/adex_neuron.rs",
     "engine/src/neuron/adex.rs",
+    "engine/src/neuron/adex/simulation.rs",
     "engine/src/network_runner/model_catalogue.rs",
     "engine/src/network_runner/model_factory.rs",
     "engine/src/network_runner/neuron_variant.rs",

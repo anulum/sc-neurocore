@@ -55,7 +55,7 @@ max_lines = 27
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/adex.rs"]
-max_lines = 217
+max_lines = 127
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/bitstream_averager.rs"]

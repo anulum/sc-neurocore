@@ -22675,13 +22675,17 @@ Integrator options:
   AdEx ODEs
 
 ``simulate`` exposes the baseline-Euler Python, Rust, Julia, Go and Mojo
-paths. ``auto`` follows the committed measured order Mojo, Julia, Go,
-compatible Rust, then Python.
+paths. ``auto`` follows the committed measured order Rust, Julia, Go,
+Mojo, then Python.
 
 - **__post_init__**()
+- **brette_gerstner_2005**(cls)
+  - Return the regular-spiking fit reported by Brette and Gerstner (2005).
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` updates from the current state, returning ``(trace, spikes)``.
+- **simulate_complete**(n_steps, current, backend)
+  - Return aligned post-step voltage, adaptation, and event traces.
 - **reset**()
 
 ---

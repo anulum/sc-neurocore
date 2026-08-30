@@ -10,9 +10,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 5.700088,
-      "minimum_call_ms": 5.141834,
-      "speedup_vs_python": 136.27761343333648,
+      "median_call_ms": 7.06106,
+      "minimum_call_ms": 5.994256,
+      "speedup_vs_python": 107.29365435217942,
       "used": true,
       "v_parity_max_abs_diff": 7.105427357601002e-15,
       "w_parity_max_abs_diff": 0.0
@@ -27,9 +27,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.454241,
-      "minimum_call_ms": 3.247095,
-      "speedup_vs_python": 224.8813528065934,
+      "median_call_ms": 3.478467,
+      "minimum_call_ms": 3.385061,
+      "speedup_vs_python": 217.7990853442048,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -44,9 +44,9 @@
         "v": -52.37869326736917,
         "w": 74.95731155256478
       },
-      "median_call_ms": 7.119938,
-      "minimum_call_ms": 7.030694,
-      "speedup_vs_python": 109.10128557299235,
+      "median_call_ms": 7.395215,
+      "minimum_call_ms": 7.194988,
+      "speedup_vs_python": 102.44555851317372,
       "used": true,
       "v_parity_max_abs_diff": 7.389644451905042e-13,
       "w_parity_max_abs_diff": 5.684341886080802e-14
@@ -61,8 +61,8 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 776.794389,
-      "minimum_call_ms": 712.216241,
+      "median_call_ms": 757.606931,
+      "minimum_call_ms": 707.161913,
       "speedup_vs_python": 1.0,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
@@ -78,9 +78,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.06484,
-      "minimum_call_ms": 2.824328,
-      "speedup_vs_python": 253.45348827344986,
+      "median_call_ms": 3.215172,
+      "minimum_call_ms": 2.97986,
+      "speedup_vs_python": 235.63496167545625,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -102,14 +102,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      7.24169921875,
-      7.984375,
-      8.59326171875
+      11.00244140625,
+      8.77880859375,
+      8.89794921875
     ],
     "load_average_start": [
-      7.85693359375,
-      8.1376953125,
-      8.65234375
+      11.31103515625,
+      8.71630859375,
+      8.87939453125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -125,13 +125,14 @@
   },
   "schema_version": "sc-neurocore.polyglot-benchmark.v2",
   "source_hashes": {
-    "benchmarks/bench_adex.py": "b021bbfe1ac9559bce836fb5f83596a94111a3f49e09cd3f19f3e7c651d157d5",
+    "benchmarks/bench_adex.py": "2a41179927562aa73bd737ce4d8ebf8ca7ed7fb7729c34c6455e8a57c058c50d",
     "bridge/sc_neurocore_engine/__init__.py": "e83a2017ab62a0123a01896cc04ee60a665e199d8d8ae0c4f5d6b81fed18685c",
     "engine/src/bindings/adex_neuron.rs": "c10a0e6e9033e6113b977ffdc44d98d59523dc9f53232ef7c3f5464d26e129f1",
     "engine/src/network_runner/model_catalogue.rs": "e37c4690ec8f3fdefc22a5e1ba4d0c2fd23b121015fa6a83ade7a084bdb2e5e9",
     "engine/src/network_runner/model_factory.rs": "d078af7c447076646cca36c46ee8265344b55efd8d6199024ca47dd0cece1203",
     "engine/src/network_runner/neuron_variant.rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed",
-    "engine/src/neuron/adex.rs": "7d8221ade59f05ac01c8057c555cb5326f3dc13c7462867ccea364f7941b0452",
+    "engine/src/neuron/adex.rs": "d91aaab348984697ec7f54077a9b78a3dcff1cb37bb89347c227c6f3ee55ed57",
+    "engine/src/neuron/adex/simulation.rs": "23ea4e27f902502eb755c3403d6c91d0ea494a756a35ea18b5042bde1748122d",
     "hdl/formal/catalogue/sc_adex.sby": "1f66fbaf7de689662aff7b6f0d7163ed9a045c213b1fc3435f875a4ab19878c4",
     "hdl/formal/catalogue/sc_adex.v": "748b85dc5d30653332b8249fe09a06f81b1fa1264b219d918c8dd5b771b9a2be",
     "hdl/formal/catalogue/sc_adex_formal.v": "112b5e631e9e12ea5535aa96202da8178ce44cad93754f799ccf4f07d199f768",

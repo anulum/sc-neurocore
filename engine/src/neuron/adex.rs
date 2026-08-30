@@ -6,8 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Adaptive exponential integrate-and-fire neuron
 
-/// Aligned voltage, adaptation, and event traces from one AdEx batch.
-pub type AdExSimulation = (Vec<f64>, Vec<f64>, Vec<u8>);
+mod simulation;
 
 /// Adaptive Exponential IF neuron. Brette & Gerstner 2005.
 /// PyO3 wrapper: `pyo3_neurons::PyAdExNeuron`
@@ -118,29 +117,6 @@ impl AdExNeuron {
         }
     }
 
-    /// Return aligned voltage, adaptation, and event traces atomically.
-    ///
-    /// The receiver is committed only after every candidate step succeeds.
-    pub fn simulate_complete(
-        &mut self,
-        n_steps: usize,
-        current: f64,
-    ) -> Result<AdExSimulation, &'static str> {
-        let mut candidate = self.clone();
-        let mut v_trace = Vec::with_capacity(n_steps);
-        let mut w_trace = Vec::with_capacity(n_steps);
-        let mut event_trace = Vec::with_capacity(n_steps);
-        for _ in 0..n_steps {
-            let event = candidate.try_step(current)?;
-            v_trace.push(candidate.v);
-            w_trace.push(candidate.w);
-            event_trace.push(u8::try_from(event).map_err(|_| "invalid AdEx event value")?);
-        }
-        self.v = candidate.v;
-        self.w = candidate.w;
-        Ok((v_trace, w_trace, event_trace))
-    }
-
     pub fn reset(&mut self) {
         self.v = self.v_rest;
         self.w = 0.0;
@@ -148,146 +124,4 @@ impl AdExNeuron {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::AdExNeuron;
-
-    #[test]
-    fn strong_input_produces_spikes() {
-        let mut neuron = AdExNeuron::new();
-        let spikes: i32 = (0..2_000).map(|_| neuron.step(500.0)).sum();
-        assert!(spikes > 0, "AdEx must fire with strong input");
-    }
-
-    #[test]
-    fn adaptation_does_not_increase_late_rate() {
-        let mut neuron = AdExNeuron::new();
-        let first: i32 = (0..1_000).map(|_| neuron.step(400.0)).sum();
-        let second: i32 = (0..1_000).map(|_| neuron.step(400.0)).sum();
-        assert!(second <= first + 5, "first={first}, second={second}");
-    }
-
-    #[test]
-    fn matches_python_golden_spike_counts() {
-        for (current, expected) in [(0.0, 0), (200.0, 4), (500.0, 12)] {
-            let mut neuron = AdExNeuron::new();
-            let spikes: i32 = (0..1_000).map(|_| neuron.step(current)).sum();
-            assert_eq!(spikes, expected, "current={current}");
-        }
-    }
-
-    #[test]
-    fn invalid_input_is_mutation_free() {
-        let mut neuron = AdExNeuron::new();
-        let before = (neuron.v, neuron.w);
-        assert!(neuron.try_step(f64::INFINITY).is_err());
-        assert_eq!((neuron.v, neuron.w), before);
-    }
-
-    #[test]
-    fn nonfinite_candidate_is_mutation_free() {
-        let mut neuron = AdExNeuron::new();
-        neuron.dt = 1.0e308;
-        let before = (neuron.v, neuron.w);
-        assert!(neuron.try_step(1.0e308).is_err());
-        assert_eq!((neuron.v, neuron.w), before);
-    }
-
-    #[test]
-    fn no_input_remains_silent() {
-        let mut neuron = AdExNeuron::new();
-        let spikes: i32 = (0..1_000).map(|_| neuron.step(0.0)).sum();
-        assert_eq!(spikes, 0);
-    }
-
-    #[test]
-    fn negative_current_remains_silent() {
-        let mut neuron = AdExNeuron::new();
-        let spikes: i32 = (0..500).map(|_| neuron.step(-100.0)).sum();
-        assert_eq!(spikes, 0);
-    }
-
-    #[test]
-    fn reset_matches_fresh_neuron() {
-        let mut neuron = AdExNeuron::new();
-        for _ in 0..200 {
-            neuron.step(500.0);
-        }
-        assert!(neuron.w > 0.0);
-        neuron.reset();
-        assert_eq!(neuron.v, neuron.v_rest);
-        assert_eq!(neuron.w, 0.0);
-
-        let mut fresh = AdExNeuron::new();
-        let reset_spikes: i32 = (0..100).map(|_| neuron.step(500.0)).sum();
-        let fresh_spikes: i32 = (0..100).map(|_| fresh.step(500.0)).sum();
-        assert_eq!(reset_spikes, fresh_spikes);
-    }
-
-    #[test]
-    fn sustained_high_input_keeps_state_finite() {
-        let mut neuron = AdExNeuron::new();
-        for _ in 0..5_000 {
-            neuron.step(1_000.0);
-        }
-        assert!(neuron.v.is_finite());
-        assert!(neuron.w.is_finite());
-    }
-
-    #[test]
-    fn sustained_input_produces_many_spikes() {
-        let mut neuron = AdExNeuron::new();
-        let spikes: i32 = (0..10_000).map(|_| neuron.step(500.0)).sum();
-        assert!(spikes > 100, "got {spikes}");
-        assert!(neuron.v.is_finite());
-    }
-
-    #[test]
-    fn ten_thousand_steps_complete_within_smoke_limit() {
-        let mut neuron = AdExNeuron::new();
-        let start = std::time::Instant::now();
-        for _ in 0..10_000 {
-            neuron.step(500.0);
-        }
-        assert!(start.elapsed().as_millis() < 50);
-    }
-
-    #[test]
-    fn complete_batch_is_full_parameter_and_failure_atomic() {
-        let mut neuron = AdExNeuron {
-            v: -60.0,
-            w: 3.0,
-            v_rest: -64.0,
-            v_reset: -69.0,
-            v_threshold: -49.0,
-            v_rh: -54.0,
-            delta_t: 2.5,
-            tau: 18.0,
-            tau_w: 120.0,
-            a: 0.7,
-            b: 8.0,
-            c_m: 180.0,
-            dt: 0.2,
-        };
-        let (v_trace, w_trace, events) = neuron
-            .simulate_complete(250, 410.0)
-            .expect("finite configured AdEx trajectory");
-        assert_eq!(
-            (v_trace.len(), w_trace.len(), events.len()),
-            (250, 250, 250)
-        );
-        assert_eq!(
-            events
-                .iter()
-                .map(|event| usize::from(*event))
-                .sum::<usize>(),
-            5
-        );
-        assert_eq!((neuron.v, neuron.w), (v_trace[249], w_trace[249]));
-
-        let mut rejected = AdExNeuron::new();
-        rejected.dt = 1.0e308;
-        let before = (rejected.v, rejected.w);
-        assert!(rejected.simulate_complete(2, 1.0e308).is_err());
-        assert_eq!((rejected.v, rejected.w), before);
-    }
-}
+mod tests;
