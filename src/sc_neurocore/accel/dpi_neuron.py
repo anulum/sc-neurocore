@@ -21,19 +21,23 @@ import numpy.typing as npt
 
 _DPIState = tuple[float, float, float]
 _DPIResult = tuple[npt.NDArray[np.float64], int, _DPIState]
+_DPICompleteResult = tuple[object, object, object, object, _DPIState]
 
 
-def _load_engine_dpi() -> type[Any]:
-    """Return the Rust engine's factory-default DPI class."""
+def _load_engine_dpi() -> tuple[type[Any], Any]:
+    """Return the Rust compatibility class and complete batch function."""
     engine = importlib.import_module("sc_neurocore_engine")
-    return cast(type[Any], engine.DPINeuron)
+    return cast(type[Any], engine.DPINeuron), engine.dpi_neuron_simulate_complete
 
 
+_EngineDPICls: type[Any] | None
+_EngineDPICompleteFn: Any | None
 try:
-    _EngineDPICls: type[Any] | None = _load_engine_dpi()
+    _EngineDPICls, _EngineDPICompleteFn = _load_engine_dpi()
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _EngineDPICls = None
+    _EngineDPICompleteFn = None
     _HAS_RUST = False
 
 _julia_module: Any | None = None
@@ -69,9 +73,10 @@ def ensure_julia_loaded() -> bool:
 
 
 def _configure_c_library(library: Any, symbol: str, *, mojo: bool) -> Any | None:
-    """Bind one DPI C ABI symbol and return the configured library."""
+    """Bind the compatibility and complete DPI C ABI symbols."""
     simulate = getattr(library, symbol, None)
-    if simulate is None:
+    complete = getattr(library, "dpi_neuron_simulate_complete_c", None)
+    if simulate is None or complete is None:
         return None
     tail = ctypes.c_int64 if mojo else ctypes.POINTER(ctypes.c_double)
     simulate.argtypes = [
@@ -81,6 +86,18 @@ def _configure_c_library(library: Any, symbol: str, *, mojo: bool) -> Any | None
         tail,
     ]
     simulate.restype = ctypes.c_int64
+    complete_tail = ctypes.c_int64 if mojo else ctypes.POINTER(ctypes.c_double)
+    event_tail = ctypes.c_int64 if mojo else ctypes.POINTER(ctypes.c_uint8)
+    complete.argtypes = [
+        *([ctypes.c_double] * _DOUBLE_FIELDS),
+        ctypes.c_int64,
+        ctypes.c_double,
+        complete_tail,
+        complete_tail,
+        complete_tail,
+        event_tail,
+    ]
+    complete.restype = ctypes.c_int64
     return library
 
 
@@ -141,6 +158,72 @@ def simulate_rust(n_steps: int, current: float) -> _DPIResult:
     )
 
 
+def simulate_rust_complete(
+    i_mem: float,
+    i_ahp: float,
+    refractory_time: float,
+    i_threshold: float,
+    i_reset: float,
+    i_rest: float,
+    i_tau: float,
+    i_g: float,
+    i_tau_ahp: float,
+    i_ga: float,
+    i_spike: float,
+    i_0: float,
+    kappa: float,
+    alpha: float,
+    tau: float,
+    tau_ahp: float,
+    refractory_period: float,
+    dt: float,
+    n_steps: int,
+    current: float,
+) -> _DPICompleteResult:
+    """Run the complete configurable production Rust batch."""
+    if _EngineDPICompleteFn is None:
+        raise RuntimeError("Rust DPI complete batch is unavailable.")
+    result = _EngineDPICompleteFn(
+        i_mem,
+        i_ahp,
+        refractory_time,
+        i_threshold,
+        i_reset,
+        i_rest,
+        i_tau,
+        i_g,
+        i_tau_ahp,
+        i_ga,
+        i_spike,
+        i_0,
+        kappa,
+        alpha,
+        tau,
+        tau_ahp,
+        refractory_period,
+        dt,
+        n_steps,
+        current,
+    )
+    raw_events = result[3]
+    events: object
+    if isinstance(raw_events, (bytes, bytearray, memoryview)):
+        events = np.frombuffer(raw_events, dtype=np.uint8).copy()
+    else:
+        events = raw_events
+    return (
+        result[0],
+        result[1],
+        result[2],
+        events,
+        (
+            float(result[4]),
+            float(result[5]),
+            float(result[6]),
+        ),
+    )
+
+
 def simulate_julia(
     i_mem: float,
     i_ahp: float,
@@ -194,6 +277,67 @@ def simulate_julia(
     return trace, int(result.spikes), state
 
 
+def simulate_julia_complete(
+    i_mem: float,
+    i_ahp: float,
+    refractory_time: float,
+    i_threshold: float,
+    i_reset: float,
+    i_rest: float,
+    i_tau: float,
+    i_g: float,
+    i_tau_ahp: float,
+    i_ga: float,
+    i_spike: float,
+    i_0: float,
+    kappa: float,
+    alpha: float,
+    tau: float,
+    tau_ahp: float,
+    refractory_period: float,
+    dt: float,
+    n_steps: int,
+    current: float,
+) -> _DPICompleteResult:
+    """Run the complete configurable Julia batch."""
+    module = _julia_module
+    if module is None:
+        raise RuntimeError("Julia DPI module is unavailable.")
+    result = module.simulate_complete(
+        i_mem,
+        i_ahp,
+        refractory_time,
+        i_threshold,
+        i_reset,
+        i_rest,
+        i_tau,
+        i_g,
+        i_tau_ahp,
+        i_ga,
+        i_spike,
+        i_0,
+        kappa,
+        alpha,
+        tau,
+        tau_ahp,
+        refractory_period,
+        dt,
+        n_steps,
+        current,
+    )
+    return (
+        result.i_mem,
+        result.i_ahp,
+        result.refractory,
+        result.events,
+        (
+            float(result.i_mem_f),
+            float(result.i_ahp_f),
+            float(result.refractory_time_f),
+        ),
+    )
+
+
 def _simulate_c(
     library: Any,
     values: tuple[float, ...],
@@ -215,6 +359,47 @@ def _simulate_c(
         raise FloatingPointError(f"{backend} DPI kernel rejected the simulation contract.")
     state = (float(output[n_steps]), float(output[n_steps + 1]), float(output[n_steps + 2]))
     return np.ascontiguousarray(output[:n_steps]), spikes, state
+
+
+def _simulate_c_complete(
+    library: Any,
+    values: tuple[float, ...],
+    n_steps: int,
+    current: float,
+    *,
+    mojo: bool,
+) -> _DPICompleteResult:
+    """Run one failure-atomic complete Go or Mojo C ABI packet."""
+    i_mem = np.empty(n_steps + 1, dtype=np.float64)
+    i_ahp = np.empty(n_steps + 1, dtype=np.float64)
+    refractory = np.empty(n_steps + 1, dtype=np.float64)
+    events = np.empty(n_steps, dtype=np.uint8)
+    if mojo:
+        destinations: tuple[Any, ...] = (
+            int(i_mem.ctypes.data),
+            int(i_ahp.ctypes.data),
+            int(refractory.ctypes.data),
+            int(events.ctypes.data),
+        )
+    else:
+        destinations = (
+            i_mem.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            i_ahp.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            refractory.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+        )
+    count = int(library.dpi_neuron_simulate_complete_c(*values, n_steps, current, *destinations))
+    backend = "Mojo" if mojo else "Go"
+    if count < 0 or count != int(np.sum(events, dtype=np.int64)):
+        raise FloatingPointError(f"{backend} DPI complete kernel rejected its packet.")
+    state = (float(i_mem[n_steps]), float(i_ahp[n_steps]), float(refractory[n_steps]))
+    return (
+        np.ascontiguousarray(i_mem[:n_steps]),
+        np.ascontiguousarray(i_ahp[:n_steps]),
+        np.ascontiguousarray(refractory[:n_steps]),
+        np.ascontiguousarray(events),
+        state,
+    )
 
 
 def simulate_go(
@@ -311,3 +496,99 @@ def simulate_mojo(
         dt,
     )
     return _simulate_c(_mojo_lib, values, n_steps, current, mojo=True)
+
+
+def simulate_go_complete(
+    i_mem: float,
+    i_ahp: float,
+    refractory_time: float,
+    i_threshold: float,
+    i_reset: float,
+    i_rest: float,
+    i_tau: float,
+    i_g: float,
+    i_tau_ahp: float,
+    i_ga: float,
+    i_spike: float,
+    i_0: float,
+    kappa: float,
+    alpha: float,
+    tau: float,
+    tau_ahp: float,
+    refractory_period: float,
+    dt: float,
+    n_steps: int,
+    current: float,
+) -> _DPICompleteResult:
+    """Run the complete configurable Go batch through its C ABI."""
+    if _go_lib is None:
+        raise RuntimeError("Go DPI library is unavailable.")
+    values = (
+        i_mem,
+        i_ahp,
+        refractory_time,
+        i_threshold,
+        i_reset,
+        i_rest,
+        i_tau,
+        i_g,
+        i_tau_ahp,
+        i_ga,
+        i_spike,
+        i_0,
+        kappa,
+        alpha,
+        tau,
+        tau_ahp,
+        refractory_period,
+        dt,
+    )
+    return _simulate_c_complete(_go_lib, values, n_steps, current, mojo=False)
+
+
+def simulate_mojo_complete(
+    i_mem: float,
+    i_ahp: float,
+    refractory_time: float,
+    i_threshold: float,
+    i_reset: float,
+    i_rest: float,
+    i_tau: float,
+    i_g: float,
+    i_tau_ahp: float,
+    i_ga: float,
+    i_spike: float,
+    i_0: float,
+    kappa: float,
+    alpha: float,
+    tau: float,
+    tau_ahp: float,
+    refractory_period: float,
+    dt: float,
+    n_steps: int,
+    current: float,
+) -> _DPICompleteResult:
+    """Run the complete configurable Mojo batch through its C ABI."""
+    if _mojo_lib is None:
+        raise RuntimeError("Mojo DPI library is unavailable.")
+    values = (
+        i_mem,
+        i_ahp,
+        refractory_time,
+        i_threshold,
+        i_reset,
+        i_rest,
+        i_tau,
+        i_g,
+        i_tau_ahp,
+        i_ga,
+        i_spike,
+        i_0,
+        kappa,
+        alpha,
+        tau,
+        tau_ahp,
+        refractory_period,
+        dt,
+    )
+    return _simulate_c_complete(_mojo_lib, values, n_steps, current, mojo=True)

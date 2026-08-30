@@ -11,12 +11,16 @@ from __future__ import annotations
 from tests.model_dpi_neuron_support import *  # noqa: F403
 
 
-def test_rust_compatibility_boundary_is_exact_factory_contract() -> None:
-    """Use the fixed-constructor PyO3 engine only for an exact field match."""
-    neuron = DPINeuron()
-    assert neuron._matches_rust_engine_contract()
-    neuron.i_ahp = math.nextafter(neuron.i_ahp, math.inf)
-    assert not neuron._matches_rust_engine_contract()
+def test_rust_complete_batch_accepts_configured_contract() -> None:
+    """Carry non-default state and parameters through the production Rust API."""
+    neuron = _configured()
+    i_mem, i_ahp, refractory, events = neuron.simulate_complete(400, 5.0, backend="rust")
+    assert int(np.sum(events, dtype=np.int64)) == 4
+    assert (neuron.i_mem, neuron.i_ahp, neuron.refractory_time) == (
+        i_mem[-1],
+        i_ahp[-1],
+        refractory[-1],
+    )
 
 
 def test_reset_restores_current_baselines_and_preserves_parameters() -> None:

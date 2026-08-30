@@ -11,13 +11,15 @@ from __future__ import annotations
 from tests.dpi_neuron_backends_support import *  # noqa: F403
 
 
-def test_rust_rejects_non_default_contract_without_mutation() -> None:
-    """Fail closed outside the engine's fixed-constructor compatibility boundary."""
-    neuron = _configured()
-    before = (neuron.i_mem, neuron.i_ahp, neuron.refractory_time)
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert (neuron.i_mem, neuron.i_ahp, neuron.refractory_time) == before
+def test_rust_accepts_non_default_contract_through_complete_batch() -> None:
+    """Remove the former factory-only production-engine boundary."""
+    rust = _configured()
+    python = _configured()
+    rust_packet = rust.simulate_complete(400, 5.0, backend="rust")
+    python_packet = python.simulate_complete(400, 5.0, backend="python")
+    for actual, expected in zip(rust_packet[:3], python_packet[:3], strict=True):
+        _assert_state_parity(actual, expected)
+    np.testing.assert_array_equal(rust_packet[3], python_packet[3])
 
 
 def test_auto_prefers_go_without_initialising_other_runtimes() -> None:

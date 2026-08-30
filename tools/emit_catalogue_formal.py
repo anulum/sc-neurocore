@@ -177,7 +177,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "coba_lif": 4,
     "connor_stevens": 4,
     "courage_nekorkin_map": 4,
-    "dpi_neuron": 4,
+    "dpi_neuron": 8,
     "ermentrout_kopell_map_neuron": 4,
     "ermentrout_kopell_pop": 4,
     "escape_rate": 4,
@@ -338,7 +338,24 @@ FORMAL_FIXED_CURRENT_BY_SCHEMA: dict[str, float] = {
     "hodgkin_huxley": 15.0,
     "mihalas_niebur": 0.002,
     "morris_lecar": 100.0,
+    "dpi_neuron": 500.0,
     "sc_scaled_reset_adaptive_if": 3.0,
+}
+
+# Public-port post-event words for deterministic bounded protocols. These are
+# safety properties of the committed fixed-point recurrence, not a claim of
+# real-number or Python-to-RTL formal equivalence.
+FORMAL_SPIKE_STATE_BY_SCHEMA: dict[str, dict[str, float]] = {
+    "dpi_neuron": {
+        "i_mem_out": 0.01,
+        "refractory_time_out": 2.0,
+    },
+}
+FORMAL_POST_SPIKE_STATE_BY_SCHEMA: dict[str, dict[str, float]] = {
+    "dpi_neuron": {
+        "i_mem_out": 0.01,
+        "refractory_time_out": 1.9,
+    },
 }
 
 # Schema display names are user-facing and may contain punctuation or
@@ -444,6 +461,8 @@ def _formal_wrapper(
     event_silent: bool = False,
     data_width: int = 16,
     fixed_current_word: int | None = None,
+    spike_state_words: dict[str, int] | None = None,
+    post_spike_state_words: dict[str, int] | None = None,
     evidence_label: str = "dual-axis perfect model",
 ) -> str:
     """Build a port-only formal harness (no hierarchical probes)."""
@@ -498,6 +517,36 @@ def _formal_wrapper(
             if event_silent
             else ""
         )
+        spike_state = ""
+        if spike_state_words is not None:
+            spike_assertions = "\n".join(
+                f"            assert ($signed({port}) == {data_width}'sd{word});"
+                for port, word in spike_state_words.items()
+            )
+            post_spike_assertions = ""
+            if post_spike_state_words is not None:
+                post_spike_lines = "\n".join(
+                    f"            assert ($signed({port}) == {data_width}'sd{word});"
+                    for port, word in post_spike_state_words.items()
+                )
+                post_spike_assertions = f"""
+        if (spike_past_valid && rst_n && $past(spike_out)) begin
+            assert (spike_out == 1'b0);
+{post_spike_lines}
+        end"""
+            spike_state = f"""
+    // The fixed-current protocol reaches a real event within this BMC depth.
+    // Bind its reset packet and the next refractory sample through public ports.
+    reg spike_past_valid = 1'b0;
+    always @(posedge clk) begin
+        spike_past_valid <= 1'b1;
+        if (spike_past_valid && rst_n && spike_out) begin
+{spike_assertions}
+        end
+{post_spike_assertions}
+    end
+
+"""
         formal_body = f"""
 `ifdef FORMAL
 {bounded_protocol}    // Minimal safety: async reset clears the spike flag.
@@ -505,7 +554,7 @@ def _formal_wrapper(
         if (!rst_n)
             assert (spike_out == 1'b0);
     end
-{event_silence}`endif
+{event_silence}{spike_state}`endif
 """
     else:
         if state_port is None:
@@ -624,6 +673,22 @@ def _emit_schema(
             fixed_current_word=(
                 round(FORMAL_FIXED_CURRENT_BY_SCHEMA[schema] * (1 << fraction))
                 if schema in FORMAL_FIXED_CURRENT_BY_SCHEMA
+                else None
+            ),
+            spike_state_words=(
+                {
+                    port: round(value * (1 << fraction))
+                    for port, value in FORMAL_SPIKE_STATE_BY_SCHEMA[schema].items()
+                }
+                if schema in FORMAL_SPIKE_STATE_BY_SCHEMA
+                else None
+            ),
+            post_spike_state_words=(
+                {
+                    port: round(value * (1 << fraction))
+                    for port, value in FORMAL_POST_SPIKE_STATE_BY_SCHEMA[schema].items()
+                }
+                if schema in FORMAL_POST_SPIKE_STATE_BY_SCHEMA
                 else None
             ),
             evidence_label=evidence_label,

@@ -130,6 +130,14 @@ fn network_runner_preserves_theta_source_event_contract() {
 }
 
 #[test]
+fn network_runner_preserves_dpi_source_event_contract() {
+    let mut source = create_neuron("DPINeuron").expect("DPI source model must construct");
+    let events: i32 = (0..5_000).map(|_| source.step(5.0)).sum();
+    assert_eq!(events, 13);
+    assert!((source.soma_voltage() - 0.24977022450967534).abs() < 1.0e-15);
+}
+
+#[test]
 fn network_runner_preserves_both_rulkov_event_contracts() {
     let mut source = create_neuron("RulkovMapNeuron").expect("source model must construct");
     let mut retained =

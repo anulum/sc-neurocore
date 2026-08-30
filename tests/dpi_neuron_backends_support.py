@@ -136,6 +136,26 @@ def _run(
     return trace, spikes, (neuron.i_mem, neuron.i_ahp, neuron.refractory_time)
 
 
+def _run_complete(
+    backend: str,
+    *,
+    current: float,
+    n_steps: int = 1_000,
+    configured: bool = False,
+) -> tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    tuple[float, float, float],
+]:
+    """Run one public complete packet and return its committed final state."""
+    neuron = _configured() if configured else DPINeuron()
+    i_mem, i_ahp, refractory, events = neuron.simulate_complete(n_steps, current, backend=backend)
+    state = (neuron.i_mem, neuron.i_ahp, neuron.refractory_time)
+    return i_mem, i_ahp, refractory, events, state
+
+
 def _assert_state_parity(actual: npt.ArrayLike, expected: npt.ArrayLike) -> None:
     """Enforce the measured cross-runtime floating-point envelope."""
     actual_array = np.asarray(actual, dtype=np.float64)
@@ -170,6 +190,7 @@ __all__ = [
     "_configured",
     "_factory_values",
     "_run",
+    "_run_complete",
     "_assert_state_parity",
     "_invoke_full_contract",
 ]

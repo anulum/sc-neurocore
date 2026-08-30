@@ -26,6 +26,20 @@ from benchmarks import bench_model_dpi_neuron as benchmark
 from sc_neurocore.accel import dpi_neuron as backends
 
 
+def _measured_packet(
+    i_mem: npt.NDArray[np.float64] | None = None,
+    event: int = 0,
+) -> tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+]:
+    """Return one aligned synthetic packet for benchmark control-flow tests."""
+    membrane = np.array([0.0]) if i_mem is None else i_mem
+    return membrane, np.array([0.0]), np.array([0.0]), np.array([event], dtype=np.uint8)
+
+
 def test_real_benchmark_writes_complete_parity_evidence(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -48,6 +62,7 @@ def test_real_benchmark_writes_complete_parity_evidence(
     assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
     assert payload["dispatcher_order"] == list(benchmark.DISPATCH_ORDER)
     assert all(row["event_count_matches_python"] for row in payload["backends"].values())
+    assert all(row["event_trace_matches_python"] for row in payload["backends"].values())
     assert payload["verification"]["rust_safety"]["passed"] is True
     assert set(payload["backends"]["python"]["final_state"]) == {
         "i_mem",
@@ -100,7 +115,19 @@ def test_committed_evidence_matches_live_sources_and_bounded_parity() -> None:
         assert row["used"] is True
         assert row["event_count"] == reference_events
         assert row["event_count_matches_python"] is True
+        assert row["event_trace_matches_python"] is True
         assert row["parity_max_abs_diff"] <= benchmark.STATE_ATOL
+        assert set(row["parity_max_abs_diff_by_state"]) == {
+            "i_mem",
+            "i_ahp",
+            "refractory_time",
+        }
+        assert set(row["trace_sha256"]) == {
+            "i_mem_le_f64",
+            "i_ahp_le_f64",
+            "refractory_time_le_f64",
+            "events_u8",
+        }
 
     hashes = payload["source_hashes"]
     for relative in benchmark.SOURCE_PATHS:
@@ -114,7 +141,7 @@ def test_real_rust_safety_gate_executes_enrolled_module() -> None:
     assert result["passed"] is True
     assert result["returncode"] == 0
     assert "dpi_neuron::tests" in result["command"]
-    assert any("12 passed" in line for line in result["output_tail"])
+    assert any("14 passed" in line for line in result["output_tail"])
 
 
 def test_absolute_state_metric_handles_empty_and_signed_differences() -> None:
@@ -207,7 +234,7 @@ def test_unavailable_backend_override_records_explicit_evidence(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0, 0.0, 0.0)),
+        lambda _backend: (1.0, 1.0, _measured_packet(), (0.0, 0.0, 0.0)),
     )
     output = tmp_path / "acknowledged-missing.json"
 
@@ -232,7 +259,7 @@ def test_compiled_lane_cannot_precede_python_reference(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0, 0.0, 0.0)),
+        lambda _backend: (1.0, 1.0, _measured_packet(), (0.0, 0.0, 0.0)),
     )
     with pytest.raises(RuntimeError, match="Python reference must be measured first"):
         benchmark.main(["--json", str(tmp_path / "invalid-order.json")])
@@ -266,13 +293,22 @@ def test_parity_contract_failures_have_distinct_exit_codes(
     ) -> tuple[
         float,
         float,
-        npt.NDArray[np.float64],
-        int,
+        tuple[
+            npt.NDArray[np.float64],
+            npt.NDArray[np.float64],
+            npt.NDArray[np.float64],
+            npt.NDArray[np.uint8],
+        ],
         tuple[float, float, float],
     ]:
         if backend == "python":
-            return 1.0, 1.0, np.array([0.0]), 0, (0.0, 0.0, 0.0)
-        return 0.5, 0.5, compiled_trace, compiled_spikes, (0.0, 0.0, 0.0)
+            return 1.0, 1.0, _measured_packet(), (0.0, 0.0, 0.0)
+        return (
+            0.5,
+            0.5,
+            _measured_packet(compiled_trace, compiled_spikes),
+            (0.0, 0.0, 0.0),
+        )
 
     monkeypatch.setattr(benchmark, "_measure_backend", measured)
     assert benchmark.main(["--json", str(tmp_path / f"failure-{expected}.json")]) == expected
@@ -291,7 +327,7 @@ def test_rust_safety_failure_has_distinct_exit_code(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0, 0.0, 0.0)),
+        lambda _backend: (1.0, 1.0, _measured_packet(), (0.0, 0.0, 0.0)),
     )
     monkeypatch.setattr(
         benchmark,

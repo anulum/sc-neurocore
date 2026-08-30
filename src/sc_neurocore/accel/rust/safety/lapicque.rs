@@ -58,9 +58,7 @@ impl LapicqueNeuron {
 
         let (v_inf, decay) = if self.source_profile {
             let total_resistance = self.series_resistance + self.polarization_resistance;
-            let beta = self.capacitance
-                * self.series_resistance
-                * self.polarization_resistance
+            let beta = self.capacitance * self.series_resistance * self.polarization_resistance
                 / total_resistance;
             (
                 i_ext * self.polarization_resistance / total_resistance,
@@ -97,7 +95,11 @@ impl LapicqueNeuron {
     }
 
     pub fn reset(&mut self) {
-        self.v = if self.source_profile { 0.0 } else { self.v_rest };
+        self.v = if self.source_profile {
+            0.0
+        } else {
+            self.v_rest
+        };
         self.excited = false;
     }
 }

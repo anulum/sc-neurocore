@@ -69,6 +69,29 @@ func TestDPIConfiguredAndEmptyContracts(t *testing.T) {
 	}
 }
 
+func TestDPICompletePacketCarriesAlignedStatesAndEvents(t *testing.T) {
+	initial := configuredDPI()
+	iMem, iAHP, refractory, events, final, err :=
+		SimulateDPIComplete(initial, 400, 5.0)
+	if err != nil {
+		t.Fatalf("unexpected complete-packet error: %v", err)
+	}
+	spikes := 0
+	for _, event := range events {
+		spikes += int(event)
+	}
+	if len(iMem) != 400 || len(iAHP) != 400 || len(refractory) != 400 ||
+		len(events) != 400 || spikes != 4 || final.IMem != iMem[399] ||
+		final.IAHP != iAHP[399] || final.RefractoryTime != refractory[399] {
+		t.Fatalf("misaligned complete packet: spikes=%d final=%+v", spikes, final)
+	}
+	for index, event := range events {
+		if event > 1 || (event == 1) != (refractory[index] == initial.RefractoryPeriod) {
+			t.Fatalf("invalid event alignment at %d: event=%d refractory=%v", index, event, refractory[index])
+		}
+	}
+}
+
 func TestDPISimulateTraceMatchesFactoryEventVector(t *testing.T) {
 	cases := []struct {
 		current float64
@@ -132,6 +155,17 @@ func TestDPIRejectedTraceContractsEmitNoState(t *testing.T) {
 			!reflect.DeepEqual(final, test.state) {
 			t.Fatalf("rejected contract emitted state: trace=%v spikes=%d final=%+v err=%v", trace, spikes, final, err)
 		}
+	}
+}
+
+func TestDPIRejectedCompleteContractEmitsNoPacket(t *testing.T) {
+	initial := *NewDPINeuron()
+	initial.Tau = math.SmallestNonzeroFloat64
+	iMem, iAHP, refractory, events, final, err :=
+		SimulateDPIComplete(initial, 2, math.MaxFloat64)
+	if err != ErrDPINonFiniteUpdate || iMem != nil || iAHP != nil ||
+		refractory != nil || events != nil || !reflect.DeepEqual(final, initial) {
+		t.Fatalf("rejected complete contract emitted output: final=%+v err=%v", final, err)
 	}
 }
 

@@ -45,6 +45,8 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 DISPATCH_ORDER = ("go", "julia", "mojo", "rust", "python")
 SOURCE_PATHS = (
     "benchmarks/bench_model_dpi_neuron.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/hardware/dpi.rs",
     "engine/src/neurons/hardware/dpi_neuron.rs",
     "src/sc_neurocore/accel/dpi_neuron.py",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go",
@@ -57,9 +59,34 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/rust/examples/dpi_neuron_trace.rs",
     "src/sc_neurocore/accel/rust/safety/dpi_neuron.rs",
     "src/sc_neurocore/neurons/models/dpi_neuron.py",
+    "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json",
     "src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml",
     "src/sc_neurocore/neurons/model_schemas/dpi_neuron.json",
+    "tests/cosim_reference_dpi_neuron.py",
+    "tests/test_cosim_dpi_neuron.py",
+    "tests/test_dpi_neuron_backend_loading.py",
+    "tests/test_dpi_neuron_backends_auto_dispatch.py",
+    "tests/test_dpi_neuron_backends_backend_parity.py",
+    "tests/test_dpi_neuron_backends_rejects_and_hints.py",
+    "tests/test_model_dpi_neuron_contract_rejects.py",
+    "tests/test_model_dpi_neuron_dynamics_and_golden.py",
+    "tests/test_model_dpi_neuron_rust_and_reset.py",
+    "tests/test_model_descriptor_reproducibility.py",
+    "tests/test_reference_dpi_neuron.py",
+    "tools/emit_catalogue_formal.py",
+    "hdl/formal/catalogue/sc_dpineuron.sby",
+    "hdl/formal/catalogue/sc_dpineuron.v",
+    "hdl/formal/catalogue/sc_dpineuron_formal.v",
+    "hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json",
+    "src/sc_neurocore/neurons/model_descriptors/DPINeuron.toml",
 )
+
+_CompletePacket = tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+]
 
 
 def _cpu_model() -> str:
@@ -146,21 +173,30 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, float, float]]:
+) -> tuple[
+    float,
+    float,
+    _CompletePacket,
+    tuple[float, float, float],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    DPINeuron().simulate(20, CURRENT, backend=backend)
+    DPINeuron().simulate_complete(20, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
-    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
-    spikes = 0
+    packet: _CompletePacket = (
+        np.empty(0, dtype=np.float64),
+        np.empty(0, dtype=np.float64),
+        np.empty(0, dtype=np.float64),
+        np.empty(0, dtype=np.uint8),
+    )
     final_state = (0.0, 0.0, 0.0)
     for _repeat in range(N_REPEATS):
         gc.collect()
         neuron = DPINeuron()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        packet = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         final_state = (neuron.i_mem, neuron.i_ahp, neuron.refractory_time)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+    return statistics.median(elapsed_ms), min(elapsed_ms), packet, final_state
 
 
 def _max_abs_diff(
@@ -264,24 +300,36 @@ def main(argv: list[str]) -> int:
         return 2
 
     rows: dict[str, dict[str, Any]] = {}
-    reference: npt.NDArray[np.float64] | None = None
+    reference: _CompletePacket | None = None
     reference_ms: float | None = None
-    reference_spikes: int | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
             rows[backend] = {"available": False, "used": False, "unavailable_reason": reason}
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        median_ms, minimum_ms, packet, final_state = _measure_backend(backend)
+        i_mem, i_ahp, refractory, events = packet
         if backend == "python":
-            reference = trace
+            reference = packet
             reference_ms = median_ms
-            reference_spikes = spikes
-            parity = 0.0
+            parity_by_state = {name: 0.0 for name in ("i_mem", "i_ahp", "refractory_time")}
+            event_trace_matches = True
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if reference is None or reference_ms is None:
                 raise RuntimeError("Python reference must be measured first")
-            parity = _max_abs_diff(trace, reference)
+            parity_by_state = {
+                name: _max_abs_diff(actual, expected)
+                for name, actual, expected in zip(
+                    ("i_mem", "i_ahp", "refractory_time"),
+                    packet[:3],
+                    reference[:3],
+                    strict=True,
+                )
+            }
+            event_trace_matches = bool(np.array_equal(events, reference[3]))
+        parity = max(parity_by_state.values())
+        spikes = int(np.sum(events, dtype=np.int64))
+        reference_spikes = spikes if reference is packet else int(np.sum(reference[3]))
         rows[backend] = {
             "available": True,
             "used": True,
@@ -289,10 +337,18 @@ def main(argv: list[str]) -> int:
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": reference_ms / median_ms if reference_ms is not None else 1.0,
             "parity_max_abs_diff": parity,
+            "parity_max_abs_diff_by_state": parity_by_state,
             "event_count": spikes,
-            "event_count_matches_python": (
-                True if reference_spikes is None else spikes == reference_spikes
-            ),
+            "event_count_matches_python": spikes == reference_spikes,
+            "event_trace_matches_python": event_trace_matches,
+            "trace_sha256": {
+                "i_mem_le_f64": hashlib.sha256(i_mem.astype("<f8").tobytes()).hexdigest(),
+                "i_ahp_le_f64": hashlib.sha256(i_ahp.astype("<f8").tobytes()).hexdigest(),
+                "refractory_time_le_f64": hashlib.sha256(
+                    refractory.astype("<f8").tobytes()
+                ).hexdigest(),
+                "events_u8": hashlib.sha256(events.tobytes()).hexdigest(),
+            },
             "final_state": dict(
                 zip(("i_mem", "i_ahp", "refractory_time"), final_state, strict=True)
             ),
@@ -346,6 +402,8 @@ def main(argv: list[str]) -> int:
     if not rust_safety["passed"]:
         return 5
     if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+        return 3
+    if any(not bool(row.get("event_trace_matches_python", True)) for row in rows.values()):
         return 3
     if any(
         float(row.get("parity_max_abs_diff", 0.0)) > STATE_ATOL

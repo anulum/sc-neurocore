@@ -77,8 +77,17 @@ def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
 
     assert module.CLASS_TO_SCHEMA["DPINeuron"] == "dpi_neuron"
     assert module.PRECISION_BY_SCHEMA["dpi_neuron"] == (32, 16)
-    assert module.DEPTH_BY_SCHEMA["dpi_neuron"] == 4
+    assert module.DEPTH_BY_SCHEMA["dpi_neuron"] == 8
     assert "dpi_neuron" in module.MINIMAL_SAFETY_SCHEMAS
+    assert module.FORMAL_FIXED_CURRENT_BY_SCHEMA["dpi_neuron"] == 500.0
+    assert module.FORMAL_SPIKE_STATE_BY_SCHEMA["dpi_neuron"] == {
+        "i_mem_out": 0.01,
+        "refractory_time_out": 2.0,
+    }
+    assert module.FORMAL_POST_SPIKE_STATE_BY_SCHEMA["dpi_neuron"] == {
+        "i_mem_out": 0.01,
+        "refractory_time_out": 1.9,
+    }
 
 
 def test_coba_lif_formal_job_uses_enrolled_q2424_precision() -> None:

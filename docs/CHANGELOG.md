@@ -5,6 +5,34 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Go alpha C ABI hygiene
+
+- Removed the pre-existing `unsafe.Pointer` to integer and back conversion in
+  alpha-kernel region assembly. Direct pointer indexing retains the exported C
+  ABI and behaviour while satisfying whole-module `go vet` and Go tests.
+
+### DPI source-bound complete-state reclosure
+
+- Re-audited `DPINeuron` directly against Indiveri, Stefanini, and Chicca
+  (2010), equations (2)-(3), plus the described threshold feedback, reset,
+  refractory pulse, and spike-driven adaptation. Normalised defaults,
+  `I_in=i_rest+current`, explicit Euler, sampled event ordering, and the
+  refractory counter remain explicitly maintained choices.
+- Added failure-atomic, aligned membrane/adaptation/refractory/event packets
+  across Python, production and safety Rust, PyO3, Julia, Go, Mojo, and both C
+  ABIs. Every lane carries the configurable 18-field contract; explicit native
+  failures leave caller-visible state and output buffers untouched.
+- Added a primary-PDF-bound independent 5,000-step receipt, complete state and
+  event digests, NetworkRunner execution, and a controlled five-runtime
+  benchmark that hashes the runtime, ABI, schema, descriptor, receipt, RTL,
+  formal, synthesis, and owning-test surfaces.
+- Preserved the 13-event Q16.16 co-simulation envelope, completed 112,953-cell
+  Yosys coarse synthesis, and strengthened the formal lane to a depth-8
+  deterministic protocol that reaches a spike and checks its public reset and
+  following refractory packet. This closes H2 only; timing, PPA, device,
+  board, transistor mismatch, physical silicon, and universal formal
+  equivalence remain open.
+
 ### Theta source-bound complete-packet reclosure
 
 - Re-audited `ThetaNeuron` directly against Ermentrout and Kopell (1986),

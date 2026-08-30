@@ -8,7 +8,7 @@
 
 module DpiNeuronAccel
 
-export DPINeuronState, reset!, simulate, simulate_trace, step!, valid
+export DPINeuronState, reset!, simulate, simulate_complete, simulate_trace, step!, valid
 
 mutable struct DPINeuronState
     i_mem::Float64
@@ -181,7 +181,14 @@ function simulate(n_steps::Int=1_000; current::Float64=5.0, dt::Float64=0.1)
     return result.trace, result.spikes
 end
 
-function simulate_trace(
+"""
+    simulate_complete(...)
+
+Return aligned post-step membrane, adaptation, refractory, and binary event
+traces for the complete maintained DPI state and parameter contract. Invalid
+input throws before returning caller-visible output.
+"""
+function simulate_complete(
     i_mem::Float64,
     i_ahp::Float64,
     refractory_time::Float64,
@@ -234,18 +241,36 @@ function simulate_trace(
         ))
     end
 
-    trace = zeros(Float64, n_steps)
-    spikes = 0
-    for index in eachindex(trace)
-        spikes += step!(state, current)
-        trace[index] = state.i_mem
+    i_mem_trace = zeros(Float64, n_steps)
+    i_ahp_trace = zeros(Float64, n_steps)
+    refractory_trace = zeros(Float64, n_steps)
+    events = zeros(UInt8, n_steps)
+    for index in eachindex(i_mem_trace)
+        events[index] = UInt8(step!(state, current))
+        i_mem_trace[index] = state.i_mem
+        i_ahp_trace[index] = state.i_ahp
+        refractory_trace[index] = state.refractory_time
     end
     return (
-        trace=trace,
-        spikes=spikes,
+        i_mem=i_mem_trace,
+        i_ahp=i_ahp_trace,
+        refractory=refractory_trace,
+        events=events,
         i_mem_f=state.i_mem,
         i_ahp_f=state.i_ahp,
         refractory_time_f=state.refractory_time,
+    )
+end
+
+"""Return the legacy membrane trace, aggregate event count, and final state."""
+function simulate_trace(args...)
+    result = simulate_complete(args...)
+    return (
+        trace=result.i_mem,
+        spikes=mapreduce(Int, +, result.events; init=0),
+        i_mem_f=result.i_mem_f,
+        i_ahp_f=result.i_ahp_f,
+        refractory_time_f=result.refractory_time_f,
     )
 end
 

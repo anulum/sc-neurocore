@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety implementation of the published DPI circuit
 
+pub type DpiCompleteTrace = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<u8>);
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct DPINeuron {
     pub i_mem: f64,
@@ -116,6 +118,35 @@ impl DPINeuron {
         self.i_ahp = next_i_ahp;
         self.refractory_time = next_refractory;
         Ok(i32::from(spiked))
+    }
+
+    /// Return aligned complete traces and commit only after every step passes.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<DpiCompleteTrace, &'static str> {
+        if !current.is_finite() || !validate_dpi_neuron(self) {
+            return Err("DPI state, parameters, and current must be physically valid");
+        }
+        let total_input = self.i_rest + current;
+        if !total_input.is_finite() || total_input < 0.0 {
+            return Err("DPI total input current must be finite and non-negative");
+        }
+        let mut candidate = self.clone();
+        let mut i_mem = Vec::with_capacity(n_steps);
+        let mut i_ahp = Vec::with_capacity(n_steps);
+        let mut refractory = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step(current)?;
+            i_mem.push(candidate.i_mem);
+            i_ahp.push(candidate.i_ahp);
+            refractory.push(candidate.refractory_time);
+            events.push(u8::try_from(event).map_err(|_| "DPI event must be binary")?);
+        }
+        *self = candidate;
+        Ok((i_mem, i_ahp, refractory, events))
     }
 
     pub fn reset(&mut self) {
@@ -257,6 +288,55 @@ mod tests {
         assert_eq!(state.i_threshold, 1.3);
         assert_eq!(state.i_reset, 0.2);
         assert_eq!(state.i_0, 0.04);
+    }
+
+    #[test]
+    fn complete_packet_exposes_every_state_and_event() {
+        let mut state = DPINeuron {
+            i_mem: 0.37,
+            i_ahp: 0.08,
+            i_threshold: 1.3,
+            i_reset: 0.2,
+            i_rest: 0.15,
+            i_tau: 0.9,
+            i_g: 1.4,
+            i_tau_ahp: 0.12,
+            i_ga: 0.8,
+            i_spike: 4.2,
+            i_0: 0.02,
+            kappa: 0.65,
+            alpha: 8.0,
+            tau: 7.0,
+            tau_ahp: 45.0,
+            refractory_period: 0.6,
+            dt: 0.05,
+            ..DPINeuron::new()
+        };
+        let (i_mem, i_ahp, refractory, events) = state.simulate_complete(400, 5.0).unwrap();
+        assert_eq!(i_mem.len(), 400);
+        assert_eq!(i_ahp.len(), 400);
+        assert_eq!(refractory.len(), 400);
+        assert_eq!(
+            events
+                .iter()
+                .map(|event| usize::from(*event))
+                .sum::<usize>(),
+            4
+        );
+        assert_eq!(state.i_mem, i_mem[399]);
+        assert_eq!(state.i_ahp, i_ahp[399]);
+        assert_eq!(state.refractory_time, refractory[399]);
+    }
+
+    #[test]
+    fn complete_packet_rejects_atomically() {
+        let mut state = DPINeuron {
+            tau: f64::MIN_POSITIVE,
+            ..DPINeuron::new()
+        };
+        let before = state.clone();
+        assert!(state.simulate_complete(2, f64::MAX).is_err());
+        assert_eq!(state, before);
     }
 
     #[test]

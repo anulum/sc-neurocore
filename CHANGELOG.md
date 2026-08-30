@@ -11,6 +11,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Removed the pre-existing integer round-trip from the Go alpha kernel's
+  `unsafe.Pointer` region assembly. The direct pointer slice preserves the C
+  ABI while restoring clean `go vet ./...` and module-test validation.
+- Re-closed `DPINeuron` against Indiveri, Stefanini, and Chicca's 2010
+  current-mode equations (2)-(3), separating the source circuit terms from
+  maintained normalised defaults and discrete event ordering. Python,
+  production and safety Rust, PyO3, Julia, Go, and Mojo now expose
+  failure-atomic complete membrane/adaptation/refractory/event packets for the
+  configurable 18-field contract. A PDF-bound independent complete-state
+  receipt, source-hashed five-runtime benchmark, paired schemas, NetworkRunner
+  execution, 112,953-cell Q16.16 Yosys synthesis, and depth-8 reached-event
+  reset/refractory safety establish H2 without timing, PPA, device, board,
+  physical-silicon, transistor-mismatch, or universal-equivalence claims.
 - Re-closed `ThetaNeuron` against Ermentrout and Kopell's equation (2.5), with
   `current` explicitly representing source parameter `a` or a frozen equation
   (3.3) drive rather than the paper's full slow-oscillator bursting system.

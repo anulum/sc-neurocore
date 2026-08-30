@@ -133,17 +133,17 @@ func alpha_simulate_c(
 	}
 	regions := finalRegions
 	if steps > 0 {
-		for _, pair := range [][2]int{
-			{int(uintptr(excCurrentPtr)), steps},
-			{int(uintptr(inhCurrentPtr)), steps},
-			{int(uintptr(vOutPtr)), steps},
-			{int(uintptr(aExcOutPtr)), steps},
-			{int(uintptr(iExcOutPtr)), steps},
-			{int(uintptr(aInhOutPtr)), steps},
-			{int(uintptr(iInhOutPtr)), steps},
-			{int(uintptr(spikesOutPtr)), steps},
+		for _, pointer := range []unsafe.Pointer{
+			excCurrentPtr,
+			inhCurrentPtr,
+			vOutPtr,
+			aExcOutPtr,
+			iExcOutPtr,
+			aInhOutPtr,
+			iInhOutPtr,
+			spikesOutPtr,
 		} {
-			region, ok := makeRegion(unsafe.Pointer(uintptr(pair[0])), pair[1])
+			region, ok := makeRegion(pointer, steps)
 			if !ok {
 				return 1
 			}

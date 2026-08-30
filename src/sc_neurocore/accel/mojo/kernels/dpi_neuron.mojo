@@ -9,9 +9,9 @@
 # Build:
 #   mojo build --emit shared-lib -o libdpi_neuron.so dpi_neuron.mojo
 #
-# The caller supplies n_steps+3 Float64 slots: the post-step membrane-current
-# trace followed by final i_mem, i_ahp, and refractory_time. Validation completes
-# before any output write.
+# The compatibility ABI supplies n_steps+3 Float64 slots. The complete ABI
+# supplies three n_steps+1 Float64 buffers and one n_steps UInt8 event buffer.
+# Both validate the entire run before any caller-visible write.
 
 from std.math import exp, isfinite, log
 from std.memory import UnsafePointer
@@ -99,6 +99,10 @@ def _run_dpi(
     n_steps: Int,
     current: Float64,
     output_addr: Int,
+    i_ahp_output_addr: Int,
+    refractory_output_addr: Int,
+    event_output_addr: Int,
+    complete_output: Bool,
     write_output: Bool,
 ) -> Int64:
     var total_input = i_rest + current
@@ -132,6 +136,15 @@ def _run_dpi(
     var output = UnsafePointer[Float64, MutAnyOrigin](
         unsafe_from_address=output_addr
     )
+    var i_ahp_output = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=i_ahp_output_addr
+    )
+    var refractory_output = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=refractory_output_addr
+    )
+    var event_output = UnsafePointer[UInt8, MutAnyOrigin](
+        unsafe_from_address=event_output_addr
+    )
     var i_mem = i_mem0
     var i_ahp = i_ahp0
     var refractory_time = refractory_time0
@@ -149,6 +162,7 @@ def _run_dpi(
         var next_i_ahp = i_ahp + dt * d_i_ahp
         var next_i_mem = i_reset
         var next_refractory = 0.0
+        var event: UInt8 = 0
         if spike_active:
             next_refractory = refractory_time - dt
             if next_refractory < 0.0:
@@ -169,6 +183,7 @@ def _run_dpi(
                 next_i_mem = i_reset
                 next_refractory = refractory_period
                 spikes += 1
+                event = 1
         if not (
             isfinite(next_i_mem)
             and isfinite(next_i_ahp)
@@ -183,10 +198,18 @@ def _run_dpi(
         refractory_time = next_refractory
         if write_output:
             output[index] = i_mem
+            if complete_output:
+                i_ahp_output[index] = i_ahp
+                refractory_output[index] = refractory_time
+                event_output[index] = event
     if write_output:
         output[n_steps] = i_mem
-        output[n_steps + 1] = i_ahp
-        output[n_steps + 2] = refractory_time
+        if complete_output:
+            i_ahp_output[n_steps] = i_ahp
+            refractory_output[n_steps] = refractory_time
+        else:
+            output[n_steps + 1] = i_ahp
+            output[n_steps + 2] = refractory_time
     return spikes
 
 
@@ -238,6 +261,10 @@ def dpi_neuron_simulate_c(
         n_steps,
         current,
         output_addr,
+        0,
+        0,
+        0,
+        False,
         False,
     )
     if validated < 0:
@@ -264,5 +291,106 @@ def dpi_neuron_simulate_c(
         n_steps,
         current,
         output_addr,
+        0,
+        0,
+        0,
+        False,
+        True,
+    )
+
+
+# Execute the complete maintained DPI packet through one failure-atomic C ABI.
+@export
+def dpi_neuron_simulate_complete_c(
+    i_mem0: Float64,
+    i_ahp0: Float64,
+    refractory_time0: Float64,
+    i_threshold: Float64,
+    i_reset: Float64,
+    i_rest: Float64,
+    i_tau: Float64,
+    i_g: Float64,
+    i_tau_ahp: Float64,
+    i_ga: Float64,
+    i_spike: Float64,
+    i_0: Float64,
+    kappa: Float64,
+    alpha: Float64,
+    tau: Float64,
+    tau_ahp: Float64,
+    refractory_period: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    i_mem_output_addr: Int,
+    i_ahp_output_addr: Int,
+    refractory_output_addr: Int,
+    event_output_addr: Int,
+) -> Int64:
+    if (
+        n_steps < 0
+        or i_mem_output_addr == 0
+        or i_ahp_output_addr == 0
+        or refractory_output_addr == 0
+        or event_output_addr == 0
+        or not isfinite(current)
+    ):
+        return -1
+    var validated = _run_dpi(
+        i_mem0,
+        i_ahp0,
+        refractory_time0,
+        i_threshold,
+        i_reset,
+        i_rest,
+        i_tau,
+        i_g,
+        i_tau_ahp,
+        i_ga,
+        i_spike,
+        i_0,
+        kappa,
+        alpha,
+        tau,
+        tau_ahp,
+        refractory_period,
+        dt,
+        n_steps,
+        current,
+        i_mem_output_addr,
+        i_ahp_output_addr,
+        refractory_output_addr,
+        event_output_addr,
+        True,
+        False,
+    )
+    if validated < 0:
+        return -1
+    return _run_dpi(
+        i_mem0,
+        i_ahp0,
+        refractory_time0,
+        i_threshold,
+        i_reset,
+        i_rest,
+        i_tau,
+        i_g,
+        i_tau_ahp,
+        i_ga,
+        i_spike,
+        i_0,
+        kappa,
+        alpha,
+        tau,
+        tau_ahp,
+        refractory_period,
+        dt,
+        n_steps,
+        current,
+        i_mem_output_addr,
+        i_ahp_output_addr,
+        refractory_output_addr,
+        event_output_addr,
+        True,
         True,
     )

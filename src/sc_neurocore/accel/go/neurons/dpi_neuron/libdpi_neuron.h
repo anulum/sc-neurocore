@@ -88,6 +88,7 @@ extern "C" {
 #endif
 
 extern int64_t dpi_neuron_simulate_c(double iMem, double iAHP, double refractoryTime, double iThreshold, double iReset, double iRest, double iTau, double iG, double iTauAHP, double iGA, double iSpike, double i0, double kappa, double alpha, double tau, double tauAHP, double refractoryPeriod, double dt, int64_t nSteps, double current, double* output);
+extern int64_t dpi_neuron_simulate_complete_c(double iMem, double iAHP, double refractoryTime, double iThreshold, double iReset, double iRest, double iTau, double iG, double iTauAHP, double iGA, double iSpike, double i0, double kappa, double alpha, double tau, double tauAHP, double refractoryPeriod, double dt, int64_t nSteps, double current, double* iMemOutput, double* iAHPOutput, double* refractoryOutput, uint8_t* eventOutput);
 
 #ifdef __cplusplus
 }

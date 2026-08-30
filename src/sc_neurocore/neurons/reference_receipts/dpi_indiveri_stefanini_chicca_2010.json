@@ -1,0 +1,72 @@
+{
+  "schema_version": "sc-neurocore.source-receipt.v1",
+  "model": "DPINeuron",
+  "source_profile": "indiveri_stefanini_chicca_2010_equations_2_3",
+  "reference": {
+    "authors": "Giacomo Indiveri, Fabio Stefanini, and Elisabetta Chicca",
+    "year": 2010,
+    "title": "Spike-based learning with a generalized integrate and fire silicon neuron",
+    "doi": "10.1109/ISCAS.2010.5536980",
+    "pdf_url": "https://noah.nrw/ubbihs/download/pdf/5123946",
+    "pdf_sha256": "7336974d3bf046e82f8b555b90e7f698bca7778cdf63229e9945a9cefb7a9807",
+    "source_scope": "equations (2)-(3), together with the circuit description of threshold feedback, reset, refractory pulse, and spike-driven adaptation"
+  },
+  "equations": {
+    "feedback_current": "I_fb=I_0^(1/(kappa+1))*I_mem^(kappa/(kappa+1))/(1+exp(-alpha*(I_mem-I_threshold)))",
+    "membrane": "tau*dI_mem/dt=(I_mem/I_tau)*(I_in/(1+I_mem/I_g)-I_tau+I_fb-I_ahp)",
+    "adaptation": "tau_ahp*dI_ahp/dt=(I_ahp/I_tau_ahp)*(I_spike*r(t)/(1+I_ahp/I_ga)-I_tau_ahp)"
+  },
+  "numerical_specialization": {
+    "integration": "simultaneous explicit Euler",
+    "input_identification": "I_in=i_rest+current",
+    "event": "post-step I_mem >= i_threshold",
+    "reset": "an event loads refractory_period and i_reset; subsequent r(t)=1 steps hold i_mem at i_reset while advancing adaptation",
+    "sample_contract": "post-step i_mem, i_ahp, refractory_time, and binary event",
+    "maintained_boundary": "The dimensionless defaults, input split, timestep, discrete integration, event ordering, and refractory counter are maintained SC-NeuroCore choices; the paper does not print this discrete recurrence or these normalized values."
+  },
+  "initial_state": {
+    "i_mem": 0.01,
+    "i_ahp": 0.01,
+    "refractory_time": 0.0
+  },
+  "parameters": {
+    "i_threshold": 1.0,
+    "i_reset": 0.01,
+    "i_rest": 0.1,
+    "i_tau": 1.0,
+    "i_g": 1.0,
+    "i_tau_ahp": 0.1,
+    "i_ga": 1.0,
+    "i_spike": 5.0,
+    "i_0": 0.01,
+    "kappa": 0.7,
+    "alpha": 10.0,
+    "tau": 20.0,
+    "tau_ahp": 100.0,
+    "refractory_period": 2.0,
+    "dt": 0.1
+  },
+  "protocol": {
+    "current": 5.0,
+    "steps": 5000,
+    "little_endian_float64_input_sha256": "df80ec233e159477bf8ebdf89a5a9531a2c07c98e3609fa455d1f2a25339f84a"
+  },
+  "expected": {
+    "event_count": 13,
+    "event_indices_zero_based": [295, 612, 931, 1252, 1578, 1912, 2258, 2621, 3004, 3409, 3835, 4278, 4735],
+    "final_state": {
+      "i_mem": 0.24977022450967534,
+      "i_ahp": 0.9597926317799105,
+      "refractory_time": 0.0
+    },
+    "little_endian_float64_i_mem_sha256": "ceb66bc27829b1271a94aafa20efdb30a6e5e4b063790a556e17a3e37a3cd28d",
+    "little_endian_float64_i_ahp_sha256": "b9b4610a9d3fd537693538f0e507482a5d07266c4715b5c11fc0206e2233fbda",
+    "little_endian_float64_refractory_sha256": "39b7b3c300110e7863ccf185ad0511da26f9fdeb7c10e9768ff3937cd9ab4b26",
+    "uint8_event_sha256": "d59860618dc50df521fa7e8842e04f60c70bfa24d5ee8e99c4cc51db80137a2c"
+  },
+  "identity_boundary": {
+    "implemented": "the coupled current-mode membrane, positive-feedback, and adaptation DPI equations under the maintained numerical specialization",
+    "not_claimed": "transistor-level mismatch, measured chip timing or power, PPA, device noise, board or HIL validation, physical-silicon equivalence, or the paper's complete learning system",
+    "catalogue_identity": "DPINeuron is the DPI circuit model; no duplicate SC-prefixed catalogue variant is introduced or removed."
+  }
+}

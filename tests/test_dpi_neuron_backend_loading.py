@@ -39,6 +39,7 @@ def test_missing_rust_engine_is_detected_at_import(monkeypatch: pytest.MonkeyPat
         reloaded = importlib.reload(backends)
         assert reloaded._HAS_RUST is False
         assert reloaded._EngineDPICls is None
+        assert reloaded._EngineDPICompleteFn is None
     importlib.reload(backends)
     assert backends._HAS_RUST is True
 
@@ -108,9 +109,29 @@ def test_loaded_runtime_is_reused_without_reprobing(
     assert getattr(backends, f"ensure_{backend}_loaded")() is True
 
 
+@pytest.mark.parametrize("mojo", (False, True))
+def test_c_library_requires_both_public_symbols(mojo: bool) -> None:
+    """Reject a library that exposes only the legacy compatibility entrypoint."""
+
+    class LegacyOnlyLibrary:
+        def dpi_neuron_simulate_c(self) -> None:
+            return None
+
+    assert (
+        backends._configure_c_library(
+            LegacyOnlyLibrary(),
+            "dpi_neuron_simulate_c",
+            mojo=mojo,
+        )
+        is None
+    )
+
+
 def test_engine_loader_returns_the_extension_class() -> None:
-    """Bind the import helper to the real DPINeuron engine symbol."""
-    assert backends._load_engine_dpi().__name__ == "DPINeuron"
+    """Bind the import helper to the real class and complete batch symbols."""
+    engine_class, complete = backends._load_engine_dpi()
+    assert engine_class.__name__ == "DPINeuron"
+    assert complete.__name__ == "dpi_neuron_simulate_complete"
 
 
 def test_checkout_bridge_discovers_maturin_compiled_extensions(tmp_path: Path) -> None:
@@ -142,7 +163,9 @@ def test_checkout_bridge_discovers_maturin_compiled_extensions(tmp_path: Path) -
         "expected = pathlib.Path(sys.argv[1]).resolve(); "
         "actual = pathlib.Path(extension.__file__).resolve(); "
         "assert actual == expected, (actual, expected); "
-        "assert package.DPINeuron is extension.DPINeuron"
+        "assert package.DPINeuron is extension.DPINeuron; "
+        "assert package.dpi_neuron_simulate_complete is "
+        "extension.dpi_neuron_simulate_complete"
     )
     # ``python -S`` disables the site module (so purelib / usersite are not
     # auto-appended). Dependencies such as NumPy often live only in the user

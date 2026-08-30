@@ -8,8 +8,12 @@
 
 /// DPI current-mode adaptive integrate-and-fire circuit.
 ///
-/// Implements Indiveri, Stefanini & Chicca (2010), Eqs. (2)–(3), with a
-/// simultaneous explicit-Euler macro-step and a spike-driven refractory pulse.
+/// Implements Indiveri, Stefanini & Chicca (2010), Eqs. (2)–(3). The
+/// normalised operating point, explicit-Euler macro-step, constant resting
+/// input, threshold event, and digital refractory scheduling are maintained
+/// numerical choices around the source circuit equations.
+pub type DpiCompleteTrace = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<u8>);
+
 #[derive(Clone, Debug)]
 pub struct DPINeuron {
     pub i_mem: f64,
@@ -111,13 +115,13 @@ impl DPINeuron {
         log_current.exp() * Self::sigmoid(self.alpha * (self.i_mem - self.i_threshold))
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    fn step_checked(&mut self, current: f64) -> Result<u8, &'static str> {
         if !current.is_finite() || !self.valid() {
-            return 0;
+            return Err("DPI state, parameters, and current must be physically valid");
         }
         let total_input = self.i_rest + current;
         if !total_input.is_finite() || total_input < 0.0 {
-            return 0;
+            return Err("DPI total input current must be finite and non-negative");
         }
 
         let spike_active = self.refractory_time > 0.0;
@@ -138,7 +142,7 @@ impl DPINeuron {
                 * (total_input / (1.0 + self.i_mem / self.i_g) - self.i_tau + i_fb - self.i_ahp);
             let candidate = self.i_mem + self.dt * d_i_mem;
             if !candidate.is_finite() || candidate <= 0.0 {
-                return 0;
+                return Err("DPI membrane Euler candidate left the physical current domain");
             }
             if candidate >= self.i_threshold {
                 (self.i_reset, self.refractory_period, true)
@@ -154,13 +158,51 @@ impl DPINeuron {
             || next_i_ahp < 0.0
             || next_refractory < 0.0
         {
-            return 0;
+            return Err("DPI Euler update left the physical current domain");
         }
 
         self.i_mem = next_i_mem;
         self.i_ahp = next_i_ahp;
         self.refractory_time = next_refractory;
-        i32::from(spiked)
+        Ok(u8::from(spiked))
+    }
+
+    /// Advance one compatibility scalar step.
+    ///
+    /// Invalid state or arithmetic leaves the instance unchanged and returns
+    /// zero. Use [`Self::simulate_complete`] when rejection must be observable.
+    pub fn step(&mut self, current: f64) -> i32 {
+        i32::from(self.step_checked(current).unwrap_or(0))
+    }
+
+    /// Return aligned state and event traces and commit only a valid full run.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<DpiCompleteTrace, &'static str> {
+        if !current.is_finite() || !self.valid() {
+            return Err("DPI state, parameters, and current must be physically valid");
+        }
+        let total_input = self.i_rest + current;
+        if !total_input.is_finite() || total_input < 0.0 {
+            return Err("DPI total input current must be finite and non-negative");
+        }
+
+        let mut candidate = self.clone();
+        let mut i_mem_trace = Vec::with_capacity(n_steps);
+        let mut i_ahp_trace = Vec::with_capacity(n_steps);
+        let mut refractory_trace = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step_checked(current)?;
+            i_mem_trace.push(candidate.i_mem);
+            i_ahp_trace.push(candidate.i_ahp);
+            refractory_trace.push(candidate.refractory_time);
+            events.push(event);
+        }
+        *self = candidate;
+        Ok((i_mem_trace, i_ahp_trace, refractory_trace, events))
     }
 
     pub fn reset(&mut self) {
@@ -226,5 +268,56 @@ mod tests {
         assert_eq!(n.i_mem, n.i_reset);
         assert!(n.i_ahp > 0.01);
         assert_eq!(n.refractory_time, 1.9);
+    }
+
+    #[test]
+    fn complete_packet_carries_all_states_and_events() {
+        let mut n = DPINeuron {
+            i_mem: 0.37,
+            i_ahp: 0.08,
+            i_threshold: 1.3,
+            i_reset: 0.2,
+            i_rest: 0.15,
+            i_tau: 0.9,
+            i_g: 1.4,
+            i_tau_ahp: 0.12,
+            i_ga: 0.8,
+            i_spike: 4.2,
+            i_0: 0.02,
+            kappa: 0.65,
+            alpha: 8.0,
+            tau: 7.0,
+            tau_ahp: 45.0,
+            refractory_period: 0.6,
+            dt: 0.05,
+            ..DPINeuron::new()
+        };
+        let (i_mem, i_ahp, refractory, events) = n.simulate_complete(400, 5.0).unwrap();
+        assert_eq!(i_mem.len(), 400);
+        assert_eq!(i_ahp.len(), 400);
+        assert_eq!(refractory.len(), 400);
+        assert_eq!(
+            events
+                .iter()
+                .map(|event| usize::from(*event))
+                .sum::<usize>(),
+            4
+        );
+        assert_eq!(n.i_mem, i_mem[399]);
+        assert_eq!(n.i_ahp, i_ahp[399]);
+        assert_eq!(n.refractory_time, refractory[399]);
+    }
+
+    #[test]
+    fn complete_packet_rejection_is_atomic() {
+        let mut n = DPINeuron {
+            tau: f64::MIN_POSITIVE,
+            ..DPINeuron::new()
+        };
+        let before = n.clone();
+        assert!(n.simulate_complete(2, f64::MAX).is_err());
+        assert_eq!(n.i_mem, before.i_mem);
+        assert_eq!(n.i_ahp, before.i_ahp);
+        assert_eq!(n.refractory_time, before.refractory_time);
     }
 }

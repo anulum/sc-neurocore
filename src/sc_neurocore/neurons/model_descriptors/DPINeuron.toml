@@ -11,14 +11,19 @@ schema_version = 2
 name = "DPINeuron"
 class_name = "DPINeuron"
 module = "dpi_neuron"
-display_name = ""
-summary = "Current-mode adaptive integrate-and-fire silicon neuron with coupled membrane and after-hyperpolarisation DPIs."
+display_name = "Indiveri-Stefanini-Chicca 2010 DPI circuit"
+summary = "Source-aligned current-mode adaptive integrate-and-fire circuit with coupled membrane, positive-feedback, and after-hyperpolarisation DPIs."
 family = "Hardware / neuromorphic"
 category = "hardware-neuromorphic"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "normalised current-mode neuromorphic dynamics",
+    "source-equation, backend-parity, and fixed-point studies",
+]
+hardware_fit = [
+    "Q16.16 equation-compiler core with a disclosed operating envelope",
+]
 behavior_tags = [
     "adapting",
     "excitable",
@@ -32,6 +37,8 @@ authors = [
 ]
 year = 2010
 doi = "10.1109/ISCAS.2010.5536980"
+paper_title = "Spike-based learning with a generalized integrate and fire silicon neuron"
+source_scope = "Equations (2)-(3), plus the described threshold feedback, reset, refractory pulse, and spike-driven adaptation. Normalised defaults and the discrete recurrence are maintained choices."
 
 [state.i_mem]
 init = 0.01
@@ -204,8 +211,9 @@ status = "implemented"
 parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":5.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "39b39196db3b637c0014e67183195d20080dfbcb32ffba3afbd981e4cf672ace"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json"
+golden_trace_sha256 = "ceb66bc27829b1271a94aafa20efdb30a6e5e4b063790a556e17a3e37a3cd28d"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json"
 
 [documentation]
 slug = "models/dpi_neuron"
@@ -214,13 +222,16 @@ notes = "The maintained normalised current-domain model implements the full coup
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "float backends at I=-0.1/0/1/2/3/5/10/20/50 for 1000 steps plus a full 18-field configured trace; independent DOI trace at I=5 for 5000 steps; generated Q16.16 RTL at I=5 for 5000 steps"
-tolerance = "compiled event counts exact and all float states <=5e-13 absolute; hand/schema states <=1e-13; Q16.16 events exact over 5000 steps, first event within 3 steps, and pre-event i_mem/i_ahp envelopes <=0.0032/0.0006"
-evidence = "tests/test_dpi_neuron_backends.py::test_full_contract_backends_match_python_factory_vector"
+operating_point = "PDF-bound complete-state receipt at I=5 for 5000 steps; float backends at I=-0.1/0/1/2/3/5/10/20/50 for 1000 steps plus a full 18-field configured trace; paired schemas and generated Q16.16 RTL at I=5 for 5000 steps"
+tolerance = "receipt input/state/event digests exact; compiled event vectors exact and all float states <=5e-13 absolute; hand/schema states <=1e-13; Q16.16 events exact over 5000 steps, first event within 3 steps, and pre-event i_mem/i_ahp envelopes <=0.0032/0.0006"
+evidence = "tests/test_reference_dpi_neuron.py::test_dpi_source_receipt_matches_independent_complete_orbit; tests/test_dpi_neuron_backends_backend_parity.py::test_complete_configured_contract_matches_python"
 
 [silicon]
 compiles = true
 cosim_validated = true
 cosim_evidence = "tests/test_cosim_dpi_neuron.py::test_q1616_rtl_preserves_events_and_measured_state_envelope"
-target_tier = "H1"
-terminal_reason = "Full nonlinear Q16.16 equation lowering, event co-simulation, and bounded formal checks are enrolled; higher silicon rungs require synthesis, timing, and hardware programmes."
+synthesised = true
+synth_report = "hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "The nonlinear Q16.16 core, event/state co-simulation, 112953-cell Yosys coarse synthesis, and depth-8 fixed-drive spike/reset/refractory safety close H2; timing, PPA, board, physical silicon, transistor mismatch, and universal formal equivalence remain open."

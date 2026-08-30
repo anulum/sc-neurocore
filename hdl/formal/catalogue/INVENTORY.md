@@ -12,7 +12,7 @@ Jobs: **32**
 | COBALIFNeuron | coba_lif | `sc_cobalifneuron` | `v_out` | Q24.24 | 4 |
 | ConnorStevensNeuron | connor_stevens | `sc_connor_stevens` | `v_out` | Q16.16 | 4 |
 | CourageNekorkinMapNeuron | courage_nekorkin_map | `sc_courbage_nekorkin_map` | `x_out` | Q32.32 | 4 |
-| DPINeuron | dpi_neuron | `sc_dpineuron` | `i_mem_out` | Q16.16 | 4 |
+| DPINeuron | dpi_neuron | `sc_dpineuron` | `i_mem_out` | Q16.16 | 8 |
 | ErmentroutKopellMapNeuron | ermentrout_kopell_map_neuron | `sc_ermentrout_kopell_map_neuron` | `theta_out` | Q8.8 | 4 |
 | ErmentroutKopellPopulation | ermentrout_kopell_pop | `sc_ermentroutkopellpopulation` | `v_out` | Q32.32 | 4 |
 | EscapeRateNeuron | escape_rate | `sc_escaperateneuron` | `v_out` | Q24.24 | 4 |

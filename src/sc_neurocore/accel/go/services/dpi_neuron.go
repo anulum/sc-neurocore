@@ -179,23 +179,44 @@ func SimulateDPITrace(
 	nSteps int,
 	current float64,
 ) ([]float64, int, DPINeuronState, error) {
+	iMem, _, _, events, final, err := SimulateDPIComplete(initial, nSteps, current)
+	if err != nil {
+		return nil, 0, initial, err
+	}
+	spikes := 0
+	for _, event := range events {
+		spikes += int(event)
+	}
+	return iMem, spikes, final, nil
+}
+
+// SimulateDPIComplete returns aligned state and event traces without partial output.
+func SimulateDPIComplete(
+	initial DPINeuronState,
+	nSteps int,
+	current float64,
+) ([]float64, []float64, []float64, []uint8, DPINeuronState, error) {
 	totalInput := initial.IRest + current
 	if nSteps < 0 || !finiteDPI(current) || !finiteDPI(totalInput) ||
 		!initial.Valid() || totalInput < 0.0 {
-		return nil, 0, initial, ErrDPIInvalidState
+		return nil, nil, nil, nil, initial, ErrDPIInvalidState
 	}
 	state := initial
-	trace := make([]float64, nSteps)
-	spikes := 0
+	iMem := make([]float64, nSteps)
+	iAHP := make([]float64, nSteps)
+	refractory := make([]float64, nSteps)
+	events := make([]uint8, nSteps)
 	for index := 0; index < nSteps; index++ {
 		spike, err := state.Step(current)
 		if err != nil {
-			return nil, 0, initial, err
+			return nil, nil, nil, nil, initial, err
 		}
-		trace[index] = state.IMem
-		spikes += spike
+		iMem[index] = state.IMem
+		iAHP[index] = state.IAHP
+		refractory[index] = state.RefractoryTime
+		events[index] = uint8(spike)
 	}
-	return trace, spikes, state, nil
+	return iMem, iAHP, refractory, events, state, nil
 }
 
 var (

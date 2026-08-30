@@ -89,19 +89,23 @@ baselines while preserving configured parameters.
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 
 neuron = DPINeuron()
-trace, spikes = neuron.simulate(1_000, current=5.0, backend="auto")
-assert spikes == 3
-assert trace.shape == (1_000,)
+i_mem, i_ahp, refractory, events = neuron.simulate_complete(
+    1_000, current=5.0, backend="auto"
+)
+assert int(events.sum()) == 3
+assert all(trace.shape == (1_000,) for trace in (i_mem, i_ahp, refractory, events))
 ```
 
-`trace[t]` is the post-step membrane current. Successful calls also commit the
-final `i_mem`, `i_ahp`, and `refractory_time` to the instance. Accepted backend
+Every array is aligned and post-step; `events` is binary `uint8`. The legacy
+`simulate()` view is derived from the complete packet and returns membrane
+trace plus event count. Successful calls commit the final `i_mem`, `i_ahp`,
+and `refractory_time` only after the entire packet validates. Accepted backend
 selectors are `python`, `rust`, `julia`, `go`, `mojo`, and `auto`.
 
 | Backend | Maintained contract |
 |---|---|
 | Python | complete 18-field state and parameter contract |
-| Rust engine | executable factory-default contract; explicit rejection otherwise |
+| Rust engine | complete configurable 18-field contract through PyO3 |
 | Rust safety | separately executable complete 18-field contract |
 | Julia | complete 18-field contract |
 | Go C ABI | complete 18-field contract with staged output writes |
@@ -127,9 +131,13 @@ The enrolled configured contract exercises every native field for 400 steps at
 `refractory_time=0.0`. Compiled event counts are exact and measured floating
 states remain within `5e-13` absolute error of Python.
 
-The descriptor reference is the 1,000-step default trace at `current=5.0`.
-Its float64 membrane trace SHA-256 is
-`39b39196db3b637c0014e67183195d20080dfbcb32ffba3afbd981e4cf672ace`.
+The primary-source receipt is
+`src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json`.
+It binds the downloaded paper SHA-256, constant-current input, all 5,000
+post-step state samples, the complete 13-event vector, and final state. An
+independent direct-equation producer reproduces the receipt without importing
+the production recurrence; the membrane digest is
+`ceb66bc27829b1271a94aafa20efdb30a6e5e4b063790a556e17a3e37a3cd28d`.
 
 ## Schema, RTL, and formal evidence
 
@@ -143,42 +151,50 @@ therefore an explicit fixed-point approximation, not float bit equivalence. At
 `current=5.0` for 5,000 steps, float and RTL both emit 13 events. The first RTL
 event is within three steps of float; before the first event, the measured
 `i_mem` and `i_ahp` errors are at most `0.0032` and `0.0006`. The pulse reset,
-adaptation increase, and timer decay are also checked. A generated depth-4 Z3
-job checks reset hygiene over its enrolled bounded horizon.
+adaptation increase, and timer decay are also checked. Full Yosys coarse
+synthesis lowers the core to 112,953 cells with no remaining processes. A
+depth-8 Z3 job uses a deterministic Q16.16 `current=500` protocol that reaches
+an event and checks its reset packet plus the following refractory sample
+through public ports. This is bounded safety evidence, not formal equivalence.
 
 Evidence anchors:
 
-- `tests/test_model_dpi_neuron.py` — source equations, pulse ordering,
-  validation, adaptation, and failure atomicity;
-- `tests/test_dpi_neuron_backends.py` — executable five-backend parity, native
-  ABI state, dispatch, and rejection paths;
+- `tests/test_model_dpi_neuron_dynamics_and_golden.py` and
+  `tests/test_model_dpi_neuron_contract_rejects.py` — source equations, pulse
+  ordering, validation, adaptation, and failure atomicity;
+- `tests/test_dpi_neuron_backends_backend_parity.py` and
+  `tests/test_dpi_neuron_backends_rejects_and_hints.py` — executable
+  five-backend complete-state parity, ABI state, dispatch, and rejection paths;
 - `src/sc_neurocore/accel/rust/safety/dpi_neuron.rs` — independent Rust safety
-  recurrence and 12 focused tests;
-- `src/sc_neurocore/accel/julia/dpi_neuron_parity_test.jl` — 69 standalone
+  recurrence and 14 focused tests;
+- `src/sc_neurocore/accel/julia/dpi_neuron_parity_test.jl` — 77 standalone
   Julia assertions;
 - `tests/test_cosim_dpi_neuron.py` — hand/schema parity and real Icarus Q16.16
   co-simulation;
-- `tests/test_reference_dpi_neuron.py` — independent DOI-bound 5,000-step
-  reference features;
-- `hdl/formal/catalogue/sc_dpineuron.sby` — generated bounded formal job.
+- `tests/test_reference_dpi_neuron.py` — PDF-bound, independent 5,000-step
+  complete-state and event receipt;
+- `hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json` — executed full coarse
+  synthesis report;
+- `hdl/formal/catalogue/sc_dpineuron.sby` — depth-8 bounded event-state job.
 
 ## Benchmark evidence
 
 `benchmarks/bench_model_dpi_neuron.py` measures 100,000 public-dispatch steps
-at `current=5.0` for all five backends. It records source hashes, exact event
-parity, trace error, all final states, affinity, host load, governor, runtime
-versions, and an executable Rust-safety receipt. The committed result is a
+at `current=5.0` for all five backends. It records source hashes, exact aligned
+event vectors, per-state trace error and digests, all final states, affinity,
+host load, governor, runtime versions, and an executable Rust-safety receipt.
+The committed result is a
 local regression record at
 `benchmarks/results/local_python_2026-07-13_dpi_neuron_circuit.json`; it is not
 a reserved-core or general throughput claim.
 
-| Backend | Median call (ms) | Events | Maximum membrane difference |
+| Backend | Median call (ms) | Events | Maximum complete-state difference |
 |---|---:|---:|---:|
-| Julia | 10.357 | 210 | `0` |
-| Mojo | 11.039 | 210 | `2.568e-13` |
-| Go | 15.893 | 210 | `1.110e-16` |
-| Rust engine | 100.328 | 210 | `0` |
-| Python | 857.834 | 210 | `0` |
+| Julia | 8.449 | 210 | `0` |
+| Mojo | 9.956 | 210 | `2.568e-13` |
+| Go | 16.454 | 210 | `1.110e-16` |
+| Rust engine | 26.541 | 210 | `0` |
+| Python | 859.046 | 210 | `0` |
 
 ## Scope limits
 
@@ -189,5 +205,5 @@ a reserved-core or general throughput claim.
   modelled.
 - Q16.16 validation proves only the declared operating point, horizon, and
   error envelope. It is not bit-true fabricated-chip equivalence.
-- Higher silicon-readiness tiers require separate synthesis, timing, and
-  hardware evidence.
+- H2 is closed by coarse synthesis. H3 and higher require target-specific
+  timing/resource closure, equivalence, PPA, and hardware evidence.

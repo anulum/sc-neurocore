@@ -49,8 +49,12 @@
   },
   "extensions": {
     "source_equations": "Indiveri, Stefanini, and Chicca (2010), Eqs. (2)-(3)",
+    "primary_source": "doi:10.1109/ISCAS.2010.5536980",
+    "source_receipt": "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json",
     "spike_pulse": "During refractory_time > 0, i_mem is held at i_reset and i_spike drives the adaptation DPI.",
     "event_order": "Simultaneous explicit-Euler state update, post-update threshold detection, then reset and refractory-pulse start.",
-    "dt_contract": "The parameter dt mirrors integration.dt so the refractory timer reaches zero exactly on the final pulse step."
+    "dt_contract": "The parameter dt mirrors integration.dt so the refractory timer reaches zero exactly on the final pulse step.",
+    "maintained_boundary": "Normalised parameters, I_in=i_rest+I, explicit Euler, sampled level detection, and the discrete refractory counter are maintained SC-NeuroCore choices rather than values or a recurrence printed by the paper.",
+    "nonclaims": "No transistor mismatch, measured chip timing or power, PPA, device, board, HIL, physical-silicon, or universal formal-equivalence claim."
   }
 }

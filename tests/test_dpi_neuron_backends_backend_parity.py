@@ -37,13 +37,14 @@ def test_full_contract_backends_match_python_factory_vector(
 
 @pytest.mark.parametrize(("current", "expected_spikes"), _GOLDENS)
 def test_factory_rust_matches_python(current: float, expected_spikes: int) -> None:
-    """Prove the fixed-constructor PyO3 engine executes the same recurrence."""
-    reference_trace, reference_spikes, reference_state = _run("python", current=current)
-    trace, spikes, state = _run("rust", current=current)
-    assert reference_spikes == expected_spikes
-    assert spikes == reference_spikes
-    _assert_state_parity(trace, reference_trace)
-    _assert_state_parity(state, reference_state)
+    """Prove the complete PyO3 batch carries every aligned output."""
+    reference = _run_complete("python", current=current)
+    actual = _run_complete("rust", current=current)
+    assert int(np.sum(reference[3], dtype=np.int64)) == expected_spikes
+    for actual_trace, reference_trace in zip(actual[:3], reference[:3], strict=True):
+        _assert_state_parity(actual_trace, reference_trace)
+    np.testing.assert_array_equal(actual[3], reference[3])
+    _assert_state_parity(actual[4], reference[4])
 
 
 def test_rust_safety_executable_matches_configured_python_trace() -> None:
@@ -104,24 +105,35 @@ def test_rust_safety_executable_matches_configured_python_trace() -> None:
     _assert_state_parity(rust_states[-1], python_state)
 
 
-@pytest.mark.parametrize("backend", _FULL_CONTRACT_BACKENDS)
+@pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_complete_configured_contract_matches_python(backend: str) -> None:
-    """Carry every state and parameter field through the native ABI."""
-    reference_trace, reference_spikes, reference_state = _run(
-        "python", current=5.0, n_steps=400, configured=True
-    )
-    trace, spikes, state = _run(backend, current=5.0, n_steps=400, configured=True)
-    assert spikes == reference_spikes == 4
-    _assert_state_parity(trace, reference_trace)
-    _assert_state_parity(state, reference_state)
+    """Carry every field and aligned state/event trace through each native ABI."""
+    reference = _run_complete("python", current=5.0, n_steps=400, configured=True)
+    actual = _run_complete(backend, current=5.0, n_steps=400, configured=True)
+    assert int(np.sum(actual[3], dtype=np.int64)) == 4
+    for actual_trace, reference_trace in zip(actual[:3], reference[:3], strict=True):
+        _assert_state_parity(actual_trace, reference_trace)
+    np.testing.assert_array_equal(actual[3], reference[3])
+    _assert_state_parity(actual[4], reference[4])
 
 
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_empty_run_preserves_all_states(backend: str) -> None:
     """Return an empty trace without discarding any dynamic state."""
-    neuron = DPINeuron() if backend == "rust" else _configured()
+    neuron = _configured()
     before = (neuron.i_mem, neuron.i_ahp, neuron.refractory_time)
     trace, spikes = neuron.simulate(0, 5.0, backend=backend)
     assert trace.shape == (0,)
     assert spikes == 0
     assert (neuron.i_mem, neuron.i_ahp, neuron.refractory_time) == before
+
+
+@pytest.mark.parametrize("backend", ("python", *_COMPILED_BACKENDS))
+def test_complete_packet_is_aligned_and_binary(backend: str) -> None:
+    """Expose four contiguous equal-length arrays through every public lane."""
+    packet = _run_complete(backend, current=5.0, n_steps=400, configured=True)
+    for trace in packet[:4]:
+        assert trace.shape == (400,)
+        assert trace.flags.c_contiguous
+    assert packet[3].dtype == np.uint8
+    np.testing.assert_array_equal(packet[3], (packet[2] == 0.6).astype(np.uint8))

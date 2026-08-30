@@ -150,3 +150,31 @@ def test_invalid_backend_and_total_current_fail_before_mutation() -> None:
     with pytest.raises(ValueError, match="finite and non-negative"):
         neuron.simulate(1, -0.2)
     assert (neuron.i_mem, neuron.i_ahp, neuron.refractory_time) == before
+
+
+@pytest.mark.parametrize(
+    "packet",
+    [
+        (np.zeros(0), np.zeros(1), np.zeros(1), np.zeros(1), (0.1, 0.1, 0.0)),
+        (np.ones(1), np.ones(1), np.zeros(1), np.array([2]), (1.0, 1.0, 0.0)),
+        (np.ones(1), np.ones(1), np.zeros(1), np.zeros(1), (0.5, 1.0, 0.0)),
+        (np.array([math.nan]), np.ones(1), np.zeros(1), np.zeros(1), (1.0, 1.0, 0.0)),
+        (np.ones(1), np.ones(1), np.zeros(1), np.zeros(1), cast(Any, (1.0, 0.0))),
+        (np.zeros(1), np.ones(1), np.zeros(1), np.zeros(1), (1.0, 1.0, 0.0)),
+    ],
+)
+def test_malformed_backend_packet_fails_before_state_commit(
+    packet: tuple[object, object, object, object, tuple[float, float, float]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Validate all native output before mutating the public instance."""
+    neuron = DPINeuron()
+    before = (neuron.i_mem, neuron.i_ahp, neuron.refractory_time)
+    monkeypatch.setattr("sc_neurocore.accel.dpi_neuron.ensure_go_loaded", lambda: True)
+    monkeypatch.setattr(
+        "sc_neurocore.accel.dpi_neuron.simulate_go_complete",
+        lambda *_args: packet,
+    )
+    with pytest.raises((RuntimeError, FloatingPointError)):
+        neuron.simulate_complete(1, 0.0, backend="go")
+    assert (neuron.i_mem, neuron.i_ahp, neuron.refractory_time) == before

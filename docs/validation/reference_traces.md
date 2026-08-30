@@ -70,6 +70,17 @@ and event-hash fields into the deterministic trace schema.
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
+The separate
+`reference_receipts/dpi_indiveri_stefanini_chicca_2010.json` binds the primary
+paper PDF, equations (2)-(3), maintained numerical specialization, 5,000-step
+constant-current input, all three post-step state traces, 13-event vector, and
+final state. Its dedicated test reproduces every sample by independently
+iterating the written equations and maintained event ordering before comparing
+the complete packet with `DPINeuron`; it does not import production recurrence
+helpers for the oracle. The receipt excludes transistor mismatch, measured
+chip timing or power, PPA, device, board, HIL, physical-silicon, and universal
+formal-equivalence claims.
+
 The separate `reference_receipts/theta_ermentrout_kopell_1986.json` binds the
 production exact-held-drive `ThetaNeuron` rather than the Euler schema runner.
 It records the SHA-256 of the author-hosted paper scan, equation (2.5), the

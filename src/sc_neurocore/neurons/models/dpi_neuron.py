@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import math
+from copy import copy
 from dataclasses import dataclass
 from typing import Protocol, cast
 
@@ -17,29 +18,35 @@ import numpy.typing as npt
 
 from sc_neurocore.accel import dpi_neuron as _backends
 
-_RUST_ENGINE_DEFAULTS: dict[str, float] = {
-    "i_mem": 0.01,
-    "i_ahp": 0.01,
-    "refractory_time": 0.0,
-    "i_threshold": 1.0,
-    "i_reset": 0.01,
-    "i_rest": 0.1,
-    "i_tau": 1.0,
-    "i_g": 1.0,
-    "i_tau_ahp": 0.1,
-    "i_ga": 1.0,
-    "i_spike": 5.0,
-    "i_0": 0.01,
-    "kappa": 0.7,
-    "alpha": 10.0,
-    "tau": 20.0,
-    "tau_ahp": 100.0,
-    "refractory_period": 2.0,
-    "dt": 0.1,
-}
+_DPI_CONTRACT_FIELDS = (
+    "i_mem",
+    "i_ahp",
+    "refractory_time",
+    "i_threshold",
+    "i_reset",
+    "i_rest",
+    "i_tau",
+    "i_g",
+    "i_tau_ahp",
+    "i_ga",
+    "i_spike",
+    "i_0",
+    "kappa",
+    "alpha",
+    "tau",
+    "tau_ahp",
+    "refractory_period",
+    "dt",
+)
 
 _DPIState = tuple[float, float, float]
-_DPIResult = tuple[npt.NDArray[np.float64], int, _DPIState]
+_DPICompleteRaw = tuple[object, object, object, object, _DPIState]
+_DPICompletePacket = tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+]
 
 
 class _FullContractRunner(Protocol):
@@ -67,7 +74,7 @@ class _FullContractRunner(Protocol):
         dt: float,
         n_steps: int,
         current: float,
-    ) -> _DPIResult: ...
+    ) -> _DPICompleteRaw: ...
 
 
 def _sigmoid(value: float) -> float:
@@ -104,10 +111,13 @@ class DPINeuron:
        - I_{\tau ahp}\right).
 
     ``r(t)`` is one for the programmable refractory pulse and zero otherwise.
-    The membrane is held at ``i_reset`` during that pulse. The continuous
-    equations use a simultaneous explicit-Euler update; a threshold crossing
-    starts the pulse for the following step, matching the schema and RTL
-    macro-step ordering.
+    The paper identifies the circuit paths that generate spikes, reset the
+    membrane, impose refractoriness, and drive adaptation. This maintained
+    digital realisation adds dimensionless factory parameters, ``i_rest`` as a
+    constant component of ``I_in``, simultaneous explicit-Euler integration,
+    post-step level detection, and a subsequent-step pulse that holds
+    ``i_mem`` at ``i_reset``. Those numerical choices are not values or a
+    discrete recurrence printed by the paper.
 
     References
     ----------
@@ -140,13 +150,6 @@ class DPINeuron:
 
     def __post_init__(self) -> None:
         self._validate_runtime_state()
-
-    def _matches_rust_engine_contract(self) -> bool:
-        """Return whether this instance matches the Rust engine defaults."""
-        return all(
-            float(getattr(self, name)) == expected
-            for name, expected in _RUST_ENGINE_DEFAULTS.items()
-        )
 
     def _feedback_current(self, i_mem: float) -> float:
         """Return the publication's inverter positive-feedback current."""
@@ -226,7 +229,43 @@ class DPINeuron:
         current: float = 0.0,
         backend: str = "auto",
     ) -> tuple[npt.NDArray[np.float64], int]:
-        """Advance a sequential trace through Python or a compiled backend."""
+        """Return membrane trace and aggregate count through one backend."""
+        i_mem, _i_ahp, _refractory, events = self.simulate_complete(n_steps, current, backend)
+        return i_mem, int(np.sum(events, dtype=np.int64))
+
+    def simulate_complete(
+        self,
+        n_steps: int,
+        current: float = 0.0,
+        backend: str = "auto",
+    ) -> _DPICompletePacket:
+        """Return aligned state/events and atomically commit the final state.
+
+        Parameters
+        ----------
+        n_steps:
+            Number of constant-input Euler updates.
+        current:
+            Finite injected component of the maintained input current.
+        backend:
+            ``python``, ``rust``, ``julia``, ``go``, ``mojo``, or ``auto``.
+
+        Returns
+        -------
+        tuple of numpy.ndarray
+            Contiguous post-step membrane, adaptation, refractory, and binary
+            event traces with identical length.
+
+        Raises
+        ------
+        ValueError
+            If the input, state, parameters, or requested backend are invalid.
+        RuntimeError
+            If an explicitly requested native runtime is unavailable or emits
+            a malformed packet.
+        FloatingPointError
+            If a native runtime rejects arithmetic or emits non-finite state.
+        """
         if not isinstance(n_steps, int) or isinstance(n_steps, bool) or n_steps < 0:
             raise ValueError("n_steps must be a non-negative integer")
         if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
@@ -246,28 +285,26 @@ class DPINeuron:
                 selected = "julia"
             elif _backends.ensure_mojo_loaded():
                 selected = "mojo"
-            elif _backends._HAS_RUST and self._matches_rust_engine_contract():
+            elif _backends._HAS_RUST:
                 selected = "rust"
             else:
                 selected = "python"
 
         if selected == "rust":
-            if not _backends._HAS_RUST or _backends._EngineDPICls is None:
+            if not _backends._HAS_RUST:
                 raise RuntimeError(
                     "Rust DPI backend requested but sc_neurocore_engine is unavailable."
                 )
-            if not self._matches_rust_engine_contract():
-                raise RuntimeError(
-                    "Rust DPI backend requires factory-default parameters and initial state."
-                )
-            trace, spikes, state = _backends.simulate_rust(n_steps, current)
+            packet = self._simulate_full_contract(
+                _backends.simulate_rust_complete, n_steps, current
+            )
         elif selected == "julia":
             if not _backends.ensure_julia_loaded():
                 raise RuntimeError(
                     "Julia DPI backend requested but juliacall or the module is unavailable."
                 )
-            trace, spikes, state = self._simulate_full_contract(
-                _backends.simulate_julia, n_steps, current
+            packet = self._simulate_full_contract(
+                _backends.simulate_julia_complete, n_steps, current
             )
         elif selected == "go":
             if not _backends.ensure_go_loaded():
@@ -276,9 +313,7 @@ class DPINeuron:
                     "go build -buildmode=c-shared -o libdpi_neuron.so . "
                     "in accel/go/neurons/dpi_neuron."
                 )
-            trace, spikes, state = self._simulate_full_contract(
-                _backends.simulate_go, n_steps, current
-            )
+            packet = self._simulate_full_contract(_backends.simulate_go_complete, n_steps, current)
         elif selected == "mojo":
             if not _backends.ensure_mojo_loaded():
                 raise RuntimeError(
@@ -286,21 +321,22 @@ class DPINeuron:
                     "mojo build --emit shared-lib -o libdpi_neuron.so dpi_neuron.mojo "
                     "in accel/mojo/kernels."
                 )
-            trace, spikes, state = self._simulate_full_contract(
-                _backends.simulate_mojo, n_steps, current
+            packet = self._simulate_full_contract(
+                _backends.simulate_mojo_complete, n_steps, current
             )
         else:
-            trace, spikes, state = self._simulate_python(n_steps, current)
+            packet = self._simulate_python_complete(n_steps, current)
 
+        traces, state = self._validated_complete_packet(packet, n_steps)
         self.i_mem, self.i_ahp, self.refractory_time = state
-        return trace, spikes
+        return traces
 
     def _simulate_full_contract(
         self,
         runner: object,
         n_steps: int,
         current: float,
-    ) -> _DPIResult:
+    ) -> _DPICompleteRaw:
         """Pass every maintained state and parameter to a native runner."""
         native = cast(_FullContractRunner, runner)
         return native(
@@ -326,14 +362,63 @@ class DPINeuron:
             current,
         )
 
-    def _simulate_python(self, n_steps: int, current: float) -> _DPIResult:
-        """Run the maintained Python recurrence."""
-        trace = np.empty(n_steps, dtype=np.float64)
-        spikes = 0
+    def _simulate_python_complete(self, n_steps: int, current: float) -> _DPICompleteRaw:
+        """Run the maintained recurrence against a staged instance."""
+        candidate = copy(self)
+        i_mem = np.empty(n_steps, dtype=np.float64)
+        i_ahp = np.empty(n_steps, dtype=np.float64)
+        refractory = np.empty(n_steps, dtype=np.float64)
+        events = np.empty(n_steps, dtype=np.uint8)
         for index in range(n_steps):
-            spikes += self.step(current)
-            trace[index] = self.i_mem
-        return trace, spikes, (self.i_mem, self.i_ahp, self.refractory_time)
+            events[index] = candidate.step(current)
+            i_mem[index] = candidate.i_mem
+            i_ahp[index] = candidate.i_ahp
+            refractory[index] = candidate.refractory_time
+        state = (candidate.i_mem, candidate.i_ahp, candidate.refractory_time)
+        return i_mem, i_ahp, refractory, events, state
+
+    @staticmethod
+    def _validated_complete_packet(
+        packet: _DPICompleteRaw,
+        n_steps: int,
+    ) -> tuple[_DPICompletePacket, _DPIState]:
+        """Validate one native packet before caller-visible state mutation."""
+        raw_i_mem, raw_i_ahp, raw_refractory, raw_events, raw_state = packet
+        i_mem = np.ascontiguousarray(np.asarray(raw_i_mem, dtype=np.float64))
+        i_ahp = np.ascontiguousarray(np.asarray(raw_i_ahp, dtype=np.float64))
+        refractory = np.ascontiguousarray(np.asarray(raw_refractory, dtype=np.float64))
+        event_values = np.asarray(raw_events)
+        if any(values.shape != (n_steps,) for values in (i_mem, i_ahp, refractory, event_values)):
+            raise RuntimeError("DPI backend returned an invalid packet shape")
+        state = tuple(float(value) for value in raw_state)
+        if len(state) != 3:
+            raise RuntimeError("DPI backend returned an invalid final state")
+        if not (
+            np.all(np.isfinite(i_mem))
+            and np.all(np.isfinite(i_ahp))
+            and np.all(np.isfinite(refractory))
+            and all(math.isfinite(value) for value in state)
+        ):
+            raise FloatingPointError("DPI backend returned non-finite state")
+        if (
+            np.any(i_mem <= 0.0)
+            or np.any(i_ahp < 0.0)
+            or np.any(refractory < 0.0)
+            or state[0] <= 0.0
+            or state[1] < 0.0
+            or state[2] < 0.0
+        ):
+            raise RuntimeError("DPI backend returned state outside the physical domain")
+        if not np.all((event_values == 0) | (event_values == 1)):
+            raise RuntimeError("DPI backend returned non-binary events")
+        events = np.ascontiguousarray(event_values, dtype=np.uint8)
+        if n_steps and state != (
+            float(i_mem[-1]),
+            float(i_ahp[-1]),
+            float(refractory[-1]),
+        ):
+            raise RuntimeError("DPI backend final state disagrees with its traces")
+        return (i_mem, i_ahp, refractory, events), state
 
     def reset(self) -> None:
         """Restore the physical leakage-current baseline and clear the pulse."""
@@ -343,7 +428,7 @@ class DPINeuron:
 
     def _validate_runtime_state(self) -> None:
         """Validate the physical current-domain state and circuit parameters."""
-        values = tuple(float(getattr(self, name)) for name in _RUST_ENGINE_DEFAULTS)
+        values = tuple(float(getattr(self, name)) for name in _DPI_CONTRACT_FIELDS)
         if not all(math.isfinite(value) for value in values):
             raise ValueError("DPI state and parameters must be finite")
         if self.i_mem <= 0.0:

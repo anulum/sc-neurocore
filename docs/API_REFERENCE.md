@@ -682,14 +682,26 @@ Load the compiled DPI Mojo C ABI when available.
 ### Function `simulate_rust(n_steps, current)`
 Run the factory-default Rust engine recurrence.
 
+### Function `simulate_rust_complete(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the complete configurable production Rust batch.
+
 ### Function `simulate_julia(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
 Run the Julia recurrence with the complete circuit contract.
+
+### Function `simulate_julia_complete(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the complete configurable Julia batch.
 
 ### Function `simulate_go(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
 Run the Go recurrence through its C ABI.
 
 ### Function `simulate_mojo(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
 Run the Mojo recurrence through its C ABI.
+
+### Function `simulate_go_complete(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the complete configurable Go batch through its C ABI.
+
+### Function `simulate_mojo_complete(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the complete configurable Mojo batch through its C ABI.
 
 ---
 
@@ -23783,10 +23795,13 @@ differential-pair-integrator circuit by Indiveri, Stefanini, and Chicca
    - I_{\tau ahp}\right).
 
 ``r(t)`` is one for the programmable refractory pulse and zero otherwise.
-The membrane is held at ``i_reset`` during that pulse. The continuous
-equations use a simultaneous explicit-Euler update; a threshold crossing
-starts the pulse for the following step, matching the schema and RTL
-macro-step ordering.
+The paper identifies the circuit paths that generate spikes, reset the
+membrane, impose refractoriness, and drive adaptation. This maintained
+digital realisation adds dimensionless factory parameters, ``i_rest`` as a
+constant component of ``I_in``, simultaneous explicit-Euler integration,
+post-step level detection, and a subsequent-step pulse that holds
+``i_mem`` at ``i_reset``. Those numerical choices are not values or a
+discrete recurrence printed by the paper.
 
 References
 ----------
@@ -23801,7 +23816,9 @@ Frontiers in Neuroscience 5:73, doi:10.3389/fnins.2011.00073.
 - **step**(current)
   - Advance one mutation-atomic Euler update of the published circuit.
 - **simulate**(n_steps, current, backend)
-  - Advance a sequential trace through Python or a compiled backend.
+  - Return membrane trace and aggregate count through one backend.
+- **simulate_complete**(n_steps, current, backend)
+  - Return aligned state/events and atomically commit the final state.
 - **reset**()
   - Restore the physical leakage-current baseline and clear the pulse.
 

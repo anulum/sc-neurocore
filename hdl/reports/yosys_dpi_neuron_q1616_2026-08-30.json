@@ -1,0 +1,54 @@
+{
+   "creator": "Yosys 0.33 (git sha1 2584903a060)",
+   "invocation": "stat -json ",
+   "modules": {
+      "\\sc_dpineuron": {
+         "num_wires":         112838,
+         "num_wire_bits":     115666,
+         "num_pub_wires":     76,
+         "num_pub_wire_bits": 2842,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         112953,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 38930,
+            "$_AND_": 2288,
+            "$_DFF_PN0_": 85,
+            "$_DFF_PN1_": 12,
+            "$_MUX_": 13418,
+            "$_NAND_": 1662,
+            "$_NOR_": 10881,
+            "$_NOT_": 5079,
+            "$_ORNOT_": 5301,
+            "$_OR_": 11235,
+            "$_XNOR_": 8828,
+            "$_XOR_": 15234
+         }
+      }
+   },
+      "design": {
+         "num_wires":         112838,
+         "num_wire_bits":     115666,
+         "num_pub_wires":     76,
+         "num_pub_wire_bits": 2842,
+         "num_memories":      0,
+         "num_memory_bits":   0,
+         "num_processes":     0,
+         "num_cells":         112953,
+         "num_cells_by_type": {
+            "$_ANDNOT_": 38930,
+            "$_AND_": 2288,
+            "$_DFF_PN0_": 85,
+            "$_DFF_PN1_": 12,
+            "$_MUX_": 13418,
+            "$_NAND_": 1662,
+            "$_NOR_": 10881,
+            "$_NOT_": 5079,
+            "$_ORNOT_": 5301,
+            "$_OR_": 11235,
+            "$_XNOR_": 8828,
+            "$_XOR_": 15234
+         }
+      }
+}

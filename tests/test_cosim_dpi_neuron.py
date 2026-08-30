@@ -139,3 +139,32 @@ def test_q1616_rtl_preserves_events_and_measured_state_envelope() -> None:
     assert rtl[first + 1][3] < rtl[first][3]
     assert abs(rtl[first + 20][3]) <= q_lsb
     assert all(row[1] > 0.0 and row[2] >= 0.0 and row[3] >= 0.0 for row in rtl)
+
+
+def test_committed_yosys_report_proves_nontrivial_q1616_synthesis() -> None:
+    """Bind H2 to the executed full coarse-synthesis receipt."""
+    report = json.loads(
+        (_REPOSITORY / "hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    module = report["modules"]["\\sc_dpineuron"]
+    assert module["num_processes"] == 0
+    assert module["num_cells"] == 112_953
+    assert module["num_cells_by_type"]["$_DFF_PN0_"] == 85
+    assert module["num_cells_by_type"]["$_DFF_PN1_"] == 12
+    assert module["num_cells_by_type"]["$_MUX_"] == 13_418
+
+
+def test_dpi_formal_job_checks_reached_spike_and_refractory_packet() -> None:
+    """Pin the deterministic depth, drive, reset, and post-spike safety checks."""
+    formal_dir = _REPOSITORY / "hdl/formal/catalogue"
+    job = (formal_dir / "sc_dpineuron.sby").read_text(encoding="utf-8")
+    harness = (formal_dir / "sc_dpineuron_formal.v").read_text(encoding="utf-8")
+    assert "depth 8" in job
+    assert "32'sd32768000" in harness
+    assert "if (spike_past_valid && rst_n && spike_out)" in harness
+    assert "assert ($signed(i_mem_out) == 32'sd655);" in harness
+    assert "assert ($signed(refractory_time_out) == 32'sd131072);" in harness
+    assert "if (spike_past_valid && rst_n && $past(spike_out))" in harness
+    assert "assert ($signed(refractory_time_out) == 32'sd124518);" in harness

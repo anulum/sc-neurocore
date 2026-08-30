@@ -163,6 +163,7 @@ try:
         SpiNNakerLIFNeuron,
         SpiNNaker2Neuron,
         DPINeuron,
+        dpi_neuron_simulate_complete,
         AkidaNeuron,
         NeuroGridNeuron,
         McCullochPittsNeuron,
@@ -443,6 +444,7 @@ __all__ = [
     *(
         [
             "expif_simulate_complete",
+            "dpi_neuron_simulate_complete",
             "lapicque_simulate_complete",
             "perfect_integrator_simulate_complete",
             "quadratic_if_simulate_complete",

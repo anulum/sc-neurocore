@@ -32,11 +32,42 @@ module sc_dpineuron_formal (
     );
 
 `ifdef FORMAL
+
+    // Bounded receipt protocol: initialise through reset and hold the exact
+    // enrolled fixed-point drive while checking the public reset property.
+    reg protocol_started = 1'b0;
+    always @(posedge clk) begin
+        if (!protocol_started)
+            assume (!rst_n);
+        else
+            assume (rst_n);
+        assume ($signed(I_t) == 32'sd32768000);
+        protocol_started <= 1'b1;
+    end
+
     // Minimal safety: async reset clears the spike flag.
     always @(*) begin
         if (!rst_n)
             assert (spike_out == 1'b0);
     end
+
+    // The fixed-current protocol reaches a real event within this BMC depth.
+    // Bind its reset packet and the next refractory sample through public ports.
+    reg spike_past_valid = 1'b0;
+    always @(posedge clk) begin
+        spike_past_valid <= 1'b1;
+        if (spike_past_valid && rst_n && spike_out) begin
+            assert ($signed(i_mem_out) == 32'sd655);
+            assert ($signed(refractory_time_out) == 32'sd131072);
+        end
+
+        if (spike_past_valid && rst_n && $past(spike_out)) begin
+            assert (spike_out == 1'b0);
+            assert ($signed(i_mem_out) == 32'sd655);
+            assert ($signed(refractory_time_out) == 32'sd124518);
+        end
+    end
+
 `endif
 
 endmodule

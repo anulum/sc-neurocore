@@ -89,6 +89,22 @@ configured = DpiNeuronAccel.simulate_trace(
 @assert isapprox(configured.i_ahp_f, 0.27412306389119817; atol=2.0e-15, rtol=0.0)
 @assert configured.refractory_time_f == 0.0
 
+complete = DpiNeuronAccel.simulate_complete(
+    0.37, 0.08, 0.0, 1.3, 0.2, 0.15, 0.9, 1.4, 0.12, 0.8,
+    4.2, 0.02, 0.65, 8.0, 7.0, 45.0, 0.6, 0.05, 400, 5.0,
+)
+@assert length(complete.i_mem) == length(complete.i_ahp) == 400
+@assert length(complete.refractory) == length(complete.events) == 400
+@assert sum(Int, complete.events) == 4
+@assert all(event -> event == 0 || event == 1, complete.events)
+@assert all(
+    index -> (complete.events[index] == 1) == (complete.refractory[index] == 0.6),
+    eachindex(complete.events),
+)
+@assert complete.i_mem_f == complete.i_mem[end]
+@assert complete.i_ahp_f == complete.i_ahp[end]
+@assert complete.refractory_time_f == complete.refractory[end]
+
 empty = DpiNeuronAccel.simulate_trace(
     0.37,
     0.08,
@@ -162,4 +178,4 @@ reset!(reset_state)
 @assert reset_state.tau == 7.0
 @assert reset_state.dt == 0.05
 
-println("DPI Julia parity assertions passed: ", length(GOLDENS) * 5 + 24)
+println("DPI Julia parity assertions passed: ", length(GOLDENS) * 5 + 32)

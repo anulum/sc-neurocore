@@ -4,75 +4,135 @@
       "available": true,
       "event_count": 210,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "i_ahp": 1.1540048283705768,
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 11.532386,
-      "minimum_call_ms": 10.136922,
+      "median_call_ms": 16.453683,
+      "minimum_call_ms": 14.636848,
       "parity_max_abs_diff": 1.1102230246251565e-16,
-      "speedup_vs_python": 60.585140577153766,
+      "parity_max_abs_diff_by_state": {
+        "i_ahp": 0.0,
+        "i_mem": 1.1102230246251565e-16,
+        "refractory_time": 0.0
+      },
+      "speedup_vs_python": 52.209954452143016,
+      "trace_sha256": {
+        "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
+        "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
+        "i_mem_le_f64": "1386563cc3efe4668e0b1f9ee7adaf7c111fc5b33acec668b7e2f09e701353ba",
+        "refractory_time_le_f64": "3381b792b562aacd431370764be41be9e107f71d21f85f6c0b1b9c4ee6c64036"
+      },
       "used": true
     },
     "julia": {
       "available": true,
       "event_count": 210,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "i_ahp": 1.1540048283705768,
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 5.836554,
-      "minimum_call_ms": 4.790178,
+      "median_call_ms": 8.448816,
+      "minimum_call_ms": 7.798298,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 119.70954556404345,
+      "parity_max_abs_diff_by_state": {
+        "i_ahp": 0.0,
+        "i_mem": 0.0,
+        "refractory_time": 0.0
+      },
+      "speedup_vs_python": 101.67649999715935,
+      "trace_sha256": {
+        "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
+        "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
+        "i_mem_le_f64": "0bc1d5428e96f8b8628f61a3eeae7f6cc36020f3e32fb55e27618af04dc7cda3",
+        "refractory_time_le_f64": "3381b792b562aacd431370764be41be9e107f71d21f85f6c0b1b9c4ee6c64036"
+      },
       "used": true
     },
     "mojo": {
       "available": true,
       "event_count": 210,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "i_ahp": 1.154004828370577,
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 9.815232,
-      "minimum_call_ms": 9.53738,
+      "median_call_ms": 9.955789,
+      "minimum_call_ms": 9.668606,
       "parity_max_abs_diff": 2.567945855957987e-13,
-      "speedup_vs_python": 71.18438229478427,
+      "parity_max_abs_diff_by_state": {
+        "i_ahp": 8.881784197001252e-16,
+        "i_mem": 2.567945855957987e-13,
+        "refractory_time": 0.0
+      },
+      "speedup_vs_python": 86.28608340333449,
+      "trace_sha256": {
+        "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
+        "i_ahp_le_f64": "0642997b9a4ea83724d99fc9cb6d5b0c7176025d28d8664e1f6fd507a9162e24",
+        "i_mem_le_f64": "14314eff1b7e0ecb097725eae13cb37929974cabdb31ac87d8778f3d309df0aa",
+        "refractory_time_le_f64": "3381b792b562aacd431370764be41be9e107f71d21f85f6c0b1b9c4ee6c64036"
+      },
       "used": true
     },
     "python": {
       "available": true,
       "event_count": 210,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "i_ahp": 1.1540048283705768,
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 698.691227,
-      "minimum_call_ms": 668.164328,
+      "median_call_ms": 859.04604,
+      "minimum_call_ms": 807.388566,
       "parity_max_abs_diff": 0.0,
+      "parity_max_abs_diff_by_state": {
+        "i_ahp": 0.0,
+        "i_mem": 0.0,
+        "refractory_time": 0.0
+      },
       "speedup_vs_python": 1.0,
+      "trace_sha256": {
+        "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
+        "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
+        "i_mem_le_f64": "0bc1d5428e96f8b8628f61a3eeae7f6cc36020f3e32fb55e27618af04dc7cda3",
+        "refractory_time_le_f64": "3381b792b562aacd431370764be41be9e107f71d21f85f6c0b1b9c4ee6c64036"
+      },
       "used": true
     },
     "rust": {
       "available": true,
       "event_count": 210,
       "event_count_matches_python": true,
+      "event_trace_matches_python": true,
       "final_state": {
         "i_ahp": 1.1540048283705768,
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 59.429012,
-      "minimum_call_ms": 50.993457,
+      "median_call_ms": 26.540958,
+      "minimum_call_ms": 25.045357,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 11.75673637313708,
+      "parity_max_abs_diff_by_state": {
+        "i_ahp": 0.0,
+        "i_mem": 0.0,
+        "refractory_time": 0.0
+      },
+      "speedup_vs_python": 32.366806051235976,
+      "trace_sha256": {
+        "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
+        "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
+        "i_mem_le_f64": "0bc1d5428e96f8b8628f61a3eeae7f6cc36020f3e32fb55e27618af04dc7cda3",
+        "refractory_time_le_f64": "3381b792b562aacd431370764be41be9e107f71d21f85f6c0b1b9c4ee6c64036"
+      },
       "used": true
     }
   },
@@ -94,93 +154,171 @@
   ],
   "meta": {
     "affinity": [
-      4
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      9.47509765625,
-      18.25244140625,
-      22.26025390625
+      4.716796875,
+      5.43798828125,
+      5.59765625
     ],
     "load_average_start": [
-      10.62109375,
-      19.05224609375,
-      22.59912109375
+      4.52490234375,
+      5.44287109375,
+      5.60205078125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
       "go": "go version go1.24.0 linux/amd64",
       "julia": "julia version 1.12.6",
       "mojo": "Mojo 1.0.0b1 (a9591de6)",
       "numpy": "2.2.6",
       "python": "3.12.3",
-      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
     },
     "single_cpu_pinned": true
   },
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_dpi_neuron": {
-      "py": "a33ec44adb60f523206107c6b92c77449f52dd506994865db79cb622ed8dc686"
+      "py": "64b6d36cc046b36226ecc30981f46c682daa961e6023cbb80833c8253277cee5"
     },
-    "benchmarks/bench_model_dpi_neuron.py": "a33ec44adb60f523206107c6b92c77449f52dd506994865db79cb622ed8dc686",
+    "benchmarks/bench_model_dpi_neuron.py": "64b6d36cc046b36226ecc30981f46c682daa961e6023cbb80833c8253277cee5",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70",
+    "engine/src/bindings/hardware/dpi": {
+      "rs": "a6999234484d3f727c5b571139cbee64c0bb4fa1cccb2b84cbb5a99cda38e466"
+    },
+    "engine/src/bindings/hardware/dpi.rs": "a6999234484d3f727c5b571139cbee64c0bb4fa1cccb2b84cbb5a99cda38e466",
     "engine/src/neurons/hardware/dpi_neuron": {
-      "rs": "5e7c26c64c554aed8896944c84600b0a9b9e4bf670ca48a7a0a3cfbedac868ca"
+      "rs": "c9c48984101e6013ce6ac67cc3b31d0c5276968de13d84534d2811a6901c3874"
     },
-    "engine/src/neurons/hardware/dpi_neuron.rs": "5e7c26c64c554aed8896944c84600b0a9b9e4bf670ca48a7a0a3cfbedac868ca",
+    "engine/src/neurons/hardware/dpi_neuron.rs": "c9c48984101e6013ce6ac67cc3b31d0c5276968de13d84534d2811a6901c3874",
+    "hdl/formal/catalogue/sc_dpineuron": {
+      "sby": "7d6cf0d74bc56b645335899362efeb2983608037c2b0985e51165667387305b2",
+      "v": "c3267ff3f39ff2b2847e1b9141de547baeff73bab11a7d3fa77f778339389a4a"
+    },
+    "hdl/formal/catalogue/sc_dpineuron.sby": "7d6cf0d74bc56b645335899362efeb2983608037c2b0985e51165667387305b2",
+    "hdl/formal/catalogue/sc_dpineuron.v": "c3267ff3f39ff2b2847e1b9141de547baeff73bab11a7d3fa77f778339389a4a",
+    "hdl/formal/catalogue/sc_dpineuron_formal": {
+      "v": "516e530f5488bca0d0bafda81bf70c05025cb5d273fc669b2e12fb526b4ab1c9"
+    },
+    "hdl/formal/catalogue/sc_dpineuron_formal.v": "516e530f5488bca0d0bafda81bf70c05025cb5d273fc669b2e12fb526b4ab1c9",
+    "hdl/reports/yosys_dpi_neuron_q1616_2026-08-30": {
+      "json": "2d3a472084b125956d7afbcdc1dc71ae0051b8603b6167c3f45ac9b3c0beec56"
+    },
+    "hdl/reports/yosys_dpi_neuron_q1616_2026-08-30.json": "2d3a472084b125956d7afbcdc1dc71ae0051b8603b6167c3f45ac9b3c0beec56",
     "src/sc_neurocore/accel/dpi_neuron": {
-      "py": "8912b0ca0ca455b95855300b71e2cddbdceaec42dc0b65590b330f4148cf5193"
+      "py": "621c0f10b000a6b645d9aca579a8bea667fcab65b861944bd583407b3b6d72fc"
     },
-    "src/sc_neurocore/accel/dpi_neuron.py": "8912b0ca0ca455b95855300b71e2cddbdceaec42dc0b65590b330f4148cf5193",
+    "src/sc_neurocore/accel/dpi_neuron.py": "621c0f10b000a6b645d9aca579a8bea667fcab65b861944bd583407b3b6d72fc",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron": {
-      "go": "2e07c6b5809bba79c12d5f98dee29b963d6db889e78a23bbae90ef166928d06b"
+      "go": "744625ae6ef59b94619436d29770e8eb66a3e944389d99819a6192aec0ff5436"
     },
-    "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go": "2e07c6b5809bba79c12d5f98dee29b963d6db889e78a23bbae90ef166928d06b",
+    "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go": "744625ae6ef59b94619436d29770e8eb66a3e944389d99819a6192aec0ff5436",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron": {
-      "h": "bea861c01a44a39a1a3363452d15dcadce4da15ca93574e6ce9c333e5b131fe0"
+      "h": "eb21bf59170cdeb0fce042033a47a68d809eb711a26a543a3b5d0a05c8ace108"
     },
-    "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h": "bea861c01a44a39a1a3363452d15dcadce4da15ca93574e6ce9c333e5b131fe0",
+    "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h": "eb21bf59170cdeb0fce042033a47a68d809eb711a26a543a3b5d0a05c8ace108",
     "src/sc_neurocore/accel/go/services/dpi_neuron": {
-      "go": "8e765ea749c2a0f3c17bc2809eeff40523a7641f4aaffff8ad77592fc4222210"
+      "go": "282bcad80a030a258cea1fb22c4c7efbab33f57b8c5dfb964f0804143edfb4b0"
     },
-    "src/sc_neurocore/accel/go/services/dpi_neuron.go": "8e765ea749c2a0f3c17bc2809eeff40523a7641f4aaffff8ad77592fc4222210",
+    "src/sc_neurocore/accel/go/services/dpi_neuron.go": "282bcad80a030a258cea1fb22c4c7efbab33f57b8c5dfb964f0804143edfb4b0",
     "src/sc_neurocore/accel/go/services/dpi_neuron_test": {
-      "go": "7820247c956bf117ab80b5afdd4355770f4ddd99a3d14fedf87074f161bbea99"
+      "go": "6251eff2d2d97ca037d0669e60e3a11dbbc20ee70458fd72fb818f6c626cc7c6"
     },
-    "src/sc_neurocore/accel/go/services/dpi_neuron_test.go": "7820247c956bf117ab80b5afdd4355770f4ddd99a3d14fedf87074f161bbea99",
+    "src/sc_neurocore/accel/go/services/dpi_neuron_test.go": "6251eff2d2d97ca037d0669e60e3a11dbbc20ee70458fd72fb818f6c626cc7c6",
     "src/sc_neurocore/accel/julia/dpi_neuron_parity_test": {
-      "jl": "edf089272534735a476972990315112b7a1ce94276b3774d5790e0aff6d633a5"
+      "jl": "5333c0cdad23dc24671f9237f2d51950c84b8c9d767eb851104bf65f461a3db0"
     },
-    "src/sc_neurocore/accel/julia/dpi_neuron_parity_test.jl": "edf089272534735a476972990315112b7a1ce94276b3774d5790e0aff6d633a5",
+    "src/sc_neurocore/accel/julia/dpi_neuron_parity_test.jl": "5333c0cdad23dc24671f9237f2d51950c84b8c9d767eb851104bf65f461a3db0",
     "src/sc_neurocore/accel/julia/neurons/dpi_neuron": {
-      "jl": "f5a5cb40cc82a2d5205429a1d6b63e40c0ee19585b231578f72fef4538c47039"
+      "jl": "2be7a07c9d66d40f1cd8c236d5d4663aa0362721eee9fa76407bcf2f58117b3d"
     },
-    "src/sc_neurocore/accel/julia/neurons/dpi_neuron.jl": "f5a5cb40cc82a2d5205429a1d6b63e40c0ee19585b231578f72fef4538c47039",
+    "src/sc_neurocore/accel/julia/neurons/dpi_neuron.jl": "2be7a07c9d66d40f1cd8c236d5d4663aa0362721eee9fa76407bcf2f58117b3d",
     "src/sc_neurocore/accel/mojo/kernels/dpi_neuron": {
-      "mojo": "a8f9636bb371da0440b92895a08ad73e35ec3992e26f6564484636f6c0bcbd73"
+      "mojo": "122d71e9849967fe657e521f5e13e9024e8b57121c573f1c53d6455f5437ff19"
     },
-    "src/sc_neurocore/accel/mojo/kernels/dpi_neuron.mojo": "a8f9636bb371da0440b92895a08ad73e35ec3992e26f6564484636f6c0bcbd73",
+    "src/sc_neurocore/accel/mojo/kernels/dpi_neuron.mojo": "122d71e9849967fe657e521f5e13e9024e8b57121c573f1c53d6455f5437ff19",
     "src/sc_neurocore/accel/rust/examples/dpi_neuron_trace": {
       "rs": "480cf340984ce63bc8b70ff836c3c1bff8721c9290b02721ebb583cdc4e297c0"
     },
     "src/sc_neurocore/accel/rust/examples/dpi_neuron_trace.rs": "480cf340984ce63bc8b70ff836c3c1bff8721c9290b02721ebb583cdc4e297c0",
     "src/sc_neurocore/accel/rust/safety/dpi_neuron": {
-      "rs": "a92cb526b4b0e2b527612379e55cef93187595606cada184233798b7fa7198c1"
+      "rs": "77990db3a80ec3eab877c63d72d6fc9e92cdac91ef2423cbe590fd7063f25de8"
     },
-    "src/sc_neurocore/accel/rust/safety/dpi_neuron.rs": "a92cb526b4b0e2b527612379e55cef93187595606cada184233798b7fa7198c1",
+    "src/sc_neurocore/accel/rust/safety/dpi_neuron.rs": "77990db3a80ec3eab877c63d72d6fc9e92cdac91ef2423cbe590fd7063f25de8",
+    "src/sc_neurocore/neurons/model_descriptors/DPINeuron": {
+      "toml": "56aea3de5c6612bd71f5f9bd6e3abe223f0e1afd54768e9e6605d42dd14df50e"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/DPINeuron.toml": "56aea3de5c6612bd71f5f9bd6e3abe223f0e1afd54768e9e6605d42dd14df50e",
     "src/sc_neurocore/neurons/model_schemas/dpi_neuron": {
-      "json": "92e880439c1637e016fd7a28dd26858cf8097fe495668b2e5555884a6c74a1bd",
-      "toml": "d06481a8dad2b51fcfd7b27129446abdd295c5f9ca30529abac42057d45cffea"
+      "json": "9a1f780bc011ab3d8fd2306bbd2a1998da0337d343efec2ff394889bda6dd703",
+      "toml": "d7ff8e7913d332741676f596a6730f7bbc1b109e2c391bb7537016a3602cb4df"
     },
-    "src/sc_neurocore/neurons/model_schemas/dpi_neuron.json": "92e880439c1637e016fd7a28dd26858cf8097fe495668b2e5555884a6c74a1bd",
-    "src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml": "d06481a8dad2b51fcfd7b27129446abdd295c5f9ca30529abac42057d45cffea",
+    "src/sc_neurocore/neurons/model_schemas/dpi_neuron.json": "9a1f780bc011ab3d8fd2306bbd2a1998da0337d343efec2ff394889bda6dd703",
+    "src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml": "d7ff8e7913d332741676f596a6730f7bbc1b109e2c391bb7537016a3602cb4df",
     "src/sc_neurocore/neurons/models/dpi_neuron": {
-      "py": "0fc55dc457143c964c3d99609bb733b498b60ec820c408e5c712f1dd8317bbc6"
+      "py": "6ee37fe44a287f40c696e33c4693da69c3f53b4f5e8b77fca83e9ed08b1f3a6f"
     },
-    "src/sc_neurocore/neurons/models/dpi_neuron.py": "0fc55dc457143c964c3d99609bb733b498b60ec820c408e5c712f1dd8317bbc6"
+    "src/sc_neurocore/neurons/models/dpi_neuron.py": "6ee37fe44a287f40c696e33c4693da69c3f53b4f5e8b77fca83e9ed08b1f3a6f",
+    "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010": {
+      "json": "48c09e22eb5524920e8ce8e26fb6c7845edb9b39b0df30e1c62e30076c94bafd"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/dpi_indiveri_stefanini_chicca_2010.json": "48c09e22eb5524920e8ce8e26fb6c7845edb9b39b0df30e1c62e30076c94bafd",
+    "tests/cosim_reference_dpi_neuron": {
+      "py": "e958e59976d06ae0a700ddb16a32813b00ca991fc391fc6e1fd183ff3f0ed845"
+    },
+    "tests/cosim_reference_dpi_neuron.py": "e958e59976d06ae0a700ddb16a32813b00ca991fc391fc6e1fd183ff3f0ed845",
+    "tests/test_cosim_dpi_neuron": {
+      "py": "cebbc53d23ffeafb85c981917e67f1a88ad0263cbd517b5ad3cf9a9316c31c69"
+    },
+    "tests/test_cosim_dpi_neuron.py": "cebbc53d23ffeafb85c981917e67f1a88ad0263cbd517b5ad3cf9a9316c31c69",
+    "tests/test_dpi_neuron_backend_loading": {
+      "py": "bc7815ff80b980642e2c2cdbf5b96db08fb624fae3c1fcf8d5e788af283b67a2"
+    },
+    "tests/test_dpi_neuron_backend_loading.py": "bc7815ff80b980642e2c2cdbf5b96db08fb624fae3c1fcf8d5e788af283b67a2",
+    "tests/test_dpi_neuron_backends_auto_dispatch": {
+      "py": "183ce199a367fdcea43aa8693aaec3fec87eccfde93fb947b86755157eeb4b8c"
+    },
+    "tests/test_dpi_neuron_backends_auto_dispatch.py": "183ce199a367fdcea43aa8693aaec3fec87eccfde93fb947b86755157eeb4b8c",
+    "tests/test_dpi_neuron_backends_backend_parity": {
+      "py": "bcfb55c20688969e858624e172af1618a745d651b4b2bf0b19ab6b8f42f2f059"
+    },
+    "tests/test_dpi_neuron_backends_backend_parity.py": "bcfb55c20688969e858624e172af1618a745d651b4b2bf0b19ab6b8f42f2f059",
+    "tests/test_dpi_neuron_backends_rejects_and_hints": {
+      "py": "147e9c80fe182cd7869ac6b490260f2aef6c27a51078de33ec9048ea65388ca1"
+    },
+    "tests/test_dpi_neuron_backends_rejects_and_hints.py": "147e9c80fe182cd7869ac6b490260f2aef6c27a51078de33ec9048ea65388ca1",
+    "tests/test_model_descriptor_reproducibility": {
+      "py": "170345312105a24058a80f6cc94776bcb184fa5426817b2d91126eee73b56074"
+    },
+    "tests/test_model_descriptor_reproducibility.py": "170345312105a24058a80f6cc94776bcb184fa5426817b2d91126eee73b56074",
+    "tests/test_model_dpi_neuron_contract_rejects": {
+      "py": "54cafb957868d60de84386ceb21c1d3e2bf1e714381ae008f16e09f16ee5d608"
+    },
+    "tests/test_model_dpi_neuron_contract_rejects.py": "54cafb957868d60de84386ceb21c1d3e2bf1e714381ae008f16e09f16ee5d608",
+    "tests/test_model_dpi_neuron_dynamics_and_golden": {
+      "py": "afc67475bc039d7ea04e6b4c9d57609f15ba07641620ad662969f7d26c4142ca"
+    },
+    "tests/test_model_dpi_neuron_dynamics_and_golden.py": "afc67475bc039d7ea04e6b4c9d57609f15ba07641620ad662969f7d26c4142ca",
+    "tests/test_model_dpi_neuron_rust_and_reset": {
+      "py": "f6d698e77695896636cedb638b88562d52cd4d99ee10b5bd448f997c0f656a1b"
+    },
+    "tests/test_model_dpi_neuron_rust_and_reset.py": "f6d698e77695896636cedb638b88562d52cd4d99ee10b5bd448f997c0f656a1b",
+    "tests/test_reference_dpi_neuron": {
+      "py": "ab497c4421c3cbb2b46be3716f8dcb6ba6bf21c258927f31127afbd87d43d42e"
+    },
+    "tests/test_reference_dpi_neuron.py": "ab497c4421c3cbb2b46be3716f8dcb6ba6bf21c258927f31127afbd87d43d42e",
+    "tools/emit_catalogue_formal": {
+      "py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7"
+    },
+    "tools/emit_catalogue_formal.py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7"
   },
   "verification": {
     "rust_safety": {
@@ -193,11 +331,11 @@
         "test dpi_neuron::tests::sustained_drive_exhibits_spike_frequency_adaptation ... ok",
         "test dpi_neuron::tests::threshold_crossing_starts_refractory_pulse ... ok",
         "",
-        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1011 filtered out; finished in 0.00s",
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1044 filtered out; finished in 0.00s",
         "",
         "",
-        "    Finished `release` profile [optimized] target(s) in 0.03s",
-        "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-cbe1a14dec3b0ed8)"
+        "    Finished `release` profile [optimized] target(s) in 0.01s",
+        "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-bc252670c4103a9c)"
       ],
       "passed": true,
       "returncode": 0
