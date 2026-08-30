@@ -115,4 +115,4 @@ SC-NeuroCore is not just a library; it is a blueprint for **Post-Biological Inte
 
 ---
 **Repository:** `sc-neurocore`
-**License:** MIT
+**License:** AGPL-3.0-or-later (dual-licensed; commercial licence available)
