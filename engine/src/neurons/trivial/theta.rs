@@ -14,6 +14,8 @@ pub struct ThetaNeuron {
     pub dt: f64,
 }
 
+pub type ThetaCompleteTrace = (Vec<f64>, Vec<u8>, f64);
+
 impl ThetaNeuron {
     pub fn new(dt: f64) -> Self {
         Self { theta: 0.0, dt }
@@ -25,6 +27,10 @@ impl ThetaNeuron {
 
     fn valid(&self) -> bool {
         self.theta.is_finite() && self.dt.is_finite() && self.dt > 0.0
+    }
+
+    fn event_packet_representable(&self, current: f64) -> bool {
+        current <= 0.0 || current.sqrt() * self.dt <= std::f64::consts::PI
     }
 
     fn exact_candidate(&self, current: f64) -> (f64, bool) {
@@ -72,20 +78,43 @@ impl ThetaNeuron {
         )
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !current.is_finite() || !self.valid() {
-            return 0;
+            return Err("theta state/current must be finite with positive dt");
+        }
+        if !self.event_packet_representable(current) {
+            return Err("theta step can contain more than one source event");
         }
         let (next_theta, spiked) = self.exact_candidate(current);
         if !next_theta.is_finite() {
-            return 0;
+            return Err("theta exact-flow candidate became non-finite");
         }
         self.theta = Self::wrap_phase(next_theta);
-        if spiked {
-            1
-        } else {
-            0
+        Ok(i32::from(spiked))
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Execute a checked complete batch without mutating the source state.
+    pub fn simulate_complete(
+        &self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<ThetaCompleteTrace, &'static str> {
+        if !self.valid() || !current.is_finite() || !self.event_packet_representable(current) {
+            return Err("invalid theta batch contract");
         }
+        let mut candidate = self.clone();
+        let mut phase = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.try_step(current)?;
+            phase.push(candidate.theta);
+            events.push(event as u8);
+        }
+        Ok((phase, events, candidate.theta))
     }
 
     pub fn reset(&mut self) {
@@ -176,6 +205,30 @@ mod tests {
         };
         let before = n.theta;
         assert_eq!(n.step(-1.0e308), 0);
+        assert_eq!(n.theta, before);
+    }
+    #[test]
+    fn theta_complete_batch_is_aligned_and_failure_atomic() {
+        let n = ThetaNeuron {
+            theta: 0.37,
+            dt: 0.037,
+        };
+        let (phase, events, final_theta) = n.simulate_complete(400, 2.2).unwrap();
+        assert_eq!(phase.len(), 400);
+        assert_eq!(events.len(), 400);
+        assert_eq!(phase.last().copied(), Some(final_theta));
+        assert_eq!(n.theta, 0.37);
+        assert!(n.simulate_complete(1, f64::NAN).is_err());
+        assert_eq!(n.theta, 0.37);
+    }
+    #[test]
+    fn theta_rejects_multi_event_step_without_mutation() {
+        let mut n = ThetaNeuron {
+            theta: 0.25,
+            dt: 1.0,
+        };
+        let before = n.theta;
+        assert!(n.try_step(16.0).is_err());
         assert_eq!(n.theta, before);
     }
 }

@@ -33,8 +33,19 @@ class TestThetaSimulate:
         assert sp_py == sp_rs
         assert np.array_equal(tr_py, tr_rs)
 
-    def test_simulate_rust_rejects_non_default(self) -> None:
+    def test_simulate_rust_accepts_complete_non_default_contract(self) -> None:
         assert backends._HAS_RUST
-        n = ThetaNeuron(dt=0.02)
-        with pytest.raises(RuntimeError, match="factory-default"):
-            n.simulate(10, current=0.0, backend="rust")
+        py = ThetaNeuron(theta=0.37, dt=0.037)
+        rs = ThetaNeuron(theta=0.37, dt=0.037)
+        tr_py, sp_py = py.simulate(400, current=2.2, backend="python")
+        tr_rs, sp_rs = rs.simulate(400, current=2.2, backend="rust")
+        assert sp_py == sp_rs
+        np.testing.assert_allclose(tr_rs, tr_py, rtol=0.0, atol=2.0e-12)
+
+    def test_simulate_complete_returns_aligned_events(self) -> None:
+        neuron = ThetaNeuron(theta=0.37, dt=0.037)
+        phase, events = neuron.simulate_complete(400, current=2.2, backend="python")
+        assert phase.shape == events.shape == (400,)
+        assert events.dtype == np.uint8
+        assert set(np.unique(events)).issubset({0, 1})
+        assert neuron.theta == float(phase[-1])

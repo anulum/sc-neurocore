@@ -51,6 +51,7 @@ try:
         QuadraticIFNeuron,
         quadratic_if_simulate_complete,
         ThetaNeuron,
+        theta_simulate_complete,
         PerfectIntegratorNeuron,
         perfect_integrator_simulate_complete,
         GatedLIFNeuron,
@@ -445,6 +446,7 @@ __all__ = [
             "lapicque_simulate_complete",
             "perfect_integrator_simulate_complete",
             "quadratic_if_simulate_complete",
+            "theta_simulate_complete",
         ]
         if _neurons_available
         else []

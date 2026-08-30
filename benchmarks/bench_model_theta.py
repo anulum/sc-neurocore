@@ -46,7 +46,15 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 DISPATCH_ORDER = ("go", "julia", "mojo", "rust", "python")
 SOURCE_PATHS = (
     "benchmarks/bench_model_theta.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/trivial/theta.rs",
+    "engine/src/network_runner/model_factory.rs",
+    "engine/src/network_runner/neuron_variant.rs",
     "engine/src/neurons/trivial/theta.rs",
+    "hdl/formal/catalogue/sc_theta.sby",
+    "hdl/formal/catalogue/sc_theta.v",
+    "hdl/formal/catalogue/sc_theta_formal.v",
+    "hdl/reports/yosys_theta_q1616_2026-08-30.json",
     "src/sc_neurocore/accel/go/neurons/theta/theta.go",
     "src/sc_neurocore/accel/go/services/theta.go",
     "src/sc_neurocore/accel/go/services/theta_test.go",
@@ -56,7 +64,16 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/rust/examples/theta_trace.rs",
     "src/sc_neurocore/accel/rust/safety/theta.rs",
     "src/sc_neurocore/accel/theta.py",
+    "src/sc_neurocore/neurons/descriptor_generator.py",
+    "src/sc_neurocore/neurons/model_descriptors/ThetaNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/theta.json",
+    "src/sc_neurocore/neurons/model_schemas/theta.toml",
     "src/sc_neurocore/neurons/models/theta.py",
+    "src/sc_neurocore/neurons/reference_receipts/theta_ermentrout_kopell_1986.json",
+    "tests/test_cosim_theta.py",
+    "tests/test_reference_theta.py",
+    "tools/emit_catalogue_formal.py",
+    "tools/readiness_evidence_index.py",
 )
 
 
@@ -142,21 +159,27 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    tuple[float],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    ThetaNeuron().simulate(20, CURRENT, backend=backend)
+    ThetaNeuron().simulate_complete(20, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
     trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
-    spikes = 0
+    events: npt.NDArray[np.uint8] = np.empty(0, dtype=np.uint8)
     final_state = (0.0,)
     for _repeat in range(N_REPEATS):
         gc.collect()
         neuron = ThetaNeuron()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        trace, events = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         final_state = (neuron.theta,)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+    return statistics.median(elapsed_ms), min(elapsed_ms), trace, events, final_state
 
 
 def _max_circular_phase_diff(
@@ -259,20 +282,21 @@ def main(argv: list[str]) -> int:
     rows: dict[str, dict[str, Any]] = {}
     reference: npt.NDArray[np.float64] | None = None
     reference_ms: float | None = None
-    reference_spikes: int | None = None
+    reference_events: npt.NDArray[np.uint8] | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
             rows[backend] = {"available": False, "used": False, "unavailable_reason": reason}
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        median_ms, minimum_ms, trace, events, final_state = _measure_backend(backend)
+        spikes = int(np.sum(events, dtype=np.int64))
         if backend == "python":
             reference = trace
             reference_ms = median_ms
-            reference_spikes = spikes
+            reference_events = events
             parity = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if reference is None or reference_ms is None or reference_events is None:
                 raise RuntimeError("Python reference must be measured first")
             parity = _max_circular_phase_diff(trace, reference)
         rows[backend] = {
@@ -284,8 +308,14 @@ def main(argv: list[str]) -> int:
             "parity_max_circular_phase_diff": parity,
             "event_count": spikes,
             "event_count_matches_python": (
-                True if reference_spikes is None else spikes == reference_spikes
+                True
+                if reference_events is None
+                else spikes == int(np.sum(reference_events, dtype=np.int64))
             ),
+            "event_vector_matches_python": (
+                True if reference_events is None else bool(np.array_equal(events, reference_events))
+            ),
+            "uint8_event_sha256": hashlib.sha256(events.tobytes()).hexdigest(),
             "final_state": dict(zip(("theta",), final_state, strict=True)),
         }
 
@@ -334,6 +364,8 @@ def main(argv: list[str]) -> int:
     if not rust_safety["passed"]:
         return 5
     if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+        return 3
+    if any(not bool(row.get("event_vector_matches_python", True)) for row in rows.values()):
         return 3
     if any(
         float(row.get("parity_max_circular_phase_diff", 0.0)) > PHASE_ATOL

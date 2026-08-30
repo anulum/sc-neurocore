@@ -35,10 +35,16 @@ def _abs(x: Float64) -> Float64:
     return x
 
 
+def _event_packet_representable(current: Float64, dt: Float64) -> Bool:
+    return current <= 0.0 or sqrt(current) * dt <= PI
+
+
 def theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
     if not _finite(current):
         return -1
     if not theta_valid(theta, dt):
+        return -1
+    if not _event_packet_representable(current, dt):
         return -1
 
     var y = tan(theta / 2.0)
@@ -87,6 +93,8 @@ def theta_next_theta(theta: Float64, current: Float64, dt: Float64) -> Float64:
         return 0.0 / 0.0
     if not theta_valid(theta, dt):
         return 0.0 / 0.0
+    if not _event_packet_representable(current, dt):
+        return 0.0 / 0.0
 
     var y = tan(theta / 2.0)
     if current > 0.0:
@@ -128,7 +136,11 @@ def _run_theta(
     write_output: Bool,
 ) -> Int64:
     var theta = theta0
-    if not _finite(current) or not theta_valid(theta, dt):
+    if (
+        not _finite(current)
+        or not theta_valid(theta, dt)
+        or not _event_packet_representable(current, dt)
+    ):
         return -1
     var output = UnsafePointer[Float64, MutAnyOrigin](
         unsafe_from_address=output_addr
@@ -164,3 +176,69 @@ def theta_simulate_c(
     if validated < 0:
         return -1
     return _run_theta(theta0, dt, n_steps, current, output_addr, True)
+
+
+def _run_theta_complete(
+    theta0: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    phase_addr: Int,
+    event_addr: Int,
+    write_output: Bool,
+) -> Int64:
+    var theta = theta0
+    if (
+        not _finite(current)
+        or not theta_valid(theta, dt)
+        or not _event_packet_representable(current, dt)
+    ):
+        return -1
+    var phase = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=phase_addr
+    )
+    var events = UnsafePointer[UInt8, MutAnyOrigin](
+        unsafe_from_address=event_addr
+    )
+    var event_count: Int64 = 0
+    for index in range(n_steps):
+        var event = theta_step_spike(theta, current, dt)
+        if event < 0:
+            return -1
+        var next_theta = theta_next_theta(theta, current, dt)
+        if not _finite(next_theta):
+            return -1
+        theta = next_theta
+        event_count += Int64(event)
+        if write_output:
+            phase[index] = theta
+            events[index] = UInt8(event)
+    if write_output:
+        phase[n_steps] = theta
+    return event_count
+
+
+@export
+def theta_simulate_complete_c(
+    theta0: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    phase_addr: Int,
+    event_addr: Int,
+) -> Int64:
+    if (
+        n_steps < 0
+        or phase_addr == 0
+        or (n_steps > 0 and event_addr == 0)
+        or not _finite(current)
+    ):
+        return -1
+    var validated = _run_theta_complete(
+        theta0, dt, n_steps, current, phase_addr, event_addr, False
+    )
+    if validated < 0:
+        return -1
+    return _run_theta_complete(
+        theta0, dt, n_steps, current, phase_addr, event_addr, True
+    )

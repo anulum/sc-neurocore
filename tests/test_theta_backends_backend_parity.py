@@ -71,7 +71,7 @@ def test_rust_safety_executable_matches_python_trace() -> None:
     _assert_phase_parity(rust_trace, python_trace)
 
 
-@pytest.mark.parametrize("backend", ("julia", "go", "mojo"))
+@pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_full_parameter_contract_matches_python(backend: str) -> None:
     """Carry phase and timestep across every full-parameter native ABI."""
     reference_trace, reference_spikes, reference_state = _run(
@@ -87,9 +87,21 @@ def test_full_parameter_contract_matches_python(backend: str) -> None:
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_empty_run_preserves_state(backend: str) -> None:
     """Return an empty trace without discarding the initial phase."""
-    neuron = ThetaNeuron() if backend == "rust" else _configured()
+    neuron = _configured()
     before = neuron.theta
     trace, spikes = neuron.simulate(0, 2.0, backend=backend)
     assert trace.shape == (0,)
     assert spikes == 0
     assert neuron.theta == before
+
+
+@pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
+def test_complete_packets_preserve_aligned_event_vectors(backend: str) -> None:
+    """Match every event sample, phase sample, and final phase."""
+    reference = _configured()
+    candidate = _configured()
+    expected_phase, expected_events = reference.simulate_complete(400, 2.2, "python")
+    phase, events = candidate.simulate_complete(400, 2.2, backend)
+    _assert_phase_parity(phase, expected_phase)
+    np.testing.assert_array_equal(events, expected_events)
+    _assert_phase_parity(candidate.theta, reference.theta)

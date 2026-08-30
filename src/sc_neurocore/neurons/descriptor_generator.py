@@ -107,6 +107,7 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
         "dt": 0.01,
         "method": "exact_held_current_riccati_flow",
     },
+    "ThetaNeuron": {"method": "exact_held_drive_phase_flow"},
     "GLMNeuron": {"dt": 1.0, "method": "map"},
     # The public default is the gate-first Euler profile.  Its v1 schema is the
     # separate simultaneous-RK4 compiler/cosimulation profile documented by the

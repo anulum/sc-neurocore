@@ -12,6 +12,8 @@ pub struct ThetaNeuron {
     pub dt: f64,
 }
 
+pub type ThetaCompleteTrace = (Vec<f64>, Vec<u8>, f64);
+
 impl ThetaNeuron {
     pub fn new() -> Self {
         Self {
@@ -23,6 +25,9 @@ impl ThetaNeuron {
     pub fn step(&mut self, i_ext: f64) -> Result<i32, &'static str> {
         if !i_ext.is_finite() || !validate_theta(self) {
             return Err("theta state/current must be finite with positive dt");
+        }
+        if !event_packet_representable(self, i_ext) {
+            return Err("theta step can contain more than one source event");
         }
 
         let (next_theta, spiked) = self.exact_candidate(i_ext);
@@ -40,6 +45,25 @@ impl ThetaNeuron {
 
     pub fn reset(&mut self) {
         self.theta = 0.0_f64;
+    }
+
+    pub fn simulate_complete(
+        &self,
+        n_steps: usize,
+        i_ext: f64,
+    ) -> Result<ThetaCompleteTrace, &'static str> {
+        if !i_ext.is_finite() || !validate_theta(self) || !event_packet_representable(self, i_ext) {
+            return Err("invalid theta batch contract");
+        }
+        let mut candidate = self.clone();
+        let mut phase = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step(i_ext)?;
+            phase.push(candidate.theta);
+            events.push(event as u8);
+        }
+        Ok((phase, events, candidate.theta))
     }
 
     fn exact_candidate(&self, i_ext: f64) -> (f64, bool) {
@@ -87,6 +111,10 @@ impl Default for ThetaNeuron {
 
 pub fn validate_theta(state: &ThetaNeuron) -> bool {
     state.theta.is_finite() && state.dt.is_finite() && state.dt > 0.0
+}
+
+pub fn event_packet_representable(state: &ThetaNeuron, i_ext: f64) -> bool {
+    i_ext <= 0.0 || i_ext.sqrt() * state.dt <= std::f64::consts::PI
 }
 
 pub fn wrap_phase(theta: f64) -> f64 {
@@ -206,5 +234,25 @@ mod tests {
             let spikes: i32 = (0..1_000).map(|_| state.step(current).unwrap()).sum();
             assert_eq!(spikes, expected, "current={current}");
         }
+    }
+
+    #[test]
+    fn test_complete_packet_and_multi_event_rejection_are_atomic() {
+        let state = ThetaNeuron {
+            theta: 0.37,
+            dt: 0.037,
+        };
+        let (phase, events, final_theta) = state.simulate_complete(400, 2.2).unwrap();
+        assert_eq!(phase.len(), 400);
+        assert_eq!(events.len(), 400);
+        assert_eq!(phase.last().copied(), Some(final_theta));
+        assert_eq!(state.theta, 0.37);
+
+        let mut rejected = ThetaNeuron {
+            theta: 0.25,
+            dt: 1.0,
+        };
+        assert!(rejected.step(16.0).is_err());
+        assert_eq!(rejected.theta, 0.25);
     }
 }

@@ -11,6 +11,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Re-closed `ThetaNeuron` against Ermentrout and Kopell's equation (2.5), with
+  `current` explicitly representing source parameter `a` or a frozen equation
+  (3.3) drive rather than the paper's full slow-oscillator bursting system.
+  Python, production and safety Rust, PyO3, Julia, Go, and Mojo now expose
+  failure-atomic complete phase/event packets for arbitrary maintained state;
+  over-wide held-drive steps fail instead of collapsing multiple passages into
+  one event bit. A PDF-bound independent receipt, source-hashed five-runtime
+  benchmark, paired exact-software/Euler-RTL contracts, 6,203-cell Q16.16 Yosys
+  receipt, and depth-110 receipt-drive phase/event safety establish the honest
+  H2 boundary without
+  timing, PPA, board, physical-silicon, or exact-flow hardware-equivalence
+  claims.
 - Corrected `QuadraticIFNeuron` to Latham et al.'s normalized source numerical
   boundaries (`v=-1`, apex `31/3`, reset `-3`, `dt=.05`) while retaining the
   historical `-1/+1/.01` recurrence as count-neutral

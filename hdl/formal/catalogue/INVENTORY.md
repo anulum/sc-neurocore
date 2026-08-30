@@ -33,7 +33,7 @@ Jobs: **32**
 | RulkovMapNeuron | rulkov_map | `sc_rulkov_map` | `x_out` | Q16.16 | 4 |
 | SigmoidRateNeuron | sigmoid_rate | `sc_sigmoidrateneuron` | `r_out` | Q32.32 | 4 |
 | TermanWangOscillator | terman_wang | `sc_terman_wang` | `v_out` | Q8.8 | 4 |
-| ThetaNeuron | theta | `sc_theta` | `theta_out` | Q8.8 | 6 |
+| ThetaNeuron | theta | `sc_theta` | `theta_out` | Q16.16 | 110 |
 | ThresholdLinearRateNeuron | threshold_linear_rate | `sc_thresholdlinearrateneuron` | `r_out` | Q16.16 | 4 |
 | WangBuzsakiNeuron | wang_buzsaki | `sc_wang_buzsaki` | `v_out` | Q16.16 | 4 |
 | WilsonCowanUnit | wilson_cowan | `sc_wilsoncowanunit` | `e_out` | Q32.32 | 4 |

@@ -70,6 +70,16 @@ and event-hash fields into the deterministic trace schema.
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
+The separate `reference_receipts/theta_ermentrout_kopell_1986.json` binds the
+production exact-held-drive `ThetaNeuron` rather than the Euler schema runner.
+It records the SHA-256 of the author-hosted paper scan, equation (2.5), the
+frozen-drive equation (3.3) interpretation, and a 1,024-step `a=2` protocol.
+Input, wrapped phase, and five-event vectors are byte-digested; an independent
+unwrapped circle-flow calculation reproduces every event sample and stays
+within `2.3e-14` circular phase error. The receipt explicitly excludes the
+paper's full slow-oscillator-coupled bursting system and keeps the separate
+`ErmentroutKopellMapNeuron` identity outside this evidence.
+
 ## Seeded stochastic reference
 
 `escape_rate_lfsr16_statistical_v1.json` is a separate statistical artifact,

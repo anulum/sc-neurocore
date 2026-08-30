@@ -261,3 +261,12 @@ def test_quadratic_if_source_descriptor_uses_latham_numeric_profile() -> None:
         "dt": 0.01,
         "method": "exact_held_current_riccati_flow",
     }
+
+
+def test_theta_descriptor_uses_runtime_exact_flow_not_rtl_euler_method() -> None:
+    """Keep production-software and fixed-point compiler contracts distinct."""
+    payload = generate_descriptor_payload("ThetaNeuron")
+    assert payload["integration"] == {
+        "dt": 0.01,
+        "method": "exact_held_drive_phase_flow",
+    }

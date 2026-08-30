@@ -1844,6 +1844,18 @@ Run the Go recurrence through its C ABI.
 ### Function `simulate_mojo(theta, dt, n_steps, current)`
 Run the Mojo recurrence through its C ABI.
 
+### Function `simulate_rust_complete(theta, dt, n_steps, current)`
+Run the checked phase-explicit production Rust batch.
+
+### Function `simulate_julia_complete(theta, dt, n_steps, current)`
+Run the checked phase-explicit Julia batch.
+
+### Function `simulate_go_complete(theta, dt, n_steps, current)`
+Run the failure-atomic Go complete C-ABI packet.
+
+### Function `simulate_mojo_complete(theta, dt, n_steps, current)`
+Run the failure-atomic Mojo complete C-ABI packet.
+
 ---
 
 ## Module `accel.threshold_linear_rate`
@@ -26704,14 +26716,19 @@ Ermentrout & Kopell 1986.
 
 Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
 
-``simulate`` exposes the Python reference and all four compiled acceleration
-lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
-Mojo transport the complete phase and integration contract.
+This is the paper's constant-parameter equation (2.5), or equation (3.3)
+under a frozen slow drive. It is not the full coupled parabolic-bursting
+system. ``current`` is the source's dimensionless parameter ``a``.
+
+``simulate_complete`` exposes aligned phase/event packets through the
+Python reference and all four compiled acceleration lanes.
 
 - **__post_init__**()
 - **step**(current)
 - **simulate**(n_steps, current, backend)
-  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
+  - Return post-step phase plus aggregate event count through one backend.
+- **simulate_complete**(n_steps, current, backend)
+  - Return aligned phase/events and atomically commit the final phase.
 - **reset**()
   - Restore the runtime phase while preserving the integration step.
 

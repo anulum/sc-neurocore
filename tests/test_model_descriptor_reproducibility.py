@@ -80,6 +80,7 @@ _DEDICATED_REPRODUCIBILITY_MODELS = {
     "SigmaDeltaNeuron",
     "SKNeuron",
     "TTypeCaNeuron",
+    "ThetaNeuron",
     "TwoCompartmentLIFNeuron",
     "WangBuzsakiNeuron",
 }

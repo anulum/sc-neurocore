@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+import json
 import re
 import subprocess
 import tempfile
@@ -39,6 +40,7 @@ _Q1616_CASES = (
 )
 _PHASE_ENVELOPE_CURRENTS = (-1.0, -0.5, 0.0, 0.333, 0.5, 1.0, 2.0)
 _Q1616_PHASE_ATOL = 0.17
+_REPOSITORY = Path(__file__).resolve().parents[1]
 
 
 def _circular_error(actual: float, expected: float) -> float:
@@ -197,3 +199,28 @@ def test_q1616_declares_one_cycle_event_timing_boundary() -> None:
     rtl_events = [event for event, _phase in _q1616_rtl_trace(current, n_steps)]
     assert (sum(hand_events), sum(schema_events), sum(rtl_events)) == (3, 3, 3)
     assert sum(hand != rtl for hand, rtl in zip(hand_events, rtl_events, strict=True)) == 6
+
+
+def test_committed_yosys_report_proves_nontrivial_q1616_synthesis() -> None:
+    """Bind H2 to the executed coarse-synthesis receipt for the committed RTL."""
+    report = json.loads(
+        (_REPOSITORY / "hdl/reports/yosys_theta_q1616_2026-08-30.json").read_text(encoding="utf-8")
+    )
+    module = report["modules"]["\\sc_theta"]
+    assert module["num_processes"] == 0
+    assert module["num_cells"] == 6203
+    assert module["num_cells_by_type"]["$_DFF_PN0_"] == 33
+    assert module["num_cells_by_type"]["$_MUX_"] == 381
+
+
+def test_curated_formal_job_reaches_and_checks_receipt_drive_event() -> None:
+    """Pin the model-specific proof depth, drive, phase envelope, and wrap."""
+    formal_dir = _REPOSITORY / "hdl/formal/catalogue"
+    job = (formal_dir / "sc_theta.sby").read_text(encoding="utf-8")
+    harness = (formal_dir / "sc_theta_formal.v").read_text(encoding="utf-8")
+    assert "depth 110" in job
+    assert "32'sd131072" in harness
+    assert "assert ($signed(theta_out) >= -32'sd205888);" in harness
+    assert "assert ($signed(theta_out) <= 32'sd203817);" in harness
+    assert "if (spike_out)" in harness
+    assert "assert ($signed(theta_out) < 32'sd0);" in harness

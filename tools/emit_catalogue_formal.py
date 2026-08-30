@@ -72,7 +72,6 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "PoissonNeuron": "poisson",
     "ResonateAndFireNeuron": "resonate_fire",
     "SigmoidRateNeuron": "sigmoid_rate",
-    "ThetaNeuron": "theta",
     "ThresholdLinearRateNeuron": "threshold_linear_rate",
     "WilsonCowanUnit": "wilson_cowan",
     "WangBuzsakiNeuron": "wang_buzsaki",
@@ -110,6 +109,7 @@ CURATED_CLASS_TO_MODULE: dict[str, str] = {
     "LapicqueNeuron": "sc_lapicque_1907",
     "PerfectIntegratorNeuron": "sc_perfect_integrator_naud_gerstner_2012",
     "QuadraticIFNeuron": "sc_quadratic_if_latham_2000",
+    "ThetaNeuron": "sc_theta",
     "SCInclusivePerfectIntegratorNeuron": "sc_perfect_integrator",
     "SCSymmetricQuadraticIFNeuron": "sc_quadratic_if",
     "MATNeuron": "sc_mat",
@@ -128,6 +128,7 @@ CURATED_CLASS_TO_SCHEMA: dict[str, str] = {
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
     "PerfectIntegratorNeuron": "perfect_integrator",
     "QuadraticIFNeuron": "quadratic_if",
+    "ThetaNeuron": "theta",
     "SCSymmetricQuadraticIFNeuron": "sc_symmetric_quadratic_if",
 }
 
@@ -203,12 +204,12 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "sc_resetting_wilson_hr": 4,
     "resonate_fire": 4,
     "sigmoid_rate": 4,
+    "theta": 110,
     "terman_wang": 4,
     "threshold_linear_rate": 4,
     "wilson_hr": 4,
     "wilson_cowan": 4,
     "wong_wang": 4,
-    "theta": 6,
     "adex": 6,
     "glif": 6,
     "wang_buzsaki": 4,
@@ -321,6 +322,8 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "sc_clipped_rational_recovery_map": (64, 32),
     "sigmoid_rate": (64, 32),
     "threshold_linear_rate": (32, 16),
+    # Ermentrout-Kopell phase and fixed-circle envelope use Q16.16.
+    "theta": (32, 16),
     "wilson_cowan": (64, 32),
     "wong_wang": (64, 32),
     "wang_buzsaki": (32, 16),
@@ -712,9 +715,7 @@ def emit_all() -> list[EmitResult]:
     ]
     for class_name, schema in RETAINED_SC_CLASS_TO_SCHEMA.items():
         retained_results.append(
-            _emit_or_inventory(
-                class_name, schema, evidence_label="retained SC project model"
-            )
+            _emit_or_inventory(class_name, schema, evidence_label="retained SC project model")
         )
     inventory = OUT_DIR / "INVENTORY.md"
     lines = [

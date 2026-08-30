@@ -49,6 +49,7 @@ def test_real_benchmark_writes_complete_parity_evidence(
     assert set(payload["measured_order"]) == {"python", "rust", "julia", "go", "mojo"}
     assert payload["dispatcher_order"] == list(benchmark.DISPATCH_ORDER)
     assert all(row["event_count_matches_python"] for row in payload["backends"].values())
+    assert all(row["event_vector_matches_python"] for row in payload["backends"].values())
     assert payload["verification"]["rust_safety"]["passed"] is True
     assert set(payload["backends"]["python"]["final_state"]) == {"theta"}
 
@@ -89,6 +90,8 @@ def test_committed_evidence_matches_live_sources_and_bounded_parity() -> None:
         assert row["used"] is True
         assert row["event_count"] == reference_events
         assert row["event_count_matches_python"] is True
+        assert row["event_vector_matches_python"] is True
+        assert len(row["uint8_event_sha256"]) == 64
         assert row["parity_max_circular_phase_diff"] <= benchmark.PHASE_ATOL
 
     hashes = payload["source_hashes"]
@@ -103,7 +106,7 @@ def test_real_rust_safety_gate_executes_enrolled_module() -> None:
     assert result["passed"] is True
     assert result["returncode"] == 0
     assert "theta::tests" in result["command"]
-    assert any("10 passed" in line for line in result["output_tail"])
+    assert any("11 passed" in line for line in result["output_tail"])
 
 
 def test_circular_phase_metric_handles_wrap_boundary() -> None:
@@ -198,7 +201,13 @@ def test_unavailable_backend_override_records_explicit_evidence(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0,)),
+        lambda _backend: (
+            1.0,
+            1.0,
+            np.array([0.0]),
+            np.array([0], dtype=np.uint8),
+            (0.0,),
+        ),
     )
     output = tmp_path / "acknowledged-missing.json"
 
@@ -223,7 +232,13 @@ def test_compiled_lane_cannot_precede_python_reference(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0,)),
+        lambda _backend: (
+            1.0,
+            1.0,
+            np.array([0.0]),
+            np.array([0], dtype=np.uint8),
+            (0.0,),
+        ),
     )
 
     with pytest.raises(RuntimeError, match="Python reference must be measured first"):
@@ -255,10 +270,22 @@ def test_parity_contract_failures_have_distinct_exit_codes(
 
     def measured(
         backend: str,
-    ) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+    ) -> tuple[
+        float,
+        float,
+        npt.NDArray[np.float64],
+        npt.NDArray[np.uint8],
+        tuple[float],
+    ]:
         if backend == "python":
-            return 1.0, 1.0, np.array([0.0]), 0, (0.0,)
-        return 0.5, 0.5, compiled_trace, compiled_spikes, (0.0,)
+            return 1.0, 1.0, np.array([0.0]), np.array([0], dtype=np.uint8), (0.0,)
+        return (
+            0.5,
+            0.5,
+            compiled_trace,
+            np.array([compiled_spikes], dtype=np.uint8),
+            (0.0,),
+        )
 
     monkeypatch.setattr(benchmark, "_measure_backend", measured)
     assert benchmark.main(["--json", str(tmp_path / f"failure-{expected}.json")]) == expected
@@ -277,7 +304,13 @@ def test_rust_safety_failure_has_distinct_exit_code(
     monkeypatch.setattr(
         benchmark,
         "_measure_backend",
-        lambda _backend: (1.0, 1.0, np.array([0.0]), 0, (0.0,)),
+        lambda _backend: (
+            1.0,
+            1.0,
+            np.array([0.0]),
+            np.array([0], dtype=np.uint8),
+            (0.0,),
+        ),
     )
     monkeypatch.setattr(
         benchmark,

@@ -33,6 +33,7 @@ def test_missing_rust_engine_is_detected_at_import(monkeypatch: pytest.MonkeyPat
         reloaded = importlib.reload(backends)
         assert reloaded._HAS_RUST is False
         assert reloaded._EngineThetaCls is None
+        assert reloaded._EngineThetaCompleteFn is None
     importlib.reload(backends)
     assert backends._HAS_RUST is True
 
@@ -89,6 +90,7 @@ def test_direct_runners_reject_unloaded_native_state(
 ) -> None:
     """Fail explicitly if an internal runner is called without its runtime."""
     monkeypatch.setattr(backends, "_EngineThetaCls", None)
+    monkeypatch.setattr(backends, "_EngineThetaCompleteFn", None)
     monkeypatch.setattr(backends, "_julia_module", None)
     monkeypatch.setattr(backends, "_go_lib", None)
     monkeypatch.setattr(backends, "_mojo_lib", None)
@@ -101,3 +103,11 @@ def test_direct_runners_reject_unloaded_native_state(
         backends.simulate_go(0.0, 0.01, 1, 0.0)
     with pytest.raises(RuntimeError, match="Mojo Theta"):
         backends.simulate_mojo(0.0, 0.01, 1, 0.0)
+    with pytest.raises(RuntimeError, match="Rust Theta"):
+        backends.simulate_rust_complete(0.0, 0.01, 1, 0.0)
+    with pytest.raises(RuntimeError, match="Julia Theta"):
+        backends.simulate_julia_complete(0.0, 0.01, 1, 0.0)
+    with pytest.raises(RuntimeError, match="Go Theta"):
+        backends.simulate_go_complete(0.0, 0.01, 1, 0.0)
+    with pytest.raises(RuntimeError, match="Mojo Theta"):
+        backends.simulate_mojo_complete(0.0, 0.01, 1, 0.0)

@@ -5,7 +5,7 @@
     "author": "Ermentrout, G.B. & Kopell, N.",
     "year": 1986,
     "doi": "10.1137/0146017",
-    "description": "Canonical Type-I neuron on the unit circle — phase model"
+    "description": "Euler fixed-point representative of the Ermentrout-Kopell equation (2.5) Type-I phase normal form"
   },
   "state": {
     "theta": 0.0
@@ -26,6 +26,9 @@
     "theta": "theta - 6.2832"
   },
   "extensions": {
-    "topology": "circular"
+    "topology": "circular",
+    "source_parameter": "I is dimensionless a from equation (2.5), or a frozen equation (3.3) drive",
+    "software_solver": "The production ThetaNeuron uses an exact held-drive flow; this schema explicitly remains Euler.",
+    "source_scope": "The full slow-oscillator-coupled bursting system is not claimed."
   }
 }

@@ -123,6 +123,13 @@ fn network_runner_preserves_source_and_sc_quadratic_if_boundaries() {
 }
 
 #[test]
+fn network_runner_preserves_theta_source_event_contract() {
+    let mut source = create_neuron("ThetaNeuron").expect("theta source model must construct");
+    let events: i32 = (0..1_000).map(|_| source.step(1.0)).sum();
+    assert_eq!(events, 3);
+}
+
+#[test]
 fn network_runner_preserves_both_rulkov_event_contracts() {
     let mut source = create_neuron("RulkovMapNeuron").expect("source model must construct");
     let mut retained =

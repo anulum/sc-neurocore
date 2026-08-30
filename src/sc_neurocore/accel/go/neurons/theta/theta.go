@@ -56,4 +56,41 @@ func theta_simulate_c(
 	return C.int64_t(spikes)
 }
 
+//export theta_simulate_complete_c
+func theta_simulate_complete_c(
+	theta C.double,
+	dt C.double,
+	nSteps C.int64_t,
+	current C.double,
+	phase *C.double,
+	events *C.uint8_t,
+) C.int64_t {
+	if nSteps < 0 || phase == nil || (nSteps > 0 && events == nil) {
+		return -1
+	}
+	n := int(nSteps)
+	if C.int64_t(n) != nSteps || n > int(^uint(0)>>1)-1 {
+		return -1
+	}
+	state := services.ThetaNeuronState{Theta: float64(theta), Dt: float64(dt)}
+	trace, eventTrace, finalTheta, err := services.SimulateThetaComplete(
+		state, n, float64(current),
+	)
+	if err != nil {
+		return -1
+	}
+	stagedPhase := make([]float64, n+1)
+	copy(stagedPhase, trace)
+	stagedPhase[n] = finalTheta
+	copy(unsafe.Slice((*float64)(unsafe.Pointer(phase)), n+1), stagedPhase)
+	if n > 0 {
+		copy(unsafe.Slice((*uint8)(unsafe.Pointer(events)), n), eventTrace)
+	}
+	count := 0
+	for _, event := range eventTrace {
+		count += int(event)
+	}
+	return C.int64_t(count)
+}
+
 func main() {}

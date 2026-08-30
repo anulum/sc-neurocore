@@ -40,6 +40,10 @@ func wrapTheta(theta float64) float64 {
 	return math.Mod(theta+math.Pi, 2.0*math.Pi) - math.Pi
 }
 
+func (s ThetaNeuronState) eventPacketRepresentable(iExt float64) bool {
+	return iExt <= 0.0 || math.Sqrt(iExt)*s.Dt <= math.Pi
+}
+
 func (s ThetaNeuronState) exactCandidate(iExt float64) (float64, bool) {
 	y := math.Tan(s.Theta / 2.0)
 	if iExt > 0.0 {
@@ -78,6 +82,9 @@ func (s *ThetaNeuronState) Step(iExt float64) (int, error) {
 	if !finiteTheta(iExt) || !s.Valid() {
 		return 0, ErrThetaInvalidState
 	}
+	if !s.eventPacketRepresentable(iExt) {
+		return 0, ErrThetaMultipleEvents
+	}
 
 	nextTheta, spiked := s.exactCandidate(iExt)
 	if !finiteTheta(nextTheta) {
@@ -111,24 +118,45 @@ func SimulateThetaTrace(
 	nSteps int,
 	iExt float64,
 ) ([]float64, int, float64, error) {
+	trace, events, finalTheta, err := SimulateThetaComplete(initial, nSteps, iExt)
+	if err != nil {
+		return nil, 0, initial.Theta, err
+	}
+	spikes := 0
+	for _, event := range events {
+		spikes += int(event)
+	}
+	return trace, spikes, finalTheta, nil
+}
+
+// SimulateThetaComplete returns aligned phase/events and a checked final phase.
+func SimulateThetaComplete(
+	initial ThetaNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, []uint8, float64, error) {
 	if nSteps < 0 || !finiteTheta(iExt) || !initial.Valid() {
-		return nil, 0, initial.Theta, ErrThetaInvalidState
+		return nil, nil, initial.Theta, ErrThetaInvalidState
+	}
+	if !initial.eventPacketRepresentable(iExt) {
+		return nil, nil, initial.Theta, ErrThetaMultipleEvents
 	}
 	s := initial
 	trace := make([]float64, nSteps)
-	spikes := 0
+	events := make([]uint8, nSteps)
 	for t := 0; t < nSteps; t++ {
 		result, err := s.Step(iExt)
 		if err != nil {
-			return nil, 0, initial.Theta, err
+			return nil, nil, initial.Theta, err
 		}
 		trace[t] = s.Theta
-		spikes += result
+		events[t] = uint8(result)
 	}
-	return trace, spikes, s.Theta, nil
+	return trace, events, s.Theta, nil
 }
 
 var (
 	ErrThetaInvalidState    = errors.New("theta state/current must be finite with positive dt")
 	ErrThetaNonFiniteUpdate = errors.New("theta exact-flow update became non-finite")
+	ErrThetaMultipleEvents  = errors.New("theta step can contain more than one source event")
 )

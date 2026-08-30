@@ -11,13 +11,22 @@ from __future__ import annotations
 from tests.theta_backends_support import *  # noqa: F403
 
 
-def test_rust_rejects_non_default_contract() -> None:
-    """Keep the Rust engine class's factory-only parameter boundary explicit."""
+def test_rust_accepts_non_default_complete_contract() -> None:
+    """Carry configured phase and timestep through the checked PyO3 batch."""
+    reference = _configured()
     neuron = _configured()
-    before = neuron.theta
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert neuron.theta == before
+    expected_phase, expected_events = reference.simulate_complete(400, 2.2, "python")
+    phase, events = neuron.simulate_complete(400, 2.2, "rust")
+    _assert_phase_parity(phase, expected_phase)
+    np.testing.assert_array_equal(events, expected_events)
+
+
+def test_multi_event_step_is_rejected_without_mutation() -> None:
+    """Do not collapse multiple source passages into one binary sample."""
+    neuron = ThetaNeuron(theta=0.25, dt=1.0)
+    with pytest.raises(ValueError, match="more than one source event"):
+        neuron.simulate_complete(1, 16.0, "python")
+    assert neuron.theta == 0.25
 
 
 @pytest.mark.parametrize("n_steps", [-1, 1.0, True])

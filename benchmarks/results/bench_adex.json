@@ -10,9 +10,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 6.047299,
-      "minimum_call_ms": 5.538739,
-      "speedup_vs_python": 121.93673225021618,
+      "median_call_ms": 6.320339,
+      "minimum_call_ms": 5.968928,
+      "speedup_vs_python": 107.10600744675247,
       "used": true,
       "v_parity_max_abs_diff": 7.105427357601002e-15,
       "w_parity_max_abs_diff": 0.0
@@ -27,9 +27,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.482628,
-      "minimum_call_ms": 3.44689,
-      "speedup_vs_python": 211.73317362635342,
+      "median_call_ms": 3.359459,
+      "minimum_call_ms": 3.213804,
+      "speedup_vs_python": 201.50455058388866,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -44,9 +44,9 @@
         "v": -52.37869326736917,
         "w": 74.95731155256478
       },
-      "median_call_ms": 7.602042,
-      "minimum_call_ms": 7.481672,
-      "speedup_vs_python": 96.9986589129605,
+      "median_call_ms": 6.638655,
+      "minimum_call_ms": 6.381542,
+      "speedup_vs_python": 101.97039550933134,
       "used": true,
       "v_parity_max_abs_diff": 7.389644451905042e-13,
       "w_parity_max_abs_diff": 5.684341886080802e-14
@@ -61,8 +61,8 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 737.387879,
-      "minimum_call_ms": 685.773033,
+      "median_call_ms": 676.946276,
+      "minimum_call_ms": 625.081334,
       "speedup_vs_python": 1.0,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
@@ -78,9 +78,9 @@
         "v": -52.37869326736922,
         "w": 74.9573115525648
       },
-      "median_call_ms": 3.10681,
-      "minimum_call_ms": 2.896206,
-      "speedup_vs_python": 237.34566291469386,
+      "median_call_ms": 2.973266,
+      "minimum_call_ms": 2.773237,
+      "speedup_vs_python": 227.6776702790803,
       "used": true,
       "v_parity_max_abs_diff": 0.0,
       "w_parity_max_abs_diff": 0.0
@@ -102,14 +102,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      7.4267578125,
-      7.4892578125,
-      10.2509765625
+      5.32421875,
+      6.939453125,
+      8.0087890625
     ],
     "load_average_start": [
-      7.49658203125,
-      7.505859375,
-      10.28662109375
+      4.70947265625,
+      6.87109375,
+      7.998046875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -126,7 +126,7 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v2",
   "source_hashes": {
     "benchmarks/bench_adex.py": "2a41179927562aa73bd737ce4d8ebf8ca7ed7fb7729c34c6455e8a57c058c50d",
-    "bridge/sc_neurocore_engine/__init__.py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40",
+    "bridge/sc_neurocore_engine/__init__.py": "4fa8babe57408d56ad33e33b6eae678755a1c69aa79091573e47cf566d6a319f",
     "engine/src/bindings/adex_neuron.rs": "c10a0e6e9033e6113b977ffdc44d98d59523dc9f53232ef7c3f5464d26e129f1",
     "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
     "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",

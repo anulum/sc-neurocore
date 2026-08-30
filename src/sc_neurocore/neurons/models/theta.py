@@ -9,19 +9,13 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from copy import copy
 from dataclasses import dataclass
-from typing import cast
 
 import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.accel import theta as _backends
-
-_RUST_ENGINE_DEFAULTS: dict[str, float] = {
-    "theta": 0.0,
-    "dt": 0.01,
-}
 
 
 @dataclass
@@ -34,9 +28,12 @@ class ThetaNeuron:
 
     Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
 
-    ``simulate`` exposes the Python reference and all four compiled acceleration
-    lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
-    Mojo transport the complete phase and integration contract.
+    This is the paper's constant-parameter equation (2.5), or equation (3.3)
+    under a frozen slow drive. It is not the full coupled parabolic-bursting
+    system. ``current`` is the source's dimensionless parameter ``a``.
+
+    ``simulate_complete`` exposes aligned phase/event packets through the
+    Python reference and all four compiled acceleration lanes.
     """
 
     theta: float = 0.0
@@ -48,13 +45,6 @@ class ThetaNeuron:
         if not math.isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
         self.theta = self._wrap_phase(self.theta)
-
-    def _matches_rust_engine_contract(self) -> bool:
-        """Return whether the instance matches the Rust engine default contract."""
-        for name, expected in _RUST_ENGINE_DEFAULTS.items():
-            if float(getattr(self, name)) != expected:
-                return False
-        return True
 
     @staticmethod
     def _wrap_phase(theta: float) -> float:
@@ -97,10 +87,15 @@ class ThetaNeuron:
         next_y = root_i * (1.0 + evolved_ratio) / denominator
         return self._wrap_phase(2.0 * math.atan(next_y)), spiked
 
+    def _validate_event_packet_resolution(self, current: float) -> None:
+        if current > 0.0 and math.sqrt(current) * self.dt > math.pi:
+            raise ValueError("theta step can contain more than one source event")
+
     def step(self, current: float) -> int:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
+        self._validate_event_packet_resolution(current)
 
         next_theta, spiked = self._exact_candidate(current)
         if not math.isfinite(next_theta):
@@ -111,7 +106,7 @@ class ThetaNeuron:
     def simulate(
         self, n_steps: int, current: float = 0.0, backend: str = "auto"
     ) -> tuple[npt.NDArray[np.float64], int]:
-        """Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
+        """Return post-step phase plus aggregate event count through one backend.
 
         Parameters
         ----------
@@ -125,6 +120,16 @@ class ThetaNeuron:
             compatible Rust, then Python, avoiding Julia initialisation when
             the Go shared library is available.
         """
+        phase, events = self.simulate_complete(n_steps, current, backend)
+        return phase, int(np.sum(events, dtype=np.int64))
+
+    def simulate_complete(
+        self,
+        n_steps: int,
+        current: float = 0.0,
+        backend: str = "auto",
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.uint8]]:
+        """Return aligned phase/events and atomically commit the final phase."""
         if not isinstance(n_steps, int) or isinstance(n_steps, bool) or n_steps < 0:
             raise ValueError("n_steps must be a non-negative integer")
         if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
@@ -132,6 +137,7 @@ class ThetaNeuron:
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
+        self._validate_event_packet_resolution(current)
 
         selected = backend
         if selected == "auto":
@@ -141,29 +147,23 @@ class ThetaNeuron:
                 selected = "julia"
             elif _backends.ensure_mojo_loaded():
                 selected = "mojo"
-            elif _backends._HAS_RUST and self._matches_rust_engine_contract():
+            elif _backends._HAS_RUST:
                 selected = "rust"
             else:
                 selected = "python"
 
         if selected == "rust":
-            if not _backends._HAS_RUST or _backends._EngineThetaCls is None:
+            if not _backends._HAS_RUST:
                 raise RuntimeError(
                     "Rust Theta backend requested but sc_neurocore_engine is unavailable."
                 )
-            if not self._matches_rust_engine_contract():
-                raise RuntimeError(
-                    "Rust Theta backend requires factory-default parameters and initial state."
-                )
-            trace, spikes, state = _backends.simulate_rust(n_steps, current)
+            packet = _backends.simulate_rust_complete(self.theta, self.dt, n_steps, current)
         elif selected == "julia":
             if not _backends.ensure_julia_loaded():
                 raise RuntimeError(
                     "Julia Theta backend requested but juliacall or the module is unavailable."
                 )
-            trace, spikes, state = self._simulate_full_contract(
-                _backends.simulate_julia, n_steps, current
-            )
+            packet = _backends.simulate_julia_complete(self.theta, self.dt, n_steps, current)
         elif selected == "go":
             if not _backends.ensure_go_loaded():
                 raise RuntimeError(
@@ -171,9 +171,7 @@ class ThetaNeuron:
                     "go build -buildmode=c-shared -o libtheta.so theta.go in "
                     "accel/go/neurons/theta."
                 )
-            trace, spikes, state = self._simulate_full_contract(
-                _backends.simulate_go, n_steps, current
-            )
+            packet = _backends.simulate_go_complete(self.theta, self.dt, n_steps, current)
         elif selected == "mojo":
             if not _backends.ensure_mojo_loaded():
                 raise RuntimeError(
@@ -181,39 +179,49 @@ class ThetaNeuron:
                     "mojo build --emit shared-lib -o libtheta.so theta.mojo in "
                     "accel/mojo/kernels."
                 )
-            trace, spikes, state = self._simulate_full_contract(
-                _backends.simulate_mojo, n_steps, current
-            )
+            packet = _backends.simulate_mojo_complete(self.theta, self.dt, n_steps, current)
         else:
-            trace, spikes, state = self._simulate_python(n_steps, current)
-        self.theta = state
-        return trace, spikes
+            packet = self._simulate_python_complete(n_steps, current)
+        phase, events, final_theta = self._validated_complete_packet(packet, n_steps)
+        self.theta = final_theta
+        return phase, events
 
-    def _simulate_full_contract(
-        self,
-        runner: object,
-        n_steps: int,
-        current: float,
-    ) -> tuple[npt.NDArray[np.float64], int, float]:
-        """Pass every maintained numeric field to a native runner."""
-        native = cast(
-            Callable[
-                [float, float, int, float],
-                tuple[npt.NDArray[np.float64], int, float],
-            ],
-            runner,
-        )
-        return native(self.theta, self.dt, n_steps, current)
-
-    def _simulate_python(
+    def _simulate_python_complete(
         self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float]:
-        trace = np.empty(n_steps, dtype=np.float64)
-        spikes = 0
+    ) -> tuple[object, object, float]:
+        candidate = copy(self)
+        phase = np.empty(n_steps, dtype=np.float64)
+        events = np.empty(n_steps, dtype=np.uint8)
         for t in range(n_steps):
-            spikes += self.step(current)
-            trace[t] = self.theta
-        return trace, spikes, self.theta
+            events[t] = candidate.step(current)
+            phase[t] = candidate.theta
+        return phase, events, candidate.theta
+
+    @staticmethod
+    def _validated_complete_packet(
+        packet: tuple[object, object, float], n_steps: int
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.uint8], float]:
+        raw_phase, raw_events, raw_final_theta = packet
+        phase = np.ascontiguousarray(np.asarray(raw_phase, dtype=np.float64))
+        event_values = np.asarray(raw_events)
+        final_theta = float(raw_final_theta)
+        if phase.shape != (n_steps,) or event_values.shape != (n_steps,):
+            raise RuntimeError("Theta backend returned an invalid packet shape")
+        if not np.all(np.isfinite(phase)) or not math.isfinite(final_theta):
+            raise FloatingPointError("Theta backend returned non-finite phase")
+        if not np.all((event_values == 0) | (event_values == 1)):
+            raise RuntimeError("Theta backend returned non-binary events")
+        events = np.ascontiguousarray(event_values, dtype=np.uint8)
+        if (
+            np.any(phase < -math.pi)
+            or np.any(phase >= math.pi)
+            or final_theta < -math.pi
+            or final_theta >= math.pi
+        ):
+            raise RuntimeError("Theta backend returned phase outside [-pi, pi)")
+        if n_steps and final_theta != float(phase[-1]):
+            raise RuntimeError("Theta backend final state disagrees with its trace")
+        return phase, events, final_theta
 
     def reset(self) -> None:
         """Restore the runtime phase while preserving the integration step."""

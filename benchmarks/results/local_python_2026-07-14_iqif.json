@@ -16,21 +16,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 14.101981,
-      "median_call_ms": 7.543074,
-      "median_ns_per_step": 37.71537,
-      "minimum_call_ms": 6.796899,
+      "maximum_call_ms": 11.033581,
+      "median_call_ms": 6.393106,
+      "median_ns_per_step": 31.96553,
+      "minimum_call_ms": 6.077553,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        8.684595,
-        14.101981,
-        7.090675,
-        10.888377,
-        7.343713,
-        7.543074,
-        6.796899
+        6.364394,
+        11.033581,
+        6.525569,
+        7.507538,
+        6.083711,
+        6.393106,
+        6.077553
       ],
-      "speedup_vs_python": 13.959265413543603,
+      "speedup_vs_python": 13.422522792520567,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -44,21 +44,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 8.534045,
-      "median_call_ms": 7.38195,
-      "median_ns_per_step": 36.90975,
-      "minimum_call_ms": 6.802447,
+      "maximum_call_ms": 5.457661,
+      "median_call_ms": 5.207421,
+      "median_ns_per_step": 26.037105,
+      "minimum_call_ms": 4.901322,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        7.777758,
-        8.101631,
-        8.534045,
-        7.38195,
-        6.966254,
-        7.080403,
-        6.802447
+        4.901322,
+        5.457661,
+        5.183516,
+        5.29959,
+        5.19796,
+        5.207421,
+        5.283425
       ],
-      "speedup_vs_python": 14.263950853094373,
+      "speedup_vs_python": 16.47871585569901,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -72,21 +72,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 4.151601,
-      "median_call_ms": 3.564556,
-      "median_ns_per_step": 17.82278,
-      "minimum_call_ms": 2.334386,
+      "maximum_call_ms": 3.245451,
+      "median_call_ms": 2.867202,
+      "median_ns_per_step": 14.33601,
+      "minimum_call_ms": 2.675511,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        3.88396,
-        2.334386,
-        3.564556,
-        4.151601,
-        3.551846,
-        3.472262,
-        3.83484
+        2.834558,
+        2.867202,
+        3.16217,
+        3.245451,
+        2.852891,
+        2.675511,
+        3.028058
       ],
-      "speedup_vs_python": 29.539659918374124,
+      "speedup_vs_python": 29.92869389739544,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -100,19 +100,19 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 143.968353,
-      "median_call_ms": 105.295772,
-      "median_ns_per_step": 526.47886,
-      "minimum_call_ms": 92.699035,
+      "maximum_call_ms": 92.718075,
+      "median_call_ms": 85.811611,
+      "median_ns_per_step": 429.058055,
+      "minimum_call_ms": 81.941697,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        109.226841,
-        105.295772,
-        92.699035,
-        133.373204,
-        105.100378,
-        104.879963,
-        143.968353
+        88.378026,
+        89.325405,
+        92.718075,
+        85.811611,
+        84.071901,
+        85.617602,
+        81.941697
       ],
       "speedup_vs_python": 1.0,
       "trace_matches_python": true,
@@ -128,21 +128,21 @@
         "v": 165
       },
       "final_state_matches_python": true,
-      "maximum_call_ms": 5.899919,
-      "median_call_ms": 3.974558,
-      "median_ns_per_step": 19.87279,
-      "minimum_call_ms": 3.484245,
+      "maximum_call_ms": 3.037673,
+      "median_call_ms": 2.905991,
+      "median_ns_per_step": 14.529955,
+      "minimum_call_ms": 2.790044,
       "parity_max_abs_diff": 0,
       "samples_call_ms": [
-        3.484245,
-        5.899919,
-        4.056281,
-        4.522127,
-        3.956455,
-        3.974558,
-        3.63628
+        2.815452,
+        3.037673,
+        3.030379,
+        2.790044,
+        2.905991,
+        2.810332,
+        2.931604
       ],
-      "speedup_vs_python": 26.49244821688349,
+      "speedup_vs_python": 29.52920742011933,
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
       "trace_sha256": "b5c84ffb7167e23d9ba3a1e4290aa93326649bd65087781e491a237ab347a4f4",
@@ -152,7 +152,7 @@
   "binary_hashes": {
     "go_shared_library": {
       "path": "src/sc_neurocore/accel/go/neurons/iqif/libiqif.so",
-      "sha256": "96906fdc6387667ae44bee12f6db7adfbb5b8e05600d2b84ff1fff9cc569adc5",
+      "sha256": "dae96ae990ab5ac24b7893d5bab0705cbd51ccf3fbfb239fa726f2e5cacf53b6",
       "size_bytes": 2200456
     },
     "mojo_shared_library": {
@@ -162,8 +162,8 @@
     },
     "rust_extension": {
       "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "89d80d939712ac702dc0cc58dce64ff1b3d42ef1db0c400292a0e54cc7c7349f",
-      "size_bytes": 34813369
+      "sha256": "2c4d1ed95ae37f285b6d14eb58c1c27782e14cefe6962f00ac85a93e673b841a",
+      "size_bytes": 34817465
     }
   },
   "command": "taskset --cpu-list <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_iqif.py --json <artifact>",
@@ -188,14 +188,14 @@
     "kernel_isolated_cpus": "",
     "kernel_nohz_full_cpus": "",
     "load_average_end": [
-      6.82275390625,
-      7.3486328125,
-      10.439453125
+      4.7763671875,
+      7.41845703125,
+      8.2451171875
     ],
     "load_average_start": [
-      6.8701171875,
-      7.376953125,
-      10.482421875
+      4.7568359375,
+      7.45947265625,
+      8.2626953125
     ],
     "measurement_scope": "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -218,9 +218,9 @@
     },
     "benchmarks/bench_model_iqif.py": "2e403d3d7391fda3730066f95b1164e54496bfce1a9fa6590e4f8930597177ac",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40"
+      "py": "4fa8babe57408d56ad33e33b6eae678755a1c69aa79091573e47cf566d6a319f"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "ae9d780845e5fcb47895a53405ffa080b13c7b8cdddfc21f14fef82f5c112f40",
+    "bridge/sc_neurocore_engine/__init__.py": "4fa8babe57408d56ad33e33b6eae678755a1c69aa79091573e47cf566d6a319f",
     "engine/src/bindings/iqif": {
       "rs": "5a0d2bd0a25fbc079ddf1528da24775c8ed8e5796116ef9092c2ce4b3cb8ba6c"
     },
@@ -272,7 +272,7 @@
     },
     "src/sc_neurocore/neurons/models/iqif.py": "0babdca12ceb6775efd6674dcb6bc8c8bed577739ea0ea0c8263ab92808032f3"
   },
-  "timestamp_utc": "2026-08-30T08:09:17Z",
+  "timestamp_utc": "2026-08-30T09:42:02Z",
   "verification": {
     "rust_safety": {
       "command": "rustc --edition=2021 --test src/sc_neurocore/accel/rust/safety/iqif.rs -O -o <temp-binary> && <temp-binary>",

@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.source-receipt.v1",
+  "model": "ThetaNeuron",
+  "source_profile": "ermentrout_kopell_1986_equation_2_5",
+  "reference": {
+    "authors": "G. Bard Ermentrout and Nancy Kopell",
+    "year": 1986,
+    "title": "Parabolic Bursting in an Excitable System Coupled with a Slow Oscillation",
+    "doi": "10.1137/0146017",
+    "pdf_url": "https://sites.pitt.edu/~phase/bard/pubs/siam46_2h.pdf",
+    "pdf_sha256": "4b733c80d40e4d8cee306366b05bf9475ec6dff71957d4d53b96acadaf092d51",
+    "source_scope": "equation (2.5), the frozen-drive reduction in equation (3.3), and the stated spike passage through theta=pi"
+  },
+  "equations": {
+    "source": "dtheta/dt=(1-cos(theta))+a*(1+cos(theta))",
+    "held_drive_identification": "current=a, or a frozen value of g(0,y,0) from equation (3.3)",
+    "tangent_half_angle": "y=tan(theta/2); dy/dt=y^2+current"
+  },
+  "numerical_specialization": {
+    "initial_theta": 0.37,
+    "dt": 0.01,
+    "integration": "exact held-drive Riccati flow",
+    "event": "continuous trajectory passage through theta=pi",
+    "state_interval": "[-pi, pi)",
+    "integration_note": "The exact held-drive solver and default timestep are maintained SC-NeuroCore choices, not integration constants specified by the paper."
+  },
+  "protocol": {
+    "current": 2.0,
+    "steps": 1024,
+    "sample_contract": "post-step wrapped phase and binary passage event",
+    "little_endian_float64_input_sha256": "c2d1d814b672982067408c3b85dde02ff4d106524939a7b52bdd6d3f7026bb5c"
+  },
+  "expected": {
+    "event_count": 5,
+    "event_indices_zero_based": [101, 323, 546, 768, 990],
+    "final_theta": -2.4425445209347743,
+    "little_endian_float64_phase_sha256": "d96bfd6c7c2ad1593407df3a39e1b1f67e00bd1646929898e04a4441f9be8b54",
+    "uint8_event_sha256": "3ffca22f73d1274b6a5dd9dc5f234140809c03a1f7113c49704d7e8ec4abb8f4",
+    "independent_closed_form_max_circular_error": 2.3e-14
+  },
+  "identity_boundary": {
+    "implemented": "constant-parameter equation (2.5), equivalently equation (3.3) under a frozen slow drive",
+    "not_claimed": "the full slow-oscillator-coupled parabolic bursting system of equations (3.3)-(3.7)",
+    "separate_catalogue_identity": "ErmentroutKopellMapNeuron remains distinct and is not evidence for ThetaNeuron"
+  }
+}

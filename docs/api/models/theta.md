@@ -3,7 +3,8 @@
 **Module:** `sc_neurocore.neurons.models.theta`
 **Reference:** Ermentrout and Kopell (1986), DOI `10.1137/0146017`
 **Family:** canonical Type-I phase model on the unit circle
-**State:** `theta`, normalised to `[-pi, pi]`
+**Source scope:** equation (2.5), or equation (3.3) with a frozen slow drive
+**State:** `theta`, normalised to `[-pi, pi)`
 
 ## Dynamics
 
@@ -12,6 +13,14 @@ The maintained hand model follows
 $$
 \frac{d\theta}{dt} = (1 - \cos\theta) + (1 + \cos\theta)I.
 $$
+
+This is Ermentrout and Kopell's equation (2.5), with `I` representing their
+dimensionless parameter `a`. It also represents equation (3.3) when the slow
+drive `g(0,y,0)` is held constant for one update. The class does **not** claim
+the full coupled slow oscillator and parabolic-bursting construction in
+equations (3.3)-(3.7). The inspected author-hosted paper scan and the complete
+source protocol are SHA-256-bound in
+`reference_receipts/theta_ermentrout_kopell_1986.json`.
 
 With the tangent half-angle substitution $y=\tan(\theta/2)$, the equation becomes
 
@@ -34,6 +43,11 @@ onto the compact circle. A spike is reported when the analytic trajectory
 crosses $\pi$ within the timestep. The state remains wrapped after that event;
 there is no separate voltage-style reset parameter.
 
+Because the public event packet is binary per sample, a positive-drive step
+must satisfy $\sqrt I\,dt\leq\pi$. A larger held step can contain more than one
+source passage. Every runtime rejects that unrepresentable request before
+mutating state instead of silently compressing multiple spikes into one bit.
+
 For positive current, the continuous-time period is
 
 $$
@@ -52,7 +66,7 @@ $$
 |---|---:|---|
 | `theta` | `0.0` | finite phase; normalised at construction |
 | `dt` | `0.01` | finite and strictly positive |
-| `current` | `0.0` | finite constant drive for each call |
+| `current` | `0.0` | finite dimensionless source parameter `a`, held for each call |
 
 Every runtime path rejects invalid current, phase, timestep, or non-finite
 analytic candidates before committing state. `reset()` restores `theta=0.0`
@@ -60,11 +74,12 @@ while preserving `dt`.
 
 ## Acceleration and dispatch
 
-`simulate()` exposes `python`, `rust`, `julia`, `go`, `mojo`, and `auto`.
-Julia, Go, and Mojo transport the complete initial-phase and timestep contract.
-The Rust engine entry point retains its factory-default boundary; the separate
-Rust safety module accepts the explicit `theta` and `dt` state and is exercised
-by an executable trace probe.
+`simulate_complete()` returns aligned post-step phase and `uint8` event arrays
+and commits the checked final phase only after the whole packet validates.
+`simulate()` is the aggregate-count compatibility view over that same packet.
+Python, production Rust/PyO3, safety Rust, Julia, Go, and Mojo transport the
+complete initial-phase and timestep contract. The Go and Mojo C ABIs stage both
+output buffers and leave them untouched on rejection.
 
 Auto dispatch probes Go, Julia, Mojo, compatible Rust, then Python. Go is
 probed before Julia so a built shared library avoids initialising the Julia
@@ -109,9 +124,13 @@ events are preserved but each is displaced by one cycle, producing six binary
 event-sample differences. The higher-current points retain event-count evidence
 only; no bounded trajectory claim is made for those rapidly rotating traces.
 
-The committed Q8.8 formal job proves the generated port-level reset and bounded
-state properties to depth 6 with Z3. Q8.8 count deviations are not presented as
-Q16.16 parity.
+The committed `sc_theta` Q16.16 design synthesizes with Yosys 0.33 to 6,203
+coarse cells, including 33 negative-reset DFF bits and 381 multiplexers. Its
+source-labelled depth-110 Z3 job reaches the first receipt-drive event and
+proves reset, the declared bounded phase envelope, and negative-side wrap on
+an event under the enrolled `I=2` fixed-drive formal contract.
+This is H2 evidence, not timing, PPA, board, physical-silicon, or universal
+equivalence evidence.
 
 ## Controlled local benchmark
 
@@ -124,25 +143,31 @@ local regression evidence rather than production throughput claims.
 
 | Backend | Median call (ms) | Minimum call (ms) | Events | Max circular difference |
 |---|---:|---:|---:|---:|
-| Julia | 26.968 | 19.258 | 225 | `7.20e-14` |
-| Go | 29.810 | 24.015 | 225 | `1.99e-13` |
-| Mojo | 49.078 | 44.728 | 225 | `0` |
-| Rust engine | 147.012 | 101.517 | 225 | `0` |
-| Python | 365.536 | 253.950 | 225 | `0` |
+| Rust/PyO3 | 10.462 | 9.890 | 225 | `0` |
+| Julia | 11.396 | 10.958 | 225 | `7.20e-14` |
+| Go | 13.946 | 11.989 | 225 | `1.99e-13` |
+| Mojo | 24.357 | 24.012 | 225 | `0` |
+| Python | 126.126 | 117.079 | 225 | `0` |
 
 The artefact records runtime versions, CPU affinity, governor, host load,
-source hashes for every implementation/ABI surface, final phase, exact event
-parity, and a successful Rust-safety test receipt.
+source hashes for the runtime, ABI, factory, receipt, descriptor, schema, RTL,
+formal, synthesis, and readiness surfaces; final phase; the identical complete
+event-vector digest `9dc6d01a...ebe4fe4d`; and a successful Rust-safety test
+receipt. The pinned run used logical CPU 10 and reported host load rather than
+claiming an isolated benchmarking host.
 
 ## Verification surfaces
 
-- `tests/test_model_theta.py`: analytic dynamics, phase geometry, validation,
-  network integration, and public simulation behaviour.
-- `tests/test_theta_backends.py`: executable four-lane parity, full-parameter
-  ABIs, fail-closed buffers, fallback order, and the Rust-safety trace probe.
+- `tests/test_model_theta_theta_*.py`: analytic dynamics, phase geometry,
+  validation, network integration, complete packets, and public simulation.
+- `tests/test_theta_backends_*.py`: executable four-lane complete-packet
+  parity, full-parameter ABIs, fail-closed buffers, fallback order, and the
+  Rust-safety trace probe.
 - `tests/test_theta_backend_loading.py`: optional-runtime loading failures.
+- `tests/test_reference_theta.py`: PDF-bound receipt digests and independent
+  analytic circle-flow/event oracle.
 - `tests/test_cosim_theta.py`: paired schemas, Q16.16 event counts, circular
-  phase bounds, and the declared timing boundary.
+  phase bounds, declared timing boundary, and Yosys receipt.
 - `tests/test_bench_theta.py`: controlled benchmark and source-hash contract.
 - `src/sc_neurocore/accel/julia/theta_parity_test.jl`: standalone Julia event
   vector, configured-state, empty-run, and rejection assertions.

@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Theta source-bound complete-packet reclosure
+
+- Re-audited `ThetaNeuron` directly against Ermentrout and Kopell (1986),
+  equation (2.5), the frozen-drive reduction in equation (3.3), and the stated
+  spike passage through `theta=pi`. The catalogue implements the constant-
+  parameter Type-I normal form; it does not claim the paper's full coupled
+  slow-oscillator parabolic-bursting system.
+- Added failure-atomic, sample-aligned phase/event packets across Python,
+  production and safety Rust, PyO3, Julia, Go, Mojo, and both native C ABIs.
+  Arbitrary finite initial phase and timestep now reach every lane, while a
+  held step capable of more than one complete rotation is rejected rather than
+  silently compressed into one binary event.
+- Added an author-PDF-bound source receipt with independent circle-flow oracle,
+  complete input/phase/event digests, and explicit solver/source boundary. The
+  controlled five-runtime benchmark now hashes all runtime, ABI, receipt,
+  descriptor, schema, RTL, formal, synthesis, and readiness inputs and records
+  exact event vectors; production Rust reaches 12.06x the Python reference in
+  the pinned local diagnostic run.
+- Regenerated the source-labelled Q16.16 Euler RTL and passed the complete
+  co-simulation vector, declared phase/timing envelopes, 6,203-cell Yosys
+  coarse synthesis, and depth-110 receipt-drive phase/event safety. This closes H2 only;
+  timing, PPA, device, board, physical silicon, and universal exact-flow
+  equivalence remain open.
+
 ### Quadratic IF source-normalisation correction and dual-profile reclosure
 
 - Restored Latham et al.'s 2000 isolated scalar QIF identity from equations
@@ -911,8 +935,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Preserved the existing Euler schema/compiler boundary and upgraded its proof:
   paired TOML/JSON schemas and generated Q16.16 RTL retain the complete event
   count vector, moderate-regime circular phase error stays below `0.17` rad,
-  the I=1 one-cycle timing displacement is explicit, and the generated depth-6
-  Z3 formal job remains enrolled.
+  the I=1 one-cycle timing displacement is explicit, and the curated depth-110
+  Z3 job reaches the first receipt-drive event while proving the declared
+  phase/event envelope.
 
 ### Hierarchical partitioner responsibility modularisation
 - Replaced the 1,324-line hierarchical partitioner and its two oversized test

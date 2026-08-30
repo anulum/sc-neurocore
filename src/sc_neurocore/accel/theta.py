@@ -20,17 +20,20 @@ import numpy as np
 import numpy.typing as npt
 
 
-def _load_engine_theta() -> type[Any]:
-    """Return the Rust engine's factory-default Theta class."""
+def _load_engine_theta() -> tuple[type[Any], Any]:
+    """Return the Rust compatibility class and checked complete batch."""
     engine = importlib.import_module("sc_neurocore_engine")
-    return cast(type[Any], engine.ThetaNeuron)
+    return cast(type[Any], engine.ThetaNeuron), engine.theta_simulate_complete
 
 
+_EngineThetaCls: type[Any] | None
+_EngineThetaCompleteFn: Any | None
 try:
-    _EngineThetaCls: type[Any] | None = _load_engine_theta()
+    _EngineThetaCls, _EngineThetaCompleteFn = _load_engine_theta()
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _EngineThetaCls = None
+    _EngineThetaCompleteFn = None
     _HAS_RUST = False
 
 _julia_module: Any | None = None
@@ -83,7 +86,8 @@ def ensure_go_loaded() -> bool:
     except OSError:
         return False
     simulate = getattr(library, "theta_simulate_c", None)
-    if simulate is None:
+    complete = getattr(library, "theta_simulate_complete_c", None)
+    if simulate is None or complete is None:
         return False
     simulate.argtypes = [
         ctypes.c_double,
@@ -93,6 +97,15 @@ def ensure_go_loaded() -> bool:
         ctypes.POINTER(ctypes.c_double),
     ]
     simulate.restype = ctypes.c_int64
+    complete.argtypes = [
+        ctypes.c_double,
+        ctypes.c_double,
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_uint8),
+    ]
+    complete.restype = ctypes.c_int64
     _go_lib = library
     _HAS_GO = True
     return True
@@ -111,7 +124,8 @@ def ensure_mojo_loaded() -> bool:
     except OSError:
         return False
     simulate = getattr(library, "theta_simulate_c", None)
-    if simulate is None:
+    complete = getattr(library, "theta_simulate_complete_c", None)
+    if simulate is None or complete is None:
         return False
     simulate.argtypes = [
         ctypes.c_double,
@@ -121,6 +135,15 @@ def ensure_mojo_loaded() -> bool:
         ctypes.c_int64,
     ]
     simulate.restype = ctypes.c_int64
+    complete.argtypes = [
+        ctypes.c_double,
+        ctypes.c_double,
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.c_int64,
+        ctypes.c_int64,
+    ]
+    complete.restype = ctypes.c_int64
     _mojo_lib = library
     _HAS_MOJO = True
     return True
@@ -203,3 +226,69 @@ def simulate_mojo(
     if spikes < 0:
         raise FloatingPointError("Mojo Theta kernel rejected the simulation contract.")
     return np.ascontiguousarray(output[:n_steps]), spikes, float(output[n_steps])
+
+
+def simulate_rust_complete(
+    theta: float, dt: float, n_steps: int, current: float
+) -> tuple[object, object, float]:
+    """Run the checked phase-explicit production Rust batch."""
+    if _EngineThetaCompleteFn is None:
+        raise RuntimeError("Rust Theta complete batch is unavailable.")
+    result = _EngineThetaCompleteFn(theta, dt, n_steps, current)
+    return result[0], result[1], float(result[2])
+
+
+def simulate_julia_complete(
+    theta: float, dt: float, n_steps: int, current: float
+) -> tuple[object, object, float]:
+    """Run the checked phase-explicit Julia batch."""
+    if _julia_module is None:
+        raise RuntimeError("Julia Theta module is unavailable.")
+    result = _julia_module.simulate_complete(theta, dt, n_steps, current)
+    return result.trace, result.events, float(result.thetaf)
+
+
+def simulate_go_complete(
+    theta: float, dt: float, n_steps: int, current: float
+) -> tuple[object, object, float]:
+    """Run the failure-atomic Go complete C-ABI packet."""
+    if _go_lib is None:
+        raise RuntimeError("Go Theta library is unavailable.")
+    phase = np.empty(n_steps + 1, dtype=np.float64)
+    events = np.empty(n_steps, dtype=np.uint8)
+    count = int(
+        _go_lib.theta_simulate_complete_c(
+            theta,
+            dt,
+            n_steps,
+            current,
+            phase.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+        )
+    )
+    if count < 0 or count != int(np.sum(events, dtype=np.int64)):
+        raise FloatingPointError("Go Theta kernel rejected its packet.")
+    return np.ascontiguousarray(phase[:n_steps]), events, float(phase[n_steps])
+
+
+def simulate_mojo_complete(
+    theta: float, dt: float, n_steps: int, current: float
+) -> tuple[object, object, float]:
+    """Run the failure-atomic Mojo complete C-ABI packet."""
+    if _mojo_lib is None:
+        raise RuntimeError("Mojo Theta library is unavailable.")
+    phase = np.empty(n_steps + 1, dtype=np.float64)
+    events = np.empty(n_steps, dtype=np.uint8)
+    count = int(
+        _mojo_lib.theta_simulate_complete_c(
+            theta,
+            dt,
+            n_steps,
+            current,
+            int(phase.ctypes.data),
+            int(events.ctypes.data),
+        )
+    )
+    if count < 0 or count != int(np.sum(events, dtype=np.int64)):
+        raise FloatingPointError("Mojo Theta kernel rejected its packet.")
+    return np.ascontiguousarray(phase[:n_steps]), events, float(phase[n_steps])

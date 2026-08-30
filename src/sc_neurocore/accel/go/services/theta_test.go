@@ -148,6 +148,24 @@ func TestThetaSimulateTraceRejectsInvalidContracts(t *testing.T) {
 	}
 }
 
+func TestThetaCompletePacketAndMultipleEventRejection(t *testing.T) {
+	initial := ThetaNeuronState{Theta: 0.37, Dt: 0.037}
+	phase, events, finalTheta, err := SimulateThetaComplete(initial, 400, 2.2)
+	if err != nil {
+		t.Fatalf("unexpected complete-packet error: %v", err)
+	}
+	if len(phase) != 400 || len(events) != 400 || finalTheta != phase[len(phase)-1] {
+		t.Fatalf("invalid complete packet: phase=%d events=%d final=%v", len(phase), len(events), finalTheta)
+	}
+	rejected := ThetaNeuronState{Theta: 0.25, Dt: 1.0}
+	if _, err := rejected.Step(16.0); err != ErrThetaMultipleEvents {
+		t.Fatalf("expected multi-event rejection, got %v", err)
+	}
+	if rejected.Theta != 0.25 {
+		t.Fatalf("rejected step mutated phase: %v", rejected.Theta)
+	}
+}
+
 func BenchmarkThetaExactFlow(b *testing.B) {
 	s := NewThetaNeuron()
 	spikes := 0

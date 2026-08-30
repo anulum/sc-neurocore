@@ -35,6 +35,37 @@ def test_c_abi_rejects_invalid_run_without_writing_output(backend: str) -> None:
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))
+def test_complete_c_abi_rejects_without_writing_either_buffer(backend: str) -> None:
+    """Keep both caller-owned buffers untouched on complete-packet rejection."""
+    assert getattr(backends, f"ensure_{backend}_loaded")()
+    phase = np.full(2, -999.0, dtype=np.float64)
+    events = np.full(1, 255, dtype=np.uint8)
+    library = getattr(backends, f"_{backend}_lib")
+    assert library is not None
+    if backend == "go":
+        result = library.theta_simulate_complete_c(
+            0.25,
+            0.01,
+            1,
+            math.nan,
+            phase.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+        )
+    else:
+        result = library.theta_simulate_complete_c(
+            0.25,
+            0.01,
+            1,
+            math.nan,
+            int(phase.ctypes.data),
+            int(events.ctypes.data),
+        )
+    assert result == -1
+    np.testing.assert_array_equal(phase, np.full(2, -999.0, dtype=np.float64))
+    np.testing.assert_array_equal(events, np.full(1, 255, dtype=np.uint8))
+
+
+@pytest.mark.parametrize("backend", ("go", "mojo"))
 def test_c_abi_rejection_does_not_commit_instance_state(backend: str) -> None:
     """Translate a native non-finite candidate into mutation-free failure."""
     neuron = ThetaNeuron(theta=0.25, dt=1.0e308)

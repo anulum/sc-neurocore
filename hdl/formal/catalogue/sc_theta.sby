@@ -1,9 +1,9 @@
 # SymbiYosys job for catalogue model sc_theta
-# Dual-axis perfect model formal (BMC)
+# Ermentrout-Kopell 1986 equation (2.5) receipt-drive phase/event safety
 
 [options]
 mode bmc
-depth 6
+depth 110
 
 [engines]
 smtbmc z3

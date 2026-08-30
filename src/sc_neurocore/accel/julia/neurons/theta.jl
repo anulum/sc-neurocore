@@ -8,7 +8,7 @@
 
 module ThetaAccel
 
-export step!, simulate, simulate_trace, ThetaNeuronState, valid, reset!, wrap_phase
+export step!, simulate, simulate_trace, simulate_complete, ThetaNeuronState, valid, reset!, wrap_phase
 
 mutable struct ThetaNeuronState
     theta::Float64
@@ -25,6 +25,10 @@ end
 
 function wrap_phase(theta::Float64)::Float64
     return mod(theta + pi, 2.0 * pi) - pi
+end
+
+function event_packet_representable(s::ThetaNeuronState, I_ext::Float64)::Bool
+    return I_ext <= 0.0 || sqrt(I_ext) * s.dt <= pi
 end
 
 function _exact_candidate(s::ThetaNeuronState, I_ext::Float64)
@@ -65,6 +69,9 @@ function step!(s::ThetaNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
     end
 
     candidate_state = ThetaNeuronState(s.theta, dt)
+    if !event_packet_representable(candidate_state, I_ext)
+        throw(DomainError((dt, I_ext), "Theta step can contain more than one source event"))
+    end
     next_theta, spiked = _exact_candidate(candidate_state, I_ext)
     if !isfinite(next_theta)
         throw(DomainError(next_theta, "Theta exact-flow update became non-finite"))
@@ -97,14 +104,33 @@ function simulate_trace(
     if !all(isfinite, (theta, dt, I_ext)) || dt <= 0.0
         throw(DomainError((theta, dt, I_ext), "Theta state/current must be finite with positive dt"))
     end
+    packet = simulate_complete(theta, dt, n_steps, I_ext)
+    return (trace=packet.trace, spikes=sum(packet.events), thetaf=packet.thetaf)
+end
+
+function simulate_complete(
+    theta::Float64,
+    dt::Float64,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    if n_steps < 0
+        throw(ArgumentError("Theta n_steps must be non-negative"))
+    end
+    if !all(isfinite, (theta, dt, I_ext)) || dt <= 0.0
+        throw(DomainError((theta, dt, I_ext), "Theta state/current must be finite with positive dt"))
+    end
     s = ThetaNeuronState(wrap_phase(theta), dt)
+    if !event_packet_representable(s, I_ext)
+        throw(DomainError((dt, I_ext), "Theta step can contain more than one source event"))
+    end
     trace = zeros(n_steps)
-    spikes = 0
+    events = zeros(UInt8, n_steps)
     for t in 1:n_steps
-        spikes += step!(s, I_ext)
+        events[t] = UInt8(step!(s, I_ext))
         trace[t] = s.theta
     end
-    return (trace=trace, spikes=spikes, thetaf=s.theta)
+    return (trace=trace, events=events, thetaf=s.theta)
 end
 
 end # module ThetaAccel

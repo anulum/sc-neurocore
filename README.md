@@ -252,6 +252,14 @@ remains intact as count-neutral `SCSymmetricQuadraticIFNeuron`; the
 [Quadratic IF model page](docs/api/models/quadratic_if.md) documents the exact
 normalisation, DOI receipt, source/SC split, and silicon evidence boundary.
 
+The Theta catalogue identity is bound to Ermentrout and Kopell's equation
+(2.5): `current` is the dimensionless source parameter `a`, or a frozen slow
+drive, and does not imply the full coupled parabolic-bursting system. Python,
+Rust/PyO3, Julia, Go, and Mojo expose aligned failure-atomic phase/event
+packets; the independent source receipt, controlled five-runtime benchmark,
+Q16.16 Euler co-simulation, 6,203-cell Yosys receipt, and bounded formal job are
+documented on the [Theta model page](docs/api/models/theta.md).
+
 The threshold-linear rate model exposes its memoryless
 `gain * max(0, current - theta)` transfer through Python, a configurable Rust
 engine batch, independent Rust safety, Julia, Go, and Mojo. Its committed
@@ -480,12 +488,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (89 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (90 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **89 SymbiYosys proof jobs and 424 formal
-statements (282 assert, 106 assume, 36 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **69 catalogue jobs** under `hdl/formal/catalogue/`). This
+Formal verification inventory: **90 SymbiYosys proof jobs and 433 formal
+statements (288 assert, 109 assume, 36 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **72 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 

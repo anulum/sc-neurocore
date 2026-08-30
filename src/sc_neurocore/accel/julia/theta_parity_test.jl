@@ -35,6 +35,12 @@ configured = ThetaAccel.simulate_trace(0.37, 0.037, 400, 2.2)
 @assert length(configured.trace) == 400
 @assert configured.thetaf == configured.trace[end]
 
+complete = ThetaAccel.simulate_complete(0.37, 0.037, 400, 2.2)
+@assert complete.trace == configured.trace
+@assert sum(complete.events) == configured.spikes
+@assert all(event -> event == 0 || event == 1, complete.events)
+@assert complete.thetaf == configured.thetaf
+
 empty = ThetaAccel.simulate_trace(0.37, 0.037, 0, 2.2)
 @assert isempty(empty.trace)
 @assert empty.spikes == 0
@@ -50,4 +56,11 @@ end
 @assert rejected.theta == 0.25
 @assert rejected.dt == 0.01
 
-println("theta Julia parity assertions passed: ", length(GOLDENS) * 3 + 9)
+try
+    ThetaAccel.simulate_complete(0.25, 1.0, 1, 16.0)
+    @assert false
+catch error
+    @assert error isa DomainError
+end
+
+println("theta Julia parity assertions passed: ", length(GOLDENS) * 3 + 14)
