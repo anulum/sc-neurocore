@@ -27,6 +27,10 @@ def test_summary_exposes_completeness_tier_and_evidence_kind() -> None:
     # AdEx is engineering-verified (python+rust + golden trace) → kernel tier 3.
     assert adex["tier"] == 3
     assert adex["evidence_kind"] == "measured"
+    expif = by_name["ExpIFNeuron"]
+    assert expif["family"] == "Integrate-and-Fire"
+    assert expif["integration_method"] == "rk4"
+    assert expif["evidence_kind"] == "measured"
     fhn = by_name["FitzHughNagumoNeuron"]
     assert fhn["tier"] == 3
     assert fhn["evidence_kind"] == "measured"
@@ -121,6 +125,16 @@ def test_get_model_detail_serves_descriptor_parameters_and_dynamics() -> None:
     assert "v" in detail["dynamics"]
     assert any(b["name"] == "python" for b in detail["backends"])
     assert detail["family"] == "Integrate-and-Fire"
+
+
+def test_expif_detail_exposes_source_receipt_and_profile_split() -> None:
+    detail = get_model_detail("ExpIFNeuron")
+    assert detail is not None
+    reproducibility = cast(dict[str, object], detail["reproducibility"])
+    assert str(reproducibility["reference_config"]).endswith(
+        "reference_receipts/expif_fourcaud_trocme_2003.json"
+    )
+    assert "source profile" in cast(dict[str, str], detail["dynamics"])["v"]
 
 
 def test_model_detail_exposes_measured_golden_trace_digest_variants() -> None:

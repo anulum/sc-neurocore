@@ -178,6 +178,7 @@ try:
         AdExNeuron,
         adex_simulate_complete,
         ExpIFNeuron,
+        expif_simulate_complete,
         LapicqueNeuron,
     )
 
@@ -435,6 +436,7 @@ __all__ = [
     "NetworkRunner",
     "PySpikingControllerPool",
     *(_NEURON_MODELS if _neurons_available else []),
+    *(["expif_simulate_complete"] if _neurons_available else []),
     *(_AI_MODELS if _ai_available else []),
     *(
         ["py_simulate_ei_network", "py_batch_simulate", "py_rk4_neuron_simulate"]

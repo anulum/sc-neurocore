@@ -29,6 +29,9 @@ def test_api_models_endpoint_serves_family(client: TestClient) -> None:
     assert adex["integration_method"] == "euler"
     assert adex["terminal_silicon_tier"] == "H2"
     assert adex["terminal_reason"].startswith("Q16.16 co-simulation")
+    expif = next(m for m in models if m["name"] == "ExpIFNeuron")
+    assert expif["family"] == "Integrate-and-Fire"
+    assert expif["validation_metric"] == "parity"
 
 
 def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None:
@@ -45,3 +48,13 @@ def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None
         "default_q_format": "Q8.8",
         "q_formats": ["Q8.8", "Q16.16"],
     }
+
+
+def test_api_expif_detail_serves_source_receipt(client: TestClient) -> None:
+    response = client.get("/api/models/ExpIFNeuron")
+    assert response.status_code == 200
+    detail = response.json()
+    assert detail["reproducibility"]["reference_config"].endswith(
+        "reference_receipts/expif_fourcaud_trocme_2003.json"
+    )
+    assert "source profile" in detail["dynamics"]["v"]

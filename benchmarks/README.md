@@ -56,7 +56,7 @@ same checkout.
 | `bench_connor_stevens_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Connor-Stevens Mojo lane, including exact events, bounded six-state traces, affinity, runtime versions, and host load |
 | `bench_hodgkin_huxley_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Hodgkin-Huxley Mojo lane, including exact events, bounded four-state traces, affinity, runtime versions, governor, and host load |
 | `bench_adex.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the maintained AdEx baseline-Euler recurrence, including exact event vectors, bounded voltage/adaptation traces, complete packet digests, final state, affinity, runtime versions, governor, and host load |
-| `bench_model_expif.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the Fourcaud-Trocmé ExpIF candidate-first RK4 recurrence, including exact events, bounded voltage traces, final state, affinity, runtime versions, governor, and host load |
+| `bench_model_expif.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the deterministic zero-noise Fourcaud-Trocmé ExpIF source profile, including complete voltage/refractory/event packets, exact events, bounded state traces, affinity, runtime versions, governor, and host load |
 | `bench_model_lapicque.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Lapicque exact constant-current RC flow, including exact events, bounded voltage traces, measured order, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_perfect_integrator.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Perfect Integrator candidate-first Euler recurrence, including bit-exact traces and events, measured order, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_quadratic_if.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Quadratic IF exact constant-current Riccati flow, including exact events, bounded voltage traces, executable Rust-safety evidence, measured warm-call order, final state, affinity, runtime versions, governor, and host load |
@@ -100,10 +100,10 @@ PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_adex.py \
   --json benchmarks/results/bench_adex.json
 
-# ExpIF five-backend candidate-first RK4 closure
+# ExpIF five-backend Fourcaud-Trocmé source-profile closure
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_model_expif.py \
-  --json benchmarks/results/local_python_2026-06-16_expif_rk4.json
+  --json benchmarks/results/bench_expif.json
 
 # Lapicque five-backend exact-flow closure
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \

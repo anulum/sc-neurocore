@@ -28,10 +28,37 @@ module sc_exponential_if_formal (
     );
 
 `ifdef FORMAL
-    // Minimal safety: async reset clears the spike flag.
+    reg f_past_valid = 1'b0;
+    initial assume (!rst_n);
+    always @(posedge clk)
+        f_past_valid <= 1'b1;
+
+    // Keep the proof inside the documented voltage-equivalent current domain.
     always @(*) begin
-        if (!rst_n)
+        assume (I_t >= -64'sd4294967296000000);
+        assume (I_t <= 64'sd4294967296000000);
+    end
+
+    // Asynchronous reset clears the event output and restores resting voltage.
+    always @(*) begin
+        if (!rst_n) begin
             assert (spike_out == 1'b0);
+            assert (v_out == 64'shffffffbf00000000);
+        end
+    end
+
+    // A sampled reset remains visible on the next clocked observation.
+    always @(posedge clk) begin
+        if (f_past_valid && !$past(rst_n)) begin
+            assert (spike_out == 1'b0);
+            assert (v_out == 64'shffffffbf00000000);
+        end
+
+        // Every emitted compatibility-lane event commits the declared reset.
+        if (f_past_valid && spike_out)
+            assert (v_out == 64'shffffffbc00000000);
+
+        cover (spike_out);
     end
 `endif
 

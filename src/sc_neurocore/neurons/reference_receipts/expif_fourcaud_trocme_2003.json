@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "model": "ExpIFNeuron.fourcaud_trocme_2003",
+  "profile": "fourcaud_trocme_2003",
+  "citation": {
+    "authors": "N. Fourcaud-Trocme, D. Hansel, C. van Vreeswijk, and N. Brunel",
+    "title": "How Spike Generation Mechanisms Determine the Neuronal Response to Fluctuating Inputs",
+    "journal": "Journal of Neuroscience 23(37), 11628-11640",
+    "year": 2003,
+    "doi": "10.1523/JNEUROSCI.23-37-11628.2003",
+    "pmcid": "PMC6740955",
+    "inspected_pdf_sha256": "5d41e49cfe09a4daf37b963e9c9cd9f70a6bfbeb2111eda5199ec2fc7cf436c4"
+  },
+  "source_contract": {
+    "equation_6": "C*dV/dt=-gL*(V-VL)+psi(V)+Isyn(t)",
+    "equation_10": "psi(V)=gL*DeltaT*exp((V-VT)/DeltaT)",
+    "C_uF_per_cm2": 1.0,
+    "gL_mS_per_cm2": 0.1,
+    "VL_mV": -65.0,
+    "VT_mV": -59.9,
+    "DeltaT_mV": 3.48,
+    "Vr_mV": -68.0,
+    "tau_m_ms": 10.0,
+    "tau_ref_ms": 1.7,
+    "integration_handoff_mV": -30.0,
+    "observation_threshold_mV": 20.0,
+    "source_dt_constraint": "less than 0.02 ms",
+    "tail_contract": "above -30 mV retain only the exponential current and integrate analytically to finite-time divergence"
+  },
+  "numerical_specialization": {
+    "dt_ms": 0.01,
+    "noise": "zero-noise deterministic specialization",
+    "integrator_below_handoff": "Heun second-order Runge-Kutta",
+    "analytical_tail_ms": 0.001855930799631619
+  },
+  "protocol": {
+    "current_convention": "voltage-equivalent Isyn/gL",
+    "segments": [
+      {"current": 0.0, "steps": 1000},
+      {"current": 20.0, "steps": 4000},
+      {"current": 50.0, "steps": 8000},
+      {"current": 5.0, "steps": 2000},
+      {"current": 100.0, "steps": 5000}
+    ],
+    "total_steps": 20000
+  },
+  "expected": {
+    "spike_count": 32,
+    "final_voltage_mV": -51.8551996276745,
+    "final_refractory_ms": 0.0,
+    "minimum_voltage_mV": -68.0,
+    "maximum_voltage_mV": -31.09439398932502,
+    "event_indices": [1678, 2690, 3702, 4714, 5330, 5880, 6430, 6980, 7530, 8080, 8630, 9180, 9730, 10280, 10830, 11380, 11930, 12480, 13037, 15123, 15502, 15881, 16260, 16639, 17018, 17397, 17776, 18155, 18534, 18913, 19292, 19671],
+    "little_endian_float64_voltage_sha256": "c2b266d66139bd35c3c1bc7badf8ad0a08442684f8ce61c1382be8f3cffdde37",
+    "little_endian_float64_refractory_sha256": "13ff5f6b25e590058b31e4a2dda208d65a5bfcd8f6f3dee5df2969c2a996a78f",
+    "uint8_event_sha256": "0a5444a9384760a45e025d506971666786f8215cbccf1e310c03af1dbf482072",
+    "little_endian_float64_current_sha256": "97cf619363db780ba251819f1e91f17f55c855cc76a944061de06fdbff2e5b42"
+  },
+  "scope": {
+    "source_aligned": "equations, fitted values, -30 mV handoff, derived analytical-tail duration, refractory duration, and sub-0.02 ms condition",
+    "maintained_specialization": "0.01 ms deterministic zero-noise Heun grid and macro-step event placement; no continuous spike timestamps or stochastic-input realisation",
+    "separate_hardware_profile": "the Q32.32 RTL remains the historical sc_rk4 compatibility profile"
+  }
+}

@@ -19,6 +19,7 @@ pub struct ExpIFNeuron {
     pub dt: f64,
     pub refractory_period: f64,
     pub refractory_remaining: f64,
+    pub source_profile: bool,
 }
 
 /// Explicit rejection classes for invalid ExpIF updates.
@@ -29,6 +30,9 @@ pub enum ExpIFError {
     NonFiniteUpdate,
 }
 
+/// Aligned voltage, refractory-state, and event traces from one complete batch.
+pub type ExpIFCompleteTrace = (Vec<f64>, Vec<f64>, Vec<u8>);
+
 impl Default for ExpIFNeuron {
     fn default() -> Self {
         Self::new()
@@ -36,7 +40,7 @@ impl Default for ExpIFNeuron {
 }
 
 impl ExpIFNeuron {
-    /// Construct the source-bound deterministic catalogue defaults.
+    /// Construct the historical SC RK4 compatibility defaults.
     pub fn new() -> Self {
         Self {
             v: -65.0,
@@ -49,10 +53,22 @@ impl ExpIFNeuron {
             dt: 0.02,
             refractory_period: 0.0,
             refractory_remaining: 0.0,
+            source_profile: false,
         }
     }
 
-    /// Advance one candidate-first RK4 update without partial mutation.
+    /// Construct the fitted source protocol's deterministic zero-noise lane.
+    pub fn fourcaud_trocme_2003() -> Self {
+        Self {
+            v_threshold: -30.0,
+            dt: 0.01,
+            refractory_period: 1.7,
+            source_profile: true,
+            ..Self::new()
+        }
+    }
+
+    /// Advance one profile-selected Runge-Kutta update without partial mutation.
     pub fn step(&mut self, current: f64) -> Result<i32, ExpIFError> {
         if !current.is_finite() {
             return Err(ExpIFError::InvalidInput);
@@ -68,10 +84,20 @@ impl ExpIFNeuron {
         }
 
         let k1 = self.rhs(self.v, current);
-        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current);
-        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current);
-        let k4 = self.rhs(self.v + self.dt * k3, current);
-        let next_v = self.v + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+        let (k2, k3, k4, next_v) = if self.source_profile {
+            let k2 = self.rhs(self.v + self.dt * k1, current);
+            (k2, 0.0, 0.0, self.v + 0.5 * self.dt * (k1 + k2))
+        } else {
+            let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current);
+            let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current);
+            let k4 = self.rhs(self.v + self.dt * k3, current);
+            (
+                k2,
+                k3,
+                k4,
+                self.v + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4),
+            )
+        };
         if !k1.is_finite()
             || !k2.is_finite()
             || !k3.is_finite()
@@ -89,6 +115,26 @@ impl ExpIFNeuron {
             self.v = next_v;
             Ok(0)
         }
+    }
+
+    /// Run an aligned failure-atomic voltage/refractory/event batch.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<ExpIFCompleteTrace, ExpIFError> {
+        let mut candidate = self.clone();
+        let mut voltage = Vec::with_capacity(n_steps);
+        let mut refractory = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.step(current)?;
+            voltage.push(candidate.v);
+            refractory.push(candidate.refractory_remaining);
+            events.push(event as u8);
+        }
+        *self = candidate;
+        Ok((voltage, refractory, events))
     }
 
     /// Restore resting voltage and clear the refractory hold.
@@ -130,6 +176,15 @@ pub fn validate_expif(state: &ExpIFNeuron) -> bool {
         && state.v < state.v_threshold
         && state.v_rest < state.v_threshold
         && state.v_reset < state.v_threshold
+        && (!state.source_profile
+            || (state.v_rest == -65.0
+                && state.v_reset == -68.0
+                && state.v_threshold == -30.0
+                && state.v_rh == -59.9
+                && state.delta_t == 3.48
+                && state.tau == 10.0
+                && state.dt < 0.02
+                && state.refractory_period == 1.7))
 }
 
 #[cfg(test)]
@@ -222,5 +277,29 @@ mod tests {
         state.reset();
         assert_eq!(state.v, state.v_rest);
         assert_eq!(state.refractory_remaining, 0.0);
+    }
+
+    #[test]
+    fn source_profile_complete_batch_is_aligned_and_atomic() {
+        let mut state = ExpIFNeuron::fourcaud_trocme_2003();
+        assert_eq!(state.v_threshold, -30.0);
+        assert_eq!(state.dt, 0.01);
+        assert_eq!(state.refractory_period, 1.7);
+        let (voltage, refractory, events) = state.simulate_complete(4_000, 20.0).unwrap();
+        assert_eq!(voltage.len(), 4_000);
+        assert_eq!(refractory.len(), 4_000);
+        assert_eq!(events.len(), 4_000);
+        assert_eq!(state.v, voltage[3_999]);
+        assert_eq!(state.refractory_remaining, refractory[3_999]);
+
+        let before = (state.v, state.refractory_remaining);
+        assert_eq!(
+            state.simulate_complete(2, f64::NAN),
+            Err(ExpIFError::InvalidInput)
+        );
+        assert_eq!((state.v, state.refractory_remaining), before);
+
+        state.dt = 0.02;
+        assert!(!validate_expif(&state));
     }
 }

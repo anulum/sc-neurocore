@@ -249,14 +249,45 @@
       ]
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-16_expif_rk4.json",
-      "description": "Source-bound Fourcaud-Trocmé ExpIF candidate-first RK4 five-backend simulation evidence.",
+      "artefact": "benchmarks/results/bench_expif.json",
+      "description": "Fourcaud-Trocmé ExpIF deterministic zero-noise source-profile complete-packet evidence across five public runtimes.",
       "expected_values": {
-        "backends.go.event_count_matches_python": true,
-        "backends.julia.event_count_matches_python": true,
-        "backends.mojo.event_count_matches_python": true,
-        "backends.rust.event_count_matches_python": true,
-        "kernel": "expif_fourcaud_rk4_simulate",
+        "backends.go.available": true,
+        "backends.go.event_count": 182,
+        "backends.go.event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+        "backends.go.events_match_python": true,
+        "backends.go.refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+        "backends.go.used": true,
+        "backends.go.voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84",
+        "backends.julia.available": true,
+        "backends.julia.event_count": 182,
+        "backends.julia.event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+        "backends.julia.events_match_python": true,
+        "backends.julia.refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+        "backends.julia.used": true,
+        "backends.julia.voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84",
+        "backends.mojo.available": true,
+        "backends.mojo.event_count": 182,
+        "backends.mojo.event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+        "backends.mojo.events_match_python": true,
+        "backends.mojo.refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+        "backends.mojo.used": true,
+        "backends.mojo.voltage_sha256": "4ccf82b08119cc005e0cac2f039dc14e94c22447f7e4a68cfb6cfbefdd6cda20",
+        "backends.python.available": true,
+        "backends.python.event_count": 182,
+        "backends.python.event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+        "backends.python.events_match_python": true,
+        "backends.python.refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+        "backends.python.used": true,
+        "backends.python.voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84",
+        "backends.rust.available": true,
+        "backends.rust.event_count": 182,
+        "backends.rust.event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+        "backends.rust.events_match_python": true,
+        "backends.rust.refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+        "backends.rust.used": true,
+        "backends.rust.voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84",
+        "kernel": "expif_fourcaud_trocme_2003_complete",
         "meta.single_cpu_pinned": true,
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "workload.current": 50.0,
@@ -264,7 +295,7 @@
         "workload.repeats": 7,
         "workload.trace_atol": 5e-08
       },
-      "id": "expif-rk4-multibackend-local-regression",
+      "id": "expif-source-profile-multibackend-local-regression",
       "parity_groups": [
         {
           "paths": [
@@ -278,50 +309,96 @@
         }
       ],
       "regression_limits": {
-        "backends.go.parity_max_abs_diff": {
+        "backends.go.refractory_parity_max_abs_diff": {
           "max": 5e-08
         },
-        "backends.julia.parity_max_abs_diff": {
+        "backends.go.voltage_parity_max_abs_diff": {
           "max": 5e-08
         },
-        "backends.mojo.parity_max_abs_diff": {
+        "backends.julia.refractory_parity_max_abs_diff": {
           "max": 5e-08
         },
-        "backends.rust.parity_max_abs_diff": {
+        "backends.julia.voltage_parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.mojo.refractory_parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.mojo.voltage_parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.rust.refractory_parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.rust.voltage_parity_max_abs_diff": {
           "max": 5e-08
         }
       },
       "required_numbers": [
         "backends.python.median_call_ms",
         "backends.python.minimum_call_ms",
-        "backends.python.parity_max_abs_diff",
+        "backends.python.voltage_parity_max_abs_diff",
+        "backends.python.refractory_parity_max_abs_diff",
         "backends.python.event_count",
+        "backends.python.final_state.v",
+        "backends.python.final_state.refractory_remaining",
         "backends.rust.median_call_ms",
         "backends.rust.minimum_call_ms",
-        "backends.rust.parity_max_abs_diff",
+        "backends.rust.voltage_parity_max_abs_diff",
+        "backends.rust.refractory_parity_max_abs_diff",
         "backends.rust.event_count",
+        "backends.rust.final_state.v",
+        "backends.rust.final_state.refractory_remaining",
         "backends.julia.median_call_ms",
         "backends.julia.minimum_call_ms",
-        "backends.julia.parity_max_abs_diff",
+        "backends.julia.voltage_parity_max_abs_diff",
+        "backends.julia.refractory_parity_max_abs_diff",
         "backends.julia.event_count",
+        "backends.julia.final_state.v",
+        "backends.julia.final_state.refractory_remaining",
         "backends.go.median_call_ms",
         "backends.go.minimum_call_ms",
-        "backends.go.parity_max_abs_diff",
+        "backends.go.voltage_parity_max_abs_diff",
+        "backends.go.refractory_parity_max_abs_diff",
         "backends.go.event_count",
+        "backends.go.final_state.v",
+        "backends.go.final_state.refractory_remaining",
         "backends.mojo.median_call_ms",
         "backends.mojo.minimum_call_ms",
-        "backends.mojo.parity_max_abs_diff",
-        "backends.mojo.event_count"
+        "backends.mojo.voltage_parity_max_abs_diff",
+        "backends.mojo.refractory_parity_max_abs_diff",
+        "backends.mojo.event_count",
+        "backends.mojo.final_state.v",
+        "backends.mojo.final_state.refractory_remaining",
+        "workload.analytical_tail_ms"
       ],
       "source_hashes": {
         "benchmarks/bench_model_expif.py": "source_hashes.benchmarks/bench_model_expif.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "docs/api/models/expif.md": "source_hashes.docs/api/models/expif.md",
+        "engine/src/bindings/exp_if.rs": "source_hashes.engine/src/bindings/exp_if.rs",
         "engine/src/neuron/exp_if.rs": "source_hashes.engine/src/neuron/exp_if.rs",
+        "engine/src/network_runner/model_catalogue.rs": "source_hashes.engine/src/network_runner/model_catalogue.rs",
+        "engine/src/network_runner/model_factory.rs": "source_hashes.engine/src/network_runner/model_factory.rs",
+        "engine/src/network_runner/neuron_variant.rs": "source_hashes.engine/src/network_runner/neuron_variant.rs",
+        "hdl/formal/catalogue/sc_exponential_if.sby": "source_hashes.hdl/formal/catalogue/sc_exponential_if.sby",
+        "hdl/formal/catalogue/sc_exponential_if.v": "source_hashes.hdl/formal/catalogue/sc_exponential_if.v",
+        "hdl/formal/catalogue/sc_exponential_if_formal.v": "source_hashes.hdl/formal/catalogue/sc_exponential_if_formal.v",
+        "hdl/reports/yosys_expif_q3232_2026-08-30.json": "source_hashes.hdl/reports/yosys_expif_q3232_2026-08-30.json",
         "src/sc_neurocore/accel/go/neurons/expif/expif.go": "source_hashes.src/sc_neurocore/accel/go/neurons/expif/expif.go",
         "src/sc_neurocore/accel/go/services/expif.go": "source_hashes.src/sc_neurocore/accel/go/services/expif.go",
         "src/sc_neurocore/accel/julia/neurons/expif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/expif.jl",
         "src/sc_neurocore/accel/mojo/kernels/expif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/expif.mojo",
         "src/sc_neurocore/accel/rust/safety/expif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/expif.rs",
-        "src/sc_neurocore/neurons/models/expif.py": "source_hashes.src/sc_neurocore/neurons/models/expif.py"
+        "src/sc_neurocore/neurons/model_descriptors/ExpIFNeuron.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/ExpIFNeuron.toml",
+        "src/sc_neurocore/neurons/model_schemas/exp_if.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/exp_if.json",
+        "src/sc_neurocore/neurons/model_schemas/exp_if.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/exp_if.toml",
+        "src/sc_neurocore/neurons/models/expif.py": "source_hashes.src/sc_neurocore/neurons/models/expif.py",
+        "src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003.json": "source_hashes.src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003.json",
+        "tests/test_expif_backends_batch_atomicity.py": "source_hashes.tests/test_expif_backends_batch_atomicity.py",
+        "tests/test_expif_engine_binding.py": "source_hashes.tests/test_expif_engine_binding.py",
+        "tests/test_model_expif_source_contract.py": "source_hashes.tests/test_model_expif_source_contract.py",
+        "tests/test_reference_expif_source_receipt.py": "source_hashes.tests/test_reference_expif_source_receipt.py"
       }
     },
     {

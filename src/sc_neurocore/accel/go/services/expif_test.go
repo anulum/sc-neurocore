@@ -20,7 +20,7 @@ func TestExpIFDefaults(t *testing.T) {
 		t.Fatal("default state must be valid")
 	}
 	if state.VThreshold != 30.0 || state.VRh != -59.9 || state.DeltaT != 3.48 {
-		t.Fatalf("unexpected source defaults: %+v", state)
+		t.Fatalf("unexpected SC compatibility defaults: %+v", state)
 	}
 }
 
@@ -130,6 +130,31 @@ func TestSimulateExpIFNeuron(t *testing.T) {
 	}
 	if _, _, err := SimulateExpIFNeuron(-1, 0.0); !errors.Is(err, ErrExpIFInvalidState) {
 		t.Fatalf("negative step count returned %v", err)
+	}
+}
+
+func TestExpIFCompletePacketAndSourceProfile(t *testing.T) {
+	state := NewFourcaudTrocme2003ExpIF()
+	if state.VThreshold != -30.0 || state.Dt != 0.01 || state.RefractoryPeriod != 1.7 {
+		t.Fatalf("unexpected source profile: %#v", state)
+	}
+	voltage, refractory, events, err := state.SimulateExpIFComplete(4000, 20.0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(voltage) != 4000 || len(refractory) != 4000 || len(events) != 4000 {
+		t.Fatalf("misaligned packet lengths: %d %d %d", len(voltage), len(refractory), len(events))
+	}
+	before := *state
+	if _, _, _, err := state.SimulateExpIFComplete(2, math.Inf(1)); err == nil {
+		t.Fatal("non-finite late batch input was accepted")
+	}
+	if *state != before {
+		t.Fatal("rejected batch mutated the receiver")
+	}
+	state.Dt = 0.02
+	if state.Valid() {
+		t.Fatal("source profile accepted a timestep outside the paper's strict bound")
 	}
 }
 

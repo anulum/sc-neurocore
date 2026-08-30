@@ -71,7 +71,7 @@
       "used": true
     }
   },
-  "kernel": "expif_fourcaud_rk4_simulate",
+  "kernel": "expif_sc_rk4_compatibility_simulate",
   "measured_order": [
     "julia",
     "go",
@@ -109,6 +109,11 @@
     "single_cpu_pinned": true
   },
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "scope": {
+    "identity": "historical SC candidate-first RK4 compatibility profile",
+    "source_protocol_claimed": false,
+    "superseded_by": "benchmarks/results/bench_expif.json"
+  },
   "source_hashes": {
     "benchmarks/bench_model_expif": {
       "py": "3b74d60b9ad3c979f4ae2d9cf9132dd51c21289e45dadba636c8381844763654"
@@ -146,7 +151,7 @@
   "workload": {
     "current": 50.0,
     "n_steps": 100000,
-    "parameters": "Fourcaud-Trocme fitted defaults; candidate-first RK4; zero-refractory deterministic contract",
+    "parameters": "historical SC +30 mV candidate-first RK4 and zero-refractory compatibility contract; not the Fourcaud-Trocme source simulation protocol",
     "repeats": 7,
     "trace_atol": 5e-08
   }

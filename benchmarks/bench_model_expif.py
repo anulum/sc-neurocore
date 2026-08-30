@@ -7,10 +7,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Controlled ExpIF five-backend benchmark
 
-"""Measure the maintained Fourcaud-Trocmé ExpIF recurrence in every lane.
+"""Measure the source-profile Fourcaud-Trocmé ExpIF recurrence in every lane.
 
 The evidence record binds public-dispatch timings to source hashes, CPU
-affinity, host load, runtime versions, event parity, and voltage-trace error.
+affinity, host load, runtime versions, complete-packet parity, and digests.
 Missing backends or unpinned execution fail unless the operator explicitly
 permits that diagnostic condition.
 """
@@ -41,17 +41,35 @@ N_STEPS = 100_000
 N_REPEATS = 7
 CURRENT = 50.0
 TRACE_ATOL = 5.0e-8
-KERNEL = "expif_fourcaud_rk4_simulate"
+KERNEL = "expif_fourcaud_trocme_2003_complete"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_expif.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "docs/api/models/expif.md",
+    "engine/src/bindings/exp_if.rs",
     "engine/src/neuron/exp_if.rs",
+    "engine/src/network_runner/model_catalogue.rs",
+    "engine/src/network_runner/model_factory.rs",
+    "engine/src/network_runner/neuron_variant.rs",
+    "hdl/formal/catalogue/sc_exponential_if.sby",
+    "hdl/formal/catalogue/sc_exponential_if.v",
+    "hdl/formal/catalogue/sc_exponential_if_formal.v",
+    "hdl/reports/yosys_expif_q3232_2026-08-30.json",
     "src/sc_neurocore/accel/go/neurons/expif/expif.go",
     "src/sc_neurocore/accel/go/services/expif.go",
     "src/sc_neurocore/accel/julia/neurons/expif.jl",
     "src/sc_neurocore/accel/mojo/kernels/expif.mojo",
     "src/sc_neurocore/accel/rust/safety/expif.rs",
+    "src/sc_neurocore/neurons/model_descriptors/ExpIFNeuron.toml",
+    "src/sc_neurocore/neurons/model_schemas/exp_if.json",
+    "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
     "src/sc_neurocore/neurons/models/expif.py",
+    "src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003.json",
+    "tests/test_expif_backends_batch_atomicity.py",
+    "tests/test_expif_engine_binding.py",
+    "tests/test_model_expif_source_contract.py",
+    "tests/test_reference_expif_source_receipt.py",
 )
 
 
@@ -137,21 +155,36 @@ def _probe_backend(backend: str) -> tuple[bool, str]:
 
 def _measure_backend(
     backend: str,
-) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float, float]]:
+) -> tuple[
+    float,
+    float,
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.uint8],
+    tuple[float, float],
+]:
     """Warm one backend, then return timings and final numerical state."""
-    ExpIFNeuron().simulate(20, CURRENT, backend=backend)
+    ExpIFNeuron.fourcaud_trocme_2003().simulate_complete(20, CURRENT, backend=backend)
     elapsed_ms: list[float] = []
-    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
-    spikes = 0
+    voltage: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    refractory: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    events: npt.NDArray[np.uint8] = np.empty(0, dtype=np.uint8)
     final_state = (0.0, 0.0)
     for _repeat in range(N_REPEATS):
         gc.collect()
-        neuron = ExpIFNeuron()
+        neuron = ExpIFNeuron.fourcaud_trocme_2003()
         started = time.perf_counter_ns()
-        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        voltage, refractory, events = neuron.simulate_complete(N_STEPS, CURRENT, backend=backend)
         elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
         final_state = (neuron.v, neuron.refractory_remaining)
-    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+    return (
+        statistics.median(elapsed_ms),
+        min(elapsed_ms),
+        voltage,
+        refractory,
+        events,
+        final_state,
+    )
 
 
 def _runtime_versions() -> dict[str, str]:
@@ -214,9 +247,10 @@ def main(argv: list[str]) -> int:
         return 2
 
     rows: dict[str, dict[str, Any]] = {}
-    reference: npt.NDArray[np.float64] | None = None
+    reference_voltage: npt.NDArray[np.float64] | None = None
+    reference_refractory: npt.NDArray[np.float64] | None = None
+    reference_events: npt.NDArray[np.uint8] | None = None
     reference_ms: float | None = None
-    reference_spikes: int | None = None
     for backend in BACKENDS:
         available, reason = probes[backend]
         if not available:
@@ -226,27 +260,46 @@ def main(argv: list[str]) -> int:
                 "unavailable_reason": reason,
             }
             continue
-        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        median_ms, minimum_ms, voltage, refractory, events, final_state = _measure_backend(backend)
         if backend == "python":
-            reference = trace
+            reference_voltage = voltage
+            reference_refractory = refractory
+            reference_events = events
             reference_ms = median_ms
-            reference_spikes = spikes
-            parity = 0.0
+            voltage_parity = 0.0
+            refractory_parity = 0.0
         else:
-            if reference is None or reference_ms is None or reference_spikes is None:
+            if (
+                reference_voltage is None
+                or reference_refractory is None
+                or reference_events is None
+                or reference_ms is None
+            ):
                 raise RuntimeError("Python reference must be measured first")
-            parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
+            voltage_parity = (
+                float(np.max(np.abs(voltage - reference_voltage))) if voltage.size else 0.0
+            )
+            refractory_parity = (
+                float(np.max(np.abs(refractory - reference_refractory))) if refractory.size else 0.0
+            )
+        event_count = int(np.sum(events, dtype=np.int64))
+        event_digest = hashlib.sha256(events.tobytes()).hexdigest()
+        events_match = (
+            True if reference_events is None else np.array_equal(events, reference_events)
+        )
         rows[backend] = {
             "available": True,
             "used": True,
             "median_call_ms": median_ms,
             "minimum_call_ms": minimum_ms,
             "speedup_vs_python": (reference_ms / median_ms if reference_ms is not None else 1.0),
-            "parity_max_abs_diff": parity,
-            "event_count": spikes,
-            "event_count_matches_python": (
-                True if reference_spikes is None else spikes == reference_spikes
-            ),
+            "voltage_parity_max_abs_diff": voltage_parity,
+            "refractory_parity_max_abs_diff": refractory_parity,
+            "event_count": event_count,
+            "events_match_python": events_match,
+            "event_sha256": event_digest,
+            "voltage_sha256": hashlib.sha256(voltage.astype("<f8").tobytes()).hexdigest(),
+            "refractory_sha256": hashlib.sha256(refractory.astype("<f8").tobytes()).hexdigest(),
             "final_state": dict(zip(("v", "refractory_remaining"), final_state, strict=True)),
         }
 
@@ -262,9 +315,10 @@ def main(argv: list[str]) -> int:
             "repeats": N_REPEATS,
             "current": CURRENT,
             "parameters": (
-                "Fourcaud-Trocme fitted defaults; candidate-first RK4; "
-                "zero-refractory deterministic contract"
+                "Fourcaud-Trocme 2003 source factory; -30 mV handoff; "
+                "0.01 ms zero-noise Heun RK2 specialization; 1.7 ms refractory"
             ),
+            "analytical_tail_ms": ExpIFNeuron.fourcaud_trocme_2003().analytical_tail_ms(),
             "trace_atol": TRACE_ATOL,
         },
         "meta": _environment(load_start),
@@ -281,16 +335,18 @@ def main(argv: list[str]) -> int:
         print(
             f"{backend:>7}: {float(row['median_call_ms']):10.3f} ms  "
             f"{float(row['speedup_vs_python']):8.2f}x  "
-            f"max|delta|={float(row['parity_max_abs_diff']):.3e}  "
+            f"max|dv|={float(row['voltage_parity_max_abs_diff']):.3e}  "
+            f"max|dr|={float(row['refractory_parity_max_abs_diff']):.3e}  "
             f"events={int(row['event_count'])}"
         )
     print(f"Measured order: {', '.join(measured_order)}")
     print(f"Wrote {args.json}")
 
-    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+    if any(not bool(row.get("events_match_python", True)) for row in rows.values()):
         return 3
     if any(
-        float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL
+        float(row.get("voltage_parity_max_abs_diff", 0.0)) > TRACE_ATOL
+        or float(row.get("refractory_parity_max_abs_diff", 0.0)) > TRACE_ATOL
         for row in rows.values()
         if row.get("used") is True
     ):

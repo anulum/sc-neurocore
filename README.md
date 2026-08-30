@@ -100,7 +100,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 197 |
 | Rust PyO3 model wrappers | 207 |
 | Optional extras | 28 |
-| Python test files | 4778 |
+| Python test files | 4782 |
 | Public documentation pages | 622 |
 | GitHub Actions workflows | 20 |
 
@@ -214,12 +214,15 @@ four-current Q16.16 co-simulation, Yosys synthesis receipt, and bounded formal
 safety establish its honest H2 boundary; see the
 [AdEx model page](docs/api/models/adex.md) for backend and evidence boundaries.
 
-The ExpIF model exposes the Fourcaud-Trocmé candidate-first RK4 recurrence
-through the same five public paths. Its committed
-`benchmarks/results/local_python_2026-06-16_expif_rk4.json` artefact records
-exact event parity and a `5e-8` voltage-trace envelope; the
-[ExpIF model page](docs/api/models/expif.md) states the fitted defaults,
-Q32.32 co-simulation boundary, and refractory protocol.
+The ExpIF model exposes a deterministic zero-noise specialization of the
+Fourcaud-Trocmé source protocol through the same five public paths: fitted
+parameters, Heun RK2 below the paper's -30 mV handoff, the derived analytical
+exponential-only tail duration, and the fitted 1.7 ms refractory interval. Its
+committed `benchmarks/results/bench_expif.json` artefact records complete
+voltage/refractory/event packets with exact event parity and a `5e-8` state
+envelope. The historical SC candidate-first RK4 and Q32.32 RTL recurrence is
+preserved as a separately named compatibility profile; the
+[ExpIF model page](docs/api/models/expif.md) states both evidence boundaries.
 
 `NonResettingLIFNeuron` now exposes the Kobayashi et al. one-timescale MAT(1)
 source recurrence across Python, Rust, Julia, Go, and Mojo. The former project
@@ -473,8 +476,8 @@ hdl/
   formal/ (87 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **87 SymbiYosys proof jobs and 386 formal
-statements (260 assert, 94 assume, 32 cover)** under `hdl/formal/` (18
+Formal verification inventory: **87 SymbiYosys proof jobs and 413 formal
+statements (272 assert, 106 assume, 35 cover)** under `hdl/formal/` (18
 non-catalogue jobs + **69 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.

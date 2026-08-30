@@ -5,10 +5,11 @@
     "author": "Fourcaud-Trocmé, N. et al.",
     "year": 2003,
     "doi": "10.1523/JNEUROSCI.23-37-11628.2003",
-    "description": "Deterministic EIF current balance from Equations 6 and 10 with the paper's finite +30 mV simulation cutoff"
+    "description": "SC-maintained deterministic RK4/Q32.32 EIF compatibility profile; the distinct Fourcaud-Trocme source protocol is recorded below"
   },
   "state": {
-    "v": -65.0
+    "v": -65.0,
+    "refractory_remaining": 0.0
   },
   "parameters": {
     "v_rest": -65.0,
@@ -16,25 +17,48 @@
     "v_threshold": 30.0,
     "v_rh": -59.9,
     "delta_t": 3.48,
-    "tau": 10.0
+    "tau": 10.0,
+    "refractory_period": 0.0
   },
   "integration": {
     "dt": 0.02,
     "method": "rk4"
   },
   "dynamics": {
-    "v": "(-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau"
+    "v": "(-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau",
+    "refractory_remaining": "0.0"
   },
   "threshold": {
     "condition": "v >= v_threshold",
     "detection": "level"
   },
   "reset": {
-    "v": "v_reset"
+    "v": "v_reset",
+    "refractory_remaining": "refractory_period"
   },
   "extensions": {
     "spike_shape": "exponential divergence",
     "current_convention": "I is normalised by leak conductance",
-    "finite_cutoff": "30 mV, following the source simulation protocol"
+    "finite_cutoff": "30 mV SC numerical event surface; the source handoff is -30 mV",
+    "profile": "sc_rk4",
+    "identity_note": "The +30 mV candidate-first RK4 recurrence is an SC compatibility profile, not the source simulation protocol"
+  },
+  "profiles": {
+    "sc_rk4": {
+      "v_threshold": 30.0,
+      "dt": 0.02,
+      "method": "candidate-first-rk4-stage-clipped",
+      "refractory_period": 0.0,
+      "hardware_contract": "Q32.32 generated RTL compatibility lane"
+    },
+    "fourcaud_trocme_2003": {
+      "v_threshold": -30.0,
+      "dt": 0.01,
+      "dt_source_constraint": "less than 0.02 ms; 0.01 ms is a maintained converged specialization",
+      "method": "deterministic-zero-noise-rk2-below-boundary-with-derived-analytical-tail-duration",
+      "refractory_period": 1.7,
+      "analytical_tail_ms": 0.001855930799631619,
+      "observation_threshold": 20.0
+    }
   }
 }

@@ -11,13 +11,14 @@ from __future__ import annotations
 from tests.expif_backends_support import *  # noqa: F403
 
 
-def test_rust_rejects_non_default_contract() -> None:
-    """Keep the Rust engine class's factory-only parameter boundary explicit."""
+@pytest.mark.skipif(not expif._HAS_RUST, reason="current ExpIF batch binding is unavailable")
+def test_rust_accepts_complete_non_default_contract() -> None:
+    """Exercise the full-parameter production batch rather than a default-only shim."""
     neuron = ExpIFNeuron(v=-60.0)
-    before = (neuron.v, neuron.refractory_remaining)
-    with pytest.raises(RuntimeError, match="factory-default"):
-        neuron.simulate(1, 0.0, backend="rust")
-    assert (neuron.v, neuron.refractory_remaining) == before
+    voltage, refractory, events = neuron.simulate_complete(4, 0.0, backend="rust")
+    assert voltage.shape == refractory.shape == events.shape == (4,)
+    assert neuron.v == voltage[-1]
+    assert neuron.refractory_remaining == refractory[-1]
 
 
 @pytest.mark.parametrize("n_steps", [-1, 1.0, True])

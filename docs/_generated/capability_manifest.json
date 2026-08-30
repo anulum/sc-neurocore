@@ -971,7 +971,7 @@
     "python_model_classes": 180,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4778
+    "test_files": 4782
   },
   "documentation": {
     "public_pages": [
@@ -4679,8 +4679,10 @@
       "tests/test_experiments_convergence_bundle_contract.py",
       "tests/test_expif_backends_auto_dispatch.py",
       "tests/test_expif_backends_backend_parity.py",
+      "tests/test_expif_backends_batch_atomicity.py",
       "tests/test_expif_backends_c_abi_and_loaders.py",
       "tests/test_expif_backends_rejects.py",
+      "tests/test_expif_engine_binding.py",
       "tests/test_explain_causal_importance.py",
       "tests/test_explain_explanation_result.py",
       "tests/test_explain_spike_attributor.py",
@@ -5570,6 +5572,7 @@
       "tests/test_model_expif_exp_if_pipeline.py",
       "tests/test_model_expif_exp_if_validation.py",
       "tests/test_model_expif_exp_iffi.py",
+      "tests/test_model_expif_source_contract.py",
       "tests/test_model_fitzhugh_nagumo_fhn_dynamics_equations.py",
       "tests/test_model_fitzhugh_nagumo_fhn_isolation.py",
       "tests/test_model_fitzhugh_nagumo_fhn_oscillatory_band.py",
@@ -6658,6 +6661,7 @@
       "tests/test_reference_ermentrout_kopell_pop.py",
       "tests/test_reference_escape_rate.py",
       "tests/test_reference_exp_if.py",
+      "tests/test_reference_expif_source_receipt.py",
       "tests/test_reference_fitzhugh_nagumo.py",
       "tests/test_reference_fitzhugh_rinzel.py",
       "tests/test_reference_glif.py",

@@ -44,6 +44,50 @@ def test_c_abi_rejection_does_not_commit_instance_state(backend: str) -> None:
     assert (neuron.v, neuron.refractory_remaining) == before
 
 
+@pytest.mark.parametrize("backend", ("go", "mojo"))
+def test_complete_c_abi_rejects_a_false_source_profile_without_output(backend: str) -> None:
+    """The source selector cannot relabel an out-of-contract timestep."""
+    assert getattr(expif, f"_ensure_{backend}_loaded")()
+    voltage = np.full(2, -999.0, dtype=np.float64)
+    refractory = np.full(2, -999.0, dtype=np.float64)
+    events = np.full(1, 255, dtype=np.uint8)
+    arguments = (
+        -65.0,
+        -65.0,
+        -68.0,
+        -30.0,
+        -59.9,
+        3.48,
+        10.0,
+        0.02,
+        1.7,
+        0.0,
+        1,
+        1,
+        20.0,
+    )
+    if backend == "go":
+        assert expif._go_lib is not None
+        result = expif._go_lib.expif_simulate_complete_c(
+            *arguments,
+            voltage.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            refractory.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            events.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
+        )
+    else:
+        assert expif._mojo_lib is not None
+        result = expif._mojo_lib.expif_simulate_complete_c(
+            *arguments,
+            int(voltage.ctypes.data),
+            int(refractory.ctypes.data),
+            int(events.ctypes.data),
+        )
+    assert result == -1
+    np.testing.assert_array_equal(voltage, np.full(2, -999.0, dtype=np.float64))
+    np.testing.assert_array_equal(refractory, np.full(2, -999.0, dtype=np.float64))
+    np.testing.assert_array_equal(events, np.full(1, 255, dtype=np.uint8))
+
+
 @pytest.mark.parametrize("backend", ("julia", "go", "mojo"))
 def test_requested_backend_reports_unavailable(
     backend: str,
@@ -60,7 +104,7 @@ def test_requested_rust_backend_reports_unavailable(
 ) -> None:
     """Keep explicit Rust requests fail-closed when the engine wheel is absent."""
     monkeypatch.setattr(expif, "_HAS_RUST", False)
-    monkeypatch.setattr(expif, "_EngineExpIFCls", None)
+    monkeypatch.setattr(expif, "_EngineExpIFSimulateFn", None)
     with pytest.raises(RuntimeError, match="Rust ExpIF backend"):
         ExpIFNeuron().simulate(1, 0.0, backend="rust")
 

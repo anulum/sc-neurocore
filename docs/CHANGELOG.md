@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### ExpIF dual-profile full-fidelity reclosure
+
+- Restored the Fourcaud-Trocmé fitted source protocol as an explicit factory:
+  deterministic zero-noise Heun RK2 below the paper's -30 mV numerical
+  handoff, the derived analytical exponential-only tail duration, and the fitted 1.7 ms
+  refractory interval. The former +30 mV candidate-first RK4 behavior remains
+  exactly available as the separately declared SC compatibility profile.
+- Added failure-atomic complete voltage/refractory/event packets across Python,
+  production and safety Rust, Julia, Go, Mojo, and both native batch ABIs.
+  Paired schemas, direct NetworkRunner coverage, an independent 20,000-step
+  source receipt, and a controlled source-hashed five-runtime benchmark retain
+  the complete numerical and event contract.
+- Promoted the compatibility RTL boundary to honest H2: the Q32.32 packet is
+  bound to complete event/state digests and preserves its enrolled aggregate
+  event count, the tracked core synthesizes to 484,938 Yosys coarse cells, and
+  depth-4 bounded checks prove reset and public event/reset safety. Timing, PPA, device, board,
+  physical silicon, and universal fixed-point equivalence remain open.
+
 ### AdEx complete-state full-fidelity reclosure
 
 - Separated the Brette–Gerstner 2005 regular-spiking fit from the maintained

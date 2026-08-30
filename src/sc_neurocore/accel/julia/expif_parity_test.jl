@@ -11,7 +11,7 @@ using Test
 include(joinpath(@__DIR__, "neurons", "expif.jl"))
 using .ExpifAccel
 
-@testset "ExpIF source defaults" begin
+@testset "ExpIF SC compatibility defaults" begin
     state = ExpIFNeuronState()
     @test state.v == -65.0
     @test state.v_threshold == 30.0
@@ -89,7 +89,47 @@ end
         0.02,
         0.0,
         0.0,
+        false,
         -1,
         0.0,
+    )
+end
+
+@testset "ExpIF source profile complete packet" begin
+    result = simulate_complete(
+        -65.0,
+        -65.0,
+        -68.0,
+        -30.0,
+        -59.9,
+        3.48,
+        10.0,
+        0.01,
+        1.7,
+        0.0,
+        true,
+        4000,
+        20.0,
+    )
+    @test length(result.voltage) == 4000
+    @test length(result.refractory) == 4000
+    @test length(result.events) == 4000
+    @test sum(result.events) == result.spikes
+    @test result.vf == result.voltage[end]
+    @test result.rf == result.refractory[end]
+    @test_throws DomainError simulate_complete(
+        -65.0,
+        -65.0,
+        -68.0,
+        -30.0,
+        -59.9,
+        3.48,
+        10.0,
+        0.02,
+        1.7,
+        0.0,
+        true,
+        1,
+        20.0,
     )
 end

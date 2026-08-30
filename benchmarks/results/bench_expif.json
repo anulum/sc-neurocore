@@ -1,0 +1,240 @@
+{
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 182,
+      "event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+      "events_match_python": true,
+      "final_state": {
+        "refractory_remaining": 0.4199999999999988,
+        "v": -68.0
+      },
+      "median_call_ms": 8.771868,
+      "minimum_call_ms": 7.983241,
+      "refractory_parity_max_abs_diff": 0.0,
+      "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+      "speedup_vs_python": 13.931497715195897,
+      "used": true,
+      "voltage_parity_max_abs_diff": 0.0,
+      "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
+    },
+    "julia": {
+      "available": true,
+      "event_count": 182,
+      "event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+      "events_match_python": true,
+      "final_state": {
+        "refractory_remaining": 0.4199999999999988,
+        "v": -68.0
+      },
+      "median_call_ms": 5.863109,
+      "minimum_call_ms": 5.426299,
+      "refractory_parity_max_abs_diff": 0.0,
+      "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+      "speedup_vs_python": 20.843081545985246,
+      "used": true,
+      "voltage_parity_max_abs_diff": 0.0,
+      "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 182,
+      "event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+      "events_match_python": true,
+      "final_state": {
+        "refractory_remaining": 0.4199999999999988,
+        "v": -68.0
+      },
+      "median_call_ms": 9.40192,
+      "minimum_call_ms": 9.090622,
+      "refractory_parity_max_abs_diff": 0.0,
+      "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+      "speedup_vs_python": 12.997904576937476,
+      "used": true,
+      "voltage_parity_max_abs_diff": 4.303686296225351e-10,
+      "voltage_sha256": "4ccf82b08119cc005e0cac2f039dc14e94c22447f7e4a68cfb6cfbefdd6cda20"
+    },
+    "python": {
+      "available": true,
+      "event_count": 182,
+      "event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+      "events_match_python": true,
+      "final_state": {
+        "refractory_remaining": 0.4199999999999988,
+        "v": -68.0
+      },
+      "median_call_ms": 122.205259,
+      "minimum_call_ms": 114.524277,
+      "refractory_parity_max_abs_diff": 0.0,
+      "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+      "speedup_vs_python": 1.0,
+      "used": true,
+      "voltage_parity_max_abs_diff": 0.0,
+      "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
+    },
+    "rust": {
+      "available": true,
+      "event_count": 182,
+      "event_sha256": "faf44e86ec0971b59a766e059449bc26d4e1b3ebf45721c42de182b8765d853e",
+      "events_match_python": true,
+      "final_state": {
+        "refractory_remaining": 0.4199999999999988,
+        "v": -68.0
+      },
+      "median_call_ms": 3.829064,
+      "minimum_call_ms": 3.673269,
+      "refractory_parity_max_abs_diff": 0.0,
+      "refractory_sha256": "3c735510f583cb774cfeee3678adcb4d6cd203d2386d572b897260feeaee5a31",
+      "speedup_vs_python": 31.915177965163288,
+      "used": true,
+      "voltage_parity_max_abs_diff": 0.0,
+      "voltage_sha256": "f7edef9776aad42fa7161bf44369a54d23a878eed4ccdc565ed672a7b9ae8e84"
+    }
+  },
+  "kernel": "expif_fourcaud_trocme_2003_complete",
+  "measured_order": [
+    "rust",
+    "julia",
+    "go",
+    "mojo",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      5
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      5.04052734375,
+      6.9169921875,
+      9.08837890625
+    ],
+    "load_average_start": [
+      5.13134765625,
+      6.96630859375,
+      9.1162109375
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_model_expif": {
+      "py": "ab911a9ad53b0086a6bae87c8841a8c1fc52419fba8261d906baaf412fdb41f4"
+    },
+    "benchmarks/bench_model_expif.py": "ab911a9ad53b0086a6bae87c8841a8c1fc52419fba8261d906baaf412fdb41f4",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "62487e1d80a110a95340dab8d9ab5bf8eb4fa34ffb6107a3ec1a89fa74a99546"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "62487e1d80a110a95340dab8d9ab5bf8eb4fa34ffb6107a3ec1a89fa74a99546",
+    "docs/api/models/expif": {
+      "md": "8b7dc1a09fb44897bc80f709b094ea4cebf8f80d517a4183460f386ef06891ca"
+    },
+    "docs/api/models/expif.md": "8b7dc1a09fb44897bc80f709b094ea4cebf8f80d517a4183460f386ef06891ca",
+    "engine/src/bindings/exp_if": {
+      "rs": "66d4e80370d7621355bc66f9da40ad55e1d6a21903ff91e2e934631847798016"
+    },
+    "engine/src/bindings/exp_if.rs": "66d4e80370d7621355bc66f9da40ad55e1d6a21903ff91e2e934631847798016",
+    "engine/src/network_runner/model_catalogue": {
+      "rs": "e37c4690ec8f3fdefc22a5e1ba4d0c2fd23b121015fa6a83ade7a084bdb2e5e9"
+    },
+    "engine/src/network_runner/model_catalogue.rs": "e37c4690ec8f3fdefc22a5e1ba4d0c2fd23b121015fa6a83ade7a084bdb2e5e9",
+    "engine/src/network_runner/model_factory": {
+      "rs": "2e1d12648edc834b1a9466312d442cbf11501526e85928864f932e1e34d0661e"
+    },
+    "engine/src/network_runner/model_factory.rs": "2e1d12648edc834b1a9466312d442cbf11501526e85928864f932e1e34d0661e",
+    "engine/src/network_runner/neuron_variant": {
+      "rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed"
+    },
+    "engine/src/network_runner/neuron_variant.rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed",
+    "engine/src/neuron/exp_if": {
+      "rs": "48fab04a48cc06474b83a94c4218d6c6cec62319572f590d61bfd4f33e9a2324"
+    },
+    "engine/src/neuron/exp_if.rs": "48fab04a48cc06474b83a94c4218d6c6cec62319572f590d61bfd4f33e9a2324",
+    "hdl/formal/catalogue/sc_exponential_if": {
+      "v": "fa71c5cbbb6339686718d4c05910140687fca344cca1124cc0272e334534e8c7"
+    },
+    "hdl/formal/catalogue/sc_exponential_if.sby": "30f1805963214ff5840c6900c3fcf6acd3c83ebc0dc5a7c51d540061cf670bb8",
+    "hdl/formal/catalogue/sc_exponential_if.v": "fa71c5cbbb6339686718d4c05910140687fca344cca1124cc0272e334534e8c7",
+    "hdl/formal/catalogue/sc_exponential_if_formal": {
+      "v": "1465b592a04963a43b072c4efdebee9e416b3b659bd730f9eaec0882432ff8de"
+    },
+    "hdl/formal/catalogue/sc_exponential_if_formal.v": "1465b592a04963a43b072c4efdebee9e416b3b659bd730f9eaec0882432ff8de",
+    "hdl/reports/yosys_expif_q3232_2026-08-30": {
+      "json": "5e0329334240fafae2a0574393ef64119628ce281bd9bc82dc5e3d021ac28135"
+    },
+    "hdl/reports/yosys_expif_q3232_2026-08-30.json": "5e0329334240fafae2a0574393ef64119628ce281bd9bc82dc5e3d021ac28135",
+    "src/sc_neurocore/accel/go/neurons/expif/expif": {
+      "go": "d8c81e77a78396bf091b42d3221e362e49fa20aaa34dd59b657aba4d7592cd80"
+    },
+    "src/sc_neurocore/accel/go/neurons/expif/expif.go": "d8c81e77a78396bf091b42d3221e362e49fa20aaa34dd59b657aba4d7592cd80",
+    "src/sc_neurocore/accel/go/services/expif": {
+      "go": "56926fff1069af3145b5d409a06ee5070be3bf87439f500be9092d168cc6d32e"
+    },
+    "src/sc_neurocore/accel/go/services/expif.go": "56926fff1069af3145b5d409a06ee5070be3bf87439f500be9092d168cc6d32e",
+    "src/sc_neurocore/accel/julia/neurons/expif": {
+      "jl": "9a43cd5fb7102dff2c59b036cc9f6c148161a473b0f77d27399fbcd807645d73"
+    },
+    "src/sc_neurocore/accel/julia/neurons/expif.jl": "9a43cd5fb7102dff2c59b036cc9f6c148161a473b0f77d27399fbcd807645d73",
+    "src/sc_neurocore/accel/mojo/kernels/expif": {
+      "mojo": "dc34e3ec557fa87c213ede2cdf396bdbf73ed1425060bd05808dc2dc1ebd75af"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/expif.mojo": "dc34e3ec557fa87c213ede2cdf396bdbf73ed1425060bd05808dc2dc1ebd75af",
+    "src/sc_neurocore/accel/rust/safety/expif": {
+      "rs": "d2676e393aba9b6f02c6ffa655a79c145f9b7be5ddb5effd97d0e4ba57026630"
+    },
+    "src/sc_neurocore/accel/rust/safety/expif.rs": "d2676e393aba9b6f02c6ffa655a79c145f9b7be5ddb5effd97d0e4ba57026630",
+    "src/sc_neurocore/neurons/model_descriptors/ExpIFNeuron": {
+      "toml": "6506e07c461aeb4f6cd4b50a7bc6418fc67b9b984b53ecc703e7adbe0aa0b7fe"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/ExpIFNeuron.toml": "6506e07c461aeb4f6cd4b50a7bc6418fc67b9b984b53ecc703e7adbe0aa0b7fe",
+    "src/sc_neurocore/neurons/model_schemas/exp_if": {
+      "toml": "d650bc48bdbfb4ae6a7f704c48131e38dd60edcdcb47a539fdf9a9bf8d98f511"
+    },
+    "src/sc_neurocore/neurons/model_schemas/exp_if.json": "3b3faf6ad562f1823d59d8d62a1305388954535a322a0d4dd50b80fd32e805e9",
+    "src/sc_neurocore/neurons/model_schemas/exp_if.toml": "d650bc48bdbfb4ae6a7f704c48131e38dd60edcdcb47a539fdf9a9bf8d98f511",
+    "src/sc_neurocore/neurons/models/expif": {
+      "py": "7ce7a2ae26b7d801b809ff8822f94c294e11126ba53e1e4d8299be5946e6d758"
+    },
+    "src/sc_neurocore/neurons/models/expif.py": "7ce7a2ae26b7d801b809ff8822f94c294e11126ba53e1e4d8299be5946e6d758",
+    "src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003": {
+      "json": "d00b8339df6d9ed2c60adeb690b010c49dd7a856f065a7e7a4178762f94c9a34"
+    },
+    "src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003.json": "d00b8339df6d9ed2c60adeb690b010c49dd7a856f065a7e7a4178762f94c9a34",
+    "tests/test_expif_backends_batch_atomicity": {
+      "py": "2e6d07e198573d12b7e4cc90453406e345091517aca9fe3d19329155cb488fa8"
+    },
+    "tests/test_expif_backends_batch_atomicity.py": "2e6d07e198573d12b7e4cc90453406e345091517aca9fe3d19329155cb488fa8",
+    "tests/test_expif_engine_binding": {
+      "py": "c001f84aca1ed4240a66d5a8f894ff4bbc3abd11030c722aa16417c394f6df8c"
+    },
+    "tests/test_expif_engine_binding.py": "c001f84aca1ed4240a66d5a8f894ff4bbc3abd11030c722aa16417c394f6df8c",
+    "tests/test_model_expif_source_contract": {
+      "py": "2ed19a135ad3df69fb16976b81a50da383f460d232919db9a54a176b56879233"
+    },
+    "tests/test_model_expif_source_contract.py": "2ed19a135ad3df69fb16976b81a50da383f460d232919db9a54a176b56879233",
+    "tests/test_reference_expif_source_receipt": {
+      "py": "9b0379737faaef4894428e36104e42d35044d971860bbde298f19cf39db29a8a"
+    },
+    "tests/test_reference_expif_source_receipt.py": "9b0379737faaef4894428e36104e42d35044d971860bbde298f19cf39db29a8a"
+  },
+  "workload": {
+    "analytical_tail_ms": 0.001855930799631619,
+    "current": 50.0,
+    "n_steps": 100000,
+    "parameters": "Fourcaud-Trocme 2003 source factory; -30 mV handoff; 0.01 ms zero-noise Heun RK2 specialization; 1.7 ms refractory",
+    "repeats": 7,
+    "trace_atol": 5e-08
+  }
+}

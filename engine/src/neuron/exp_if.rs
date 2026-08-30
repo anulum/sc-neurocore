@@ -19,9 +19,22 @@ pub struct ExpIfNeuron {
     pub dt: f64,
     pub refractory_period: f64,
     pub refractory_remaining: f64,
+    /// False preserves the historical SC RK4 recurrence; true selects source RK2.
+    pub source_profile: bool,
     pub inv_delta_t: f64,
     pub dt_div_tau: f64,
 }
+
+/// Explicit rejection classes for checked ExpIF execution.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ExpIfError {
+    InvalidInput,
+    InvalidState,
+    NonFiniteUpdate,
+}
+
+/// Aligned voltage, refractory-state, and event traces from one complete batch.
+pub type ExpIfCompleteTrace = (Vec<f64>, Vec<f64>, Vec<u8>);
 
 impl Default for ExpIfNeuron {
     fn default() -> Self {
@@ -42,12 +55,31 @@ impl ExpIfNeuron {
             dt: 0.02,
             refractory_period: 0.0,
             refractory_remaining: 0.0,
+            source_profile: false,
             inv_delta_t: 1.0 / 3.48,
             dt_div_tau: 0.02 / 10.0,
         }
     }
 
+    /// Construct the fitted Fourcaud-Trocmé protocol's deterministic RK2 lane.
+    pub fn fourcaud_trocme_2003() -> Self {
+        Self {
+            v_threshold: -30.0,
+            dt: 0.01,
+            refractory_period: 1.7,
+            source_profile: true,
+            dt_div_tau: 0.01 / 10.0,
+            ..Self::new()
+        }
+    }
+
+    /// Preserve the historical scalar ABI while failing closed on rejection.
     pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Advance one checked update without mutating the receiver on rejection.
+    pub fn try_step(&mut self, current: f64) -> Result<i32, ExpIfError> {
         if !self.v.is_finite()
             || !current.is_finite()
             || !self.v_rest.is_finite()
@@ -69,29 +101,59 @@ impl ExpIfNeuron {
             || self.v >= self.v_threshold
             || self.v_rest >= self.v_threshold
             || self.v_reset >= self.v_threshold
+            || (self.source_profile
+                && (self.v_rest != -65.0
+                    || self.v_reset != -68.0
+                    || self.v_threshold != -30.0
+                    || self.v_rh != -59.9
+                    || self.delta_t != 3.48
+                    || self.tau != 10.0
+                    || self.dt >= 0.02
+                    || self.refractory_period != 1.7))
         {
-            return 0;
+            return Err(if !current.is_finite() {
+                ExpIfError::InvalidInput
+            } else {
+                ExpIfError::InvalidState
+            });
         }
 
         if self.refractory_remaining > 0.0 {
             self.refractory_remaining = (self.refractory_remaining - self.dt).max(0.0);
             self.v = self.v_reset;
-            return 0;
+            return Ok(0);
         }
 
         let inv_delta_t = 1.0 / self.delta_t;
         let k1 = self.rhs(self.v, current, inv_delta_t);
-        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current, inv_delta_t);
-        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current, inv_delta_t);
-        let k4 = self.rhs(self.v + self.dt * k3, current, inv_delta_t);
-        let next_v = self.v + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+        let predictor = self.v + self.dt * k1;
+        let k2 = self.rhs(
+            if self.source_profile {
+                predictor
+            } else {
+                self.v + 0.5 * self.dt * k1
+            },
+            current,
+            inv_delta_t,
+        );
+        let (k3, k4, next_v) = if self.source_profile {
+            (0.0, 0.0, self.v + 0.5 * self.dt * (k1 + k2))
+        } else {
+            let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current, inv_delta_t);
+            let k4 = self.rhs(self.v + self.dt * k3, current, inv_delta_t);
+            (
+                k3,
+                k4,
+                self.v + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4),
+            )
+        };
         if !k1.is_finite()
             || !k2.is_finite()
             || !k3.is_finite()
             || !k4.is_finite()
             || !next_v.is_finite()
         {
-            return 0;
+            return Err(ExpIfError::NonFiniteUpdate);
         }
 
         self.inv_delta_t = inv_delta_t;
@@ -99,11 +161,31 @@ impl ExpIfNeuron {
         if next_v >= self.v_threshold {
             self.v = self.v_reset;
             self.refractory_remaining = self.refractory_period;
-            1
+            Ok(1)
         } else {
             self.v = next_v;
-            0
+            Ok(0)
         }
+    }
+
+    /// Run a checked, failure-atomic batch and return aligned state/event rows.
+    pub fn simulate_complete(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<ExpIfCompleteTrace, ExpIfError> {
+        let mut candidate = self.clone();
+        let mut voltage = Vec::with_capacity(n_steps);
+        let mut refractory = Vec::with_capacity(n_steps);
+        let mut events = Vec::with_capacity(n_steps);
+        for _ in 0..n_steps {
+            let event = candidate.try_step(current)?;
+            voltage.push(candidate.v);
+            refractory.push(candidate.refractory_remaining);
+            events.push(event as u8);
+        }
+        *self = candidate;
+        Ok((voltage, refractory, events))
     }
 
     pub fn reset(&mut self) {
@@ -237,5 +319,34 @@ mod tests {
             neuron.step(500.0);
         }
         assert!(start.elapsed().as_millis() < 50);
+    }
+
+    #[test]
+    fn source_factory_freezes_the_fitted_protocol_boundary() {
+        let mut neuron = ExpIfNeuron::fourcaud_trocme_2003();
+        assert_eq!(neuron.v_threshold, -30.0);
+        assert_eq!(neuron.dt, 0.01);
+        assert_eq!(neuron.refractory_period, 1.7);
+        assert!(neuron.source_profile);
+        neuron.dt = 0.02;
+        assert_eq!(neuron.try_step(20.0), Err(super::ExpIfError::InvalidState));
+    }
+
+    #[test]
+    fn checked_batch_is_aligned_and_failure_atomic() {
+        let mut neuron = ExpIfNeuron::new();
+        let (voltage, refractory, events) = neuron.simulate_complete(1_000, 20.0).unwrap();
+        assert_eq!(voltage.len(), 1_000);
+        assert_eq!(refractory.len(), 1_000);
+        assert_eq!(events.len(), 1_000);
+        assert_eq!(events.iter().map(|event| i32::from(*event)).sum::<i32>(), 2);
+        assert_eq!(neuron.v, voltage[999]);
+
+        let before = (neuron.v, neuron.refractory_remaining);
+        assert_eq!(
+            neuron.simulate_complete(2, f64::INFINITY),
+            Err(super::ExpIfError::InvalidInput)
+        );
+        assert_eq!((neuron.v, neuron.refractory_remaining), before);
     }
 }

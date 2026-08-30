@@ -34,6 +34,7 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         }
         "AdEx" | "AdExNeuron" => Ok(NeuronVariant::AdEx(AdExNeuron::new())),
         "ExpIF" | "ExpIfNeuron" => Ok(NeuronVariant::ExpIF(ExpIfNeuron::new())),
+        "ExpIFNeuron" => Ok(NeuronVariant::ExpIF(ExpIfNeuron::fourcaud_trocme_2003())),
         "Lapicque" | "LapicqueNeuron" => Ok(NeuronVariant::Lapicque(LapicqueNeuron::new(
             20.0, 1.0, 1.0, 1.0,
         ))),

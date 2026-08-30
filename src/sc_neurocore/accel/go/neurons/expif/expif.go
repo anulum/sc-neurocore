@@ -21,6 +21,64 @@ import (
 	"github.com/anulum/sc-neurocore/accel/services"
 )
 
+//export expif_simulate_complete_c
+func expif_simulate_complete_c(
+	v C.double,
+	vRest C.double,
+	vReset C.double,
+	vThreshold C.double,
+	vRh C.double,
+	deltaT C.double,
+	tau C.double,
+	dt C.double,
+	refractoryPeriod C.double,
+	refractoryRemaining C.double,
+	sourceProfile C.int64_t,
+	nSteps C.int64_t,
+	current C.double,
+	voltageOutput *C.double,
+	refractoryOutput *C.double,
+	eventOutput *C.uint8_t,
+) C.int64_t {
+	if nSteps < 0 || voltageOutput == nil || refractoryOutput == nil || eventOutput == nil {
+		return -1
+	}
+	n := int(nSteps)
+	if C.int64_t(n) != nSteps || n > int(^uint(0)>>1)-1 {
+		return -1
+	}
+	state := &services.ExpIFNeuronState{
+		V:                   float64(v),
+		VRest:               float64(vRest),
+		VReset:              float64(vReset),
+		VThreshold:          float64(vThreshold),
+		VRh:                 float64(vRh),
+		DeltaT:              float64(deltaT),
+		Tau:                 float64(tau),
+		Dt:                  float64(dt),
+		RefractoryPeriod:    float64(refractoryPeriod),
+		RefractoryRemaining: float64(refractoryRemaining),
+		SourceProfile:       sourceProfile != 0,
+	}
+	voltage, refractory, events, err := state.SimulateExpIFComplete(n, float64(current))
+	if err != nil {
+		return -1
+	}
+	voltageDestination := unsafe.Slice((*float64)(unsafe.Pointer(voltageOutput)), n+1)
+	refractoryDestination := unsafe.Slice((*float64)(unsafe.Pointer(refractoryOutput)), n+1)
+	eventDestination := unsafe.Slice((*uint8)(unsafe.Pointer(eventOutput)), n)
+	copy(voltageDestination[:n], voltage)
+	copy(refractoryDestination[:n], refractory)
+	copy(eventDestination, events)
+	voltageDestination[n] = state.V
+	refractoryDestination[n] = state.RefractoryRemaining
+	spikes := 0
+	for _, event := range events {
+		spikes += int(event)
+	}
+	return C.int64_t(spikes)
+}
+
 //export expif_simulate_c
 func expif_simulate_c(
 	v C.double,

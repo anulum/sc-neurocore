@@ -20,7 +20,7 @@ def _exp_if_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, 
 
     Fourcaud-Trocmé et al. (2003), Equations 6 and 10, define the leak plus
     exponential current. This re-derivation uses the fitted ``V_T``, slope,
-    leak, reset and the paper's ``+30 mV`` finite simulation cutoff. RK4 stages
+    leak and reset with the SC profile's ``+30 mV`` finite event surface. RK4 stages
     are bounded at that event surface, matching the maintained deterministic
     recurrence without importing the hand model or the schema runner.
 

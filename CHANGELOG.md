@@ -11,6 +11,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Re-closed `ExpIFNeuron` against the Fourcaud-Trocmé et al. (2003) fitted
+  exponential integrate-and-fire protocol. The catalogue-counted source
+  factory now keeps the paper's -30 mV numerical handoff, deterministic
+  zero-noise Heun RK2 specialization, derived analytical exponential-only
+  tail duration, and 1.7 ms refractory interval distinct from the retained historical SC
+  candidate-first RK4/+30 mV/Q32.32 compatibility profile. Python,
+  production and safety Rust, Julia, Go, Mojo, PyO3, NetworkRunner, paired
+  schemas, an independent complete-packet receipt, source-hashed benchmark,
+  fixed-point co-simulation, 484,938-cell Yosys synthesis, and bounded
+  reset/event safety now establish the honest H2 boundary without timing, PPA, device, board,
+  physical-silicon, or universal-equivalence claims.
 - Re-closed `AdExNeuron` against the Brette–Gerstner equations and separated
   the paper's regular-spiking fit from backwards-compatible maintained
   defaults. Python, production and safety Rust, Julia, Go, and Mojo now expose

@@ -11,14 +11,19 @@ schema_version = 2
 name = "ExpIFNeuron"
 class_name = "ExpIFNeuron"
 module = "expif"
-display_name = ""
-summary = "Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003."
+display_name = "Exponential integrate-and-fire"
+summary = "Source-aligned Fourcaud-Trocme EIF fit and deterministic simulation profile with the historical SC RK4/Q32.32 recurrence preserved explicitly."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = []
-hardware_fit = []
+intended_use = [
+    "source-equation reference",
+    "exponential spike-initiation simulation",
+]
+hardware_fit = [
+    "separate SC Q32.32 exponential-LUT compatibility lane",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -38,7 +43,7 @@ init = -65.0
 [state.refractory_remaining]
 init = 0.0
 unit = "ms"
-meaning = "remaining post-spike reset hold; zero for the deterministic schema-to-RTL contract"
+meaning = "remaining post-spike reset hold; source profile starts at zero and loads 1.7 ms"
 
 [parameters.v_rest]
 default = -65.0
@@ -61,9 +66,9 @@ range = [
 [parameters.v_threshold]
 default = 30.0
 unit = "mV"
-meaning = "finite numerical spike cutoff; distinct from the soft exponential threshold"
+meaning = "SC default numerical event surface; source factory uses the paper's -30 mV handoff"
 range = [
-    0.0,
+    -40.0,
     100.0,
 ]
 
@@ -97,7 +102,7 @@ range = [
 [parameters.refractory_period]
 default = 0.0
 unit = "ms"
-meaning = "post-spike reset hold; 1.7 ms reproduces the paper's fitted comparison protocol"
+meaning = "SC default reset hold; source factory uses the paper's fitted 1.7 ms protocol"
 range = [
     0.0,
     10.0,
@@ -108,7 +113,7 @@ dt = 0.02
 method = "rk4"
 
 [dynamics]
-v = "candidate-first RK4 of (-(min(v,v_threshold)-v_rest)+delta_t*exp((min(v,v_threshold)-v_rh)/delta_t)+I)/tau; level-detect candidate>=v_threshold then reset"
+v = "source-aligned profile: zero-noise Heun RK2 below -30 mV with the analytical exponential-only tail duration exposed separately; SC compatibility profile: candidate-first stage-clipped RK4 to +30 mV"
 refractory_remaining = "hold v at v_reset while positive; decrement by dt; load refractory_period on a spike"
 
 [backends.python]
@@ -117,7 +122,7 @@ parity = "exact"
 
 [backends.rust]
 status = "implemented"
-parity = "ulp-bounded"
+parity = "exact"
 
 [backends.julia]
 status = "implemented"
@@ -129,26 +134,30 @@ parity = "ulp-bounded"
 
 [backends.mojo]
 status = "implemented"
-parity = "approximate"
+parity = "ulp-bounded"
 
 [reproducibility]
-reference_config = "{\"n_steps\":1000,\"current\":20.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "cd3fc0cd092a9924e7477426c3d8622510ea01c37ed51b83188b38f7e026a1c6"
+reference_config = "src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003.json"
+golden_trace_sha256 = "c2b266d66139bd35c3c1bc7badf8ad0a08442684f8ce61c1382be8f3cffdde37"
+golden_citation = "src/sc_neurocore/neurons/reference_receipts/expif_fourcaud_trocme_2003.json"
 
 [documentation]
 slug = "models/expif"
-notes = ""
+notes = "ExpIFNeuron.fourcaud_trocme_2003() is the source profile. ExpIFNeuron() and ExpIFNeuron.sc_rk4_compatibility() preserve the historical +30 mV RK4/Q32.32 contract without attributing it to the paper."
 
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "Fourcaud-Trocme deterministic EIF; 1000 RK4 steps; currents 0,5,10,20,50,100; Q32.32 RTL"
-tolerance = "hand/TOML/JSON spike counts exact and float envelope <=2e-10; Q32.32 spike counts exact"
-evidence = "tests/test_cosim_exp_if.py::test_expif_q3232_spike_parity"
+operating_point = "source profile: 20000-step five-segment protocol and 0.01/0.005 ms convergence; SC compatibility: 1000 RK4 steps at currents 0,5,10,20,50,100 and Q32.32 RTL"
+tolerance = "source receipt digests and events exact; five native packets exact/5e-8 bounded; paired SC schemas <=2e-10; Q32.32 aggregate counts match SC float and the distinct bit-level event/state packet is digest-exact"
+evidence = "tests/test_reference_expif_source_receipt.py; tests/test_model_expif_source_contract.py; tests/test_expif_backends_batch_atomicity.py; tests/test_expif_engine_binding.py; tests/test_cosim_exp_if.py"
 
 [silicon]
 compiles = true
 cosim_validated = true
 cosim_evidence = "tests/test_cosim_exp_if.py::test_expif_q3232_spike_parity"
-target_tier = "H1"
-terminal_reason = "Q32.32 point-neuron schema-to-RTL spike parity is enrolled; higher silicon rungs require synthesis, timing, and hardware programmes."
+synthesised = true
+synth_report = "hdl/reports/yosys_expif_q3232_2026-08-30.json"
+target_device = "generic RTL (Yosys coarse synthesis)"
+target_tier = "H2"
+terminal_reason = "The SC Q32.32 compatibility core preserves enrolled aggregate events plus a digest-bound complete event/state packet, synthesizes to 484938 Yosys coarse cells, and passes bounded reset/event safety; timing, PPA, target-device, board, physical-silicon, and universal-equivalence evidence remain open."

@@ -8,7 +8,7 @@
 
 module ExpifAccel
 
-export ExpIFNeuronState, reset!, simulate, simulate_trace, step!
+export ExpIFNeuronState, reset!, simulate, simulate_complete, simulate_trace, step!
 
 mutable struct ExpIFNeuronState
     v::Float64
@@ -21,6 +21,7 @@ mutable struct ExpIFNeuronState
     dt::Float64
     refractory_period::Float64
     refractory_remaining::Float64
+    source_profile::Bool
 end
 
 ExpIFNeuronState() = ExpIFNeuronState(
@@ -34,6 +35,7 @@ ExpIFNeuronState() = ExpIFNeuronState(
     0.02,
     0.0,
     0.0,
+    false,
 )
 
 function _valid(state::ExpIFNeuronState, dt::Float64)
@@ -55,14 +57,27 @@ function _valid(state::ExpIFNeuronState, dt::Float64)
         state.refractory_period >= 0.0 && state.refractory_remaining >= 0.0 &&
         state.refractory_remaining <= state.refractory_period &&
         state.v_threshold > state.v_rh && state.v < state.v_threshold &&
-        state.v_rest < state.v_threshold && state.v_reset < state.v_threshold
+        state.v_rest < state.v_threshold && state.v_reset < state.v_threshold &&
+        (
+            !state.source_profile ||
+            (
+                state.v_rest == -65.0 &&
+                state.v_reset == -68.0 &&
+                state.v_threshold == -30.0 &&
+                state.v_rh == -59.9 &&
+                state.delta_t == 3.48 &&
+                state.tau == 10.0 &&
+                dt < 0.02 &&
+                state.refractory_period == 1.7
+            )
+        )
 end
 
 function _rhs(state::ExpIFNeuronState, v::Float64, current::Float64)
     bounded_v = min(v, state.v_threshold)
     exp_term = state.delta_t * exp((bounded_v - state.v_rh) / state.delta_t)
     rhs = (-(bounded_v - state.v_rest) + exp_term + current) / state.tau
-    isfinite(rhs) || throw(DomainError(rhs, "ExpIF RK4 derivative must remain finite"))
+    isfinite(rhs) || throw(DomainError(rhs, "ExpIF derivative must remain finite"))
     rhs
 end
 
@@ -79,11 +94,17 @@ function step!(state::ExpIFNeuronState, current::Float64 = 0.0; dt::Float64 = st
     end
 
     k1 = _rhs(state, state.v, current)
-    k2 = _rhs(state, state.v + 0.5 * dt * k1, current)
-    k3 = _rhs(state, state.v + 0.5 * dt * k2, current)
-    k4 = _rhs(state, state.v + dt * k3, current)
-    next_v = state.v + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
-    isfinite(next_v) || throw(DomainError(next_v, "ExpIF RK4 update must remain finite"))
+    if state.source_profile
+        predictor = state.v + dt * k1
+        k2 = _rhs(state, predictor, current)
+        next_v = state.v + 0.5 * dt * (k1 + k2)
+    else
+        k2 = _rhs(state, state.v + 0.5 * dt * k1, current)
+        k3 = _rhs(state, state.v + 0.5 * dt * k2, current)
+        k4 = _rhs(state, state.v + dt * k3, current)
+        next_v = state.v + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+    end
+    isfinite(next_v) || throw(DomainError(next_v, "ExpIF update must remain finite"))
 
     state.dt = dt
     if next_v >= state.v_threshold
@@ -101,7 +122,7 @@ function reset!(state::ExpIFNeuronState)
     nothing
 end
 
-function simulate_trace(
+function simulate_complete(
     v::Float64,
     v_rest::Float64,
     v_reset::Float64,
@@ -112,6 +133,7 @@ function simulate_trace(
     dt::Float64,
     refractory_period::Float64,
     refractory_remaining::Float64,
+    source_profile::Bool,
     n_steps::Int,
     current::Float64,
 )
@@ -127,16 +149,39 @@ function simulate_trace(
         dt,
         refractory_period,
         refractory_remaining,
+        source_profile,
     )
     _valid(state, dt) || throw(DomainError(v, "ExpIF state parameters are invalid"))
     isfinite(current) || throw(DomainError(current, "ExpIF input current must be finite"))
-    trace = Vector{Float64}(undef, n_steps)
+    voltage = Vector{Float64}(undef, n_steps)
+    refractory = Vector{Float64}(undef, n_steps)
+    events = Vector{UInt8}(undef, n_steps)
     spikes = 0
-    for index in eachindex(trace)
-        spikes += step!(state, current)
-        trace[index] = state.v
+    for index in eachindex(voltage)
+        event = step!(state, current)
+        spikes += event
+        voltage[index] = state.v
+        refractory[index] = state.refractory_remaining
+        events[index] = UInt8(event)
     end
-    (trace = trace, spikes = spikes, vf = state.v, rf = state.refractory_remaining)
+    (
+        voltage = voltage,
+        refractory = refractory,
+        events = events,
+        spikes = spikes,
+        vf = state.v,
+        rf = state.refractory_remaining,
+    )
+end
+
+function simulate_trace(args...)
+    result = simulate_complete(args...)
+    (
+        trace = result.voltage,
+        spikes = result.spikes,
+        vf = result.vf,
+        rf = result.rf,
+    )
 end
 
 function simulate(n_steps::Int, current::Float64 = 0.0)
@@ -152,6 +197,7 @@ function simulate(n_steps::Int, current::Float64 = 0.0)
         state.dt,
         state.refractory_period,
         state.refractory_remaining,
+        state.source_profile,
         n_steps,
         current,
     )

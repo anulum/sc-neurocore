@@ -18,7 +18,7 @@
   "provenance": {
     "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
-    "equation": "Driven deterministic EIF trace re-derived from Fourcaud-Trocme et al. (2003), Equations 6 and 10: fitted leak, exponential threshold and slope, +30 mV finite simulation cutoff, reset, and candidate-first RK4.",
+    "equation": "SC compatibility trace using the Fourcaud-Trocme et al. (2003) EIF current balance and fitted leak, exponential threshold and slope with a maintained +30 mV event surface, reset, and candidate-first RK4.",
     "citation": "doi:10.1523/JNEUROSCI.23-37-11628.2003"
   },
   "expected_features": {

@@ -23943,7 +23943,7 @@ Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
 ## Module `neurons.models.expif`
 
 ### Class `ExpIFNeuron`
-Fourcaud-Trocmé exponential integrate-and-fire neuron.
+Profile-explicit Fourcaud-Trocmé exponential integrate-and-fire neuron.
 
 The deterministic voltage flow is
 
@@ -23979,6 +23979,9 @@ refractory_period:
     Non-negative post-spike hold duration in milliseconds.
 refractory_remaining:
     Non-negative runtime remainder of the refractory hold.
+profile:
+    ``"fourcaud_trocme_2003"`` selects the deterministic source
+    specialization; ``"sc_rk4"`` retains the historical SC recurrence.
 
 References
 ----------
@@ -23987,10 +23990,18 @@ Fourcaud-Trocmé, N., Hansel, D., van Vreeswijk, C. & Brunel, N.
 doi:10.1523/JNEUROSCI.23-37-11628.2003.
 
 - **__post_init__**()
+- **fourcaud_trocme_2003**(cls)
+  - Return the fitted source protocol's deterministic zero-noise profile.
+- **sc_rk4_compatibility**(cls)
+  - Return the historical SC candidate-first RK4/Q32.32 contract.
+- **analytical_tail_ms**()
+  - Return the source approximation from the handoff to divergence.
 - **step**(current)
   - Advance one timestep and return ``1`` on a spike, otherwise ``0``.
 - **simulate**(n_steps, current, backend)
   - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
+- **simulate_complete**(n_steps, current, backend)
+  - Return aligned post-step voltage, refractory, and event traces.
 - **reset**()
   - Restore resting voltage and clear any refractory hold.
 

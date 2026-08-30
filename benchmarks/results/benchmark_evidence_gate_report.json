@@ -38,8 +38,8 @@
       "id": "dcls-q88-rust-contract"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-16_expif_rk4.json",
-      "id": "expif-rk4-multibackend-local-regression"
+      "artefact": "benchmarks/results/bench_expif.json",
+      "id": "expif-source-profile-multibackend-local-regression"
     },
     {
       "artefact": "benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json",

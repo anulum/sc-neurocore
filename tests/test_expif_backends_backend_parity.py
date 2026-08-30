@@ -34,7 +34,7 @@ def test_missing_rust_engine_is_detected_at_import(
         patch.setattr(importlib, "import_module", without_engine)
         reloaded = importlib.reload(expif)
         assert reloaded._HAS_RUST is False
-        assert reloaded._EngineExpIFCls is None
+        assert reloaded._EngineExpIFSimulateFn is None
     importlib.reload(expif)
     assert expif._HAS_RUST is True
 
@@ -46,7 +46,7 @@ def test_compiled_backends_match_python_golden(
     current: float,
     expected_spikes: int,
 ) -> None:
-    """Preserve the complete trace, final state, and source-bound events."""
+    """Preserve the complete SC compatibility trace, final state, and events."""
     reference_trace, reference_spikes, reference_state = _run("python", current=current)
     trace, spikes, state = _run(backend, current=current)
 
