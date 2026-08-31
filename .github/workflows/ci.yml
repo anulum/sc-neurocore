@@ -121,8 +121,8 @@ jobs:
     name: test (${{ matrix.python-minor }})
     runs-on: ubuntu-latest
     # Fail-fast backstop for a hung leg. The 3.12 leg alone runs the full suite
-    # under --cov (the coverage tracer roughly doubles wall-clock: ~82 min vs
-    # ~50-66 min for the uninstrumented legs), so the cap is generous. Its job is
+    # under --cov (the coverage tracer roughly doubles wall-clock), so the cap is
+    # generous even with process-reclaiming file batches. Its job is
     # to kill a genuine deadlock at the cap instead of letting it burn the shared
     # runner for the 6h GitHub default — a hung job is worse than a clean red.
     timeout-minutes: 240
@@ -351,11 +351,10 @@ jobs:
         shell: bash
         run: python tools/check_mojo_isa_baseline.py
 
-      # Bootstrap juliacall's Julia ONCE, serially, before the parallel pytest
+      # Bootstrap juliacall's Julia ONCE before the batched pytest
       # run. On first import juliacall's juliapkg installs + precompiles Julia
-      # into the shared ~/.julia depot; under `pytest -n auto` several xdist
-      # workers hit that lazily at once, race on the depot and OOM ("node down").
-      # Warming it here means the workers reuse the ready depot.
+      # into the shared ~/.julia depot. Warming it here keeps every fresh batch
+      # on the ready depot rather than repeating the install and precompile.
       - name: Verify and warm up juliacall (Julia depot)
         shell: bash
         run: |
@@ -371,17 +370,11 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.primary }}" == "true" ]]; then
-            pytest -n 2 --dist loadfile tests/ -q \
-              --cov=sc_neurocore \
-              --cov-report=term-missing \
-              --cov-report=html:htmlcov \
-              --cov-report=xml:coverage.xml \
-              --cov-fail-under=100 \
-              --junitxml=test-results.xml
+            bash tools/run_full_cov.sh --batch-size=384 --html --cov-fail-under=100
           else
             # Full behavioral compatibility matrix, without repeating
             # coverage instrumentation on every Python interpreter.
-            pytest -n 2 --dist loadfile tests/ -q --junitxml=test-results.xml
+            bash tools/run_full_cov.sh --batch-size=384 --no-cov
           fi
 
       - name: NIR graph exact coverage
@@ -653,7 +646,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: test-results-py${{ matrix.python-minor }}
-          path: test-results.xml
+          path: test-results/test-results-batch-*.xml
 
       - name: Upload coverage report
         if: matrix.primary

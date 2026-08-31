@@ -43,8 +43,8 @@ def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100,)
 
 
-def test_hosted_full_suite_has_a_memory_bounded_xdist_pool() -> None:
-    """Keep native compilers and Julia workers within hosted-runner memory."""
+def test_hosted_full_suite_uses_memory_reclaiming_batches() -> None:
+    """Run every matrix leg in bounded batches without weakening coverage."""
 
     workflow_path = _ROOT / ".github/workflows/ci.yml"
     workflow_text = workflow_path.read_text(encoding="utf-8")
@@ -52,7 +52,9 @@ def test_hosted_full_suite_has_a_memory_bounded_xdist_pool() -> None:
     end = workflow_text.index("\n      - name:", start + 1)
     step = workflow_text[start:end]
 
-    assert step.count("pytest -n 2 --dist loadfile tests/ -q") == 2
+    assert step.count("bash tools/run_full_cov.sh --batch-size=384") == 2
+    assert "--batch-size=384 --html --cov-fail-under=100" in step
+    assert "--batch-size=384 --no-cov" in step
     assert "pytest -n auto" not in step
 
     try:
@@ -63,6 +65,20 @@ def test_hosted_full_suite_has_a_memory_bounded_xdist_pool() -> None:
         pytest.skip("PyYAML is not installed")
     workflow = yaml.safe_load(workflow_text)
     assert workflow["jobs"]["test"]["timeout-minutes"] == 240
+
+
+def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> None:
+    """The OOM repair must retain complete discovery and the exact coverage gate."""
+
+    runner = (_ROOT / "tools/run_full_cov.sh").read_text(encoding="utf-8")
+    assert "find tests -type f" in runner
+    assert "-name 'test_*.py'" in runner
+    assert "-name '*_test.py'" in runner
+    assert "--cov=sc_neurocore --cov-append --cov-report=" in runner
+    assert "DEFAULT_COV_FAIL_UNDER=100" in runner
+    assert '--fail-under="$cov_fail_under"' in runner
+    assert "python -m coverage xml -o coverage.xml" in runner
+    assert "test-results-batch-%03d.xml" in runner
 
 
 def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
