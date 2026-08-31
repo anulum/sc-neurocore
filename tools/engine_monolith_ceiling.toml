@@ -47,7 +47,7 @@ max_lines = 33
 max_pyfunctions = 0
 
 [targets."engine/src/network_runner/model_factory.rs"]
-max_lines = 432
+max_lines = 399
 max_pyfunctions = 0
 
 [targets."engine/src/neuron.rs"]
@@ -67,7 +67,7 @@ max_lines = 71
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/exp_if.rs"]
-max_lines = 241
+max_lines = 209
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/fixed_point_lif.rs"]
@@ -83,7 +83,7 @@ max_lines = 115
 max_pyfunctions = 0
 
 [targets."engine/src/neuron/lapicque.rs"]
-max_lines = 184
+max_lines = 171
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/ai_optimized.rs"]
@@ -115,7 +115,7 @@ max_lines = 108
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/hardware/dpi_neuron.rs"]
-max_lines = 230
+max_lines = 222
 max_pyfunctions = 0
 
 [targets."engine/src/neurons/hardware/loihi2.rs"]

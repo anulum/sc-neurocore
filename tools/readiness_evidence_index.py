@@ -208,8 +208,7 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
             "test_source_q3232_preserves_first_attainment_and_polarization_bound"
         ),
         operating_point=(
-            "Lapicque 1907 exact source-voltage polarization at V=5.5,11,12,22 "
-            "over 1000 steps"
+            "Lapicque 1907 exact source-voltage polarization at V=5.5,11,12,22 over 1000 steps"
         ),
         tolerance=(
             "source hand/TOML/JSON event-exact with state error at or below 8e-15; "
@@ -240,8 +239,7 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         class_name="QuadraticIFNeuron",
         level="h1_cosim",
         evidence=(
-            "tests/test_cosim_quadratic_if.py::"
-            "test_latham_source_rtl_tracks_source_euler_schema"
+            "tests/test_cosim_quadratic_if.py::test_latham_source_rtl_tracks_source_euler_schema"
         ),
         operating_point=(
             "Latham 2000 normalized source Euler schema/RTL at eta=0,2,4,8 over "

@@ -46,6 +46,7 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_lapicque.py",
     "engine/src/neuron/lapicque.rs",
+    "engine/src/neuron/lapicque_tests.rs",
     "engine/src/bindings/lapicque_neuron.rs",
     "engine/src/network_runner/model_factory.rs",
     "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",

@@ -8,7 +8,6 @@
 
 //! Canonical model-name catalogue and construction for network execution.
 
-use super::input_adapters::*;
 use super::{NeuronVariant, PopulationRunner};
 use crate::neuron::*;
 use crate::neurons::*;
@@ -17,6 +16,9 @@ use crate::rk4_neurons::Izhikevich2007Rk4;
 #[path = "model_catalogue.rs"]
 mod model_catalogue;
 pub use model_catalogue::supported_models;
+#[path = "wrapped_model_factory.rs"]
+mod wrapped_model_factory;
+use wrapped_model_factory::create_wrapped_neuron;
 
 /// Create a population of `n` identical neurons by model name.
 pub fn create_population(model_name: &str, n: usize) -> Result<PopulationRunner, String> {
@@ -27,6 +29,9 @@ pub fn create_population(model_name: &str, n: usize) -> Result<PopulationRunner,
 }
 
 pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
+    if let Some(result) = create_wrapped_neuron(name) {
+        return result;
+    }
     match name {
         "Izhikevich" => Ok(NeuronVariant::Izhikevich(Izhikevich::regular_spiking())),
         "Izhikevich2007" | "Izhikevich2007Neuron" => {
@@ -389,52 +394,6 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
             Ok(NeuronVariant::SmoothMuscle(SmoothMuscleCell::new()))
         }
         "EndocrineBetaCell" | "BetaCell" => Ok(NeuronVariant::BetaCell(EndocrineBetaCell::new())),
-        // Wrapped multi-input spiking
-        "AlphaNeuron" | "Alpha" => Ok(NeuronVariant::WrAlphaCell(WrAlpha::new())),
-        "COBALIFNeuron" | "COBALIF" => Ok(NeuronVariant::WrCOBALIFCell(WrCOBALIF::new())),
-        "CompteWMNeuron" | "CompteWM" => Ok(NeuronVariant::WrCompteWMCell(WrCompteWM::new())),
-        "TsodyksMarkramNeuron" | "TsodyksMarkram" => {
-            Ok(NeuronVariant::WrTsodyksMarkramCell(WrTsodyksMarkram::new()))
-        }
-        "PinskyRinzelNeuron" | "PinskyRinzel" => {
-            Ok(NeuronVariant::WrPinskyRinzelCell(WrPinskyRinzel::new()))
-        }
-        "HayL5PyramidalNeuron" | "HayL5" => Ok(NeuronVariant::WrHayL5Cell(WrHayL5::new())),
-        "TwoCompartmentLIFNeuron" | "TwoCompLIF" => {
-            Ok(NeuronVariant::WrTwoCompLIFCell(WrTwoCompLIF::new()))
-        }
-        // Wrapped hardware integer-input
-        "LoihiCUBANeuron" | "LoihiCUBA" => Ok(NeuronVariant::WrLoihiCUBACell(WrLoihiCUBA::new())),
-        "Loihi2Neuron" | "Loihi2" => Ok(NeuronVariant::WrLoihi2Cell(WrLoihi2::new())),
-        "SpiNNaker2Neuron" | "SpiNNaker2" => {
-            Ok(NeuronVariant::WrSpiNNaker2Cell(WrSpiNNaker2::new()))
-        }
-        "TrueNorthNeuron" | "TrueNorth" => Ok(NeuronVariant::WrTrueNorthCell(WrTrueNorth::new())),
-        "IntegerQIFNeuron" | "IntegerQIF" => {
-            Ok(NeuronVariant::WrIntegerQIFCell(WrIntegerQIF::new()))
-        }
-        "McCullochPittsNeuron" | "McCullochPitts" => {
-            Ok(NeuronVariant::WrMcCullochPittsCell(WrMcCullochPitts::new()))
-        }
-        // Wrapped graded/rate output
-        "SigmoidRateNeuron" | "SigmoidRate" => {
-            Ok(NeuronVariant::WrSigmoidRateCell(WrSigmoidRate::new()))
-        }
-        "ThresholdLinearRateNeuron" | "ThresholdLinearRate" => Ok(
-            NeuronVariant::WrThresholdLinearCell(WrThresholdLinear::new()),
-        ),
-        "AstrocyteModel" | "Astrocyte" => Ok(NeuronVariant::WrAstrocyteCell(WrAstrocyte::new())),
-        "InnerHairCell" | "IHC" => Ok(NeuronVariant::WrInnerHairCellCell(WrInnerHairCell::new())),
-        "OuterHairCell" | "OHC" => Ok(NeuronVariant::WrOuterHairCellCell(WrOuterHairCell::new())),
-        "RodPhotoreceptor" | "Rod" => Ok(NeuronVariant::WrRodPhotoreceptorCell(
-            WrRodPhotoreceptor::new(),
-        )),
-        "ConePhotoreceptor" | "Cone" => Ok(NeuronVariant::WrConePhotoreceptorCell(
-            WrConePhotoreceptor::new(),
-        )),
-        "TasteReceptorCell" | "TasteReceptor" => {
-            Ok(NeuronVariant::WrTasteReceptorCell(WrTasteReceptor::new()))
-        }
         _ => Err(format!("Unsupported model: '{name}'")),
     }
 }

@@ -49,6 +49,7 @@ SOURCE_PATHS = (
     "docs/api/models/expif.md",
     "engine/src/bindings/exp_if.rs",
     "engine/src/neuron/exp_if.rs",
+    "engine/src/neuron/exp_if_tests.rs",
     "engine/src/network_runner/model_catalogue.rs",
     "engine/src/network_runner/model_factory.rs",
     "engine/src/network_runner/neuron_variant.rs",

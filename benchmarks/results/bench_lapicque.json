@@ -8,10 +8,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 7.902621,
-      "minimum_call_ms": 7.476561,
+      "median_call_ms": 8.93358,
+      "minimum_call_ms": 7.820487,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 31.080361059957195,
+      "speedup_vs_python": 31.29863861967991,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -23,10 +23,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 4.175507,
-      "minimum_call_ms": 3.806623,
+      "median_call_ms": 5.023316,
+      "minimum_call_ms": 3.179797,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 58.823111540706314,
+      "speedup_vs_python": 55.66221436198718,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -38,10 +38,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 1.013934,
-      "minimum_call_ms": 0.853802,
-      "parity_max_abs_diff": 1.2212453270876722e-15,
-      "speedup_vs_python": 242.24092889675265,
+      "median_call_ms": 1.55293,
+      "minimum_call_ms": 1.210892,
+      "parity_max_abs_diff": 1.2212453270876722E-15,
+      "speedup_vs_python": 180.0524762867612,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -53,8 +53,8 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 245.616314,
-      "minimum_call_ms": 225.63941,
+      "median_call_ms": 279.608892,
+      "minimum_call_ms": 255.986139,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
@@ -68,10 +68,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 3.258772,
-      "minimum_call_ms": 3.092827,
+      "median_call_ms": 3.607475,
+      "minimum_call_ms": 3.277998,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 75.37081882377778,
+      "speedup_vs_python": 77.50819950242206,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     }
@@ -92,14 +92,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      5.083984375,
-      5.09375,
-      5.15869140625
+      10.32666015625,
+      10.32177734375,
+      14.6806640625
     ],
     "load_average_start": [
-      4.92529296875,
-      5.0634765625,
-      5.1494140625
+      10.2607421875,
+      10.314453125,
+      14.7255859375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -116,21 +116,25 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_lapicque": {
-      "py": "e05ccac7137f99176b444e132bd047d88a3baded5133203096be9b3e417a291f"
+      "py": "0c709afd6567d7102ef828717b9399f91204300084b58042f94644e4df1e736a"
     },
-    "benchmarks/bench_model_lapicque.py": "e05ccac7137f99176b444e132bd047d88a3baded5133203096be9b3e417a291f",
+    "benchmarks/bench_model_lapicque.py": "0c709afd6567d7102ef828717b9399f91204300084b58042f94644e4df1e736a",
     "engine/src/bindings/lapicque_neuron": {
       "rs": "baec33982f8a5f34ffc50aa7d700950d5b44ef18b60e5b7bc2d3d057e39854e0"
     },
     "engine/src/bindings/lapicque_neuron.rs": "baec33982f8a5f34ffc50aa7d700950d5b44ef18b60e5b7bc2d3d057e39854e0",
     "engine/src/network_runner/model_factory": {
-      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
+      "rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d"
     },
-    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
+    "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
     "engine/src/neuron/lapicque": {
-      "rs": "11bd56778011b24c1afc7f4ed03c67306fe980827f5338a8ffff57ccb1d2f1e6"
+      "rs": "1a05abbdc54e2602b424a537bbcb39a3f3900a5aa72f7f46749db7ff4953755f"
     },
-    "engine/src/neuron/lapicque.rs": "11bd56778011b24c1afc7f4ed03c67306fe980827f5338a8ffff57ccb1d2f1e6",
+    "engine/src/neuron/lapicque.rs": "1a05abbdc54e2602b424a537bbcb39a3f3900a5aa72f7f46749db7ff4953755f",
+    "engine/src/neuron/lapicque_tests": {
+      "rs": "6c3dfd57eac1dfee3fe1e56ea231867a342e4856961109df0f20ed00ad5e0243"
+    },
+    "engine/src/neuron/lapicque_tests.rs": "6c3dfd57eac1dfee3fe1e56ea231867a342e4856961109df0f20ed00ad5e0243",
     "hdl/formal/catalogue/sc_lapicque_1907": {
       "sby": "c017ae81c74017c4f2865d402bdd62d0e7c2fc43026c069b9d4dc109a3de4200"
     },
@@ -191,6 +195,6 @@
     "parameters": "Lapicque 1907 normalized profile; K=1.1, R=10, rho=1, beta=1 ms; exact constant-source-voltage flow; first-attainment latch; no automatic reset",
     "repeats": 7,
     "source_voltage": 22.0,
-    "trace_atol": 5e-15
+    "trace_atol": 5E-15
   }
 }

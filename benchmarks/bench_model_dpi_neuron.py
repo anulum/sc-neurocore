@@ -48,6 +48,7 @@ SOURCE_PATHS = (
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/bindings/hardware/dpi.rs",
     "engine/src/neurons/hardware/dpi_neuron.rs",
+    "engine/src/neurons/hardware/dpi_neuron_tests.rs",
     "src/sc_neurocore/accel/dpi_neuron.py",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go",
     "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h",

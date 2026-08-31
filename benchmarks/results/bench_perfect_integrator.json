@@ -8,10 +8,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 2.466393,
-      "minimum_call_ms": 1.895658,
+      "median_call_ms": 3.939411,
+      "minimum_call_ms": 2.782714,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 38.559316783659376,
+      "speedup_vs_python": 42.946393255235364,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     },
@@ -23,10 +23,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 1.294444,
-      "minimum_call_ms": 1.017093,
+      "median_call_ms": 2.167027,
+      "minimum_call_ms": 1.545257,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 73.46971286513747,
+      "speedup_vs_python": 78.07170561326647,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     },
@@ -38,10 +38,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 0.94051,
-      "minimum_call_ms": 0.813604,
+      "median_call_ms": 1.058839,
+      "minimum_call_ms": 0.598209,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 101.11793495018661,
+      "speedup_vs_python": 159.78207640632806,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     },
@@ -53,8 +53,8 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 95.102429,
-      "minimum_call_ms": 92.405945,
+      "median_call_ms": 169.183494,
+      "minimum_call_ms": 157.795812,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true,
@@ -68,10 +68,10 @@
       "final_state": {
         "v": 0.5
       },
-      "median_call_ms": 0.43715,
-      "minimum_call_ms": 0.348836,
+      "median_call_ms": 0.822447,
+      "minimum_call_ms": 0.762252,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 217.55102138853943,
+      "speedup_vs_python": 205.70747294354527,
       "used": true,
       "voltage_sha256": "557f23eff2766ec008c28ebe98f30534ac8de7ad354c074dc3093faa7323d092"
     }
@@ -86,20 +86,20 @@
   ],
   "meta": {
     "affinity": [
-      10
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      4.17529296875,
-      5.6064453125,
-      7.3427734375
+      11.55908203125,
+      10.6123046875,
+      14.70654296875
     ],
     "load_average_start": [
-      4.3818359375,
-      5.6953125,
-      7.39013671875
+      11.501953125,
+      10.56591796875,
+      14.736328125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -124,9 +124,9 @@
     },
     "engine/src/bindings/trivial/perfect_integrator.rs": "a490b48d658e4e3bbcb7685a5607aba97d211247b2684e69e29ace8669902b4b",
     "engine/src/network_runner/model_factory": {
-      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
+      "rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d"
     },
-    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
+    "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
     "engine/src/neurons/trivial/perfect_integrator": {
       "rs": "e388fde43c8b842d11dcaf4f611225ef6c5ad49d1380f43f42da971c877229b5"
     },

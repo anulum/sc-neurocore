@@ -11,18 +11,18 @@
         "y": 2.0422731728210026
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 3.4389158187764224e-14,
-      "median_call_ms": 24.49708,
-      "minimum_call_ms": 23.415208,
+      "final_state_max_abs_diff": 3.4389158187764224E-14,
+      "median_call_ms": 36.249902,
+      "minimum_call_ms": 33.861547,
       "output_packet_encoding": "row-major little-endian float64 post-step (x,y), uint8 upward-crossing events, then little-endian int64 event count and float64 final (x,y)",
       "output_packet_sha256": "1d47de054331889d84c5f2cbfc4d967df906546d2ec081ef77ecf6e9634f2dad",
-      "parity_atol": 1e-10,
-      "parity_max_abs_diff": 3.5424996269739495e-12,
-      "speedup_vs_python": 124.20836324165982,
+      "parity_atol": 1E-10,
+      "parity_max_abs_diff": 3.5424996269739495E-12,
+      "speedup_vs_python": 135.1262869896862,
       "state_trace_sha256": "5234087d7a0d4cde054e74bb567885a4fce45dba0ae1d6606f311e3613d810e3",
       "used": true,
-      "x_trace_max_abs_diff": 3.5424996269739495e-12,
-      "y_trace_max_abs_diff": 3.4059421949450552e-12
+      "x_trace_max_abs_diff": 3.5424996269739495E-12,
+      "y_trace_max_abs_diff": 3.4059421949450552E-12
     },
     "julia": {
       "available": true,
@@ -35,18 +35,18 @@
         "y": 2.042273172820973
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 1.534883331544279e-14,
-      "median_call_ms": 12.652216,
-      "minimum_call_ms": 9.365696,
+      "final_state_max_abs_diff": 1.534883331544279E-14,
+      "median_call_ms": 16.705007,
+      "minimum_call_ms": 10.796978,
       "output_packet_encoding": "row-major little-endian float64 post-step (x,y), uint8 upward-crossing events, then little-endian int64 event count and float64 final (x,y)",
       "output_packet_sha256": "b5a2daff8949da0a526498f112dc828aa91d93b579c817bb76f90b3fa54d024f",
-      "parity_atol": 1e-10,
-      "parity_max_abs_diff": 1.7363888105137448e-12,
-      "speedup_vs_python": 240.4908524324909,
+      "parity_atol": 1E-10,
+      "parity_max_abs_diff": 1.7363888105137448E-12,
+      "speedup_vs_python": 293.2243405225751,
       "state_trace_sha256": "649d71fd8e85b5cdb0e7c9d6ee458e981a66e3a6901b879090ccf63adc070295",
       "used": true,
-      "x_trace_max_abs_diff": 1.7363888105137448e-12,
-      "y_trace_max_abs_diff": 1.624256285026604e-12
+      "x_trace_max_abs_diff": 1.7363888105137448E-12,
+      "y_trace_max_abs_diff": 1.624256285026604E-12
     },
     "mojo": {
       "available": true,
@@ -59,18 +59,18 @@
         "y": 2.0422731681758846
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 7.553070877075463e-09,
-      "median_call_ms": 24.646069,
-      "minimum_call_ms": 23.570408,
+      "final_state_max_abs_diff": 7.553070877075463E-9,
+      "median_call_ms": 26.077384,
+      "minimum_call_ms": 24.538199,
       "output_packet_encoding": "row-major little-endian float64 post-step (x,y), uint8 upward-crossing events, then little-endian int64 event count and float64 final (x,y)",
       "output_packet_sha256": "4140e5f5726c64a6b82e81f0d188e425f81887912de98e93ca12699942591447",
-      "parity_atol": 1e-06,
-      "parity_max_abs_diff": 6.83866635764474e-07,
-      "speedup_vs_python": 123.45750598198845,
+      "parity_atol": 0.000001,
+      "parity_max_abs_diff": 6.83866635764474E-7,
+      "speedup_vs_python": 187.83765507307024,
       "state_trace_sha256": "628d5ca2212239ee69b52cd4ab159ffc9610aa3a9e08a209bc7bcb0e117c495b",
       "used": true,
-      "x_trace_max_abs_diff": 6.83866635764474e-07,
-      "y_trace_max_abs_diff": 6.593243563335349e-07
+      "x_trace_max_abs_diff": 6.83866635764474E-7,
+      "y_trace_max_abs_diff": 6.593243563335349E-7
     },
     "python": {
       "available": true,
@@ -84,8 +84,8 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "median_call_ms": 3042.742211,
-      "minimum_call_ms": 2874.874697,
+      "median_call_ms": 4898.314661,
+      "minimum_call_ms": 4740.565582,
       "output_packet_encoding": "row-major little-endian float64 post-step (x,y), uint8 upward-crossing events, then little-endian int64 event count and float64 final (x,y)",
       "output_packet_sha256": "a51cf877eff85523ba1495b4f67a4b2ea20de01a9014815bedd3a17e5afc4fbb",
       "parity_atol": 0.0,
@@ -107,44 +107,44 @@
         "y": 2.04227317282096
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 3.555489236362064e-14,
-      "median_call_ms": 7.564284,
-      "minimum_call_ms": 7.382421,
+      "final_state_max_abs_diff": 3.555489236362064E-14,
+      "median_call_ms": 8.490995,
+      "minimum_call_ms": 7.888189,
       "output_packet_encoding": "row-major little-endian float64 post-step (x,y), uint8 upward-crossing events, then little-endian int64 event count and float64 final (x,y)",
       "output_packet_sha256": "02e829868991334b8e5e3ad12d16f55ff0fd1c56cbeee7763a2bee6839739c0a",
-      "parity_atol": 1e-10,
-      "parity_max_abs_diff": 5.1951776214309575e-12,
-      "speedup_vs_python": 402.25118610036327,
+      "parity_atol": 1E-10,
+      "parity_max_abs_diff": 5.1951776214309575E-12,
+      "speedup_vs_python": 576.8834701940115,
       "state_trace_sha256": "7f3b663b876d184302fef144dcc1f1404849efaa1a36af010f31b77167b0e9b7",
       "used": true,
-      "x_trace_max_abs_diff": 5.1951776214309575e-12,
-      "y_trace_max_abs_diff": 5.026312699385471e-12
+      "x_trace_max_abs_diff": 5.1951776214309575E-12,
+      "y_trace_max_abs_diff": 5.026312699385471E-12
     }
   },
   "kernel": "chialvo_map_simulate",
   "measured_order": [
     "rust",
     "julia",
-    "go",
     "mojo",
+    "go",
     "python"
   ],
   "meta": {
     "affinity": [
-      10
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      9.94287109375,
-      10.56884765625,
-      10.09326171875
+      9.75732421875,
+      10.21826171875,
+      14.791015625
     ],
     "load_average_start": [
-      9.37890625,
-      10.517578125,
-      10.064453125
+      8.64501953125,
+      10.0615234375,
+      14.91748046875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -164,7 +164,7 @@
     "bridge/sc_neurocore_engine/__init__.py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70",
     "engine/src/bindings/chialvo_map.rs": "cc7191afb9ea8a13f7a0cb7b746ddace77d26976c6a1b87dce143a78edf8169f",
     "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
-    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
+    "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
     "engine/src/network_runner/neuron_variant.rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed",
     "engine/src/neurons/chialvo_map.rs": "118444f566dfa87537d576bf0b4369b1b643fee960855a4d083694e974039b13",
     "hdl/formal/catalogue/sc_chialvo_map.sby": "cc87fb6d6c86e0692fc4682aa4d6c38a25cc0d5a88eed98dbdf435daf95d39cd",

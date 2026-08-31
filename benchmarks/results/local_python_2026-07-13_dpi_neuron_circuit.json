@@ -10,15 +10,15 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 16.453683,
-      "minimum_call_ms": 14.636848,
-      "parity_max_abs_diff": 1.1102230246251565e-16,
+      "median_call_ms": 22.00174,
+      "minimum_call_ms": 19.642494,
+      "parity_max_abs_diff": 1.1102230246251565E-16,
       "parity_max_abs_diff_by_state": {
         "i_ahp": 0.0,
-        "i_mem": 1.1102230246251565e-16,
+        "i_mem": 1.1102230246251565E-16,
         "refractory_time": 0.0
       },
-      "speedup_vs_python": 52.209954452143016,
+      "speedup_vs_python": 46.84651913894083,
       "trace_sha256": {
         "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
         "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
@@ -37,15 +37,15 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 8.448816,
-      "minimum_call_ms": 7.798298,
+      "median_call_ms": 9.94342,
+      "minimum_call_ms": 9.173921,
       "parity_max_abs_diff": 0.0,
       "parity_max_abs_diff_by_state": {
         "i_ahp": 0.0,
         "i_mem": 0.0,
         "refractory_time": 0.0
       },
-      "speedup_vs_python": 101.67649999715935,
+      "speedup_vs_python": 103.65698461897416,
       "trace_sha256": {
         "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
         "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
@@ -64,15 +64,15 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 9.955789,
-      "minimum_call_ms": 9.668606,
-      "parity_max_abs_diff": 2.567945855957987e-13,
+      "median_call_ms": 13.335087,
+      "minimum_call_ms": 12.779861,
+      "parity_max_abs_diff": 2.567945855957987E-13,
       "parity_max_abs_diff_by_state": {
-        "i_ahp": 8.881784197001252e-16,
-        "i_mem": 2.567945855957987e-13,
+        "i_ahp": 8.881784197001252E-16,
+        "i_mem": 2.567945855957987E-13,
         "refractory_time": 0.0
       },
-      "speedup_vs_python": 86.28608340333449,
+      "speedup_vs_python": 77.29270412708969,
       "trace_sha256": {
         "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
         "i_ahp_le_f64": "0642997b9a4ea83724d99fc9cb6d5b0c7176025d28d8664e1f6fd507a9162e24",
@@ -91,8 +91,8 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 859.04604,
-      "minimum_call_ms": 807.388566,
+      "median_call_ms": 1030.704934,
+      "minimum_call_ms": 1020.394781,
       "parity_max_abs_diff": 0.0,
       "parity_max_abs_diff_by_state": {
         "i_ahp": 0.0,
@@ -118,15 +118,15 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 26.540958,
-      "minimum_call_ms": 25.045357,
+      "median_call_ms": 34.719488,
+      "minimum_call_ms": 33.250957,
       "parity_max_abs_diff": 0.0,
       "parity_max_abs_diff_by_state": {
         "i_ahp": 0.0,
         "i_mem": 0.0,
         "refractory_time": 0.0
       },
-      "speedup_vs_python": 32.366806051235976,
+      "speedup_vs_python": 29.686639791462365,
       "trace_sha256": {
         "events_u8": "3ad3712fe2ce56198220045b9a8b042a0d588fe957de9644d50f93e6c759275e",
         "i_ahp_le_f64": "20600c9c8193665094f5bb648aa25eb770cc3ce0b81c4fe130a80756a12f47c6",
@@ -160,14 +160,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      4.716796875,
-      5.43798828125,
-      5.59765625
+      12.86474609375,
+      11.07568359375,
+      14.625
     ],
     "load_average_start": [
-      4.52490234375,
-      5.44287109375,
-      5.60205078125
+      12.498046875,
+      10.90380859375,
+      14.6494140625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -184,9 +184,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_dpi_neuron": {
-      "py": "64b6d36cc046b36226ecc30981f46c682daa961e6023cbb80833c8253277cee5"
+      "py": "31e71103d334f8a1be1bd687c7226c69d603d01ccb3789c5f13b54fc24949256"
     },
-    "benchmarks/bench_model_dpi_neuron.py": "64b6d36cc046b36226ecc30981f46c682daa961e6023cbb80833c8253277cee5",
+    "benchmarks/bench_model_dpi_neuron.py": "31e71103d334f8a1be1bd687c7226c69d603d01ccb3789c5f13b54fc24949256",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70"
     },
@@ -196,9 +196,13 @@
     },
     "engine/src/bindings/hardware/dpi.rs": "a6999234484d3f727c5b571139cbee64c0bb4fa1cccb2b84cbb5a99cda38e466",
     "engine/src/neurons/hardware/dpi_neuron": {
-      "rs": "c9c48984101e6013ce6ac67cc3b31d0c5276968de13d84534d2811a6901c3874"
+      "rs": "4e3ca67d3416cbd344d6ec82bb65b754f11712d6daf344f81d202a7d49423f97"
     },
-    "engine/src/neurons/hardware/dpi_neuron.rs": "c9c48984101e6013ce6ac67cc3b31d0c5276968de13d84534d2811a6901c3874",
+    "engine/src/neurons/hardware/dpi_neuron.rs": "4e3ca67d3416cbd344d6ec82bb65b754f11712d6daf344f81d202a7d49423f97",
+    "engine/src/neurons/hardware/dpi_neuron_tests": {
+      "rs": "d8e129c069040e5674b23bf2bebc1002bd65169cde8af7325cc4d9f6319dc0ff"
+    },
+    "engine/src/neurons/hardware/dpi_neuron_tests.rs": "d8e129c069040e5674b23bf2bebc1002bd65169cde8af7325cc4d9f6319dc0ff",
     "hdl/formal/catalogue/sc_dpineuron": {
       "sby": "7d6cf0d74bc56b645335899362efeb2983608037c2b0985e51165667387305b2",
       "v": "c3267ff3f39ff2b2847e1b9141de547baeff73bab11a7d3fa77f778339389a4a"
@@ -331,10 +335,10 @@
         "test dpi_neuron::tests::sustained_drive_exhibits_spike_frequency_adaptation ... ok",
         "test dpi_neuron::tests::threshold_crossing_starts_refractory_pulse ... ok",
         "",
-        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1044 filtered out; finished in 0.00s",
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1046 filtered out; finished in 0.01s",
         "",
         "",
-        "    Finished `release` profile [optimized] target(s) in 0.01s",
+        "    Finished `release` profile [optimized] target(s) in 0.02s",
         "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-bc252670c4103a9c)"
       ],
       "passed": true,
@@ -346,6 +350,6 @@
     "n_steps": 100000,
     "parameters": "DPI factory defaults; Indiveri-Stefanini-Chicca 2010 Eqs. (2)-(3); simultaneous explicit Euler; post-update threshold and refractory pulse",
     "repeats": 7,
-    "state_atol": 5e-13
+    "state_atol": 5E-13
   }
 }

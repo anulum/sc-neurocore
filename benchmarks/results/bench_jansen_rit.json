@@ -1,7 +1,7 @@
 {
   "auto_backend_order": [
-    "rust",
     "mojo",
+    "rust",
     "julia",
     "go",
     "python"
@@ -19,20 +19,20 @@
         "y5": 25.44412923685571
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 2.9203306439740118e-12,
-      "max_call_ns": 10750597,
-      "median_call_ms": 9.685865,
-      "median_call_ns": 9685865.0,
-      "median_ns_per_step": 193.7173,
-      "min_call_ns": 8382783,
-      "parity_atol": 1e-11,
-      "parity_max_abs_diff": 6.188827228470473e-12,
+      "final_state_max_abs_diff": 2.9203306439740118E-12,
+      "max_call_ns": 11092786,
+      "median_call_ms": 9.298635,
+      "median_call_ns": 9298635.0,
+      "median_ns_per_step": 185.9727,
+      "min_call_ns": 6804458,
+      "parity_atol": 1E-11,
+      "parity_max_abs_diff": 6.188827228470473E-12,
       "samples_ns": [
-        9167466,
-        10537015,
-        8382783,
-        9685865,
-        10750597
+        9706328,
+        7863868,
+        6804458,
+        9298635,
+        11092786
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -50,20 +50,20 @@
         "y5": 25.444129236852785
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 3.552713678800501e-15,
-      "max_call_ns": 6334721,
-      "median_call_ms": 5.444953,
-      "median_call_ns": 5444953.0,
-      "median_ns_per_step": 108.89906,
-      "min_call_ns": 5061280,
-      "parity_atol": 1e-11,
-      "parity_max_abs_diff": 1.4210854715202004e-14,
+      "final_state_max_abs_diff": 3.552713678800501E-15,
+      "max_call_ns": 9325740,
+      "median_call_ms": 8.031706,
+      "median_call_ns": 8031706.0,
+      "median_ns_per_step": 160.63412,
+      "min_call_ns": 7051213,
+      "parity_atol": 1E-11,
+      "parity_max_abs_diff": 1.4210854715202004E-14,
       "samples_ns": [
-        5061280,
-        6334721,
-        5372099,
-        5547379,
-        5444953
+        7051213,
+        9325740,
+        8031706,
+        9234681,
+        7934210
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -81,20 +81,20 @@
         "y5": 25.44412923686377
       },
       "final_state_matches_python": true,
-      "final_state_max_abs_diff": 1.0981437981172348e-11,
-      "max_call_ns": 6184726,
-      "median_call_ms": 4.793474,
-      "median_call_ns": 4793474.0,
-      "median_ns_per_step": 95.86948,
-      "min_call_ns": 4597475,
-      "parity_atol": 1e-08,
-      "parity_max_abs_diff": 2.660414111232967e-10,
+      "final_state_max_abs_diff": 1.0981437981172348E-11,
+      "max_call_ns": 7738770,
+      "median_call_ms": 6.389182,
+      "median_call_ns": 6389182.0,
+      "median_ns_per_step": 127.78364,
+      "min_call_ns": 5784353,
+      "parity_atol": 1E-8,
+      "parity_max_abs_diff": 2.660414111232967E-10,
       "samples_ns": [
-        4945958,
-        6184726,
-        4709237,
-        4597475,
-        4793474
+        7591729,
+        7738770,
+        6389182,
+        5784353,
+        6256120
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -113,19 +113,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 410696378,
-      "median_call_ms": 380.177822,
-      "median_call_ns": 380177822.0,
-      "median_ns_per_step": 7603.55644,
-      "min_call_ns": 346765361,
+      "max_call_ns": 795105786,
+      "median_call_ms": 654.020869,
+      "median_call_ns": 654020869.0,
+      "median_ns_per_step": 13080.41738,
+      "min_call_ns": 579226448,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        380177822,
-        346765361,
-        382376830,
-        347834196,
-        410696378
+        609416823,
+        579226448,
+        715946397,
+        795105786,
+        654020869
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -144,19 +144,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 5792473,
-      "median_call_ms": 4.659967,
-      "median_call_ns": 4659967.0,
-      "median_ns_per_step": 93.19934,
-      "min_call_ns": 4082859,
-      "parity_atol": 1e-11,
+      "max_call_ns": 10190537,
+      "median_call_ms": 7.672005,
+      "median_call_ns": 7672005.0,
+      "median_ns_per_step": 153.4401,
+      "min_call_ns": 6621937,
+      "parity_atol": 1E-11,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4659967,
-        5792473,
-        4082859,
-        4457927,
-        4696450
+        7485472,
+        10190537,
+        7672005,
+        6621937,
+        8399146
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -168,31 +168,31 @@
   "binary_hashes": {
     "go_shared_library": {
       "path": "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit.so",
-      "sha256": "9a3759bb1e1b44e83b2101b64b791d6704f4fbe2f973c4e0447cc39c04472852",
-      "size_bytes": 2020592
+      "sha256": "755387dd43df33c37348d50f1fb815173dfde2d804c65c82b655d31a0c3fd52e",
+      "size_bytes": 2020432
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/jansen_rit/libjansen_rit.so",
-      "sha256": "3a948e451a9ba9829f59259303aec03921a788a54e590b618dab284a74249b6e",
+      "sha256": "260265c0a0e3a7ee9a5ca3cdc134896f851eb22bb6ac70967a87eda2e207a8cc",
       "size_bytes": 15000
     },
     "rust_extension": {
-      "path": "wheel_site/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "6967cd6b1f68b0f6fe2b80a61f33be8accab8da39d06210c95416234a7504778",
-      "size_bytes": 34806584
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "477f2f0c1d3a18757dfb3bda679f071429adf8844df260cf22ea5ebae65a1a2c",
+      "size_bytes": 34833849
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_jansen_rit.py --json benchmarks/results/bench_jansen_rit.json",
   "environment": {
     "affinity": [
-      10
+      0
     ],
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      8.5361328125,
-      9.58984375,
-      9.8408203125
+      14.6171875,
+      11.55029296875,
+      14.703125
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -203,7 +203,7 @@
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
   "hardware_measurement_claimed": false,
   "kernel": "jansen_rit_euler_batch",
-  "lowest_median_native_backend": "rust",
+  "lowest_median_native_backend": "mojo",
   "measured_order": [
     "python",
     "rust",
@@ -219,17 +219,17 @@
   },
   "parity_contract": {
     "comparison": {
-      "go": 1e-11,
-      "julia": 1e-11,
-      "mojo": 1e-08,
+      "go": 1E-11,
+      "julia": 1E-11,
+      "mojo": 1E-8,
       "python": 0.0,
-      "rust": 1e-11
+      "rust": 1E-11
     },
     "observable": "seven complete float64 traces and six final states",
     "reason": "transcendental library implementations may differ by bounded ulps"
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "rust",
+  "recommended_auto_backend": "mojo",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_jansen_rit": {
@@ -265,9 +265,9 @@
     },
     "src/sc_neurocore/accel/go/jansen_rit/jansen_rit.go": "0efaabe98d1e0feb6ddc51e4b4c68fe9cdb9eb2935311994ec6d7596aa446636",
     "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit": {
-      "h": "cfe78ab6810c86ac069431f5e859b31cf1d98a6fc034b563371b172a27e0d89c"
+      "h": "16e0cac16854d068e58e67aa876a9bdb06126a1a0615d4816f8f624c0c3552d3"
     },
-    "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit.h": "cfe78ab6810c86ac069431f5e859b31cf1d98a6fc034b563371b172a27e0d89c",
+    "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit.h": "16e0cac16854d068e58e67aa876a9bdb06126a1a0615d4816f8f624c0c3552d3",
     "src/sc_neurocore/accel/go/services/jansen_rit": {
       "go": "1d4950a49dab68904ed14cf6e8af6b50b5db7c86f434a4a0ab75401cb069ee95"
     },
@@ -319,7 +319,7 @@
     },
     "src/sc_neurocore/neurons/reference_trace_data/jansen_rit_eq6_euler_brian2.json": "6a5895a51159ea469a8109a9984e03e6aa55a4c7a19657f6c9a945b80883a464"
   },
-  "timestamp_utc": "2026-08-31T14:43:27+00:00",
+  "timestamp_utc": "2026-08-31T18:22:34+00:00",
   "verification": {
     "rust_safety": {
       "command": [

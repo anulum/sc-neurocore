@@ -8,10 +8,10 @@
       "final_state": {
         "v": -1.5129750387601124
       },
-      "median_call_ms": 6.932071,
-      "minimum_call_ms": 6.583411,
-      "parity_max_abs_diff": 9.769962616701378e-15,
-      "speedup_vs_python": 16.407503616163194,
+      "median_call_ms": 9.45698,
+      "minimum_call_ms": 9.158663,
+      "parity_max_abs_diff": 9.769962616701378E-15,
+      "speedup_vs_python": 20.304377401665224,
       "used": true,
       "voltage_sha256": "f90be6310fc0ce72cf07adbaf3fe83184c7bad0bdb4b29157e5b42ac7666e15f"
     },
@@ -23,10 +23,10 @@
       "final_state": {
         "v": -1.5129750387601126
       },
-      "median_call_ms": 6.010864,
-      "minimum_call_ms": 5.795918,
+      "median_call_ms": 8.742748,
+      "minimum_call_ms": 6.169877,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 18.922068441408754,
+      "speedup_vs_python": 21.96312772597357,
       "used": true,
       "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     },
@@ -38,10 +38,10 @@
       "final_state": {
         "v": -1.5129750387601126
       },
-      "median_call_ms": 10.443539,
-      "minimum_call_ms": 10.225396,
+      "median_call_ms": 16.004339,
+      "minimum_call_ms": 12.603135,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 10.89075073114583,
+      "speedup_vs_python": 11.997877013227473,
       "used": true,
       "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     },
@@ -53,8 +53,8 @@
       "final_state": {
         "v": -1.5129750387601126
       },
-      "median_call_ms": 113.73798,
-      "minimum_call_ms": 106.180457,
+      "median_call_ms": 192.018091,
+      "minimum_call_ms": 181.081899,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true,
@@ -68,10 +68,10 @@
       "final_state": {
         "v": -1.5129750387601126
       },
-      "median_call_ms": 4.140633,
-      "minimum_call_ms": 4.06297,
+      "median_call_ms": 5.138983,
+      "minimum_call_ms": 4.71672,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 27.468742098128473,
+      "speedup_vs_python": 37.36499828857188,
       "used": true,
       "voltage_sha256": "9c1d8c65aed7a061c56ce4d935ae3405c02d4e20b0f97a6cc5b76fa8edee3a93"
     }
@@ -86,20 +86,20 @@
   ],
   "meta": {
     "affinity": [
-      10
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      4.07470703125,
-      6.06396484375,
-      7.6533203125
+      12.083984375,
+      10.7724609375,
+      14.67041015625
     ],
     "load_average_start": [
-      3.90673828125,
-      6.0654296875,
-      7.66259765625
+      11.43408203125,
+      10.60205078125,
+      14.68115234375
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -124,9 +124,9 @@
     },
     "engine/src/bindings/trivial/quadratic_if.rs": "57e873939d17d875b96bba52ff75813a10512b40c8535fb48a040ab9831eda1d",
     "engine/src/network_runner/model_factory": {
-      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
+      "rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d"
     },
-    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
+    "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
     "engine/src/neurons/trivial/quadratic_if": {
       "rs": "20f55bf94955642d607d7c6bac11e3cd69ef585010ef99ce4357c8f5694e9a23"
     },
@@ -214,10 +214,10 @@
         "test quadratic_if::tests::test_quadratic_if_step ... ok",
         "test quadratic_if::tests::test_reset_preserves_parameters ... ok",
         "",
-        "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1046 filtered out; finished in 0.00s",
+        "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1051 filtered out; finished in 0.01s",
         "",
         "",
-        "    Finished `release` profile [optimized] target(s) in 0.01s",
+        "    Finished `release` profile [optimized] target(s) in 0.02s",
         "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-bc252670c4103a9c)"
       ],
       "passed": true,
@@ -229,6 +229,6 @@
     "n_steps": 100000,
     "parameters": "Latham 2000 normalized source profile; v=-1, reset=-3, apex=31/3, dt=.05; exact held-current Riccati flow",
     "repeats": 7,
-    "trace_atol": 2e-12
+    "trace_atol": 2E-12
   }
 }

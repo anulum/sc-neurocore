@@ -8,10 +8,10 @@
       "final_state": {
         "theta": 0.3549750607569697
       },
-      "median_call_ms": 13.94625,
-      "minimum_call_ms": 11.988515,
-      "parity_max_circular_phase_diff": 1.9895196601282805e-13,
-      "speedup_vs_python": 9.043719064264588,
+      "median_call_ms": 16.448207,
+      "minimum_call_ms": 13.879259,
+      "parity_max_circular_phase_diff": 1.9895196601282805E-13,
+      "speedup_vs_python": 14.015397787734553,
       "uint8_event_sha256": "9dc6d01a8bd086bb9a23f4ec8e3d024cadc24cb099c3cbc8cbae98c2ebe4fe4d",
       "used": true
     },
@@ -23,10 +23,10 @@
       "final_state": {
         "theta": 0.3549750607568738
       },
-      "median_call_ms": 11.396356,
-      "minimum_call_ms": 10.957532,
-      "parity_max_circular_phase_diff": 7.194245199571014e-14,
-      "speedup_vs_python": 11.067218942616394,
+      "median_call_ms": 14.891367,
+      "minimum_call_ms": 14.492054,
+      "parity_max_circular_phase_diff": 7.194245199571014E-14,
+      "speedup_vs_python": 15.480658290135485,
       "uint8_event_sha256": "9dc6d01a8bd086bb9a23f4ec8e3d024cadc24cb099c3cbc8cbae98c2ebe4fe4d",
       "used": true
     },
@@ -38,10 +38,10 @@
       "final_state": {
         "theta": 0.3549750607569022
       },
-      "median_call_ms": 24.357452,
-      "minimum_call_ms": 24.011582,
+      "median_call_ms": 30.571999,
+      "minimum_call_ms": 29.251019,
       "parity_max_circular_phase_diff": 0.0,
-      "speedup_vs_python": 5.178126472342017,
+      "speedup_vs_python": 7.540500181227927,
       "uint8_event_sha256": "9dc6d01a8bd086bb9a23f4ec8e3d024cadc24cb099c3cbc8cbae98c2ebe4fe4d",
       "used": true
     },
@@ -53,8 +53,8 @@
       "final_state": {
         "theta": 0.3549750607569022
       },
-      "median_call_ms": 126.125967,
-      "minimum_call_ms": 117.079061,
+      "median_call_ms": 230.528164,
+      "minimum_call_ms": 222.63742,
       "parity_max_circular_phase_diff": 0.0,
       "speedup_vs_python": 1.0,
       "uint8_event_sha256": "9dc6d01a8bd086bb9a23f4ec8e3d024cadc24cb099c3cbc8cbae98c2ebe4fe4d",
@@ -68,10 +68,10 @@
       "final_state": {
         "theta": 0.3549750607569022
       },
-      "median_call_ms": 10.461786,
-      "minimum_call_ms": 9.89033,
+      "median_call_ms": 11.145839,
+      "minimum_call_ms": 10.438937,
       "parity_max_circular_phase_diff": 0.0,
-      "speedup_vs_python": 12.055873347055655,
+      "speedup_vs_python": 20.682890179913777,
       "uint8_event_sha256": "9dc6d01a8bd086bb9a23f4ec8e3d024cadc24cb099c3cbc8cbae98c2ebe4fe4d",
       "used": true
     }
@@ -94,20 +94,20 @@
   ],
   "meta": {
     "affinity": [
-      10
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      14.0224609375,
-      15.8408203125,
-      10.076171875
+      12.498046875,
+      10.90380859375,
+      14.6494140625
     ],
     "load_average_start": [
-      14.72119140625,
-      16.00732421875,
-      10.0986328125
+      12.083984375,
+      10.7724609375,
+      14.67041015625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
@@ -128,17 +128,17 @@
     },
     "benchmarks/bench_model_theta.py": "5544bd7524459d18a9fdd48428960c47c020544117b197a262e8cd04ff4e5e9d",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "4fa8babe57408d56ad33e33b6eae678755a1c69aa79091573e47cf566d6a319f"
+      "py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "4fa8babe57408d56ad33e33b6eae678755a1c69aa79091573e47cf566d6a319f",
+    "bridge/sc_neurocore_engine/__init__.py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70",
     "engine/src/bindings/trivial/theta": {
       "rs": "95abe0360b9cd6440b6ef76e0e3b2c627e4d4e74496827525e4f75a30721c152"
     },
     "engine/src/bindings/trivial/theta.rs": "95abe0360b9cd6440b6ef76e0e3b2c627e4d4e74496827525e4f75a30721c152",
     "engine/src/network_runner/model_factory": {
-      "rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4"
+      "rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d"
     },
-    "engine/src/network_runner/model_factory.rs": "998c45653a6838bf5081f63dbae153f90069184047d33362200c457a30a6c2f4",
+    "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
     "engine/src/network_runner/neuron_variant": {
       "rs": "e7cf8adc990f06e1afd0f880edc089699f32cd65a4ce8ddcf5b674ee63a36eed"
     },
@@ -226,13 +226,13 @@
     },
     "tests/test_reference_theta.py": "7624b5139e7ca37ad47e5737aa58653d89c728089d7722ccb823b60059f59d2d",
     "tools/emit_catalogue_formal": {
-      "py": "cfbb2bcb4ea0342c034ca6aef444a4fcf6d6f54fa5b15dd14358575322e6b6e6"
+      "py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7"
     },
-    "tools/emit_catalogue_formal.py": "cfbb2bcb4ea0342c034ca6aef444a4fcf6d6f54fa5b15dd14358575322e6b6e6",
+    "tools/emit_catalogue_formal.py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7",
     "tools/readiness_evidence_index": {
-      "py": "e2bb75bac54e4b2c505a1c0015e4b2c9d4e3cddbd138f26aa3ab11b0f6716da5"
+      "py": "5deb258a14b8dbb30c9419f89878096ceef6167afdb4a17ee9c7bdcafe332cd3"
     },
-    "tools/readiness_evidence_index.py": "e2bb75bac54e4b2c505a1c0015e4b2c9d4e3cddbd138f26aa3ab11b0f6716da5"
+    "tools/readiness_evidence_index.py": "5deb258a14b8dbb30c9419f89878096ceef6167afdb4a17ee9c7bdcafe332cd3"
   },
   "verification": {
     "rust_safety": {
@@ -245,7 +245,7 @@
         "test theta::tests::test_theta_new ... ok",
         "test theta::tests::test_theta_step ... ok",
         "",
-        "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1045 filtered out; finished in 0.01s",
+        "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1049 filtered out; finished in 0.01s",
         "",
         "",
         "    Finished `release` profile [optimized] target(s) in 0.01s",
@@ -256,7 +256,7 @@
     }
   },
   "workload": {
-    "circular_phase_atol": 2e-12,
+    "circular_phase_atol": 2E-12,
     "current": 0.5,
     "n_steps": 100000,
     "parameters": "Theta factory defaults; tangent-half-angle exact constant-current flow",
