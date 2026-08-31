@@ -491,8 +491,8 @@ hdl/
   formal/ (90 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **90 SymbiYosys proof jobs and 433 formal
-statements (288 assert, 109 assume, 36 cover)** under `hdl/formal/` (18
+Formal verification inventory: **90 SymbiYosys proof jobs and 441 formal
+statements (293 assert, 112 assume, 36 cover)** under `hdl/formal/` (18
 non-catalogue jobs + **72 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.

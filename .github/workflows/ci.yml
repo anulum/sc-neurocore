@@ -125,7 +125,7 @@ jobs:
     # ~50-66 min for the uninstrumented legs), so the cap is generous. Its job is
     # to kill a genuine deadlock at the cap instead of letting it burn the shared
     # runner for the 6h GitHub default — a hung job is worse than a clean red.
-    timeout-minutes: 150
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
@@ -287,7 +287,7 @@ jobs:
           # is mandatory because its Go/Mojo parity modules otherwise skip at collection.
           for model in wilson_cowan wong_wang jansen_rit amari_field brunel_wang compte_wm non_resetting_lif sc_non_resetting_adaptive_lif sigma_delta sc_sigma_delta_accumulator partition rk4_neurons; do
             ( cd "src/sc_neurocore/accel/go/${model}" \
-                && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+                && go build -buildmode=c-shared -o "lib${model}.so" . )
             # --target-cpu x86-64-v3 keeps this explicit build within the same portable ISA
             # baseline as tools/build_accel_backends.py, so it cannot emit AVX-512 that SIGILLs
             # on a runner without AVX-512F. The drift gate below enforces this on every library.
@@ -371,7 +371,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.primary }}" == "true" ]]; then
-            pytest -n auto --dist loadfile tests/ -q \
+            pytest -n 2 --dist loadfile tests/ -q \
               --cov=sc_neurocore \
               --cov-report=term-missing \
               --cov-report=html:htmlcov \
@@ -381,7 +381,7 @@ jobs:
           else
             # Full behavioral compatibility matrix, without repeating
             # coverage instrumentation on every Python interpreter.
-            pytest -n auto --dist loadfile tests/ -q --junitxml=test-results.xml
+            pytest -n 2 --dist loadfile tests/ -q --junitxml=test-results.xml
           fi
 
       - name: NIR graph exact coverage

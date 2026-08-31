@@ -72,7 +72,10 @@ _RUNTIME_NAMES = (
 )
 
 
-_ADEX_NAMES = ("_adex_subthreshold_euler_features",)
+_ADEX_NAMES = (
+    "_adex_published_euler_trace",
+    "_adex_subthreshold_euler_features",
+)
 
 
 _CONDUCTANCE_RATE_NAMES = (

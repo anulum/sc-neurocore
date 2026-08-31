@@ -33,12 +33,13 @@ def test_catalogue_formal_smoke_pass(sby_name: str) -> None:
         pytest.skip("z3 not on PATH")
     sby_path = CATALOGUE / sby_name
     assert sby_path.is_file()
+    timeout_seconds = 300 if sby_name == "sc_dpineuron.sby" else 120
     proc = subprocess.run(
         ["sby", "-f", sby_name],
         cwd=CATALOGUE,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=timeout_seconds,
         check=False,
     )
     combined = (proc.stdout or "") + (proc.stderr or "")

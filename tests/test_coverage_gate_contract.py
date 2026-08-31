@@ -43,6 +43,28 @@ def test_explicit_local_and_hosted_thresholds_match_canonical_gate() -> None:
     assert _cov_thresholds(_ROOT / ".github/workflows/ci.yml") == (100,)
 
 
+def test_hosted_full_suite_has_a_memory_bounded_xdist_pool() -> None:
+    """Keep native compilers and Julia workers within hosted-runner memory."""
+
+    workflow_path = _ROOT / ".github/workflows/ci.yml"
+    workflow_text = workflow_path.read_text(encoding="utf-8")
+    start = workflow_text.index("- name: Test + coverage")
+    end = workflow_text.index("\n      - name:", start + 1)
+    step = workflow_text[start:end]
+
+    assert step.count("pytest -n 2 --dist loadfile tests/ -q") == 2
+    assert "pytest -n auto" not in step
+
+    try:
+        import yaml
+    except ModuleNotFoundError:  # pragma: no cover - PyYAML ships with the dev env.
+        import pytest
+
+        pytest.skip("PyYAML is not installed")
+    workflow = yaml.safe_load(workflow_text)
+    assert workflow["jobs"]["test"]["timeout-minutes"] == 240
+
+
 def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:
     """Both preserved map identities need branch and backend custody."""
 
