@@ -158,6 +158,7 @@ exclude = [
 [tool.setuptools.package-data]
 sc_neurocore = [
   "py.typed",
+  "juliapkg.json",
   "model_zoo/weights/*.npz",
   "hardware/*.v",
   "hdl/primitives/*.v",

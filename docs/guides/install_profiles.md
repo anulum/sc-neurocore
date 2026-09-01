@@ -81,6 +81,31 @@ bitstream generation, a `StochasticLIFNeuron` bitstream pass, and packaged
 Verilog primitive discovery. It does not import quantum, Lava, gdsfactory,
 PyTorch, JAX, or hardware-only dependencies.
 
+## Reproducible source workstation
+
+Use the workstation lock when a source checkout needs the contributor tools,
+Julia bridge, Rust build frontend, plotting stack, and Jupyter surface in one
+environment:
+
+```bash
+uv venv --python 3.12.13 .venv
+uv pip install --python .venv/bin/python --require-hashes \
+  -r requirements/workstation.txt
+uv pip install --python .venv/bin/python --no-deps --no-build-isolation \
+  --editable .
+```
+
+`requirements/workstation.txt` is compiled from `pyproject.toml` with the
+`dev` and `julia` extras, `requirements/build.in`,
+`requirements/maturin.in`, and the notebook-only
+`requirements/workstation.in`. The lock pins every Python package and archive
+hash. External Rust, Go, Julia, Mojo, and HDL executables remain host
+toolchains rather than Python dependencies.
+
+The packaged `juliapkg.json` constrains JuliaCall to Julia 1.11.9, matching
+the required CI runtime. This prevents JuliaUp from silently selecting a newer
+installed release during first import.
+
 ## Rust engine
 
 The Rust engine is optional acceleration. If an engine wheel or local source

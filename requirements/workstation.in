@@ -1,0 +1,7 @@
+# Full-fidelity local workstation overlay.
+# Package, developer, Julia, build, and maturin dependencies are compiled from
+# their canonical project inputs alongside this intentionally separate
+# interactive notebook surface.
+jupyter>=1.1,<2
+matplotlib>=3.5
+pip>=26,<27

@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, cast
 
@@ -17,6 +18,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
+JULIAPKG_PATH = ROOT / "src" / "sc_neurocore" / "juliapkg.json"
 SETUP_JULIA = "julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32"
 JULIA_VERSION = "1.11.9"
 
@@ -71,3 +73,13 @@ def test_ci_fails_closed_on_wrong_julia_before_juliacall_import() -> None:
     assert "python -c \"import juliacall; juliacall.Main.seval('1+1')\"" in run_text
     assert _step_index(steps, name="Install package") < warm_index
     assert warm_index < _step_index(steps, name="Test + coverage")
+
+
+def test_python_package_pins_the_same_julia_runtime() -> None:
+    """Ship the CI Julia patch pin with source and wheel installations."""
+
+    contract = json.loads(JULIAPKG_PATH.read_text(encoding="utf-8"))
+    assert contract == {"julia": f"={JULIA_VERSION}"}
+
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert '  "juliapkg.json",' in pyproject
