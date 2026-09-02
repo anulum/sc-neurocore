@@ -63,7 +63,7 @@ sha2 = "0.11"
 wgpu = { version = "30", optional = true }
 pollster = { version = "1.0", optional = true }
 bytemuck = { version = "1.21", features = ["derive"], optional = true }
-z3 = { version = "0.20", features = ["bundled"], optional = true }
+z3 = { version = "0.21", features = ["bundled"], optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
