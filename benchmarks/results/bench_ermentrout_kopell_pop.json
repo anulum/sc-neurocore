@@ -269,9 +269,9 @@
     },
     "engine/src/neurons/special.rs": "973ab2368ecc09889b2577ccf23f80c979fcb2d0107eaa05f3adfbe21b349bbf",
     "pyproject": {
-      "toml": "0ba9bf4ea8c5a4892d3e50a7d8399be2b64520bb01cff8ce856e016ac91bca3b"
+      "toml": "78f294b5f7420cef23b39b3b7cec08e3aef572e98616cc70c7bbfc77c56c92db"
     },
-    "pyproject.toml": "0ba9bf4ea8c5a4892d3e50a7d8399be2b64520bb01cff8ce856e016ac91bca3b",
+    "pyproject.toml": "78f294b5f7420cef23b39b3b7cec08e3aef572e98616cc70c7bbfc77c56c92db",
     "src/sc_neurocore/accel/ermentrout_kopell_pop": {
       "py": "6a4bf4259c981c65d085a179d4147bdefdae710915ecff80ad08d0aad75ead2a"
     },
