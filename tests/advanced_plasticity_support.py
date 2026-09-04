@@ -30,8 +30,8 @@ from sc_neurocore.learning.advanced import (
 @pytest.fixture()
 def simple_net():
     """Two-population network with one projection."""
-    pop_a = Population("LapicqueNeuron", 5, label="src")
-    pop_b = Population("LapicqueNeuron", 5, label="tgt")
+    pop_a = Population("SCLapicqueLIFNeuron", 5, label="src")
+    pop_b = Population("SCLapicqueLIFNeuron", 5, label="tgt")
     proj = Projection(pop_a, pop_b, weight=0.3, probability=1.0, seed=0)
     net = Network(pop_a, pop_b, proj)
     return net, pop_a, pop_b, proj

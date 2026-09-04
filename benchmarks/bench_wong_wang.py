@@ -65,7 +65,6 @@ SOURCE_PATHS = (
     "src/sc_neurocore/accel/go/services/wong_wang.go",
     "src/sc_neurocore/accel/go/services/wong_wang_test.go",
     "src/sc_neurocore/accel/go/wong_wang/__init__.py",
-    "src/sc_neurocore/accel/go/wong_wang/libwong_wang.h",
     "src/sc_neurocore/accel/go/wong_wang/wong_wang.go",
     "src/sc_neurocore/accel/julia/neurons/__init__.py",
     "src/sc_neurocore/accel/julia/neurons/wong_wang.jl",

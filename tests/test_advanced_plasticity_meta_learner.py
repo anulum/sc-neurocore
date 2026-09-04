@@ -18,7 +18,7 @@ class TestMetaLearner:
         net, pop_a, _, proj = simple_net
         w_before = proj.data.copy()
         inputs = np.ones((20, pop_a.n)) * 50.0
-        targets = np.zeros((20, pop_a.n))
+        targets = np.ones((20, pop_a.n))
         ml = MetaLearner(net, inner_lr=0.1)
         ml.inner_loop((inputs, targets), n_steps=5)
         assert not np.allclose(proj.data, w_before)

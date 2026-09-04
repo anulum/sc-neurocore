@@ -26,7 +26,8 @@ hardware_fit = [
 ]
 behavior_tags = [
     "excitable",
-    "single-event",
+    "rate-coded",
+    "tonic",
 ]
 
 [provenance]

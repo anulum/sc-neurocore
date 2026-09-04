@@ -26,8 +26,8 @@ hardware_fit = [
 ]
 behavior_tags = [
     "excitable",
+    "rate-coded",
     "tonic",
-    "resetting",
 ]
 
 [provenance]

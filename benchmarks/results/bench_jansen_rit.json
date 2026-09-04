@@ -233,9 +233,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_jansen_rit": {
-      "py": "92f4dd1b47345e7c976476d49e97b1777c21e97a5a412ed0ce9971baf3654ba6"
+      "py": "8358fdb8bbfc57eaf08c7774eb7d4c9ad9f1c2e6693774fee8d4795c70dc7691"
     },
-    "benchmarks/bench_jansen_rit.py": "92f4dd1b47345e7c976476d49e97b1777c21e97a5a412ed0ce9971baf3654ba6",
+    "benchmarks/bench_jansen_rit.py": "8358fdb8bbfc57eaf08c7774eb7d4c9ad9f1c2e6693774fee8d4795c70dc7691",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70"
     },
@@ -264,10 +264,6 @@
       "go": "0efaabe98d1e0feb6ddc51e4b4c68fe9cdb9eb2935311994ec6d7596aa446636"
     },
     "src/sc_neurocore/accel/go/jansen_rit/jansen_rit.go": "0efaabe98d1e0feb6ddc51e4b4c68fe9cdb9eb2935311994ec6d7596aa446636",
-    "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit": {
-      "h": "16e0cac16854d068e58e67aa876a9bdb06126a1a0615d4816f8f624c0c3552d3"
-    },
-    "src/sc_neurocore/accel/go/jansen_rit/libjansen_rit.h": "16e0cac16854d068e58e67aa876a9bdb06126a1a0615d4816f8f624c0c3552d3",
     "src/sc_neurocore/accel/go/services/jansen_rit": {
       "go": "1d4950a49dab68904ed14cf6e8af6b50b5db7c86f434a4a0ab75401cb069ee95"
     },

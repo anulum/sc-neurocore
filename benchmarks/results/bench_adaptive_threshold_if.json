@@ -245,9 +245,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     ".github/workflows/ci": {
-      "yml": "7196b36f1410988479552a11274e39a41c28668a87f5793c70c4e8ea2ef05703"
+      "yml": "1cbad3ebf7248f884fa22d699ba9d9bfeafc7aa19c98579a2b8983029c908e41"
     },
-    ".github/workflows/ci.yml": "7196b36f1410988479552a11274e39a41c28668a87f5793c70c4e8ea2ef05703",
+    ".github/workflows/ci.yml": "1cbad3ebf7248f884fa22d699ba9d9bfeafc7aa19c98579a2b8983029c908e41",
     "Cargo": {
       "lock": "91ed757d87477abf6bed5195e9258761d8f52a6dce4cd94ae653448871edd3ea"
     },
@@ -277,9 +277,9 @@
     },
     "engine/src/neurons/trivial/adaptive_threshold_if.rs": "4bf449334c7e811f4447e6007f49bfdad5e2295d4f4bba0123de34ea504a36eb",
     "pyproject": {
-      "toml": "0ba9bf4ea8c5a4892d3e50a7d8399be2b64520bb01cff8ce856e016ac91bca3b"
+      "toml": "78f294b5f7420cef23b39b3b7cec08e3aef572e98616cc70c7bbfc77c56c92db"
     },
-    "pyproject.toml": "0ba9bf4ea8c5a4892d3e50a7d8399be2b64520bb01cff8ce856e016ac91bca3b",
+    "pyproject.toml": "78f294b5f7420cef23b39b3b7cec08e3aef572e98616cc70c7bbfc77c56c92db",
     "src/sc_neurocore/accel/adaptive_threshold_if": {
       "py": "a00e75a261c5877e2dbc9255da17826c3b97cdcf4fc1da87ab76c5979a24fe46"
     },

@@ -223,9 +223,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_wong_wang": {
-      "py": "2967a331bdc41f559c54c1f148f5d4a44631944da6ca9a9d1fd20c09f01141a3"
+      "py": "b5fc330b9a325c50a0dd38c713a1a47128a5573e801dfa8bd523fbea57fa0ba8"
     },
-    "benchmarks/bench_wong_wang.py": "2967a331bdc41f559c54c1f148f5d4a44631944da6ca9a9d1fd20c09f01141a3",
+    "benchmarks/bench_wong_wang.py": "b5fc330b9a325c50a0dd38c713a1a47128a5573e801dfa8bd523fbea57fa0ba8",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "88bc427f9fab05ee08027d07c021cc191c963f04f579701f387fc7908577fa70"
     },
@@ -254,10 +254,6 @@
       "py": "d87fa965d330ca73955e4d1257d3052bc5430aa03c5d384460efd9981671d257"
     },
     "src/sc_neurocore/accel/go/wong_wang/__init__.py": "d87fa965d330ca73955e4d1257d3052bc5430aa03c5d384460efd9981671d257",
-    "src/sc_neurocore/accel/go/wong_wang/libwong_wang": {
-      "h": "aaec0712eb596d9d5d7213e53ab51e913961aebf177c39a121f954402b1da042"
-    },
-    "src/sc_neurocore/accel/go/wong_wang/libwong_wang.h": "aaec0712eb596d9d5d7213e53ab51e913961aebf177c39a121f954402b1da042",
     "src/sc_neurocore/accel/go/wong_wang/wong_wang": {
       "go": "7af6ffeead601fff7b07a4a31bf49f4986c964d0c027009eab936b1368d54858"
     },

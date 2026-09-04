@@ -1380,6 +1380,26 @@
       "result_sha256": "4bbd62dfbb6477d05782cf41a8b2690dbc2562a4fa20101f1a8fefe0f2bb92df",
       "stochastic": false
     },
+    "SCInclusivePerfectIntegratorNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "da5d4eef708690ae2aa201b128821a093c24d4bb7d6cac4c7fe2b2ecbafc4583",
+      "stochastic": false
+    },
+    "SCLapicqueLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56bcfb6f7650eb54c2b08b01a90e15242d13f04c744ca704b67029b32c6c9bd2",
+      "stochastic": false
+    },
     "SCLeakyTwoCompartmentLIFNeuron": {
       "behavior_tags": [
         "excitable",
@@ -1478,6 +1498,16 @@
       "drivable": true,
       "result_sha256": "11a1f6928160bdecc8bded6d91ad17c2cd6a40e2b2811ca1b0948aecb3b17db2",
       "stochastic": true
+    },
+    "SCSymmetricQuadraticIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c2e7284486dcdc93e47ab911b08f6f2b772d3a99f98b33c4348ac3f5f0605fe2",
+      "stochastic": false
     },
     "SCThreeStatePhantomBurster": {
       "behavior_tags": [
@@ -1865,7 +1895,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "9425be321436dc94b0dc5cdde6f94c2ae03d874723af18649be5c017e6bd2741",
+  "result_sha256": "330a73071bba6ca5a0e2c3cf6718ffa159c4bdd8d46b73311c63048b8a1b0285",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

@@ -35,6 +35,112 @@ def _fast_sigmoid_surrogate(
     return SURROGATE_BETA / (1.0 + SURROGATE_BETA * np.abs(v - threshold)) ** 2
 
 
+def _direct_readout_projection(network: Any) -> Any:
+    """Return the projection supported by the array-based learners.
+
+    These lightweight learners operate on one directly connected input/output
+    pair. Reject hidden, recurrent, and delayed graphs instead of silently
+    computing a gradient for the wrong population or timestep.
+    """
+    if len(network.populations) != 2 or len(network.projections) != 1:
+        raise NotImplementedError(
+            "array-based BPTT learners require exactly two populations and one projection"
+        )
+    projection = network.projections[0]
+    if (
+        projection.source is not network.populations[0]
+        or projection.target is not network.populations[1]
+    ):
+        raise NotImplementedError(
+            "array-based BPTT learners require a direct input-to-output projection"
+        )
+    if getattr(projection, "_delay_mode", "none") != "none":
+        raise NotImplementedError("array-based BPTT learners do not support delayed projections")
+    return projection
+
+
+def _validate_training_arrays(
+    network: Any,
+    inputs: np.ndarray[Any, Any],
+    targets: np.ndarray[Any, Any],
+) -> Any:
+    """Validate a training batch and return its direct readout projection."""
+    projection = _direct_readout_projection(network)
+    if inputs.ndim != 2 or targets.ndim != 2:
+        raise ValueError("inputs and targets must both be two-dimensional")
+    if inputs.shape[0] != targets.shape[0]:
+        raise ValueError("inputs and targets must contain the same number of timesteps")
+    if inputs.shape[1] != projection.source.n:
+        raise ValueError("input width must equal the input population size")
+    if targets.shape[1] != projection.target.n:
+        raise ValueError("target width must equal the output population size")
+    if inputs.shape[0] == 0:
+        raise ValueError("training sequences must contain at least one timestep")
+    return projection
+
+
+def _reset_training_network(network: Any) -> None:
+    """Reset neuron state before an independent training rollout."""
+    for population in network.populations:
+        population.reset_all()
+
+
+def _forward_direct_window(
+    projection: Any,
+    inputs: np.ndarray[Any, Any],
+    previous_source_spikes: np.ndarray[Any, Any],
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+]:
+    """Run a window with the same one-timestep projection semantics as ``Network``."""
+    output_spikes: list[np.ndarray[Any, Any]] = []
+    output_voltages: list[np.ndarray[Any, Any]] = []
+    driving_source_spikes: list[np.ndarray[Any, Any]] = []
+    source_spikes = previous_source_spikes.copy()
+
+    for currents in inputs:
+        driving_source_spikes.append(source_spikes.copy())
+        output_current = projection.propagate(source_spikes)
+        next_source_spikes = projection.source.step_all(currents)
+        next_output_spikes = projection.target.step_all(output_current)
+        output_spikes.append(next_output_spikes.copy())
+        output_voltages.append(projection.target.voltages.copy())
+        source_spikes = next_source_spikes
+
+    return (
+        np.stack(output_spikes),
+        np.stack(output_voltages),
+        np.stack(driving_source_spikes),
+        source_spikes,
+    )
+
+
+def _direct_surrogate_gradient(
+    projection: Any,
+    output_spikes: np.ndarray[Any, Any],
+    output_voltages: np.ndarray[Any, Any],
+    driving_source_spikes: np.ndarray[Any, Any],
+    targets: np.ndarray[Any, Any],
+) -> np.ndarray[Any, Any]:
+    """Return the sparse direct-readout surrogate gradient for one window."""
+    gradient: np.ndarray[Any, Any] = np.zeros_like(projection.data)
+    output_error = output_spikes - targets
+    for timestep in range(output_spikes.shape[0]):
+        post_delta = output_error[timestep] * _fast_sigmoid_surrogate(output_voltages[timestep])
+        for source_index in range(projection.source.n):
+            pre = driving_source_spikes[timestep, source_index]
+            if pre == 0:
+                continue
+            start = projection.indptr[source_index]
+            stop = projection.indptr[source_index + 1]
+            target_indices = projection.indices[start:stop]
+            gradient[start:stop] += pre * post_delta[target_indices]
+    return gradient
+
+
 class BPTTLearner:
     """Backpropagation Through Time for spiking networks.
 
@@ -62,34 +168,18 @@ class BPTTLearner:
         float
             Scalar loss value.
         """
+        projection = _validate_training_arrays(self.network, inputs, targets)
         n_steps = inputs.shape[0]
-        for pop in self.network.populations:
-            pop.reset_all()
-
-        recorded_v = []
-        recorded_spikes = []
-        for t in range(n_steps):
-            currents = inputs[t]
-            pop = self.network.populations[0]
-            spikes = pop.step_all(currents[: pop.n])
-            recorded_v.append(pop.voltages.copy())
-            recorded_spikes.append(spikes.copy())
-
-        spike_arr = np.stack(recorded_spikes)
+        _reset_training_network(self.network)
+        initial_spikes = np.zeros(projection.source.n, dtype=np.int8)
+        spike_arr, recorded_v, driving_spikes, _ = _forward_direct_window(
+            projection, inputs, initial_spikes
+        )
         loss = float(self.loss_fn(spike_arr, targets))
-
-        output_error = spike_arr - targets
-        for proj in self.network.projections:
-            n_src = proj.source.n
-            grad_w = np.zeros_like(proj.data)
-            for t in range(n_steps):
-                surr = _fast_sigmoid_surrogate(recorded_v[t])
-                post_delta = output_error[t][: proj.target.n] * surr[: proj.target.n]
-                for i in range(n_src):
-                    for k in range(proj.indptr[i], proj.indptr[i + 1]):
-                        j = proj.indices[k]
-                        grad_w[k] += recorded_spikes[t][i] * post_delta[j]
-            proj.data -= self.lr * grad_w / max(n_steps, 1)
+        gradient = _direct_surrogate_gradient(
+            projection, spike_arr, recorded_v, driving_spikes, targets
+        )
+        projection.data -= self.lr * gradient / n_steps
 
         return loss
 
@@ -127,42 +217,32 @@ class TBPTTLearner:
         float
             Total loss summed across chunks.
         """
+        projection = _validate_training_arrays(self.network, inputs, targets)
+        if self.k <= 0:
+            raise ValueError("k must be positive")
         n_steps = inputs.shape[0]
         total_loss = 0.0
-
-        for pop in self.network.populations:
-            pop.reset_all()
+        _reset_training_network(self.network)
+        previous_source_spikes = np.zeros(projection.source.n, dtype=np.int8)
 
         for chunk_start in range(0, n_steps, self.k):
             chunk_end = min(chunk_start + self.k, n_steps)
             chunk_len = chunk_end - chunk_start
 
-            recorded_v = []
-            recorded_spikes = []
-            for t in range(chunk_start, chunk_end):
-                pop = self.network.populations[0]
-                spikes = pop.step_all(inputs[t][: pop.n])
-                recorded_v.append(pop.voltages.copy())
-                recorded_spikes.append(spikes.copy())
-
-            spike_arr = np.stack(recorded_spikes)
+            spike_arr, recorded_v, driving_spikes, previous_source_spikes = _forward_direct_window(
+                projection,
+                inputs[chunk_start:chunk_end],
+                previous_source_spikes,
+            )
             chunk_targets = targets[chunk_start:chunk_end]
             chunk_loss = float(self.loss_fn(spike_arr, chunk_targets))
             total_loss += chunk_loss
 
             # Backward within this chunk only
-            output_error = spike_arr - chunk_targets
-            for proj in self.network.projections:
-                n_src = proj.source.n
-                grad_w = np.zeros_like(proj.data)
-                for t_local in range(chunk_len):
-                    surr = _fast_sigmoid_surrogate(recorded_v[t_local])
-                    post_delta = output_error[t_local][: proj.target.n] * surr[: proj.target.n]
-                    for i in range(n_src):
-                        for k_idx in range(proj.indptr[i], proj.indptr[i + 1]):
-                            j = proj.indices[k_idx]
-                            grad_w[k_idx] += recorded_spikes[t_local][i] * post_delta[j]
-                proj.data -= self.lr * grad_w / max(chunk_len, 1)
+            gradient = _direct_surrogate_gradient(
+                projection, spike_arr, recorded_v, driving_spikes, chunk_targets
+            )
+            projection.data -= self.lr * gradient / chunk_len
 
             # State (voltages) carries forward — no reset between chunks
 
@@ -289,25 +369,18 @@ class MetaLearner:
             Number of inner-loop updates.
         """
         inputs, targets = task_data
+        projection = _validate_training_arrays(self.network, inputs, targets)
         for _ in range(n_steps):
-            for pop in self.network.populations:
-                pop.reset_all()
+            _reset_training_network(self.network)
             n_t = inputs.shape[0]
-            recorded_spikes = []
-            for t in range(n_t):
-                pop = self.network.populations[0]
-                spikes = pop.step_all(inputs[t][: pop.n])
-                recorded_spikes.append(spikes.copy())
-            spike_arr = np.stack(recorded_spikes)
-            error = spike_arr - targets
-            for proj in self.network.projections:
-                grad = np.zeros_like(proj.data)
-                for t in range(n_t):
-                    for i in range(proj.source.n):
-                        for k in range(proj.indptr[i], proj.indptr[i + 1]):
-                            j = proj.indices[k]
-                            grad[k] += recorded_spikes[t][i] * error[t][j]
-                proj.data -= self.inner_lr * grad / max(n_t, 1)
+            initial_spikes = np.zeros(projection.source.n, dtype=np.int8)
+            spike_arr, recorded_v, driving_spikes, _ = _forward_direct_window(
+                projection, inputs, initial_spikes
+            )
+            gradient = _direct_surrogate_gradient(
+                projection, spike_arr, recorded_v, driving_spikes, targets
+            )
+            projection.data -= self.inner_lr * gradient / n_t
 
     def outer_step(self, tasks: list[tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]]) -> None:
         """Meta-gradient update across multiple tasks.
