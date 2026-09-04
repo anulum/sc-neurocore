@@ -3,9 +3,9 @@
 -r requirements.txt
 pytest>=9.1.1
 pytest-cov>=7.1.0
-hypothesis>=6.160.0
-mypy>=2.3.0
-ruff>=0.16.4
+hypothesis>=6.167.0
+mypy>=2.3.1
+ruff>=0.16.5
 bandit>=1.7
 pyyaml>=6.0
 mojo>=1.0.0

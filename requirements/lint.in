@@ -1,5 +1,5 @@
-ruff==0.16.4
+ruff==0.16.5
 bandit==1.9.4
-mypy==2.3.0
+mypy==2.3.1
 numpy
 tomli==2.4.1
