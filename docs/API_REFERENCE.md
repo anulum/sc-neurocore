@@ -32454,6 +32454,73 @@ Reference: Rotter, S. & Diesmann, M. (1999). Biol. Cybern. 81:381–402.
 
 ---
 
+## Module `solvers.exact_lif_profile`
+
+### Class `ExactCurrentLIFProfile`
+Immutable parameters and semantics for one exact-current LIF instance.
+
+- **__post_init__**()
+- **to_payload**()
+  - Return the complete canonical profile payload.
+- **digest**()
+  - Return the SHA-256 of canonical profile JSON.
+- **to_json**()
+  - Serialize the profile canonically.
+- **verify_source_binding**()
+  - Fail closed if the shipped model source differs from this profile.
+- **from_json**(cls, serialized)
+  - Parse strict canonical semantics; reject versions, fields and units.
+
+### Class `CurrentDriveTick`
+One duration with simultaneous piecewise-constant current inputs.
+
+- **__post_init__**()
+- **total_current**()
+  - Return the order-independent sum delivered at tick start.
+- **to_payload**()
+
+### Class `ExactLIFState`
+Complete persistent runtime state at a shot-relative instant.
+
+- **__post_init__**()
+- **to_payload**()
+
+### Class `ExactLIFStateSample`
+One ordered point in the complete execution state trace.
+
+- **to_payload**()
+
+### Class `ExactLIFEvent`
+One exact threshold-crossing event.
+
+- **to_payload**()
+
+### Class `ExactLIFExecutionPacket`
+Immutable complete trace and provenance packet for one execute call.
+
+- **to_payload**()
+- **to_json**()
+  - Serialize the packet canonically for deterministic evidence.
+- **from_json**(cls, serialized)
+  - Validate a packet by strict parsing and deterministic replay.
+
+### Class `ExactCurrentLIFSession`
+Stateful, failure-atomic executor for :class:`ExactCurrentLIFProfile`.
+
+- **__init__**(profile)
+- **state**()
+  - Return the current immutable persistent state.
+- **reset_shot**(shot_id)
+  - Reset voltage and time explicitly at a new shot boundary.
+- **serialize_state**()
+  - Serialize state with the exact profile digest.
+- **restore_state**(serialized)
+  - Restore compatible state atomically; reject drift and unknown fields.
+- **execute**(ticks)
+  - Execute a complete current sequence and commit state only on success.
+
+---
+
 ## Module `solvers.ising`
 
 ### Class `StochasticIsingGraph`
