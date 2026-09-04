@@ -3024,6 +3024,7 @@
     ],
     "shipped_package_data": [
       "py.typed",
+      "juliapkg.json",
       "model_zoo/weights/*.npz",
       "hardware/*.v",
       "hdl/primitives/*.v",
