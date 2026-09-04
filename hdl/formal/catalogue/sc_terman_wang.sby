@@ -6,7 +6,7 @@ mode bmc
 depth 4
 
 [engines]
-smtbmc z3
+smtbmc cvc5
 
 [script]
 read -formal sc_terman_wang_formal.v

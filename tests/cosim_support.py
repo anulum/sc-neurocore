@@ -26,6 +26,7 @@ from tests.cosim_runtime import (
 )
 
 from tests.cosim_reference_adex import (
+    _adex_published_euler_trace as _adex_published_euler_trace,
     _adex_subthreshold_euler_features as _adex_subthreshold_euler_features,
 )
 from tests.cosim_reference_conductance_rates import (

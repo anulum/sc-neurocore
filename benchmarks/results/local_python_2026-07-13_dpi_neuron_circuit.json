@@ -320,9 +320,9 @@
     },
     "tests/test_reference_dpi_neuron.py": "ab497c4421c3cbb2b46be3716f8dcb6ba6bf21c258927f31127afbd87d43d42e",
     "tools/emit_catalogue_formal": {
-      "py": "22740f32bb083e7bee820b5aeb220b7985eb4ecd1f0223604ed11ba49d89142f"
+      "py": "8130c298e3acc1ca7ec3fa74d45cfb88d95b8c343ef07a0d7c05dd3b919d4046"
     },
-    "tools/emit_catalogue_formal.py": "22740f32bb083e7bee820b5aeb220b7985eb4ecd1f0223604ed11ba49d89142f"
+    "tools/emit_catalogue_formal.py": "8130c298e3acc1ca7ec3fa74d45cfb88d95b8c343ef07a0d7c05dd3b919d4046"
   },
   "verification": {
     "rust_safety": {

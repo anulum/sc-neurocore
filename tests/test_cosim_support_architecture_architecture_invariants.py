@@ -111,7 +111,7 @@ def test_runtime_dependency_is_one_way_and_surfaces_cannot_regrow() -> None:
     assert len(runtime_text.splitlines()) <= 180
     adex_text = Path(cosim_reference_adex.__file__).read_text(encoding="utf-8")
     assert "cosim_support" not in adex_text
-    assert len(adex_text.splitlines()) <= 80
+    assert len(adex_text.splitlines()) <= 120
     conductance_rate_text = Path(cosim_reference_conductance_rates.__file__).read_text(
         encoding="utf-8"
     )

@@ -173,9 +173,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/lapicque.rs": "fd6bdfed7825ba31ba7791198d1579045c4c18c6da19694f32be59ec0027c147",
     "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron": {
-      "toml": "9afc4195a9fca56fecf682a49dddcaf7f425b1d38d3c2fd9475cea03d354261c"
+      "toml": "f529f1d14f4d08f0bfdc31c747beb17a93613008ec4f97638a8dd5e4366c084b"
     },
-    "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml": "9afc4195a9fca56fecf682a49dddcaf7f425b1d38d3c2fd9475cea03d354261c",
+    "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml": "f529f1d14f4d08f0bfdc31c747beb17a93613008ec4f97638a8dd5e4366c084b",
     "src/sc_neurocore/neurons/model_schemas/lapicque": {
       "json": "76854bc8be1d52866f1470999700e5f39370e85dfb25c70c1fbc77ade4c6b79f"
     },

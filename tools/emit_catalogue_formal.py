@@ -701,7 +701,7 @@ def _emit_schema(
             depth,
             flatten=schema in FLATTEN_FORMAL_SCHEMAS,
             evidence_label=evidence_label,
-            solver="cvc5" if schema == "dpi_neuron" else "z3",
+            solver="cvc5" if schema in {"dpi_neuron", "terman_wang"} else "z3",
         ),
         encoding="utf-8",
     )

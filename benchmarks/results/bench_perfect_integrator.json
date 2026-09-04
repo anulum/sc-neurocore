@@ -169,9 +169,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs": "3c4bf71060529c9cc3023dc8f8001f91a8405daec3faa62fcb1a41fc583cb020",
     "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron": {
-      "toml": "ba273d17c9d57064517fea021665b26c223413b7444f029206242f179c242f8e"
+      "toml": "aaef85760a4d46702bc8ed18c091c68e3e6b41376fc619a054392e48529c22db"
     },
-    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml": "ba273d17c9d57064517fea021665b26c223413b7444f029206242f179c242f8e",
+    "src/sc_neurocore/neurons/model_descriptors/PerfectIntegratorNeuron.toml": "aaef85760a4d46702bc8ed18c091c68e3e6b41376fc619a054392e48529c22db",
     "src/sc_neurocore/neurons/model_schemas/perfect_integrator": {
       "json": "9eed850785d6230282f8d9c9c2444cd7ba60cde287d3b1da80cd2e55503c7c19"
     },
