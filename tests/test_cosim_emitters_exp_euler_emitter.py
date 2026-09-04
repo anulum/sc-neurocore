@@ -51,11 +51,13 @@ class TestExpEulerEmitter:
 
         The emitted exp-Euler datapath still multiplies by the tabulated ``exprel(0)``,
         so this proves the zero-Jacobian limit survives the LUT: the exp-Euler RTL, the
-        Euler RTL and the Python golden all agree exactly.
+        Euler RTL and the Python golden all agree exactly. The explicit derivative-form
+        fixture avoids overriding the source-faithful map semantics of the maintained
+        PerfectIntegratorNeuron schema.
         """
-        py_spikes = _spike_count_method("perfect_integrator", 300, 5.0, "exp_euler")
-        vlog_exp = _verilog_spike_count_method("perfect_integrator", 300, 5.0, 32, 16, "exp_euler")
-        vlog_euler = _verilog_spike_count_method("perfect_integrator", 300, 5.0, 32, 16, "euler")
+        py_spikes = _zero_jacobian_spike_count("exp_euler", 300, 5.0)
+        vlog_exp = _zero_jacobian_verilog_spike_count("exp_euler", 300, 5.0)
+        vlog_euler = _zero_jacobian_verilog_spike_count("euler", 300, 5.0)
         assert py_spikes > 0
         assert vlog_exp == vlog_euler == py_spikes, (
             f"A=0 limit broke: exp={vlog_exp}, euler={vlog_euler}, py={py_spikes}"

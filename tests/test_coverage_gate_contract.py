@@ -75,10 +75,12 @@ def test_batched_runner_collects_every_pytest_module_and_unions_coverage() -> No
     assert "-name 'test_*.py'" in runner
     assert "-name '*_test.py'" in runner
     assert "--cov=sc_neurocore --cov-append --cov-report=" in runner
+    assert "--cov-fail-under=0" in runner
     assert "DEFAULT_COV_FAIL_UNDER=100" in runner
     assert '--fail-under="$cov_fail_under"' in runner
     assert "python -m coverage xml -o coverage.xml" in runner
     assert "test-results-batch-%03d.xml" in runner
+    assert '! $coverage && [[ "$path" == "tests/test_catalogue_formal_smoke.py" ]]' in runner
 
 
 def test_nagumo_sato_and_sc_map_exact_coverage_and_parity_is_hosted() -> None:

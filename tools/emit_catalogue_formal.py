@@ -609,6 +609,7 @@ def _sby_script(
     *,
     flatten: bool = False,
     evidence_label: str = "dual-axis perfect model",
+    solver: str = "z3",
 ) -> str:
     prep = f"prep -top {module}_formal" + (" -flatten" if flatten else "")
     sby_evidence_label = evidence_label[:1].upper() + evidence_label[1:]
@@ -621,8 +622,7 @@ def _sby_script(
         f"depth {depth}\n"
         "\n"
         "[engines]\n"
-        # Prefer z3 (widely available on this workstation); yices is not installed.
-        "smtbmc z3\n"
+        f"smtbmc {solver}\n"
         "\n"
         "[script]\n"
         f"read -formal {module}_formal.v\n"
@@ -701,6 +701,7 @@ def _emit_schema(
             depth,
             flatten=schema in FLATTEN_FORMAL_SCHEMAS,
             evidence_label=evidence_label,
+            solver="cvc5" if schema == "dpi_neuron" else "z3",
         ),
         encoding="utf-8",
     )

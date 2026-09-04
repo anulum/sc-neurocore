@@ -6,7 +6,7 @@ mode bmc
 depth 8
 
 [engines]
-smtbmc z3
+smtbmc cvc5
 
 [script]
 read -formal sc_dpineuron_formal.v

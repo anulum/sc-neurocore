@@ -78,6 +78,13 @@ mapfile -d '' -t discovered < <(
 
 test_files=()
 for path in "${discovered[@]}"; do
+    # External formal proofs are independent of the Python interpreter. Run
+    # them once in the coverage-bearing primary leg, not in every compatibility
+    # leg where five concurrent solver copies only duplicate the same evidence.
+    if ! $coverage && [[ "$path" == "tests/test_catalogue_formal_smoke.py" ]]; then
+        echo "[primary-only] $path"
+        continue
+    fi
     if $skip_slow; then
         skip=false
         for prefix in "${SKIP_SLOW[@]}"; do
@@ -110,7 +117,9 @@ for ((offset = 0; offset < total; offset += batch_size)); do
         --junitxml="$junit_path"
     )
     if $coverage; then
-        pytest_args+=(--cov=sc_neurocore --cov-append --cov-report=)
+        # The canonical 100% threshold applies to the union below. Enforcing
+        # it inside each partial batch rejects valid intermediate coverage.
+        pytest_args+=(--cov=sc_neurocore --cov-append --cov-report= --cov-fail-under=0)
     fi
 
     if python "${pytest_args[@]}"; then

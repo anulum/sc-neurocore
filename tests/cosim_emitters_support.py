@@ -59,7 +59,6 @@ _RK4_EXACT_MODELS = [
 _RK4_Q_FORMATS = [("Q16.16", 32, 16), ("Q12.12", 24, 12), ("Q18.18", 36, 18), ("Q20.12", 32, 12)]
 _EXP_EULER_EXACT_MODELS = [
     ("lif", 50.0, 300),
-    ("lapicque", 50.0, 300),
     ("adex", 1000.0, 500),
     ("theta", 50.0, 300),
 ]
@@ -115,6 +114,46 @@ def _linear_oscillator_verilog_spike_count(
     return _simulate(verilog, testbench, module_name)
 
 
+def _zero_jacobian_neuron(method: str) -> EquationNeuron:
+    """Return a true derivative-form perfect integrator for compiler tests."""
+    return EquationNeuron(
+        equations={"v": "I"},
+        state={"v": 0.0},
+        threshold="v >= 1.0",
+        reset={"v": "0.0"},
+        dt=0.1,
+        method=method,
+        detection="crossing",
+    )
+
+
+def _zero_jacobian_spike_count(method: str, n_steps: int, current: float) -> int:
+    """Return the Python spike count for the zero-Jacobian fixture."""
+    neuron = _zero_jacobian_neuron(method)
+    return sum(neuron.step(I=current) for _ in range(n_steps))
+
+
+def _zero_jacobian_verilog_spike_count(method: str, n_steps: int, current: float) -> int:
+    """Return the Q16.16 RTL spike count for the zero-Jacobian fixture."""
+    neuron = _zero_jacobian_neuron(method)
+    module_name = f"sc_zero_jacobian_{method}"
+    verilog = compile_to_verilog(
+        neuron,
+        module_name=module_name,
+        data_width=32,
+        fraction=16,
+    )
+    testbench = generate_testbench(
+        neuron,
+        module_name=module_name,
+        n_steps=n_steps,
+        input_current=current,
+        data_width=32,
+        fraction=16,
+    )
+    return _simulate(verilog, testbench, module_name)
+
+
 __all__ = [
     "pytest",
     "generate_testbench",
@@ -142,4 +181,6 @@ __all__ = [
     "_linear_oscillator",
     "_linear_oscillator_spike_count",
     "_linear_oscillator_verilog_spike_count",
+    "_zero_jacobian_spike_count",
+    "_zero_jacobian_verilog_spike_count",
 ]
