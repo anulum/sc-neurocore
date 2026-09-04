@@ -32,6 +32,15 @@ from .ode import (
     get_solver,
 )
 from .exact_lif import ExactLIFSolver
+from .exact_lif_profile import (
+    CurrentDriveTick,
+    ExactCurrentLIFProfile,
+    ExactCurrentLIFSession,
+    ExactLIFEvent,
+    ExactLIFExecutionPacket,
+    ExactLIFState,
+    ExactLIFStateSample,
+)
 from .symplectic import StormerVerlet, LeapfrogSolver
 from .stiff import ImplicitEuler, RosenbrockEuler, TrapezoidalRule
 
@@ -44,6 +53,13 @@ __all__ = [
     "DormandPrinceSolver",
     "ExponentialEuler",
     "ExactLIFSolver",
+    "CurrentDriveTick",
+    "ExactCurrentLIFProfile",
+    "ExactCurrentLIFSession",
+    "ExactLIFEvent",
+    "ExactLIFExecutionPacket",
+    "ExactLIFState",
+    "ExactLIFStateSample",
     "StormerVerlet",
     "LeapfrogSolver",
     "RosenbrockEuler",
