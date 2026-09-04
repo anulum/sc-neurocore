@@ -204,10 +204,10 @@
     },
     "engine/src/neurons/hardware/dpi_neuron_tests.rs": "d8e129c069040e5674b23bf2bebc1002bd65169cde8af7325cc4d9f6319dc0ff",
     "hdl/formal/catalogue/sc_dpineuron": {
-      "sby": "7d6cf0d74bc56b645335899362efeb2983608037c2b0985e51165667387305b2",
+      "sby": "cbcf574280b0613b470ac2437e7525ff964ba04314d44a4393c8e48ce21aa7df",
       "v": "c3267ff3f39ff2b2847e1b9141de547baeff73bab11a7d3fa77f778339389a4a"
     },
-    "hdl/formal/catalogue/sc_dpineuron.sby": "7d6cf0d74bc56b645335899362efeb2983608037c2b0985e51165667387305b2",
+    "hdl/formal/catalogue/sc_dpineuron.sby": "cbcf574280b0613b470ac2437e7525ff964ba04314d44a4393c8e48ce21aa7df",
     "hdl/formal/catalogue/sc_dpineuron.v": "c3267ff3f39ff2b2847e1b9141de547baeff73bab11a7d3fa77f778339389a4a",
     "hdl/formal/catalogue/sc_dpineuron_formal": {
       "v": "516e530f5488bca0d0bafda81bf70c05025cb5d273fc669b2e12fb526b4ab1c9"
@@ -320,9 +320,9 @@
     },
     "tests/test_reference_dpi_neuron.py": "ab497c4421c3cbb2b46be3716f8dcb6ba6bf21c258927f31127afbd87d43d42e",
     "tools/emit_catalogue_formal": {
-      "py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7"
+      "py": "22740f32bb083e7bee820b5aeb220b7985eb4ecd1f0223604ed11ba49d89142f"
     },
-    "tools/emit_catalogue_formal.py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7"
+    "tools/emit_catalogue_formal.py": "22740f32bb083e7bee820b5aeb220b7985eb4ecd1f0223604ed11ba49d89142f"
   },
   "verification": {
     "rust_safety": {

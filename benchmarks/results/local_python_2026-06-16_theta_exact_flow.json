@@ -226,9 +226,9 @@
     },
     "tests/test_reference_theta.py": "7624b5139e7ca37ad47e5737aa58653d89c728089d7722ccb823b60059f59d2d",
     "tools/emit_catalogue_formal": {
-      "py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7"
+      "py": "22740f32bb083e7bee820b5aeb220b7985eb4ecd1f0223604ed11ba49d89142f"
     },
-    "tools/emit_catalogue_formal.py": "1731071911d0c2cb3552e80683cc67075d7bcdc6e4aa272fa7fe93d00590e2d7",
+    "tools/emit_catalogue_formal.py": "22740f32bb083e7bee820b5aeb220b7985eb4ecd1f0223604ed11ba49d89142f",
     "tools/readiness_evidence_index": {
       "py": "5deb258a14b8dbb30c9419f89878096ceef6167afdb4a17ee9c7bdcafe332cd3"
     },
