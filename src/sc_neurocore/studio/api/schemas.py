@@ -12,7 +12,11 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import AliasChoices, BaseModel, Field, StringConstraints
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, StringConstraints
+
+FiniteFloat = Annotated[float, Field(strict=True, allow_inf_nan=False)]
+PositiveFiniteFloat = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
+StudioProtocol = Literal["constant", "step", "ramp", "pulse", "sine"]
 
 
 class SimulateRequest(BaseModel):
@@ -30,17 +34,78 @@ class SimulateRequest(BaseModel):
 
 
 class ModelSimulateRequest(BaseModel):
-    """Request body for model-catalogue simulation in Studio."""
+    """Request body for model-catalogue simulation in Studio.
+
+    The body is fail-closed: unknown keys are rejected, parameter overrides and
+    the timestep must be finite numbers (booleans and strings are not numbers),
+    and the protocol must be one of the supported injection protocols. Model-
+    specific validation (unknown parameter names, integer fields, unsupported
+    step inputs) is performed by the run contract and reported as
+    :class:`ModelInputErrorDetail`.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     # Accept ``model_name`` as well so the field matches the rest of the model API
     # surface (fi-curve, characterize, sensitivity, …) and the Studio frontend,
     # which sends ``model_name`` consistently.
     name: str = Field(validation_alias=AliasChoices("name", "model_name"))
-    params: dict[str, float] | None = None
-    dt: float | None = None
-    duration: float = Field(default=100.0, gt=0)
-    current: float = 10.0
-    protocol: str = "constant"
+    params: dict[str, FiniteFloat] | None = None
+    dt: PositiveFiniteFloat | None = None
+    duration: PositiveFiniteFloat = 100.0
+    current: FiniteFloat = 10.0
+    protocol: StudioProtocol = "constant"
+
+
+class ModelInputErrorDetail(BaseModel):
+    """422 detail for a model-run request rejected before any simulation step."""
+
+    error: Literal["invalid_model_input"]
+    model: str | None
+    field: str
+    reason: str
+
+
+class ModelSimulationFailureDetail(BaseModel):
+    """422 detail for a validated model run that failed numerically at a step."""
+
+    error: Literal["model_simulation_failed"]
+    model: str
+    backend: Literal["python", "rust"]
+    step: int
+    time_ms: float
+    diagnostic: str
+
+
+class RequestValidationErrorItem(BaseModel):
+    """One body-validation error as produced by the request schema."""
+
+    loc: list[str | int]
+    msg: str
+    type: str
+
+
+class ModelRunErrorResponse(BaseModel):
+    """422 response body of every route that executes a catalogue model run."""
+
+    detail: (
+        ModelInputErrorDetail
+        | ModelSimulationFailureDetail
+        | list[RequestValidationErrorItem]
+        | str
+    )
+
+
+MODEL_RUN_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    422: {
+        "model": ModelRunErrorResponse,
+        "description": (
+            "Request rejected before simulation (invalid_model_input), run failed "
+            "numerically at a named step (model_simulation_failed), or body "
+            "validation failed."
+        ),
+    }
+}
 
 
 class FICurveRequest(BaseModel):

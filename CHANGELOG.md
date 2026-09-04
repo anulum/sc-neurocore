@@ -11,6 +11,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Studio model runs (`simulate_model`, `POST /api/models/simulate`,
+  `POST /api/export/svg`) are fail-closed. A new run contract validates every
+  request against the model class: unknown, non-numeric, non-finite, private,
+  derived or non-numeric-typed parameter overrides, fractional values for
+  integer fields, foreign `dt` on fixed-step or timestep-less models,
+  unsupported protocols, fractional samples for integer-drive models, and
+  `step` inputs the protocol cannot supply are rejected with the field and
+  reason (HTTP 422 `invalid_model_input`). Constructor failures, `step`
+  exceptions, non-finite or non-scalar state are reported with backend, step
+  and simulated time (HTTP 422 `model_simulation_failed`) instead of default
+  reconstruction, retried steps, or zero substitution; failed requests are not
+  cached. Successful runs carry a `studio.model-run-inputs.v1` receipt with
+  the effective parameters, timestep source, drive contract and every excluded
+  state variable. `IntegerQIFNeuron` now reports its fixed 1.0 ms step in the
+  catalogue and on both backends. The request schema forbids unknown keys and
+  non-finite numbers, and a body carrying `NaN` or `Infinity` returns 422
+  instead of 500. The OpenAPI reference declares the 422 contract.
 - Removed the pre-existing integer round-trip from the Go alpha kernel's
   `unsafe.Pointer` region assembly. The direct pointer slice preserves the C
   ABI while restoring clean `go vet ./...` and module-test validation.

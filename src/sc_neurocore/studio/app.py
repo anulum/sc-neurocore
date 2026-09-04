@@ -11,10 +11,12 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from sc_neurocore.studio.api import build_studio_routers
+from sc_neurocore.studio.api.common import request_validation_error_handler
 from sc_neurocore.studio.api.frontend import mount_studio_frontend
 from sc_neurocore.studio.api.runtime import (
     DEFAULT_STUDIO_JOB_KINDS,
@@ -125,6 +127,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         Application with security middleware and responsibility routers mounted.
     """
     application = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
+    application.add_exception_handler(RequestValidationError, request_validation_error_handler)
     context = build_studio_api_context(application, runtime_settings)
     settings = context.settings
     application.add_middleware(

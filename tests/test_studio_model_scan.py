@@ -127,9 +127,10 @@ def test_scan_survives_real_undriveable_models(monkeypatch: pytest.MonkeyPatch) 
     """The real simulation path stays resilient to a genuinely undriveable model.
 
     ``DendriticNMDANeuron`` needs a synaptic glutamate input its ``step`` cannot
-    get from a constant current, so it errored the old fail-closed scan. Here the
-    genuine ``simulate_model`` runs (only the model list is narrowed) and the scan
-    must still classify the drivable model and report the failure.
+    get from a constant current. The run contract rejects it before any step as
+    a ``ModelInputError`` naming the missing input. Here the genuine
+    ``simulate_model`` runs (only the model list is narrowed) and the scan must
+    still classify the drivable model and report the structured failure.
     """
 
     model_scan._CACHE.clear()
@@ -148,7 +149,8 @@ def test_scan_survives_real_undriveable_models(monkeypatch: pytest.MonkeyPatch) 
     by_name = {cast(dict[str, JsonValue], m)["name"]: cast(dict[str, JsonValue], m) for m in models}
     assert by_name["ThetaNeuron"]["pattern"] != "error"
     assert by_name["DendriticNMDANeuron"]["pattern"] == "error"
-    assert by_name["DendriticNMDANeuron"]["error_type"] == "TypeError"
+    assert by_name["DendriticNMDANeuron"]["error_type"] == "ModelInputError"
+    assert "glutamate" in str(by_name["DendriticNMDANeuron"]["description"])
 
     metadata = _object_field(scan, "scan_metadata")
     assert metadata["error_count"] == 1

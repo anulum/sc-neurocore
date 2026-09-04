@@ -33883,6 +33883,29 @@ Request body for direct ODE simulation in Studio.
 ### Class `ModelSimulateRequest`
 Request body for model-catalogue simulation in Studio.
 
+The body is fail-closed: unknown keys are rejected, parameter overrides and
+the timestep must be finite numbers (booleans and strings are not numbers),
+and the protocol must be one of the supported injection protocols. Model-
+specific validation (unknown parameter names, integer fields, unsupported
+step inputs) is performed by the run contract and reported as
+:class:`ModelInputErrorDetail`.
+
+
+### Class `ModelInputErrorDetail`
+422 detail for a model-run request rejected before any simulation step.
+
+
+### Class `ModelSimulationFailureDetail`
+422 detail for a validated model run that failed numerically at a step.
+
+
+### Class `RequestValidationErrorItem`
+One body-validation error as produced by the request schema.
+
+
+### Class `ModelRunErrorResponse`
+422 response body of every route that executes a catalogue model run.
+
 
 ### Class `FICurveRequest`
 Request body for firing-rate versus current sweeps.
@@ -34471,6 +34494,157 @@ Compile and compare real C-reference and RTL state traces cycle by cycle.
 
 ---
 
+## Module `studio.model_run_contract`
+
+### Class `ModelInputError`
+Raised when a Studio model-run request is rejected before any simulation step.
+
+Parameters
+----------
+model : str or None
+    Catalogue identity the request named, or ``None`` when the name itself
+    was not a string.
+field : str
+    Dotted request field that failed (``name``, ``params.tau_m``, ``dt``,
+    ``constructor``, ``step``, ``protocol``, ``current``, ``duration``).
+reason : str
+    Bounded human-readable reason without repository paths.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `ModelSimulationFailure`
+Raised when a validated model run fails numerically at a specific step.
+
+Parameters
+----------
+model : str
+    Catalogue identity of the failed run.
+backend : {"python", "rust"}
+    Backend that executed the failing step.
+step : int
+    Zero-based step index at which the failure was detected.
+time_ms : float
+    Simulated time of that step in milliseconds.
+diagnostic : str
+    Bounded description of the failure (exception class and message, or
+    the non-finite state variable).
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `ParameterContract`
+One numerically overridable constructor field of a model class.
+
+Attributes
+----------
+name : str
+    Constructor keyword.
+kind : {"float", "int"}
+    Numeric kind the model declares; ``int`` fields reject fractional values.
+default : float or int or None
+    Declared default, or ``None`` when the field defaults to ``None``.
+
+
+### Class `ModelParameterContracts`
+Overridable numeric fields and the reasons other fields are not inputs.
+
+
+### Class `DriveContract`
+How the Studio current protocol is delivered to ``step``.
+
+Attributes
+----------
+parameter : str
+    Name of the first ``step`` parameter after ``self``.
+kind : {"float", "int"}
+    Declared type of that parameter; ``int`` models require integral samples.
+positional_only : bool
+    Whether the parameter must be passed positionally.
+
+
+### Class `ModelRunInputs`
+Validated effective inputs of one model run before any step executes.
+
+- **effective_parameters**()
+  - Return every overridable field with the value the run will use.
+- **instantiate**()
+  - Construct the model with the validated keywords; never retry or substitute.
+
+### Class `DriveTrace`
+Validated current-injection protocol resolved against the run inputs.
+
+
+### Function `bounded_diagnostic(exc)`
+Return ``ClassName: message`` truncated to :data:`DIAGNOSTIC_LIMIT` characters.
+
+### Function `model_parameter_contracts(cls)`
+Inventory the numerically overridable constructor fields of ``cls``.
+
+Parameters
+----------
+cls : type
+    Catalogue model class (dataclass or plain class with keyword defaults).
+
+Returns
+-------
+ModelParameterContracts
+    Overridable fields keyed by name plus the reason each other constructor
+    field is not an input (private state, derived ``init=False`` field,
+    factory-initialised field, non-numeric type).
+
+### Function `model_drive_contract(model, cls)`
+Derive how the current protocol enters ``cls.step``; reject unsatisfiable steps.
+
+Raises
+------
+ModelInputError
+    When ``step`` takes no drive input or requires further inputs without
+    defaults that the Studio current protocol cannot supply.
+
+### Function `resolve_model_run_inputs(name, param_overrides, dt)`
+Validate a model-run request against the model's own constructor contract.
+
+Parameters
+----------
+name : object
+    Catalogue identity; must be a registered class name.
+param_overrides : Mapping&#91;str, object&#93; or None
+    Constructor overrides. Every key must be an overridable numeric field;
+    every value a finite number of the declared kind.
+dt : object
+    Explicit timestep in milliseconds, or ``None`` for the model default.
+    A model whose step is a fixed class attribute accepts only that value;
+    a model without any timestep accepts only the Studio default.
+
+Returns
+-------
+ModelRunInputs
+    Effective inputs ready for construction. No model is constructed here.
+
+Raises
+------
+ModelInputError
+    On any unknown, mistyped, non-finite, fractional-integer or
+    unsupported input, naming the field and reason.
+
+### Function `resolve_drive_trace(inputs)`
+Validate the injection protocol and build the sample trace for the run.
+
+Raises
+------
+ModelInputError
+    On an unsupported protocol, non-finite current, non-positive duration or
+    frequency, a duration shorter than one step, or fractional samples for
+    a model whose ``step`` declares an integer drive.
+
+### Function `run_receipt(inputs, trace)`
+Return the effective-input receipt attached to a successful run payload.
+
+---
+
 ## Module `studio.model_scan`
 
 ### Class `ModelScanEntry`
@@ -34529,12 +34703,53 @@ Raised when the Studio Rust batch-simulation path fails at runtime.
 
 
 ### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path)`
-Simulate a named model. Uses Rust engine when model has default params.
+Simulate a named catalogue model under a fail-closed input contract.
 
-Set ``use_fast_path=False`` to force the Python reference model and bypass the
-Rust accelerator. The behaviour probe relies on this so its characterisation
-is the canonical model's, independent of whether the Rust extension happens to
-be loaded (the two backends can differ for models with an internal RNG).
+Parameters
+----------
+name : str
+    Registered catalogue class name.
+param_overrides : dict&#91;str, float&#93; or None
+    Constructor overrides; every key must be an overridable numeric field of
+    the model and every value a finite number of the declared kind.
+dt : float or None
+    Timestep in milliseconds. ``None`` uses the model default. A model whose
+    step is a fixed class attribute accepts only that value; a model without
+    any timestep accepts only the Studio default of 0.1 ms.
+duration : float
+    Requested run length in milliseconds; capped at ``MAX_STEPS`` steps and
+    reported as ``steps_truncated`` in the receipt.
+current : float
+    Protocol amplitude; must be finite. Integer-drive models additionally
+    require every sample of the protocol to be integral.
+protocol : {"constant", "step", "ramp", "pulse", "sine"}
+    Current-injection protocol.
+frequency_hz : float
+    Sine frequency; must be positive and finite.
+use_fast_path : bool
+    Allow the Rust batch backend when no override or explicit ``dt`` is
+    given. The behaviour probe passes ``False`` so its characterisation is
+    the canonical Python model's, independent of the loaded extension.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    Time base, recorded state traces, injected current, spike indices,
+    statistics and an ``effective_inputs`` receipt naming the backend, the
+    effective parameters, the drive contract and every excluded state.
+
+Raises
+------
+ModelInputError
+    When any input is unknown, mistyped, non-finite, fractional for an
+    integer field, unsupported for the model, or when the model cannot be
+    constructed or driven under the request.
+ModelSimulationFailure
+    When a step raises or produces a non-finite or non-scalar state; the
+    failure names the backend, step index and simulated time.
+RustStudioBackendError
+    When an available Rust backend fails for a reason other than an
+    unsupported model.
 
 ---
 

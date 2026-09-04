@@ -195,6 +195,43 @@ Simulations are cached (LRU, 64 slots) for instant replay.
 | POST | `/api/multi-simulate` | Simulate 2-4 models in parallel |
 | POST | `/api/network/ei` | E-I balanced network simulation |
 
+#### Model-run contract (`/api/models/simulate`, `/api/export/svg`)
+
+A catalogue model run is fail-closed. The request body rejects unknown keys,
+non-numeric or non-finite `params` values and `dt`, non-positive `dt` and
+`duration`, and any `protocol` outside `constant`, `step`, `ramp`, `pulse`,
+`sine`. The run contract then validates the request against the model class
+itself and never substitutes a default:
+
+- every `params` key must be a numerically overridable constructor field of the
+  model; private state, derived (`init=False`) fields, factory-initialised
+  fields and non-numeric fields (integrator or profile literals, arrays) are
+  rejected with the reason;
+- integer fields reject fractional values; integer-drive models reject
+  protocols whose samples are not integral;
+- a model with a fixed class-level step (for example `IntegerQIFNeuron`,
+  1.0 ms) accepts only that `dt`; a model without any timestep accepts only the
+  Studio default of 0.1 ms per step;
+- a model whose `step` needs inputs the current protocol cannot supply (for
+  example `DendriticNMDANeuron`, which needs glutamate) is rejected before any
+  step runs;
+- a constructor failure is reported as-is instead of falling back to defaults.
+
+Rejections return HTTP 422 with `detail = {"error": "invalid_model_input",
+"model", "field", "reason"}`; body-schema failures return the usual list of
+validation errors, including for `NaN` or `Infinity` in the body. A validated
+run that raises or produces a non-finite or non-scalar state at some step
+returns HTTP 422 with `detail = {"error": "model_simulation_failed", "model",
+"backend", "step", "time_ms", "diagnostic"}` and no partial payload; failed
+requests are never cached. A successful run carries an `effective_inputs`
+receipt (`studio.model-run-inputs.v1`): backend (`python` or `rust`), effective
+`dt` and its source, every effective parameter, the applied overrides, the
+`step` drive parameter and kind, the protocol, the requested duration, the step
+count with a `steps_truncated` flag, the plot stride, and the recorded and
+excluded state variables with the exclusion reason (non-scalar, absent, or not
+exported by the Rust batch backend). Non-finite values are never rewritten to
+zero.
+
 ### Analysis
 
 | Method | Endpoint | Description |

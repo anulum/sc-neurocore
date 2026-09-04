@@ -13,6 +13,7 @@ from __future__ import annotations
 import dataclasses
 import importlib
 import inspect
+import math
 from typing import Any
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
@@ -110,11 +111,35 @@ def _model_field_specs(cls: type) -> list[tuple[str, float]]:
     return plain
 
 
+def _fixed_step_attribute(cls: type) -> float | None:
+    """Return a positive numeric class-level ``dt`` that is not a constructor field.
+
+    Integer and map models may fix their step as a class attribute (for example
+    ``IntegerQIFNeuron.dt = 1.0``). Such a step cannot be overridden through the
+    constructor but is the model's real time base, so the catalogue and the run
+    contract must report it instead of the Studio default.
+    """
+    attribute = inspect.getattr_static(cls, "dt", None)
+    if isinstance(attribute, bool) or not isinstance(attribute, (int, float)):
+        return None
+    value = float(attribute)
+    if not math.isfinite(value) or value <= 0.0:
+        return None
+    return value
+
+
 def _extract_dt(cls: type) -> float:
-    """Return the model's default timestep, or ``0.1`` when undeclared."""
+    """Return the model's default timestep, or ``0.1`` when undeclared.
+
+    Resolution order: declared ``dt`` field default, fixed class-level ``dt``
+    attribute, Studio default of ``0.1`` ms per step.
+    """
     for name, default in _model_field_specs(cls):
         if name == "dt":
             return default
+    fixed = _fixed_step_attribute(cls)
+    if fixed is not None:
+        return fixed
     return 0.1
 
 

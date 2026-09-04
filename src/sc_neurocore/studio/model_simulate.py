@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio model simulation entrypoints
 
-"""Python and optional Rust batch simulation for Studio model runs."""
+"""Python and optional Rust batch simulation for Studio model runs.
+
+Every run first resolves its effective inputs through
+:mod:`sc_neurocore.studio.model_run_contract`, so an invalid request is rejected
+before any model is constructed, and a numerical failure is reported with its
+step instead of being replaced by a silent zero.
+"""
 
 from __future__ import annotations
 
-import dataclasses
+import math
 from typing import Any
+
+import numpy as np
 
 try:
     from sc_neurocore_engine.studio import get_batch_simulate
@@ -22,11 +30,19 @@ except ImportError:
         raise ImportError("Studio Rust batch simulator unavailable")
 
 
-from sc_neurocore.neurons.models import _CLASS_TO_MODULE
-from sc_neurocore.studio.model_introspection import (
-    _classify_fields,
-    _load_class,
+from sc_neurocore.studio.model_introspection import _classify_fields
+from sc_neurocore.studio.model_run_contract import (
+    DriveTrace,
+    ModelRunInputs,
+    ModelSimulationFailure,
+    bounded_diagnostic,
+    resolve_drive_trace,
+    resolve_model_run_inputs,
+    run_receipt,
 )
+from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, MAX_STEPS, _spike_stats
+
+_RUST_STATE_EXPORTS: tuple[str, ...] = ("v",)
 
 
 class RustStudioBackendUnavailable(ImportError):
@@ -54,20 +70,17 @@ def _is_rust_unsupported_model_error(exc: Exception) -> bool:
     return isinstance(exc, ValueError) and "Unsupported model:" in str(exc)
 
 
-def _detect_step_kwarg(cls: Any) -> str:
-    """Figure out what keyword the .step() method uses for current injection."""
-    import inspect
+def _plot_stride(n_steps: int) -> int:
+    """Return the decimation stride that keeps a trace within ``MAX_PLOT_POINTS``."""
+    return n_steps // MAX_PLOT_POINTS if n_steps > MAX_PLOT_POINTS else 1
 
-    sig = inspect.signature(cls.step)
-    params = list(sig.parameters.keys())
-    # Skip 'self'
-    for candidate in ["current", "I", "input_current", "i_ext", "ext_input"]:
-        if candidate in params:
-            return candidate
-    # Fallback: second param after self (positional)
-    if len(params) >= 2:
-        return params[1]
-    return "current"
+
+def _first_non_finite(values: np.ndarray[Any, Any]) -> int | None:
+    """Return the index of the first non-finite sample, or ``None`` when all are finite."""
+    finite = np.isfinite(values)
+    if bool(np.all(finite)):
+        return None
+    return int(np.argmin(finite))
 
 
 def _try_rust_simulate(
@@ -80,11 +93,9 @@ def _try_rust_simulate(
 
     Returns ``None`` only when the backend is unavailable or the model is not
     implemented in Rust. Runtime failures in an available backend are raised so
-    the caller does not silently degrade to Python.
+    the caller does not silently degrade to Python; a non-finite voltage trace
+    is a :class:`ModelSimulationFailure` at its first non-finite step.
     """
-    import numpy as np
-    from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, _spike_stats
-
     try:
         py_batch_simulate = _load_rust_batch_simulate()
     except RustStudioBackendUnavailable:
@@ -100,31 +111,144 @@ def _try_rust_simulate(
             f"Studio Rust batch simulation failed for model '{name}'"
         ) from exc
 
-    voltages = np.asarray(result["voltages"])
+    voltages = np.asarray(result["voltages"], dtype=np.float64)
+    bad_step = _first_non_finite(voltages)
+    if bad_step is not None:
+        raise ModelSimulationFailure(
+            model=name,
+            backend="rust",
+            step=bad_step,
+            time_ms=bad_step * actual_dt,
+            diagnostic=f"state 'v' became non-finite ({voltages[bad_step]!r})",
+        )
     spikes = result["spikes"].tolist()
     stats = _spike_stats(spikes, actual_dt, n_steps)
 
+    stride = _plot_stride(n_steps)
     time = np.arange(n_steps) * actual_dt
-    if n_steps > MAX_PLOT_POINTS:
-        stride = n_steps // MAX_PLOT_POINTS
+    if stride > 1:
         time = time[::stride]
         voltages = voltages[::stride]
-        current_trace = current_trace[::stride]
-
-    voltages = np.nan_to_num(voltages, nan=0.0, posinf=0.0, neginf=0.0)
+        current_arr = current_arr[::stride]
 
     return {
         "time": time.tolist(),
         "states": {"v": voltages.tolist()},
-        "current_trace": current_trace.tolist()
-        if hasattr(current_trace, "tolist")
-        else list(current_trace),
+        "current_trace": current_arr.tolist(),
         "spikes": spikes,
         "spike_count": len(spikes),
         "stats": stats,
         "dt": actual_dt,
         "n_steps": n_steps,
         "model_name": name,
+    }
+
+
+def _scalar_state(value: object) -> float | None:
+    """Return ``value`` as a float when it is a real scalar, otherwise ``None``."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, np.integer, np.floating)):
+        return None
+    return float(value)
+
+
+def _state_recording_plan(
+    neuron: Any, state_names: list[str]
+) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+    """Split the catalogue state variables into recordable scalars and declared exclusions."""
+    recorded: list[str] = []
+    excluded: list[tuple[str, str]] = []
+    for state_name in state_names:
+        if not hasattr(neuron, state_name):
+            excluded.append((state_name, "absent on the model instance"))
+            continue
+        value = getattr(neuron, state_name)
+        if _scalar_state(value) is None:
+            excluded.append((state_name, f"non-scalar state ({type(value).__name__})"))
+            continue
+        recorded.append(state_name)
+    return tuple(recorded), tuple(excluded)
+
+
+def _simulate_python(inputs: ModelRunInputs, trace: DriveTrace) -> dict[str, Any]:
+    """Run the Python reference model step by step under the resolved contract."""
+    neuron = inputs.instantiate()
+    n_steps = trace.n_steps
+    dt = inputs.dt
+    state_vars, _ = _classify_fields(inputs.cls)
+    recorded, excluded = _state_recording_plan(neuron, [s["name"] for s in state_vars])
+    traces: dict[str, np.ndarray[Any, Any]] = {
+        state_name: np.empty(n_steps) for state_name in recorded
+    }
+    spike_indices: list[int] = []
+    drive = inputs.drive
+
+    for t in range(n_steps):
+        sample = trace.samples[t]
+        value: float | int = int(sample) if drive.kind == "int" else float(sample)
+        try:
+            spike = (
+                neuron.step(value)
+                if drive.positional_only
+                else neuron.step(**{drive.parameter: value})
+            )
+        except (ArithmeticError, ValueError, TypeError) as exc:
+            raise ModelSimulationFailure(
+                model=inputs.model,
+                backend="python",
+                step=t,
+                time_ms=t * dt,
+                diagnostic=bounded_diagnostic(exc),
+            ) from exc
+        for state_name in recorded:
+            raw = getattr(neuron, state_name)
+            scalar = _scalar_state(raw)
+            if scalar is None:
+                raise ModelSimulationFailure(
+                    model=inputs.model,
+                    backend="python",
+                    step=t,
+                    time_ms=t * dt,
+                    diagnostic=f"state {state_name!r} is no longer a scalar ({type(raw).__name__})",
+                )
+            if not math.isfinite(scalar):
+                raise ModelSimulationFailure(
+                    model=inputs.model,
+                    backend="python",
+                    step=t,
+                    time_ms=t * dt,
+                    diagnostic=f"state {state_name!r} became non-finite ({scalar!r})",
+                )
+            traces[state_name][t] = scalar
+        if spike:
+            spike_indices.append(t)
+
+    stats = _spike_stats(spike_indices, dt, n_steps)
+    stride = _plot_stride(n_steps)
+    time = np.arange(n_steps) * dt
+    samples = trace.samples
+    if stride > 1:
+        time = time[::stride]
+        traces = {state_name: arr[::stride] for state_name, arr in traces.items()}
+        samples = samples[::stride]
+
+    return {
+        "time": time.tolist(),
+        "states": {state_name: arr.tolist() for state_name, arr in traces.items()},
+        "current_trace": samples.tolist(),
+        "spikes": spike_indices,
+        "spike_count": len(spike_indices),
+        "stats": stats,
+        "dt": dt,
+        "n_steps": n_steps,
+        "model_name": inputs.model,
+        "effective_inputs": run_receipt(
+            inputs,
+            trace,
+            backend="python",
+            recorded_state=recorded,
+            excluded_state=excluded,
+            plot_stride=stride,
+        ),
     }
 
 
@@ -138,141 +262,81 @@ def simulate_model(
     frequency_hz: float = 10.0,
     use_fast_path: bool = True,
 ) -> dict[str, Any]:
-    """Simulate a named model. Uses Rust engine when model has default params.
+    """Simulate a named catalogue model under a fail-closed input contract.
 
-    Set ``use_fast_path=False`` to force the Python reference model and bypass the
-    Rust accelerator. The behaviour probe relies on this so its characterisation
-    is the canonical model's, independent of whether the Rust extension happens to
-    be loaded (the two backends can differ for models with an internal RNG).
+    Parameters
+    ----------
+    name : str
+        Registered catalogue class name.
+    param_overrides : dict[str, float] or None
+        Constructor overrides; every key must be an overridable numeric field of
+        the model and every value a finite number of the declared kind.
+    dt : float or None
+        Timestep in milliseconds. ``None`` uses the model default. A model whose
+        step is a fixed class attribute accepts only that value; a model without
+        any timestep accepts only the Studio default of 0.1 ms.
+    duration : float
+        Requested run length in milliseconds; capped at ``MAX_STEPS`` steps and
+        reported as ``steps_truncated`` in the receipt.
+    current : float
+        Protocol amplitude; must be finite. Integer-drive models additionally
+        require every sample of the protocol to be integral.
+    protocol : {"constant", "step", "ramp", "pulse", "sine"}
+        Current-injection protocol.
+    frequency_hz : float
+        Sine frequency; must be positive and finite.
+    use_fast_path : bool
+        Allow the Rust batch backend when no override or explicit ``dt`` is
+        given. The behaviour probe passes ``False`` so its characterisation is
+        the canonical Python model's, independent of the loaded extension.
+
+    Returns
+    -------
+    dict[str, Any]
+        Time base, recorded state traces, injected current, spike indices,
+        statistics and an ``effective_inputs`` receipt naming the backend, the
+        effective parameters, the drive contract and every excluded state.
+
+    Raises
+    ------
+    ModelInputError
+        When any input is unknown, mistyped, non-finite, fractional for an
+        integer field, unsupported for the model, or when the model cannot be
+        constructed or driven under the request.
+    ModelSimulationFailure
+        When a step raises or produces a non-finite or non-scalar state; the
+        failure names the backend, step index and simulated time.
+    RustStudioBackendError
+        When an available Rust backend fails for a reason other than an
+        unsupported model.
     """
-    import numpy as np
-    from sc_neurocore.studio.simulation import (
-        MAX_PLOT_POINTS,
-        MAX_STEPS,
-        _make_current_trace,
-        _spike_stats,
+    inputs = resolve_model_run_inputs(name, param_overrides, dt)
+    trace = resolve_drive_trace(
+        inputs,
+        protocol=protocol,
+        current=current,
+        duration=duration,
+        frequency_hz=frequency_hz,
+        max_steps=MAX_STEPS,
     )
 
-    if name not in _CLASS_TO_MODULE:
-        raise ValueError(f"Unknown model: {name}")
-
-    # Rust fast path: default params, no overrides
-    has_overrides = param_overrides and any(True for _ in param_overrides.values())
-    if use_fast_path and not has_overrides and dt is None:
-        cls = _load_class(name)
-        actual_dt = 0.1
-        if dataclasses.is_dataclass(cls):
-            dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
-            if dt_field and dt_field.default is not dataclasses.MISSING:
-                actual_dt = float(dt_field.default)
-        n_steps = min(int(duration / actual_dt), MAX_STEPS)
-        if n_steps >= 1:
-            I_trace = _make_current_trace(
-                protocol, current, n_steps, dt=actual_dt, frequency_hz=frequency_hz
+    if use_fast_path and not inputs.overrides_applied and dt is None:
+        rust_result = _try_rust_simulate(name, trace.n_steps, trace.samples, inputs.dt)
+        if rust_result is not None:
+            state_names = [s["name"] for s in _classify_fields(inputs.cls)[0]]
+            excluded = tuple(
+                (state_name, "not exported by the Rust batch backend")
+                for state_name in state_names
+                if state_name not in _RUST_STATE_EXPORTS
             )
-            rust_result = _try_rust_simulate(name, n_steps, I_trace, actual_dt)
-            if rust_result is not None:
-                return rust_result
+            rust_result["effective_inputs"] = run_receipt(
+                inputs,
+                trace,
+                backend="rust",
+                recorded_state=_RUST_STATE_EXPORTS,
+                excluded_state=excluded,
+                plot_stride=_plot_stride(trace.n_steps),
+            )
+            return rust_result
 
-    cls = _load_class(name)
-
-    # Build constructor kwargs — only pass fields that actually exist on the dataclass
-    valid_fields = {}
-    if dataclasses.is_dataclass(cls):
-        for f in dataclasses.fields(cls):
-            valid_fields[f.name] = f.default if f.default is not dataclasses.MISSING else None
-    kwargs: dict[str, Any] = {}
-    if param_overrides:
-        for k, v in param_overrides.items():
-            if k not in valid_fields:
-                continue
-            default = valid_fields[k]
-            # Skip if value matches default (avoids float→int type issues)
-            if (
-                default is not None
-                and isinstance(default, (int, float))
-                and abs(v - default) < 1e-12
-            ):
-                continue
-            # Preserve int type for integer-arithmetic models
-            if default is not None and isinstance(default, int):
-                kwargs[k] = int(round(v))
-            else:
-                kwargs[k] = v
-    if dt is not None and "dt" in valid_fields:
-        kwargs["dt"] = dt
-
-    try:
-        neuron = cls(**kwargs)
-    except (TypeError, OverflowError):
-        # Some models need int params (bitshift arithmetic)
-        int_kwargs = {
-            k: int(v) if isinstance(v, float) and v == int(v) else v for k, v in kwargs.items()
-        }
-        try:
-            neuron = cls(**int_kwargs)
-        except (TypeError, OverflowError):
-            neuron = cls()
-
-    actual_dt = getattr(neuron, "dt", 0.1)
-    n_steps = min(int(duration / actual_dt), MAX_STEPS)
-    if n_steps < 1:
-        raise ValueError(f"Duration {duration} with dt {actual_dt} yields < 1 step")
-
-    state_vars, _ = _classify_fields(cls)
-    var_names = [s["name"] for s in state_vars]
-    traces = {v: np.empty(n_steps) for v in var_names}
-    spike_indices: list[int] = []
-
-    I_trace = _make_current_trace(
-        protocol, current, n_steps, dt=actual_dt, frequency_hz=frequency_hz
-    )
-    step_kwarg = _detect_step_kwarg(cls)
-
-    # Detect if this is an integer-arithmetic model
-    _is_int_model = any(isinstance(valid_fields.get(k), int) for k in valid_fields if k == "v")
-
-    for t in range(n_steps):
-        i_val: Any = int(I_trace[t]) if _is_int_model else float(I_trace[t])
-        try:
-            spike = neuron.step(**{step_kwarg: i_val})
-        except TypeError:
-            try:
-                spike = neuron.step(i_val)
-            except TypeError:
-                spike = neuron.step(int(i_val))
-        except (OverflowError, FloatingPointError):
-            spike = 0
-        for v in var_names:
-            val = getattr(neuron, v, 0.0)
-            try:
-                traces[v][t] = float(val) if isinstance(val, (int, float)) else 0.0
-            except (ValueError, OverflowError):
-                traces[v][t] = 0.0
-        if spike:
-            spike_indices.append(t)
-
-    time = np.arange(n_steps) * actual_dt
-    stats = _spike_stats(spike_indices, actual_dt, n_steps)
-
-    if n_steps > MAX_PLOT_POINTS:
-        stride = n_steps // MAX_PLOT_POINTS
-        time = time[::stride]
-        traces = {v: arr[::stride] for v, arr in traces.items()}  # type: ignore[misc]
-        I_trace = I_trace[::stride]
-
-    # Replace NaN/Inf with 0 for JSON serialisation
-    for v in traces:
-        traces[v] = np.nan_to_num(traces[v], nan=0.0, posinf=0.0, neginf=0.0)  # type: ignore[assignment]
-
-    return {
-        "time": time.tolist(),
-        "states": {v: arr.tolist() for v, arr in traces.items()},
-        "current_trace": I_trace.tolist(),
-        "spikes": spike_indices,
-        "spike_count": len(spike_indices),
-        "stats": stats,
-        "dt": actual_dt,
-        "n_steps": n_steps,
-        "model_name": name,
-    }
+    return _simulate_python(inputs, trace)

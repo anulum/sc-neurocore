@@ -1154,8 +1154,76 @@
         "title": "ModelCosimRequest",
         "type": "object"
       },
+      "ModelInputErrorDetail": {
+        "description": "422 detail for a model-run request rejected before any simulation step.",
+        "properties": {
+          "error": {
+            "const": "invalid_model_input",
+            "title": "Error",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "model",
+          "field",
+          "reason"
+        ],
+        "title": "ModelInputErrorDetail",
+        "type": "object"
+      },
+      "ModelRunErrorResponse": {
+        "description": "422 response body of every route that executes a catalogue model run.",
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelInputErrorDetail"
+              },
+              {
+                "$ref": "#/components/schemas/ModelSimulationFailureDetail"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RequestValidationErrorItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ModelRunErrorResponse",
+        "type": "object"
+      },
       "ModelSimulateRequest": {
-        "description": "Request body for model-catalogue simulation in Studio.",
+        "additionalProperties": false,
+        "description": "Request body for model-catalogue simulation in Studio.\n\nThe body is fail-closed: unknown keys are rejected, parameter overrides and\nthe timestep must be finite numbers (booleans and strings are not numbers),\nand the protocol must be one of the supported injection protocols. Model-\nspecific validation (unknown parameter names, integer fields, unsupported\nstep inputs) is performed by the run contract and reported as\n:class:`ModelInputErrorDetail`.",
         "properties": {
           "current": {
             "default": 10.0,
@@ -1165,6 +1233,7 @@
           "dt": {
             "anyOf": [
               {
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
@@ -1199,6 +1268,13 @@
           },
           "protocol": {
             "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
             "title": "Protocol",
             "type": "string"
           }
@@ -1207,6 +1283,50 @@
           "name"
         ],
         "title": "ModelSimulateRequest",
+        "type": "object"
+      },
+      "ModelSimulationFailureDetail": {
+        "description": "422 detail for a validated model run that failed numerically at a step.",
+        "properties": {
+          "backend": {
+            "enum": [
+              "python",
+              "rust"
+            ],
+            "title": "Backend",
+            "type": "string"
+          },
+          "diagnostic": {
+            "title": "Diagnostic",
+            "type": "string"
+          },
+          "error": {
+            "const": "model_simulation_failed",
+            "title": "Error",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "time_ms": {
+            "title": "Time Ms",
+            "type": "number"
+          }
+        },
+        "required": [
+          "error",
+          "model",
+          "backend",
+          "step",
+          "time_ms",
+          "diagnostic"
+        ],
+        "title": "ModelSimulationFailureDetail",
         "type": "object"
       },
       "NetworkRequest": {
@@ -1585,6 +1705,40 @@
           "template_fingerprints"
         ],
         "title": "PresetDefaultFlowVerifyRequest",
+        "type": "object"
+      },
+      "RequestValidationErrorItem": {
+        "description": "One body-validation error as produced by the request schema.",
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Loc",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Msg",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "RequestValidationErrorItem",
         "type": "object"
       },
       "SensitivityRequest": {
@@ -2868,6 +3022,7 @@
     },
     "/api/export/svg": {
       "post": {
+        "description": "Render one catalogue model run as SVG under the fail-closed run contract.",
         "operationId": "export_svg_api_export_svg_post",
         "requestBody": {
           "content": {
@@ -2894,11 +3049,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Request rejected before simulation (invalid_model_input), run failed numerically at a named step (model_simulation_failed), or body validation failed."
           }
         },
         "summary": "Export Svg"
@@ -3685,6 +3840,7 @@
     },
     "/api/models/simulate": {
       "post": {
+        "description": "Simulate one catalogue model under the fail-closed run contract.\n\nA rejected request (HTTP 422 ``invalid_model_input``) or a numerical\nfailure (HTTP 422 ``model_simulation_failed``) is never cached and never\nreturns a success payload; a successful run carries its\n``effective_inputs`` receipt.",
         "operationId": "api_model_simulate_api_models_simulate_post",
         "requestBody": {
           "content": {
@@ -3711,11 +3867,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Request rejected before simulation (invalid_model_input), run failed numerically at a named step (model_simulation_failed), or body validation failed."
           }
         },
         "summary": "Api Model Simulate"

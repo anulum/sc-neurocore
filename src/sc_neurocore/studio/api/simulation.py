@@ -41,6 +41,7 @@ from sc_neurocore.studio.api.analysis_jobs import (
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
+    MODEL_RUN_ERROR_RESPONSES,
     AnalysisJobRequest,
     BifurcationRequest,
     CodegenRequest,
@@ -156,8 +157,15 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
 
         return _safe(fn)
 
-    @router.post("/api/models/simulate")
+    @router.post("/api/models/simulate", responses=MODEL_RUN_ERROR_RESPONSES)
     def api_model_simulate(req: ModelSimulateRequest) -> Any:
+        """Simulate one catalogue model under the fail-closed run contract.
+
+        A rejected request (HTTP 422 ``invalid_model_input``) or a numerical
+        failure (HTTP 422 ``model_simulation_failed``) is never cached and never
+        returns a success payload; a successful run carries its
+        ``effective_inputs`` receipt.
+        """
         cache_key = {"_type": "model", **req.model_dump()}
         cached = _cache.get(cache_key)
         if cached:

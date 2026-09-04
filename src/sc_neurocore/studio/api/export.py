@@ -16,7 +16,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
-from sc_neurocore.studio.api.schemas import ModelSimulateRequest
+from sc_neurocore.studio.api.schemas import MODEL_RUN_ERROR_RESPONSES, ModelSimulateRequest
 from sc_neurocore.studio.api.security import (
     _studio_identity_from_websocket_headers,
     _studio_request_id,
@@ -34,8 +34,9 @@ def build_export_router(context: StudioApiContext) -> APIRouter:
     studio_policy_gateway = context.studio_policy_gateway
     studio_route_policies = context.studio_route_policies
 
-    @router.post("/api/export/svg")
+    @router.post("/api/export/svg", responses=MODEL_RUN_ERROR_RESPONSES)
     def export_svg(req: ModelSimulateRequest) -> Any:
+        """Render one catalogue model run as SVG under the fail-closed run contract."""
         from fastapi.responses import Response
         from sc_neurocore.studio.svg_export import traces_to_svg
 
