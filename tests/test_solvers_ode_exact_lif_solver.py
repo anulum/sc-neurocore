@@ -12,9 +12,18 @@ from __future__ import annotations
 
 import json
 from dataclasses import FrozenInstanceError
+from pathlib import Path
 
 import sc_neurocore.solvers.exact_lif_profile as lif_profile_module
 from tests.solvers_ode_support import *  # noqa: F403
+
+_ROOT = Path(__file__).resolve().parents[1]
+_PROFILE_RECEIPT = (
+    _ROOT / "src/sc_neurocore/neurons/reference_trace_data/exact_current_lif_profile_v1.json"
+)
+_PACKET_RECEIPT = (
+    _ROOT / "src/sc_neurocore/neurons/reference_trace_data/exact_current_lif_multitick_v1.json"
+)
 
 
 class TestExactLIFSolver:
@@ -340,6 +349,59 @@ class TestExactCurrentLIFProfile:
             )
             == packet
         )
+
+    def test_immutable_multitick_receipt_matches_independent_oracle(self):
+        implementation_commit = "f55954538b8f2b1e230bc8342fc33722375f7dc9"
+        profile_json = _PROFILE_RECEIPT.read_text(encoding="utf-8").strip()
+        profile = ExactCurrentLIFProfile.from_json(profile_json)
+
+        assert profile.to_json() == profile_json
+        assert profile.digest == "c667f3885f564dcf968febaf62125a86abaaee4758df792d5f06b0e82d1f121a"
+        packet = ExactLIFExecutionPacket.from_json(
+            _PACKET_RECEIPT.read_text(encoding="utf-8"),
+            profile=profile,
+            expected_producer_commit=implementation_commit,
+        )
+        assert len(packet.ticks) == 4
+        assert [len(tick.currents) for tick in packet.ticks] == [1, 2, 2, 1]
+        assert [event.tick for event in packet.events] == [1, 3, 3]
+        assert [sample.phase for sample in packet.state_trace] == [
+            "initial",
+            "tick_end",
+            "threshold",
+            "reset",
+            "tick_end",
+            "tick_end",
+            "threshold",
+            "reset",
+            "threshold",
+            "reset",
+            "tick_end",
+        ]
+
+        def evolve(voltage: float, duration_ms: float, current: float) -> float:
+            equilibrium = profile.v_rest + profile.resistance * current
+            return equilibrium + (voltage - equilibrium) * math.exp(-duration_ms / profile.tau_ms)
+
+        def crossing(voltage: float, current: float) -> float:
+            equilibrium = profile.v_rest + profile.resistance * current
+            return -profile.tau_ms * math.log(
+                (equilibrium - profile.v_threshold) / (equilibrium - voltage)
+            )
+
+        after_tick_0 = evolve(profile.v_rest, 5.0, 10.0)
+        crossing_1 = 5.0 + crossing(after_tick_0, 30.0)
+        after_tick_1 = evolve(profile.v_reset, 25.0 - crossing_1, 30.0)
+        after_tick_2 = evolve(after_tick_1, 7.0, 0.0)
+        crossing_2 = 32.0 + crossing(after_tick_2, 30.0)
+        reset_isi = crossing(profile.v_reset, 30.0)
+        crossing_3 = crossing_2 + reset_isi
+        final_voltage = evolve(profile.v_reset, 62.0 - crossing_3, 30.0)
+
+        assert [event.time_ms for event in packet.events] == pytest.approx(
+            [crossing_1, crossing_2, crossing_3], abs=1e-12
+        )
+        assert packet.final_state.voltage == pytest.approx(final_voltage, abs=1e-12)
 
     @pytest.mark.parametrize(
         ("mutate", "match"),

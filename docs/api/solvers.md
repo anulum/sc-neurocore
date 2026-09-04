@@ -67,6 +67,12 @@ validated = type(packet).from_json(
 assert validated == packet
 ```
 
+The canonical default profile and a four-tick complete-state receipt are shipped
+as `exact_current_lif_profile_v1.json` and
+`exact_current_lif_multitick_v1.json` under
+`src/sc_neurocore/neurons/reference_trace_data/`. The receipt binds its profile
+digest and the exact implementation commit and includes three off-grid events.
+
 The profile is a precise software/reference contract. It does not by itself
 claim fixed-point equivalence, generated RTL parity, synthesis timing, PPA,
 board/HIL evidence, or biological fidelity. Those remain separate gates.
