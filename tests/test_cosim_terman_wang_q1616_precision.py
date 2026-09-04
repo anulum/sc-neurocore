@@ -48,9 +48,7 @@ def test_yosys_synthesises_committed_rtl() -> None:
 def test_symbiyosys_proves_the_committed_reset_contract(tmp_path: Path) -> None:
     """The public catalogue SBY entrypoint must execute and reach PASS."""
     engine = next(
-        line
-        for line in _SBY.read_text(encoding="utf-8").splitlines()
-        if line.startswith("smtbmc ")
+        line for line in _SBY.read_text(encoding="utf-8").splitlines() if line.startswith("smtbmc ")
     )
     require_executable(engine.split(maxsplit=1)[1])
     output = tmp_path / "terman_wang_bmc"

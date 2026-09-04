@@ -14,10 +14,12 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - ".github/workflows/yosys-synth.yml"
       - "hdl/**"
       - "tools/yosys_synth.*"
   pull_request:
     paths:
+      - ".github/workflows/yosys-synth.yml"
       - "hdl/**"
 
 concurrency:
@@ -40,9 +42,11 @@ jobs:
 
       - name: Install sv2v
         run: |
-          SV2V_URL=$(curl -fsSL https://api.github.com/repos/zachjs/sv2v/releases/latest \
-            | jq -r '.assets[] | select(.name == "sv2v-Linux.zip") | .browser_download_url')
-          curl -fsSL "$SV2V_URL" -o /tmp/sv2v.zip
+          SV2V_VERSION="v0.0.13"
+          SV2V_SHA256="552799a1d76cd177b9b4cc63a3e77823a3d2a6eb4ec006569288abeff28e1ff8"
+          SV2V_URL="https://github.com/zachjs/sv2v/releases/download/${SV2V_VERSION}/sv2v-Linux.zip"
+          curl --proto '=https' --tlsv1.2 -fsSL "$SV2V_URL" -o /tmp/sv2v.zip
+          echo "${SV2V_SHA256}  /tmp/sv2v.zip" | sha256sum -c -
           unzip -o /tmp/sv2v.zip -d /tmp/sv2v
           sudo install /tmp/sv2v/sv2v-Linux/sv2v /usr/local/bin/sv2v
           sv2v --version
