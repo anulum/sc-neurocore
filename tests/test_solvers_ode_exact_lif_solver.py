@@ -351,7 +351,7 @@ class TestExactCurrentLIFProfile:
         )
 
     def test_immutable_multitick_receipt_matches_independent_oracle(self):
-        implementation_commit = "f55954538b8f2b1e230bc8342fc33722375f7dc9"
+        implementation_commit = "bc76e5b3c217fec191534bb650685316e645ad34"
         profile_json = _PROFILE_RECEIPT.read_text(encoding="utf-8").strip()
         profile = ExactCurrentLIFProfile.from_json(profile_json)
 
