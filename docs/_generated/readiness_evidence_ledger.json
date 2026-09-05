@@ -56,7 +56,6 @@
         "validator"
       ],
       "optional_subjects": [
-        "native-backend",
         "schema-profile",
         "source-reference"
       ],
@@ -70,10 +69,11 @@
       "required_subjects": [
         "descriptor-contract",
         "model-module",
-        "validator"
+        "validator",
+        "native-backend",
+        "native-binary"
       ],
       "optional_subjects": [
-        "native-backend",
         "schema-profile",
         "source-reference"
       ],
@@ -87,10 +87,11 @@
       "required_subjects": [
         "descriptor-contract",
         "model-module",
-        "validator"
+        "validator",
+        "native-backend",
+        "native-binary"
       ],
       "optional_subjects": [
-        "native-backend",
         "schema-profile",
         "source-reference"
       ],
@@ -104,10 +105,11 @@
       "required_subjects": [
         "descriptor-contract",
         "model-module",
-        "validator"
+        "validator",
+        "native-backend",
+        "native-binary"
       ],
       "optional_subjects": [
-        "native-backend",
         "schema-profile",
         "source-reference"
       ],
@@ -121,10 +123,11 @@
       "required_subjects": [
         "descriptor-contract",
         "model-module",
-        "validator"
+        "validator",
+        "native-backend",
+        "native-binary"
       ],
       "optional_subjects": [
-        "native-backend",
         "schema-profile",
         "source-reference"
       ],
@@ -268,7 +271,6 @@
       "descriptor-contract",
       "model-module",
       "validator",
-      "native-backend",
       "schema-profile",
       "source-reference"
     ],
@@ -277,6 +279,7 @@
       "model-module",
       "validator",
       "native-backend",
+      "native-binary",
       "schema-profile",
       "source-reference"
     ],
@@ -285,6 +288,7 @@
       "model-module",
       "validator",
       "native-backend",
+      "native-binary",
       "schema-profile",
       "source-reference"
     ],
@@ -293,6 +297,7 @@
       "model-module",
       "validator",
       "native-backend",
+      "native-binary",
       "schema-profile",
       "source-reference"
     ],
@@ -301,6 +306,7 @@
       "model-module",
       "validator",
       "native-backend",
+      "native-binary",
       "schema-profile",
       "source-reference"
     ],
@@ -365,8 +371,8 @@
     "verified_science_tiers": {
       "S1": 52,
       "S2": 71,
-      "S3": 60,
-      "S5": 2
+      "S3": 61,
+      "S5": 1
     },
     "declared_silicon_tiers": {
       "H0": 3,
@@ -375,19 +381,19 @@
       "none": 114
     },
     "verified_silicon_tiers": {
-      "H1": 4,
-      "none": 181
+      "H1": 3,
+      "none": 182
     },
     "facet_statuses": {
       "dynamics_faithful": {
-        "bound": 2,
+        "bound": 1,
         "declared": 9,
-        "located": 75,
+        "located": 76,
         "not-declared": 99
       },
       "class_validated": {
-        "bound": 2,
-        "located": 75,
+        "bound": 1,
+        "located": 76,
         "not-declared": 108
       },
       "backend:python": {
@@ -415,8 +421,8 @@
         "not-declared": 114
       },
       "cosim": {
-        "bound": 4,
-        "located": 64,
+        "bound": 3,
+        "located": 65,
         "not-declared": 117
       },
       "synthesis": {
@@ -443,6 +449,7 @@
   "models": [
     {
       "class_name": "ATypeKNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -598,6 +605,7 @@
     },
     {
       "class_name": "AdExNeuron",
+      "profile": "adex",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -802,6 +810,7 @@
     },
     {
       "class_name": "AdaptiveThresholdIFNeuron",
+      "profile": "adaptive_threshold_if",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -914,7 +923,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260905T064642Z.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260905T093836Z__adaptive_threshold_if.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -976,6 +985,7 @@
     },
     {
       "class_name": "AdaptiveThresholdMoENeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -1131,6 +1141,7 @@
     },
     {
       "class_name": "AiharaMapNeuron",
+      "profile": "aihara_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -1319,6 +1330,7 @@
     },
     {
       "class_name": "AkidaNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -1474,6 +1486,7 @@
     },
     {
       "class_name": "AlphaMotorNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -1629,6 +1642,7 @@
     },
     {
       "class_name": "AlphaNeuron",
+      "profile": "alpha",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -1803,6 +1817,7 @@
     },
     {
       "class_name": "AmariNeuralField",
+      "profile": "amari_field",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -1991,6 +2006,7 @@
     },
     {
       "class_name": "ArcaneNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -2146,6 +2162,7 @@
     },
     {
       "class_name": "AstrocyteLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -2301,6 +2318,7 @@
     },
     {
       "class_name": "AstrocyteModel",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -2456,6 +2474,7 @@
     },
     {
       "class_name": "AstrocyteNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -2611,6 +2630,7 @@
     },
     {
       "class_name": "AttentionGatedNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -2766,6 +2786,7 @@
     },
     {
       "class_name": "AvRonCardiacNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -2921,6 +2942,7 @@
     },
     {
       "class_name": "BKNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -3076,6 +3098,7 @@
     },
     {
       "class_name": "BalancedResonateAndFireNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -3231,6 +3254,7 @@
     },
     {
       "class_name": "BendaHerzNeuron",
+      "profile": "benda_herz",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -3403,6 +3427,7 @@
     },
     {
       "class_name": "BertramPhantomBurster",
+      "profile": "bertram_phantom",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -3558,6 +3583,7 @@
     },
     {
       "class_name": "BoothRinzelNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -3713,6 +3739,7 @@
     },
     {
       "class_name": "BrainScaleSAdExNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -3868,6 +3895,7 @@
     },
     {
       "class_name": "BrunelWangNeuron",
+      "profile": "brunel_wang",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -3994,7 +4022,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "BrunelWangNeuron__cosim__20260905T064646Z.json",
+          "receipt": "BrunelWangNeuron__cosim__20260905T093839Z__brunel_wang.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -4056,6 +4084,7 @@
     },
     {
       "class_name": "ButeraRespiratoryNeuron",
+      "profile": "butera_respiratory",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -4211,6 +4240,7 @@
     },
     {
       "class_name": "COBALIFNeuron",
+      "profile": "coba_lif",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -4385,6 +4415,7 @@
     },
     {
       "class_name": "CazellesMapNeuron",
+      "profile": "cazelles_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -4582,6 +4613,7 @@
     },
     {
       "class_name": "CerebellarBasketNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -4737,6 +4769,7 @@
     },
     {
       "class_name": "ChandelierNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -4892,6 +4925,7 @@
     },
     {
       "class_name": "ChayKeizerMinimalNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -5047,6 +5081,7 @@
     },
     {
       "class_name": "ChayKeizerNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -5202,6 +5237,7 @@
     },
     {
       "class_name": "ChayNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -5357,6 +5393,7 @@
     },
     {
       "class_name": "ChialvoMapNeuron",
+      "profile": "chialvo_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -5547,6 +5584,7 @@
     },
     {
       "class_name": "ClosedFormContinuousNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -5702,6 +5740,7 @@
     },
     {
       "class_name": "CochlearHairCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -5857,6 +5896,7 @@
     },
     {
       "class_name": "ComplementaryLIFNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -6012,6 +6052,7 @@
     },
     {
       "class_name": "CompositionalBindingNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -6167,6 +6208,7 @@
     },
     {
       "class_name": "CompteWMNeuron",
+      "profile": "compte_wm",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -6355,6 +6397,7 @@
     },
     {
       "class_name": "ConnorStevensNeuron",
+      "profile": "connor_stevens",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -6545,6 +6588,7 @@
     },
     {
       "class_name": "ContinuousAttractorNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -6700,6 +6744,7 @@
     },
     {
       "class_name": "CourageNekorkinMapNeuron",
+      "profile": "courage_nekorkin_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -6890,6 +6935,7 @@
     },
     {
       "class_name": "DCNNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -7045,6 +7091,7 @@
     },
     {
       "class_name": "DPINeuron",
+      "profile": "dpi_neuron",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -7235,6 +7282,7 @@
     },
     {
       "class_name": "DeSchutterPurkinjeNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -7390,6 +7438,7 @@
     },
     {
       "class_name": "DendrifyNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -7545,6 +7594,7 @@
     },
     {
       "class_name": "DendriticNMDANeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -7700,6 +7750,7 @@
     },
     {
       "class_name": "DestexheThalamicNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -7855,6 +7906,7 @@
     },
     {
       "class_name": "DifferentiableSurrogateNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -8010,6 +8062,7 @@
     },
     {
       "class_name": "DirectionSelectiveRGC",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -8165,6 +8218,7 @@
     },
     {
       "class_name": "DurstewitzDopamineNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -8320,6 +8374,7 @@
     },
     {
       "class_name": "EPropALIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -8475,6 +8530,7 @@
     },
     {
       "class_name": "EnergyLIFNeuron",
+      "profile": "energy_lif",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -8656,6 +8712,7 @@
     },
     {
       "class_name": "ErmentroutKopellMapNeuron",
+      "profile": "ermentrout_kopell_map_neuron",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -8846,6 +8903,7 @@
     },
     {
       "class_name": "ErmentroutKopellPopulation",
+      "profile": "ermentrout_kopell_pop",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -9020,6 +9078,7 @@
     },
     {
       "class_name": "EscapeRateNeuron",
+      "profile": "escape_rate",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -9194,6 +9253,7 @@
     },
     {
       "class_name": "ExpIFNeuron",
+      "profile": "exp_if",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -9405,6 +9465,7 @@
     },
     {
       "class_name": "FitzHughNagumoNeuron",
+      "profile": "fitzhugh_nagumo",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -9595,6 +9656,7 @@
     },
     {
       "class_name": "FitzHughRinzelNeuron",
+      "profile": "fitzhugh_rinzel",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -9778,6 +9840,7 @@
     },
     {
       "class_name": "FractionalLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -9933,6 +9996,7 @@
     },
     {
       "class_name": "GIFPopulationNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -10088,6 +10152,7 @@
     },
     {
       "class_name": "GLIFNeuron",
+      "profile": "glif",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -10283,6 +10348,7 @@
     },
     {
       "class_name": "GLMNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -10438,6 +10504,7 @@
     },
     {
       "class_name": "GalvesLocherbachNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -10593,6 +10660,7 @@
     },
     {
       "class_name": "GammaMotorNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -10748,6 +10816,7 @@
     },
     {
       "class_name": "GammaRenewalNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -10903,6 +10972,7 @@
     },
     {
       "class_name": "GatedLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11058,6 +11128,7 @@
     },
     {
       "class_name": "GolgiCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11213,6 +11284,7 @@
     },
     {
       "class_name": "GolombFSNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11368,6 +11440,7 @@
     },
     {
       "class_name": "GranuleCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11523,6 +11596,7 @@
     },
     {
       "class_name": "GutkinErmentroutNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11678,6 +11752,7 @@
     },
     {
       "class_name": "HayL5PyramidalNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11833,6 +11908,7 @@
     },
     {
       "class_name": "HillTononiNeuron",
+      "profile": "hill_tononi",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -11998,6 +12074,7 @@
     },
     {
       "class_name": "HindmarshRoseNeuron",
+      "profile": "hindmarsh_rose",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -12181,6 +12258,7 @@
     },
     {
       "class_name": "HodgkinHuxleyNeuron",
+      "profile": "hodgkin_huxley",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -12371,6 +12449,7 @@
     },
     {
       "class_name": "HuberBraunNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -12526,6 +12605,7 @@
     },
     {
       "class_name": "HybridFisherPosnerLIFNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -12681,6 +12761,7 @@
     },
     {
       "class_name": "HybridLinearAttentionNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -12836,6 +12917,7 @@
     },
     {
       "class_name": "IbarzTanakaMapNeuron",
+      "profile": "ibarz_tanaka_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -13026,6 +13108,7 @@
     },
     {
       "class_name": "IhNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -13191,6 +13274,7 @@
     },
     {
       "class_name": "InhibitoryLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -13346,6 +13430,7 @@
     },
     {
       "class_name": "InhomogeneousPoissonNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -13501,6 +13586,7 @@
     },
     {
       "class_name": "IntegerQIFNeuron",
+      "profile": "iqif",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -13675,6 +13761,7 @@
     },
     {
       "class_name": "Izhikevich2007Neuron",
+      "profile": null,
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -13858,6 +13945,7 @@
     },
     {
       "class_name": "JansenRitUnit",
+      "profile": "jansen_rit",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -14032,6 +14120,7 @@
     },
     {
       "class_name": "KLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -14187,6 +14276,7 @@
     },
     {
       "class_name": "LapicqueNeuron",
+      "profile": null,
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -14196,10 +14286,10 @@
         "silicon_label": "H2"
       },
       "verified": {
-        "science_tier": 5,
-        "science_label": "S5",
-        "silicon_tier": 1,
-        "silicon_label": "H1"
+        "science_tier": 3,
+        "science_label": "S3",
+        "silicon_tier": null,
+        "silicon_label": "none"
       },
       "evidence": {
         "validation.evidence": [
@@ -14262,18 +14352,18 @@
         {
           "facet": "dynamics_faithful",
           "declared": true,
-          "status": "bound",
+          "status": "located",
           "evidence_field": "validation.evidence",
-          "receipt": "LapicqueNeuron__dynamics_faithful__20260905T084908Z.json",
+          "receipt": "",
           "changed_subjects": [],
           "problems": []
         },
         {
           "facet": "class_validated",
           "declared": true,
-          "status": "bound",
+          "status": "located",
           "evidence_field": "validation.evidence",
-          "receipt": "LapicqueNeuron__class_validated__20260905T084903Z.json",
+          "receipt": "",
           "changed_subjects": [],
           "problems": []
         },
@@ -14334,9 +14424,9 @@
         {
           "facet": "cosim",
           "declared": true,
-          "status": "bound",
+          "status": "located",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "LapicqueNeuron__cosim__20260905T064638Z.json",
+          "receipt": "",
           "changed_subjects": [],
           "problems": []
         },
@@ -14398,6 +14488,7 @@
     },
     {
       "class_name": "LarterBreakspearNeuron",
+      "profile": "larter_breakspear",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -14570,6 +14661,7 @@
     },
     {
       "class_name": "LeakyCompeteFireNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -14725,6 +14817,7 @@
     },
     {
       "class_name": "LearnableNeuronModel",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -14880,6 +14973,7 @@
     },
     {
       "class_name": "LiquidTimeConstantNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -15035,6 +15129,7 @@
     },
     {
       "class_name": "Loihi2Neuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -15190,6 +15285,7 @@
     },
     {
       "class_name": "LoihiCUBANeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -15345,6 +15441,7 @@
     },
     {
       "class_name": "LugaroCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -15500,6 +15597,7 @@
     },
     {
       "class_name": "MATNeuron",
+      "profile": "mat",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -15688,6 +15786,7 @@
     },
     {
       "class_name": "MainenSejnowskiNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -15843,6 +15942,7 @@
     },
     {
       "class_name": "MarderSTGNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -15998,6 +16098,7 @@
     },
     {
       "class_name": "MartinottiNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -16153,6 +16254,7 @@
     },
     {
       "class_name": "McCullochPittsNeuron",
+      "profile": "mcculloch_pitts",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -16193,7 +16295,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "validation.evidence",
-          "receipt": "McCullochPittsNeuron__dynamics_faithful__20260905T064608Z.json",
+          "receipt": "McCullochPittsNeuron__dynamics_faithful__20260905T093833Z__mcculloch_pitts.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -16202,7 +16304,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "validation.evidence",
-          "receipt": "McCullochPittsNeuron__class_validated__20260905T064604Z.json",
+          "receipt": "McCullochPittsNeuron__class_validated__20260905T093830Z__mcculloch_pitts.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -16327,6 +16429,7 @@
     },
     {
       "class_name": "McKeanNeuron",
+      "profile": "mckean",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -16517,6 +16620,7 @@
     },
     {
       "class_name": "MedvedevMapNeuron",
+      "profile": "medvedev_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -16691,6 +16795,7 @@
     },
     {
       "class_name": "MetaPlasticNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -16846,6 +16951,7 @@
     },
     {
       "class_name": "MihalasNieburNeuron",
+      "profile": "mihalas_niebur",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -17050,6 +17156,7 @@
     },
     {
       "class_name": "MorrisLecarNeuron",
+      "profile": "morris_lecar",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -17240,6 +17347,7 @@
     },
     {
       "class_name": "MotorUnit",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -17395,6 +17503,7 @@
     },
     {
       "class_name": "MultiTimescaleNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -17550,6 +17659,7 @@
     },
     {
       "class_name": "MulticompartmentMCNNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -17705,6 +17815,7 @@
     },
     {
       "class_name": "NMDANeuron",
+      "profile": "nmda_neuron",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -17902,6 +18013,7 @@
     },
     {
       "class_name": "NagumoSatoMapNeuron",
+      "profile": "nagumo_sato_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -18090,6 +18202,7 @@
     },
     {
       "class_name": "NeuroGridNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -18245,6 +18358,7 @@
     },
     {
       "class_name": "NonResettingLIFNeuron",
+      "profile": "non_resetting_lif",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -18433,6 +18547,7 @@
     },
     {
       "class_name": "NonlinearLIFNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -18588,6 +18703,7 @@
     },
     {
       "class_name": "PVFastSpikingNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -18743,6 +18859,7 @@
     },
     {
       "class_name": "ParallelSpikingNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -18898,6 +19015,7 @@
     },
     {
       "class_name": "ParametricLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -19053,6 +19171,7 @@
     },
     {
       "class_name": "PerfectIntegratorNeuron",
+      "profile": "perfect_integrator",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -19250,6 +19369,7 @@
     },
     {
       "class_name": "PernarowskiNeuron",
+      "profile": "pernarowski",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -19433,6 +19553,7 @@
     },
     {
       "class_name": "PersistentNaNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -19598,6 +19719,7 @@
     },
     {
       "class_name": "PinskyRinzelNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -19753,6 +19875,7 @@
     },
     {
       "class_name": "PlantR15Neuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -19908,6 +20031,7 @@
     },
     {
       "class_name": "PoissonNeuron",
+      "profile": "poisson",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -20082,6 +20206,7 @@
     },
     {
       "class_name": "PospischilNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -20237,6 +20362,7 @@
     },
     {
       "class_name": "PredictiveCodingNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -20392,6 +20518,7 @@
     },
     {
       "class_name": "PrescottNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -20547,6 +20674,7 @@
     },
     {
       "class_name": "QuadraticIFNeuron",
+      "profile": "quadratic_if",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -20737,6 +20865,7 @@
     },
     {
       "class_name": "QuantumInspiredLIFNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -20892,6 +21021,7 @@
     },
     {
       "class_name": "RallCableNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -21047,6 +21177,7 @@
     },
     {
       "class_name": "RenshawCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -21202,6 +21333,7 @@
     },
     {
       "class_name": "ResonateAndFireNeuron",
+      "profile": "resonate_fire",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -21314,7 +21446,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "ResonateAndFireNeuron__cosim__20260905T064650Z.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20260905T093843Z__resonate_fire.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -21376,6 +21508,7 @@
     },
     {
       "class_name": "RulkovMapNeuron",
+      "profile": "rulkov_map",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -21573,6 +21706,7 @@
     },
     {
       "class_name": "SCAdaptiveThresholdMapNeuron",
+      "profile": "sc_adaptive_threshold_map",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -21754,6 +21888,7 @@
     },
     {
       "class_name": "SCChaoticMapNeuron",
+      "profile": "sc_chaotic_map",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -21942,6 +22077,7 @@
     },
     {
       "class_name": "SCClippedLogisticBurstingMapNeuron",
+      "profile": "sc_clipped_logistic_bursting_map",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -22139,6 +22275,7 @@
     },
     {
       "class_name": "SCClippedRationalRecoveryMapNeuron",
+      "profile": "sc_clipped_rational_recovery_map",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -22329,6 +22466,7 @@
     },
     {
       "class_name": "SCDecoupledAdaptationIonMassNeuron",
+      "profile": "sc_decoupled_adaptation_ion_mass",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -22501,6 +22639,7 @@
     },
     {
       "class_name": "SCExponentialTwoCompartmentLIFNeuron",
+      "profile": "hand",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -22656,6 +22795,7 @@
     },
     {
       "class_name": "SCFourStateGLIFNeuron",
+      "profile": "sc_four_state_glif",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -22851,6 +22991,7 @@
     },
     {
       "class_name": "SCInclusivePerfectIntegratorNeuron",
+      "profile": "sc_perfect_integrator",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -23030,6 +23171,7 @@
     },
     {
       "class_name": "SCLapicqueLIFNeuron",
+      "profile": "sc_lapicque_lif",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -23218,6 +23360,7 @@
     },
     {
       "class_name": "SCLeakyTwoCompartmentLIFNeuron",
+      "profile": "hand",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -23373,6 +23516,7 @@
     },
     {
       "class_name": "SCNonResettingAdaptiveLIFNeuron",
+      "profile": "sc_non_resetting_adaptive_lif",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -23561,6 +23705,7 @@
     },
     {
       "class_name": "SCNormalizedEnergyLIFNeuron",
+      "profile": "sc_normalized_energy_lif",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -23742,6 +23887,7 @@
     },
     {
       "class_name": "SCResettingMATNeuron",
+      "profile": "sc_resetting_mat",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -23930,6 +24076,7 @@
     },
     {
       "class_name": "SCResettingParallelSpikingNeuron",
+      "profile": "hand",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -24085,6 +24232,7 @@
     },
     {
       "class_name": "SCResettingWilsonHRNeuron",
+      "profile": "sc_resetting_wilson_hr",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -24289,6 +24437,7 @@
     },
     {
       "class_name": "SCScaledResetAdaptiveIFNeuron",
+      "profile": "sc_scaled_reset_adaptive_if",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -24493,6 +24642,7 @@
     },
     {
       "class_name": "SCSigmaDeltaAccumulatorNeuron",
+      "profile": "sc_sigma_delta_accumulator",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -24674,6 +24824,7 @@
     },
     {
       "class_name": "SCSixStateThalamocorticalNeuron",
+      "profile": "hand",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -24829,6 +24980,7 @@
     },
     {
       "class_name": "SCStochasticRateAdaptationNeuron",
+      "profile": "sc_stochastic_rate_adaptation",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -24994,6 +25146,7 @@
     },
     {
       "class_name": "SCSymmetricQuadraticIFNeuron",
+      "profile": "sc_symmetric_quadratic_if",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -25168,6 +25321,7 @@
     },
     {
       "class_name": "SCThreeStatePhantomBurster",
+      "profile": "sc_three_state_phantom",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -25323,6 +25477,7 @@
     },
     {
       "class_name": "SCTriangularMcKeanNeuron",
+      "profile": "sc_triangular_mckean",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -25513,6 +25668,7 @@
     },
     {
       "class_name": "SCUnitCapacitanceRespiratoryNeuron",
+      "profile": "sc_unit_capacitance_respiratory",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -25678,6 +25834,7 @@
     },
     {
       "class_name": "SCUpwardCrossingRulkovMapNeuron",
+      "profile": "sc_upward_crossing_rulkov_map",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -25882,6 +26039,7 @@
     },
     {
       "class_name": "SCWBNMDAMagnesiumBlockNeuron",
+      "profile": "sc_wb_nmda_magnesium_block",
       "kind": "sc-compatibility",
       "has_descriptor": true,
       "declared": {
@@ -26079,6 +26237,7 @@
     },
     {
       "class_name": "SFANeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -26234,6 +26393,7 @@
     },
     {
       "class_name": "SKNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -26389,6 +26549,7 @@
     },
     {
       "class_name": "SRM0Neuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -26544,6 +26705,7 @@
     },
     {
       "class_name": "SSTNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -26699,6 +26861,7 @@
     },
     {
       "class_name": "SelfReferentialNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -26854,6 +27017,7 @@
     },
     {
       "class_name": "ShermanRinzelKeizerNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -27009,6 +27173,7 @@
     },
     {
       "class_name": "SiegertTransferFunction",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -27164,6 +27329,7 @@
     },
     {
       "class_name": "SigmaDeltaNeuron",
+      "profile": "sigma_delta",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -27352,6 +27518,7 @@
     },
     {
       "class_name": "SigmoidRateNeuron",
+      "profile": "sigmoid_rate",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -27526,6 +27693,7 @@
     },
     {
       "class_name": "SpiNNaker2Neuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {
@@ -27681,6 +27849,7 @@
     },
     {
       "class_name": "SpiNNakerLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -27836,6 +28005,7 @@
     },
     {
       "class_name": "SpikeResponseNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -27991,6 +28161,7 @@
     },
     {
       "class_name": "StellateCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -28146,6 +28317,7 @@
     },
     {
       "class_name": "StochasticIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -28301,6 +28473,7 @@
     },
     {
       "class_name": "StochasticLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -28456,6 +28629,7 @@
     },
     {
       "class_name": "SuperSpikeNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -28611,6 +28785,7 @@
     },
     {
       "class_name": "TTypeCaNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -28766,6 +28941,7 @@
     },
     {
       "class_name": "TermanWangOscillator",
+      "profile": "terman_wang",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -28949,6 +29125,7 @@
     },
     {
       "class_name": "ThetaNeuron",
+      "profile": "theta",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -29139,6 +29316,7 @@
     },
     {
       "class_name": "ThresholdLinearRateNeuron",
+      "profile": "threshold_linear_rate",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -29313,6 +29491,7 @@
     },
     {
       "class_name": "TraubMilesNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -29468,6 +29647,7 @@
     },
     {
       "class_name": "TrueNorthNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -29623,6 +29803,7 @@
     },
     {
       "class_name": "TsodyksMarkramNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -29778,6 +29959,7 @@
     },
     {
       "class_name": "TwoCompartmentLIFNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -29933,6 +30115,7 @@
     },
     {
       "class_name": "UnipolarBrushCell",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -30088,6 +30271,7 @@
     },
     {
       "class_name": "UpperMotorNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -30243,6 +30427,7 @@
     },
     {
       "class_name": "VIPNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -30398,6 +30583,7 @@
     },
     {
       "class_name": "WangBuzsakiNeuron",
+      "profile": "wang_buzsaki",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -30595,6 +30781,7 @@
     },
     {
       "class_name": "WendlingNeuron",
+      "profile": "hand",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -30750,6 +30937,7 @@
     },
     {
       "class_name": "WilsonCowanUnit",
+      "profile": "wilson_cowan",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -30924,6 +31112,7 @@
     },
     {
       "class_name": "WilsonHRNeuron",
+      "profile": "wilson_hr",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -31121,6 +31310,7 @@
     },
     {
       "class_name": "WongWangUnit",
+      "profile": "wong_wang",
       "kind": "source-literature",
       "has_descriptor": true,
       "declared": {
@@ -31295,6 +31485,7 @@
     },
     {
       "class_name": "YamadaNeuron",
+      "profile": "hand",
       "kind": "project-original",
       "has_descriptor": true,
       "declared": {

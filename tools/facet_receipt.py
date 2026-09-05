@@ -17,15 +17,13 @@ tool, runtime and outcome, seals the receipt and writes it as a new file under
 receipt: a later run is a new file that supersedes the older one.
 
 A pytest command is run with a JUnit report so the passed/failed/skipped
-counts are recorded from the run itself, not from the exit code alone. Any
-other command is credited only by its exit code and is recorded as one check.
+counts and executed validator identities are retained from the run itself.
+Other commands cannot credit a facet until a result adapter is implemented.
 
 Usage::
 
-    python tools/facet_receipt.py record --model LapicqueNeuron --facet cosim \\
+    python tools/facet_receipt.py record --model LapicqueNeuron --facet cosim --profile lapicque \\
         -- python -m pytest "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound"
-    python tools/facet_receipt.py record --model AdExNeuron --facet formal_safety \\
-        --evidence hdl/formal/catalogue/sc_adex.sby -- sby -f hdl/formal/catalogue/sc_adex.sby
 """
 
 from __future__ import annotations
@@ -34,12 +32,14 @@ import argparse
 import datetime as dt
 import importlib.util
 import json
+import math
+import os
 import platform
+import signal
 import shutil
 import subprocess
 import sys
 import tempfile
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from types import ModuleType
 
@@ -64,8 +64,16 @@ from sc_neurocore.neurons.facet_receipts import (  # noqa: E402
 )
 from sc_neurocore.neurons.model_identity import identity_registry  # noqa: E402
 from sc_neurocore.neurons.readiness import (  # noqa: E402
+    current_digest,
     derive_subjects,
     facet_evidence_field,
+)
+from sc_neurocore.neurons.receipt_execution import (  # noqa: E402
+    EXECUTION_CONTRACT,
+    evidence_selection_problems,
+    execution_problems,
+    junit_checks,
+    pytest_command,
 )
 
 _SILICON_TOOLS = ("iverilog", "yosys", "verilator", "sby")
@@ -150,16 +158,7 @@ def _runtime(subjects: tuple[Subject, ...]) -> dict[str, str]:
 
 
 def _junit_counts(report: Path) -> dict[str, int]:
-    root = ET.parse(report).getroot()
-    suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
-    counts = {"collected": 0, "failed": 0, "errors": 0, "skipped": 0}
-    for suite in suites:
-        counts["collected"] += int(suite.get("tests", "0"))
-        counts["failed"] += int(suite.get("failures", "0"))
-        counts["errors"] += int(suite.get("errors", "0"))
-        counts["skipped"] += int(suite.get("skipped", "0"))
-    counts["passed"] = counts["collected"] - counts["failed"] - counts["errors"] - counts["skipped"]
-    return counts
+    return junit_checks(report.read_text(encoding="utf-8"))[0]
 
 
 def _outcome(exit_code: int, counts: dict[str, int]) -> str:
@@ -177,12 +176,14 @@ def run_command(
 ) -> tuple[int, dict[str, int], str, dict[str, str]]:
     """Run the evidence command and return exit code, counts, outcome and tool.
 
-    A pytest invocation (any argument equal to ``pytest`` or ending in
-    ``/pytest``) is run with ``-p no:cacheprovider --junitxml`` and its counts
-    come from the JUnit report; any other command is one check credited by its
-    exit code.
+    Direct pytest invocations receive ``-p no:cacheprovider --junitxml`` and
+    counts come from testcase elements. Other successful commands carry zero
+    passed checks. None means a bounded 600-second budget, not unlimited work.
     """
-    is_pytest = any(arg == "pytest" or arg.endswith("/pytest") for arg in command)
+    duration = 600.0 if timeout is None else timeout
+    if not math.isfinite(duration) or duration <= 0:
+        raise RecordError("timeout must be positive and finite")
+    is_pytest = pytest_command(command)
     tool = {"name": "pytest" if is_pytest else Path(command[0]).name}
     if is_pytest:
         import pytest
@@ -196,21 +197,38 @@ def run_command(
         if is_pytest:
             argv += ["-p", "no:cacheprovider", f"--junitxml={report}"]
         try:
-            completed = subprocess.run(
-                argv, cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout, check=False
+            process = subprocess.Popen(
+                argv,
+                cwd=REPO_ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                start_new_session=os.name == "posix",
             )
+            stdout, stderr = process.communicate(timeout=duration)
         except subprocess.TimeoutExpired:
+            if os.name == "posix":
+                os.killpg(process.pid, signal.SIGKILL)
+            else:
+                process.kill()
+            process.communicate()
             counts = {"collected": 0, "passed": 0, "failed": 0, "errors": 0, "skipped": 0}
             return -1, counts, "timeout", tool
-        exit_code = completed.returncode
+        exit_code = process.returncode
+        tool["stdout"] = stdout
+        tool["stderr"] = stderr
         if is_pytest and report.is_file():
-            counts = _junit_counts(report)
+            tool["junit_xml"] = report.read_text(encoding="utf-8")
+            try:
+                counts = _junit_counts(report)
+            except ValueError:
+                counts = {"collected": 0, "passed": 0, "failed": 0, "errors": 1, "skipped": 0}
         elif is_pytest:
             counts = {"collected": 0, "passed": 0, "failed": 0, "errors": 1, "skipped": 0}
         else:
             counts = {
                 "collected": 1,
-                "passed": 1 if exit_code == 0 else 0,
+                "passed": 0,
                 "failed": 0 if exit_code == 0 else 1,
                 "errors": 0,
                 "skipped": 0,
@@ -259,13 +277,21 @@ def record_receipt(
     if model not in registry or registry[model].kind == "api-alias":
         raise RecordError(f"{model!r} is not a registered class")
     identity = registry[model]
+    profiles = {item.stem for item in identity.schema_profiles} or {"hand"}
+    if not profile:
+        if len(profiles) != 1:
+            raise RecordError("multiple model profiles: select --profile explicitly")
+        profile = next(iter(profiles))
+    if profile not in profiles:
+        raise RecordError(f"unknown profile {profile!r} for {model}")
     refs = list(evidence or ())
     from sc_neurocore.neurons.model_catalogue import load_descriptor
 
     descriptor = load_descriptor(model)
+    field_text = ""
     if descriptor is not None:
         field_text = facet_evidence_field(descriptor, spec)
-        if field_text:
+        if field_text and not refs:
             refs.append(field_text)
     if not refs:
         raise RecordError(f"{model} declares no evidence reference for {facet}; pass --evidence")
@@ -273,6 +299,9 @@ def record_receipt(
         for reference in parse_evidence_field(raw, REPO_ROOT):
             if reference.is_locatable and not reference.is_resolved:
                 raise RecordError(f"evidence reference does not resolve: {reference.raw}")
+    selection_errors = evidence_selection_problems(refs, field_text)
+    if selection_errors:
+        raise RecordError("; ".join(selection_errors))
     command_files = [
         arg.split("::", 1)[0]
         for arg in command
@@ -299,7 +328,35 @@ def record_receipt(
             f"cannot derive required subject kind(s) {', '.join(missing)} for {model}/{facet}; "
             "pass them with --subject KIND=PATH"
         )
+    if not pytest_command(command):
+        raise RecordError(
+            "credit requires a direct pytest validator; native result adapters are not yet supported"
+        )
     exit_code, counts, outcome, tool = run_command(command, timeout=timeout)
+    validator = {
+        "name": "tools/facet_receipt.py",
+        "schema": FACET_RECEIPT_SCHEMA,
+        "execution_contract": EXECUTION_CONTRACT,
+        "junit_xml": tool.pop("junit_xml", ""),
+    }
+    execution_errors = execution_problems(command, refs, validator, counts)
+    changed = [
+        subject.path for subject in subjects if current_digest(subject, REPO_ROOT) != subject.sha256
+    ]
+    after = derive_subjects(
+        model,
+        facet,
+        repo_root=REPO_ROOT,
+        evidence_refs=[*refs, *command_files],
+        extra_subjects=extras,
+    )
+    if {(s.kind, s.path, s.scope) for s in after} != {(s.kind, s.path, s.scope) for s in subjects}:
+        changed.append("subject manifest membership")
+    if execution_errors or changed:
+        outcome = "error"
+        notes = "\n".join(
+            [notes, *execution_errors, *(f"subject changed during run: {p}" for p in changed)]
+        )
     extra_tools = (
         {name: _tool_version(name) for name in _SILICON_TOOLS if shutil.which(name)}
         if spec.axis == "silicon"
@@ -309,8 +366,7 @@ def record_receipt(
     receipt = FacetReceipt(
         class_name=model,
         facet=facet,
-        profile=profile
-        or (identity.schema_profiles[0].stem if identity.schema_profiles else "hand"),
+        profile=profile,
         claim_scope=spec.claim_scope if claim_scope is None else claim_scope,
         subjects=subjects,
         evidence_refs=tuple(refs),
@@ -318,7 +374,7 @@ def record_receipt(
         tool=tool,
         extra_tools=extra_tools,
         runtime=_runtime(subjects),
-        validator={"name": "tools/facet_receipt.py", "schema": FACET_RECEIPT_SCHEMA},
+        validator=validator,
         outcome=outcome,
         exit_code=exit_code,
         counts=counts,
@@ -326,12 +382,21 @@ def record_receipt(
         notes=notes,
     ).sealed()
     receipt_dir.mkdir(parents=True, exist_ok=True)
-    target = receipt_dir / receipt_filename(model, facet, stamp)
-    if target.exists():
-        raise RecordError(f"receipt already exists and is immutable: {target}")
-    target.write_text(
-        json.dumps(receipt.to_payload(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
+    target = receipt_dir / receipt_filename(model, facet, stamp, profile=profile)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=receipt_dir, delete=False
+    ) as pending:
+        temporary = Path(pending.name)
+        try:
+            pending.write(json.dumps(receipt.to_payload(), indent=2, ensure_ascii=False) + "\n")
+            pending.flush()
+            os.fsync(pending.fileno())
+            try:
+                os.link(temporary, target)
+            except FileExistsError as error:
+                raise RecordError(f"receipt already exists and is immutable: {target}") from error
+        finally:
+            temporary.unlink()
     return target, receipt
 
 
@@ -372,7 +437,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {error}", file=sys.stderr)
         return 2
     problems = credit_problems(receipt, class_name=args.model)
-    print(f"wrote {path.relative_to(REPO_ROOT).as_posix()}: outcome={receipt.outcome}")
+    print(f"wrote {path}: outcome={receipt.outcome}")
     if problems:
         for problem in problems:
             print(f"  not creditable: {problem}")

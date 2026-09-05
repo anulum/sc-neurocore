@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4793
+    "test_files": 4794
   },
   "documentation": {
     "public_pages": [
@@ -6669,6 +6669,7 @@
       "tests/test_rall_dendrite.py",
       "tests/test_readiness_evidence_ledger.py",
       "tests/test_readiness_verification.py",
+      "tests/test_receipt_execution.py",
       "tests/test_recorders/test_spike_recorder.py",
       "tests/test_reference_adaptive_threshold_if.py",
       "tests/test_reference_adex.py",

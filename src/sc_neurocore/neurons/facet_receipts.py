@@ -25,7 +25,7 @@ facet only from a receipt that
   recorded under ``formal_safety`` and can never credit ``formal_equivalence``).
 
 Receipts are append-only: a later run writes a new file; the verifier reads the
-newest receipt per (class, facet) and never edits an older one.
+newest receipt per (class, facet, profile) and never edits an older one.
 
 The dependency matrix :data:`INVALIDATION_MATRIX` names, per facet, the subject
 kinds whose content change invalidates the receipt. Changing one subject
@@ -43,13 +43,14 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 from sc_neurocore.neurons.evidence_references import sha256_canonical_json
+from sc_neurocore.neurons.receipt_execution import execution_problems
 
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
     import tomli as tomllib  # type: ignore[no-redef]
 
-FACET_RECEIPT_SCHEMA = "sc-neurocore.facet-receipt.v1"
+FACET_RECEIPT_SCHEMA = "sc-neurocore.facet-receipt.v2"
 RECEIPT_DIR = Path(__file__).resolve().parent / "facet_receipts"
 
 Axis = Literal["science", "software", "silicon"]
@@ -61,6 +62,7 @@ SubjectKind = Literal[
     "compiler",
     "committed-rtl",
     "native-backend",
+    "native-binary",
     "report",
     "validator",
 ]
@@ -75,6 +77,7 @@ SUBJECT_KINDS: tuple[SubjectKind, ...] = (
     "compiler",
     "committed-rtl",
     "native-backend",
+    "native-binary",
     "report",
     "validator",
 )
@@ -154,8 +157,9 @@ FACETS: tuple[FacetSpec, ...] = (
             f"backend:{backend}",
             "software",
             None,
-            ("descriptor-contract", "model-module", "validator"),
-            ("native-backend", "schema-profile", "source-reference"),
+            ("descriptor-contract", "model-module", "validator")
+            + (("native-backend", "native-binary") if backend != "python" else ()),
+            ("schema-profile", "source-reference"),
         )
         for backend in ("python", "rust", "julia", "go", "mojo")
     ),
@@ -399,7 +403,7 @@ def parse_receipt(payload: Mapping[str, Any]) -> FacetReceipt:
         If a required field is missing or malformed.
     """
     schema = _str_field(payload, "schema")
-    if schema != FACET_RECEIPT_SCHEMA:
+    if schema not in {FACET_RECEIPT_SCHEMA, "sc-neurocore.facet-receipt.v1"}:
         raise FacetReceiptError(f"unsupported receipt schema {schema!r}")
     class_name = _str_field(payload, "class_name")
     if not _CLASS_NAME.fullmatch(class_name):
@@ -480,6 +484,13 @@ def credit_problems(receipt: FacetReceipt, *, class_name: str | None = None) -> 
         different class is a wrong-subject receipt.
     """
     problems: list[str] = []
+    if receipt.schema != FACET_RECEIPT_SCHEMA:
+        problems.append("legacy receipt requires a new executed-validator receipt")
+    problems.extend(
+        execution_problems(
+            receipt.command, receipt.evidence_refs, receipt.validator, receipt.counts
+        )
+    )
     spec = FACET_BY_NAME.get(receipt.facet)
     if spec is None:
         return (f"unknown facet {receipt.facet!r}",)
@@ -499,6 +510,8 @@ def credit_problems(receipt: FacetReceipt, *, class_name: str | None = None) -> 
     if receipt.exit_code != 0:
         problems.append(f"exit code {receipt.exit_code} is not 0")
     counts = receipt.counts
+    if any(value < 0 for value in counts.values()):
+        problems.append("negative check count")
     if counts.get("passed", 0) < 1:
         problems.append("no passed check recorded")
     for key in ("failed", "errors", "skipped"):
@@ -514,10 +527,13 @@ def credit_problems(receipt: FacetReceipt, *, class_name: str | None = None) -> 
     return tuple(problems)
 
 
-def receipt_filename(class_name: str, facet: str, recorded_at: str) -> str:
+def receipt_filename(class_name: str, facet: str, recorded_at: str, *, profile: str = "") -> str:
     """Return the canonical receipt file name for one run."""
+    if profile and re.fullmatch(r"[A-Za-z0-9_-]+", profile) is None:
+        raise FacetReceiptError("profile must be a schema stem")
     stamp = recorded_at.replace("-", "").replace(":", "")
-    return f"{class_name}__{facet.replace(':', '-')}__{stamp}.json"
+    suffix = f"__{profile}" if profile else ""
+    return f"{class_name}__{facet.replace(':', '-')}__{stamp}{suffix}.json"
 
 
 def iter_receipts(directory: Path = RECEIPT_DIR) -> Iterator[tuple[Path, FacetReceipt]]:
@@ -537,15 +553,15 @@ def iter_receipts(directory: Path = RECEIPT_DIR) -> Iterator[tuple[Path, FacetRe
 
 def latest_receipts(
     directory: Path = RECEIPT_DIR,
-) -> dict[tuple[str, str], tuple[Path, FacetReceipt]]:
-    """Return the newest receipt per ``(class_name, facet)``.
+) -> dict[tuple[str, str, str], tuple[Path, FacetReceipt]]:
+    """Return the newest receipt per ``(class_name, facet, profile)``.
 
     Newest is decided by ``recorded_at`` and then by file name, so an
     append-only successor always supersedes its predecessor.
     """
-    latest: dict[tuple[str, str], tuple[Path, FacetReceipt]] = {}
+    latest: dict[tuple[str, str, str], tuple[Path, FacetReceipt]] = {}
     for path, receipt in iter_receipts(directory):
-        key = (receipt.class_name, receipt.facet)
+        key = (receipt.class_name, receipt.facet, receipt.profile)
         current = latest.get(key)
         if current is None or (receipt.recorded_at, path.name) > (
             current[1].recorded_at,
@@ -562,10 +578,9 @@ _CONTRACT_METADATA = ("name", "class_name", "module")
 def descriptor_contract_digest(payload: Mapping[str, Any]) -> str:
     """Return the digest of the descriptor sections that fix the model contract.
 
-    Only identity (``metadata.name``/``class_name``/``module``), state,
-    parameters, integration and dynamics take part, so a documentation,
-    provenance or evidence edit never invalidates a receipt while a changed
-    equation, parameter default, dt or method always does.
+    Identity, state, parameters, integration, dynamics and scientific acceptance
+    criteria take part. A documentation or evidence-pointer edit alone does not
+    change this digest; evidence selection is independently checked on use.
     """
     metadata = payload.get("metadata", {})
     contract: dict[str, Any] = {
@@ -575,6 +590,13 @@ def descriptor_contract_digest(payload: Mapping[str, Any]) -> str:
     }
     for section in _CONTRACT_SECTIONS:
         contract[section] = payload.get(section, {})
+    validation = payload.get("validation", {})
+    if isinstance(validation, Mapping):
+        contract["validation_contract"] = {
+            key: value
+            for key, value in validation.items()
+            if key not in {"evidence", "dynamics_faithful", "is_class_validated"}
+        }
     return sha256_canonical_json(contract)
 
 

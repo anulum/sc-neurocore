@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 423
+expected_file_count = 424
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1695,6 +1695,10 @@ rationale = "Typed evidence references and content digests consumed by the readi
 [[file]]
 path = "src/sc_neurocore/neurons/facet_receipts.py"
 rationale = "Immutable facet receipt contract and the evidence invalidation matrix; every credited readiness rung reads it."
+
+[[file]]
+path = "src/sc_neurocore/neurons/receipt_execution.py"
+rationale = "Descriptor-bound validator selection and executed JUnit evidence consumed by receipt recording and verification."
 
 [[file]]
 path = "src/sc_neurocore/neurons/readiness.py"

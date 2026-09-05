@@ -1,0 +1,173 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v2",
+  "class_name": "BrunelWangNeuron",
+  "facet": "cosim",
+  "profile": "brunel_wang",
+  "claim_scope": "trace",
+  "subjects": [
+    {
+      "kind": "committed-rtl",
+      "path": "hdl/formal/catalogue/sc_brunel_wang.v",
+      "sha256": "bbe1e193f0b3486cc8d3a42aef94b77d47205ade4bc6a54f7d642dd844a00fbd",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/compiler",
+      "sha256": "b558f4357101424c4527bc65cfce24201fc229cd90cccb1311162226d3f2a6bb",
+      "scope": "tree"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_builder.py",
+      "sha256": "3b2fe0fa8386141625570d8f1f9a6f12e446d5765f4d74eb4843ed949ca2134a",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_namespace.py",
+      "sha256": "79778540beb3614cdfdb3b76599ad9cfb138c48aa680c907504f9ceb76357e3b",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_safety.py",
+      "sha256": "87c42779221213ca6a09d789168619c3322188f29ea45844bfe32e532e335267",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_units_runtime.py",
+      "sha256": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/expression_derivative.py",
+      "sha256": "c061e934bcf061ede6c0859addec64e975231bd194bf451c04148df7f55a4409",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_contracts.py",
+      "sha256": "264caf838d10c54c4318b7a8815b332feecf3dfc2946b275ab0ba1ef09193962",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_validator.py",
+      "sha256": "ac9f322d1049802cec417fb05e9dedd4546fa85b9f3b299ac6afd6d57668b1ca",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/universal_dsl.py",
+      "sha256": "6a640cbd21df2bb26cb377d8b836424be89bc9ae40123cdf23ccb7739a11717f",
+      "scope": "file"
+    },
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/BrunelWangNeuron.toml",
+      "sha256": "fca94228cea2ea153cac5b4173398f3c6cf553e017011479fccb7338b08a3c98",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/brunel_wang.py",
+      "sha256": "c6d4935330f11b41c37dd86fc6081c587fac174a8cc2bb380dc483a59f7fa6ec",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/brunel_wang.json",
+      "sha256": "6edc5daf2c8db3064ffa3468f2de61af4d7e34840c3a72a0d8a10e2f830146e8",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/brunel_wang.toml",
+      "sha256": "827a404f27655f71424c33892887bd772c93cf7f831bfa32be50631a78c9196e",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/facet_receipts.py",
+      "sha256": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/readiness.py",
+      "sha256": "5534a558600f0960f2d2d5ec34a90b702be7d0dc5df391c3b4b14cfc525ff962",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/receipt_execution.py",
+      "sha256": "6d3362d7338b4fa0cb7f44c996b33a7bda8c20d308e001ee339983d0aa35422e",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_cosim_brunel_wang.py",
+      "sha256": "467d5c5ef0fb5c6e9e427824e9a5c9c9e5ea20967434c4c7d58355a4dd1a23be",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt.py",
+      "sha256": "5699c0bcb3e7ac1f43674d44148e52d66a6da4863d4f3f3b9b5342d143b0f306",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state"
+  ],
+  "command": [
+    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1",
+    "stdout": ".                                                                        [100%]\n1 passed in 0.83s\n",
+    "stderr": ""
+  },
+  "extra_tools": {
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "yosys": "Yosys 0.33 (git sha1 2584903a060)",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "sby": "usage: sby [options] [<jobname>.sby [tasknames] | <dirname>]"
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "3.16.0",
+    "git_head": "4cc8c02c4fdd7215710e28d3ebdae2106ce7a9b3",
+    "dirty_subjects": "rc/sc_neurocore/neurons/facet_receipts.py, src/sc_neurocore/neurons/readiness.py, src/sc_neurocore/neurons/receipt_execution.py, tools/facet_receipt.py"
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v2",
+    "execution_contract": "pytest-junit.v1",
+    "junit_xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"1\" time=\"0.729\" timestamp=\"2026-09-05T11:38:38.818805+02:00\" hostname=\"aaarthuus\"><testcase classname=\"tests.test_cosim_brunel_wang\" name=\"test_q1616_rtl_preserves_events_and_bounded_state\" time=\"0.026\" /></testsuite></testsuites>"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "recorded_at": "2026-09-05T09:38:39Z",
+  "notes": "",
+  "receipt_sha256": "40ccf0806b8d954ab154ebb70f8c98982018d78690b8ea0fc3079cbf73bfd0b2"
+}

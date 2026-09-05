@@ -42,7 +42,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -66,13 +65,19 @@ from sc_neurocore.neurons.facet_receipts import (
     descriptor_contract_digest_of,
     latest_receipts,
 )
-from sc_neurocore.neurons.model_catalogue import descriptor_path, load_descriptor_payload
+from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
 from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     descriptor_completeness_tier,
     parse_model_descriptor,
 )
 from sc_neurocore.neurons.model_identity import identity_registry
+from sc_neurocore.neurons.receipt_execution import evidence_selection_problems
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
+    import tomli as tomllib  # type: ignore[no-redef] # Python 3.10 has no tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FacetStatus = Literal[
@@ -142,6 +147,7 @@ class ReadinessRecord:
     verified_science: int
     verified_silicon: int | None
     facets: tuple[FacetVerification, ...]
+    profile: str | None = None
 
     @property
     def declared_science_label(self) -> str:
@@ -174,6 +180,7 @@ class ReadinessRecord:
         """Return a JSON-compatible projection with a stable field order."""
         return {
             "class_name": self.class_name,
+            "profile": self.profile,
             "kind": self.kind,
             "has_descriptor": self.has_descriptor,
             "declared": {
@@ -245,7 +252,6 @@ def _tree_files(root: Path) -> tuple[Path, ...]:
     return tuple(sorted(path for path in root.rglob("*.py") if "__pycache__" not in path.parts))
 
 
-@lru_cache(maxsize=8)
 def compiler_subjects(repo_root: Path = REPO_ROOT) -> tuple[Subject, ...]:
     """Return the compiler subjects shared by every generated-RTL receipt."""
     subjects: list[Subject] = []
@@ -273,10 +279,6 @@ def current_digest(subject: Subject, repo_root: Path = REPO_ROOT) -> str | None:
     if subject.scope == "contract-sections":
         return descriptor_contract_digest_of(path)
     return sha256_file(path)
-
-
-def _relative(path: Path, repo_root: Path) -> str:
-    return path.resolve().relative_to(repo_root.resolve()).as_posix()
 
 
 def derive_subjects(
@@ -313,7 +315,10 @@ def derive_subjects(
     """
     spec = next(item for item in FACETS if item.name == facet)
     identity = identity_registry()[class_name]
-    payload = load_descriptor_payload(class_name)
+    local_descriptor = (
+        repo_root / "src/sc_neurocore/neurons/model_descriptors" / f"{class_name}.toml"
+    )
+    payload = tomllib.loads(local_descriptor.read_text()) if local_descriptor.is_file() else None
     subjects: dict[tuple[str, str], Subject] = {}
 
     def add(subject: Subject) -> None:
@@ -324,7 +329,7 @@ def derive_subjects(
         if path.is_file():
             add(Subject(kind, relative, sha256_file(path)))
 
-    descriptor_file = _relative(descriptor_path(class_name), repo_root)
+    descriptor_file = local_descriptor.relative_to(repo_root).as_posix()
     if payload is not None:
         add(
             Subject(
@@ -366,6 +371,13 @@ def derive_subjects(
     if "compiler" in spec.subjects:
         for subject in compiler_subjects(repo_root):
             add(subject)
+    for relative in (
+        "tools/facet_receipt.py",
+        "src/sc_neurocore/neurons/receipt_execution.py",
+        "src/sc_neurocore/neurons/facet_receipts.py",
+        "src/sc_neurocore/neurons/readiness.py",
+    ):
+        add_file("validator", relative)
     for subject in extra_subjects:
         add(subject)
     return tuple(
@@ -391,6 +403,34 @@ def verify_receipt(
     problems = credit_problems(receipt, class_name=class_name)
     if problems:
         return "invalid", (), problems
+    identity = identity_registry().get(class_name)
+    if identity is None:
+        return "invalid", (), ("unregistered receipt identity",)
+    profiles = {item.stem for item in identity.schema_profiles} or {"hand"}
+    if receipt.profile not in profiles:
+        return "invalid", (), (f"unknown model profile: {receipt.profile}",)
+    descriptor_file = (
+        repo_root / "src/sc_neurocore/neurons/model_descriptors" / f"{class_name}.toml"
+    )
+    if not descriptor_file.is_file():
+        return "invalid", (), ("current model descriptor is missing",)
+    descriptor = parse_model_descriptor(tomllib.loads(descriptor_file.read_text()))
+    selection_errors = evidence_selection_problems(
+        receipt.evidence_refs, facet_evidence_field(descriptor, FACET_BY_NAME[receipt.facet])
+    )
+    if selection_errors:
+        return "invalid", (), selection_errors
+    expected = derive_subjects(
+        class_name, receipt.facet, repo_root=repo_root, evidence_refs=receipt.evidence_refs
+    )
+    present = {(subject.kind, subject.path, subject.scope) for subject in receipt.subjects}
+    omitted = tuple(
+        f"missing current subject: {subject.kind}:{subject.path}"
+        for subject in expected
+        if (subject.kind, subject.path, subject.scope) not in present
+    )
+    if omitted:
+        return "invalid", (), omitted
     changed: list[str] = []
     for subject in receipt.subjects:
         digest = current_digest(subject, repo_root)
@@ -458,7 +498,8 @@ def verify_model(
     class_name: str,
     *,
     repo_root: Path = REPO_ROOT,
-    receipts: Mapping[tuple[str, str], tuple[Path, FacetReceipt]] | None = None,
+    receipts: Mapping[tuple[str, str, str], tuple[Path, FacetReceipt]] | None = None,
+    profile: str | None = None,
 ) -> ReadinessRecord:
     """Verify every facet of one registered class.
 
@@ -469,12 +510,21 @@ def verify_model(
     repo_root:
         Repository root the evidence paths are relative to.
     receipts:
-        Newest receipts per ``(class_name, facet)``; read from
+        Newest receipts per ``(class_name, facet, profile)``; read from
         :data:`~sc_neurocore.neurons.facet_receipts.RECEIPT_DIR` when omitted.
+    profile:
+        Exact schema profile. Without a selection, a multi-profile model cannot
+        receive a class-wide verified claim from one profile's evidence.
     """
     if receipts is None:
         receipts = latest_receipts()
     identity = identity_registry()[class_name]
+    profiles = {item.stem for item in identity.schema_profiles} or {"hand"}
+    selected_profile = (
+        profile if profile is not None else (next(iter(profiles)) if len(profiles) == 1 else None)
+    )
+    if profile is not None and profile not in profiles:
+        raise ValueError(f"unknown profile {profile!r} for {class_name}")
     payload = load_descriptor_payload(class_name)
     if payload is None:
         facets = tuple(
@@ -491,7 +541,9 @@ def verify_model(
                 spec,
                 declared=declared[spec.name],
                 evidence=evidence,
-                receipt_entry=receipts.get((class_name, spec.name)),
+                receipt_entry=receipts.get((class_name, spec.name, selected_profile))
+                if selected_profile is not None
+                else None,
                 class_name=class_name,
                 repo_root=repo_root,
             )
@@ -499,6 +551,7 @@ def verify_model(
     bound = {item.facet: item.status == "bound" for item in verifications}
     return ReadinessRecord(
         class_name=class_name,
+        profile=selected_profile,
         kind=identity.kind,
         has_descriptor=True,
         declared_science=science_tier(descriptor),

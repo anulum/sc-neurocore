@@ -21,6 +21,7 @@ import pytest
 
 from sc_neurocore.neurons.facet_receipts import (
     FACETS,
+    FACET_RECEIPT_SCHEMA,
     INVALIDATION_MATRIX,
     RECEIPT_DIR,
     credit_problems,
@@ -95,8 +96,14 @@ def test_committed_receipts_are_creditable_named_and_fresh() -> None:
     assert receipts, "the receipt store must hold the representative receipts"
     for path, receipt in receipts:
         assert path.name == receipt_filename(
-            receipt.class_name, receipt.facet, receipt.recorded_at
+            receipt.class_name,
+            receipt.facet,
+            receipt.recorded_at,
+            profile=receipt.profile if receipt.schema == FACET_RECEIPT_SCHEMA else "",
         )
+        if receipt.schema != FACET_RECEIPT_SCHEMA:
+            assert any("legacy receipt" in p for p in credit_problems(receipt))
+            continue
         assert credit_problems(receipt, class_name=receipt.class_name) == ()
         assert receipt.runtime["git_head"]
         assert receipt.counts["passed"] >= 1

@@ -22484,7 +22484,7 @@ FacetReceiptError
     silently ignored file.
 
 ### Function `latest_receipts(directory)`
-Return the newest receipt per ``(class_name, facet)``.
+Return the newest receipt per ``(class_name, facet, profile)``.
 
 Newest is decided by ``recorded_at`` and then by file name, so an
 append-only successor always supersedes its predecessor.
@@ -22492,10 +22492,9 @@ append-only successor always supersedes its predecessor.
 ### Function `descriptor_contract_digest(payload)`
 Return the digest of the descriptor sections that fix the model contract.
 
-Only identity (``metadata.name``/``class_name``/``module``), state,
-parameters, integration and dynamics take part, so a documentation,
-provenance or evidence edit never invalidates a receipt while a changed
-equation, parameter default, dt or method always does.
+Identity, state, parameters, integration, dynamics and scientific acceptance
+criteria take part. A documentation or evidence-pointer edit alone does not
+change this digest; evidence selection is independently checked on use.
 
 ### Function `descriptor_contract_digest_of(path)`
 Return :func:`descriptor_contract_digest` of a descriptor TOML file.
@@ -27586,14 +27585,87 @@ class_name:
 repo_root:
     Repository root the evidence paths are relative to.
 receipts:
-    Newest receipts per ``(class_name, facet)``; read from
+    Newest receipts per ``(class_name, facet, profile)``; read from
     :data:`~sc_neurocore.neurons.facet_receipts.RECEIPT_DIR` when omitted.
+profile:
+    Exact schema profile. Without a selection, a multi-profile model cannot
+    receive a class-wide verified claim from one profile's evidence.
 
 ### Function `readiness_report()`
 Verify every registered class (aliases excluded), keyed by class name.
 
 ### Function `summarise(records)`
 Return count summaries of declared versus verified readiness.
+
+---
+
+## Module `neurons.receipt_execution`
+
+### Function `evidence_selection_problems(selected, declared)`
+Reject validator selections outside a descriptor's reviewed evidence.
+
+Parameters
+----------
+selected : Sequence&#91;str&#93;
+    Evidence references selected for this particular execution.
+declared : str
+    Descriptor evidence field containing reviewed files or exact test nodes.
+
+Returns
+-------
+tuple&#91;str, ...&#93;
+    Missing or foreign test selections. A file declaration permits its nodes,
+    but a node declaration does not permit another test in the same file.
+
+### Function `pytest_command(command)`
+Return whether argv directly invokes pytest, without a shell wrapper.
+
+Parameters
+----------
+command : Sequence&#91;str&#93;
+    Executable and arguments.
+
+Returns
+-------
+bool
+    Whether pytest owns the invocation rather than appearing as an argument.
+
+### Function `junit_checks(xml)`
+Derive counts and executed validator names from the actual report.
+
+Parameters
+----------
+xml : str
+    Complete pytest JUnit XML retained in a receipt.
+
+Returns
+-------
+tuple&#91;dict&#91;str, int&#93;, tuple&#91;str, ...&#93;&#93;
+    Counts derived from testcase elements and their dotted identities.
+
+Raises
+------
+ValueError
+    If the report is malformed, empty or lacks testcase identities.
+
+### Function `execution_problems(command, evidence_refs, validator, counts)`
+Check that a receipt's declared validators actually appear in its run.
+
+Parameters
+----------
+command : Sequence&#91;str&#93;
+    Recorded direct invocation.
+evidence_refs : Sequence&#91;str&#93;
+    Declared test files or node IDs; prose alone cannot identify a validator.
+validator : Mapping&#91;str, str&#93;
+    Execution contract and retained JUnit XML.
+counts : Mapping&#91;str, int&#93;
+    Recorded check totals, compared against the XML testcase elements.
+
+Returns
+-------
+tuple&#91;str, ...&#93;
+    Reasons why this execution cannot credit the scientific claim.
 
 ---
 

@@ -22,7 +22,8 @@ invalidates it):
 |---|---|---|---|---|
 | `dynamics_faithful` | science | S4 | descriptor contract, model module, validator | `validation.evidence` |
 | `class_validated` | science | S5 | descriptor contract, model module, validator | `validation.evidence` |
-| `backend:python` … `backend:mojo` | software | none | descriptor contract, model module, validator | none |
+| `backend:python` | software | none | descriptor contract, model module, validator | none |
+| `backend:rust` … `backend:mojo` | software | none | descriptor contract, model module, validator, native source and binary | none |
 | `rtl_compile` | silicon | H0 | schema profile, compiler, validator | `silicon.cosim_evidence` |
 | `cosim` | silicon | H1 | descriptor contract, model module, schema profile, compiler, validator | `silicon.cosim_evidence` |
 | `synthesis` | silicon | H2 | committed RTL, report, validator | `silicon.synth_report` |
@@ -44,10 +45,41 @@ two facets require different claim scopes.
 
 ## Facet receipts
 
+Receipt schema v2 binds the result to `(class, facet, profile)`. Select the
+profile explicitly for models with several numerical definitions; an unselected
+multi-profile model receives no class-wide verified claim. For example,
+`verify_model("LapicqueNeuron", profile="lapicque")` checks only that profile,
+not its alternative LIF definition. Returned records identify the selected
+profile. This selection is not a claim that the underlying numerical profiles
+are mathematically interchangeable.
+
+The recorder accepts a direct pytest invocation and retains its JUnit testcase
+identities and results. Selected evidence must be declared by the descriptor
+and actually appear in that execution. `--evidence` can select a reviewed subset
+from a descriptor listing several validators; the receipt states that subset,
+not execution of all the other tests. A successful unrelated command, a passing
+different test or invented suite totals cannot credit the selected facet.
+Native-tool result adapters remain unsupported rather than crediting exit zero
+as a scientific result. Compiled backend facets require both source and binary
+subjects; their descriptor-bound validator enrolment remains necessary.
+
+Current subject membership and digests are checked, including the recorder and
+verifier implementations. Scientific metric/tolerance edits invalidate evidence.
+The recorder checks inputs again after execution and refuses credit if they
+changed. Receipt publication is atomic and exclusive; an existing file is never
+overwritten. Default execution timeout is 600 seconds; a positive finite override
+is allowed. On POSIX, timeout terminates the command's process group.
+
+Historical v1 receipts remain readable and immutable but cannot provide v2
+credit. They need a fresh run, not a changed seal. SHA-256 seals detect content
+changes; they are not signatures, independent scientific review or proof of
+the recorder's identity. A receipt covers its declared inputs and validated
+domain, not arbitrary imported dependencies or all possible operating points.
+
 A receipt records one execution of the evidence command:
 
 ```
-python tools/facet_receipt.py record --model LapicqueNeuron --facet cosim \
+python tools/facet_receipt.py record --model LapicqueNeuron --facet cosim --profile lapicque \
     -- python -m pytest "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound"
 ```
 
@@ -58,7 +90,7 @@ versions, the git head and any uncommitted subject, seals the payload with its
 own SHA-256 and writes it as a new file under
 `src/sc_neurocore/neurons/facet_receipts/`. Receipts are append-only: the
 recorder refuses to overwrite, and the verifier reads the newest receipt per
-(class, facet). A receipt credits its facet only when it is sealed, names the
+(class, facet, profile). A receipt credits its facet only when it is sealed, names the
 class it is read for, carries every required subject kind, ended with
 `outcome = "passed"`, exit code 0, at least one passed check and no failed,
 errored or skipped check, and states the claim scope the facet requires.

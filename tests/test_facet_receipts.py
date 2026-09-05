@@ -58,7 +58,11 @@ def _receipt(facet: str = "cosim", **overrides: Any) -> FacetReceipt:
         "tool": {"name": "pytest", "version": "8.0"},
         "extra_tools": {"iverilog": "12.0"},
         "runtime": {"python": "3.12"},
-        "validator": {"name": "tools/facet_receipt.py"},
+        "validator": {
+            "name": "tools/facet_receipt.py",
+            "execution_contract": "pytest-junit.v1",
+            "junit_xml": '<testsuite><testcase classname="tests.test_cosim_lapicque" name="test_x" /></testsuite>',
+        },
         "outcome": "passed",
         "exit_code": 0,
         "counts": {"collected": 1, "passed": 1, "failed": 0, "errors": 0, "skipped": 0},
@@ -174,7 +178,7 @@ def test_invalidation_matrix_names_descendants_only() -> None:
         "physical",
     }
     assert set(facets_invalidated_by("native-backend")) == {
-        f"backend:{name}" for name in ("python", "rust", "julia", "go", "mojo")
+        f"backend:{name}" for name in ("rust", "julia", "go", "mojo")
     }
     assert "model-module" in INVALIDATION_MATRIX["cosim"]
     assert "model-module" not in INVALIDATION_MATRIX["synthesis"]
@@ -204,6 +208,14 @@ def test_descriptor_contract_digest_ignores_non_contract_sections() -> None:
     assert descriptor_contract_digest(edited) != base
 
 
+def test_validation_metric_changes_invalidate_the_contract() -> None:
+    """Changing scientific acceptance criteria is not a documentation-only edit."""
+    payload = {"validation": {"metric": "trajectory", "tolerance": 1e-8}}
+    before = descriptor_contract_digest(payload)
+    payload["validation"]["tolerance"] = 1.0
+    assert descriptor_contract_digest(payload) != before
+
+
 def test_latest_receipt_is_the_append_only_successor(tmp_path: Path) -> None:
     """The newest receipt per (class, facet) supersedes; older files stay."""
     older = _receipt(recorded_at="2026-09-05T06:00:00Z")
@@ -213,8 +225,8 @@ def test_latest_receipt_is_the_append_only_successor(tmp_path: Path) -> None:
         name = receipt_filename(receipt.class_name, receipt.facet, receipt.recorded_at)
         (tmp_path / name).write_text(json.dumps(receipt.to_payload()), encoding="utf-8")
     latest = latest_receipts(tmp_path)
-    assert latest[("LapicqueNeuron", "cosim")][1] == newer
-    assert latest[("LapicqueNeuron", "class_validated")][1] == other
+    assert latest[("LapicqueNeuron", "cosim", "lapicque")][1] == newer
+    assert latest[("LapicqueNeuron", "class_validated", "lapicque")][1] == other
     assert len(list(tmp_path.glob("*.json"))) == 3
     assert receipt_filename("A", "backend:rust", "2026-09-05T06:00:00Z") == (
         "A__backend-rust__20260905T060000Z.json"
@@ -222,6 +234,73 @@ def test_latest_receipt_is_the_append_only_successor(tmp_path: Path) -> None:
     (tmp_path / "broken.json").write_text("{", encoding="utf-8")
     with pytest.raises(FacetReceiptError):
         latest_receipts(tmp_path)
+
+
+def test_receipt_successors_do_not_cross_profiles(tmp_path: Path) -> None:
+    """A later alternate numerical profile cannot replace the source profile."""
+    first = _receipt(profile="lapicque", recorded_at="2026-09-05T06:00:00Z")
+    second = _receipt(profile="lif", recorded_at="2026-09-05T07:00:00Z")
+    for receipt in (first, second):
+        name = receipt_filename(receipt.class_name, receipt.facet, receipt.recorded_at)
+        (tmp_path / name).write_text(json.dumps(receipt.to_payload()), encoding="utf-8")
+    latest = latest_receipts(tmp_path)
+    assert latest[("LapicqueNeuron", "cosim", "lapicque")][1] == first
+    assert latest[("LapicqueNeuron", "cosim", "lif")][1] == second
+
+
+def test_compiled_backend_requires_its_executable_subject() -> None:
+    """Python source and a validator alone cannot verify a compiled backend."""
+    receipt = _receipt("backend:rust")
+    payload = receipt.to_payload(sealed=False)
+    payload["subjects"] = [s for s in payload["subjects"] if s["kind"] != "native-backend"]
+    missing = parse_receipt(payload).sealed()
+    assert any("native-backend" in problem for problem in credit_problems(missing))
+
+
+def test_recorder_rejects_unrelated_execution_and_ambiguous_profile(tmp_path: Path) -> None:
+    """A real but unrelated test does not validate the named scientific model."""
+    recorder = _load_recorder()
+    with pytest.raises(recorder.RecordError, match="multiple model profiles"):
+        recorder.record_receipt(
+            model="LapicqueNeuron",
+            facet="class_validated",
+            command=[sys.executable, "-c", "pass"],
+            receipt_dir=tmp_path,
+        )
+    with pytest.raises(recorder.RecordError, match="direct pytest"):
+        recorder.record_receipt(
+            model="LapicqueNeuron",
+            profile="lapicque",
+            facet="class_validated",
+            command=[sys.executable, "-c", "pass"],
+            receipt_dir=tmp_path,
+        )
+    path, receipt = recorder.record_receipt(
+        model="McCullochPittsNeuron",
+        facet="class_validated",
+        command=[sys.executable, "-m", "pytest", "tests/test_receipt_execution.py", "-q"],
+        receipt_dir=tmp_path,
+        timeout=60,
+    )
+    assert path.is_file()
+    assert receipt.outcome == "error"
+    assert any("not executed" in problem for problem in credit_problems(receipt))
+
+
+def test_recorder_enforces_finite_timeout() -> None:
+    """Unbounded budgets are rejected and a timed-out process is not credited."""
+    recorder = _load_recorder()
+    for timeout in (0.0, -1.0, float("nan"), float("inf")):
+        with pytest.raises(recorder.RecordError, match="positive and finite"):
+            recorder.run_command([sys.executable, "-c", "pass"], timeout=timeout)
+    result = recorder.run_command(
+        [sys.executable, "-c", "import time; time.sleep(30)"], timeout=0.05
+    )
+    assert result[:3] == (
+        -1,
+        {"collected": 0, "passed": 0, "failed": 0, "errors": 0, "skipped": 0},
+        "timeout",
+    )
 
 
 def _load_recorder() -> ModuleType:
@@ -261,25 +340,33 @@ def test_recorder_counts_come_from_the_run_not_the_exit_code(tmp_path: Path) -> 
     exit_code, counts, outcome, tool = recorder.run_command(
         [sys.executable, "-c", "raise SystemExit(0)"], timeout=60
     )
-    assert (exit_code, outcome, counts["passed"]) == (0, "passed", 1)
+    assert (exit_code, outcome, counts["passed"]) == (0, "skipped", 0)
     assert tool["name"] == Path(sys.executable).name
 
 
 def test_recorder_writes_an_immutable_creditable_receipt(tmp_path: Path) -> None:
     """Recording a real model against a passing command yields a sealed receipt."""
     recorder = _load_recorder()
-    probe = tmp_path / "test_probe.py"
-    probe.write_text("def test_ok():\n    pass\n", encoding="utf-8")
-    command = [sys.executable, "-m", "pytest", str(probe), "-q", "-p", "no:nengo"]
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/test_reference_lapicque_source_receipt.py",
+        "-q",
+        "-p",
+        "no:nengo",
+    ]
     path, receipt = recorder.record_receipt(
         model="LapicqueNeuron",
         facet="class_validated",
+        profile="lapicque",
+        evidence=["tests/test_reference_lapicque_source_receipt.py"],
         command=command,
         receipt_dir=tmp_path / "receipts",
         recorded_at="2026-09-05T06:00:00Z",
         timeout=300,
     )
-    assert path.name == "LapicqueNeuron__class_validated__20260905T060000Z.json"
+    assert path.name == "LapicqueNeuron__class_validated__20260905T060000Z__lapicque.json"
     assert credit_problems(load_receipt(path), class_name="LapicqueNeuron") == ()
     assert receipt.profile == "lapicque"
     assert {subject.kind for subject in receipt.subjects} >= {
@@ -300,6 +387,8 @@ def test_recorder_writes_an_immutable_creditable_receipt(tmp_path: Path) -> None
         recorder.record_receipt(
             model="LapicqueNeuron",
             facet="class_validated",
+            profile="lapicque",
+            evidence=["tests/test_reference_lapicque_source_receipt.py"],
             command=command,
             receipt_dir=tmp_path / "receipts",
             recorded_at="2026-09-05T06:00:00Z",
@@ -313,6 +402,7 @@ def test_recorder_writes_an_immutable_creditable_receipt(tmp_path: Path) -> None
         recorder.record_receipt(
             model="LapicqueNeuron",
             facet="cosim",
+            profile="lapicque",
             command=command,
             evidence=["tests/test_cosim_lapicque.py::test_never_written"],
             receipt_dir=tmp_path,

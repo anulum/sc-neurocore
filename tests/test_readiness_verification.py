@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -22,15 +21,11 @@ except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
     import tomli as tomllib  # type: ignore[no-redef]
 
 from sc_neurocore.neurons.descriptor_tiers import science_tier, silicon_tier
-from sc_neurocore.neurons.evidence_references import sha256_file, sha256_tree
 from sc_neurocore.neurons.facet_receipts import (
     FACET_BY_NAME,
-    FACETS,
     FacetReceipt,
     Subject,
-    descriptor_contract_digest,
     parse_receipt,
-    receipt_filename,
 )
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.model_identity import identity_registry
@@ -127,7 +122,7 @@ def test_corrected_pointers_are_bound_and_withdrawn_claim_is_not_declared(
         assert cosim.status == "bound", (name, cosim.problems, cosim.changed_subjects)
         assert cosim.receipt.startswith(f"{name}__cosim__")
     assert report["McCullochPittsNeuron"].facet("class_validated").status == "bound"
-    lapicque = report["LapicqueNeuron"]
+    lapicque = verify_model("LapicqueNeuron", profile="lapicque")
     assert lapicque.verified_science == 5
     assert lapicque.verified_silicon == 1
     assert lapicque.facet("synthesis").status == "located"
@@ -172,158 +167,88 @@ def test_unregistered_class_is_an_error() -> None:
         verify_model("GhostNeuron")
 
 
-# --- invalidation matrix against a synthetic repository -----------------------------
+@pytest.fixture
+def copied_receipt(tmp_path: Path) -> tuple[Path, FacetReceipt]:
+    """Copy actual evidence inputs, never fabricate a scientifically passing model."""
+    import shutil
 
-_DESCRIPTOR = {
-    "metadata": {"name": "Probe", "class_name": "Probe", "module": "probe", "summary": "s"},
-    "state": {"v": {"init": 0.0}},
-    "parameters": {"tau": {"default": 10.0}},
-    "integration": {"dt": 0.1, "method": "euler"},
-    "dynamics": {"v": "dv/dt=-v/tau"},
-    "documentation": {"notes": "before"},
-}
+    from sc_neurocore.neurons.facet_receipts import latest_receipts
 
-
-def _toml(payload: dict[str, object]) -> str:
-    return tomli_w.dumps(payload)
-
-
-def _synthetic_repo(tmp_path: Path) -> Path:
-    (tmp_path / "desc").mkdir()
-    (tmp_path / "desc" / "Probe.toml").write_text(_toml(_DESCRIPTOR), encoding="utf-8")
-    (tmp_path / "models").mkdir()
-    (tmp_path / "models" / "probe.py").write_text("STATE = 1\n", encoding="utf-8")
-    (tmp_path / "schemas").mkdir()
-    (tmp_path / "schemas" / "probe.toml").write_text("[a]\nb = 1\n", encoding="utf-8")
-    (tmp_path / "compiler").mkdir()
-    (tmp_path / "compiler" / "emit.py").write_text("VERSION = 1\n", encoding="utf-8")
-    (tmp_path / "tests").mkdir()
-    (tmp_path / "tests" / "test_probe.py").write_text("def test_x():\n    pass\n", encoding="utf-8")
-    (tmp_path / "rtl").mkdir()
-    (tmp_path / "rtl" / "probe.v").write_text("module probe; endmodule\n", encoding="utf-8")
-    (tmp_path / "reports").mkdir()
-    (tmp_path / "reports" / "synth.json").write_text('{"cells": 1}\n', encoding="utf-8")
-    return tmp_path
+    root = Path(__file__).resolve().parents[1]
+    receipt = latest_receipts()[("AdaptiveThresholdIFNeuron", "cosim", "adaptive_threshold_if")][1]
+    assert verify_receipt(receipt, class_name=receipt.class_name)[0] == "bound"
+    for subject in receipt.subjects:
+        source, target = root / subject.path, tmp_path / subject.path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir():
+            shutil.copytree(source, target, dirs_exist_ok=True)
+        else:
+            shutil.copy2(source, target)
+    return tmp_path, receipt
 
 
-def _subject(repo: Path, kind: str, relative: str, scope: str = "file") -> Subject:
-    path = repo / relative
-    if scope == "tree":
-        digest = sha256_tree(sorted(path.rglob("*.py")), repo)
-    elif scope == "contract-sections":
-        digest = descriptor_contract_digest(tomllib.loads(path.read_text(encoding="utf-8")))
-    else:
-        digest = sha256_file(path)
-    return Subject(kind, relative, digest, scope)  # type: ignore[arg-type]
+def test_one_changed_subject_invalidates_only_its_descendants(
+    copied_receipt: tuple[Path, FacetReceipt],
+) -> None:
+    """Real committed cosim inputs stale on edits while documentation does not."""
+    repo, receipt = copied_receipt
+    assert verify_receipt(receipt, class_name=receipt.class_name, repo_root=repo)[0] == "bound"
+    descriptor = next(s for s in receipt.subjects if s.kind == "descriptor-contract")
+    path = repo / descriptor.path
+    original = path.read_text()
+    payload = tomllib.loads(original)
+    payload["metadata"]["summary"] = "changed description"
+    path.write_text(tomli_w.dumps(payload))
+    assert verify_receipt(receipt, class_name=receipt.class_name, repo_root=repo)[0] == "bound"
+    key = next(iter(payload["parameters"]))
+    payload["parameters"][key]["default"] = 12345.0
+    path.write_text(tomli_w.dumps(payload))
+    assert verify_receipt(receipt, class_name=receipt.class_name, repo_root=repo)[0] == "stale"
+    path.write_text(original)
+    compiler = next(s for s in receipt.subjects if s.kind == "compiler" and s.scope == "tree")
+    member = next((repo / compiler.path).rglob("*.py"))
+    member.write_text(member.read_text() + "\n# changed compiler input\n")
+    assert verify_receipt(receipt, class_name=receipt.class_name, repo_root=repo)[0] == "stale"
 
 
-def _receipt(repo: Path, facet: str, subjects: tuple[Subject, ...]) -> FacetReceipt:
-    spec = FACET_BY_NAME[facet]
-    return FacetReceipt(
-        class_name="Probe",
-        facet=facet,
-        profile="probe",
-        claim_scope=spec.claim_scope,
-        subjects=subjects,
-        evidence_refs=("tests/test_probe.py::test_x",),
-        command=("python", "-m", "pytest", "tests/test_probe.py::test_x"),
-        tool={"name": "pytest", "version": "8"},
-        extra_tools={},
-        runtime={"python": "3.12"},
-        validator={"name": "tools/facet_receipt.py"},
-        outcome="passed",
-        exit_code=0,
-        counts={"collected": 1, "passed": 1, "failed": 0, "errors": 0, "skipped": 0},
-        recorded_at="2026-09-05T06:00:00Z",
+def test_current_manifest_rejects_omitted_inputs(
+    copied_receipt: tuple[Path, FacetReceipt],
+) -> None:
+    """Resealing a partial set of a required kind does not make it complete."""
+    from dataclasses import replace
+
+    repo, receipt = copied_receipt
+    compiler = [s for s in receipt.subjects if s.kind == "compiler"]
+    assert len(compiler) > 1
+    partial = replace(
+        receipt, subjects=tuple(s for s in receipt.subjects if s != compiler[0])
     ).sealed()
-
-
-def _receipts(repo: Path) -> dict[str, FacetReceipt]:
-    descriptor = _subject(repo, "descriptor-contract", "desc/Probe.toml", "contract-sections")
-    module = _subject(repo, "model-module", "models/probe.py")
-    schema = _subject(repo, "schema-profile", "schemas/probe.toml")
-    compiler = _subject(repo, "compiler", "compiler", "tree")
-    validator = _subject(repo, "validator", "tests/test_probe.py")
-    rtl = _subject(repo, "committed-rtl", "rtl/probe.v")
-    synth = _subject(repo, "report", "reports/synth.json")
-    return {
-        "class_validated": _receipt(
-            repo, "class_validated", (descriptor, module, schema, validator)
-        ),
-        "cosim": _receipt(repo, "cosim", (descriptor, module, schema, compiler, validator, rtl)),
-        "synthesis": _receipt(repo, "synthesis", (rtl, synth, validator)),
-    }
-
-
-def _statuses(
-    repo: Path, receipts: dict[str, FacetReceipt]
-) -> dict[str, tuple[str, tuple[str, ...]]]:
-    return {
-        facet: verify_receipt(receipt, class_name="Probe", repo_root=repo)[:2]
-        for facet, receipt in receipts.items()
-    }
-
-
-def test_one_changed_subject_invalidates_only_its_descendants(tmp_path: Path) -> None:
-    """Compiler, contract, RTL and report edits each stale exactly their consumers."""
-    repo = _synthetic_repo(tmp_path)
-    receipts = _receipts(repo)
-    assert {facet: status for facet, (status, _c) in _statuses(repo, receipts).items()} == {
-        "class_validated": "bound",
-        "cosim": "bound",
-        "synthesis": "bound",
-    }
-
-    (repo / "compiler" / "emit.py").write_text("VERSION = 2\n", encoding="utf-8")
-    statuses = _statuses(repo, receipts)
-    assert statuses["cosim"] == ("stale", ("compiler:compiler",))
-    assert statuses["class_validated"][0] == "bound"
-    assert statuses["synthesis"][0] == "bound"
-    (repo / "compiler" / "emit.py").write_text("VERSION = 1\n", encoding="utf-8")
-
-    edited = json.loads(json.dumps(_DESCRIPTOR))
-    edited["documentation"]["notes"] = "after"
-    (repo / "desc" / "Probe.toml").write_text(_toml(edited), encoding="utf-8")
-    assert {f: s for f, (s, _c) in _statuses(repo, receipts).items()} == {
-        "class_validated": "bound",
-        "cosim": "bound",
-        "synthesis": "bound",
-    }
-    edited["parameters"]["tau"]["default"] = 20.0
-    (repo / "desc" / "Probe.toml").write_text(_toml(edited), encoding="utf-8")
-    statuses = _statuses(repo, receipts)
-    assert statuses["class_validated"] == ("stale", ("descriptor-contract:desc/Probe.toml",))
-    assert statuses["cosim"][0] == "stale"
-    assert statuses["synthesis"][0] == "bound"
-    (repo / "desc" / "Probe.toml").write_text(_toml(_DESCRIPTOR), encoding="utf-8")
-
-    (repo / "rtl" / "probe.v").write_text("module probe2; endmodule\n", encoding="utf-8")
-    statuses = _statuses(repo, receipts)
-    assert statuses["synthesis"] == ("stale", ("committed-rtl:rtl/probe.v",))
-    assert statuses["cosim"] == ("stale", ("committed-rtl:rtl/probe.v",))
-    assert statuses["class_validated"][0] == "bound"
-    (repo / "rtl" / "probe.v").write_text("module probe; endmodule\n", encoding="utf-8")
-
-    (repo / "reports" / "synth.json").unlink()
-    statuses = _statuses(repo, receipts)
-    assert statuses["synthesis"] == ("stale", ("report:reports/synth.json (missing)",))
-    assert statuses["cosim"][0] == "bound"
-    assert statuses["class_validated"][0] == "bound"
-
-
-def test_fabricated_and_tampered_receipts_are_invalid_not_stale(tmp_path: Path) -> None:
-    """A receipt that fails the credit rules never reaches the freshness check."""
-    repo = _synthetic_repo(tmp_path)
-    receipts = _receipts(repo)
-    payload = receipts["cosim"].to_payload()
-    payload["outcome"] = "failed"
-    tampered = parse_receipt(payload)
-    status, changed, problems = verify_receipt(tampered, class_name="Probe", repo_root=repo)
+    status, _changed, problems = verify_receipt(
+        partial, class_name=receipt.class_name, repo_root=repo
+    )
     assert status == "invalid"
-    assert changed == ()
+    assert any("missing current subject" in p for p in problems)
+
+
+def test_fabricated_and_tampered_receipts_are_invalid_not_stale(
+    copied_receipt: tuple[Path, FacetReceipt],
+) -> None:
+    """A wrong identity or changed result cannot borrow an executed receipt."""
+    repo, receipt = copied_receipt
+    payload = receipt.to_payload()
+    payload["outcome"] = "failed"
+    status, changed, problems = verify_receipt(
+        parse_receipt(payload), class_name=receipt.class_name, repo_root=repo
+    )
+    assert (status, changed) == ("invalid", ())
     assert problems
-    wrong_class = verify_receipt(receipts["cosim"], class_name="Other", repo_root=repo)
-    assert wrong_class[0] == "invalid"
-    name = receipt_filename("Probe", "cosim", "2026-09-05T06:00:00Z")
-    assert name == "Probe__cosim__20260905T060000Z.json"
-    assert len(FACETS) == len({spec.name for spec in FACETS})
+    assert verify_receipt(receipt, class_name="LapicqueNeuron", repo_root=repo)[0] == "invalid"
+
+
+def test_profile_specific_readiness_does_not_promote_other_profiles() -> None:
+    """Lapicque source evidence does not confer a class-wide LIF guarantee."""
+    assert verify_model("LapicqueNeuron").verified_science < 4
+    assert verify_model("LapicqueNeuron", profile="lapicque").verified_science == 5
+    assert verify_model("LapicqueNeuron", profile="lif").verified_science < 4
+    with pytest.raises(ValueError, match="unknown profile"):
+        verify_model("LapicqueNeuron", profile="not-a-profile")
