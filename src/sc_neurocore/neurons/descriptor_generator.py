@@ -36,7 +36,6 @@ from sc_neurocore.neurons.model_descriptor import (
     parse_model_descriptor,
 )
 from sc_neurocore.neurons.schema_contracts import stateless_event_kind
-from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.model_taxonomy import model_family
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
@@ -310,13 +309,20 @@ def _is_mirror_field(cls: type, name: str) -> bool:
     return False
 
 
-def _load_v1_schema(module: str) -> dict[str, Any]:
-    """Return the curated v1 schema for a module, or an empty mapping."""
+def _load_curated_schema(class_name: str) -> dict[str, Any]:
+    """Return the curated schema profile bound to a class, or an empty mapping.
+
+    The class's own bound profile decides (``model_identity.schema_for_class``):
+    a source identity and its retained ``SC`` compatibility identity share one
+    module, so a module-based lookup would hand the compatibility class the
+    source profile.
+    """
+    from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
     from sc_neurocore.neurons.universal_dsl import load_schema
 
     try:
-        return load_schema(schema_for_module(module))
-    except FileNotFoundError:
+        return load_schema(schema_for_class(class_name))
+    except (FileNotFoundError, ModelIdentityError):
         return {}
 
 
@@ -358,7 +364,7 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     module = _CLASS_TO_MODULE[class_name]
     cls = _load_class(class_name)
     family, category = model_family(class_name) or ("", "")
-    v1 = _load_v1_schema(module)
+    v1 = _load_curated_schema(class_name)
     v1_meta = v1.get("metadata", {}) if isinstance(v1.get("metadata"), Mapping) else {}
     v1_state = v1.get("state", {}) if isinstance(v1.get("state"), Mapping) else {}
     v1_params = v1.get("parameters", {}) if isinstance(v1.get("parameters"), Mapping) else {}

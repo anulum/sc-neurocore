@@ -82,6 +82,12 @@ from typing import Any
 
 from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.neurons.model_profile import (
+    AdmittedOverrides,
+    ModelProfile,
+    admit_overrides,
+    resolve_profile,
+)
 from sc_neurocore.neurons.schema_contracts import stateless_event_kind
 
 logger = logging.getLogger(__name__)
@@ -223,6 +229,14 @@ class UniversalNeuron:
     all existing AST safety, integration methods, and compilation paths
     remain available.
 
+    Every schema is resolved to its :class:`~sc_neurocore.neurons.model_profile.ModelProfile`
+    before anything runs. A schema whose authored profile contradicts it, or that is a
+    descriptive record outside the executable vocabulary, is refused. Overrides are
+    admitted through the profile: a method must stay in the profile's family (a
+    published map is never integrated as an ODE), a timestep override moves the
+    profile's timebase parameters with it and is refused for a recurrence without a
+    continuous timebase, and a seed is refused for a model that draws no randomness.
+
     Parameters
     ----------
     schema : dict
@@ -233,6 +247,15 @@ class UniversalNeuron:
         Override the schema's default timestep.
     method_override : str, optional
         Override the integration method.
+    rng_seed_override : int, optional
+        Override the stochastic-threshold LFSR seed.
+
+    Raises
+    ------
+    ValueError
+        If the schema defines no dynamics and no event-only contract, or the
+        profile refuses the schema or an override
+        (:class:`~sc_neurocore.neurons.model_profile.ProfileAdmissionError`).
     """
 
     def __init__(
@@ -261,10 +284,6 @@ class UniversalNeuron:
 
         # Integration config
         integration = self._schema.get("integration", {})
-        dt = dt_override if dt_override is not None else integration.get("dt", 0.1)
-        method = (
-            method_override if method_override is not None else integration.get("method", "euler")
-        )
         # ``substeps`` (default 1) advances the integrator this many inner steps per
         # macro ``step()`` before a single spike decision, mirroring the conductance
         # hand models' fixed sub-stepping (e.g. 100 dt sub-steps per 1 ms macro step).
@@ -282,9 +301,23 @@ class UniversalNeuron:
                 "stateless Poisson probability schema or a stateless deterministic "
                 "level-threshold schema"
             )
+        # Profile admission: the schema's scientific model, numerical realisation and
+        # lowering profile are separated first; contradictions and inadmissible
+        # overrides are refused before any expression is compiled.
+        self._profile = resolve_profile(self._schema, stem=str(self._metadata.get("name", "")))
+        self._admitted = admit_overrides(
+            self._profile,
+            dt=dt_override,
+            method=method_override,
+            parameters=parameter_overrides,
+            rng_seed=rng_seed_override,
+        )
+        dt = self._admitted.dt
+        method = self._admitted.method
+        params.update(self._admitted.parameters)
         rng_seed = (
-            rng_seed_override
-            if rng_seed_override is not None
+            self._admitted.rng_seed
+            if self._admitted.rng_seed is not None
             else threshold_config.get("rng_seed", DEFAULT_LFSR16_SEED)
         )
         if detection in {"escape_rate", "poisson"} and threshold_expr == "stochastic":
@@ -389,6 +422,33 @@ class UniversalNeuron:
     def extensions(self) -> dict[str, Any]:
         """Forward-compatible extension fields."""
         return dict(self._extensions)
+
+    @property
+    def profile(self) -> ModelProfile:
+        """Resolved model profile: scientific model, numerical realisation, lowering.
+
+        The profile describes the schema as authored. The realisation this
+        instance actually runs, after admitted overrides, is
+        :meth:`realised_profile`.
+        """
+        return self._profile
+
+    @property
+    def admitted_overrides(self) -> AdmittedOverrides:
+        """Overrides admitted under the profile, with the timebase propagated."""
+        return self._admitted
+
+    def realised_profile(self) -> dict[str, object]:
+        """Return the effective numerical realisation as a public record.
+
+        Returns
+        -------
+        dict[str, object]
+            Contract, declared and effective method and exactness, effective
+            step, sub-steps and macro step, randomness contract and whether the
+            realisation was derived from an override.
+        """
+        return self._admitted.realisation(self._profile)
 
     @property
     def science(self) -> dict[str, Any]:

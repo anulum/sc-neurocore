@@ -84,5 +84,40 @@
   "hints": {
     "recommended_precision": "Q16.16 or wider",
     "integrator_rationale": "Explicit Euler is the maintained compatibility profile; RK4 and Rosenbrock are optional numerical alternatives over the same ODE."
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "notes": "Explicit Euler is the maintained compatibility realisation; RK4 is a declared numerical alternative over the same ODE. The binary64 exponential clamp of the hand runtimes is a numerical guard outside this schema.",
+    "state": {
+      "v": "biological",
+      "w": "biological"
+    },
+    "parameters": {
+      "v_rest": "source",
+      "v_reset": "source",
+      "v_threshold": "source",
+      "v_rh": "source",
+      "delta_T": "source",
+      "tau": "source",
+      "tau_w": "source",
+      "a": "source",
+      "b_adapt": "source",
+      "C": "source"
+    },
+    "units": {
+      "v": "mV",
+      "w": "pA",
+      "v_rest": "mV",
+      "v_reset": "mV",
+      "v_threshold": "mV",
+      "v_rh": "mV",
+      "delta_T": "mV",
+      "tau": "ms",
+      "tau_w": "ms",
+      "a": "nS",
+      "b_adapt": "pA",
+      "C": "pF"
+    }
   }
 }

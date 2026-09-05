@@ -79,8 +79,8 @@ range = [
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
 y = "k * y - alpha * sigmoid(y / epsilon) + bias + I"

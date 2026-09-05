@@ -26,5 +26,26 @@
     "event_contract": "An event marks the pre-update state occupying the rightmost reset branch, as defined by Rulkov 2002.",
     "identity_note": "The former configurable upward-x crossing is retained separately as SCUpwardCrossingRulkovMapNeuron.",
     "silicon_cosim_note": "Class-correct validation uses a bounded short-window trajectory and exact reset-branch event vector. Long-window event-count parity is not used as a chaotic-map equivalence claim."
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "iteration",
+    "notes": "Published two-dimensional recurrence iterated exactly; there is no continuous timebase. Events mark the pre-update state on the reset branch.",
+    "state": {
+      "x": "biological",
+      "y": "biological"
+    },
+    "parameters": {
+      "alpha": "source",
+      "sigma": "source",
+      "mu": "source"
+    },
+    "units": {
+      "x": "1",
+      "y": "1",
+      "alpha": "1",
+      "sigma": "1",
+      "mu": "1"
+    }
   }
 }

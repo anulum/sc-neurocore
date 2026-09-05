@@ -36,5 +36,30 @@
     "source_equation_note": "The simultaneous recurrence and defaults follow Chialvo (1995), DOI 10.1016/0960-0779(93)E0056-H.",
     "observation_note": "x_threshold=1.0 and upward-crossing event detection are maintained SC-NeuroCore observables, not source-paper dynamics.",
     "silicon_cosim_note": "At I=-0.05,0,0.01,0.1,1.0 over 100 iterations, hand model and both schemas agree exactly. Q16.16 preserves event counts 0/2/3/0/1; at the stable I=-0.05,0.1,1.0 points maximum x/y errors remain below 0.055/0.093. Oscillatory event timing and full trajectories are not claimed exact because exp is LUT-quantised."
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "iteration",
+    "notes": "Published simultaneous recurrence iterated exactly; the upward crossing of x_threshold is a maintained observable, not source dynamics.",
+    "state": {
+      "x": "biological",
+      "y": "biological"
+    },
+    "parameters": {
+      "a": "source",
+      "b": "source",
+      "c": "source",
+      "k": "source",
+      "x_threshold": "implementation: maintained observation convention"
+    },
+    "units": {
+      "x": "1",
+      "y": "1",
+      "a": "1",
+      "b": "1",
+      "c": "1",
+      "k": "1",
+      "x_threshold": "1"
+    }
   }
 }

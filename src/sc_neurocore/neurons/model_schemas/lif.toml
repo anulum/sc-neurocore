@@ -38,3 +38,22 @@ detection = "level"
 v = "v_rest"
 
 [extensions]
+
+[profile]
+contract = "sc-neurocore.model-profile.v1"
+time_unit = "ms"
+notes = "Explicit Euler is a first-order realisation of the linear membrane; it is not the exact flow. Any ODE method may be selected as a numerical alternative."
+
+[profile.state]
+v = "biological"
+
+[profile.parameters]
+v_rest = "source"
+tau_m = "source"
+R = "source"
+C = "source"
+
+[profile.units]
+v = "mV"
+v_rest = "mV"
+tau_m = "ms"

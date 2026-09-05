@@ -91,8 +91,8 @@ range = [
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
 x = "clamp(-x + k * sigmoid(4 * (x - theta)) + I, -5, 5)"

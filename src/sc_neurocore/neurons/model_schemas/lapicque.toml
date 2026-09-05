@@ -48,3 +48,28 @@ input_contract = "I is Lapicque's source voltage V, not injected membrane curren
 event_contract = "first threshold attainment is latched; no automatic source reset"
 default_scope = "normalized maintained R/rho=10 and beta=1 ms reproducibility point"
 identity_note = "sc_lapicque_lif preserves the historical SC hard-reset periodic LIF recurrence"
+
+[profile]
+contract = "sc-neurocore.model-profile.v1"
+time_unit = "ms"
+exactness = "exact-flow"
+notes = "The map is the closed-form RC polarization flow sampled every dt under a held source voltage; excited latches the first threshold attainment and is an event register, not a biological quantity."
+
+[profile.state]
+v = "biological"
+excited = "auxiliary: latched first threshold attainment"
+
+[profile.parameters]
+v_threshold = "source"
+capacitance = "source"
+series_resistance = "source"
+polarization_resistance = "source"
+dt = "timebase"
+
+[profile.units]
+v = "normalized polarization"
+v_threshold = "normalized polarization"
+capacitance = "normalized capacitance"
+series_resistance = "normalized resistance"
+polarization_resistance = "normalized resistance"
+dt = "ms"

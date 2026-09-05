@@ -1,0 +1,191 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v2",
+  "class_name": "LapicqueNeuron",
+  "facet": "cosim",
+  "profile": "lapicque",
+  "claim_scope": "trace",
+  "subjects": [
+    {
+      "kind": "committed-rtl",
+      "path": "hdl/formal/catalogue/sc_lapicque_1907.v",
+      "sha256": "bd873d9d5b422befdac97fb6994706d3d6b6c136be6f1422efa53e14141f87ca",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/compiler",
+      "sha256": "b558f4357101424c4527bc65cfce24201fc229cd90cccb1311162226d3f2a6bb",
+      "scope": "tree"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_builder.py",
+      "sha256": "3b2fe0fa8386141625570d8f1f9a6f12e446d5765f4d74eb4843ed949ca2134a",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_namespace.py",
+      "sha256": "79778540beb3614cdfdb3b76599ad9cfb138c48aa680c907504f9ceb76357e3b",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_safety.py",
+      "sha256": "87c42779221213ca6a09d789168619c3322188f29ea45844bfe32e532e335267",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_units_runtime.py",
+      "sha256": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/expression_derivative.py",
+      "sha256": "c061e934bcf061ede6c0859addec64e975231bd194bf451c04148df7f55a4409",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_contracts.py",
+      "sha256": "264caf838d10c54c4318b7a8815b332feecf3dfc2946b275ab0ba1ef09193962",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_validator.py",
+      "sha256": "76e1196266e891cfb848f4a35f808bfe6f70ae3358790af6d9bcfaa65f7094fd",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/universal_dsl.py",
+      "sha256": "dca9819d76eed76d5eb536ee3ec6a82a0b8c2134d0a0a8cddba3cd99a42ae6f1",
+      "scope": "file"
+    },
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml",
+      "sha256": "695a7ee5fc8ce51031107d0fd7d94ef8de96b80f8f19e4475fad43279e5e62c3",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/lapicque.py",
+      "sha256": "4e067b4be98326a404df5b84153f95bb1155918950a641a0ca49af8db6dabe0c",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/lapicque.json",
+      "sha256": "56e9b905fee94e2e63de03566b8faaba830f6269601607a243b1224036686047",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
+      "sha256": "6783bcbd31d7c4f4792f415502b1a77f06f6143d57899df19c43ce54e05244b3",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/lif.json",
+      "sha256": "a63fde83f7e3aedda4eecca7f06b8b17b802821a7676ec05ab1111e8130c2026",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/lif.toml",
+      "sha256": "33c71413eaa90d6998d14358e5ef72cdf74343c3d74ef85e3937a0c0ca1a98da",
+      "scope": "file"
+    },
+    {
+      "kind": "source-reference",
+      "path": "src/sc_neurocore/neurons/reference_receipts/lapicque_1907.json",
+      "sha256": "a2d7fd7cb83162b8abe2d6f0f85d362aaad56615f2d56ffe85a2c63e12f917e8",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/facet_receipts.py",
+      "sha256": "583b29830839b9c4757c792de15ba9a1e7e9428a5dd6c26de65e92e419199b2b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/readiness.py",
+      "sha256": "5534a558600f0960f2d2d5ec34a90b702be7d0dc5df391c3b4b14cfc525ff962",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "src/sc_neurocore/neurons/receipt_execution.py",
+      "sha256": "6d3362d7338b4fa0cb7f44c996b33a7bda8c20d308e001ee339983d0aa35422e",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_cosim_lapicque.py",
+      "sha256": "2a945b413ae0c94f839053fd8ffc26cc72f7e1aaeeb4a37b3292267d92445ee9",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tools/facet_receipt.py",
+      "sha256": "5699c0bcb3e7ac1f43674d44148e52d66a6da4863d4f3f3b9b5342d143b0f306",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound"
+  ],
+  "command": [
+    "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROMORPHIC-COMPUTING-SYSTEMS/repositories/SC-NEUROCORE/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_cosim_lapicque.py::test_source_q3232_preserves_first_attainment_and_polarization_bound",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1",
+    "stdout": "....                                                                     [100%]\n4 passed in 1.11s\n",
+    "stderr": ""
+  },
+  "extra_tools": {
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "yosys": "Yosys 0.33 (git sha1 2584903a060)",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "sby": "usage: sby [options] [<jobname>.sby [tasknames] | <dirname>]"
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "3.16.0",
+    "git_head": "f1ffd64af5e5c0653ea235a8e313301ec8657578",
+    "dirty_subjects": "rc/sc_neurocore/neurons/model_schemas/lapicque.json, src/sc_neurocore/neurons/model_schemas/lapicque.toml, src/sc_neurocore/neurons/model_schemas/lif.json, src/sc_neurocore/neurons/model_schemas/lif.toml, src/sc_neurocore/neurons/schema_validator.py, src/sc_neurocore/neurons/universal_dsl.py"
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v2",
+    "execution_contract": "pytest-junit.v1",
+    "junit_xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"4\" time=\"0.991\" timestamp=\"2026-09-05T13:54:12.654647+02:00\" hostname=\"aaarthuus\"><testcase classname=\"tests.test_cosim_lapicque\" name=\"test_source_q3232_preserves_first_attainment_and_polarization_bound[V=5.5]\" time=\"0.028\" /><testcase classname=\"tests.test_cosim_lapicque\" name=\"test_source_q3232_preserves_first_attainment_and_polarization_bound[V=11]\" time=\"0.019\" /><testcase classname=\"tests.test_cosim_lapicque\" name=\"test_source_q3232_preserves_first_attainment_and_polarization_bound[V=12]\" time=\"0.021\" /><testcase classname=\"tests.test_cosim_lapicque\" name=\"test_source_q3232_preserves_first_attainment_and_polarization_bound[V=22]\" time=\"0.023\" /></testsuite></testsuites>"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 4,
+    "passed": 4,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "recorded_at": "2026-09-05T11:54:14Z",
+  "notes": "",
+  "receipt_sha256": "8e6bbf65f8eda7f46c95f7a9a1172e52c3f0a6035e36063313dfd3dafaafa534"
+}

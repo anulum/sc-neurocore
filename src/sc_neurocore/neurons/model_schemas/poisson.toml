@@ -39,3 +39,18 @@ description = "P(at least one event in dt) = 1 - exp(-rate_hz * dt_ms / 1000); m
 layer_type = "input"
 stochastic = true
 use_case = "Input layer spike generation for SNN benchmarks"
+
+[profile]
+contract = "sc-neurocore.model-profile.v1"
+time_unit = "ms"
+notes = "Event-only bin process: the probability of at least one event per bin is decided by the model-scoped LFSR16; dt_ms is the bin width bound to integration.dt, so a step override moves the bin width with it."
+
+[profile.state]
+
+[profile.parameters]
+rate_hz = "source"
+dt_ms = "timebase"
+
+[profile.units]
+rate_hz = "Hz"
+dt_ms = "ms"

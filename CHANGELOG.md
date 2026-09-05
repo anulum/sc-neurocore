@@ -11,6 +11,60 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added the versioned model profile contract `sc-neurocore.model-profile.v1`
+  (`sc_neurocore.neurons.model_profile`): every schema-DSL document resolves
+  into a scientific model (authored equations, biological state and source
+  parameters with units), a numerical realisation (method and exactness class,
+  step and time unit, sub-steps and whether they subdivide time or fold the
+  stages of one scheme, macro step, evaluation order, auxiliary registers,
+  implementation and timebase parameters, admissible methods, randomness
+  contract) and a lowering profile (what the RTL emitter accepts and under
+  which limits). An optional `[profile]` section authors what cannot be
+  derived; twelve representative schemas (`lapicque`, `sc_lapicque_lif`,
+  `lif`, `adex`, `hodgkin_huxley`, `wang_buzsaki`, `exp_if`, `rulkov_map`,
+  `chialvo_map`, `escape_rate`, `poisson`, `coba_lif`) carry one in both
+  formats. No equation, parameter, step, threshold or reset value changed.
+  Exactness claims are checked: `exact-linear-relaxation` for exponential
+  Euler is verified symbolically, `exact-flow` is admitted only for an
+  authored recurrence, and an explicit-Euler or RK4 schema cannot claim either.
+- `UniversalNeuron` refuses a schema whose profile contradicts it or that is a
+  descriptive record outside the executable vocabulary, and admits overrides
+  through the profile: a method must stay in the family (a published map is
+  never integrated as an ODE; an ODE may select another ODE integrator and the
+  realisation is then reported as derived), a step override moves the
+  timebase parameters (`dt`, `dt_ms`) with it and is refused for a recurrence
+  without a continuous timebase, a parameter override that contradicts the
+  effective step is refused, and a seed is refused for a deterministic model.
+  `neuron.profile` and `neuron.realised_profile()` expose both views.
+- The static schema validator reports profile contradictions as errors,
+  classifies the thirteen descriptive records (methods or detections outside
+  the executable vocabulary) as warnings instead of passing them silently, and
+  checks the profile section for TOML/JSON parity.
+- Studio model details carry `profile_contract`; the compile configuration
+  offers only integrators inside the profile's family and refuses one that
+  leaves it; compile evidence records the realised profile (declared and
+  effective method, exactness, step, sub-steps, macro step, randomness,
+  derived flag) next to the schema digest. The descriptor skeleton generator
+  resolves the curated schema per class instead of per module.
+- Added the per-profile inventory and validator registry
+  (`sc_neurocore.neurons.profile_registry`, `tools/model_profile_ledger.py`,
+  generated `docs/_generated/model_profile_ledger.json`): one row per bound
+  (class, schema profile) with the three layers, the descriptor's own
+  integration label next to the profile method, readiness verified for exactly
+  that profile, every declared validator per facet with its resolution and
+  scope, and an admission verdict. A non-canonical profile is never admitted
+  by the canonical profile's class-scoped tests; a facet declared by prose or
+  a report alone blocks admission; declared-but-unvalidated backends are
+  listed, not decided. Documented in `docs/api/model_profiles.md`.
+- Four descriptors (`AiharaMapNeuron`, `NagumoSatoMapNeuron`,
+  `SCAdaptiveThresholdMapNeuron`, `SCChaoticMapNeuron`) stated
+  `method = "euler"`, `dt = 0.1` because the generator resolved their schema by
+  module name and found none; regenerated per class they state the bound map
+  profile (`map`, `dt = 1.0`). The `ermentrout_kopell_theta_euler_doi`
+  reference protocol declared an inert `dt = 1.0` for a map whose 0.1 Euler
+  step is fixed inside its expression; it now declares 0.1 with unchanged
+  expected features. The eight representative facet receipts were re-recorded
+  against the changed schema and compiler-front-end subjects.
 - Added evidence-bound readiness next to the declared dual-axis tiers
   (`sc_neurocore.neurons.readiness`, `facet_receipts`, `evidence_references`).
   Descriptor evidence fields are parsed into typed references and resolved on

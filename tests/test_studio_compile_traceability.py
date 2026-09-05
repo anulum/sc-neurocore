@@ -230,7 +230,9 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
     assert response.status_code == 200, response.text
     payload = response.json()
     assert "module sc_studio_lapicque" in payload["verilog"]
-    assert payload["compile_configuration"] == {
+    configuration = dict(payload["compile_configuration"])
+    profile = configuration.pop("profile")
+    assert configuration == {
         "dt": 1.0,
         "integrator": "exp_euler",
         "model_name": "SCLapicqueLIFNeuron",
@@ -238,6 +240,9 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
         "schema_name": "sc_lapicque_lif",
         "schema_sha256": payload["compile_traceability"]["source_payload"]["schema_sha256"],
     }
+    assert profile["contract"] == "sc-neurocore.model-profile.v1"
+    assert profile["method"] == profile["declared_method"] == "exp_euler"
+    assert profile["derived"] is False
     assert len(payload["compile_configuration"]["schema_sha256"]) == 64
     assert payload["compile_traceability"]["source"] == "model"
 

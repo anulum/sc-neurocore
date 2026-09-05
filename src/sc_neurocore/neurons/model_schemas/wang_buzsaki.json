@@ -40,5 +40,41 @@
   "extensions": {
     "cell_type": "fast-spiking interneuron",
     "brain_region": "hippocampus"
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "substep_kind": "time-subdivision",
+    "notes": "Sequential (Gauss-Seidel) explicit Euler: h and n advance from the previous voltage, v then reads the committed gates; fifty sub-steps of dt = 0.01 ms per 0.5 ms macro step with one rising crossing per macro step.",
+    "state": {
+      "h": "biological",
+      "n": "biological",
+      "v": "biological"
+    },
+    "parameters": {
+      "C": "source",
+      "g_Na": "source",
+      "g_K": "source",
+      "g_L": "source",
+      "E_Na": "source",
+      "E_K": "source",
+      "E_L": "source",
+      "phi": "source",
+      "v_threshold": "implementation: observation threshold for event registration; the 1996 model defines no spike threshold"
+    },
+    "units": {
+      "h": "1",
+      "n": "1",
+      "v": "mV",
+      "C": "uF/cm^2",
+      "g_Na": "mS/cm^2",
+      "g_K": "mS/cm^2",
+      "g_L": "mS/cm^2",
+      "E_Na": "mV",
+      "E_K": "mV",
+      "E_L": "mV",
+      "phi": "1",
+      "v_threshold": "mV"
+    }
   }
 }

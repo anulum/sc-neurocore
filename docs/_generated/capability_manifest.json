@@ -967,11 +967,11 @@
     "model_documentation_pages": 200,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 626,
+    "public_documentation_pages": 627,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4794
+    "test_files": 4798
   },
   "documentation": {
     "public_pages": [
@@ -1074,6 +1074,7 @@
       "docs/api/memristor.md",
       "docs/api/meta_plasticity.md",
       "docs/api/model_fidelity_status.md",
+      "docs/api/model_profiles.md",
       "docs/api/model_zoo.md",
       "docs/api/model_zoo_v2.md",
       "docs/api/models/adaptive_threshold_if.md",
@@ -5932,6 +5933,10 @@
       "tests/test_model_prescott_prescott_network.py",
       "tests/test_model_prescott_prescott_oscillations.py",
       "tests/test_model_prescott_prescott_parameters.py",
+      "tests/test_model_profile_admission.py",
+      "tests/test_model_profile_contract.py",
+      "tests/test_model_profile_ledger.py",
+      "tests/test_model_profile_registry.py",
       "tests/test_model_psn_atomicity.py",
       "tests/test_model_psn_parallel_spiking_neuron.py",
       "tests/test_model_psn_psn_custom_kernel.py",

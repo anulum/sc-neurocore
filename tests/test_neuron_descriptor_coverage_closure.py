@@ -183,8 +183,8 @@ def test_descriptor_generation_skips_curated_runtime_and_property_parameters(
     monkeypatch.setattr(descriptor_generator, "_load_class", lambda _name: SyntheticNeuron)
     monkeypatch.setattr(
         descriptor_generator,
-        "_load_v1_schema",
-        lambda _module: {"parameters": {"v": 1.0, "rng_state": 7.0}},
+        "_load_curated_schema",
+        lambda _class_name: {"parameters": {"v": 1.0, "rng_state": 7.0}},
     )
 
     payload = descriptor_generator.generate_descriptor_payload("SyntheticNeuron")

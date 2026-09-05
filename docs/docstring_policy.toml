@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 424
+expected_file_count = 427
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1701,12 +1701,24 @@ path = "src/sc_neurocore/neurons/receipt_execution.py"
 rationale = "Descriptor-bound validator selection and executed JUnit evidence consumed by receipt recording and verification."
 
 [[file]]
+path = "src/sc_neurocore/neurons/model_profile.py"
+rationale = "Versioned model profile contract (scientific model, numerical realisation, lowering) enforced by UniversalNeuron, the schema validator, Studio and the reference-trace runner."
+
+[[file]]
+path = "src/sc_neurocore/neurons/profile_registry.py"
+rationale = "Per-profile inventory and validator registry consumed by the source-oracle, native-admission and dependency-closure work."
+
+[[file]]
 path = "src/sc_neurocore/neurons/readiness.py"
 rationale = "Declared-versus-verified readiness verification exposed through Studio, the CLI ledger and the public fidelity page."
 
 [[file]]
 path = "tools/facet_receipt.py"
 rationale = "Receipt recorder that executes evidence commands and seals immutable receipts; operators run it directly."
+
+[[file]]
+path = "tools/model_profile_ledger.py"
+rationale = "Generated model profile ledger writer and checker exposed through the CLI and the docs gate."
 
 [[file]]
 path = "tools/readiness_evidence_ledger.py"

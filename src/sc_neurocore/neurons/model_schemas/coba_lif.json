@@ -72,5 +72,63 @@
     "refractory_contract": "The timer updates only after stage 4 and clamps at dt with a 1e-12 relative roundoff guard, so the 5 ms interval at dt=0.1 contains exactly 50 held macro steps without a floating-point residue step.",
     "conductance_event_contract": "delta_ge and delta_gi are schema parameters representing constant per-macro-step boundary events; event-driven Python callers may vary them on each public step.",
     "auxiliary_state_contract": "spike_flag, phase, base_*, last_k_*, and weighted_* are deterministic RK4/event lowering registers, not biological state. Four internal map substeps are folded into one public macro step and one rising spike_flag decision."
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "substep_kind": "stage-iteration",
+    "refractory_register": "refractory_time",
+    "notes": "The four map iterations of one public step are the four classical RK4 stages of a single dt = 0.1 ms macro step; the stage registers are lowering state, not biological state, and one rising spike_flag decision is taken per macro step.",
+    "state": {
+      "v": "biological",
+      "g_e": "biological",
+      "g_i": "biological",
+      "refractory_time": "auxiliary: remaining absolute refractory hold",
+      "spike_flag": "auxiliary: event flag raised at stage 4",
+      "phase": "auxiliary: RK4 stage counter",
+      "base_v": "auxiliary: RK4 stage-0 base voltage",
+      "base_ge": "auxiliary: RK4 stage-0 base excitatory conductance",
+      "base_gi": "auxiliary: RK4 stage-0 base inhibitory conductance",
+      "last_k_v": "auxiliary: RK4 stage derivative of v",
+      "last_k_ge": "auxiliary: RK4 stage derivative of g_e",
+      "last_k_gi": "auxiliary: RK4 stage derivative of g_i",
+      "weighted_v": "auxiliary: RK4 weighted derivative accumulator of v",
+      "weighted_ge": "auxiliary: RK4 weighted derivative accumulator of g_e",
+      "weighted_gi": "auxiliary: RK4 weighted derivative accumulator of g_i"
+    },
+    "parameters": {
+      "c_m": "source",
+      "g_l": "source",
+      "e_l": "source",
+      "e_e": "source",
+      "e_i": "source",
+      "tau_e": "source",
+      "tau_i": "source",
+      "v_threshold": "source",
+      "v_reset": "source",
+      "refractory_period": "source",
+      "dt": "timebase",
+      "delta_ge": "implementation: constant per-macro-step boundary conductance event",
+      "delta_gi": "implementation: constant per-macro-step boundary conductance event"
+    },
+    "units": {
+      "v": "mV",
+      "g_e": "nS",
+      "g_i": "nS",
+      "refractory_time": "ms",
+      "c_m": "pF",
+      "g_l": "nS",
+      "e_l": "mV",
+      "e_e": "mV",
+      "e_i": "mV",
+      "tau_e": "ms",
+      "tau_i": "ms",
+      "v_threshold": "mV",
+      "v_reset": "mV",
+      "refractory_period": "ms",
+      "dt": "ms",
+      "delta_ge": "nS",
+      "delta_gi": "nS"
+    }
   }
 }

@@ -45,3 +45,31 @@ v = "v_reset"
 [extensions]
 noise_type = "escape_rate"
 stochastic = true
+
+[profile]
+contract = "sc-neurocore.model-profile.v1"
+time_unit = "ms"
+exactness = "exact-linear-relaxation"
+notes = "Exponential Euler is the exact constant-current flow of the linear membrane. After the step the hazard rate * dt becomes the probability 1 - exp(-hazard) and the model-scoped LFSR16 seeded from threshold.rng_seed decides the event."
+
+[profile.state]
+v = "biological"
+
+[profile.parameters]
+v_rest = "source"
+v_reset = "source"
+v_threshold = "source"
+tau_m = "source"
+rho_0 = "source"
+delta_u = "source"
+resistance = "source"
+
+[profile.units]
+v = "mV"
+v_rest = "mV"
+v_reset = "mV"
+v_threshold = "mV"
+tau_m = "ms"
+rho_0 = "1/ms"
+delta_u = "mV"
+resistance = "mV/current-unit"

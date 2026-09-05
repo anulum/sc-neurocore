@@ -23049,6 +23049,318 @@ CatalogueCounts
 
 ---
 
+## Module `neurons.model_profile`
+
+### Class `ModelProfileError`
+Raised when a schema's profile contradicts the schema or the contract.
+
+
+### Class `ProfileAdmissionError`
+Raised when an override or protocol is not admissible under a profile.
+
+
+### Class `StateVariable`
+One state variable and its role in the profile.
+
+Parameters
+----------
+name:
+    Variable name as declared in ``&#91;state&#93;``.
+role:
+    ``biological`` (a quantity of the scientific model) or ``auxiliary`` (a
+    deterministic register that exists only to realise the numerical
+    scheme or the event logic).
+init:
+    Initial value from the schema.
+unit:
+    Declared unit, empty when not declared.
+meaning:
+    Authored meaning for auxiliary registers, empty otherwise.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `Parameter`
+One schema parameter and its role in the profile.
+
+Parameters
+----------
+name:
+    Parameter name as declared in ``&#91;parameters&#93;``.
+role:
+    ``source`` (defined by the scientific source), ``implementation`` (a
+    maintained choice such as an observation threshold) or ``timebase``
+    (bound to ``integration.dt`` and read by the expressions).
+default:
+    Default value from the schema.
+unit:
+    Declared unit, empty when not declared.
+meaning:
+    Authored meaning, empty when not declared.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `EventContract`
+How the realisation turns state into events.
+
+Parameters
+----------
+detection:
+    Threshold detection mode from the schema (``level``, ``crossing``,
+    ``escape_rate``, ``poisson``) or the schema's free text for a
+    descriptive record.
+condition:
+    Threshold condition expression, empty when none.
+stochastic_expression:
+    Escape-rate or Poisson probability expression, empty when none.
+reset:
+    Reset rules per state variable.
+edge_detection:
+    Whether the runtime engages rising-edge logic (``crossing`` with no
+    reset rule); a resetting model uses the level path under either mode.
+refractory_register:
+    State variable that encodes the refractory hold inside the dynamics,
+    empty when the model has none.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `RandomnessContract`
+Which random draws a realisation makes and whether they replay.
+
+Parameters
+----------
+kind:
+    ``none``; ``lfsr16-threshold`` (a model-scoped 16-bit LFSR decides
+    stochastic threshold trials from ``seed``); ``diffusion-noise-global-rng``
+    (an expression names ``xi``, drawn from NumPy's process-global stream);
+    or both.
+seed:
+    Initial LFSR seed when the threshold is stochastic, else ``None``.
+reproducible:
+    ``True`` only when every draw comes from the model-scoped seeded LFSR.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `ScientificModel`
+The authored scientific content of a schema.
+
+Parameters
+----------
+name:
+    Model name from the schema metadata.
+author, year, doi:
+    Source locator fields from the metadata (empty or ``None`` when absent).
+equations:
+    Authored right-hand sides (or map updates) per state variable.
+biological_state:
+    State variables that belong to the scientific model.
+source_parameters:
+    Parameters the source defines.
+published_equations:
+    ``science.equations_as_published`` when authored, else empty.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `NumericalRealisation`
+How the scientific model is advanced in time.
+
+Parameters
+----------
+method:
+    Integration method (``euler``, ``map``, ``rk4``, ``exp_euler``,
+    ``gauss_seidel``) or the schema's free label for a descriptive record.
+family:
+    ``ode`` (the equations are derivatives), ``map`` (the equations are the
+    next state) or ``event-only`` (no state at all).
+exactness:
+    Exactness class of the update; see :data:`METHOD_TABLE`.
+exactness_claimed:
+    ``True`` when the exactness came from an authored claim that the
+    resolver admitted, ``False`` when it is the derived class.
+dt:
+    Integration step from the schema.
+time_unit:
+    Unit of ``dt`` (``ms`` for the conductance and IF corpus; ``iteration``
+    for a recurrence without a continuous timebase; empty when unstated).
+substeps:
+    Inner steps per public step.
+substep_kind:
+    ``time-subdivision`` (each sub-step advances ``dt``; the public step is
+    ``substeps * dt``), ``stage-iteration`` (the sub-steps are stages of one
+    scheme folded into a map; the public step is one ``dt``) or ``none``.
+macro_step:
+    Duration of one public ``step()`` in ``time_unit``; ``None`` for a
+    descriptive record, whose sub-step convention is not the runtime's.
+evaluation_order:
+    Phases of one public step in execution order.
+auxiliary_registers:
+    State variables that exist only to realise the scheme or the events.
+implementation_parameters:
+    Parameters that are maintained implementation choices.
+timebase_parameters:
+    Parameters bound to ``dt`` and read by the expressions.
+admissible_methods:
+    Methods a consumer may select for this scientific model without leaving
+    its family; the declared method is always first.
+randomness:
+    Randomness contract.
+event:
+    Event contract.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `LoweringProfile`
+What the RTL emitter can lower from the realisation.
+
+Parameters
+----------
+rtl_supported:
+    ``True`` when the equation compiler accepts the realisation as declared.
+limits:
+    Reasons the realisation cannot be lowered, or the limits it is lowered
+    under (pipelining excluded for sub-stepped or stochastic datapaths).
+cosim_methods:
+    Admissible methods Studio co-simulates against the golden.
+recommended_precision:
+    ``hints.recommended_precision`` when authored, else empty.
+
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `ModelProfile`
+The resolved profile of one schema document.
+
+Parameters
+----------
+contract:
+    Contract identifier (:data:`PROFILE_CONTRACT`).
+stem:
+    Schema stem when resolved from a bundled schema, else empty.
+realisation_kind:
+    ``executable`` when UniversalNeuron can run the schema, otherwise
+    ``descriptive-record`` (the schema records a hand model whose method or
+    detection is outside the executable vocabulary).
+authored:
+    ``True`` when the schema carries a ``&#91;profile&#93;`` section.
+scientific, numerical, lowering:
+    The three separated layers.
+problems:
+    Contradictions between the authored profile and the schema, or between
+    schema fields. Non-empty means an executable consumer must refuse.
+notes:
+    Authored free-text note from the profile section.
+
+- **is_executable**()
+  - Whether the schema runs through the equation runtime.
+- **to_public_dict**()
+  - Return the JSON projection with a stable field order.
+
+### Class `AdmittedOverrides`
+Overrides accepted under a profile, with the timebase propagated.
+
+Parameters
+----------
+dt:
+    Effective integration step.
+method:
+    Effective method.
+parameters:
+    Effective parameter overrides, including timebase parameters set to
+    ``dt`` when the step was overridden.
+rng_seed:
+    Effective LFSR seed, ``None`` when the profile draws no randomness.
+derived:
+    ``True`` when the effective realisation differs from the declared one.
+
+- **realisation**(profile)
+  - Return the effective numerical realisation as a public record.
+
+### Function `expression_names(expression)`
+Return the identifiers an expression reads, with ``_prev`` aliases folded.
+
+Parameters
+----------
+expression:
+    A DSL expression (Python expression syntax).
+
+Returns
+-------
+frozenset&#91;str&#93;
+    Identifier names; ``x_prev`` is reported as ``x``. An unparsable
+    expression (a descriptive record's prose) yields the empty set.
+
+### Function `resolve_profile(schema)`
+Resolve the profile of one schema document.
+
+Parameters
+----------
+schema:
+    Parsed schema mapping (as returned by
+    :func:`~sc_neurocore.neurons.universal_dsl.load_schema`).
+stem:
+    Bundled schema stem, when known.
+
+Returns
+-------
+ModelProfile
+    The separated scientific model, numerical realisation and lowering
+    profile, with every contradiction listed in ``problems``.
+
+### Function `admit_overrides(profile)`
+Admit consumer overrides under a profile or refuse them.
+
+Parameters
+----------
+profile:
+    Resolved profile of the schema being instantiated.
+dt:
+    Requested integration step, ``None`` to keep the schema's.
+method:
+    Requested method, ``None`` to keep the schema's.
+parameters:
+    Requested parameter overrides.
+rng_seed:
+    Requested LFSR seed, ``None`` to keep the schema's.
+
+Returns
+-------
+AdmittedOverrides
+    The effective step, method, parameter overrides (timebase parameters
+    follow the step) and seed.
+
+Raises
+------
+ProfileAdmissionError
+    If the schema itself is contradictory, is a descriptive record, or the
+    override leaves the profile's family, contradicts its timebase, changes
+    the step of a recurrence without a timebase, or seeds a deterministic
+    model.
+
+### Function `parse_profile(payload)`
+Rebuild a :class:`ModelProfile` from its public projection.
+
+Parameters
+----------
+payload:
+    A mapping produced by :meth:`ModelProfile.to_public_dict`.
+
+Returns
+-------
+ModelProfile
+    A profile equal to the one that produced the payload.
+
+Raises
+------
+ModelProfileError
+    If the payload does not carry the contract or a required field.
+
+---
+
 ## Module `neurons.model_taxonomy`
 
 ### Function `canonical_model_name(class_name)`
@@ -27499,6 +27811,134 @@ Reference: Yamada, W.M. et al. (1989). In: Methods in Neuronal Modeling. MIT Pre
 
 ---
 
+## Module `neurons.profile_registry`
+
+### Class `ValidatorBinding`
+One declared validator bound to one facet of one profile.
+
+Parameters
+----------
+facet:
+    Facet name the validator is declared for.
+origin:
+    ``descriptor`` (the descriptor's evidence field for the facet) or
+    ``schema`` (the schema's ``&#91;validation&#93;.evidence``).
+scope:
+    ``profile`` when the validator belongs to this profile (a schema
+    validator, or a descriptor validator on the class's canonical profile);
+    ``class`` when it is a descriptor validator listed on a non-canonical
+    profile, where it documents the class but cannot admit the profile.
+reference:
+    Parsed and resolved evidence reference.
+
+- **executable**()
+  - Whether the reference names an existing test file or test node.
+- **admits**()
+  - Whether the validator can admit this profile (executable and profile-scoped).
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `FacetRegistryEntry`
+Validator registry of one facet for one profile.
+
+Parameters
+----------
+facet:
+    Facet name.
+declared:
+    Whether the descriptor declares the facet.
+status:
+    Readiness status of the facet for this profile.
+receipt:
+    Newest receipt file name for this profile, empty when none.
+validators:
+    Every declared validator for the facet, executable or not.
+
+- **executable_validators**()
+  - Validators that name an existing test file or node.
+- **admitting_validators**()
+  - Executable validators scoped to this profile.
+- **to_public_dict**()
+  - Return the JSON projection.
+
+### Class `ProfileRow`
+One (class, profile) row of the inventory.
+
+Parameters
+----------
+class_name:
+    Registered class the profile is bound to.
+stem:
+    Schema stem of the profile.
+identity_kind:
+    Identity kind of the class.
+counts_in_source_catalogue:
+    Whether the class counts in the public source catalogue.
+canonical:
+    Whether this stem is the class's canonical profile (the one Studio and
+    the generators use).
+profile:
+    Resolved model profile.
+descriptor_method, descriptor_dt:
+    The descriptor's own integration label and step (the hand class's
+    numerics), empty and ``None`` without a descriptor.
+method_agreement:
+    ``same`` when the descriptor label equals the profile method,
+    ``differs`` when it names another realisation (a hand class may keep a
+    different default than its schema profile), ``no-descriptor`` otherwise.
+readiness:
+    Readiness record verified for exactly this profile.
+registry:
+    Validator registry per facet.
+admission:
+    ``admitted``, ``blocked`` or ``not-executable``.
+admission_reasons:
+    Why the profile is not admitted, empty when admitted.
+unvalidated_backends:
+    Backends the descriptor declares implemented without any validator
+    field to bind them; reported, not decided, until the native admission
+    contract defines the field.
+
+- **entry**(facet)
+  - Return the registry entry of one facet by name.
+- **to_public_dict**()
+  - Return the JSON projection with a stable field order.
+
+### Function `profile_row(identity, stem)`
+Build the inventory row of one bound profile.
+
+Parameters
+----------
+identity:
+    Identity record of the class.
+stem:
+    One of the identity's bound schema stems.
+repo_root:
+    Repository root the evidence paths are relative to.
+receipts:
+    Newest receipts per ``(class, facet, profile)`` as returned by
+    :func:`~sc_neurocore.neurons.facet_receipts.latest_receipts`; read
+    from the receipt store when omitted.
+
+### Function `profile_inventory()`
+Return one row per bound (class, profile), sorted by class and stem.
+
+Parameters
+----------
+repo_root:
+    Repository root the evidence paths are relative to.
+
+### Function `validator_registry(rows)`
+Return the validator registry keyed by ``(class_name, stem)``.
+
+### Function `summarise_inventory(rows)`
+Return count summaries over the inventory.
+
+### Function `method_table()`
+Return the method → exactness → family → lowering mapping table.
+
+---
+
 ## Module `neurons.readiness`
 
 ### Class `FacetVerification`
@@ -28034,6 +28474,14 @@ Does NOT replace hand-crafted model files.  Delegates simulation to
 all existing AST safety, integration methods, and compilation paths
 remain available.
 
+Every schema is resolved to its :class:`~sc_neurocore.neurons.model_profile.ModelProfile`
+before anything runs. A schema whose authored profile contradicts it, or that is a
+descriptive record outside the executable vocabulary, is refused. Overrides are
+admitted through the profile: a method must stay in the profile's family (a
+published map is never integrated as an ODE), a timestep override moves the
+profile's timebase parameters with it and is refused for a recurrence without a
+continuous timebase, and a seed is refused for a model that draws no randomness.
+
 Parameters
 ----------
 schema : dict
@@ -28044,6 +28492,15 @@ dt_override : float, optional
     Override the schema's default timestep.
 method_override : str, optional
     Override the integration method.
+rng_seed_override : int, optional
+    Override the stochastic-threshold LFSR seed.
+
+Raises
+------
+ValueError
+    If the schema defines no dynamics and no event-only contract, or the
+    profile refuses the schema or an override
+    (:class:`~sc_neurocore.neurons.model_profile.ProfileAdmissionError`).
 
 - **__init__**(schema)
   - Initialise from a validated schema dictionary.
@@ -28065,6 +28522,12 @@ method_override : str, optional
   - Return a deep copy of the underlying schema.
 - **extensions**()
   - Forward-compatible extension fields.
+- **profile**()
+  - Resolved model profile: scientific model, numerical realisation, lowering.
+- **admitted_overrides**()
+  - Overrides admitted under the profile, with the timebase propagated.
+- **realised_profile**()
+  - Return the effective numerical realisation as a public record.
 - **science**()
   - Authored science layer (schema v2), empty for v1 schemas.
 - **validation**()

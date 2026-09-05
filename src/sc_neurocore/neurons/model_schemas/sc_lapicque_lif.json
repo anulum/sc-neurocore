@@ -22,5 +22,29 @@
     "family": "sc-compatibility-lif",
     "maintained_discretisation": "Exact constant-current RC flow via exponential Euler",
     "identity_note": "Later hard-reset repetitive LIF convention; not claimed as the complete 1907 source model"
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "exactness": "exact-linear-relaxation",
+    "notes": "SC compatibility realisation: exponential Euler is the exact constant-current RC flow of this linear membrane; the hard reset and the repetitive recurrence are project conventions, not the 1907 source.",
+    "state": {
+      "v": "biological"
+    },
+    "parameters": {
+      "v_rest": "source",
+      "v_reset": "source",
+      "v_threshold": "source",
+      "tau": "source",
+      "resistance": "source"
+    },
+    "units": {
+      "v": "normalized voltage",
+      "v_rest": "normalized voltage",
+      "v_reset": "normalized voltage",
+      "v_threshold": "normalized voltage",
+      "tau": "ms",
+      "resistance": "normalized resistance"
+    }
   }
 }

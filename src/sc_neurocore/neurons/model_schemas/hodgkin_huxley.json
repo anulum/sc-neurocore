@@ -40,5 +40,41 @@
   },
   "extensions": {
     "ion_channels": ["Na", "K", "leak"]
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "substep_kind": "time-subdivision",
+    "notes": "One hundred simultaneous RK4 sub-steps of dt = 0.01 ms per sampled 1 ms macro step; the rising crossing is judged once per macro step. This is the schema and compiler profile; the production class default is gate-first explicit Euler.",
+    "state": {
+      "v": "biological",
+      "m": "biological",
+      "h": "biological",
+      "n": "biological"
+    },
+    "parameters": {
+      "C": "source",
+      "g_Na": "source",
+      "g_K": "source",
+      "g_L": "source",
+      "E_Na": "source",
+      "E_K": "source",
+      "E_L": "source",
+      "v_threshold": "implementation: observation threshold for event registration; the 1952 model defines no spike threshold"
+    },
+    "units": {
+      "v": "mV",
+      "m": "1",
+      "h": "1",
+      "n": "1",
+      "C": "uF/cm^2",
+      "g_Na": "mS/cm^2",
+      "g_K": "mS/cm^2",
+      "g_L": "mS/cm^2",
+      "E_Na": "mV",
+      "E_K": "mV",
+      "E_L": "mV",
+      "v_threshold": "mV"
+    }
   }
 }

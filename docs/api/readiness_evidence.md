@@ -130,6 +130,16 @@ Studio exposes the same data: every catalogue entry carries
 labels, the model detail carries a `readiness.verified` block with the
 per-facet statuses, and the facet summary counts verified tiers.
 
+## Profiles
+
+A receipt is keyed by `(class, facet, profile)`, where the profile is a schema
+stem. What a profile *is* — the authored scientific model, the numerical
+realisation that advances it and what the RTL emitter can lower from it — is
+the [model profile contract](model_profiles.md). The generated
+`docs/_generated/model_profile_ledger.json` lists, per profile, the validators
+declared for every facet, whether they resolve, whether a receipt binds them
+for that profile, and whether the profile is admitted for evidence at all.
+
 ## What this layer does not do
 
 It does not run evidence on its own, does not decide whether a test is the

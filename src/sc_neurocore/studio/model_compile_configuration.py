@@ -39,12 +39,20 @@ class ResolvedModelCompileConfiguration:
     schema_sha256: str
 
     def to_public_dict(self) -> dict[str, object]:
-        """Return the path-free configuration attached to Studio evidence."""
+        """Return the path-free configuration attached to Studio evidence.
+
+        The ``profile`` entry records the numerical realisation the compiled
+        neuron actually runs (declared and effective method, exactness class,
+        step, sub-steps, macro step, randomness) so the evidence states whether
+        the RTL was generated from the authored profile or from an admitted
+        override.
+        """
 
         return {
             "dt": self.dt,
             "integrator": self.integrator,
             "model_name": self.model_name,
+            "profile": self.neuron.realised_profile(),
             "q_format": self.q_format.q_label,
             "schema_name": self.schema_name,
             "schema_sha256": self.schema_sha256,
@@ -96,6 +104,15 @@ def resolve_model_compile_configuration(
     integrator = requested_integrator or default_integrator
     if integrator not in allowed_integrators:
         raise ValueError(f"Integrator {integrator!r} is not declared for {model_name!r}.")
+    profile_contract = detail.get("profile_contract")
+    if isinstance(profile_contract, dict):
+        numerical = profile_contract.get("numerical")
+        admissible = numerical.get("admissible_methods") if isinstance(numerical, dict) else None
+        if isinstance(admissible, list) and integrator not in admissible:
+            raise ValueError(
+                f"Integrator {integrator!r} leaves the numerical family of {model_name!r} "
+                f"(admissible: {', '.join(str(item) for item in admissible)})."
+            )
 
     schema_params = schema.get("parameters", {})
     if not isinstance(schema_params, Mapping):

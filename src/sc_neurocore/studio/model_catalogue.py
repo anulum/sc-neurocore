@@ -20,6 +20,7 @@ from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     descriptor_completeness_tier,
 )
+from sc_neurocore.neurons.model_profile import resolve_profile
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.universal_dsl import load_schema
@@ -138,13 +139,14 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
             "readiness": _readiness_detail(descriptor),
             "documentation_slug": descriptor.documentation_slug,
             "compile_configuration": _compile_configuration(descriptor),
+            "profile_contract": _profile_contract(descriptor),
         }
     )
     return detail
 
 
-def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None:
-    """Return the canonical schema-backed Studio compile choices, if available."""
+def _canonical_schema(descriptor: ModelDescriptor) -> tuple[str, dict[str, Any]] | None:
+    """Return the class's canonical schema stem and document, if one is bundled."""
     from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
 
     try:
@@ -152,18 +154,52 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     except ModelIdentityError:
         schema_name = schema_for_module(descriptor.module.rsplit(".", 1)[-1])
     try:
-        schema = load_schema(schema_name)
+        return schema_name, load_schema(schema_name)
     except (FileNotFoundError, ValueError):
         return None
 
-    integration = schema.get("integration", {})
-    default_integrator = str(integration.get("method", "euler"))
+
+def _profile_contract(descriptor: ModelDescriptor) -> dict[str, Any] | None:
+    """Return the canonical schema's resolved model profile, if one is bundled.
+
+    The profile separates the scientific model from its numerical realisation
+    and lowering profile (:mod:`sc_neurocore.neurons.model_profile`); Studio
+    shows it next to the descriptor so a user sees which state is biological,
+    which parameters are implementation choices, how sub-steps are meant and
+    which methods may be selected without leaving the profile's family.
+    """
+    canonical = _canonical_schema(descriptor)
+    if canonical is None:
+        return None
+    schema_name, schema = canonical
+    return resolve_profile(schema, stem=schema_name).to_public_dict()
+
+
+def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None:
+    """Return the canonical schema-backed Studio compile choices, if available.
+
+    Declared ``extensions.integrator_options`` are admitted only inside the
+    profile's numerical family: a published map never offers an ODE integrator
+    and an ODE never offers ``map``. A schema whose profile is contradictory or
+    a descriptive record has no compile configuration.
+    """
+    canonical = _canonical_schema(descriptor)
+    if canonical is None:
+        return None
+    schema_name, schema = canonical
+    profile = resolve_profile(schema, stem=schema_name)
+    if profile.problems or not profile.is_executable:
+        return None
+    default_integrator = profile.numerical.method
     if default_integrator not in SUPPORTED_METHODS:
         return None
+    admissible = set(profile.numerical.admissible_methods)
     extensions = schema.get("extensions", {})
     declared = extensions.get("integrator_options", [default_integrator])
     integrators = [
-        str(value) for value in declared if isinstance(value, str) and value in SUPPORTED_METHODS
+        str(value)
+        for value in declared
+        if isinstance(value, str) and value in SUPPORTED_METHODS and value in admissible
     ]
     if default_integrator not in integrators:
         integrators.insert(0, default_integrator)
@@ -174,19 +210,48 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
         "cosim_integrators": [
             integrator
             for integrator in dict.fromkeys(integrators)
-            if integrator in {"euler", "map"}
+            if integrator in profile.lowering.cosim_methods
         ],
         "default_q_format": "Q8.8",
         "q_formats": ["Q8.8", "Q16.16"],
     }
 
 
+def _selected_profile(class_name: str) -> str | None:
+    """Return the concrete profile Studio verifies a class under.
+
+    Receipts are keyed by profile and a multi-profile identity receives no
+    class-wide verified claim without a selection, so Studio selects the
+    class's canonical schema profile (the one it compiles). A class without a
+    bound schema profile is verified under its hand profile.
+    """
+    from sc_neurocore.neurons.model_identity import ModelIdentityError, resolve_identity
+
+    try:
+        identity = resolve_identity(class_name)
+    except ModelIdentityError:
+        return None
+    stems = {profile.stem for profile in identity.schema_profiles}
+    canonical = _canonical_schema_name(class_name)
+    return canonical if canonical in stems else None
+
+
+def _canonical_schema_name(class_name: str) -> str:
+    from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
+
+    try:
+        return schema_for_class(class_name)
+    except ModelIdentityError:
+        return ""
+
+
 def _verified_summary(class_name: str) -> dict[str, Any]:
     """Return the verified (receipt-bound) tiers for a browse entry.
 
     The declared tiers above come from the descriptor's own flags; these come
-    only from facet receipts whose subjects still match the repository, so a
-    browse entry always shows both what is claimed and what is proven.
+    only from facet receipts, for the class's canonical profile, whose subjects
+    still match the repository, so a browse entry always shows both what is
+    claimed and what is proven.
     """
     from sc_neurocore.neurons.model_identity import identity_registry
     from sc_neurocore.neurons.readiness import verify_model
@@ -197,22 +262,29 @@ def _verified_summary(class_name: str) -> dict[str, Any]:
             "verified_science_label": "S0",
             "verified_silicon_tier": None,
             "verified_silicon_label": "none",
+            "verified_profile": None,
         }
-    record = verify_model(class_name)
+    record = verify_model(class_name, profile=_selected_profile(class_name))
     return {
         "verified_science_tier": record.verified_science,
         "verified_science_label": record.verified_science_label,
         "verified_silicon_tier": record.verified_silicon,
         "verified_silicon_label": record.verified_silicon_label,
+        "verified_profile": record.profile,
     }
 
 
 def _verified_detail(class_name: str) -> dict[str, Any]:
-    """Return the per-facet verification block for a model detail."""
+    """Return the per-facet verification block for a model detail.
+
+    The block names the profile the receipts were read for; a receipt of
+    another profile of the same class never appears here.
+    """
     from sc_neurocore.neurons.readiness import verify_model
 
-    record = verify_model(class_name)
+    record = verify_model(class_name, profile=_selected_profile(class_name))
     return {
+        "profile": record.profile,
         "science_tier": record.verified_science,
         "science_label": record.verified_science_label,
         "silicon_tier": record.verified_silicon,

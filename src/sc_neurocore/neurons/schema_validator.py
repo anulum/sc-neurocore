@@ -16,6 +16,12 @@ Checks:
 5. Threshold condition is valid
 6. Reset section references only state variables
 7. TOML ↔ JSON parity (if both formats exist)
+8. The model profile (:mod:`sc_neurocore.neurons.model_profile`) resolves without a
+   contradiction: an authored ``[profile]`` that names unknown quantities, a timebase
+   parameter that disagrees with ``integration.dt``, an inadmissible exactness claim, a
+   map with undeclared sub-step semantics or integrator options outside the method's
+   family are errors; a descriptive record outside the executable vocabulary is
+   reported as a classified warning.
 
 Usage::
 
@@ -33,6 +39,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.neurons.model_profile import PROFILE_SECTION, resolve_profile
 from sc_neurocore.neurons.schema_contracts import stateless_event_kind
 
 logger = logging.getLogger(__name__)
@@ -46,6 +53,7 @@ _OPTIONAL_SECTIONS = {
     "threshold",
     "reset",
     "extensions",
+    PROFILE_SECTION,
     *_V2_KNOWLEDGE_SECTIONS,
 }
 _PARITY_SECTIONS = (
@@ -61,6 +69,7 @@ _PARITY_SECTIONS = (
     "validation",
     "provenance",
     "hints",
+    PROFILE_SECTION,
 )
 _REQUIRED_METADATA = {"schema_version", "name"}
 _REQUIRED_INTEGRATION = {"dt", "method"}
@@ -213,6 +222,20 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
                     "dynamics",
                 )
             )
+
+    # Model profile: contradictions are errors; a descriptive record is classified.
+    profile = resolve_profile(data, stem=name)
+    for problem in profile.problems:
+        errors.append(SchemaError("error", problem, PROFILE_SECTION))
+    if not profile.is_executable:
+        errors.append(
+            SchemaError(
+                "warning",
+                "descriptive record, not executable by UniversalNeuron: "
+                + "; ".join(profile.lowering.limits),
+                PROFILE_SECTION,
+            )
+        )
 
     # Unknown sections
     known_sections = _REQUIRED_SECTIONS | _OPTIONAL_SECTIONS

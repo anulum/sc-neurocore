@@ -60,5 +60,35 @@
       "analytical_tail_ms": 0.001855930799631619,
       "observation_threshold": 20.0
     }
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "refractory_register": "refractory_remaining",
+    "notes": "SC deterministic RK4 compatibility realisation with the +30 mV numerical event surface; the Fourcaud-Trocme 2003 protocol is recorded under [profiles] and is not executed by this schema.",
+    "state": {
+      "v": "biological",
+      "refractory_remaining": "auxiliary: remaining absolute refractory hold"
+    },
+    "parameters": {
+      "v_rest": "source",
+      "v_reset": "source",
+      "v_threshold": "implementation: +30 mV SC numerical event surface; the source hand-off is -30 mV",
+      "v_rh": "source",
+      "delta_t": "source",
+      "tau": "source",
+      "refractory_period": "source"
+    },
+    "units": {
+      "v": "mV",
+      "refractory_remaining": "ms",
+      "v_rest": "mV",
+      "v_reset": "mV",
+      "v_threshold": "mV",
+      "v_rh": "mV",
+      "delta_t": "mV",
+      "tau": "ms",
+      "refractory_period": "ms"
+    }
   }
 }

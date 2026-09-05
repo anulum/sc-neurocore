@@ -50,7 +50,9 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
     assert result["chars"] == len(cast(str, result["verilog"]))
     traceability = cast(dict[str, object], result["compile_traceability"])
     source_payload = cast(dict[str, object], traceability["source_payload"])
-    assert result["compile_configuration"] == {
+    configuration = dict(cast(dict[str, object], result["compile_configuration"]))
+    profile = cast(dict[str, object], configuration.pop("profile"))
+    assert configuration == {
         "dt": 1.0,
         "integrator": "exp_euler",
         "model_name": "SCLapicqueLIFNeuron",
@@ -58,6 +60,15 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
         "schema_name": "sc_lapicque_lif",
         "schema_sha256": source_payload["schema_sha256"],
     }
+    # The evidence records the realisation the RTL was generated from: the authored
+    # exact-flow exponential-Euler profile, not a derived override.
+    assert profile["contract"] == "sc-neurocore.model-profile.v1"
+    assert profile["declared_method"] == "exp_euler"
+    assert profile["method"] == "exp_euler"
+    assert profile["exactness"] == "exact-linear-relaxation"
+    assert profile["macro_step"] == 1.0
+    assert profile["randomness"] == "none"
+    assert profile["derived"] is False
     assert [artifact.relative_path for artifact in context.artifacts] == [
         "compiler/model-result.json",
         "compiler/model-evidence.json",
@@ -117,7 +128,9 @@ def test_model_compile_process_rejects_corrupt_catalogue_configuration(
     monkeypatch.setattr(
         model_compile_process,
         "get_model_detail",
-        lambda _name: {"compile_configuration": {"schema_name": "sc_lapicque_lif", "integrators": []}},
+        lambda _name: {
+            "compile_configuration": {"schema_name": "sc_lapicque_lif", "integrators": []}
+        },
     )
 
     with pytest.raises(ValueError, match="configuration 'integrators' is invalid"):

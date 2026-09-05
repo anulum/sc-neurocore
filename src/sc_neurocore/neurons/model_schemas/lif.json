@@ -30,5 +30,24 @@
   "reset": {
     "v": "v_rest"
   },
-  "extensions": {}
+  "extensions": {},
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "time_unit": "ms",
+    "notes": "Explicit Euler is a first-order realisation of the linear membrane; it is not the exact flow. Any ODE method may be selected as a numerical alternative.",
+    "state": {
+      "v": "biological"
+    },
+    "parameters": {
+      "v_rest": "source",
+      "tau_m": "source",
+      "R": "source",
+      "C": "source"
+    },
+    "units": {
+      "v": "mV",
+      "v_rest": "mV",
+      "tau_m": "ms"
+    }
+  }
 }
