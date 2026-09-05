@@ -84,29 +84,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - The jobs package keeps one responsibility per module: the ledger's schema,
   writes, reads, recovery and supervisor identity are separate owners, and the
   job manager's durable read surface moved to `jobs_manager_custody`.
-- Corrected the strict public polyglot-completion inventory from 60/155 to
-  57/155: the three models in the explicitly incomplete acceleration table are
-  no longer folded into the promoted source-model count. All 31 legacy
-  `this commit` fidelity anchors now resolve to stable tracked evidence paths,
-  with a regression deriving the count from the published table and checking
-  every anchor. The count-neutral SC three-state phantom remains public but is
-  no longer strict-promoted until it has its own source-hashed five-runtime
-  benchmark rather than borrowing the distinct Bertram source artefact.
-- Repaired the formal-catalogue emitter's pre-existing generated-only filter:
-  every current dual-axis perfect descriptor now appears once in the inventory,
-  while model-specific curated RTL, harnesses, and proof depths remain intact.
-- Re-closed `COBALIFNeuron` as the Brette et al. (2007) conductance-based LIF
-  cell component without claiming the paper's complete 4,000-cell Benchmark 1
-  network. Python, production and safety Rust, PyO3, Julia, Go, and Mojo now
-  expose failure-atomic aligned voltage, excitatory-conductance,
-  inhibitory-conductance, refractory, and binary-event packets; all lanes
-  reject raw voltage and conductance candidates outside the maintained safety
-  envelope before mutation. A PDF-bound independent receipt, paired schemas,
-  NetworkRunner execution, source-hashed five-runtime benchmark, Q24.24
-  complete-state co-simulation, tracked Yosys synthesis, and depth-8 reached-
-  event/reset/refractory safety establish the honest H2 boundary without
-  network reproduction, timing, PPA, device, board, physical-silicon, or
-  universal-equivalence claims.
 - `vite preview` now proxies `/api` to the Studio backend, as the dev server
   does; the built bundle previously had no way to reach it.
 - Firing-pattern classification moved from `studio.codegen` to
