@@ -10,7 +10,49 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+- Studio code export reproduces the experiment it came from. The generated
+  script is built from the resolved `studio.experiment-spec.v1` and runs it
+  through the public runner, instead of constructing the model with its default
+  constructor, calling `step(current=…)` and reading `neuron.v`. Those
+  assumptions were false for much of the catalogue: a model whose public step
+  takes `drive` produced a script that raised `TypeError`, a requested time step
+  the model did not receive ran a different length of model time while reporting
+  the requested duration, and a non-constant drive protocol was silently
+  exported as a constant one. The exported script now carries the experiment
+  digest and stops rather than reporting a result when the installed package
+  resolves a different experiment.
+
+### Added
+- `sc_neurocore.studio.replay_pack`: a sealed `studio.replay-pack.v1` document
+  with the re-resolvable request (a drawn stochastic seed is pinned and the
+  trial sealed as a replay), the public specification, an
+  `experiment_identity_sha256` over the scientific blocks only, the complete
+  expectation (every spike event, a digest per state trace with its endpoints
+  and range, the initial and final state, the drive digest, the run statistics)
+  and the sealing environment. `python -m sc_neurocore.studio.replay_pack
+  <pack.json>` admits or refuses the pack before anything executes — unsupported
+  schema, a document whose digest does not describe its own specification, an
+  unexecutable request field, an experiment that resolves differently here, a
+  drifted model revision, or unadmitted runtime drift — then runs it and
+  compares in full, exiting 0, 1 or 2. Identity digests describe JSON values, so
+  a pack saved by a browser still verifies.
+- `POST /api/export/replay-pack` and the Studio's **Replay pack** export.
+  `/api/codegen` now takes the same fail-closed request as the simulation
+  routes, requires the `mode` discriminator, honours `protocol`,
+  `frequency_hz`, `seed` and `trial`, and returns the experiment digest, the
+  pinned request and a replay script alongside the script and one-liner.
+- `docs/studio/replay-and-export.md`, and a browser-to-server-to-replay
+  contract (`npm run test:e2e:export`) that drives the built Studio bundle,
+  downloads a pack and replays it in a separate interpreter outside the
+  repository.
+
 ### Changed
+- `vite preview` now proxies `/api` to the Studio backend, as the dev server
+  does; the built bundle previously had no way to reach it.
+- Firing-pattern classification moved from `studio.codegen` to
+  `studio.firing_pattern`; code export and run description are separate
+  responsibilities with separate owners.
 - The Studio network canvas runs the graph it shows. A graph is resolved
   into a versioned specification (`sc_neurocore.studio.network_graph_spec`,
   `studio.network-graph-spec.v1`): every population names a catalogue model

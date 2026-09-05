@@ -75,7 +75,9 @@ export interface StudioCodegenStartStatePatch {
 }
 
 export interface StudioCodegenResultStatePatch {
+  codeExperimentSha256: string;
   codeOneliner: string;
+  codeReplayScript: string;
   codeScript: string;
 }
 
@@ -185,8 +187,10 @@ export function studioCodegenStartState(): StudioCodegenStartStatePatch {
 export function studioCodegenResultState(
   codeScript: string,
   codeOneliner: string,
+  codeReplayScript: string,
+  codeExperimentSha256: string,
 ): StudioCodegenResultStatePatch {
-  return { codeOneliner, codeScript };
+  return { codeExperimentSha256, codeOneliner, codeReplayScript, codeScript };
 }
 
 export function studioMultiResultsState(

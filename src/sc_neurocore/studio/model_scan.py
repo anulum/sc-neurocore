@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TypeAlias, cast
 
-from sc_neurocore.studio.codegen import classify_firing_pattern
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
     StudioEvidenceStatus,

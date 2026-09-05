@@ -89,6 +89,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.trace.import",
     ),
     ("POST", "/api/codegen", RouteVisibility.AUTHENTICATED, "studio.codegen.generate"),
+    (
+        "POST",
+        "/api/export/replay-pack",
+        RouteVisibility.AUTHENTICATED,
+        "studio.codegen.replay_pack",
+    ),
     ("POST", "/api/compile", RouteVisibility.AUTHENTICATED, "studio.compiler.compile"),
     (
         "POST",

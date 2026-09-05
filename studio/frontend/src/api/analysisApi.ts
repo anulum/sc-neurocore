@@ -14,6 +14,8 @@ import type {
   FreqResponse,
   AnalysisJobRequestBody,
   AnalysisJobReceipt,
+  CodegenResponse,
+  ReplayPack,
 } from "./types";
 
 export const submitAnalysisJob = (request: AnalysisJobRequestBody) =>
@@ -27,4 +29,8 @@ export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unkno
 
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
 
-export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
+export const fetchCodegen = (req: Record<string, unknown>) =>
+  post<CodegenResponse>("/codegen", req);
+
+export const fetchReplayPack = (req: Record<string, unknown>) =>
+  post<ReplayPack>("/export/replay-pack", req);

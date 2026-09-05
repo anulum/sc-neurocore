@@ -378,6 +378,7 @@ export default function App() {
         <Btn label="Code" onClick={s.runCodegen}
           disabled={panelUnavailable("code")}
           title={panelState("code").message}
+          testId="run-codegen"
           color="#90a4ae" />
         {paramKeys.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -458,6 +459,11 @@ export default function App() {
         <Btn label="JSON" onClick={s.exportData} disabled={!s.result} outline />
         <Btn label="CSV" onClick={s.exportCSV} disabled={!s.result} outline />
         <Btn label="SVG" onClick={s.exportSVG} disabled={!s.result} outline />
+        <Btn label="Replay pack" onClick={s.exportReplayPack}
+          disabled={panelUnavailable("code")}
+          title="Download a sealed pack another installation can run and compare"
+          testId="export-replay-pack"
+          outline />
 
         <div className="header-spacer" />
 
@@ -733,16 +739,23 @@ export default function App() {
           ) : s.activeTab === "delays" ? (
             <DclsPanel />
           ) : s.activeTab === "code" ? (
-            <div style={{ flex: 1, padding: 8 }}>
+            <div style={{ flex: 1, padding: 8, display: "flex", flexDirection: "column", minHeight: 0 }}>
               {s.codeScript ? (
                 <pre style={{
                   fontSize: 11, fontFamily: "var(--font-mono)",
                   color: "var(--text-primary)", background: "var(--bg-secondary)",
                   padding: 12, borderRadius: "var(--radius)",
-                  overflow: "auto", height: "100%", whiteSpace: "pre-wrap",
-                }}>
+                  overflow: "auto", flex: 1, minHeight: 0, whiteSpace: "pre-wrap",
+                }} data-testid="codegen-script">
                   {s.codeScript}
                 </pre>
+              ) : null}
+              {s.codeScript ? (
+                <div style={{ fontSize: 10, color: "var(--text-muted)", paddingTop: 8 }} data-testid="codegen-experiment">
+                  experiment {s.codeExperimentSha256.slice(0, 16)} — "Replay pack" saves the sealed
+                  experiment; run it with{" "}
+                  <code>python -m sc_neurocore.studio.replay_pack &lt;pack.json&gt;</code>
+                </div>
               ) : (
                 <div style={{ color: "var(--text-muted)", padding: 20 }}>
                   Click "Code" to generate a Python script

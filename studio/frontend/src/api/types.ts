@@ -1496,3 +1496,37 @@ export interface ProgressMessage {
   msg?: string;
   result?: unknown;
 }
+
+/**
+ * What `/api/codegen` returns: code that runs the same effective experiment.
+ *
+ * `request` is the pinned request the script carries — a drawn stochastic seed
+ * is already fixed in it — and `experiment_sha256` is the digest the script
+ * checks before it reports a result.
+ */
+export interface CodegenResponse {
+  script: string;
+  oneliner: string;
+  replay_script: string;
+  experiment_sha256: string;
+  request: Record<string, unknown>;
+}
+
+/**
+ * A sealed `studio.replay-pack.v1` document from `/api/export/replay-pack`.
+ *
+ * The fields the UI needs are named; the specification, expectation and
+ * environment blocks travel opaquely to the file the user saves, because their
+ * contract belongs to the Python replay runner, not to the browser.
+ */
+export interface ReplayPack {
+  schema_version: "studio.replay-pack.v1";
+  source: "model" | "ode";
+  request: Record<string, unknown>;
+  experiment: Record<string, unknown>;
+  experiment_sha256: string;
+  experiment_identity_sha256: string;
+  expectation: Record<string, unknown>;
+  environment: Record<string, string>;
+  runner: { module: string; command: string; entrypoint: string };
+}

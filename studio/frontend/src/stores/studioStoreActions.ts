@@ -38,6 +38,7 @@ import {
   cosimModelVerilog,
   fetchPrecision,
   fetchCodegen,
+  fetchReplayPack,
   fetchCompare,
   fetchNullclines,
   fetchFreqResponse,
@@ -146,7 +147,7 @@ import {
   studioTraceImportRequest,
 } from "../studioTraceImport";
 import {
-  studioCodegenRequest,
+  studioExperimentExportRequest,
   studioFrequencyResponseRequest,
   studioNullclineRequest,
   studioPrecisionRequest,
@@ -170,8 +171,10 @@ import {
   studioSTAResultState,
 } from "../studioAnalysisState";
 import {
+  replayPackExport,
   simulationExportPlan,
 } from "../simulationExports";
+import { downloadBrowserArtefact } from "../browserArtefactDownload";
 import {
   networkNirExportPlan,
 } from "../networkNirExport";
@@ -766,8 +769,17 @@ export function createStudioStoreActions(
     const s = get();
     set(studioCodegenStartState());
     try {
-      const res = await fetchCodegen(studioCodegenRequest(simulationConfigInput(s)));
-      set(studioCodegenResultState(res.script, res.oneliner));
+      const res = await fetchCodegen(studioExperimentExportRequest(simulationConfigInput(s)));
+      set(studioCodegenResultState(res.script, res.oneliner, res.replay_script, res.experiment_sha256));
+    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
+  },
+
+  exportReplayPack: async () => {
+    const s = get();
+    try {
+      const pack = await fetchReplayPack(studioExperimentExportRequest(simulationConfigInput(s)));
+      const artefact = replayPackExport(pack);
+      downloadBrowserArtefact(artefact.blob, artefact.filename);
     } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 

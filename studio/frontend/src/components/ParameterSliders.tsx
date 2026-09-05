@@ -52,6 +52,7 @@ function Slider({ label, value, onChange, min, max, step, unit, title }: {
     <div className="slider-row" title={title}>
       <span className="slider-label">{label}</span>
       <input type="range" min={lo} max={hi} step={st} value={value}
+        data-testid={`slider-${label}`}
         onChange={(e) => onChange(parseFloat(e.target.value))} />
       <span className="slider-value">
         {fmt(value)}
@@ -157,6 +158,7 @@ export default function ParameterSliders() {
         <div className="slider-row">
           <span className="slider-label">protocol</span>
           <select value={protocol} onChange={(e) => setProtocol(e.target.value)}
+            data-testid="protocol-select"
             style={{ flex: 1 }}>
             {PROTOCOLS.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>

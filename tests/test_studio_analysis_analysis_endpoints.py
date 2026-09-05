@@ -60,8 +60,15 @@ class TestAnalysisEndpoints:
         )
         assert r.status_code == 200
         d = r.json()
-        assert "COBALIFNeuron" in d["script"]
-        assert "oneliner" in d
+        # The export states the experiment it reproduces, including the
+        # parameter override and the digest the script checks before it
+        # reports anything.
+        assert d["request"]["name"] == "COBALIFNeuron"
+        assert d["request"]["params"] == {"c_m": 200.0}
+        assert len(d["experiment_sha256"]) == 64
+        assert d["experiment_sha256"] in d["script"]
+        assert "resolve_experiment" in d["script"]
+        assert "run_experiment" in d["oneliner"]
 
     def test_classify_endpoint(self, client):
         r = client.post(

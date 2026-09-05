@@ -35360,8 +35360,19 @@ simulation routes refuse as oversized).
 Request body for balanced excitatory-inhibitory network simulation.
 
 
-### Class `CodegenRequest`
-Request body for Studio script and one-liner generation.
+### Class `ModelExperimentExportRequest`
+Export request for one catalogue-model experiment.
+
+Identical to :class:`ModelSimulateRequest` plus the ``mode`` discriminator,
+so an export resolves through the same fail-closed contract that runs it:
+the timestep, protocol, randomness and parameter overrides an export claims
+are the ones the run would use.
+
+
+### Class `OdeExperimentExportRequest`
+Export request for one equation-playground experiment.
+
+Identical to :class:`SimulateRequest` plus the ``mode`` discriminator.
 
 
 ---
@@ -35652,17 +35663,57 @@ Returns a dict with:
 
 ## Module `studio.codegen`
 
-### Function `generate_model_script(model_name, params, duration, current, dt)`
-Generate a standalone Python script that reproduces the current simulation.
+### Function `generate_experiment_script(spec, request)`
+Generate a standalone script that reproduces one resolved experiment.
 
-### Function `generate_ode_script(equations, threshold, reset, params, init, duration, current, dt)`
-Generate a standalone Python script for a custom ODE simulation.
+Parameters
+----------
+spec : ExperimentSpec
+    The resolved experiment the script must reproduce.
+request : dict
+    The request fields that re-resolve to ``spec``; a drawn seed must
+    already be pinned (see
+    :func:`~sc_neurocore.studio.replay_pack.pinned_request`).
 
-### Function `generate_oneliner(model_name, params, current)`
-Generate a copy-paste Python one-liner for notebook use.
+Returns
+-------
+str
+    Python source. It re-resolves the request, refuses on a digest
+    mismatch, runs the experiment through the public runner and reports the
+    spike count, the effective time step and the final state.
 
-### Function `classify_firing_pattern(spikes, n_steps, dt)`
-Classify the firing pattern from spike indices.
+### Function `generate_replay_script(pack_filename)`
+Generate a script that replays a saved pack and compares it in full.
+
+Parameters
+----------
+pack_filename : str
+    Name of the ``studio.replay-pack.v1`` file the script reads, relative
+    to the script's working directory.
+
+Returns
+-------
+str
+    Python source that verifies, runs and judges the pack, and exits
+    non-zero when the experiment does not reproduce.
+
+### Function `generate_oneliner(spec, request)`
+Generate a copy-paste one-liner that runs the same experiment.
+
+Parameters
+----------
+spec : ExperimentSpec
+    The resolved experiment. Its source decides nothing here; the request
+    carries everything the contract needs.
+request : dict
+    The request fields that re-resolve to ``spec``.
+
+Returns
+-------
+str
+    A single line for a notebook or a ``python -c`` invocation. It runs the
+    same effective experiment as the exported script; it does not check the
+    digest, so use the script when reproducibility must be proven.
 
 ---
 
@@ -35918,6 +35969,32 @@ Raises
 ------
 ModelInputError, ModelSimulationFailure, ValueError
     From the run entrypoints.
+
+---
+
+## Module `studio.firing_pattern`
+
+### Function `classify_firing_pattern(spikes, n_steps, dt)`
+Classify the firing pattern of a spike train.
+
+Parameters
+----------
+spikes : list of int
+    Step indices at which the run spiked, in ascending order.
+n_steps : int
+    Number of steps the run executed; with ``dt`` it gives the duration
+    the rate is computed over.
+dt : float
+    Time step in milliseconds.
+
+Returns
+-------
+dict
+    ``pattern`` (``silent``, ``single_spike``, ``bursting``, ``adapting``,
+    ``tonic``, ``irregular`` or ``chaotic``) and a human ``description``.
+    Every pattern except ``silent`` also carries ``rate_hz``; every pattern
+    with at least three spikes carries ``isi_cv``; a burst additionally
+    carries ``burst_isi_ms`` and ``inter_burst_ms``.
 
 ---
 
@@ -38931,6 +39008,228 @@ Return the durable JSON representation for a saved project payload.
 The writer keeps the human-readable indentation used by existing Studio
 project files, while rejecting non-standard JSON values such as NaN and
 Infinity so saved projects remain portable across runtimes.
+
+---
+
+## Module `studio.replay_pack`
+
+### Class `ReplayRejected`
+Raised when a pack cannot be replayed, before anything is executed.
+
+Parameters
+----------
+stage : {"schema", "request", "identity", "revision", "runtime"}
+    Which admission step refused.
+reason : str
+    Bounded, path-free explanation.
+differences : sequence of str, optional
+    Named blocks or fields that differ, for a drift refusal.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `ReplayAdmission`
+The outcome of admitting a pack, before the experiment runs.
+
+Attributes
+----------
+spec : ExperimentSpec
+    The experiment re-resolved in this process.
+identity_sha256 : str
+    Identity digest of the re-resolved experiment; equal to the pack's.
+runtime_differences : tuple of str
+    Runtime fields that differ from the sealed environment. Non-empty only
+    when the caller admitted runtime drift explicitly.
+
+
+### Function `experiment_identity(public)`
+Return the scientific blocks of a public specification.
+
+Parameters
+----------
+public : mapping
+    A public :class:`~sc_neurocore.studio.experiment_spec.ExperimentSpec`
+    projection.
+
+Returns
+-------
+dict
+    The blocks named in :data:`IDENTITY_BLOCKS` that the specification
+    actually carries, in that order.
+
+### Function `experiment_identity_sha256(public)`
+Return the digest of a specification's scientific identity.
+
+### Function `pinned_request(request, spec)`
+Return the request fields that re-resolve to this experiment.
+
+A drawn or defaulted seed is written back into the request and the trial is
+sealed as ``replay``, so the pack reproduces the run it recorded instead of
+drawing new randomness. A deterministic experiment carries no seed, because
+the run contract refuses one.
+
+Parameters
+----------
+request : mapping
+    The original request. Unknown keys are dropped here rather than
+    travelling into the pack.
+spec : ExperimentSpec
+    The experiment resolved from that request.
+
+Returns
+-------
+dict
+    A JSON-safe request with pinned randomness.
+
+### Function `replay_expectation(result)`
+Summarise a run result into the complete expectation a replay must meet.
+
+Every scalar state trace contributes a digest of its float64 bytes plus its
+endpoints and range, so a mismatch can be reported as a number rather than
+as "the digest differs". Spike events are carried in full: they are the
+observable a spiking experiment exists to produce.
+
+Parameters
+----------
+result : mapping
+    A result from
+    :func:`~sc_neurocore.studio.experiment_spec.run_experiment`.
+
+Returns
+-------
+dict
+    The expectation block of a replay pack.
+
+### Function `build_replay_pack(request)`
+Resolve, pin, execute and seal one experiment into a replay pack.
+
+The pack is built from the *pinned* experiment, so what it promises is
+exactly what a replay of it produces. A fresh stochastic trial is executed
+once with the seed it drew.
+
+Parameters
+----------
+request : mapping
+    A Studio simulate request (catalogue model or equation playground).
+max_steps : int
+    Largest synchronous step count; a larger run is refused by the
+    experiment contract with ``execution_mode = job_required``.
+
+Returns
+-------
+dict
+    A ``studio.replay-pack.v1`` document.
+
+Raises
+------
+ModelInputError
+    From the run contract: unknown model, parameter or unsupported step.
+ExperimentRejected
+    From the experiment contract: invalid randomness, no complete step or
+    an oversized run.
+
+### Function `verify_replay_pack(pack)`
+Admit a pack for replay, refusing before any side effect.
+
+The pack's request is re-resolved against the installed package and the
+resulting scientific identity is compared with the sealed one. Nothing is
+executed until every refusal has been ruled out.
+
+Parameters
+----------
+pack : mapping
+    A ``studio.replay-pack.v1`` document.
+allow_runtime_drift : bool
+    Admit a package, interpreter, NumPy or platform difference and report
+    it, instead of refusing. Never implicit.
+max_steps : int
+    Largest synchronous step count for the re-resolved run.
+
+Returns
+-------
+ReplayAdmission
+    The re-resolved experiment and any admitted runtime differences.
+
+Raises
+------
+ReplayRejected
+    Unsupported schema, unexecutable request, model or experiment drift, or
+    unadmitted runtime drift.
+
+### Function `compare_to_expectation(expectation, result)`
+Compare a replayed result with a sealed expectation.
+
+Spike events are compared exactly; a spike train is an observable, not a
+rounding matter. State traces are compared by digest first and, when the
+digests differ, by the largest deviation of their endpoints and range
+against ``tolerance``.
+
+Parameters
+----------
+expectation : mapping
+    The ``expectation`` block of a replay pack.
+result : mapping
+    The result of replaying the pack's experiment.
+tolerance : float
+    Largest absolute state deviation still called a match. Zero means the
+    replay must be bit-identical.
+
+Returns
+-------
+dict
+    ``verdict``, the list of ``differences`` and the observed expectation.
+
+### Function `replay_pack(pack)`
+Admit, execute and judge one replay pack.
+
+Parameters
+----------
+pack : mapping
+    A ``studio.replay-pack.v1`` document.
+allow_runtime_drift : bool
+    Admit and report a runtime difference instead of refusing.
+tolerance : float
+    Largest absolute state deviation still called a match.
+max_steps : int
+    Largest synchronous step count for the replay.
+
+Returns
+-------
+dict
+    The comparison outcome with the admitted experiment digests and any
+    runtime differences.
+
+Raises
+------
+ReplayRejected
+    From :func:`verify_replay_pack`, before the experiment runs.
+
+### Function `load_replay_pack(path)`
+Read a replay pack from a regular file.
+
+Parameters
+----------
+path : pathlib.Path
+    Path to the pack. It must be a regular file (a directory, device or
+    dangling symlink is refused) no larger than 32 MiB.
+
+Returns
+-------
+dict
+    The parsed pack; its contents are validated on admission, not here.
+
+Raises
+------
+ReplayRejected
+    The path is not a readable regular file, is too large, or does not
+    contain a JSON object.
+
+### Function `main(argv)`
+Replay a pack from the command line.
+
+Exit code 0 means the experiment reproduced, 1 that it did not, and 2 that
+the pack was refused before it ran.
 
 ---
 

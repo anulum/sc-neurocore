@@ -393,108 +393,6 @@
         "title": "BifurcationRequest",
         "type": "object"
       },
-      "CodegenRequest": {
-        "description": "Request body for Studio script and one-liner generation.",
-        "properties": {
-          "current": {
-            "default": 10.0,
-            "title": "Current",
-            "type": "number"
-          },
-          "dt": {
-            "default": 0.1,
-            "title": "Dt",
-            "type": "number"
-          },
-          "duration": {
-            "default": 100.0,
-            "title": "Duration",
-            "type": "number"
-          },
-          "equations": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Equations"
-          },
-          "init": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Init"
-          },
-          "mode": {
-            "default": "model",
-            "title": "Mode",
-            "type": "string"
-          },
-          "model_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model Name"
-          },
-          "params": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Params"
-          },
-          "reset": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reset"
-          },
-          "threshold": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Threshold"
-          }
-        },
-        "title": "CodegenRequest",
-        "type": "object"
-      },
       "CompareRequest": {
         "description": "Request body for comparing two Studio simulation configurations.",
         "properties": {
@@ -1286,6 +1184,104 @@
         "title": "ModelCosimRequest",
         "type": "object"
       },
+      "ModelExperimentExportRequest": {
+        "additionalProperties": false,
+        "description": "Export request for one catalogue-model experiment.\n\nIdentical to :class:`ModelSimulateRequest` plus the ``mode`` discriminator,\nso an export resolves through the same fail-closed contract that runs it:\nthe timestep, protocol, randomness and parameter overrides an export claims\nare the ones the run would use.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dt"
+          },
+          "duration": {
+            "default": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
+          },
+          "mode": {
+            "const": "model",
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "protocol": {
+            "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
+            "title": "Protocol",
+            "type": "string"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "trial": {
+            "default": "replay",
+            "enum": [
+              "replay",
+              "fresh"
+            ],
+            "title": "Trial",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "mode"
+        ],
+        "title": "ModelExperimentExportRequest",
+        "type": "object"
+      },
       "ModelInputErrorDetail": {
         "description": "422 detail for a model-run request rejected before any simulation step.",
         "properties": {
@@ -1668,6 +1664,137 @@
           "ranges"
         ],
         "title": "NullclineRequest",
+        "type": "object"
+      },
+      "OdeExperimentExportRequest": {
+        "additionalProperties": false,
+        "description": "Export request for one equation-playground experiment.\n\nIdentical to :class:`SimulateRequest` plus the ``mode`` discriminator.",
+        "properties": {
+          "current": {
+            "default": 0.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Equations",
+            "type": "array"
+          },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "mode": {
+            "const": "ode",
+            "title": "Mode",
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "protocol": {
+            "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
+            "title": "Protocol",
+            "type": "string"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "trial": {
+            "default": "replay",
+            "enum": [
+              "replay",
+              "fresh"
+            ],
+            "title": "Trial",
+            "type": "string"
+          }
+        },
+        "required": [
+          "equations",
+          "mode"
+        ],
+        "title": "OdeExperimentExportRequest",
         "type": "object"
       },
       "PrecisionRequest": {
@@ -3139,12 +3266,28 @@
     },
     "/api/codegen": {
       "post": {
+        "description": "Export Python that runs this exact experiment somewhere else.\n\nThe request is resolved through the effective experiment contract\nbefore any code is written, so the script inherits the run's timestep,\ndrive protocol, initial state, parameter overrides and randomness\ninstead of restating a guess about the model's constructor. A drawn\nstochastic seed is pinned, so the exported script replays the trial it\nwas exported from. The script refuses to report a result if the\ninstalled package resolves a different experiment. A request the\ncontract rejects is refused here too (HTTP 422), never exported as\ncode that would fail or, worse, quietly run something else.",
         "operationId": "api_codegen_api_codegen_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CodegenRequest"
+                "discriminator": {
+                  "mapping": {
+                    "model": "#/components/schemas/ModelExperimentExportRequest",
+                    "ode": "#/components/schemas/OdeExperimentExportRequest"
+                  },
+                  "propertyName": "mode"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ModelExperimentExportRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OdeExperimentExportRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -3165,11 +3308,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
           }
         },
         "summary": "Api Codegen"
@@ -3323,6 +3466,60 @@
           }
         },
         "summary": "Api Dcls Info"
+      }
+    },
+    "/api/export/replay-pack": {
+      "post": {
+        "description": "Export a sealed pack another installation can run and compare.\n\nThe experiment is resolved, its randomness pinned and the run executed\nonce; the pack carries the re-resolvable request, the specification,\nthe scientific identity digest, the complete expectation (every spike\nevent, a digest per state trace, the initial and final state, the drive\ndigest) and the environment that sealed it. Replay it with\n``python -m sc_neurocore.studio.replay_pack <pack.json>``.",
+        "operationId": "api_export_replay_pack_api_export_replay_pack_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "model": "#/components/schemas/ModelExperimentExportRequest",
+                    "ode": "#/components/schemas/OdeExperimentExportRequest"
+                  },
+                  "propertyName": "mode"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ModelExperimentExportRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OdeExperimentExportRequest"
+                  }
+                ],
+                "title": "Req"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Export Replay Pack Api Export Replay Pack Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
+                }
+              }
+            },
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
+          }
+        },
+        "summary": "Api Export Replay Pack"
       }
     },
     "/api/export/svg": {

@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio simulation export builders
 
 import type { SimulateResponse } from "./api/client";
+import type { ReplayPack } from "./api/types";
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
 import { downloadCanvasPng } from "./browserCanvasExport";
 import { fullDriveTrace, fullSampleTimes, fullStateNames, fullStateTrace } from "./simulationRaw";
@@ -172,6 +173,30 @@ export function simulationSvgExport(result: SimulateResponse): SimulationExportA
     blob: simulationSvgBlob(result),
     filename: simulationSvgFilename(result),
   };
+}
+
+export function replayPackFilename(pack: ReplayPack): string {
+  const name =
+    typeof pack.request.name === "string"
+      ? pack.request.name
+      : pack.source === "ode"
+        ? "equations"
+        : "custom";
+  return `replay_${safeSimulationStem(name, "custom")}_${pack.experiment_identity_sha256.slice(0, 12)}.json`;
+}
+
+export function replayPackBlob(pack: ReplayPack): Blob {
+  return new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
+}
+
+/**
+ * A saved replay pack: the experiment, its identity digest and the complete
+ * expectation another installation compares against. The filename carries the
+ * identity digest so two packs of the same model but different experiments do
+ * not overwrite each other.
+ */
+export function replayPackExport(pack: ReplayPack): SimulationExportArtefact {
+  return { blob: replayPackBlob(pack), filename: replayPackFilename(pack) };
 }
 
 export function simulationExportArtefact(

@@ -48,7 +48,7 @@ from sc_neurocore.studio.api.schemas import (
     PRECISION_ERROR_RESPONSES,
     AnalysisJobRequest,
     BifurcationRequest,
-    CodegenRequest,
+    ExperimentExportRequest,
     CompareRequest,
     FICurveRequest,
     FreqResponseRequest,
@@ -62,11 +62,11 @@ from sc_neurocore.studio.api.schemas import (
 )
 from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.codegen import (
-    classify_firing_pattern,
-    generate_model_script,
-    generate_ode_script,
+    generate_experiment_script,
     generate_oneliner,
+    generate_replay_script,
 )
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.experiment_spec import (
     ExperimentRejected,
     ExperimentSpec,
@@ -74,6 +74,7 @@ from sc_neurocore.studio.experiment_spec import (
     run_experiment,
 )
 from sc_neurocore.studio.network import simulate_ei_network
+from sc_neurocore.studio.replay_pack import build_replay_pack, pinned_request
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 
@@ -155,6 +156,17 @@ def _resolve_or_422_model(request: dict[str, Any]) -> ExperimentSpec:
         raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
     except ModelInputError as exc:
         raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _request_payload(req: Any) -> dict[str, Any]:
+    """Return an export request as the experiment contract's request mapping.
+
+    The ``mode`` discriminator selects the schema; it is not part of the
+    experiment, so it never reaches the contract or a digest.
+    """
+    payload = dict(req.model_dump())
+    payload.pop("mode", None)
+    return payload
 
 
 def _cached_replay(spec: ExperimentSpec) -> dict[str, Any] | None:
@@ -465,26 +477,48 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
 
         return _safe(fn)
 
-    @router.post("/api/codegen")
-    def api_codegen(req: CodegenRequest) -> Any:
-        if req.mode == "model" and req.model_name:
-            script = generate_model_script(
-                req.model_name, req.params, req.duration, req.current, req.dt
-            )
-            oneliner = generate_oneliner(req.model_name, req.params, req.current)
-        else:
-            script = generate_ode_script(
-                req.equations or [],
-                req.threshold,
-                req.reset,
-                req.params,
-                req.init,
-                req.duration,
-                req.current,
-                req.dt,
-            )
-            oneliner = ""
-        return {"script": script, "oneliner": oneliner}
+    @router.post("/api/codegen", responses=MODEL_RUN_ERROR_RESPONSES)
+    def api_codegen(req: ExperimentExportRequest) -> Any:
+        """Export Python that runs this exact experiment somewhere else.
+
+        The request is resolved through the effective experiment contract
+        before any code is written, so the script inherits the run's timestep,
+        drive protocol, initial state, parameter overrides and randomness
+        instead of restating a guess about the model's constructor. A drawn
+        stochastic seed is pinned, so the exported script replays the trial it
+        was exported from. The script refuses to report a result if the
+        installed package resolves a different experiment. A request the
+        contract rejects is refused here too (HTTP 422), never exported as
+        code that would fail or, worse, quietly run something else.
+        """
+        payload = _request_payload(req)
+        spec = _resolve_or_422_model(payload)
+        sealed = pinned_request(payload, spec)
+        return {
+            "script": generate_experiment_script(spec, sealed),
+            "oneliner": generate_oneliner(spec, sealed),
+            "replay_script": generate_replay_script(),
+            "experiment_sha256": spec.experiment_sha256,
+            "request": sealed,
+        }
+
+    @router.post("/api/export/replay-pack", responses=MODEL_RUN_ERROR_RESPONSES)
+    def api_export_replay_pack(req: ExperimentExportRequest) -> Any:
+        """Export a sealed pack another installation can run and compare.
+
+        The experiment is resolved, its randomness pinned and the run executed
+        once; the pack carries the re-resolvable request, the specification,
+        the scientific identity digest, the complete expectation (every spike
+        event, a digest per state trace, the initial and final state, the drive
+        digest) and the environment that sealed it. Replay it with
+        ``python -m sc_neurocore.studio.replay_pack <pack.json>``.
+        """
+        payload = _request_payload(req)
+        spec = _resolve_or_422_model(payload)
+        _guard_analysis_request(
+            analysis_budget, simulation_count=1, duration=spec.duration_ms, dt=spec.dt
+        )
+        return _safe(lambda: build_replay_pack(payload))
 
     @router.post("/api/classify")
     def api_classify(req: SimulateRequest) -> Any:

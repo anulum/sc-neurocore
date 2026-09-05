@@ -55,7 +55,7 @@ export const studioInitialData = {
     hidden: [128], timesteps: 25, surrogate: "atan_surrogate",
     learn_beta: false, learn_threshold: false,
   },
-  codeScript: "", codeOneliner: "",
+  codeScript: "", codeOneliner: "", codeReplayScript: "", codeExperimentSha256: "",
   savedSessions: readStoredStudioSessions(),
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",

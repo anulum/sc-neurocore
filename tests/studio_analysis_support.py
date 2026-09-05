@@ -16,7 +16,7 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 
-from sc_neurocore.studio.codegen import classify_firing_pattern, generate_model_script
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 
 from sc_neurocore.studio.analysis import frequency_response, heatmap_2d
 
@@ -35,7 +35,6 @@ __all__ = [
     "TestClient",
     "create_app",
     "classify_firing_pattern",
-    "generate_model_script",
     "frequency_response",
     "heatmap_2d",
     "_make_current_trace",

@@ -181,6 +181,17 @@ Four injection protocols for all simulations:
 - **Evidence labels**: trace and analysis plots surface evidence
   classification, source, input digest, and result digest labels
 - **PNG export**: screenshot the current plot
+- **Code export**: a standalone script built from the resolved experiment. It
+  re-resolves the request, refuses if this installation would resolve a
+  different experiment, and runs it through the public runner — so the time
+  step, drive protocol, initial state, parameters and randomness travel with
+  the export instead of being guessed from the model's constructor
+- **Replay pack**: a sealed `studio.replay-pack.v1` document with the
+  re-resolvable request, the specification, its identity digest, the complete
+  expectation (every spike event, a digest per state trace, initial and final
+  state, drive digest) and the environment that sealed it. Replay it with
+  `python -m sc_neurocore.studio.replay_pack <pack.json>`; see
+  [Replay and code export](../studio/replay-and-export.md)
 
 ## One effective experiment per run
 
@@ -445,7 +456,8 @@ current protocol for each frequency. The injected trace is
 | GET | `/api/models/{name}` | Get model detail (params, state vars) |
 | GET | `/api/presets` | List preset experiments |
 | GET | `/api/presets/{id}` | Get preset detail |
-| POST | `/api/codegen` | Generate Python script |
+| POST | `/api/codegen` | Export a script that reproduces the resolved experiment |
+| POST | `/api/export/replay-pack` | Export a sealed pack another installation can run and compare |
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
 | POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
 | POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity |

@@ -610,16 +610,31 @@ class NetworkRequest(BaseModel):
     dt: float = Field(default=0.1, gt=0)
 
 
-class CodegenRequest(BaseModel):
-    """Request body for Studio script and one-liner generation."""
+class ModelExperimentExportRequest(ModelSimulateRequest):
+    """Export request for one catalogue-model experiment.
 
-    mode: str = "model"
-    model_name: str | None = None
-    equations: list[str] | None = None
-    threshold: str | None = None
-    reset: str | None = None
-    params: dict[str, float] | None = None
-    init: dict[str, float] | None = None
-    dt: float = 0.1
-    duration: float = 100.0
-    current: float = 10.0
+    Identical to :class:`ModelSimulateRequest` plus the ``mode`` discriminator,
+    so an export resolves through the same fail-closed contract that runs it:
+    the timestep, protocol, randomness and parameter overrides an export claims
+    are the ones the run would use.
+    """
+
+    mode: Literal["model"]
+
+
+class OdeExperimentExportRequest(SimulateRequest):
+    """Export request for one equation-playground experiment.
+
+    Identical to :class:`SimulateRequest` plus the ``mode`` discriminator.
+    """
+
+    mode: Literal["ode"]
+
+
+#: Body of ``/api/codegen`` and ``/api/export/replay-pack``. ``mode`` is
+#: required: a request that does not say which kind of experiment it describes
+#: is rejected rather than assumed to be a model.
+ExperimentExportRequest = Annotated[
+    ModelExperimentExportRequest | OdeExperimentExportRequest,
+    Field(discriminator="mode"),
+]

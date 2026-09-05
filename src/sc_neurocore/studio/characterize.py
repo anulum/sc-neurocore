@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 import numpy as np
 
-from sc_neurocore.studio.codegen import classify_firing_pattern
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.trace_projection import full_state_traces
 
 

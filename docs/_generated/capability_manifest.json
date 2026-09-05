@@ -967,11 +967,11 @@
     "model_documentation_pages": 200,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 627,
+    "public_documentation_pages": 628,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4808
+    "test_files": 4810
   },
   "documentation": {
     "public_pages": [
@@ -1474,6 +1474,7 @@
       "docs/studio/network-canvas.md",
       "docs/studio/ode-editor.md",
       "docs/studio/onboarding.md",
+      "docs/studio/replay-and-export.md",
       "docs/studio/svg-export.md",
       "docs/studio/synthesis-dashboard.md",
       "docs/studio/training-monitor.md",
@@ -7282,6 +7283,7 @@
       "tests/test_studio_backup_plan.py",
       "tests/test_studio_benchmark_contribution.py",
       "tests/test_studio_browser_sessions.py",
+      "tests/test_studio_codegen_export.py",
       "tests/test_studio_compile_process.py",
       "tests/test_studio_compile_traceability.py",
       "tests/test_studio_compiler_cosim.py",
@@ -7377,6 +7379,7 @@
       "tests/test_studio_progress_scan_progress.py",
       "tests/test_studio_progress_web_socket_endpoint.py",
       "tests/test_studio_project_manifest.py",
+      "tests/test_studio_replay_pack.py",
       "tests/test_studio_router_contract.py",
       "tests/test_studio_runtime_settings_parsing_cors_and_websocket.py",
       "tests/test_studio_runtime_settings_parsing_hosts_and_headers.py",

@@ -61,6 +61,7 @@ export function Btn({
   color,
   outline,
   title,
+  testId,
 }: {
   label: string;
   onClick: () => void;
@@ -68,6 +69,8 @@ export function Btn({
   color?: string;
   outline?: boolean;
   title?: string;
+  /** Stable handle for browser tests; several buttons share a label. */
+  testId?: string;
 }) {
   return (
     <button
@@ -75,6 +78,7 @@ export function Btn({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      data-testid={testId}
       style={{
         background: outline ? "transparent" : color || "var(--accent)",
         border: outline ? "1px solid var(--border)" : "none",

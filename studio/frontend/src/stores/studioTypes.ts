@@ -140,6 +140,10 @@ export interface StudioState {
   trainingConfig: StudioProjectTrainingConfig;
   codeScript: string;
   codeOneliner: string;
+  /** Script that replays a saved pack and compares the run in full. */
+  codeReplayScript: string;
+  /** Digest of the exported effective experiment. */
+  codeExperimentSha256: string;
   savedSessions: StudioSavedSession[];
   error: string | null;
   isSimulating: boolean;
@@ -220,6 +224,7 @@ export interface StudioState {
   runPrecision: () => Promise<void>;
   runHeatmap: () => Promise<void>;
   runCodegen: () => Promise<void>;
+  exportReplayPack: () => Promise<void>;
   runCompile: () => Promise<void>;
   runCosim: () => Promise<void>;
   runCharacterize: () => Promise<void>;

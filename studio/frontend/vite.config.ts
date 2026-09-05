@@ -13,6 +13,13 @@ import { defineConfig } from "vite";
 const studioApiOrigin = process.env.SC_NEUROCORE_STUDIO_API_ORIGIN
   ?? "http://127.0.0.1:8001";
 
+const studioApiProxy = {
+  "/api": {
+    target: studioApiOrigin,
+    changeOrigin: true,
+  },
+} as const;
+
 const reactSharedContract = {
   react: { singleton: true, requiredVersion: "19.2.7" },
   "react-dom": { singleton: true, requiredVersion: "19.2.7" },
@@ -43,14 +50,12 @@ export default defineConfig({
     target: "esnext",
   },
   server: {
-    proxy: {
-      "/api": {
-        target: studioApiOrigin,
-        changeOrigin: true,
-      },
-    },
+    proxy: studioApiProxy,
   },
   preview: {
     cors: true,
+    // The built bundle calls a same-origin /api, so a preview that cannot
+    // reach the Studio backend can only ever render an empty catalogue.
+    proxy: studioApiProxy,
   },
 });

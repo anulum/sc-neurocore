@@ -20,11 +20,9 @@ from sc_neurocore_engine.studio import get_ei_network_simulator
 
 from sc_neurocore.studio.characterize import characterize_model
 
-from sc_neurocore.studio.codegen import (
-    classify_firing_pattern,
-    generate_ode_script,
-    generate_oneliner,
-)
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
+
+from sc_neurocore.studio.codegen import generate_experiment_script, generate_oneliner
 
 from sc_neurocore.studio.network import simulate_ei_network
 
@@ -43,7 +41,7 @@ __all__ = [
     "get_ei_network_simulator",
     "characterize_model",
     "classify_firing_pattern",
-    "generate_ode_script",
+    "generate_experiment_script",
     "generate_oneliner",
     "simulate_ei_network",
     "client",

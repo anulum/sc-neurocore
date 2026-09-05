@@ -146,8 +146,12 @@ describe("studio analysis state helpers", () => {
 
   it("builds code generation patches", () => {
     expect(studioCodegenStartState()).toEqual({ activeTab: "code" });
-    expect(studioCodegenResultState("print('run')", "sc-neurocore run")).toEqual({
+    expect(
+      studioCodegenResultState("print('run')", "sc-neurocore run", "replay()", "abc123"),
+    ).toEqual({
+      codeExperimentSha256: "abc123",
       codeOneliner: "sc-neurocore run",
+      codeReplayScript: "replay()",
       codeScript: "print('run')",
     });
   });

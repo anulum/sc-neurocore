@@ -187,19 +187,18 @@ export function studioNullclineRequest(input: StudioNullclineRequestInput): Stud
   };
 }
 
-export function studioCodegenRequest(input: StudioCodegenRequestInput): StudioSimulationRequest {
-  return {
-    mode: input.sourceMode,
-    model_name: input.sourceMode === "model" ? input.selectedModelName : null,
-    equations: input.sourceMode === "ode" ? input.equations : null,
-    threshold: input.threshold,
-    reset: input.reset,
-    params: input.sourceMode === "model" ? input.modelParams : input.odeParams,
-    init: input.sourceMode === "ode" ? input.odeInit : null,
-    dt: input.dt,
-    duration: input.duration,
-    current: input.current,
-  };
+/**
+ * Build the body of an export request.
+ *
+ * An export describes the same experiment as the run it comes from, so it
+ * reuses {@link studioSimulationConfig} rather than restating the fields. Only
+ * the branch's own fields are sent: the export endpoints are fail-closed, and
+ * a null of the other branch is a rejected field, not an empty one.
+ */
+export function studioExperimentExportRequest(
+  input: StudioCodegenRequestInput,
+): StudioSimulationRequest {
+  return { mode: input.sourceMode, ...studioSimulationConfig(input) };
 }
 
 export function studioFrequencyResponseRequest(

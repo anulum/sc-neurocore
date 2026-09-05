@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore.studio.codegen import classify_firing_pattern
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.trace_projection import full_state_traces
 
 
@@ -169,7 +169,7 @@ def _scan_with_progress(q: queue.Queue[dict[str, Any]]) -> None:
     """Scan all models with progress updates."""
     try:
         from sc_neurocore.studio.models import list_models, simulate_model
-        from sc_neurocore.studio.codegen import classify_firing_pattern
+        from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 
         models = list_models()
         total = len(models)

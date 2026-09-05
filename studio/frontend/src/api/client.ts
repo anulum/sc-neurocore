@@ -81,6 +81,7 @@ export {
   fetchCompare,
   fetchFreqResponse,
   fetchCodegen,
+  fetchReplayPack,
 } from "./analysisApi";
 
 export {

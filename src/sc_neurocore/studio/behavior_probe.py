@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, TypeAlias
 
 from sc_neurocore.neurons.behavior_taxonomy import validate_behavior_tags
-from sc_neurocore.studio.codegen import classify_firing_pattern
+from sc_neurocore.studio.firing_pattern import classify_firing_pattern
 from sc_neurocore.studio.models import list_models, simulate_model
 
 BEHAVIOR_PROBE_SCHEMA_VERSION = "studio.behavior-probe.v1"

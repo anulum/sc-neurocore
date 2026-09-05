@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   studioBifurcationRequest,
-  studioCodegenRequest,
+  studioExperimentExportRequest,
   studioFICurveRequest,
   studioFrequencyResponseRequest,
   studioHeatmapRequest,
@@ -193,21 +193,38 @@ describe("Studio simulation request builders", () => {
     ).toMatchObject({ current: 0, held: {} });
   });
 
-  it("builds code generation requests for both supported source modes", () => {
-    expect(studioCodegenRequest(input)).toMatchObject({
+  it("exports the same experiment fields the run would use, and only its own branch", () => {
+    const modelRequest = studioExperimentExportRequest(input);
+    expect(modelRequest).toMatchObject({
       mode: "model",
       model_name: "lif",
-      equations: null,
       params: { tau: 10, capacitance: 1 },
-      init: null,
+      dt: input.dt,
+      duration: input.duration,
+      current: input.current,
+      protocol: input.protocol,
+      frequency_hz: input.frequencyHz,
+      trial: input.trial,
     });
-    expect(studioCodegenRequest({ ...input, sourceMode: "ode" })).toMatchObject({
+    // The export endpoints are fail-closed: a null of the other branch is a
+    // rejected field, not an empty one.
+    expect(modelRequest).not.toHaveProperty("equations");
+    expect(modelRequest).not.toHaveProperty("init");
+
+    const odeRequest = studioExperimentExportRequest({ ...input, sourceMode: "ode" });
+    expect(odeRequest).toMatchObject({
       mode: "ode",
-      model_name: null,
       equations: ["dv/dt = -(v - e_l) / tau + i"],
       params: { tau: 20, e_l: -65 },
       init: { v: -65 },
+      protocol: input.protocol,
     });
+    expect(odeRequest).not.toHaveProperty("model_name");
+
+    // An export request is the simulation request plus its discriminator.
+    const { mode, ...withoutMode } = modelRequest;
+    expect(mode).toBe("model");
+    expect(withoutMode).toEqual(studioSimulationConfig(input));
   });
 
   it("builds a frequency-response request with the Studio sweep defaults", () => {
