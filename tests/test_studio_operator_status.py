@@ -128,13 +128,13 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     assert payload["deployment_profile"] == "development"
     assert payload["route_policies"] == {
         "admin_count": 27,
-        "authenticated_count": 61,
+        "authenticated_count": 62,
         "enforced": True,
-        "protected_audit_action_count": 88,
-        "protected_count": 88,
+        "protected_audit_action_count": 89,
+        "protected_count": 89,
         "protected_routes_audited": True,
         "public_count": 31,
-        "total_count": 119,
+        "total_count": 120,
     }
     assert payload["identity"] == {
         "configured": True,
@@ -160,7 +160,9 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,
+        "interrupted_count": 0,
         "process_count": 0,
+        "recovery": [],
         "resource_profiles": [
             {
                 "default_timeout_seconds": 1.0,
@@ -169,9 +171,10 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
                 "max_artifact_bytes": 16777216,
             }
         ],
-        "schema_version": "studio.jobs.status.v1",
+        "schema_version": "studio.jobs.status.v2",
         "thread_count": 0,
         "timed_out_count": 0,
+        "unknown_count": 0,
     }
     assert payload["browser_login"] == {
         "active_bucket_count": 2,

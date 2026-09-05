@@ -12,21 +12,21 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 
+from sc_neurocore.studio.platform.jobs_ledger import (
+    DEFAULT_LEASE_SECONDS,
+    StudioJobLedger,
+    StudioJobReconciliation,
+)
 from sc_neurocore.studio.platform.jobs_manager_access import (
     _cancel_job,
-    _get_job_record,
+    _commit_supervised_update,
     _job_manager_status,
-    _list_job_records,
-    _list_job_snapshot,
-    _purge_terminal_job,
-    _read_declared_artifact,
-    _read_live_artifact,
     _wait_for_job,
 )
+from sc_neurocore.studio.platform.jobs_manager_custody import StudioJobCustody
 from sc_neurocore.studio.platform.jobs_manager_process import (
     _send_process_control_command,
     _submit_process_job,
@@ -41,8 +41,6 @@ from sc_neurocore.studio.platform.jobs_models import (
     STUDIO_SEED_INPUT_DIR,
     UTC,
     StudioJobArtifact,
-    StudioJobArtifactPayload,
-    StudioJobListSnapshot,
     StudioJobRecord,
     StudioJobStatus,
     StudioJobStatusSnapshot,
@@ -53,8 +51,12 @@ from sc_neurocore.studio.platform.jobs_paths import _resolve_job_directory
 from sc_neurocore.studio.platform.jobs_process_protocol import _run_process_supervised
 
 
-class StudioJobManager:
-    """Manage local Studio jobs inside per-job sandbox directories."""
+class StudioJobManager(StudioJobCustody):
+    """Start and supervise local Studio jobs inside per-job sandbox directories.
+
+    Reading what those jobs did is the custody surface this inherits from
+    :class:`~sc_neurocore.studio.platform.jobs_manager_custody.StudioJobCustody`.
+    """
 
     def __init__(
         self,
@@ -65,8 +67,17 @@ class StudioJobManager:
         max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
         configured: bool = True,
         clock: Callable[[], datetime] | None = None,
+        workspace: str = "default",
+        lease_seconds: float = DEFAULT_LEASE_SECONDS,
+        reconcile: bool = True,
     ) -> None:
-        """Configure bounded execution and immutable in-memory job state."""
+        """Configure bounded execution over the durable job ledger.
+
+        The ledger file lives in ``root`` beside the per-job sandboxes it
+        describes, so a restarted process and a second process over the same
+        root see the same jobs. Unless ``reconcile`` is disabled, construction
+        resolves every job an earlier supervisor left alive.
+        """
 
         if not allowed_kinds:
             raise ValueError("Studio job manager requires at least one allowed job kind.")
@@ -81,9 +92,17 @@ class StudioJobManager:
         self._configured = configured
         self._clock = clock or self._utc_now
         self._lock = threading.Lock()
-        self._records: dict[str, StudioJobRecord] = {}
+        self._default_workspace = workspace
+        self._ledger = StudioJobLedger(
+            root=self._root, clock=self._clock, lease_seconds=lease_seconds
+        )
+        # Live handles for the jobs this process supervises. The durable state
+        # is the ledger's; these only let this process wait and cancel.
         self._done_events: dict[str, threading.Event] = {}
         self._cancel_events: dict[str, threading.Event] = {}
+        self._reconciliation: tuple[StudioJobReconciliation, ...] = ()
+        if reconcile:
+            self._reconciliation = self._ledger.reconcile()
 
     def submit(
         self,
@@ -93,8 +112,19 @@ class StudioJobManager:
         request_id: str | None,
         task: StudioJobTask,
         timeout_seconds: float | None = None,
+        workspace: str | None = None,
+        idempotency_key: str | None = None,
+        experiment_sha256: str | None = None,
+        admission: Mapping[str, object] | None = None,
     ) -> StudioJobRecord:
-        """Submit one local task to the bounded thread supervisor."""
+        """Submit one local task to the bounded thread supervisor.
+
+        The job is admitted to the durable ledger before it starts, so it
+        survives this process. See
+        :func:`~sc_neurocore.studio.platform.jobs_manager_thread._submit_thread_job`
+        for the custody fields (``workspace``, ``idempotency_key``,
+        ``experiment_sha256``, ``admission``) and what each one binds.
+        """
 
         return _submit_thread_job(
             self,
@@ -103,6 +133,10 @@ class StudioJobManager:
             request_id=request_id,
             task=task,
             timeout_seconds=timeout_seconds,
+            workspace=workspace,
+            idempotency_key=idempotency_key,
+            experiment_sha256=experiment_sha256,
+            admission=admission,
         )
 
     def submit_process_task(
@@ -115,8 +149,16 @@ class StudioJobManager:
         payload: StudioProcessJobPayload,
         timeout_seconds: float | None = None,
         seed_inputs: Mapping[str, bytes] | None = None,
+        workspace: str | None = None,
+        idempotency_key: str | None = None,
+        experiment_sha256: str | None = None,
+        admission: Mapping[str, object] | None = None,
     ) -> StudioJobRecord:
-        """Submit one importable task to an isolated Python process."""
+        """Submit one importable task to an isolated Python process.
+
+        Takes the same custody fields as :meth:`submit`; an idempotency key
+        already admitted returns the earlier job without starting a process.
+        """
 
         return _submit_process_job(
             self,
@@ -127,6 +169,10 @@ class StudioJobManager:
             payload=payload,
             timeout_seconds=timeout_seconds,
             seed_inputs=seed_inputs,
+            workspace=workspace,
+            idempotency_key=idempotency_key,
+            experiment_sha256=experiment_sha256,
+            admission=admission,
         )
 
     def send_control_command(
@@ -154,49 +200,6 @@ class StudioJobManager:
         """Wait for one job and return its latest immutable record."""
 
         return _wait_for_job(self, job_id, timeout_seconds)
-
-    def record(self, job_id: str) -> StudioJobRecord:
-        """Return the latest immutable record for one job."""
-
-        return _get_job_record(self, job_id)
-
-    def list_records(self) -> tuple[StudioJobRecord, ...]:
-        """Return all known jobs in creation order."""
-
-        return _list_job_records(self)
-
-    def list_snapshot(self) -> StudioJobListSnapshot:
-        """Return a path-free snapshot of every known job."""
-
-        return _list_job_snapshot(self)
-
-    def purge_terminal_record(self, job_id: str) -> StudioJobRecord:
-        """Delete one terminal job directory and its in-memory state."""
-
-        return _purge_terminal_job(self, job_id)
-
-    def read_artifact(self, job_id: str, relative_path: str) -> StudioJobArtifactPayload:
-        """Read and verify one manifest-declared artifact."""
-
-        return _read_declared_artifact(self, job_id, relative_path)
-
-    def read_live_artifact_bytes(
-        self,
-        job_id: str,
-        relative_path: str,
-        *,
-        offset: int,
-        max_bytes: int = 64 * 1024,
-    ) -> tuple[bytes, int]:
-        """Read one bounded slice from a confined live artifact."""
-
-        return _read_live_artifact(
-            self,
-            job_id,
-            relative_path,
-            offset=offset,
-            max_bytes=max_bytes,
-        )
 
     def status(self) -> StudioJobStatusSnapshot:
         """Return aggregate path-free manager health."""
@@ -265,19 +268,16 @@ class StudioJobManager:
         result: dict[str, object] | None = None,
         artifacts: tuple[StudioJobArtifact, ...] | None = None,
     ) -> None:
-        with self._lock:
-            record = self._records[job_id]
-            self._records[job_id] = replace(
-                record,
-                status=status,
-                started_at_utc=(
-                    record.started_at_utc if started_at_utc is None else started_at_utc
-                ),
-                finished_at_utc=finished_at_utc,
-                error=error,
-                result=result,
-                artifacts=record.artifacts if artifacts is None else artifacts,
-            )
+        _commit_supervised_update(
+            self,
+            job_id,
+            status=status,
+            started_at_utc=started_at_utc,
+            finished_at_utc=finished_at_utc,
+            error=error,
+            result=result,
+            artifacts=artifacts,
+        )
 
     def _timestamp_utc(self) -> str:
         timestamp = self._clock().astimezone(UTC).replace(microsecond=0)

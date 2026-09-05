@@ -52,7 +52,9 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,
+        "interrupted_count": 0,
         "process_count": 0,
+        "recovery": [],
         "resource_profiles": [
             {
                 "default_timeout_seconds": 3.0,
@@ -91,9 +93,10 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
                 "max_artifact_bytes": 16777216,
             },
         ],
-        "schema_version": "studio.jobs.status.v1",
+        "schema_version": "studio.jobs.status.v2",
         "thread_count": 0,
         "timed_out_count": 0,
+        "unknown_count": 0,
     }
     assert str(tmp_path) not in response.text
 

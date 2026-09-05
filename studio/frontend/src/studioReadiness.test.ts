@@ -49,7 +49,7 @@ function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOp
       failed_count: 0,
       process_count: 2,
       resource_profiles: [],
-      schema_version: "studio.jobs.status.v1",
+      schema_version: "studio.jobs.status.v2",
       thread_count: 1,
       timed_out_count: 0,
     },

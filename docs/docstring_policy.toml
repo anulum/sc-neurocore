@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 439
+expected_file_count = 446
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1739,6 +1739,34 @@ rationale = "Read-only classification of an observed spike train, with its thres
 [[file]]
 path = "src/sc_neurocore/studio/replay_pack.py"
 rationale = "Sealed replay contract: the re-resolvable request, the scientific identity digest, the complete expectation, and the refusals that precede execution."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger.py"
+rationale = "Durable transactional job store: admission, transitions, leases and recovery of the records that outlive a Studio process."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_reads.py"
+rationale = "Scoped reads of the job ledger; an out-of-scope job is absent rather than filtered."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_recovery.py"
+rationale = "Startup recovery rules: interrupted, unknown, or left alone, with the reason recorded."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_schema.py"
+rationale = "Stored shape and state machine of the job ledger, including the append-only transition triggers."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_supervisor.py"
+rationale = "Supervisor identity and three-valued liveness; a foreign host is unknown, not dead."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_ledger_writes.py"
+rationale = "Every change to a job, each one transaction: admission, transitions, heartbeat and purge."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_manager_custody.py"
+rationale = "The durable read surface of the job manager, scopeable by actor and workspace."
 
 [[file]]
 path = "src/sc_neurocore/studio/network_execution.py"

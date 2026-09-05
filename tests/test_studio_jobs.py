@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import threading
 from pathlib import Path
@@ -68,7 +69,32 @@ def _record(
 
 
 def _insert_record(manager: StudioJobManager, key: str, record: StudioJobRecord) -> None:
-    manager._records[key] = record
+    """Store a corrupt record directly, bypassing admission.
+
+    The ledger's own ``create`` refuses an identifier like ``../escape``, which
+    is exactly why these cases write the row by hand: they check that path
+    confinement holds against a stored record nobody validated, not against one
+    the admission path produced.
+    """
+
+    ledger = manager._ledger
+    with ledger.transaction() as connection:
+        connection.execute(
+            "INSERT OR REPLACE INTO jobs (job_id, kind, actor, workspace, request_id,"
+            " idempotency_key, experiment_sha256, admission, execution_model, status,"
+            " created_at_utc, artifacts, sequence)"
+            " VALUES (?, ?, ?, ?, NULL, NULL, NULL, '{}', ?, ?, ?, ?, 0)",
+            (
+                key,
+                record.kind,
+                record.owner,
+                record.workspace,
+                record.execution_model,
+                record.status,
+                record.created_at_utc,
+                json.dumps([artifact.to_public_dict() for artifact in record.artifacts]),
+            ),
+        )
     manager._done_events[key] = threading.Event()
     manager._cancel_events[key] = threading.Event()
 

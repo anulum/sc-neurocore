@@ -46,8 +46,16 @@ def _submit_process_job(
     payload: StudioProcessJobPayload,
     timeout_seconds: float | None,
     seed_inputs: Mapping[str, bytes] | None,
+    workspace: str | None = None,
+    idempotency_key: str | None = None,
+    experiment_sha256: str | None = None,
+    admission: Mapping[str, object] | None = None,
 ) -> StudioJobRecord:
-    """Submit one importable task to an isolated Python process."""
+    """Submit one importable task to an isolated Python process.
+
+    An idempotency key already admitted for this actor and workspace returns
+    the earlier job untouched, so no side effect is repeated.
+    """
 
     if kind not in manager._allowed_kinds:
         raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
@@ -57,6 +65,19 @@ def _submit_process_job(
     _validate_process_task_path(task_path)
     payload_json = _json_payload(payload, "Studio process job payload must be JSON.")
     job_id = f"sj_{secrets.token_hex(8)}"
+    submission = manager._ledger.create(
+        job_id=job_id,
+        kind=kind,
+        actor=owner,
+        workspace=workspace or manager._default_workspace,
+        request_id=request_id,
+        idempotency_key=idempotency_key,
+        experiment_sha256=experiment_sha256,
+        admission=admission,
+        execution_model="process",
+    )
+    if submission.duplicate:
+        return submission.record
     work_dir = _resolve_job_directory(
         root=manager._root,
         job_id=job_id,
@@ -69,17 +90,7 @@ def _submit_process_job(
     payload_path.write_text(payload_json, encoding="utf-8")
     cancel_event = threading.Event()
     done_event = threading.Event()
-    record = StudioJobRecord(
-        job_id=job_id,
-        kind=kind,
-        owner=owner,
-        request_id=request_id,
-        status="pending",
-        execution_model="process",
-        created_at_utc=manager._timestamp_utc(),
-    )
     with manager._lock:
-        manager._records[job_id] = record
         manager._done_events[job_id] = done_event
         manager._cancel_events[job_id] = cancel_event
     supervisor = threading.Thread(
@@ -97,7 +108,7 @@ def _submit_process_job(
         daemon=True,
     )
     supervisor.start()
-    return record
+    return submission.record
 
 
 def _send_process_control_command(
@@ -109,8 +120,7 @@ def _send_process_control_command(
 ) -> None:
     """Atomically deliver a command and confined seeds to a running job."""
 
-    with manager._lock:
-        record = manager._records[job_id]
+    record = manager._ledger.record(job_id)
     if record.status != "running":
         raise StudioJobRejected("Studio job is not running.")
     command_json = _json_payload(command, "Studio job control command must be JSON.")

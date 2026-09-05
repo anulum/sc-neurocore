@@ -17,6 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
+from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.studio.platform.jobs_ledger_recovery import StudioJobReconciliation
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
     StudioJobRecord,
@@ -35,7 +37,11 @@ class _StudioJobManagerState(Protocol):
     _configured: bool
     _clock: Callable[[], datetime]
     _lock: LockType
-    _records: dict[str, StudioJobRecord]
+    #: The durable record of every job. The dictionaries below hold only the
+    #: live handles of jobs this process is supervising right now.
+    _ledger: StudioJobLedger
+    _default_workspace: str
+    _reconciliation: tuple[StudioJobReconciliation, ...]
     _done_events: dict[str, threading.Event]
     _cancel_events: dict[str, threading.Event]
 
@@ -91,8 +97,16 @@ class _StudioJobManagerState(Protocol):
     def _job_work_dir(self, job_id: str) -> Path:
         """Resolve one generated job directory below the manager root."""
 
-    def record(self, job_id: str) -> StudioJobRecord:
-        """Return the latest immutable job record."""
+    def record(
+        self, job_id: str, *, actor: str | None = None, workspace: str | None = None
+    ) -> StudioJobRecord:
+        """Return the latest durable job record, scoped when asked."""
 
-    def list_records(self) -> tuple[StudioJobRecord, ...]:
-        """Return all records in creation order."""
+    def list_records(
+        self, *, actor: str | None = None, workspace: str | None = None
+    ) -> tuple[StudioJobRecord, ...]:
+        """Return all records in creation order, scoped when asked."""
+
+    @property
+    def last_reconciliation(self) -> tuple[StudioJobReconciliation, ...]:
+        """Return the decisions of the most recent recovery pass."""

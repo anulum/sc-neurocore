@@ -11,6 +11,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Studio job records survive the process that made them. They lived in one
+  in-memory dictionary, so a restarted API answered `404` for a job it had
+  completed a second earlier, a second API process over the same job root saw
+  none of the first one's work while its artifacts sat on disk, the same
+  `request_id` submitted twice ran twice, and a job that was running when its
+  process died had no terminal state and no way to acquire one. Job state now
+  lives in a durable transactional ledger under the job root
+  (`sc_neurocore.studio.platform.jobs_ledger`, `studio.job-ledger.v1`: SQLite
+  in WAL mode, forward schema migrations, an append-only transition log
+  enforced by triggers, and a state machine that refuses to rewrite a terminal
+  record). Each job carries its actor and workspace, an idempotency key (a
+  second submission with the same key returns the first job instead of running
+  the work again), the effective experiment digest, the admission decision, a
+  lease with expiry and heartbeat, and the terminal result and artifact
+  manifest committed in one transaction with the status. Reads are scopeable by
+  actor and workspace; a job outside the scope raises `KeyError` rather than
+  reporting that it exists.
+- Startup recovery resolves the jobs a departed supervisor left behind: one
+  whose supervisor is provably gone, or whose lease expired without a
+  heartbeat, becomes `interrupted`; one whose supervisor this host cannot probe
+  becomes `unknown`, which is not terminal and awaits verification. Nothing is
+  promoted to `completed` and no side effect is repeated. An artifact written
+  before a crash stays on disk and out of the manifest the job never committed.
+- Route policy counts and the operator status payload, which the
+  `/api/export/replay-pack` route had left stale.
 - Studio code export reproduces the experiment it came from. The generated
   script is built from the resolved `studio.experiment-spec.v1` and runs it
   through the public runner, instead of constructing the model with its default
@@ -24,6 +49,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   resolves a different experiment.
 
 ### Added
+- `docs/studio/job-ledger.md`: the job ledger's migration, recovery, retention
+  and backup contract, including how to read a job's transition history and how
+  to resolve an `unknown` job by hand.
 - `sc_neurocore.studio.replay_pack`: a sealed `studio.replay-pack.v1` document
   with the re-resolvable request (a drawn stochastic seed is pinned and the
   trial sealed as a replay), the public specification, an
@@ -48,6 +76,37 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   repository.
 
 ### Changed
+- `studio.jobs.status.v1` → `studio.jobs.status.v2`: the job status snapshot
+  gained `interrupted_count`, `unknown_count` and `recovery`. A v1 consumer
+  would have counted an interrupted job as neither active nor failed, and seen
+  no reason why. `StudioJobStatus` gained `interrupted` and `unknown`, and
+  `StudioJobRecord` gained the custody fields the ledger stores.
+- The jobs package keeps one responsibility per module: the ledger's schema,
+  writes, reads, recovery and supervisor identity are separate owners, and the
+  job manager's durable read surface moved to `jobs_manager_custody`.
+- Corrected the strict public polyglot-completion inventory from 60/155 to
+  57/155: the three models in the explicitly incomplete acceleration table are
+  no longer folded into the promoted source-model count. All 31 legacy
+  `this commit` fidelity anchors now resolve to stable tracked evidence paths,
+  with a regression deriving the count from the published table and checking
+  every anchor. The count-neutral SC three-state phantom remains public but is
+  no longer strict-promoted until it has its own source-hashed five-runtime
+  benchmark rather than borrowing the distinct Bertram source artefact.
+- Repaired the formal-catalogue emitter's pre-existing generated-only filter:
+  every current dual-axis perfect descriptor now appears once in the inventory,
+  while model-specific curated RTL, harnesses, and proof depths remain intact.
+- Re-closed `COBALIFNeuron` as the Brette et al. (2007) conductance-based LIF
+  cell component without claiming the paper's complete 4,000-cell Benchmark 1
+  network. Python, production and safety Rust, PyO3, Julia, Go, and Mojo now
+  expose failure-atomic aligned voltage, excitatory-conductance,
+  inhibitory-conductance, refractory, and binary-event packets; all lanes
+  reject raw voltage and conductance candidates outside the maintained safety
+  envelope before mutation. A PDF-bound independent receipt, paired schemas,
+  NetworkRunner execution, source-hashed five-runtime benchmark, Q24.24
+  complete-state co-simulation, tracked Yosys synthesis, and depth-8 reached-
+  event/reset/refractory safety establish the honest H2 boundary without
+  network reproduction, timing, PPA, device, board, physical-silicon, or
+  universal-equivalence claims.
 - `vite preview` now proxies `/api` to the Studio backend, as the dev server
   does; the built bundle previously had no way to reach it.
 - Firing-pattern classification moved from `studio.codegen` to

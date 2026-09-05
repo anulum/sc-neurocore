@@ -37813,13 +37813,257 @@ Execution context passed to one local Studio job task.
 
 ---
 
+## Module `studio.platform.jobs_ledger`
+
+### Class `StudioJobLedger`
+A durable, transactional record of every local Studio job.
+
+Parameters
+----------
+root : pathlib.Path
+    The job root. The ledger file is created inside it, beside the per-job
+    sandbox directories it describes.
+clock : callable, optional
+    Returns the current time; defaults to the system UTC clock.
+supervisor : str, optional
+    Identity of the supervisor in this process; defaults to
+    :func:`~sc_neurocore.studio.platform.jobs_ledger_supervisor.supervisor_identity`.
+lease_seconds : float
+    How long a lease stays valid without a heartbeat.
+
+- **__init__**()
+- **path**()
+  - Return the ledger file path.
+- **supervisor**()
+  - Return the identity this ledger stamps on leases it takes.
+- **close**()
+  - Close this thread's connection, if it opened one.
+- **connection**()
+  - Return this thread's connection, opening it on first use.
+- **transaction**()
+  - Run one unit of work; either all of it lands or none of it does.
+- **now**()
+  - Return the ledger clock, truncated to whole seconds in UTC.
+- **timestamp**()
+  - Return the ledger clock as a stable UTC string.
+- **lease_expiry**()
+  - Return when a lease taken now would expire without a heartbeat.
+- **create**()
+  - Admit one job, or return the one that already owns its key.
+- **transition**(job_id, to_status)
+  - Move one job to a new status and append the transition.
+- **heartbeat**(job_id)
+  - Extend this supervisor's lease on a job it is still running.
+- **delete**(job_id)
+  - Remove one terminal job and its whole transition history.
+- **record**(job_id)
+  - Return one job record, scoped to an actor and workspace when given.
+- **list_records**()
+  - Return records in creation order, scoped to an actor and workspace.
+- **transitions**(job_id)
+  - Return the append-only transition history of one job, in order.
+- **live_rows**()
+  - Return the stored rows of every job that has not finished.
+- **reconcile**()
+  - Resolve every job left alive by a supervisor that is no longer here.
+
+---
+
+## Module `studio.platform.jobs_ledger_reads`
+
+### Function `read_record(ledger, job_id)`
+Return one job record, scoped to an actor and workspace when given.
+
+A job that exists but belongs to a different actor or workspace raises
+:class:`KeyError`, so an isolated caller cannot tell it apart from a job
+that never existed.
+
+### Function `read_records(ledger)`
+Return records in creation order, scoped to an actor and workspace.
+
+### Function `read_transitions(ledger, job_id)`
+Return the append-only transition history of one job, in order.
+
+### Function `read_live_rows(ledger)`
+Return the stored rows of every job that has not finished.
+
+---
+
+## Module `studio.platform.jobs_ledger_recovery`
+
+### Class `StudioJobReconciliation`
+What startup recovery decided about one job it found alive.
+
+Attributes
+----------
+job_id : str
+    The job examined.
+previous_status : StudioJobStatus
+    The status the ledger held before recovery.
+status : StudioJobStatus
+    The status recovery assigned, or the previous one when it left the job
+    alone because another live supervisor owns it.
+reason : str
+    Why, in words a runbook can act on.
+
+- **to_public_dict**()
+  - Return a path-free JSON representation of this decision.
+
+### Function `reconcile_ledger(ledger)`
+Resolve every job left alive by a supervisor that is no longer here.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    The ledger to recover. Its own supervisor identity is treated as a
+    previous incarnation: a live process reconciles at startup, before it
+    supervises anything, so a lease already stamped with this identity
+    belongs to the process that died.
+
+Returns
+-------
+tuple of StudioJobReconciliation
+    One decision per job examined, including those left running.
+
+---
+
+## Module `studio.platform.jobs_ledger_schema`
+
+### Class `StudioJobSubmission`
+The outcome of asking the ledger to admit one job.
+
+Attributes
+----------
+record : StudioJobRecord
+    The stored record: the new one, or the existing one when the
+    idempotency key had already been admitted.
+duplicate : bool
+    ``True`` when an earlier submission already owns this idempotency key,
+    so the caller must not start a second run.
+
+
+### Class `StudioJobLedgerCorrupt`
+Raised when the ledger file cannot be read as a Studio job ledger.
+
+
+### Function `migrate(connection)`
+Bring the stored schema forward, refusing a version from the future.
+
+Raises
+------
+StudioJobLedgerCorrupt
+    The file was written by a newer schema than this build understands.
+    Downgrading a ledger would silently drop columns, so it is refused.
+
+### Function `json_or_none(value)`
+Decode one stored JSON column, or ``None``.
+
+### Function `artifacts_from_json(value)`
+Rebuild an artifact manifest, refusing a malformed one.
+
+### Function `artifacts_to_json(artifacts)`
+Serialise an artifact manifest deterministically.
+
+### Function `record_from_row(row)`
+Rebuild one immutable public record from its stored row.
+
+---
+
+## Module `studio.platform.jobs_ledger_supervisor`
+
+### Function `supervisor_identity()`
+Return a stable identity for the supervisor in this process.
+
+### Function `supervisor_is_alive(identity)`
+Return whether a supervisor is running, or ``None`` when unknowable.
+
+Parameters
+----------
+identity : str
+    An identity produced by :func:`supervisor_identity`.
+
+Returns
+-------
+bool or None
+    ``True`` when the process is running, ``False`` when it provably is
+    not, and ``None`` when this host cannot tell — a malformed identity, a
+    different host, or a platform without process metadata.
+
+---
+
+## Module `studio.platform.jobs_ledger_writes`
+
+### Function `create_job(ledger)`
+Admit one job, or return the one that already owns its key.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    The ledger to write to.
+job_id : str
+    Generated identifier for the new job.
+kind, actor, workspace : str
+    What is running, for whom, and in which workspace. Actor and workspace
+    scope every later read.
+request_id : str, optional
+    The caller's request correlation id.
+idempotency_key : str, optional
+    When given, a second submission with the same key by the same actor and
+    workspace returns the first job instead of starting another.
+experiment_sha256 : str, optional
+    Digest of the effective experiment this job runs, when it has one.
+admission : mapping, optional
+    The admission decision recorded with the job.
+execution_model : {"thread", "process"}
+    How the job is supervised.
+
+Returns
+-------
+StudioJobSubmission
+    The stored record and whether it was already there.
+
+### Function `transition_job(ledger, job_id, to_status)`
+Move one job to a new status and append the transition.
+
+The move is refused when the state machine does not allow it, so a terminal
+record can never be rewritten and an interrupted job can never be quietly
+completed. Repeating the current status is accepted and records the
+accompanying fields without inventing a transition. A supervisor reporting
+``running`` for a job that is already ``cancelling`` keeps the cancellation
+visible and records only the start time.
+
+Raises
+------
+KeyError
+    The job is not in the ledger.
+StudioJobRejected
+    The transition is not allowed from the job's current status.
+
+### Function `heartbeat_job(ledger, job_id)`
+Extend this supervisor's lease on a job it is still running.
+
+### Function `delete_job(ledger, job_id)`
+Remove one terminal job and its whole transition history.
+
+Raises
+------
+KeyError
+    The job is not in the ledger.
+StudioJobRejected
+    The job has not finished; a running job's history is not disposable.
+
+---
+
 ## Module `studio.platform.jobs_manager`
 
 ### Class `StudioJobManager`
-Manage local Studio jobs inside per-job sandbox directories.
+Start and supervise local Studio jobs inside per-job sandbox directories.
+
+Reading what those jobs did is the custody surface this inherits from
+:class:`~sc_neurocore.studio.platform.jobs_manager_custody.StudioJobCustody`.
 
 - **__init__**()
-  - Configure bounded execution and immutable in-memory job state.
+  - Configure bounded execution over the durable job ledger.
 - **submit**()
   - Submit one local task to the bounded thread supervisor.
 - **submit_process_task**()
@@ -37830,20 +38074,40 @@ Manage local Studio jobs inside per-job sandbox directories.
   - Request cooperative cancellation for one job.
 - **wait**(job_id, timeout_seconds)
   - Wait for one job and return its latest immutable record.
+- **status**()
+  - Return aggregate path-free manager health.
+
+---
+
+## Module `studio.platform.jobs_manager_custody`
+
+### Class `StudioJobCustody`
+The durable read surface of a Studio job manager.
+
+Every method annotates ``self`` as the manager state it needs. The mixin
+carries no state of its own: it is the reading half of one object, split
+from the supervising half so each file has one responsibility.
+
 - **record**(job_id)
-  - Return the latest immutable record for one job.
+  - Return the durable record for one job, scoped when asked.
 - **list_records**()
-  - Return all known jobs in creation order.
+  - Return durable jobs in creation order, scoped when asked.
 - **list_snapshot**()
-  - Return a path-free snapshot of every known job.
+  - Return a path-free snapshot of every job visible to the caller.
+- **transitions**(job_id)
+  - Return the append-only transition history of one job.
+- **reconcile**()
+  - Resolve jobs left alive by a supervisor that is no longer running.
+- **last_reconciliation**()
+  - Return the decisions of the most recent recovery pass.
+- **ledger_path**()
+  - Return the durable ledger file backing this manager.
 - **purge_terminal_record**(job_id)
   - Delete one terminal job directory and its in-memory state.
 - **read_artifact**(job_id, relative_path)
   - Read and verify one manifest-declared artifact.
 - **read_live_artifact_bytes**(job_id, relative_path)
   - Read one bounded slice from a confined live artifact.
-- **status**()
-  - Return aggregate path-free manager health.
 
 ---
 

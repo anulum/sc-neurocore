@@ -18,8 +18,15 @@ JOBS_PACKAGE = "sc_neurocore.studio.platform"
 JOBS_FACADE = f"{JOBS_PACKAGE}.jobs"
 JOBS_IMPLEMENTATION_MODULES = (
     f"{JOBS_PACKAGE}.jobs_context",
+    f"{JOBS_PACKAGE}.jobs_ledger",
+    f"{JOBS_PACKAGE}.jobs_ledger_reads",
+    f"{JOBS_PACKAGE}.jobs_ledger_recovery",
+    f"{JOBS_PACKAGE}.jobs_ledger_schema",
+    f"{JOBS_PACKAGE}.jobs_ledger_supervisor",
+    f"{JOBS_PACKAGE}.jobs_ledger_writes",
     f"{JOBS_PACKAGE}.jobs_manager",
     f"{JOBS_PACKAGE}.jobs_manager_access",
+    f"{JOBS_PACKAGE}.jobs_manager_custody",
     f"{JOBS_PACKAGE}.jobs_manager_process",
     f"{JOBS_PACKAGE}.jobs_manager_state",
     f"{JOBS_PACKAGE}.jobs_manager_thread",
@@ -44,6 +51,9 @@ JOBS_TEST_PATHS = tuple(
         "test_studio_jobs_process_control.py",
         "test_studio_jobs_process_failures.py",
         "test_studio_jobs_routes.py",
+        "test_studio_jobs_ledger.py",
+        "test_studio_jobs_ledger_recovery.py",
+        "test_studio_jobs_restart_recovery.py",
     )
 )
 EXPECTED_JOBS_EXPORTS = (

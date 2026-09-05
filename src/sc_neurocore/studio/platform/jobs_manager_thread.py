@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import secrets
 import threading
+from collections.abc import Mapping
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
@@ -33,8 +34,17 @@ def _submit_thread_job(
     request_id: str | None,
     task: StudioJobTask,
     timeout_seconds: float | None,
+    workspace: str | None = None,
+    idempotency_key: str | None = None,
+    experiment_sha256: str | None = None,
+    admission: Mapping[str, object] | None = None,
 ) -> StudioJobRecord:
-    """Submit one local task to the bounded thread supervisor."""
+    """Submit one local task to the bounded thread supervisor.
+
+    An idempotency key already admitted for this actor and workspace returns
+    the earlier job untouched: the work runs once, however often the request
+    arrives.
+    """
 
     if kind not in manager._allowed_kinds:
         raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
@@ -42,6 +52,19 @@ def _submit_thread_job(
     if timeout <= 0:
         raise StudioJobRejected("Studio job timeout must be positive.")
     job_id = f"sj_{secrets.token_hex(8)}"
+    submission = manager._ledger.create(
+        job_id=job_id,
+        kind=kind,
+        actor=owner,
+        workspace=workspace or manager._default_workspace,
+        request_id=request_id,
+        idempotency_key=idempotency_key,
+        experiment_sha256=experiment_sha256,
+        admission=admission,
+        execution_model="thread",
+    )
+    if submission.duplicate:
+        return submission.record
     work_dir = _resolve_job_directory(
         root=manager._root,
         job_id=job_id,
@@ -50,17 +73,7 @@ def _submit_thread_job(
     work_dir.mkdir(parents=True, exist_ok=False)
     cancel_event = threading.Event()
     done_event = threading.Event()
-    record = StudioJobRecord(
-        job_id=job_id,
-        kind=kind,
-        owner=owner,
-        request_id=request_id,
-        status="pending",
-        execution_model="thread",
-        created_at_utc=manager._timestamp_utc(),
-    )
     with manager._lock:
-        manager._records[job_id] = record
         manager._done_events[job_id] = done_event
         manager._cancel_events[job_id] = cancel_event
     supervisor = threading.Thread(
@@ -69,7 +82,7 @@ def _submit_thread_job(
         daemon=True,
     )
     supervisor.start()
-    return record
+    return submission.record
 
 
 def _run_thread_supervised(

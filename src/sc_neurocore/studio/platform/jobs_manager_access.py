@@ -13,17 +13,19 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
-from dataclasses import replace
 from pathlib import Path
 
+from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
+    StudioJobArtifact,
     StudioJobArtifactPayload,
     StudioJobArtifactUnavailable,
     StudioJobListSnapshot,
     StudioJobRecord,
     StudioJobRejected,
     StudioJobResourceProfile,
+    StudioJobStatus,
     StudioJobStatusSnapshot,
 )
 from sc_neurocore.studio.platform.jobs_paths import (
@@ -36,17 +38,20 @@ from sc_neurocore.studio.platform.jobs_paths import (
 
 
 def _cancel_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord:
-    """Request cooperative cancellation for one job."""
+    """Request cooperative cancellation for one job.
 
+    A job this process is not supervising can still be asked to cancel: the
+    request is recorded durably, and the supervisor that owns it acts on it.
+    """
+
+    record = manager._ledger.record(job_id)
+    if record.status in TERMINAL_STATUSES or record.status == "cancelling":
+        return record
     with manager._lock:
-        record = manager._records[job_id]
-        cancel_event = manager._cancel_events[job_id]
-        if record.status in ("completed", "failed", "cancelled", "timed_out"):
-            return record
+        cancel_event = manager._cancel_events.get(job_id)
+    if cancel_event is not None:
         cancel_event.set()
-        updated = replace(record, status="cancelling")
-        manager._records[job_id] = updated
-        return updated
+    return manager._ledger.transition(job_id, "cancelling", reason="cancellation requested")
 
 
 def _wait_for_job(
@@ -62,33 +67,50 @@ def _wait_for_job(
     return manager.record(job_id)
 
 
-def _get_job_record(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord:
-    """Return the latest immutable record for one job."""
+def _get_job_record(
+    manager: _StudioJobManagerState,
+    job_id: str,
+    *,
+    actor: str | None = None,
+    workspace: str | None = None,
+) -> StudioJobRecord:
+    """Return the latest durable record for one job.
 
-    with manager._lock:
-        return manager._records[job_id]
+    A job belonging to another actor or workspace raises ``KeyError``, so an
+    isolated caller cannot distinguish it from one that never existed.
+    """
+
+    return manager._ledger.record(job_id, actor=actor, workspace=workspace)
 
 
-def _list_job_records(manager: _StudioJobManagerState) -> tuple[StudioJobRecord, ...]:
-    """Return all known jobs in creation order."""
+def _list_job_records(
+    manager: _StudioJobManagerState,
+    *,
+    actor: str | None = None,
+    workspace: str | None = None,
+) -> tuple[StudioJobRecord, ...]:
+    """Return all durable jobs in creation order, scoped when asked."""
 
-    with manager._lock:
-        return tuple(manager._records.values())
+    return manager._ledger.list_records(actor=actor, workspace=workspace)
 
 
-def _list_job_snapshot(manager: _StudioJobManagerState) -> StudioJobListSnapshot:
-    """Return a path-free snapshot of every known job."""
+def _list_job_snapshot(
+    manager: _StudioJobManagerState,
+    *,
+    actor: str | None = None,
+    workspace: str | None = None,
+) -> StudioJobListSnapshot:
+    """Return a path-free snapshot of every job visible to the caller."""
 
-    return StudioJobListSnapshot(records=manager.list_records())
+    return StudioJobListSnapshot(records=manager.list_records(actor=actor, workspace=workspace))
 
 
 def _purge_terminal_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord:
     """Delete one terminal job directory and its in-memory state."""
 
-    with manager._lock:
-        record = manager._records[job_id]
-        if record.status in ("pending", "running", "cancelling"):
-            raise StudioJobRejected("Studio active jobs cannot be purged.")
+    record = manager._ledger.record(job_id)
+    if record.status not in TERMINAL_STATUSES:
+        raise StudioJobRejected("Studio active jobs cannot be purged.")
     try:
         work_dir = manager._job_work_dir(record.job_id)
     except ValueError as exc:
@@ -97,11 +119,45 @@ def _purge_terminal_job(manager: _StudioJobManagerState, job_id: str) -> StudioJ
         if not work_dir.is_dir():
             raise StudioJobRejected("Studio job purge target is not a directory.")
         shutil.rmtree(work_dir)
+    manager._ledger.delete(job_id)
     with manager._lock:
-        manager._records.pop(job_id, None)
         manager._done_events.pop(job_id, None)
         manager._cancel_events.pop(job_id, None)
     return record
+
+
+def _commit_supervised_update(
+    manager: _StudioJobManagerState,
+    job_id: str,
+    *,
+    status: StudioJobStatus,
+    started_at_utc: str | None = None,
+    finished_at_utc: str | None = None,
+    error: str | None = None,
+    result: dict[str, object] | None = None,
+    artifacts: tuple[StudioJobArtifact, ...] | None = None,
+) -> None:
+    """Commit one supervised state change to the durable ledger.
+
+    The artifact manifest lands in the same transaction as the terminal status,
+    so a crash between writing an artifact and committing the outcome leaves the
+    job recoverable rather than falsely complete.
+
+    A job asked to cancel before its supervisor marked it running keeps its
+    ``cancelling`` status; that rule lives inside the ledger transaction, where
+    it cannot race the cancellation it is reconciling with.
+    """
+
+    manager._ledger.transition(
+        job_id,
+        status,
+        reason="supervised",
+        started_at_utc=started_at_utc,
+        finished_at_utc=finished_at_utc,
+        error=error,
+        result=result,
+        artifacts=artifacts,
+    )
 
 
 def _read_declared_artifact(
@@ -183,6 +239,9 @@ def _job_manager_status(manager: _StudioJobManagerState) -> StudioJobStatusSnaps
         process_count=sum(record.execution_model == "process" for record in records),
         thread_count=sum(record.execution_model == "thread" for record in records),
         timed_out_count=sum(record.status == "timed_out" for record in records),
+        interrupted_count=sum(record.status == "interrupted" for record in records),
+        unknown_count=sum(record.status == "unknown" for record in records),
+        recovery=tuple(decision.to_public_dict() for decision in manager.last_reconciliation),
         resource_profiles=tuple(
             StudioJobResourceProfile(
                 kind=kind,
