@@ -197,41 +197,22 @@ def schema_to_toml(schema: dict[str, Any]) -> str:
     Parameters
     ----------
     schema : dict
-        A schema dictionary.
+        A schema dictionary, including authored science, validation, provenance,
+        hints and extension fields. Values must be representable in TOML.
 
     Returns
     -------
     str
-        TOML-formatted string.
+        TOML document preserving all fields, nested tables and empty sections.
+
+    Raises
+    ------
+    TypeError
+        If a value cannot be represented in TOML, for example ``None``.
     """
-    lines: list[str] = []
+    import tomli_w
 
-    # Ordered sections
-    for section in (
-        "metadata",
-        "state",
-        "parameters",
-        "integration",
-        "dynamics",
-        "threshold",
-        "reset",
-        "extensions",
-    ):
-        data = schema.get(section)
-        if not data:
-            continue
-        lines.append(f"\n[{section}]")
-        for key, value in data.items():
-            if isinstance(value, str):
-                lines.append(f'{key} = "{value}"')
-            elif isinstance(value, bool):
-                lines.append(f"{key} = {'true' if value else 'false'}")
-            elif isinstance(value, (int, float)):
-                lines.append(f"{key} = {value}")
-            else:
-                lines.append(f"{key} = {json.dumps(value)}")
-
-    return "\n".join(lines).strip() + "\n"
+    return tomli_w.dumps(schema)
 
 
 class UniversalNeuron:

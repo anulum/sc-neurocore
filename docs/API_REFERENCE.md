@@ -28130,12 +28130,18 @@ Export a schema dictionary as a TOML string (for version control).
 Parameters
 ----------
 schema : dict
-    A schema dictionary.
+    A schema dictionary, including authored science, validation, provenance,
+    hints and extension fields. Values must be representable in TOML.
 
 Returns
 -------
 str
-    TOML-formatted string.
+    TOML document preserving all fields, nested tables and empty sections.
+
+Raises
+------
+TypeError
+    If a value cannot be represented in TOML, for example ``None``.
 
 ### Function `list_bundled_schemas()`
 Return names of all bundled model schemas (without extensions).

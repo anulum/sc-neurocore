@@ -2,3 +2,4 @@ numpy
 scipy
 defusedxml
 tomli; python_version < "3.11"
+tomli-w>=1.0
