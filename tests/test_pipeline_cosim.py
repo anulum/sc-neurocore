@@ -47,7 +47,7 @@ _PIPELINED_PARITY_CASES = [
 # must preserve that match. (Mirrors the exact-model set in the combinational exp-Euler suite.)
 _EXP_EULER_EXACT_MODELS = [
     ("lif", 50.0, 300),
-    ("lapicque", 50.0, 300),
+    ("sc_lapicque_lif", 50.0, 300),
     ("adex", 1000.0, 500),
     ("theta", 50.0, 300),
 ]

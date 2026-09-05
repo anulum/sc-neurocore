@@ -29,6 +29,21 @@ class _RaiseSite:
 
 _APPROVED_NOTIMPLEMENTED_GUARDS = {
     _RaiseSite(
+        "src/sc_neurocore/learning/advanced.py",
+        "_direct_readout_projection",
+        "require exactly two populations and one projection",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/learning/advanced.py",
+        "_direct_readout_projection",
+        "require a direct input-to-output projection",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/learning/advanced.py",
+        "_direct_readout_projection",
+        "do not support delayed projections",
+    ),
+    _RaiseSite(
         "src/sc_neurocore/drivers/sc_neurocore_driver.py",
         "SC_NeuroCore_Driver.run_step",
         "HARDWARE DMA transfer requires PYNQ overlay",

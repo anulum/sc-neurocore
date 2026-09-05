@@ -73,7 +73,10 @@ def test_model_cosim_process_writes_report_traces_sources_and_evidence(tmp_path:
             "current",
         ),
         ({"model_name": "AdaptiveThresholdIFNeuron", "current": 1.0, "n_steps": 0}, "n_steps"),
-        ({"model_name": "LapicqueNeuron", "current": 1.0, "n_steps": 4}, "supports integrators"),
+        (
+            {"model_name": "SCLapicqueLIFNeuron", "current": 1.0, "n_steps": 4},
+            "supports integrators",
+        ),
     ],
 )
 def test_model_cosim_process_rejects_invalid_or_unsupported_payload(

@@ -10,8 +10,12 @@ from __future__ import annotations
 
 import json
 import math
-import tomllib
 from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
+    import tomli as tomllib  # type: ignore[no-redef]
 
 import pytest
 

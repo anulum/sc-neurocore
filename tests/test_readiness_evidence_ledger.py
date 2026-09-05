@@ -25,6 +25,7 @@ from sc_neurocore.neurons.facet_receipts import (
     RECEIPT_DIR,
     credit_problems,
     iter_receipts,
+    latest_receipts,
     receipt_filename,
 )
 from sc_neurocore.neurons.model_identity import identity_registry
@@ -85,17 +86,24 @@ def test_ledger_payload_mirrors_the_verifier() -> None:
 
 
 def test_committed_receipts_are_creditable_named_and_fresh() -> None:
-    """Every receipt in the store is sealed, correctly named and still bound."""
+    """Every receipt is sealed and correctly named; the newest per facet is still bound.
+
+    Superseded receipts stay in the store as history and may be stale; only the
+    newest receipt of each (class, facet) must match the current subjects.
+    """
     receipts = list(iter_receipts(RECEIPT_DIR))
     assert receipts, "the receipt store must hold the representative receipts"
     for path, receipt in receipts:
-        assert path.name == receipt_filename(receipt.class_name, receipt.facet, receipt.recorded_at)
+        assert path.name == receipt_filename(
+            receipt.class_name, receipt.facet, receipt.recorded_at
+        )
         assert credit_problems(receipt, class_name=receipt.class_name) == ()
-        status, changed, problems = verify_receipt(receipt, class_name=receipt.class_name)
-        assert (status, changed, problems) == ("bound", (), ()), path.name
         assert receipt.runtime["git_head"]
         assert receipt.counts["passed"] >= 1
         assert receipt.counts["skipped"] == 0
+    for path, receipt in latest_receipts(RECEIPT_DIR).values():
+        status, changed, problems = verify_receipt(receipt, class_name=receipt.class_name)
+        assert (status, changed, problems) == ("bound", (), ()), path.name
 
 
 def test_summary_cli_prints_the_partition(capsys: pytest.CaptureFixture[str]) -> None:

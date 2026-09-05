@@ -23012,6 +23012,26 @@ ModelIdentityError
 ### Function `iter_source_catalogue()`
 Yield identities that count in the public source catalogue.
 
+### Function `schema_for_class(class_name)`
+Return the schema-DSL profile Studio and the generators use for a class.
+
+Two registered classes may share one module (a source identity and its
+retained ``SC`` compatibility identity), so a module-based lookup would hand
+the compatibility class the source profile. The class's own bound profiles
+decide: the module's canonical schema when the class owns it, otherwise the
+class's first bound profile; a class without a bound profile falls back to
+the module lookup so unbound models keep their historical behaviour.
+
+Parameters
+----------
+class_name:
+    Registered class name or import alias.
+
+Returns
+-------
+str
+    Schema stem.
+
 ### Function `public_fidelity_bindings()`
 Return the public page label and status bound to each listed class.
 

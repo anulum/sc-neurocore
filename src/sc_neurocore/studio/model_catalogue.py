@@ -145,8 +145,12 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
 
 def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None:
     """Return the canonical schema-backed Studio compile choices, if available."""
-    module_stem = descriptor.module.rsplit(".", 1)[-1]
-    schema_name = schema_for_module(module_stem)
+    from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
+
+    try:
+        schema_name = schema_for_class(descriptor.class_name)
+    except ModelIdentityError:
+        schema_name = schema_for_module(descriptor.module.rsplit(".", 1)[-1])
     try:
         schema = load_schema(schema_name)
     except (FileNotFoundError, ValueError):

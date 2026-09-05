@@ -93,8 +93,8 @@ def test_build_model_compile_traceability_records_selected_configuration() -> No
     """Model traceability hashes the canonical model, schema, solver, and precision."""
 
     traceability = build_model_compile_traceability(
-        model_name="LapicqueNeuron",
-        schema_name="lapicque",
+        model_name="SCLapicqueLIFNeuron",
+        schema_name="sc_lapicque_lif",
         schema_sha256="a" * 64,
         params={"tau": 20.0},
         dt=1.0,
@@ -108,10 +108,10 @@ def test_build_model_compile_traceability_records_selected_configuration() -> No
     assert traceability["source_payload"] == {
         "dt": 1.0,
         "integrator": "exp_euler",
-        "model_name": "LapicqueNeuron",
+        "model_name": "SCLapicqueLIFNeuron",
         "params": {"tau": 20.0},
         "q_format": "Q8.8",
-        "schema_name": "lapicque",
+        "schema_name": "sc_lapicque_lif",
         "schema_sha256": "a" * 64,
     }
     assert traceability["input_sha256"] == _sha256_json(
@@ -122,8 +122,8 @@ def test_build_model_compile_traceability_records_selected_configuration() -> No
 def test_build_model_compile_traceability_requires_schema_identity() -> None:
     with pytest.raises(ValueError, match="schema digest"):
         build_model_compile_traceability(
-            model_name="LapicqueNeuron",
-            schema_name="lapicque",
+            model_name="SCLapicqueLIFNeuron",
+            schema_name="sc_lapicque_lif",
             schema_sha256="short",
             params=None,
             dt=1.0,
@@ -220,7 +220,7 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
     response = client.post(
         "/api/models/compile",
         json={
-            "model_name": "LapicqueNeuron",
+            "model_name": "SCLapicqueLIFNeuron",
             "params": {"tau": 15.0},
             "dt": 1.0,
             "integrator": "exp_euler",
@@ -235,9 +235,9 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
     assert payload["compile_configuration"] == {
         "dt": 1.0,
         "integrator": "exp_euler",
-        "model_name": "LapicqueNeuron",
+        "model_name": "SCLapicqueLIFNeuron",
         "q_format": "Q8.8",
-        "schema_name": "lapicque",
+        "schema_name": "sc_lapicque_lif",
         "schema_sha256": payload["compile_traceability"]["source_payload"]["schema_sha256"],
     }
     assert len(payload["compile_configuration"]["schema_sha256"]) == 64
@@ -253,7 +253,7 @@ def test_model_compile_route_is_authenticated_when_policy_is_enforced() -> None:
     )
     response = protected_client.post(
         "/api/models/compile",
-        json={"model_name": "LapicqueNeuron", "q_format": "Q8.8"},
+        json={"model_name": "SCLapicqueLIFNeuron", "q_format": "Q8.8"},
     )
 
     assert response.status_code == 401
@@ -305,8 +305,8 @@ def test_model_cosim_route_is_authenticated_when_policy_is_enforced() -> None:
     "payload",
     [
         {"model_name": "MissingNeuron", "q_format": "Q8.8"},
-        {"model_name": "LapicqueNeuron", "integrator": "rk4", "q_format": "Q8.8"},
-        {"model_name": "LapicqueNeuron", "q_format": "Q1.0"},
+        {"model_name": "SCLapicqueLIFNeuron", "integrator": "rk4", "q_format": "Q8.8"},
+        {"model_name": "SCLapicqueLIFNeuron", "q_format": "Q1.0"},
     ],
 )
 def test_model_compile_route_fails_closed_for_invalid_configuration(

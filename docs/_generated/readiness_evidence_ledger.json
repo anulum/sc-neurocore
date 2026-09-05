@@ -14264,7 +14264,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "validation.evidence",
-          "receipt": "LapicqueNeuron__dynamics_faithful__20260905T064555Z.json",
+          "receipt": "LapicqueNeuron__dynamics_faithful__20260905T084908Z.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -14273,7 +14273,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "validation.evidence",
-          "receipt": "LapicqueNeuron__class_validated__20260905T064551Z.json",
+          "receipt": "LapicqueNeuron__class_validated__20260905T084903Z.json",
           "changed_subjects": [],
           "problems": []
         },

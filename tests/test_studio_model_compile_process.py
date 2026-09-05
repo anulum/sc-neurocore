@@ -37,7 +37,7 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
     result = run_model_compile_process_task(
         context,
         {
-            "model_name": "LapicqueNeuron",
+            "model_name": "SCLapicqueLIFNeuron",
             "params": {"tau": 15.0},
             "dt": 1.0,
             "integrator": "exp_euler",
@@ -53,9 +53,9 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
     assert result["compile_configuration"] == {
         "dt": 1.0,
         "integrator": "exp_euler",
-        "model_name": "LapicqueNeuron",
+        "model_name": "SCLapicqueLIFNeuron",
         "q_format": "Q16.16",
-        "schema_name": "lapicque",
+        "schema_name": "sc_lapicque_lif",
         "schema_sha256": source_payload["schema_sha256"],
     }
     assert [artifact.relative_path for artifact in context.artifacts] == [
@@ -72,14 +72,14 @@ def test_model_compile_process_uses_schema_defaults(tmp_path: Path) -> None:
 
     result = run_model_compile_process_task(
         context,
-        {"model_name": "LapicqueNeuron", "q_format": "Q8.8"},
+        {"model_name": "SCLapicqueLIFNeuron", "q_format": "Q8.8"},
     )
 
-    assert result["module_name"] == "sc_lapicque_neuron"
+    assert result["module_name"] == "sc_sc_lapicque_lif_neuron"
     configuration = cast(dict[str, object], result["compile_configuration"])
     assert configuration["dt"] == 1.0
     assert configuration["integrator"] == "exp_euler"
-    assert configuration["schema_name"] == "lapicque"
+    assert configuration["schema_name"] == "sc_lapicque_lif"
 
 
 @pytest.mark.parametrize(
@@ -88,15 +88,15 @@ def test_model_compile_process_uses_schema_defaults(tmp_path: Path) -> None:
         ({}, "model_name"),
         ({"model_name": "MissingNeuron"}, "Unknown Studio model"),
         ({"model_name": "ATypeKNeuron"}, "no canonical schema"),
-        ({"model_name": "LapicqueNeuron", "integrator": "rk4"}, "not declared"),
-        ({"model_name": "LapicqueNeuron", "params": {"missing": 1}}, "Unknown schema"),
-        ({"model_name": "LapicqueNeuron", "q_format": "Q1.0"}, "between 2 and 64"),
-        ({"model_name": "LapicqueNeuron", "integrator": 1}, "integrator"),
-        ({"model_name": "LapicqueNeuron", "params": []}, "params"),
-        ({"model_name": "LapicqueNeuron", "params": {"tau": True}}, "finite numbers"),
-        ({"model_name": "LapicqueNeuron", "params": {"tau": float("nan")}}, "finite numbers"),
-        ({"model_name": "LapicqueNeuron", "dt": "slow"}, "positive number"),
-        ({"model_name": "LapicqueNeuron", "dt": 0}, "positive number"),
+        ({"model_name": "SCLapicqueLIFNeuron", "integrator": "rk4"}, "not declared"),
+        ({"model_name": "SCLapicqueLIFNeuron", "params": {"missing": 1}}, "Unknown schema"),
+        ({"model_name": "SCLapicqueLIFNeuron", "q_format": "Q1.0"}, "between 2 and 64"),
+        ({"model_name": "SCLapicqueLIFNeuron", "integrator": 1}, "integrator"),
+        ({"model_name": "SCLapicqueLIFNeuron", "params": []}, "params"),
+        ({"model_name": "SCLapicqueLIFNeuron", "params": {"tau": True}}, "finite numbers"),
+        ({"model_name": "SCLapicqueLIFNeuron", "params": {"tau": float("nan")}}, "finite numbers"),
+        ({"model_name": "SCLapicqueLIFNeuron", "dt": "slow"}, "positive number"),
+        ({"model_name": "SCLapicqueLIFNeuron", "dt": 0}, "positive number"),
     ],
 )
 def test_model_compile_process_rejects_invalid_payloads(
@@ -117,11 +117,11 @@ def test_model_compile_process_rejects_corrupt_catalogue_configuration(
     monkeypatch.setattr(
         model_compile_process,
         "get_model_detail",
-        lambda _name: {"compile_configuration": {"schema_name": "lapicque", "integrators": []}},
+        lambda _name: {"compile_configuration": {"schema_name": "sc_lapicque_lif", "integrators": []}},
     )
 
     with pytest.raises(ValueError, match="configuration 'integrators' is invalid"):
-        run_model_compile_process_task(context, {"model_name": "LapicqueNeuron"})
+        run_model_compile_process_task(context, {"model_name": "SCLapicqueLIFNeuron"})
 
     assert context.artifacts == ()
 
@@ -149,6 +149,6 @@ def test_model_compile_process_rejects_corrupt_schema_sections(
     )
 
     with pytest.raises(ValueError, match=message):
-        run_model_compile_process_task(context, {"model_name": "LapicqueNeuron"})
+        run_model_compile_process_task(context, {"model_name": "SCLapicqueLIFNeuron"})
 
     assert context.artifacts == ()

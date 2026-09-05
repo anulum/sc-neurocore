@@ -61,7 +61,7 @@ def test_model_cosim_compares_every_real_rtl_state_cycle_bit_exactly() -> None:
 
 def test_model_cosim_rejects_integrator_without_bit_true_reference() -> None:
     configuration = resolve_model_compile_configuration(
-        {"model_name": "LapicqueNeuron", "integrator": "exp_euler", "q_format": "Q8.8"}
+        {"model_name": "SCLapicqueLIFNeuron", "integrator": "exp_euler", "q_format": "Q8.8"}
     )
 
     with pytest.raises(ValueError, match="supports integrators euler, map"):
@@ -146,9 +146,9 @@ def test_model_cosim_reports_first_cycle_and_signal_mismatch() -> None:
 @pytest.mark.parametrize(
     "payload, message",
     [
-        ({"model_name": "LapicqueNeuron", "module_name": "bad module"}, "Verilog identifier"),
-        ({"model_name": "LapicqueNeuron", "q_format": "Q1.0"}, "between 2 and 64"),
-        ({"model_name": "LapicqueNeuron", "params": {"missing": 1.0}}, "Unknown schema"),
+        ({"model_name": "SCLapicqueLIFNeuron", "module_name": "bad module"}, "Verilog identifier"),
+        ({"model_name": "SCLapicqueLIFNeuron", "q_format": "Q1.0"}, "between 2 and 64"),
+        ({"model_name": "SCLapicqueLIFNeuron", "params": {"missing": 1.0}}, "Unknown schema"),
     ],
 )
 def test_shared_model_compile_configuration_fails_closed(

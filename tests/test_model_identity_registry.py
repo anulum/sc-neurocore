@@ -25,6 +25,7 @@ from sc_neurocore.neurons.model_identity import (
     iter_source_catalogue,
     public_fidelity_bindings,
     resolve_identity,
+    schema_for_class,
 )
 from sc_neurocore.neurons.model_taxonomy import _COMPATIBILITY_ALIASES, classified_models
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
@@ -260,3 +261,16 @@ def test_unbound_schema_stem_is_rejected(monkeypatch: pytest.MonkeyPatch) -> Non
             identity_registry()
     finally:
         identity_registry.cache_clear()
+
+
+def test_schema_for_class_separates_identities_sharing_a_module() -> None:
+    """A retained SC identity never inherits the source profile of its module."""
+    assert schema_for_class("LapicqueNeuron") == "lapicque"
+    assert schema_for_class("SCLapicqueLIFNeuron") == "sc_lapicque_lif"
+    assert schema_for_class("PerfectIntegratorNeuron") == "perfect_integrator"
+    assert schema_for_class("SCInclusivePerfectIntegratorNeuron") == "sc_perfect_integrator"
+    assert schema_for_class("KilincBhattMapNeuron") == schema_for_class(
+        "SCAdaptiveThresholdMapNeuron"
+    )
+    with pytest.raises(ModelIdentityError):
+        schema_for_class("NoSuchNeuronAnywhere")

@@ -49,7 +49,11 @@ from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
 from sc_neurocore.neurons.model_taxonomy import _COMPATIBILITY_ALIASES as _TAXONOMY_ALIASES
 from sc_neurocore.neurons.model_taxonomy import model_family
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
-from sc_neurocore.neurons.schema_module_aliases import class_for_schema, module_for_schema
+from sc_neurocore.neurons.schema_module_aliases import (
+    class_for_schema,
+    module_for_schema,
+    schema_for_module,
+)
 
 IdentityKind = Literal["source-literature", "project-original", "sc-compatibility", "api-alias"]
 SourceBasis = Literal["doi", "url", "citation-unlocated", "project-specification", "alias"]
@@ -678,6 +682,36 @@ def iter_source_catalogue() -> Iterator[ModelIdentity]:
             yield record
 
 
+def schema_for_class(class_name: str) -> str:
+    """Return the schema-DSL profile Studio and the generators use for a class.
+
+    Two registered classes may share one module (a source identity and its
+    retained ``SC`` compatibility identity), so a module-based lookup would hand
+    the compatibility class the source profile. The class's own bound profiles
+    decide: the module's canonical schema when the class owns it, otherwise the
+    class's first bound profile; a class without a bound profile falls back to
+    the module lookup so unbound models keep their historical behaviour.
+
+    Parameters
+    ----------
+    class_name:
+        Registered class name or import alias.
+
+    Returns
+    -------
+    str
+        Schema stem.
+    """
+    identity = resolve_identity(class_name)
+    module_schema = schema_for_module(identity.module)
+    stems = [profile.stem for profile in identity.schema_profiles]
+    if module_schema in stems:
+        return module_schema
+    if stems:
+        return stems[0]
+    return module_schema
+
+
 def public_fidelity_bindings() -> dict[str, tuple[str, PublicStatus]]:
     """Return the public page label and status bound to each listed class.
 
@@ -752,4 +786,5 @@ __all__ = [
     "iter_source_catalogue",
     "public_fidelity_bindings",
     "resolve_identity",
+    "schema_for_class",
 ]
