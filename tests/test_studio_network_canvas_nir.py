@@ -29,8 +29,8 @@ class TestNIR:
             "format": "nir",
             "version": "0.1",
             "nodes": {
-                "pop_a": {"type": "LIF", "count": 80, "neuron_type": "excitatory"},
-                "pop_b": {"type": "LIF", "count": 20, "neuron_type": "inhibitory"},
+                "pop_a": {"type": "SCLapicqueLIFNeuron", "count": 80, "neuron_type": "excitatory"},
+                "pop_b": {"type": "SCLapicqueLIFNeuron", "count": 20, "neuron_type": "inhibitory"},
             },
             "edges": [{"source": "pop_a", "target": "pop_b", "weight": 0.5}],
         }
@@ -38,6 +38,27 @@ class TestNIR:
         assert len(graph["populations"]) == 2
         assert len(graph["projections"]) == 1
         assert graph["populations"][0]["id"] == "pop_a"
+        assert graph["populations"][0]["model"] == "SCLapicqueLIFNeuron"
+        assert graph["projections"][0]["rule"] == "all_to_all"
+        assert validate_graph(graph) == []
+
+    def test_import_rejects_nir_primitive_types_and_inconsistent_graphs(self):
+        with pytest.raises(ValueError, match="is not a catalogue model"):
+            nir_to_graph({"nodes": {"a": {"type": "LIF", "count": 10}}, "edges": []})
+        with pytest.raises(ValueError, match="not executable"):
+            nir_to_graph(
+                {
+                    "nodes": {
+                        "a": {
+                            "type": "SCLapicqueLIFNeuron",
+                            "count": 10,
+                            "neuron_type": "inhibitory",
+                        },
+                        "b": {"type": "SCLapicqueLIFNeuron", "count": 10},
+                    },
+                    "edges": [{"source": "a", "target": "b", "weight": 1.0}],
+                }
+            )
 
     def test_roundtrip(self):
         exc = create_population(label="E", count=64)
@@ -45,6 +66,9 @@ class TestNIR:
         proj = create_projection(exc["id"], inh["id"], weight=0.3)
         graph = {"populations": [exc, inh], "projections": [proj]}
         nir = graph_to_nir(graph)
+        assert nir["nodes"][exc["id"]]["type"] == "SCLapicqueLIFNeuron"
         restored = nir_to_graph(nir)
         assert len(restored["populations"]) == 2
         assert len(restored["projections"]) == 1
+        # The format carries no probability: the restored edge is all-to-all.
+        assert restored["projections"][0]["rule"] == "all_to_all"

@@ -23,6 +23,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useStudioStore } from "../stores/studio";
 import { buildPipelineEvidenceModel, type PipelineEvidenceModel } from "../pipelineEvidence";
+import { studioPopulationDriveLabel, studioProjectionLabel } from "../studioGraphRequests";
+import type { GraphSimResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
 function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
@@ -41,8 +43,33 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
         {data.model as string} × {data.count as number}
       </div>
       <div style={{ fontSize: 8, color: "var(--text-muted)" }}>
-        {isExc ? "excitatory" : "inhibitory"}
+        {isExc ? "excitatory" : "inhibitory"} · {data.drive as string}
       </div>
+    </div>
+  );
+}
+
+export function GraphResultSummary({ result }: { result: GraphSimResult }) {
+  const populations = result.populations ?? [];
+  const rejected = result.execution?.backend.rejected ?? [];
+  return (
+    <div style={{
+      padding: "6px 12px", borderTop: "1px solid var(--border)",
+      fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-secondary)",
+      display: "flex", gap: 16, flexWrap: "wrap",
+    }}>
+      <span>Neurons: {result.n_total}</span>
+      <span>Synapses: {result.topology?.n_synapses ?? 0}</span>
+      <span>Spikes: {result.n_spikes}</span>
+      <span>Steps: {result.n_steps} × {result.dt} ms</span>
+      {populations.map((population) => (
+        <span key={population.id}>
+          {population.label}: {population.n_spikes} spikes, {population.mean_rate_hz.toFixed(1)} Hz
+        </span>
+      ))}
+      <span>backend: {result.execution?.backend.selected ?? "?"}
+        {rejected.length > 0 ? ` (rejected: ${rejected.map((r) => r.name).join(", ")})` : ""}</span>
+      {result.spec?.graph_sha256 && <span>graph {String(result.spec.graph_sha256).slice(0, 12)}</span>}
     </div>
   );
 }
@@ -82,7 +109,10 @@ export default function NetworkCanvas() {
       id: p.id,
       type: "population",
       position: p.position,
-      data: { label: p.label, model: p.model, count: p.count, neuron_type: p.neuron_type },
+      data: {
+        label: p.label, model: p.model, count: p.count, neuron_type: p.neuron_type,
+        drive: studioPopulationDriveLabel(p.drive),
+      },
     })),
     [graphPopulations],
   );
@@ -92,7 +122,7 @@ export default function NetworkCanvas() {
       id: e.id,
       source: e.source,
       target: e.target,
-      label: `w=${e.weight}`,
+      label: studioProjectionLabel(e),
       style: { stroke: "var(--text-muted)", strokeWidth: 1.5 },
       markerEnd: { type: MarkerType.ArrowClosed, color: "var(--text-muted)" },
       labelStyle: { fontSize: 8, fill: "var(--text-muted)" },
@@ -216,22 +246,7 @@ export default function NetworkCanvas() {
       )}
 
       {/* Sim results summary */}
-      {graphSimResult?.success && (
-        <div style={{
-          padding: "6px 12px", borderTop: "1px solid var(--border)",
-          fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text-secondary)",
-          display: "flex", gap: 16,
-        }}>
-          <span>Neurons: {graphSimResult.n_total}</span>
-          <span>Spikes: {graphSimResult.n_spikes}</span>
-          <span>Exc rate: {graphSimResult.exc_rates && graphSimResult.exc_rates.length > 0
-            ? (graphSimResult.exc_rates.reduce((a, b) => a + b, 0) / graphSimResult.exc_rates.length).toFixed(1)
-            : "0"} Hz</span>
-          <span>Inh rate: {graphSimResult.inh_rates && graphSimResult.inh_rates.length > 0
-            ? (graphSimResult.inh_rates.reduce((a, b) => a + b, 0) / graphSimResult.inh_rates.length).toFixed(1)
-            : "0"} Hz</span>
-        </div>
-      )}
+      {graphSimResult?.success && <GraphResultSummary result={graphSimResult} />}
     </div>
   );
 }

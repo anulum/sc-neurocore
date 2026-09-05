@@ -13,6 +13,7 @@ import type {
   NetworkGraph,
   GraphSimResult,
   NIRFormat,
+  ProjectionRule,
 } from "./types";
 
 export const fetchGraphModels = () => get<string[]>("/graph/models");
@@ -20,8 +21,14 @@ export const fetchGraphModels = () => get<string[]>("/graph/models");
 export const createPopulation = (data: Partial<PopulationNode>) =>
   post<PopulationNode>("/graph/population", data);
 
-export const createProjection = (data: { source_id: string; target_id: string; weight?: number; delay?: number; probability?: number }) =>
-  post<ProjectionEdge>("/graph/projection", data);
+export const createProjection = (data: {
+  source_id: string;
+  target_id: string;
+  weight?: number;
+  delay?: number;
+  probability?: number;
+  rule?: ProjectionRule;
+}) => post<ProjectionEdge>("/graph/projection", data);
 
 export const validateGraph = (graph: NetworkGraph) =>
   post<{ valid: boolean; errors: string[] }>("/graph/validate", graph);

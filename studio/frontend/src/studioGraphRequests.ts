@@ -10,11 +10,32 @@ import type {
   GraphSimResult,
   NetworkGraph,
   PipelineResult,
+  PopulationDrive,
   PopulationNode,
   ProjectionEdge,
+  ProjectionRule,
+  StudioNeuronType,
 } from "./api/client";
 
-export type StudioNeuronType = "excitatory" | "inhibitory";
+export type { StudioNeuronType } from "./api/client";
+
+/** Catalogue model every new population starts from (exact-flow hard-reset LIF). */
+export const STUDIO_DEFAULT_POPULATION_MODEL = "SCLapicqueLIFNeuron";
+/**
+ * Constant drive of a new excitatory population. With the default model
+ * (v_rest 0, threshold 1, resistance 1, tau 20 ms) a current of 1.2 settles at
+ * v_inf = 1.2 above threshold and fires regularly; inhibitory populations start
+ * without external input and are driven through projections only.
+ */
+export const STUDIO_DEFAULT_EXCITATORY_DRIVE: PopulationDrive = { kind: "constant", current: 1.2 };
+/**
+ * Starting magnitude of a new projection weight. The public Network injects the
+ * weight as drive for one timestep per source spike, so with dt 0.1 ms and
+ * tau 20 ms one spike moves the default model by about weight × 0.005; 40 moves
+ * it by a fifth of the threshold. This is a starting value, not a tuned one.
+ */
+export const STUDIO_DEFAULT_PROJECTION_WEIGHT = 40;
+export const STUDIO_DEFAULT_PROJECTION_PROBABILITY = 0.2;
 
 export interface StudioPopulationCreateRequest extends Record<string, unknown> {
   label: string;
@@ -23,12 +44,15 @@ export interface StudioPopulationCreateRequest extends Record<string, unknown> {
   neuron_type: StudioNeuronType;
   x: number;
   y: number;
+  drive: PopulationDrive;
 }
 
 export interface StudioProjectionCreateRequest {
   source_id: string;
   target_id: string;
   weight: number;
+  delay: number;
+  rule: ProjectionRule;
   probability: number;
 }
 
@@ -100,12 +124,14 @@ export function studioGraphRequest(
   projections: ProjectionEdge[],
   duration: number,
   dt: number,
+  seed: number | null = null,
 ): NetworkGraph {
   return {
     populations,
     projections,
     duration,
     dt,
+    ...(seed === null ? {} : { seed }),
   };
 }
 
@@ -234,24 +260,47 @@ export function studioDefaultPopulationRequest(
 ): StudioPopulationCreateRequest {
   return {
     label: neuronType === "excitatory" ? `Exc ${index}` : `Inh ${index}`,
-    model: "LIFNeuron",
+    model: STUDIO_DEFAULT_POPULATION_MODEL,
     count: neuronType === "excitatory" ? 80 : 20,
     neuron_type: neuronType,
     x: 100 + index * 200,
     y: neuronType === "excitatory" ? 100 : 300,
+    drive: neuronType === "excitatory" ? STUDIO_DEFAULT_EXCITATORY_DRIVE : { kind: "none" },
   };
 }
 
+/**
+ * Default projection request. The weight sign follows the source population's
+ * declared type (Dale's principle as the population states it); the server
+ * rejects a sign that disagrees instead of flipping it.
+ */
 export function studioDefaultProjectionRequest(
   sourceId: string,
   targetId: string,
+  sourceNeuronType: StudioNeuronType,
 ): StudioProjectionCreateRequest {
   return {
     source_id: sourceId,
     target_id: targetId,
-    weight: 0.1,
-    probability: 0.2,
+    weight: sourceNeuronType === "inhibitory"
+      ? -STUDIO_DEFAULT_PROJECTION_WEIGHT
+      : STUDIO_DEFAULT_PROJECTION_WEIGHT,
+    delay: 0,
+    rule: "random",
+    probability: STUDIO_DEFAULT_PROJECTION_PROBABILITY,
   };
+}
+
+export function studioPopulationDriveLabel(drive: PopulationDrive | undefined): string {
+  if (!drive || drive.kind === "none") return "no input";
+  if (drive.kind === "constant") return `I = ${drive.current}`;
+  return `Poisson ${drive.rate_hz} Hz × ${drive.weight}`;
+}
+
+export function studioProjectionLabel(projection: ProjectionEdge): string {
+  const rule = projection.rule === "all_to_all" ? "all" : `p=${projection.probability}`;
+  const delay = projection.delay > 0 ? ` d=${projection.delay}ms` : "";
+  return `w=${projection.weight} ${rule}${delay}`;
 }
 
 export function studioGraphWithoutPopulation(

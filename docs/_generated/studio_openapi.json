@@ -3620,6 +3620,7 @@
     },
     "/api/graph/simulate": {
       "post": {
+        "description": "Run a graph; validation failures are a 200 with ``success: false``.\n\nA resolved graph that fails while running (a raising neuron step or a\nnon-finite final state) answers 422 with the path-free failure detail.",
         "operationId": "api_simulate_graph_api_graph_simulate_post",
         "requestBody": {
           "content": {

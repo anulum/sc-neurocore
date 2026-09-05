@@ -1,36 +1,49 @@
 # Network Canvas
 
-The Network Canvas provides a visual drag-and-drop interface for
-designing spiking neural networks. Add excitatory and inhibitory
-populations, connect them with projections, configure weights and
-connectivity, then simulate — all from a browser.
+The Network Canvas is a visual editor for small spiking networks: add
+populations, connect them with projections, set their models, parameters,
+inputs, weights and delays, then run the graph. Built on React Flow (Xyflow),
+the canvas supports node dragging, edge creation via drag-connect and layout
+updates.
 
-Built on React Flow (Xyflow), the canvas supports node dragging,
-edge creation via drag-connect, and real-time layout updates.
+A graph runs exactly what it declares. The server resolves the canvas JSON
+into a versioned specification (`studio.network-graph-spec.v1`), lowers it to
+the public `sc_neurocore.network` objects (`Population`, `Projection`,
+`SpikeMonitor`, `StepCurrent`, `PoissonInput`) and runs the reference Python
+loop. Nothing is mapped to a template, clamped, rounded or defaulted from a
+different model: a graph the runtime cannot preserve is rejected with the
+field and the reason.
 
 ## Quick Start
 
 1. Switch to the **Canvas** tab
-2. Click **+ Exc** to add an excitatory population
-3. Click **+ Inh** to add an inhibitory population
+2. Click **+ Exc** to add an excitatory population (constant input `I = 1.2`)
+3. Click **+ Inh** to add an inhibitory population (no external input)
 4. Drag from one node's handle to another to create a projection
-5. Click **Simulate** to run the network
-6. View spike counts, firing rates in the results bar
+5. Click **Simulate** to run the graph
+6. Read the per-population spike counts and rates in the results bar
 
 ## Populations
 
-Each population is a group of identical neurons:
+Each population is a group of identical neurons of one catalogue model:
 
 | Property | Default | Description |
 |----------|---------|-------------|
 | label | auto | Display name (e.g., "Exc 0") |
-| model | LIFNeuron | Neuron model from the 118 available |
-| count | 80 (exc) / 20 (inh) | Number of neurons |
-| neuron_type | excitatory | Excitatory (blue) or inhibitory (red) |
+| model | `SCLapicqueLIFNeuron` | Catalogue class name; `GET /api/graph/models` lists the admissible ones |
+| count | 80 (exc) / 20 (inh) | Positive integer |
+| neuron_type | excitatory | `excitatory` or `inhibitory`; fixes the sign of outgoing weights |
+| params | `{}` | Constructor overrides validated against the model's own contract |
+| drive | `{"kind": "none"}` | External input: `none`, `constant` (`current`), or `poisson` (`rate_hz`, `weight`, optional `seed`) |
 | position | auto | Canvas x, y coordinates |
 
-Excitatory populations are shown with rounded blue borders.
-Inhibitory populations use square red borders.
+The graph timestep `dt` is passed to every model constructor. A model that
+cannot take it (fixed step attribute, no timestep field) rejects the graph.
+Models with an integer drive or a `seed` constructor field are not admitted
+(every neuron of a population would share the seed and its noise).
+
+Excitatory populations are shown with rounded blue borders, inhibitory ones
+with square red borders; the node shows model × count and the drive.
 
 ## Projections
 
@@ -38,54 +51,72 @@ Projections are directed connections between populations:
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| weight | 0.1 | Synaptic weight (positive for exc, negated for inh→exc) |
-| delay | 1.0 ms | Synaptic delay |
-| probability | 0.2 | Connection probability (sparse random connectivity) |
+| weight | +40 (exc source) / −40 (inh source) | Signed synaptic weight; the sign must agree with the source population's type |
+| delay | 0 ms | Whole number of graph timesteps; a fractional delay is rejected, never rounded |
+| rule | `random` | `random` (Erdős–Rényi with `probability`) or `all_to_all` (no probability) |
+| probability | 0.2 | Connection probability of the `random` rule, in (0, 1] |
+| seed | derived | Connectivity seed; derived from the graph seed and the edge index when absent |
+| autapses | false | Self-projections drop the diagonal unless declared |
 
-Create projections by dragging from a source node handle to a target
-node handle. The weight label appears on the edge.
+Two projections between the same pair are two independent projections whose
+currents add. Populations without incoming projections or a drive stay
+silent.
 
 ## Simulation
 
-The canvas maps populations and projections to the E-I balanced
-network simulation backend. For networks with excitatory and
-inhibitory populations:
+`POST /api/graph/simulate` takes the populations, projections, `duration`
+(ms), `dt` (ms, default 0.1) and `seed` (default 42). The response is
+`studio.network-graph-result.v1`:
 
-- Exc→Exc weight = w_ee
-- Exc→Inh weight = w_ie
-- Inh→Exc weight = w_ei
-- Inh→Inh weight = w_ii
+- `spec`: the resolved specification with effective parameters, derived seeds,
+  delays in steps and the `graph_sha256` digest;
+- `execution`: the loop that ran (public `Network._run_python`), its step
+  order, the one-step projection latency, the delay and synapse semantics, the
+  `Network.run` timestep in seconds and the rejected Rust runner with its
+  reason (default construction, no stimuli);
+- `populations`: per population every spike event `(step, neuron)`, the mean
+  rate and a binned rate;
+- `topology`: per projection the synapse count, delay mode, autapses removed,
+  the CSR digest and, within the element budget, the CSR arrays;
+- `contract`: the metric contract of the reported activity;
+- `n_total`, `n_spikes`, `spike_times` (ms), `spike_neurons` (global index,
+  population offsets in `spec`), `graph_summary`.
 
-Connection probability from projections is used for sparse random
-connectivity.
+Execution semantics of the public loop: a spike at step `t` reaches its
+targets at step `t + 1 + delay_steps`; each source spike injects the weight
+as drive into the target for one step, so the membrane increment per spike is
+model-defined (about weight × dt / tau for the default LIF). Delays are in
+milliseconds and must be whole steps.
 
-**Limits:** Maximum 2000 neurons per network (browser performance).
+**Limits:** at most 2000 neurons, 100000 steps and 1000000 neuron-steps per
+synchronous run. A larger run is refused, not shortened.
 
-Results appear in the status bar: neuron count, spike count, mean
-excitatory and inhibitory firing rates.
+A validation failure answers `200` with `success: false` and every message;
+a run that fails numerically answers `422` with `graph_execution_failed`.
 
 ## NIR Export/Import
 
-The canvas supports NIR (Neuromorphic Intermediate Representation)
-format for interoperability with other SNN frameworks:
+The canvas exports and imports the NIR-named JSON format
+(`format: "nir"`, `version: "0.1"`); this is a JSON interchange of the graph,
+not a conformance proof against the NIR specification.
 
-- **Export NIR:** Saves populations as nodes and projections as edges
-  in a JSON file compatible with the NIR specification
-- **Import NIR:** Loads a NIR JSON file and creates populations and
-  projections on the canvas
-
-### NIR Format
+- **Export:** populations become nodes (`type` is the catalogue model name),
+  projections become edges (weight, delay; the probability is not carried)
+- **Import:** node `type` must be a catalogue model name (NIR primitives such
+  as `LIF` are not mapped to a model); imported edges connect all-to-all. The
+  assembled graph is validated with the default timestep and rejected when it
+  would not execute.
 
 ```json
 {
   "format": "nir",
   "version": "0.1",
   "nodes": {
-    "pop_a": {"type": "LIF", "count": 80, "neuron_type": "excitatory"},
-    "pop_b": {"type": "LIF", "count": 20, "neuron_type": "inhibitory"}
+    "pop_a": {"type": "SCLapicqueLIFNeuron", "count": 80, "neuron_type": "excitatory"},
+    "pop_b": {"type": "SCLapicqueLIFNeuron", "count": 20, "neuron_type": "inhibitory"}
   },
   "edges": [
-    {"source": "pop_a", "target": "pop_b", "weight": 0.5, "delay": 1.0}
+    {"source": "pop_a", "target": "pop_b", "weight": 40.0, "delay": 1.0}
   ]
 }
 ```
@@ -94,18 +125,19 @@ format for interoperability with other SNN frameworks:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/graph/models` | List available neuron models |
+| GET | `/api/graph/models` | List catalogue models admissible for populations |
 | POST | `/api/graph/population` | Create a population node |
 | POST | `/api/graph/projection` | Create a projection edge |
-| POST | `/api/graph/validate` | Validate network graph |
-| POST | `/api/graph/simulate` | Simulate network |
-| POST | `/api/graph/export-nir` | Export to NIR format |
-| POST | `/api/graph/import-nir` | Import from NIR format |
+| POST | `/api/graph/validate` | Validate a graph; every error at once |
+| POST | `/api/graph/simulate` | Run the graph through the public Network runtime |
+| POST | `/api/graph/export-nir` | Export to the NIR-named JSON |
+| POST | `/api/graph/import-nir` | Import from the NIR-named JSON |
 
 ### POST /api/graph/population
 
 ```json
-{"label": "Exc 0", "model": "LIFNeuron", "count": 80, "neuron_type": "excitatory", "x": 100, "y": 100}
+{"label": "Exc 0", "model": "SCLapicqueLIFNeuron", "count": 80, "neuron_type": "excitatory",
+ "x": 100, "y": 100, "params": {"tau": 10.0}, "drive": {"kind": "constant", "current": 1.2}}
 ```
 
 ### POST /api/graph/simulate
@@ -115,17 +147,19 @@ format for interoperability with other SNN frameworks:
   "populations": [...],
   "projections": [...],
   "duration": 200.0,
-  "dt": 0.1
+  "dt": 0.1,
+  "seed": 42
 }
 ```
 
-Returns spike times, neuron indices, firing rates, and a graph summary.
+## Supported operations
 
-### POST /api/graph/validate
-
-Returns `{"valid": true, "errors": []}` or validation errors:
-- Missing populations
-- Dangling projection endpoints
-- Zero-weight projections
-- Neuron count exceeding 2000 limit
-- Probability out of (0, 1] range
+| Operation | Status |
+|-----------|--------|
+| Catalogue model per population, constructor overrides, graph `dt` | executed through the model contract |
+| Signed weights, `random` / `all_to_all` rules, per-edge seeds, whole-step delays, autapse control | executed |
+| Constant and Poisson drives per population | executed as public stimuli |
+| Multiple projections between one pair | executed, currents add |
+| Rust network runner | rejected (default parameters, no stimuli) |
+| Per-synapse delay arrays, plasticity, state traces | not exposed on the canvas |
+| Compiled (hardware) execution of a graph | separate unit; the pipeline compiles a fixed equation |

@@ -10,6 +10,9 @@ import { describe, expect, it } from "vitest";
 
 import type { GraphSimResult, NIRFormat, PipelineResult, PopulationNode, ProjectionEdge } from "./api/client";
 import {
+  STUDIO_DEFAULT_EXCITATORY_DRIVE,
+  STUDIO_DEFAULT_POPULATION_MODEL,
+  STUDIO_DEFAULT_PROJECTION_WEIGHT,
   studioGraphFailureState,
   studioGraphImportedState,
   studioGraphModelsLoadedState,
@@ -23,6 +26,8 @@ import {
   studioPipelineCompletedState,
   studioPipelineStartState,
   studioPopulationAddedState,
+  studioPopulationDriveLabel,
+  studioProjectionLabel,
   studioPopulationUpdatedState,
   studioProjectionAddedState,
   studioProjectionRemovedState,
@@ -38,14 +43,16 @@ const population: PopulationNode = {
   neuron_type: "excitatory",
   position: { x: 100, y: 100 },
   params: {},
+  drive: { kind: "constant", current: 1.2 },
 };
 
 const projection: ProjectionEdge = {
   id: "e1",
   source: "p1",
   target: "p2",
-  weight: 0.1,
+  weight: 40,
   delay: 1,
+  rule: "random",
   probability: 0.2,
 };
 
@@ -57,34 +64,59 @@ describe("Studio graph request builders", () => {
       duration: 250,
       dt: 0.05,
     });
+    expect(studioGraphRequest([population], [projection], 250, 0.05, 7)).toEqual({
+      populations: [population],
+      projections: [projection],
+      duration: 250,
+      dt: 0.05,
+      seed: 7,
+    });
   });
 
-  it("builds default excitatory and inhibitory population create requests", () => {
+  it("builds default population create requests on a catalogue model with an explicit drive", () => {
+    expect(STUDIO_DEFAULT_POPULATION_MODEL).toBe("SCLapicqueLIFNeuron");
     expect(studioDefaultPopulationRequest("excitatory", 0)).toEqual({
       label: "Exc 0",
-      model: "LIFNeuron",
+      model: "SCLapicqueLIFNeuron",
       count: 80,
       neuron_type: "excitatory",
       x: 100,
       y: 100,
+      drive: STUDIO_DEFAULT_EXCITATORY_DRIVE,
     });
     expect(studioDefaultPopulationRequest("inhibitory", 2)).toEqual({
       label: "Inh 2",
-      model: "LIFNeuron",
+      model: "SCLapicqueLIFNeuron",
       count: 20,
       neuron_type: "inhibitory",
       x: 500,
       y: 300,
+      drive: { kind: "none" },
     });
   });
 
-  it("builds the default projection create request", () => {
-    expect(studioDefaultProjectionRequest("p1", "p2")).toEqual({
+  it("signs the default projection weight by the source population type", () => {
+    expect(studioDefaultProjectionRequest("p1", "p2", "excitatory")).toEqual({
       source_id: "p1",
       target_id: "p2",
-      weight: 0.1,
+      weight: STUDIO_DEFAULT_PROJECTION_WEIGHT,
+      delay: 0,
+      rule: "random",
       probability: 0.2,
     });
+    expect(studioDefaultProjectionRequest("p2", "p1", "inhibitory").weight)
+      .toBe(-STUDIO_DEFAULT_PROJECTION_WEIGHT);
+  });
+
+  it("labels drives and projections with their executed semantics", () => {
+    expect(studioPopulationDriveLabel(undefined)).toBe("no input");
+    expect(studioPopulationDriveLabel({ kind: "none" })).toBe("no input");
+    expect(studioPopulationDriveLabel({ kind: "constant", current: 1.2 })).toBe("I = 1.2");
+    expect(studioPopulationDriveLabel({ kind: "poisson", rate_hz: 50, weight: 2 }))
+      .toBe("Poisson 50 Hz × 2");
+    expect(studioProjectionLabel(projection)).toBe("w=40 p=0.2 d=1ms");
+    expect(studioProjectionLabel({ ...projection, rule: "all_to_all", probability: undefined, delay: 0 }))
+      .toBe("w=40 all");
   });
 
   it("removes a population and all incident projections from local graph state", () => {

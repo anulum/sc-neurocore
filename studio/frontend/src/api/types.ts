@@ -1336,24 +1336,42 @@ export interface TrainingJobSummary {
   config: TrainingConfig;
 }
 
+export type StudioNeuronType = "excitatory" | "inhibitory";
+
+export type PopulationDrive =
+  | { kind: "none" }
+  | { kind: "constant"; current: number }
+  | { kind: "poisson"; rate_hz: number; weight: number; seed?: number };
+
 export interface PopulationNode {
   id: string;
   type: "population";
   label: string;
   model: string;
   count: number;
-  neuron_type: "excitatory" | "inhibitory";
+  neuron_type: StudioNeuronType;
   position: { x: number; y: number };
   params: Record<string, number>;
+  /** External input; a node saved before drives existed resolves to no input. */
+  drive?: PopulationDrive;
 }
+
+export type ProjectionRule = "random" | "all_to_all";
 
 export interface ProjectionEdge {
   id: string;
   source: string;
   target: string;
+  /** Signed synaptic weight: negative for an inhibitory source population. */
   weight: number;
+  /** Delay in milliseconds; must be a whole number of graph timesteps. */
   delay: number;
-  probability: number;
+  /** Connection rule; an edge saved before rules existed resolves to random. */
+  rule?: ProjectionRule;
+  /** Connection probability of the random rule; absent for all_to_all. */
+  probability?: number;
+  seed?: number;
+  autapses?: boolean;
 }
 
 export interface NetworkGraph {
@@ -1361,21 +1379,81 @@ export interface NetworkGraph {
   projections: ProjectionEdge[];
   duration?: number;
   dt?: number;
+  seed?: number;
+}
+
+export interface GraphPopulationResult {
+  id: string;
+  label: string;
+  model: string;
+  count: number;
+  neuron_type: StudioNeuronType;
+  offset: number;
+  n_spikes: number;
+  mean_rate_hz: number;
+  events: { step: number[]; neuron: number[] };
+  rate: { bin_steps: number; bin_ms: number; time_ms: number[]; rate_hz: number[]; covered_steps: number };
+}
+
+export interface GraphProjectionTopology {
+  id: string;
+  source: string;
+  target: string;
+  rule: ProjectionRule;
+  seed: number;
+  weight: number;
+  delay_steps: number;
+  delay_mode: string;
+  n_synapses: number;
+  autapses_removed: number;
+  csr_sha256: string;
+  indptr?: number[];
+  indices?: number[];
+}
+
+export interface GraphExecutionBlock {
+  backend: { selected: string; rejected: { name: string; reason: string }[] };
+  loop: string;
+  step_order: string;
+  projection_latency_steps: number;
+  delay_semantics: string;
+  synapse_semantics: string;
+  network_dt_s: number;
+  population_construction: string;
+  autapses: string;
+  state_check: string;
+  runtime: { package_version: string; python: string; numpy: string };
 }
 
 export interface GraphSimResult {
   success: boolean;
   errors?: string[];
-  spike_times?: number[];
-  spike_neurons?: number[];
-  n_exc?: number;
-  n_inh?: number;
+  schema_version?: string;
+  spec?: Record<string, unknown> & { graph_sha256?: string; n_steps?: number; dt?: number };
+  execution?: GraphExecutionBlock;
+  populations?: GraphPopulationResult[];
+  topology?: {
+    n_synapses: number;
+    connectivity_included: boolean;
+    connectivity_omitted_reason: string | null;
+    projections: GraphProjectionTopology[];
+  };
   n_total?: number;
   n_spikes?: number;
-  rate_time?: number[];
-  exc_rates?: number[];
-  inh_rates?: number[];
-  graph_summary?: { n_populations: number; n_projections: number; n_exc: number; n_inh: number };
+  spike_times?: number[];
+  spike_neurons?: number[];
+  duration?: number;
+  dt?: number;
+  n_steps?: number;
+  graph_summary?: {
+    n_populations: number;
+    n_projections: number;
+    n_neurons: number;
+    n_synapses: number;
+    n_excitatory: number;
+    n_inhibitory: number;
+  };
+  contract?: MetricContract;
 }
 
 export interface NIRFormat {

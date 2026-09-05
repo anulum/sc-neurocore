@@ -36265,37 +36265,232 @@ Simulate a balanced E-I network. Uses Rust engine when available.
 
 ---
 
+## Module `studio.network_execution`
+
+### Class `GraphExecutionFailure`
+Raised when a lowered graph fails while running.
+
+Parameters
+----------
+reason : str
+    Bounded, path-free description (exception class and message, or the
+    population whose state is non-finite).
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `LoweredProjection`
+One public projection with its CSR arrays and the autapses removed.
+
+- **csr_sha256**()
+  - Digest of the CSR arrays (indptr, indices, data) as int64/int64/float64 bytes.
+
+### Class `LoweredGraph`
+The public objects of one resolved graph, ready for ``Network.run``.
+
+- **network_dt_s**()
+  - Timestep handed to ``Network.run`` (seconds; scales stimuli only).
+- **n_synapses**()
+  - Total synapses across every projection.
+
+### Function `csr_digest(indptr, indices, data)`
+Return the SHA-256 of the CSR arrays in their canonical dtypes.
+
+### Function `connectivity_arrays(spec, n_source, n_target)`
+Return the CSR arrays of ``spec`` and the number of autapses removed.
+
+``random`` uses the public Erdős–Rényi generator with the projection seed;
+``all_to_all`` the public full generator. On a self-projection without
+``autapses`` the diagonal entries are removed; nothing else is added or
+dropped.
+
+### Function `lower_graph(spec)`
+Build the public network objects of ``spec`` without running them.
+
+### Function `run_lowered_graph(lowered)`
+Run the reference Python loop; report a raising step or non-finite state.
+
+Raises
+------
+GraphExecutionFailure
+    When a neuron step raises or a population ends with a non-finite
+    membrane voltage.
+
+### Function `graph_result(lowered)`
+Assemble the public result of a run graph.
+
+### Function `simulate_graph_spec(spec)`
+Lower, run and report one resolved graph.
+
+Raises
+------
+GraphExecutionFailure
+    From :func:`run_lowered_graph`.
+
+---
+
 ## Module `studio.network_graph`
 
 ### Class `ModelDiscoveryError`
 Raised when Studio model discovery cannot produce a trustworthy list.
 
 
-### Function `available_models()`
-Return names of all neuron models available for populations.
+### Function `population_model_admission(name)`
+Return why catalogue model ``name`` cannot form a population, or ``None``.
 
-### Function `create_population(label, model, count, neuron_type, x, y)`
+A population is admissible when the model has a float drive ``step`` that
+the Studio protocol can satisfy and no ``seed`` constructor field (every
+neuron of a population would otherwise share the seed and its noise).
+
+### Function `available_models()`
+Return the names of the catalogue models admissible for populations.
+
+Raises
+------
+ModelDiscoveryError
+    When the catalogue yields no admissible model.
+
+### Function `create_population(label, model, count, neuron_type, x, y, params, drive)`
 Create a population node for the network canvas.
 
-### Function `create_projection(source_id, target_id, weight, delay, probability)`
+The node carries the fields the graph schema executes: catalogue ``model``,
+``count``, ``neuron_type``, constructor ``params`` and the external
+``drive`` (``{"kind": "none"}`` when omitted). Nothing is validated here;
+:func:`validate_graph` reports every problem of the assembled graph.
+
+### Function `create_projection(source_id, target_id, weight, delay, probability, rule)`
 Create a projection edge between two populations.
 
-### Function `validate_graph(graph)`
-Validate a network graph. Returns list of error messages (empty = valid).
+``weight`` is signed (negative for an inhibitory source), ``delay`` is in
+milliseconds and must be a whole number of graph timesteps, ``rule`` is
+``random`` (with ``probability``) or ``all_to_all``.
 
 ### Function `simulate_graph(graph)`
-Simulate a network graph using the E-I network backend.
+Simulate a network graph through the public ``Network`` runtime.
 
-Maps populations and projections to the existing E-I simulation.
-Only graphs with exactly 2 populations (1 exc + 1 inh) are
-currently supported; other topologies fail closed instead of
-being collapsed into an unfaithful surrogate.
+Returns ``{"success": False, "errors": &#91;...&#93;}`` with every validation
+message when the graph cannot be resolved, otherwise the
+``studio.network-graph-result.v1`` payload of
+:func:`sc_neurocore.studio.network_execution.simulate_graph_spec`.
+
+Raises
+------
+GraphExecutionFailure
+    When a resolved graph fails while running.
 
 ### Function `graph_to_nir(graph)`
-Export network graph to NIR-compatible format.
+Export a validated network graph to the NIR-named JSON format.
+
+Raises
+------
+ValueError
+    When the graph does not validate.
 
 ### Function `nir_to_graph(nir_data)`
-Import NIR-compatible format to network graph.
+Import NIR-named JSON to a network graph.
+
+Every node ``type`` must be a catalogue model name: no NIR primitive is
+mapped to a model here (that mapping is a separate unit), and an unknown
+type is rejected rather than replaced by a default. Imported edges connect
+all-to-all with the given weight and delay because the format carries no
+probability.
+
+The assembled graph is validated against the graph schema with the Studio
+default timestep, so an import that would not execute (sign conflicts,
+delays that are not whole default steps, inadmissible models, budgets) is
+rejected here instead of surfacing later on the canvas.
+
+Raises
+------
+ValueError
+    On a malformed payload, a node type that is not a catalogue model, or
+    an assembled graph that does not validate.
+
+---
+
+## Module `studio.network_graph_spec`
+
+### Class `GraphRejected`
+Raised when a graph cannot be resolved into one executable specification.
+
+Parameters
+----------
+field : str
+    Dotted request field that failed (``populations&#91;1&#93;.count``,
+    ``projections&#91;0&#93;.delay``, ``dt``, …).
+reason : str
+    Bounded, path-free reason.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `GraphIssue`
+One validation failure: the request field and the human-readable message.
+
+
+### Class `DriveSpec`
+External input of one population, lowered to a public stimulus object.
+
+``constant`` injects ``current`` into every neuron at every step
+(``StepCurrent`` over the whole run); ``poisson`` injects ``weight`` into a
+neuron whenever its independent Poisson process at ``rate_hz`` fires
+(``PoissonInput``); ``none`` injects nothing.
+
+- **to_public_dict**()
+  - Return the path-free drive block.
+
+### Class `PopulationSpec`
+One resolved population: catalogue model, validated constructor inputs, drive.
+
+- **to_public_dict**()
+  - Return the path-free population block (effective parameters included).
+
+### Class `ProjectionSpec`
+One resolved projection: rule, signed weight, exact delay steps, seed.
+
+- **to_public_dict**()
+  - Return the path-free projection block.
+
+### Class `GraphSpec`
+The resolved, digest-bound specification of one graph run.
+
+- **neuron_steps**()
+  - Total neuron updates the run performs (``n_neurons * n_steps``).
+- **population**(population_id)
+  - Return the population with ``population_id``.
+- **to_public_dict**()
+  - Return the path-free specification with its ``graph_sha256`` digest.
+
+### Function `derived_seed(graph_seed, kind, index)`
+Return the deterministic 32-bit seed of element ``index`` of ``kind``.
+
+The seed is spawned from ``numpy.random.SeedSequence(graph_seed,
+spawn_key=(kind, index))`` so projections and drives draw from independent
+streams that a direct public-runtime script can reproduce from the graph
+seed alone.
+
+### Function `graph_issues(graph)`
+Return every validation issue of ``graph`` in request order (empty = valid).
+
+### Function `validate_graph(graph)`
+Validate a network graph and return its error messages (empty = valid).
+
+Structural errors (shapes, ids, endpoints), model-contract errors (unknown
+model or parameter, timestep the model cannot take, inadmissible drive or
+randomness), projection errors (sign against the source type, rule and
+probability conflicts, delays that are not whole timesteps, seeds,
+autapses) and budget errors (neuron cap, step cap, neuron-step cap) are all
+reported together.
+
+### Function `resolve_graph(graph)`
+Resolve ``graph`` into its executable specification.
+
+Raises
+------
+GraphRejected
+    With the field and message of the first validation issue.
 
 ---
 

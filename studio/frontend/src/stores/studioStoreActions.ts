@@ -1074,7 +1074,7 @@ export function createStudioStoreActions(
     if (s.isSimulating || s.graphPopulations.length === 0) return;
     set(studioPipelineStartState());
     try {
-      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt);
+      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed);
       const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
       set(studioPipelineCompletedState(pipelineResult));
     } catch (e) { set(studioGraphFailureState(e, "Pipeline run failed", { clearBusy: true })); }
@@ -1113,8 +1113,13 @@ export function createStudioStoreActions(
   },
 
   addProjection: async (sourceId, targetId) => {
+    const source = get().graphPopulations.find((population) => population.id === sourceId);
+    if (!source) {
+      set(studioGraphFailureState(new Error(`Source population ${sourceId} not found`), "Projection creation failed"));
+      return;
+    }
     try {
-      const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId));
+      const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId, source.neuron_type));
       set((prev) => studioProjectionAddedState(prev.graphProjections, proj));
     } catch (e) { set(studioGraphFailureState(e, "Projection creation failed")); }
   },
@@ -1132,7 +1137,7 @@ export function createStudioStoreActions(
     if (s.isSimulating) return;
     set(studioGraphSimulationStartState());
     try {
-      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt);
+      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed);
       const validation = await apiValidateGraph(graph);
       if (!validation.valid) {
         set(studioGraphValidationFailedState(validation.errors));

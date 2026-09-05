@@ -20,6 +20,14 @@ class TestCreation:
         assert pop["id"].startswith("pop_")
         assert pop["count"] == 80
         assert pop["neuron_type"] == "excitatory"
+        assert pop["model"] == "SCLapicqueLIFNeuron"
+        assert pop["params"] == {}
+        assert pop["drive"] == {"kind": "none"}
+
+    def test_create_population_carries_params_and_drive(self):
+        pop = create_population(params={"tau": 10.0}, drive={"kind": "constant", "current": 1.2})
+        assert pop["params"] == {"tau": 10.0}
+        assert pop["drive"] == {"kind": "constant", "current": 1.2}
 
     def test_create_population_inhibitory(self):
         pop = create_population(
@@ -36,6 +44,14 @@ class TestCreation:
         assert proj["target"] == "tgt"
         assert proj["weight"] == 0.3
         assert proj["delay"] == 2.0
+        assert proj["rule"] == "random"
+        assert proj["probability"] == 0.5
+
+    def test_create_projection_all_to_all_carries_no_probability(self):
+        proj = create_projection("src", "tgt", weight=-2.0, rule="all_to_all")
+        assert proj["rule"] == "all_to_all"
+        assert "probability" not in proj
+        assert proj["delay"] == 0.0
 
     def test_unique_ids(self):
         ids = {create_population()["id"] for _ in range(10)}

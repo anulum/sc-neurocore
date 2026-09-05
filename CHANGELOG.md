@@ -11,6 +11,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- The Studio network canvas runs the graph it shows. A graph is resolved
+  into a versioned specification (`sc_neurocore.studio.network_graph_spec`,
+  `studio.network-graph-spec.v1`): every population names a catalogue model
+  whose constructor contract accepts its parameters and the graph timestep,
+  declares its external input (`none`, `constant`, `poisson`) and a positive
+  integral count; every projection carries a signed weight that agrees with
+  its source population's type, an explicit connection rule (`random` with a
+  probability or `all_to_all`), a delay that is a whole number of timesteps
+  and a seed that is given or derived from the graph seed; validation reports
+  every error of a graph at once and unknown fields, sign conflicts, rule
+  conflicts, fractional delays, inadmissible models (integer drive, shared
+  seed field) and oversized runs are rejected, never clamped, rounded or
+  shortened. The specification is lowered to public `Population`,
+  `Projection`, `SpikeMonitor` and stimulus objects and run through the
+  reference Python loop (`sc_neurocore.studio.network_execution`); the
+  result (`studio.network-graph-result.v1`) reports the executed
+  specification with its digest, the loop's semantics (previous-step
+  propagation, delay buffering, one-step synaptic current), the rejected Rust
+  runner with its reason, a topology artefact with the CSR digest and arrays
+  of every projection, every spike event of every population, rates under a
+  metric contract and a final finiteness check. The former mapping of any
+  two-population graph onto the E-I template (model, parameters and delays
+  ignored, `abs(weight)`, one probability from the last edge, template
+  defaults for absent edges) is gone; the E-I template remains available as
+  `/api/network/ei`. The canvas default model is `SCLapicqueLIFNeuron`
+  (`LIFNeuron` was never a catalogue model); new excitatory populations
+  carry a constant drive, new projections a weight signed by their source
+  type; NIR-named import requires catalogue model names and validates the
+  assembled graph. `/api/graph/models` lists only admissible models.
 - Studio analyses now state what they measure and where they are valid.
   Every analysis payload carries a metric contract
   (`sc_neurocore.studio.analysis_contract`, `studio.metric-contract.v1`:

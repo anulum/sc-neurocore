@@ -53,6 +53,44 @@ class TestEndpoints:
         assert r.status_code == 200
         data = r.json()
         assert data["success"] is True
+        assert data["spec"]["n_steps"] == 300
+
+    def test_simulate_endpoint_reports_validation_errors_in_the_body(self, client):
+        exc = create_population(count=30, neuron_type="excitatory")
+        proj = create_projection(exc["id"], exc["id"], delay=0.33)
+        graph = {"populations": [exc], "projections": [proj], "duration": 30.0}
+        r = client.post("/api/graph/simulate", json=graph)
+        assert r.status_code == 200
+        data = r.json()
+        assert data["success"] is False
+        assert any("whole number of 0.1 ms steps" in e for e in data["errors"])
+
+    def test_simulate_endpoint_maps_execution_failure_to_422(self, client, monkeypatch):
+        import sc_neurocore.studio.api.design as design_routes
+        from sc_neurocore.studio.network_execution import GraphExecutionFailure
+
+        def _fail(_graph):
+            raise GraphExecutionFailure(
+                reason="population x ended with a non-finite membrane voltage"
+            )
+
+        monkeypatch.setattr(design_routes, "simulate_graph", _fail)
+        r = client.post("/api/graph/simulate", json={"populations": [], "projections": []})
+        assert r.status_code == 422
+        assert r.json()["detail"] == {
+            "error": "graph_execution_failed",
+            "reason": "population x ended with a non-finite membrane voltage",
+        }
+
+    def test_create_population_endpoint_carries_params_and_drive(self, client):
+        r = client.post(
+            "/api/graph/population",
+            json={"params": {"tau": 5.0}, "drive": {"kind": "constant", "current": 1.0}, "x": 1},
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["params"] == {"tau": 5.0}
+        assert data["drive"] == {"kind": "constant", "current": 1.0}
 
     def test_export_nir_endpoint(self, client):
         pop = create_population()
@@ -62,7 +100,7 @@ class TestEndpoints:
         assert data["format"] == "nir"
 
     def test_import_nir_endpoint(self, client):
-        nir = {"nodes": {"a": {"type": "LIF", "count": 10}}, "edges": []}
+        nir = {"nodes": {"a": {"type": "SCLapicqueLIFNeuron", "count": 10}}, "edges": []}
         r = client.post("/api/graph/import-nir", json=nir)
         assert r.status_code == 200
         data = r.json()

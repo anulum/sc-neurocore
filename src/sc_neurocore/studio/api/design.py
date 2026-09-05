@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException
 
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
+from sc_neurocore.studio.network_execution import GraphExecutionFailure
 from sc_neurocore.studio.network_graph import (
     available_models as graph_available_models,
     create_population,
@@ -69,12 +70,14 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/graph/population")
     def api_create_population(data: dict[str, Any]) -> Any:
-        return create_population(
-            **{
-                k: v
-                for k, v in data.items()
-                if k in ("label", "model", "count", "neuron_type", "x", "y")
-            }
+        return _safe(
+            lambda: create_population(
+                **{
+                    k: v
+                    for k, v in data.items()
+                    if k in ("label", "model", "count", "neuron_type", "x", "y", "params", "drive")
+                }
+            )
         )
 
     @router.post("/api/graph/projection")
@@ -84,7 +87,7 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
                 **{
                     k: v
                     for k, v in data.items()
-                    if k in ("source_id", "target_id", "weight", "delay", "probability")
+                    if k in ("source_id", "target_id", "weight", "delay", "probability", "rule")
                 }
             )
         )
@@ -96,7 +99,19 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/graph/simulate")
     def api_simulate_graph(data: dict[str, Any]) -> Any:
-        return _safe(lambda: simulate_graph(data))
+        """Run a graph; validation failures are a 200 with ``success: false``.
+
+        A resolved graph that fails while running (a raising neuron step or a
+        non-finite final state) answers 422 with the path-free failure detail.
+        """
+
+        def run() -> Any:
+            try:
+                return simulate_graph(data)
+            except GraphExecutionFailure as exc:
+                raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+        return _safe(run)
 
     @router.post("/api/graph/export-nir")
     def api_export_nir(data: dict[str, Any]) -> Any:

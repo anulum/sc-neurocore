@@ -460,14 +460,26 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/graph/population` | Create a population node |
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate graph JSON and return structured errors |
-| POST | `/api/graph/simulate` | Simulate a graph through the E-I backend |
-| POST | `/api/graph/export-nir` | Export validated graph JSON to NIR-compatible JSON |
-| POST | `/api/graph/import-nir` | Import NIR-compatible JSON to Studio graph JSON |
+| POST | `/api/graph/simulate` | Run a graph through the public `Network` runtime |
+| POST | `/api/graph/export-nir` | Export validated graph JSON to NIR-named JSON |
+| POST | `/api/graph/import-nir` | Import NIR-named JSON to Studio graph JSON |
 
-Graph and NIR import endpoints validate malformed JSON boundaries explicitly:
-`populations` and `projections` must be lists, population IDs and NIR edge
-endpoints must be non-empty strings, and numeric count/weight/probability
-fields must be finite.
+A graph runs what it declares. Every population names a catalogue model whose
+constructor contract accepts the parameters and the graph timestep; every
+projection carries a signed weight that agrees with its source population's
+type, an explicit connection rule (`random` with a probability or
+`all_to_all`), a delay that is a whole number of timesteps and a seed that is
+given or derived from the graph seed; populations declare their external
+input (`none`, `constant`, `poisson`). The server resolves the graph into
+`studio.network-graph-spec.v1`, lowers it to public `Population`,
+`Projection`, `SpikeMonitor` and stimulus objects and runs the reference
+Python loop; the result (`studio.network-graph-result.v1`) reports the
+executed specification, the loop's semantics (previous-step propagation,
+delay buffering), a topology artefact with CSR digests, every spike event per
+population and a metric contract. Validation reports every error of a graph
+at once; nothing is clamped, rounded or replaced by a template default, and an
+oversized run is refused rather than shortened. See
+[Network Canvas](../studio/network-canvas.md).
 
 ### Example: POST /api/simulate
 

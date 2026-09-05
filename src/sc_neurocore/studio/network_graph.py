@@ -6,39 +6,95 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Network graph builder for Studio (Block 5)
 
+"""Network-canvas graph operations for Studio.
+
+Population and projection factories, validation, simulation through the
+public ``Network`` runtime (:mod:`sc_neurocore.studio.network_graph_spec`
+resolves the graph, :mod:`sc_neurocore.studio.network_execution` lowers and
+runs it) and the NIR-named JSON import/export. The explicit E-I template
+(:func:`sc_neurocore.studio.network.simulate_ei_network`) is no longer used
+for graphs: a graph runs the models, parameters, rules, signed weights, delays
+and drives it declares, or is rejected with the field and reason.
+"""
+
 from __future__ import annotations
 
-from collections.abc import Mapping
-import math
-from numbers import Real
 import secrets
+from collections.abc import Mapping
 from typing import Any
 
+from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.studio.model_introspection import _load_class
+from sc_neurocore.studio.model_run_contract import ModelInputError, model_drive_contract
+from sc_neurocore.studio.model_run_contract import model_parameter_contracts
 from sc_neurocore.studio.models import list_models
-from sc_neurocore.studio.network import simulate_ei_network
+from sc_neurocore.studio.network_execution import simulate_graph_spec
+from sc_neurocore.studio.network_graph_spec import (
+    DEFAULT_MODEL,
+    GraphRejected,
+    graph_issues,
+    resolve_graph,
+    validate_graph,
+)
 
 
 class ModelDiscoveryError(RuntimeError):
     """Raised when Studio model discovery cannot produce a trustworthy list."""
 
 
+def population_model_admission(name: str) -> str | None:
+    """Return why catalogue model ``name`` cannot form a population, or ``None``.
+
+    A population is admissible when the model has a float drive ``step`` that
+    the Studio protocol can satisfy and no ``seed`` constructor field (every
+    neuron of a population would otherwise share the seed and its noise).
+    """
+    if name not in _CLASS_TO_MODULE:
+        return "not a catalogue model"
+    cls = _load_class(name)
+    try:
+        drive = model_drive_contract(name, cls)
+    except ModelInputError as exc:
+        return exc.reason
+    if drive.kind == "int":
+        return "integer-drive model: the public Network injects float currents"
+    if "seed" in model_parameter_contracts(cls).overridable:
+        return "seed field: every neuron of a population would share its noise"
+    return None
+
+
 def available_models() -> list[str]:
-    """Return names of all neuron models available for populations."""
+    """Return the names of the catalogue models admissible for populations.
+
+    Raises
+    ------
+    ModelDiscoveryError
+        When the catalogue yields no admissible model.
+    """
     names = [m["name"] for m in list_models()]
-    if not names:
-        raise ModelDiscoveryError("Studio model discovery returned no models")
-    return names
+    admitted = [name for name in names if population_model_admission(name) is None]
+    if not admitted:
+        raise ModelDiscoveryError("Studio model discovery returned no admissible models")
+    return admitted
 
 
 def create_population(
     label: str = "Population",
-    model: str = "LIFNeuron",
+    model: str = DEFAULT_MODEL,
     count: int = 80,
     neuron_type: str = "excitatory",
     x: float = 0.0,
     y: float = 0.0,
+    params: Mapping[str, float] | None = None,
+    drive: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Create a population node for the network canvas."""
+    """Create a population node for the network canvas.
+
+    The node carries the fields the graph schema executes: catalogue ``model``,
+    ``count``, ``neuron_type``, constructor ``params`` and the external
+    ``drive`` (``{"kind": "none"}`` when omitted). Nothing is validated here;
+    :func:`validate_graph` reports every problem of the assembled graph.
+    """
     return {
         "id": f"pop_{secrets.token_hex(4)}",
         "type": "population",
@@ -47,7 +103,8 @@ def create_population(
         "count": count,
         "neuron_type": neuron_type,
         "position": {"x": x, "y": y},
-        "params": {},
+        "params": dict(params or {}),
+        "drive": dict(drive) if drive is not None else {"kind": "none"},
     }
 
 
@@ -55,181 +112,56 @@ def create_projection(
     source_id: str,
     target_id: str,
     weight: float = 0.1,
-    delay: float = 1.0,
+    delay: float = 0.0,
     probability: float = 0.2,
+    rule: str = "random",
 ) -> dict[str, Any]:
-    """Create a projection edge between two populations."""
-    return {
+    """Create a projection edge between two populations.
+
+    ``weight`` is signed (negative for an inhibitory source), ``delay`` is in
+    milliseconds and must be a whole number of graph timesteps, ``rule`` is
+    ``random`` (with ``probability``) or ``all_to_all``.
+    """
+    edge: dict[str, Any] = {
         "id": f"proj_{secrets.token_hex(4)}",
         "source": source_id,
         "target": target_id,
         "weight": weight,
         "delay": delay,
-        "probability": probability,
+        "rule": rule,
     }
+    if rule == "random":
+        edge["probability"] = probability
+    return edge
 
 
-def validate_graph(graph: object) -> list[str]:
-    """Validate a network graph. Returns list of error messages (empty = valid)."""
-    errors = []
-    if not isinstance(graph, Mapping):
-        return ["Network graph must be an object"]
+def simulate_graph(graph: object) -> dict[str, Any]:
+    """Simulate a network graph through the public ``Network`` runtime.
 
-    populations = graph.get("populations", [])
-    projections = graph.get("projections", [])
+    Returns ``{"success": False, "errors": [...]}`` with every validation
+    message when the graph cannot be resolved, otherwise the
+    ``studio.network-graph-result.v1`` payload of
+    :func:`sc_neurocore.studio.network_execution.simulate_graph_spec`.
 
-    if not isinstance(populations, list):
-        errors.append("Network populations must be a list")
-        populations = []
-    if not isinstance(projections, list):
-        errors.append("Network projections must be a list")
-        projections = []
-
-    if not populations:
-        errors.append("Network has no populations")
-        return errors
-
-    pop_ids: set[str] = set()
-    valid_populations: list[Mapping[str, Any]] = []
-    for index, pop in enumerate(populations):
-        if not isinstance(pop, Mapping):
-            errors.append(f"Population {index} must be an object")
-            continue
-        pop_id = pop.get("id")
-        if not isinstance(pop_id, str) or not pop_id:
-            errors.append(f"Population {index} id must be a non-empty string")
-            continue
-        pop_ids.add(pop_id)
-        valid_populations.append(pop)
-
-    if not valid_populations:
-        errors.append("Network has no valid populations")
-
-    for index, proj in enumerate(projections):
-        if not isinstance(proj, Mapping):
-            errors.append(f"Projection {index} must be an object")
-            continue
-        proj_id = proj.get("id")
-        proj_label = proj_id if isinstance(proj_id, str) and proj_id else str(index)
-        source = proj.get("source")
-        target = proj.get("target")
-        if not isinstance(source, str) or not source:
-            errors.append(f"Projection {proj_label} source must be a non-empty string")
-        elif source not in pop_ids:
-            errors.append(f"Projection {proj_label} source {source} not found")
-        if not isinstance(target, str) or not target:
-            errors.append(f"Projection {proj_label} target must be a non-empty string")
-        elif target not in pop_ids:
-            errors.append(f"Projection {proj_label} target {target} not found")
-        weight = proj.get("weight", 0)
-        if not isinstance(weight, Real) or isinstance(weight, bool):
-            errors.append(f"Projection {proj_label} weight must be numeric")
-        elif not math.isfinite(float(weight)):
-            errors.append(f"Projection {proj_label} weight must be finite")
-        elif float(weight) == 0:
-            errors.append(f"Projection {proj_label} has zero weight")
-        probability = proj.get("probability", 0)
-        if not isinstance(probability, Real) or isinstance(probability, bool):
-            errors.append(f"Projection {proj_label} probability must be numeric")
-        elif not math.isfinite(float(probability)):
-            errors.append(f"Projection {proj_label} probability must be finite")
-        elif float(probability) <= 0 or float(probability) > 1:
-            errors.append(f"Projection {proj_label} probability out of range (0, 1]")
-
-    total_neurons = 0.0
-    for index, pop in enumerate(valid_populations):
-        count = pop.get("count", 0)
-        if not isinstance(count, Real) or isinstance(count, bool):
-            errors.append(f"Population {index} count must be numeric")
-            continue
-        if not math.isfinite(float(count)):
-            errors.append(f"Population {index} count must be finite")
-            continue
-        total_neurons += float(count)
-    if total_neurons > 2000:
-        errors.append(
-            f"Total neuron count {total_neurons:g} exceeds 2000 limit for browser simulation"
-        )
-
-    return errors
-
-
-def simulate_graph(graph: dict[str, Any]) -> dict[str, Any]:
-    """Simulate a network graph using the E-I network backend.
-
-    Maps populations and projections to the existing E-I simulation.
-    Only graphs with exactly 2 populations (1 exc + 1 inh) are
-    currently supported; other topologies fail closed instead of
-    being collapsed into an unfaithful surrogate.
+    Raises
+    ------
+    GraphExecutionFailure
+        When a resolved graph fails while running.
     """
-    populations = graph.get("populations", [])
-    projections = graph.get("projections", [])
-    duration = graph.get("duration", 200.0)
-    dt = graph.get("dt", 0.1)
-
-    errors = validate_graph(graph)
-    if errors:
-        return {"success": False, "errors": errors}
-
-    exc_pops = [p for p in populations if p.get("neuron_type") == "excitatory"]
-    inh_pops = [p for p in populations if p.get("neuron_type") == "inhibitory"]
-    if len(exc_pops) != 1 or len(inh_pops) != 1 or len(populations) != 2:
-        return {
-            "success": False,
-            "errors": [
-                "Studio graph simulation currently requires exactly one excitatory "
-                "and one inhibitory population; export richer topologies to NIR or "
-                "run them through the full network backend."
-            ],
-        }
-
-    n_exc = sum(p.get("count", 80) for p in exc_pops) if exc_pops else 80
-    n_inh = sum(p.get("count", 20) for p in inh_pops) if inh_pops else 20
-
-    # Extract weights from projections (use first matching or defaults)
-    w_ee, w_ei, w_ie, w_ii = 0.1, 0.4, 0.1, 0.4
-    p_conn = 0.2
-    for proj in projections:
-        src = next((p for p in populations if p["id"] == proj["source"]), None)
-        tgt = next((p for p in populations if p["id"] == proj["target"]), None)
-        if not src or not tgt:
-            continue
-        s_type = src.get("neuron_type", "excitatory")
-        t_type = tgt.get("neuron_type", "excitatory")
-        w = abs(proj.get("weight", 0.1))
-        p_conn = proj.get("probability", 0.2)
-        if s_type == "excitatory" and t_type == "excitatory":
-            w_ee = w
-        elif s_type == "excitatory" and t_type == "inhibitory":
-            w_ie = w
-        elif s_type == "inhibitory" and t_type == "excitatory":
-            w_ei = w
-        elif s_type == "inhibitory" and t_type == "inhibitory":
-            w_ii = w
-
-    result = simulate_ei_network(
-        n_exc=n_exc,
-        n_inh=n_inh,
-        w_ee=w_ee,
-        w_ei=w_ei,
-        w_ie=w_ie,
-        w_ii=w_ii,
-        p_conn=p_conn,
-        duration=duration,
-        dt=dt,
-    )
-    result["success"] = True
-    result["graph_summary"] = {
-        "n_populations": len(populations),
-        "n_projections": len(projections),
-        "n_exc": n_exc,
-        "n_inh": n_inh,
-    }
-    return result
+    issues = graph_issues(graph)
+    if issues:
+        return {"success": False, "errors": [issue.message for issue in issues]}
+    return simulate_graph_spec(resolve_graph(graph))
 
 
 def graph_to_nir(graph: object) -> dict[str, Any]:
-    """Export network graph to NIR-compatible format."""
+    """Export a validated network graph to the NIR-named JSON format.
+
+    Raises
+    ------
+    ValueError
+        When the graph does not validate.
+    """
     if not isinstance(graph, Mapping):
         raise ValueError("Network graph must be an object")
     errors = validate_graph(graph)
@@ -241,7 +173,7 @@ def graph_to_nir(graph: object) -> dict[str, Any]:
 
     for pop in graph.get("populations", []):
         nodes[pop["id"]] = {
-            "type": "LIF" if "LIF" in pop.get("model", "LIF") else pop.get("model", "LIF"),
+            "type": pop.get("model", DEFAULT_MODEL),
             "count": pop.get("count", 1),
             "neuron_type": pop.get("neuron_type", "excitatory"),
             "params": pop.get("params", {}),
@@ -266,7 +198,25 @@ def graph_to_nir(graph: object) -> dict[str, Any]:
 
 
 def nir_to_graph(nir_data: object) -> dict[str, Any]:
-    """Import NIR-compatible format to network graph."""
+    """Import NIR-named JSON to a network graph.
+
+    Every node ``type`` must be a catalogue model name: no NIR primitive is
+    mapped to a model here (that mapping is a separate unit), and an unknown
+    type is rejected rather than replaced by a default. Imported edges connect
+    all-to-all with the given weight and delay because the format carries no
+    probability.
+
+    The assembled graph is validated against the graph schema with the Studio
+    default timestep, so an import that would not execute (sign conflicts,
+    delays that are not whole default steps, inadmissible models, budgets) is
+    rejected here instead of surfacing later on the canvas.
+
+    Raises
+    ------
+    ValueError
+        On a malformed payload, a node type that is not a catalogue model, or
+        an assembled graph that does not validate.
+    """
     if not isinstance(nir_data, Mapping):
         raise ValueError("NIR payload must be an object")
     raw_nodes = nir_data.get("nodes", {})
@@ -285,16 +235,23 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
             raise ValueError("NIR node ids must be non-empty strings")
         if not isinstance(node, Mapping):
             raise ValueError(f"NIR node {node_id!r} must be an object")
+        model = node.get("type", DEFAULT_MODEL)
+        if not isinstance(model, str) or model not in _CLASS_TO_MODULE:
+            raise ValueError(
+                f"NIR node {node_id!r} type {model!r} is not a catalogue model; "
+                "NIR primitives are not mapped to models"
+            )
         populations.append(
             {
                 "id": node_id,
                 "type": "population",
                 "label": node_id,
-                "model": node.get("type", "LIFNeuron"),
+                "model": model,
                 "count": node.get("count", 1),
                 "neuron_type": node.get("neuron_type", "excitatory"),
                 "position": {"x": x_offset, "y": 0},
                 "params": node.get("params", {}),
+                "drive": {"kind": "none"},
             }
         )
         x_offset += 200
@@ -315,8 +272,26 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
                 "target": target,
                 "weight": edge.get("weight", 1.0),
                 "delay": edge.get("delay", 0.0),
-                "probability": 1.0,
+                "rule": "all_to_all",
             }
         )
 
-    return {"populations": populations, "projections": projections}
+    graph = {"populations": populations, "projections": projections}
+    errors = validate_graph(graph)
+    if errors:
+        raise ValueError(f"Imported graph is not executable: {'; '.join(errors)}")
+    return graph
+
+
+__all__ = [
+    "GraphRejected",
+    "ModelDiscoveryError",
+    "available_models",
+    "create_population",
+    "create_projection",
+    "graph_to_nir",
+    "nir_to_graph",
+    "population_model_admission",
+    "simulate_graph",
+    "validate_graph",
+]
