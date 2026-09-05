@@ -22,7 +22,7 @@ class TestTBPTTLearner:
 
         learner = TBPTTLearner(net, loss_fn=mse, lr=0.001, k=10)
         inputs = np.random.randn(50, 10)
-        targets = np.random.randint(0, 2, (50, 10)).astype(float)
+        targets = np.random.randint(0, 2, (50, 5)).astype(float)
         loss = learner.train_step(inputs, targets)
         assert np.isfinite(loss)
 

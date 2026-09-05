@@ -18,12 +18,12 @@ class TestBPTTLearner:
         net, proj = _make_small_network()
 
         def mse_loss(spikes, targets):
-            # spikes shape matches first population (n_in=10)
+            # spikes are the output population's spike trains (n_out=5)
             return float(np.mean((spikes - targets) ** 2))
 
         learner = BPTTLearner(net, loss_fn=mse_loss, lr=0.001)
         inputs = np.random.randn(50, 10)
-        targets = np.random.randint(0, 2, size=(50, 10)).astype(float)
+        targets = np.random.randint(0, 2, size=(50, 5)).astype(float)
         loss = learner.train_step(inputs, targets)
         assert isinstance(loss, float)
         assert np.isfinite(loss)
@@ -37,6 +37,6 @@ class TestBPTTLearner:
 
         learner = BPTTLearner(net, loss_fn=mse_loss, lr=0.01)
         inputs = np.random.randn(20, 10)
-        targets = np.ones((20, 10))
+        targets = np.ones((20, 5))
         learner.train_step(inputs, targets)
         assert not np.allclose(proj.data, w_before), "weights unchanged after BPTT"
