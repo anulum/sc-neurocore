@@ -114,9 +114,7 @@ def test_build_model_compile_traceability_records_selected_configuration() -> No
         "schema_name": "sc_lapicque_lif",
         "schema_sha256": "a" * 64,
     }
-    assert traceability["input_sha256"] == _sha256_json(
-        cast(dict[str, JsonValue], traceability["source_payload"])
-    )
+    assert traceability["input_sha256"] == _sha256_json(traceability["source_payload"])
 
 
 def test_build_model_compile_traceability_requires_schema_identity() -> None:

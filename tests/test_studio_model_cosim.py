@@ -17,6 +17,7 @@ import pytest
 
 from sc_neurocore.compiler.q_format import QFormat
 from sc_neurocore.studio.model_compile_configuration import (
+    ResolvedModelCompileConfiguration,
     resolve_model_compile_configuration,
 )
 from sc_neurocore.studio.model_cosim import (
@@ -32,7 +33,7 @@ from sc_neurocore.studio.model_cosim import (
 HAS_COSIM_TOOLS = all(shutil.which(tool) is not None for tool in ("gcc", "iverilog", "vvp"))
 
 
-def _map_configuration():
+def _map_configuration() -> ResolvedModelCompileConfiguration:
     return resolve_model_compile_configuration(
         {
             "model_name": "AdaptiveThresholdIFNeuron",

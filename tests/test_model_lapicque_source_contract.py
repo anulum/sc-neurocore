@@ -19,7 +19,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised on Python < 3.11
 
 import pytest
 
-from sc_neurocore.neurons.models import LapicqueNeuron, SCLapicqueLIFNeuron
+from sc_neurocore.neurons.models.lapicque import LapicqueNeuron, SCLapicqueLIFNeuron
 from sc_neurocore.network.population import Population
 
 
