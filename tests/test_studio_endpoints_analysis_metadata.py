@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 from tests.studio_endpoints_support import *  # noqa: F403
 
 
@@ -37,5 +38,5 @@ class TestAnalysisMetadataConsistency:
         results = r.json()
         assert len(results) == 2
         for result in results:
-            assert result["run_metadata"]["schema_version"] == "studio.simulation-run.v1"
+            assert result["run_metadata"]["schema_version"] == STUDIO_SIMULATION_RUN_SCHEMA_VERSION
             assert result["run_metadata"]["source"] == "model"

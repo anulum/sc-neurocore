@@ -71,7 +71,11 @@ def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest(),
+        "layout_source": "",
         "n_steps": 10,
+        "observation_clock": "",
+        "raw_included": False,
+        "raw_sha256": "",
         "result_sha256": hashlib.sha256(
             json.dumps(
                 result_payload,
@@ -85,6 +89,7 @@ def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
         "schema_version": STUDIO_SIMULATION_RUN_SCHEMA_VERSION,
         "source": "ode",
         "spike_count": 0,
+        "state_custody_complete": False,
         "status": "completed",
         "state_variables": ["v"],
     }
@@ -170,6 +175,11 @@ def test_simulation_run_manifest_rejects_unknown_evidence_classification() -> No
         sample_count=1,
         spike_count=0,
         state_variables=("v",),
+        raw_sha256="",
+        raw_included=False,
+        layout_source="",
+        state_custody_complete=False,
+        observation_clock="",
         evidence_classification="screenshots",  # type: ignore[arg-type] # Invalid by design.
     )
 
@@ -189,6 +199,11 @@ def test_simulation_run_manifest_rejects_unknown_status() -> None:
         sample_count=1,
         spike_count=0,
         state_variables=("v",),
+        raw_sha256="",
+        raw_included=False,
+        layout_source="",
+        state_custody_complete=False,
+        observation_clock="",
         status="running",  # type: ignore[arg-type] # Invalid by design.
     )
 
@@ -220,6 +235,11 @@ def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> Non
     assert metadata["state_variables"] == ["v"]
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["input_sha256"])
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["result_sha256"])
+    assert re.fullmatch(r"[0-9a-f]{64}", metadata["raw_sha256"])
+    assert metadata["raw_included"] is True
+    assert metadata["layout_source"] == "equations"
+    assert metadata["state_custody_complete"] is True
+    assert metadata["observation_clock"] == "post-step"
     assert "path" not in metadata
 
 
@@ -240,3 +260,7 @@ def test_model_simulation_endpoint_returns_run_metadata(client: TestClient) -> N
     assert metadata["sample_count"] == len(response.json()["time"])
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["input_sha256"])
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["result_sha256"])
+    assert re.fullmatch(r"[0-9a-f]{64}", metadata["raw_sha256"])
+    assert metadata["state_variables"] == ["v", "w"]
+    assert metadata["layout_source"] == "descriptor"
+    assert metadata["state_custody_complete"] is True

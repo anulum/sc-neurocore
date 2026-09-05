@@ -18,6 +18,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.studio.codegen import classify_firing_pattern
+from sc_neurocore.studio.trace_projection import full_state_traces
 
 
 def _characterize_with_progress(
@@ -61,7 +62,7 @@ def _characterize_with_progress(
         max_rate = round(max(rates), 1) if rates else 0.0
 
         state_ranges = {}
-        for var, values in trace["states"].items():
+        for var, values in full_state_traces(trace).items():
             arr = np.array(values)
             state_ranges[var] = {
                 "min": round(float(np.min(arr)), 2),

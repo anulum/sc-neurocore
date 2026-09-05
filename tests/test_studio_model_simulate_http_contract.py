@@ -218,7 +218,7 @@ class TestSuccessfulRun:
         assert receipt["overrides_applied"] == ["delta_theta", "tau_theta", "theta_rest"]
         assert receipt["parameters"]["theta_rest"] == -48.0
         assert receipt["parameters"]["tau_m"] == 10.0
-        assert receipt["state_recording"] == {"recorded": ["v"], "excluded": []}
+        assert receipt["state_recording"] == {"recorded": ["v", "theta"], "excluded": []}
         assert data["spike_count"] > 0
         assert len(data["states"]["v"]) == data["n_steps"] == 500
         assert "pattern" in data

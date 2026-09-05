@@ -48,13 +48,14 @@ def build_export_router(context: StudioApiContext) -> APIRouter:
                 duration=req.duration,
                 current=req.current,
                 protocol=req.protocol,
+                use_fast_path=False,
             )
             svg = traces_to_svg(
                 time=result["time"],
                 states=result["states"],
                 spikes=result.get("spikes", []),
                 model_name=result.get("model_name", req.name),
-                dt=req.dt or 0.1,
+                dt=float(result["dt"]) if "dt" in result else (req.dt or 0.1),
             )
             return Response(content=svg, media_type="image/svg+xml")
 

@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4798
+    "test_files": 4801
   },
   "documentation": {
     "public_pages": [
@@ -7379,10 +7379,12 @@
       "tests/test_studio_runtime_settings_parsing_security_and_profile.py",
       "tests/test_studio_rust_integration_batch_simulate.py",
       "tests/test_studio_rust_integration_ei_network.py",
+      "tests/test_studio_simulate_custody_http.py",
       "tests/test_studio_simulation_manifest.py",
       "tests/test_studio_simulation_simulate_all_templates.py",
       "tests/test_studio_simulation_simulate_basic.py",
       "tests/test_studio_simulation_simulate_edge_cases.py",
+      "tests/test_studio_state_custody.py",
       "tests/test_studio_svg_export.py",
       "tests/test_studio_synthesis_device_capacity.py",
       "tests/test_studio_synthesis_endpoint.py",
@@ -7401,6 +7403,7 @@
       "tests/test_studio_templates_list_and_get.py",
       "tests/test_studio_templates_template_parsing.py",
       "tests/test_studio_templates_template_structure.py",
+      "tests/test_studio_trace_projection.py",
       "tests/test_studio_training_architecture.py",
       "tests/test_studio_training_attach_failures.py",
       "tests/test_studio_training_checkpoint.py",

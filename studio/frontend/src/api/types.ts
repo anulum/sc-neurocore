@@ -28,12 +28,87 @@ export interface SimulationRunMetadata {
   n_steps: number;
   result_sha256: string;
   sample_count: number;
-  schema_version: "studio.simulation-run.v1";
+  schema_version: "studio.simulation-run.v1" | "studio.simulation-run.v2";
   source: "ode" | "model";
   spike_count: number;
   status: "completed";
   state_variables: string[];
+  /** v2: digest of the full-resolution ``raw`` block. */
+  raw_sha256?: string;
+  /** v2: whether ``raw`` carries every step. */
+  raw_included?: boolean;
+  /** v2: ``descriptor``, ``equations`` or ``undeclared``. */
+  layout_source?: string;
+  /** v2: every declared variable recorded and nothing undeclared changed. */
+  state_custody_complete?: boolean;
+  /** v2: ``post-step`` sample clock. */
+  observation_clock?: string;
 }
+
+export interface SimulationStateVariable {
+  name: string;
+  role: "biological" | "auxiliary" | "unassigned";
+  unit: string;
+  meaning: string;
+  declared_init: number | null;
+  kind: "scalar" | "vector" | null;
+  shape: number[] | null;
+  observable: boolean;
+  reason: string;
+  trace: "per-step" | "snapshots-only" | "none";
+}
+
+export interface SimulationStateLayout {
+  schema_version: "studio.state-layout.v1";
+  source: "descriptor" | "equations" | "undeclared";
+  schema_profile: string;
+  variables: SimulationStateVariable[];
+  recorded: string[];
+  complete: boolean;
+  incomplete_reasons: string[];
+  undeclared_mutable: string[];
+  custody_notes: string[];
+}
+
+export interface SimulationObservation {
+  clock: "post-step";
+  dt: number;
+  initial_time_ms: number;
+  sample_time_ms: string;
+  drive_interval_ms: string;
+}
+
+export interface SimulationRawBlock {
+  schema_version: "studio.raw-trace.v1";
+  included: boolean;
+  element_count: number;
+  element_budget: number;
+  dt: number;
+  n_steps: number;
+  sample_time_ms: string;
+  drive_interval_ms: string;
+  spike_indices: number[];
+  spike_times_ms: number[];
+  vector_snapshots_only: string[];
+  states?: Record<string, number[]>;
+  vector_states?: Record<string, number[][]>;
+  drive?: number[];
+  reason?: string;
+}
+
+export interface SimulationDisplayProjection {
+  schema_version: "studio.display-projection.v1";
+  method: "identity" | "bucket-extrema";
+  max_points: number;
+  bucket_count: number;
+  point_count: number;
+  sample_index: number[];
+  first_sample_included: boolean;
+  final_sample_included: boolean;
+  spikes_are_raw_steps: boolean;
+}
+
+export type SimulationSnapshot = Record<string, number | number[]>;
 
 export interface AnalysisResultMetadata {
   analysis_type: string;
@@ -47,9 +122,13 @@ export interface AnalysisResultMetadata {
 }
 
 export interface SimulateResponse {
+  /** Display projection sample times ``(index + 1) * dt``; see ``display``. */
   time: number[];
+  /** Display projection of every scalar state; full arrays live in ``raw``. */
   states: Record<string, number[]>;
+  /** Display projection of the injected drive. */
   current_trace: number[];
+  /** Raw step indices at which the model spiked (never decimated). */
   spikes: number[];
   spike_count: number;
   stats: SpikeStats;
@@ -58,6 +137,12 @@ export interface SimulateResponse {
   n_steps: number;
   model_name?: string;
   run_metadata: SimulationRunMetadata;
+  observation?: SimulationObservation;
+  state_layout?: SimulationStateLayout;
+  initial_state?: SimulationSnapshot | null;
+  final_state?: SimulationSnapshot;
+  raw?: SimulationRawBlock;
+  display?: SimulationDisplayProjection;
 }
 
 export interface HeatmapResponse {

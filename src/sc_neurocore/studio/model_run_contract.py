@@ -600,9 +600,24 @@ def run_receipt(
     backend: Backend,
     recorded_state: tuple[str, ...],
     excluded_state: tuple[tuple[str, str], ...],
-    plot_stride: int,
+    display_points: int,
 ) -> dict[str, Any]:
-    """Return the effective-input receipt attached to a successful run payload."""
+    """Return the effective-input receipt attached to a successful run payload.
+
+    Parameters
+    ----------
+    inputs, trace : ModelRunInputs, DriveTrace
+        The resolved run.
+    backend : {"python", "rust"}
+        Backend that executed the steps.
+    recorded_state : tuple of str
+        Declared variables recorded at every step.
+    excluded_state : tuple of (name, reason)
+        Declared variables not recorded per step and why.
+    display_points : int
+        Number of points in the display projection (the raw result keeps every
+        step; see ``raw`` and ``display`` on the payload).
+    """
     return {
         "schema_version": RECEIPT_SCHEMA_VERSION,
         "model": inputs.model,
@@ -622,7 +637,7 @@ def run_receipt(
             "recorded": list(recorded_state),
             "excluded": [{"name": name, "reason": reason} for name, reason in excluded_state],
         },
-        "plot_stride": plot_stride,
+        "display_points": display_points,
     }
 
 

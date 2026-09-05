@@ -11,6 +11,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Studio simulation results now carry complete-state and raw-result custody.
+  Catalogue runs record the state the committed descriptor declares, joined
+  with the canonical profile roles (`sc_neurocore.studio.state_layout`), with
+  observed scalar/vector shapes, exact initial and final snapshots, a
+  post-step observation clock and a start-to-end mutation audit; name
+  heuristics are no longer a state source (they recorded AdEx parameters as
+  state and dropped the adaptive threshold). Every response returns the
+  full-resolution `raw` block next to a bounded display projection whose
+  `display.sample_index` maps each point to its raw step and preserves every
+  bucket extremum, the first and the last sample
+  (`sc_neurocore.studio.trace_projection`). Run manifests move to
+  `studio.simulation-run.v2` (raw digest, layout source, custody verdict,
+  observation clock); evidence bundles accept v1 and v2. The catalogue and
+  multi-simulate routes run on the Python custody backend; the Rust batch
+  result is labelled voltage-only without an initial snapshot. Analyses,
+  the spike-triggered average and CSV export read the raw traces.
 - Added the versioned model profile contract `sc-neurocore.model-profile.v1`
   (`sc_neurocore.neurons.model_profile`): every schema-DSL document resolves
   into a scientific model (authored equations, biological state and source

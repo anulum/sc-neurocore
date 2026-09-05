@@ -11,12 +11,14 @@
 Every run first resolves its effective inputs through
 :mod:`sc_neurocore.studio.model_run_contract`, so an invalid request is rejected
 before any model is constructed, and a numerical failure is reported with its
-step instead of being replaced by a silent zero.
+step instead of being replaced by a silent zero. The Python path records the
+model-declared state layout (:mod:`sc_neurocore.studio.state_layout`) at every
+step and returns the complete raw result next to a separate display projection
+(:mod:`sc_neurocore.studio.trace_projection`).
 """
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 import numpy as np
@@ -30,7 +32,6 @@ except ImportError:
         raise ImportError("Studio Rust batch simulator unavailable")
 
 
-from sc_neurocore.studio.model_introspection import _classify_fields
 from sc_neurocore.studio.model_run_contract import (
     DriveTrace,
     ModelRunInputs,
@@ -40,9 +41,22 @@ from sc_neurocore.studio.model_run_contract import (
     resolve_model_run_inputs,
     run_receipt,
 )
-from sc_neurocore.studio.simulation import MAX_PLOT_POINTS, MAX_STEPS, _spike_stats
+from sc_neurocore.studio.simulation import MAX_STEPS, _spike_stats
+from sc_neurocore.studio.state_layout import (
+    ObservedState,
+    StateLayout,
+    StateObservationError,
+    attribute_fingerprints,
+    declared_state,
+    observe_layout,
+    read_variable,
+    snapshot,
+    undeclared_mutations,
+)
+from sc_neurocore.studio.trace_projection import RAW_ELEMENT_BUDGET, custody_payload
 
 _RUST_STATE_EXPORTS: tuple[str, ...] = ("v",)
+_RUST_INITIAL_SNAPSHOT_NOTE = "the Rust batch backend exposes no initial snapshot"
 
 
 class RustStudioBackendUnavailable(ImportError):
@@ -70,17 +84,45 @@ def _is_rust_unsupported_model_error(exc: Exception) -> bool:
     return isinstance(exc, ValueError) and "Unsupported model:" in str(exc)
 
 
-def _plot_stride(n_steps: int) -> int:
-    """Return the decimation stride that keeps a trace within ``MAX_PLOT_POINTS``."""
-    return n_steps // MAX_PLOT_POINTS if n_steps > MAX_PLOT_POINTS else 1
-
-
 def _first_non_finite(values: np.ndarray[Any, Any]) -> int | None:
     """Return the index of the first non-finite sample, or ``None`` when all are finite."""
     finite = np.isfinite(values)
     if bool(np.all(finite)):
         return None
     return int(np.argmin(finite))
+
+
+def _state_recording(layout: StateLayout) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+    """Split the layout into per-step recorded names and named exclusions."""
+    recorded = tuple(variable.name for variable in layout.per_step)
+    excluded: list[tuple[str, str]] = []
+    for variable in layout.variables:
+        if not variable.observable:
+            excluded.append((variable.name, variable.reason))
+        elif variable.trace == "snapshots-only":
+            excluded.append(
+                (variable.name, "vector recorded in snapshots only (raw element budget)")
+            )
+    return recorded, tuple(excluded)
+
+
+def _rust_layout(name: str) -> StateLayout:
+    """Return the declared layout as the Rust batch backend can honour it."""
+    source, stem, declared = declared_state(name)
+    variables = tuple(
+        ObservedState(spec, "scalar", (), True, "", "per-step")
+        if spec.name in _RUST_STATE_EXPORTS
+        else ObservedState(
+            spec, None, None, False, "not exported by the Rust batch backend", "none"
+        )
+        for spec in declared
+    )
+    return StateLayout(
+        source=source,
+        schema_profile=stem,
+        variables=variables,
+        custody_notes=(_RUST_INITIAL_SNAPSHOT_NOTE,),
+    )
 
 
 def _try_rust_simulate(
@@ -94,7 +136,10 @@ def _try_rust_simulate(
     Returns ``None`` only when the backend is unavailable or the model is not
     implemented in Rust. Runtime failures in an available backend are raised so
     the caller does not silently degrade to Python; a non-finite voltage trace
-    is a :class:`ModelSimulationFailure` at its first non-finite step.
+    is a :class:`ModelSimulationFailure` at its first non-finite step. The
+    result carries the declared layout with every variable the backend does
+    not export marked unobservable and no initial snapshot, so it is never
+    presented as complete-state custody.
     """
     try:
         py_batch_simulate = _load_rust_batch_simulate()
@@ -121,52 +166,25 @@ def _try_rust_simulate(
             time_ms=bad_step * actual_dt,
             diagnostic=f"state 'v' became non-finite ({voltages[bad_step]!r})",
         )
-    spikes = result["spikes"].tolist()
+    spikes = [int(step) for step in np.asarray(result["spikes"]).tolist()]
     stats = _spike_stats(spikes, actual_dt, n_steps)
-
-    stride = _plot_stride(n_steps)
-    time = np.arange(n_steps) * actual_dt
-    if stride > 1:
-        time = time[::stride]
-        voltages = voltages[::stride]
-        current_arr = current_arr[::stride]
-
-    return {
-        "time": time.tolist(),
-        "states": {"v": voltages.tolist()},
-        "current_trace": current_arr.tolist(),
-        "spikes": spikes,
-        "spike_count": len(spikes),
-        "stats": stats,
-        "dt": actual_dt,
-        "n_steps": n_steps,
-        "model_name": name,
-    }
-
-
-def _scalar_state(value: object) -> float | None:
-    """Return ``value`` as a float when it is a real scalar, otherwise ``None``."""
-    if isinstance(value, bool) or not isinstance(value, (int, float, np.integer, np.floating)):
-        return None
-    return float(value)
-
-
-def _state_recording_plan(
-    neuron: Any, state_names: list[str]
-) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
-    """Split the catalogue state variables into recordable scalars and declared exclusions."""
-    recorded: list[str] = []
-    excluded: list[tuple[str, str]] = []
-    for state_name in state_names:
-        if not hasattr(neuron, state_name):
-            excluded.append((state_name, "absent on the model instance"))
-            continue
-        value = getattr(neuron, state_name)
-        if _scalar_state(value) is None:
-            excluded.append((state_name, f"non-scalar state ({type(value).__name__})"))
-            continue
-        recorded.append(state_name)
-    return tuple(recorded), tuple(excluded)
+    layout = _rust_layout(name)
+    payload = custody_payload(
+        dt=actual_dt,
+        n_steps=n_steps,
+        layout=layout,
+        initial_state={},
+        final_state={"v": float(voltages[-1])},
+        scalar_traces={"v": voltages},
+        vector_traces={},
+        vector_omitted=(),
+        drive=current_arr,
+        spikes=spikes,
+        stats=stats,
+    )
+    payload["initial_state"] = None
+    payload["model_name"] = name
+    return payload
 
 
 def _simulate_python(inputs: ModelRunInputs, trace: DriveTrace) -> dict[str, Any]:
@@ -174,11 +192,33 @@ def _simulate_python(inputs: ModelRunInputs, trace: DriveTrace) -> dict[str, Any
     neuron = inputs.instantiate()
     n_steps = trace.n_steps
     dt = inputs.dt
-    state_vars, _ = _classify_fields(inputs.cls)
-    recorded, excluded = _state_recording_plan(neuron, [s["name"] for s in state_vars])
-    traces: dict[str, np.ndarray[Any, Any]] = {
-        state_name: np.empty(n_steps) for state_name in recorded
-    }
+    source, stem, declared = declared_state(inputs.model)
+    layout = observe_layout(
+        neuron, source, stem, declared, n_steps=n_steps, element_budget=RAW_ELEMENT_BUDGET
+    )
+    try:
+        initial_state = snapshot(neuron, layout)
+    except StateObservationError as exc:
+        raise ModelSimulationFailure(
+            model=inputs.model,
+            backend="python",
+            step=0,
+            time_ms=0.0,
+            diagnostic=f"initial state {exc.name!r} {exc.reason}",
+        ) from exc
+    fingerprints_before = attribute_fingerprints(neuron)
+
+    scalar_traces: dict[str, np.ndarray[Any, Any]] = {}
+    vector_traces: dict[str, np.ndarray[Any, Any]] = {}
+    vector_omitted: list[str] = []
+    for variable in layout.observable:
+        if variable.kind == "scalar":
+            scalar_traces[variable.name] = np.empty(n_steps, dtype=np.float64)
+        elif variable.trace == "per-step" and variable.shape is not None:
+            vector_traces[variable.name] = np.empty((n_steps, *variable.shape), dtype=np.float64)
+        else:
+            vector_omitted.append(variable.name)
+    per_step = layout.per_step
     spike_indices: list[int] = []
     drive = inputs.drive
 
@@ -199,57 +239,62 @@ def _simulate_python(inputs: ModelRunInputs, trace: DriveTrace) -> dict[str, Any
                 time_ms=t * dt,
                 diagnostic=bounded_diagnostic(exc),
             ) from exc
-        for state_name in recorded:
-            raw = getattr(neuron, state_name)
-            scalar = _scalar_state(raw)
-            if scalar is None:
+        for variable in per_step:
+            try:
+                observed = read_variable(neuron, variable)
+            except StateObservationError as exc:
                 raise ModelSimulationFailure(
                     model=inputs.model,
                     backend="python",
                     step=t,
                     time_ms=t * dt,
-                    diagnostic=f"state {state_name!r} is no longer a scalar ({type(raw).__name__})",
-                )
-            if not math.isfinite(scalar):
-                raise ModelSimulationFailure(
-                    model=inputs.model,
-                    backend="python",
-                    step=t,
-                    time_ms=t * dt,
-                    diagnostic=f"state {state_name!r} became non-finite ({scalar!r})",
-                )
-            traces[state_name][t] = scalar
+                    diagnostic=f"state {exc.name!r} {exc.reason}",
+                ) from exc
+            if variable.kind == "scalar":
+                scalar_traces[variable.name][t] = observed
+            else:
+                vector_traces[variable.name][t] = observed
         if spike:
             spike_indices.append(t)
 
-    stats = _spike_stats(spike_indices, dt, n_steps)
-    stride = _plot_stride(n_steps)
-    time = np.arange(n_steps) * dt
-    samples = trace.samples
-    if stride > 1:
-        time = time[::stride]
-        traces = {state_name: arr[::stride] for state_name, arr in traces.items()}
-        samples = samples[::stride]
-
-    return {
-        "time": time.tolist(),
-        "states": {state_name: arr.tolist() for state_name, arr in traces.items()},
-        "current_trace": samples.tolist(),
-        "spikes": spike_indices,
-        "spike_count": len(spike_indices),
-        "stats": stats,
-        "dt": dt,
-        "n_steps": n_steps,
-        "model_name": inputs.model,
-        "effective_inputs": run_receipt(
-            inputs,
-            trace,
+    try:
+        final_state = snapshot(neuron, layout)
+    except StateObservationError as exc:
+        raise ModelSimulationFailure(
+            model=inputs.model,
             backend="python",
-            recorded_state=recorded,
-            excluded_state=excluded,
-            plot_stride=stride,
-        ),
-    }
+            step=n_steps - 1,
+            time_ms=(n_steps - 1) * dt,
+            diagnostic=f"final state {exc.name!r} {exc.reason}",
+        ) from exc
+    layout = layout.with_undeclared_mutable(
+        undeclared_mutations(fingerprints_before, attribute_fingerprints(neuron), layout)
+    )
+    stats = _spike_stats(spike_indices, dt, n_steps)
+    payload = custody_payload(
+        dt=dt,
+        n_steps=n_steps,
+        layout=layout,
+        initial_state=initial_state,
+        final_state=final_state,
+        scalar_traces=scalar_traces,
+        vector_traces=vector_traces,
+        vector_omitted=vector_omitted,
+        drive=trace.samples,
+        spikes=spike_indices,
+        stats=stats,
+    )
+    payload["model_name"] = inputs.model
+    recorded, excluded = _state_recording(layout)
+    payload["effective_inputs"] = run_receipt(
+        inputs,
+        trace,
+        backend="python",
+        recorded_state=recorded,
+        excluded_state=excluded,
+        display_points=int(payload["display"]["point_count"]),
+    )
+    return payload
 
 
 def simulate_model(
@@ -287,15 +332,18 @@ def simulate_model(
         Sine frequency; must be positive and finite.
     use_fast_path : bool
         Allow the Rust batch backend when no override or explicit ``dt`` is
-        given. The behaviour probe passes ``False`` so its characterisation is
-        the canonical Python model's, independent of the loaded extension.
+        given. The Rust result exports the membrane voltage only and no
+        initial snapshot, and says so in its ``state_layout``; callers that
+        need complete-state custody pass ``False``.
 
     Returns
     -------
     dict[str, Any]
-        Time base, recorded state traces, injected current, spike indices,
-        statistics and an ``effective_inputs`` receipt naming the backend, the
-        effective parameters, the drive contract and every excluded state.
+        The display projection (``time``, ``states``, ``current_trace``),
+        spike indices and statistics, the ``observation`` clock, the
+        ``state_layout`` with its custody verdict, exact ``initial_state`` and
+        ``final_state`` snapshots, the full-resolution ``raw`` block, the
+        ``display`` sample-index map and an ``effective_inputs`` receipt.
 
     Raises
     ------
@@ -304,8 +352,9 @@ def simulate_model(
         integer field, unsupported for the model, or when the model cannot be
         constructed or driven under the request.
     ModelSimulationFailure
-        When a step raises or produces a non-finite or non-scalar state; the
-        failure names the backend, step index and simulated time.
+        When a step raises or a recorded variable is non-finite or changes
+        kind or shape; the failure names the backend, the step index and the
+        simulated time at which that step started (``step * dt``).
     RustStudioBackendError
         When an available Rust backend fails for a reason other than an
         unsupported model.
@@ -323,20 +372,22 @@ def simulate_model(
     if use_fast_path and not inputs.overrides_applied and dt is None:
         rust_result = _try_rust_simulate(name, trace.n_steps, trace.samples, inputs.dt)
         if rust_result is not None:
-            state_names = [s["name"] for s in _classify_fields(inputs.cls)[0]]
-            excluded = tuple(
-                (state_name, "not exported by the Rust batch backend")
-                for state_name in state_names
-                if state_name not in _RUST_STATE_EXPORTS
-            )
+            recorded, excluded = _state_recording(_rust_layout(name))
             rust_result["effective_inputs"] = run_receipt(
                 inputs,
                 trace,
                 backend="rust",
-                recorded_state=_RUST_STATE_EXPORTS,
+                recorded_state=recorded,
                 excluded_state=excluded,
-                plot_stride=_plot_stride(trace.n_steps),
+                display_points=int(rust_result["display"]["point_count"]),
             )
             return rust_result
 
     return _simulate_python(inputs, trace)
+
+
+__all__ = [
+    "RustStudioBackendError",
+    "RustStudioBackendUnavailable",
+    "simulate_model",
+]

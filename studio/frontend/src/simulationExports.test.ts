@@ -67,6 +67,49 @@ describe("Studio simulation export builders", () => {
     ].join("\n"));
   });
 
+  it("exports the full-resolution raw traces when the result carries them", () => {
+    const custody: SimulateResponse = {
+      ...result,
+      time: [0.1, 0.3],
+      states: { v: [-65, -64] },
+      current_trace: [10, 11],
+      n_steps: 3,
+      raw: {
+        schema_version: "studio.raw-trace.v1",
+        included: true,
+        element_count: 6,
+        element_budget: 2_000_000,
+        dt: 0.1,
+        n_steps: 3,
+        sample_time_ms: "(index + 1) * dt",
+        drive_interval_ms: "[index * dt, (index + 1) * dt)",
+        spike_indices: [1],
+        spike_times_ms: [0.2],
+        vector_snapshots_only: [],
+        states: { v: [-65, -64.5, -64] },
+        drive: [10, 10.5, 11],
+      },
+      display: {
+        schema_version: "studio.display-projection.v1",
+        method: "bucket-extrema",
+        max_points: 2,
+        bucket_count: 1,
+        point_count: 2,
+        sample_index: [0, 2],
+        first_sample_included: true,
+        final_sample_included: true,
+        spikes_are_raw_steps: true,
+      },
+    };
+
+    expect(simulationCsvText(custody)).toBe([
+      "time,v,current",
+      "0.1000,-65.000000,10.0000",
+      "0.2000,-64.500000,10.5000",
+      "0.3000,-64.000000,11.0000",
+    ].join("\n"));
+  });
+
   it("escapes SVG text labels sourced from model and state names", () => {
     const svg = simulationSvgText(result);
 

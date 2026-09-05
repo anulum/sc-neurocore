@@ -234,7 +234,7 @@ class TestSuccessfulRuns:
         expected.update(ATIF_OVERRIDES)
         assert receipt["parameters"] == expected
         assert receipt["drive"] == {"step_parameter": "current", "kind": "float"}
-        assert receipt["state_recording"] == {"recorded": ["v"], "excluded": []}
+        assert receipt["state_recording"] == {"recorded": ["v", "theta"], "excluded": []}
         assert receipt["steps_truncated"] is False
 
         reference = AdaptiveThresholdIFNeuron(**ATIF_OVERRIDES)
@@ -250,11 +250,15 @@ class TestSuccessfulRuns:
         assert all(math.isfinite(v) for v in result["states"]["v"])
         assert result["states"]["v"] == expected_v
 
-    def test_non_scalar_state_is_declared_excluded_not_zeroed(self) -> None:
+    def test_undeclared_vector_state_is_reported_not_zeroed(self) -> None:
         result = simulate_model("RallCableNeuron", duration=1.0, use_fast_path=False)
-        assert "v" not in result["states"]
-        excluded = result["effective_inputs"]["state_recording"]["excluded"]
-        assert excluded == [{"name": "v", "reason": "non-scalar state (ndarray)"}]
+        assert result["states"] == {}
+        layout = result["state_layout"]
+        assert layout["source"] == "undeclared"
+        assert layout["complete"] is False
+        assert "v" in layout["undeclared_mutable"]
+        assert "the model declares no state layout" in layout["incomplete_reasons"]
+        assert result["effective_inputs"]["state_recording"] == {"recorded": [], "excluded": []}
 
     def test_rust_fast_path_receipt_declares_unexported_state(
         self, monkeypatch: pytest.MonkeyPatch
@@ -301,7 +305,9 @@ class TestSuccessfulRuns:
         result = simulate_model("AdExNeuron", duration=1e9)
         assert result["n_steps"] == MAX_STEPS
         assert result["effective_inputs"]["steps_truncated"] is True
-        assert result["effective_inputs"]["plot_stride"] == MAX_STEPS // 5_000
+        assert result["effective_inputs"]["display_points"] == result["display"]["point_count"]
+        assert result["display"]["point_count"] <= 5_000
+        assert result["display"]["method"] == "bucket-extrema"
 
     def test_resolver_applies_integer_override_exactly(self) -> None:
         inputs = resolve_model_run_inputs("IntegerQIFNeuron", {"v_threshold": 40.0}, None)

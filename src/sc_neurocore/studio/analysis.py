@@ -13,6 +13,8 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.studio.trace_projection import full_state_trace, full_state_traces
+
 
 def bifurcation_sweep(
     simulate_fn: Callable[..., dict[str, Any]],
@@ -37,7 +39,8 @@ def bifurcation_sweep(
         cfg["params"] = params
 
         result = simulate_fn(**cfg)
-        v = result["states"][list(result["states"].keys())[0]]
+        traces = full_state_traces(result)
+        v = traces[next(iter(traces))]
         # Use second half to skip transient
         half = v[len(v) // 2 :]
         if len(half) < 10:
@@ -348,9 +351,9 @@ def precision_compare(
     )
 
     # Compute error
-    var0 = list(float_result["states"].keys())[0]
-    float_v = np.array(float_result["states"][var0])
-    fixed_v = np.array(fixed_result["states"][var0])
+    var0 = next(iter(full_state_traces(float_result)))
+    float_v = np.array(full_state_trace(float_result, var0))
+    fixed_v = np.array(full_state_trace(fixed_result, var0))
     n = min(len(float_v), len(fixed_v))
     error = np.abs(float_v[:n] - fixed_v[:n])
 

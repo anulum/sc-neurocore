@@ -35720,6 +35720,20 @@ ModelInputError
 ### Function `run_receipt(inputs, trace)`
 Return the effective-input receipt attached to a successful run payload.
 
+Parameters
+----------
+inputs, trace : ModelRunInputs, DriveTrace
+    The resolved run.
+backend : {"python", "rust"}
+    Backend that executed the steps.
+recorded_state : tuple of str
+    Declared variables recorded at every step.
+excluded_state : tuple of (name, reason)
+    Declared variables not recorded per step and why.
+display_points : int
+    Number of points in the display projection (the raw result keeps every
+    step; see ``raw`` and ``display`` on the payload).
+
 ---
 
 ## Module `studio.model_scan`
@@ -35805,15 +35819,18 @@ frequency_hz : float
     Sine frequency; must be positive and finite.
 use_fast_path : bool
     Allow the Rust batch backend when no override or explicit ``dt`` is
-    given. The behaviour probe passes ``False`` so its characterisation is
-    the canonical Python model's, independent of the loaded extension.
+    given. The Rust result exports the membrane voltage only and no
+    initial snapshot, and says so in its ``state_layout``; callers that
+    need complete-state custody pass ``False``.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    Time base, recorded state traces, injected current, spike indices,
-    statistics and an ``effective_inputs`` receipt naming the backend, the
-    effective parameters, the drive contract and every excluded state.
+    The display projection (``time``, ``states``, ``current_trace``),
+    spike indices and statistics, the ``observation`` clock, the
+    ``state_layout`` with its custody verdict, exact ``initial_state`` and
+    ``final_state`` snapshots, the full-resolution ``raw`` block, the
+    ``display`` sample-index map and an ``effective_inputs`` receipt.
 
 Raises
 ------
@@ -35822,8 +35839,9 @@ ModelInputError
     integer field, unsupported for the model, or when the model cannot be
     constructed or driven under the request.
 ModelSimulationFailure
-    When a step raises or produces a non-finite or non-scalar state; the
-    failure names the backend, step index and simulated time.
+    When a step raises or a recorded variable is non-finite or changes
+    kind or shape; the failure names the backend, the step index and the
+    simulated time at which that step started (``step * dt``).
 RustStudioBackendError
     When an available Rust backend fails for a reason other than an
     unsupported model.
@@ -38224,7 +38242,39 @@ Infinity so saved projects remain portable across runtimes.
 ## Module `studio.simulation`
 
 ### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz)`
-Run an ODE neuron simulation and return time series data.
+Run an equation-neuron simulation and return its complete raw result.
+
+Parameters
+----------
+equations : list&#91;str&#93;
+    Differential equations or map updates, one per state variable.
+threshold, reset : str or None
+    Spike condition and reset assignments.
+params, init : dict or None
+    Parameter values and initial state.
+dt, duration : float
+    Step in milliseconds and requested run length; capped at
+    :data:`MAX_STEPS` steps.
+current, protocol, frequency_hz : float, str, float
+    Injection protocol.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    The display projection (``time``, ``states``, ``current_trace``),
+    spikes and statistics, the ``observation`` clock, the ``state_layout``
+    (source ``equations``), exact ``initial_state`` and ``final_state``
+    snapshots, the full-resolution ``raw`` block and the ``display``
+    sample-index map.
+
+Raises
+------
+ValueError
+    When the duration yields no complete step or the equations are invalid.
+ModelSimulationFailure
+    When a step raises or a state variable becomes non-finite (reported
+    with the step index and the time that step started, never as a NaN
+    trace).
 
 ### Function `fi_curve(equations, threshold, reset, params, init, dt, duration, i_min, i_max, i_steps)`
 Sweep current and compute firing rate at each level.
@@ -38244,16 +38294,30 @@ input_sha256:
     SHA-256 digest of the canonical request payload.
 result_sha256:
     SHA-256 digest of the canonical result payload without this manifest.
+raw_sha256:
+    SHA-256 digest of the canonical ``raw`` block (full-resolution traces,
+    spikes and clock rules), empty when the result carries no raw block.
 dt:
     Effective simulation time step in milliseconds.
 n_steps:
-    Number of executed simulation steps before plotting downsampling.
+    Number of executed simulation steps.
 sample_count:
-    Number of samples returned to the UI after plotting downsampling.
+    Number of display samples returned in ``time``.
 spike_count:
     Number of spikes detected during the simulation.
 state_variables:
-    Sorted state variable names returned in the result payload.
+    Sorted names of the state variables recorded at every step.
+raw_included:
+    Whether the raw block carries the full-resolution traces.
+layout_source:
+    Where the state layout came from (``descriptor``, ``equations`` or
+    ``undeclared``), empty for a result without a layout.
+state_custody_complete:
+    Whether every declared variable was recorded and nothing undeclared
+    changed during the run.
+observation_clock:
+    Clock rule of the recorded samples (``post-step``), empty when the
+    result carries none.
 evidence_classification:
     Stable evidence lane label for simulation runs.
 status:
@@ -38284,6 +38348,175 @@ Raises
 ------
 ValueError
     If request or result payloads cannot be encoded as portable JSON.
+
+---
+
+## Module `studio.state_layout`
+
+### Class `DeclaredState`
+One state variable as the model declares it.
+
+Parameters
+----------
+name : str
+    Attribute name on the model instance (or variable name of an equation
+    neuron).
+role : {"biological", "auxiliary", "unassigned"}
+    Role from the canonical schema profile; ``unassigned`` when the class
+    has no bound profile or the profile does not name the variable.
+unit : str
+    Declared unit, empty when undeclared.
+meaning : str
+    Declared meaning, empty when undeclared.
+declared_init : float or None
+    Declared initial value, ``None`` when the declaration carries none.
+
+
+### Class `ObservedState`
+A declared state variable with the shape observed on the instance.
+
+Parameters
+----------
+declared : DeclaredState
+    The declaration.
+kind : {"scalar", "vector"} or None
+    Observed kind; ``None`` when the variable is not observable.
+shape : tuple of int or None
+    Observed shape (``()`` for a scalar); ``None`` when not observable.
+observable : bool
+    Whether the run can record the variable.
+reason : str
+    Why the variable is not observable (empty when it is).
+trace : {"per-step", "snapshots-only", "none"}
+    How the run records the variable: every step, only in the initial and
+    final snapshots (a vector beyond the raw budget), or not at all.
+
+- **name**()
+  - Attribute name of the variable.
+- **to_public_dict**()
+  - Return the path-free public description of the variable.
+
+### Class `StateLayout`
+The declared state layout of one run and its custody verdict.
+
+Parameters
+----------
+source : {"descriptor", "equations", "undeclared"}
+    Where the declaration comes from.
+schema_profile : str
+    Canonical schema stem whose profile assigned the roles, else empty.
+variables : tuple of ObservedState
+    Every declared variable, observable or not.
+undeclared_mutable : tuple of str
+    Instance attributes that changed between the initial and the final
+    snapshot without being declared (private registers included).
+
+- **observable**()
+  - Variables the run records.
+- **per_step**()
+  - Variables recorded at every step.
+- **scalars**()
+  - Observable scalar variables (the ones the display projection shows).
+- **incomplete_reasons**()
+  - Return why the recorded state is not the complete declared state.
+- **complete**()
+  - Whether every declared variable was recorded and nothing undeclared moved.
+- **with_undeclared_mutable**(names)
+  - Return a copy carrying the start-to-end mutation audit.
+- **with_custody_notes**(notes)
+  - Return a copy carrying backend custody limitations.
+- **to_public_dict**()
+  - Return the path-free public layout with its custody verdict.
+
+### Class `StateObservationError`
+Raised when an observable variable is not a finite value of its observed shape.
+
+Parameters
+----------
+name : str
+    Variable name.
+reason : str
+    Bounded description of the violation.
+
+- **__init__**(name, reason)
+
+### Function `declared_state(class_name)`
+Return the declared state of a catalogue class.
+
+Parameters
+----------
+class_name : str
+    Registered catalogue class name.
+
+Returns
+-------
+tuple
+    ``(source, schema_profile, variables)``: ``descriptor`` with the
+    committed ``&#91;state&#93;`` table joined with the canonical profile roles, or
+    ``undeclared`` with no variables when the descriptor is absent or
+    declares no state. The descriptor is the authority; the profile only
+    assigns roles.
+
+### Function `equation_state(names, init)`
+Return the declared state of an equation-playground neuron.
+
+Parameters
+----------
+names : iterable of str
+    State variable names in the neuron's evaluation order.
+init : mapping or None
+    Initial values the request declared; a variable without one carries
+    ``None``.
+
+### Function `scalar_value(value)`
+Return ``value`` as a float when it is a real scalar, otherwise ``None``.
+
+### Function `vector_value(value)`
+Return ``value`` as a float64 array when it is a numeric array of rank ≥ 1.
+
+### Function `observe_layout(instance, source, schema_profile, declared)`
+Observe the shape of every declared variable on a constructed instance.
+
+Parameters
+----------
+instance : object
+    The model instance before its first step.
+source, schema_profile : str
+    Provenance of the declaration (see :func:`declared_state`).
+declared : iterable of DeclaredState
+    The declared variables.
+n_steps : int
+    Steps the run will execute; decides whether a vector trace fits the
+    raw element budget.
+element_budget : int
+    Maximum raw elements the run may return per variable trace.
+
+Returns
+-------
+StateLayout
+    Every declared variable with its observed kind and shape, or the
+    reason it cannot be recorded.
+
+### Function `read_variable(instance, variable)`
+Read one observable variable and enforce its observed kind, shape and finiteness.
+
+Raises
+------
+StateObservationError
+    When the value is no longer of the observed kind or shape, or is not
+    finite.
+
+### Function `snapshot(instance, layout)`
+Return the exact value of every observable variable of the layout.
+
+### Function `public_snapshot(values)`
+Return a snapshot as JSON values (vectors as nested lists).
+
+### Function `attribute_fingerprints(instance)`
+Fingerprint every instance attribute (public and private) for the mutation audit.
+
+### Function `undeclared_mutations(before, after, layout)`
+Return attributes that changed between two fingerprints without being declared.
 
 ---
 
@@ -38493,6 +38726,107 @@ Return all curated Studio equation templates.
 
 ### Function `get_template(name)`
 Return one curated Studio equation template by name.
+
+---
+
+## Module `studio.trace_projection`
+
+### Class `DisplayProjection`
+The sample-index set of the viewport projection.
+
+Parameters
+----------
+sample_index : numpy.ndarray
+    Sorted raw step indices the projection shows.
+method : {"identity", "bucket-extrema"}
+    ``identity`` when the run fits the point budget, otherwise per-bucket
+    extrema of every series on a shared index set.
+bucket_count : int
+    Number of buckets used (``0`` for identity).
+max_points : int
+    The upper bound the projection was built against.
+
+- **point_count**()
+  - Number of display points.
+
+### Function `display_sample_indices(n_steps, series)`
+Choose the raw step indices a bounded viewport shows.
+
+Parameters
+----------
+n_steps : int
+    Number of raw steps.
+series : sequence of numpy.ndarray
+    Every scalar trace whose extrema must survive (states and drive), each
+    of length ``n_steps`` and finite.
+max_points : int
+    Hard upper bound on the number of display points.
+
+Returns
+-------
+DisplayProjection
+    Identity when ``n_steps <= max_points``; otherwise the sorted union of
+    the first sample, the last sample and each bucket's argmin/argmax of
+    every series. With ``k`` series and ``b`` buckets the union holds at
+    most ``2 + 2*k*b <= max_points`` points, so the bound is exact.
+
+Raises
+------
+ValueError
+    When ``n_steps`` is not positive, ``max_points < 2`` or a series has
+    the wrong length.
+
+### Function `sample_times(n_steps, dt)`
+Return the post-step sample time of every raw step: ``(index + 1) * dt``.
+
+### Function `observation_block(dt)`
+Return the observation-clock contract of a run.
+
+### Function `raw_block()`
+Return the full-resolution raw block of a run.
+
+Parameters
+----------
+dt, n_steps : float, int
+    Step and number of executed steps.
+scalar_traces : mapping
+    Per-step float64 arrays of length ``n_steps`` for every scalar state.
+vector_traces : mapping
+    Per-step arrays of shape ``(n_steps, *shape)`` for vector states that
+    fit the element budget.
+vector_omitted : sequence of str
+    Vector states recorded in snapshots only.
+drive : numpy.ndarray
+    The injected drive sample of every step.
+spikes : sequence of int
+    Raw step indices at which the model reported a spike.
+element_budget : int
+    Raw element budget the block was built against.
+
+Returns
+-------
+dict
+    ``included`` is ``False`` only when the scalar traces alone exceed the
+    budget; nothing is shortened silently, the reason is stated instead.
+
+### Function `custody_payload()`
+Assemble the public result of a run: raw custody plus display projection.
+
+The top-level ``time``, ``states`` and ``current_trace`` fields are the
+display projection (kept for existing consumers and labelled as such in
+``display``); ``raw``, ``initial_state`` and ``final_state`` carry the
+complete result.
+
+### Function `full_state_traces(result)`
+Return the full-resolution scalar state traces of a run result.
+
+Consumers that compute on a trace (attractor detection, state ranges,
+precision errors) must not use the display projection. When the result
+carries an included ``raw`` block its traces are returned; a legacy or
+raw-less result falls back to its ``states`` field.
+
+### Function `full_state_trace(result, name)`
+Return one full-resolution scalar state trace (empty when absent).
 
 ---
 

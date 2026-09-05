@@ -9,6 +9,7 @@
 import type { SimulateResponse } from "./api/client";
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
 import { downloadCanvasPng } from "./browserCanvasExport";
+import { fullDriveTrace, fullSampleTimes, fullStateNames, fullStateTrace } from "./simulationRaw";
 
 const SVG_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"] as const;
 
@@ -75,14 +76,19 @@ export function simulationJsonExport(result: SimulateResponse): SimulationExport
 }
 
 export function simulationCsvText(result: SimulateResponse): string {
-  const variables = Object.keys(result.states);
+  // Export the full-resolution raw traces (post-step sample times); a legacy
+  // result without raw custody exports the arrays it carries.
+  const variables = fullStateNames(result);
+  const traces = variables.map((variable) => fullStateTrace(result, variable) ?? []);
+  const drive = fullDriveTrace(result);
+  const times = fullSampleTimes(result);
   const header = ["time", ...variables, "current"].join(",");
-  const rows = result.time.map((time, index) => {
-    const values = variables.map((variable) => result.states[variable][index]?.toFixed(6) ?? "");
+  const rows = times.map((time, index) => {
+    const values = traces.map((trace) => trace[index]?.toFixed(6) ?? "");
     return [
       time.toFixed(4),
       ...values,
-      result.current_trace[index]?.toFixed(4) ?? "",
+      drive[index]?.toFixed(4) ?? "",
     ].join(",");
   });
   return [header, ...rows].join("\n");

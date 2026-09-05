@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 427
+expected_file_count = 429
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1707,6 +1707,14 @@ rationale = "Versioned model profile contract (scientific model, numerical reali
 [[file]]
 path = "src/sc_neurocore/neurons/profile_registry.py"
 rationale = "Per-profile inventory and validator registry consumed by the source-oracle, native-admission and dependency-closure work."
+
+[[file]]
+path = "src/sc_neurocore/studio/state_layout.py"
+rationale = "Model-declared state layout, observed shapes, exact snapshots and the mutation audit behind Studio complete-state custody."
+
+[[file]]
+path = "src/sc_neurocore/studio/trace_projection.py"
+rationale = "Full-resolution raw trace custody and the bounded display projection every Studio simulation response carries."
 
 [[file]]
 path = "src/sc_neurocore/neurons/readiness.py"

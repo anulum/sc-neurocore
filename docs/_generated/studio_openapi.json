@@ -3840,7 +3840,7 @@
     },
     "/api/models/simulate": {
       "post": {
-        "description": "Simulate one catalogue model under the fail-closed run contract.\n\nA rejected request (HTTP 422 ``invalid_model_input``) or a numerical\nfailure (HTTP 422 ``model_simulation_failed``) is never cached and never\nreturns a success payload; a successful run carries its\n``effective_inputs`` receipt.",
+        "description": "Simulate one catalogue model under the fail-closed run contract.\n\nA rejected request (HTTP 422 ``invalid_model_input``) or a numerical\nfailure (HTTP 422 ``model_simulation_failed``) is never cached and never\nreturns a success payload; a successful run carries its\n``effective_inputs`` receipt, the declared ``state_layout`` with its\ncustody verdict, exact initial and final snapshots, the full-resolution\n``raw`` block and the ``display`` projection. The run executes on the\nPython custody backend so every declared variable is observed.",
         "operationId": "api_model_simulate_api_models_simulate_post",
         "requestBody": {
           "content": {

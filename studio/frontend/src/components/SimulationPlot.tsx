@@ -20,6 +20,7 @@ import type {
   SensitivityResponse,
 } from "../api/client";
 import { buildAnalysisEvidenceItems, buildSimulationEvidenceItems } from "../plotEvidence";
+import { displayPositionAtTime, rawStepAtTime } from "../simulationRaw";
 import {
   drawAxes,
   drawLine,
@@ -147,18 +148,21 @@ export default function SimulationPlot() {
       const t0 = isNaN(z.xMin) ? result.time[0] : z.xMin;
       const t1 = isNaN(z.xMax) ? result.time[result.time.length - 1] : z.xMax;
       const tAt = t0 + fracX * (t1 - t0);
-      const idx = Math.round(tAt / result.dt);
+      // Display arrays are a projection of the raw steps: read them at the
+      // display position nearest to the cursor time and report the raw step.
+      const position = displayPositionAtTime(result, tAt);
+      const step = rawStepAtTime(result, tAt);
       const vars = Object.keys(result.states);
       const vals = vars.map((v) => {
         const arr = result.states[v];
-        const i = Math.min(Math.max(idx, 0), arr.length - 1);
+        const i = Math.min(Math.max(position, 0), arr.length - 1);
         return `${v}=${arr[i].toFixed(2)}`;
       }).join(" ");
       crosshairRef.current = e.clientX - rect.left;
       setTooltip({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
-        text: `t=${tAt.toFixed(1)} ${vals}`,
+        text: `t=${result.time[position].toFixed(1)} step=${step} ${vals}`,
       });
       draw();
     } else {
@@ -622,7 +626,7 @@ export default function SimulationPlot() {
     if (hasSpikes) {
       ctx.strokeStyle = "rgba(255,82,82,0.2)"; ctx.lineWidth = 1;
       for (const idx of result.spikes) {
-        const x = L + ((idx * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
+        const x = L + (((idx + 1) * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
         ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + voltH); ctx.stroke();
       }
     }
@@ -668,7 +672,7 @@ export default function SimulationPlot() {
       ctx.strokeStyle = BORDER; ctx.lineWidth = 1; ctx.strokeRect(L, rasY, pw, rasterH);
       ctx.strokeStyle = "#ff5252"; ctx.lineWidth = 1.5;
       for (const idx of result.spikes) {
-        const x = L + ((idx * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
+        const x = L + (((idx + 1) * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
         ctx.beginPath(); ctx.moveTo(x, rasY + 2); ctx.lineTo(x, rasY + rasterH - 2); ctx.stroke();
       }
     }

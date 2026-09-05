@@ -29,7 +29,7 @@ from sc_neurocore.studio.evidence_classification import (
 )
 from sc_neurocore.studio.model_scan import STUDIO_MODEL_SCAN_SCHEMA_VERSION
 from sc_neurocore.studio.project_manifest import build_project_save_manifest
-from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
+from sc_neurocore.studio.simulation_manifest import SUPPORTED_SIMULATION_RUN_SCHEMA_VERSIONS
 
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
 STUDIO_DEFAULT_FLOW_RUN_SCHEMA_VERSION = "sc-neurocore.studio.default-flow-run.v1"
@@ -77,7 +77,7 @@ def _simulation_result_payload(payload: Mapping[str, object]) -> dict[str, JsonV
     if not isinstance(metadata, Mapping):
         raise ValueError("Studio simulation payload requires run metadata.")
     schema_version = metadata.get("schema_version")
-    if schema_version != STUDIO_SIMULATION_RUN_SCHEMA_VERSION:
+    if schema_version not in SUPPORTED_SIMULATION_RUN_SCHEMA_VERSIONS:
         raise ValueError("Studio simulation payload has unsupported run metadata.")
     evidence_classification = metadata.get("evidence_classification")
     if evidence_classification != validate_studio_evidence_classification("simulation"):

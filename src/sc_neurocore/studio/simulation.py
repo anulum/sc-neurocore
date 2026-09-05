@@ -6,15 +6,36 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — ODE simulation engine for Studio Equation Playground
 
+"""Equation-playground simulation with complete raw custody.
+
+The state layout of an equation neuron is the set of variables the equations
+declare; the run records every one of them at every step under the post-step
+observation clock and returns the raw arrays next to a bounded display
+projection (:mod:`sc_neurocore.studio.trace_projection`).
+"""
+
 from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
 
 from sc_neurocore.neurons.equation_builder import from_equations
+from sc_neurocore.studio.state_layout import (
+    StateObservationError,
+    equation_state,
+    observe_layout,
+    read_variable,
+    snapshot,
+)
+from sc_neurocore.studio.trace_projection import (
+    MAX_PLOT_POINTS,
+    RAW_ELEMENT_BUDGET,
+    custody_payload,
+)
 
 MAX_STEPS = 100_000
-MAX_PLOT_POINTS = 5_000
+ODE_MODEL_NAME = "ode"
 
 
 def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict[str, Any]:
@@ -77,6 +98,29 @@ def _make_current_trace(
     return I
 
 
+def _run_failure(step: int, dt: float, exc: BaseException) -> Exception:
+    """Build the structured numerical-failure error for an equation run.
+
+    The error class lives in :mod:`sc_neurocore.studio.model_run_contract`,
+    which imports the protocol builder above; the import is deferred to the
+    failure path to keep the module graph acyclic.
+    """
+    from sc_neurocore.studio.model_run_contract import ModelSimulationFailure, bounded_diagnostic
+
+    diagnostic = (
+        f"state {exc.name!r} {exc.reason}"
+        if isinstance(exc, StateObservationError)
+        else bounded_diagnostic(exc)
+    )
+    return ModelSimulationFailure(
+        model=ODE_MODEL_NAME,
+        backend="python",
+        step=step,
+        time_ms=step * dt,
+        diagnostic=diagnostic,
+    )
+
+
 def simulate(
     equations: list[str],
     threshold: str | None = None,
@@ -89,7 +133,40 @@ def simulate(
     protocol: str = "constant",
     frequency_hz: float = 10.0,
 ) -> dict[str, Any]:
-    """Run an ODE neuron simulation and return time series data."""
+    """Run an equation-neuron simulation and return its complete raw result.
+
+    Parameters
+    ----------
+    equations : list[str]
+        Differential equations or map updates, one per state variable.
+    threshold, reset : str or None
+        Spike condition and reset assignments.
+    params, init : dict or None
+        Parameter values and initial state.
+    dt, duration : float
+        Step in milliseconds and requested run length; capped at
+        :data:`MAX_STEPS` steps.
+    current, protocol, frequency_hz : float, str, float
+        Injection protocol.
+
+    Returns
+    -------
+    dict[str, Any]
+        The display projection (``time``, ``states``, ``current_trace``),
+        spikes and statistics, the ``observation`` clock, the ``state_layout``
+        (source ``equations``), exact ``initial_state`` and ``final_state``
+        snapshots, the full-resolution ``raw`` block and the ``display``
+        sample-index map.
+
+    Raises
+    ------
+    ValueError
+        When the duration yields no complete step or the equations are invalid.
+    ModelSimulationFailure
+        When a step raises or a state variable becomes non-finite (reported
+        with the step index and the time that step started, never as a NaN
+        trace).
+    """
     n_steps = int(duration / dt)
     if n_steps > MAX_STEPS:
         n_steps = MAX_STEPS
@@ -106,40 +183,55 @@ def simulate(
     )
 
     var_names = list(neuron.state.keys())
-    traces = {v: np.empty(n_steps) for v in var_names}
+    layout = observe_layout(
+        neuron.state,
+        "equations",
+        "",
+        equation_state(var_names, init),
+        n_steps=n_steps,
+        element_budget=RAW_ELEMENT_BUDGET,
+    )
+    try:
+        initial_state = snapshot(neuron.state, layout)
+    except StateObservationError as exc:
+        raise _run_failure(0, dt, exc) from exc
+    traces = {v.name: np.empty(n_steps, dtype=np.float64) for v in layout.scalars}
     spike_indices: list[int] = []
 
     I_trace = _make_current_trace(protocol, current, n_steps, dt=dt, frequency_hz=frequency_hz)
 
     for t in range(n_steps):
-        spike = neuron.step(I=float(I_trace[t]))
-        for v in var_names:
-            traces[v][t] = neuron.state[v]
+        try:
+            spike = neuron.step(I=float(I_trace[t]))
+        except (ArithmeticError, ValueError, TypeError) as exc:
+            raise _run_failure(t, dt, exc) from exc
+        for variable in layout.scalars:
+            try:
+                traces[variable.name][t] = read_variable(neuron.state, variable)
+            except StateObservationError as exc:
+                raise _run_failure(t, dt, exc) from exc
         if spike:
             spike_indices.append(t)
 
-    time = np.arange(n_steps) * dt
+    try:
+        final_state = snapshot(neuron.state, layout)
+    except StateObservationError as exc:
+        raise _run_failure(n_steps - 1, dt, exc) from exc
     stats = _spike_stats(spike_indices, dt, n_steps)
-
-    # Current trace for plotting (downsample with states)
-    current_trace = I_trace
-
-    if n_steps > MAX_PLOT_POINTS:
-        stride = n_steps // MAX_PLOT_POINTS
-        time = time[::stride]
-        traces = {v: arr[::stride] for v, arr in traces.items()}  # type: ignore[misc]
-        current_trace = current_trace[::stride]
-
-    return {
-        "time": time.tolist(),
-        "states": {v: arr.tolist() for v, arr in traces.items()},
-        "current_trace": current_trace.tolist(),
-        "spikes": spike_indices,
-        "spike_count": len(spike_indices),
-        "stats": stats,
-        "dt": dt,
-        "n_steps": n_steps,
-    }
+    return custody_payload(
+        dt=dt,
+        n_steps=n_steps,
+        layout=layout,
+        initial_state=initial_state,
+        final_state=final_state,
+        scalar_traces=traces,
+        vector_traces={},
+        vector_omitted=(),
+        drive=I_trace,
+        spikes=spike_indices,
+        stats=stats,
+        max_points=MAX_PLOT_POINTS,
+    )
 
 
 def fi_curve(
@@ -171,3 +263,12 @@ def fi_curve(
         )
         rates.append(result["stats"]["rate_hz"])
     return {"currents": currents, "rates": rates}
+
+
+__all__ = [
+    "MAX_PLOT_POINTS",
+    "MAX_STEPS",
+    "ODE_MODEL_NAME",
+    "fi_curve",
+    "simulate",
+]

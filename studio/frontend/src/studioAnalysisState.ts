@@ -18,6 +18,7 @@ import type {
   SensitivityResponse,
   SimulateResponse,
 } from "./api/client";
+import { fullStateNames, fullStateTrace } from "./simulationRaw";
 
 export interface StudioAnalysisStartStatePatch {
   activeTab?: "bifurcation" | "compare" | "fi-curve" | "freq" | "heatmap" | "multi" |
@@ -228,8 +229,10 @@ export function studioSTAResultState(result: SimulateResponse): StudioSTAResultS
   if (result.spikes.length < 3) {
     return null;
   }
-  const variables = Object.keys(result.states);
-  const voltage = result.states[variables[0]];
+  // Spike indices are raw steps, so the average must be taken over the
+  // full-resolution trace, never over the display projection.
+  const variables = fullStateNames(result);
+  const voltage = fullStateTrace(result, variables[0]);
   if (voltage === undefined) {
     return null;
   }

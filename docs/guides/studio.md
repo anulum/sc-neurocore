@@ -173,12 +173,62 @@ Four injection protocols for all simulations:
 - **Shareable URLs**: state encoded in URL hash (click Share)
 - **10 preset experiments**: threshold exploration, adaptation, bursting, chaos,
   hardware comparison, and more
-- **CSV export**: download simulation data as comma-separated values
-- **JSON export**: download the simulation response with path-free
-  `studio.simulation-run.v1` reproducibility metadata
+- **CSV export**: download the full-resolution raw traces at their post-step
+  sample times as comma-separated values
+- **JSON export**: download the complete simulation response (raw traces,
+  snapshots and the display projection) with path-free
+  `studio.simulation-run.v2` reproducibility metadata
 - **Evidence labels**: trace and analysis plots surface evidence
   classification, source, input digest, and result digest labels
 - **PNG export**: screenshot the current plot
+
+## Complete state and raw-result custody
+
+Every simulation response (`/api/simulate`, `/api/models/simulate`,
+`/api/multi-simulate`) returns the complete run next to a bounded display
+projection:
+
+- `state_layout` — the state the model declares (its committed descriptor
+  `[state]` table for catalogue models, the equations for the playground),
+  each variable with its role from the canonical schema profile
+  (`biological`, `auxiliary` or `unassigned`), unit, meaning, declared initial
+  value, observed kind (`scalar` or `vector`) and shape. A declared variable
+  the instance does not expose is listed with its reason; attributes that
+  change without being declared are listed under `undeclared_mutable`.
+  `complete` is `true` only when every declared variable was recorded at every
+  step and nothing undeclared changed; `incomplete_reasons` says why not.
+  Name heuristics are not a state source.
+- `observation` — the clock: the initial snapshot is at 0 ms, sample `i` is the
+  state after step `i` at `(i + 1) * dt`, and drive sample `i` applies over
+  `[i * dt, (i + 1) * dt)`.
+- `initial_state` and `final_state` — exact snapshots of every observable
+  declared variable (vectors as lists).
+- `raw` — full-resolution per-step traces of every recorded scalar state
+  (`states`), vector states within the element budget (`vector_states`), the
+  drive, spike step indices and spike times. When the scalar traces alone
+  would exceed `element_budget` the block says so in `reason` instead of
+  shortening anything; vectors beyond the budget are recorded in the snapshots
+  only and named in `vector_snapshots_only`.
+- `time`, `states`, `current_trace` — the display projection, at most 5,000
+  points chosen as the per-bucket extrema of every scalar trace and the drive
+  plus the first and the last sample, with `display.sample_index` mapping each
+  point to its raw step. Peaks, resets and the final sample survive
+  reduction; `spikes` are raw step indices and are never decimated. Analyses,
+  exports and the spike-triggered average read `raw`, not the projection.
+- `effective_inputs` — the ST-01 receipt; `state_recording` lists the
+  recorded and excluded declared variables and `display_points` the size of
+  the projection.
+
+`run_metadata` carries the `studio.simulation-run.v2` manifest: the digests of
+the request, of the returned payload and of the raw block, the layout source,
+whether custody is complete, whether raw traces are included and the
+observation clock. Evidence bundles accept both v1 (history) and v2 manifests.
+
+The catalogue routes run on the Python custody backend so every declared
+variable is observed. The optional Rust batch backend, still used by analysis
+sweeps that need rates only, exports the membrane voltage and no initial
+snapshot; its result says so in `state_layout` and is never presented as
+complete-state custody.
 
 ## API Reference
 
@@ -254,7 +304,7 @@ input and result SHA-256 digests, and the returned result keys without
 exposing host-local paths. The corresponding plot views surface the evidence
 class, source, input digest, and result digest next to the rendered analysis.
 `/api/multi-simulate` attaches per-result `run_metadata` with the
-`studio.simulation-run.v1` schema so each overlaid trace carries the same
+`studio.simulation-run.v2` schema so each overlaid trace carries the same
 reproducibility provenance as `/api/simulate`.
 
 The frequency-response endpoint runs the simulator with a true sinusoidal
@@ -313,11 +363,14 @@ fields must be finite.
 
 Response includes `time`, `states`, `spikes`, `spike_count`, `dt`, `n_steps`,
 `stats` (rate_hz, isi_mean_ms, isi_cv, isi_histogram), `current_trace`, and
-`pattern` (auto-classified firing behaviour). Simulation responses also include
-`run_metadata` with the `studio.simulation-run.v1` schema, `simulation`
-evidence classification, source (`ode` or `model`), input and result SHA-256
-digests, effective `dt`, executed step count, returned sample count, spike
-count, and state variable names.
+`pattern` (auto-classified firing behaviour), plus the custody fields
+(`state_layout`, `observation`, `initial_state`, `final_state`, `raw`,
+`display`) described above. Simulation responses also include
+`run_metadata` with the `studio.simulation-run.v2` schema, `simulation`
+evidence classification, source (`ode` or `model`), input, result and raw
+SHA-256 digests, effective `dt`, executed step count, returned display sample
+count, spike count, recorded state variable names, layout source, custody
+verdict and observation clock.
 
 Analysis responses include `analysis_metadata` with path-free result
 provenance. The frontend displays the analysis type, source, and shortened
@@ -649,7 +702,8 @@ execution-model limits before launching long-running work.
 Administrators can create reproducible handoff bundles with
 `POST /api/studio/evidence/bundle`. The route runs as a bounded
 `studio-evidence` worker job and can include one saved project payload,
-selected simulation responses carrying `studio.simulation-run.v1` run metadata,
+selected simulation responses carrying `studio.simulation-run.v1` or `.v2` run
+metadata,
 selected analysis responses carrying `studio.analysis-result.v1` analysis
 metadata, selected default-flow run and attestation responses, selected job
 records, verified copies of selected job artifacts, a bounded audit export,

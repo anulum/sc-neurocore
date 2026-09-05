@@ -171,6 +171,41 @@ describe("studio analysis state helpers", () => {
     });
   });
 
+  it("computes the spike-triggered average over the raw trace, not the display projection", () => {
+    const raw = Array.from({ length: 30 }, (_, index) => index);
+    const result = simulationResult({
+      dt: 5,
+      spikes: [3, 10, 20],
+      states: { v: [0, 29] },
+      time: [5, 150],
+      n_steps: 30,
+    });
+    result.raw = {
+      schema_version: "studio.raw-trace.v1",
+      included: true,
+      element_count: 60,
+      element_budget: 2_000_000,
+      dt: 5,
+      n_steps: 30,
+      sample_time_ms: "(index + 1) * dt",
+      drive_interval_ms: "[index * dt, (index + 1) * dt)",
+      spike_indices: [3, 10, 20],
+      spike_times_ms: [20, 55, 105],
+      vector_snapshots_only: [],
+      states: { v: raw },
+      drive: raw.map(() => 10),
+    };
+
+    expect(studioSTAResultState(result)).toEqual({
+      activeTab: "sta",
+      staResult: {
+        average: [9, 10, 11, 12],
+        n_spikes: 3,
+        time_ms: [-10, -5, 0, 5],
+      },
+    });
+  });
+
   it("returns null when STA cannot be computed", () => {
     expect(studioSTAResultState(simulationResult({ spikes: [1, 2] }))).toBeNull();
     expect(studioSTAResultState(simulationResult({ spikes: [3, 10, 20], states: {} }))).toBeNull();

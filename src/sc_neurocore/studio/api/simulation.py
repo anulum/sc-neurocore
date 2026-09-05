@@ -69,8 +69,26 @@ from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 
 
+CACHE_RAW_ELEMENT_LIMIT = 200_000
+
+
+def _raw_element_count(result: dict[str, Any]) -> int:
+    """Return the raw element count a custody result declares (0 when absent)."""
+    raw = result.get("raw")
+    if isinstance(raw, dict):
+        count = raw.get("element_count")
+        if isinstance(count, int) and not isinstance(count, bool):
+            return count
+    return 0
+
+
 class _SimCache:
-    """LRU cache for simulation results keyed by JSON hash."""
+    """LRU cache for simulation results keyed by JSON hash.
+
+    Results whose raw block exceeds :data:`CACHE_RAW_ELEMENT_LIMIT` elements
+    are returned but not retained, so the cache cannot pin hundreds of
+    megabytes of full-resolution traces.
+    """
 
     def __init__(self, maxsize: int = 64) -> None:
         self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
@@ -92,6 +110,8 @@ class _SimCache:
         return None
 
     def put(self, params: dict[str, Any], result: dict[str, Any]) -> None:
+        if _raw_element_count(result) > CACHE_RAW_ELEMENT_LIMIT:
+            return
         k = self._key(params)
         self._cache[k] = result
         self._cache.move_to_end(k)
@@ -164,7 +184,10 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         A rejected request (HTTP 422 ``invalid_model_input``) or a numerical
         failure (HTTP 422 ``model_simulation_failed``) is never cached and never
         returns a success payload; a successful run carries its
-        ``effective_inputs`` receipt.
+        ``effective_inputs`` receipt, the declared ``state_layout`` with its
+        custody verdict, exact initial and final snapshots, the full-resolution
+        ``raw`` block and the ``display`` projection. The run executes on the
+        Python custody backend so every declared variable is observed.
         """
         cache_key = {"_type": "model", **req.model_dump()}
         cached = _cache.get(cache_key)
@@ -182,6 +205,7 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
                 duration=req.duration,
                 current=req.current,
                 protocol=req.protocol,
+                use_fast_path=False,
             )
             result["pattern"] = classify_firing_pattern(
                 result["spikes"], result["n_steps"], result["dt"]
@@ -484,17 +508,15 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         def fn() -> list[dict[str, Any]]:
             results: list[dict[str, Any]] = []
             for cfg in configs[:4]:
-                sim_fn = _make_simulate_fn(
-                    {
-                        "model_name": cfg.name,
-                        "params": cfg.params,
-                        "dt": cfg.dt,
-                        "duration": cfg.duration,
-                        "current": cfg.current,
-                        "protocol": cfg.protocol,
-                    }
+                r = simulate_model(
+                    name=cfg.name,
+                    param_overrides=cfg.params,
+                    dt=cfg.dt,
+                    duration=cfg.duration,
+                    current=cfg.current,
+                    protocol=cfg.protocol,
+                    use_fast_path=False,
                 )
-                r = sim_fn()
                 r["pattern"] = classify_firing_pattern(r["spikes"], r["n_steps"], r["dt"])
                 r["run_metadata"] = build_simulation_run_manifest(
                     source="model",
