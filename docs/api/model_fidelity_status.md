@@ -186,6 +186,11 @@ page records, all of:
 - an executed Python-parity test per lane (bit-exact, or spike-count with the transcendental caveat);
 - an honest committed benchmark.
 
+Declared tiers on this page and in Studio are what the descriptors claim. Their evidence-bound
+counterpart (which claims are backed by an executed, still-fresh facet receipt, and which merely
+name evidence that exists) is described in [readiness evidence](readiness_evidence.md) and
+generated into `docs/_generated/readiness_evidence_ledger.json`.
+
 The internal working tracker for the sweep (with per-unit close-out detail) is
 `docs/internal/POLYGLOT_STUB_REMEDIATION_BACKLOG.md` (developer-local, not published). This page is
 its public, per-model summary.

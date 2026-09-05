@@ -11,6 +11,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added evidence-bound readiness next to the declared dual-axis tiers
+  (`sc_neurocore.neurons.readiness`, `facet_receipts`, `evidence_references`).
+  Descriptor evidence fields are parsed into typed references and resolved on
+  disk; a facet is credited only through an immutable facet receipt
+  (`tools/facet_receipt.py`) that records the executed command, its tool and
+  runtime, its passed/failed/skipped counts and the digests of every subject
+  (descriptor contract, model module, schema profiles, compiler, committed RTL,
+  reports, validator tests), so one changed subject invalidates exactly the
+  facets that consume it. `tools/readiness_evidence_ledger.py` writes and
+  checks `docs/_generated/readiness_evidence_ledger.json`; Studio catalogue
+  entries carry verified tiers next to the declared ones; see
+  `docs/api/readiness_evidence.md`.
+- Corrected four descriptor evidence pointers that named test functions that
+  never existed under that name (AdaptiveThresholdIF, Brunel-Wang and
+  resonate-and-fire co-simulation; McCulloch-Pitts validation) and withdrew the
+  co-simulation claim of `SCInclusivePerfectIntegratorNeuron`, whose retained
+  schema has no RTL trace test. The corpus now fails on any evidence reference
+  that does not resolve. Eight receipts recorded from executed tests bind
+  Lapicque (S5, H1), the three corrected co-simulations and the McCulloch-Pitts
+  validation.
 - Added the canonical model identity registry
   (`sc_neurocore.neurons.model_identity`): every registered class and import
   alias resolves to exactly one identity record with its kind (published source,

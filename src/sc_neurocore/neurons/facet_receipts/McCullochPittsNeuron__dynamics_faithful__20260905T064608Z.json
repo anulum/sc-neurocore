@@ -1,0 +1,78 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v1",
+  "class_name": "McCullochPittsNeuron",
+  "facet": "dynamics_faithful",
+  "profile": "mcculloch_pitts",
+  "claim_scope": "",
+  "subjects": [
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml",
+      "sha256": "d55694463ecf571a51f6a760ae523cca760fd78f7e26705642824aa7f2badec1",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/mcculloch_pitts.py",
+      "sha256": "2029d7b3877a0abee09a90ba576ee9d4f8b2c9d59648d09b6f49d6cb90f34c9e",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/mcculloch_pitts.json",
+      "sha256": "334c96c92b43627471a880f51bab43a031077e776945f147c455cd5ffa38f8e5",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/mcculloch_pitts.toml",
+      "sha256": "ed1381065f9f8e12031af05269cadaf5cf16719eec16b198ee15e1f2a7b1469b",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_reference_mcculloch_pitts.py",
+      "sha256": "94620ea5695a04ab476752d3f798d9b9c55d991e12ee18ea47044ed535b476a4",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule"
+  ],
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule",
+    "-q"
+  ],
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  },
+  "extra_tools": {},
+  "runtime": {
+    "python": "3.12.13",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "3.16.0",
+    "git_head": "eeb89a4002a8a20d12bd181a6a33b5ebbed54c08",
+    "dirty_subjects": "rc/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml"
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v1"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1
+  },
+  "recorded_at": "2026-09-05T06:46:08Z",
+  "notes": "",
+  "receipt_sha256": "e7f3ec21a16a726b7cc144e0ede0a6f8063a639847f1be8f7f2998d192eff5bd"
+}

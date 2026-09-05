@@ -22200,6 +22200,134 @@ Convert a runtime value from pint quantity to float.
 
 ---
 
+## Module `neurons.evidence_references`
+
+### Class `EvidenceReference`
+One parsed and resolved evidence reference.
+
+Parameters
+----------
+raw:
+    The reference text exactly as written in the descriptor.
+kind:
+    Reference kind; see the module docstring.
+path:
+    Repository-relative path the reference names (empty for prose and
+    inline configurations).
+node:
+    ``Class::test`` node path for ``test-node`` references, else empty.
+resolution:
+    ``resolved`` when the named file (and node) exists; ``missing-file`` or
+    ``missing-node`` when it does not; ``unresolvable`` for prose and inline
+    configurations, which name nothing on disk.
+
+- **is_locatable**()
+  - True when the reference names a file that could be checked on disk.
+- **is_resolved**()
+  - True when the named file (and node) exists.
+- **to_public_dict**()
+  - Return a JSON-compatible projection.
+
+### Function `split_evidence_field(value)`
+Split a descriptor evidence field into its reference tokens.
+
+Tokens are separated by semicolons; surrounding whitespace is dropped and
+empty tokens are ignored.
+
+Parameters
+----------
+value:
+    Raw evidence field text.
+
+Returns
+-------
+tuple&#91;str, ...&#93;
+    Non-empty reference tokens in field order.
+
+### Function `classify_reference(token)`
+Classify one reference token without touching the filesystem.
+
+Parameters
+----------
+token:
+    One stripped token from :func:`split_evidence_field`.
+
+Returns
+-------
+tuple&#91;ReferenceKind, str, str&#93;
+    ``(kind, path, node)``.
+
+### Function `resolve_reference(token, repo_root)`
+Classify one token and resolve it against ``repo_root``.
+
+Parameters
+----------
+token:
+    One stripped token from :func:`split_evidence_field`.
+repo_root:
+    Repository root the paths are relative to.
+
+Returns
+-------
+EvidenceReference
+    The typed and resolved reference.
+
+### Function `parse_evidence_field(value, repo_root)`
+Parse and resolve every reference in one descriptor evidence field.
+
+Parameters
+----------
+value:
+    Raw evidence field text.
+repo_root:
+    Repository root the paths are relative to.
+
+Returns
+-------
+tuple&#91;EvidenceReference, ...&#93;
+    References in field order; empty for an empty field.
+
+### Function `node_is_defined(test_file, node)`
+Return whether ``node`` (``Class::test&#91;param&#93;``) is defined in ``test_file``.
+
+Parameters
+----------
+test_file:
+    Absolute path of the test module.
+node:
+    Node path after the ``::`` that follows the file name; a trailing
+    parametrisation suffix in square brackets is ignored.
+
+Returns
+-------
+bool
+    ``True`` when a class or function with that path is defined.
+
+### Function `sha256_file(path)`
+Return the SHA-256 hex digest of one file's bytes.
+
+### Function `sha256_tree(paths, relative_to)`
+Return one digest over several files, independent of iteration order.
+
+Parameters
+----------
+paths:
+    Files to include; each is hashed and listed with its path relative to
+    ``relative_to``.
+relative_to:
+    Root the listed paths are made relative to.
+
+Returns
+-------
+str
+    SHA-256 hex digest of the sorted lines, each holding one relative path,
+    a NUL separator and that file's digest.
+
+### Function `sha256_canonical_json(payload)`
+Return the SHA-256 hex digest of a canonical JSON rendering.
+
+---
+
 ## Module `neurons.expression_derivative`
 
 ### Class `exprel`
@@ -22242,6 +22370,135 @@ ExpressionDifferentiationError
     is not expressible in the smooth grammar (``abs``/``clip``/``min``/
     ``max``, a comparison, a conditional, ``%``, ``//``, or an unknown
     function).
+
+---
+
+## Module `neurons.facet_receipts`
+
+### Class `FacetReceiptError`
+Raised when a receipt payload violates the receipt contract.
+
+
+### Class `FacetSpec`
+Definition of one readiness facet.
+
+Parameters
+----------
+name:
+    Facet identifier (``backend:rust``, ``cosim``, …).
+axis:
+    ``science`` (S4/S5), ``software`` (per-backend completion) or
+    ``silicon`` (H0–H5 and the physical rung beyond them).
+rung:
+    Tier rung the facet credits on its axis, or ``None`` when it credits no
+    tier (per-backend completion, bounded safety, physical measurement).
+required_subjects:
+    Subject kinds a creditable receipt must carry.
+optional_subjects:
+    Subject kinds a receipt may carry; they are checked for freshness when
+    present.
+evidence_field:
+    Descriptor field holding the declared evidence, ``""`` when the
+    descriptor has no field for the facet.
+claim_scope:
+    Claim scope a receipt must state, ``""`` when unconstrained.
+
+- **subjects**()
+  - Every subject kind whose change invalidates the facet.
+
+### Class `Subject`
+One content-addressed input of a facet receipt.
+
+Parameters
+----------
+kind:
+    Subject kind from :data:`SUBJECT_KINDS`.
+path:
+    Repository-relative path (a file, or a directory for ``tree`` scope).
+sha256:
+    Digest of the subject at recording time.
+scope:
+    ``file`` (whole file), ``contract-sections`` (the descriptor sections
+    that fix the model contract, so documentation edits do not invalidate
+    evidence) or ``tree`` (every ``.py`` file under a directory).
+
+- **to_payload**()
+  - Return the JSON projection.
+
+### Class `FacetReceipt`
+One immutable record of an executed evidence command.
+
+Every field is a recorded fact of the run; none is derived by the verifier.
+
+- **to_payload**()
+  - Return the JSON payload, with the seal digest when ``sealed``.
+- **sealed**()
+  - Return a copy whose ``receipt_sha256`` seals the current content.
+- **subject_kinds**()
+  - Return the subject kinds the receipt carries.
+
+### Function `facets_invalidated_by(kind)`
+Return the facets whose receipts a change of ``kind`` invalidates.
+
+### Function `seal_digest(unsealed_payload)`
+Return the seal digest of a receipt payload without ``receipt_sha256``.
+
+### Function `parse_receipt(payload)`
+Validate a receipt payload and return a :class:`FacetReceipt`.
+
+Structural validation only: the seal, the outcome and the subject
+freshness are judged by :func:`credit_problems` and the verifier.
+
+Raises
+------
+FacetReceiptError
+    If a required field is missing or malformed.
+
+### Function `load_receipt(path)`
+Load and structurally validate one receipt file.
+
+### Function `credit_problems(receipt)`
+Return why a receipt cannot credit its facet; empty when it can.
+
+Freshness of the subjects is not judged here (it needs the repository);
+see :func:`sc_neurocore.neurons.readiness.verify_receipt`.
+
+Parameters
+----------
+receipt:
+    The receipt to judge.
+class_name:
+    When given, the class the receipt is being read for; a receipt for a
+    different class is a wrong-subject receipt.
+
+### Function `receipt_filename(class_name, facet, recorded_at)`
+Return the canonical receipt file name for one run.
+
+### Function `iter_receipts(directory)`
+Yield every receipt file in ``directory`` in file-name order.
+
+Raises
+------
+FacetReceiptError
+    If any receipt file is malformed; a broken receipt is an error, not a
+    silently ignored file.
+
+### Function `latest_receipts(directory)`
+Return the newest receipt per ``(class_name, facet)``.
+
+Newest is decided by ``recorded_at`` and then by file name, so an
+append-only successor always supersedes its predecessor.
+
+### Function `descriptor_contract_digest(payload)`
+Return the digest of the descriptor sections that fix the model contract.
+
+Only identity (``metadata.name``/``class_name``/``module``), state,
+parameters, integration and dynamics take part, so a documentation,
+provenance or evidence edit never invalidates a receipt while a changed
+equation, parameter default, dt or method always does.
+
+### Function `descriptor_contract_digest_of(path)`
+Return :func:`descriptor_contract_digest` of a descriptor TOML file.
 
 ---
 
@@ -27220,6 +27477,103 @@ Reference: Yamada, W.M. et al. (1989). In: Methods in Neuronal Modeling. MIT Pre
 - **__post_init__**()
 - **step**(current)
 - **reset**()
+
+---
+
+## Module `neurons.readiness`
+
+### Class `FacetVerification`
+Verification outcome of one facet for one model.
+
+- **to_public_dict**()
+  - Return a JSON-compatible projection.
+
+### Class `ReadinessRecord`
+Declared and verified readiness of one registered class.
+
+- **declared_science_label**()
+  - Declared science tier as ``S<n>``.
+- **declared_silicon_label**()
+  - Declared silicon tier as ``H<n>`` or ``none``.
+- **verified_science_label**()
+  - Verified science tier as ``S<n>``.
+- **verified_silicon_label**()
+  - Verified silicon tier as ``H<n>`` or ``none``.
+- **facet**(name)
+  - Return the verification of one facet by name.
+- **to_public_dict**()
+  - Return a JSON-compatible projection with a stable field order.
+- **evidence_by_field**()
+  - Return the parsed references of every non-empty descriptor evidence field.
+
+### Function `declared_facets(descriptor)`
+Return which facets a descriptor declares, under tier semantics v1.
+
+The predicates are exactly the anchors :mod:`descriptor_tiers` credits, so
+a declared facet here is a declared rung there.
+
+### Function `facet_evidence_field(descriptor, spec)`
+Return the raw evidence text the descriptor holds for ``spec``.
+
+### Function `compiler_subjects(repo_root)`
+Return the compiler subjects shared by every generated-RTL receipt.
+
+### Function `current_digest(subject, repo_root)`
+Recompute a subject's digest from the current repository, ``None`` if absent.
+
+### Function `derive_subjects(class_name, facet)`
+Derive the current subjects a receipt for ``facet`` must cover.
+
+Parameters
+----------
+class_name:
+    Registered class the receipt is for.
+facet:
+    Facet name.
+repo_root:
+    Repository root.
+evidence_refs:
+    Evidence references to take validator and report subjects from; the
+    descriptor's own field for the facet is always included.
+extra_subjects:
+    Subjects the caller adds: the committed RTL a formal or synthesis lane
+    covers (the recorder resolves it through the formal inventory tool)
+    or a native backend source the registry cannot derive.
+
+Returns
+-------
+tuple&#91;Subject, ...&#93;
+    Subjects with digests of the current content, de-duplicated by
+    ``(kind, path)`` and sorted.
+
+### Function `verify_receipt(receipt)`
+Judge one receipt against the current repository.
+
+Returns
+-------
+tuple&#91;FacetStatus, tuple&#91;str, ...&#93;, tuple&#91;str, ...&#93;&#93;
+    ``(status, changed_subject_paths, problems)`` where status is
+    ``invalid`` (cannot credit), ``stale`` (creditable but a subject
+    changed or vanished) or ``bound``.
+
+### Function `verify_model(class_name)`
+Verify every facet of one registered class.
+
+Parameters
+----------
+class_name:
+    Registered class name (aliases are resolved by the caller).
+repo_root:
+    Repository root the evidence paths are relative to.
+receipts:
+    Newest receipts per ``(class_name, facet)``; read from
+    :data:`~sc_neurocore.neurons.facet_receipts.RECEIPT_DIR` when omitted.
+
+### Function `readiness_report()`
+Verify every registered class (aliases excluded), keyed by class name.
+
+### Function `summarise(records)`
+Return count summaries of declared versus verified readiness.
 
 ---
 

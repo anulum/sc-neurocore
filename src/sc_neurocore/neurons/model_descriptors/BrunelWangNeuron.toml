@@ -275,6 +275,6 @@ evidence = "tests/test_reference_brunel_wang.py; tests/test_brunel_wang_backends
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_brunel_wang.py::test_q1616_rtl_tracks_the_schema_oracle"
+cosim_evidence = "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state"
 target_tier = "H1"
 terminal_reason = "The hand Q16.16 single-cell datapath matches its integer oracle, preserves events at the enrolled trace, synthesizes in Yosys, and carries a depth-4 bounded safety job. Timing, PPA, device validation, and formal equivalence to binary64 remain open."

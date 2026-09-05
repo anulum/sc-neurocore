@@ -967,11 +967,11 @@
     "model_documentation_pages": 200,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 625,
+    "public_documentation_pages": 626,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4789
+    "test_files": 4793
   },
   "documentation": {
     "public_pages": [
@@ -1298,6 +1298,7 @@
       "docs/api/qat.md",
       "docs/api/quantum.md",
       "docs/api/quantum_cognition.md",
+      "docs/api/readiness_evidence.md",
       "docs/api/recorders.md",
       "docs/api/research-speculative.md",
       "docs/api/reservoir.md",
@@ -4634,6 +4635,7 @@
       "tests/test_event_driven_event_driven_simulator.py",
       "tests/test_event_driven_event_stats.py",
       "tests/test_event_driven_spike_event.py",
+      "tests/test_evidence_references.py",
       "tests/test_evo_substrate/__init__.py",
       "tests/test_evo_substrate/ecology_support.py",
       "tests/test_evo_substrate/fitness_support.py",
@@ -4778,6 +4780,7 @@
       "tests/test_extended_neurons_stochastic_if.py",
       "tests/test_extended_neurons_true_north.py",
       "tests/test_extended_neurons_wong_wang.py",
+      "tests/test_facet_receipts.py",
       "tests/test_fault_engine_bindings.py",
       "tests/test_fault_injection/fault_injection_support.py",
       "tests/test_fault_injection/test_fault_injection_fault_injection_result.py",
@@ -6664,6 +6667,8 @@
       "tests/test_quasirandom_emitter_quasi_random_emitter.py",
       "tests/test_quasirandom_emitter_sobol16_emitter.py",
       "tests/test_rall_dendrite.py",
+      "tests/test_readiness_evidence_ledger.py",
+      "tests/test_readiness_verification.py",
       "tests/test_recorders/test_spike_recorder.py",
       "tests/test_reference_adaptive_threshold_if.py",
       "tests/test_reference_adex.py",

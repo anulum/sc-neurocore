@@ -5239,6 +5239,7 @@
       "public_label": "",
       "revalidation": "not-completed",
       "missing_gates": [
+        "cosim",
         "synthesis",
         "timing",
         "formal-equivalence",

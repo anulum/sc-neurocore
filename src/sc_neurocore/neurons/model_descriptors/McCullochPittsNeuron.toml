@@ -96,7 +96,7 @@ dynamics_faithful = true
 metric = "trajectory"
 operating_point = "complete theta-one OR and theta-two AND rows, threshold equality, zero excitation, maximum signed count and absolute inhibition"
 tolerance = "eight primary-paper truth rows and varying-input Python/Rust/Julia/Go/Mojo/TOML/JSON/registered-RTL/folded-RTL outputs exact; invalid thresholds, counts, flags and native results fail closed before output"
-evidence = "tests/test_reference_mcculloch_pitts.py::test_committed_truth_table_matches_independent_source_rule"
+evidence = "tests/test_reference_mcculloch_pitts.py::test_truth_rows_match_an_independent_absolute_veto_rule"
 
 [silicon]
 compiles = true

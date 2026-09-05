@@ -75,6 +75,7 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
         "science_label": tiers.science_label,
         "silicon_tier": tiers.silicon,
         "silicon_label": tiers.silicon_label,
+        **_verified_summary(descriptor.class_name),
         "validation_metric": descriptor.validation.metric,
         "integration_method": descriptor.integration_method,
         "terminal_silicon_tier": descriptor.silicon.target_tier,
@@ -144,7 +145,6 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
 
 def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None:
     """Return the canonical schema-backed Studio compile choices, if available."""
-
     module_stem = descriptor.module.rsplit(".", 1)[-1]
     schema_name = schema_for_module(module_stem)
     try:
@@ -177,12 +177,66 @@ def _compile_configuration(descriptor: ModelDescriptor) -> dict[str, Any] | None
     }
 
 
+def _verified_summary(class_name: str) -> dict[str, Any]:
+    """Return the verified (receipt-bound) tiers for a browse entry.
+
+    The declared tiers above come from the descriptor's own flags; these come
+    only from facet receipts whose subjects still match the repository, so a
+    browse entry always shows both what is claimed and what is proven.
+    """
+    from sc_neurocore.neurons.model_identity import identity_registry
+    from sc_neurocore.neurons.readiness import verify_model
+
+    if class_name not in identity_registry():
+        return {
+            "verified_science_tier": 0,
+            "verified_science_label": "S0",
+            "verified_silicon_tier": None,
+            "verified_silicon_label": "none",
+        }
+    record = verify_model(class_name)
+    return {
+        "verified_science_tier": record.verified_science,
+        "verified_science_label": record.verified_science_label,
+        "verified_silicon_tier": record.verified_silicon,
+        "verified_silicon_label": record.verified_silicon_label,
+    }
+
+
+def _verified_detail(class_name: str) -> dict[str, Any]:
+    """Return the per-facet verification block for a model detail."""
+    from sc_neurocore.neurons.readiness import verify_model
+
+    record = verify_model(class_name)
+    return {
+        "science_tier": record.verified_science,
+        "science_label": record.verified_science_label,
+        "silicon_tier": record.verified_silicon,
+        "silicon_label": record.verified_silicon_label,
+        "facets": [
+            {
+                "facet": facet.facet,
+                "declared": facet.declared,
+                "status": facet.status,
+                "receipt": facet.receipt,
+                "changed_subjects": list(facet.changed_subjects),
+                "problems": list(facet.problems),
+                "evidence": [reference.to_public_dict() for reference in facet.evidence],
+            }
+            for facet in record.facets
+        ],
+    }
+
+
 def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build the auditable dual-axis readiness view for a declared descriptor.
 
-    Surfaces the science (S0-S5) and silicon (H0-H5) tiers together with the raw
-    evidence facets that justify them, so a reviewer can see exactly why a model
-    sits where it does — and whether it meets its declared deployability class.
+    Surfaces the declared science (S0-S5) and silicon (H0-H5) tiers together
+    with the raw evidence facets that justify them, and next to them the
+    verified tiers and per-facet statuses derived from facet receipts, so a
+    reviewer can see exactly why a model sits where it does, whether it meets
+    its declared deployability class, and how much of the claim is bound to an
+    executed, still-fresh receipt.
     """
     tiers = completeness_tiers(descriptor)
     return {
@@ -190,6 +244,7 @@ def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
         "science_label": tiers.science_label,
         "silicon_tier": tiers.silicon,
         "silicon_label": tiers.silicon_label,
+        "verified": _verified_detail(descriptor.class_name),
         "is_perfect": is_perfect(descriptor),
         "terminal_silicon_tier": descriptor.silicon.target_tier,
         "terminal_reason": descriptor.silicon.terminal_reason,
@@ -225,6 +280,10 @@ def _introspected_summary(name: str) -> dict[str, Any]:
         "science_tier": 0,
         "science_label": "S0",
         "silicon_tier": None,
+        "verified_science_tier": 0,
+        "verified_science_label": "S0",
+        "verified_silicon_tier": None,
+        "verified_silicon_label": "none",
         "silicon_label": "none",
         "validation_metric": "none",
         "integration_method": "unknown",
@@ -309,11 +368,15 @@ def model_facets() -> dict[str, Any]:
     behavior_counts: Counter[str] = Counter()
     science_tier_counts: Counter[str] = Counter()
     silicon_tier_counts: Counter[str] = Counter()
+    verified_science_counts: Counter[str] = Counter()
+    verified_silicon_counts: Counter[str] = Counter()
     for model in models:
         family_counts[(str(model["family"]), str(model["category_slug"]))] += 1
         maturity_counts[str(model["maturity"])] += 1
         science_tier_counts[str(model.get("science_label", "S0"))] += 1
         silicon_tier_counts[str(model.get("silicon_label", "none"))] += 1
+        verified_science_counts[str(model.get("verified_science_label", "S0"))] += 1
+        verified_silicon_counts[str(model.get("verified_silicon_label", "none"))] += 1
         for tag in model.get("behavior_tags", []):
             behavior_counts[str(tag)] += 1
     families = [
@@ -332,6 +395,8 @@ def model_facets() -> dict[str, Any]:
         "behaviors": behaviors,
         "science_tiers": dict(sorted(science_tier_counts.items())),
         "silicon_tiers": dict(sorted(silicon_tier_counts.items())),
+        "verified_science_tiers": dict(sorted(verified_science_counts.items())),
+        "verified_silicon_tiers": dict(sorted(verified_silicon_counts.items())),
     }
 
 

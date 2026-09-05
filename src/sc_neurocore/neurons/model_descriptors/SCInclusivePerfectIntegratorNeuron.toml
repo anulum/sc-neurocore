@@ -110,7 +110,7 @@ evidence = "tests/test_reference_perfect_integrator_source_receipt.py; tests/tes
 
 [silicon]
 compiles = true
-cosim_validated = true
-cosim_evidence = "tests/test_cosim_perfect_integrator.py::TestTierBModelCosim::test_source_and_sc_rtl_keep_distinct_equality_events"
+cosim_validated = false
+cosim_evidence = ""
 target_tier = "H1"
-terminal_reason = "The preserved SC profile has dedicated Q8.8 RTL, co-simulation, and depth-20 formal reset/event safety; synthesis, timing, PPA, device, board, and physical-silicon evidence remain open."
+terminal_reason = "The preserved SC profile has dedicated Q8.8 RTL (hdl/formal/catalogue/sc_perfect_integrator.v) and depth-20 formal reset/event safety; no RTL trace co-simulation test exists for the retained sc_perfect_integrator schema, so the H1 co-simulation rung is open together with synthesis, timing, PPA, device, board, and physical-silicon evidence."

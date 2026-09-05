@@ -289,6 +289,7 @@ nav:
       - Core:
           - Neuron Model Catalogue: api/neuron_models.md
           - Model Fidelity &amp; Polyglot Status: api/model_fidelity_status.md
+          - Readiness Evidence: api/readiness_evidence.md
           - SC Compte Working-Memory Network: api/sc_compte_wm_network.md
           - Neurons: api/neurons.md
           - Synapses: api/synapses.md

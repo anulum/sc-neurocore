@@ -161,6 +161,6 @@ evidence = "tests/test_adaptive_threshold_if_backends.py::test_complete_configur
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosim_adaptive_threshold_if.py::test_q1616_rtl_tracks_exact_relaxation_and_complete_event_vector"
+cosim_evidence = "tests/test_cosim_adaptive_threshold_if.py::test_q3232_rtl_tracks_exact_relaxation_and_complete_event_vector"
 target_tier = "H1"
 terminal_reason = "Generated fixed-point co-simulation is validated; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

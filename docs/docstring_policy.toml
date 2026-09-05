@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 418
+expected_file_count = 423
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1687,3 +1687,23 @@ rationale = "Canonical model identity registry; public records and count derivat
 [[file]]
 path = "tools/model_identity_ledger.py"
 rationale = "Generated identity ledger writer and freshness check used by the public-claims regression."
+
+[[file]]
+path = "src/sc_neurocore/neurons/evidence_references.py"
+rationale = "Typed evidence references and content digests consumed by the readiness verifier, the receipt recorder and Studio."
+
+[[file]]
+path = "src/sc_neurocore/neurons/facet_receipts.py"
+rationale = "Immutable facet receipt contract and the evidence invalidation matrix; every credited readiness rung reads it."
+
+[[file]]
+path = "src/sc_neurocore/neurons/readiness.py"
+rationale = "Declared-versus-verified readiness verification exposed through Studio, the CLI ledger and the public fidelity page."
+
+[[file]]
+path = "tools/facet_receipt.py"
+rationale = "Receipt recorder that executes evidence commands and seals immutable receipts; operators run it directly."
+
+[[file]]
+path = "tools/readiness_evidence_ledger.py"
+rationale = "Generated readiness evidence ledger writer and freshness check used by the readiness regression."

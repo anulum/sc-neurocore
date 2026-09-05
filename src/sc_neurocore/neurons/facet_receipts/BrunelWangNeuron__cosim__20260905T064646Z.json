@@ -1,0 +1,143 @@
+{
+  "schema": "sc-neurocore.facet-receipt.v1",
+  "class_name": "BrunelWangNeuron",
+  "facet": "cosim",
+  "profile": "brunel_wang",
+  "claim_scope": "trace",
+  "subjects": [
+    {
+      "kind": "committed-rtl",
+      "path": "hdl/formal/catalogue/sc_brunel_wang.v",
+      "sha256": "bbe1e193f0b3486cc8d3a42aef94b77d47205ade4bc6a54f7d642dd844a00fbd",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/compiler",
+      "sha256": "b558f4357101424c4527bc65cfce24201fc229cd90cccb1311162226d3f2a6bb",
+      "scope": "tree"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_builder.py",
+      "sha256": "3b2fe0fa8386141625570d8f1f9a6f12e446d5765f4d74eb4843ed949ca2134a",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_namespace.py",
+      "sha256": "79778540beb3614cdfdb3b76599ad9cfb138c48aa680c907504f9ceb76357e3b",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_safety.py",
+      "sha256": "87c42779221213ca6a09d789168619c3322188f29ea45844bfe32e532e335267",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/equation_units_runtime.py",
+      "sha256": "72580bbef9d6a1b056c83f299912ab1713de73ffe09a5e9247b6b27b239165ac",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/expression_derivative.py",
+      "sha256": "c061e934bcf061ede6c0859addec64e975231bd194bf451c04148df7f55a4409",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_contracts.py",
+      "sha256": "264caf838d10c54c4318b7a8815b332feecf3dfc2946b275ab0ba1ef09193962",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/schema_validator.py",
+      "sha256": "ac9f322d1049802cec417fb05e9dedd4546fa85b9f3b299ac6afd6d57668b1ca",
+      "scope": "file"
+    },
+    {
+      "kind": "compiler",
+      "path": "src/sc_neurocore/neurons/universal_dsl.py",
+      "sha256": "6a640cbd21df2bb26cb377d8b836424be89bc9ae40123cdf23ccb7739a11717f",
+      "scope": "file"
+    },
+    {
+      "kind": "descriptor-contract",
+      "path": "src/sc_neurocore/neurons/model_descriptors/BrunelWangNeuron.toml",
+      "sha256": "cf1bffe12a546cd17537854812901d2452d3043276ea034fbc4fd43858c1666b",
+      "scope": "contract-sections"
+    },
+    {
+      "kind": "model-module",
+      "path": "src/sc_neurocore/neurons/models/brunel_wang.py",
+      "sha256": "c6d4935330f11b41c37dd86fc6081c587fac174a8cc2bb380dc483a59f7fa6ec",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/brunel_wang.json",
+      "sha256": "6edc5daf2c8db3064ffa3468f2de61af4d7e34840c3a72a0d8a10e2f830146e8",
+      "scope": "file"
+    },
+    {
+      "kind": "schema-profile",
+      "path": "src/sc_neurocore/neurons/model_schemas/brunel_wang.toml",
+      "sha256": "827a404f27655f71424c33892887bd772c93cf7f831bfa32be50631a78c9196e",
+      "scope": "file"
+    },
+    {
+      "kind": "validator",
+      "path": "tests/test_cosim_brunel_wang.py",
+      "sha256": "467d5c5ef0fb5c6e9e427824e9a5c9c9e5ea20967434c4c7d58355a4dd1a23be",
+      "scope": "file"
+    }
+  ],
+  "artifacts": [],
+  "evidence_refs": [
+    "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state"
+  ],
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_cosim_brunel_wang.py::test_q1616_rtl_preserves_events_and_bounded_state",
+    "-q"
+  ],
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  },
+  "extra_tools": {
+    "iverilog": "Icarus Verilog version 12.0 (stable) ()",
+    "yosys": "Yosys 0.33 (git sha1 2584903a060)",
+    "verilator": "Verilator 5.020 2024-01-01 rev (Debian 5.020-1)",
+    "sby": "usage: sby [options] [<jobname>.sby [tasknames] | <dirname>]"
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "sc_neurocore": "3.16.0",
+    "git_head": "eeb89a4002a8a20d12bd181a6a33b5ebbed54c08",
+    "dirty_subjects": "rc/sc_neurocore/neurons/model_descriptors/BrunelWangNeuron.toml"
+  },
+  "validator": {
+    "name": "tools/facet_receipt.py",
+    "schema": "sc-neurocore.facet-receipt.v1"
+  },
+  "outcome": "passed",
+  "exit_code": 0,
+  "counts": {
+    "collected": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1
+  },
+  "recorded_at": "2026-09-05T06:46:46Z",
+  "notes": "",
+  "receipt_sha256": "05a9c644ae399d6a1589ee43517ad364a2c1595b463727da15c0adb338a039ab"
+}

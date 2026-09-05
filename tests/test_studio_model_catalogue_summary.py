@@ -12,6 +12,7 @@ from .studio_model_catalogue_support import *
 
 
 def test_list_models_serves_declared_family_and_provenance() -> None:
+    """The browse entry carries the curated family and citeable provenance."""
     summary = _adex_summary()
     assert summary["family"] == "Integrate-and-Fire"
     assert summary["category"] == "Integrate-and-Fire"
@@ -22,6 +23,7 @@ def test_list_models_serves_declared_family_and_provenance() -> None:
 
 
 def test_summary_exposes_completeness_tier_and_evidence_kind() -> None:
+    """Kernel tiers and evidence kinds follow the descriptor curation."""
     by_name = {m["name"]: m for m in list_models()}
     adex = by_name["AdExNeuron"]
     # AdEx is engineering-verified (python+rust + golden trace) → kernel tier 3.
@@ -111,13 +113,13 @@ def test_detail_readiness_block_is_auditable() -> None:
 
 def test_no_model_falls_into_an_other_bucket() -> None:
     """Every model now declares a real family — the 'Other' bucket is gone."""
-
     categories = {str(m["category"]) for m in list_models()}
     assert "Other" not in categories
     assert all(m["category_source"] == "declared" for m in list_models())
 
 
 def test_get_model_detail_serves_descriptor_parameters_and_dynamics() -> None:
+    """Model detail serves the descriptor parameters and dynamics verbatim."""
     detail = get_model_detail("AdExNeuron")
     assert detail is not None
     param = detail["params"][0]
@@ -128,6 +130,7 @@ def test_get_model_detail_serves_descriptor_parameters_and_dynamics() -> None:
 
 
 def test_expif_detail_exposes_source_receipt_and_profile_split() -> None:
+    """ExpIF detail exposes its source receipt and profile split."""
     detail = get_model_detail("ExpIFNeuron")
     assert detail is not None
     reproducibility = cast(dict[str, object], detail["reproducibility"])
@@ -138,6 +141,7 @@ def test_expif_detail_exposes_source_receipt_and_profile_split() -> None:
 
 
 def test_lapicque_detail_exposes_source_receipt_and_no_reset_boundary() -> None:
+    """Lapicque detail exposes its source receipt and no-reset boundary."""
     detail = get_model_detail("LapicqueNeuron")
     assert detail is not None
     reproducibility = cast(dict[str, object], detail["reproducibility"])
@@ -163,6 +167,7 @@ def test_model_detail_exposes_measured_golden_trace_digest_variants() -> None:
 
 
 def test_model_facets_cover_the_whole_catalogue() -> None:
+    """Facet counts partition the whole catalogue on every axis."""
     facets = model_facets()
     assert facets["total"] == len(list_models())
     assert sum(f["count"] for f in facets["families"]) == facets["total"]
@@ -185,8 +190,45 @@ def test_model_facets_cover_the_whole_catalogue() -> None:
 
 def test_introspected_fallback_flags_inferred_category() -> None:
     """A model without a descriptor falls back to an inferred category."""
-
     summary = _introspected_summary("AdExNeuron")
     assert summary["category_source"] == "inferred"
     assert summary["name"] == "AdExNeuron"
     assert summary["n_params"] >= 1
+
+
+def test_summary_and_facets_expose_verified_tiers_next_to_declared() -> None:
+    """Verified (receipt-bound) tiers never exceed the declared tiers."""
+    models = list_models()
+    for model in models:
+        assert model["verified_science_label"] == f"S{model['verified_science_tier']}"
+        assert cast(int, model["verified_science_tier"]) <= cast(int, model["science_tier"])
+        verified_h = model["verified_silicon_tier"]
+        declared_h = model["silicon_tier"]
+        assert verified_h is None or (
+            declared_h is not None and cast(int, verified_h) <= cast(int, declared_h)
+        )
+    lapicque = next(model for model in models if model["name"] == "LapicqueNeuron")
+    assert lapicque["verified_science_label"] == "S5"
+    assert lapicque["verified_silicon_label"] == "H1"
+    adex = _adex_summary()
+    assert adex["verified_science_label"] == "S3"
+    assert adex["verified_silicon_label"] == "none"
+    facets = model_facets()
+    assert sum(facets["verified_science_tiers"].values()) == facets["total"]
+    assert sum(facets["verified_silicon_tiers"].values()) == facets["total"]
+    assert "H1" in facets["verified_silicon_tiers"]
+
+
+def test_detail_verified_block_names_every_facet_status() -> None:
+    """The detail readiness block carries per-facet verification with receipts."""
+    detail = get_model_detail("LapicqueNeuron")
+    assert detail is not None
+    verified = cast(dict[str, object], cast(dict[str, object], detail["readiness"])["verified"])
+    assert verified["science_label"] == "S5"
+    assert verified["silicon_label"] == "H1"
+    facets = {str(row["facet"]): row for row in cast(list[dict[str, object]], verified["facets"])}
+    assert facets["cosim"]["status"] == "bound"
+    assert str(facets["cosim"]["receipt"]).startswith("LapicqueNeuron__cosim__")
+    assert facets["synthesis"]["status"] == "located"
+    assert facets["ppa"]["status"] == "not-declared"
+    assert facets["class_validated"]["declared"] is True
