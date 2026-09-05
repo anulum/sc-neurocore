@@ -24,7 +24,8 @@ class TestSVEmit:
         assert data["chars"] > 50
 
     def test_emit_sv_direct(self, client):
-        r = client.post("/api/ir/emit-sv-direct", json=LIF_EQ)
+        request = {k: v for k, v in LIF_EQ.items() if k not in {"dt", "duration", "current"}}
+        r = client.post("/api/ir/emit-sv-direct", json=request)
         assert r.status_code == 200
         data = r.json()
         assert "verilog" in data

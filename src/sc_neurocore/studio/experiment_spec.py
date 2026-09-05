@@ -134,7 +134,7 @@ def _draw_seed() -> int:
     return secrets.randbelow((1 << FRESH_SEED_BITS) - 1) + 1
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class ExperimentSpec:
     """The resolved, digest-bound specification of one Studio run.
 
@@ -145,12 +145,43 @@ class ExperimentSpec:
     """
 
     source: Source
-    public: dict[str, Any]
-    run_kwargs: dict[str, Any]
+    _public_json: str
+    _run_kwargs_json: str
     cacheable: bool
     n_steps: int
     dt: float
     duration_ms: float
+
+    def __init__(
+        self,
+        source: Source,
+        public: dict[str, Any],
+        run_kwargs: dict[str, Any],
+        cacheable: bool,
+        n_steps: int,
+        dt: float,
+        duration_ms: float,
+    ) -> None:
+        """Snapshot inputs without retaining mutable aliases to callers or exports."""
+        object.__setattr__(self, "source", source)
+        object.__setattr__(self, "_public_json", json.dumps(public, allow_nan=False))
+        object.__setattr__(self, "_run_kwargs_json", json.dumps(run_kwargs, allow_nan=False))
+        object.__setattr__(self, "cacheable", cacheable)
+        object.__setattr__(self, "n_steps", n_steps)
+        object.__setattr__(self, "dt", dt)
+        object.__setattr__(self, "duration_ms", duration_ms)
+
+    @property
+    def public(self) -> dict[str, Any]:
+        """Return an independent JSON projection of the sealed specification."""
+        result: dict[str, Any] = json.loads(self._public_json)
+        return result
+
+    @property
+    def run_kwargs(self) -> dict[str, Any]:
+        """Return independent execution inputs; mutations cannot alter this run."""
+        result: dict[str, Any] = json.loads(self._run_kwargs_json)
+        return result
 
     @property
     def experiment_sha256(self) -> str:
@@ -159,7 +190,7 @@ class ExperimentSpec:
 
     def to_public_dict(self) -> dict[str, Any]:
         """Return the path-free experiment specification."""
-        return dict(self.public)
+        return self.public
 
 
 def _finish(

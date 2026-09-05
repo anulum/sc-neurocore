@@ -46,6 +46,40 @@ def _spec(**request: Any) -> dict[str, Any]:
 
 
 class TestEffectiveConfiguration:
+    @pytest.mark.parametrize("surface", ["public", "export", "run_kwargs", "result"])
+    def test_nested_projections_cannot_change_sealed_execution(self, surface: str) -> None:
+        request = {
+            "equations": ["dv/dt = gain * I"],
+            "params": {"gain": 2.0},
+            "init": {"v": 0.0},
+            "dt": 0.1,
+            "duration": 0.2,
+            "current": 1.0,
+        }
+        spec = resolve_experiment(request)
+        before = run_experiment(spec)
+        digest = spec.experiment_sha256
+        if surface == "run_kwargs":
+            exported = spec.run_kwargs
+            exported["init"]["v"] = 99.0
+            exported["params"]["gain"] = 50.0
+        else:
+            exported = (
+                spec.public
+                if surface == "public"
+                else before["experiment"]
+                if surface == "result"
+                else spec.to_public_dict()
+            )
+            exported["initial_state"]["v"] = 99.0
+            exported["parameters"]["gain"] = 50.0
+            exported["equations"]["equations"][0] = "dv/dt = 100"
+        after = run_experiment(spec)
+        assert after["initial_state"] == {"v": 0.0}
+        assert after["raw"] == before["raw"]
+        assert after["experiment"]["parameters"]["gain"] == 2.0
+        assert after["experiment"]["experiment_sha256"] == digest
+
     def test_model_spec_binds_revision_profile_steps_state_protocol_and_runtime(self) -> None:
         public = _spec(name=ATIF, duration=5.0)
         assert public["schema_version"] == EXPERIMENT_SCHEMA_VERSION

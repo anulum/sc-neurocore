@@ -209,12 +209,20 @@ class BenchmarkContributeRequest(BaseModel):
 class CompileRequest(BaseModel):
     """Request body for equation-to-SystemVerilog compilation."""
 
+    model_config = ConfigDict(extra="forbid")
+
     equations: list[str] = Field(min_length=1)
     threshold: str | None = None
     reset: str | None = None
     params: dict[str, float] | None = None
     init: dict[str, float] | None = None
     module_name: str = "sc_neuron"
+
+
+class DirectCompileRequest(CompileRequest):
+    """Direct RTL export with its historical default module name."""
+
+    module_name: str = "sc_ode_neuron"
 
 
 class ModelCompileRequest(BaseModel):

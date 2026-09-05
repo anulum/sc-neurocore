@@ -200,8 +200,38 @@ def test_direct_sv_route_returns_traceability_manifest(client: TestClient) -> No
     output = cast(dict[str, JsonValue], traceability["output"])
     assert traceability["schema_version"] == STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION
     assert traceability["status"] == "completed"
-    assert output["module_name"] == payload["module_name"] == "sc_ode_neuron"
+    assert output["module_name"] == payload["module_name"] == "sc_traceable_neuron"
     assert output["rtl_sha256"] == hashlib.sha256(payload["verilog"].encode("utf-8")).hexdigest()
+
+
+@pytest.mark.parametrize("route", ["/api/compile", "/api/ir/emit-sv-direct"])
+def test_compile_routes_preserve_coupled_equations_and_init(client: TestClient, route: str) -> None:
+    from sc_neurocore.compiler.equation_compiler import equation_to_fpga
+
+    request = {
+        "equations": ["dv/dt = -v + w + I", "dw/dt = -w"],
+        "init": {"v": 2.0, "w": 3.0},
+        "module_name": "sc_coupled",
+    }
+    response = client.post(route, json=request)
+    assert response.status_code == 200, response.text
+    _, expected = equation_to_fpga(
+        "dv/dt = -v + w + I", "dw/dt = -w", init={"v": 2.0, "w": 3.0}, module_name="sc_coupled"
+    )
+    payload = response.json()
+    assert payload["verilog"] == expected
+    source = payload["compile_traceability"]["source_payload"]
+    assert source["equations"] == request["equations"]
+    assert source["init"] == request["init"]
+
+
+@pytest.mark.parametrize("route", ["/api/compile", "/api/ir/emit-sv-direct"])
+@pytest.mark.parametrize("field", ["dt", "duration", "current", "unknown_option"])
+def test_compile_routes_reject_unimplemented_options(
+    client: TestClient, route: str, field: str
+) -> None:
+    response = client.post(route, json={**LIF_COMPILE_REQUEST, field: 1.0})
+    assert response.status_code == 422
 
 
 def test_compile_route_rejects_empty_equation_list(client: TestClient) -> None:

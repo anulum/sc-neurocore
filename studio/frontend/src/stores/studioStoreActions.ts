@@ -735,6 +735,7 @@ export function createStudioStoreActions(
         }))
         : await compileVerilog({
           equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
+          init: s.odeInit,
         });
       set(compilerVerilogLoadedState(res));
     } catch (e) { set(compilerFailureState(e)); }
@@ -935,6 +936,7 @@ export function createStudioStoreActions(
       const result = await emitSVDirect({
         equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
         params: s.odeParams,
+        init: s.odeInit,
       });
       set(compilerSVDirectLoadedState(result));
     } catch (e) { set(compilerFailureState(e)); }

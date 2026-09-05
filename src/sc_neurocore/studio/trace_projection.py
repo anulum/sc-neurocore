@@ -96,7 +96,8 @@ def display_sample_indices(
     ------
     ValueError
         When ``n_steps`` is not positive, ``max_points < 2`` or a series has
-        the wrong length.
+        the wrong length, contains non-finite values, or the point budget
+        cannot guarantee the endpoints and every series' extrema.
     """
     if n_steps < 1:
         raise ValueError("n_steps must be positive")
@@ -105,6 +106,8 @@ def display_sample_indices(
     for values in series:
         if values.shape != (n_steps,):
             raise ValueError(f"series shape {values.shape} does not match n_steps {n_steps}")
+        if not np.isfinite(values).all():
+            raise ValueError("display series must contain only finite values")
     if n_steps <= max_points:
         return DisplayProjection(
             sample_index=np.arange(n_steps, dtype=np.int64),
@@ -113,6 +116,8 @@ def display_sample_indices(
             max_points=max_points,
         )
     k = max(1, len(series))
+    if series and max_points < 2 + 2 * k:
+        raise ValueError("max_points cannot preserve endpoints and every series' extrema")
     buckets = max(1, (max_points - 2) // (2 * k))
     edges = np.linspace(0, n_steps, buckets + 1).astype(np.int64)
     chosen: set[int] = {0, n_steps - 1}

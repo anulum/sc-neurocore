@@ -184,6 +184,10 @@ Four injection protocols for all simulations:
 
 ## One effective experiment per run
 
+The resolved Python specification owns immutable snapshots of its inputs.
+Editing a returned dictionary or a result's experiment metadata cannot change
+a subsequent execution or its cache identity.
+
 Before anything runs, a simulation request (`/api/simulate`,
 `/api/models/simulate`, `/api/multi-simulate`, or the `simulate` kind of
 `/api/analysis/jobs`) is resolved into one `experiment`
@@ -306,6 +310,9 @@ zero:
   invalid fractions are returned, and the phase view labels a partial domain.
 
 ### Precision comparison
+
+The Python comparison rejects invalid timing and runs exceeding its step limit;
+it never labels a shortened prefix as a complete comparison.
 
 `/api/precision` (and `/api/ir/cosim`) compares three runs of the same
 experiment and keeps them apart:
@@ -764,6 +771,14 @@ classification, action kind, status, target, step, replay route, and the
 `pipeline/result.json` plus `pipeline/evidence.json` artifact names.
 
 Compile responses include path-free `studio.compile-traceability.v1` metadata.
+Both `/api/compile` and `/api/ir/emit-sv-direct` compile every supplied equation
+and preserve `init` and `module_name`. The direct route defaults to
+`sc_ode_neuron`; the worker route defaults to `sc_neuron`. These ODE export
+routes use the equation compiler's fixed default timestep of 0.1. They reject
+simulation-only fields such as `dt`, `duration`, and `current` with HTTP 422;
+they do not silently apply a different simulation configuration. Selected-model
+compilation has its own explicit timestep contract.
+
 The manifest records the source equation payload, emitted RTL module metadata,
 source and RTL SHA-256 digests, and `evidence_classification: "compile"`
 without exposing host-local paths. The Compiler Inspector displays shortened

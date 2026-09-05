@@ -16,8 +16,8 @@ Three runs of the same experiment are reported and kept apart:
   (:mod:`sc_neurocore.studio.bit_true_execution`), whose arithmetic the
   ``arithmetic`` block states from the kernel generator; every state word and
   spike of every step is decoded and compared;
-* ``parameter_quantisation_result`` — float64 with the parameters, initial
-  state and time step rounded to the word resolution, so the reader can
+* ``parameter_quantisation_result`` — float64 with the parameters and initial
+  state rounded to the word resolution (the requested time step is retained), so the reader can
   separate the sensitivity to parameter rounding from the effect of
   fixed-point operations (wrap-truncate multiplies, saturation, look-up
   tables).
@@ -370,6 +370,19 @@ def precision_compare(
     NativeToolUnavailable
         When no C compiler is installed.
     """
+    for field, value in (("dt", dt), ("duration", duration)):
+        if isinstance(value, bool) or not math.isfinite(value) or value <= 0:
+            raise _input_error(field, "must be finite and strictly positive")
+    if isinstance(max_steps, bool) or not isinstance(max_steps, int) or max_steps < 1:
+        raise _input_error("max_steps", "must be a positive integer")
+    requested_steps = duration / dt
+    if not math.isfinite(requested_steps) or requested_steps >= max_steps + 1:
+        raise _input_error(
+            "duration", f"requested run exceeds {max_steps} steps; the run is not shortened"
+        )
+    n_steps = int(requested_steps)
+    if n_steps < 1:
+        raise _input_error("duration", f"{duration!r} with dt {dt!r} yields no complete step")
     if overflow not in SUPPORTED_OVERFLOW:
         raise _input_error(
             "overflow", f"{overflow!r} is not one of {', '.join(SUPPORTED_OVERFLOW)}"
@@ -411,11 +424,6 @@ def precision_compare(
         raise _input_error("equations", f"integrator {neuron.method!r} is not mirrored bit-true")
     _reject_unrepresentable(q, q_label, neuron, equations, threshold, reset, dt)
 
-    n_steps = int(duration / dt)
-    if n_steps > max_steps:
-        n_steps = max_steps
-    if n_steps < 1:
-        raise _input_error("duration", f"{duration!r} with dt {dt!r} yields no complete step")
     drive = current_trace(protocol, float(current), n_steps, dt=dt, frequency_hz=frequency_hz)
     if not _representable(q, float(drive.max())) or not _representable(q, float(drive.min())):
         raise _input_error(

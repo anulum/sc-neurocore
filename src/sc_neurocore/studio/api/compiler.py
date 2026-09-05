@@ -18,6 +18,7 @@ from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
     CompileRequest,
+    DirectCompileRequest,
     ModelCompileRequest,
     ModelCosimRequest,
     SimulateRequest,
@@ -111,13 +112,15 @@ def build_compiler_router(context: StudioApiContext) -> APIRouter:
         return _safe(lambda: emit_systemverilog(ir_text))
 
     @router.post("/api/ir/emit-sv-direct")
-    def api_ir_emit_sv_direct(req: SimulateRequest) -> Any:
+    def api_ir_emit_sv_direct(req: DirectCompileRequest) -> Any:
         return _safe(
             lambda: emit_sv_from_equation(
                 equations=req.equations,
                 params=req.params,
                 threshold=req.threshold,
                 reset=req.reset,
+                init=req.init,
+                module_name=req.module_name,
             )
         )
 

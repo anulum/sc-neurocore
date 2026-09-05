@@ -49,7 +49,7 @@ def run_compile_process_task(
 
     request = _compile_request_from_payload(payload)
     _, verilog = equation_to_fpga(
-        request.equations[0],
+        *request.equations,
         threshold=request.threshold,
         reset=request.reset,
         params=request.params,

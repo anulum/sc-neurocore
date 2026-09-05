@@ -59,6 +59,38 @@ LIF: dict[str, Any] = {
 }
 
 
+@pytest.mark.parametrize(
+    "override,field",
+    [
+        ({"dt": 0.0}, "dt"),
+        ({"dt": -0.1}, "dt"),
+        ({"dt": float("nan")}, "dt"),
+        ({"duration": float("inf")}, "duration"),
+        ({"duration": 0.0}, "duration"),
+        ({"duration": -1.0}, "duration"),
+        ({"duration": 0.01}, "duration"),
+        ({"max_steps": 0}, "max_steps"),
+        ({"max_steps": True}, "max_steps"),
+        ({"max_steps": 2}, "duration"),
+    ],
+)
+def test_precision_refuses_invalid_or_shortened_experiment(
+    override: dict[str, Any], field: str
+) -> None:
+    """A complete metric must never describe only a prefix of the requested run."""
+    with pytest.raises(ModelInputError) as error:
+        precision_compare(**{**LIF, **override})
+    assert error.value.field == field
+
+
+@requires_gcc
+def test_precision_runs_exact_step_limit_without_shortening() -> None:
+    result = precision_compare(**{**LIF, "duration": 0.2, "max_steps": 2})
+    for key in ("float_result", "fixed_result", "parameter_quantisation_result"):
+        assert result[key]["n_steps"] == 2
+        assert len(result[key]["raw"]["states"]["v"]) == 2
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(create_app(), base_url="http://127.0.0.1")

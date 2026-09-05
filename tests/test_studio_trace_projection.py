@@ -94,6 +94,18 @@ class TestDisplaySampleIndices:
         with pytest.raises(ValueError, match="does not match"):
             display_sample_indices(10, [np.zeros(9)])
 
+    def test_budget_cannot_silently_drop_required_extrema(self) -> None:
+        values = np.array([0.0, 2.0, -2.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        with pytest.raises(ValueError, match="preserve endpoints"):
+            display_sample_indices(8, [values], max_points=2)
+        projection = display_sample_indices(8, [values], max_points=4)
+        assert projection.sample_index.tolist() == [0, 1, 2, 7]
+
+    @pytest.mark.parametrize("invalid", [float("nan"), float("inf"), -float("inf")])
+    def test_nonfinite_samples_are_not_displayed_as_valid_extrema(self, invalid: float) -> None:
+        with pytest.raises(ValueError, match="finite"):
+            display_sample_indices(3, [np.array([1.0, invalid, 2.0])])
+
 
 class TestClockAndRawBlock:
     def test_sample_times_are_post_step(self) -> None:

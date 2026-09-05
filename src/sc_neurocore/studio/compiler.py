@@ -115,29 +115,32 @@ def emit_sv_from_equation(
     params: dict[str, float] | None = None,
     threshold: str | None = None,
     reset: str | None = None,
+    init: dict[str, float] | None = None,
+    module_name: str = "sc_ode_neuron",
 ) -> dict[str, Any]:
     """Direct equation → SystemVerilog via the Python equation compiler."""
     from sc_neurocore.compiler.equation_compiler import equation_to_fpga
 
     ir_repr, verilog = equation_to_fpga(
-        equations[0],
+        *equations,
         threshold=threshold,
         reset=reset,
         params=params,
-        module_name="sc_ode_neuron",
+        init=init,
+        module_name=module_name,
     )
     return {
         "verilog": verilog,
         "ir_repr": str(ir_repr),
         "chars": len(verilog),
-        "module_name": "sc_ode_neuron",
+        "module_name": module_name,
         "compile_traceability": build_compile_traceability(
             equations=equations,
             threshold=threshold,
             reset=reset,
             params=params,
-            init=None,
-            module_name="sc_ode_neuron",
+            init=init,
+            module_name=module_name,
             verilog=verilog,
         ).to_public_dict(),
     }

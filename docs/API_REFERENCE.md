@@ -35196,6 +35196,10 @@ Request body for benchmark-databank contribution uploads.
 Request body for equation-to-SystemVerilog compilation.
 
 
+### Class `DirectCompileRequest`
+Direct RTL export with its historical default module name.
+
+
 ### Class `ModelCompileRequest`
 Request body for schema-backed catalogue-model RTL compilation.
 
@@ -35747,7 +35751,7 @@ Parse and verify an IR text representation.
 ### Function `emit_systemverilog(ir_text)`
 Parse IR text and emit synthesisable SystemVerilog.
 
-### Function `emit_sv_from_equation(equations, params, threshold, reset)`
+### Function `emit_sv_from_equation(equations, params, threshold, reset, init, module_name)`
 Direct equation → SystemVerilog via the Python equation compiler.
 
 ### Function `cosim_traces(equations, threshold, reset, params, init, dt, duration, current)`
@@ -35864,6 +35868,12 @@ The resolved, digest-bound specification of one Studio run.
 never returned to a client; ``cacheable`` is ``False`` for a fresh
 stochastic trial.
 
+- **__init__**(source, public, run_kwargs, cacheable, n_steps, dt, duration_ms)
+  - Snapshot inputs without retaining mutable aliases to callers or exports.
+- **public**()
+  - Return an independent JSON projection of the sealed specification.
+- **run_kwargs**()
+  - Return independent execution inputs; mutations cannot alter this run.
 - **experiment_sha256**()
   - Digest of the public specification: the cache key of the run.
 - **to_public_dict**()
@@ -39276,7 +39286,8 @@ Raises
 ------
 ValueError
     When ``n_steps`` is not positive, ``max_points < 2`` or a series has
-    the wrong length.
+    the wrong length, contains non-finite values, or the point budget
+    cannot guarantee the endpoints and every series' extrema.
 
 ### Function `sample_times(n_steps, dt)`
 Return the post-step sample time of every raw step: ``(index + 1) * dt``.

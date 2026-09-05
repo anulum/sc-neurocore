@@ -517,6 +517,7 @@
         "type": "object"
       },
       "CompileRequest": {
+        "additionalProperties": false,
         "description": "Request body for equation-to-SystemVerilog compilation.",
         "properties": {
           "equations": {
@@ -643,6 +644,80 @@
           }
         },
         "title": "DclsEvaluateRequest",
+        "type": "object"
+      },
+      "DirectCompileRequest": {
+        "additionalProperties": false,
+        "description": "Direct RTL export with its historical default module name.",
+        "properties": {
+          "equations": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Equations",
+            "type": "array"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "module_name": {
+            "default": "sc_ode_neuron",
+            "title": "Module Name",
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "title": "DirectCompileRequest",
         "type": "object"
       },
       "ExperimentRejectedDetail": {
@@ -3845,7 +3920,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SimulateRequest"
+                "$ref": "#/components/schemas/DirectCompileRequest"
               }
             }
           },
