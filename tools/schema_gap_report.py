@@ -33,12 +33,20 @@ try:
     from sc_neurocore.neurons.schema_module_aliases import (  # type: ignore[import-not-found]
         SCHEMA_SOURCE_ALIASES as _CANONICAL_SCHEMA_SOURCE_ALIASES,
     )
+    from sc_neurocore.neurons.schema_module_aliases import (  # type: ignore[import-not-found]
+        SCHEMA_TO_MODULE as _CANONICAL_SCHEMA_TO_MODULE,
+    )
 
     SCHEMA_SOURCE_ALIASES: dict[str, str] = dict(_CANONICAL_SCHEMA_SOURCE_ALIASES)
+    SCHEMA_TO_MODULE: dict[str, str] = dict(_CANONICAL_SCHEMA_TO_MODULE)
 except ImportError:  # pragma: no cover - script path without PYTHONPATH=src
     SCHEMA_SOURCE_ALIASES = {
         "expif": "exp_if",
         "resonate_and_fire": "resonate_fire",
+    }
+    SCHEMA_TO_MODULE = {
+        "exp_if": "expif",
+        "resonate_fire": "resonate_and_fire",
     }
 
 Classification = Literal[
@@ -105,8 +113,12 @@ def build_report(repo: Path) -> dict[str, Any]:
         for model_name in collect_model_names(repo)
     ]
     missing = [record for record in records if not record.schema_present]
-    covered_schema_names = {record.schema_name for record in records if record.schema_name}
-    schema_only_models = sorted(schema_names - covered_schema_names)
+    module_names = {record.model for record in records}
+    schema_only_models = sorted(
+        name
+        for name in schema_names
+        if name not in module_names and module_for_schema_stem(name) not in module_names
+    )
     class_counts = Counter(record.classification for record in records)
     priority_counts = Counter(record.priority for record in missing)
 
@@ -116,7 +128,7 @@ def build_report(repo: Path) -> dict[str, Any]:
         "counts": {
             "model_modules": len(records),
             "schema_models": len(schema_names),
-            "net_missing_schema_models": len(records) - len(schema_names),
+            "net_missing_schema_models": len(missing) - len(schema_only_models),
             "source_modules_without_schema": len(missing),
             "schema_only_models": len(schema_only_models),
             "classification": dict(sorted(class_counts.items())),
@@ -242,6 +254,16 @@ def priority_for(classification: Classification) -> str:
     if classification in {"multi_compartment", "package_alias"}:
         return "P5-out-of-auto-cosim"
     return "P6-source-review-required"
+
+
+def module_for_schema_stem(schema: str) -> str:
+    """Return the model module stem a schema stem binds to (itself when unmapped).
+
+    A stem is "schema-only" when neither the stem itself nor its alias-table
+    module exists as a model module; paired ``sc_*`` profiles and renamed stems
+    therefore count as bound, not orphaned.
+    """
+    return SCHEMA_TO_MODULE.get(schema, schema)
 
 
 def schema_for_source(model: str, schema_names: set[str]) -> str | None:

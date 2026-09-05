@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 416
+expected_file_count = 418
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1679,3 +1679,11 @@ rationale = "Audited state-owning equation-neuron Verilog emitter preserving the
 [[file]]
 path = "tests/test_equation_compiler_cli.py"
 rationale = "Maintained public CLI contract coverage for equation-to-Verilog file generation, module naming, and missing-equation handling."
+
+[[file]]
+path = "src/sc_neurocore/neurons/model_identity.py"
+rationale = "Canonical model identity registry; public records and count derivations are consumed by tools, tests and generated ledgers."
+
+[[file]]
+path = "tools/model_identity_ledger.py"
+rationale = "Generated identity ledger writer and freshness check used by the public-claims regression."

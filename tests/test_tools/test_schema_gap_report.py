@@ -47,16 +47,14 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
     assert counts["model_modules"] == len(modules)
-    assert counts["schema_models"] == 77
-    assert counts["schema_only_models"] == 6
-    assert report["schema_only_models"] == [
-        "aihara_map",
-        "izhikevich",
-        "lif",
-        "nagumo_sato_map",
-        "sc_adaptive_threshold_map",
-        "sc_chaotic_map",
-    ]
+    assert counts["schema_models"] == len(tool.collect_schema_names(REPO)) == 80
+    assert counts["schema_only_models"] == 0
+    assert report["schema_only_models"] == []
+    # Every schema stem binds to a live model module, directly or through the alias table.
+    assert all(
+        name in modules or tool.module_for_schema_stem(name) in modules
+        for name in report["schema_models"]
+    )
     assert len(report["records"]) == len(modules)
     assert counts["source_modules_without_schema"] == len(report["ranked_enrolment"])
     assert isinstance(counts["net_missing_schema_models"], int)
@@ -223,11 +221,4 @@ def test_script_entrypoint_writes_report(tmp_path: Path, monkeypatch: pytest.Mon
 
     runpy.run_path(str(TOOL), run_name="__main__")
 
-    assert json.loads(output.read_text(encoding="utf-8"))["schema_only_models"] == [
-        "aihara_map",
-        "izhikevich",
-        "lif",
-        "nagumo_sato_map",
-        "sc_adaptive_threshold_map",
-        "sc_chaotic_map",
-    ]
+    assert json.loads(output.read_text(encoding="utf-8"))["schema_only_models"] == []

@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4787
+    "test_files": 4789
   },
   "documentation": {
     "public_pages": [
@@ -5694,6 +5694,8 @@
       "tests/test_model_ibarz_tanaka_dynamics.py",
       "tests/test_model_ibarz_tanaka_reproducibility.py",
       "tests/test_model_ibarz_tanaka_validation.py",
+      "tests/test_model_identity_ledger.py",
+      "tests/test_model_identity_registry.py",
       "tests/test_model_ih_neuron.py",
       "tests/test_model_ilif_ilif_analytical.py",
       "tests/test_model_ilif_ilif_dynamics.py",

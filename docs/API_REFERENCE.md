@@ -22611,6 +22611,168 @@ ModelDescriptorError
 
 ---
 
+## Module `neurons.model_identity`
+
+### Class `ModelIdentityError`
+Raised when a catalogue identity cannot be resolved unambiguously.
+
+
+### Class `SchemaProfile`
+One schema-DSL profile bound to a model identity.
+
+Parameters
+----------
+stem:
+    Schema file stem under ``neurons/model_schemas``.
+basis:
+    ``"alias-table"`` when :mod:`schema_module_aliases` names the class,
+    ``"module-stem"`` when the stem resolves through the model module.
+
+
+### Class `SourceLocator`
+Where a model's defining source lives.
+
+Parameters
+----------
+basis:
+    Which locator establishes the identity.
+doi, url, paper_title, authors, year:
+    Provenance fields copied from the descriptor.
+doi_is_translation:
+    ``True`` when the DOI points at a translation of the primary source.
+
+
+### Class `ModelIdentity`
+Canonical identity record of one catalogue class.
+
+Parameters
+----------
+class_name:
+    Public Python class name.
+module:
+    Module stem under ``neurons/models`` (or the alias re-export module).
+kind:
+    Identity kind; see the module docstring.
+counts_in_source_catalogue:
+    ``True`` only for ``source-literature`` and ``project-original``.
+family, category:
+    Curated taxonomy family and category slug (empty for aliases).
+canonical_class:
+    The identity an alias resolves to; the class itself otherwise.
+aliases:
+    Historical import names resolving to this identity.
+schema_profiles:
+    Schema-DSL profiles bound to this identity.
+source:
+    Source locator.
+public_status:
+    Row status on the public fidelity page.
+public_label:
+    Row label on the public fidelity page, empty when unlisted.
+revalidation:
+    For strict-promoted identities: whether the promotion is bound to an
+    independent source receipt.
+missing_gates:
+    Evidence gates the descriptor does not yet claim.
+
+- **to_public_dict**()
+  - Return a JSON-compatible projection of the record.
+
+### Class `NetworkIdentity`
+A network-level identity that is distinct from any cell component.
+
+Parameters
+----------
+class_name:
+    Public network class name.
+module:
+    Dotted module path of the class.
+kind:
+    Identity kind (``sc-compatibility`` for retained project networks).
+cell_identity:
+    The neuron identity the network is built from.
+
+
+### Class `CatalogueCounts`
+Every catalogue number derived from the identity registry.
+
+Parameters
+----------
+registered:
+    Registered model classes (aliases excluded).
+source_catalogue:
+    Identities that count in the public source catalogue.
+source_literature, project_original, sc_compatibility, api_aliases:
+    Identity kind totals.
+network_identities:
+    Registered network-level identities.
+polyglot_complete_source, polyglot_complete_sc:
+    Strict-promoted rows on the public page, split by count membership.
+runtime_validated, compatibility_runtime:
+    Rows in the two non-promoted public tables.
+remaining_source:
+    Source-catalogue identities not strict-promoted.
+receipt_bound_complete, not_revalidated_complete:
+    Strict-promoted source identities with and without an independent
+    source receipt.
+schema_profiles:
+    Schema-DSL stems bound to an identity.
+
+- **to_public_dict**()
+  - Return the counts as a plain mapping.
+
+### Function `identity_registry()`
+Return the canonical identity record for every registered class and alias.
+
+Returns
+-------
+dict&#91;str, ModelIdentity&#93;
+    Class name (including aliases) to identity record, sorted by name.
+
+Raises
+------
+ModelIdentityError
+    If any join is ambiguous or names an unknown class.
+
+### Function `resolve_identity(class_name)`
+Return the canonical identity for a class or alias name.
+
+Parameters
+----------
+class_name:
+    Registered class name or historical alias.
+
+Returns
+-------
+ModelIdentity
+    The record of the canonical identity the name resolves to.
+
+Raises
+------
+ModelIdentityError
+    If the name is neither registered nor an alias.
+
+### Function `iter_source_catalogue()`
+Yield identities that count in the public source catalogue.
+
+### Function `public_fidelity_bindings()`
+Return the public page label and status bound to each listed class.
+
+Returns
+-------
+dict&#91;str, tuple&#91;str, PublicStatus&#93;&#93;
+    Class name to ``(row label, status)``.
+
+### Function `catalogue_counts()`
+Derive every catalogue number from the identity registry.
+
+Returns
+-------
+CatalogueCounts
+    Counts computed over :func:`identity_registry`.
+
+---
+
 ## Module `neurons.model_taxonomy`
 
 ### Function `canonical_model_name(class_name)`

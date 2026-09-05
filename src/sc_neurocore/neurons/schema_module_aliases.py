@@ -39,6 +39,13 @@ SCHEMA_TO_MODULE: dict[str, str] = {
     "lif": "lapicque",
     "lapicque": "lapicque",
     "izhikevich": "izhikevich2007",  # 2003 schema joins 2007 class until a distinct 2003 class exists
+    "aihara_map": "aihara_map_neuron",
+    "nagumo_sato_map": "nagumo_sato_map_neuron",
+    "sc_adaptive_threshold_map": "sc_adaptive_threshold_map_neuron",
+    "sc_chaotic_map": "sc_chaotic_map_neuron",
+    "sc_lapicque_lif": "lapicque",
+    "sc_perfect_integrator": "perfect_integrator",
+    "sc_symmetric_quadratic_if": "quadratic_if",
 }
 
 # Schema-DSL stem → public Python class_name used by descriptors / Studio.
@@ -73,6 +80,13 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "wang_buzsaki": "WangBuzsakiNeuron",
     "escape_rate": "EscapeRateNeuron",
     "poisson": "PoissonNeuron",
+    "aihara_map": "AiharaMapNeuron",
+    "nagumo_sato_map": "NagumoSatoMapNeuron",
+    "sc_adaptive_threshold_map": "SCAdaptiveThresholdMapNeuron",
+    "sc_chaotic_map": "SCChaoticMapNeuron",
+    "sc_lapicque_lif": "SCLapicqueLIFNeuron",
+    "sc_perfect_integrator": "SCInclusivePerfectIntegratorNeuron",
+    "sc_symmetric_quadratic_if": "SCSymmetricQuadraticIFNeuron",
 }
 
 # Source-module stems that are aliases of another schema stem (schema_gap report).

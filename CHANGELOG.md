@@ -11,6 +11,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added the canonical model identity registry
+  (`sc_neurocore.neurons.model_identity`): every registered class and import
+  alias resolves to exactly one identity record with its kind (published source,
+  project-original design, `SC` compatibility identity or API alias), count
+  membership, taxonomy family, bound schema-DSL profiles, source locator, public
+  fidelity status, revalidation status and open evidence gates. Ambiguous or
+  missing joins raise instead of being dropped: an `SC` identity with a
+  literature DOI, a schema stem owned by no class or by two, or a public row
+  naming an unregistered class. `tools/model_identity_ledger.py` writes and
+  checks the generated `docs/_generated/model_identity_ledger.json`.
+- Corrected the public catalogue figures to 57 of 160. The page sentence said
+  sixty while its own strict table carried 57 source rows, and the 155
+  denominator was a running hand tally with no live definition; the registry
+  derives the source catalogue as the 185 registered classes minus the 25
+  count-neutral `SC` compatibility identities (import aliases are never
+  registered classes), so 103 source-model units remain. The count-neutral SC
+  three-state phantom is listed as a compatibility identity awaiting its own
+  source-hashed five-runtime benchmark instead of being strict-promoted on the
+  distinct Bertram artefact. Of the 57 promoted source identities, 20 are bound
+  to an independent source receipt and 37 are explicitly recorded as not
+  revalidated.
+- Classified the three retained `SC` compatibility identities
+  (`SCInclusivePerfectIntegratorNeuron`, `SCLapicqueLIFNeuron`,
+  `SCSymmetricQuadraticIFNeuron`) in the family taxonomy, so the taxonomy
+  completeness test passes again, and bound the seven schema-DSL stems whose
+  module names differ from their stem (`aihara_map`, `nagumo_sato_map` and the
+  five `sc_*` paired profiles) in the schema alias table. The schema-gap report binds stems
+  through the same table, so paired `sc_*` profiles are no longer reported as
+  orphan schemas and its net-missing count is modules without any schema.
 - Studio model runs (`simulate_model`, `POST /api/models/simulate`,
   `POST /api/export/svg`) are fail-closed. A new run contract validates every
   request against the model class: unknown, non-numeric, non-finite, private,

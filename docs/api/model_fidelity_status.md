@@ -43,7 +43,8 @@ most of the catalogue already has:
 
 Every lane below carries the real model dynamics with an executed Python-parity proof. Every Mojo
 surface in this promoted set is now executable; no lane below is a fake stub or documentation-only
-parity note.
+parity note. Rows whose model name begins with `SC` are preserved project compatibility identities;
+they are count-neutral and do not increment the 160-model source catalogue.
 
 | Model | Rust safety | Go | Julia | Mojo | Parity basis (golden) | Evidence anchor |
 |---|---|---|---|---|---|---|
@@ -85,7 +86,6 @@ parity note.
 | Benda-Herz universal adaptation | ✅ | ✅ | ✅ | ✅ shared-lib | Benda and Herz 2003 equations (8) and (45), specialized to the Figure 8 square-root onset and linear steady-state adaptation example; deterministic phase events and both state traces agree across five runtimes within `2e-12`; paired schemas and the 512-step primary-equation receipt agree; bounded Q16.16 adaptation/phase RTL synthesizes and passes reset-safety proof; the paper's stated rate-model operating limits, timing, PPA, device evidence, and universal real-number equivalence remain open | `this commit` |
 | SC stochastic rate adaptation | ✅ | ✅ | ✅ | ✅ executable | count-neutral retained project logistic RK4 adaptation and exponential-hazard Bernoulli recurrence, without Benda-Herz attribution; explicit-uniform parity, paired schemas, and bounded hazard-commit RTL are enrolled; hardware randomness, timing, PPA, and device evidence remain open | `this commit` |
 | Bertram phantom burster | ✅ | ✅ | ✅ | ✅ executable | Bertram et al. 2000 equations 1–10 and `BJ_00.ode` author defaults with dynamic fast potassium gate `n`; five runtimes preserve the enrolled 18-event, 10,000-step four-state trajectory, native state error stays below `5e-9`, paired schemas and a 512-step primary-equation receipt agree; production fixed-step RK4 is an explicit specialization of the authors' adaptive CVODE run, and no identical interpolation, RTL, timing, PPA, or device claim is made | `this commit` |
-| SC three-state phantom | ✅ | ✅ | ✅ | ✅ executable | count-neutral retained project RK4 recurrence with instantaneous `n_inf`, without Bertram attribution; the old defaults and three-state behavior remain available under an explicit SC identity | `this commit` |
 | Hill–Tononi cortical waking neuron | ✅ | ✅ | ✅ | ✅ executable | Hill and Tononi 2005 hybrid model neuron with dynamic threshold, depolarisation-dependent potassium current, optional cell-specific `I_h`/`I_T`, and source `0.25 ms` RK4; five runtimes preserve the 538-event, 200,000-step `I_ext=20` benchmark, paired schemas and a 768-step mixed-drive independent receipt agree, and the former HH/Na-pump recurrence is retained separately as count-neutral `SCSixStateThalamocorticalNeuron`; full-network behavior and all RTL/silicon claims remain outside scope | `this commit` |
 | Butera Model 1 respiratory pacemaker | ✅ | ✅ | ✅ | ✅ executable | Butera, Rinzel, and Smith 1999 Model 1 equations 1–7 with the source `C=21 pF` membrane-current balance, slow persistent-sodium inactivation, optional inactive-by-default tonic conductance, candidate-first RK4 implementation specialization, and observational no-reset spike crossing; five runtimes preserve 954 exact events over the source-bound 200,000-step `I_app=50 pA` benchmark and an independent 1,024-step mixed-drive receipt; the omitted-capacitance recurrence is retained as count-neutral `SCUnitCapacitanceRespiratoryNeuron` with separate registration, descriptor, behavior evidence, paired schemas, project receipt, native custody, one-step state parity, and an explicit 4–5-event 20,000-step cross-libm envelope; RTL, timing, PPA, device, and silicon claims remain outside scope | `this commit` |
 | Larter–Breakspear cortical neural mass | ✅ | ✅ | ✅ | ✅ executable | Breakspear, Terry, and Friston 2003 conductance population dynamics with source `QV`/`QZ` firing-rate feedback, NMDA modulation, local/external coupling balance, inhibitory feedback, and continuous three-state RK4 output; five runtimes preserve the complete one-step state within `2e-12`, paired schemas and independent SHA-256-locked 512-step source/project receipts agree, and the source-hashed 20,000-step benchmark executes both the source identity and count-neutral retained `SCDecoupledAdaptationIonMassNeuron`; the fixed-step solver is an implementation specialization and RTL, full-network, timing, PPA, device, and silicon evidence remain unclaimed | `benchmarks/results/bench_larter_breakspear.json`; `src/sc_neurocore/neurons/reference_receipts/larter_breakspear_2003.json` |
@@ -143,6 +143,17 @@ validated on that named surface only, not graduation under the stricter bar abov
 | T-type calcium neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | complete 64-step state trajectory within `1e-12`; invalid input is rejected atomically | `5577616dc` |
 | GLM neuron | ✅ | ✅ | ✅ | ✅ | ✅ | ⬜ missing | ⬜ | 64-step spike and history-buffer parity within `1e-12` under explicit uniform samples; legacy engine filters remain reconstructible without a second model identity | `0e1770007`, `8897bd0d0` |
 
+## Runtime-complete compatibility identities awaiting benchmark closure
+
+The count-neutral identity below retains real implementations and executed
+parity checks across the maintained languages, but it is not strict-promoted:
+its own source-hashed five-runtime benchmark is still missing. The source
+Bertram benchmark is not reused as proof for the distinct SC recurrence.
+
+| Model | Python | Rust engine | Rust safety | Go | Julia | Mojo | Blocking evidence | Evidence anchors |
+|---|---|---|---|---|---|---|---|---|
+| SC three-state phantom | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ executable | dedicated source-hashed five-runtime benchmark | `tests/test_bertram_phantom_native_parity.py`; `src/sc_neurocore/neurons/reference_receipts/sc_three_state_phantom_project.json` |
+
 ## In progress
 
 The local-first remediation campaign remains active. Mid-flight ownership and queue position are
@@ -155,9 +166,16 @@ Every other catalogued model has a **faithful, tested Python reference** (and mo
 Rust engine acceleration path), but at least one required `accel/{rust,go,julia,mojo}` lane is a stub,
 missing, or not yet verified. The polyglot-stub-remediation sweep is replacing those gaps
 model-by-model. Partial runtime closures are shown separately above and are **deliberately not
-promoted** into the strict table. As of the latest strict graduation, there are **sixty
-polyglot-complete source models** out of the 155-model source catalogue; the remaining **95** source
+promoted** into the strict table. As of the latest strict graduation, there are **57
+polyglot-complete source models** out of the 160-model source catalogue; the remaining **103** source
 model units still have at least one acceleration-chain requirement open.
+
+These counts are derived from the identity registry, not typed by hand. The source catalogue is
+every registered model class whose identity is a published source or a project-original design;
+`SC` compatibility identities and import aliases are count-neutral. `python
+tools/model_identity_ledger.py --counts` prints the live numbers, and
+`docs/_generated/model_identity_ledger.json` records each identity's kind, schema profiles, source
+locator, public status, revalidation status and open evidence gates.
 
 ## How a model graduates onto this page
 
