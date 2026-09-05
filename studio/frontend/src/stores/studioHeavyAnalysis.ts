@@ -28,6 +28,9 @@ export function simulationConfigInput(s: StudioState): StudioSimulationConfigInp
     duration: s.duration,
     current: s.current,
     protocol: s.protocol,
+    frequencyHz: s.frequencyHz,
+    seed: s.seed,
+    trial: s.trial,
   };
 }
 

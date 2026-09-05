@@ -17,20 +17,35 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, StringConstrain
 FiniteFloat = Annotated[float, Field(strict=True, allow_inf_nan=False)]
 PositiveFiniteFloat = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
 StudioProtocol = Literal["constant", "step", "ramp", "pulse", "sine"]
+StudioTrial = Literal["replay", "fresh"]
+ExperimentSeed = Annotated[int, Field(strict=True, ge=0, le=2**63 - 1)]
 
 
 class SimulateRequest(BaseModel):
-    """Request body for direct ODE simulation in Studio."""
+    """Request body for direct equation-playground simulation in Studio.
+
+    The body is fail-closed: unknown keys are rejected, the protocol must be
+    one of the supported injection protocols (a typo never becomes
+    ``constant``), the sine frequency is explicit, and the randomness
+    contract is explicit: ``seed`` fixes the diffusion-noise generator of a
+    stochastic run (``xi`` in the equations), ``trial`` selects replay of a
+    trial (cacheable) or a fresh trial whose drawn seed is reported.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     equations: list[str]
     threshold: str | None = None
     reset: str | None = None
-    params: dict[str, float] | None = None
-    init: dict[str, float] | None = None
-    dt: float = Field(default=0.1, gt=0)
-    duration: float = Field(default=100.0, gt=0)
-    current: float = 0.0
-    protocol: str = "constant"
+    params: dict[str, FiniteFloat] | None = None
+    init: dict[str, FiniteFloat] | None = None
+    dt: PositiveFiniteFloat = 0.1
+    duration: PositiveFiniteFloat = 100.0
+    current: FiniteFloat = 0.0
+    protocol: StudioProtocol = "constant"
+    frequency_hz: PositiveFiniteFloat = 10.0
+    seed: ExperimentSeed | None = None
+    trial: StudioTrial = "replay"
 
 
 class ModelSimulateRequest(BaseModel):
@@ -55,6 +70,9 @@ class ModelSimulateRequest(BaseModel):
     duration: PositiveFiniteFloat = 100.0
     current: FiniteFloat = 10.0
     protocol: StudioProtocol = "constant"
+    frequency_hz: PositiveFiniteFloat = 10.0
+    seed: ExperimentSeed | None = None
+    trial: StudioTrial = "replay"
 
 
 class ModelInputErrorDetail(BaseModel):
@@ -64,6 +82,16 @@ class ModelInputErrorDetail(BaseModel):
     model: str | None
     field: str
     reason: str
+
+
+class ExperimentRejectedDetail(BaseModel):
+    """422 detail for a simulation request the experiment contract refuses."""
+
+    error: Literal["experiment_rejected"]
+    field: str
+    reason: str
+    execution_mode: Literal["refused", "job_required"]
+    recommended_route: str | None = None
 
 
 class ModelSimulationFailureDetail(BaseModel):
@@ -91,6 +119,7 @@ class ModelRunErrorResponse(BaseModel):
     detail: (
         ModelInputErrorDetail
         | ModelSimulationFailureDetail
+        | ExperimentRejectedDetail
         | list[RequestValidationErrorItem]
         | str
     )
@@ -100,9 +129,10 @@ MODEL_RUN_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     422: {
         "model": ModelRunErrorResponse,
         "description": (
-            "Request rejected before simulation (invalid_model_input), run failed "
-            "numerically at a named step (model_simulation_failed), or body "
-            "validation failed."
+            "Request rejected before simulation (invalid_model_input or "
+            "experiment_rejected, the latter also for an oversized synchronous run "
+            "that must be submitted as a job), run failed numerically at a named "
+            "step (model_simulation_failed), or body validation failed."
         ),
     }
 }
@@ -492,10 +522,13 @@ class AnalysisJobRequest(BaseModel):
 
     The ``analysis`` field selects the synchronous analysis kind. ``payload``
     must match the corresponding synchronous request schema (for example
-    :class:`BifurcationRequest` when ``analysis`` is ``bifurcation``).
+    :class:`BifurcationRequest` when ``analysis`` is ``bifurcation``;
+    :class:`ModelSimulateRequest` or :class:`SimulateRequest` when
+    ``analysis`` is ``simulate``, the route for a run the synchronous
+    simulation routes refuse as oversized).
     """
 
-    analysis: Literal["fi_curve", "bifurcation", "heatmap", "sensitivity"]
+    analysis: Literal["fi_curve", "bifurcation", "heatmap", "sensitivity", "simulate"]
     payload: dict[str, Any] = Field(default_factory=dict)
 
 

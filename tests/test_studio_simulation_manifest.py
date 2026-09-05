@@ -62,6 +62,7 @@ def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
     assert public == {
         "dt": 0.1,
         "evidence_classification": "simulation",
+        "experiment_sha256": "",
         "input_sha256": hashlib.sha256(
             json.dumps(
                 request_payload,
@@ -92,6 +93,7 @@ def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
         "state_custody_complete": False,
         "status": "completed",
         "state_variables": ["v"],
+        "trial": "",
     }
     assert "path" not in public
 
@@ -240,6 +242,8 @@ def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> Non
     assert metadata["layout_source"] == "equations"
     assert metadata["state_custody_complete"] is True
     assert metadata["observation_clock"] == "post-step"
+    assert re.fullmatch(r"[0-9a-f]{64}", metadata["experiment_sha256"])
+    assert metadata["trial"] == "replay"
     assert "path" not in metadata
 
 

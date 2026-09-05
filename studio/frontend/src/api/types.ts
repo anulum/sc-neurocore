@@ -110,6 +110,41 @@ export interface SimulationDisplayProjection {
 
 export type SimulationSnapshot = Record<string, number | number[]>;
 
+export type StudioTrialMode = "replay" | "fresh";
+
+export interface SimulationRandomness {
+  kind: "none" | "seeded-model" | "diffusion-noise";
+  seed: number | null;
+  seed_source: "none" | "request" | "model-default" | "playground-default" | "drawn";
+  trial: StudioTrialMode;
+  effective_trial: StudioTrialMode;
+  generator: string | null;
+  note?: string;
+}
+
+export interface SimulationExperiment {
+  schema_version: "studio.experiment-spec.v1";
+  source: "model" | "ode";
+  model?: Record<string, string>;
+  equations?: { equations: string[]; threshold: string | null; reset: string | null; variables: string[]; equation_sha256: string };
+  numerical: { method: string; family: string; dt: number; dt_source: string; substeps: number; time_unit: string };
+  steps: { n_steps: number; duration_requested_ms: number; duration_effective_ms: number; synchronous_limit: number };
+  parameters: Record<string, number | null>;
+  initial_state: Record<string, number | null>;
+  initial_state_source: string;
+  protocol: Record<string, string | number | null>;
+  randomness: SimulationRandomness;
+  backend: { selected: string; rejected: Array<{ name: string; reason: string }> };
+  runtime: Record<string, string>;
+  experiment_sha256: string;
+  cache: { key: string; cacheable: boolean };
+}
+
+export interface SimulationCacheInfo {
+  hit: boolean;
+  key: string;
+}
+
 export interface AnalysisResultMetadata {
   analysis_type: string;
   evidence_classification: "analysis";
@@ -143,6 +178,8 @@ export interface SimulateResponse {
   final_state?: SimulationSnapshot;
   raw?: SimulationRawBlock;
   display?: SimulationDisplayProjection;
+  experiment?: SimulationExperiment;
+  cache?: SimulationCacheInfo;
 }
 
 export interface HeatmapResponse {

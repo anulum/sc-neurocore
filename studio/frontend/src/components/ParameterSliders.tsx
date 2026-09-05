@@ -25,6 +25,7 @@ const PROTOCOLS = [
   { value: "step", label: "Step (20%-80%)" },
   { value: "ramp", label: "Ramp (0 → I)" },
   { value: "pulse", label: "Pulse train" },
+  { value: "sine", label: "Sine" },
 ];
 
 export function sliderBounds(
@@ -65,8 +66,8 @@ export default function ParameterSliders() {
     sourceMode, modelDetail, modelParams, setModelParam,
     modelIntegrator, modelQFormat, setModelIntegrator, setModelQFormat,
     odeParams, odeInit, setOdeParam, setOdeInit,
-    current, dt, duration, protocol,
-    setCurrent, setDt, setDuration, setProtocol,
+    current, dt, duration, protocol, frequencyHz, seed, trial,
+    setCurrent, setDt, setDuration, setProtocol, setFrequencyHz, setSeed, setTrial,
   } = useStudioStore();
 
   return (
@@ -168,6 +169,29 @@ export default function ParameterSliders() {
           min={0.001} max={1} step={0.001} />
         <Slider label="T (ms)" value={duration} onChange={setDuration}
           min={10} max={2000} step={10} />
+        {protocol === "sine" && (
+          <Slider label="f (Hz)" value={frequencyHz} onChange={setFrequencyHz}
+            min={1} max={500} step={1} />
+        )}
+      </div>
+
+      <div className="panel-section">
+        <div className="panel-header">Randomness</div>
+        <div className="slider-row">
+          <span className="slider-label">trial</span>
+          <select value={trial} onChange={(e) => setTrial(e.target.value === "fresh" ? "fresh" : "replay")}
+            style={{ flex: 1 }} aria-label="trial mode">
+            <option value="replay">Replay (recorded seed)</option>
+            <option value="fresh">Fresh (independent seed)</option>
+          </select>
+        </div>
+        <div className="slider-row">
+          <span className="slider-label">seed</span>
+          <input type="number" min={0} step={1} value={seed ?? ""} placeholder="model default"
+            aria-label="seed"
+            onChange={(e) => setSeed(e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value))))}
+            style={{ flex: 1 }} />
+        </div>
       </div>
     </>
   );

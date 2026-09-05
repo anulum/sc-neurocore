@@ -182,6 +182,43 @@ Four injection protocols for all simulations:
   classification, source, input digest, and result digest labels
 - **PNG export**: screenshot the current plot
 
+## One effective experiment per run
+
+Before anything runs, a simulation request (`/api/simulate`,
+`/api/models/simulate`, `/api/multi-simulate`, or the `simulate` kind of
+`/api/analysis/jobs`) is resolved into one `experiment`
+(`studio.experiment-spec.v1`) that the response returns and whose digest keys
+the result cache:
+
+- `model` — class, module SHA-256, descriptor SHA-256 and contract digest,
+  canonical schema profile and its SHA-256 (or `equations` with the equation
+  digest and the declared variables for the playground).
+- `numerical` — method, family, effective `dt` with its source (`override`,
+  `model_default`, `model_attribute`, `studio_default`), sub-steps and time
+  unit; `steps` — the exact step count and effective duration. An oversized
+  synchronous run is refused with `execution_mode = job_required` and the job
+  route, never shortened.
+- `initial_state` — typed initial values (descriptor-declared for models,
+  explicit for every playground variable, undeclared ones at 0.0; an initial
+  value for an undeclared variable is rejected).
+- `protocol` — kind, amplitude, the explicit sine `frequency_hz`, the fixed
+  step/ramp/pulse fractions and the SHA-256 of the drive samples.
+- `randomness` — `kind` (`none`, `seeded-model`, `diffusion-noise`), the
+  effective `seed` and its source (`request`, `model-default`,
+  `playground-default`, `drawn`), the requested `trial` (`replay` or `fresh`)
+  and the effective one. A seed on a deterministic model or on noise-free
+  equations is rejected; a fresh trial draws a seed, reports it so the trial
+  can be replayed, and is never cached. Playground diffusion noise (`xi`) is
+  drawn from a per-run generator, not from the process-global stream.
+- `backend` — the selected backend and the rejected alternatives with their
+  reasons; `runtime` — package, Python and NumPy versions and the equation
+  builder digest.
+
+Explicit request defaults resolve to the same experiment as omitted ones, so
+the GUI, the API and a replay from an exported response share one effective
+configuration; `cache.hit` says whether a replay came from the cache and the
+run manifest carries `experiment_sha256` and `trial`.
+
 ## Complete state and raw-result custody
 
 Every simulation response (`/api/simulate`, `/api/models/simulate`,
@@ -233,7 +270,8 @@ complete-state custody.
 ## API Reference
 
 The Studio backend exposes a REST API. All POST endpoints accept JSON.
-Simulations are cached (LRU, 64 slots) for instant replay.
+Replayable simulations are cached (LRU, 64 slots) by the digest of their
+resolved experiment; fresh stochastic trials are never cached.
 
 ### Core Simulation
 

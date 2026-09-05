@@ -306,6 +306,7 @@ def simulate_model(
     protocol: str = "constant",
     frequency_hz: float = 10.0,
     use_fast_path: bool = True,
+    max_steps: int = MAX_STEPS,
 ) -> dict[str, Any]:
     """Simulate a named catalogue model under a fail-closed input contract.
 
@@ -321,7 +322,7 @@ def simulate_model(
         step is a fixed class attribute accepts only that value; a model without
         any timestep accepts only the Studio default of 0.1 ms.
     duration : float
-        Requested run length in milliseconds; capped at ``MAX_STEPS`` steps and
+        Requested run length in milliseconds; capped at ``max_steps`` steps and
         reported as ``steps_truncated`` in the receipt.
     current : float
         Protocol amplitude; must be finite. Integer-drive models additionally
@@ -335,6 +336,11 @@ def simulate_model(
         given. The Rust result exports the membrane voltage only and no
         initial snapshot, and says so in its ``state_layout``; callers that
         need complete-state custody pass ``False``.
+    max_steps : int
+        Step cap of this caller (``MAX_STEPS`` for synchronous routes; a job
+        may pass more). A longer request is truncated and declared as
+        ``steps_truncated``; the experiment contract refuses it before
+        reaching this point.
 
     Returns
     -------
@@ -366,7 +372,7 @@ def simulate_model(
         current=current,
         duration=duration,
         frequency_hz=frequency_hz,
-        max_steps=MAX_STEPS,
+        max_steps=max_steps,
     )
 
     if use_fast_path and not inputs.overrides_applied and dt is None:

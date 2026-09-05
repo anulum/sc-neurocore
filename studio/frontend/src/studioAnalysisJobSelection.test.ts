@@ -36,6 +36,9 @@ const simInput = studioSimulationConfigInput({
   duration: 100,
   current: 12,
   protocol: "constant",
+  frequencyHz: 10,
+  seed: null,
+  trial: "replay",
 });
 
 describe("buildStudioAnalysisJobSelection success", () => {

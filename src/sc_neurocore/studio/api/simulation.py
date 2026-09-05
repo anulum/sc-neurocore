@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import OrderedDict
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 
@@ -39,6 +39,7 @@ from sc_neurocore.studio.api.analysis_jobs import (
     submit_analysis_job,
 )
 from sc_neurocore.studio.api.common import _safe
+from sc_neurocore.studio.model_run_contract import ModelInputError
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
     MODEL_RUN_ERROR_RESPONSES,
@@ -63,7 +64,12 @@ from sc_neurocore.studio.codegen import (
     generate_ode_script,
     generate_oneliner,
 )
-from sc_neurocore.studio.models import simulate_model
+from sc_neurocore.studio.experiment_spec import (
+    ExperimentRejected,
+    ExperimentSpec,
+    resolve_experiment,
+    run_experiment,
+)
 from sc_neurocore.studio.network import simulate_ei_network
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
@@ -83,11 +89,16 @@ def _raw_element_count(result: dict[str, Any]) -> int:
 
 
 class _SimCache:
-    """LRU cache for simulation results keyed by JSON hash.
+    """LRU cache for simulation results keyed by the resolved experiment digest.
 
-    Results whose raw block exceeds :data:`CACHE_RAW_ELEMENT_LIMIT` elements
-    are returned but not retained, so the cache cannot pin hundreds of
-    megabytes of full-resolution traces.
+    The key is the ``experiment_sha256`` of the resolved
+    :class:`~sc_neurocore.studio.experiment_spec.ExperimentSpec`, which binds
+    the effective inputs (model revision or equation digest, numerical
+    profile, effective dt and step count, typed initial state, protocol and
+    drive digest, randomness contract, backend and runtime digests), so runs
+    that differ in any of them cannot share an entry. A fresh stochastic
+    trial is never stored. Results whose raw block exceeds
+    :data:`CACHE_RAW_ELEMENT_LIMIT` elements are returned but not retained.
     """
 
     def __init__(self, maxsize: int = 64) -> None:
@@ -96,11 +107,14 @@ class _SimCache:
         self.hits = 0
         self.misses = 0
 
-    def _key(self, data: dict[str, Any]) -> str:
+    @staticmethod
+    def _key(data: dict[str, Any] | str) -> str:
+        if isinstance(data, str):
+            return data
         raw = json.dumps(data, sort_keys=True, default=str)
-        return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
+        return hashlib.sha256(raw.encode()).hexdigest()
 
-    def get(self, params: dict[str, Any]) -> dict[str, Any] | None:
+    def get(self, params: dict[str, Any] | str) -> dict[str, Any] | None:
         k = self._key(params)
         if k in self._cache:
             self.hits += 1
@@ -109,7 +123,7 @@ class _SimCache:
         self.misses += 1
         return None
 
-    def put(self, params: dict[str, Any], result: dict[str, Any]) -> None:
+    def put(self, params: dict[str, Any] | str, result: dict[str, Any]) -> None:
         if _raw_element_count(result) > CACHE_RAW_ELEMENT_LIMIT:
             return
         k = self._key(params)
@@ -120,6 +134,53 @@ class _SimCache:
 
 
 _cache = _SimCache()
+
+
+def _resolve_or_422(request: dict[str, Any]) -> ExperimentSpec:
+    """Resolve the effective experiment or raise the structured 422."""
+    try:
+        return resolve_experiment(request)
+    except ExperimentRejected as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _resolve_or_422_model(request: dict[str, Any]) -> ExperimentSpec:
+    """Resolve a catalogue-model experiment; contract errors become the public 422."""
+    try:
+        return resolve_experiment(request)
+    except ExperimentRejected as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+    except ModelInputError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _cached_replay(spec: ExperimentSpec) -> dict[str, Any] | None:
+    """Return the cached result of a replayable experiment, marked as a cache hit."""
+    if not spec.cacheable:
+        return None
+    cached = _cache.get(spec.experiment_sha256)
+    if cached is None:
+        return None
+    replay = dict(cached)
+    replay["cache"] = {"hit": True, "key": spec.experiment_sha256}
+    return replay
+
+
+def _run_and_record(
+    spec: ExperimentSpec, *, source: Literal["ode", "model"], request_payload: dict[str, Any]
+) -> dict[str, Any]:
+    """Execute a resolved experiment, attach pattern and manifest, store a replay."""
+    result = run_experiment(spec)
+    result["pattern"] = classify_firing_pattern(result["spikes"], result["n_steps"], result["dt"])
+    result["cache"] = {"hit": False, "key": spec.experiment_sha256}
+    result["run_metadata"] = build_simulation_run_manifest(
+        source=source,
+        request_payload=request_payload,
+        result_payload=result,
+    ).to_public_dict()
+    if spec.cacheable:
+        _cache.put(spec.experiment_sha256, result)
+    return result
 
 
 def build_simulation_router(context: StudioApiContext) -> APIRouter:
@@ -142,83 +203,54 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         except AnalysisJobValidationError as exc:
             raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
 
-    @router.post("/api/simulate")
+    @router.post("/api/simulate", responses=MODEL_RUN_ERROR_RESPONSES)
     def api_simulate(req: SimulateRequest) -> Any:
-        cache_key = {"_type": "ode", **req.model_dump()}
-        cached = _cache.get(cache_key)
-        if cached:
+        """Simulate the equation playground under the effective experiment contract.
+
+        The request resolves into one ``experiment`` (equation digest,
+        numerical profile, exact step count, typed initial state, protocol
+        with drive digest, randomness contract, backend and runtime digests)
+        before anything runs; the result cache is keyed by that digest and a
+        fresh stochastic trial is never cached. An oversized run is refused
+        with ``execution_mode = job_required`` instead of being shortened.
+        """
+        spec = _resolve_or_422(req.model_dump())
+        cached = _cached_replay(spec)
+        if cached is not None:
             return cached
         _guard_analysis_request(
-            analysis_budget, simulation_count=1, duration=req.duration, dt=req.dt
+            analysis_budget, simulation_count=1, duration=spec.duration_ms, dt=spec.dt
         )
-
-        def fn() -> dict[str, Any]:
-            result = simulate(
-                equations=req.equations,
-                threshold=req.threshold,
-                reset=req.reset,
-                params=req.params,
-                init=req.init,
-                dt=req.dt,
-                duration=req.duration,
-                current=req.current,
-                protocol=req.protocol,
-            )
-            result["pattern"] = classify_firing_pattern(
-                result["spikes"], result["n_steps"], result["dt"]
-            )
-            result["run_metadata"] = build_simulation_run_manifest(
-                source="ode",
-                request_payload=req.model_dump(),
-                result_payload=result,
-            ).to_public_dict()
-            _cache.put(cache_key, result)
-            return result
-
-        return _safe(fn)
+        return _safe(lambda: _run_and_record(spec, source="ode", request_payload=req.model_dump()))
 
     @router.post("/api/models/simulate", responses=MODEL_RUN_ERROR_RESPONSES)
     def api_model_simulate(req: ModelSimulateRequest) -> Any:
         """Simulate one catalogue model under the fail-closed run contract.
 
-        A rejected request (HTTP 422 ``invalid_model_input``) or a numerical
-        failure (HTTP 422 ``model_simulation_failed``) is never cached and never
-        returns a success payload; a successful run carries its
-        ``effective_inputs`` receipt, the declared ``state_layout`` with its
-        custody verdict, exact initial and final snapshots, the full-resolution
-        ``raw`` block and the ``display`` projection. The run executes on the
-        Python custody backend so every declared variable is observed.
+        The request resolves into one ``experiment`` (model revision and
+        descriptor/schema digests, numerical profile, effective dt and exact
+        step count, typed initial state, protocol with drive digest,
+        randomness contract, backend selection, runtime digest) before
+        anything runs; the cache is keyed by that digest. A rejected request
+        (HTTP 422 ``invalid_model_input`` or ``experiment_rejected``) or a
+        numerical failure (HTTP 422 ``model_simulation_failed``) is never
+        cached and never returns a success payload; a successful run carries
+        its ``effective_inputs`` receipt, the declared ``state_layout`` with
+        its custody verdict, exact initial and final snapshots, the
+        full-resolution ``raw`` block and the ``display`` projection. The run
+        executes on the Python custody backend so every declared variable is
+        observed.
         """
-        cache_key = {"_type": "model", **req.model_dump()}
-        cached = _cache.get(cache_key)
-        if cached:
+        spec = _resolve_or_422_model(req.model_dump())
+        cached = _cached_replay(spec)
+        if cached is not None:
             return cached
         _guard_analysis_request(
-            analysis_budget, simulation_count=1, duration=req.duration, dt=req.dt
+            analysis_budget, simulation_count=1, duration=spec.duration_ms, dt=spec.dt
         )
-
-        def fn() -> dict[str, Any]:
-            result = simulate_model(
-                name=req.name,
-                param_overrides=req.params,
-                dt=req.dt,
-                duration=req.duration,
-                current=req.current,
-                protocol=req.protocol,
-                use_fast_path=False,
-            )
-            result["pattern"] = classify_firing_pattern(
-                result["spikes"], result["n_steps"], result["dt"]
-            )
-            result["run_metadata"] = build_simulation_run_manifest(
-                source="model",
-                request_payload=req.model_dump(),
-                result_payload=result,
-            ).to_public_dict()
-            _cache.put(cache_key, result)
-            return result
-
-        return _safe(fn)
+        return _safe(
+            lambda: _run_and_record(spec, source="model", request_payload=req.model_dump())
+        )
 
     @router.get("/api/cache/stats")
     def api_cache_stats() -> dict[str, int]:
@@ -505,25 +537,17 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
                 [(cfg.duration, cfg.dt) for cfg in configs[:4]],
             )
 
+        specs = [_resolve_or_422_model(cfg.model_dump()) for cfg in configs[:4]]
+
         def fn() -> list[dict[str, Any]]:
             results: list[dict[str, Any]] = []
-            for cfg in configs[:4]:
-                r = simulate_model(
-                    name=cfg.name,
-                    param_overrides=cfg.params,
-                    dt=cfg.dt,
-                    duration=cfg.duration,
-                    current=cfg.current,
-                    protocol=cfg.protocol,
-                    use_fast_path=False,
+            for cfg, spec in zip(configs[:4], specs, strict=True):
+                cached = _cached_replay(spec)
+                results.append(
+                    cached
+                    if cached is not None
+                    else _run_and_record(spec, source="model", request_payload=cfg.model_dump())
                 )
-                r["pattern"] = classify_firing_pattern(r["spikes"], r["n_steps"], r["dt"])
-                r["run_metadata"] = build_simulation_run_manifest(
-                    source="model",
-                    request_payload=cfg.model_dump(),
-                    result_payload=r,
-                ).to_public_dict()
-                results.append(r)
             return results
 
         return _safe(fn)

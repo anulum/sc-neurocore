@@ -132,6 +132,8 @@ def simulate(
     current: float = 0.0,
     protocol: str = "constant",
     frequency_hz: float = 10.0,
+    seed: int | None = None,
+    max_steps: int = MAX_STEPS,
 ) -> dict[str, Any]:
     """Run an equation-neuron simulation and return its complete raw result.
 
@@ -145,9 +147,15 @@ def simulate(
         Parameter values and initial state.
     dt, duration : float
         Step in milliseconds and requested run length; capped at
-        :data:`MAX_STEPS` steps.
+        ``max_steps`` steps (:data:`MAX_STEPS` by default; the experiment
+        contract refuses a longer synchronous run instead of shortening it).
     current, protocol, frequency_hz : float, str, float
         Injection protocol.
+    seed : int or None
+        Seed of the diffusion-noise generator (the ``xi`` symbol). ``None``
+        draws from the process-global ``numpy.random`` stream, which is not
+        reproducible; the experiment contract always passes a seed for a
+        stochastic playground run and rejects one for noise-free equations.
 
     Returns
     -------
@@ -168,8 +176,8 @@ def simulate(
         trace).
     """
     n_steps = int(duration / dt)
-    if n_steps > MAX_STEPS:
-        n_steps = MAX_STEPS
+    if n_steps > max_steps:
+        n_steps = max_steps
     if n_steps < 1:
         raise ValueError(f"Duration {duration} with dt {dt} yields < 1 step")
 
@@ -177,9 +185,10 @@ def simulate(
         *equations,
         threshold=threshold,
         reset=reset if reset else None,
-        params=params,
-        init=init,
+        params=dict(params) if params else None,
+        init=dict(init) if init else None,
         dt=dt,
+        noise_rng=np.random.default_rng(seed) if seed is not None else None,
     )
 
     var_names = list(neuron.state.keys())

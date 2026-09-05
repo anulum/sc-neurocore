@@ -32,6 +32,9 @@ const input: StudioSimulationConfigInput = {
   duration: 100,
   current: 12,
   protocol: "constant",
+  frequencyHz: 10,
+  seed: null,
+  trial: "replay",
 };
 
 describe("Studio simulation request builders", () => {
@@ -43,6 +46,22 @@ describe("Studio simulation request builders", () => {
       duration: 100,
       current: 12,
       protocol: "constant",
+      frequency_hz: 10,
+      trial: "replay",
+    });
+  });
+
+  it("sends an explicit seed and trial so the effective config is the same in GUI and API", () => {
+    expect(studioSimulationConfig({ ...input, seed: 7, trial: "fresh", protocol: "sine", frequencyHz: 25 })).toEqual({
+      model_name: "lif",
+      params: { tau: 10, capacitance: 1 },
+      dt: 0.1,
+      duration: 100,
+      current: 12,
+      protocol: "sine",
+      frequency_hz: 25,
+      trial: "fresh",
+      seed: 7,
     });
   });
 
@@ -57,6 +76,8 @@ describe("Studio simulation request builders", () => {
       duration: 100,
       current: 12,
       protocol: "constant",
+      frequency_hz: 10,
+      trial: "replay",
     });
   });
 

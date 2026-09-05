@@ -76,6 +76,7 @@ export default function App() {
       modelParams: s.modelParams, equations: s.equations, threshold: s.threshold,
       reset: s.reset, odeParams: s.odeParams, odeInit: s.odeInit,
       dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
+      frequencyHz: s.frequencyHz, seed: s.seed, trial: s.trial,
     }, analysis: analysisKind, sweepParam: s.sweepParam, sweepParamY: s.sweepParamY,
   }, { disabled: s.isSimulating, capabilityEnabled: !panelUnavailable(analysisPanel),
     applyPatch: (patch) => useStudioStore.setState(patch) });

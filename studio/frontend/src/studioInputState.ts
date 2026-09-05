@@ -129,6 +129,30 @@ export function protocolState(protocol: string): StudioProtocolStatePatch {
   return { protocol };
 }
 
+export interface StudioFrequencyHzStatePatch {
+  frequencyHz: number;
+}
+
+export interface StudioSeedStatePatch {
+  seed: number | null;
+}
+
+export interface StudioTrialStatePatch {
+  trial: "replay" | "fresh";
+}
+
+export function frequencyHzState(frequencyHz: number): StudioFrequencyHzStatePatch {
+  return { frequencyHz };
+}
+
+export function seedState(seed: number | null): StudioSeedStatePatch {
+  return { seed };
+}
+
+export function trialState(trial: "replay" | "fresh"): StudioTrialStatePatch {
+  return { trial };
+}
+
 export function activeTabState(activeTab: StudioInputViewTab): StudioActiveTabStatePatch {
   return { activeTab };
 }

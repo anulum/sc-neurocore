@@ -33,6 +33,9 @@ export interface StudioSimulationConfigSource {
   duration: number;
   current: number;
   protocol: string;
+  frequencyHz: number;
+  seed: number | null;
+  trial: "replay" | "fresh";
 }
 
 /**
@@ -55,5 +58,8 @@ export function studioSimulationConfigInput(
     duration: source.duration,
     current: source.current,
     protocol: source.protocol,
+    frequencyHz: source.frequencyHz,
+    seed: source.seed,
+    trial: source.trial,
   };
 }

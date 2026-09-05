@@ -22108,10 +22108,12 @@ and the special variable `I` (input current).
 ``units="strict"`` enables opt-in pint-based dimensional
 validation before the expressions are compiled for runtime.
 
-- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed)
+- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed, noise_rng)
   - Initialise an equation-defined neuron from ODE strings.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
+- **uses_diffusion_noise**()
+  - Whether any authored expression references the diffusion-noise symbol ``xi``.
 - **step**(I)
   - Advance the neuron by one macro timestep; return 1 if it spikes.
 - **get_state**()
@@ -22131,6 +22133,9 @@ validation before the expressions are compiled for runtime.
 
 ### Function `from_equations()`
 Build an EquationNeuron from Brian2-style equation strings.
+
+``noise_rng`` seeds the diffusion-noise symbol ``xi``; without it the
+process-global ``numpy.random`` stream is used.
 
 Examples
 --------
@@ -34954,7 +34959,14 @@ StudioApiContext
 ## Module `studio.api.schemas`
 
 ### Class `SimulateRequest`
-Request body for direct ODE simulation in Studio.
+Request body for direct equation-playground simulation in Studio.
+
+The body is fail-closed: unknown keys are rejected, the protocol must be
+one of the supported injection protocols (a typo never becomes
+``constant``), the sine frequency is explicit, and the randomness
+contract is explicit: ``seed`` fixes the diffusion-noise generator of a
+stochastic run (``xi`` in the equations), ``trial`` selects replay of a
+trial (cacheable) or a fresh trial whose drawn seed is reported.
 
 
 ### Class `ModelSimulateRequest`
@@ -34970,6 +34982,10 @@ step inputs) is performed by the run contract and reported as
 
 ### Class `ModelInputErrorDetail`
 422 detail for a model-run request rejected before any simulation step.
+
+
+### Class `ExperimentRejectedDetail`
+422 detail for a simulation request the experiment contract refuses.
 
 
 ### Class `ModelSimulationFailureDetail`
@@ -35141,7 +35157,10 @@ Request body for asynchronous heavy analysis job submission.
 
 The ``analysis`` field selects the synchronous analysis kind. ``payload``
 must match the corresponding synchronous request schema (for example
-:class:`BifurcationRequest` when ``analysis`` is ``bifurcation``).
+:class:`BifurcationRequest` when ``analysis`` is ``bifurcation``;
+:class:`ModelSimulateRequest` or :class:`SimulateRequest` when
+``analysis`` is ``simulate``, the route for a run the synchronous
+simulation routes refuse as oversized).
 
 
 ### Class `NetworkRequest`
@@ -35516,6 +35535,80 @@ ValueError
 
 ---
 
+## Module `studio.experiment_spec`
+
+### Class `ExperimentRejected`
+Raised when a request cannot become one effective experiment.
+
+Parameters
+----------
+field : str
+    Request field that failed.
+reason : str
+    Bounded, path-free reason.
+execution_mode : {"refused", "job_required"}
+    ``job_required`` when the run is valid but too large for the
+    synchronous route and must be submitted as a job.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `ExperimentSpec`
+The resolved, digest-bound specification of one Studio run.
+
+``public`` is the path-free specification (with ``experiment_sha256``);
+``run_kwargs`` is the executable material for the run entrypoint and is
+never returned to a client; ``cacheable`` is ``False`` for a fresh
+stochastic trial.
+
+- **experiment_sha256**()
+  - Digest of the public specification: the cache key of the run.
+- **to_public_dict**()
+  - Return the path-free experiment specification.
+
+### Function `resolve_model_experiment(request)`
+Resolve a catalogue-model request into its effective experiment.
+
+Parameters
+----------
+request : mapping
+    Validated request fields: ``name``, ``params``, ``dt``, ``duration``,
+    ``current``, ``protocol``, ``frequency_hz``, ``seed``, ``trial``.
+max_steps : int
+    Largest step count this caller executes; a larger run is rejected
+    with ``execution_mode = job_required``.
+
+Raises
+------
+ModelInputError
+    From the run contract (unknown model, parameter, unsupported step).
+ExperimentRejected
+    Seed on a deterministic model, seed given twice, no complete step or
+    an oversized run.
+
+### Function `resolve_ode_experiment(request)`
+Resolve an equation-playground request into its effective experiment.
+
+Raises
+------
+ExperimentRejected
+    Unparsable equation, initial value for an undeclared variable, seed
+    on noise-free equations, no complete step or an oversized run.
+
+### Function `resolve_experiment(request)`
+Resolve a model or equation request into its effective experiment.
+
+### Function `run_experiment(spec)`
+Execute a resolved experiment and attach its specification to the result.
+
+Raises
+------
+ModelInputError, ModelSimulationFailure, ValueError
+    From the run entrypoints.
+
+---
+
 ## Module `studio.model_catalogue`
 
 ### Class `ModelMetadataError`
@@ -35793,7 +35886,7 @@ Raised when the Studio Rust batch-simulation path is unavailable.
 Raised when the Studio Rust batch-simulation path fails at runtime.
 
 
-### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path)`
+### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path, max_steps)`
 Simulate a named catalogue model under a fail-closed input contract.
 
 Parameters
@@ -35808,7 +35901,7 @@ dt : float or None
     step is a fixed class attribute accepts only that value; a model without
     any timestep accepts only the Studio default of 0.1 ms.
 duration : float
-    Requested run length in milliseconds; capped at ``MAX_STEPS`` steps and
+    Requested run length in milliseconds; capped at ``max_steps`` steps and
     reported as ``steps_truncated`` in the receipt.
 current : float
     Protocol amplitude; must be finite. Integer-drive models additionally
@@ -35822,6 +35915,11 @@ use_fast_path : bool
     given. The Rust result exports the membrane voltage only and no
     initial snapshot, and says so in its ``state_layout``; callers that
     need complete-state custody pass ``False``.
+max_steps : int
+    Step cap of this caller (``MAX_STEPS`` for synchronous routes; a job
+    may pass more). A longer request is truncated and declared as
+    ``steps_truncated``; the experiment contract refuses it before
+    reaching this point.
 
 Returns
 -------
@@ -38241,7 +38339,7 @@ Infinity so saved projects remain portable across runtimes.
 
 ## Module `studio.simulation`
 
-### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz)`
+### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz, seed, max_steps)`
 Run an equation-neuron simulation and return its complete raw result.
 
 Parameters
@@ -38254,9 +38352,15 @@ params, init : dict or None
     Parameter values and initial state.
 dt, duration : float
     Step in milliseconds and requested run length; capped at
-    :data:`MAX_STEPS` steps.
+    ``max_steps`` steps (:data:`MAX_STEPS` by default; the experiment
+    contract refuses a longer synchronous run instead of shortening it).
 current, protocol, frequency_hz : float, str, float
     Injection protocol.
+seed : int or None
+    Seed of the diffusion-noise generator (the ``xi`` symbol). ``None``
+    draws from the process-global ``numpy.random`` stream, which is not
+    reproducible; the experiment contract always passes a seed for a
+    stochastic playground run and rejects one for noise-free equations.
 
 Returns
 -------
@@ -38318,6 +38422,12 @@ state_custody_complete:
 observation_clock:
     Clock rule of the recorded samples (``post-step``), empty when the
     result carries none.
+experiment_sha256:
+    SHA-256 digest of the resolved experiment specification
+    (``studio.experiment-spec.v1``), empty when the result carries none.
+trial:
+    ``replay`` (deterministic replay of a recorded trial) or ``fresh``
+    (independent stochastic trial with a drawn seed), empty when absent.
 evidence_classification:
     Stable evidence lane label for simulation runs.
 status:

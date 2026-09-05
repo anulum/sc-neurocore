@@ -32,6 +32,7 @@ export const studioInitialData = {
   auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
+  frequencyHz: 10, seed: null, trial: "replay",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
   heatmapResult: null, compareResult: null, nullclineResult: null,
   freqResult: null, staResult: null,

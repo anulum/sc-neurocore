@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 429
+expected_file_count = 430
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1715,6 +1715,10 @@ rationale = "Model-declared state layout, observed shapes, exact snapshots and t
 [[file]]
 path = "src/sc_neurocore/studio/trace_projection.py"
 rationale = "Full-resolution raw trace custody and the bounded display projection every Studio simulation response carries."
+
+[[file]]
+path = "src/sc_neurocore/studio/experiment_spec.py"
+rationale = "The effective experiment contract (revision digests, numerical profile, typed state, protocol, randomness, backend, runtime) that keys the Studio result cache."
 
 [[file]]
 path = "src/sc_neurocore/neurons/readiness.py"

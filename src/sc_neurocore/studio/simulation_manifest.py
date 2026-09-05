@@ -76,6 +76,12 @@ class StudioSimulationRunManifest:
     observation_clock:
         Clock rule of the recorded samples (``post-step``), empty when the
         result carries none.
+    experiment_sha256:
+        SHA-256 digest of the resolved experiment specification
+        (``studio.experiment-spec.v1``), empty when the result carries none.
+    trial:
+        ``replay`` (deterministic replay of a recorded trial) or ``fresh``
+        (independent stochastic trial with a drawn seed), empty when absent.
     evidence_classification:
         Stable evidence lane label for simulation runs.
     status:
@@ -95,6 +101,8 @@ class StudioSimulationRunManifest:
     layout_source: str
     state_custody_complete: bool
     observation_clock: str
+    experiment_sha256: str = ""
+    trial: str = ""
     evidence_classification: StudioEvidenceClassification = "simulation"
     status: StudioEvidenceStatus = "completed"
 
@@ -105,6 +113,7 @@ class StudioSimulationRunManifest:
             "evidence_classification": validate_studio_evidence_classification(
                 self.evidence_classification
             ),
+            "experiment_sha256": self.experiment_sha256,
             "input_sha256": self.input_sha256,
             "layout_source": self.layout_source,
             "n_steps": self.n_steps,
@@ -119,6 +128,7 @@ class StudioSimulationRunManifest:
             "state_custody_complete": self.state_custody_complete,
             "status": validate_studio_evidence_status(self.status),
             "state_variables": list(self.state_variables),
+            "trial": self.trial,
         }
 
 
@@ -155,6 +165,7 @@ def build_simulation_run_manifest(
     raw = result_payload.get("raw")
     layout = result_payload.get("state_layout")
     observation = result_payload.get("observation")
+    experiment = result_payload.get("experiment")
     result_without_manifest = {
         key: value for key, value in result_payload.items() if key != "run_metadata"
     }
@@ -182,6 +193,14 @@ def build_simulation_run_manifest(
         ),
         observation_clock=(
             str(observation.get("clock", "")) if isinstance(observation, Mapping) else ""
+        ),
+        experiment_sha256=(
+            str(experiment.get("experiment_sha256", "")) if isinstance(experiment, Mapping) else ""
+        ),
+        trial=(
+            str(experiment.get("randomness", {}).get("trial", ""))
+            if isinstance(experiment, Mapping) and isinstance(experiment.get("randomness"), Mapping)
+            else ""
         ),
     )
 

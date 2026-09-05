@@ -54,6 +54,9 @@ describe("Studio saved-session persistence", () => {
     selectedModelName: "lif",
     sourceMode: "model",
     threshold: "v > -50",
+    frequencyHz: 10,
+    seed: 42,
+    trial: "replay",
   };
 
   it("returns an empty list when browser storage is unavailable or invalid", () => {
@@ -128,6 +131,9 @@ describe("Studio saved-session persistence", () => {
       selectedModelName: "lif",
       sourceMode: "model",
       threshold: "v > -50",
+      frequencyHz: 10,
+      seed: 42,
+      trial: "replay",
     });
   });
 
@@ -163,6 +169,9 @@ describe("Studio saved-session persistence", () => {
       selectedModelName: false,
       sourceMode: "invalid",
       threshold: undefined,
+      frequencyHz: -3,
+      seed: 1.5,
+      trial: "random",
     })).toEqual({
       current: 10,
       dt: 0.1,
@@ -176,6 +185,18 @@ describe("Studio saved-session persistence", () => {
       selectedModelName: "",
       sourceMode: "model",
       threshold: "",
+      frequencyHz: 10,
+      seed: null,
+      trial: "replay",
     });
+  });
+
+  it("restores an explicit fresh trial and a missing seed as the model default", () => {
+    expect(studioSavedSessionRestoreState({
+      ...studioSavedSessionState(demoInput),
+      seed: undefined,
+      trial: "fresh",
+      frequencyHz: 40,
+    })).toEqual({ ...demoInput, seed: null, trial: "fresh", frequencyHz: 40 });
   });
 });

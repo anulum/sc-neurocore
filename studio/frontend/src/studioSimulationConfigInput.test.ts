@@ -29,6 +29,9 @@ const modelSource: StudioSimulationConfigSource = {
   duration: 100,
   current: 12,
   protocol: "constant",
+  frequencyHz: 10,
+  seed: null,
+  trial: "replay",
 };
 
 const odeSource: StudioSimulationConfigSource = {
@@ -55,6 +58,9 @@ describe("studioSimulationConfigInput", () => {
       duration: 100,
       current: 12,
       protocol: "constant",
+      frequencyHz: 10,
+      seed: null,
+      trial: "replay",
     } satisfies StudioSimulationConfigInput);
     expect(input.modelParams).toBe(modelSource.modelParams);
     expect(input.equations).toBe(modelSource.equations);
@@ -96,6 +102,9 @@ describe("studioSimulationConfigInput", () => {
         duration: modelSource.duration,
         current: modelSource.current,
         protocol: modelSource.protocol,
+        frequencyHz: modelSource.frequencyHz,
+        seed: modelSource.seed,
+        trial: modelSource.trial,
       }),
     );
     expect(studioSimulationConfig(odeInput)).toEqual(
@@ -112,6 +121,9 @@ describe("studioSimulationConfigInput", () => {
         duration: odeSource.duration,
         current: odeSource.current,
         protocol: odeSource.protocol,
+        frequencyHz: odeSource.frequencyHz,
+        seed: odeSource.seed,
+        trial: odeSource.trial,
       }),
     );
   });
@@ -130,6 +142,9 @@ describe("studioSimulationConfigInput", () => {
       duration: 0,
       current: 0,
       protocol: "",
+      frequencyHz: 10,
+      seed: null,
+      trial: "replay",
     };
     const input = studioSimulationConfigInput(sparse);
     expect(input.threshold).toBe("");

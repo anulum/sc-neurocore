@@ -117,8 +117,15 @@ class EquationNeuron:
         rate_expression: str | None = None,
         probability_expression: str | None = None,
         rng_seed: int = DEFAULT_LFSR16_SEED,
+        noise_rng: np.random.Generator | None = None,
     ) -> None:
-        """Initialise an equation-defined neuron from ODE strings."""
+        """Initialise an equation-defined neuron from ODE strings.
+
+        ``noise_rng`` is the generator that draws the diffusion-noise symbol
+        ``xi``; when ``None`` the process-global ``numpy.random`` stream is
+        used (legacy behaviour). A caller that needs a reproducible stochastic
+        trial passes its own seeded ``numpy.random.Generator``.
+        """
         if units not in {"none", "strict"}:
             raise ValueError("units must be 'none' or 'strict'")
         if method not in SUPPORTED_METHODS:
@@ -220,6 +227,7 @@ class EquationNeuron:
 
         self.initial_state = deepcopy(self.state)
         self._noise_scale = np.sqrt(self.dt)
+        self._noise_rng = noise_rng
 
         self._safety = ExpressionSafetyValidator()
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
@@ -330,6 +338,24 @@ class EquationNeuron:
     # :class:`~sc_neurocore.neurons.equation_safety.ExpressionSafetyValidator`.
     _EVAL_GLOBALS = EVAL_GLOBALS
 
+    def _draw_noise(self) -> float:
+        """Draw one standard-normal diffusion-noise sample from the run's generator."""
+        if self._noise_rng is not None:
+            return float(self._noise_rng.standard_normal())
+        return float(np.random.randn())
+
+    @property
+    def uses_diffusion_noise(self) -> bool:
+        """Whether any authored expression references the diffusion-noise symbol ``xi``."""
+        expressions = list(self.equations.values()) + list(self.reset_rules.values())
+        if self.threshold_expr:
+            expressions.append(self.threshold_expr)
+        if self.rate_expression:
+            expressions.append(self.rate_expression)
+        if self.probability_expression:
+            expressions.append(self.probability_expression)
+        return any(re.search(r"\bxi\b", expression) is not None for expression in expressions)
+
     def _build_env(self, **kwargs: float) -> dict[str, object]:
         """Build the eval environment with parameters, state, and noise."""
         env: dict[str, object] = dict(self._namespace)
@@ -341,7 +367,7 @@ class EquationNeuron:
             # equations, probability/rate, or reset expressions references diffusion noise.
             env["xi"] = 0.0
         else:
-            env["xi"] = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
+            env["xi"] = self._noise_scale * self._draw_noise() / max(self.dt, 1e-12) ** 0.5
         env.update(self.parameters)
         env.update(self.constants)
         env.update(self.state)
@@ -499,7 +525,7 @@ class EquationNeuron:
         elif self.method == "rk4":
             s0 = deepcopy(self.state)
 
-            xi_sample = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
+            xi_sample = self._noise_scale * self._draw_noise() / max(self.dt, 1e-12) ** 0.5
 
             def eval_derivs(state_override: dict[str, float]) -> dict[str, float]:
                 """Evaluate all ODE derivatives at given state."""
@@ -631,8 +657,12 @@ def from_equations(
     units: str = "none",
     input_unit: Any | None = None,
     detection: str = "level",
+    noise_rng: np.random.Generator | None = None,
 ) -> EquationNeuron:
     """Build an EquationNeuron from Brian2-style equation strings.
+
+    ``noise_rng`` seeds the diffusion-noise symbol ``xi``; without it the
+    process-global ``numpy.random`` stream is used.
 
     Examples
     --------
@@ -682,7 +712,9 @@ def from_equations(
         threshold = threshold.strip()
         threshold_expr = threshold
 
-    state = init or {k: 0.0 for k in equations}
+    # Copy the caller's initial state: the neuron mutates its state mapping in
+    # place, and a shared dict would silently change the caller's record.
+    state = dict(init) if init else {k: 0.0 for k in equations}
 
     return EquationNeuron(
         equations=equations,
@@ -696,4 +728,5 @@ def from_equations(
         units=units,
         input_unit=input_unit,
         detection=detection,
+        noise_rng=noise_rng,
     )

@@ -11,6 +11,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Every Studio simulation request now resolves into one effective experiment
+  (`sc_neurocore.studio.experiment_spec`, `studio.experiment-spec.v1`) before
+  it runs: model revision (package, module, descriptor and canonical schema
+  digests) or equation digest, numerical profile and effective time step,
+  exact step count, typed initial state, protocol with an explicit sine
+  frequency and the drive digest, randomness contract (kind, seed and its
+  source, replay or fresh trial), backend selection with rejected
+  alternatives and the runtime digest. The result cache is keyed by that
+  digest, so runs that differ in any of them cannot share an entry, and a
+  fresh stochastic trial is never cached; explicit request defaults resolve
+  to the same experiment as omitted ones. A seed on a deterministic model or
+  on noise-free equations is rejected; playground diffusion noise draws from
+  a per-run generator instead of the process-global stream; an oversized
+  synchronous run is refused with a pointer to the new `simulate` job kind
+  instead of being shortened; a protocol typo on the playground route is
+  rejected instead of becoming constant. Run manifests carry the experiment
+  digest and trial; the Studio UI sends explicit frequency, seed and trial
+  and persists them in saved sessions.
 - Studio simulation results now carry complete-state and raw-result custody.
   Catalogue runs record the state the committed descriptor declares, joined
   with the canonical profile roles (`sc_neurocore.studio.state_layout`), with

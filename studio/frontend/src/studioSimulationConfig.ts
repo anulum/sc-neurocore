@@ -8,6 +8,7 @@
 
 export type StudioSimulationSourceMode = "model" | "ode";
 export type StudioSimulationRequest = Record<string, unknown>;
+export type StudioSimulationTrial = "replay" | "fresh";
 
 export interface StudioSimulationConfigInput {
   sourceMode: StudioSimulationSourceMode;
@@ -22,6 +23,26 @@ export interface StudioSimulationConfigInput {
   duration: number;
   current: number;
   protocol: string;
+  /** Sine-protocol frequency; always sent so the effective config is explicit. */
+  frequencyHz: number;
+  /** Explicit seed of a stochastic run; ``null`` leaves the model or playground default. */
+  seed: number | null;
+  /** ``replay`` (cacheable, deterministic) or ``fresh`` (independent stochastic trial). */
+  trial: StudioSimulationTrial;
+}
+
+/**
+ * The explicit randomness and protocol fields every simulation request carries.
+ */
+export function studioExperimentFields(input: StudioSimulationConfigInput): StudioSimulationRequest {
+  const fields: StudioSimulationRequest = {
+    frequency_hz: input.frequencyHz,
+    trial: input.trial,
+  };
+  if (input.seed !== null) {
+    fields.seed = input.seed;
+  }
+  return fields;
 }
 
 export interface StudioCodegenRequestInput extends StudioSimulationConfigInput {
@@ -49,6 +70,7 @@ export function studioSimulationConfig(input: StudioSimulationConfigInput): Stud
       duration: input.duration,
       current: input.current,
       protocol: input.protocol,
+      ...studioExperimentFields(input),
     };
   }
   return {
@@ -61,6 +83,7 @@ export function studioSimulationConfig(input: StudioSimulationConfigInput): Stud
     duration: input.duration,
     current: input.current,
     protocol: input.protocol,
+    ...studioExperimentFields(input),
   };
 }
 

@@ -187,14 +187,15 @@
         "type": "object"
       },
       "AnalysisJobRequest": {
-        "description": "Request body for asynchronous heavy analysis job submission.\n\nThe ``analysis`` field selects the synchronous analysis kind. ``payload``\nmust match the corresponding synchronous request schema (for example\n:class:`BifurcationRequest` when ``analysis`` is ``bifurcation``).",
+        "description": "Request body for asynchronous heavy analysis job submission.\n\nThe ``analysis`` field selects the synchronous analysis kind. ``payload``\nmust match the corresponding synchronous request schema (for example\n:class:`BifurcationRequest` when ``analysis`` is ``bifurcation``;\n:class:`ModelSimulateRequest` or :class:`SimulateRequest` when\n``analysis`` is ``simulate``, the route for a run the synchronous\nsimulation routes refuse as oversized).",
         "properties": {
           "analysis": {
             "enum": [
               "fi_curve",
               "bifurcation",
               "heatmap",
-              "sensitivity"
+              "sensitivity",
+              "simulate"
             ],
             "title": "Analysis",
             "type": "string"
@@ -631,6 +632,51 @@
           }
         },
         "title": "DclsEvaluateRequest",
+        "type": "object"
+      },
+      "ExperimentRejectedDetail": {
+        "description": "422 detail for a simulation request the experiment contract refuses.",
+        "properties": {
+          "error": {
+            "const": "experiment_rejected",
+            "title": "Error",
+            "type": "string"
+          },
+          "execution_mode": {
+            "enum": [
+              "refused",
+              "job_required"
+            ],
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "recommended_route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Route"
+          }
+        },
+        "required": [
+          "error",
+          "field",
+          "reason",
+          "execution_mode"
+        ],
+        "title": "ExperimentRejectedDetail",
         "type": "object"
       },
       "FICurveRequest": {
@@ -1203,6 +1249,9 @@
                 "$ref": "#/components/schemas/ModelSimulationFailureDetail"
               },
               {
+                "$ref": "#/components/schemas/ExperimentRejectedDetail"
+              },
+              {
                 "items": {
                   "$ref": "#/components/schemas/RequestValidationErrorItem"
                 },
@@ -1248,6 +1297,12 @@
             "title": "Duration",
             "type": "number"
           },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -1276,6 +1331,28 @@
               "sine"
             ],
             "title": "Protocol",
+            "type": "string"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "trial": {
+            "default": "replay",
+            "enum": [
+              "replay",
+              "fresh"
+            ],
+            "title": "Trial",
             "type": "string"
           }
         },
@@ -1839,7 +1916,8 @@
         "type": "object"
       },
       "SimulateRequest": {
-        "description": "Request body for direct ODE simulation in Studio.",
+        "additionalProperties": false,
+        "description": "Request body for direct equation-playground simulation in Studio.\n\nThe body is fail-closed: unknown keys are rejected, the protocol must be\none of the supported injection protocols (a typo never becomes\n``constant``), the sine frequency is explicit, and the randomness\ncontract is explicit: ``seed`` fixes the diffusion-noise generator of a\nstochastic run (``xi`` in the equations), ``trial`` selects replay of a\ntrial (cacheable) or a fresh trial whose drawn seed is reported.",
         "properties": {
           "current": {
             "default": 0.0,
@@ -1864,6 +1942,12 @@
             },
             "title": "Equations",
             "type": "array"
+          },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
           },
           "init": {
             "anyOf": [
@@ -1895,6 +1979,13 @@
           },
           "protocol": {
             "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
             "title": "Protocol",
             "type": "string"
           },
@@ -1909,6 +2000,19 @@
             ],
             "title": "Reset"
           },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
           "threshold": {
             "anyOf": [
               {
@@ -1919,6 +2023,15 @@
               }
             ],
             "title": "Threshold"
+          },
+          "trial": {
+            "default": "replay",
+            "enum": [
+              "replay",
+              "fresh"
+            ],
+            "title": "Trial",
+            "type": "string"
           }
         },
         "required": [
@@ -3053,7 +3166,7 @@
                 }
               }
             },
-            "description": "Request rejected before simulation (invalid_model_input), run failed numerically at a named step (model_simulation_failed), or body validation failed."
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
           }
         },
         "summary": "Export Svg"
@@ -3840,7 +3953,7 @@
     },
     "/api/models/simulate": {
       "post": {
-        "description": "Simulate one catalogue model under the fail-closed run contract.\n\nA rejected request (HTTP 422 ``invalid_model_input``) or a numerical\nfailure (HTTP 422 ``model_simulation_failed``) is never cached and never\nreturns a success payload; a successful run carries its\n``effective_inputs`` receipt, the declared ``state_layout`` with its\ncustody verdict, exact initial and final snapshots, the full-resolution\n``raw`` block and the ``display`` projection. The run executes on the\nPython custody backend so every declared variable is observed.",
+        "description": "Simulate one catalogue model under the fail-closed run contract.\n\nThe request resolves into one ``experiment`` (model revision and\ndescriptor/schema digests, numerical profile, effective dt and exact\nstep count, typed initial state, protocol with drive digest,\nrandomness contract, backend selection, runtime digest) before\nanything runs; the cache is keyed by that digest. A rejected request\n(HTTP 422 ``invalid_model_input`` or ``experiment_rejected``) or a\nnumerical failure (HTTP 422 ``model_simulation_failed``) is never\ncached and never returns a success payload; a successful run carries\nits ``effective_inputs`` receipt, the declared ``state_layout`` with\nits custody verdict, exact initial and final snapshots, the\nfull-resolution ``raw`` block and the ``display`` projection. The run\nexecutes on the Python custody backend so every declared variable is\nobserved.",
         "operationId": "api_model_simulate_api_models_simulate_post",
         "requestBody": {
           "content": {
@@ -3871,7 +3984,7 @@
                 }
               }
             },
-            "description": "Request rejected before simulation (invalid_model_input), run failed numerically at a named step (model_simulation_failed), or body validation failed."
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
           }
         },
         "summary": "Api Model Simulate"
@@ -5028,6 +5141,7 @@
     },
     "/api/simulate": {
       "post": {
+        "description": "Simulate the equation playground under the effective experiment contract.\n\nThe request resolves into one ``experiment`` (equation digest,\nnumerical profile, exact step count, typed initial state, protocol\nwith drive digest, randomness contract, backend and runtime digests)\nbefore anything runs; the result cache is keyed by that digest and a\nfresh stochastic trial is never cached. An oversized run is refused\nwith ``execution_mode = job_required`` instead of being shortened.",
         "operationId": "api_simulate_api_simulate_post",
         "requestBody": {
           "content": {
@@ -5054,11 +5168,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
           }
         },
         "summary": "Api Simulate"

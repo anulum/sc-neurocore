@@ -270,6 +270,9 @@ import {
   characterizeRunStartState,
 } from "../characterizeStoreState";
 import {
+  frequencyHzState,
+  seedState,
+  trialState,
   activeTabState,
   currentState,
   dtState,
@@ -356,6 +359,9 @@ export function createStudioStoreActions(
     get().autoSimulate();
   },
   setProtocol: (p) => { set(protocolState(p)); get().autoSimulate(); },
+  setFrequencyHz: (frequencyHz) => { set(frequencyHzState(frequencyHz)); get().autoSimulate(); },
+  setSeed: (seed) => { set(seedState(seed)); get().autoSimulate(); },
+  setTrial: (trial) => { set(trialState(trial)); get().autoSimulate(); },
   setActiveTab: (tab) => set(activeTabState(tab)),
   setModelFilter: (f) => set(modelFilterState(f)),
   setSweepParam: (p) => set(sweepParamState(p)),

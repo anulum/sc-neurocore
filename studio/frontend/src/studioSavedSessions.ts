@@ -28,7 +28,12 @@ export interface StudioSavedSessionInput {
   duration: number;
   current: number;
   protocol: string;
+  frequencyHz: number;
+  seed: number | null;
+  trial: StudioSavedSessionTrial;
 }
+
+export type StudioSavedSessionTrial = "replay" | "fresh";
 
 export interface StudioSavedSessionRestoreState extends StudioSavedSessionInput {}
 
@@ -76,6 +81,18 @@ function finiteNumberValue(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function positiveFiniteNumberValue(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function seedValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
+function trialValue(value: unknown): StudioSavedSessionTrial {
+  return value === "fresh" ? "fresh" : "replay";
+}
+
 function numberRecordValue(value: unknown): Record<string, number> {
   if (!isRecord(value)) {
     return {};
@@ -104,6 +121,9 @@ export function studioSavedSessionState(input: StudioSavedSessionInput): Record<
     duration: input.duration,
     current: input.current,
     protocol: input.protocol,
+    frequencyHz: input.frequencyHz,
+    seed: input.seed,
+    trial: input.trial,
   };
 }
 
@@ -123,6 +143,9 @@ export function studioSavedSessionRestoreState(
     duration: nonZeroFiniteNumberValue(state.duration, 100),
     current: finiteNumberValue(state.current, 10),
     protocol: stringValue(state.protocol, "constant"),
+    frequencyHz: positiveFiniteNumberValue(state.frequencyHz, 10),
+    seed: seedValue(state.seed),
+    trial: trialValue(state.trial),
   };
 }
 

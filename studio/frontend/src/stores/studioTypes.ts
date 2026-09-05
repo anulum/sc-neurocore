@@ -8,6 +8,7 @@
 // Studio store state shape and view-mode types.
 
 import type {
+  StudioTrialMode,
   CharacterizeResponse, CompileTraceability, ModelCosimReport, FICurveResponse, BifurcationResponse,
   SensitivityResponse, PrecisionResponse, HeatmapResponse, CompareResponse,
   NullclineResponse, FreqResponse, ImportedTrace, NetworkResult, NeuronTemplate,
@@ -86,6 +87,9 @@ export interface StudioState {
   duration: number;
   current: number;
   protocol: string;
+  frequencyHz: number;
+  seed: number | null;
+  trial: StudioTrialMode;
   result: SimulateResponse | null;
   fiResult: FICurveResponse | null;
   bifResult: BifurcationResponse | null;
@@ -156,6 +160,9 @@ export interface StudioState {
   setDuration: (d: number) => void;
   setCurrent: (c: number) => void;
   setProtocol: (p: string) => void;
+  setFrequencyHz: (frequencyHz: number) => void;
+  setSeed: (seed: number | null) => void;
+  setTrial: (trial: StudioTrialMode) => void;
   setActiveTab: (tab: ViewTab) => void;
   setModelFilter: (f: string) => void;
   setSweepParam: (p: string) => void;

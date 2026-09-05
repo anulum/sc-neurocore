@@ -28,13 +28,23 @@ from sc_neurocore.studio.api.schemas import (
     BifurcationRequest,
     FICurveRequest,
     HeatmapRequest,
+    ModelSimulateRequest,
     SensitivityRequest,
+    SimulateRequest,
 )
+from sc_neurocore.studio.experiment_spec import (
+    JOB_MAX_STEPS,
+    ExperimentRejected,
+    resolve_experiment,
+    run_experiment,
+)
+from sc_neurocore.studio.model_run_contract import ModelInputError
+from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
 from sc_neurocore.studio.platform.jobs_manager import StudioJobManager
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 
-AnalysisKind = Literal["fi_curve", "bifurcation", "heatmap", "sensitivity"]
+AnalysisKind = Literal["fi_curve", "bifurcation", "heatmap", "sensitivity", "simulate"]
 
 
 class AnalysisJobValidationError(ValueError):
@@ -68,6 +78,17 @@ def validate_analysis_job_request(
 
     analysis = req.analysis
     try:
+        if analysis == "simulate":
+            body: SimulateRequest | ModelSimulateRequest = (
+                SimulateRequest.model_validate(req.payload)
+                if "equations" in req.payload
+                else ModelSimulateRequest.model_validate(req.payload)
+            )
+            try:
+                spec = resolve_experiment(body.model_dump(), max_steps=JOB_MAX_STEPS)
+            except (ExperimentRejected, ModelInputError) as exc:
+                raise AnalysisJobValidationError("invalid_analysis_payload") from exc
+            return analysis, body.model_dump(), 1, spec.duration_ms, spec.dt
         if analysis == "fi_curve":
             fi_body = FICurveRequest.model_validate(req.payload)
             return analysis, fi_body.model_dump(), fi_body.i_steps, fi_body.duration, fi_body.dt
@@ -108,6 +129,16 @@ def run_analysis_job_task(
 ) -> dict[str, object]:
     """Execute one validated analysis payload and return a public result dict."""
 
+    if analysis == "simulate":
+        spec = resolve_experiment(payload_dump, max_steps=JOB_MAX_STEPS)
+        result = run_experiment(spec)
+        result["cache"] = {"hit": False, "key": spec.experiment_sha256}
+        result["run_metadata"] = build_simulation_run_manifest(
+            source=spec.source,
+            request_payload=payload_dump,
+            result_payload=result,
+        ).to_public_dict()
+        return dict(result)
     if analysis == "fi_curve":
         import numpy as np
 
