@@ -63,6 +63,12 @@ def _spike_stats(spike_indices: list[int], dt: float, n_steps: int) -> dict[str,
     }
 
 
+# Public name of the spike-statistics contract shared by every equation-run
+# consumer (the bit-true comparison computes the same statistics on the
+# kernel's spikes so the two runs are summarised identically).
+spike_statistics = _spike_stats
+
+
 def _make_current_trace(
     protocol: str,
     current: float,
@@ -96,6 +102,11 @@ def _make_current_trace(
     else:
         I[:] = current
     return I
+
+
+# Public name of the injection-protocol builder so comparison runs feed the
+# same samples the playground run itself receives.
+current_trace = _make_current_trace
 
 
 def _run_failure(step: int, dt: float, exc: BaseException) -> Exception:
@@ -278,6 +289,8 @@ __all__ = [
     "MAX_PLOT_POINTS",
     "MAX_STEPS",
     "ODE_MODEL_NAME",
+    "current_trace",
     "fi_curve",
     "simulate",
+    "spike_statistics",
 ]

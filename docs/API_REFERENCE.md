@@ -8818,6 +8818,48 @@ str
 
 ## Module `compiler.intelligence.bit_true_kernel`
 
+### Function `c_word_type(data_width)`
+Return the C integer type the kernel uses for a ``data_width``-bit word.
+
+Harnesses that drive a generated kernel (per-step input words, decoded
+state reads) must pass and read exactly this type; it is the type of the
+``I_t`` step argument and of every ``<state>_out`` field.
+
+### Function `kernel_arithmetic_contract()`
+State the fixed-point arithmetic a generated neuron kernel performs.
+
+The description is derived from the same configuration checks the
+generator applies, so it cannot drift from what
+:func:`generate_bittrue_kernel_from_neuron` emits: value encoding,
+multiply width collapse and product rounding, accumulate overflow
+handling, division and modulo lowering, look-up-table geometry for the
+transcendental vocabulary, and the threshold / reset / output sequencing
+of the RTL ``always`` block the kernel mirrors.
+
+Parameters
+----------
+data_width, fraction : int
+    Fixed-point word geometry (``Q<data_width - fraction>.<fraction>``
+    in the Studio label convention, ``Q8.8`` = 16 bits).
+overflow : str
+    ``"saturate"`` or ``"wrap"`` (the accumulate commit policy).
+rounding : str
+    ``"truncate"`` or ``"nearest"`` (the multiply product policy).
+method : str
+    ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``) or ``"map"``
+    (``next = commit(f)``).
+
+Returns
+-------
+dict
+    Path-free, JSON-portable statement of the arithmetic.
+
+Raises
+------
+ValueError
+    For a geometry, mode or method the kernel does not mirror, with the
+    same message the generator would raise.
+
 ### Function `generate_bittrue_kernel(module_name, equations)`
 Generate a bit-true fixed-point kernel from a ``{var: derivative}`` mapping.
 
@@ -34699,29 +34741,148 @@ initial_state_dict : Mapping&#91;str, object&#93; or None, optional
 
 ## Module `studio.analysis`
 
-### Function `bifurcation_sweep(simulate_fn, base_config, param_name, param_min, param_max, n_values)`
-Sweep one parameter and extract voltage attractors at each value.
+### Function `fi_curve_sweep(simulate_fn, i_min, i_max, i_steps)`
+Sweep a constant current and report the firing rate at each level.
 
-Returns {param_values, attractors} where attractors&#91;i&#93; is a list
-of voltage extrema in the second half of the simulation (the attractor).
+Parameters
+----------
+simulate_fn:
+    Callable accepting ``current=`` and returning a run result with
+    ``stats.rate_hz``.
+i_min, i_max, i_steps:
+    Inclusive current range and number of levels.
+
+Returns
+-------
+dict
+    ``currents``, ``rates`` and the metric contract.
+
+### Function `bifurcation_sweep(simulate_fn, base_config, param_name, param_min, param_max, n_values)`
+Sweep one parameter and record the late-run extrema of one state trace.
+
+This is a numerical extrema sweep under the configured drive, not a
+bifurcation continuation: no equilibrium branch is followed and no
+stability is computed. At each parameter value the second half of the
+trace is inspected; its local maxima and minima (up to
+:data:`ATTRACTOR_EXTREMA_KEPT` of each, rounded to
+:data:`ATTRACTOR_DECIMALS`) are reported as the attractor sample. A
+trace without extrema reports its mean as a single fixed-point sample; a
+trace with fewer than :data:`ATTRACTOR_MIN_SAMPLES` late samples is
+reported as insufficient.
+
+Parameters
+----------
+simulate_fn:
+    Callable accepting ``params=`` (and the other base-config keys) and
+    returning a run result with raw traces.
+base_config:
+    Run configuration shared by every sweep point (``protocol`` is
+    reported).
+param_name, param_min, param_max, n_values:
+    Swept parameter and its inclusive range.
+variable:
+    State variable analysed; the first raw trace when ``None``.
+
+Returns
+-------
+dict
+    ``param_name``, ``param_values``, ``attractors`` (one list per
+    value), ``attractor_kinds`` (``extrema`` / ``fixed_point`` /
+    ``insufficient_samples``), ``variable``, ``protocol`` and the
+    metric contract.
 
 ### Function `sensitivity_analysis(simulate_fn, base_config, param_names, perturbation)`
-Compute firing rate sensitivity to each parameter (±perturbation fraction).
+Rate elasticity of each parameter under a symmetric relative perturbation.
 
-### Function `nullclines_2d(equations, params, var_names, ranges, grid_size)`
-Compute nullclines for a 2-variable ODE system on a grid.
+The elasticity is ``|rate(p + δ) − rate(p − δ)| / (2 δ) · |p| / rate(p)``
+with ``δ = perturbation · |p|``. It is undefined (reported as ``null``
+with a reason) when the base rate is zero or when the parameter is zero,
+because a relative perturbation of zero is no perturbation.
+
+Parameters
+----------
+simulate_fn:
+    Callable accepting ``params=`` and returning a run result with
+    ``stats.rate_hz``.
+base_config:
+    Run configuration; ``params`` holds the base values.
+param_names:
+    Parameters to perturb.
+perturbation:
+    Relative perturbation of each parameter.
+
+Returns
+-------
+dict
+    ``base_rate``, ``sensitivities`` (sorted, undefined last) and the
+    metric contract; each row carries ``sensitivity`` (or ``null``),
+    ``reason`` when undefined, ``rate_minus`` / ``rate_plus`` when
+    computed.
 
 ### Function `heatmap_2d(simulate_fn, base_config, param_x, x_min, x_max, x_steps, param_y, y_min, y_max, y_steps)`
-Sweep two parameters and compute firing rate heatmap.
+Sweep two parameters and compute the firing-rate map.
+
+The sweep fails closed: when any grid point fails the whole request is
+rejected with every failure listed, so a partial map is never returned
+with silent zeros.
 
 ### Function `spike_triggered_average(time, voltage, spikes, dt, window_ms)`
-Compute spike-triggered average of voltage around each spike.
+Average of the trace in a symmetric window around every complete spike.
+
+Spikes whose window would leave the trace are excluded and counted
+against ``n_spikes``; the window half-width is ``window_ms / 2`` rounded
+down to whole steps (at least one step).
 
 ### Function `frequency_response(simulate_fn, base_config, freq_min, freq_max, n_freqs, amplitude)`
-Sweep sinusoidal current frequency and measure spike rate response.
+Sweep the frequency of a sinusoidal drive and record the firing rate.
 
-### Function `precision_compare(equations, threshold, reset, params, init, dt, duration, current)`
-Compare float64 vs Q8.8 fixed-point simulation of the same ODE.
+The drive is ``I(t) = amplitude · sin(2π f t)`` from the run's first
+step; the rate follows the f-I definition. Frequencies are spaced
+logarithmically.
+
+---
+
+## Module `studio.analysis_contract`
+
+### Class `MetricContract`
+What one analysis computed, in which units, and where it is valid.
+
+Parameters
+----------
+kind:
+    Stable identifier of the metric family (``"fi-curve"``,
+    ``"precision-compare"``, ``"nullclines"``, …).
+definition:
+    One-sentence statement of how the reported numbers are computed.
+units:
+    Unit of every reported quantity, keyed by the payload field or the
+    quantity name; ``"model-defined"`` when the equation system carries no
+    declared unit.
+applicability:
+    Conditions under which the metric is meaningful.
+limitations:
+    Known limits of the computation (resolution, transients, protocol).
+domain:
+    ``complete`` when every requested point was evaluated, ``partial``
+    when some points were invalid and are reported, ``empty`` when no
+    point could be evaluated.
+domain_detail:
+    Path-free detail of the invalid part (counts, fractions, reasons).
+
+- **__post_init__**()
+  - Reject an empty kind or definition and an unknown domain verdict.
+- **to_public_dict**()
+  - Return the path-free public contract block.
+
+### Function `attach_contract(payload, contract)`
+Set ``payload&#91;"contract"&#93;`` and return the same payload.
+
+### Function `contract_summary(payload)`
+Return ``(kind, domain)`` of a payload's contract block, or ``(None, None)``.
+
+The analysis manifest records these two values so an evidence bundle can
+tell a complete-domain result from a partial one without opening the
+payload.
 
 ---
 
@@ -34746,6 +34907,12 @@ evidence_classification:
     Stable evidence lane label for analysis results.
 status:
     Terminal status for this analysis evidence object.
+contract:
+    Kind of the payload's metric contract (``payload&#91;"contract"&#93;``), or
+    ``None`` for a payload without one.
+domain:
+    Domain verdict of that contract (``complete`` / ``partial`` /
+    ``empty``), or ``None``.
 
 - **to_public_dict**()
   - Return the public, path-free analysis manifest.
@@ -34773,7 +34940,8 @@ StudioAnalysisResultManifest
 Raises
 ------
 ValueError
-    If request or result payloads cannot be encoded as portable JSON.
+    If request or result payloads cannot be encoded as portable JSON, or
+    the payload's contract block carries an unknown domain verdict.
 
 ### Function `attach_analysis_result_manifest()`
 Return an analysis result with a path-free metadata manifest attached.
@@ -34988,6 +35156,10 @@ step inputs) is performed by the run contract and reported as
 422 detail for a simulation request the experiment contract refuses.
 
 
+### Class `NativeToolUnavailableDetail`
+503 detail for an analysis that needs a native tool the host lacks.
+
+
 ### Class `ModelSimulationFailureDetail`
 422 detail for a validated model run that failed numerically at a step.
 
@@ -34998,6 +35170,10 @@ One body-validation error as produced by the request schema.
 
 ### Class `ModelRunErrorResponse`
 422 response body of every route that executes a catalogue model run.
+
+
+### Class `NativeToolUnavailableResponse`
+503 response body when the host lacks the C compiler of the bit-true kernel.
 
 
 ### Class `FICurveRequest`
@@ -35033,7 +35209,11 @@ Request body for digest-bound selected-model synthesis and PnR.
 
 
 ### Class `BifurcationRequest`
-Request body for one-parameter bifurcation sweeps.
+Request body for one-parameter numerical extrema sweeps.
+
+The response is labelled ``numerical-extrema-sweep``: the late-run
+extrema of one state trace per parameter value under the configured
+drive, not a bifurcation continuation.
 
 
 ### Class `SensitivityRequest`
@@ -35043,9 +35223,18 @@ Request body for Studio model sensitivity analysis.
 ### Class `NullclineRequest`
 Request body for two-dimensional nullcline analysis.
 
+``current`` is the input the drift field is evaluated at and ``held``
+fixes every equation variable that is not swept (an unlisted one is held
+at its initial value). Invalid grid samples are reported as validity
+masks, never as zero derivatives.
+
 
 ### Class `PrecisionRequest`
-Request body for float versus fixed-point precision comparisons.
+Request body for float64 versus bit-true fixed-point comparisons.
+
+``q_format`` names the word (``Q8.8`` = 16 bits, 8 fractional; 8 to 32
+bits), ``overflow`` and ``rounding`` the kernel's accumulate and product
+policies. Values the word cannot hold are rejected, never clamped.
 
 
 ### Class `AdaptivePrecisionAutoTuneRequest`
@@ -35332,6 +35521,114 @@ Aggregate the databank into a per-CPU, per-backend speed-up leaderboard.
 
 ---
 
+## Module `studio.bit_true_execution`
+
+### Class `NativeToolUnavailable`
+Raised when a required native tool is not installed on the host.
+
+Parameters
+----------
+tools:
+    Names of the missing tools.
+purpose:
+    What the tools were needed for, without repository paths.
+
+- **__init__**(tools, purpose)
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `NativeExecutionError`
+Raised when a native compile or run fails or exceeds its time budget.
+
+
+### Class `BitTrueTrace`
+Integer state words and spikes of one bit-true kernel run.
+
+Parameters
+----------
+module_name:
+    Name the kernel was generated under.
+variables:
+    Equation variable names in declaration order (the word columns).
+words:
+    ``(n_steps, len(variables))`` post-step state words.
+spikes:
+    ``(n_steps,)`` spike flag of every step.
+drive_words:
+    ``(n_steps,)`` input words the kernel consumed.
+fraction:
+    Fractional bits of the word format (for :meth:`decoded`).
+kernel_sha256, harness_sha256:
+    Digests of the generated kernel source and of the harness ``main``.
+compiler:
+    First version line of the C compiler used.
+
+- **n_steps**()
+  - Number of executed steps.
+- **decoded**()
+  - Return every state trace decoded to float64 (``word / 2**fraction``).
+- **spike_steps**()
+  - Return the raw step indices at which the kernel spiked.
+
+### Function `resolve_native_tool(name)`
+Return the absolute path of a supported native tool, or ``None``.
+
+### Function `require_native_tools(names)`
+Resolve every tool in ``names`` or raise :class:`NativeToolUnavailable`.
+
+### Function `run_native_command(command)`
+Run ``command`` without a shell and raise a bounded error on failure.
+
+### Function `native_tool_version(path, name)`
+Return the first version line a tool prints, or a stable placeholder.
+
+### Function `harness_main(neuron, module_name, data_width)`
+Return the C ``main`` that streams input words in and state rows out.
+
+The harness reads little-endian ``int64`` input words from the file named
+by its first argument, calls ``<module>_step`` once per word and appends
+one binary row ``&#91;spike, <state words…>&#93;`` of ``int64`` to the file named
+by its second argument. Binary rows avoid any text formatting of the
+words on either side.
+
+### Function `run_bittrue_kernel(neuron)`
+Compile the neuron's bit-true kernel and run it under ``drive_words``.
+
+Parameters
+----------
+neuron:
+    Equation neuron whose equations, parameters, threshold and reset
+    rules are lowered (``method`` must be ``euler`` or ``map``).
+data_width, fraction:
+    Fixed-point word geometry.
+overflow, rounding:
+    Accumulate overflow and product rounding policies of the kernel.
+drive_words:
+    One already-encoded signed input word per step. The caller is
+    responsible for representability; a word outside the ``data_width``
+    range is rejected here rather than wrapped.
+module_name:
+    Identifier for the generated kernel.
+timeout_seconds:
+    Budget for each of the compile and the run.
+
+Returns
+-------
+BitTrueTrace
+    Words and spikes of every step.
+
+Raises
+------
+NativeToolUnavailable
+    When no C compiler is installed.
+NativeExecutionError
+    When compilation or execution fails or times out.
+ValueError
+    For an empty or oversized drive, a word outside the format, or a
+    kernel configuration the generator rejects.
+
+---
+
 ## Module `studio.characterize`
 
 ### Function `characterize_model(simulate_fn, base_config)`
@@ -35454,7 +35751,12 @@ Parse IR text and emit synthesisable SystemVerilog.
 Direct equation → SystemVerilog via the Python equation compiler.
 
 ### Function `cosim_traces(equations, threshold, reset, params, init, dt, duration, current)`
-Run Python float and Q8.8 fixed-point simulations side by side.
+Run the float64 reference and the bit-true fixed-point kernel side by side.
+
+This is the precision comparison of
+:func:`sc_neurocore.studio.precision_compare.precision_compare`: the
+fixed-point trace is the generated bit-true kernel executed natively,
+not a float run with rounded parameters.
 
 ---
 
@@ -35996,6 +36298,48 @@ Lower a parsed NIR graph to synthesisable Verilog and return the artefacts.
 Compile a standard ``.nir`` (HDF5) document supplied as raw bytes.
 
 Options are forwarded to :func:`compile_nir_graph`.
+
+---
+
+## Module `studio.nullclines`
+
+### Function `nullclines_2d(equations, params, var_names, ranges, grid_size)`
+Compute both nullclines of a two-variable section of the drift field.
+
+Parameters
+----------
+equations:
+    Equation strings of the system (``dx/dt = f(x, …)`` or map updates).
+params:
+    Parameter values.
+var_names:
+    The two swept variables ``(x, y)``; both must be equation variables.
+ranges:
+    Inclusive ``(low, high)`` range per swept variable; a missing range
+    falls back to :data:`DEFAULT_RANGES`.
+grid_size:
+    Samples per axis.
+current:
+    Input current ``I`` the field is evaluated at (held constant).
+held:
+    Values at which every other equation variable is held; an
+    unlisted variable is held at its equation-builder default (``0``).
+
+Returns
+-------
+dict
+    ``var_names``, ``nullcline_0`` / ``nullcline_1`` (contour cell
+    corners and the contour cell count), the grid axes, one validity
+    mask per component (``1`` valid, ``0`` invalid; rows follow ``y``,
+    columns ``x``), the held variables and input, and the
+    :class:`~sc_neurocore.studio.analysis_contract.MetricContract`.
+
+Raises
+------
+ModelInputError
+    When fewer than two variables are given, a swept variable is not an
+    equation variable, a held name is not an equation variable, a range
+    is degenerate, or an expression references an unknown symbol.
 
 ---
 
@@ -38215,6 +38559,54 @@ Raises
 ValueError
     If the schema, framework, format, config digest, artifact paths,
     artifact sizes, artifact hashes, or metadata payload are invalid.
+
+---
+
+## Module `studio.precision_compare`
+
+### Function `resolve_word_format(q_format)`
+Parse a Studio Q-format label into ``(data_width, fraction)``.
+
+``Q8.8`` is 16 bits with 8 fractional bits; the kernel supports total
+widths from 8 to 32 bits with at least one integer bit.
+
+### Function `precision_compare(equations, threshold, reset, params, init, dt, duration, current)`
+Run float64, bit-true fixed-point and parameter-quantised comparisons.
+
+Parameters
+----------
+equations, threshold, reset, params, init:
+    The equation system exactly as the playground runs it.
+dt, duration, current, protocol, frequency_hz:
+    The experiment; the same drive samples feed all three runs (encoded
+    to words for the kernel).
+q_format:
+    Word format label (``Q8.8`` = 16 bits, 8 fractional).
+overflow, rounding:
+    Kernel accumulate overflow and product rounding policies.
+max_steps:
+    Synchronous step ceiling of the reference run.
+
+Returns
+-------
+dict
+    ``float_result``, ``fixed_result`` and
+    ``parameter_quantisation_result`` (each a complete custody payload),
+    the ``arithmetic`` statement of the kernel, the ``encoding`` of every
+    value, the per-variable and event ``comparison`` for both candidate
+    runs, the ``contract`` and the legacy ``error`` / ``quantized_params``
+    summary (bit-true error of the first declared variable).
+
+Raises
+------
+ModelInputError
+    For an unsupported format or mode, a stochastic system, an
+    integrator the kernel does not mirror, an unrepresentable value or
+    an invalid protocol.
+ModelSimulationFailure
+    When the float64 reference run fails numerically.
+NativeToolUnavailable
+    When no C compiler is installed.
 
 ---
 

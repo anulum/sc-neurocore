@@ -11,6 +11,39 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Studio analyses now state what they measure and where they are valid.
+  Every analysis payload carries a metric contract
+  (`sc_neurocore.studio.analysis_contract`, `studio.metric-contract.v1`:
+  kind, definition, units, applicability, limitations and a
+  complete/partial/empty domain verdict) and the analysis manifest records
+  its kind and domain. The precision comparison (`/api/precision`,
+  `/api/ir/cosim`) runs genuine fixed-point arithmetic: the generated
+  bit-true C kernel of the equation system, proven bit-identical to the RTL,
+  is compiled with the host C compiler and driven with one encoded input
+  word per step (`sc_neurocore.studio.bit_true_execution`); the kernel
+  generator states its value encoding, multiply width collapse and rounding,
+  accumulate overflow policy, LUT geometry and threshold/reset sequencing
+  (`kernel_arithmetic_contract`). The result keeps the float64 reference,
+  the bit-true run (decoded words, every state and spike) and a separately
+  labelled float64 run with parameters and initial state rounded to the word
+  resolution apart, compares every variable and the spike train, aligns the
+  error trace with the display projection, and reports saturation; the word
+  format, overflow and rounding modes, protocol and sine frequency are
+  request fields. A parameter, expression constant, initial value, time step
+  or drive sample the word cannot hold is rejected with its field instead of
+  being clamped, and a missing C compiler is answered with HTTP 503 instead
+  of an estimate. Nullclines (`sc_neurocore.studio.nullclines`) evaluate each
+  drift-field component with floating-point errors raised and return
+  per-component validity masks, contour cells only where all four corners
+  are valid, the held variables and the input current; an invalid sample is
+  never a zero derivative. Sensitivity reports an undefined elasticity
+  (zero base rate or zero parameter) as `null` with a reason instead of
+  `0.0`; the bifurcation route is labelled a numerical extrema sweep with
+  the analysed variable and protocol; f-I, heatmap and frequency response
+  state their rate definition. The Studio UI sends the explicit protocol and
+  word format, draws the bit-true and parameter-quantisation errors on the
+  display axis, labels a partial nullcline domain and shows undefined
+  sensitivities with their reason.
 - Every Studio simulation request now resolves into one effective experiment
   (`sc_neurocore.studio.experiment_spec`, `studio.experiment-spec.v1`) before
   it runs: model revision (package, module, descriptor and canonical schema

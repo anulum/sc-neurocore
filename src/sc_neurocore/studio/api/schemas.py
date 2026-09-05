@@ -94,6 +94,14 @@ class ExperimentRejectedDetail(BaseModel):
     recommended_route: str | None = None
 
 
+class NativeToolUnavailableDetail(BaseModel):
+    """503 detail for an analysis that needs a native tool the host lacks."""
+
+    error: Literal["native_tool_unavailable"]
+    tools: list[str]
+    reason: str
+
+
 class ModelSimulationFailureDetail(BaseModel):
     """422 detail for a validated model run that failed numerically at a step."""
 
@@ -135,6 +143,25 @@ MODEL_RUN_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
             "step (model_simulation_failed), or body validation failed."
         ),
     }
+}
+
+
+class NativeToolUnavailableResponse(BaseModel):
+    """503 response body when the host lacks the C compiler of the bit-true kernel."""
+
+    detail: NativeToolUnavailableDetail
+
+
+PRECISION_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    **MODEL_RUN_ERROR_RESPONSES,
+    503: {
+        "model": NativeToolUnavailableResponse,
+        "description": (
+            "The bit-true fixed-point run needs a native C compiler that is not "
+            "installed on this host (native_tool_unavailable); nothing is estimated "
+            "in its place."
+        ),
+    },
 }
 
 
@@ -218,7 +245,12 @@ class SynthesisTerminalRequest(BaseModel):
 
 
 class BifurcationRequest(BaseModel):
-    """Request body for one-parameter bifurcation sweeps."""
+    """Request body for one-parameter numerical extrema sweeps.
+
+    The response is labelled ``numerical-extrema-sweep``: the late-run
+    extrema of one state trace per parameter value under the configured
+    drive, not a bifurcation continuation.
+    """
 
     equations: list[str] | None = None
     model_name: str | None = None
@@ -233,6 +265,7 @@ class BifurcationRequest(BaseModel):
     sweep_min: float
     sweep_max: float
     sweep_steps: int = Field(default=30, ge=5, le=80)
+    variable: str | None = None
 
 
 class SensitivityRequest(BaseModel):
@@ -250,26 +283,48 @@ class SensitivityRequest(BaseModel):
 
 
 class NullclineRequest(BaseModel):
-    """Request body for two-dimensional nullcline analysis."""
+    """Request body for two-dimensional nullcline analysis.
+
+    ``current`` is the input the drift field is evaluated at and ``held``
+    fixes every equation variable that is not swept (an unlisted one is held
+    at its initial value). Invalid grid samples are reported as validity
+    masks, never as zero derivatives.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     equations: list[str]
-    params: dict[str, float]
+    params: dict[str, FiniteFloat]
     var_names: list[str]
-    ranges: dict[str, list[float]]
+    ranges: dict[str, list[FiniteFloat]]
     grid_size: int = Field(default=60, ge=20, le=150)
+    current: FiniteFloat = 0.0
+    held: dict[str, FiniteFloat] | None = None
 
 
 class PrecisionRequest(BaseModel):
-    """Request body for float versus fixed-point precision comparisons."""
+    """Request body for float64 versus bit-true fixed-point comparisons.
+
+    ``q_format`` names the word (``Q8.8`` = 16 bits, 8 fractional; 8 to 32
+    bits), ``overflow`` and ``rounding`` the kernel's accumulate and product
+    policies. Values the word cannot hold are rejected, never clamped.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     equations: list[str]
     threshold: str | None = None
     reset: str | None = None
-    params: dict[str, float] | None = None
-    init: dict[str, float] | None = None
-    dt: float = 0.1
-    duration: float = 200.0
-    current: float = 10.0
+    params: dict[str, FiniteFloat] | None = None
+    init: dict[str, FiniteFloat] | None = None
+    dt: PositiveFiniteFloat = 0.1
+    duration: PositiveFiniteFloat = 200.0
+    current: FiniteFloat = 10.0
+    protocol: StudioProtocol = "constant"
+    frequency_hz: PositiveFiniteFloat = 10.0
+    q_format: Annotated[str, StringConstraints(pattern=r"^Q\d{1,2}\.\d{1,2}$")] = "Q8.8"
+    overflow: Literal["saturate", "wrap"] = "saturate"
+    rounding: Literal["truncate", "nearest"] = "truncate"
 
 
 class AdaptivePrecisionAutoTuneRequest(BaseModel):

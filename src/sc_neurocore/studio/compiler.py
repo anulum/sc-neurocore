@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Compiler Inspector backend for Studio
 
+"""Verilog compilation and co-simulation adapters for the Studio equation playground."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -150,9 +152,21 @@ def cosim_traces(
     dt: float = 0.1,
     duration: float = 100.0,
     current: float = 10.0,
+    *,
+    protocol: str = "constant",
+    frequency_hz: float = 10.0,
+    q_format: str = "Q8.8",
+    overflow: str = "saturate",
+    rounding: str = "truncate",
 ) -> dict[str, Any]:
-    """Run Python float and Q8.8 fixed-point simulations side by side."""
-    from sc_neurocore.studio.analysis import precision_compare
+    """Run the float64 reference and the bit-true fixed-point kernel side by side.
+
+    This is the precision comparison of
+    :func:`sc_neurocore.studio.precision_compare.precision_compare`: the
+    fixed-point trace is the generated bit-true kernel executed natively,
+    not a float run with rounded parameters.
+    """
+    from sc_neurocore.studio.precision_compare import precision_compare
 
     return precision_compare(
         equations=equations,
@@ -163,4 +177,9 @@ def cosim_traces(
         dt=dt,
         duration=duration,
         current=current,
+        protocol=protocol,
+        frequency_hz=frequency_hz,
+        q_format=q_format,
+        overflow=overflow,
+        rounding=rounding,
     )

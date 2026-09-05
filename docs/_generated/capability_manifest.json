@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4803
+    "test_files": 4806
   },
   "documentation": {
     "public_pages": [
@@ -7257,6 +7257,7 @@
       "tests/test_studio_analysis_budget_enforcement.py",
       "tests/test_studio_analysis_budget_types.py",
       "tests/test_studio_analysis_codegen.py",
+      "tests/test_studio_analysis_contracts.py",
       "tests/test_studio_analysis_costs.py",
       "tests/test_studio_analysis_firing_classifier.py",
       "tests/test_studio_analysis_jobs.py",
@@ -7353,6 +7354,7 @@
       "tests/test_studio_network_canvas_validation.py",
       "tests/test_studio_nir_compile.py",
       "tests/test_studio_nullcline_budget.py",
+      "tests/test_studio_nullclines.py",
       "tests/test_studio_operator_status.py",
       "tests/test_studio_pipeline_process.py",
       "tests/test_studio_platform.py",
@@ -7365,6 +7367,7 @@
       "tests/test_studio_policy_audit_rotation.py",
       "tests/test_studio_policy_gateway.py",
       "tests/test_studio_policy_routes.py",
+      "tests/test_studio_precision_compare.py",
       "tests/test_studio_preflight.py",
       "tests/test_studio_preset_routes.py",
       "tests/test_studio_progress_characterise_progress.py",

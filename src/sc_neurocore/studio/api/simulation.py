@@ -19,6 +19,7 @@ from fastapi import APIRouter, HTTPException
 
 from sc_neurocore.studio.analysis import (
     bifurcation_sweep,
+    fi_curve_sweep,
     frequency_response,
     heatmap_2d,
     nullclines_2d,
@@ -39,10 +40,12 @@ from sc_neurocore.studio.api.analysis_jobs import (
     submit_analysis_job,
 )
 from sc_neurocore.studio.api.common import _safe
+from sc_neurocore.studio.bit_true_execution import NativeToolUnavailable
 from sc_neurocore.studio.model_run_contract import ModelInputError
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
     MODEL_RUN_ERROR_RESPONSES,
+    PRECISION_ERROR_RESPONSES,
     AnalysisJobRequest,
     BifurcationRequest,
     CodegenRequest,
@@ -197,7 +200,6 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         ``execution_mode=job_required``. The job result carries the same
         analysis payload shape as the corresponding synchronous endpoint.
         """
-
         try:
             return submit_analysis_job(studio_job_manager, req)
         except AnalysisJobValidationError as exc:
@@ -286,12 +288,8 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         )
 
         def fn() -> dict[str, Any]:
-            import numpy as np
-
             sim_fn = _make_simulate_fn(req.model_dump())
-            currents = np.linspace(req.i_min, req.i_max, req.i_steps).tolist()
-            rates = [sim_fn(current=float(I))["stats"]["rate_hz"] for I in currents]
-            payload = {"currents": currents, "rates": rates}
+            payload = fi_curve_sweep(sim_fn, req.i_min, req.i_max, req.i_steps)
             return _attach_analysis_metadata("fi_curve", req.model_dump(), payload)
 
         return _safe(fn)
@@ -316,7 +314,13 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
                 "protocol": "sine",
             }
             payload = bifurcation_sweep(
-                sim_fn, base_cfg, req.sweep_param, req.sweep_min, req.sweep_max, req.sweep_steps
+                sim_fn,
+                base_cfg,
+                req.sweep_param,
+                req.sweep_min,
+                req.sweep_max,
+                req.sweep_steps,
+                variable=req.variable,
             )
             return _attach_analysis_metadata("bifurcation", req.model_dump(), payload)
 
@@ -356,29 +360,46 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         )
 
         def fn() -> dict[str, Any]:
-            ranges = {k: (v[0], v[1]) for k, v in req.ranges.items()}
-            payload = nullclines_2d(req.equations, req.params, req.var_names, ranges, req.grid_size)
+            ranges = {k: (v[0], v[1]) for k, v in req.ranges.items() if len(v) == 2}
+            payload = nullclines_2d(
+                req.equations,
+                req.params,
+                req.var_names,
+                ranges,
+                req.grid_size,
+                current=req.current,
+                held=req.held,
+            )
             return _attach_analysis_metadata("nullclines", req.model_dump(), payload)
 
         return _safe(fn)
 
-    @router.post("/api/precision")
+    @router.post("/api/precision", responses=PRECISION_ERROR_RESPONSES)
     def api_precision(req: PrecisionRequest) -> Any:
+        # Three runs: float64 reference, bit-true kernel, parameter-quantised float64.
         _guard_analysis_request(
-            analysis_budget, simulation_count=2, duration=req.duration, dt=req.dt
+            analysis_budget, simulation_count=3, duration=req.duration, dt=req.dt
         )
 
         def fn() -> dict[str, Any]:
-            payload = precision_compare(
-                equations=req.equations,
-                threshold=req.threshold,
-                reset=req.reset,
-                params=req.params,
-                init=req.init,
-                dt=req.dt,
-                duration=req.duration,
-                current=req.current,
-            )
+            try:
+                payload = precision_compare(
+                    equations=req.equations,
+                    threshold=req.threshold,
+                    reset=req.reset,
+                    params=req.params,
+                    init=req.init,
+                    dt=req.dt,
+                    duration=req.duration,
+                    current=req.current,
+                    protocol=req.protocol,
+                    frequency_hz=req.frequency_hz,
+                    q_format=req.q_format,
+                    overflow=req.overflow,
+                    rounding=req.rounding,
+                )
+            except NativeToolUnavailable as exc:
+                raise HTTPException(status_code=503, detail=exc.to_public_detail()) from None
             return _attach_analysis_metadata("precision", req.model_dump(), payload)
 
         return _safe(fn)

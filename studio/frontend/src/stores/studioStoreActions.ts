@@ -148,6 +148,7 @@ import {
 import {
   studioCodegenRequest,
   studioFrequencyResponseRequest,
+  studioNullclineRequest,
   studioPrecisionRequest,
   studioSimulationConfig,
 } from "../studioSimulationConfig";
@@ -712,7 +713,9 @@ export function createStudioStoreActions(
     }
     set(studioAnalysisStartState("precision"));
     try {
-      const precResult = await fetchPrecision(studioPrecisionRequest(simulationConfigInput(s)));
+      const precResult = await fetchPrecision(
+        studioPrecisionRequest(simulationConfigInput(s), s.modelQFormat),
+      );
       set(studioPrecisionResultState(precResult));
     } catch (e) { set(studioAnalysisFailureState(e)); }
   },
@@ -873,10 +876,17 @@ export function createStudioStoreActions(
       const r1: [number, number] = v1vals
         ? [Math.min(...v1vals) - 0.5, Math.max(...v1vals) + 0.5]
         : [-2, 2];
-      const nullclineResult = await fetchNullclines({
-        equations: s.equations, params: s.odeParams,
-        var_names: vars, ranges: { [vars[0]]: r0, [vars[1]]: r1 }, grid_size: 60,
-      });
+      const nullclineResult = await fetchNullclines(
+        studioNullclineRequest({
+          equations: s.equations,
+          odeParams: s.odeParams,
+          odeInit: s.odeInit,
+          protocol: s.protocol,
+          current: s.current,
+          ranges: { [vars[0]]: r0, [vars[1]]: r1 },
+          gridSize: 60,
+        }),
+      );
       set(studioNullclineResultState(nullclineResult));
     } catch (e) { set(studioAnalysisFailureState(e)); }
   },

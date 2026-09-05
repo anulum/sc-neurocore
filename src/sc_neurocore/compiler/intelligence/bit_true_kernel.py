@@ -55,6 +55,151 @@ def _rtype(data_width: int) -> str:
     return "i32" if data_width <= 32 else "i64"
 
 
+def c_word_type(data_width: int) -> str:
+    """Return the C integer type the kernel uses for a ``data_width``-bit word.
+
+    Harnesses that drive a generated kernel (per-step input words, decoded
+    state reads) must pass and read exactly this type; it is the type of the
+    ``I_t`` step argument and of every ``<state>_out`` field.
+    """
+    return _ctype(data_width)
+
+
+BIT_TRUE_ARITHMETIC_SCHEMA_VERSION = "sc-neurocore.bit-true-arithmetic.v1"
+
+
+def kernel_arithmetic_contract(
+    *,
+    data_width: int = 16,
+    fraction: int = 8,
+    overflow: str = "saturate",
+    rounding: str = "truncate",
+    method: str = "euler",
+) -> dict[str, object]:
+    """State the fixed-point arithmetic a generated neuron kernel performs.
+
+    The description is derived from the same configuration checks the
+    generator applies, so it cannot drift from what
+    :func:`generate_bittrue_kernel_from_neuron` emits: value encoding,
+    multiply width collapse and product rounding, accumulate overflow
+    handling, division and modulo lowering, look-up-table geometry for the
+    transcendental vocabulary, and the threshold / reset / output sequencing
+    of the RTL ``always`` block the kernel mirrors.
+
+    Parameters
+    ----------
+    data_width, fraction : int
+        Fixed-point word geometry (``Q<data_width - fraction>.<fraction>``
+        in the Studio label convention, ``Q8.8`` = 16 bits).
+    overflow : str
+        ``"saturate"`` or ``"wrap"`` (the accumulate commit policy).
+    rounding : str
+        ``"truncate"`` or ``"nearest"`` (the multiply product policy).
+    method : str
+        ``"euler"`` (``next = commit(reg + fxmul(f, dt_q))``) or ``"map"``
+        (``next = commit(f)``).
+
+    Returns
+    -------
+    dict
+        Path-free, JSON-portable statement of the arithmetic.
+
+    Raises
+    ------
+    ValueError
+        For a geometry, mode or method the kernel does not mirror, with the
+        same message the generator would raise.
+    """
+    q = Q88(data_width=data_width, fraction=fraction, overflow=overflow, rounding=rounding)
+    _validate_modes(q)
+    if method not in {"euler", "map"}:
+        raise ValueError(
+            "bit-true neuron kernel currently supports method='euler' or method='map', "
+            f"got {method!r}"
+        )
+    if 2 * data_width > 64:
+        raise ValueError(
+            f"data_width={data_width} needs a {2 * data_width}-bit intermediate; "
+            "the bit-exact integer emitter supports 2*data_width <= 64 "
+            "(i.e. data_width <= 32, covering Q8.8 and Q16.16)."
+        )
+    max_word = (1 << (data_width - 1)) - 1
+    min_word = -(1 << (data_width - 1))
+    scale = 1 << fraction
+    if rounding == "nearest" and fraction > 0:
+        multiply = (
+            f"product wrapped to {2 * data_width} bits, biased by half a unit "
+            f"(2**{fraction - 1}, minus one for a negative product) and wrapped again, "
+            f"then arithmetic shift right by {fraction} and wrap to {data_width} bits"
+        )
+    else:
+        multiply = (
+            f"product wrapped to {2 * data_width} bits, arithmetic shift right by "
+            f"{fraction} (truncation towards negative infinity), wrap to {data_width} bits"
+        )
+    if overflow == "wrap":
+        commit = f"two's-complement wrap of the sum to {data_width} bits"
+    else:
+        commit = f"saturation of the sum to [{min_word}, {max_word}]"
+    if method == "map":
+        update = f"next = commit(f(state)); commit = {commit}"
+    else:
+        update = f"next = commit(reg + fxmul(f(state), dt_q)); commit = {commit}"
+    return {
+        "schema_version": BIT_TRUE_ARITHMETIC_SCHEMA_VERSION,
+        "kind": "generated-bit-true-kernel",
+        "q_format": f"Q{data_width - fraction}.{fraction}",
+        "data_width": data_width,
+        "fraction": fraction,
+        "signed": True,
+        "resolution": 1.0 / scale,
+        "min_value": min_word / scale,
+        "max_value": max_word / scale,
+        "value_encoding": (
+            f"round(value * 2**{fraction}) to nearest (ties to even), two's-complement "
+            f"wrapped to {data_width} bits; parameters, constants, initial state, the "
+            "time step and every input word use this encoding"
+        ),
+        "multiply": multiply,
+        "division_by_constant": "multiply by the encoded reciprocal of the constant",
+        "division": (
+            f"numerator shifted left by {fraction} and wrapped to {2 * data_width} bits, "
+            f"integer division by the encoded divisor, quotient wrapped to {data_width} bits"
+        ),
+        "modulo": (
+            f"dividend wrapped to {data_width} bits, signed remainder by the encoded "
+            "positive period, one period added when negative"
+        ),
+        "integer_power": "repeated wrap-truncate multiplies (exponents 2 to 8)",
+        "transcendentals": (
+            "look-up tables on the RTL sample grids (exp, tanh, cosh, exprel, sigmoid, "
+            "sin, cos, cbrt: [-16, 16) step 0.125; log and sqrt on their own grids); "
+            f"argument truncated to {data_width} bits, index computed in "
+            f"{data_width + 1} bits and clamped to the table"
+        ),
+        "overflow": overflow,
+        "rounding": rounding,
+        "method": method,
+        "state_update": update,
+        "sequencing": (
+            "candidate = update(reg); spike = threshold(candidate, <var>_prev = reg); "
+            "on spike every reset rule is evaluated on the candidate and saturated, "
+            "otherwise the candidate is committed; the reported state and spike are "
+            "the post-step values"
+        ),
+        "threshold_detection": "level: the spike fires on every step the condition holds",
+        "input": (
+            f"one signed {data_width}-bit word per step ({c_word_type(data_width)}), "
+            "held for the whole step"
+        ),
+        "randomness": "none: the diffusion-noise symbol xi is not supported",
+        "identity_proof": (
+            "the generated kernel is bit-identical to the compile_to_verilog RTL; "
+            "proven by the Icarus Verilog co-simulation test of the bit-true kernel"
+        ),
+    }
+
+
 def _validate_modes(q: Q88) -> None:
     """Reject overflow / rounding modes the bit-true kernel does not mirror."""
     if q.rounding not in {"truncate", "nearest"}:

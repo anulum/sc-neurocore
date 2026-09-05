@@ -289,6 +289,20 @@ export default function SimulationPlot() {
         ctx.font = "9px monospace"; ctx.textAlign = "right";
         ctx.fillStyle = "#ff5252"; ctx.fillText(`d${vars[0]}/dt=0`, L + pw - 4, T + ph - 16);
         ctx.fillStyle = "#81c784"; ctx.fillText(`d${vars[1]}/dt=0`, L + pw - 4, T + ph - 4);
+        // Invalid part of the field (domain errors, overflow, non-finite values): not zero.
+        const domain = nullclineResult.domain;
+        if (domain && domain.status !== "complete") {
+          const fractions = Object.entries(domain.invalid_fraction)
+            .map(([name, fraction]) => `${name} ${(fraction * 100).toFixed(0)}%`)
+            .join(", ");
+          ctx.fillStyle = "#ffb74d"; ctx.textAlign = "left";
+          ctx.fillText(
+            domain.status === "empty"
+              ? `field undefined on the whole grid (${fractions} invalid)`
+              : `partial domain: ${fractions} of samples invalid, no contour there`,
+            L + 4, T + 24,
+          );
+        }
       }
       return;
     }
@@ -371,51 +385,96 @@ export default function SimulationPlot() {
       const ph = h - T - B - 20;
       const sens = sensResult.sensitivities.slice(0, 15);
       if (sens.length === 0) return;
-      const maxS = Math.max(...sens.map((s) => s.sensitivity), 0.01);
+      const defined = sens.map((s) => s.sensitivity).filter((v): v is number => v !== null);
+      const maxS = Math.max(...defined, 0.01);
       const barH = Math.min(20, ph / sens.length - 2);
       ctx.font = "10px monospace";
       sens.forEach((s, i) => {
         const y = T + i * (barH + 2);
-        const bw = (s.sensitivity / maxS) * (pw - 80);
-        ctx.fillStyle = "rgba(79,195,247,0.6)";
-        ctx.fillRect(L + 70, y, bw, barH);
         ctx.fillStyle = AXIS; ctx.textAlign = "right";
         ctx.fillText(s.param, L + 65, y + barH - 4);
         ctx.textAlign = "left";
+        if (s.sensitivity === null) {
+          // Undefined elasticity (zero base rate or zero parameter): no bar, the reason instead of a zero.
+          ctx.fillStyle = "#ffb74d";
+          ctx.fillText(`undefined: ${s.reason ?? "no reason given"}`, L + 75, y + barH - 4);
+          return;
+        }
+        const bw = (s.sensitivity / maxS) * (pw - 80);
+        ctx.fillStyle = "rgba(79,195,247,0.6)";
+        ctx.fillRect(L + 70, y, bw, barH);
+        ctx.fillStyle = AXIS;
         ctx.fillText(s.sensitivity.toFixed(3), L + 75 + bw, y + barH - 4);
       });
       ctx.fillStyle = AXIS; ctx.textAlign = "left";
-      ctx.fillText(`base rate: ${sensResult.base_rate} Hz`, L + 4, h - 8);
+      ctx.fillText(`base rate: ${sensResult.base_rate} Hz (elasticity |Δrate/Δp|·|p|/rate)`, L + 4, h - 8);
       return;
     }
 
     // Precision compare (#5)
     if (activeTab === "precision" && precResult) {
       const ph = (h - T - B - 30) / 2;
-      const float_v = precResult.float_result.states[precResult.error.variable];
-      const fixed_v = precResult.fixed_result.states[precResult.error.variable];
+      const variable = precResult.error.variable;
+      const float_v = precResult.float_result.states[variable];
+      const fixed_v = precResult.fixed_result.states[variable];
       const time_f = precResult.float_result.time;
+      const time_x = precResult.fixed_result.time;
       const tMin = time_f[0], tMax = time_f[time_f.length - 1];
       let vMin = Math.min(...float_v, ...fixed_v);
       let vMax = Math.max(...float_v, ...fixed_v);
       const vPad = (vMax - vMin) * 0.05 || 1;
       vMin -= vPad; vMax += vPad;
+      const qLabel = precResult.arithmetic?.q_format ?? precResult.encoding?.q_format ?? "fixed-point";
+      const arithmeticLabel = precResult.arithmetic
+        ? `bit-true ${qLabel} kernel (${precResult.arithmetic.overflow}, ${precResult.arithmetic.rounding})`
+        : `${qLabel}`;
 
       drawAxes(ctx, L, T, pw, ph, tMin, tMax, vMin, vMax);
       drawLine(ctx, L, T, pw, ph, time_f, float_v, tMin, tMax, vMin, vMax, "#4fc3f7", 1.2);
-      drawLine(ctx, L, T, pw, ph, time_f, fixed_v, tMin, tMax, vMin, vMax, "#ff5252", 1.2);
+      // Each result is drawn on its own display sample times: the projections
+      // of the two runs are chosen independently.
+      drawLine(ctx, L, T, pw, ph, time_x, fixed_v, tMin, tMax, vMin, vMax, "#ff5252", 1.2);
       ctx.font = "10px monospace"; ctx.textAlign = "left";
       ctx.fillStyle = "#4fc3f7"; ctx.fillText("float64", L + 6, T + 12);
-      ctx.fillStyle = "#ff5252"; ctx.fillText("Q8.8", L + 60, T + 12);
+      ctx.fillStyle = "#ff5252"; ctx.fillText(arithmeticLabel, L + 60, T + 12);
 
-      // Error trace
+      // Error trace at the float result's display samples (the raw error stays in error.trace).
+      const errorSeries = precResult.error.display ?? precResult.error.trace;
       const errY = T + ph + 16;
       const errH = ph - 8;
-      const errMax = Math.max(...precResult.error.trace, 0.001);
+      const paramError = precResult.comparison?.parameter_quantisation.variables[variable];
+      const errMax = Math.max(...errorSeries, paramError?.max_abs_error ?? 0, 0.001);
       drawAxes(ctx, L, errY, pw, errH, tMin, tMax, 0, errMax * 1.1, "ms");
-      drawLine(ctx, L, errY, pw, errH, time_f, precResult.error.trace, tMin, tMax, 0, errMax * 1.1, "#ffb74d", 1.5);
+      if (paramError && paramError.display.length === time_f.length) {
+        drawLine(ctx, L, errY, pw, errH, time_f, paramError.display, tMin, tMax, 0, errMax * 1.1, "#b39ddb", 1.0);
+      }
+      if (errorSeries.length === time_f.length) {
+        drawLine(ctx, L, errY, pw, errH, time_f, errorSeries, tMin, tMax, 0, errMax * 1.1, "#ffb74d", 1.5);
+      }
       ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText(`error (max=${precResult.error.max_error.toFixed(4)}, rms=${precResult.error.rms_error.toFixed(4)})`, L + 6, errY + 12);
+      const divergence = precResult.error.first_divergence_step;
+      ctx.fillText(
+        `|float64 − bit-true| (max=${precResult.error.max_error.toFixed(4)}, rms=${precResult.error.rms_error.toFixed(4)}`
+          + (divergence === null || divergence === undefined ? ", never beyond ½ LSB)" : `, diverges at step ${divergence})`),
+        L + 6, errY + 12,
+      );
+      if (paramError) {
+        ctx.fillStyle = "#b39ddb";
+        ctx.fillText(
+          `|float64 − quantised-parameter float64| (max=${paramError.max_abs_error.toFixed(4)}, rms=${paramError.rms_error.toFixed(4)})`,
+          L + 6, errY + 24,
+        );
+      }
+      const events = precResult.comparison?.bit_true.events;
+      if (events) {
+        ctx.fillStyle = AXIS;
+        ctx.fillText(
+          events.identical
+            ? `spikes identical (${events.reference_count})`
+            : `spikes differ: float64 ${events.reference_count}, bit-true ${events.candidate_count}, first at #${events.first_divergence?.index ?? "?"}`,
+          L + 6, errY + 36,
+        );
+      }
       return;
     }
 

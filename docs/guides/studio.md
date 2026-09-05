@@ -110,7 +110,7 @@ current simulation:
 | A/B Comparison | A/B | Split-view of two configurations |
 | E-I Network | E-I | Excitatory-inhibitory network raster + population rates |
 | Code generator | Code | Python script + one-liner for notebooks |
-| Q8.8 Precision | Q8.8 | Float64 vs fixed-point comparison + error trace |
+| Precision | Q8.8 | Float64 vs bit-true fixed-point kernel run + parameter-quantisation run, error traces |
 | Verilog RTL | RTL | Generated Verilog from the selected schema-backed model or custom ODE |
 
 ### Trace View
@@ -267,6 +267,83 @@ sweeps that need rates only, exports the membrane voltage and no initial
 snapshot; its result says so in `state_layout` and is never presented as
 complete-state custody.
 
+## Analysis validity and metric contracts
+
+Every analysis response (`/api/fi-curve`, `/api/bifurcation`,
+`/api/sensitivity`, `/api/heatmap`, `/api/freq-response`, `/api/precision`,
+`/api/nullclines`, `/api/ir/cosim` and the analysis job kinds) carries a
+`contract` block (`studio.metric-contract.v1`): the `kind` of metric, its
+`definition`, the `units` of every reported quantity (`model-defined` where
+the equation system declares none), the `applicability` conditions, the
+`limitations` of the computation and a `domain` verdict — `complete` when
+every requested point was evaluated, `partial` when some points were invalid
+and are reported, `empty` when none could be. The `analysis_metadata`
+manifest repeats the contract kind and the domain so an evidence bundle can
+tell a partial result apart without opening it. An invalid point is never a
+zero:
+
+- **f-I curve, heatmap, frequency response** — the rate is the spike count
+  over the whole simulated duration (transient included); the contract says
+  so, together with the drive protocol.
+- **Sensitivity** — the dimensionless rate elasticity
+  `|rate(p+δ) − rate(p−δ)| / (2δ) · |p| / rate(p)` with δ = 10 % of `p`. A
+  zero base rate or a zero parameter makes the elasticity undefined; the row
+  reports `sensitivity: null` with a `reason` and the domain is `partial` or
+  `empty`.
+- **Bifurcation** — labelled `numerical-extrema-sweep`: the late-run
+  extrema of the analysed `variable` (request field `variable`, first trace
+  by default) under the route's drive `protocol`. It is not a bifurcation
+  continuation: no branch is followed and no stability is computed;
+  `attractor_kinds` says per point whether extrema, a fixed-point mean or an
+  insufficient trace was found.
+- **Nullclines** — each component of the drift field is evaluated at every
+  grid sample with NumPy floating-point errors raised; a sample that raises
+  or is non-finite is invalid and reported in `validity_0` / `validity_1`
+  (rows follow `y`, columns `x`). A contour cell needs four valid corners.
+  The field is evaluated at the request's `current` (default 0) with every
+  variable outside the two swept ones held at `held` (default: its initial
+  value) and the diffusion-noise symbol at zero; `domain.status` and the
+  invalid fractions are returned, and the phase view labels a partial domain.
+
+### Precision comparison
+
+`/api/precision` (and `/api/ir/cosim`) compares three runs of the same
+experiment and keeps them apart:
+
+- `float_result` — the float64 explicit-Euler playground run;
+- `fixed_result` — the **bit-true fixed-point run**: the generated C kernel
+  of the equation system (`sc_neurocore.compiler.intelligence.bit_true_kernel`,
+  proven bit-identical to the emitted RTL by the Icarus co-simulation),
+  compiled with the host C compiler and driven with one encoded input word
+  per step. Its `words` block holds the raw integer state words; `arithmetic`
+  states the value encoding, multiply width collapse and rounding, accumulate
+  overflow policy, division/modulo/LUT lowering, threshold/reset sequencing
+  and the kernel and compiler digests. `backend` is `bit-true-kernel`.
+- `parameter_quantisation_result` — float64 with parameters and initial
+  state rounded to the word resolution, so parameter rounding can be told
+  apart from the fixed-point operations (wrap-truncate multiplies,
+  saturation, look-up tables) that only the bit-true run performs. The
+  time-step word the kernel applies is reported under `encoding.dt`; all
+  three runs receive the same drive samples.
+
+`comparison.bit_true` and `comparison.parameter_quantisation` report, for
+every state variable, the per-step absolute error (`trace`, full resolution,
+and `display` aligned with the float result's display samples), its maximum,
+mean, RMS and final value and the first step beyond half a word resolution;
+the spike trains are compared in order (`events`); `saturation` counts the
+steps each word spent at the format limits. `error` and `quantized_params`
+keep the former summary for the first declared variable (bit-true error).
+
+The request names the word (`q_format`, `Q8.8` = 16 bits with 8 fractional,
+8 to 32 bits), the accumulate `overflow` (`saturate` or `wrap`) and product
+`rounding` (`truncate` or `nearest`), the `protocol` and `frequency_hz`. A
+parameter, expression constant, initial value, time step or drive sample the
+word cannot hold is rejected with its field (HTTP 422 `invalid_model_input`)
+instead of being clamped — a clamped parameter is a different model, not a
+precision effect — as are diffusion noise (`xi`) and integrators the kernel
+does not mirror. When the host has no C compiler the route answers HTTP 503
+`native_tool_unavailable`; nothing is estimated in its place.
+
 ## API Reference
 
 The Studio backend exposes a REST API. All POST endpoints accept JSON.
@@ -330,16 +407,17 @@ zero.
 | POST | `/api/heatmap` | Two-parameter firing rate heatmap |
 | POST | `/api/characterize` | Full model characterisation |
 | POST | `/api/freq-response` | Frequency response curve |
-| POST | `/api/precision` | Float vs Q8.8 precision compare |
-| POST | `/api/nullclines` | Nullcline computation for 2D ODEs |
+| POST | `/api/precision` | Float64 vs bit-true fixed-point compare (`q_format`, `overflow`, `rounding`, protocol) |
+| POST | `/api/nullclines` | Nullclines of a 2D section with validity masks (`current`, `held`) |
 
 Analysis responses for `/api/compare`, `/api/fi-curve`, `/api/bifurcation`,
 `/api/sensitivity`, `/api/heatmap`, `/api/freq-response`, `/api/precision`,
 `/api/nullclines`, and `/api/characterize` include `analysis_metadata` with the
 `studio.analysis-result.v1` schema. The manifest records the analysis type,
 evidence classification, source (`ode`, `model`, `mixed`, or `unknown`),
-input and result SHA-256 digests, and the returned result keys without
-exposing host-local paths. The corresponding plot views surface the evidence
+input and result SHA-256 digests, the returned result keys, and the metric
+contract kind and domain verdict of the payload (`contract`, `domain`; null
+for a payload without a contract) without exposing host-local paths. The corresponding plot views surface the evidence
 class, source, input digest, and result digest next to the rendered analysis.
 `/api/multi-simulate` attaches per-result `run_metadata` with the
 `studio.simulation-run.v2` schema so each overlaid trace carries the same

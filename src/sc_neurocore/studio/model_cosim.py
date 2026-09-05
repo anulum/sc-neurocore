@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
-import subprocess  # nosec B404
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,13 +23,26 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import (
 from sc_neurocore.compiler.verilog_compiler_config import Q88
 from sc_neurocore.hdl_gen._ident import sanitize_ident
 from sc_neurocore.neurons.equation_builder import EquationNeuron
+from sc_neurocore.studio.bit_true_execution import (
+    NATIVE_TOOL_NAMES,
+    native_tool_version,
+    resolve_native_tool,
+    run_native_command,
+)
 from sc_neurocore.studio.model_compile_configuration import (
     ResolvedModelCompileConfiguration,
 )
 
 STUDIO_COSIM_PARITY_SCHEMA_VERSION = "studio.cosim-parity.v1"
 BIT_TRUE_COSIM_INTEGRATORS = frozenset({"euler", "map"})
-_TOOL_NAMES = ("gcc", "iverilog", "vvp")
+_TOOL_NAMES = NATIVE_TOOL_NAMES
+
+# The native-tool helpers are shared with the bit-true precision comparison
+# (:mod:`sc_neurocore.studio.bit_true_execution`); the module-level names stay
+# so the process task and its tests address one resolution point.
+_resolve_tool = resolve_native_tool
+_run_checked = run_native_command
+_tool_version = native_tool_version
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,7 +64,6 @@ def run_model_cosim(
     n_steps: int,
 ) -> ModelCosimExecution:
     """Compile and compare real C-reference and RTL state traces cycle by cycle."""
-
     if configuration.integrator not in BIT_TRUE_COSIM_INTEGRATORS:
         supported = ", ".join(sorted(BIT_TRUE_COSIM_INTEGRATORS))
         raise ValueError(
@@ -175,45 +185,6 @@ def run_model_cosim(
         rtl_testbench=testbench,
         rtl_trace=rtl_trace,
     )
-
-
-def _resolve_tool(name: str) -> str | None:
-    if name not in _TOOL_NAMES:
-        raise ValueError(f"Unsupported Studio co-simulation tool {name!r}.")
-    return shutil.which(name)
-
-
-def _run_checked(command: list[str], *, timeout_seconds: float) -> subprocess.CompletedProcess[str]:
-    try:
-        completed = subprocess.run(  # nosec B603
-            command,
-            capture_output=True,
-            check=False,
-            shell=False,
-            text=True,
-            timeout=timeout_seconds,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
-        raise RuntimeError(
-            f"Studio co-simulation command failed: {Path(command[0]).name}."
-        ) from exc
-    if completed.returncode != 0:
-        detail = (completed.stderr or completed.stdout).strip().replace("\n", " ")[:500]
-        raise RuntimeError(
-            f"Studio co-simulation command {Path(command[0]).name!r} exited "
-            f"{completed.returncode}: {detail}"
-        )
-    return completed
-
-
-def _tool_version(path: str, name: str) -> str:
-    argument = "-V" if name in {"iverilog", "vvp"} else "--version"
-    try:
-        completed = _run_checked([path, argument], timeout_seconds=5)
-    except RuntimeError:
-        return "available-version-unreported"
-    lines = (completed.stdout + "\n" + completed.stderr).strip().splitlines()
-    return lines[0][:200] if lines else "available-version-unreported"
 
 
 def _signal_names(neuron: EquationNeuron) -> list[str]:

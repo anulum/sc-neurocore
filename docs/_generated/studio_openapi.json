@@ -262,7 +262,7 @@
         "type": "object"
       },
       "BifurcationRequest": {
-        "description": "Request body for one-parameter bifurcation sweeps.",
+        "description": "Request body for one-parameter numerical extrema sweeps.\n\nThe response is labelled ``numerical-extrema-sweep``: the late-run\nextrema of one state trace per parameter value under the configured\ndrive, not a bifurcation continuation.",
         "properties": {
           "current": {
             "default": 10.0,
@@ -372,6 +372,17 @@
               }
             ],
             "title": "Threshold"
+          },
+          "variable": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variable"
           }
         },
         "required": [
@@ -1406,6 +1417,47 @@
         "title": "ModelSimulationFailureDetail",
         "type": "object"
       },
+      "NativeToolUnavailableDetail": {
+        "description": "503 detail for an analysis that needs a native tool the host lacks.",
+        "properties": {
+          "error": {
+            "const": "native_tool_unavailable",
+            "title": "Error",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          }
+        },
+        "required": [
+          "error",
+          "tools",
+          "reason"
+        ],
+        "title": "NativeToolUnavailableDetail",
+        "type": "object"
+      },
+      "NativeToolUnavailableResponse": {
+        "description": "503 response body when the host lacks the C compiler of the bit-true kernel.",
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/NativeToolUnavailableDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "NativeToolUnavailableResponse",
+        "type": "object"
+      },
       "NetworkRequest": {
         "description": "Request body for balanced excitatory-inhibitory network simulation.",
         "properties": {
@@ -1473,8 +1525,14 @@
         "type": "object"
       },
       "NullclineRequest": {
-        "description": "Request body for two-dimensional nullcline analysis.",
+        "additionalProperties": false,
+        "description": "Request body for two-dimensional nullcline analysis.\n\n``current`` is the input the drift field is evaluated at and ``held``\nfixes every equation variable that is not swept (an unlisted one is held\nat its initial value). Invalid grid samples are reported as validity\nmasks, never as zero derivatives.",
         "properties": {
+          "current": {
+            "default": 0.0,
+            "title": "Current",
+            "type": "number"
+          },
           "equations": {
             "items": {
               "type": "string"
@@ -1488,6 +1546,20 @@
             "minimum": 20.0,
             "title": "Grid Size",
             "type": "integer"
+          },
+          "held": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held"
           },
           "params": {
             "additionalProperties": {
@@ -1524,7 +1596,8 @@
         "type": "object"
       },
       "PrecisionRequest": {
-        "description": "Request body for float versus fixed-point precision comparisons.",
+        "additionalProperties": false,
+        "description": "Request body for float64 versus bit-true fixed-point comparisons.\n\n``q_format`` names the word (``Q8.8`` = 16 bits, 8 fractional; 8 to 32\nbits), ``overflow`` and ``rounding`` the kernel's accumulate and product\npolicies. Values the word cannot hold are rejected, never clamped.",
         "properties": {
           "current": {
             "default": 10.0,
@@ -1533,11 +1606,13 @@
           },
           "dt": {
             "default": 0.1,
+            "exclusiveMinimum": 0.0,
             "title": "Dt",
             "type": "number"
           },
           "duration": {
             "default": 200.0,
+            "exclusiveMinimum": 0.0,
             "title": "Duration",
             "type": "number"
           },
@@ -1547,6 +1622,12 @@
             },
             "title": "Equations",
             "type": "array"
+          },
+          "frequency_hz": {
+            "default": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Frequency Hz",
+            "type": "number"
           },
           "init": {
             "anyOf": [
@@ -1562,6 +1643,15 @@
             ],
             "title": "Init"
           },
+          "overflow": {
+            "default": "saturate",
+            "enum": [
+              "saturate",
+              "wrap"
+            ],
+            "title": "Overflow",
+            "type": "string"
+          },
           "params": {
             "anyOf": [
               {
@@ -1576,6 +1666,24 @@
             ],
             "title": "Params"
           },
+          "protocol": {
+            "default": "constant",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "pulse",
+              "sine"
+            ],
+            "title": "Protocol",
+            "type": "string"
+          },
+          "q_format": {
+            "default": "Q8.8",
+            "pattern": "^Q\\d{1,2}\\.\\d{1,2}$",
+            "title": "Q Format",
+            "type": "string"
+          },
           "reset": {
             "anyOf": [
               {
@@ -1586,6 +1694,15 @@
               }
             ],
             "title": "Reset"
+          },
+          "rounding": {
+            "default": "truncate",
+            "enum": [
+              "truncate",
+              "nearest"
+            ],
+            "title": "Rounding",
+            "type": "string"
           },
           "threshold": {
             "anyOf": [
@@ -4304,11 +4421,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ModelRunErrorResponse"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Request rejected before simulation (invalid_model_input or experiment_rejected, the latter also for an oversized synchronous run that must be submitted as a job), run failed numerically at a named step (model_simulation_failed), or body validation failed."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeToolUnavailableResponse"
+                }
+              }
+            },
+            "description": "The bit-true fixed-point run needs a native C compiler that is not installed on this host (native_tool_unavailable); nothing is estimated in its place."
           }
         },
         "summary": "Api Precision"

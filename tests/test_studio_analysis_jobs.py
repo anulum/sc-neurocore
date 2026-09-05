@@ -66,9 +66,12 @@ def test_analysis_job_polls_to_completed_with_analysis_result_schema(
         sweep_min: float,
         sweep_max: float,
         sweep_steps: int,
+        *,
+        variable: str | None = None,
     ) -> dict[str, object]:
         return {
             "sweep_param": sweep_param,
+            "variable": variable,
             "values": [sweep_min, sweep_max],
             "rates": [0.0, 1.0],
             "steps": sweep_steps,

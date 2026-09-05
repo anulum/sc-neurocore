@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 from sc_neurocore.studio.analysis import (
     bifurcation_sweep,
+    fi_curve_sweep,
     heatmap_2d,
     sensitivity_analysis,
 )
@@ -56,7 +57,6 @@ class AnalysisJobValidationError(ValueError):
 
     def to_public_detail(self) -> dict[str, str]:
         """Return a path-free public error detail."""
-
         return {"error": self.code}
 
 
@@ -75,7 +75,6 @@ def validate_analysis_job_request(
     AnalysisJobValidationError
         When the payload does not match the selected analysis schema.
     """
-
     analysis = req.analysis
     try:
         if analysis == "simulate":
@@ -128,7 +127,6 @@ def run_analysis_job_task(
     _job_context: StudioJobContext,
 ) -> dict[str, object]:
     """Execute one validated analysis payload and return a public result dict."""
-
     if analysis == "simulate":
         spec = resolve_experiment(payload_dump, max_steps=JOB_MAX_STEPS)
         result = run_experiment(spec)
@@ -140,14 +138,10 @@ def run_analysis_job_task(
         ).to_public_dict()
         return dict(result)
     if analysis == "fi_curve":
-        import numpy as np
-
         fi = FICurveRequest.model_validate(payload_dump)
         sim_fn = _make_simulate_fn(fi.model_dump())
-        currents = np.linspace(fi.i_min, fi.i_max, fi.i_steps).tolist()
-        rates = [sim_fn(current=float(i))["stats"]["rate_hz"] for i in currents]
         result = _attach_analysis_metadata(
-            "fi_curve", fi.model_dump(), {"currents": currents, "rates": rates}
+            "fi_curve", fi.model_dump(), fi_curve_sweep(sim_fn, fi.i_min, fi.i_max, fi.i_steps)
         )
         return dict(result)
     if analysis == "bifurcation":
@@ -168,6 +162,7 @@ def run_analysis_job_task(
             bif.sweep_min,
             bif.sweep_max,
             bif.sweep_steps,
+            variable=bif.variable,
         )
         result = _attach_analysis_metadata("bifurcation", bif.model_dump(), sweep)
         return dict(result)
@@ -217,7 +212,6 @@ def submit_analysis_job(
     req: AnalysisJobRequest,
 ) -> dict[str, Any]:
     """Validate and submit one analysis job; return the public job receipt."""
-
     analysis, payload_dump, sim_count, duration, dt = validate_analysis_job_request(req)
     if sim_count < 1:
         raise AnalysisJobValidationError("analysis_job_empty")

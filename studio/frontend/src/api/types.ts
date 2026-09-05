@@ -145,8 +145,26 @@ export interface SimulationCacheInfo {
   key: string;
 }
 
+export type MetricDomain = "complete" | "partial" | "empty";
+
+/** What an analysis computed, in which units, where it is valid and where it could not be evaluated. */
+export interface MetricContract {
+  schema_version: "studio.metric-contract.v1";
+  kind: string;
+  definition: string;
+  units: Record<string, string>;
+  applicability: string[];
+  limitations: string[];
+  domain: MetricDomain;
+  domain_detail: Record<string, unknown>;
+}
+
 export interface AnalysisResultMetadata {
   analysis_type: string;
+  /** Kind of the payload's metric contract, or null for a payload without one. */
+  contract?: string | null;
+  /** Domain verdict of that contract, or null. */
+  domain?: MetricDomain | null;
   evidence_classification: "analysis";
   input_sha256: string;
   output_keys: string[];
@@ -192,6 +210,7 @@ export interface HeatmapResponse {
 
 export interface FICurveResponse {
   analysis_metadata: AnalysisResultMetadata;
+  contract?: MetricContract;
   currents: number[];
   rates: number[];
 }
@@ -302,30 +321,130 @@ export interface PresetSummary {
   id: string; title: string; description: string; suggested_view: string;
 }
 
+export type AttractorKind = "extrema" | "fixed_point" | "insufficient_samples";
+
+/** A numerical extrema sweep under the configured drive; not a bifurcation continuation. */
 export interface BifurcationResponse {
   param_name: string; param_values: number[]; attractors: number[][];
+  attractor_kinds?: AttractorKind[];
+  variable?: string | null;
+  protocol?: string;
+  contract?: MetricContract;
   analysis_metadata: AnalysisResultMetadata;
+}
+
+export interface SensitivityRow {
+  param: string;
+  /** Rate elasticity, or null where it is undefined (see ``reason``). */
+  sensitivity: number | null;
+  base_rate?: number;
+  reason?: string;
+  rate_minus?: number;
+  rate_plus?: number;
 }
 
 export interface SensitivityResponse {
   analysis_metadata: AnalysisResultMetadata;
+  contract?: MetricContract;
   base_rate: number;
-  sensitivities: { param: string; sensitivity: number; rate_minus: number; rate_plus: number }[];
+  sensitivities: SensitivityRow[];
 }
 
+export interface PrecisionVariableComparison {
+  max_abs_error: number;
+  mean_abs_error: number;
+  rms_error: number;
+  final_abs_error: number;
+  first_divergence_step: number | null;
+  divergence_tolerance: number;
+  /** Full-resolution absolute error per raw step. */
+  trace: number[];
+  /** Error at the float result's display sample indices. */
+  display: number[];
+}
+
+export interface PrecisionEventComparison {
+  identical: boolean;
+  reference_count: number;
+  candidate_count: number;
+  paired: number;
+  max_paired_step_offset: number;
+  first_divergence: { index: number; reference_step: number | null; candidate_step: number | null } | null;
+}
+
+export interface PrecisionCandidateComparison {
+  candidate: string;
+  variables: Record<string, PrecisionVariableComparison>;
+  events: PrecisionEventComparison;
+  saturation?: {
+    max_word: number;
+    min_word: number;
+    per_variable: Record<string, { steps_at_max: number; steps_at_min: number }>;
+  };
+}
+
+export interface PrecisionEncodingRow {
+  requested: number;
+  word: number;
+  quantised: number;
+  abs_error: number;
+}
+
+/**
+ * Float64 reference versus (a) the bit-true fixed-point kernel run and (b) a
+ * float64 run with quantised parameters; ``error`` summarises (a) for the
+ * first declared variable.
+ */
 export interface PrecisionResponse {
   analysis_metadata: AnalysisResultMetadata;
+  schema_version?: "studio.precision-compare.v2";
+  contract?: MetricContract;
   float_result: SimulateResponse;
   fixed_result: SimulateResponse;
-  error: { variable: string; max_error: number; mean_error: number; rms_error: number; trace: number[] };
+  parameter_quantisation_result?: SimulateResponse;
+  arithmetic?: Record<string, unknown> & { q_format: string; overflow: string; rounding: string; compiler?: string };
+  encoding?: {
+    q_format: string;
+    data_width: number;
+    fraction: number;
+    resolution: number;
+    params: Record<string, PrecisionEncodingRow>;
+    init: Record<string, PrecisionEncodingRow>;
+    dt: PrecisionEncodingRow;
+    drive: { protocol: string; frequency_hz: number; n_steps: number; max_abs_error: number; min: number; max: number };
+  };
+  comparison?: {
+    bit_true: PrecisionCandidateComparison;
+    parameter_quantisation: PrecisionCandidateComparison;
+  };
+  error: {
+    kind?: string;
+    variable: string;
+    max_error: number;
+    mean_error: number;
+    rms_error: number;
+    first_divergence_step?: number | null;
+    trace: number[];
+    display?: number[];
+  };
   quantized_params: Record<string, number>;
+  quantized_init?: Record<string, number>;
 }
 
 export interface NullclineResponse {
   analysis_metadata: AnalysisResultMetadata;
+  schema_version?: "studio.nullclines.v2";
+  contract?: MetricContract;
   var_names: string[];
-  nullcline_0: { variable: string; points: number[][] };
-  nullcline_1: { variable: string; points: number[][] };
+  nullcline_0: { variable: string; points: number[][]; cells?: number };
+  nullcline_1: { variable: string; points: number[][]; cells?: number };
+  grid?: { x: number[]; y: number[]; size: number };
+  /** 1 where the component could be evaluated, 0 where it could not; rows follow y, columns x. */
+  validity_0?: number[][];
+  validity_1?: number[][];
+  held?: Record<string, number>;
+  current?: number;
+  domain?: { status: MetricDomain; invalid_fraction: Record<string, number> };
 }
 
 export interface CompareResponse {

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 430
+expected_file_count = 434
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1719,6 +1719,22 @@ rationale = "Full-resolution raw trace custody and the bounded display projectio
 [[file]]
 path = "src/sc_neurocore/studio/experiment_spec.py"
 rationale = "The effective experiment contract (revision digests, numerical profile, typed state, protocol, randomness, backend, runtime) that keys the Studio result cache."
+
+[[file]]
+path = "src/sc_neurocore/studio/analysis_contract.py"
+rationale = "Metric contract (definition, units, applicability, limitations, domain verdict) attached to every Studio analysis payload."
+
+[[file]]
+path = "src/sc_neurocore/studio/bit_true_execution.py"
+rationale = "Native execution of the generated bit-true kernel under a per-step drive; the only fixed-point arithmetic Studio reports as fixed-point."
+
+[[file]]
+path = "src/sc_neurocore/studio/nullclines.py"
+rationale = "Nullclines of a two-variable drift field with per-component validity masks; invalid samples are reported, never zero."
+
+[[file]]
+path = "src/sc_neurocore/studio/precision_compare.py"
+rationale = "Float64 reference versus bit-true fixed-point and parameter-quantised runs with per-variable, event and encoding comparison."
 
 [[file]]
 path = "src/sc_neurocore/neurons/readiness.py"

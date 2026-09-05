@@ -923,7 +923,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260905T174416Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260905T182918Z__adaptive_threshold_if.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -4022,7 +4022,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "BrunelWangNeuron__cosim__20260905T174420Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20260905T182922Z__brunel_wang.json",
           "changed_subjects": [],
           "problems": []
         },
@@ -21446,7 +21446,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "ResonateAndFireNeuron__cosim__20260905T174424Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20260905T182926Z__resonate_fire.json",
           "changed_subjects": [],
           "problems": []
         },

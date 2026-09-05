@@ -14,6 +14,7 @@ import {
   studioFICurveRequest,
   studioFrequencyResponseRequest,
   studioHeatmapRequest,
+  studioNullclineRequest,
   studioPrecisionRequest,
   studioSimulationConfig,
   type StudioSimulationConfigInput,
@@ -143,7 +144,7 @@ describe("Studio simulation request builders", () => {
     });
   });
 
-  it("builds the ODE-only precision request without protocol fields", () => {
+  it("builds the ODE-only precision request with the explicit protocol and word format", () => {
     expect(studioPrecisionRequest(input)).toEqual({
       equations: ["dv/dt = -(v - e_l) / tau + i"],
       threshold: "v > -50",
@@ -153,7 +154,43 @@ describe("Studio simulation request builders", () => {
       dt: 0.1,
       duration: 100,
       current: 12,
+      protocol: input.protocol,
+      frequency_hz: input.frequencyHz,
+      q_format: "Q8.8",
     });
+    expect(studioPrecisionRequest(input, "Q16.16")).toMatchObject({ q_format: "Q16.16" });
+  });
+
+  it("builds the nullcline request holding every further variable and stating the input", () => {
+    const request = studioNullclineRequest({
+      equations: ["dv/dt = w + i", "dw/dt = -v", "du/dt = -u"],
+      odeParams: { a: 1 },
+      odeInit: { v: -65, w: 0, u: 2 },
+      protocol: "constant",
+      current: 12,
+      ranges: { v: [-80, 40], w: [-1, 1] },
+      gridSize: 60,
+    });
+    expect(request).toEqual({
+      equations: ["dv/dt = w + i", "dw/dt = -v", "du/dt = -u"],
+      params: { a: 1 },
+      var_names: ["v", "w"],
+      ranges: { v: [-80, 40], w: [-1, 1] },
+      grid_size: 60,
+      current: 12,
+      held: { u: 2 },
+    });
+    expect(
+      studioNullclineRequest({
+        equations: ["dv/dt = w", "dw/dt = -v"],
+        odeParams: {},
+        odeInit: { v: 0, w: 0 },
+        protocol: "sine",
+        current: 12,
+        ranges: {},
+        gridSize: 20,
+      }),
+    ).toMatchObject({ current: 0, held: {} });
   });
 
   it("builds code generation requests for both supported source modes", () => {

@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, TypeAlias
 
+from sc_neurocore.studio.analysis_contract import DomainStatus, contract_summary
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
     StudioEvidenceStatus,
@@ -50,6 +51,12 @@ class StudioAnalysisResultManifest:
         Stable evidence lane label for analysis results.
     status:
         Terminal status for this analysis evidence object.
+    contract:
+        Kind of the payload's metric contract (``payload["contract"]``), or
+        ``None`` for a payload without one.
+    domain:
+        Domain verdict of that contract (``complete`` / ``partial`` /
+        ``empty``), or ``None``.
     """
 
     analysis_type: str
@@ -59,12 +66,15 @@ class StudioAnalysisResultManifest:
     output_keys: tuple[str, ...]
     evidence_classification: StudioEvidenceClassification = "analysis"
     status: StudioEvidenceStatus = "completed"
+    contract: str | None = None
+    domain: DomainStatus | None = None
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free analysis manifest."""
-
         return {
             "analysis_type": self.analysis_type,
+            "contract": self.contract,
+            "domain": self.domain,
             "evidence_classification": validate_studio_evidence_classification(
                 self.evidence_classification
             ),
@@ -106,18 +116,21 @@ def build_analysis_result_manifest(
     Raises
     ------
     ValueError
-        If request or result payloads cannot be encoded as portable JSON.
+        If request or result payloads cannot be encoded as portable JSON, or
+        the payload's contract block carries an unknown domain verdict.
     """
-
     result_without_manifest = {
         key: value for key, value in result_payload.items() if key != "analysis_metadata"
     }
+    contract, domain = contract_summary(result_without_manifest)
     return StudioAnalysisResultManifest(
         analysis_type=analysis_type,
         source=source,
         input_sha256=_sha256_json(request_payload),
         result_sha256=_sha256_json(result_without_manifest),
         output_keys=tuple(sorted(str(key) for key in result_without_manifest)),
+        contract=contract,
+        domain=domain,
     )
 
 
@@ -146,7 +159,6 @@ def attach_analysis_result_manifest(
     dict[str, Any]
         The same result object with ``analysis_metadata`` set.
     """
-
     result_payload["analysis_metadata"] = build_analysis_result_manifest(
         analysis_type=analysis_type,
         source=source,
@@ -170,7 +182,6 @@ def infer_analysis_source(request_payload: Mapping[str, Any]) -> AnalysisSource:
         ``"model"`` when a model name is present, ``"ode"`` when equations are
         present, ``"mixed"`` for comparison payloads, otherwise ``"unknown"``.
     """
-
     if "config_a" in request_payload or "config_b" in request_payload:
         return "mixed"
     model_name = request_payload.get("model_name")
@@ -184,7 +195,6 @@ def infer_analysis_source(request_payload: Mapping[str, Any]) -> AnalysisSource:
 
 def _sha256_json(payload: Mapping[str, Any]) -> str:
     """Return a stable SHA-256 digest over portable canonical JSON."""
-
     try:
         encoded = json.dumps(
             payload,

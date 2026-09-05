@@ -129,7 +129,17 @@ export function studioHeatmapRequest(
   };
 }
 
-export function studioPrecisionRequest(input: StudioSimulationConfigInput): StudioSimulationRequest {
+export const DEFAULT_PRECISION_Q_FORMAT = "Q8.8";
+
+/**
+ * Float64 versus bit-true fixed-point comparison of the custom ODE. The
+ * protocol, sine frequency and word format are explicit so the three runs the
+ * server compares are the configured experiment, not a constant-current default.
+ */
+export function studioPrecisionRequest(
+  input: StudioSimulationConfigInput,
+  qFormat: string = DEFAULT_PRECISION_Q_FORMAT,
+): StudioSimulationRequest {
   return {
     equations: input.equations,
     threshold: input.threshold,
@@ -139,6 +149,41 @@ export function studioPrecisionRequest(input: StudioSimulationConfigInput): Stud
     dt: input.dt,
     duration: input.duration,
     current: input.current,
+    protocol: input.protocol,
+    frequency_hz: input.frequencyHz,
+    q_format: qFormat,
+  };
+}
+
+export interface StudioNullclineRequestInput {
+  equations: string[];
+  odeParams: Record<string, number>;
+  odeInit: Record<string, number>;
+  protocol: string;
+  current: number;
+  ranges: Record<string, [number, number]>;
+  gridSize: number;
+}
+
+/**
+ * Nullclines of the first two ODE variables; every further variable is held at
+ * its initial value and the drift field is evaluated at the configured current
+ * when the protocol is constant (otherwise at zero input).
+ */
+export function studioNullclineRequest(input: StudioNullclineRequestInput): StudioSimulationRequest {
+  const vars = Object.keys(input.odeInit);
+  const held: Record<string, number> = {};
+  for (const name of vars.slice(2)) {
+    held[name] = input.odeInit[name];
+  }
+  return {
+    equations: input.equations,
+    params: input.odeParams,
+    var_names: vars.slice(0, 2),
+    ranges: input.ranges,
+    grid_size: input.gridSize,
+    current: input.protocol === "constant" ? input.current : 0,
+    held,
   };
 }
 

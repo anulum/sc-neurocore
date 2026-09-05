@@ -62,6 +62,8 @@ def test_build_analysis_result_manifest_returns_path_free_hashes() -> None:
 
     assert manifest == {
         "analysis_type": "fi_curve",
+        "contract": None,
+        "domain": None,
         "evidence_classification": "analysis",
         "input_sha256": _sha256_json(request),
         "output_keys": ["currents", "rates"],

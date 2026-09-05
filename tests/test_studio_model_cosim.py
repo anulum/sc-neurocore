@@ -102,11 +102,11 @@ def test_model_cosim_rejects_unsupported_q_width(q_format: QFormat) -> None:
 def test_model_cosim_tool_and_subprocess_failures_are_bounded(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    with pytest.raises(ValueError, match="Unsupported Studio co-simulation tool"):
+    with pytest.raises(ValueError, match="Unsupported native tool"):
         _resolve_tool("shell")
 
     monkeypatch.setattr(
-        "sc_neurocore.studio.model_cosim.subprocess.run",
+        "sc_neurocore.studio.bit_true_execution.subprocess.run",
         lambda *_args, **_kwargs: subprocess.CompletedProcess(
             args=["gcc"], returncode=2, stdout="", stderr="compile\nfailed"
         ),
@@ -115,7 +115,7 @@ def test_model_cosim_tool_and_subprocess_failures_are_bounded(
         _run_checked(["/usr/bin/gcc"], timeout_seconds=1)
 
     monkeypatch.setattr(
-        "sc_neurocore.studio.model_cosim.subprocess.run",
+        "sc_neurocore.studio.bit_true_execution.subprocess.run",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(FileNotFoundError()),
     )
     with pytest.raises(RuntimeError, match="command failed: gcc"):
