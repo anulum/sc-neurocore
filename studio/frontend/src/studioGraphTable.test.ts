@@ -29,6 +29,7 @@ import {
   studioGraphTableRemoveLabel,
 } from "./studioGraphTable";
 
+/** One population, overridden where a case needs a particular value. */
 function population(overrides: Partial<PopulationNode> & { id: string }): PopulationNode {
   return {
     count: 100,
@@ -42,6 +43,7 @@ function population(overrides: Partial<PopulationNode> & { id: string }): Popula
   };
 }
 
+/** One projection, overridden where a case needs a particular value. */
 function projection(overrides: Partial<ProjectionEdge> & { id: string }): ProjectionEdge {
   return {
     delay: 0,

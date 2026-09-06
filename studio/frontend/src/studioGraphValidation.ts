@@ -49,6 +49,16 @@ export interface StudioGraphIssueLocation {
 
 const INDEXED = /^(populations|projections)\[(\d+)\](?:\.(.+))?$/;
 
+/**
+ * Name a projection the way the canvas draws it: by its endpoints.
+ *
+ * An identifier means nothing to a reader looking at a diagram; the labels of
+ * the two populations it joins are how the projection is recognised.
+ *
+ * @param projection - The projection to name.
+ * @param labels - Population labels by identifier.
+ * @returns The two endpoint labels joined by an arrow, falling back to the identifiers when a label is not there to give.
+ */
 function projectionSubject(
   projection: ProjectionEdge,
   labels: ReadonlyMap<string, string>,
@@ -77,6 +87,11 @@ export function studioGraphIssueLocations(
     const attribute = matched?.[3] ?? "";
     if (matched?.[1] === "populations") {
       const population = populations[Number(matched[2])];
+      // An index the graph no longer holds is `undefined` at runtime; the
+      // array type says otherwise only because `noUncheckedIndexedAccess`
+      // is not on yet, and this guard is what keeps an unplaceable message
+      // from being dropped.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (population !== undefined) {
         return {
           attribute,
@@ -90,6 +105,11 @@ export function studioGraphIssueLocations(
     }
     if (matched?.[1] === "projections") {
       const projection = projections[Number(matched[2])];
+      // An index the graph no longer holds is `undefined` at runtime; the
+      // array type says otherwise only because `noUncheckedIndexedAccess`
+      // is not on yet, and this guard is what keeps an unplaceable message
+      // from being dropped.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (projection !== undefined) {
         return {
           attribute,
@@ -118,6 +138,9 @@ export function studioGraphIssueLocations(
  * Group located failures by the identifier of the object they are about.
  *
  * Graph-level failures are not in the map; read them from the located list.
+ *
+ * @param locations - Located failures for the whole graph.
+ * @returns The failures of each object, by that object's identifier.
  */
 export function studioGraphIssuesById(
   locations: readonly StudioGraphIssueLocation[],
@@ -141,6 +164,9 @@ export function studioGraphIssuesById(
  * The message the server wrote is kept verbatim; only the subject is added,
  * because a message that has been reworded can no longer be matched against
  * what the server said.
+ *
+ * @param locations - Located failures for the whole graph.
+ * @returns One line per failure, each naming the object it is about.
  */
 export function studioGraphIssueLines(
   locations: readonly StudioGraphIssueLocation[],
@@ -158,13 +184,18 @@ export function studioGraphIssueLines(
  * Both forms are kept: the sentences the server wrote, and the same failures
  * resolved to the objects they name. A graph the server accepted clears both,
  * so a stale refusal never outlives the edit that fixed it.
+ *
+ * @param validation - The server's answer to a validation request.
+ * @param populations - Populations in the order they were sent for validation.
+ * @param projections - Projections in the order they were sent for validation.
+ * @returns The messages and the located failures to put on the state.
  */
 export function studioGraphValidatedState(
   validation: GraphValidation,
   populations: readonly PopulationNode[],
   projections: readonly ProjectionEdge[],
 ): { graphErrors: string[]; graphIssues: StudioGraphIssueLocation[] } {
-  if (validation.valid === true) {
+  if (validation.valid) {
     return { graphErrors: [], graphIssues: [] };
   }
   const graphIssues = studioGraphIssueLocations(
@@ -190,6 +221,11 @@ export function studioGraphValidatedState(
  * Return the state a refused validation leaves behind before a run.
  *
  * The run stops, so the busy flag is cleared here rather than by the caller.
+ *
+ * @param validation - The server's answer to a validation request.
+ * @param populations - Populations in the order they were sent for validation.
+ * @param projections - Projections in the order they were sent for validation.
+ * @returns The same, with the run stopped.
  */
 export function studioGraphValidationLocatedState(
   validation: GraphValidation,

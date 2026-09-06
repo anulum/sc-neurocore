@@ -54,10 +54,25 @@ export type StudioPopulationEdit =
   | { readonly ok: true; readonly update: Partial<PopulationNode> }
   | { readonly ok: false; readonly reason: string };
 
+/**
+ * Return a drive's kind, treating a population saved before drives as undriven.
+ *
+ * @param drive - The population's drive, absent on a workspace saved before
+ *   drives existed.
+ * @returns The kind name the graph specification uses.
+ */
 function driveKind(drive: PopulationDrive | undefined): string {
   return drive?.kind ?? "none";
 }
 
+/**
+ * Render one numeric field of a drive, leaving an absent one empty.
+ *
+ * @param drive - The population's drive, if it has one.
+ * @param key - The field to read, as the graph specification names it.
+ * @returns The value as an input carries it; empty when the drive does not
+ *   carry that field, which is how a derived seed is shown.
+ */
 function driveNumber(drive: PopulationDrive | undefined, key: string): string {
   if (drive === undefined) return "";
   const value = (drive as unknown as Record<string, unknown>)[key];
@@ -70,6 +85,10 @@ function driveNumber(drive: PopulationDrive | undefined, key: string): string {
  * A parameter failure arrives as `params.tau`, so it is filed under that whole
  * path; a failure about the population as a whole is filed under the empty
  * attribute, where the editor shows it rather than losing it.
+ *
+ * @param issues - Located failures for the whole graph.
+ * @param populationId - The population being edited.
+ * @returns Messages by attribute, in the order the server reported them.
  */
 export function studioPopulationFieldErrors(
   issues: readonly StudioGraphIssueLocation[],
@@ -94,6 +113,7 @@ export function studioPopulationFieldErrors(
  * @param population - The population being edited.
  * @param models - Model names the server admits for a population.
  * @param issues - Located validation failures, so each input carries its own.
+ * @returns One entry per identity field, in a stable order.
  */
 export function studioPopulationFields(
   population: PopulationNode,
@@ -148,6 +168,10 @@ export function studioPopulationFields(
  * A drive of kind `none` carries no fields at all — the specification refuses
  * one that does — so the editor offers none rather than showing boxes whose
  * values would be rejected.
+ *
+ * @param population - The population being edited.
+ * @param issues - Located validation failures, so each input carries its own.
+ * @returns The kind, and the fields that kind carries; nothing else.
  */
 export function studioPopulationDriveFields(
   population: PopulationNode,
@@ -222,18 +246,28 @@ export function studioPopulationDriveFields(
  * @param population - The population being edited.
  * @param contract - The model contract, or `null` while it is being fetched.
  * @param issues - Located validation failures, so each input carries its own.
+ * @returns One entry per overridable parameter, in the contract's order; none
+ *   while the contract is absent or belongs to another model.
  */
 export function studioPopulationParameterFields(
   population: PopulationNode,
   contract: PopulationModelContract | null,
   issues: readonly StudioGraphIssueLocation[] = [],
 ): StudioPopulationFieldModel[] {
-  if (contract === null || contract.model !== population.model) {
+  if (contract?.model !== population.model) {
     return [];
   }
   const errors = studioPopulationFieldErrors(issues, population.id);
   return contract.parameters.map((parameter) => {
-    const overridden = population.params[parameter.name];
+    // A record's index type promises a number for every key; the object need
+    // not carry one. Asking what is actually there is the difference between
+    // "overridden to 0" and "not overridden at all".
+    const overridden = Object.prototype.hasOwnProperty.call(
+      population.params,
+      parameter.name,
+    )
+      ? population.params[parameter.name]
+      : undefined;
     const declared = parameter.default === null ? "" : String(parameter.default);
     return {
       choices: [],
@@ -255,6 +289,10 @@ export function studioPopulationParameterFields(
  *
  * Showing them is the point: a user who cannot find `profile` should read that
  * it is a non-numeric field rather than conclude the editor is incomplete.
+ *
+ * @param contract - The model contract, or `null` while it is being fetched.
+ * @returns Each field that is not an input, with the reason it is not; empty
+ *   while there is no contract to read them from.
  */
 export function studioPopulationUnsupported(
   contract: PopulationModelContract | null,
@@ -262,6 +300,15 @@ export function studioPopulationUnsupported(
   return contract === null ? [] : contract.unsupported.map((entry) => ({ ...entry }));
 }
 
+/**
+ * Return the finite number a box holds, or `null` when it holds no value.
+ *
+ * Blank text and a non-finite result are both `null`: neither is a value the
+ * graph specification would carry.
+ *
+ * @param raw - The text the input carries.
+ * @returns The number, or `null` when the text is not one.
+ */
 function parsedNumber(raw: string): number | null {
   const text = raw.trim();
   if (text.length === 0) return null;
@@ -269,18 +316,29 @@ function parsedNumber(raw: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+/**
+ * Return the drive with one field changed, keeping the rest of it.
+ *
+ * A drive is an object of its kind's fields; editing one by replacing the
+ * whole drive would silently drop the others.
+ *
+ * @param population - The population whose drive is being edited.
+ * @param key - The drive field to change.
+ * @param value - Its new value, or `undefined` to remove the field, which is
+ *   how an emptied seed asks for a derived one.
+ * @returns The update to apply to the population.
+ */
 function withDrive(
   population: PopulationNode,
   key: string,
   value: number | undefined,
 ): Partial<PopulationNode> {
   const current = { ...(population.drive ?? { kind: "none" }) } as Record<string, unknown>;
-  if (value === undefined) {
-    delete current[key];
-  } else {
-    current[key] = value;
-  }
-  return { drive: current as unknown as PopulationDrive };
+  const kept =
+    value === undefined
+      ? Object.fromEntries(Object.entries(current).filter(([name]) => name !== key))
+      : { ...current, [key]: value };
+  return { drive: kept as unknown as PopulationDrive };
 }
 
 /**
@@ -290,6 +348,7 @@ function withDrive(
  *   is a change to one key of an object the rest of which must survive.
  * @param field - The request attribute that was edited.
  * @param raw - The text the input carries.
+ * @returns The update to apply, or the reason the text is not a value.
  */
 export function studioPopulationEdit(
   population: PopulationNode,

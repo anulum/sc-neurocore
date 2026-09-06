@@ -28,6 +28,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+/** Open the Studio on the model this receipt is about, with its detail loaded. */
 async function openStudioWithTheModel(page: Page): Promise<void> {
   await page.goto("./");
   await page.getByPlaceholder("Search models...").fill(MODEL_NAME);
@@ -41,6 +42,12 @@ async function openStudioWithTheModel(page: Page): Promise<void> {
   await detail;
 }
 
+/**
+ * Ask for a timestep and protocol that are not the model's own defaults.
+ *
+ * A syntax-only export agreed with the defaults by accident; asking for
+ * neither is the case that caught it.
+ */
 async function chooseNondefaultExperiment(page: Page): Promise<void> {
   await page.getByTestId("protocol-select").selectOption(REQUESTED_PROTOCOL);
   await page.getByTestId("slider-dt").fill(REQUESTED_DT);

@@ -35,7 +35,8 @@ it.each([
   expect(fetch).toHaveBeenCalledOnce();
   const [url, options] = fetch.mock.calls[0];
   expect(url).toBe(route);
-  expect(JSON.parse(String(options?.body))).toMatchObject({
+  const body = options?.body;
+  expect(JSON.parse(typeof body === "string" ? body : JSON.stringify(body))).toMatchObject({
     equations: ["dv/dt = -v + w + I", "dw/dt = -w"],
     init: { v: 2, w: 3 },
   });

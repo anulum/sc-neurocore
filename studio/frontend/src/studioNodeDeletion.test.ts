@@ -33,6 +33,7 @@ import {
 } from "./studioGraphRequests";
 import { useStudioStore } from "./stores/studio";
 
+/** One population at a given position, so a move can be told from an edit. */
 function population(id: string, x: number, y: number): PopulationNode {
   return {
     count: 4,
@@ -47,6 +48,7 @@ function population(id: string, x: number, y: number): PopulationNode {
   };
 }
 
+/** One projection between two named populations. */
 function projection(id: string, source: string, target: string): ProjectionEdge {
   return {
     autapses: false,
@@ -70,6 +72,12 @@ const PROJECTIONS = [
 /** The canvas nodes as the component derives them from the graph. */
 const NODES = POPULATIONS.map((p) => ({ id: p.id, position: p.position, data: {} }));
 
+/**
+ * Run a change batch through the canvas library's own `applyNodeChanges`.
+ *
+ * The plan has to be derived from what the library actually produces, not from
+ * a batch hand-written to look like it.
+ */
 function planFor(changes: NodeChange[]): ReturnType<typeof studioNodeChangePlan> {
   return studioNodeChangePlan(changes, applyNodeChanges(changes, NODES), POPULATIONS);
 }

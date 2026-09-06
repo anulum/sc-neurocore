@@ -8,6 +8,18 @@
 
 import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * Return a port from the environment, refusing anything that is not one.
+ *
+ * A shared workstation runs several of these suites at once, so the ports are
+ * configurable; a silent fallback on a malformed value would start the servers
+ * somewhere the tests do not look.
+ *
+ * @param name - Environment variable that may hold the port.
+ * @param fallback - Port to use when it is unset.
+ * @returns The port to bind.
+ * @throws {Error} When the variable holds something that is not a port.
+ */
 function configuredPort(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined) return fallback;

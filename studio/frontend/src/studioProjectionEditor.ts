@@ -17,11 +17,11 @@
  * This is the model behind those inputs. It does two things and deliberately
  * not a third:
  *
- * * it states each field's contract in the words the server would use, so a
+ * it states each field's contract in the words the server would use, so a
  *   user reads the constraint before breaking it rather than after;
- * * it parses a typed-in value into an update, refusing only what is not a
+ * it parses a typed-in value into an update, refusing only what is not a
  *   value at all — a blank box, text where a number belongs;
- * * it does **not** decide whether a value is admissible. A weight's sign
+ * it does **not** decide whether a value is admissible. A weight's sign
  *   against its source population, a delay against the graph timestep, a
  *   probability's range: those belong to the server, which owns the contract
  *   and reports every failure at once with the field it came from. Re-deciding
@@ -42,6 +42,9 @@ export const STUDIO_PROJECTION_FIELDS = [
   "autapses",
 ] as const;
 
+/**
+ *
+ */
 export type StudioProjectionField = (typeof STUDIO_PROJECTION_FIELDS)[number];
 
 /** One editable field: what it is called, what it holds, what it must satisfy. */
@@ -72,6 +75,15 @@ export type StudioProjectionEdit =
 /** Rules the graph spec admits, in the order the editor offers them. */
 export const STUDIO_PROJECTION_RULES: readonly ProjectionRule[] = ["random", "all_to_all"];
 
+/**
+ * State the sign the source population's type requires.
+ *
+ * Without a source population the constraint is still stated, in the general
+ * form, rather than guessed at: an editor that guesses teaches the wrong rule.
+ *
+ * @param source - The source population, whose type fixes the weight's sign.
+ * @returns The constraint in the words the server would refuse with.
+ */
 function signHelp(source: PopulationNode | undefined): string {
   if (source === undefined) {
     return "Signed synaptic weight; the sign must agree with the source population's type.";
@@ -81,6 +93,12 @@ function signHelp(source: PopulationNode | undefined): string {
     : "Signed synaptic weight; an excitatory source needs a positive weight.";
 }
 
+/**
+ * Render an optional number for an input, leaving an absent one empty.
+ *
+ * @param value - The number to render, if there is one.
+ * @returns The value as an input carries it; empty when it is absent.
+ */
 function numberText(value: number | undefined): string {
   return value === undefined ? "" : String(value);
 }
@@ -196,6 +214,15 @@ export function studioProjectionFields(
   ];
 }
 
+/**
+ * Return the finite number a box holds, or `null` when it holds no value.
+ *
+ * Blank text and a non-finite result are both `null`: neither is a value the
+ * graph specification would carry.
+ *
+ * @param raw - The text the input carries.
+ * @returns The number, or `null` when the text is not one.
+ */
 function parsedNumber(raw: string): number | null {
   const text = raw.trim();
   if (text.length === 0) return null;
@@ -243,7 +270,7 @@ export function studioProjectionEdit(
   if (value === null) {
     return { ok: false, reason: `${field} must be a number.` };
   }
-  return { ok: true, update: { [field]: value } as Partial<ProjectionEdge> };
+  return { ok: true, update: { [field]: value } };
 }
 
 /**
@@ -251,6 +278,10 @@ export function studioProjectionEdit(
  *
  * The endpoints, because that is how the canvas draws it and how a located
  * validation failure names it.
+ *
+ * @param projection - The projection being edited.
+ * @param populations - Populations, for naming the endpoints.
+ * @returns The projection's endpoints, as the canvas draws them.
  */
 export function studioProjectionTitle(
   projection: ProjectionEdge,

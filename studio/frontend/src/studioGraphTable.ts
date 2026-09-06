@@ -71,6 +71,14 @@ export const STUDIO_GRAPH_TABLE_COLUMNS = [
   "Problems",
 ] as const;
 
+/**
+ * Return the messages recorded against one object, or none.
+ *
+ * @param grouped - Located failures, already grouped by object identifier.
+ * @param id - The population or projection to read them for.
+ * @returns Its messages in the order the server reported them; empty when it
+ *   was not refused.
+ */
 function messagesOf(
   grouped: ReadonlyMap<string, StudioGraphIssueLocation[]>,
   id: string,
@@ -78,6 +86,19 @@ function messagesOf(
   return (grouped.get(id) ?? []).map((location) => location.message);
 }
 
+/**
+ * Return one entry per projection at one end of a population.
+ *
+ * The entry names the population at the *other* end, because that is what a
+ * reader of the row needs: the row already says which population it is about.
+ *
+ * @param projections - Every projection in the graph.
+ * @param labels - Population labels by identifier, for naming the far end.
+ * @param grouped - Located failures by object identifier.
+ * @param populationId - The population whose row is being built.
+ * @param end - Which end of the projection this population is.
+ * @returns One entry per incident projection, in graph order.
+ */
 function connectionsOf(
   projections: readonly ProjectionEdge[],
   labels: ReadonlyMap<string, string>,
@@ -96,12 +117,27 @@ function connectionsOf(
     }));
 }
 
+/**
+ * Render connections as one sentence fragment, for the row's description.
+ *
+ * @param connections - The connections at one end of a population.
+ * @returns The connections as one sentence fragment.
+ */
 function listed(connections: readonly StudioGraphTableConnection[]): string {
   return connections
     .map((connection) => `${connection.populationLabel} (${connection.detail})`)
     .join(", ");
 }
 
+/**
+ * Return the single sentence a screen reader can read instead of the cells.
+ *
+ * It carries what the row carries, in the order the columns carry it, so a
+ * reader who takes the sentence loses nothing by not walking the row.
+ *
+ * @param row - The row being described.
+ * @returns One sentence carrying everything the row carries.
+ */
 function describe(row: Omit<StudioGraphTableRow, "description">): string {
   const identity = `${row.label}: ${row.count} ${row.neuronType} ${row.model} neurons, ${row.drive}`;
   const incoming =
@@ -158,6 +194,10 @@ export function studioGraphTable(
  *
  * It states the size of the topology so a reader knows what the table holds
  * before entering it, and says plainly when the graph is empty.
+ *
+ * @param populations - Populations in the order the graph holds them.
+ * @param projections - Projections in the order the graph holds them.
+ * @returns The sentence that introduces the table.
  */
 export function studioGraphTableCaption(
   populations: readonly PopulationNode[],
@@ -181,6 +221,9 @@ export function studioGraphTableCaption(
  *
  * A row of buttons all called "Delete" is unusable without sight; each says
  * what it removes, including the projections that leave with it.
+ *
+ * @param row - The row being described.
+ * @returns The accessible name of that row's delete control.
  */
 export function studioGraphTableRemoveLabel(row: StudioGraphTableRow): string {
   const incident = row.incoming.length + row.outgoing.length;

@@ -564,6 +564,23 @@ strict typing, public-symbol docstrings, module-specific tests, focused coverage
 for new modules, and documentation in the same change. Generic coverage-fill
 tests are not accepted.
 
+**The docstring requirement holds in every language, and each language is held
+to it by the strictest standard tool for that language, not by anything written
+here.**
+
+| Language | Tool | Scope |
+|---|---|---|
+| Python | ruff `D` rules, numpy convention | the audited file list in `docs/docstring_policy.toml`, which grows package by package until `D` can be promoted to the global select |
+| TypeScript | `eslint` with `typescript-eslint` at strict-type-checked and `eslint-plugin-jsdoc` | the audited file list in `studio/frontend/eslint.config.js`, run with `npm run lint` |
+
+Both lists are incremental by design and for the same reason: a file joins when
+its whole surface has been documented and made safe to enforce, and the test
+then stops it regressing. Neither list pretends the legacy tree is clean —
+`eslint.config.js` records what is still outside its scope, and the next
+strictness step with what it would cost, so the remaining work is readable
+rather than implied. **A new file is expected to join the list**, which is how
+new code is documented by default instead of adding to the backlog.
+
 ## Panels
 
 ### Equation Editor & Model Browser

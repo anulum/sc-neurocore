@@ -33,6 +33,7 @@ import {
   studioProjectionTitle,
 } from "./studioProjectionEditor";
 
+/** One population whose type fixes the sign a projection's weight needs. */
 function population(id: string, label: string, inhibitory = false): PopulationNode {
   return {
     count: 10,
@@ -49,6 +50,7 @@ function population(id: string, label: string, inhibitory = false): PopulationNo
 const EXC = population("p1", "Exc 0");
 const INH = population("p2", "Inh 0", true);
 
+/** One valid projection, overridden where a case needs a particular value. */
 function projection(overrides: Partial<ProjectionEdge> = {}): ProjectionEdge {
   return {
     delay: 0,
@@ -62,6 +64,7 @@ function projection(overrides: Partial<ProjectionEdge> = {}): ProjectionEdge {
   };
 }
 
+/** Return one field model by name, or fail saying which one is absent. */
 function fieldOf(models: ReturnType<typeof studioProjectionFields>, field: string) {
   const found = models.find((model) => model.field === field);
   if (found === undefined) throw new Error(`no field ${field}`);

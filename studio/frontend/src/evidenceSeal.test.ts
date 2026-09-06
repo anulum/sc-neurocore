@@ -34,13 +34,12 @@ interface SealCorpusDocument extends SealVectorDocument {
   seed: number;
 }
 
-function readVectors<T extends SealVectorDocument>(name: string): T {
-  return JSON.parse(
-    readFileSync(fileURLToPath(new URL(name, import.meta.url)), "utf8"),
-  ) as T;
+/** Read one committed corpus beside this module, as parsed JSON. */
+function readCorpusText(name: string): unknown {
+  return JSON.parse(readFileSync(fileURLToPath(new URL(name, import.meta.url)), "utf8"));
 }
 
-const VECTORS = readVectors<SealVectorDocument>("./evidenceSealVectors.json");
+const VECTORS = readCorpusText("./evidenceSealVectors.json") as SealVectorDocument;
 
 /**
  * Random doubles drawn as bit patterns by the Python half.
@@ -52,7 +51,7 @@ const VECTORS = readVectors<SealVectorDocument>("./evidenceSealVectors.json");
  * the canonical text the server produced, so the agreement is checked on every
  * run instead of remembered from one experiment.
  */
-const CORPUS = readVectors<SealCorpusDocument>("./evidenceSealRandomVectors.json");
+const CORPUS = readCorpusText("./evidenceSealRandomVectors.json") as SealCorpusDocument;
 
 describe("the vectors the Python half wrote", () => {
   it("carries the contract this module implements", () => {

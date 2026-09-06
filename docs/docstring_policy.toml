@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 464
+expected_file_count = 466
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1871,3 +1871,11 @@ rationale = "What a foreign runtime transports across the boundary, which of the
 [[file]]
 path = "tools/runtime_state_conformance.py"
 rationale = "Generated matrix of how much of each model's declared state a foreign lane could transport, derived from the layouts and the lane packets rather than from a machine's toolchain."
+
+[[file]]
+path = "src/sc_neurocore/studio/workspace_lock.py"
+rationale = "Public workspace exclusion: the lock a save, fork, import, delete, restore and legacy adoption all hold, its bounded wait and its refusal type."
+
+[[file]]
+path = "tools/generate_evidence_seal_vectors.py"
+rationale = "Public generator of the committed random-double corpus both seal implementations are checked against, including the draw, the rendering and the freshness check."

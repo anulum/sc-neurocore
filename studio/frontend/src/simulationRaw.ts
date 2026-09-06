@@ -10,6 +10,10 @@ import type { SimulateResponse } from "./api/client";
 
 /**
  * Whether the result carries the full-resolution raw block.
+ *
+ * @param result - One simulation response.
+ * @returns Whether it carries full-resolution traces rather than only the
+ *   decimated display arrays.
  */
 export function hasRawTraces(result: SimulateResponse): boolean {
   return result.raw?.included === true && result.raw.states !== undefined;
@@ -20,6 +24,10 @@ export function hasRawTraces(result: SimulateResponse): boolean {
  *
  * Uses the ``raw`` block when the result carries it; a legacy result without
  * raw custody falls back to its (display) ``states`` field.
+ *
+ * @param result - One simulation response.
+ * @param name - The scalar state to read.
+ * @returns Its trace, or `undefined` when the result carries no such state.
  */
 export function fullStateTrace(result: SimulateResponse, name: string): number[] | undefined {
   if (hasRawTraces(result)) {
@@ -30,6 +38,9 @@ export function fullStateTrace(result: SimulateResponse, name: string): number[]
 
 /**
  * Names of the scalar states that have a full-resolution trace.
+ *
+ * @param result - One simulation response.
+ * @returns The state names a full-resolution trace can be read for.
  */
 export function fullStateNames(result: SimulateResponse): string[] {
   if (hasRawTraces(result)) {
@@ -40,6 +51,9 @@ export function fullStateNames(result: SimulateResponse): string[] {
 
 /**
  * Full-resolution drive samples (raw when present, else the display trace).
+ *
+ * @param result - One simulation response.
+ * @returns The drive samples, at raw resolution where the result carries them.
  */
 export function fullDriveTrace(result: SimulateResponse): number[] {
   if (hasRawTraces(result) && result.raw?.drive !== undefined) {
@@ -50,6 +64,9 @@ export function fullDriveTrace(result: SimulateResponse): number[] {
 
 /**
  * Post-step sample times of the full-resolution traces: ``(index + 1) * dt``.
+ *
+ * @param result - One simulation response.
+ * @returns One time per full-resolution sample, in milliseconds.
  */
 export function fullSampleTimes(result: SimulateResponse): number[] {
   if (hasRawTraces(result)) {
@@ -63,6 +80,10 @@ export function fullSampleTimes(result: SimulateResponse): number[] {
  *
  * Display points carry their raw step in ``display.sample_index``; a legacy
  * result maps the time back through ``dt`` and the post-step clock.
+ *
+ * @param result - One simulation response.
+ * @param timeMs - A time on the display axis, in milliseconds.
+ * @returns The raw step index that time was drawn from.
  */
 export function rawStepAtTime(result: SimulateResponse, timeMs: number): number {
   const times = result.time;
@@ -81,7 +102,7 @@ export function rawStepAtTime(result: SimulateResponse, timeMs: number): number 
   }
   const candidate = lo > 0 && Math.abs(times[lo - 1] - timeMs) <= Math.abs(times[lo] - timeMs) ? lo - 1 : lo;
   const sampleIndex = result.display?.sample_index;
-  if (sampleIndex !== undefined && sampleIndex.length === times.length) {
+  if (sampleIndex?.length === times.length) {
     return sampleIndex[candidate];
   }
   return Math.min(Math.max(Math.round(timeMs / result.dt) - 1, 0), result.n_steps - 1);
@@ -89,6 +110,10 @@ export function rawStepAtTime(result: SimulateResponse, timeMs: number): number 
 
 /**
  * Display array position of a sample time (for reading display arrays).
+ *
+ * @param result - One simulation response.
+ * @param timeMs - A time on the display axis, in milliseconds.
+ * @returns The position in the display arrays to read that time from.
  */
 export function displayPositionAtTime(result: SimulateResponse, timeMs: number): number {
   const times = result.time;

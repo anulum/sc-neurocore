@@ -40,6 +40,7 @@ const CONTRACT: PopulationModelContract = {
   unsupported: [{ name: "profile", reason: "non-numeric field" }],
 };
 
+/** One valid population, overridden where a case needs a particular value. */
 function population(overrides: Partial<PopulationNode> = {}): PopulationNode {
   return {
     count: 80,
@@ -62,6 +63,7 @@ interface Mounted {
   unmount: () => Promise<void>;
 }
 
+/** Mount the editor on a real DOM and return the handles a case needs. */
 async function mount(
   node: PopulationNode = population(),
   contract: PopulationModelContract | null = CONTRACT,
@@ -89,19 +91,30 @@ async function mount(
     onChange,
     onValidate,
     unmount: async () => {
-      await act(async () => root.unmount());
+      await act(async () => { root.unmount(); });
       container.remove();
     },
   };
 }
 
+/** Return one input by the id its label points at, or fail saying which. */
 function field(container: HTMLElement, id: string): HTMLInputElement {
   const found = container.querySelector<HTMLInputElement>(`#population-${id}`);
   if (found === null) throw new Error(`no input for ${id}`);
   return found;
 }
 
+/**
+ * Type into a controlled input the way a browser does.
+ *
+ * React reads the value through the prototype setter it patched, so assigning
+ * `element.value` directly is invisible to it; going through the original
+ * descriptor is what a real keystroke does.
+ */
 async function type(element: HTMLInputElement, text: string): Promise<void> {
+  // The receiver is supplied by `.call` below, which is the whole point of
+  // going through the prototype descriptor.
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const setter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,
     "value",
@@ -272,10 +285,11 @@ describe("editing a field", () => {
   it("clears the parameters when the model changes", async () => {
     const mounted = await mount(population({ params: { tau: 12 } }));
     const model = mounted.container.querySelector<HTMLSelectElement>("#population-model");
+    if (model === null) throw new Error("no model select");
 
     await act(async () => {
-      model!.value = "AdExNeuron";
-      model!.dispatchEvent(new Event("change", { bubbles: true }));
+      model.value = "AdExNeuron";
+      model.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
     expect(mounted.onChange).toHaveBeenCalledWith("p1", {

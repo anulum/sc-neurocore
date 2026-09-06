@@ -35,6 +35,7 @@ import {
 import { studioGraphRequest } from "./studioGraphRequests";
 import { useStudioStore } from "./stores/studio";
 
+/** One population, distinguished only by the identifier a case names. */
 function population(id: string): PopulationNode {
   return {
     count: 4,
@@ -49,6 +50,7 @@ function population(id: string): PopulationNode {
   };
 }
 
+/** One projection between two named populations. */
 function projection(id: string, source: string, target: string): ProjectionEdge {
   return { delay: 0, id, probability: 1, rule: "all_to_all", source, target, weight: 40 };
 }
@@ -73,14 +75,18 @@ describe("the history structure", () => {
     const undone = graphUndone(history, after);
 
     expect(undone).not.toBeNull();
-    expect(graphSnapshotsEqual(undone!.snapshot, before)).toBe(true);
-    expect(graphSnapshotsEqual(graphRedone(undone!.history, before)!.snapshot, after)).toBe(true);
+    if (undone === null) throw new Error("nothing to undo");
+    expect(graphSnapshotsEqual(undone.snapshot, before)).toBe(true);
+    const redone = graphRedone(undone.history, before);
+    if (redone === null) throw new Error("nothing to redo");
+    expect(graphSnapshotsEqual(redone.snapshot, after)).toBe(true);
   });
 
   it("discards the redo branch when an edit follows an undo", () => {
     const first = graphSnapshotOf(POPULATIONS, PROJECTIONS);
     const second = graphSnapshotOf(POPULATIONS.slice(1), PROJECTIONS);
-    const undone = graphUndone(graphEditRecorded(emptyGraphHistory(), first), second)!;
+    const undone = graphUndone(graphEditRecorded(emptyGraphHistory(), first), second);
+    if (undone === null) throw new Error("nothing to undo");
     expect(undone.history.future).toHaveLength(1);
 
     const edited = graphEditRecorded(undone.history, first);
@@ -122,6 +128,7 @@ describe("undo through the live store", () => {
     useStudioStore.setState(pristine, true);
   });
 
+  /** Put the store into the graph these cases start from. */
   function seed(): void {
     useStudioStore.setState({
       graphHistory: emptyGraphHistory(),

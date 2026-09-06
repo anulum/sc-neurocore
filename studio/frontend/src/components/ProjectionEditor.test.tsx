@@ -48,6 +48,7 @@ const POPULATIONS: PopulationNode[] = [
   },
 ];
 
+/** One valid projection, overridden where a case needs a particular value. */
 function projection(overrides: Partial<ProjectionEdge> = {}): ProjectionEdge {
   return {
     delay: 0,
@@ -68,6 +69,7 @@ interface Mounted {
   unmount: () => Promise<void>;
 }
 
+/** Mount the editor on a real DOM and return the handles a case needs. */
 async function mount(
   edge: ProjectionEdge = projection(),
   issues: StudioGraphIssueLocation[] = [],
@@ -93,12 +95,13 @@ async function mount(
     onChange,
     onValidate,
     unmount: async () => {
-      await act(async () => root.unmount());
+      await act(async () => { root.unmount(); });
       container.remove();
     },
   };
 }
 
+/** Return one input by the id its label points at, or fail saying which. */
 function input(container: HTMLElement, field: string): HTMLInputElement {
   const found = container.querySelector<HTMLInputElement>(`#projection-${field}`);
   if (found === null) throw new Error(`no input for ${field}`);
@@ -113,6 +116,9 @@ function input(container: HTMLElement, field: string): HTMLInputElement {
  * descriptor is what a real keystroke does.
  */
 async function type(element: HTMLInputElement, text: string): Promise<void> {
+  // The receiver is supplied by `.call` below, which is the whole point of
+  // going through the prototype descriptor.
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const setter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,
     "value",
@@ -234,10 +240,11 @@ describe("editing a field", () => {
   it("drops the probability when the rule stops using one", async () => {
     const mounted = await mount();
     const rule = mounted.container.querySelector<HTMLSelectElement>("#projection-rule");
+    if (rule === null) throw new Error("no rule select");
 
     await act(async () => {
-      rule!.value = "all_to_all";
-      rule!.dispatchEvent(new Event("change", { bubbles: true }));
+      rule.value = "all_to_all";
+      rule.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
     expect(mounted.onChange).toHaveBeenCalledWith("e1", {
@@ -251,7 +258,7 @@ describe("editing a field", () => {
     const mounted = await mount();
     const autapses = input(mounted.container, "autapses");
 
-    await act(async () => autapses.click());
+    await act(async () => { autapses.click(); });
 
     expect(mounted.onChange).toHaveBeenCalledWith("e1", { autapses: true });
     await mounted.unmount();

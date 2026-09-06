@@ -47,7 +47,11 @@ export interface StudioGraphHistory {
   future: StudioGraphSnapshot[];
 }
 
-/** The history a session starts with. */
+/**
+ * The history a session starts with.
+ *
+ * @returns A history with nothing to step in either direction.
+ */
 export function emptyGraphHistory(): StudioGraphHistory {
   return { future: [], past: [] };
 }
@@ -58,6 +62,10 @@ export function emptyGraphHistory(): StudioGraphHistory {
  * The arrays are copied so a later mutation of the live state cannot reach
  * back into a recorded snapshot; the objects inside are treated as immutable,
  * which is how the store's reducers already produce them.
+ *
+ * @param populations - Populations as the graph holds them.
+ * @param projections - Projections as the graph holds them.
+ * @returns A snapshot holding copies of both arrays, so a later mutation of the live state cannot reach back into it.
  */
 export function graphSnapshotOf(
   populations: readonly PopulationNode[],
@@ -71,6 +79,10 @@ export function graphSnapshotOf(
  *
  * Used so an edit that changed nothing records nothing: an undo should reach
  * the last real change, not an empty step.
+ *
+ * @param left - One snapshot.
+ * @param right - The other snapshot.
+ * @returns Whether the two snapshots hold the same graph.
  */
 export function graphSnapshotsEqual(
   left: StudioGraphSnapshot,
@@ -91,6 +103,10 @@ export function graphSnapshotsEqual(
  * future that undo had stepped back from; offering a redo into a graph that no
  * longer follows from the current one would reinstate work the user has
  * already moved past. The oldest entry is dropped once the limit is reached.
+ *
+ * @param history - The history as it stands.
+ * @param before - The graph as it stood before the edit.
+ * @returns The history with the before-state pushed and the redo branch dropped.
  */
 export function graphEditRecorded(
   history: StudioGraphHistory,
@@ -114,12 +130,16 @@ export interface StudioGraphHistoryStep {
  *
  * @param history - The history as it stands.
  * @param current - The graph being stepped away from, kept for redo.
+ * @returns The step to apply and the history after it, or `null` when there is nothing to undo.
  */
 export function graphUndone(
   history: StudioGraphHistory,
   current: StudioGraphSnapshot,
 ): StudioGraphHistoryStep | null {
   const snapshot = history.past[history.past.length - 1];
+  // An empty history yields `undefined` here; the array type says otherwise
+  // only because `noUncheckedIndexedAccess` is not on yet.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (snapshot === undefined) {
     return null;
   }
@@ -137,12 +157,16 @@ export function graphUndone(
  *
  * @param history - The history as it stands.
  * @param current - The graph being stepped away from, kept for undo.
+ * @returns The step to apply and the history after it, or `null` when there is nothing to redo.
  */
 export function graphRedone(
   history: StudioGraphHistory,
   current: StudioGraphSnapshot,
 ): StudioGraphHistoryStep | null {
   const [snapshot, ...future] = history.future;
+  // An empty history yields `undefined` here; the array type says otherwise
+  // only because `noUncheckedIndexedAccess` is not on yet.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (snapshot === undefined) {
     return null;
   }
@@ -156,6 +180,9 @@ export function graphRedone(
  * Return whether an update to a population is layout only.
  *
  * A drag writes a position on every frame. Those are not edits to undo.
+ *
+ * @param updates - The fields one canvas update would write.
+ * @returns Whether the update changes only where a node is drawn.
  */
 export function isLayoutOnlyUpdate(updates: Partial<PopulationNode>): boolean {
   const keys = Object.keys(updates);

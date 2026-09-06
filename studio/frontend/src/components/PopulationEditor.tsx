@@ -50,11 +50,19 @@ const inputStyle: CSSProperties = {
   padding: "2px 6px",
 };
 
-/** Turn a request attribute into an element id a label can point at. */
+/**
+ * Turn a request attribute into an element id a label can point at.
+ *
+ * @param field - The request attribute, as the server names it.
+ * @returns An element id a label can point at.
+ */
 function elementId(field: string): string {
   return `population-${field.replace(/\./g, "-")}`;
 }
 
+/**
+ *
+ */
 export interface PopulationEditorProps {
   population: PopulationNode;
   /** Model names the server admits for a population. */
@@ -68,6 +76,15 @@ export interface PopulationEditorProps {
   onValidate: () => void;
 }
 
+/**
+ * Render one editable field of the population, with everything bound to it.
+ *
+ * The contract statement and any failure are tied to the input with
+ * `aria-describedby`, so a screen reader reads them with the field rather than
+ * leaving them somewhere on the page to be found.
+ *
+ * @returns One labelled input with its contract and any refusal bound to it.
+ */
 function Field({
   model,
   draft,
@@ -95,7 +112,7 @@ function Field({
           value={model.value}
           aria-describedby={described}
           aria-invalid={messages.length > 0}
-          onChange={(event) => onEdit(model.field, event.target.value)}
+          onChange={(event) => { onEdit(model.field, event.target.value); }}
           style={inputStyle}
         >
           {model.choices.map((choice) => (
@@ -112,7 +129,7 @@ function Field({
           value={draft ?? model.value}
           aria-describedby={described}
           aria-invalid={messages.length > 0}
-          onChange={(event) => onEdit(model.field, event.target.value)}
+          onChange={(event) => { onEdit(model.field, event.target.value); }}
           style={inputStyle}
         />
       )}
@@ -131,12 +148,7 @@ function Field({
 /**
  * Edit one population's executed fields.
  *
- * @param population - The population being edited.
- * @param models - Model names the server admits for a population.
- * @param contract - Its model's contract, or `null` until it arrives.
- * @param issues - Located validation failures, so each input carries its own.
- * @param onChange - Applies a parsed update to the graph.
- * @param onValidate - Asks the server about the graph as it now stands.
+ * @returns The editor for one population's executed fields.
  */
 export default function PopulationEditor({
   population,
@@ -169,11 +181,9 @@ export default function PopulationEditor({
       setReasons((current) => ({ ...current, [field]: edit.reason }));
       return;
     }
-    setReasons((current) => {
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
+    setReasons((current) =>
+      Object.fromEntries(Object.entries(current).filter(([name]) => name !== field)),
+    );
     onChange(population.id, edit.update);
     onValidate();
   };
@@ -211,7 +221,7 @@ export default function PopulationEditor({
       <h4 style={headingStyle}>Input</h4>
       {drive.map(render)}
       <h4 style={headingStyle}>Parameters</h4>
-      {contract === null || contract.model !== population.model ? (
+      {contract?.model !== population.model ? (
         <span style={helpStyle}>
           Waiting for the model contract; parameters are not offered until the server states
           which of them a population may override.

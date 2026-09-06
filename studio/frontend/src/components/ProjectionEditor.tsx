@@ -48,6 +48,9 @@ const inputStyle: CSSProperties = {
   padding: "2px 6px",
 };
 
+/**
+ *
+ */
 export interface ProjectionEditorProps {
   projection: ProjectionEdge;
   populations: PopulationNode[];
@@ -58,6 +61,15 @@ export interface ProjectionEditorProps {
   onValidate: () => void;
 }
 
+/**
+ * Render one editable field of the projection, with everything bound to it.
+ *
+ * The contract statement and any failure are tied to the input with
+ * `aria-describedby`, so a screen reader reads them with the field rather than
+ * leaving them somewhere on the page to be found.
+ *
+ * @returns One labelled input with its contract and any refusal bound to it.
+ */
 function Field({
   model,
   draft,
@@ -85,7 +97,7 @@ function Field({
           value={model.value}
           aria-describedby={described}
           aria-invalid={messages.length > 0}
-          onChange={(event) => onEdit(model.field, event.target.value)}
+          onChange={(event) => { onEdit(model.field, event.target.value); }}
           style={inputStyle}
         >
           {model.choices.map((choice) => (
@@ -101,7 +113,7 @@ function Field({
           checked={model.checked}
           aria-describedby={described}
           aria-invalid={messages.length > 0}
-          onChange={(event) => onEdit(model.field, event.target.checked)}
+          onChange={(event) => { onEdit(model.field, event.target.checked); }}
           style={{ alignSelf: "flex-start" }}
         />
       ) : (
@@ -113,7 +125,7 @@ function Field({
           disabled={!model.applies}
           aria-describedby={described}
           aria-invalid={messages.length > 0}
-          onChange={(event) => onEdit(model.field, event.target.value)}
+          onChange={(event) => { onEdit(model.field, event.target.value); }}
           style={inputStyle}
         />
       )}
@@ -132,12 +144,7 @@ function Field({
 /**
  * Edit one projection's executed fields.
  *
- * @param projection - The projection being edited.
- * @param populations - Used to name the endpoints and to state the sign the
- *   source population's type requires.
- * @param issues - Located validation failures, so each input carries its own.
- * @param onChange - Applies a parsed update to the graph.
- * @param onValidate - Asks the server about the graph as it now stands.
+ * @returns The editor for one projection's executed fields.
  */
 export default function ProjectionEditor({
   projection,
@@ -169,11 +176,9 @@ export default function ProjectionEditor({
       setReasons((current) => ({ ...current, [field]: edit.reason }));
       return;
     }
-    setReasons((current) => {
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
+    setReasons((current) =>
+      Object.fromEntries(Object.entries(current).filter(([name]) => name !== field)),
+    );
     onChange(projection.id, edit.update);
     onValidate();
   };

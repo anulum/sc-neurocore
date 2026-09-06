@@ -46,6 +46,13 @@ const offscreen: CSSProperties = {
   width: 1,
 };
 
+/**
+ * List the projections at one end of a population, or say there are none.
+ *
+ * An empty cell reads as missing information; `none` reads as an answer.
+ *
+ * @returns The connections as a list, or the word `none`.
+ */
 function Connections({ connections }: { connections: StudioGraphTableConnection[] }) {
   if (connections.length === 0) {
     return <span style={{ color: "var(--text-muted)" }}>none</span>;
@@ -63,7 +70,11 @@ function Connections({ connections }: { connections: StudioGraphTableConnection[
   );
 }
 
-/** What validation refused about one object, or nothing at all. */
+/**
+ * What validation refused about one object, or nothing at all.
+ *
+ * @returns The refusals as a list, or nothing at all when there are none.
+ */
 function Problems({ messages }: { messages: string[] }) {
   if (messages.length === 0) {
     return null;
@@ -77,6 +88,9 @@ function Problems({ messages }: { messages: string[] }) {
   );
 }
 
+/**
+ *
+ */
 export interface NetworkGraphTableProps {
   populations: PopulationNode[];
   projections: ProjectionEdge[];
@@ -91,6 +105,8 @@ export interface NetworkGraphTableProps {
  * The population is the row header, so a screen reader announces which
  * population a cell belongs to, and each row also carries one sentence
  * describing it in full for a reader who does not want to walk the cells.
+ *
+ * @returns The topology as a table, captioned with its size.
  */
 export default function NetworkGraphTable({
   populations,
@@ -143,7 +159,7 @@ export default function NetworkGraphTable({
             <td style={cell}>
               <button
                 type="button"
-                onClick={() => onRemovePopulation(row.id)}
+                onClick={() => { onRemovePopulation(row.id); }}
                 aria-label={studioGraphTableRemoveLabel(row)}
                 style={{
                   background: "transparent",

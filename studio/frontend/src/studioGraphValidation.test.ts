@@ -26,6 +26,7 @@ import {
   studioGraphValidationLocatedState,
 } from "./studioGraphValidation";
 
+/** One population carrying the label a located failure will name it by. */
 function population(id: string, label: string): PopulationNode {
   return {
     count: 10,

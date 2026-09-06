@@ -49,6 +49,7 @@ const CONTRACT: PopulationModelContract = {
   ],
 };
 
+/** One valid population, overridden where a case needs a particular value. */
 function population(overrides: Partial<PopulationNode> = {}): PopulationNode {
   return {
     count: 80,
@@ -64,6 +65,7 @@ function population(overrides: Partial<PopulationNode> = {}): PopulationNode {
   };
 }
 
+/** Return one field model by name, or fail saying which one is absent. */
 function fieldOf(models: StudioPopulationFieldModelList, field: string) {
   const found = models.find((model) => model.field === field);
   if (found === undefined) throw new Error(`no field ${field}`);

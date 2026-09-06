@@ -60,12 +60,13 @@ const projections: ProjectionEdge[] = [
   },
 ];
 
+/** Render the table to static markup, so the assertions are on semantics. */
 function render(
   nodes: PopulationNode[] = populations,
   edges: ProjectionEdge[] = projections,
 ): string {
   return renderToStaticMarkup(
-    <NetworkGraphTable populations={nodes} projections={edges} onRemovePopulation={() => {}} />,
+    <NetworkGraphTable populations={nodes} projections={edges} onRemovePopulation={() => undefined} />,
   );
 }
 
@@ -164,7 +165,7 @@ describe("NetworkGraphTable", () => {
             subject: "Input → Output",
           },
         ]}
-        onRemovePopulation={() => {}}
+        onRemovePopulation={() => undefined}
       />,
     );
 
@@ -194,7 +195,7 @@ describe("NetworkGraphTable", () => {
     controls[1].click();
 
     expect(onRemovePopulation).toHaveBeenCalledExactlyOnceWith("output");
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
   });
 
   it("reaches every control by keyboard, because each one is a real button", async () => {
@@ -219,7 +220,7 @@ describe("NetworkGraphTable", () => {
       control.focus();
       expect(document.activeElement).toBe(control);
     }
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 });
