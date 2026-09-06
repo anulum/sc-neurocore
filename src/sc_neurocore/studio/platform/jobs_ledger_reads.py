@@ -61,18 +61,13 @@ def read_records(
     order, so the wrong archive was kept whenever the ids happened to sort
     against submission order.
     """
-    clauses: list[str] = []
-    parameters: list[str] = []
-    if actor is not None:
-        clauses.append("actor = ?")
-        parameters.append(actor)
-    if workspace is not None:
-        clauses.append("workspace = ?")
-        parameters.append(workspace)
-    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
     rows = (
         ledger.connection()
-        .execute(f"SELECT * FROM jobs{where} ORDER BY created_at_utc, rowid", parameters)
+        .execute(
+            "SELECT * FROM jobs WHERE (? IS NULL OR actor = ?)"
+            " AND (? IS NULL OR workspace = ?) ORDER BY created_at_utc, rowid",
+            (actor, actor, workspace, workspace),
+        )
         .fetchall()
     )
     return tuple(record_from_row(row) for row in rows)
@@ -100,10 +95,9 @@ def read_transitions(ledger: StudioJobLedger, job_id: str) -> tuple[dict[str, An
 
 def read_live_rows(ledger: StudioJobLedger) -> tuple[sqlite3.Row, ...]:
     """Return the stored rows of every job that has not finished."""
-    placeholders = ",".join("?" for _ in LIVE_STATUSES)
     return tuple(
         ledger.connection()
-        .execute(f"SELECT * FROM jobs WHERE status IN ({placeholders})", LIVE_STATUSES)
+        .execute("SELECT * FROM jobs WHERE status IN (?, ?, ?, ?)", LIVE_STATUSES)
         .fetchall()
     )
 

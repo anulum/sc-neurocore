@@ -10,9 +10,11 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
 
 EXECUTION_CONTRACT = "pytest-junit.v1"
 
@@ -89,11 +91,12 @@ def junit_checks(xml: str) -> tuple[dict[str, int], tuple[str, ...]]:
     Raises
     ------
     ValueError
-        If the report is malformed, empty or lacks testcase identities.
+        If the report is malformed, empty, declares a DTD or entities, or lacks
+        testcase identities. External references are never resolved.
     """
     try:
-        root = ET.fromstring(xml)
-    except ET.ParseError as error:
+        root = ET.fromstring(xml, forbid_dtd=True, forbid_entities=True, forbid_external=True)
+    except (ET.ParseError, DefusedXmlException) as error:
         raise ValueError("invalid JUnit report") from error
     if root.tag not in {"testsuites", "testsuite"}:
         raise ValueError("not a JUnit report")

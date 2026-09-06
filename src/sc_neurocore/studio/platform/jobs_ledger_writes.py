@@ -228,14 +228,19 @@ def transition_job(
 
 
 def heartbeat_job(ledger: StudioJobLedger, job_id: str) -> None:
-    """Extend this supervisor's lease on a job it is still running."""
-    terminal = sorted(TERMINAL_STATUSES)
-    placeholders = ",".join("?" for _ in terminal)
+    """Extend a live job's lease, checking its status in the write transaction.
+
+    Terminal and absent jobs remain unchanged. The transaction serialises this
+    check with transitions so a finished job cannot acquire another lease.
+    """
     with ledger.transaction() as connection:
+        row = connection.execute("SELECT status FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+        if row is None or row["status"] in TERMINAL_STATUSES:
+            return
         connection.execute(
             "UPDATE jobs SET heartbeat_at_utc = ?, lease_expires_at_utc = ?, lease_owner = ?"
-            f" WHERE job_id = ? AND status NOT IN ({placeholders})",
-            (ledger.timestamp(), ledger.lease_expiry(), ledger.supervisor, job_id, *terminal),
+            " WHERE job_id = ?",
+            (ledger.timestamp(), ledger.lease_expiry(), ledger.supervisor, job_id),
         )
 
 

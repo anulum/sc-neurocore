@@ -3,3 +3,4 @@ bandit==1.9.4
 mypy==2.3.1
 numpy
 tomli==2.4.1
+types-defusedxml==0.7.0.20260504

@@ -276,5 +276,6 @@ def test_security_scanner_workflow_uploads_artifact() -> None:
         isinstance(step, dict)
         and step.get("uses", "").startswith("actions/upload-artifact@")
         and "security/ci-security-packet" in step.get("with", {}).get("path", "")
+        and step.get("if") == "${{ always() }}"
         for step in steps
     )

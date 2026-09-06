@@ -26,6 +26,7 @@ import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobManager
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.studio.platform.jobs_models import StudioJobStatus
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import (
     _process_start_token,
     supervisor_identity,
@@ -35,24 +36,18 @@ from sc_neurocore.studio.platform.jobs_ledger_supervisor import (
 UTC_CLOCK_START = datetime.fromisoformat("2026-09-06T00:00:00+00:00")
 
 
-def _ledger(root: Path, **kwargs: object) -> StudioJobLedger:
-    return StudioJobLedger(root=root, **kwargs)  # type: ignore[arg-type]
-
-
-def _admit(ledger: StudioJobLedger, job_id: str = "sj_0000000000000001", **kwargs: object):
-    fields: dict[str, object] = {
-        "job_id": job_id,
-        "kind": "analysis",
-        "actor": "alice",
-        "workspace": "default",
-        "request_id": None,
-        "idempotency_key": None,
-        "experiment_sha256": None,
-        "admission": None,
-        "execution_model": "thread",
-    }
-    fields.update(kwargs)
-    return ledger.create(**fields)  # type: ignore[arg-type]
+def _admit(ledger: StudioJobLedger) -> None:
+    ledger.create(
+        job_id="sj_0000000000000001",
+        kind="analysis",
+        actor="alice",
+        workspace="default",
+        request_id=None,
+        idempotency_key=None,
+        experiment_sha256=None,
+        admission=None,
+        execution_model="thread",
+    )
 
 
 def _manager(root: Path) -> StudioJobManager:
@@ -63,9 +58,28 @@ def _manager(root: Path) -> StudioJobManager:
 
 
 class TestLease:
+    @pytest.mark.parametrize(
+        "status", ["completed", "failed", "cancelled", "timed_out", "interrupted"]
+    )
+    def test_heartbeat_leaves_every_terminal_record_unchanged(
+        self, tmp_path: Path, status: StudioJobStatus
+    ) -> None:
+        """A heartbeat cannot revive a terminal lease or change its record."""
+        moment = {"now": UTC_CLOCK_START}
+        ledger = StudioJobLedger(root=tmp_path, clock=lambda: moment["now"])
+        _admit(ledger)
+        ledger.transition("sj_0000000000000001", "running")
+        before = ledger.transition("sj_0000000000000001", status)
+        moment["now"] += timedelta(seconds=10)
+        ledger.heartbeat(before.job_id)
+        assert ledger.record(before.job_id) == before
+        ledger.heartbeat("sj_0000000000000009")
+        assert ledger.list_records() == (before,)
+        ledger.close()
+
     def test_a_heartbeat_extends_a_live_lease_only(self, tmp_path: Path) -> None:
         moment = {"now": UTC_CLOCK_START}
-        ledger = _ledger(tmp_path, clock=lambda: moment["now"], lease_seconds=30.0)
+        ledger = StudioJobLedger(root=tmp_path, clock=lambda: moment["now"], lease_seconds=30.0)
         _admit(ledger)
         first = ledger.record("sj_0000000000000001").lease_expires_at_utc
 

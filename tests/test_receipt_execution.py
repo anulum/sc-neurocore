@@ -67,6 +67,21 @@ def test_incomplete_reports_cannot_credit(report: str) -> None:
         junit_checks(report)
 
 
+def test_doctype_report_is_refused_at_the_execution_contract() -> None:
+    """Receipt XML cannot introduce a DTD, even without entity expansion."""
+    report = (
+        '<!DOCTYPE testsuite><testsuite><testcase classname="tests.check" name="ok" /></testsuite>'
+    )
+    with pytest.raises(ValueError, match="invalid JUnit report"):
+        junit_checks(report)
+    assert execution_problems(
+        ["python", "-m", "pytest"],
+        ["tests/check.py"],
+        {"execution_contract": EXECUTION_CONTRACT, "junit_xml": report},
+        {"collected": 1, "passed": 1, "failed": 0, "errors": 0, "skipped": 0},
+    ) == ("invalid JUnit report",)
+
+
 def test_parameterised_nodes_and_failure_categories_remain_explicit() -> None:
     """The unparameterised selector covers its instances without losing skips."""
     xml = '<testsuite><testcase classname="tests.test_receipt_execution" name="test_incomplete_reports_cannot_credit[a]" /><testcase classname="tests.test_receipt_execution" name="bad"><failure/></testcase><testcase classname="tests.test_receipt_execution" name="err"><error/></testcase><testcase classname="tests.test_receipt_execution" name="skip"><skipped/></testcase></testsuite>'

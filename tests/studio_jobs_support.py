@@ -57,6 +57,7 @@ JOBS_TEST_PATHS = tuple(
         "test_studio_jobs_routes.py",
         "test_studio_jobs_admission.py",
         "test_studio_jobs_ledger.py",
+        "test_studio_jobs_ledger_reads.py",
         "test_studio_jobs_ledger_ordering.py",
         "test_studio_jobs_ledger_recovery.py",
         "test_studio_jobs_reaping.py",
