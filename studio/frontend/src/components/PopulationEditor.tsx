@@ -61,7 +61,11 @@ function elementId(field: string): string {
 }
 
 /**
+ * What the population editor needs to edit one population against its contract.
  *
+ * The model list and the contract come in as props rather than being fetched
+ * here, so the editor states the server's own rules without deciding when to
+ * ask for them.
  */
 export interface PopulationEditorProps {
   population: PopulationNode;

@@ -49,7 +49,11 @@ const inputStyle: CSSProperties = {
 };
 
 /**
+ * What the projection editor needs to edit one projection.
  *
+ * The populations are passed in whole because a projection is edited against
+ * its endpoints — the source's neuron type decides the sign its weight may
+ * take.
  */
 export interface ProjectionEditorProps {
   projection: ProjectionEdge;

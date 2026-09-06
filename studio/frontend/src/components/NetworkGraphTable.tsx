@@ -89,7 +89,11 @@ function Problems({ messages }: { messages: string[] }) {
 }
 
 /**
+ * What the table needs to stand in for the canvas.
  *
+ * It takes the graph and the validation issues rather than reading them from
+ * the store, so the same table can be rendered for a graph that is not the one
+ * currently being edited.
  */
 export interface NetworkGraphTableProps {
   populations: PopulationNode[];

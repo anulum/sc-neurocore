@@ -43,7 +43,10 @@ export const STUDIO_PROJECTION_FIELDS = [
 ] as const;
 
 /**
+ * The name of one editable projection field.
  *
+ * Derived from the list rather than written out again, so a field added to the
+ * list cannot be missed by the type that is supposed to cover it.
  */
 export type StudioProjectionField = (typeof STUDIO_PROJECTION_FIELDS)[number];
 

@@ -57,6 +57,7 @@ const AUDITED = [
   "src/api/synthApi.test.ts",
   "src/api/synthApi.ts",
   "src/api/trainingApi.ts",
+  "src/api/types.ts",
   "src/arrayAt.test.ts",
   "src/arrayAt.ts",
   "src/components/NetworkGraphTable.test.tsx",
@@ -149,15 +150,6 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * taken in any order, and the six admin-operator specs are one shape of
    * problem that is better solved once than six times.
    */
-  /**
-   * What remains inside `src/api/`, and why it is one file.
-   *
-   * `types.ts` carries **156** of the directory's 278 findings on its own —
-   * the contract shapes, as against the calls that use them. Documenting a
-   * type is a different piece of writing from documenting a call, and it is
-   * taken as its own unit rather than half-done here.
-   */
-  apiTypesOutsideScope: { file: "src/api/types.ts", findings: 156 },
   e2eOutsideScope: {
     "admin-operator-audit-archive.spec.ts": 13,
     "admin-operator-capabilities.spec.ts": 14,
@@ -196,7 +188,28 @@ export default tseslint.config(
     rules: {
       // Every function a reader of the module meets carries a docblock, and a
       // docblock that says nothing is not one.
-      "jsdoc/require-description": "error",
+      //
+      // The contexts are stated because the rule's own default covers
+      // functions and classes only. Without them `/** */` on an interface
+      // satisfied `require-jsdoc` and nothing else looked at it — the gate
+      // accepted an empty docblock, which is the padding this scope exists to
+      // refuse. Verified against that exact candidate.
+      "jsdoc/require-description": [
+        "error",
+        {
+          contexts: [
+            "ArrowFunctionExpression",
+            "ClassDeclaration",
+            "ClassExpression",
+            "FunctionDeclaration",
+            "FunctionExpression",
+            "MethodDefinition",
+            "TSEnumDeclaration",
+            "TSInterfaceDeclaration",
+            "TSTypeAliasDeclaration",
+          ],
+        },
+      ],
       "jsdoc/require-jsdoc": [
         "error",
         {

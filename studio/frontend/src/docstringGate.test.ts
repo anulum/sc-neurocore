@@ -107,4 +107,35 @@ export function unlabelled(value: number): number {
       expect(rules).toContain("jsdoc/require-description");
     },
   );
+
+  it(
+    "rejects an empty docblock on an interface, which passed until 2026-09-07",
+    { timeout: TIMEOUT_MS },
+    async () => {
+      // `require-description` covers functions and classes by default, so an
+      // empty block on an interface satisfied `require-jsdoc` and nothing else
+      // looked at it. Four had already reached the audited scope. The contexts
+      // are now stated in the configuration, and this is the candidate that
+      // proves it.
+      const rules = await lint(`/** */
+export interface Carrier {
+  value: number;
+}
+`);
+
+      expect(rules).toContain("jsdoc/require-description");
+    },
+  );
+
+  it(
+    "rejects an empty docblock on a type alias for the same reason",
+    { timeout: TIMEOUT_MS },
+    async () => {
+      const rules = await lint(`/** */
+export type Carried = number;
+`);
+
+      expect(rules).toContain("jsdoc/require-description");
+    },
+  );
 });
