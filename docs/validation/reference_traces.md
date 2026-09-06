@@ -33,7 +33,6 @@ and event-hash fields into the deterministic trace schema.
 | `cazelles_map_bursting_doi` | `cazelles_map` | `universal_dsl` | Independent iteration of Cazelles, Courbage & Rabinovich (2001), equation (1) and Figure-1 scalar four-branch map, with the maintained slow-regime-entry event and disclosed right-continuous exact-breakpoint convention |
 | `sc_clipped_logistic_bursting_map_project` | `sc_clipped_logistic_bursting_map` | `universal_dsl` | Independent simultaneous iteration of the retained two-state clipped-logistic project recurrence without whole-model publication attribution |
 | `chialvo_map_doi` | `chialvo_map` | `universal_dsl` | Independent simultaneous iteration of Chialvo (1995), Eq. 1 (`method="map"`), with the maintained upward `x_threshold` observation separated from DOI-sourced dynamics |
-| `coba_lif_conductance_rk4_doi` | `coba_lif` | `universal_dsl` | Independent coupled-RK4 iteration of Brette et al. (2007), Appendix 2 equations (5) and (7), with pre-step maintained conductance increments, raw-candidate threshold/reset, refractory conductance decay, and explicit separation from the paper's complete 4,000-cell network benchmark |
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `courage_nekorkin_map_autonomous_doi` | `courage_nekorkin_map` | `universal_dsl` | Independent simultaneous iteration of Courbage, Nekorkin & Vdovin (2007), equations 3–5 (`method="map"`, three fast branches, Heaviside discontinuity, upward `x >= x_threshold` crossing), with DOI-backed schema provenance |
 | `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent simultaneous explicit-Euler re-derivation of Indiveri, Stefanini & Chicca (2010), Eqs. (2)–(3): nonlinear membrane feedback, after-hyperpolarisation DPI, threshold reset, and spike-driven refractory pulse |
@@ -70,14 +69,6 @@ and event-hash fields into the deterministic trace schema.
 | `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration of Rulkov 2002 Equations 1–2 with `method="map"` and the source pre-update rightmost/reset-branch event, from `neurons/model_schemas/rulkov_map.toml` with DOI-backed provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
-
-The separate
-`reference_receipts/coba_lif_brette_2007.json` binds the author-manuscript PDF,
-Appendix 2 conductance-cell equations and parameters, the source's 6/67 nS
-event quanta, and the distinct maintained 400-step current/conductance stress
-protocol. Its dedicated test independently reconstructs all four biological
-state traces and the complete binary event vector, checks their SHA-256
-digests, and explicitly excludes the paper's 4,000-cell Benchmark 1 network.
 
 The separate
 `reference_receipts/dpi_indiveri_stefanini_chicca_2010.json` binds the primary
