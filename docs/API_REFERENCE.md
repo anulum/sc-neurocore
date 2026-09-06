@@ -28330,6 +28330,217 @@ ValueError
 
 ---
 
+## Module `neurons.reference_trace_mutations`
+
+### Class `ControlOutcome`
+Result of applying one negative control to one reference trace.
+
+Attributes
+----------
+name : str
+    Corpus identifier of the trace under control.
+mutation : str
+    Which control was applied.
+status : str
+    ``detected``, ``refused``, ``undetected`` or ``inapplicable``.
+reason : str
+    Why the control reached that status, in words an operator can act on.
+mismatched_features : int
+    How many features violated tolerance; zero unless ``detected``.
+
+- **caught**()
+  - Return whether this control demonstrated the trace catches the error.
+- **to_public_dict**()
+  - Return a JSON-safe row for reports and documentation.
+
+### Class `NegativeControlReport`
+Every control outcome for the committed corpus.
+
+Attributes
+----------
+version : str
+    Negative-control contract version.
+outcomes : tuple of ControlOutcome
+    One outcome per trace and control.
+
+- **for_trace**(name)
+  - Return every outcome recorded for one trace.
+- **with_status**(status)
+  - Return every outcome with one status.
+- **uncontrolled_traces**()
+  - Return traces no control could catch — a vacuous trace, if any.
+- **to_public_dict**()
+  - Return a JSON-safe report of every control outcome.
+
+### Function `run_negative_control(spec, mutation)`
+Apply one negative control to one reference trace.
+
+Parameters
+----------
+spec : ReferenceTraceSpec
+    The trace to control. It is never modified; mutations act on copies.
+mutation : str
+    One of :data:`MUTATIONS`.
+
+Returns
+-------
+ControlOutcome
+    What the control demonstrated, including why it could not apply.
+
+Raises
+------
+ValueError
+    ``mutation`` is not a known control.
+
+### Function `negative_control_report(names)`
+Apply every control to every deterministic trace in the corpus.
+
+Parameters
+----------
+names : iterable of str, optional
+    Restrict the report to these traces. Defaults to the whole corpus.
+
+Returns
+-------
+NegativeControlReport
+    One outcome per trace and control, in corpus order.
+
+---
+
+## Module `neurons.reference_trace_provenance`
+
+### Class `ReferenceTraceAdjudicationError`
+Raised when a trace's provenance cannot be adjudicated.
+
+
+### Class `SpecAdjudication`
+How independent one reference trace is, and of what.
+
+Attributes
+----------
+name : str
+    Corpus identifier of the adjudicated trace.
+kind : str
+    The ``provenance.kind`` the trace declares.
+derivation : str
+    How the expected values were produced.
+attribution : str
+    What the formulation is sourced from.
+independence : str
+    The class a public claim about this trace may use.
+citation : str or None
+    The citation as declared.
+
+- **meaning**()
+  - Return what this trace's independence class licenses as a claim.
+- **to_public_dict**()
+  - Return a JSON-safe row for reports and generated documentation.
+
+### Class `CorpusAdjudication`
+The corpus-wide honest replication boundary.
+
+Attributes
+----------
+version : str
+    Adjudication contract version.
+rows : tuple of SpecAdjudication
+    One adjudication per deterministic corpus trace, by name.
+
+- **counts**()
+  - Return how many traces fall in each independence class.
+- **by_class**(independence)
+  - Return the trace names in one independence class, sorted.
+- **to_public_dict**()
+  - Return a JSON-safe report of the whole adjudication.
+
+### Function `adjudicated_kinds()`
+Return every ``provenance.kind`` this build knows how to adjudicate.
+
+### Function `derivation_of_kind(kind)`
+Return how a declared ``provenance.kind`` produced its expected values.
+
+Parameters
+----------
+kind : str
+    The ``provenance.kind`` a trace declares.
+
+Returns
+-------
+str
+    The derivation recorded for that kind.
+
+Raises
+------
+ReferenceTraceAdjudicationError
+    The kind is not in the adjudicated vocabulary. A new kind is a decision
+    about what a trace proves, so it is declared here rather than accepted
+    as free text.
+
+### Function `classify_citation(citation)`
+Return what a citation string attributes the formulation to.
+
+Parameters
+----------
+citation : str or None
+    The declared citation.
+
+Returns
+-------
+str
+    ``"resolvable_source"`` for a DOI or URL, ``"project_retained"`` when the
+    citation names this project's own recurrence, and ``"named_source"``
+    otherwise — a publication named without a locator resolvable from here.
+
+Raises
+------
+ReferenceTraceAdjudicationError
+    The citation is absent. Every trace states what it is derived from;
+    an unstated source cannot be adjudicated, and silently treating it as
+    external is the overstatement this module exists to prevent.
+
+### Function `adjudicate_spec(spec)`
+Adjudicate one reference trace's independence.
+
+Parameters
+----------
+spec : ReferenceTraceSpec
+    A loaded deterministic corpus trace.
+
+Returns
+-------
+SpecAdjudication
+    Derivation, attribution and the independence class a claim may use.
+
+Raises
+------
+ReferenceTraceAdjudicationError
+    The declared ``provenance.kind`` is not in the adjudicated vocabulary,
+    or no citation is declared.
+
+Notes
+-----
+A citation naming the project's own recurrence demotes the trace to
+``project_formulation`` whatever the declared kind says. A hand re-derivation
+of a recurrence this repository invented is independent of the
+implementation, but there is no published formulation for it to be
+independent of.
+
+### Function `adjudicate_corpus()`
+Adjudicate every deterministic trace in the committed corpus.
+
+Returns
+-------
+CorpusAdjudication
+    The honest replication boundary: which identities rest on a published
+    source and which rest on this repository's own formulation.
+
+Raises
+------
+ReferenceTraceAdjudicationError
+    Any trace declares an unadjudicated kind or no citation.
+
+---
+
 ## Module `neurons.reference_trace_runner`
 
 ### Function `simulate_reference_trace(spec_or_name)`
@@ -28378,6 +28589,27 @@ Returns
 -------
 tuple&#91;TraceValidationReport, ...&#93;
     Sorted reports for the current corpus.
+
+### Function `extract_trace_features(trace, spikes)`
+Return the scalar features a reference trace pins.
+
+This is the whole comparison surface: a trace constrains the model exactly
+as far as these features constrain it. Negative controls extract features
+the same way, so a control and the production validator can never disagree
+about what was measured.
+
+Parameters
+----------
+trace : mapping of str to tuple of float
+    Recorded value sequence per state variable.
+spikes : tuple of int
+    Emitted event per timestep.
+
+Returns
+-------
+mapping of str to float
+    ``spike_count``, ``first_spike_step`` (``-1`` when silent) and
+    ``final``/``min``/``max``/``mean`` per recorded state variable.
 
 ---
 

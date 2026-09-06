@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 452
+expected_file_count = 455
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1823,3 +1823,15 @@ rationale = "Append-only workspace revisions with conflict detection on save; th
 [[file]]
 path = "src/sc_neurocore/studio/workspace_lifecycle.py"
 rationale = "Fork, recoverable delete, restore, export and import over stored workspace revisions."
+
+[[file]]
+path = "src/sc_neurocore/neurons/reference_trace_provenance.py"
+rationale = "Per-identity adjudication of what a reference trace is independent of; the corpus-wide honest replication boundary."
+
+[[file]]
+path = "src/sc_neurocore/neurons/reference_trace_mutations.py"
+rationale = "Negative controls that demonstrate a reference trace fails when the model is broken, and report where a control cannot bite."
+
+[[file]]
+path = "tools/reference_trace_evidence.py"
+rationale = "Operator-facing evidence for the reference corpus: which identities rest on a published source, and whether each trace can fail at all."

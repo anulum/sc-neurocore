@@ -63,7 +63,7 @@ def simulate_reference_trace(spec_or_name: ReferenceTraceSpec | str) -> TraceSim
         steps=spec.protocol.steps,
         trace=trace,
         spikes=spike_tuple,
-        features=_extract_features(trace, spike_tuple),
+        features=extract_trace_features(trace, spike_tuple),
     )
 
 
@@ -136,9 +136,29 @@ def _coerce_spec(spec_or_name: ReferenceTraceSpec | str) -> ReferenceTraceSpec:
     return load_reference_trace_spec(spec_or_name)
 
 
-def _extract_features(
+def extract_trace_features(
     trace: Mapping[str, tuple[float, ...]], spikes: tuple[int, ...]
 ) -> Mapping[str, float]:
+    """Return the scalar features a reference trace pins.
+
+    This is the whole comparison surface: a trace constrains the model exactly
+    as far as these features constrain it. Negative controls extract features
+    the same way, so a control and the production validator can never disagree
+    about what was measured.
+
+    Parameters
+    ----------
+    trace : mapping of str to tuple of float
+        Recorded value sequence per state variable.
+    spikes : tuple of int
+        Emitted event per timestep.
+
+    Returns
+    -------
+    mapping of str to float
+        ``spike_count``, ``first_spike_step`` (``-1`` when silent) and
+        ``final``/``min``/``max``/``mean`` per recorded state variable.
+    """
     features: dict[str, float] = {
         "spike_count": float(math.fsum(spikes)),
         "first_spike_step": float(
@@ -154,6 +174,7 @@ def _extract_features(
 
 
 __all__ = [
+    "extract_trace_features",
     "simulate_reference_trace",
     "validate_all_reference_traces",
     "validate_reference_trace",

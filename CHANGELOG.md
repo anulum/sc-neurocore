@@ -10,6 +10,34 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+- The reference-trace corpus now says, per identity, what it is a reference
+  *for*. Backends agreeing with each other can reproduce one shared scientific
+  error, so `provenance.kind` — previously free text — is a closed vocabulary
+  adjudicated into a derivation (how the expected values were produced) and an
+  attribution (what the formulation is sourced from). The two combine into the
+  class a claim may use: 34 traces rest on an externally published source, 1 on
+  published values, 1 on a pinned third-party implementation, and 9 on a
+  formulation this repository retains with no whole-model publication to be
+  independent of. Four of those nine declare an independent or analytic
+  derivation, which is accurate, while citing a project recurrence — the
+  citation settles the class. A trace declaring an unadjudicated kind is now
+  refused at load time.
+- Negative controls for the same corpus. Five deliberate errors — a flipped
+  drive sign, a unit scale off by three orders of magnitude, the drive removed,
+  events recorded on the wrong side of the state update, and a threshold
+  displaced by up to 100 % — are applied to every deterministic trace, and each
+  outcome is recorded as detected, refused (the mutated run left the numeric
+  domain), inapplicable (the mutation provably changes nothing about that
+  protocol) or undetected. No trace in the corpus survives every control. Six
+  applied controls do not bite and each is stated: a logical all-or-none unit is
+  scale-invariant above threshold and its truth table cannot distinguish
+  pre-update from post-update state, and four conductance spiking traces
+  overshoot far enough inside one timestep that they validate the trajectory
+  rather than the threshold surface.
+- `tools/reference_trace_evidence.py` prints both surfaces and exits non-zero
+  when a trace cannot be adjudicated or survives every control.
+
 ### Fixed
 - A workspace saved before revisions existed is no longer invisible. The
   previous store kept one flat `<name>.json` per workspace in the project

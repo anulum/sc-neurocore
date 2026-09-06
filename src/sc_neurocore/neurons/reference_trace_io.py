@@ -30,6 +30,7 @@ from sc_neurocore.neurons.reference_trace_contracts import (
     ReferenceTraceProvenance,
     ReferenceTraceSpec,
 )
+from sc_neurocore.neurons.reference_trace_provenance import derivation_of_kind
 from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 
 _UNIVERSAL_DSL_REFERENCE_RUNNER = "universal_dsl"
@@ -98,7 +99,7 @@ def reference_trace_spec_from_payload(payload: Mapping[str, object]) -> Referenc
             ),
         ),
         provenance=ReferenceTraceProvenance(
-            kind=_string_field(provenance_payload, "kind"),
+            kind=_adjudicated_kind_field(provenance_payload),
             source=_string_field(provenance_payload, "source"),
             equation=_string_field(provenance_payload, "equation"),
             citation=_optional_string_field(provenance_payload, "citation"),
@@ -185,6 +186,19 @@ def _load_spec_file(path: Traversable) -> ReferenceTraceSpec | None:
     if uses_dedicated_validator:
         return None
     return reference_trace_spec_from_payload(mapping)
+
+
+def _adjudicated_kind_field(provenance_payload: Mapping[str, object]) -> str:
+    """Return the declared provenance kind, refusing one nobody has adjudicated.
+
+    A free-text kind lets a trace call itself independent without anyone
+    deciding what it is independent of, which is the claim this corpus exists
+    to support. ``derivation_of_kind`` raises for an unknown value, so a new
+    kind is added deliberately with the derivation it actually used.
+    """
+    kind = _string_field(provenance_payload, "kind")
+    derivation_of_kind(kind)
+    return kind
 
 
 def _reference_trace_data_dir() -> Traversable:

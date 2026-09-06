@@ -33,6 +33,7 @@ and event-hash fields into the deterministic trace schema.
 | `cazelles_map_bursting_doi` | `cazelles_map` | `universal_dsl` | Independent iteration of Cazelles, Courbage & Rabinovich (2001), equation (1) and Figure-1 scalar four-branch map, with the maintained slow-regime-entry event and disclosed right-continuous exact-breakpoint convention |
 | `sc_clipped_logistic_bursting_map_project` | `sc_clipped_logistic_bursting_map` | `universal_dsl` | Independent simultaneous iteration of the retained two-state clipped-logistic project recurrence without whole-model publication attribution |
 | `chialvo_map_doi` | `chialvo_map` | `universal_dsl` | Independent simultaneous iteration of Chialvo (1995), Eq. 1 (`method="map"`), with the maintained upward `x_threshold` observation separated from DOI-sourced dynamics |
+| `coba_lif_conductance_rk4_doi` | `coba_lif` | `universal_dsl` | Independent coupled-RK4 iteration of Brette et al. (2007), Appendix 2 equations (5) and (7), with pre-step maintained conductance increments, raw-candidate threshold/reset, refractory conductance decay, and explicit separation from the paper's complete 4,000-cell network benchmark |
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `courage_nekorkin_map_autonomous_doi` | `courage_nekorkin_map` | `universal_dsl` | Independent simultaneous iteration of Courbage, Nekorkin & Vdovin (2007), equations 3–5 (`method="map"`, three fast branches, Heaviside discontinuity, upward `x >= x_threshold` crossing), with DOI-backed schema provenance |
 | `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent simultaneous explicit-Euler re-derivation of Indiveri, Stefanini & Chicca (2010), Eqs. (2)–(3): nonlinear membrane feedback, after-hyperpolarisation DPI, threshold reset, and spike-driven refractory pulse |
@@ -69,6 +70,14 @@ and event-hash fields into the deterministic trace schema.
 | `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration of Rulkov 2002 Equations 1–2 with `method="map"` and the source pre-update rightmost/reset-branch event, from `neurons/model_schemas/rulkov_map.toml` with DOI-backed provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
+
+The separate
+`reference_receipts/coba_lif_brette_2007.json` binds the author-manuscript PDF,
+Appendix 2 conductance-cell equations and parameters, the source's 6/67 nS
+event quanta, and the distinct maintained 400-step current/conductance stress
+protocol. Its dedicated test independently reconstructs all four biological
+state traces and the complete binary event vector, checks their SHA-256
+digests, and explicitly excludes the paper's 4,000-cell Benchmark 1 network.
 
 The separate
 `reference_receipts/dpi_indiveri_stefanini_chicca_2010.json` binds the primary
@@ -312,7 +321,9 @@ PYTHONPATH=src python -m pytest \
     tests/test_reference_traces.py \
     tests/test_reference_trace_payloads.py \
     tests/test_reference_ermentrout_kopell_map_neuron.py \
-    tests/test_reference_medvedev_map.py -q
+    tests/test_reference_medvedev_map.py \
+    tests/test_reference_trace_independence.py \
+    tests/test_reference_trace_negative_controls.py -q
 ```
 
 Exact-file coverage for the implementation modules is measured with:
@@ -320,6 +331,114 @@ Exact-file coverage for the implementation modules is measured with:
 ```bash
 PYTHONPATH=src python -m coverage run --rcfile=/dev/null --source=src/sc_neurocore/neurons -m pytest tests/test_reference_traces.py tests/test_reference_trace_payloads.py -q
 PYTHONPATH=src python -m coverage report --rcfile=/dev/null --include='src/sc_neurocore/neurons/reference_trace*.py' --fail-under=100 -m
+```
+
+## Independence adjudication
+
+Backends agreeing with each other can reproduce one shared scientific error, so
+"reference" is only worth the word where the expected values came from
+somewhere other than the implementation under test — and, separately, where the
+formulation came from somewhere other than this repository. Those are two
+questions and the adjudication
+(`sc_neurocore.neurons.reference_trace_provenance`,
+`sc-neurocore.reference-trace-adjudication.v1`) keeps them apart.
+
+**Derivation** — how the expected values were produced: an independent
+re-derivation from the equations, an analytic solution, values read out of the
+publication, a pinned third-party implementation, or a transcription of a
+recurrence this project retains.
+
+**Attribution** — what the formulation is sourced from: a resolvable external
+citation (`doi:` or a URL), a publication named without a resolvable locator,
+or a formulation the project retains with no whole-model publication.
+
+The two combine into the class a claim about a trace may use:
+
+| Class | What it licenses | Traces |
+|---|---|---|
+| `published_source` | Re-derived from an externally published formulation without executing the implementation under test | 34 |
+| `published_data` | Values taken from the publication itself | 1 |
+| `external_implementation` | Reproduced from a pinned third-party implementation — independent of this repository, but an implementation rather than the publication | 1 |
+| `project_formulation` | Transcribed from a formulation this repository retains, with no whole-model publication to be independent of. A regression contract, not an external oracle | 9 |
+
+The nine `project_formulation` traces are the `sc_*` identities. Four of them
+(`sc_lapicque_lif_constant_current_closed_form`, `sc_resetting_wilson_hr_project`,
+`sc_symmetric_quadratic_if_zero_current_analytic`, `sc_triangular_mckean_project`)
+declare an independent or analytic *derivation*, which is accurate — the values
+were produced without running the candidate — while citing a project recurrence.
+The citation is what settles the class: a hand re-derivation of a recurrence
+this repository invented is independent of the implementation, but there is no
+publication for it to be independent of.
+
+`provenance.kind` is a closed vocabulary. A trace declaring a kind nobody has
+adjudicated is refused at load time, so introducing one is a decision about
+what the trace proves rather than a new string.
+
+```python
+from sc_neurocore.neurons.reference_traces import adjudicate_corpus
+
+report = adjudicate_corpus()
+print(dict(report.counts))
+print(report.by_class("project_formulation"))
+```
+
+## Negative controls
+
+A corpus that only ever passes has not been shown to work. Five controls break
+the model on purpose and require the corpus to notice
+(`sc_neurocore.neurons.reference_trace_mutations`,
+`sc-neurocore.reference-trace-controls.v1`):
+
+| Control | The error it stands for |
+|---|---|
+| `sign` | The drive enters with the wrong sign |
+| `unit_scale` | A unit conversion slipped by three orders of magnitude |
+| `omitted_current` | The drive is dropped entirely |
+| `event_ordering` | State is recorded on the wrong side of the update |
+| `threshold_shift` | The threshold surface is displaced by 10 %, then 30 %, then 100 % |
+
+Each outcome is `detected` (the mutant violated the trace's tolerances),
+`refused` (the mutated run left the model's numeric domain — still caught),
+`inapplicable` (the mutation provably changes nothing about this protocol,
+decided before running it), or `undetected` (applied, and the trace still
+passed). An `inapplicable` outcome is never counted as a pass.
+
+**No trace in the corpus is uncontrolled**: every one of the 45 deterministic
+traces fails under at least one of the five controls.
+
+Six applied controls do not bite, and each is a boundary statement rather than
+a defect:
+
+| Trace | Control | Why |
+|---|---|---|
+| `mcculloch_pitts_1943_truth_table` | `unit_scale` | A logical all-or-none unit is scale-invariant above threshold |
+| `mcculloch_pitts_1943_truth_table` | `event_ordering` | A stateless truth table does not distinguish pre-update from post-update state |
+| `connor_stevens_driven_spiking_doi` | `threshold_shift` | A conductance spike overshoots by tens of millivolts inside one timestep, so it crosses a displaced threshold on the same step |
+| `exp_if_driven_rk4_doi` | `threshold_shift` | As above |
+| `hodgkin_huxley_driven_spiking_doi` | `threshold_shift` | As above |
+| `wang_buzsaki_driven_spiking_doi` | `threshold_shift` | As above |
+
+Those four spiking traces validate the trajectory, not the threshold surface.
+Twenty further `threshold_shift` outcomes are `inapplicable` because the trace
+records no event or the schema's threshold condition names no single adjustable
+parameter; nine `sign`, `unit_scale` and `omitted_current` outcomes are
+`inapplicable` because the protocol drives the model with zero input.
+
+```python
+from sc_neurocore.neurons.reference_traces import negative_control_report
+
+report = negative_control_report()
+assert report.uncontrolled_traces() == ()
+for outcome in report.with_status("undetected"):
+    print(outcome.name, outcome.mutation, outcome.reason)
+```
+
+Both surfaces are printable from a shell, and `--check` exits non-zero when a
+trace cannot be adjudicated or survives every control:
+
+```bash
+PYTHONPATH=src:. python tools/reference_trace_evidence.py --report
+PYTHONPATH=src:. python tools/reference_trace_evidence.py --check
 ```
 
 ## External Simulator Boundary
