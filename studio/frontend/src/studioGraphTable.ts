@@ -23,6 +23,7 @@
 
 import type { PopulationNode, ProjectionEdge } from "./api/client";
 import { studioPopulationDriveLabel, studioProjectionLabel } from "./studioGraphRequests";
+import { studioGraphIssuesById, type StudioGraphIssueLocation } from "./studioGraphValidation";
 
 /** One connection as a row states it. */
 export interface StudioGraphTableConnection {
@@ -32,6 +33,8 @@ export interface StudioGraphTableConnection {
   populationLabel: string;
   /** Weight, rule and delay, in the canvas's own words. */
   detail: string;
+  /** What validation said about this projection, if anything. */
+  issues: string[];
 }
 
 /** One population and everything the graph says about it. */
@@ -46,6 +49,8 @@ export interface StudioGraphTableRow {
   outgoing: StudioGraphTableConnection[];
   /** One sentence a screen reader can read without visiting the cells. */
   description: string;
+  /** What validation said about this population, if anything. */
+  issues: string[];
 }
 
 /** The whole table, with the caption that describes the topology. */
@@ -63,11 +68,20 @@ export const STUDIO_GRAPH_TABLE_COLUMNS = [
   "Input",
   "Incoming",
   "Outgoing",
+  "Problems",
 ] as const;
+
+function messagesOf(
+  grouped: ReadonlyMap<string, StudioGraphIssueLocation[]>,
+  id: string,
+): string[] {
+  return (grouped.get(id) ?? []).map((location) => location.message);
+}
 
 function connectionsOf(
   projections: readonly ProjectionEdge[],
   labels: ReadonlyMap<string, string>,
+  grouped: ReadonlyMap<string, StudioGraphIssueLocation[]>,
   populationId: string,
   end: "source" | "target",
 ): StudioGraphTableConnection[] {
@@ -77,6 +91,7 @@ function connectionsOf(
     .map((projection) => ({
       detail: studioProjectionLabel(projection),
       id: projection.id,
+      issues: messagesOf(grouped, projection.id),
       populationLabel: labels.get(projection[other]) ?? projection[other],
     }));
 }
@@ -97,7 +112,11 @@ function describe(row: Omit<StudioGraphTableRow, "description">): string {
     row.outgoing.length === 0
       ? "no outgoing projections"
       : `${row.outgoing.length} outgoing to ${listed(row.outgoing)}`;
-  return `${identity}; ${incoming}; ${outgoing}.`;
+  const problems =
+    row.issues.length === 0
+      ? ""
+      : ` Validation refused it: ${row.issues.join("; ")}`;
+  return `${identity}; ${incoming}; ${outgoing}.${problems}`;
 }
 
 /**
@@ -105,23 +124,29 @@ function describe(row: Omit<StudioGraphTableRow, "description">): string {
  *
  * @param populations - Populations in the order the graph holds them.
  * @param projections - Projections in the order the graph holds them.
+ * @param issues - Located validation failures, so a row can say what was
+ *   refused about the object it describes rather than leaving the reader to
+ *   match a flat list of sentences against the diagram.
  * @returns One row per population plus a caption stating the topology's size.
  */
 export function studioGraphTable(
   populations: readonly PopulationNode[],
   projections: readonly ProjectionEdge[],
+  issues: readonly StudioGraphIssueLocation[] = [],
 ): StudioGraphTable {
   const labels = new Map(populations.map((population) => [population.id, population.label]));
+  const grouped = studioGraphIssuesById(issues);
   const rows = populations.map((population) => {
     const partial = {
       count: population.count,
       drive: studioPopulationDriveLabel(population.drive),
       id: population.id,
-      incoming: connectionsOf(projections, labels, population.id, "target"),
+      incoming: connectionsOf(projections, labels, grouped, population.id, "target"),
+      issues: messagesOf(grouped, population.id),
       label: population.label,
       model: population.model,
       neuronType: population.neuron_type,
-      outgoing: connectionsOf(projections, labels, population.id, "source"),
+      outgoing: connectionsOf(projections, labels, grouped, population.id, "source"),
     };
     return { ...partial, description: describe(partial) };
   });

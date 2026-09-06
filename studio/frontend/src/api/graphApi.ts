@@ -12,6 +12,7 @@ import type {
   ProjectionEdge,
   NetworkGraph,
   GraphSimResult,
+  GraphValidation,
   NIRFormat,
   ProjectionRule,
 } from "./types";
@@ -31,7 +32,7 @@ export const createProjection = (data: {
 }) => post<ProjectionEdge>("/graph/projection", data);
 
 export const validateGraph = (graph: NetworkGraph) =>
-  post<{ valid: boolean; errors: string[] }>("/graph/validate", graph);
+  post<GraphValidation>("/graph/validate", graph);
 
 export const simulateGraph = (graph: NetworkGraph) =>
   post<GraphSimResult>("/graph/simulate", graph);

@@ -1374,6 +1374,19 @@ export interface ProjectionEdge {
   autapses?: boolean;
 }
 
+/** One graph validation failure with the request field it came from. */
+export interface GraphValidationIssue {
+  field: string;
+  message: string;
+}
+
+/** The answer of `POST /api/graph/validate`: every failure, each located. */
+export interface GraphValidation {
+  errors: string[];
+  issues: GraphValidationIssue[];
+  valid: boolean;
+}
+
 export interface NetworkGraph {
   populations: PopulationNode[];
   projections: ProjectionEdge[];

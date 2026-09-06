@@ -21,10 +21,10 @@ from sc_neurocore.studio.network_graph import (
     available_models as graph_available_models,
     create_population,
     create_projection,
+    graph_issues,
     graph_to_nir,
     nir_to_graph,
     simulate_graph,
-    validate_graph,
 )
 from sc_neurocore.studio.project import (
     delete_project,
@@ -168,8 +168,20 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/graph/validate")
     def api_validate_graph(data: dict[str, Any]) -> Any:
-        errors = validate_graph(data)
-        return {"valid": len(errors) == 0, "errors": errors}
+        """Report every validation failure, each with the field it belongs to.
+
+        ``errors`` is the flat list of messages this route has always
+        answered. ``issues`` adds the request field each message came from —
+        ``projections[2].delay``, ``populations[0].params.tau`` — because an
+        editor that cannot say *which* projection a message is about leaves the
+        reader to find it by reading all of them.
+        """
+        issues = graph_issues(data)
+        return {
+            "errors": [issue.message for issue in issues],
+            "issues": [{"field": issue.field, "message": issue.message} for issue in issues],
+            "valid": not issues,
+        }
 
     @router.post("/api/graph/simulate")
     def api_simulate_graph(data: dict[str, Any]) -> Any:

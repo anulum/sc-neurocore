@@ -8,6 +8,7 @@
 // Studio store state shape and view-mode types.
 
 import type { StudioGraphHistory } from "../studioGraphHistory";
+import type { StudioGraphIssueLocation } from "../studioGraphValidation";
 import type {
   StudioTrialMode,
   CharacterizeResponse, CompileTraceability, ModelCosimReport, FICurveResponse, BifurcationResponse,
@@ -132,6 +133,12 @@ export interface StudioState {
   progressPct: number;
   progressMsg: string;
   graphErrors: string[];
+  /**
+   * The same failures, each resolved to the population or projection it is
+   * about. Kept beside `graphErrors` rather than replacing it, because a
+   * caller that only wants the sentences should not have to locate them.
+   */
+  graphIssues: StudioGraphIssueLocation[];
   projectSaveResult: ProjectSaveResponse | null;
   /** The workspace revision the editor loaded or last wrote. */
   projectRevision: StudioProjectRevisionPointer | null;

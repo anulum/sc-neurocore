@@ -86,13 +86,13 @@ describe("studioGraphTable", () => {
     const [first, second, third] = table.rows;
     expect(first.incoming).toEqual([]);
     expect(first.outgoing).toEqual([
-      { detail: "w=0.5 p=0.1", id: "p1", populationLabel: "Hidden" },
+      { detail: "w=0.5 p=0.1", id: "p1", issues: [], populationLabel: "Hidden" },
     ]);
     expect(second.incoming).toEqual([
-      { detail: "w=0.5 p=0.1", id: "p1", populationLabel: "Input" },
+      { detail: "w=0.5 p=0.1", id: "p1", issues: [], populationLabel: "Input" },
     ]);
     expect(second.outgoing).toEqual([
-      { detail: "w=-0.4 all d=2ms", id: "p2", populationLabel: "Output" },
+      { detail: "w=-0.4 all d=2ms", id: "p2", issues: [], populationLabel: "Output" },
     ]);
     expect(third.outgoing).toEqual([]);
   });
@@ -136,7 +136,9 @@ describe("studioGraphTable", () => {
   it("falls back to the identifier when a projection names a population the graph lost", () => {
     const [row] = studioGraphTable([hidden], [inputToHidden]).rows;
 
-    expect(row.incoming).toEqual([{ detail: "w=0.5 p=0.1", id: "p1", populationLabel: "input" }]);
+    expect(row.incoming).toEqual([
+      { detail: "w=0.5 p=0.1", id: "p1", issues: [], populationLabel: "input" },
+    ]);
   });
 
   it("lists the columns in the order the rows carry them", () => {
@@ -148,6 +150,7 @@ describe("studioGraphTable", () => {
       "Input",
       "Incoming",
       "Outgoing",
+      "Problems",
     ]);
   });
 });
@@ -196,5 +199,57 @@ describe("studioGraphTableRemoveLabel", () => {
     ).rows;
 
     expect(studioGraphTableRemoveLabel(row)).toBe("Delete population Hidden and its 2 projections");
+  });
+});
+
+describe("a graph validation refused", () => {
+  const ISSUES = [
+    {
+      attribute: "weight",
+      field: "projections[0].weight",
+      id: "p1",
+      kind: "projection" as const,
+      message: "Projection p1 weight -4 conflicts with the excitatory source population input",
+      subject: "Input → Hidden",
+    },
+    {
+      attribute: "count",
+      field: "populations[1].count",
+      id: "hidden",
+      kind: "population" as const,
+      message: "Population Hidden count must be a positive integer",
+      subject: "Hidden",
+    },
+  ];
+
+  it("puts a population's failure on that population's row", () => {
+    const [, row] = studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows;
+
+    expect(row.issues).toEqual(["Population Hidden count must be a positive integer"]);
+  });
+
+  it("puts a projection's failure on that projection's connection entries", () => {
+    const [first, second] = studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows;
+
+    expect(first.outgoing[0].issues).toEqual([
+      "Projection p1 weight -4 conflicts with the excitatory source population input",
+    ]);
+    expect(second.incoming[0].issues).toEqual(first.outgoing[0].issues);
+    expect(first.issues).toEqual([]);
+  });
+
+  it("says in the row's sentence that the population was refused", () => {
+    const [, row] = studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows;
+
+    expect(row.description).toContain(
+      "Validation refused it: Population Hidden count must be a positive integer",
+    );
+  });
+
+  it("leaves every row clean when nothing was refused", () => {
+    const table = studioGraphTable([input, hidden], [inputToHidden]);
+
+    expect(table.rows.every((row) => row.issues.length === 0)).toBe(true);
+    expect(table.rows[0].description).not.toContain("Validation refused");
   });
 });

@@ -21,7 +21,6 @@ import {
   studioGraphSimulationCompletedState,
   studioGraphSimulationStartState,
   studioGraphRequest,
-  studioGraphValidationFailedState,
   studioGraphWithoutPopulation,
   studioPipelineCompletedState,
   studioPipelineStartState,
@@ -147,11 +146,8 @@ describe("Studio graph request builders", () => {
     expect(studioGraphSimulationStartState()).toEqual({
       error: null,
       graphErrors: [],
+      graphIssues: [],
       isSimulating: true,
-    });
-    expect(studioGraphValidationFailedState(["missing projection"])).toEqual({
-      graphErrors: ["missing projection"],
-      isSimulating: false,
     });
     expect(studioGraphSimulationCompletedState(simResult)).toEqual({
       graphSimResult: simResult,

@@ -289,6 +289,7 @@ __all__ = [
     "available_models",
     "create_population",
     "create_projection",
+    "graph_issues",
     "graph_to_nir",
     "nir_to_graph",
     "population_model_admission",

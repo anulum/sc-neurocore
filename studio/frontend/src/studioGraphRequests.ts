@@ -64,6 +64,8 @@ export interface StudioGraphElements {
 export interface StudioGraphBusyStatePatch {
   error: null;
   graphErrors?: [];
+  /** Cleared with the messages: a located failure outlives nothing else. */
+  graphIssues?: [];
   graphSimResult?: null;
   isSimulating: true;
   pipelineResult?: null;
@@ -96,11 +98,6 @@ export interface StudioProjectionUpdatedStatePatch {
 
 export interface StudioProjectionRemovedStatePatch {
   graphProjections: ProjectionEdge[];
-}
-
-export interface StudioGraphValidationFailedStatePatch {
-  graphErrors: string[];
-  isSimulating: false;
 }
 
 export interface StudioGraphSimulationCompletedStatePatch {
@@ -156,16 +153,8 @@ export function studioGraphSimulationStartState(): StudioGraphBusyStatePatch {
   return {
     error: null,
     graphErrors: [],
+    graphIssues: [],
     isSimulating: true,
-  };
-}
-
-export function studioGraphValidationFailedState(
-  graphErrors: string[],
-): StudioGraphValidationFailedStatePatch {
-  return {
-    graphErrors,
-    isSimulating: false,
   };
 }
 

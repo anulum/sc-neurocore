@@ -60,8 +60,10 @@ states the topology instead of drawing it.
 The table holds one row per population. The population is the row header, so a
 screen reader announces which population a cell belongs to, and the row also
 carries one sentence describing it in full — its model, count, type and input,
-what reaches it and what it reaches — for a reader who does not want to walk
-the cells. The caption states the size of the topology before you enter the
+what reaches it and what it reaches, and what validation refused about it — for
+a reader who does not want to walk the cells. A **Problems** column carries the
+refusals themselves, per population and per connection, and reads `none` when
+there are none. The caption states the size of the topology before you enter the
 table. Each row's delete control says what it removes *and how many
 projections leave with it*, because a column of controls all called "Delete" is
 unusable without sight.
@@ -144,6 +146,38 @@ synchronous run. A larger run is refused, not shortened.
 A validation failure answers `200` with `success: false` and every message;
 a run that fails numerically answers `422` with `graph_execution_failed`.
 
+### Where a failure happened
+
+`POST /api/graph/validate` answers with `valid`, the flat `errors` list of
+messages it has always returned, and `issues` — the same failures, each with
+the request field it came from:
+
+```json
+{
+  "errors": ["Projection e1 delay 0.05 ms is not a whole number of 0.1 ms steps; …"],
+  "issues": [
+    {
+      "field": "projections[0].delay",
+      "message": "Projection e1 delay 0.05 ms is not a whole number of 0.1 ms steps; …"
+    }
+  ],
+  "valid": false
+}
+```
+
+The index is the position in the array that was **sent**, so a caller can place
+each message against the object it holds. Fields are
+`populations[i].<attribute>`, `projections[i].<attribute>` — including nested
+ones such as `populations[0].params.tau` — or a bare `dt`, `duration`, `seed`
+for a failure about the run as a whole.
+
+The canvas resolves each field to the population or projection it names and
+prefixes the message with it — `Exc 0 → Inh 0: …` — leaving the server's
+sentence verbatim, and the table view puts it in that object's row. A message
+whose field names an index the graph no longer holds, or a shape this build
+does not recognise, is still shown, named by its own field: a refusal that
+cannot be placed still has to be read.
+
 ## NIR Export/Import
 
 The canvas exports and imports the NIR-named JSON format
@@ -178,7 +212,7 @@ not a conformance proof against the NIR specification.
 | GET | `/api/graph/models` | List catalogue models admissible for populations |
 | POST | `/api/graph/population` | Create a population node |
 | POST | `/api/graph/projection` | Create a projection edge |
-| POST | `/api/graph/validate` | Validate a graph; every error at once |
+| POST | `/api/graph/validate` | Validate a graph; every error at once, each with the field it came from |
 | POST | `/api/graph/simulate` | Run the graph through the public Network runtime |
 | POST | `/api/graph/export-nir` | Export to the NIR-named JSON |
 | POST | `/api/graph/import-nir` | Import from the NIR-named JSON |

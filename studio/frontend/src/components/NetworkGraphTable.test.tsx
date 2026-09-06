@@ -123,7 +123,8 @@ describe("NetworkGraphTable", () => {
   it("says none rather than leaving a connection cell empty", () => {
     const html = render();
 
-    expect(html.match(/>none</g)).toHaveLength(2);
+    // Two empty connection cells and two clean Problems cells.
+    expect(html.match(/>none</g)).toHaveLength(4);
   });
 
   it("lists each connection with the population at the other end", () => {
@@ -138,6 +139,41 @@ describe("NetworkGraphTable", () => {
 
     expect(html).toContain("Network topology: no populations yet.");
     expect(html).toContain("<tbody></tbody>");
+  });
+
+  it("shows what validation refused about a population on that row", () => {
+    const html = renderToStaticMarkup(
+      <NetworkGraphTable
+        populations={populations}
+        projections={projections}
+        issues={[
+          {
+            attribute: "count",
+            field: "populations[1].count",
+            id: "output",
+            kind: "population",
+            message: "Population Output count must be a positive integer",
+            subject: "Output",
+          },
+          {
+            attribute: "weight",
+            field: "projections[0].weight",
+            id: "p1",
+            kind: "projection",
+            message: "Projection p1 weight conflicts with its excitatory source",
+            subject: "Input → Output",
+          },
+        ]}
+        onRemovePopulation={() => {}}
+      />,
+    );
+
+    expect(html).toContain("Population Output count must be a positive integer");
+    expect(html).toContain("Projection p1 weight conflicts with its excitatory source");
+    // The row's own sentence says it too, for a reader who does not walk cells.
+    expect(html).toContain(
+      "Validation refused it: Population Output count must be a positive integer",
+    );
   });
 
   it("removes the population its own row names when the control is used", async () => {

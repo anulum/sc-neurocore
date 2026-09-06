@@ -42,7 +42,7 @@ export const studioInitialData = {
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[], compileTraceability: null,
   cosimResult: null,
   progressPct: 0, progressMsg: "",
-  graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
+  graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [], graphIssues: [],
   graphHistory: emptyGraphHistory(),
   projectSaveResult: null, projectRevision: null, serverProjects: [],
   deletedProjects: [], pipelineResult: null,

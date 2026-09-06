@@ -100,7 +100,7 @@ export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidence
 
 export default function NetworkCanvas() {
   const {
-    graphPopulations, graphProjections, graphSimResult, graphErrors, pipelineResult,
+    graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult,
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     undoGraphEdit, redoGraphEdit, graphHistory,
@@ -274,6 +274,7 @@ export default function NetworkCanvas() {
           <NetworkGraphTable
             populations={graphPopulations}
             projections={graphProjections}
+            issues={graphIssues}
             onRemovePopulation={removePopulation}
           />
         </div>

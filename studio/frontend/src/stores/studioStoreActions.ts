@@ -144,7 +144,6 @@ import {
   studioGraphRequest,
   studioGraphSimulationCompletedState,
   studioGraphSimulationStartState,
-  studioGraphValidationFailedState,
   studioGraphWithoutPopulation,
   studioPipelineCompletedState,
   studioPipelineStartState,
@@ -154,6 +153,9 @@ import {
   studioProjectionRemovedState,
   studioProjectionUpdatedState,
 } from "../studioGraphRequests";
+import {
+  studioGraphValidationLocatedState,
+} from "../studioGraphValidation";
 import {
   copyStudioShareUrlInRuntime,
   scheduleStudioShareStatusClear,
@@ -1260,7 +1262,9 @@ export function createStudioStoreActions(
       const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed);
       const validation = await apiValidateGraph(graph);
       if (!validation.valid) {
-        set(studioGraphValidationFailedState(validation.errors));
+        set(
+          studioGraphValidationLocatedState(validation, s.graphPopulations, s.graphProjections),
+        );
         return;
       }
       const graphSimResult = await apiSimGraph(graph);

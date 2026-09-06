@@ -17,6 +17,7 @@
 import type { CSSProperties } from "react";
 
 import type { PopulationNode, ProjectionEdge } from "../api/client";
+import type { StudioGraphIssueLocation } from "../studioGraphValidation";
 import {
   STUDIO_GRAPH_TABLE_COLUMNS,
   studioGraphTable,
@@ -55,7 +56,22 @@ function Connections({ connections }: { connections: StudioGraphTableConnection[
         <li key={connection.id}>
           {connection.populationLabel}{" "}
           <span style={{ color: "var(--text-muted)" }}>{connection.detail}</span>
+          <Problems messages={connection.issues} />
         </li>
+      ))}
+    </ul>
+  );
+}
+
+/** What validation refused about one object, or nothing at all. */
+function Problems({ messages }: { messages: string[] }) {
+  if (messages.length === 0) {
+    return null;
+  }
+  return (
+    <ul style={{ color: "var(--danger, #c0392b)", listStyle: "none", margin: 0, padding: 0 }}>
+      {messages.map((message) => (
+        <li key={message}>{message}</li>
       ))}
     </ul>
   );
@@ -64,6 +80,8 @@ function Connections({ connections }: { connections: StudioGraphTableConnection[
 export interface NetworkGraphTableProps {
   populations: PopulationNode[];
   projections: ProjectionEdge[];
+  /** Located validation failures; empty when the graph has not been refused. */
+  issues?: StudioGraphIssueLocation[];
   onRemovePopulation: (id: string) => void;
 }
 
@@ -77,9 +95,10 @@ export interface NetworkGraphTableProps {
 export default function NetworkGraphTable({
   populations,
   projections,
+  issues = [],
   onRemovePopulation,
 }: NetworkGraphTableProps) {
-  const table = studioGraphTable(populations, projections);
+  const table = studioGraphTable(populations, projections, issues);
   return (
     <table style={{ borderCollapse: "collapse", width: "100%" }}>
       <caption style={{ captionSide: "top", fontSize: 11, padding: "4px 0", textAlign: "left" }}>
@@ -113,6 +132,13 @@ export default function NetworkGraphTable({
             </td>
             <td style={cell}>
               <Connections connections={row.outgoing} />
+            </td>
+            <td style={cell}>
+              {row.issues.length === 0 ? (
+                <span style={{ color: "var(--text-muted)" }}>none</span>
+              ) : (
+                <Problems messages={row.issues} />
+              )}
             </td>
             <td style={cell}>
               <button
