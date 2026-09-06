@@ -303,6 +303,60 @@ export function studioProjectionLabel(projection: ProjectionEdge): string {
   return `w=${projection.weight} ${rule}${delay}`;
 }
 
+/** One population's new layout position after a canvas interaction. */
+export interface StudioNodeMove {
+  id: string;
+  position: { x: number; y: number };
+}
+
+/**
+ * What a batch of canvas node changes means for the graph.
+ *
+ * The canvas used to compute the new node array and then write back positions
+ * only, so a delete was computed and discarded: the population and every
+ * projection touching it stayed in the graph and reappeared on the next render.
+ * Separating the two answers keeps layout out of scientific identity — a move
+ * changes where a node is drawn and nothing else — while making a removal an
+ * explicit instruction the store can act on.
+ */
+export interface StudioNodeChangePlan {
+  moved: StudioNodeMove[];
+  removed: string[];
+}
+
+/**
+ * Read a batch of canvas node changes as moves and removals.
+ *
+ * `nextNodes` is the array the canvas library produced from the change batch;
+ * `populations` is the graph as it stands. A position is reported only when it
+ * actually differs, so a render that reasserts the same layout writes nothing.
+ */
+export function studioNodeChangePlan(
+  changes: readonly { type: string; id?: string }[],
+  nextNodes: readonly { id: string; position: { x: number; y: number } }[],
+  populations: readonly PopulationNode[],
+): StudioNodeChangePlan {
+  const removed = changes
+    .filter((change) => change.type === "remove")
+    .map((change) => change.id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+  const removedSet = new Set(removed);
+  const moved: StudioNodeMove[] = [];
+  for (const node of nextNodes) {
+    if (removedSet.has(node.id)) {
+      continue;
+    }
+    const population = populations.find((candidate) => candidate.id === node.id);
+    if (
+      population &&
+      (population.position.x !== node.position.x || population.position.y !== node.position.y)
+    ) {
+      moved.push({ id: node.id, position: node.position });
+    }
+  }
+  return { moved, removed };
+}
+
 export function studioGraphWithoutPopulation(
   graph: StudioGraphElements,
   populationId: string,

@@ -23,6 +23,24 @@ field and the reason.
 5. Click **Simulate** to run the graph
 6. Read the per-population spike counts and rates in the results bar
 
+## Editing the graph
+
+Adding, connecting and moving are what the toolbar and the canvas suggest.
+Deleting is worth stating exactly, because it changes the graph and not only
+the picture:
+
+- **Deleting a population also deletes every projection into or out of it.** A
+  network cannot hold an edge whose endpoint is gone, so the edges leave with
+  the node rather than being left behind as references nothing can resolve.
+- **Deleting a projection leaves both populations in place.**
+- **Moving a node changes the layout only.** A position travels with the graph
+  so a saved workspace reopens as you left it, but the run resolves the same
+  specification wherever the node sits: dragging never changes what is
+  simulated.
+
+There is no undo yet. A deletion is applied to the graph immediately, and the
+way back is the workspace revision you saved before it.
+
 ## Populations
 
 Each population is a group of identical neurons of one catalogue model:

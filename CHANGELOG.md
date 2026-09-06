@@ -11,6 +11,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Deleting a population on the Network Canvas now deletes it. The canvas
+  computed the new node array from a change batch and then wrote back positions
+  only, so a removal was computed and discarded: the population and every
+  projection touching it stayed in the graph and reappeared on the next render.
+  `removePopulation` already existed in the store, removed the population with
+  its incident projections, and was called from nowhere in the frontend. A
+  change batch is now read as moves and removals separately, so a delete reaches
+  the graph and a drag still changes the layout only — a position travels with
+  the graph but never changes what is simulated. Deleting a population deletes
+  the edges into and out of it, because a network cannot hold an edge whose
+  endpoint is gone; `docs/studio/network-canvas.md` states that, and that there
+  is no undo yet.
 - `QuadraticIFNeuron` accepted foreign event arrays its six siblings refuse. Its
   complete-packet validator cast the array to `uint8` before checking it, so
   `256` wrapped to `0` and `0.5` truncated to `0` — a spike returned by a Rust,

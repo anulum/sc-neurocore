@@ -23,7 +23,11 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useStudioStore } from "../stores/studio";
 import { buildPipelineEvidenceModel, type PipelineEvidenceModel } from "../pipelineEvidence";
-import { studioPopulationDriveLabel, studioProjectionLabel } from "../studioGraphRequests";
+import {
+  studioNodeChangePlan,
+  studioPopulationDriveLabel,
+  studioProjectionLabel,
+} from "../studioGraphRequests";
 import type { GraphSimResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
@@ -96,7 +100,7 @@ export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidence
 export default function NetworkCanvas() {
   const {
     graphPopulations, graphProjections, graphSimResult, graphErrors, pipelineResult,
-    addPopulation, updatePopulation,
+    addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     simulateGraphAction, exportGraphNIR, loadGraphModels, runPipelineAction,
     isSimulating, synthTarget,
@@ -131,14 +135,16 @@ export default function NetworkCanvas() {
   );
 
   const onNodesChange: OnNodesChange = useCallback((changes) => {
-    const updated = applyNodeChanges(changes, nodes);
-    for (const n of updated) {
-      const pop = graphPopulations.find((p) => p.id === n.id);
-      if (pop && (pop.position.x !== n.position.x || pop.position.y !== n.position.y)) {
-        updatePopulation(n.id, { position: n.position });
-      }
+    const plan = studioNodeChangePlan(changes, applyNodeChanges(changes, nodes), graphPopulations);
+    for (const move of plan.moved) {
+      updatePopulation(move.id, { position: move.position });
     }
-  }, [nodes, graphPopulations, updatePopulation]);
+    // A removal used to be computed and dropped, so the population and every
+    // projection touching it survived and reappeared on the next render.
+    for (const id of plan.removed) {
+      removePopulation(id);
+    }
+  }, [nodes, graphPopulations, removePopulation, updatePopulation]);
 
   const onEdgesChange: OnEdgesChange = useCallback((changes) => {
     const updated = applyEdgeChanges(changes, edges);
