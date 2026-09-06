@@ -29,9 +29,30 @@ interface SealVectorDocument {
   vectors: SealVector[];
 }
 
-const VECTORS: SealVectorDocument = JSON.parse(
-  readFileSync(fileURLToPath(new URL("./evidenceSealVectors.json", import.meta.url)), "utf8"),
-) as SealVectorDocument;
+interface SealCorpusDocument extends SealVectorDocument {
+  count: number;
+  seed: number;
+}
+
+function readVectors<T extends SealVectorDocument>(name: string): T {
+  return JSON.parse(
+    readFileSync(fileURLToPath(new URL(name, import.meta.url)), "utf8"),
+  ) as T;
+}
+
+const VECTORS = readVectors<SealVectorDocument>("./evidenceSealVectors.json");
+
+/**
+ * Random doubles drawn as bit patterns by the Python half.
+ *
+ * The hand-written vectors carry the cases a person would think of. A double
+ * is 64 bits and each runtime chooses its shortest round-tripping decimal form
+ * separately, so the divergences that matter were found by drawing bit
+ * patterns rather than by enumeration. This file is that draw, committed with
+ * the canonical text the server produced, so the agreement is checked on every
+ * run instead of remembered from one experiment.
+ */
+const CORPUS = readVectors<SealCorpusDocument>("./evidenceSealRandomVectors.json");
 
 describe("the vectors the Python half wrote", () => {
   it("carries the contract this module implements", () => {
@@ -133,5 +154,45 @@ describe("the digest", () => {
     const afterTheRoundTrip = JSON.parse(JSON.stringify(fromTheServer)) as unknown;
 
     expect(await sealSha256(afterTheRoundTrip)).toBe(await sealSha256(fromTheServer));
+  });
+});
+
+describe("the random-double corpus the server drew", () => {
+  it("carries the contract and the size the generator states", () => {
+    expect(CORPUS.schema_version).toBe(EVIDENCE_SEAL_SCHEMA_VERSION);
+    expect(CORPUS.vectors).toHaveLength(CORPUS.count);
+    expect(CORPUS.count).toBeGreaterThan(0);
+  });
+
+  it("reaches the server's canonical text for every drawn double", () => {
+    // This runtime parsed these numbers with its own JSON parser and renders
+    // them with its own algorithm. Agreeing with the text the server recorded
+    // is the parity claim; nothing here simulates the other runtime.
+    for (const vector of CORPUS.vectors) {
+      expect(canonicalSealText(vector.value), JSON.stringify(vector.value)).toBe(
+        vector.canonical,
+      );
+    }
+  });
+
+  it("still agrees after the round trip a payload makes through the browser", () => {
+    // JSON.stringify is what an exported artefact is written with, and
+    // JSON.parse is what reads it back. A double that survived the draw must
+    // survive that too, or an exported evidence pack could not be verified.
+    for (const vector of CORPUS.vectors) {
+      const afterTheRoundTrip = JSON.parse(JSON.stringify(vector.value)) as unknown;
+
+      expect(canonicalSealText(afterTheRoundTrip), vector.canonical).toBe(vector.canonical);
+    }
+  });
+});
+
+describe("the hand-written vectors through the browser's own round trip", () => {
+  it("seals every one of them to the same text before and after", () => {
+    for (const vector of VECTORS.vectors) {
+      const afterTheRoundTrip = JSON.parse(JSON.stringify(vector.value)) as unknown;
+
+      expect(canonicalSealText(afterTheRoundTrip), vector.canonical).toBe(vector.canonical);
+    }
   });
 });

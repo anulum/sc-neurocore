@@ -49,10 +49,23 @@ recorded digest was `771d8e51…` and the identical payload re-digested to
 no verifier could have existed while that was true.
 
 `studio.evidence-seal.v1` encodes values rather than one runtime's rendering of
-them, and the server and the browser implement it identically — one shared set
-of vectors is checked from both sides. Anything that would not survive the trip
-intact, such as a non-finite number or an integer no double holds exactly, is
-refused rather than silently altered.
+them, and the server and the browser implement it identically. Anything that
+would not survive the trip intact, such as a non-finite number or an integer no
+double holds exactly, is refused rather than silently altered.
+
+**How that identity is checked, and what the check is worth.** Neither runtime
+can perform the other's JSON round trip, so nothing pretends to: the parity is
+carried by two committed corpora that both sides read. The first holds the
+cases a person would write down. The second holds 1024 doubles drawn as random
+**bit patterns** from a fixed seed, because a double is 64 bits and each
+runtime chooses its shortest round-tripping decimal form separately — the
+divergences that matter were found by drawing, not by enumeration. Each side
+parses the same JSON with its own parser and must produce the same canonical
+text, and the browser side additionally puts every vector through a real
+`JSON.parse(JSON.stringify(...))` first, which is the round trip itself. The
+corpora are contracts, not snapshots: a canonical form that changed would make
+them stale and fail, because changing it changes every digest already issued
+under this schema version.
 
 ## The verdicts
 

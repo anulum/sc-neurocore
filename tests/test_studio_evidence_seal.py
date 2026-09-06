@@ -13,13 +13,24 @@ of ``AdExNeuron`` recorded ``result_sha256`` ``771d8e51…`` and the identical
 payload, after the JSON round trip every exported artefact makes through the
 operator's browser, re-sealed to ``813d3005…``. The values had not changed —
 ``1.0`` had come back as ``1``. No verifier could exist while that was true.
+
+**What these cases can and cannot show.** Python cannot perform JavaScript's
+JSON round trip, so nothing here simulates one: an earlier helper claimed to
+and did not, because ``json.loads(json.dumps(1.0))`` is ``1.0`` in Python and
+never the ``1`` a browser returns. The cross-runtime claim is carried by two
+committed corpora — the hand-written vectors and a random-double corpus — read
+by **both** suites. Each runtime parses the same JSON with its own parser and
+must reach the same canonical text; ``evidenceSeal.test.ts`` additionally puts
+every vector through a real ``JSON.parse(JSON.stringify(...))`` before sealing
+it, which is the browser round trip itself, in the runtime that has one. What
+these cases show is this side: the canonical form, the refusals, and that the
+committed corpora still describe this build.
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-import struct
 from typing import Any
 
 import pytest
@@ -31,20 +42,14 @@ from sc_neurocore.studio.evidence_seal import (
     canonical_seal_text,
     seal_sha256,
 )
+from tools.generate_evidence_seal_vectors import CORPUS_SIZE, build_corpus, render_corpus
 
 #: Vectors shared with ``evidenceSeal.test.ts``. One file, both runtimes: a
 #: divergence fails on whichever side drifted.
 _VECTORS = Path(__file__).resolve().parents[1] / "studio/frontend/src/evidenceSealVectors.json"
-
-
-def _through_the_browser(value: object) -> Any:
-    """Return ``value`` as it comes back from a JSON round trip.
-
-    ``json.dumps`` then ``json.loads`` reproduces what the browser does to
-    numbers for the cases that matter here: an integral float returns as an
-    integer, because that is what ``JSON.stringify`` writes for it.
-    """
-    return json.loads(json.dumps(json.loads(json.dumps(value))))
+#: The random-double corpus both suites read; see
+#: ``tools/generate_evidence_seal_vectors.py``.
+_CORPUS = Path(__file__).resolve().parents[1] / "studio/frontend/src/evidenceSealRandomVectors.json"
 
 
 class TestCanonicalForm:
@@ -95,38 +100,80 @@ class TestCanonicalForm:
         assert EVIDENCE_SEAL_SCHEMA_VERSION == "studio.evidence-seal.v1"
 
 
-class TestBrowserRoundTrip:
-    def test_a_measured_run_payload_seals_the_same_after_the_round_trip(self) -> None:
-        """The acceptance case, in the shape the defect was measured in."""
-        payload = {
-            "dt": 1.0,
-            "n_steps": 100,
-            "spike_count": 3.0,
-            "states": {"v": [0.1, -70.0, 1e-07]},
-        }
+class TestTheMeasuredPayload:
+    """The shape the defect was measured in, pinned to a recorded digest."""
 
-        assert seal_sha256(payload) == seal_sha256(_through_the_browser(payload))
+    #: The payload of the measured ``AdExNeuron`` run, in the shape the
+    #: divergence was found in: an integral float the browser returns as an
+    #: integer, a fraction, a negative integral float and a small exponent.
+    PAYLOAD = {
+        "dt": 1.0,
+        "n_steps": 100,
+        "spike_count": 3.0,
+        "states": {"v": [0.1, -70.0, 1e-07]},
+    }
 
-    def test_a_changed_value_does_not_survive_the_round_trip(self) -> None:
-        """Tolerating the browser must not tolerate an edit."""
-        payload = {"spike_count": 3.0}
-        edited = {"spike_count": 4.0}
+    def test_it_seals_to_the_canonical_text_both_runtimes_write(self) -> None:
+        """No rendering of Python's own is allowed to reach the digest."""
+        assert canonical_seal_text(self.PAYLOAD) == (
+            '{"dt":1,"n_steps":100,"spike_count":3,"states":{"v":[1e-1,-70,1e-7]}}'
+        )
 
-        assert seal_sha256(_through_the_browser(edited)) != seal_sha256(payload)
+    def test_this_side_is_stable_across_its_own_serialisation(self) -> None:
+        """A weaker claim than the browser's, and the only one Python can make.
 
-    @pytest.mark.parametrize("seed", [11, 4409])
-    def test_random_doubles_survive_the_round_trip(self, seed: int) -> None:
-        """Bit patterns, not only the values a person would type."""
-        import random
+        Python's own round trip returns ``1.0`` as ``1.0``, so this shows the
+        seal is stable under serialisation on this side. The browser's round
+        trip is exercised in ``evidenceSeal.test.ts``, which has one.
+        """
+        restored = json.loads(json.dumps(self.PAYLOAD))
 
-        rng = random.Random(seed)
-        values: list[float] = []
-        while len(values) < 500:
-            candidate = struct.unpack("<d", struct.pack("<Q", rng.getrandbits(64)))[0]
-            if candidate == candidate and abs(candidate) != float("inf"):
-                values.append(candidate)
+        assert seal_sha256(restored) == seal_sha256(self.PAYLOAD)
 
-        assert seal_sha256(values) == seal_sha256(_through_the_browser(values))
+    def test_an_edited_value_seals_differently(self) -> None:
+        """Tolerating a runtime's rendering must not tolerate an edit."""
+        edited = {**self.PAYLOAD, "spike_count": 4.0}
+
+        assert seal_sha256(edited) != seal_sha256(self.PAYLOAD)
+
+
+class TestTheRandomCorpus:
+    """Bit patterns nobody would think to write down, checked every run."""
+
+    def _document(self) -> dict[str, Any]:
+        document: dict[str, Any] = json.loads(_CORPUS.read_text(encoding="utf-8"))
+        return document
+
+    def test_it_describes_this_build(self) -> None:
+        """A canonical form that changed would leave the corpus stale.
+
+        The corpus is a contract, not a snapshot to refresh: changing the
+        canonical text changes every digest already issued under this schema
+        version, so a stale corpus must be a failure and not a regeneration.
+        """
+        document = self._document()
+
+        assert document["schema_version"] == EVIDENCE_SEAL_SCHEMA_VERSION
+        assert document["count"] == len(document["vectors"]) == CORPUS_SIZE
+        for vector in document["vectors"]:
+            assert canonical_seal_text(vector["value"]) == vector["canonical"], vector
+
+    def test_the_committed_file_is_what_the_generator_writes(self) -> None:
+        assert _CORPUS.read_text(encoding="utf-8") == render_corpus(build_corpus())
+
+    def test_the_draw_reaches_the_whole_exponent_range(self) -> None:
+        """A draw over magnitudes would never reach these, and they diverge."""
+        values = [vector["value"] for vector in self._document()["vectors"]]
+        magnitudes = [abs(value) for value in values if value != 0.0]
+
+        assert min(magnitudes) < 1e-100
+        assert max(magnitudes) > 1e100
+        assert any(value < 0 for value in values)
+
+    def test_every_recorded_text_parses_back_to_the_same_double(self) -> None:
+        """The canonical text is the value, not an approximation of it."""
+        for vector in self._document()["vectors"]:
+            assert float(vector["canonical"]) == vector["value"], vector
 
 
 class TestRefusals:

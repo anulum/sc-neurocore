@@ -26,8 +26,17 @@ carry the minimal RFC 8259 escapes, and anything that cannot survive the trip
 intact — a non-finite float, an integer no double holds exactly, an unpaired
 surrogate — is refused instead of silently altered.
 
-``evidenceSeal.ts`` is the byte-identical counterpart;
-``tests/test_studio_evidence_seal_parity.py`` runs both over one corpus.
+``studio/frontend/src/evidenceSeal.ts`` is the byte-identical counterpart.
+Neither runtime can perform the other's JSON round trip, so parity is carried
+by two committed corpora that both read —
+``studio/frontend/src/evidenceSealVectors.json`` (the cases a person would
+write down) and ``evidenceSealRandomVectors.json`` (1024 doubles drawn as bit
+patterns, written by ``tools/generate_evidence_seal_vectors.py``). Each side
+parses the same JSON with its own parser and must reach the same canonical
+text. ``tests/test_studio_evidence_seal.py`` holds this side and the freshness
+of the corpora; ``evidenceSeal.test.ts`` holds the other and additionally puts
+every vector through a real ``JSON.parse(JSON.stringify(...))`` before sealing
+it, which is the browser round trip itself.
 """
 
 from __future__ import annotations
