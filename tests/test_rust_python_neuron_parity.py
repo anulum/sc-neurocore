@@ -37,6 +37,12 @@ class StateModel(StepModel, Protocol):
         """Return the model's named dynamic state."""
 
 
+class VoltageModel(StepModel, Protocol):
+    """Scalar SC recurrence exposing its public membrane state."""
+
+    v: float
+
+
 class _RecordingStepModel:
     """Small step model used to cover generic stimulus routing."""
 
@@ -165,7 +171,12 @@ _RUST_NAME_MAP = {
     "SCExponentialTwoCompartmentLIFNeuron": "SCExponentialTwoCompartmentLIF",
 }
 
-_GENERIC_PARITY_UNSUPPORTED = frozenset(_RUST_NAME_MAP) | _PYTHON_ONLY_MODELS
+_RUNNER_PROFILE_MODELS = frozenset(
+    {"SCInclusivePerfectIntegratorNeuron", "SCLapicqueLIFNeuron", "SCSymmetricQuadraticIFNeuron"}
+)
+_GENERIC_PARITY_UNSUPPORTED = (
+    frozenset(_RUST_NAME_MAP) | _PYTHON_ONLY_MODELS | _RUNNER_PROFILE_MODELS
+)
 _STOCHASTIC = frozenset(
     {
         "EscapeRateNeuron",
@@ -187,10 +198,11 @@ _RUST_AGGREGATE_SOURCE_PATHS = (
     Path("engine/src/lib.rs"),
 )
 _DOC_TOKENS = (
-    "182 public Python registry names",
+    "185 public Python registry names",
     "165 same-name Rust constructors",
     "10 Rust-prefixed or core-only constructors",
     "7 Python-only registry names",
+    "3 Rust network-runner profiles",
     "Python-only boundary rationale",
     "HybridFisherPosnerLIFNeuron",
 )
@@ -331,8 +343,9 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     assert model_names >= _STOCHASTIC
     assert model_names >= _GENERIC_PARITY_UNSUPPORTED
     assert not (_PYTHON_ONLY_MODELS & mapped_names)
-    assert len(model_names) == 182
-    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS) == 165
+    assert not (_RUNNER_PROFILE_MODELS & (_PYTHON_ONLY_MODELS | mapped_names))
+    assert len(model_names) == 185
+    assert len(model_names - mapped_names - _PYTHON_ONLY_MODELS - _RUNNER_PROFILE_MODELS) == 165
 
 
 def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:
@@ -342,7 +355,8 @@ def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:
     missing = {
         name: _rust_name(name)
         for name in _all_model_names()
-        if name not in _PYTHON_ONLY_MODELS and _rust_name(name) not in rust_names
+        if name not in (_PYTHON_ONLY_MODELS | _RUNNER_PROFILE_MODELS)
+        and _rust_name(name) not in rust_names
     }
 
     assert not missing
@@ -371,10 +385,34 @@ def test_rust_binding_coverage_map_matches_built_engine() -> None:
     missing = {
         name: _rust_name(name)
         for name in _all_model_names()
-        if name not in _PYTHON_ONLY_MODELS and _rust_name(name) not in rust_exports
+        if name not in (_PYTHON_ONLY_MODELS | _RUNNER_PROFILE_MODELS)
+        and _rust_name(name) not in rust_exports
     }
 
     assert not missing
+
+
+@pytest.mark.parametrize("name", sorted(_RUNNER_PROFILE_MODELS))
+def test_runner_profiles_match_python_state_and_events(name: str) -> None:
+    """Preserved SC identities execute through the real compiled population API."""
+    import numpy as np
+
+    module = _engine_module()
+    factory = (_repo_root() / "engine/src/network_runner/model_factory.rs").read_text()
+    assert f'"{name}"' in factory
+    assert name in (_repo_root() / _DOC_PATH).read_text()
+    assert not hasattr(module, name)
+    python = cast(VoltageModel, _make_py(name))
+    runner = module.NetworkRunner()
+    population = runner.add_population(name, 1)
+    spike_count = 0
+    for current in [0.0, -1.0, 1.0, 10.0] * 64:
+        event = python.step(current)
+        result = runner.step_population(population, np.array([current], dtype=np.float64))
+        assert result["spikes"].tolist() == [event]
+        assert result["voltages"].tolist() == pytest.approx([python.v], abs=1e-12)
+        spike_count += int(bool(event))
+    assert spike_count > 0
 
 
 def test_public_docs_describe_rust_binding_coverage_map() -> None:
