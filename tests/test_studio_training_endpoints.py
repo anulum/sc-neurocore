@@ -37,6 +37,34 @@ class TestTrainingEndpoints:
         r = client.post("/api/training/stop", json={"job_id": job_id})
         assert r.status_code == 200
 
+    def test_stop_endpoint_reports_a_run_that_already_finished(self, client: TestClient) -> None:
+        """Pressing Stop on a run that just finished is not a server error.
+
+        Under load the run reaches a terminal state between the operator
+        reading the page and the request arriving; the stop path used to
+        propagate the ledger's refusal as HTTP 500.
+        """
+        start = client.post(
+            "/api/training/start",
+            json={"epochs": 1, "dataset": "synthetic", "batch_size": 32, "timesteps": 4},
+        )
+        job_id = start.json()["job_id"]
+        deadline = time.monotonic() + 300.0
+        status = ""
+        while time.monotonic() < deadline:
+            status = client.get(f"/api/training/status/{job_id}").json().get("status", "")
+            if status in {"completed", "failed", "stopped"}:
+                break
+            time.sleep(0.2)
+        assert status in {"completed", "failed", "stopped"}, status
+
+        stopped = client.post("/api/training/stop", json={"job_id": job_id})
+
+        assert stopped.status_code == 200
+        body = stopped.json()
+        assert body["job_id"] == job_id
+        assert body["status"] != "stopping"
+
     def test_status_endpoint(self, client: TestClient) -> None:
         start = client.post(
             "/api/training/start",

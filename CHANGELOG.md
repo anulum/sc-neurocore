@@ -11,6 +11,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Pressing Stop on a training run that had just finished returned a server
+  error. `cancel` reads the job's status and then writes the transition, and
+  the read is outside the ledger transaction, so under load a run reached a
+  terminal state in that gap; the ledger refused `cancelled -> cancelling` and
+  the refusal reached the operator as HTTP 500. Cancelling a job that has
+  already stopped is now a no-op even when it stops inside that window, and a
+  refusal for any other reason still propagates. `POST /api/training/stop` also
+  reports the state the run actually reached instead of claiming `stopping` for
+  a run nothing can still affect.
 - An exported evidence pack can now be rechecked by whoever receives it.
   Measured on the real surface before this change: a model run of `AdExNeuron`
   recorded `result_sha256` `771d8e51…`, and the identical payload — after the

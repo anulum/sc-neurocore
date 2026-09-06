@@ -57,6 +57,23 @@ class TestJobLifecycle:
         result = stop_training("nonexistent_id")
         assert "error" in result
 
+    def test_stop_a_local_job_the_platform_never_recorded(self, tmp_path: Path) -> None:
+        """A run started without a manager has no platform record to cancel.
+
+        The manager raises for an identifier it has never seen; that is not a
+        failure of the stop request, and the local job still stops.
+        """
+        manager = StudioJobManager(
+            root=tmp_path / "jobs",
+            allowed_kinds=frozenset({"training"}),
+            default_timeout_seconds=5.0,
+        )
+        result = start_training({"epochs": 50, "dataset": "synthetic"})
+
+        stop_result = stop_training(result["job_id"], manager)
+
+        assert stop_result == {"job_id": result["job_id"], "status": "stopping"}
+
     def test_blocking_training_writes_terminal_evidence(
         self,
         monkeypatch: pytest.MonkeyPatch,

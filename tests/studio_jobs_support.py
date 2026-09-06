@@ -48,6 +48,7 @@ JOBS_TEST_PATHS = tuple(
         "test_studio_jobs.py",
         "test_studio_jobs_architecture.py",
         "test_studio_jobs_artifacts.py",
+        "test_studio_jobs_cancel_race.py",
         "test_studio_jobs_context.py",
         "test_studio_jobs_thread.py",
         "test_studio_jobs_process.py",

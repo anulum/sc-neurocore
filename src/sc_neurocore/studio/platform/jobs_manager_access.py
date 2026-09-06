@@ -42,6 +42,15 @@ def _cancel_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord
 
     A job this process is not supervising can still be asked to cancel: the
     request is recorded durably, and the supervisor that owns it acts on it.
+
+    Cancelling a job that has already stopped is a no-op rather than an error,
+    and that has to hold even when the job stops between the status read and
+    the write. The pre-check reads outside the ledger transaction, so under
+    load a run can reach ``cancelled`` in that gap; the ledger then refuses
+    ``cancelled -> cancelling`` and the refusal reached the operator as a
+    server error for pressing Stop on a run that had just finished. Losing
+    that race means the job is already stopped, so the record it reached is
+    returned. A refusal for any other reason still propagates.
     """
 
     record = manager._ledger.record(job_id)
@@ -51,7 +60,13 @@ def _cancel_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord
         cancel_event = manager._cancel_events.get(job_id)
     if cancel_event is not None:
         cancel_event.set()
-    return manager._ledger.transition(job_id, "cancelling", reason="cancellation requested")
+    try:
+        return manager._ledger.transition(job_id, "cancelling", reason="cancellation requested")
+    except StudioJobRejected:
+        settled = manager._ledger.record(job_id)
+        if settled.status in TERMINAL_STATUSES or settled.status == "cancelling":
+            return settled
+        raise
 
 
 def _wait_for_job(

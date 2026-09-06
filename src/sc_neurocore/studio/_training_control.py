@@ -23,6 +23,7 @@ from sc_neurocore.studio._training_events import (
 )
 from sc_neurocore.studio._training_job import TrainingJob
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
+from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.jobs import (
     StudioJobManager,
     StudioJobRecord,
@@ -104,16 +105,25 @@ def _stop_training(
     job_id: str,
     job_manager: StudioJobManager | None = None,
 ) -> dict[str, Any]:
-    """Request cooperative stop for a registered training job."""
+    """Request cooperative stop, or report the state the run already reached.
+
+    A run that finished between the operator reading the page and pressing
+    Stop is not an error. Reporting ``stopping`` for it would be worse than an
+    error: it would say the request had taken effect on a run nothing can
+    still affect. The status the job actually reached is returned instead.
+    """
     job = _get_registered_job(job_id)
     if job is None:
         return {"error": f"Job {job_id} not found"}
     job.stop()
-    if job_manager is not None:
-        try:
-            job_manager.cancel(job_id)
-        except KeyError:
-            pass
+    if job_manager is None:
+        return {"job_id": job_id, "status": "stopping"}
+    try:
+        record = job_manager.cancel(job_id)
+    except KeyError:
+        return {"job_id": job_id, "status": "stopping"}
+    if record.status in TERMINAL_STATUSES:
+        return {"job_id": job_id, "status": record.status}
     return {"job_id": job_id, "status": "stopping"}
 
 
