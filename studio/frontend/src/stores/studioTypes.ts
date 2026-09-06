@@ -139,6 +139,8 @@ export interface StudioState {
    * caller that only wants the sentences should not have to locate them.
    */
   graphIssues: StudioGraphIssueLocation[];
+  /** Which projection the property editor is editing, if any. */
+  selectedProjectionId: string | null;
   projectSaveResult: ProjectSaveResponse | null;
   /** The workspace revision the editor loaded or last wrote. */
   projectRevision: StudioProjectRevisionPointer | null;
@@ -280,6 +282,16 @@ export interface StudioState {
   addProjection: (sourceId: string, targetId: string) => Promise<void>;
   removeProjection: (id: string) => void;
   updateProjection: (id: string, updates: Partial<ProjectionEdge>) => void;
+  /** Select the projection the property editor edits, or clear the selection. */
+  selectProjection: (id: string | null) => void;
+  /**
+   * Ask the server whether the graph is admissible as it now stands.
+   *
+   * Separate from running it: an editor has to be able to check a change
+   * without starting a simulation, and a graph the server accepts must clear
+   * the previous refusal rather than leave it beside the fixed field.
+   */
+  validateGraphAction: () => Promise<void>;
   simulateGraphAction: () => Promise<void>;
   exportGraphNIR: () => Promise<void>;
   importGraphNIR: (nir: NIRFormat) => Promise<void>;

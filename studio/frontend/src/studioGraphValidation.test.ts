@@ -22,6 +22,7 @@ import {
   studioGraphIssueLines,
   studioGraphIssueLocations,
   studioGraphIssuesById,
+  studioGraphValidatedState,
   studioGraphValidationLocatedState,
 } from "./studioGraphValidation";
 
@@ -199,6 +200,29 @@ describe("the state a refused validation leaves", () => {
       `Exc 0 → Inh 0: ${WEIGHT_ISSUE.message}`,
       `Inh 0: ${COUNT_ISSUE.message}`,
     ]);
+  });
+
+  it("clears a previous refusal when the server accepts the graph", () => {
+    const patch = studioGraphValidatedState(
+      { errors: [], issues: [], valid: true },
+      POPULATIONS,
+      PROJECTIONS,
+    );
+
+    expect(patch).toEqual({ graphErrors: [], graphIssues: [] });
+  });
+
+  it("says plainly when a refusal arrives with no reason at all", () => {
+    // Saying "no errors" for a graph that was not accepted would read as
+    // success. This is the answer a malformed or truncated reply deserves.
+    const patch = studioGraphValidatedState(
+      {} as unknown as GraphValidation,
+      POPULATIONS,
+      PROJECTIONS,
+    );
+
+    expect(patch.graphErrors).toEqual(["The server refused the graph without saying why."]);
+    expect(patch.graphIssues).toEqual([]);
   });
 
   it("falls back to the server's own messages when it reported no fields", () => {

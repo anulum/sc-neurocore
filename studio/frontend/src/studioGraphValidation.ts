@@ -153,26 +153,51 @@ export function studioGraphIssueLines(
 }
 
 /**
- * Return the state a refused validation leaves behind.
+ * Return what a validation answer says about the graph.
  *
  * Both forms are kept: the sentences the server wrote, and the same failures
- * resolved to the objects they name. The run stops, so the busy flag is
- * cleared here rather than by the caller.
+ * resolved to the objects they name. A graph the server accepted clears both,
+ * so a stale refusal never outlives the edit that fixed it.
+ */
+export function studioGraphValidatedState(
+  validation: GraphValidation,
+  populations: readonly PopulationNode[],
+  projections: readonly ProjectionEdge[],
+): { graphErrors: string[]; graphIssues: StudioGraphIssueLocation[] } {
+  if (validation.valid === true) {
+    return { graphErrors: [], graphIssues: [] };
+  }
+  const graphIssues = studioGraphIssueLocations(
+    Array.isArray(validation.issues) ? validation.issues : [],
+    populations,
+    projections,
+  );
+  if (graphIssues.length > 0) {
+    return { graphErrors: studioGraphIssueLines(graphIssues), graphIssues };
+  }
+  if (Array.isArray(validation.errors) && validation.errors.length > 0) {
+    return { graphErrors: validation.errors, graphIssues };
+  }
+  // The graph was not accepted and no reason came back. Saying "no errors"
+  // here would read as success; saying so plainly is the only honest answer.
+  return {
+    graphErrors: ["The server refused the graph without saying why."],
+    graphIssues,
+  };
+}
+
+/**
+ * Return the state a refused validation leaves behind before a run.
+ *
+ * The run stops, so the busy flag is cleared here rather than by the caller.
  */
 export function studioGraphValidationLocatedState(
   validation: GraphValidation,
   populations: readonly PopulationNode[],
   projections: readonly ProjectionEdge[],
 ): { graphErrors: string[]; graphIssues: StudioGraphIssueLocation[]; isSimulating: false } {
-  const graphIssues = studioGraphIssueLocations(
-    validation.issues ?? [],
-    populations,
-    projections,
-  );
   return {
-    graphErrors:
-      graphIssues.length > 0 ? studioGraphIssueLines(graphIssues) : validation.errors,
-    graphIssues,
+    ...studioGraphValidatedState(validation, populations, projections),
     isSimulating: false,
   };
 }

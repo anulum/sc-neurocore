@@ -31,6 +31,7 @@ import {
 import type { GraphSimResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 import NetworkGraphTable from "./NetworkGraphTable";
+import ProjectionEditor from "./ProjectionEditor";
 
 function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   const isExc = data.neuron_type === "excitatory";
@@ -101,6 +102,7 @@ export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidence
 export default function NetworkCanvas() {
   const {
     graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult,
+    selectedProjectionId, selectProjection, updateProjection, validateGraphAction,
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     undoGraphEdit, redoGraphEdit, graphHistory,
@@ -181,6 +183,18 @@ export default function NetworkCanvas() {
     for (const id of removedIds) removeProjection(id);
     void updated;
   }, [edges, removeProjection]);
+
+  // A click on an edge opens the editor for it; a click on the empty canvas
+  // closes it, because an editor for nothing is a panel with stale numbers.
+  const onEdgeClick = useCallback(
+    (_event: unknown, edge: { id: string }) => selectProjection(edge.id),
+    [selectProjection],
+  );
+  const onPaneClick = useCallback(() => selectProjection(null), [selectProjection]);
+
+  const selectedProjection = graphProjections.find(
+    (projection) => projection.id === selectedProjectionId,
+  );
 
   const onConnect: OnConnect = useCallback((conn) => {
     if (conn.source && conn.target) {
@@ -280,8 +294,9 @@ export default function NetworkCanvas() {
         </div>
       )}
 
-      {/* Canvas */}
-      <div style={{ flex: 1, position: "relative", display: tableView ? "none" : undefined }}>
+      {/* Canvas and, when a projection is selected, its property editor */}
+      <div style={{ display: tableView ? "none" : "flex", flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, position: "relative" }}>
         {graphPopulations.length === 0 ? (
           <div style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center",
@@ -296,6 +311,8 @@ export default function NetworkCanvas() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onEdgeClick={onEdgeClick}
+            onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView
             proOptions={{ hideAttribution: true }}
@@ -305,6 +322,16 @@ export default function NetworkCanvas() {
             <Controls position="bottom-right" />
           </ReactFlow>
         )}
+      </div>
+      {selectedProjection !== undefined && (
+        <ProjectionEditor
+          projection={selectedProjection}
+          populations={graphPopulations}
+          issues={graphIssues}
+          onChange={updateProjection}
+          onValidate={() => void validateGraphAction()}
+        />
+      )}
       </div>
 
       {/* Pipeline result */}

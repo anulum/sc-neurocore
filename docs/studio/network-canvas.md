@@ -50,6 +50,30 @@ the graph exactly as you saved it. Editing after an undo drops the redo branch,
 because a redo into a graph that no longer follows from the current one would
 reinstate work you have already moved past.
 
+## Editing a projection
+
+Click a projection to open its property editor. Every field the runtime
+executes is there — weight, rule, probability, delay, seed and autapses — and
+each input states the contract it has to satisfy: the sign the source
+population's type requires, that a delay is a whole number of graph timesteps
+and is never rounded, that a probability lies in (0, 1], that an empty seed
+means "derive one from the graph seed and the edge index". The statement is
+tied to its input, so a screen reader reads it with the field rather than
+leaving it to be found elsewhere on the page.
+
+The editor **parses**; the server **decides**. A blank box or text where a
+number belongs is refused in the browser, because it is not a value at all. A
+weight whose sign contradicts its source, a delay that is not a whole step, a
+probability out of range: those go to the server, which owns the contract and
+answers with the field each failure came from. A second copy of the contract in
+the browser would be a copy free to drift from the one that runs.
+
+Each edit that parses is applied to the graph and validated, so the refusal
+appears against the input that caused it, and disappears when it is fixed.
+Switching the rule to `all_to_all` drops the probability rather than sending
+one the specification refuses. Deleting a projection — or the population it
+touches — closes the editor rather than leaving it writing into nothing.
+
 ## Reading the graph without the canvas
 
 A node-and-edge diagram carries its meaning in positions and arrows, and
@@ -246,5 +270,7 @@ not a conformance proof against the NIR specification.
 | Multiple projections between one pair | executed, currents add |
 | Rust network runner | rejected (default parameters, no stimuli) |
 | Per-synapse delay arrays, plasticity, state traces | not exposed on the canvas |
+| Property editor for a projection's executed fields | weight, rule, probability, delay, seed, autapses; parsed in the browser, admitted by the server |
+| Property editor for a population's model, count, type, drive and params | not yet; the fields are executed and still carry their creation defaults |
 | Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph, deletion included |
 | Compiled (hardware) execution of a graph | separate unit; the pipeline compiles a fixed equation |

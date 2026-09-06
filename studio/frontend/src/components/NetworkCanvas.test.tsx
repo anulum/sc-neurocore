@@ -124,9 +124,14 @@ describe("NetworkCanvas table view", () => {
     expect([...container.querySelectorAll('th[scope="row"] span:first-child')].map(
       (cell) => cell.textContent,
     )).toEqual(["Input", "Output"]);
-    expect([...container.querySelectorAll("div")].some(
-      (element) => element.style.position === "relative" && element.style.display === "none",
-    )).toBe(true);
+    // The canvas sits inside a hidden container, so it leaves the tab order
+    // with it rather than staying reachable behind the table.
+    const hidden = [...container.querySelectorAll("div")].filter(
+      (element) => element.style.display === "none",
+    );
+    expect(
+      hidden.some((element) => element.querySelector('div[style*="position: relative"]') !== null),
+    ).toBe(true);
 
     await act(async () => toggle?.click());
 
@@ -158,5 +163,114 @@ describe("NetworkCanvas table view", () => {
     );
     await act(async () => root.unmount());
     container.remove();
+  });
+});
+
+/**
+ * The property editor is only useful if the canvas opens it on the projection
+ * the user picked and closes it when that projection is gone.
+ */
+describe("NetworkCanvas projection editor", () => {
+  const pristine = useStudioStore.getState();
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("[]", { headers: { "content-type": "application/json" } })),
+    );
+    useStudioStore.setState({ graphPopulations: POPULATIONS, graphProjections: PROJECTIONS });
+  });
+
+  afterEach(() => {
+    useStudioStore.setState(pristine, true);
+    vi.unstubAllGlobals();
+  });
+
+  it("opens the editor on the selected projection and closes it on none", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<NetworkCanvas />);
+    });
+    expect(container.querySelector("#projection-weight")).toBeNull();
+
+    await act(async () => useStudioStore.getState().selectProjection("e1"));
+
+    expect(container.querySelector("section")?.getAttribute("aria-label")).toBe(
+      "Projection Input → Output",
+    );
+    expect(container.querySelector<HTMLInputElement>("#projection-weight")?.value).toBe("0.5");
+
+    await act(async () => useStudioStore.getState().selectProjection(null));
+
+    expect(container.querySelector("#projection-weight")).toBeNull();
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it("edits the selected projection through the store", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<NetworkCanvas />);
+    });
+    await act(async () => useStudioStore.getState().selectProjection("e1"));
+    const delay = container.querySelector<HTMLInputElement>("#projection-delay");
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value",
+    )?.set;
+
+    await act(async () => {
+      setter?.call(delay!, "2");
+      delay!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(useStudioStore.getState().graphProjections[0].delay).toBe(2);
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it("stops editing a projection that left with its population", () => {
+    useStudioStore.getState().selectProjection("e1");
+
+    useStudioStore.getState().removePopulation("p1");
+
+    expect(useStudioStore.getState().graphProjections).toEqual([]);
+    expect(useStudioStore.getState().selectedProjectionId).toBeNull();
+  });
+
+  it("stops editing a projection that was removed on its own", () => {
+    useStudioStore.getState().selectProjection("e1");
+
+    useStudioStore.getState().removeProjection("e1");
+
+    expect(useStudioStore.getState().selectedProjectionId).toBeNull();
+  });
+
+  it("keeps editing when a different projection is removed", () => {
+    useStudioStore.setState({
+      graphProjections: [
+        ...PROJECTIONS,
+        {
+          delay: 0,
+          id: "e2",
+          probability: 0.1,
+          rule: "random",
+          source: "p2",
+          target: "p1",
+          weight: -0.5,
+        },
+      ],
+    });
+    useStudioStore.getState().selectProjection("e1");
+
+    useStudioStore.getState().removeProjection("e2");
+
+    expect(useStudioStore.getState().selectedProjectionId).toBe("e1");
   });
 });

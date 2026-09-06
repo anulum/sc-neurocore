@@ -154,6 +154,7 @@ import {
   studioProjectionUpdatedState,
 } from "../studioGraphRequests";
 import {
+  studioGraphValidatedState,
   studioGraphValidationLocatedState,
 } from "../studioGraphValidation";
 import {
@@ -1189,10 +1190,16 @@ export function createStudioStoreActions(
       if (graph.populations.length === s.graphPopulations.length) {
         return {};
       }
+      const survives = graph.projections.some(
+        (projection) => projection.id === s.selectedProjectionId,
+      );
       return {
         graphHistory: studioGraphEditRecordedFrom(s),
         graphPopulations: graph.populations,
         graphProjections: graph.projections,
+        // Deleting a population takes its projections with it, and one of
+        // them may be the projection the editor is editing.
+        selectedProjectionId: survives ? s.selectedProjectionId : null,
       };
     });
   },
@@ -1243,7 +1250,13 @@ export function createStudioStoreActions(
       if (patch.graphProjections.length === s.graphProjections.length) {
         return {};
       }
-      return { ...patch, graphHistory: studioGraphEditRecordedFrom(s) };
+      return {
+        ...patch,
+        graphHistory: studioGraphEditRecordedFrom(s),
+        // Editing a projection that is no longer in the graph would write
+        // fields into nothing.
+        selectedProjectionId: s.selectedProjectionId === id ? null : s.selectedProjectionId,
+      };
     });
   },
 
@@ -1252,6 +1265,27 @@ export function createStudioStoreActions(
       ...studioProjectionUpdatedState(s.graphProjections, id, updates),
       graphHistory: studioGraphEditRecordedFrom(s),
     }));
+  },
+
+  selectProjection: (id) => {
+    set({ selectedProjectionId: id });
+  },
+
+  validateGraphAction: async () => {
+    const s = get();
+    try {
+      const graph = studioGraphRequest(
+        s.graphPopulations,
+        s.graphProjections,
+        s.duration,
+        s.dt,
+        s.seed,
+      );
+      const validation = await apiValidateGraph(graph);
+      set(studioGraphValidatedState(validation, s.graphPopulations, s.graphProjections));
+    } catch (e) {
+      set(studioGraphFailureState(e, "Graph validation failed"));
+    }
   },
 
   simulateGraphAction: async () => {
