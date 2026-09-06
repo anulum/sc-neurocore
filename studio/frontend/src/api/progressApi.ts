@@ -11,6 +11,21 @@ import type {
   ProgressMessage,
 } from "./types";
 
+/**
+ * Open a progress socket for one long-running operation.
+ *
+ * The token cannot travel as a header on a WebSocket, so it goes as a
+ * subprotocol; see `progressWebSocketProtocols`. A frame that does not parse is
+ * dropped rather than thrown, because a malformed progress update must not
+ * take down the operation it is reporting on, and a failed connection is
+ * reported to the same callback as an ordinary error message so callers have
+ * one place to handle it.
+ *
+ * @param op - The operation to run.
+ * @param config - The operation's own configuration, sent on open.
+ * @param onMessage - Called for each progress update and for a failure.
+ * @returns The open socket, for the caller to close.
+ */
 export function connectProgress(
   op: string,
   config: Record<string, unknown>,
@@ -21,12 +36,16 @@ export function connectProgress(
     `${proto}//${window.location.host}/ws/progress`,
     progressWebSocketProtocols(),
   );
-  ws.onopen = () => ws.send(JSON.stringify({ op, config }));
-  ws.onmessage = (e) => {
-    try {
-      onMessage(JSON.parse(e.data));
-    } catch { /* ignore parse errors */ }
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ op, config }));
   };
-  ws.onerror = () => onMessage({ type: "error", msg: "WebSocket connection failed" });
+  ws.onmessage = (e: MessageEvent<string>) => {
+    try {
+      onMessage(JSON.parse(e.data) as ProgressMessage);
+    } catch { /* a frame that does not parse is dropped, not thrown */ }
+  };
+  ws.onerror = () => {
+    onMessage({ type: "error", msg: "WebSocket connection failed" });
+  };
   return ws;
 }

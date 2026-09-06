@@ -42,6 +42,21 @@ const AUDITED = [
   "e2e/network-canvas-live.spec.ts",
   "playwright.export.config.ts",
   "playwright.graph.config.ts",
+  "src/api/adminApi.ts",
+  "src/api/analysisApi.ts",
+  "src/api/benchmarksApi.ts",
+  "src/api/client.ts",
+  "src/api/compilerApi.ts",
+  "src/api/dclsApi.ts",
+  "src/api/graphApi.ts",
+  "src/api/http.ts",
+  "src/api/modelsApi.ts",
+  "src/api/progressApi.ts",
+  "src/api/projectApi.ts",
+  "src/api/simulationApi.ts",
+  "src/api/synthApi.test.ts",
+  "src/api/synthApi.ts",
+  "src/api/trainingApi.ts",
   "src/arrayAt.test.ts",
   "src/arrayAt.ts",
   "src/components/NetworkGraphTable.test.tsx",
@@ -134,6 +149,15 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * taken in any order, and the six admin-operator specs are one shape of
    * problem that is better solved once than six times.
    */
+  /**
+   * What remains inside `src/api/`, and why it is one file.
+   *
+   * `types.ts` carries **156** of the directory's 278 findings on its own —
+   * the contract shapes, as against the calls that use them. Documenting a
+   * type is a different piece of writing from documenting a call, and it is
+   * taken as its own unit rather than half-done here.
+   */
+  apiTypesOutsideScope: { file: "src/api/types.ts", findings: 156 },
   e2eOutsideScope: {
     "admin-operator-audit-archive.spec.ts": 13,
     "admin-operator-capabilities.spec.ts": 14,

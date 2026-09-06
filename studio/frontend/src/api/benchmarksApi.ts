@@ -12,10 +12,31 @@ import type {
   DatabankLeaderboard,
 } from "./types";
 
+/**
+ * Run a benchmark on the server and get back a submission it will accept.
+ *
+ * The result is not yet in the databank: contributing it is a separate,
+ * deliberate step, so a measurement can be inspected before it is published.
+ *
+ * @param body - Channel count, tap count and repeat count to measure with.
+ * @returns The measurement, shaped as a submission.
+ */
 export const runBenchmark = (body: { n_channels: number; n_taps: number; repeats: number }) =>
   post<BenchmarkSubmission>("/benchmarks/run", body);
 
+/**
+ * Publish a measurement to the shared databank under a handle.
+ *
+ * @param submission - A measurement returned by {@link runBenchmark}.
+ * @param handle - The name to attribute it to.
+ * @returns Whether the server stored it.
+ */
 export const contributeBenchmark = (submission: BenchmarkSubmission, handle: string) =>
   post<{ stored: boolean }>("/benchmarks/contribute", { submission, handle });
 
+/**
+ * Read the contributed benchmark databank.
+ *
+ * @returns The leaderboard as the server holds it.
+ */
 export const fetchDatabank = () => get<DatabankLeaderboard>("/benchmarks/databank");

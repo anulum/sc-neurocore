@@ -40,12 +40,19 @@ describe("runSynthesisTerminal", () => {
     const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("/api/synth/terminal");
     expect(request.method).toBe("POST");
-    expect(JSON.parse(String(request.body))).toEqual({
+    // `body` is `BodyInit`, which stringifies to "[object Object]" for the
+    // shapes that are not text. Checking the type states what the transport is
+    // supposed to send instead of asserting on that string.
+    const body = request.body;
+    if (typeof body !== "string") {
+      throw new TypeError(`the transport sent a ${typeof body} body, not JSON text`);
+    }
+    expect(JSON.parse(body)).toEqual({
       compile_traceability: compileTraceability,
       cosim_parity: cosimParity,
       target: "ecp5",
       verilog: "module selected; endmodule",
     });
-    expect(String(request.body)).not.toContain("json_path");
+    expect(body).not.toContain("json_path");
   });
 });
