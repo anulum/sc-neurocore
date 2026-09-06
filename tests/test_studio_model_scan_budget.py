@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -35,7 +36,12 @@ def test_model_scan_rejected_over_catalogue_budget_before_scan_runs(
         ],
     )
 
-    def _scan_all_models(*, current: float, duration: float) -> dict[str, object]:
+    def _scan_all_models(
+        *,
+        current: float,
+        duration: float,
+        should_stop: Callable[[], bool] | None = None,
+    ) -> dict[str, object]:
         raise AssertionError("scan_all_models must not run after budget rejection")
 
     monkeypatch.setattr(catalogue_routes, "scan_all_models", _scan_all_models)
@@ -75,7 +81,16 @@ def test_model_scan_within_catalogue_budget_runs_scan(
         lambda: [{"name": "ModelA", "category": "CatA"}],
     )
 
-    def _scan_all_models(*, current: float, duration: float) -> dict[str, object]:
+    def _scan_all_models(
+        *,
+        current: float,
+        duration: float,
+        should_stop: Callable[[], bool] | None = None,
+    ) -> dict[str, object]:
+        # The synchronous route has no job to cancel, so it passes no
+        # callback. The stub still accepts one: a stub that did not would pass
+        # here while the job route it shares a name with raised TypeError.
+        assert should_stop is None
         return {
             "models": [],
             "scan_metadata": {
@@ -119,7 +134,15 @@ def test_model_scan_job_route_polls_to_completed_with_model_scan_schema(
         ],
     )
 
-    def _scan_all_models(*, current: float, duration: float) -> dict[str, object]:
+    def _scan_all_models(
+        *,
+        current: float,
+        duration: float,
+        should_stop: Callable[[], bool] | None = None,
+    ) -> dict[str, object]:
+        # The job route passes its cancellation check; the real scan consults
+        # it between models.
+        assert should_stop is not None and should_stop() is False
         return {
             "models": [{"name": "ModelA", "pattern": "tonic"}],
             "scan_metadata": {

@@ -109,6 +109,11 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         if reconcile:
             self._reconciliation = self._ledger.reconcile()
 
+    @property
+    def root(self) -> Path:
+        """Return the directory holding the ledger and every job's sandbox."""
+        return self._root
+
     def submit(
         self,
         *,

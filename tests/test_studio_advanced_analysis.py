@@ -131,4 +131,13 @@ class TestAnalysisFunctions:
             },
         )
         assert r.status_code == 200
-        assert "from_equations" in r.json()["script"]
+        script = r.json()["script"]
+        # The script re-resolves the exported request through the public
+        # contract and refuses to run if this installation resolves a
+        # different experiment. `test_studio_codegen_export.py` runs the
+        # emitted script and compares its result; this case guards the route.
+        assert "resolve_experiment(REQUEST)" in script
+        assert "run_experiment(spec)" in script
+        assert "dv/dt = -(v + 65) / 10 + I" in script
+        assert "EXPERIMENT_SHA256" in script
+        assert "raise SystemExit" in script

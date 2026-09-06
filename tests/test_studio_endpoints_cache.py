@@ -48,7 +48,15 @@ class TestCacheStats:
             200,
             200,
         ]
-        assert cached.json() == first.json()
+        # A cached response is the first one, apart from the cache report that
+        # says where it came from — which is the one field that must differ.
+        first_body = first.json()
+        cached_body = cached.json()
+        assert first_body["cache"] == {"hit": False, "key": first_body["cache"]["key"]}
+        assert cached_body["cache"] == {"hit": True, "key": first_body["cache"]["key"]}
+        assert {k: v for k, v in cached_body.items() if k != "cache"} == {
+            k: v for k, v in first_body.items() if k != "cache"
+        }
         assert cache.hits == 1
         assert cache.misses == 3
         assert len(cache._cache) == 1

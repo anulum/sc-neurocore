@@ -50,3 +50,34 @@ def test_studio_runtime_settings_rejects_invalid_request_body_limit() -> None:
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES": "not-a-number"}
         )
+
+
+def _job_root(app: Any) -> Path:
+    return Path(app.state.studio_job_manager.root)
+
+
+def test_an_unconfigured_job_root_is_private_to_its_process() -> None:
+    """Durability is for a configured root; an unconfigured one is scratch.
+
+    One fixed path under the system temp directory was shared by every Studio
+    on the host: a second process — or a later run — opened the first one's
+    ledger and reported its jobs as its own, and on a multi-user machine the
+    directory belonged to whichever user created it first.
+    """
+
+    first = _job_root(create_app())
+    second = _job_root(create_app())
+
+    assert first != second
+    assert first.name.startswith("sc-neurocore-studio-jobs-")
+    assert first.is_dir()
+    # Private, not world-readable: it holds a ledger and job artifacts.
+    assert first.stat().st_mode & 0o077 == 0
+
+
+def test_a_configured_job_root_is_used_as_given(tmp_path: Path) -> None:
+    configured = tmp_path / "jobs"
+
+    app = create_app(StudioRuntimeSettings(job_root_path=str(configured)))
+
+    assert _job_root(app) == configured

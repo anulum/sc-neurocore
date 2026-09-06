@@ -16,6 +16,14 @@ Schema `studio.job-ledger.v1`. Single host by design: SQLite in WAL mode
 serialises the writers sharing one root. A distributed worker contract is a
 separate obligation and is not implied here.
 
+Durability is a property of a **configured** job root
+(`SC_NEUROCORE_STUDIO_JOB_ROOT`). Without one, Studio creates a private
+directory for the process and its records go with it: an unconfigured root is
+scratch, and `GET /api/studio/jobs/status` reports `configured: false`. One
+fixed shared path would otherwise hand every Studio on the host the same
+ledger — a second process reporting a first one's jobs as its own, and on a
+multi-user machine a directory owned by whichever user created it first.
+
 ## What a job carries
 
 | Field | Meaning |

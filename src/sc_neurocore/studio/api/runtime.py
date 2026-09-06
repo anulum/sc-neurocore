@@ -135,10 +135,16 @@ def build_studio_api_context(
         failure_window_seconds=settings.browser_login_failure_window_seconds,
         cooldown_seconds=settings.browser_login_cooldown_seconds,
     )
+    # A configured root is durable: its ledger outlives the process, and
+    # recovery reconciles what a departed supervisor left behind. An
+    # unconfigured root is scratch, so it is private to this process. One fixed
+    # path under the system temp directory would otherwise be shared by every
+    # Studio on the host — accumulating another run's records, and on a
+    # multi-user machine owned by whichever user created it first.
     studio_job_root = (
         Path(settings.job_root_path)
         if settings.job_root_path is not None
-        else Path(tempfile.gettempdir()) / "sc-neurocore-studio-jobs"
+        else Path(tempfile.mkdtemp(prefix="sc-neurocore-studio-jobs-"))
     )
     studio_job_manager = StudioJobManager(
         root=studio_job_root,

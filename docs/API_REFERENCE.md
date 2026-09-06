@@ -38188,6 +38188,8 @@ Reading what those jobs did is the custody surface this inherits from
 
 - **__init__**()
   - Configure bounded execution over the durable job ledger.
+- **root**()
+  - Return the directory holding the ledger and every job's sandbox.
 - **submit**()
   - Submit one local task to the bounded thread supervisor.
 - **submit_process_task**()

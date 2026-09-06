@@ -11,6 +11,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- A Studio started without a configured job root no longer shares one fixed
+  directory with every other Studio on the host. Since the job ledger became
+  durable, that shared path meant a second process — or a later run — opened
+  the first one's ledger and reported its jobs as its own, and on a multi-user
+  machine the directory belonged to whichever user created it first.
+  Durability is now a property of a configured root
+  (`SC_NEUROCORE_STUDIO_JOB_ROOT`); without one, Studio creates a private
+  directory for the process and says so through `configured: false`.
+- Repaired three stale test expectations that were pinning behaviour the
+  code no longer has: the code-export route now emits a script that
+  re-resolves the exported request and guards its digest rather than building
+  a model inline, a cached simulation response differs from the first one by
+  its cache report, and the catalogue-scan stubs now carry the cancellation
+  callback the real scan takes — a stub without it passed while the route it
+  stood in for raised `TypeError`.
 - Stopping a Studio job now stops the work, or says that it did not. A process
   worker's descendants survived its termination: only the direct child was
   signalled, so a job that spawned a subprocess left it running while the
