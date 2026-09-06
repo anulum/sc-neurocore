@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -30,6 +30,7 @@ import {
 } from "../studioGraphRequests";
 import type { GraphSimResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
+import NetworkGraphTable from "./NetworkGraphTable";
 
 function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   const isExc = data.neuron_type === "excitatory";
@@ -106,6 +107,8 @@ export default function NetworkCanvas() {
     simulateGraphAction, exportGraphNIR, loadGraphModels, runPipelineAction,
     isSimulating, synthTarget,
   } = useStudioStore();
+
+  const [tableView, setTableView] = useState(false);
 
   useEffect(() => { loadGraphModels(); }, [loadGraphModels]);
 
@@ -236,6 +239,17 @@ export default function NetworkCanvas() {
         }}>
           Pipeline → {synthTarget.toUpperCase()}
         </button>
+        <button
+          onClick={() => setTableView((shown) => !shown)}
+          aria-pressed={tableView}
+          title="Everything the canvas shows, as a table a screen reader can read"
+          style={{
+            background: tableView ? "var(--border)" : "transparent",
+            color: tableView ? "var(--text)" : "var(--text-muted)",
+            border: "1px solid var(--border)",
+            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          }}
+        >Table view</button>
         <button onClick={exportGraphNIR} disabled={graphPopulations.length === 0} style={{
           background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
@@ -254,8 +268,19 @@ export default function NetworkCanvas() {
         </div>
       )}
 
+      {/* Table equivalent */}
+      {tableView && (
+        <div style={{ flex: 1, overflow: "auto", padding: "8px 12px" }}>
+          <NetworkGraphTable
+            populations={graphPopulations}
+            projections={graphProjections}
+            onRemovePopulation={removePopulation}
+          />
+        </div>
+      )}
+
       {/* Canvas */}
-      <div style={{ flex: 1, position: "relative" }}>
+      <div style={{ flex: 1, position: "relative", display: tableView ? "none" : undefined }}>
         {graphPopulations.length === 0 ? (
           <div style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center",

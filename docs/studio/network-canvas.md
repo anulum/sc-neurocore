@@ -50,6 +50,29 @@ the graph exactly as you saved it. Editing after an undo drops the redo branch,
 because a redo into a graph that no longer follows from the current one would
 reinstate work you have already moved past.
 
+## Reading the graph without the canvas
+
+A node-and-edge diagram carries its meaning in positions and arrows, and
+neither survives a screen reader: the canvas reports a list of draggable boxes
+and says nothing about what is connected to what. The **Table view** toggle
+states the topology instead of drawing it.
+
+The table holds one row per population. The population is the row header, so a
+screen reader announces which population a cell belongs to, and the row also
+carries one sentence describing it in full — its model, count, type and input,
+what reaches it and what it reaches — for a reader who does not want to walk
+the cells. The caption states the size of the topology before you enter the
+table. Each row's delete control says what it removes *and how many
+projections leave with it*, because a column of controls all called "Delete" is
+unusable without sight.
+
+The table is a second presentation of the same graph the canvas draws and the
+server runs, derived from the same fields: it is never a summary that could
+drift from the graph. Deleting through it is the same edit as deleting on the
+canvas, undo included. While the table is shown the canvas is hidden, so it
+does not sit in the tab order behind it; the canvas keeps its viewport, and the
+toggle returns you to it.
+
 ## Populations
 
 Each population is a group of identical neurons of one catalogue model:
@@ -189,4 +212,5 @@ not a conformance proof against the NIR specification.
 | Multiple projections between one pair | executed, currents add |
 | Rust network runner | rejected (default parameters, no stimuli) |
 | Per-synapse delay arrays, plasticity, state traces | not exposed on the canvas |
+| Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph, deletion included |
 | Compiled (hardware) execution of a graph | separate unit; the pipeline compiles a fixed equation |
