@@ -17,11 +17,19 @@ import threading
 import time
 from collections.abc import Callable, Mapping
 from contextlib import suppress
-from dataclasses import dataclass
-from io import BytesIO
 from typing import Any, Protocol, cast
 
 from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic
+from sc_neurocore.studio._training_weight_capture import (
+    CapturedWeightCheckpoint,
+    capture_weight_checkpoint,
+)
+from sc_neurocore.studio.training_resume import (
+    TrainingResumeState,
+    apply_resume_state,
+    capture_resume_state,
+    dataset_fingerprint,
+)
 from sc_neurocore.studio.training_contract import (
     SUPPORTED_CELL_TYPES,
     SUPPORTED_SURROGATES,
@@ -42,7 +50,6 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
 )
 from sc_neurocore.studio.platform.training_weights import (
-    STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
     write_training_weight_checkpoint,
 )
 
@@ -71,15 +78,6 @@ class _TrainingLoss(Protocol):
 
     def item(self) -> float:
         """Return the scalar loss value."""
-
-
-@dataclass(frozen=True, slots=True)
-class _CapturedWeightCheckpoint:
-    """Hold an all-or-none serialised training checkpoint."""
-
-    payload: bytes
-    architecture: str
-    parameter_count: int
 
 
 def _seed_everything(seed: int) -> None:
@@ -126,7 +124,14 @@ class TrainingJob:
     event_sink : Callable[[dict[str, object]], None] or None, optional
         Sink used to persist path-free JSON events from a process worker.
     initial_state_dict : Mapping[str, object] or None, optional
-        Verified model state loaded before the first optimisation step.
+        Verified model state loaded before the first optimisation step. On its
+        own this is a **warm start**: a new run beginning from those weights,
+        with a fresh optimiser and generator at epoch zero.
+    resume_state : TrainingResumeState or None, optional
+        Saved position of a run to continue **exactly**: the optimiser state,
+        the generator states and how many epochs are already done. Supplied
+        together with ``initial_state_dict``; supplying it alone would restore
+        an optimiser onto weights it never saw.
 
     Raises
     ------
@@ -142,10 +147,12 @@ class TrainingJob:
         cancelled: Callable[[], bool] | None = None,
         event_sink: Callable[[dict[str, object]], None] | None = None,
         initial_state_dict: Mapping[str, object] | None = None,
+        resume_state: TrainingResumeState | None = None,
     ) -> None:
         # Resolved here so an unrunnable job cannot be constructed at all: a
         # refusal after the artifact machinery has started produces a second,
         # confusing error about a missing artifact instead of the real one.
+        self._resume_state = resume_state
         self.resolved_config = resolve_training_config(config)
         self.config = dict(self.resolved_config.to_public_dict())
         self.id = job_id or f"j{secrets.token_hex(6)}"
@@ -159,7 +166,7 @@ class TrainingJob:
         self.error: str | None = None
         self.final_metrics: dict[str, Any] | None = None
         self.weight_checkpoint: dict[str, JsonValue] | None = None
-        self._captured_weight_checkpoint: _CapturedWeightCheckpoint | None = None
+        self._captured_weight_checkpoint: CapturedWeightCheckpoint | None = None
         self._initial_state_dict = initial_state_dict
         self.live_attach_evidence: dict[str, JsonValue] | None = None
 
@@ -362,6 +369,7 @@ class TrainingJob:
         else:
             train_loader, test_loader, n_inputs, n_outputs = _make_synthetic(batch_size)
 
+        train_fingerprint = dataset_fingerprint(train_loader)
         model = SpikingNet(
             n_input=n_inputs,
             n_hidden=list(resolved.hidden_widths),
@@ -375,6 +383,18 @@ class TrainingJob:
         if initial_state_dict is not None:
             self._attach_initial_state_dict(model, initial_state_dict)
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        architecture = resolved.architecture(n_inputs, n_outputs)
+        start_epoch = 0
+        if self._resume_state is not None:
+            # Restores the optimiser and the generator states, and returns the
+            # epoch this run begins at, so a resumed run neither repeats nor
+            # skips the work the interrupted one already did.
+            start_epoch = apply_resume_state(
+                self._resume_state,
+                optimiser=optimizer,
+                architecture=architecture,
+                config=resolved.to_public_dict(),
+            )
         monitor = SpikeMonitor(model)
         info = model_info(model)
 
@@ -386,12 +406,14 @@ class TrainingJob:
                 "model_info": info,
                 "dataset": dataset,
                 "n_epochs": n_epochs,
-                "architecture": resolved.architecture(n_inputs, n_outputs),
+                "architecture": architecture,
                 "resolved_config": resolved.to_public_dict(),
+                "dataset_fingerprint": train_fingerprint,
+                "start_epoch": start_epoch,
             },
         )
 
-        for epoch in range(n_epochs):
+        for epoch in range(start_epoch, n_epochs):
             if self._stop_requested():
                 self.status = "stopped"
                 self._emit("stopped", {"epoch": epoch})
@@ -496,16 +518,17 @@ class TrainingJob:
             "val_loss": round(val_loss, 6),
             "val_accuracy": round(val_acc, 4),
         }
-        hidden_architecture = "->".join(str(width) for width in resolved.hidden_widths)
-        architecture = (
-            f"{n_inputs}->{hidden_architecture}->{n_outputs}"
-            if hidden_architecture
-            else f"{n_inputs}->{n_outputs}"
-        )
         self._capture_weight_checkpoint(
             model=model,
             architecture=architecture,
             model_info=info,
+            resume_state=capture_resume_state(
+                epochs_completed=n_epochs,
+                architecture=architecture,
+                config=resolved.to_public_dict(),
+                optimiser=optimizer,
+                dataset_fingerprint=train_fingerprint,
+            ),
         )
         self._emit("completed", self.final_metrics)
         monitor.remove()
@@ -605,21 +628,16 @@ class TrainingJob:
         model: Any,
         architecture: str,
         model_info: dict[str, Any],
+        resume_state: TrainingResumeState | None = None,
     ) -> None:
-        """Serialise terminal model weights for later artifact publication."""
-        payload = {
-            "config": self.config,
-            "final_metrics": self.final_metrics,
-            "model_info": model_info,
-            "model_state_dict": model.state_dict(),
-            "schema_version": STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
-        }
-        buffer = BytesIO()
-        torch.save(payload, buffer)
-        self._captured_weight_checkpoint = _CapturedWeightCheckpoint(
-            payload=buffer.getvalue(),
+        """Serialise terminal weights and the position of the run."""
+        self._captured_weight_checkpoint = capture_weight_checkpoint(
+            model=model,
             architecture=architecture,
-            parameter_count=int(sum(parameter.numel() for parameter in model.parameters())),
+            model_info=model_info,
+            config=self.config,
+            final_metrics=self.final_metrics,
+            resume_state=resume_state,
         )
 
     def _publish_weight_checkpoint(self, context: StudioJobContext) -> None:

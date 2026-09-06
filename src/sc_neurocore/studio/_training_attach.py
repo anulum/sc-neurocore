@@ -41,8 +41,16 @@ def _start_training_attach(
     job_manager: StudioJobManager,
     *,
     expected_config_sha256: str | None = None,
+    mode: str = "warm_start",
 ) -> dict[str, Any]:
-    """Start a warm-start job seeded with verified source weights."""
+    """Start a job seeded with verified source weights.
+
+    ``mode`` chooses between the two operations, which are different runs:
+    ``warm_start`` begins a new run from those weights with a fresh optimiser
+    and generator at epoch zero, and ``exact_resume`` continues the source run
+    from its recorded position. A resume into a different configuration or
+    architecture is refused by the worker rather than approximated.
+    """
     from sc_neurocore.studio.platform.training_process import (
         TRAINING_ATTACH_PROCESS_TASK,
         TRAINING_ATTACH_SEED_METADATA_PATH,
@@ -87,6 +95,7 @@ def _start_training_attach(
             "config": config,
             "restore_plan": restore_plan.to_public_dict(),
             "architecture_fingerprint": fingerprint,
+            "mode": mode,
         },
         seed_inputs={
             TRAINING_ATTACH_SEED_WEIGHTS_PATH: weights_bytes,
@@ -101,6 +110,7 @@ def _start_training_attach(
         "status": "running",
         "source_job_id": source_job_id,
         "architecture_fingerprint": fingerprint,
+        "mode": mode,
     }
 
 

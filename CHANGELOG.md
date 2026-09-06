@@ -11,6 +11,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Continuing a training run is now a different operation from starting one
+  from its weights, and the difference is measurable. Restoring weights alone
+  is a **warm start**: a new run with a fresh optimiser and generator at epoch
+  zero, which discards Adam's moment estimates and restarts the shuffle order,
+  so it does not reach where the interrupted run was heading. **Exact resume**
+  carries the optimiser state, the Python, NumPy and Torch generator states as
+  they stood at the epoch boundary, and the epochs already completed. Training
+  two epochs, and training one then resuming for the second, now produce
+  identical metrics. `POST /api/studio/training/weight-restore/attach` takes a
+  `mode` of `warm_start` (the default, unchanged) or `exact_resume`, and a
+  resume into a different architecture or configuration is refused rather than
+  approximated; asking for more epochs is not a difference. A checkpoint
+  written by a build that recorded no position supports a warm start and says
+  so. The saved position travels inside the weight checkpoint as tensors and
+  plain integers, so the artefact still loads under `weights_only=True` — a
+  checkpoint arrives from a user, and unpickling one would trade that
+  guarantee for convenience. Checkpoints also record a dataset fingerprint
+  covering the dataset length, batch size, sample layout and the first and
+  last samples; the boundary of what it detects is documented rather than
+  implied.
 - The Studio trains what was asked for, or refuses before it starts. Measured
   through the public HTTP surface: a request for hidden widths `[128, 64]` on
   `cifar10` with surrogate `not_a_real_surrogate` completed successfully, and

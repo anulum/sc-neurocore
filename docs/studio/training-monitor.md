@@ -228,13 +228,39 @@ same seed and configuration produce identical metrics; a different seed
 produces a different run. The seed lives in the request rather than in ambient
 process state, so a checkpoint's seed is what actually produced it.
 
-### What is not yet separated
+### Warm start and exact resume are different runs
 
-Warm-starting from exported weights is supported. **Exact resume** — continuing
-a run with its optimiser, scheduler, generator state and epoch/batch position —
-is not: importing a checkpoint restores weights and configuration, not the
-position in a run. Treat a resumed run as a new run initialised from those
-weights.
+`POST /api/studio/training/weight-restore/attach` takes a `mode`:
+
+| Mode | What it starts |
+|---|---|
+| `warm_start` (default) | A **new** run beginning from the restored weights, with a fresh optimiser and generator at epoch zero |
+| `exact_resume` | A **continuation** of the source run from its recorded position: the optimiser state, the Python, NumPy and Torch generator states as they stood at the epoch boundary, and the epochs already completed |
+
+The difference is measurable, and it is why the two are named separately: a
+warm start discards Adam's moment estimates and restarts the shuffle order, so
+it does not reach where the interrupted run was heading. An exact resume does.
+Training two epochs, and training one then resuming for the second, produce
+**identical** metrics.
+
+A resume is refused when the saved position belongs to a different
+architecture or a different configuration — asking for more epochs is not a
+difference, since that is the ordinary reason to resume. A checkpoint written
+by a build that recorded no position supports a warm start and says so rather
+than pretending to continue anything.
+
+The saved position travels inside the weight checkpoint under `resume_state`,
+as tensors and plain integers, so the artefact still loads under
+`weights_only=True`. A checkpoint arrives from a user; unpickling one is not
+an option, and the generator states are stored as integers and a hex string
+for exactly that reason.
+
+`dataset_fingerprint` records what the run was trained on: a digest over the
+dataset length, batch size, sample layout and the first and last samples. It
+detects a different dataset, a different split boundary or a different sample
+layout. It does **not** detect a change confined to the middle of a large
+corpus — hashing every sample on every run would cost more than the training
+step it protects.
 
 ## API Endpoints
 

@@ -16,6 +16,7 @@ from typing import cast
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
 from sc_neurocore.studio.platform.training_weight_loader import (
+    load_training_resume_block,
     load_training_weight_state_dict,
 )
 from sc_neurocore.studio.platform.training_weights import (
@@ -25,6 +26,7 @@ from sc_neurocore.studio.platform.training_weights import (
 )
 from sc_neurocore.studio.training import TRAINING_EVENT_LOG_ARTIFACT_PATH, TrainingJob
 from sc_neurocore.studio.training_contract import TrainingConfigError
+from sc_neurocore.studio.training_resume import resume_state_from_payload
 
 TRAINING_PROCESS_TASK = "sc_neurocore.studio.platform.training_process:run_training_process_task"
 TRAINING_ATTACH_PROCESS_TASK = (
@@ -129,6 +131,16 @@ def run_training_attach_process_task(
         trusted_loader=load_training_weight_state_dict,
     )
 
+    mode = payload.get("mode", "warm_start")
+    if mode not in {"warm_start", "exact_resume"}:
+        raise ValueError(f"Training weight attach mode {mode!r} is not supported.")
+    resume_state = None
+    if mode == "exact_resume":
+        # The bytes were digest-verified by the materialisation above, so the
+        # resume block is read through the same trusted loader rather than
+        # trusted a second time.
+        resume_state = resume_state_from_payload(load_training_resume_block(weights_payload))
+
     job = TrainingJob(
         config,
         job_id=context.job_id,
@@ -138,12 +150,13 @@ def run_training_attach_process_task(
             event,
         ),
         initial_state_dict=materialization.state_dict,
+        resume_state=resume_state,
     )
     result = job.run_blocking(context)
 
     attach_evidence = build_training_weight_restore_attach_evidence(
         materialization,
-        mode="warm_start",
+        mode=str(mode),
         target_job_id=context.job_id,
         target_architecture=materialization.architecture,
         target_parameter_count=materialization.parameter_count,

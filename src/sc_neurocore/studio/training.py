@@ -115,8 +115,16 @@ def start_training_attach(
     job_manager: StudioJobManager,
     *,
     expected_config_sha256: str | None = None,
+    mode: str = "warm_start",
 ) -> dict[str, Any]:
-    """Start a warm-start training job seeded with restored, verified weights.
+    """Start a training job seeded with restored, verified weights.
+
+    ``mode`` names which of two different runs this is. ``warm_start`` begins a
+    new run from the restored weights with a fresh optimiser and generator at
+    epoch zero. ``exact_resume`` continues the source run from its recorded
+    position — optimiser state, generator states and epochs already completed —
+    and is refused when that position belongs to a different configuration or
+    architecture.
 
     The source checkpoint and binary artifacts are verified before a bounded
     process job loads them at the epoch-zero boundary. Raw tensors remain inside
@@ -132,12 +140,14 @@ def start_training_attach(
         Bounded manager owning artifact reads and process submission.
     expected_config_sha256 : str or None, optional
         Optional digest that the source configuration must match.
+    mode : str, optional
+        ``"warm_start"`` (default) or ``"exact_resume"``.
 
     Returns
     -------
     dict[str, Any]
-        Warm-start job metadata, or a stable ``error`` code when a source
-        precondition is unavailable.
+        Job metadata including the mode, or a stable ``error`` code when a
+        source precondition is unavailable.
 
     Raises
     ------
@@ -149,6 +159,7 @@ def start_training_attach(
         config,
         job_manager,
         expected_config_sha256=expected_config_sha256,
+        mode=mode,
     )
 
 

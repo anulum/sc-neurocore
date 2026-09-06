@@ -148,7 +148,11 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
     def api_studio_training_weight_restore_attach(
         attach_request: StudioTrainingWeightAttachRequest,
     ) -> dict[str, object]:
-        """Warm-start a training job seeded with restored, verified weights.
+        """Start a training job seeded with restored, verified weights.
+
+        ``mode`` picks the operation: ``warm_start`` (the default) begins a new
+        run from those weights, and ``exact_resume`` continues the source run
+        from its recorded optimiser, generator and epoch position.
 
         Builds the canonical restore plan from the source job's checkpoint,
         delivers the integrity-checked weights to a bounded process worker as
@@ -164,6 +168,7 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
                 dict(attach_request.config),
                 studio_job_manager,
                 expected_config_sha256=attach_request.expected_config_sha256,
+                mode=attach_request.mode,
             )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc

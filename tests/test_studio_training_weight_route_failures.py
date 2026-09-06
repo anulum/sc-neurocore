@@ -216,6 +216,7 @@ def test_warm_attach_maps_backend_failures(
         job_manager: StudioJobManager,
         *,
         expected_config_sha256: str | None = None,
+        mode: str = "warm_start",
     ) -> dict[str, Any]:
         del source_job_id, config, job_manager, expected_config_sha256
         return {"error": error}

@@ -68,4 +68,49 @@ def load_training_weight_state_dict(payload: bytes) -> Mapping[str, object]:
     return dict(state_dict)
 
 
-__all__ = ["load_training_weight_state_dict"]
+def load_training_resume_block(payload: bytes) -> Mapping[str, object]:
+    """Deserialize the saved run position from a verified checkpoint payload.
+
+    Same trusted boundary and same ``weights_only=True`` restriction as
+    :func:`load_training_weight_state_dict`: the resume block holds optimiser
+    tensors and plain generator state, never opaque pickled objects, precisely
+    so this guarantee survives.
+
+    Parameters
+    ----------
+    payload:
+        Raw bytes of a checkpoint that already passed digest verification.
+
+    Returns
+    -------
+    Mapping[str, object]
+        The ``resume_state`` block, or an empty mapping when the checkpoint
+        was written by a build that recorded no position. An empty mapping
+        supports a warm start and nothing more.
+
+    Raises
+    ------
+    ValueError
+        The payload cannot be safely deserialized or carries an unsupported
+        schema.
+    """
+
+    import torch  # local import: torch is an optional research dependency.
+
+    try:
+        loaded = torch.load(BytesIO(payload), weights_only=True, map_location="cpu")
+    except Exception as exc:  # torch raises many concrete deserialization types.
+        raise ValueError("Training weight payload could not be deserialized.") from exc
+    if not isinstance(loaded, Mapping):
+        raise ValueError("Training weight payload is not a checkpoint object.")
+    if loaded.get("schema_version") != STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION:
+        raise ValueError("Training weight payload schema is unsupported.")
+    resume = loaded.get("resume_state")
+    if resume is None:
+        return {}
+    if not isinstance(resume, Mapping):
+        raise ValueError("Training weight payload has an invalid resume block.")
+    return dict(resume)
+
+
+__all__ = ["load_training_resume_block", "load_training_weight_state_dict"]

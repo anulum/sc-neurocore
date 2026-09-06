@@ -2719,7 +2719,7 @@
         "type": "object"
       },
       "StudioTrainingWeightAttachRequest": {
-        "description": "Request body for admin training weight-restore warm-start attach.",
+        "description": "Request body for admin training weight-restore attach.\n\n``mode`` names which of two different runs is being started.\n``warm_start`` begins a new run from the restored weights with a fresh\noptimiser and generator at epoch zero. ``exact_resume`` continues the\nsource run from its recorded position, restoring the optimiser and\ngenerator states and the epoch already reached; it is refused when the\nsaved position belongs to a different configuration or architecture.",
         "properties": {
           "config": {
             "additionalProperties": true,
@@ -2737,6 +2737,15 @@
               }
             ],
             "title": "Expected Config Sha256"
+          },
+          "mode": {
+            "default": "warm_start",
+            "enum": [
+              "warm_start",
+              "exact_resume"
+            ],
+            "title": "Mode",
+            "type": "string"
           },
           "source_job_id": {
             "maxLength": 128,
@@ -7083,7 +7092,7 @@
     },
     "/api/studio/training/weight-restore/attach": {
       "post": {
-        "description": "Warm-start a training job seeded with restored, verified weights.\n\nBuilds the canonical restore plan from the source job's checkpoint,\ndelivers the integrity-checked weights to a bounded process worker as\nconfined seed inputs, and starts a training job that loads them at the\nepoch-zero checkpoint boundary before training forward. A strict load of\nan incompatible architecture fails the job before training begins. The\nworker writes a path-free ``studio.training.weight-restore-attach.v1``\nevidence artifact; the deserialized tensors never reach the response.",
+        "description": "Start a training job seeded with restored, verified weights.\n\n``mode`` picks the operation: ``warm_start`` (the default) begins a new\nrun from those weights, and ``exact_resume`` continues the source run\nfrom its recorded optimiser, generator and epoch position.\n\nBuilds the canonical restore plan from the source job's checkpoint,\ndelivers the integrity-checked weights to a bounded process worker as\nconfined seed inputs, and starts a training job that loads them at the\nepoch-zero checkpoint boundary before training forward. A strict load of\nan incompatible architecture fails the job before training begins. The\nworker writes a path-free ``studio.training.weight-restore-attach.v1``\nevidence artifact; the deserialized tensors never reach the response.",
         "operationId": "api_studio_training_weight_restore_attach_api_studio_training_weight_restore_attach_post",
         "requestBody": {
           "content": {

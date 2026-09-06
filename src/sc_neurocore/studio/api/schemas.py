@@ -506,7 +506,15 @@ class StudioTrainingWeightRestoreRequest(BaseModel):
 
 
 class StudioTrainingWeightAttachRequest(BaseModel):
-    """Request body for admin training weight-restore warm-start attach."""
+    """Request body for admin training weight-restore attach.
+
+    ``mode`` names which of two different runs is being started.
+    ``warm_start`` begins a new run from the restored weights with a fresh
+    optimiser and generator at epoch zero. ``exact_resume`` continues the
+    source run from its recorded position, restoring the optimiser and
+    generator states and the epoch already reached; it is refused when the
+    saved position belongs to a different configuration or architecture.
+    """
 
     source_job_id: str = Field(min_length=1, max_length=128)
     config: dict[str, Any] = Field(default_factory=dict)
@@ -514,6 +522,7 @@ class StudioTrainingWeightAttachRequest(BaseModel):
         default=None,
         pattern=r"^[0-9a-f]{64}$",
     )
+    mode: Literal["warm_start", "exact_resume"] = "warm_start"
 
 
 class StudioTrainingWeightLiveAttachRequest(BaseModel):

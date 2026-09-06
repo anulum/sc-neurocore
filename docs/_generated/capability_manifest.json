@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4822
+    "test_files": 4823
   },
   "documentation": {
     "public_pages": [
@@ -7439,6 +7439,7 @@
       "tests/test_studio_training_job_lifecycle.py",
       "tests/test_studio_training_listing.py",
       "tests/test_studio_training_process.py",
+      "tests/test_studio_training_resume.py",
       "tests/test_studio_training_sse.py",
       "tests/test_studio_training_weight_attach.py",
       "tests/test_studio_training_weight_checkpoint.py",

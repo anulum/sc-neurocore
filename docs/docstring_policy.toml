@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 456
+expected_file_count = 457
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1839,3 +1839,7 @@ rationale = "Operator-facing evidence for the reference corpus: which identities
 [[file]]
 path = "src/sc_neurocore/studio/training_contract.py"
 rationale = "Typed training capability contract: what the Studio can run, refused before any work rather than substituted."
+
+[[file]]
+path = "src/sc_neurocore/studio/training_resume.py"
+rationale = "Exact resume separated from warm start: the optimiser, generator and epoch position a continuation needs, and the refusals that stop one being restored into a different run."

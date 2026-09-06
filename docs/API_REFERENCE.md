@@ -34961,7 +34961,14 @@ cancelled : Callable&#91;&#91;&#93;, bool&#93; or None, optional
 event_sink : Callable&#91;&#91;dict&#91;str, object&#93;&#93;, None&#93; or None, optional
     Sink used to persist path-free JSON events from a process worker.
 initial_state_dict : Mapping&#91;str, object&#93; or None, optional
-    Verified model state loaded before the first optimisation step.
+    Verified model state loaded before the first optimisation step. On its
+    own this is a **warm start**: a new run beginning from those weights,
+    with a fresh optimiser and generator at epoch zero.
+resume_state : TrainingResumeState or None, optional
+    Saved position of a run to continue **exactly**: the optimiser state,
+    the generator states and how many epochs are already done. Supplied
+    together with ``initial_state_dict``; supplying it alone would restore
+    an optimiser onto weights it never saw.
 
 Raises
 ------
@@ -34977,6 +34984,54 @@ TrainingConfigError
   - Run this training job inside a bounded Studio job context.
 - **write_refused_evidence**(context, message)
   - Seal failed evidence for a request that was refused before it ran.
+
+---
+
+## Module `studio._training_weight_capture`
+
+### Class `CapturedWeightCheckpoint`
+Serialised terminal weights awaiting artifact publication.
+
+Attributes
+----------
+payload : bytes
+    The ``torch.save`` document, loadable with ``weights_only=True``.
+architecture : str
+    Layer sizes of the network the weights belong to.
+parameter_count : int
+    Total parameters, for the published metadata.
+
+
+### Function `capture_weight_checkpoint()`
+Serialise terminal weights, and the run position when there is one.
+
+Parameters
+----------
+model : torch.nn.Module
+    The trained network.
+architecture : str
+    Layer sizes, as the checkpoint records them.
+model_info : dict
+    Architecture summary published alongside the weights.
+config : dict
+    The resolved configuration the run executed.
+final_metrics : dict or None
+    Terminal metrics, when the run reached them.
+resume_state : TrainingResumeState or None, optional
+    The position the run reached. Present, a later run can continue this
+    one exactly; absent, the weights support a warm start and nothing more.
+
+Returns
+-------
+CapturedWeightCheckpoint
+    Bytes and metadata for artifact publication.
+
+Notes
+-----
+Everything written here is a tensor or a primitive, so the artifact loads
+under ``weights_only=True``. The generator states are integers and a hex
+string for exactly that reason: a checkpoint arrives from a user, and
+unpickling one would trade that guarantee for convenience.
 
 ---
 
@@ -35563,7 +35618,14 @@ Request body for admin training weight-restore materialization.
 
 
 ### Class `StudioTrainingWeightAttachRequest`
-Request body for admin training weight-restore warm-start attach.
+Request body for admin training weight-restore attach.
+
+``mode`` names which of two different runs is being started.
+``warm_start`` begins a new run from the restored weights with a fresh
+optimiser and generator at epoch zero. ``exact_resume`` continues the
+source run from its recorded position, restoring the optimiser and
+generator states and the epoch already reached; it is refused when the
+saved position belongs to a different configuration or architecture.
 
 
 ### Class `StudioTrainingWeightLiveAttachRequest`
@@ -39231,6 +39293,32 @@ ValueError
     expected schema, or does not contain a string-keyed model state
     dictionary.
 
+### Function `load_training_resume_block(payload)`
+Deserialize the saved run position from a verified checkpoint payload.
+
+Same trusted boundary and same ``weights_only=True`` restriction as
+:func:`load_training_weight_state_dict`: the resume block holds optimiser
+tensors and plain generator state, never opaque pickled objects, precisely
+so this guarantee survives.
+
+Parameters
+----------
+payload:
+    Raw bytes of a checkpoint that already passed digest verification.
+
+Returns
+-------
+Mapping&#91;str, object&#93;
+    The ``resume_state`` block, or an empty mapping when the checkpoint
+    was written by a build that recorded no position. An empty mapping
+    supports a warm start and nothing more.
+
+Raises
+------
+ValueError
+    The payload cannot be safely deserialized or carries an unsupported
+    schema.
+
 ---
 
 ## Module `studio.platform.training_weights`
@@ -40663,7 +40751,14 @@ dict&#91;str, Any&#93;
     Path-free job identifier and initial ``running`` status.
 
 ### Function `start_training_attach(source_job_id, config, job_manager)`
-Start a warm-start training job seeded with restored, verified weights.
+Start a training job seeded with restored, verified weights.
+
+``mode`` names which of two different runs this is. ``warm_start`` begins a
+new run from the restored weights with a fresh optimiser and generator at
+epoch zero. ``exact_resume`` continues the source run from its recorded
+position — optimiser state, generator states and epochs already completed —
+and is refused when that position belongs to a different configuration or
+architecture.
 
 The source checkpoint and binary artifacts are verified before a bounded
 process job loads them at the epoch-zero boundary. Raw tensors remain inside
@@ -40679,12 +40774,14 @@ job_manager : StudioJobManager
     Bounded manager owning artifact reads and process submission.
 expected_config_sha256 : str or None, optional
     Optional digest that the source configuration must match.
+mode : str, optional
+    ``"warm_start"`` (default) or ``"exact_resume"``.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    Warm-start job metadata, or a stable ``error`` code when a source
-    precondition is unavailable.
+    Job metadata including the mode, or a stable ``error`` code when a
+    source precondition is unavailable.
 
 Raises
 ------
@@ -40875,6 +40972,145 @@ TrainingConfigError
     Any field names something unsupported, is the wrong type, or is out of
     range. The refusal happens before the dataset is loaded and before a
     model is built, so a rejected request costs nothing and leaves nothing.
+
+---
+
+## Module `studio.training_resume`
+
+### Class `TrainingResumeMismatch`
+Raised when saved run state does not belong to the run being started.
+
+Attributes
+----------
+field : str
+    What differs — the configuration, the architecture or the schema.
+expected : str
+    What the saved state describes.
+actual : str
+    What the run being started describes.
+
+- **__init__**(field, expected, actual)
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `TrainingResumeState`
+Everything a run needs to continue where another one stopped.
+
+Attributes
+----------
+schema_version : str
+    Resume contract version.
+epochs_completed : int
+    How many epochs finished before this state was taken. A resume starts
+    at this index, so it neither repeats nor skips one.
+architecture : str
+    Layer sizes of the network the state belongs to.
+config : mapping
+    The resolved configuration of the run being continued.
+optimiser_state : mapping
+    The optimiser's ``state_dict``. Dropping it is what makes a warm start
+    a different run: Adam's moment estimates are part of where the run is.
+rng_state : mapping
+    Python, NumPy and Torch generator states at the epoch boundary, so the
+    shuffle order and any stochastic layer continue rather than restart.
+dataset_fingerprint : str
+    Digest of the data the run was trained on; a resume onto different
+    data is a different experiment.
+
+- **resolved_config**()
+  - Return the configuration this state belongs to, re-resolved.
+- **to_public_dict**()
+  - Return the JSON-safe summary a status payload may carry.
+
+### Function `capture_resume_state()`
+Take the state a later run needs in order to continue this one.
+
+Parameters
+----------
+epochs_completed : int
+    Epochs finished at the moment of capture.
+architecture : str
+    Layer sizes of the network being trained.
+config : mapping
+    The resolved configuration of the run.
+optimiser : torch.optim.Optimizer
+    The live optimiser; its ``state_dict`` is copied.
+dataset_fingerprint : str
+    Digest of the data the run is training on.
+
+Returns
+-------
+TrainingResumeState
+    Captured at an epoch boundary, which is the only point where the
+    generator states describe a clean position in the run.
+
+### Function `apply_resume_state(state)`
+Restore a saved position and return the epoch to start from.
+
+Parameters
+----------
+state : TrainingResumeState
+    The saved position.
+optimiser : torch.optim.Optimizer
+    The optimiser to load the saved state into.
+architecture : str
+    Layer sizes of the network this run built.
+config : mapping
+    The resolved configuration of this run.
+
+Returns
+-------
+int
+    The epoch index to begin at.
+
+Raises
+------
+TrainingResumeMismatch
+    The saved state belongs to a different schema, network or
+    configuration. Resuming across any of those would report a
+    continuation of a run that never existed.
+
+### Function `resume_state_from_payload(payload)`
+Rebuild a saved position from a weight checkpoint payload.
+
+Parameters
+----------
+payload : mapping
+    A loaded weight checkpoint's ``resume_state`` block.
+
+Returns
+-------
+TrainingResumeState
+    The position the run was in when the checkpoint was written.
+
+Raises
+------
+TrainingResumeMismatch
+    The block is absent or was written by a different resume schema. A
+    checkpoint from a build that recorded no position supports a warm
+    start and nothing more, and saying so is the point.
+
+### Function `dataset_fingerprint(loader)`
+Return a digest of the data a loader will serve.
+
+Parameters
+----------
+loader : torch.utils.data.DataLoader
+    The training loader.
+
+Returns
+-------
+str
+    ``sha256`` over the dataset's length, the batch size, the shape and
+    dtype of one sample, and the bytes of the first and last samples.
+
+Notes
+-----
+This is a fingerprint, not a content hash: it detects a different dataset,
+a different split boundary or a different sample layout, and it does not
+detect a change confined to the middle of a large corpus. Hashing every
+sample of a full dataset on every run would cost more than the training
+step it protects, so the boundary is stated rather than implied.
 
 ---
 

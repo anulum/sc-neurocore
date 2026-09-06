@@ -27,6 +27,7 @@ _MODULE_PATHS = {
     "_training_events": _REPO_ROOT / "src/sc_neurocore/studio/_training_events.py",
     "_training_job": _REPO_ROOT / "src/sc_neurocore/studio/_training_job.py",
     "_training_datasets": _REPO_ROOT / "src/sc_neurocore/studio/_training_datasets.py",
+    "_training_weight_capture": _REPO_ROOT / "src/sc_neurocore/studio/_training_weight_capture.py",
 }
 _MODULE_LINE_CEILINGS = {
     "training": 375,
@@ -35,6 +36,7 @@ _MODULE_LINE_CEILINGS = {
     "_training_events": 175,
     "_training_job": 675,
     "_training_datasets": 100,
+    "_training_weight_capture": 130,
 }
 _EXPECTED_DEPENDENCIES = {
     "training": {
@@ -46,8 +48,9 @@ _EXPECTED_DEPENDENCIES = {
     "_training_attach": {"_training_control", "_training_job"},
     "_training_control": {"_training_events", "_training_job"},
     "_training_events": set(),
-    "_training_job": {"_training_events", "_training_datasets"},
+    "_training_job": {"_training_events", "_training_datasets", "_training_weight_capture"},
     "_training_datasets": set(),
+    "_training_weight_capture": set(),
 }
 _EXPECTED_EXPORTS = {
     "HAS_TORCH",
@@ -69,7 +72,8 @@ _EXPECTED_SIGNATURES = {
     "TrainingJob": "(config: 'dict[str, Any]', *, job_id: 'str | None' = None, "
     "cancelled: 'Callable[[], bool] | None' = None, "
     "event_sink: 'Callable[[dict[str, object]], None] | None' = None, "
-    "initial_state_dict: 'Mapping[str, object] | None' = None) -> 'None'",
+    "initial_state_dict: 'Mapping[str, object] | None' = None, "
+    "resume_state: 'TrainingResumeState | None' = None) -> 'None'",
     "export_training_checkpoint": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
     "get_training_status": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
     "import_training_checkpoint": "(data: 'dict[str, Any]') -> 'dict[str, Any]'",
@@ -80,7 +84,8 @@ _EXPECTED_SIGNATURES = {
     "job_manager: 'StudioJobManager', *, expected_config_sha256: 'str | None' = None) -> 'dict[str, Any]'",
     "start_training": "(config: 'dict[str, Any]', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
     "start_training_attach": "(source_job_id: 'str', config: 'dict[str, Any]', "
-    "job_manager: 'StudioJobManager', *, expected_config_sha256: 'str | None' = None) -> 'dict[str, Any]'",
+    "job_manager: 'StudioJobManager', *, expected_config_sha256: 'str | None' = None, "
+    "mode: 'str' = 'warm_start') -> 'dict[str, Any]'",
     "stop_training": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
     "stream_metrics": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'Any'",
 }
