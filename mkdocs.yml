@@ -122,6 +122,7 @@ nav:
       - NAS Guide: guides/nas_guide.md
   - Validation:
       - Reference Trace Harness: validation/reference_traces.md
+      - Runtime State Conformance: validation/runtime_state_conformance.md
       - COBA-LIF Fidelity: validation/coba_lif_cosim_fidelity.md
       - EscapeRate Stochastic Fidelity: validation/escape_rate_stochastic_fidelity.md
       - Poisson Stochastic Fidelity: validation/poisson_stochastic_fidelity.md

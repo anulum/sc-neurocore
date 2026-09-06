@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 463
+expected_file_count = 464
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1867,3 +1867,7 @@ rationale = "Offline recheck of an exported evidence pack: file digests, subject
 [[file]]
 path = "src/sc_neurocore/studio/runtime_state_packet.py"
 rationale = "What a foreign runtime transports across the boundary, which of the model's declared variables it may name, and the structural checks its arrays pass before anything is built from them."
+
+[[file]]
+path = "tools/runtime_state_conformance.py"
+rationale = "Generated matrix of how much of each model's declared state a foreign lane could transport, derived from the layouts and the lane packets rather than from a machine's toolchain."

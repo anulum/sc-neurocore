@@ -1,0 +1,4459 @@
+{
+  "lanes": [
+    {
+      "carries_initial_snapshot": false,
+      "carries_parameters": false,
+      "exports": [
+        "v"
+      ],
+      "runtime": "rust-batch",
+      "schema_version": "sc-neurocore.runtime-state-packet.v1"
+    }
+  ],
+  "packet_schema_version": "sc-neurocore.runtime-state-packet.v1",
+  "rows": [
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "a",
+        "b"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "a",
+            "b"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ATypeKNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AdExNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AdaptiveThresholdIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "v_th"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "v_th"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AdaptiveThresholdMoENeuron"
+    },
+    {
+      "declared": [
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AiharaMapNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AkidaNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "m_pic",
+        "h_pic",
+        "ca",
+        "ca_buf"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "m_pic",
+            "h_pic",
+            "ca",
+            "ca_buf"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AlphaMotorNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "i_exc",
+        "i_inh",
+        "a_exc",
+        "a_inh"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "i_exc",
+            "i_inh",
+            "a_exc",
+            "a_inh"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AlphaNeuron"
+    },
+    {
+      "declared": [
+        "n",
+        "u"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "n",
+            "u"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AmariNeuralField"
+    },
+    {
+      "declared": [
+        "v_fast",
+        "v_work",
+        "v_deep",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_fast",
+            "v_work",
+            "v_deep",
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ArcaneNeuron"
+    },
+    {
+      "declared": [
+        "theta",
+        "v",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AstrocyteLIFNeuron"
+    },
+    {
+      "declared": [
+        "ca",
+        "h",
+        "ip3"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "ca",
+            "h",
+            "ip3"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AstrocyteModel"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "AstrocyteNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AttentionGatedNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "s"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "s"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "AvRonCardiacNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BKNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y",
+        "q"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y",
+            "q"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BalancedResonateAndFireNeuron"
+    },
+    {
+      "declared": [
+        "a",
+        "phase"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "a",
+            "phase"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BendaHerzNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "s1",
+        "s2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "s1",
+            "s2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BertramPhantomBurster"
+    },
+    {
+      "declared": [
+        "vs",
+        "vd",
+        "h",
+        "n",
+        "q",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "vs",
+            "vd",
+            "h",
+            "n",
+            "q",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BoothRinzelNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BrainScaleSAdExNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "ref_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "ref_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "BrunelWangNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "h_nap"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "h_nap"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ButeraRespiratoryNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "g_e",
+        "g_i",
+        "refractory_time"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "g_e",
+            "g_i",
+            "refractory_time"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "COBALIFNeuron"
+    },
+    {
+      "declared": [
+        "x"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "CazellesMapNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "a",
+        "b",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "a",
+            "b",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "CerebellarBasketNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "d",
+        "p"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "d",
+            "p"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ChandelierNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "c"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "c"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ChayKeizerMinimalNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ChayKeizerNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ChayNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ChialvoMapNeuron"
+    },
+    {
+      "declared": [
+        "x"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ClosedFormContinuousNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "glutamate_release"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "glutamate_release"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "CochlearHairCell"
+    },
+    {
+      "declared": [
+        "v_pos",
+        "v_neg"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_pos",
+            "v_neg"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ComplementaryLIFNeuron"
+    },
+    {
+      "declared": [
+        "phi",
+        "amplitude",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "phi",
+            "amplitude",
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "CompositionalBindingNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "s_ampa",
+        "s_nmda",
+        "x_nmda",
+        "s_gaba",
+        "ref_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "s_ampa",
+            "s_nmda",
+            "x_nmda",
+            "s_gaba",
+            "ref_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "CompteWMNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "a",
+        "b"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "a",
+            "b"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ConnorStevensNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "ContinuousAttractorNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "CourageNekorkinMapNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "p",
+        "s",
+        "r",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "p",
+            "s",
+            "r",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DCNNeuron"
+    },
+    {
+      "declared": [
+        "i_mem",
+        "i_ahp",
+        "refractory_time"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "i_mem",
+            "i_ahp",
+            "refractory_time"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DPINeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h_na",
+        "n_k",
+        "m_cap",
+        "h_cap",
+        "q_kca",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h_na",
+            "n_k",
+            "m_cap",
+            "h_cap",
+            "q_kca",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DeSchutterPurkinjeNeuron"
+    },
+    {
+      "declared": [
+        "v_s",
+        "v_d",
+        "d_timer"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_s",
+            "v_d",
+            "d_timer"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DendrifyNeuron"
+    },
+    {
+      "declared": [
+        "theta",
+        "v_soma",
+        "v_dend"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "v_soma",
+            "v_dend"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DendriticNMDANeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h_na",
+        "n_k",
+        "m_t",
+        "h_t"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h_na",
+            "n_k",
+            "m_t",
+            "h_t"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DestexheThalamicNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DifferentiableSurrogateNeuron"
+    },
+    {
+      "declared": [
+        "theta",
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DirectionSelectiveRGC"
+    },
+    {
+      "declared": [
+        "v",
+        "h_na",
+        "n_k"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h_na",
+            "n_k"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "DurstewitzDopamineNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "a",
+        "e_trace"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "a",
+            "e_trace"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "EPropALIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "epsilon"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "epsilon"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "EnergyLIFNeuron"
+    },
+    {
+      "declared": [
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ErmentroutKopellMapNeuron"
+    },
+    {
+      "declared": [
+        "r",
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ErmentroutKopellPopulation"
+    },
+    {
+      "declared": [
+        "v",
+        "rng_state"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "rng_state"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "EscapeRateNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "refractory_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "refractory_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ExpIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "FitzHughNagumoNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "FitzHughRinzelNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "FractionalLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta",
+        "eta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "eta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GIFPopulationNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta_spike",
+        "i_asc1",
+        "i_asc2",
+        "theta_voltage",
+        "refractory_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta_spike",
+            "i_asc1",
+            "i_asc2",
+            "theta_voltage",
+            "refractory_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GLIFNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "GLMNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GalvesLocherbachNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "adapt"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "adapt"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GammaMotorNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "GammaRenewalNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GatedLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "p_na",
+        "n",
+        "a",
+        "b",
+        "w",
+        "m_t",
+        "s",
+        "c_n",
+        "r",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "p_na",
+            "n",
+            "a",
+            "b",
+            "w",
+            "m_t",
+            "s",
+            "c_n",
+            "r",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GolgiCell"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "p"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "p"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GolombFSNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "a",
+        "b",
+        "m_t",
+        "s",
+        "ca",
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "a",
+            "b",
+            "m_t",
+            "s",
+            "ca",
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GranuleCell"
+    },
+    {
+      "declared": [
+        "v",
+        "n"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "GutkinErmentroutNeuron"
+    },
+    {
+      "declared": [
+        "v_s",
+        "h_na",
+        "n_k",
+        "v_t",
+        "m_ca",
+        "h_ca",
+        "m_ih",
+        "v_a",
+        "ca_a"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_s",
+            "h_na",
+            "n_k",
+            "v_t",
+            "m_ca",
+            "h_ca",
+            "m_ih",
+            "v_a",
+            "ca_a"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "HayL5PyramidalNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta",
+        "d_k",
+        "m_h",
+        "m_t",
+        "h_t",
+        "spike_timer"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "d_k",
+            "m_h",
+            "m_t",
+            "h_t",
+            "spike_timer"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "HillTononiNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y",
+        "z"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y",
+            "z"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "HindmarshRoseNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "HodgkinHuxleyNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "a_sd",
+        "a_sr"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "a_sd",
+            "a_sr"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "HuberBraunNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "HybridFisherPosnerLIFNeuron"
+    },
+    {
+      "declared": [
+        "window_size",
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "window_size"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "HybridLinearAttentionNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "u"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "u"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "IbarzTanakaMapNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "IhNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "inh_trace"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "inh_trace"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "InhibitoryLIFNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "InhomogeneousPoissonNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "IntegerQIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "u"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "u"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "Izhikevich2007Neuron"
+    },
+    {
+      "declared": [
+        "y0",
+        "y3",
+        "y1",
+        "y4",
+        "y2",
+        "y5"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "y0",
+            "y3",
+            "y1",
+            "y4",
+            "y2",
+            "y5"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "JansenRitUnit"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "KLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "excited"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "excited"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "LapicqueNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w",
+        "z"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w",
+            "z"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "LarterBreakspearNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "LeakyCompeteFireNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "LearnableNeuronModel"
+    },
+    {
+      "declared": [
+        "x"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "LiquidTimeConstantNeuron"
+    },
+    {
+      "declared": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "s1",
+            "s2",
+            "s3"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "Loihi2Neuron"
+    },
+    {
+      "declared": [
+        "v",
+        "u"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "u"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "LoihiCUBANeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "adapt"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "adapt"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "LugaroCell"
+    },
+    {
+      "declared": [
+        "v",
+        "theta1",
+        "theta2",
+        "refractory_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta1",
+            "theta2",
+            "refractory_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MATNeuron"
+    },
+    {
+      "declared": [
+        "vs",
+        "va",
+        "m",
+        "h",
+        "n"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "vs",
+            "va",
+            "m",
+            "h",
+            "n"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MainenSejnowskiNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m_na",
+        "h_na",
+        "m_cat",
+        "h_cat",
+        "m_cas",
+        "h_cas",
+        "m_a",
+        "h_a",
+        "m_kca",
+        "m_kd",
+        "m_h",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m_na",
+            "h_na",
+            "m_cat",
+            "h_cat",
+            "m_cas",
+            "h_cas",
+            "m_a",
+            "h_a",
+            "m_kca",
+            "m_kd",
+            "m_h",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MarderSTGNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "p",
+        "s"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "p",
+            "s"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MartinottiNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "McCullochPittsNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "McKeanNeuron"
+    },
+    {
+      "declared": [
+        "u"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "u"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MedvedevMapNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "error_trace",
+        "expected_reward",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "error_trace",
+            "expected_reward",
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MetaPlasticNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta",
+        "i1",
+        "i2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "i1",
+            "i2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MihalasNieburNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MorrisLecarNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "adapt",
+        "force"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "adapt",
+            "force"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MotorUnit"
+    },
+    {
+      "declared": [
+        "v_fast",
+        "v_medium",
+        "v_slow"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_fast",
+            "v_medium",
+            "v_slow"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MultiTimescaleNeuron"
+    },
+    {
+      "declared": [
+        "u",
+        "v_basal",
+        "v_apical"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "u",
+            "v_basal",
+            "v_apical"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "MulticompartmentMCNNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "x_nmda",
+        "s_nmda",
+        "ca",
+        "refractory_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "x_nmda",
+            "s_nmda",
+            "ca",
+            "refractory_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "NMDANeuron"
+    },
+    {
+      "declared": [
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "NagumoSatoMapNeuron"
+    },
+    {
+      "declared": [
+        "v_s",
+        "v_d"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_s",
+            "v_d"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "NeuroGridNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta",
+        "refractory_remaining"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "refractory_remaining"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "NonResettingLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "NonlinearLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "p"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "p"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PVFastSpikingNeuron"
+    },
+    {
+      "declared": [
+        "hidden"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "hidden"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ParallelSpikingNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ParametricLIFNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PerfectIntegratorNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w",
+        "z"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w",
+            "z"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PernarowskiNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "p"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "p"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PersistentNaNeuron"
+    },
+    {
+      "declared": [
+        "v_s",
+        "v_d",
+        "h",
+        "n",
+        "s",
+        "c",
+        "q",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_s",
+            "v_d",
+            "h",
+            "n",
+            "s",
+            "c",
+            "q",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PinskyRinzelNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PlantR15Neuron"
+    },
+    {
+      "declared": [
+        "rng_state"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "rng_state"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PoissonNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "p"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "p"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PospischilNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "pred",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "pred",
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PredictiveCodingNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "PrescottNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "QuadraticIFNeuron"
+    },
+    {
+      "declared": [
+        "theta",
+        "z_re",
+        "z_im"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "z_re",
+            "z_im"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "QuantumInspiredLIFNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "RallCableNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "adapt"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "adapt"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "RenshawCell"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ResonateAndFireNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "RulkovMapNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCAdaptiveThresholdMapNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCChaoticMapNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCClippedLogisticBurstingMapNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCClippedRationalRecoveryMapNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w",
+        "z"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w",
+            "z"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCDecoupledAdaptationIonMassNeuron"
+    },
+    {
+      "declared": [
+        "v_s",
+        "v_d"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_s",
+            "v_d"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCExponentialTwoCompartmentLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta",
+        "i_asc1",
+        "i_asc2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "i_asc1",
+            "i_asc2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCFourStateGLIFNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCInclusivePerfectIntegratorNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCLapicqueLIFNeuron"
+    },
+    {
+      "declared": [
+        "v_s",
+        "v_d"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "v_s",
+            "v_d"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCLeakyTwoCompartmentLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCNonResettingAdaptiveLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "epsilon"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "epsilon"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCNormalizedEnergyLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta1",
+        "theta2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta1",
+            "theta2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCResettingMATNeuron"
+    },
+    {
+      "declared": [
+        "buffer"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "buffer"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCResettingParallelSpikingNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCResettingWilsonHRNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta",
+        "i1",
+        "i2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta",
+            "i1",
+            "i2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCScaledResetAdaptiveIFNeuron"
+    },
+    {
+      "declared": [
+        "sigma"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "sigma"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCSigmaDeltaAccumulatorNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h_na",
+        "n_k",
+        "m_h",
+        "h_t",
+        "na_i"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h_na",
+            "n_k",
+            "m_h",
+            "h_t",
+            "na_i"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCSixStateThalamocorticalNeuron"
+    },
+    {
+      "declared": [
+        "a"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "a"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCStochasticRateAdaptationNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCSymmetricQuadraticIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "s1",
+        "s2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "s1",
+            "s2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCThreeStatePhantomBurster"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCTriangularMcKeanNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "h_nap"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "h_nap"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCUnitCapacitanceRespiratoryNeuron"
+    },
+    {
+      "declared": [
+        "x",
+        "y"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "x",
+            "y"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCUpwardCrossingRulkovMapNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "s_nmda"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "s_nmda"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SCWBNMDAMagnesiumBlockNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "g_sfa"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "g_sfa"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SFANeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "ca"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "ca"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SKNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SRM0Neuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "p",
+        "s",
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "p",
+            "s",
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SSTNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SelfReferentialNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "s"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "s"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ShermanRinzelKeizerNeuron"
+    },
+    {
+      "declared": [],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "undeclared",
+      "model": "SiegertTransferFunction"
+    },
+    {
+      "declared": [
+        "sigma",
+        "reconstruction"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "sigma",
+            "reconstruction"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SigmaDeltaNeuron"
+    },
+    {
+      "declared": [
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SigmoidRateNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SpiNNaker2Neuron"
+    },
+    {
+      "declared": [
+        "v",
+        "refrac_count"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "refrac_count"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SpiNNakerLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "time_since_spike"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "time_since_spike"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SpikeResponseNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "p"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "p"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "StellateCell"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "StochasticIFNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "StochasticLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "trace"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "trace"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "SuperSpikeNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "s"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "s"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "TTypeCaNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "w"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "w"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "TermanWangOscillator"
+    },
+    {
+      "declared": [
+        "theta"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "theta"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ThetaNeuron"
+    },
+    {
+      "declared": [
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "ThresholdLinearRateNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "TraubMilesNeuron"
+    },
+    {
+      "declared": [
+        "v"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": true,
+          "dropped": [],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "TrueNorthNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "x",
+        "u"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "x",
+            "u"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "TsodyksMarkramNeuron"
+    },
+    {
+      "declared": [
+        "u_d",
+        "u_s",
+        "s_prev"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "u_d",
+            "u_s",
+            "s_prev"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "TwoCompartmentLIFNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "persistent"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "persistent"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "UnipolarBrushCell"
+    },
+    {
+      "declared": [
+        "v",
+        "m",
+        "h",
+        "n",
+        "p",
+        "s"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "m",
+            "h",
+            "n",
+            "p",
+            "s"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "UpperMotorNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n",
+        "a",
+        "b"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n",
+            "a",
+            "b"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "VIPNeuron"
+    },
+    {
+      "declared": [
+        "v",
+        "h",
+        "n"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "h",
+            "n"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "WangBuzsakiNeuron"
+    },
+    {
+      "declared": [
+        "y0",
+        "y5",
+        "y1",
+        "y6",
+        "y2",
+        "y7",
+        "y3",
+        "y8",
+        "y4",
+        "y9",
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "y0",
+            "y5",
+            "y1",
+            "y6",
+            "y2",
+            "y7",
+            "y3",
+            "y8",
+            "y4",
+            "y9",
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "WendlingNeuron"
+    },
+    {
+      "declared": [
+        "e",
+        "i"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "e",
+            "i"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "WilsonCowanUnit"
+    },
+    {
+      "declared": [
+        "v",
+        "r"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "r"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "WilsonHRNeuron"
+    },
+    {
+      "declared": [
+        "s1",
+        "s2",
+        "noise1",
+        "noise2"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [],
+          "complete": false,
+          "dropped": [
+            "s1",
+            "s2",
+            "noise1",
+            "noise2"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": [
+            "v"
+          ]
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "WongWangUnit"
+    },
+    {
+      "declared": [
+        "v",
+        "n",
+        "q"
+      ],
+      "lanes": {
+        "rust-batch": {
+          "carried": [
+            "v"
+          ],
+          "complete": false,
+          "dropped": [
+            "n",
+            "q"
+          ],
+          "runtime": "rust-batch",
+          "schema_version": "sc-neurocore.runtime-state-packet.v1",
+          "unnameable": []
+        }
+      },
+      "layout_source": "descriptor",
+      "model": "YamadaNeuron"
+    }
+  ],
+  "schema_version": "sc-neurocore.runtime-state-conformance.v1",
+  "summary": {
+    "models": 185,
+    "models_without_declared_state": 10,
+    "per_lane": {
+      "rust-batch": {
+        "carried": 123,
+        "complete": 18,
+        "dropped": 415,
+        "names_nothing": 52
+      }
+    }
+  }
+}

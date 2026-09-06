@@ -109,6 +109,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   place the reason can survive.
 
 ### Added
+- `docs/_generated/runtime_state_conformance.json` records, per catalogue model
+  and per lane, which declared state variables a foreign runtime could carry,
+  which it would drop, and whether it exports anything the model has no name
+  for. Across all 185 models the Rust batch lane could carry 123 declared
+  variables and would drop 415; it fully accounts for 18 models and can name
+  nothing in 52. It is derived from the declared layouts and the lane packets,
+  so it is reproducible from committed sources, carries no timestamp or commit
+  hash, and a test fails when the file and the live contract disagree. It
+  deliberately does not report whether a lane is built or installed on a given
+  machine: that is a property of a toolchain rather than of a contract, and the
+  binding coverage tests hold that question.
 - `tools/studio_evidence_verify.py` rechecks an exported evidence pack without
   the Studio: it recomputes every file digest against the manifest, re-seals
   every subject against its receipt, re-resolves the dependency graph, and
