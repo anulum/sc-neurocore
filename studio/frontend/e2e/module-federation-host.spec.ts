@@ -10,7 +10,7 @@ import { expect, test } from "@playwright/test";
 
 test("the built remote loads its production panel through a real federation host", async ({ page }) => {
   const pageErrors: string[] = [];
-  const remoteResponses: Array<{ path: string; status: number }> = [];
+  const remoteResponses: { path: string; status: number }[] = [];
 
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("response", (response) => {

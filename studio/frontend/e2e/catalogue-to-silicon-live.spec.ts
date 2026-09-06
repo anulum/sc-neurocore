@@ -40,6 +40,15 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+/**
+ * Open the Studio against the live server and record which routes answered.
+ *
+ * The set is returned rather than asserted here, so a case can say which
+ * routes it required rather than requiring the same ones for every case.
+ *
+ * @param page - The page to drive.
+ * @returns The `/api/` paths that answered successfully, filled as they do.
+ */
 async function openLiveStudio(page: Page): Promise<Set<string>> {
   const completedApiRoutes = new Set<string>();
   page.on("response", (response) => {
@@ -54,6 +63,12 @@ async function openLiveStudio(page: Page): Promise<Set<string>> {
   return completedApiRoutes;
 }
 
+/**
+ * Search for a catalogue model and open it, waiting for its contract to show.
+ *
+ * @param page - The page to drive.
+ * @param modelName - The model's catalogue name.
+ */
 async function selectCatalogueModel(page: Page, modelName: string): Promise<void> {
   await page.getByPlaceholder("Search models...").fill(modelName);
   const contract = page.getByTestId(`model-contract-${modelName}`);

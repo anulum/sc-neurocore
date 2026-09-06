@@ -13,8 +13,15 @@ interface ApiMockSequence {
   sequence: object[];
 }
 
+/** A mocked route answers either one body or a sequence of them. */
 type ApiMockPayload = object | ApiMockSequence;
 
+/**
+ * A capability record with only the fields this spec's assertions read.
+ *
+ * @param overrides - Fields to set on top of the minimal record.
+ * @returns The capability payload.
+ */
 function capability(overrides: Record<string, unknown>): Record<string, unknown> {
   return {
     capability_id: "studio.capability_registry",
@@ -31,6 +38,16 @@ function capability(overrides: Record<string, unknown>): Record<string, unknown>
   };
 }
 
+/**
+ * Answer every `/api/` request from a route table, counting the calls.
+ *
+ * Only counts are recorded: this spec asserts that a queued analysis is
+ * polled, not what was sent, so recording bodies would be state nothing reads.
+ *
+ * @param page - The page to intercept.
+ * @param mocks - Path to mocked payload.
+ * @returns A view of how many times each path was asked.
+ */
 async function installApiDispatcher(
   page: Page,
   mocks: Map<string, ApiMockPayload>,
@@ -190,6 +207,11 @@ const analysisJobPoll = {
   ],
 };
 
+/**
+ * The route table this spec drives the host with.
+ *
+ * @returns Path to mocked payload, for every route the host reaches.
+ */
 function hostMocks(): Map<string, ApiMockPayload> {
   return new Map<string, ApiMockPayload>([
     ["/api/studio/capabilities", {

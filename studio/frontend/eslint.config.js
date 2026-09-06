@@ -38,7 +38,18 @@ import tseslint from "typescript-eslint";
  * enforce. Sorted, so an addition is one reviewable line of diff.
  */
 const AUDITED = [
+  "e2e/admin-operator-audit-archive.spec.ts",
+  "e2e/admin-operator-capabilities.spec.ts",
+  "e2e/admin-operator-evidence-bundle.spec.ts",
+  "e2e/admin-operator-project-evidence.spec.ts",
+  "e2e/admin-operator-status.spec.ts",
+  "e2e/admin-operator-synthesis.spec.ts",
+  "e2e/adminOperatorHarness.ts",
+  "e2e/analysis-job-host.spec.ts",
+  "e2e/catalogue-to-silicon-live.spec.ts",
   "e2e/experiment-export-live.spec.ts",
+  "e2e/guided-operator-run.spec.ts",
+  "e2e/module-federation-host.spec.ts",
   "e2e/network-canvas-live.spec.ts",
   "playwright.export.config.ts",
   "playwright.graph.config.ts",
@@ -141,27 +152,15 @@ export const LEGACY_OUTSIDE_SCOPE = {
    */
   noUncheckedIndexedAccessErrors: 0,
   /**
-   * What auditing the rest of the `e2e` suite would cost, per file.
+   * The `e2e` suite is fully audited as of 2026-09-07; nothing remains here.
    *
-   * Measured by putting every spec into a type-aware project and running the
-   * audited profile over it — 103 findings in ten files, almost all
-   * `no-unsafe-*` from untyped JSON. Four of the files are nearly free, which
-   * is why the list is here rather than a single "next": the cheap ones can be
-   * taken in any order, and the six admin-operator specs are one shape of
-   * problem that is better solved once than six times.
+   * Closing it removed 2 454 lines of duplication: the six admin-operator
+   * specs each carried an identical 500-line copy of the same mocked Studio,
+   * and the unused fixtures the strict profile reported were a symptom of six
+   * copies each using a different subset. They share
+   * `e2e/adminOperatorHarness.ts` now.
    */
-  e2eOutsideScope: {
-    "admin-operator-audit-archive.spec.ts": 13,
-    "admin-operator-capabilities.spec.ts": 14,
-    "admin-operator-evidence-bundle.spec.ts": 17,
-    "admin-operator-project-evidence.spec.ts": 17,
-    "admin-operator-status.spec.ts": 18,
-    "admin-operator-synthesis.spec.ts": 15,
-    "analysis-job-host.spec.ts": 3,
-    "catalogue-to-silicon-live.spec.ts": 2,
-    "guided-operator-run.spec.ts": 3,
-    "module-federation-host.spec.ts": 1,
-  },
+  e2eOutsideScope: {},
 };
 
 export default tseslint.config(

@@ -20,6 +20,12 @@ interface ApiDispatcher {
   requests: (path: string) => number;
 }
 
+/**
+ * A healthy capability record, for the guided flow's own registry.
+ *
+ * @param overrides - Fields to set on top of the healthy default.
+ * @returns The capability payload.
+ */
 function capability(overrides: Record<string, unknown>): Record<string, unknown> {
   return {
     capability_id: "studio.capability_registry",
@@ -36,6 +42,16 @@ function capability(overrides: Record<string, unknown>): Record<string, unknown>
   };
 }
 
+/**
+ * Answer every `/api/` request from a route table, recording what was asked.
+ *
+ * This spec's own dispatcher rather than the admin harness's: it drives a
+ * different route set and records only the bodies and counts its cases read.
+ *
+ * @param page - The page to intercept.
+ * @param mocks - Path to mocked payload.
+ * @returns A view of what each path was asked, for the assertions.
+ */
 async function installApiDispatcher(
   page: Page,
   mocks: Map<string, ApiMockPayload>,
@@ -341,6 +357,11 @@ const evidenceBundle = {
   },
 };
 
+/**
+ * The route table the guided flow is driven with.
+ *
+ * @returns Path to mocked payload, for every route the flow reaches.
+ */
 function guidedMocks(): Map<string, ApiMockPayload> {
   return new Map<string, ApiMockPayload>([
     ["/api/studio/capabilities", {
