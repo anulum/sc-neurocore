@@ -41,7 +41,7 @@ const helpStyle: CSSProperties = { color: "var(--text-muted)", fontSize: 10 };
 const errorStyle: CSSProperties = { color: "var(--danger, #c0392b)", fontSize: 10 };
 const inputStyle: CSSProperties = {
   background: "var(--bg-primary)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--control-border)",
   borderRadius: 3,
   color: "var(--text-primary)",
   fontSize: 11,

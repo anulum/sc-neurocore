@@ -249,7 +249,7 @@ export default function ModelBrowser() {
                         fontSize: 11,
                         background: "var(--bg-tertiary)",
                         color: "var(--text-primary)",
-                        border: "1px solid var(--border)",
+                        border: "1px solid var(--control-border)",
                         borderRadius: "var(--radius)",
                         outline: "none",
                         fontFamily: "var(--font-mono)",
@@ -273,7 +273,7 @@ export default function ModelBrowser() {
                             modelScan.state.phase === "completed"
                                 ? "var(--accent)"
                                 : "var(--text-muted)",
-                        border: "1px solid var(--border)",
+                        border: "1px solid var(--control-border)",
                         borderRadius: 3,
                         cursor: modelScan.busy ? "wait" : "pointer",
                         opacity: modelScan.busy ? 0.7 : 1,
@@ -328,7 +328,7 @@ export default function ModelBrowser() {
                         fontSize: 10,
                         background: "var(--bg-tertiary)",
                         color: "var(--text-primary)",
-                        border: "1px solid var(--border)",
+                        border: "1px solid var(--control-border)",
                         borderRadius: "var(--radius)",
                         fontFamily: "var(--font-mono)",
                     }}

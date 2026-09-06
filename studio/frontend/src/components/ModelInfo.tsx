@@ -98,7 +98,7 @@ export default function ModelInfo() {
                   style={{
                     fontSize: 9, padding: "0 5px", cursor: "pointer",
                     background: "var(--bg-secondary)", color: "var(--text-secondary)",
-                    border: "1px solid var(--border)", borderRadius: "var(--radius)",
+                    border: "1px solid var(--control-border)", borderRadius: "var(--radius)",
                   }}>
                   {copied ? "✓ copied" : "⧉ How to cite"}
                 </button>

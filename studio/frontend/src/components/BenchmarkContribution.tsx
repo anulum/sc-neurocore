@@ -124,12 +124,12 @@ export default function BenchmarkContribution() {
               placeholder="handle (optional)" maxLength={40} style={{
                 fontSize: 10, padding: "2px 6px", flex: 1,
                 background: "var(--bg-tertiary)", color: "var(--text-primary)",
-                border: "1px solid var(--border)", borderRadius: "var(--radius)",
+                border: "1px solid var(--control-border)", borderRadius: "var(--radius)",
               }} />
             <button type="button" onClick={contribute} style={{
               fontSize: 10, padding: "2px 10px", cursor: "pointer",
               background: "var(--bg-secondary)", color: "var(--text-secondary)",
-              border: "1px solid var(--border)", borderRadius: "var(--radius)",
+              border: "1px solid var(--control-border)", borderRadius: "var(--radius)",
             }}>Contribute</button>
           </div>
         </details>

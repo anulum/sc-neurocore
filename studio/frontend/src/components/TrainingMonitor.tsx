@@ -136,7 +136,7 @@ export function TrainingCheckpointControls({
         title="Export training checkpoint"
         style={{
           background: "var(--bg-tertiary)",
-          border: "1px solid var(--border)",
+          border: "1px solid var(--control-border)",
           color: canExport ? "var(--text-secondary)" : "var(--text-muted)",
           cursor: canExport ? "pointer" : "not-allowed",
           fontSize: 10,
@@ -150,7 +150,7 @@ export function TrainingCheckpointControls({
         title="Import training checkpoint"
         style={{
           background: "var(--bg-tertiary)",
-          border: "1px solid var(--border)",
+          border: "1px solid var(--control-border)",
           color: "var(--text-secondary)",
           cursor: "pointer",
           fontSize: 10,
@@ -222,7 +222,7 @@ export function TrainingWeightRestorePlanStrip({
               onClick={onVerify}
               style={{
                 background: "var(--bg-tertiary)",
-                border: "1px solid var(--border)",
+                border: "1px solid var(--control-border)",
                 color: "var(--text-secondary)",
                 cursor: "pointer",
                 fontSize: 10,
@@ -239,7 +239,7 @@ export function TrainingWeightRestorePlanStrip({
               onClick={onExportVerification}
               style={{
                 background: "var(--bg-tertiary)",
-                border: "1px solid var(--border)",
+                border: "1px solid var(--control-border)",
                 color: verification ? "var(--text-secondary)" : "var(--text-muted)",
                 cursor: verification ? "pointer" : "not-allowed",
                 fontSize: 10,
@@ -408,7 +408,7 @@ export default function TrainingMonitor() {
           title="Materialize and verify training weights into confined evidence"
           style={{
             background: "var(--bg-tertiary)",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--control-border)",
             color: trainingJobId !== null ? "var(--text-secondary)" : "var(--text-muted)",
             cursor: trainingJobId !== null ? "pointer" : "not-allowed",
             fontSize: 10,
@@ -423,7 +423,7 @@ export default function TrainingMonitor() {
           title="Warm-start a new training job from the verified weights"
           style={{
             background: "var(--bg-tertiary)",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--control-border)",
             color: trainingJobId !== null && !isRunning ? "var(--text-secondary)" : "var(--text-muted)",
             cursor: trainingJobId !== null && !isRunning ? "pointer" : "not-allowed",
             fontSize: 10,
@@ -438,7 +438,7 @@ export default function TrainingMonitor() {
           title="Attach the verified weights into the running job at the next epoch boundary"
           style={{
             background: "var(--bg-tertiary)",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--control-border)",
             color: isRunning && trainingWeightMaterialization !== null ? "var(--text-secondary)" : "var(--text-muted)",
             cursor: isRunning && trainingWeightMaterialization !== null ? "pointer" : "not-allowed",
             fontSize: 10,

@@ -249,7 +249,7 @@ export default function NetworkCanvas() {
           aria-label="Undo the last graph edit"
           title="Undo the last graph edit (Ctrl+Z). Moving a node is not an edit."
           style={{
-            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Undo</button>
@@ -259,7 +259,7 @@ export default function NetworkCanvas() {
           aria-label="Redo the last undone graph edit"
           title="Redo the last undone graph edit (Ctrl+Shift+Z)"
           style={{
-            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Redo</button>
@@ -273,7 +273,7 @@ export default function NetworkCanvas() {
           }
           title="Copy the selection, with the projections whose both ends are inside it. A projection leaving the selection is not copied."
           style={{
-            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Duplicate</button>
@@ -296,12 +296,12 @@ export default function NetworkCanvas() {
           style={{
             background: tableView ? "var(--border)" : "transparent",
             color: tableView ? "var(--text)" : "var(--text-muted)",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--control-border)",
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Table view</button>
         <button onClick={exportGraphNIR} disabled={graphPopulations.length === 0} style={{
-          background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+          background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>Export NIR</button>
         <span style={{ fontSize: 9, color: "var(--text-muted)" }}>

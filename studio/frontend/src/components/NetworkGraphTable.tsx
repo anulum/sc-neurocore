@@ -163,7 +163,7 @@ export default function NetworkGraphTable({
                 aria-label={studioGraphTableRemoveLabel(row)}
                 style={{
                   background: "transparent",
-                  border: "1px solid var(--border)",
+                  border: "1px solid var(--control-border)",
                   borderRadius: 3,
                   color: "var(--text-muted)",
                   cursor: "pointer",

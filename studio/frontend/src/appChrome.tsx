@@ -43,7 +43,7 @@ export function Tab({
         lineHeight: 1.4,
         background: active ? color : "transparent",
         color: active ? "var(--bg-primary)" : disabled ? "var(--text-muted)" : "var(--text-secondary)",
-        border: "1px solid var(--border)",
+        border: "1px solid var(--control-border)",
         cursor: disabled ? "not-allowed" : "pointer",
         whiteSpace: "nowrap",
         opacity: disabled ? 0.45 : 1,
@@ -81,7 +81,7 @@ export function Btn({
       data-testid={testId}
       style={{
         background: outline ? "transparent" : color || "var(--accent)",
-        border: outline ? "1px solid var(--border)" : "none",
+        border: outline ? "1px solid var(--control-border)" : "none",
         color: outline ? "var(--text-muted)" : "var(--bg-primary)",
         padding: "2px 7px",
         fontSize: 10,

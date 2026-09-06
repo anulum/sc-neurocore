@@ -118,7 +118,7 @@ export default function OnboardingOverlay() {
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <button onClick={prev} disabled={step === 0} style={{
             background: "var(--bg-tertiary)", color: "var(--text-secondary)",
-            border: "1px solid var(--border)", borderRadius: 6,
+            border: "1px solid var(--control-border)", borderRadius: 6,
             padding: "6px 16px", fontSize: 12, cursor: "pointer",
             opacity: step === 0 ? 0.3 : 1,
           }}>Back</button>

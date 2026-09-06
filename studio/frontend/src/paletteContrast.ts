@@ -21,6 +21,7 @@
 
 import { at } from "./arrayAt";
 import {
+  CONTRAST_AA_LARGE,
   CONTRAST_AA_NORMAL,
   composite,
   contrastRatio,
@@ -233,6 +234,36 @@ export function textTokenRequirements(): PaletteRequirement[] {
 }
 
 /**
+ * Surfaces an interactive control is drawn on.
+ *
+ * A control's own outline is what identifies it as a control, so WCAG 2.2 SC
+ * 1.4.11 holds it to 3:1 against whatever it sits on. Structural dividers —
+ * panel edges, row separators, card outlines — carry no information a reader
+ * needs and are outside that criterion; they keep `--border`.
+ */
+export const CONTROL_GROUNDS: readonly (readonly string[])[] = [
+  ["var(--bg-primary)"],
+  ["var(--bg-secondary)"],
+  ["var(--bg-tertiary)"],
+  ["var(--bg-hover)"],
+];
+
+/**
+ * Requirements for the outline of every interactive control.
+ *
+ * @returns One requirement per surface a control is drawn on.
+ */
+export function controlBorderRequirements(): PaletteRequirement[] {
+  return CONTROL_GROUNDS.map((ground) => ({
+    foreground: "var(--control-border)",
+    ground,
+    label: `--control-border on ${ground.join(" over ")}`,
+    threshold: CONTRAST_AA_LARGE,
+    why: "SC 1.4.11: the outline is what identifies the control.",
+  }));
+}
+
+/**
  * Requirements for one badge colour map, in both roles it is used in.
  *
  * A badge colour is the chip's text while the filter is off and the chip's
@@ -380,4 +411,35 @@ export function canvasTextColours(source: string): CanvasTextColours {
     throw new Error("no fillText call found; the scan no longer matches the source");
   }
   return { literals: [...literals], symbols: [...symbols] };
+}
+
+const CONTROL_TAG = /^(?:button|input|select|textarea)$/;
+const OPENING_TAG = /<([A-Za-z][\w.]*)\b/;
+const DIVIDER_BORDER = /\bborder\s*:\s*"1px solid var\(--border\)"/;
+
+/**
+ * Find controls whose outline uses the divider token.
+ *
+ * A control drawn with `--border` fails SC 1.4.11 while every token in the
+ * stylesheet still passes its own check, so the token audit alone cannot see
+ * it. Each match is attributed to the nearest opening tag above it, which is
+ * the element the inline style belongs to; a `borderTop` or `borderBottom` is
+ * a divider by construction and is not considered.
+ *
+ * @param source - A component module's text.
+ * @returns One-based line numbers of the offending declarations.
+ */
+export function controlsUsingDividerBorder(source: string): number[] {
+  const lines = source.split("\n");
+  const offenders: number[] = [];
+  for (const [index, line] of lines.entries()) {
+    if (!DIVIDER_BORDER.test(line)) continue;
+    let tag: string | null = null;
+    for (let back = index; back >= 0 && tag === null; back--) {
+      const opening = OPENING_TAG.exec(lines[back] ?? "");
+      if (opening !== null) tag = (opening[1] ?? "").toLowerCase();
+    }
+    if (tag !== null && CONTROL_TAG.test(tag)) offenders.push(index + 1);
+  }
+  return offenders;
 }

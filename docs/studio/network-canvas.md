@@ -220,9 +220,32 @@ badge greys rose to the least they could and still pass in both of the roles a
 badge colour has — chip text while the filter is off, chip ground while it is
 on.
 
-Grid lines behind the plot data are deliberately left below 3:1. They are
-redundant guides drawn beneath labelled axes, not graphics required to
-understand the content, and raising them would compete with the traces.
+### Non-text contrast, and where it stops
+
+SC 1.4.11 asks for 3:1 from two things: the visual information that identifies
+a **user interface component**, and the parts of a **graphic required to
+understand the content**. Not from everything that has an edge.
+
+A control's outline is the first of those — it is what says the thing is a
+control — and `--border` at 1.42:1 was not enough for it. `--control-border`
+(`#728091`) is the lowest luminance of the same blue-grey that clears 3:1 on
+every surface a control sits on; `--bg-hover` binds it at 3.03:1. Every button,
+input, select and textarea that used to draw itself with `--border` now uses
+it, in the stylesheet and in the components.
+
+`--border` stays where it was, at 1.42:1, and that is a decision rather than an
+omission: panel edges, row separators and card outlines carry no information a
+reader needs, so the criterion does not reach them. Grid lines behind the plot
+data are the same case — redundant guides drawn beneath labelled axes, where
+raising them would compete with the traces. Both figures are recorded in the
+test so a later reader can see they were measured and excluded.
+
+The split is worth guarding in two directions. The token check alone would stay
+green if a control were drawn with `--border`, because both tokens pass their
+own thresholds, so `controlsUsingDividerBorder` reads the component sources and
+attributes each inline `border` declaration to the nearest opening tag; a
+control found using the divider token fails the suite. A one-sided
+`borderTop`/`borderBottom` is a divider by construction and is not considered.
 
 ## Reading the graph without the canvas
 

@@ -69,7 +69,7 @@ export default function ModelDocViewer() {
         style={{
           width: "100%", textAlign: "left", fontSize: 10, padding: "3px 4px",
           background: "var(--bg-tertiary)", color: "var(--text-secondary)",
-          border: "1px solid var(--border)", borderRadius: "var(--radius)", cursor: "pointer",
+          border: "1px solid var(--control-border)", borderRadius: "var(--radius)", cursor: "pointer",
         }}
       >
         {open ? "▾" : "▸"} Reference documentation

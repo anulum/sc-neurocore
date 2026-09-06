@@ -71,7 +71,7 @@ export default function EvidenceBundleArtifactList({
             onClick={() => onDownloadArtifact(artifact.relative_path)}
             style={{
               background: "var(--bg-tertiary)",
-              border: "1px solid var(--border)",
+              border: "1px solid var(--control-border)",
               borderRadius: 3,
               color: "var(--text-secondary)",
               cursor: loading ? "wait" : "pointer",

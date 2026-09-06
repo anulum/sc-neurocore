@@ -77,7 +77,7 @@ export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelPr
             onClick={() => { void runNextStep(); }}
             style={{
               background: actionDisabled ? "var(--bg-tertiary)" : "var(--accent)",
-              border: "1px solid var(--border)",
+              border: "1px solid var(--control-border)",
               color: actionDisabled ? "var(--text-muted)" : "var(--bg-primary)",
               cursor: actionDisabled ? "not-allowed" : "pointer",
               fontSize: 10,

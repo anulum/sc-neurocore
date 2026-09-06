@@ -623,18 +623,18 @@ export default function App() {
                 if (name) s.saveProjectToServer(name);
               }} style={{
                 fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
-                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Save</button>
               <button aria-label="Refresh projects" onClick={() => s.listServerProjects()} style={{
                 fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
-                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Refresh</button>
               <button aria-label="Show deleted projects"
                 onClick={() => void s.listDeletedServerProjects()} style={{
                 fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
-                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Deleted</button>
             </div>
@@ -692,7 +692,7 @@ export default function App() {
                 if (name) s.saveSession(name);
               }} style={{
                 fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
-                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                color: "var(--text-secondary)", border: "1px solid var(--control-border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Save</button>
             </div>

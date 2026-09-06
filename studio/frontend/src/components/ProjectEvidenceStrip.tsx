@@ -54,7 +54,7 @@ export default function ProjectEvidenceStrip({
             padding: "2px 6px",
             background: "var(--bg-tertiary)",
             color: "var(--text-secondary)",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--control-border)",
             borderRadius: 3,
             cursor: loading ? "wait" : "pointer",
           }}

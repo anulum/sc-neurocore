@@ -34,6 +34,8 @@ import {
   auditPalette,
   badgeRequirements,
   canvasTextColours,
+  controlBorderRequirements,
+  controlsUsingDividerBorder,
   parseCssColour,
   plotTextRequirements,
   readCssTokens,
@@ -182,6 +184,36 @@ describe("auditPalette", () => {
   });
 });
 
+describe("controlsUsingDividerBorder", () => {
+  it("flags a control drawn with the divider token", () => {
+    expect(
+      controlsUsingDividerBorder('<button style={{ border: "1px solid var(--border)" }}>x</button>'),
+    ).toEqual([1]);
+  });
+
+  it("leaves a panel drawn with the divider token alone", () => {
+    expect(
+      controlsUsingDividerBorder('<div style={{ border: "1px solid var(--border)" }} />'),
+    ).toEqual([]);
+  });
+
+  it("attributes a style to the nearest tag, not to one further above", () => {
+    const module = [
+      "<button>Table view</button>",
+      "<div style={{",
+      '  border: "1px solid var(--border)",',
+      "}} />",
+    ].join("\n");
+    expect(controlsUsingDividerBorder(module)).toEqual([]);
+  });
+
+  it("ignores a one-sided border, which is a divider by construction", () => {
+    expect(
+      controlsUsingDividerBorder('<button style={{ borderTop: "1px solid var(--border)" }} />'),
+    ).toEqual([]);
+  });
+});
+
 describe("canvasTextColours", () => {
   it("attributes a fillText to the fillStyle above it", () => {
     const found = canvasTextColours('ctx.fillStyle = "#abcdef";\nctx.fillText("x", 0, 0);\n');
@@ -259,6 +291,47 @@ describe("the Studio's declared colours", () => {
     const resolved = fills.map((fill) => (fill === "${PLOT_AXIS}" ? PLOT_AXIS : fill));
     expect(resolved.every((fill) => fill.startsWith("#"))).toBe(true);
     expect(auditPalette(plotTextRequirements(resolved, "simulationExports"), TOKENS)).toEqual([]);
+  });
+
+  it("holds every control outline to the 3:1 that identifies it as a control", () => {
+    expect(auditPalette(controlBorderRequirements(), TOKENS)).toEqual([]);
+  });
+
+  it("keeps structural dividers on the token that is not held to 3:1", () => {
+    // `--border` is deliberately quiet. Recording the number here means a
+    // future reader can see it was measured and excluded rather than missed.
+    const findings = auditPalette(
+      [
+        {
+          foreground: "var(--border)",
+          ground: ["var(--bg-secondary)"],
+          label: "--border on --bg-secondary",
+          threshold: 3,
+          why: "not a control outline; recorded, not enforced",
+        },
+      ],
+      TOKENS,
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.ratio).toBeCloseTo(1.42, 2);
+  });
+
+  it("draws no control outline with the divider token", () => {
+    const offenders: string[] = [];
+    for (const file of [
+      "App.tsx",
+      "appChrome.tsx",
+      "components/NetworkCanvas.tsx",
+      "components/TrainingMonitor.tsx",
+      "components/PopulationEditor.tsx",
+      "components/ProjectionEditor.tsx",
+      "components/ModelBrowser.tsx",
+    ]) {
+      for (const line of controlsUsingDividerBorder(source(file))) {
+        offenders.push(`${file}:${String(line)}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it("keeps the canvas tints exactly as the components use them", () => {

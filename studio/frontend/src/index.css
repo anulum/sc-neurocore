@@ -3,7 +3,15 @@
   --bg-secondary: #161b22;
   --bg-tertiary: #21262d;
   --bg-hover: #30363d;
+  /* Structural dividers: panel edges, row separators, card outlines. These
+     carry no information a reader needs, so WCAG 2.2 SC 1.4.11 does not apply
+     and they stay quiet at 1.4:1. */
   --border: #30363d;
+  /* The outline of an interactive control is what identifies it as one, which
+     SC 1.4.11 holds to 3:1. This is the lowest luminance of the same blue-grey
+     that clears it against every surface a control sits on; the binding one is
+     --bg-hover, at 3.03:1. Guarded by src/paletteContrast.test.ts. */
+  --control-border: #728091;
   --text-primary: #e6edf3;
   /* The grey ramp is fixed by WCAG 2.2 AA, not by taste: --text-muted sits at
      the lowest luminance that still reaches 4.5:1 against every ground it is
@@ -240,7 +248,7 @@ body {
 .auth-control input {
   min-width: 0;
   padding: 2px 5px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -249,7 +257,7 @@ body {
 
 .auth-control button {
   padding: 2px 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -313,7 +321,7 @@ body {
 
 .admin-actions button {
   padding: 3px 7px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -408,7 +416,7 @@ body {
   grid-row: 1 / span 3;
   align-self: center;
   padding: 5px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -434,7 +442,7 @@ body {
   grid-row: 1 / span 2;
   align-self: center;
   padding: 5px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -466,7 +474,7 @@ body {
   width: 100%;
   min-width: 0;
   padding: 4px 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -476,7 +484,7 @@ body {
 
 .admin-identity-row button {
   padding: 4px 7px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--accent);
   color: var(--bg-primary);
@@ -510,7 +518,7 @@ body {
   width: 100%;
   min-width: 0;
   padding: 4px 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -535,7 +543,7 @@ body {
 .admin-evidence-form button {
   align-self: end;
   padding: 5px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--accent);
   color: var(--bg-primary);
@@ -667,7 +675,7 @@ body {
   justify-self: start;
   margin-top: 8px;
   padding: 2px 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -776,7 +784,7 @@ body {
 
 .studio-readiness-actions button {
   padding: 2px 7px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -819,7 +827,7 @@ body {
 select {
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   padding: 5px 10px;
   font-size: 13px;
@@ -942,7 +950,7 @@ input[type="range"]::-moz-range-thumb {
 
 /* Monaco override */
 .monaco-wrapper {
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   overflow: hidden;
 }

@@ -98,7 +98,7 @@ export default function CompilerInspector() {
             onClick={exportCompileEvidence}
             style={{
               padding: "3px 8px",
-              border: "1px solid var(--border)",
+              border: "1px solid var(--control-border)",
               borderRadius: "var(--radius)",
               background: "var(--accent)",
               color: "var(--bg-primary)",
