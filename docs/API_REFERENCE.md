@@ -41725,6 +41725,66 @@ WorkspaceConflict
 
 ---
 
+## Module `studio.workspace_lock`
+
+### Class `WorkspaceLockTimeout`
+Raised when another writer held a workspace for longer than the wait.
+
+Attributes
+----------
+name : str
+    The workspace that was busy.
+timeout : float
+    The wait that elapsed, in seconds.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Function `lock_path(root, name)`
+Return the lock database of one workspace under a project root.
+
+Parameters
+----------
+root : pathlib.Path
+    The project root holding the workspaces.
+name : str
+    Workspace name, one path segment.
+
+Raises
+------
+ValueError
+    The name is not a single path segment. The callers validate names
+    already; this refuses rather than trusting them, because the result is
+    a filesystem path.
+
+### Function `workspace_lock(root, name)`
+Hold one workspace against every other writer for the block's duration.
+
+Parameters
+----------
+root : pathlib.Path
+    The project root holding the workspaces.
+name : str
+    Workspace name.
+timeout : float, optional
+    How long to wait for another writer before refusing.
+
+Yields
+------
+None
+    The block runs with the workspace held.
+
+Raises
+------
+WorkspaceLockTimeout
+    Another thread or process held the workspace for the whole wait.
+    Nothing was written.
+ValueError
+    The name is not a single path segment.
+
+---
+
 ## Module `studio.workspace_schema`
 
 ### Class `WorkspaceSchemaError`
@@ -41826,8 +41886,14 @@ root : pathlib.Path
     Directory holding one subdirectory per workspace.
 clock : callable, optional
     Returns the current Unix timestamp; defaults to :func:`time.time`.
+lock_timeout : float, optional
+    How long an operation waits for another writer of the same workspace
+    before being refused with
+    :class:`~sc_neurocore.studio.workspace_lock.WorkspaceLockTimeout`.
 
 - **__init__**()
+- **lock**(name)
+  - Hold one workspace against every other writer, in this process and others.
 - **root**()
   - Return the directory this store keeps workspaces in.
 - **workspace_dir**(name)

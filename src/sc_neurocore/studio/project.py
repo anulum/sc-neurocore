@@ -16,12 +16,18 @@ from typing import Any
 from sc_neurocore.hdl_gen._ident import sanitize_ident
 from sc_neurocore.studio.project_manifest import build_project_save_manifest
 from sc_neurocore.studio.synthesis import EdaProcessLimits
+from sc_neurocore.studio.workspace_lock import DEFAULT_LOCK_TIMEOUT
 from sc_neurocore.studio.workspace_schema import PROJECT_PAYLOAD_VERSION, WorkspaceSchemaError
 from sc_neurocore.studio.workspace_store import WorkspaceStore
 
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
 
 logger = logging.getLogger(__name__)
+
+#: How long a request waits for another writer of the same workspace before it
+#: is refused with HTTP 503. A request thread is a scarce resource, so this is
+#: a bounded wait rather than a blocking one.
+_LOCK_TIMEOUT = DEFAULT_LOCK_TIMEOUT
 
 #: Payload version reported in save manifests; the revision document carries
 #: the same value so it satisfies the evidence-bundle project contract.
@@ -122,8 +128,14 @@ def _safe_path(name: str) -> Path:
 
 
 def _store() -> WorkspaceStore:
-    """Return the versioned workspace store rooted at the project directory."""
-    return WorkspaceStore(root=_projects_root())
+    """Return the versioned workspace store rooted at the project directory.
+
+    The store serialises writers of one workspace across processes, so a
+    request that arrives while another writer holds the same workspace waits
+    rather than racing it. The wait is bounded by ``_LOCK_TIMEOUT``: a request
+    thread must be released even when the other writer is stuck.
+    """
+    return WorkspaceStore(root=_projects_root(), lock_timeout=_LOCK_TIMEOUT)
 
 
 def save_project(

@@ -23,6 +23,7 @@ from starlette.responses import JSONResponse, Response
 
 from sc_neurocore.studio.model_run_contract import ModelInputError, ModelSimulationFailure
 from sc_neurocore.studio.training_contract import TrainingConfigError
+from sc_neurocore.studio.workspace_lock import WorkspaceLockTimeout
 from sc_neurocore.studio.workspace_store import WorkspaceConflict
 
 
@@ -42,6 +43,12 @@ def _safe(fn: Callable[..., Any]) -> Any:
     a ``ValueError``: a route that forgot it would report "invalid input" for a
     save that was perfectly valid and simply arrived second.
 
+    A :class:`WorkspaceLockTimeout` becomes HTTP 503: another writer held the
+    workspace for the whole bounded wait, nothing was written, and the same
+    request can be retried. It is translated here rather than left to the
+    generic handler because it is an :class:`OSError`, which would otherwise
+    be reported as an internal error the caller could do nothing about.
+
     A :class:`TrainingConfigError` becomes HTTP 422 with the field it refused
     and the supported values, for the same reason: a generic "invalid input"
     would leave a caller guessing which of eleven fields the Studio cannot run.
@@ -52,6 +59,8 @@ def _safe(fn: Callable[..., Any]) -> Any:
         raise
     except WorkspaceConflict as exc:
         raise HTTPException(status_code=409, detail=exc.to_public_detail()) from None
+    except WorkspaceLockTimeout as exc:
+        raise HTTPException(status_code=503, detail=exc.to_public_detail()) from None
     except TrainingConfigError as exc:
         raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
     except (ModelInputError, ModelSimulationFailure) as exc:

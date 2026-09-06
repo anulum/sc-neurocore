@@ -14,6 +14,14 @@ is this one. The rule they share: nothing here overwrites a workspace that
 already exists, and nothing removes one irrecoverably. Deleting moves the
 directory aside, restoring brings it back only onto a free name, and forking
 writes a new workspace rather than touching the one it copied.
+
+Each of those checks is only worth as much as its atomicity, so deleting and
+restoring hold the workspace the same way a save does: a delete that ran
+between a save's head check and its write, or two restores racing onto one
+free name, would defeat the check by walking through it. Forking and importing
+need no lock of their own — they create their workspace through
+:meth:`~sc_neurocore.studio.workspace_store.WorkspaceStore.save`, which holds
+the destination.
 """
 
 from __future__ import annotations
@@ -75,14 +83,15 @@ def delete_workspace(store: WorkspaceStore, name: str) -> Path:
     KeyError
         The workspace does not exist.
     """
-    source = store.workspace_dir(name)
-    if not source.is_dir():
-        raise KeyError(name)
-    trash = store.root / TRASH_DIR
-    trash.mkdir(parents=True, exist_ok=True)
-    destination = trash / f"{name}.{int(store.now() * 1000)}"
-    shutil.move(str(source), str(destination))
-    return destination
+    with store.lock(name):
+        source = store.workspace_dir(name)
+        if not source.is_dir():
+            raise KeyError(name)
+        trash = store.root / TRASH_DIR
+        trash.mkdir(parents=True, exist_ok=True)
+        destination = trash / f"{name}.{int(store.now() * 1000)}"
+        shutil.move(str(source), str(destination))
+        return destination
 
 
 def deleted_workspaces(store: WorkspaceStore) -> tuple[dict[str, object], ...]:
@@ -121,11 +130,12 @@ def restore_workspace(store: WorkspaceStore, token: str) -> str:
         raise KeyError(token)
     name, _, _stamp = token.rpartition(".")
     name = name or token
-    destination = store.workspace_dir(name)
-    if destination.exists():
-        raise _conflict(None, store.head_revision(name) or 0)
-    shutil.move(str(source), str(destination))
-    return name
+    with store.lock(name):
+        destination = store.workspace_dir(name)
+        if destination.exists():
+            raise _conflict(None, store.head_revision(name) or 0)
+        shutil.move(str(source), str(destination))
+        return name
 
 
 def export_workspace(

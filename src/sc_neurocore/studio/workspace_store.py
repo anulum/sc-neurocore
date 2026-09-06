@@ -22,6 +22,14 @@ before it was written:
   real ``RLIMIT_FSIZE`` refusal a 156-byte workspace became 65,536 bytes of
   unterminated JSON and loading it raised — the previous revision was gone.
   Revisions are written to a sibling temporary file and moved into place.
+* **Lost update again, through the gap in the check.** Refusing a stale save
+  is only a refusal if reading the head and writing the next revision happen
+  together. They did not: two savers read the same head, both believed they
+  were creating revision 1, both were acknowledged, and one payload was
+  overwritten. Every operation that reads or moves a workspace now holds that
+  workspace against other threads and other processes for as long as it needs
+  it — see :mod:`sc_neurocore.studio.workspace_lock` — and a revision number
+  is never reused even if a previous writer died between its two writes.
 
 A workspace directory holds ``revisions/<n>.json`` (immutable), ``head.json``
 (which revision is current) and ``trash/`` (deleted workspaces). Forking copies
@@ -34,6 +42,7 @@ from __future__ import annotations
 import hashlib
 import time
 from collections.abc import Mapping
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -45,6 +54,11 @@ from sc_neurocore.studio.workspace_lifecycle import (
     fork_workspace,
     import_workspace,
     restore_workspace,
+)
+from sc_neurocore.studio.workspace_lock import (
+    DEFAULT_LOCK_TIMEOUT,
+    LOCK_DIR,
+    workspace_lock,
 )
 from sc_neurocore.studio.workspace_schema import (
     PROJECT_PAYLOAD_VERSION,
@@ -142,12 +156,32 @@ class WorkspaceStore:
         Directory holding one subdirectory per workspace.
     clock : callable, optional
         Returns the current Unix timestamp; defaults to :func:`time.time`.
+    lock_timeout : float, optional
+        How long an operation waits for another writer of the same workspace
+        before being refused with
+        :class:`~sc_neurocore.studio.workspace_lock.WorkspaceLockTimeout`.
     """
 
-    def __init__(self, *, root: Path, clock: Any = None) -> None:
+    def __init__(
+        self,
+        *,
+        root: Path,
+        clock: Any = None,
+        lock_timeout: float = DEFAULT_LOCK_TIMEOUT,
+    ) -> None:
         self._root = root
         self._clock = clock or time.time
+        self._lock_timeout = lock_timeout
         self._root.mkdir(parents=True, exist_ok=True)
+
+    def lock(self, name: str) -> AbstractContextManager[None]:
+        """Hold one workspace against every other writer, in this process and others.
+
+        Every method here that writes, and every read that a writer depends
+        on, runs inside this. It is re-entrant within one thread, so a locked
+        operation may call another one; a different thread or process waits.
+        """
+        return workspace_lock(self._root, name, timeout=self._lock_timeout)
 
     @property
     def root(self) -> Path:
@@ -191,6 +225,11 @@ class WorkspaceStore:
             Whether an adoption happened. Adopting twice is a no-op, because
             the second call finds a head.
         """
+        with self.lock(name):
+            return self._adopt_legacy_held(name)
+
+    def _adopt_legacy_held(self, name: str) -> bool:
+        """Adopt a legacy file with this workspace already held."""
         legacy = self._legacy_path(name)
         if self._head_path(name).is_file() or not legacy.is_file():
             return False
@@ -231,17 +270,38 @@ class WorkspaceStore:
 
     def exists(self, name: str) -> bool:
         """Return whether a workspace has at least one revision."""
-        self.adopt_legacy(name)
-        return self._head_path(name).is_file()
+        with self.lock(name):
+            self._adopt_legacy_held(name)
+            return self._head_path(name).is_file()
 
     def head_revision(self, name: str) -> int | None:
         """Return the current revision number, or ``None`` for a new workspace."""
-        self.adopt_legacy(name)
+        with self.lock(name):
+            return self._head_revision_held(name)
+
+    def _head_revision_held(self, name: str) -> int | None:
+        """Return the current revision with this workspace already held."""
+        self._adopt_legacy_held(name)
         path = self._head_path(name)
         if not path.is_file():
             return None
         document = read_document(path)
         return int(document["state"]["revision"])
+
+    def _highest_revision(self, name: str) -> int:
+        """Return the largest revision number on disk, or zero.
+
+        A writer that died between writing its revision and writing the head
+        leaves a revision file the head does not point at. Numbering from the
+        head alone would hand that number to the next save, which would then
+        overwrite a stored state. Numbering from whichever is higher never
+        reuses a number, so no stored revision is ever written over.
+        """
+        directory = self.workspace_dir(name) / REVISIONS_DIR
+        if not directory.is_dir():
+            return 0
+        numbers = [int(path.stem) for path in directory.glob("*.json") if path.stem.isdigit()]
+        return max(numbers, default=0)
 
     def save(
         self,
@@ -273,10 +333,21 @@ class WorkspaceStore:
         WorkspaceConflict
             The workspace has moved on since ``expected_revision``.
         """
-        current = self.head_revision(name)
+        with self.lock(name):
+            return self._save_held(name, state, expected_revision=expected_revision)
+
+    def _save_held(
+        self,
+        name: str,
+        state: Mapping[str, Any],
+        *,
+        expected_revision: int | None,
+    ) -> WorkspaceRevision:
+        """Append one revision with this workspace already held."""
+        current = self._head_revision_held(name)
         if current != expected_revision:
             raise WorkspaceConflict(expected=expected_revision, actual=current or 0)
-        revision = (current or 0) + 1
+        revision = max(current or 0, self._highest_revision(name)) + 1
         saved_at = float(self._clock())
         document = {
             "schema_version": WORKSPACE_SCHEMA_VERSION,
@@ -318,10 +389,15 @@ class WorkspaceStore:
         WorkspaceSchemaError
             The stored revision cannot be read as a workspace.
         """
-        self.adopt_legacy(name)
-        target = revision if revision is not None else self.head_revision(name)
-        if target is None:
-            raise KeyError(name)
+        with self.lock(name):
+            self._adopt_legacy_held(name)
+            target = revision if revision is not None else self._head_revision_held(name)
+            if target is None:
+                raise KeyError(name)
+            return self._read_revision(name, target)
+
+    def _read_revision(self, name: str, target: int) -> dict[str, Any]:
+        """Return one stored revision document."""
         path = self._revision_path(name, target)
         if not path.is_file():
             raise KeyError(f"{name}@{target}")
@@ -329,7 +405,12 @@ class WorkspaceStore:
 
     def revisions(self, name: str) -> tuple[WorkspaceRevision, ...]:
         """Return every stored revision of one workspace, oldest first."""
-        self.adopt_legacy(name)
+        with self.lock(name):
+            self._adopt_legacy_held(name)
+            return self._revisions_held(name)
+
+    def _revisions_held(self, name: str) -> tuple[WorkspaceRevision, ...]:
+        """Return every stored revision with this workspace already held."""
         directory = self.workspace_dir(name) / REVISIONS_DIR
         if not directory.is_dir():
             return ()
@@ -360,19 +441,22 @@ class WorkspaceStore:
             if path.is_file():
                 self.adopt_legacy(path.name[: -len(LEGACY_SUFFIX)])
         for directory in sorted(self._root.iterdir()):
-            if not directory.is_dir() or directory.name == TRASH_DIR:
+            if not directory.is_dir() or directory.name in (TRASH_DIR, LOCK_DIR):
                 continue
             name = directory.name
-            head = self.head_revision(name) if self.exists(name) else None
-            if head is None:
-                continue
-            summaries.append(
-                {
-                    "name": name,
-                    "revision": head,
-                    "revision_count": len(self.revisions(name)),
-                }
-            )
+            # One acquisition per workspace: the reads below would each take
+            # the same lock again, which is allowed but pointless work.
+            with self.lock(name):
+                head = self._head_revision_held(name)
+                if head is None:
+                    continue
+                summaries.append(
+                    {
+                        "name": name,
+                        "revision": head,
+                        "revision_count": len(self._revisions_held(name)),
+                    }
+                )
         return tuple(summaries)
 
     def fork(self, name: str, new_name: str, *, revision: int | None = None) -> WorkspaceRevision:

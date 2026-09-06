@@ -249,6 +249,22 @@ describe("a refused save", () => {
     });
   });
 
+  it("tells the editor a busy workspace can simply be saved again", () => {
+    const busy = new StudioRequestError(
+      "another writer held workspace 'demo' for longer than 10.0 seconds; "
+      + "nothing was written, so the same save can be retried.",
+      503,
+      { error: "workspace_busy", name: "demo", reason: "busy", timeout_seconds: 10 },
+    );
+
+    expect(studioProjectSaveFailureState(busy)).toEqual({
+      error:
+        "another writer held workspace 'demo' for longer than 10.0 seconds; "
+        + "nothing was written, so the same save can be retried. "
+        + "Nothing was written; save again.",
+    });
+  });
+
   it("falls back to the ordinary failure message for anything else", () => {
     expect(studioProjectSaveFailureState(new Error("network down"))).toEqual({
       error: "network down",

@@ -144,12 +144,21 @@ export function studioProjectRevisionFromLoadResponse(
  * overwrite the other editor's work with the state this one still holds —
  * the lost update the conflict exists to prevent. The editor keeps its own
  * revision and the message says the workspace was left alone.
+ *
+ * A busy workspace (503) is a different answer and deserves a different one
+ * back: another writer held the workspace for the whole of the server's wait,
+ * nothing was written, and the very same save can be sent again. Reporting it
+ * as an ordinary failure would push a user into reloading and reapplying work
+ * that was never in conflict with anything.
  */
 export function studioProjectSaveFailureState(
   error: unknown,
 ): StudioProjectFailureStatePatch {
   if (error instanceof StudioRequestError && error.status === 409) {
     return { error: `${error.message} Nothing was overwritten.` };
+  }
+  if (error instanceof StudioRequestError && error.status === 503) {
+    return { error: `${error.message} Nothing was written; save again.` };
   }
   return studioProjectFailureState(error, "Project save failed");
 }

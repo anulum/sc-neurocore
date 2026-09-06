@@ -10,14 +10,15 @@
 A Studio workspace is an append-only list of revisions. Saving adds one; it
 never rewrites one. Schema `studio.workspace.v1`.
 
-Three failures this replaces, each reproduced against the previous
-single-file store before the replacement was written:
+Four failures this replaces, each reproduced against the store as it stood
+before the replacement was written:
 
 | Failure | What happened | What happens now |
 |---|---|---|
 | Lost update | Two editors loaded the same workspace and both saved. The second save replaced the first, with nothing to notice it by | A save states the revision it was made from; a save from a stale revision is refused with HTTP 409 |
 | Unrecoverable delete | `delete_project` removed the file | Deletion moves the workspace to a trash it can be restored from |
 | Torn write | A save truncated the live file and wrote into it. Under a real `RLIMIT_FSIZE` refusal a 156-byte workspace became 65,536 bytes of unterminated JSON, and loading it raised | A revision is written to a sibling temporary file, `fsync`ed and `os.replace`d into place; a failure leaves the previous revision untouched |
+| Lost update through the check | Two savers read the same head between them, both computed revision 1, both were acknowledged with different digests, and one payload was overwritten | Reading the head and writing the revision happen while the workspace is held against every other writer, in this process and in others |
 
 ## On disk
 
@@ -29,6 +30,8 @@ single-file store before the replacement was written:
     revisions/2.json   immutable
   .trash/
     <name>.<ms>/       a deleted workspace, restorable
+  .locks/
+    <name>.lock.sqlite3   holds the workspace while one writer works on it
 ```
 
 `os.replace` is atomic on POSIX: a reader sees the old bytes or the new ones,
@@ -38,6 +41,42 @@ rename itself survives a power loss.
 A revision document is also a valid project payload — it carries `name`,
 `saved_at`, `version` and `state` — so the evidence bundle reads a revision
 directly rather than a second copy that could disagree with it.
+
+## One writer at a time
+
+Refusing a stale save is only a refusal if reading the head and writing the
+next revision happen together. Every operation that writes a workspace — save,
+fork, import, delete, restore, and the adoption of a pre-revision file — holds
+that workspace for as long as it needs it, and so does every read a writer
+depends on.
+
+The exclusion is a SQLite `BEGIN IMMEDIATE` on a small database of its own, one
+per workspace, which is the primitive the job ledger already relies on for
+single-host serialisation:
+
+- it is enforced by the operating system, so **two server processes** over one
+  project root exclude each other, not only two threads of one process;
+- it is released when the connection closes **and when the process dies**, so a
+  crashed or killed worker cannot leave a workspace permanently locked;
+- the wait is **bounded**. A writer that cannot take the workspace within the
+  wait is answered `503` with `error: workspace_busy` and writes nothing, so
+  the same request can simply be retried; a request thread is never blocked
+  indefinitely by another writer.
+
+The lock databases live in `.locks/` beside the workspaces rather than inside
+one, because deleting a workspace moves its directory into the trash: a lock
+kept inside would vanish underneath the writer holding it.
+
+A revision number is never reused. A writer that died between writing its
+revision file and writing the head leaves a revision the head does not point
+at; the next save numbers itself above the highest revision on disk rather than
+above the head, so that stored state is never written over. It stays readable
+through `GET /api/project/load/{name}?revision=N` and appears in the history.
+
+**Operator limitation, stated rather than implied.** This serialises writers
+that share a filesystem implementing SQLite's locking — one host, as for the
+job ledger. Two hosts over one network share are outside what it can promise.
+Deploy one host per project root.
 
 ## Saving against a revision
 
@@ -71,6 +110,22 @@ The Studio frontend carries the revision it loaded or last wrote and sends it
 with every save. It does **not** adopt the revision a conflict reports —
 saving again with the state it still holds is exactly the lost update the
 conflict prevents. Reload, reapply, save.
+
+A `503` is a different answer and the editor says so differently: nothing was
+written, no other editor's work is at stake, and the same save can simply be
+sent again. Treating it like a conflict would push a user into reloading and
+reapplying work that never conflicted with anything.
+
+```json
+{
+  "detail": {
+    "error": "workspace_busy",
+    "name": "shared",
+    "reason": "another writer held workspace 'shared' for longer than 10.0 seconds; nothing was written, so the same save can be retried.",
+    "timeout_seconds": 10.0
+  }
+}
+```
 
 ## History, forks and transfer
 

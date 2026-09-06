@@ -1516,6 +1516,14 @@ export interface WorkspaceConflictDetail {
   reason: string;
 }
 
+/** The 503 body of a save that could not take the workspace from another writer. */
+export interface WorkspaceBusyDetail {
+  error: "workspace_busy";
+  name: string;
+  reason: string;
+  timeout_seconds: number;
+}
+
 export interface PipelineResult {
   success: boolean;
   target: string;
