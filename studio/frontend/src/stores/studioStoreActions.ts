@@ -8,6 +8,17 @@
 // Studio store action implementations (mutations + async side effects).
 
 import {
+  graphEditRecorded,
+  graphRedone,
+  graphSnapshotOf,
+  graphUndone,
+  isLayoutOnlyUpdate,
+  type StudioGraphHistory,
+  type StudioGraphHistoryStep,
+  type StudioGraphSnapshot,
+} from "../studioGraphHistory";
+import type { PopulationNode, ProjectionEdge } from "../api/client";
+import {
   fetchTemplates,
   fetchModels,
   fetchModelDetail,
@@ -309,6 +320,37 @@ import {
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
 import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
+
+/** The graph the store currently holds, as a history snapshot. */
+function studioGraphSnapshotFrom(state: {
+  graphPopulations: PopulationNode[];
+  graphProjections: ProjectionEdge[];
+}): StudioGraphSnapshot {
+  return graphSnapshotOf(state.graphPopulations, state.graphProjections);
+}
+
+/** The history after recording the graph as it stands before an edit. */
+function studioGraphEditRecordedFrom(state: {
+  graphHistory: StudioGraphHistory;
+  graphPopulations: PopulationNode[];
+  graphProjections: ProjectionEdge[];
+}): StudioGraphHistory {
+  return graphEditRecorded(state.graphHistory, studioGraphSnapshotFrom(state));
+}
+
+/** The state patch that reinstates one recorded graph. */
+function studioGraphRestoredState(step: StudioGraphHistoryStep): {
+  graphHistory: StudioGraphHistory;
+  graphPopulations: PopulationNode[];
+  graphProjections: ProjectionEdge[];
+} {
+  return {
+    graphHistory: step.history,
+    graphPopulations: step.snapshot.populations,
+    graphProjections: step.snapshot.projections,
+  };
+}
+
 
 let debounceTimer: StudioAutoSimulationTimer | null = null;
 
@@ -1129,7 +1171,10 @@ export function createStudioStoreActions(
     const s = get();
     try {
       const pop = await apiCreatePop(studioDefaultPopulationRequest(neuronType, s.graphPopulations.length));
-      set((prev) => studioPopulationAddedState(prev.graphPopulations, pop));
+      set((prev) => ({
+        ...studioPopulationAddedState(prev.graphPopulations, pop),
+        graphHistory: studioGraphEditRecordedFrom(prev),
+      }));
     } catch (e) { set(studioGraphFailureState(e, "Population creation failed")); }
   },
 
@@ -1139,7 +1184,11 @@ export function createStudioStoreActions(
         populations: s.graphPopulations,
         projections: s.graphProjections,
       }, id);
+      if (graph.populations.length === s.graphPopulations.length) {
+        return {};
+      }
       return {
+        graphHistory: studioGraphEditRecordedFrom(s),
         graphPopulations: graph.populations,
         graphProjections: graph.projections,
       };
@@ -1147,7 +1196,28 @@ export function createStudioStoreActions(
   },
 
   updatePopulation: (id, updates) => {
-    set((s) => studioPopulationUpdatedState(s.graphPopulations, id, updates));
+    set((s) => {
+      const patch = studioPopulationUpdatedState(s.graphPopulations, id, updates);
+      // A drag writes a position on every frame; those are not edits to undo.
+      if (isLayoutOnlyUpdate(updates)) {
+        return patch;
+      }
+      return { ...patch, graphHistory: studioGraphEditRecordedFrom(s) };
+    });
+  },
+
+  undoGraphEdit: () => {
+    set((s) => {
+      const step = graphUndone(s.graphHistory, studioGraphSnapshotFrom(s));
+      return step === null ? {} : studioGraphRestoredState(step);
+    });
+  },
+
+  redoGraphEdit: () => {
+    set((s) => {
+      const step = graphRedone(s.graphHistory, studioGraphSnapshotFrom(s));
+      return step === null ? {} : studioGraphRestoredState(step);
+    });
   },
 
   addProjection: async (sourceId, targetId) => {
@@ -1158,16 +1228,28 @@ export function createStudioStoreActions(
     }
     try {
       const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId, source.neuron_type));
-      set((prev) => studioProjectionAddedState(prev.graphProjections, proj));
+      set((prev) => ({
+        ...studioProjectionAddedState(prev.graphProjections, proj),
+        graphHistory: studioGraphEditRecordedFrom(prev),
+      }));
     } catch (e) { set(studioGraphFailureState(e, "Projection creation failed")); }
   },
 
   removeProjection: (id) => {
-    set((s) => studioProjectionRemovedState(s.graphProjections, id));
+    set((s) => {
+      const patch = studioProjectionRemovedState(s.graphProjections, id);
+      if (patch.graphProjections.length === s.graphProjections.length) {
+        return {};
+      }
+      return { ...patch, graphHistory: studioGraphEditRecordedFrom(s) };
+    });
   },
 
   updateProjection: (id, updates) => {
-    set((s) => studioProjectionUpdatedState(s.graphProjections, id, updates));
+    set((s) => ({
+      ...studioProjectionUpdatedState(s.graphProjections, id, updates),
+      graphHistory: studioGraphEditRecordedFrom(s),
+    }));
   },
 
   simulateGraphAction: async () => {

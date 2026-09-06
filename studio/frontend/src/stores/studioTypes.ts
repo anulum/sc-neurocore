@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio Zustand store
 // Studio store state shape and view-mode types.
 
+import type { StudioGraphHistory } from "../studioGraphHistory";
 import type {
   StudioTrialMode,
   CharacterizeResponse, CompileTraceability, ModelCosimReport, FICurveResponse, BifurcationResponse,
@@ -123,6 +124,8 @@ export interface StudioState {
   latestMultiTargetSynthesisJobId: string | null;
   toolsAvailable: Record<string, SynthToolInfo> | null;
   graphPopulations: PopulationNode[];
+  /** Graph edits that can be stepped back and forward; layout moves are not edits. */
+  graphHistory: StudioGraphHistory;
   graphProjections: ProjectionEdge[];
   graphModels: string[];
   graphSimResult: GraphSimResult | null;
@@ -264,6 +267,8 @@ export interface StudioState {
   loadGraphModels: () => Promise<void>;
   addPopulation: (neuronType: "excitatory" | "inhibitory") => Promise<void>;
   removePopulation: (id: string) => void;
+  undoGraphEdit: () => void;
+  redoGraphEdit: () => void;
   updatePopulation: (id: string, updates: Partial<PopulationNode>) => void;
   addProjection: (sourceId: string, targetId: string) => Promise<void>;
   removeProjection: (id: string) => void;

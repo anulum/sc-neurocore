@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio Zustand store
 // Default initial field values for the Studio Zustand store.
 
+import { emptyGraphHistory } from "../studioGraphHistory";
 import { readStoredStudioSessions } from "../studioSavedSessions";
 
 /** Data-field defaults for useStudioStore (actions attached in studio.ts). */
@@ -42,6 +43,7 @@ export const studioInitialData = {
   cosimResult: null,
   progressPct: 0, progressMsg: "",
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
+  graphHistory: emptyGraphHistory(),
   projectSaveResult: null, projectRevision: null, serverProjects: [],
   deletedProjects: [], pipelineResult: null,
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null,

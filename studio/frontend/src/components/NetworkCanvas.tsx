@@ -102,11 +102,35 @@ export default function NetworkCanvas() {
     graphPopulations, graphProjections, graphSimResult, graphErrors, pipelineResult,
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
+    undoGraphEdit, redoGraphEdit, graphHistory,
     simulateGraphAction, exportGraphNIR, loadGraphModels, runPipelineAction,
     isSimulating, synthTarget,
   } = useStudioStore();
 
   useEffect(() => { loadGraphModels(); }, [loadGraphModels]);
+
+  // Ctrl/Cmd+Z steps back through graph edits, Ctrl/Cmd+Shift+Z forward. A key
+  // pressed inside a field belongs to that field, not to the graph.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable) {
+        return;
+      }
+      event.preventDefault();
+      if (event.shiftKey) {
+        redoGraphEdit();
+      } else {
+        undoGraphEdit();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [redoGraphEdit, undoGraphEdit]);
 
   const nodes: Node[] = useMemo(() =>
     graphPopulations.map((p) => ({
@@ -180,6 +204,26 @@ export default function NetworkCanvas() {
           background: "rgba(255, 82, 82, 0.2)", color: "#ff5252", border: "1px solid #ff5252",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>+ Inh</button>
+        <button
+          onClick={undoGraphEdit}
+          disabled={graphHistory.past.length === 0}
+          aria-label="Undo the last graph edit"
+          title="Undo the last graph edit (Ctrl+Z). Moving a node is not an edit."
+          style={{
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          }}
+        >Undo</button>
+        <button
+          onClick={redoGraphEdit}
+          disabled={graphHistory.future.length === 0}
+          aria-label="Redo the last undone graph edit"
+          title="Redo the last undone graph edit (Ctrl+Shift+Z)"
+          style={{
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          }}
+        >Redo</button>
         <button onClick={simulateGraphAction} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#81c784", color: "#0d1117", border: "none",
           padding: "3px 10px", fontSize: 10, cursor: "pointer",

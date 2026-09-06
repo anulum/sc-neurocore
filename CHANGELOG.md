@@ -129,6 +129,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   place the reason can survive.
 
 ### Added
+- The Network Canvas has undo and redo for graph edits: `Ctrl+Z` and
+  `Ctrl+Shift+Z`, or the toolbar buttons. Adding, deleting and changing a
+  population or a projection are edits; **moving a node is not**, because a drag
+  writes a position on every frame and recording those would bury the edits
+  worth undoing under layout noise. Deleting a population removes every
+  projection touching it, which is the edit a user most wants back and
+  previously cost a return to a saved workspace revision — discarding
+  everything done since. The history holds the last 50 edits, lives for the
+  session rather than being saved with the workspace, and drops the redo branch
+  when an edit follows an undo.
 - `docs/_generated/runtime_state_conformance.json` records, per catalogue model
   and per lane, which declared state variables a foreign runtime could carry,
   which it would drop, and whether it exports anything the model has no name

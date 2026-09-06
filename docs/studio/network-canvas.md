@@ -38,8 +38,17 @@ the picture:
   specification wherever the node sits: dragging never changes what is
   simulated.
 
-There is no undo yet. A deletion is applied to the graph immediately, and the
-way back is the workspace revision you saved before it.
+**Undo** steps back through graph edits: `Ctrl+Z` (`Cmd+Z`), or the Undo
+button; `Ctrl+Shift+Z` steps forward again. Adding, deleting and changing a
+population or a projection are edits. **Moving a node is not** — a drag writes a
+position on every frame, and recording those would bury the edits worth undoing
+under layout noise.
+
+The history holds the last 50 edits and lives for the session; it is not saved
+with the workspace, so a reopened workspace starts with an empty history and
+the graph exactly as you saved it. Editing after an undo drops the redo branch,
+because a redo into a graph that no longer follows from the current one would
+reinstate work you have already moved past.
 
 ## Populations
 
