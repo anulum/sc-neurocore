@@ -156,6 +156,14 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     }
     assert payload["jobs"] == {
         "active_count": 0,
+        "admission": {
+            "admitted": 0,
+            "max_concurrent": 4,
+            "max_queued": 32,
+            "queued": 0,
+            "refused": 0,
+            "running": 0,
+        },
         "allowed_kinds": ["training"],
         "completed_count": 0,
         "configured": True,
@@ -175,6 +183,7 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "thread_count": 0,
         "timed_out_count": 0,
         "unknown_count": 0,
+        "unreaped_workers": [],
     }
     assert payload["browser_login"] == {
         "active_bucket_count": 2,

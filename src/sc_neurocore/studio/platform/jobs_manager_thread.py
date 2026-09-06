@@ -25,6 +25,10 @@ from sc_neurocore.studio.platform.jobs_models import (
 )
 from sc_neurocore.studio.platform.jobs_paths import _resolve_job_directory
 
+#: How long a cancelled thread task is given to notice and unwind before its
+#: worker is reported as still running.
+COOPERATIVE_STOP_SECONDS = 1.0
+
 
 def _submit_thread_job(
     manager: _StudioJobManagerState,
@@ -52,18 +56,27 @@ def _submit_thread_job(
     if timeout <= 0:
         raise StudioJobRejected("Studio job timeout must be positive.")
     job_id = f"sj_{secrets.token_hex(8)}"
-    submission = manager._ledger.create(
-        job_id=job_id,
-        kind=kind,
-        actor=owner,
-        workspace=workspace or manager._default_workspace,
-        request_id=request_id,
-        idempotency_key=idempotency_key,
-        experiment_sha256=experiment_sha256,
-        admission=admission,
-        execution_model="thread",
-    )
+    # A slot first: a job that cannot run yet must not appear in the ledger as
+    # one that did, and a refused submission never happened at all.
+    manager._admission.reserve()
+    try:
+        submission = manager._ledger.create(
+            job_id=job_id,
+            kind=kind,
+            actor=owner,
+            workspace=workspace or manager._default_workspace,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            experiment_sha256=experiment_sha256,
+            admission=admission,
+            execution_model="thread",
+        )
+    except BaseException:
+        manager._admission.release()
+        raise
     if submission.duplicate:
+        # The work already ran or is running; this submission holds no slot.
+        manager._admission.release()
         return submission.record
     work_dir = _resolve_job_directory(
         root=manager._root,
@@ -117,11 +130,25 @@ def _run_thread_supervised(
     worker.join(timeout_seconds)
     if worker.is_alive():
         cancel_event.set()
-        worker.join(min(timeout_seconds, 1.0))
+        worker.join(max(min(timeout_seconds, COOPERATIVE_STOP_SECONDS), COOPERATIVE_STOP_SECONDS))
+        # A thread cannot be killed. If the task never consults
+        # ``context.cancelled`` it is still running now, and saying only
+        # "timed out" would report an end that did not happen. Say both.
+        stopped = not worker.is_alive()
+        if not stopped:
+            manager._note_unreaped_worker(job_id)
         manager._update(
             job_id,
             status="timed_out",
-            error="Studio job exceeded its timeout.",
+            error=(
+                "Studio job exceeded its timeout."
+                if stopped
+                else (
+                    "Studio job exceeded its timeout, and its worker did not stop: the task "
+                    "does not check for cancellation, so it is still running. Uncooperative "
+                    "work must be submitted as a process job, which can be reaped."
+                )
+            ),
             finished_at_utc=manager._timestamp_utc(),
             artifacts=context.artifacts,
         )

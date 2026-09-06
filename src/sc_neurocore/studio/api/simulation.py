@@ -260,7 +260,11 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         if cached is not None:
             return cached
         _guard_analysis_request(
-            analysis_budget, simulation_count=1, duration=spec.duration_ms, dt=spec.dt
+            analysis_budget,
+            simulation_count=1,
+            duration=spec.duration_ms,
+            dt=spec.dt,
+            model_name=req.name,
         )
         return _safe(
             lambda: _run_and_record(spec, source="model", request_payload=req.model_dump())

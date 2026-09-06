@@ -36263,6 +36263,21 @@ Simulate every model at a given current and classify its firing pattern.
 Results are cached per ``(current, duration)`` pair so a scan for one
 configuration cannot be served as evidence for another configuration.
 
+Parameters
+----------
+current, duration : float
+    The constant operating point every model is driven at.
+should_stop : callable, optional
+    Consulted before each model. A scan that is asked to stop raises
+    :class:`~sc_neurocore.studio.platform.jobs_models.StudioJobCancelled`
+    and caches nothing: a partial sweep is not a scan of the catalogue, and
+    serving one as if it were would understate the catalogue silently.
+
+Raises
+------
+StudioJobCancelled
+    ``should_stop`` returned ``True`` before the sweep finished.
+
 ---
 
 ## Module `studio.model_simulate`
@@ -36730,6 +36745,30 @@ total_steps:
 - **to_public_dict**()
   - Return a JSON-serializable, path-free cost payload.
 
+### Class `ModelCostFactors`
+What one model actually costs per millisecond of simulated time.
+
+``ceil(duration / dt)`` is not the work a model does. A model with a
+substepped integrator advances several times per step, and one carrying
+many state variables does several times the arithmetic per advance. A
+budget that ignores both projects the same cost for a one-variable map and
+a ten-variable conductance model and admits requests it should refuse.
+
+Attributes
+----------
+dt : float
+    The effective timestep the run will use, resolved from the model rather
+    than assumed.
+substeps : int
+    Integrator advances per step, from the model's numerical profile.
+state_count : int
+    Declared state variables carried per advance, at least one.
+
+- **work_per_step**()
+  - Return the arithmetic weight of one step relative to a scalar Euler step.
+- **to_public_dict**()
+  - Return a JSON-serializable, path-free cost-factor payload.
+
 ### Function `simulation_step_count(duration, dt)`
 Return the integration-step count for one simulation.
 
@@ -36767,6 +36806,25 @@ float
     :data:`STUDIO_ANALYSIS_REFERENCE_TIMESTEP_MS`. A supplied non-positive
     ``dt`` is returned unchanged so the timestep gate rejects it.
 
+### Function `resolve_model_cost_factors(name, dt)`
+Resolve one model's effective timestep, substeps and state count.
+
+Falls back to the reference timestep and scalar weights when the model
+cannot be resolved: a budget that raises on an unknown name would turn a
+model-input error into a budget error and report the wrong thing.
+
+Parameters
+----------
+name : str
+    Catalogue model name.
+dt : float, optional
+    Requested timestep, or ``None`` to take the model's own default.
+
+Returns
+-------
+ModelCostFactors
+    The factors the projection should use.
+
 ### Function `evaluate_analysis_cost()`
 Project the cost of a request whose simulations share one duration/dt.
 
@@ -36778,11 +36836,17 @@ duration:
     Shared simulated time span in milliseconds.
 dt:
     Shared integration timestep in milliseconds.
+work_per_step:
+    Arithmetic weight of one step, from
+    :meth:`ModelCostFactors.work_per_step`. The default of ``1`` projects a
+    scalar single-substep model, which is what a request with no resolvable
+    model gets.
 
 Returns
 -------
 AnalysisCost
-    Projected per-simulation and total integration-step counts.
+    Projected per-simulation and total integration-step counts, weighted by
+    ``work_per_step``.
 
 Raises
 ------
@@ -37785,6 +37849,66 @@ Verify a raw browser-user password against an encoded verifier.
 
 ---
 
+## Module `studio.platform.jobs_admission`
+
+### Class `StudioJobQueueFull`
+Raised when both the running slots and the queue behind them are full.
+
+Attributes
+----------
+running : int
+    Jobs occupying a slot when the request arrived.
+queued : int
+    Jobs already waiting.
+limit : int
+    The queue ceiling that was reached.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `AdmissionSnapshot`
+What admission control is doing right now.
+
+Attributes
+----------
+running : int
+    Jobs holding a slot.
+queued : int
+    Jobs waiting for one.
+max_concurrent : int
+    How many may run at once.
+max_queued : int
+    How many may wait.
+admitted : int
+    Jobs admitted since this controller started.
+refused : int
+    Submissions refused because the queue was full.
+
+- **to_public_dict**()
+  - Return a JSON-serializable, path-free admission snapshot.
+
+### Class `StudioJobAdmission`
+A bounded number of running jobs, with a bounded queue behind them.
+
+Parameters
+----------
+max_concurrent : int
+    Jobs allowed to run at once.
+max_queued : int
+    Jobs allowed to wait for a slot. A submission that arrives when both
+    are full is refused with :class:`StudioJobQueueFull`.
+
+- **__init__**()
+- **reserve**()
+  - Take a slot, waiting in the queue when they are all occupied.
+- **release**()
+  - Give a slot back and wake one waiting submission.
+- **snapshot**()
+  - Return the current admission state.
+
+---
+
 ## Module `studio.platform.jobs_context`
 
 ### Class `StudioJobContext`
@@ -38108,6 +38232,19 @@ from the supervising half so each file has one responsibility.
   - Read and verify one manifest-declared artifact.
 - **read_live_artifact_bytes**(job_id, relative_path)
   - Read one bounded slice from a confined live artifact.
+- **unreaped_workers**()
+  - Return the jobs whose worker was still running when they ended.
+
+---
+
+## Module `studio.platform.jobs_manager_supervision`
+
+### Class `StudioJobSupervision`
+The callbacks a Studio job supervisor makes on its manager.
+
+Each method annotates ``self`` as the manager state it needs; the mixin
+holds no state of its own.
+
 
 ---
 
@@ -38158,6 +38295,64 @@ Path-free list payload for Studio job operator views.
 ### Class `StudioJobArtifactPayload`
 Verified payload for one declared Studio job artifact.
 
+
+---
+
+## Module `studio.platform.jobs_reaper`
+
+### Class `ReapReport`
+What stopping one worker process group actually achieved.
+
+Attributes
+----------
+outcome : {"exited", "terminated", "killed", "unreaped"}
+    ``exited`` when the worker had already finished, ``terminated`` when it
+    stopped on SIGTERM, ``killed`` when SIGKILL was needed, and
+    ``unreaped`` when the group was still there afterwards.
+group_id : int or None
+    The process group signalled, when one could be resolved.
+returncode : int or None
+    The direct worker's exit status, when it was collected.
+duration_seconds : float
+    Wall-clock time the reap took.
+survivors : tuple of int
+    Process ids still alive in the group when the reap gave up. Empty
+    unless ``outcome`` is ``unreaped``.
+
+- **reaped**()
+  - Return whether nothing from the worker is still running.
+- **to_public_dict**()
+  - Return a path-free JSON representation of this reap.
+
+### Function `process_group_of(process)`
+Return the worker's process group, or ``None`` when it has none.
+
+A worker started with ``start_new_session=True`` leads its own group, so
+the group id equals its pid. Reading it from the operating system rather
+than assuming it keeps the reap honest when the process has already gone.
+
+### Function `reap_process_group(process)`
+Stop a worker and everything it started, and report what happened.
+
+SIGTERM to the group first, so a worker that handles it can seal its own
+files; SIGKILL to the group if the grace period passes; then a check that
+the group is actually gone.
+
+Parameters
+----------
+process : subprocess.Popen
+    The worker. It must have been started with ``start_new_session=True``,
+    or it shares the supervisor's group and only the direct child is
+    signalled.
+terminate_grace_seconds : float
+    How long the group may take to exit on SIGTERM.
+kill_grace_seconds : float
+    How long the group may take to disappear after SIGKILL.
+
+Returns
+-------
+ReapReport
+    The outcome, never an exception.
 
 ---
 

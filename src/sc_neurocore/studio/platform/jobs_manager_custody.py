@@ -119,5 +119,21 @@ class StudioJobCustody:
             max_bytes=max_bytes,
         )
 
+    def _note_unreaped_worker(self: _StudioJobManagerState, job_id: str) -> None:
+        """Record that one job's worker outlived its terminal state.
+
+        A Python thread cannot be killed, so a task that never checks for
+        cancellation keeps running after its record is terminal. That is
+        reported rather than hidden.
+        """
+        with self._lock:
+            self._unreaped_workers.add(job_id)
+
+    @property
+    def unreaped_workers(self: _StudioJobManagerState) -> tuple[str, ...]:
+        """Return the jobs whose worker was still running when they ended."""
+        with self._lock:
+            return tuple(sorted(self._unreaped_workers))
+
 
 __all__ = ["StudioJobCustody"]

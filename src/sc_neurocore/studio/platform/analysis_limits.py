@@ -210,11 +210,102 @@ def resolve_request_timestep(dt: float | None) -> float:
     return dt
 
 
+@dataclass(frozen=True, slots=True)
+class ModelCostFactors:
+    """What one model actually costs per millisecond of simulated time.
+
+    ``ceil(duration / dt)`` is not the work a model does. A model with a
+    substepped integrator advances several times per step, and one carrying
+    many state variables does several times the arithmetic per advance. A
+    budget that ignores both projects the same cost for a one-variable map and
+    a ten-variable conductance model and admits requests it should refuse.
+
+    Attributes
+    ----------
+    dt : float
+        The effective timestep the run will use, resolved from the model rather
+        than assumed.
+    substeps : int
+        Integrator advances per step, from the model's numerical profile.
+    state_count : int
+        Declared state variables carried per advance, at least one.
+    """
+
+    dt: float
+    substeps: int
+    state_count: int
+
+    @property
+    def work_per_step(self) -> int:
+        """Return the arithmetic weight of one step relative to a scalar Euler step."""
+        return max(1, self.substeps) * max(1, self.state_count)
+
+    def to_public_dict(self) -> dict[str, float | int]:
+        """Return a JSON-serializable, path-free cost-factor payload."""
+        return {
+            "dt": self.dt,
+            "state_count": self.state_count,
+            "substeps": self.substeps,
+            "work_per_step": self.work_per_step,
+        }
+
+
+def resolve_model_cost_factors(name: str, dt: float | None) -> ModelCostFactors:
+    """Resolve one model's effective timestep, substeps and state count.
+
+    Falls back to the reference timestep and scalar weights when the model
+    cannot be resolved: a budget that raises on an unknown name would turn a
+    model-input error into a budget error and report the wrong thing.
+
+    Parameters
+    ----------
+    name : str
+        Catalogue model name.
+    dt : float, optional
+        Requested timestep, or ``None`` to take the model's own default.
+
+    Returns
+    -------
+    ModelCostFactors
+        The factors the projection should use.
+    """
+    from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
+    from sc_neurocore.neurons.model_profile import resolve_profile
+    from sc_neurocore.neurons.universal_dsl import load_schema
+    from sc_neurocore.studio.model_run_contract import (
+        ModelInputError,
+        resolve_model_run_inputs,
+    )
+    from sc_neurocore.studio.state_layout import declared_state
+
+    effective_dt = resolve_request_timestep(dt)
+    substeps = 1
+    state_count = 1
+    try:
+        inputs = resolve_model_run_inputs(name, {}, dt)
+        effective_dt = inputs.dt
+    except (ModelInputError, KeyError, ValueError):
+        return ModelCostFactors(dt=effective_dt, substeps=substeps, state_count=state_count)
+    try:
+        stem = schema_for_class(name)
+        profile = resolve_profile(load_schema(stem), stem=stem)
+        substeps = max(1, int(profile.numerical.substeps))
+    except (ModelIdentityError, FileNotFoundError, ValueError, KeyError):
+        substeps = 1
+    try:
+        _source, _stem, declared = declared_state(name)
+        state_count = max(1, len(declared))
+    except (ModelIdentityError, FileNotFoundError, ValueError, KeyError):
+        state_count = 1
+    return ModelCostFactors(dt=effective_dt, substeps=substeps, state_count=state_count)
+
+
 def evaluate_analysis_cost(
     *,
     simulation_count: int,
     duration: float,
     dt: float,
+    work_per_step: int = 1,
 ) -> AnalysisCost:
     """Project the cost of a request whose simulations share one duration/dt.
 
@@ -226,11 +317,17 @@ def evaluate_analysis_cost(
         Shared simulated time span in milliseconds.
     dt:
         Shared integration timestep in milliseconds.
+    work_per_step:
+        Arithmetic weight of one step, from
+        :meth:`ModelCostFactors.work_per_step`. The default of ``1`` projects a
+        scalar single-substep model, which is what a request with no resolvable
+        model gets.
 
     Returns
     -------
     AnalysisCost
-        Projected per-simulation and total integration-step counts.
+        Projected per-simulation and total integration-step counts, weighted by
+        ``work_per_step``.
 
     Raises
     ------
@@ -246,7 +343,7 @@ def evaluate_analysis_cost(
             allowed=1,
             message="Analysis simulation count must be positive.",
         )
-    steps = simulation_step_count(duration, dt)
+    steps = simulation_step_count(duration, dt) * max(1, work_per_step)
     return AnalysisCost(
         simulation_count=simulation_count,
         steps_per_simulation=steps,
@@ -431,11 +528,13 @@ __all__ = [
     "AnalysisBudgetError",
     "AnalysisBudgetLimit",
     "AnalysisCost",
+    "ModelCostFactors",
     "enforce_analysis_budget",
     "evaluate_analysis_cost",
     "evaluate_multi_config_cost",
     "evaluate_model_scan_cost",
     "evaluate_nullcline_grid_cost",
+    "resolve_model_cost_factors",
     "resolve_request_timestep",
     "simulation_step_count",
 ]

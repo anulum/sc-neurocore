@@ -11,6 +11,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Stopping a Studio job now stops the work, or says that it did not. A process
+  worker's descendants survived its termination: only the direct child was
+  signalled, so a job that spawned a subprocess left it running while the
+  record read `timed_out`. Workers now lead their own process group, the group
+  is signalled, escalated from SIGTERM to SIGKILL and then checked, and a group
+  that survives is reported with the number of processes that may still be
+  running. A thread task that never checks `context.cancelled` cannot be killed
+  at all; instead of reporting only a timeout, the record states that the
+  worker did not stop and that uncooperative work belongs in a process job, and
+  the job appears in `unreaped_workers`.
+- The catalogue scan consults its cancellation context between models. A
+  cancelled sweep stops rather than running all 185 models and being discarded,
+  and a partial sweep is never cached as a scan of the catalogue.
+- The synchronous analysis budget projects a request's cost from the model it
+  names — resolved timestep, integrator substeps and declared state count —
+  instead of `ceil(duration / dt)` at a reference timestep. A four-state
+  substepped conductance model was previously budgeted as a scalar map.
 - Studio job records survive the process that made them. They lived in one
   in-memory dictionary, so a restarted API answered `404` for a job it had
   completed a second earlier, a second API process over the same job root saw
@@ -49,6 +66,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   resolves a different experiment.
 
 ### Added
+- `sc_neurocore.studio.platform.jobs_reaper`: process-group reaping with
+  escalation and verification, reporting the outcome rather than raising.
+- `sc_neurocore.studio.platform.jobs_admission`: a bounded number of running
+  jobs with a bounded queue behind them; overflow is refused with
+  `job_queue_full` and never reaches the ledger. The job status payload reports
+  `admission` and `unreaped_workers`.
 - `docs/studio/job-ledger.md`: the job ledger's migration, recovery, retention
   and backup contract, including how to read a job's transition history and how
   to resolve an `unknown` job by hand.

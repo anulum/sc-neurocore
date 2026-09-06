@@ -28,6 +28,13 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobRejected,
     StudioProcessJobPayload,
 )
+from sc_neurocore.studio.platform.jobs_reaper import (
+    DEFAULT_KILL_GRACE_SECONDS,
+    DEFAULT_TERMINATE_GRACE_SECONDS,
+    ReapReport,
+    _terminate_direct_child,
+    reap_process_group,
+)
 
 
 def _process_worker_environment() -> dict[str, str]:
@@ -80,14 +87,19 @@ def _json_payload(payload: StudioProcessJobPayload, error_message: str) -> str:
 
 
 def _terminate_process(process: subprocess.Popen[bytes]) -> None:
-    """Terminate one worker and fall back to a bounded kill."""
+    """Stop one worker that does not lead its own process group.
 
-    process.terminate()
-    try:
-        process.wait(timeout=1.0)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait(timeout=1.0)
+    Retained for callers that hold a bare child. Supervised jobs go through
+    :func:`~sc_neurocore.studio.platform.jobs_reaper.reap_process_group`, which
+    stops the worker's descendants too. Both share one implementation, so the
+    second wait can no longer raise out of a supervisor that is cleaning up.
+    """
+
+    _terminate_direct_child(
+        process,
+        DEFAULT_TERMINATE_GRACE_SECONDS,
+        DEFAULT_KILL_GRACE_SECONDS,
+    )
 
 
 def _load_process_result(result_path: Path) -> _ProcessWorkerResult:
@@ -173,6 +185,15 @@ def _parse_process_artifacts(raw_artifacts: object) -> tuple[StudioJobArtifact, 
     return tuple(artifacts)
 
 
+def _unreaped_error(report: ReapReport) -> str:
+    """Describe a worker group that survived its reap, so nobody assumes it did not."""
+
+    return (
+        f"The worker process group was not reaped after "
+        f"{report.duration_seconds:.1f}s; {len(report.survivors)} process(es) may still be running."
+    )
+
+
 def _run_process_supervised(
     manager: _StudioJobManagerState,
     job_id: str,
@@ -202,25 +223,34 @@ def _run_process_supervised(
         "--max-artifact-bytes",
         str(manager._max_artifact_bytes),
     ]
-    process = subprocess.Popen(command, env=_process_worker_environment())  # nosec B603
+    # Its own session, so stopping the job stops everything the worker
+    # started rather than only the process the supervisor can see.
+    process = subprocess.Popen(  # nosec B603
+        command, env=_process_worker_environment(), start_new_session=True
+    )
     deadline = time.monotonic() + timeout_seconds
     while process.poll() is None:
         if cancel_event.is_set():
-            _terminate_process(process)
+            report = reap_process_group(process)
             manager._update(
                 job_id,
                 status="cancelled",
+                error=None if report.reaped else _unreaped_error(report),
                 finished_at_utc=manager._timestamp_utc(),
                 artifacts=_load_process_artifacts(result_path),
             )
             done_event.set()
             return
         if time.monotonic() >= deadline:
-            _terminate_process(process)
+            report = reap_process_group(process)
             manager._update(
                 job_id,
                 status="timed_out",
-                error="Studio job exceeded its timeout.",
+                error=(
+                    "Studio job exceeded its timeout."
+                    if report.reaped
+                    else f"Studio job exceeded its timeout. {_unreaped_error(report)}"
+                ),
                 finished_at_utc=manager._timestamp_utc(),
                 artifacts=_load_process_artifacts(result_path),
             )

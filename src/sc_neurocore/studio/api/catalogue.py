@@ -98,8 +98,14 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
         duration = 100.0
         current = 10.0
 
-        def _task(_job_context: StudioJobContext) -> dict[str, object]:
-            payload = scan_all_models(current=current, duration=duration)
+        def _task(job_context: StudioJobContext) -> dict[str, object]:
+            # 185 models is a long sweep; a cancelled job must stop between
+            # models rather than run to completion and then be discarded.
+            payload = scan_all_models(
+                current=current,
+                duration=duration,
+                should_stop=lambda: job_context.cancelled,
+            )
             return dict(payload)
 
         try:

@@ -15,6 +15,11 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 
+from sc_neurocore.studio.platform.jobs_admission import (
+    DEFAULT_MAX_CONCURRENT_JOBS,
+    DEFAULT_MAX_QUEUED_JOBS,
+    StudioJobAdmission,
+)
 from sc_neurocore.studio.platform.jobs_ledger import (
     DEFAULT_LEASE_SECONDS,
     StudioJobLedger,
@@ -22,36 +27,28 @@ from sc_neurocore.studio.platform.jobs_ledger import (
 )
 from sc_neurocore.studio.platform.jobs_manager_access import (
     _cancel_job,
-    _commit_supervised_update,
     _job_manager_status,
     _wait_for_job,
 )
 from sc_neurocore.studio.platform.jobs_manager_custody import StudioJobCustody
+from sc_neurocore.studio.platform.jobs_manager_supervision import StudioJobSupervision
 from sc_neurocore.studio.platform.jobs_manager_process import (
     _send_process_control_command,
     _submit_process_job,
-    _write_seed_inputs,
 )
 from sc_neurocore.studio.platform.jobs_manager_thread import (
-    _run_thread_supervised,
     _submit_thread_job,
 )
 from sc_neurocore.studio.platform.jobs_models import (
     DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
-    STUDIO_SEED_INPUT_DIR,
-    UTC,
-    StudioJobArtifact,
     StudioJobRecord,
-    StudioJobStatus,
     StudioJobStatusSnapshot,
     StudioJobTask,
     StudioProcessJobPayload,
 )
-from sc_neurocore.studio.platform.jobs_paths import _resolve_job_directory
-from sc_neurocore.studio.platform.jobs_process_protocol import _run_process_supervised
 
 
-class StudioJobManager(StudioJobCustody):
+class StudioJobManager(StudioJobCustody, StudioJobSupervision):
     """Start and supervise local Studio jobs inside per-job sandbox directories.
 
     Reading what those jobs did is the custody surface this inherits from
@@ -70,13 +67,15 @@ class StudioJobManager(StudioJobCustody):
         workspace: str = "default",
         lease_seconds: float = DEFAULT_LEASE_SECONDS,
         reconcile: bool = True,
+        max_concurrent_jobs: int = DEFAULT_MAX_CONCURRENT_JOBS,
+        max_queued_jobs: int = DEFAULT_MAX_QUEUED_JOBS,
     ) -> None:
         """Configure bounded execution over the durable job ledger.
 
-        The ledger file lives in ``root`` beside the per-job sandboxes it
-        describes, so a restarted process and a second process over the same
-        root see the same jobs. Unless ``reconcile`` is disabled, construction
-        resolves every job an earlier supervisor left alive.
+        The ledger lives in ``root`` beside the sandboxes it describes, so a
+        restart and a second process see the same jobs; unless ``reconcile`` is
+        disabled, construction resolves the jobs an earlier supervisor left
+        alive. ``max_concurrent_jobs`` and ``max_queued_jobs`` bound what runs.
         """
 
         if not allowed_kinds:
@@ -93,6 +92,9 @@ class StudioJobManager(StudioJobCustody):
         self._clock = clock or self._utc_now
         self._lock = threading.Lock()
         self._default_workspace = workspace
+        self._admission = StudioJobAdmission(
+            max_concurrent=max_concurrent_jobs, max_queued=max_queued_jobs
+        )
         self._ledger = StudioJobLedger(
             root=self._root, clock=self._clock, lease_seconds=lease_seconds
         )
@@ -101,6 +103,9 @@ class StudioJobManager(StudioJobCustody):
         self._done_events: dict[str, threading.Event] = {}
         self._cancel_events: dict[str, threading.Event] = {}
         self._reconciliation: tuple[StudioJobReconciliation, ...] = ()
+        # Jobs whose worker was still running after its terminal record. A
+        # thread cannot be killed, so this is reported rather than fixed.
+        self._unreaped_workers: set[str] = set()
         if reconcile:
             self._reconciliation = self._ledger.reconcile()
 
@@ -119,11 +124,11 @@ class StudioJobManager(StudioJobCustody):
     ) -> StudioJobRecord:
         """Submit one local task to the bounded thread supervisor.
 
-        The job is admitted to the durable ledger before it starts, so it
-        survives this process. See
+        The job takes an admission slot and reaches the durable ledger before
+        it starts. See
         :func:`~sc_neurocore.studio.platform.jobs_manager_thread._submit_thread_job`
-        for the custody fields (``workspace``, ``idempotency_key``,
-        ``experiment_sha256``, ``admission``) and what each one binds.
+        for the custody fields and what each binds. A task that never checks
+        ``context.cancelled`` cannot be stopped: use a process job.
         """
 
         return _submit_thread_job(
@@ -156,8 +161,8 @@ class StudioJobManager(StudioJobCustody):
     ) -> StudioJobRecord:
         """Submit one importable task to an isolated Python process.
 
-        Takes the same custody fields as :meth:`submit`; an idempotency key
-        already admitted returns the earlier job without starting a process.
+        Same custody fields as :meth:`submit`. The worker leads its own process
+        group, so stopping the job stops everything it started.
         """
 
         return _submit_process_job(
@@ -205,91 +210,3 @@ class StudioJobManager(StudioJobCustody):
         """Return aggregate path-free manager health."""
 
         return _job_manager_status(self)
-
-    def _write_seed_inputs(
-        self,
-        work_dir: Path,
-        seed_inputs: Mapping[str, bytes] | None,
-        *,
-        seed_dir: str = STUDIO_SEED_INPUT_DIR,
-    ) -> None:
-        _write_seed_inputs(self, work_dir, seed_inputs, seed_dir=seed_dir)
-
-    def _run_supervised(
-        self,
-        job_id: str,
-        work_dir: Path,
-        cancel_event: threading.Event,
-        done_event: threading.Event,
-        task: StudioJobTask,
-        timeout_seconds: float,
-    ) -> None:
-        _run_thread_supervised(
-            self,
-            job_id,
-            work_dir,
-            cancel_event,
-            done_event,
-            task,
-            timeout_seconds,
-        )
-
-    def _run_process_supervised(
-        self,
-        job_id: str,
-        work_dir: Path,
-        cancel_event: threading.Event,
-        done_event: threading.Event,
-        task_path: str,
-        payload_path: Path,
-        result_path: Path,
-        timeout_seconds: float,
-    ) -> None:
-        _run_process_supervised(
-            self,
-            job_id,
-            work_dir,
-            cancel_event,
-            done_event,
-            task_path,
-            payload_path,
-            result_path,
-            timeout_seconds,
-        )
-
-    def _update(
-        self,
-        job_id: str,
-        *,
-        status: StudioJobStatus,
-        started_at_utc: str | None = None,
-        finished_at_utc: str | None = None,
-        error: str | None = None,
-        result: dict[str, object] | None = None,
-        artifacts: tuple[StudioJobArtifact, ...] | None = None,
-    ) -> None:
-        _commit_supervised_update(
-            self,
-            job_id,
-            status=status,
-            started_at_utc=started_at_utc,
-            finished_at_utc=finished_at_utc,
-            error=error,
-            result=result,
-            artifacts=artifacts,
-        )
-
-    def _timestamp_utc(self) -> str:
-        timestamp = self._clock().astimezone(UTC).replace(microsecond=0)
-        return timestamp.isoformat().replace("+00:00", "Z")
-
-    def _job_work_dir(self, job_id: str) -> Path:
-        return _resolve_job_directory(
-            root=self._root,
-            job_id=job_id,
-            error_message="Studio job path escapes the job root.",
-        )
-
-    @staticmethod
-    def _utc_now() -> datetime:
-        return datetime.now(UTC)

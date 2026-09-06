@@ -17,6 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 JOBS_PACKAGE = "sc_neurocore.studio.platform"
 JOBS_FACADE = f"{JOBS_PACKAGE}.jobs"
 JOBS_IMPLEMENTATION_MODULES = (
+    f"{JOBS_PACKAGE}.jobs_admission",
     f"{JOBS_PACKAGE}.jobs_context",
     f"{JOBS_PACKAGE}.jobs_ledger",
     f"{JOBS_PACKAGE}.jobs_ledger_reads",
@@ -29,10 +30,12 @@ JOBS_IMPLEMENTATION_MODULES = (
     f"{JOBS_PACKAGE}.jobs_manager_custody",
     f"{JOBS_PACKAGE}.jobs_manager_process",
     f"{JOBS_PACKAGE}.jobs_manager_state",
+    f"{JOBS_PACKAGE}.jobs_manager_supervision",
     f"{JOBS_PACKAGE}.jobs_manager_thread",
     f"{JOBS_PACKAGE}.jobs_models",
     f"{JOBS_PACKAGE}.jobs_paths",
     f"{JOBS_PACKAGE}.jobs_process_protocol",
+    f"{JOBS_PACKAGE}.jobs_reaper",
 )
 JOBS_SOURCE_PATHS = tuple(
     REPO_ROOT / "src" / Path(*module_name.split("."))
@@ -51,8 +54,10 @@ JOBS_TEST_PATHS = tuple(
         "test_studio_jobs_process_control.py",
         "test_studio_jobs_process_failures.py",
         "test_studio_jobs_routes.py",
+        "test_studio_jobs_admission.py",
         "test_studio_jobs_ledger.py",
         "test_studio_jobs_ledger_recovery.py",
+        "test_studio_jobs_reaping.py",
         "test_studio_jobs_restart_recovery.py",
     )
 )

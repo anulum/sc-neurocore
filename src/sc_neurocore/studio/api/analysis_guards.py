@@ -29,6 +29,8 @@ from sc_neurocore.studio.platform import (
     evaluate_model_scan_cost,
     evaluate_multi_config_cost,
     evaluate_nullcline_grid_cost,
+    ModelCostFactors,
+    resolve_model_cost_factors,
     resolve_request_timestep,
 )
 from sc_neurocore.studio.simulation import simulate
@@ -49,6 +51,7 @@ def _guard_analysis_request(
     simulation_count: int,
     duration: float,
     dt: float | None,
+    model_name: str | None = None,
 ) -> None:
     """Reject an analysis request whose projected synchronous cost is over budget.
 
@@ -63,6 +66,11 @@ def _guard_analysis_request(
     dt:
         Shared timestep in milliseconds, or ``None`` when the request defers to
         the model default.
+    model_name:
+        Catalogue model the request drives, when it names one. Its resolved
+        timestep, integrator substeps and declared state count weight the
+        projection, so a substepped ten-variable model is not budgeted as a
+        scalar Euler map. A request with no model keeps the scalar weight.
 
     Raises
     ------
@@ -70,11 +78,17 @@ def _guard_analysis_request(
         With status 422 and a path-free budget detail when the request exceeds
         the configured synchronous analysis budget.
     """
+    factors = (
+        resolve_model_cost_factors(model_name, dt)
+        if model_name
+        else ModelCostFactors(dt=resolve_request_timestep(dt), substeps=1, state_count=1)
+    )
     try:
         cost = evaluate_analysis_cost(
             simulation_count=simulation_count,
             duration=duration,
-            dt=resolve_request_timestep(dt),
+            dt=factors.dt,
+            work_per_step=factors.work_per_step,
         )
         enforce_analysis_budget(cost, budget)
     except AnalysisBudgetError as exc:

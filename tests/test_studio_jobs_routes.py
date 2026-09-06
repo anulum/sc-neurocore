@@ -41,6 +41,14 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "active_count": 0,
+        "admission": {
+            "admitted": 0,
+            "max_concurrent": 4,
+            "max_queued": 32,
+            "queued": 0,
+            "refused": 0,
+            "running": 0,
+        },
         "allowed_kinds": [
             "analysis",
             "compiler",
@@ -97,6 +105,7 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
         "thread_count": 0,
         "timed_out_count": 0,
         "unknown_count": 0,
+        "unreaped_workers": [],
     }
     assert str(tmp_path) not in response.text
 

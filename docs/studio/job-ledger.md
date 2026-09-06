@@ -86,6 +86,62 @@ alone: the evidence is preserved without being promoted into a result the job
 never produced. Read it from the job directory; do not add it to a manifest by
 hand.
 
+## Bounded compute and cancellation
+
+A Studio that accepts every submission and starts it immediately lets one
+caller decide how much of the machine it uses. Admission bounds that: a fixed
+number of jobs run at once, a fixed number wait behind them, and a submission
+that arrives when both are full is refused with `job_queue_full` and the
+counts that caused it. A refused submission never reaches the ledger — it did
+not happen. `GET /api/studio/jobs/status` reports `admission` with the running,
+queued, admitted and refused counts.
+
+### Stopping a job stops what it started
+
+A process job's worker leads its own process group. Cancelling or timing one
+out signals the **group**: SIGTERM first, so a worker that handles it can seal
+its own files, then SIGKILL after the grace period, then a check that nothing
+in the group is still running. A worker that spawned children takes them with
+it. The reap reports what it achieved and never raises, because a supervisor
+that crashes while cleaning up leaves a job with no terminal record at all.
+
+If a group survives even SIGKILL, the job's error says so and names how many
+processes may still be running. That is a fact an operator can act on; silence
+would not be.
+
+### Thread jobs need a cooperative task
+
+A Python thread cannot be killed. A thread task that never checks
+`context.cancelled` keeps running after its deadline, and the ledger cannot
+change that — so it does not pretend to. Such a job is recorded as `timed_out`
+**and** its error states that the worker did not stop and that uncooperative
+work belongs in a process job. The job id also appears in
+`unreaped_workers` on the status payload.
+
+Write thread tasks that check `context.cancelled` in their loop, or submit them
+as process jobs.
+
+### Nothing arrives after the outcome
+
+The terminal transition is the seal. A worker that outlives its deadline cannot
+post a result afterwards: the state machine refuses a second terminal
+transition, so a late success is rejected rather than overwriting the timeout
+that was already reported.
+
+### What a request is allowed to cost
+
+The synchronous budget projects a request's cost from the model it actually
+names: the effective timestep resolved through the run contract, the
+integrator's substeps and the declared state count, not `ceil(duration / dt)`
+with a reference timestep. A four-state conductance model with a substepped
+integrator costs hundreds of times a scalar map, and the budget now says so
+instead of admitting both as if they were the same work. A request naming no
+resolvable model keeps the scalar weight.
+
+The catalogue scan honours cancellation between models. A cancelled sweep
+raises rather than finishing all 185 and being discarded, and nothing partial
+is cached: a partial sweep is not a scan of the catalogue.
+
 ## Migration
 
 `schema_meta` holds the stored version. Opening a ledger runs forward

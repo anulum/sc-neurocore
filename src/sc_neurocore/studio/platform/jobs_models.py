@@ -175,6 +175,11 @@ class StudioJobStatusSnapshot:
     interrupted_count: int = 0
     unknown_count: int = 0
     recovery: tuple[dict[str, str], ...] = ()
+    #: How many jobs are running, how many wait, and how many submissions
+    #: were refused because both were full.
+    admission: dict[str, int] = field(default_factory=dict)
+    #: Jobs whose worker was still running after their terminal record.
+    unreaped_workers: tuple[str, ...] = ()
     schema_version: str = JOBS_STATUS_SCHEMA_VERSION
 
     def to_public_dict(self) -> dict[str, object]:
@@ -182,6 +187,7 @@ class StudioJobStatusSnapshot:
 
         return {
             "active_count": self.active_count,
+            "admission": self.admission,
             "allowed_kinds": list(self.allowed_kinds),
             "completed_count": self.completed_count,
             "configured": self.configured,
@@ -194,6 +200,7 @@ class StudioJobStatusSnapshot:
             "thread_count": self.thread_count,
             "timed_out_count": self.timed_out_count,
             "unknown_count": self.unknown_count,
+            "unreaped_workers": list(self.unreaped_workers),
         }
 
 

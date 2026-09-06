@@ -148,7 +148,7 @@ def _commit_supervised_update(
     it cannot race the cancellation it is reconciling with.
     """
 
-    manager._ledger.transition(
+    record = manager._ledger.transition(
         job_id,
         status,
         reason="supervised",
@@ -158,6 +158,10 @@ def _commit_supervised_update(
         result=result,
         artifacts=artifacts,
     )
+    if record.status in TERMINAL_STATUSES:
+        # The job stopped occupying a slot the moment its outcome was
+        # committed, not when the supervisor thread happens to unwind.
+        manager._admission.release()
 
 
 def _read_declared_artifact(
@@ -242,6 +246,8 @@ def _job_manager_status(manager: _StudioJobManagerState) -> StudioJobStatusSnaps
         interrupted_count=sum(record.status == "interrupted" for record in records),
         unknown_count=sum(record.status == "unknown" for record in records),
         recovery=tuple(decision.to_public_dict() for decision in manager.last_reconciliation),
+        admission=manager._admission.snapshot().to_public_dict(),
+        unreaped_workers=manager.unreaped_workers,
         resource_profiles=tuple(
             StudioJobResourceProfile(
                 kind=kind,

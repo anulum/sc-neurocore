@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import hashlib
 import json
 import warnings
@@ -135,15 +137,37 @@ class StudioModelScanManifest:
 _CACHE: dict[ModelScanCacheKey, tuple[ModelScanEntry, ...]] = {}
 
 
-def scan_all_models(current: float = 10.0, duration: float = 100.0) -> dict[str, JsonValue]:
+def scan_all_models(
+    current: float = 10.0,
+    duration: float = 100.0,
+    *,
+    should_stop: Callable[[], bool] | None = None,
+) -> dict[str, JsonValue]:
     """Simulate every model at a given current and classify its firing pattern.
 
     Results are cached per ``(current, duration)`` pair so a scan for one
     configuration cannot be served as evidence for another configuration.
+
+    Parameters
+    ----------
+    current, duration : float
+        The constant operating point every model is driven at.
+    should_stop : callable, optional
+        Consulted before each model. A scan that is asked to stop raises
+        :class:`~sc_neurocore.studio.platform.jobs_models.StudioJobCancelled`
+        and caches nothing: a partial sweep is not a scan of the catalogue, and
+        serving one as if it were would understate the catalogue silently.
+
+    Raises
+    ------
+    StudioJobCancelled
+        ``should_stop`` returned ``True`` before the sweep finished.
     """
     cache_key = (float(current), float(duration))
     if cache_key not in _CACHE:
-        _CACHE[cache_key] = _run_model_scan(current=cache_key[0], duration=cache_key[1])
+        _CACHE[cache_key] = _run_model_scan(
+            current=cache_key[0], duration=cache_key[1], should_stop=should_stop
+        )
     entries = _CACHE[cache_key]
     models = cast(list[JsonValue], [entry.to_public_dict() for entry in entries])
     manifest = _build_model_scan_manifest(
@@ -156,7 +180,9 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> dict[str,
     }
 
 
-def _run_model_scan(*, current: float, duration: float) -> tuple[ModelScanEntry, ...]:
+def _run_model_scan(
+    *, current: float, duration: float, should_stop: Callable[[], bool] | None = None
+) -> tuple[ModelScanEntry, ...]:
     """Classify every model, recording per-model failures rather than aborting.
 
     A model that cannot be driven at the scan's constant current — one whose
@@ -172,6 +198,15 @@ def _run_model_scan(*, current: float, duration: float) -> tuple[ModelScanEntry,
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         for m in models:
+            if should_stop is not None and should_stop():
+                # Imported here: the job platform imports this module's schema
+                # version, so binding the exception at module scope would close
+                # an import cycle.
+                from sc_neurocore.studio.platform.jobs_models import StudioJobCancelled
+
+                raise StudioJobCancelled(
+                    f"Studio model scan cancelled after {len(results)} of {len(models)} models."
+                )
             name = str(m["name"])
             category = str(m.get("category", "Other"))
             try:

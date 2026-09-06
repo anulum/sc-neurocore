@@ -65,18 +65,26 @@ def _submit_process_job(
     _validate_process_task_path(task_path)
     payload_json = _json_payload(payload, "Studio process job payload must be JSON.")
     job_id = f"sj_{secrets.token_hex(8)}"
-    submission = manager._ledger.create(
-        job_id=job_id,
-        kind=kind,
-        actor=owner,
-        workspace=workspace or manager._default_workspace,
-        request_id=request_id,
-        idempotency_key=idempotency_key,
-        experiment_sha256=experiment_sha256,
-        admission=admission,
-        execution_model="process",
-    )
+    # A slot first, for the same reason as the thread path: a refused
+    # submission never reaches the ledger, and a duplicate holds no slot.
+    manager._admission.reserve()
+    try:
+        submission = manager._ledger.create(
+            job_id=job_id,
+            kind=kind,
+            actor=owner,
+            workspace=workspace or manager._default_workspace,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            experiment_sha256=experiment_sha256,
+            admission=admission,
+            execution_model="process",
+        )
+    except BaseException:
+        manager._admission.release()
+        raise
     if submission.duplicate:
+        manager._admission.release()
         return submission.record
     work_dir = _resolve_job_directory(
         root=manager._root,

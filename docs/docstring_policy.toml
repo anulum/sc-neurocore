@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 446
+expected_file_count = 449
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1739,6 +1739,18 @@ rationale = "Read-only classification of an observed spike train, with its thres
 [[file]]
 path = "src/sc_neurocore/studio/replay_pack.py"
 rationale = "Sealed replay contract: the re-resolvable request, the scientific identity digest, the complete expectation, and the refusals that precede execution."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_admission.py"
+rationale = "Bounded concurrency and queue for Studio jobs; overflow is refused with a stated reason rather than accepted and lost."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_manager_supervision.py"
+rationale = "The manager's side of the supervision protocol: seeding, running, committing and the clock."
+
+[[file]]
+path = "src/sc_neurocore/studio/platform/jobs_reaper.py"
+rationale = "Process-group reaping with escalation and verification; a reap reports what it achieved, never raises."
 
 [[file]]
 path = "src/sc_neurocore/studio/platform/jobs_ledger.py"

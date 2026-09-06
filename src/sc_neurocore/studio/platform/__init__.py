@@ -217,6 +217,8 @@ from sc_neurocore.studio.platform.analysis_limits import (
     evaluate_multi_config_cost,
     evaluate_model_scan_cost,
     evaluate_nullcline_grid_cost,
+    ModelCostFactors,
+    resolve_model_cost_factors,
     resolve_request_timestep,
     simulation_step_count,
 )
@@ -331,6 +333,8 @@ __all__ = [
     "evaluate_multi_config_cost",
     "evaluate_model_scan_cost",
     "evaluate_nullcline_grid_cost",
+    "ModelCostFactors",
+    "resolve_model_cost_factors",
     "resolve_request_timestep",
     "simulation_step_count",
     "DEFAULT_STUDIO_ALLOWED_HOSTS",

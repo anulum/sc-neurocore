@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4813
+    "test_files": 4815
   },
   "documentation": {
     "public_pages": [
@@ -7332,6 +7332,7 @@
       "tests/test_studio_integration_pipeline.py",
       "tests/test_studio_integration_project.py",
       "tests/test_studio_jobs.py",
+      "tests/test_studio_jobs_admission.py",
       "tests/test_studio_jobs_architecture.py",
       "tests/test_studio_jobs_artifacts.py",
       "tests/test_studio_jobs_context.py",
@@ -7340,6 +7341,7 @@
       "tests/test_studio_jobs_process.py",
       "tests/test_studio_jobs_process_control.py",
       "tests/test_studio_jobs_process_failures.py",
+      "tests/test_studio_jobs_reaping.py",
       "tests/test_studio_jobs_restart_recovery.py",
       "tests/test_studio_jobs_routes.py",
       "tests/test_studio_jobs_thread.py",
