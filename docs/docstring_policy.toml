@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 466
+expected_file_count = 467
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1879,3 +1879,7 @@ rationale = "Public workspace exclusion: the lock a save, fork, import, delete, 
 [[file]]
 path = "tools/generate_evidence_seal_vectors.py"
 rationale = "Public generator of the committed random-double corpus both seal implementations are checked against, including the draw, the rendering and the freshness check."
+
+[[file]]
+path = "tools/documentation_debt.py"
+rationale = "Public per-language documentation-debt measurement: the tools it drives, what each figure covers, and why a language with no installed tool is recorded as not measured rather than given a substitute number."

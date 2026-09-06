@@ -47,6 +47,7 @@ const AUDITED = [
   "src/components/PopulationEditor.tsx",
   "src/components/ProjectionEditor.test.tsx",
   "src/components/ProjectionEditor.tsx",
+  "src/docstringGate.test.ts",
   "src/evidenceSeal.test.ts",
   "src/evidenceSeal.ts",
   "src/simulationRaw.test.ts",
@@ -72,9 +73,27 @@ const AUDITED = [
  * later sweep can state what it actually reduced.
  */
 export const LEGACY_OUTSIDE_SCOPE = {
-  declarations: 719,
-  files: 151,
+  /**
+   * Undocumented declarations outside the audited scope, as **ESLint** counts
+   * them — the tool that enforces the rule, run over the whole frontend with
+   * `eslint.measure.js`.
+   *
+   * The first figure recorded here was 719, taken with a regex over source
+   * lines. The owner directive of 2026-09-06 is explicit that a heuristic may
+   * size a problem but may not become a ceiling, and this is why: re-taken
+   * with the real tool the same surface reports **1297**. The heuristic
+   * understated the debt by nearly half, and had it been used as a ratchet it
+   * would have enforced the estimate rather than the surface.
+   */
+  declarations: 1297,
+  files: 190,
+  measuredBy:
+    "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
+    "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
   measuredOn: "2026-09-06",
+  measuredOnSourceSha: "5a8669d0f1e6e1909fa2067a680352981d6a92ae",
+  nodeVersion: "v22.23.1",
+  typescriptVersion: "5.8.3",
   /**
    * The next strictness step, measured rather than guessed at.
    *
