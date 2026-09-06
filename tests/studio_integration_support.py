@@ -12,6 +12,8 @@ import json
 
 import re
 
+from collections.abc import Iterator
+
 from pathlib import Path
 
 from typing import Any
@@ -36,8 +38,19 @@ from sc_neurocore.studio.project import (
 
 
 @pytest.fixture(scope="module")
-def client() -> TestClient:
-    return TestClient(create_app(), base_url="http://127.0.0.1")
+def client(tmp_path_factory: pytest.TempPathFactory) -> Iterator[TestClient]:
+    """A Studio client whose saved workspaces live under a temporary root.
+
+    The default project root is the user's home directory. A case that saved
+    into it left a workspace behind, so the next run saved over a workspace it
+    had never loaded — which the revision store correctly refuses. Tests do not
+    write to the person's real Studio.
+    """
+
+    root = tmp_path_factory.mktemp("studio-projects")
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(root))
+        yield TestClient(create_app(), base_url="http://127.0.0.1")
 
 
 __all__ = [

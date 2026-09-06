@@ -52,7 +52,15 @@ def read_record(
 def read_records(
     ledger: StudioJobLedger, *, actor: str | None = None, workspace: str | None = None
 ) -> tuple[StudioJobRecord, ...]:
-    """Return records in creation order, scoped to an actor and workspace."""
+    """Return records in creation order, scoped to an actor and workspace.
+
+    Creation timestamps have one-second resolution, so two jobs submitted in
+    the same second tie. The tie is broken by insertion order (``rowid``), not
+    by ``job_id``: an id is a digest, and ordering by it made "the latest job"
+    a matter of which random hex sorted higher. Retention decisions read this
+    order, so the wrong archive was kept whenever the ids happened to sort
+    against submission order.
+    """
     clauses: list[str] = []
     parameters: list[str] = []
     if actor is not None:
@@ -64,7 +72,7 @@ def read_records(
     where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
     rows = (
         ledger.connection()
-        .execute(f"SELECT * FROM jobs{where} ORDER BY created_at_utc, job_id", parameters)
+        .execute(f"SELECT * FROM jobs{where} ORDER BY created_at_utc, rowid", parameters)
         .fetchall()
     )
     return tuple(record_from_row(row) for row in rows)

@@ -278,6 +278,83 @@ class TestSchema:
         assert store.load("w")["state"]["n"] == 2
 
 
+class TestLegacyLayout:
+    """A workspace saved before revisions existed must not disappear.
+
+    The previous store kept one flat ``<name>.json`` per workspace in the
+    project root. A store that only reads ``<name>/head.json`` would find an
+    existing installation's saved work simply gone.
+    """
+
+    def _legacy(self, tmp_path: Path, name: str, state: dict[str, object]) -> Path:
+        root = tmp_path / "workspaces"
+        root.mkdir(parents=True, exist_ok=True)
+        path = root / f"{name}.json"
+        path.write_text(
+            json.dumps({"name": name, "saved_at": 1.5, "version": "0.3.0", "state": state}),
+            encoding="utf-8",
+        )
+        return path
+
+    def test_a_flat_workspace_file_is_adopted_as_revision_one(self, tmp_path: Path) -> None:
+        legacy = self._legacy(tmp_path, "old", {"note": "written before revisions"})
+        store = _store(tmp_path)
+
+        assert store.load("old")["state"] == {"note": "written before revisions"}
+        assert store.head_revision("old") == 1
+        assert [entry.revision for entry in store.revisions("old")] == [1]
+        # The original file is left where it is: an adoption that writes is
+        # reversible, one that deletes is not.
+        assert legacy.is_file()
+
+    def test_an_adopted_workspace_saves_on_top_of_its_own_history(self, tmp_path: Path) -> None:
+        self._legacy(tmp_path, "old", {"note": "one"})
+        store = _store(tmp_path)
+
+        store.save("old", {"note": "two"}, expected_revision=1)
+
+        assert [entry.revision for entry in store.revisions("old")] == [1, 2]
+        assert store.load("old", revision=1)["state"] == {"note": "one"}
+        assert store.load("old")["state"] == {"note": "two"}
+
+    def test_saving_over_an_adopted_workspace_without_its_revision_is_refused(
+        self, tmp_path: Path
+    ) -> None:
+        self._legacy(tmp_path, "old", {"note": "one"})
+        store = _store(tmp_path)
+
+        with pytest.raises(WorkspaceConflict):
+            store.save("old", {"note": "clobber"})
+
+        assert store.load("old")["state"] == {"note": "one"}
+
+    def test_an_adopted_workspace_is_listed(self, tmp_path: Path) -> None:
+        self._legacy(tmp_path, "old", {"note": "one"})
+        store = _store(tmp_path)
+
+        assert [entry["name"] for entry in store.list_workspaces()] == ["old"]
+
+    def test_a_file_that_is_not_a_workspace_is_left_alone(self, tmp_path: Path) -> None:
+        root = tmp_path / "workspaces"
+        root.mkdir(parents=True)
+        (root / "broken.json").write_text("{", encoding="utf-8")
+        (root / "notes.txt").write_text("not a project", encoding="utf-8")
+        store = _store(tmp_path)
+
+        # One unreadable file must not take down the listing.
+        assert store.list_workspaces() == ()
+        assert store.exists("broken") is False
+        assert (root / "broken.json").read_text(encoding="utf-8") == "{"
+
+    def test_adoption_is_idempotent(self, tmp_path: Path) -> None:
+        self._legacy(tmp_path, "old", {"note": "one"})
+        store = _store(tmp_path)
+
+        assert store.adopt_legacy("old") is True
+        assert store.adopt_legacy("old") is False
+        assert [entry.revision for entry in store.revisions("old")] == [1]
+
+
 class TestPublicProjectApi:
     def _project_module(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         import sc_neurocore.studio.project as project

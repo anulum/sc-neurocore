@@ -57,6 +57,8 @@ from sc_neurocore.studio.workspace_schema import (
 )
 
 REVISIONS_DIR = "revisions"
+#: Suffix of the pre-revision one-file-per-workspace layout.
+LEGACY_SUFFIX = ".json"
 TRASH_DIR = ".trash"
 HEAD_FILE = "head.json"
 
@@ -166,12 +168,75 @@ class WorkspaceStore:
     def _head_path(self, name: str) -> Path:
         return self.workspace_dir(name) / HEAD_FILE
 
+    def _legacy_path(self, name: str) -> Path:
+        """Return where the pre-revision store kept this workspace."""
+        return self._root / f"{name}{LEGACY_SUFFIX}"
+
+    def adopt_legacy(self, name: str) -> bool:
+        """Bring a pre-revision workspace file into the revision layout.
+
+        Before revisions, a workspace was one flat ``<name>.json`` in the
+        project root. Those files are invisible to a store that reads
+        ``<name>/head.json``, so an existing installation would have found its
+        saved work simply gone. The flat file becomes revision 1 and is left
+        on disk untouched: an adoption that writes is reversible by deleting
+        the directory, one that deleted would not be.
+
+        A file that is not a readable workspace is skipped, not adopted and
+        not raised over: it stays on disk and the name behaves as unused.
+
+        Returns
+        -------
+        bool
+            Whether an adoption happened. Adopting twice is a no-op, because
+            the second call finds a head.
+        """
+        legacy = self._legacy_path(name)
+        if self._head_path(name).is_file() or not legacy.is_file():
+            return False
+        try:
+            document = read_document(legacy)
+        except WorkspaceSchemaError:
+            # A file in the project root that is not a readable workspace is
+            # left exactly where it is and adopted by nobody. Raising here
+            # would let one unreadable file take down the whole listing.
+            return False
+        saved_at = float(document.get("saved_at") or self._clock())
+        revision = {
+            "schema_version": WORKSPACE_SCHEMA_VERSION,
+            "schema_number": SCHEMA_VERSION,
+            "name": name,
+            "revision": 1,
+            "parent": None,
+            "saved_at": saved_at,
+            "version": document.get("version") or PROJECT_PAYLOAD_VERSION,
+            "adopted_from": "studio.project-save.v0",
+            "state": dict(document.get("state") or {}),
+        }
+        (self.workspace_dir(name) / REVISIONS_DIR).mkdir(parents=True, exist_ok=True)
+        write_atomic(self._revision_path(name, 1), dump_canonical(revision) + "\n")
+        write_atomic(
+            self._head_path(name),
+            dump_canonical(
+                {
+                    "schema_version": WORKSPACE_SCHEMA_VERSION,
+                    "schema_number": SCHEMA_VERSION,
+                    "name": name,
+                    "state": {"revision": 1, "saved_at": saved_at},
+                }
+            )
+            + "\n",
+        )
+        return True
+
     def exists(self, name: str) -> bool:
         """Return whether a workspace has at least one revision."""
+        self.adopt_legacy(name)
         return self._head_path(name).is_file()
 
     def head_revision(self, name: str) -> int | None:
         """Return the current revision number, or ``None`` for a new workspace."""
+        self.adopt_legacy(name)
         path = self._head_path(name)
         if not path.is_file():
             return None
@@ -253,6 +318,7 @@ class WorkspaceStore:
         WorkspaceSchemaError
             The stored revision cannot be read as a workspace.
         """
+        self.adopt_legacy(name)
         target = revision if revision is not None else self.head_revision(name)
         if target is None:
             raise KeyError(name)
@@ -263,6 +329,7 @@ class WorkspaceStore:
 
     def revisions(self, name: str) -> tuple[WorkspaceRevision, ...]:
         """Return every stored revision of one workspace, oldest first."""
+        self.adopt_legacy(name)
         directory = self.workspace_dir(name) / REVISIONS_DIR
         if not directory.is_dir():
             return ()
@@ -289,6 +356,9 @@ class WorkspaceStore:
     def list_workspaces(self) -> tuple[dict[str, object], ...]:
         """Return one summary per workspace, by name."""
         summaries: list[dict[str, object]] = []
+        for path in sorted(self._root.glob(f"*{LEGACY_SUFFIX}")):
+            if path.is_file():
+                self.adopt_legacy(path.name[: -len(LEGACY_SUFFIX)])
         for directory in sorted(self._root.iterdir()):
             if not directory.is_dir() or directory.name == TRASH_DIR:
                 continue
@@ -332,6 +402,7 @@ class WorkspaceStore:
 
 __all__ = [
     "HEAD_FILE",
+    "LEGACY_SUFFIX",
     "REVISIONS_DIR",
     "TRASH_DIR",
     "WorkspaceConflict",

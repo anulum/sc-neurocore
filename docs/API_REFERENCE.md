@@ -38005,6 +38005,13 @@ that never existed.
 ### Function `read_records(ledger)`
 Return records in creation order, scoped to an actor and workspace.
 
+Creation timestamps have one-second resolution, so two jobs submitted in
+the same second tie. The tie is broken by insertion order (``rowid``), not
+by ``job_id``: an id is a digest, and ordering by it made "the latest job"
+a matter of which random hex sorted higher. Retention decisions read this
+order, so the wrong archive was kept whenever the ids happened to sort
+against submission order.
+
 ### Function `read_transitions(ledger, job_id)`
 Return the append-only transition history of one job, in order.
 
@@ -40727,6 +40734,8 @@ clock : callable, optional
   - Return the directory holding one workspace's revisions and head.
 - **now**()
   - Return this store's clock, so collaborators stamp the same time.
+- **adopt_legacy**(name)
+  - Bring a pre-revision workspace file into the revision layout.
 - **exists**(name)
   - Return whether a workspace has at least one revision.
 - **head_revision**(name)

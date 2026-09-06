@@ -11,6 +11,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- A workspace saved before revisions existed is no longer invisible. The
+  previous store kept one flat `<name>.json` per workspace in the project
+  root, and a store that reads `<name>/head.json` found an existing
+  installation's saved work simply gone. Such a file is now adopted as
+  revision 1 on first access — read, list, save and history alike — and the
+  flat file is left on disk untouched, so the adoption is reversible. Adoption
+  is idempotent, and a file in the project root that is not a readable
+  workspace is adopted by nobody and never allowed to take down the listing.
+- Studio job records are returned in submission order. Creation timestamps
+  have one-second resolution and the tie was broken by `job_id`, which is a
+  digest: "retain the latest archive" kept whichever random hex sorted higher,
+  so audit-quarantine retention pruned the wrong archive whenever the ids
+  sorted against submission order. The tie is now broken by insertion order.
 - Saving a Studio workspace can no longer destroy what was already saved.
   Three failures, each reproduced through the public API before it was
   replaced: two editors loaded the same workspace and the second save silently

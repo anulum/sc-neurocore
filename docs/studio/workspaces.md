@@ -109,8 +109,22 @@ A workspace written by a **newer** schema is refused rather than downgraded —
 dropping fields a future build added would lose a user's work quietly. Upgrade
 the package instead.
 
-A legacy single-file project payload still loads: it is migrated to a revision
-on read, and the next save is the first immutable revision.
+## Workspaces saved before revisions existed
+
+The previous store kept one flat `<name>.json` per workspace in the project
+root. Those files are adopted on first access: the document becomes revision 1
+(marked `adopted_from: studio.project-save.v0`) and the flat file is **left on
+disk untouched** — an adoption that writes is reversible by deleting the
+workspace directory, one that deleted would not be. Adoption is idempotent and
+happens on read, list, save and history alike, so nothing an existing
+installation saved goes missing.
+
+The first save after an adoption states revision 1, like any other save. Saving
+without stating it is refused, as it is for any existing workspace.
+
+A file in the project root that is not a readable workspace — a stray
+`notes.txt`, a truncated JSON file — is adopted by nobody, left exactly where it
+is, and never allowed to take down the listing.
 
 A revision file that cannot be read is omitted from the history listing rather
 than reported as an empty workspace, and every error message about a stored
