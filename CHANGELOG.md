@@ -11,6 +11,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- `QuadraticIFNeuron` accepted foreign event arrays its six siblings refuse. Its
+  complete-packet validator cast the array to `uint8` before checking it, so
+  `256` wrapped to `0` and `0.5` truncated to `0` — a spike returned by a Rust,
+  Julia, Go or Mojo lane became a silent non-spike — while `-1` and `2` were
+  caught. The event domain is now checked on the values as they arrived, as
+  every other model already did, and a contract test drives the same four
+  out-of-domain arrays through every model that has such a boundary so one
+  validator cannot drift away from the others again.
 - A foreign runtime may no longer name a state variable the model does not
   have. The Studio's Rust batch lane transports one scalar trace, the soma
   voltage, and the payload placed it under `states["v"]` unconditionally.

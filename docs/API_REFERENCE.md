@@ -28133,7 +28133,8 @@ tuple&#91;dict&#91;str, int&#93;, tuple&#91;str, ...&#93;&#93;
 Raises
 ------
 ValueError
-    If the report is malformed, empty or lacks testcase identities.
+    If the report is malformed, empty, declares a DTD or entities, or lacks
+    testcase identities. External references are never resolved.
 
 ### Function `execution_problems(command, evidence_refs, validator, counts)`
 Check that a receipt's declared validators actually appear in its run.
@@ -38905,7 +38906,10 @@ StudioJobRejected
     The transition is not allowed from the job's current status.
 
 ### Function `heartbeat_job(ledger, job_id)`
-Extend this supervisor's lease on a job it is still running.
+Extend a live job's lease, checking its status in the write transaction.
+
+Terminal and absent jobs remain unchanged. The transaction serialises this
+check with transitions so a finished job cannot acquire another lease.
 
 ### Function `delete_job(ledger, job_id)`
 Remove one terminal job and its whole transition history.

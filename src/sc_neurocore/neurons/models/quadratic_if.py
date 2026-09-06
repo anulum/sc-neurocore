@@ -252,14 +252,18 @@ class QuadraticIFNeuron:
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.uint8], float]:
         raw_voltage, raw_events, raw_final_v = packet
         voltage = np.ascontiguousarray(np.asarray(raw_voltage, dtype=np.float64))
-        events = np.ascontiguousarray(np.asarray(raw_events, dtype=np.uint8))
+        # The event domain is checked on the values as they arrived. Casting
+        # first would decide the answer: 256 wraps to 0 under uint8 and 0.5
+        # truncates to 0, so a foreign spike would become a silent non-spike.
+        event_values = np.asarray(raw_events)
         final_v = float(raw_final_v)
-        if voltage.shape != (n_steps,) or events.shape != (n_steps,):
+        if voltage.shape != (n_steps,) or event_values.shape != (n_steps,):
             raise RuntimeError("QuadraticIF backend returned an invalid packet shape")
         if not np.all(np.isfinite(voltage)) or not math.isfinite(final_v):
             raise FloatingPointError("QuadraticIF backend returned non-finite voltage")
-        if np.any(events > 1):
+        if not np.all((event_values == 0) | (event_values == 1)):
             raise RuntimeError("QuadraticIF backend returned non-binary events")
+        events = np.ascontiguousarray(event_values, dtype=np.uint8)
         if n_steps and final_v != float(voltage[-1]):
             raise RuntimeError("QuadraticIF backend final state disagrees with its trace")
         return voltage, events, final_v
