@@ -5,8 +5,15 @@
   --bg-hover: #30363d;
   --border: #30363d;
   --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #484f58;
+  /* The grey ramp is fixed by WCAG 2.2 AA, not by taste: --text-muted sits at
+     the lowest luminance that still reaches 4.5:1 against every ground it is
+     rendered on (the darkest margin is 4.55:1 on the accent tint behind the
+     Network Canvas's "+ Exc" button), and
+     --text-secondary sits at the luminance midpoint between it and
+     --text-primary so the three steps stay distinguishable. Changing either
+     value fails src/paletteContrast.test.ts unless the new one also passes. */
+  --text-secondary: #c0c5ca;
+  --text-muted: #9ca4ae;
   --accent: #4fc3f7;
   --accent-dim: #1a3a4a;
   --spike-red: #ff5252;

@@ -50,6 +50,8 @@ const AUDITED = [
   "src/contrastAudit.test.ts",
   "src/contrastAudit.ts",
   "src/docstringGate.test.ts",
+  "src/paletteContrast.test.ts",
+  "src/paletteContrast.ts",
   "src/evidenceSeal.test.ts",
   "src/evidenceSeal.ts",
   "src/simulationRaw.test.ts",

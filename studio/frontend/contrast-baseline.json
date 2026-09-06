@@ -1,79 +1,8 @@
 {
-  "failures": [
-    {
-      "background": "26,58,74",
-      "foreground": "72,79,88",
-      "ratio": 1.45,
-      "required": 4.5,
-      "seenAt": "span \"validation none \u00b7 integrator eul\""
-    },
-    {
-      "background": "23,44,57",
-      "foreground": "72,79,88",
-      "ratio": 1.75,
-      "required": 4.5,
-      "seenAt": "div \"SCLapicqueLIFNeuron \u00d7 80\""
-    },
-    {
-      "background": "33,38,45",
-      "foreground": "72,79,88",
-      "ratio": 1.84,
-      "required": 4.5,
-      "seenAt": "button \"Scan\""
-    },
-    {
-      "background": "49,27,32",
-      "foreground": "72,79,88",
-      "ratio": 1.94,
-      "required": 4.5,
-      "seenAt": "div \"SCLapicqueLIFNeuron \u00d7 20\""
-    },
-    {
-      "background": "22,27,34",
-      "foreground": "72,79,88",
-      "ratio": 2.09,
-      "required": 4.5,
-      "seenAt": "span \"Analyze\""
-    },
-    {
-      "background": "72,79,88",
-      "foreground": "13,17,23",
-      "ratio": 2.28,
-      "required": 4.5,
-      "seenAt": "span \"S1\""
-    },
-    {
-      "background": "13,17,23",
-      "foreground": "72,79,88",
-      "ratio": 2.28,
-      "required": 4.5,
-      "seenAt": "span \"validation none \u00b7 integrator eul\""
-    },
-    {
-      "background": "33,38,45",
-      "foreground": "97,97,97",
-      "ratio": 2.46,
-      "required": 4.5,
-      "seenAt": "span \"quiescent 2\""
-    },
-    {
-      "background": "69,38,44",
-      "foreground": "255,82,82",
-      "ratio": 4.21,
-      "required": 4.5,
-      "seenAt": "button \"+ Inh\""
-    },
-    {
-      "background": "33,38,45",
-      "foreground": "186,104,200",
-      "ratio": 4.28,
-      "required": 4.5,
-      "seenAt": "span \"stochastic 3\""
-    }
-  ],
-  "measured_on": "2026-09-07",
-  "measured_on_source_sha": "1d6cd195dcb8398b03f360cb54bc955b17a2e6f4",
+  "failures": [],
+  "measured_on": "2026-09-06",
+  "measured_on_source_sha": "dbf12b4cd9f01ee21950bc6f74a499a9a6268c57",
   "measured_with": "chromium via playwright.graph.config.ts, built bundle, live Studio backend",
-  "note": "Colour pairs on the Studio that do not meet their WCAG 2.2 AA contrast threshold, measured in a real browser by e2e/network-canvas-live.spec.ts. Keyed on the COLOURS, not on the element or its text: one palette decision fails on dozens of unrelated elements, and the text on screen depends on which other tests ran first. A pair not listed here fails the run, and a listed pair that no longer fails also fails the run, so the list can only shrink deliberately. These are user-facing defects, not merely debt.",
+  "note": "Colour pairs on the Studio that do not meet their WCAG 2.2 AA contrast threshold, measured in a real browser by e2e/network-canvas-live.spec.ts. Keyed on the COLOURS, not on the element or its text: one palette decision fails on dozens of unrelated elements, and the text on screen depends on which other tests ran first. A pair not listed here fails the run, and a listed pair that no longer fails also fails the run, so the list can only shrink deliberately. It is empty because the ten pairs it recorded were fixed rather than accepted; it stays in the tree so a new failure has somewhere to be refused. This file covers the DOM only. Text painted into a canvas or written into an exported SVG is pixels by the time a browser reports it, and is held to the same bar by src/paletteContrast.test.ts.",
   "schema_version": "sc-neurocore.contrast-baseline.v2"
 }

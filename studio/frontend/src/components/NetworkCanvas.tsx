@@ -23,6 +23,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useStudioStore } from "../stores/studio";
 import { buildPipelineEvidenceModel, type PipelineEvidenceModel } from "../pipelineEvidence";
+import { CANVAS_TINTS } from "../paletteContrast";
 import {
   studioNodeChangePlan,
   studioPopulationDriveLabel,
@@ -39,7 +40,7 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   return (
     <div style={{
       padding: "8px 12px", borderRadius: isExc ? 8 : 4,
-      background: isExc ? "rgba(79, 195, 247, 0.15)" : "rgba(255, 82, 82, 0.15)",
+      background: isExc ? CANVAS_TINTS.excitatoryNode : CANVAS_TINTS.inhibitoryNode,
       border: `2px solid ${isExc ? "#4fc3f7" : "#ff5252"}`,
       minWidth: 100, textAlign: "center",
     }}>
@@ -235,11 +236,11 @@ export default function NetworkCanvas() {
           Network Canvas
         </span>
         <button onClick={() => addPopulation("excitatory")} style={{
-          background: "rgba(79, 195, 247, 0.2)", color: "#4fc3f7", border: "1px solid #4fc3f7",
+          background: CANVAS_TINTS.excitatoryButton, color: "#4fc3f7", border: "1px solid #4fc3f7",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>+ Exc</button>
         <button onClick={() => addPopulation("inhibitory")} style={{
-          background: "rgba(255, 82, 82, 0.2)", color: "#ff5252", border: "1px solid #ff5252",
+          background: CANVAS_TINTS.inhibitoryButton, color: "#ff5252", border: "1px solid #ff5252",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>+ Inh</button>
         <button
@@ -320,7 +321,7 @@ export default function NetworkCanvas() {
       {/* Errors */}
       {graphErrors.length > 0 && (
         <div style={{
-          padding: "4px 12px", background: "rgba(255,82,82,0.1)", fontSize: 10, color: "#ff5252",
+          padding: "4px 12px", background: CANVAS_TINTS.errorStrip, fontSize: 10, color: "#ff5252",
         }}>
           {graphErrors.map((e, i) => <div key={i}>{e}</div>)}
         </div>
@@ -395,7 +396,7 @@ export default function NetworkCanvas() {
         <div style={{
           padding: "6px 12px", borderTop: "1px solid var(--border)",
           fontSize: 10, color: pipelineResult.success ? "var(--text-secondary)" : "#ff5252",
-          background: pipelineResult.success ? "rgba(129, 199, 132, 0.05)" : "rgba(255, 82, 82, 0.05)",
+          background: pipelineResult.success ? CANVAS_TINTS.pipelineSucceeded : CANVAS_TINTS.pipelineFailed,
         }}>
           {pipelineResult.success
             ? `Pipeline complete: ${pipelineResult.pipeline} → ${pipelineResult.target?.toUpperCase()}`

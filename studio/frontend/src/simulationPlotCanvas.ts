@@ -17,7 +17,16 @@ export const PLOT_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8
 export const PLOT_BG = "#0d1117";
 export const PLOT_PANEL_BG = "#0a0e14";
 export const PLOT_GRID = "#1a1f2a";
-export const PLOT_AXIS = "#484f58";
+/**
+ * Axis rule and tick-label colour for every Studio plot canvas.
+ *
+ * Canvas text is pixels, so no DOM audit can measure it. The value is the
+ * lowest luminance of the original blue-grey that still reaches 4.5:1 against
+ * both plot grounds (4.62:1 on PLOT_PANEL_BG, 4.53:1 on PLOT_BG); the same
+ * colour draws the axis rules, which need only 3:1. Guarded by
+ * paletteContrast.test.ts.
+ */
+export const PLOT_AXIS = "#727d8b";
 export const PLOT_BORDER = "#21262d";
 
 /**

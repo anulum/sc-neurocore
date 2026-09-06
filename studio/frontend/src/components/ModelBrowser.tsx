@@ -20,27 +20,44 @@ import EvidenceSummaryStrip, {
 } from "./EvidenceSummaryStrip";
 import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
 
-const MATURITY_COLORS: Record<string, string> = {
+/**
+ * Maturity dot colours.
+ *
+ * Rendered as a filled dot and, for the badge row, as text on --bg-tertiary or
+ * as a ground under --bg-primary text. Every value clears WCAG 2.2 AA in both
+ * roles; paletteContrast.test.ts fails if a new one does not.
+ */
+export const MATURITY_COLORS: Record<string, string> = {
     validated: "#81c784",
     experimental: "#ffb74d",
     reference: "#4fc3f7",
 };
 
-const PATTERN_COLORS: Record<string, string> = {
+/**
+ * Live-scan firing-pattern colours.
+ *
+ * Same two roles as MATURITY_COLORS. `silent` is the muted text token itself,
+ * referenced rather than copied so the two cannot drift apart again.
+ */
+export const PATTERN_COLORS: Record<string, string> = {
     tonic: "#81c784",
     bursting: "#ffb74d",
     adapting: "#4fc3f7",
     irregular: "#ce93d8",
     chaotic: "#ff5252",
-    silent: "#484f58",
+    silent: "var(--text-muted)",
     single_spike: "#90a4ae",
-    error: "#616161",
+    error: "#8c8c8c",
 };
 
-// Measured behaviour-tag colours (descriptor facet, distinct from the live scan).
-const BEHAVIOR_COLORS: Record<string, string> = {
+/**
+ * Measured behaviour-tag colours (descriptor facet, distinct from the live scan).
+ *
+ * Same two roles as MATURITY_COLORS.
+ */
+export const BEHAVIOR_COLORS: Record<string, string> = {
     excitable: "#81c784",
-    quiescent: "#616161",
+    quiescent: "#8c8c8c",
     tonic: "#81c784",
     adapting: "#4fc3f7",
     bursting: "#ffb74d",
@@ -48,7 +65,7 @@ const BEHAVIOR_COLORS: Record<string, string> = {
     chaotic: "#ff5252",
     phasic: "#90a4ae",
     "rate-coded": "#4dd0e1",
-    stochastic: "#ba68c8",
+    stochastic: "#bd6ecb",
 };
 
 function shortDigest(value: string): string {

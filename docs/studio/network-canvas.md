@@ -169,22 +169,60 @@ gradient, an image, a chain that never reaches an opaque colour — is
 dark text on an unknown ground. The thresholds are WCAG 2.2 AA: 4.5:1, or 3:1
 for large text (18.66px bold, 24px otherwise).
 
-Measured on the Studio, **ten colour pairs do not meet their threshold**, and
-that is a user-facing defect rather than a matter of taste. The worst is
-**1.45:1**, where 4.5:1 is required; a population node's own
-`SCLapicqueLIFNeuron × 80` sits at **1.75:1**. Seven of the ten are one
-decision — `--text-muted` against seven different grounds.
+When this audit was first run it found **ten failing colour pairs**, the worst
+at **1.45:1** where 4.5:1 is required. Seven of them were a single decision:
+`--text-muted` against seven different grounds. All ten are now fixed, so
+`contrast-baseline.json` is empty; it stays in the tree because it works in
+both directions — a pair it does not record fails the run, and a recorded pair
+that no longer fails also fails the run — so a new failure has somewhere to be
+refused and an old one cannot be quietly re-accepted.
 
-They are recorded in `contrast-baseline.json`, keyed on the **colours** rather
-than on the element or its text. That distinction is not cosmetic: one palette
-decision fails on dozens of unrelated elements, and the text on screen depends
-on which other tests ran first, so a text-keyed list reported seventeen entries
-alone and nine hundred and sixteen in a full suite. Keyed on colour it is ten
-either way.
+The baseline is keyed on the **colours** rather than on the element or its
+text. That distinction is not cosmetic: one palette decision fails on dozens of
+unrelated elements, and the text on screen depends on which other tests ran
+first, so a text-keyed list reported seventeen entries alone and nine hundred
+and sixteen in a full suite. Keyed on colour it was ten either way.
 
-The list works in both directions: a pair it does not record fails the run, and
-a recorded pair that no longer fails also fails the run, so it can only shrink
-deliberately and cannot drift into a blanket permission.
+### What the browser audit cannot see, and what covers it
+
+A DOM audit can only read text nodes. Two surfaces carry ordinary product text
+and are invisible to it: text painted into a `<canvas>`, which is pixels by the
+time the DOM reports anything, and text written into an exported SVG, which
+never reaches a page at all. Both were failing — every axis and tick label in
+every Studio plot sat at about **2.3:1** — and neither would ever have appeared
+in the browser run.
+
+`src/paletteContrast.test.ts` covers them by reading the sources that declare
+the colours: the stylesheet's own custom properties, the badge colour maps, the
+plot constants, and a scan of every colour `SimulationPlot` assigns to
+`fillStyle` immediately before painting text. It composites each translucent
+ground over the base the component actually places it on, and it uses
+`contrastAudit.ts`'s arithmetic rather than a second copy of it. A pair it
+cannot resolve throws instead of passing, and a scan that stops matching the
+source fails instead of reporting the file clean.
+
+### How the grey ramp is chosen
+
+`--text-muted` is the lowest luminance of its own blue-grey that still reaches
+4.5:1 against **every** ground it is rendered on — the plain `--bg-*` surfaces,
+`--accent-dim`, and the composited tints of the Network Canvas. The binding one
+is the accent tint behind the **+ Exc** button, where it clears by 4.55:1.
+`--text-secondary` then sits at the luminance midpoint between it and
+`--text-primary`, so the ramp keeps three distinguishable steps in the order it
+always had. Both values are consequences of the threshold, not preferences, and
+changing either fails the test unless the new one also passes.
+
+The same rule fixed the rest: the inhibitory `+ Inh` button's tint dropped from
+0.2 to 0.12 alpha, because `#ff5252` is far darker than `#4fc3f7` and equal
+alphas do not give equal contrast; `PLOT_AXIS` rose to `#727d8b`, which clears
+the 4.5:1 text bar and therefore the 3:1 bar its axis rules need; and the two
+badge greys rose to the least they could and still pass in both of the roles a
+badge colour has — chip text while the filter is off, chip ground while it is
+on.
+
+Grid lines behind the plot data are deliberately left below 3:1. They are
+redundant guides drawn beneath labelled axes, not graphics required to
+understand the content, and raising them would compete with the traces.
 
 ## Reading the graph without the canvas
 

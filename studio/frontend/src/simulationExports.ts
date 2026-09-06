@@ -11,6 +11,7 @@ import type { ReplayPack } from "./api/types";
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
 import { downloadCanvasPng } from "./browserCanvasExport";
 import { fullDriveTrace, fullSampleTimes, fullStateNames, fullStateTrace } from "./simulationRaw";
+import { PLOT_AXIS } from "./simulationPlotCanvas";
 
 const SVG_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"] as const;
 
@@ -145,8 +146,8 @@ export function simulationSvgText(result: SimulateResponse): string {
     const x = toX(result.time[spikeIndex] ?? spikeIndex * result.dt);
     svg += `<line x1="${x.toFixed(1)}" y1="${padding.top}" x2="${x.toFixed(1)}" y2="${padding.top + 8}" stroke="#ff5252" stroke-width="1.5"/>\n`;
   }
-  svg += `<line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + plotHeight}" stroke="#484f58"/>\n`;
-  svg += `<line x1="${padding.left}" y1="${padding.top + plotHeight}" x2="${padding.left + plotWidth}" y2="${padding.top + plotHeight}" stroke="#484f58"/>\n`;
+  svg += `<line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + plotHeight}" stroke="${PLOT_AXIS}"/>\n`;
+  svg += `<line x1="${padding.left}" y1="${padding.top + plotHeight}" x2="${padding.left + plotWidth}" y2="${padding.top + plotHeight}" stroke="${PLOT_AXIS}"/>\n`;
   svg += `<text x="${padding.left + plotWidth / 2}" y="${height - 5}" text-anchor="middle" fill="#8b949e" font-size="11" font-family="sans-serif">time (ms)</text>\n`;
   svg += `<text x="12" y="${padding.top + plotHeight / 2}" text-anchor="middle" fill="#8b949e" font-size="11" font-family="sans-serif" transform="rotate(-90,12,${padding.top + plotHeight / 2})">mV</text>\n`;
   for (let index = 0; index <= 4; index++) {
@@ -158,7 +159,7 @@ export function simulationSvgText(result: SimulateResponse): string {
     svg += `<line x1="${x}" y1="10" x2="${x + 15}" y2="10" stroke="${SVG_COLORS[variableIndex % SVG_COLORS.length]}" stroke-width="2"/><text x="${x + 18}" y="13" fill="#8b949e" font-size="10">${escapeSvgText(variables[variableIndex])}</text>\n`;
   }
   if (result.model_name) {
-    svg += `<text x="${width - padding.right}" y="13" text-anchor="end" fill="#484f58" font-size="9" font-family="monospace">${escapeSvgText(result.model_name)}</text>\n`;
+    svg += `<text x="${width - padding.right}" y="13" text-anchor="end" fill="${PLOT_AXIS}" font-size="9" font-family="monospace">${escapeSvgText(result.model_name)}</text>\n`;
   }
   svg += `</svg>`;
   return svg;

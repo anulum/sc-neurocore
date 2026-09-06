@@ -11,6 +11,22 @@ from __future__ import annotations
 
 COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"]
 
+BACKGROUND = "#0d1117"
+"""Ground every exported plot is painted on."""
+
+AXIS = "#727d8b"
+"""Axis rules and the model-name watermark.
+
+The lowest luminance of the original blue-grey that still reaches WCAG 2.2 AA's
+4.5:1 against ``BACKGROUND`` (4.53:1), which also clears the 3:1 that the axis
+rules need as non-text.  The Studio's TypeScript exporter uses the same value
+through ``PLOT_AXIS``; ``tests/studio/test_svg_export_contrast.py`` holds both
+this module's text colours to the threshold.
+"""
+
+LABEL = "#8b949e"
+"""Axis captions, tick labels and the legend, at 6.15:1 on ``BACKGROUND``."""
+
 
 def traces_to_svg(
     time: list[float],
@@ -51,7 +67,7 @@ def traces_to_svg(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
         f'height="{height}" viewBox="0 0 {width} {height}">'
     )
-    lines.append(f'<rect width="{width}" height="{height}" fill="#0d1117"/>')
+    lines.append(f'<rect width="{width}" height="{height}" fill="{BACKGROUND}"/>')
 
     # Grid lines
     for i in range(5):
@@ -84,21 +100,21 @@ def traces_to_svg(
     # Axes
     lines.append(
         f'<line x1="{pad_left}" y1="{pad_top}" x2="{pad_left}" '
-        f'y2="{pad_top + ph}" stroke="#484f58"/>'
+        f'y2="{pad_top + ph}" stroke="{AXIS}"/>'
     )
     lines.append(
         f'<line x1="{pad_left}" y1="{pad_top + ph}" x2="{pad_left + pw}" '
-        f'y2="{pad_top + ph}" stroke="#484f58"/>'
+        f'y2="{pad_top + ph}" stroke="{AXIS}"/>'
     )
 
     # Axis labels
     lines.append(
         f'<text x="{pad_left + pw / 2}" y="{height - 5}" text-anchor="middle" '
-        f'fill="#8b949e" font-size="11" font-family="sans-serif">time (ms)</text>'
+        f'fill="{LABEL}" font-size="11" font-family="sans-serif">time (ms)</text>'
     )
     lines.append(
         f'<text x="12" y="{pad_top + ph / 2}" text-anchor="middle" '
-        f'fill="#8b949e" font-size="11" font-family="sans-serif" '
+        f'fill="{LABEL}" font-size="11" font-family="sans-serif" '
         f'transform="rotate(-90,12,{pad_top + ph / 2})">mV</text>'
     )
 
@@ -108,7 +124,7 @@ def traces_to_svg(
         y = to_y(val)
         lines.append(
             f'<text x="{pad_left - 5}" y="{y + 3:.1f}" text-anchor="end" '
-            f'fill="#8b949e" font-size="9" font-family="monospace">'
+            f'fill="{LABEL}" font-size="9" font-family="monospace">'
             f"{val:.1f}</text>"
         )
 
@@ -119,7 +135,7 @@ def traces_to_svg(
         lines.append(
             f'<line x1="{x_offset}" y1="10" x2="{x_offset + 15}" y2="10" '
             f'stroke="{colour}" stroke-width="2"/>'
-            f'<text x="{x_offset + 18}" y="13" fill="#8b949e" '
+            f'<text x="{x_offset + 18}" y="13" fill="{LABEL}" '
             f'font-size="10">{name}</text>'
         )
 
@@ -127,7 +143,7 @@ def traces_to_svg(
     if model_name:
         lines.append(
             f'<text x="{width - pad_right}" y="13" text-anchor="end" '
-            f'fill="#484f58" font-size="9" font-family="monospace">'
+            f'fill="{AXIS}" font-size="9" font-family="monospace">'
             f"{model_name}</text>"
         )
 
@@ -139,7 +155,7 @@ def _empty_svg(width: int, height: int) -> str:
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
         f'height="{height}" viewBox="0 0 {width} {height}">'
-        f'<rect width="{width}" height="{height}" fill="#0d1117"/>'
+        f'<rect width="{width}" height="{height}" fill="{BACKGROUND}"/>'
         f'<text x="{width // 2}" y="{height // 2}" text-anchor="middle" '
-        f'fill="#8b949e" font-size="14">No data</text></svg>'
+        f'fill="{LABEL}" font-size="14">No data</text></svg>'
     )

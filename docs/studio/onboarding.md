@@ -38,7 +38,7 @@ a centred card:
 - Accent-coloured title bar
 - Step counter in muted text
 - Navigation buttons styled consistently with Studio controls
-- Skip link in subtle `#8b949e` text
+- Skip link in the muted text token, which carries its own contrast floor
 
 The card is responsive — on screens narrower than 480px it fills the
 available width with appropriate padding.
