@@ -121,6 +121,7 @@ export {
 
 export {
   fetchGraphModels,
+  graphModelContract,
   createPopulation,
   createProjection,
   validateGraph,

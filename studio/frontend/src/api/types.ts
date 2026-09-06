@@ -1374,6 +1374,28 @@ export interface ProjectionEdge {
   autapses?: boolean;
 }
 
+/** One constructor field a population of this model may override. */
+export interface PopulationModelParameter {
+  default: number | null;
+  kind: "float" | "int";
+  name: string;
+}
+
+/** One field that is not an input, and the reason it is not. */
+export interface PopulationModelUnsupported {
+  name: string;
+  reason: string;
+}
+
+/** What a population of one model may be given, as the server decides it. */
+export interface PopulationModelContract {
+  drive: { kind: "float" | "int"; parameter: string; positional_only: boolean };
+  model: string;
+  parameters: PopulationModelParameter[];
+  schema_version: "studio.population-model-contract.v1";
+  unsupported: PopulationModelUnsupported[];
+}
+
 /** One graph validation failure with the request field it came from. */
 export interface GraphValidationIssue {
   field: string;

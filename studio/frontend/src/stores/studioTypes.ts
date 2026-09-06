@@ -17,7 +17,7 @@ import type {
   ModelSummary, ModelDetail, PresetSummary, SimulateResponse, SynthResult,
   SynthEstimate, MultiTargetResult, SynthToolInfo, SurrogateInfo, TrainingEpochMetrics,
   TrainingWeightRestorePlan, TrainingWeightRestoreResult, TrainingWeightAttachResult,
-  TrainingWeightLiveAttachResult, PopulationNode, ProjectionEdge, GraphSimResult,
+  TrainingWeightLiveAttachResult, PopulationNode, PopulationModelContract, ProjectionEdge, GraphSimResult,
   DeletedProjectSummary, NIRFormat, ProjectSaveResponse, ProjectSummary, PipelineResult,
   StudioAuditExport,
   StudioAuditStatus, StudioCapability, StudioAuditQuarantineArchivePurgeResult,
@@ -141,6 +141,15 @@ export interface StudioState {
   graphIssues: StudioGraphIssueLocation[];
   /** Which projection the property editor is editing, if any. */
   selectedProjectionId: string | null;
+  /** Which population the property editor is editing, if any. */
+  selectedPopulationId: string | null;
+  /**
+   * The contract of the selected population's model, once it has arrived.
+   *
+   * Which constructor fields a population may override is the server's answer,
+   * so the editor waits for it rather than offering a guess.
+   */
+  populationModelContract: PopulationModelContract | null;
   projectSaveResult: ProjectSaveResponse | null;
   /** The workspace revision the editor loaded or last wrote. */
   projectRevision: StudioProjectRevisionPointer | null;
@@ -284,6 +293,10 @@ export interface StudioState {
   updateProjection: (id: string, updates: Partial<ProjectionEdge>) => void;
   /** Select the projection the property editor edits, or clear the selection. */
   selectProjection: (id: string | null) => void;
+  /** Select the population the property editor edits, or clear the selection. */
+  selectPopulation: (id: string | null) => void;
+  /** Fetch the contract of one model, so its parameters can be edited. */
+  loadPopulationModelContract: (model: string) => Promise<void>;
   /**
    * Ask the server whether the graph is admissible as it now stands.
    *

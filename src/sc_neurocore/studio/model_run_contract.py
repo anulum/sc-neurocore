@@ -42,6 +42,13 @@ DtSource = Literal["override", "model_default", "model_attribute", "studio_defau
 Backend = Literal["python", "rust"]
 
 
+#: Why ``dt`` is never a parameter override: the run and the graph both set the
+#: timestep through their own field, and a second copy in ``params`` could
+#: disagree with it. Stated once so a contract reported to a caller and the
+#: refusal a caller receives cannot drift apart.
+DT_OVERRIDE_REASON = "the timestep is set through the dt field, not a parameter override"
+
+
 class ModelInputError(ValueError):
     """Raised when a Studio model-run request is rejected before any simulation step.
 
@@ -425,11 +432,7 @@ def _validated_overrides(
                 model=model, field="params", reason="parameter names must be strings"
             )
         if key == "dt":
-            raise ModelInputError(
-                model=model,
-                field="params.dt",
-                reason="the timestep is set through the dt field, not a parameter override",
-            )
+            raise ModelInputError(model=model, field="params.dt", reason=DT_OVERRIDE_REASON)
         contract = contracts.overridable.get(key)
         if contract is None:
             unsupported = contracts.unsupported.get(key)

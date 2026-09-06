@@ -37170,6 +37170,30 @@ A population is admissible when the model has a float drive ``step`` that
 the Studio protocol can satisfy and no ``seed`` constructor field (every
 neuron of a population would otherwise share the seed and its noise).
 
+### Function `population_model_contract(name)`
+Return the contract a population of model ``name`` is validated against.
+
+The canvas creates a population with a model's defaults and then has to let
+a user change them. It cannot do that honestly from a list of names: which
+constructor fields are numerically overridable, what kind each is, what it
+defaults to and *why* the others are not inputs are all decided by
+:mod:`sc_neurocore.studio.model_run_contract`, and a browser that guessed
+would be a second implementation of the contract, free to drift.
+
+Parameters
+----------
+name : str
+    Catalogue model name.
+
+Returns
+-------
+dict or None
+    ``None`` when the model is not admissible for a population; otherwise
+    ``schema_version``, ``model``, the ``parameters`` a population may
+    override with their kind and default, the ``unsupported`` fields with
+    the reason each is not an input, and the ``drive`` parameter the
+    Studio protocol delivers the current through.
+
 ### Function `available_models()`
 Return the names of the catalogue models admissible for populations.
 

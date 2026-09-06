@@ -274,3 +274,88 @@ describe("NetworkCanvas projection editor", () => {
     expect(useStudioStore.getState().selectedProjectionId).toBe("e1");
   });
 });
+
+/**
+ * The two editors share one panel position, so selecting either must close the
+ * other, and a population's model contract has to be asked for by the canvas.
+ */
+describe("NetworkCanvas population editor", () => {
+  const pristine = useStudioStore.getState();
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes("/graph/models/")) {
+          return new Response(
+            JSON.stringify({
+              drive: { kind: "float", parameter: "current", positional_only: false },
+              model: "LIF",
+              parameters: [{ default: 1.1, kind: "float", name: "capacitance" }],
+              schema_version: "studio.population-model-contract.v1",
+              unsupported: [],
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response("[]", { headers: { "content-type": "application/json" } });
+      }),
+    );
+    useStudioStore.setState({ graphPopulations: POPULATIONS, graphProjections: PROJECTIONS });
+  });
+
+  afterEach(() => {
+    useStudioStore.setState(pristine, true);
+    vi.unstubAllGlobals();
+  });
+
+  it("opens the editor on the selected population and fetches its contract", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<NetworkCanvas />);
+    });
+    await act(async () => useStudioStore.getState().selectPopulation("p1"));
+
+    expect(container.querySelector("section")?.getAttribute("aria-label")).toBe(
+      "Population Input",
+    );
+    expect(container.querySelector<HTMLInputElement>("#population-count")?.value).toBe("100");
+    expect(useStudioStore.getState().populationModelContract?.model).toBe("LIF");
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it("closes the projection editor when a population is selected, and the reverse", () => {
+    useStudioStore.getState().selectProjection("e1");
+    expect(useStudioStore.getState().selectedPopulationId).toBeNull();
+
+    useStudioStore.getState().selectPopulation("p1");
+
+    expect(useStudioStore.getState().selectedProjectionId).toBeNull();
+    expect(useStudioStore.getState().selectedPopulationId).toBe("p1");
+
+    useStudioStore.getState().selectProjection("e1");
+
+    expect(useStudioStore.getState().selectedPopulationId).toBeNull();
+  });
+
+  it("stops editing a population that was removed", () => {
+    useStudioStore.getState().selectPopulation("p1");
+
+    useStudioStore.getState().removePopulation("p1");
+
+    expect(useStudioStore.getState().selectedPopulationId).toBeNull();
+  });
+
+  it("keeps editing when a different population is removed", () => {
+    useStudioStore.getState().selectPopulation("p1");
+
+    useStudioStore.getState().removePopulation("p2");
+
+    expect(useStudioStore.getState().selectedPopulationId).toBe("p1");
+  });
+});

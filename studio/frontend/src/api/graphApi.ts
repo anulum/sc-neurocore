@@ -13,6 +13,7 @@ import type {
   NetworkGraph,
   GraphSimResult,
   GraphValidation,
+  PopulationModelContract,
   NIRFormat,
   ProjectionRule,
 } from "./types";
@@ -30,6 +31,9 @@ export const createProjection = (data: {
   probability?: number;
   rule?: ProjectionRule;
 }) => post<ProjectionEdge>("/graph/projection", data);
+
+export const graphModelContract = (name: string) =>
+  get<PopulationModelContract>(`/graph/models/${encodeURIComponent(name)}`);
 
 export const validateGraph = (graph: NetworkGraph) =>
   post<GraphValidation>("/graph/validate", graph);

@@ -25,8 +25,12 @@ from typing import Any
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.studio.model_introspection import _load_class
-from sc_neurocore.studio.model_run_contract import ModelInputError, model_drive_contract
-from sc_neurocore.studio.model_run_contract import model_parameter_contracts
+from sc_neurocore.studio.model_run_contract import (
+    DT_OVERRIDE_REASON,
+    ModelInputError,
+    model_drive_contract,
+    model_parameter_contracts,
+)
 from sc_neurocore.studio.models import list_models
 from sc_neurocore.studio.network_execution import simulate_graph_spec
 from sc_neurocore.studio.network_graph_spec import (
@@ -36,6 +40,10 @@ from sc_neurocore.studio.network_graph_spec import (
     resolve_graph,
     validate_graph,
 )
+
+
+#: Contract version of the population model contract a canvas editor reads.
+POPULATION_MODEL_CONTRACT_VERSION = "studio.population-model-contract.v1"
 
 
 class ModelDiscoveryError(RuntimeError):
@@ -61,6 +69,67 @@ def population_model_admission(name: str) -> str | None:
     if "seed" in model_parameter_contracts(cls).overridable:
         return "seed field: every neuron of a population would share its noise"
     return None
+
+
+def population_model_contract(name: str) -> dict[str, Any] | None:
+    """Return the contract a population of model ``name`` is validated against.
+
+    The canvas creates a population with a model's defaults and then has to let
+    a user change them. It cannot do that honestly from a list of names: which
+    constructor fields are numerically overridable, what kind each is, what it
+    defaults to and *why* the others are not inputs are all decided by
+    :mod:`sc_neurocore.studio.model_run_contract`, and a browser that guessed
+    would be a second implementation of the contract, free to drift.
+
+    Parameters
+    ----------
+    name : str
+        Catalogue model name.
+
+    Returns
+    -------
+    dict or None
+        ``None`` when the model is not admissible for a population; otherwise
+        ``schema_version``, ``model``, the ``parameters`` a population may
+        override with their kind and default, the ``unsupported`` fields with
+        the reason each is not an input, and the ``drive`` parameter the
+        Studio protocol delivers the current through.
+    """
+    if population_model_admission(name) is not None:
+        return None
+    cls = _load_class(name)
+    contracts = model_parameter_contracts(cls)
+    drive = model_drive_contract(name, cls)
+    return {
+        "drive": {
+            "kind": drive.kind,
+            "parameter": drive.parameter,
+            "positional_only": drive.positional_only,
+        },
+        "model": name,
+        "parameters": [
+            {
+                "default": contract.default,
+                "kind": contract.kind,
+                "name": field,
+            }
+            for field, contract in sorted(contracts.overridable.items())
+            # dt is overridable on the class and refused as an override by the
+            # run contract, because the graph sets the timestep through its own
+            # field. Offering it as a parameter would offer a field that is
+            # always rejected.
+            if field != "dt"
+        ],
+        "schema_version": POPULATION_MODEL_CONTRACT_VERSION,
+        "unsupported": [
+            {"name": field, "reason": reason}
+            for field, reason in sorted(
+                {**contracts.unsupported, "dt": DT_OVERRIDE_REASON}.items()
+                if "dt" in contracts.overridable
+                else contracts.unsupported.items()
+            )
+        ],
+    }
 
 
 def available_models() -> list[str]:
@@ -286,6 +355,7 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
 __all__ = [
     "GraphRejected",
     "ModelDiscoveryError",
+    "POPULATION_MODEL_CONTRACT_VERSION",
     "available_models",
     "create_population",
     "create_projection",
@@ -293,6 +363,7 @@ __all__ = [
     "graph_to_nir",
     "nir_to_graph",
     "population_model_admission",
+    "population_model_contract",
     "simulate_graph",
     "validate_graph",
 ]

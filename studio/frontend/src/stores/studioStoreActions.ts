@@ -77,6 +77,7 @@ import {
   createPopulation as apiCreatePop,
   createProjection as apiCreateProj,
   simulateGraph as apiSimGraph,
+  graphModelContract as apiGraphModelContract,
   validateGraph as apiValidateGraph,
   exportNIR as apiExportNIR,
   importNIR as apiImportNIR,
@@ -1199,6 +1200,7 @@ export function createStudioStoreActions(
         graphProjections: graph.projections,
         // Deleting a population takes its projections with it, and one of
         // them may be the projection the editor is editing.
+        selectedPopulationId: s.selectedPopulationId === id ? null : s.selectedPopulationId,
         selectedProjectionId: survives ? s.selectedProjectionId : null,
       };
     });
@@ -1268,7 +1270,31 @@ export function createStudioStoreActions(
   },
 
   selectProjection: (id) => {
-    set({ selectedProjectionId: id });
+    set({ selectedProjectionId: id, selectedPopulationId: null });
+  },
+
+  selectPopulation: (id) => {
+    set({ selectedPopulationId: id, selectedProjectionId: null });
+    if (id === null) return;
+    const population = get().graphPopulations.find((one) => one.id === id);
+    if (population !== undefined) {
+      void get().loadPopulationModelContract(population.model);
+    }
+  },
+
+  loadPopulationModelContract: async (model) => {
+    if (get().populationModelContract?.model === model) return;
+    try {
+      set({ populationModelContract: await apiGraphModelContract(model) });
+    } catch (e) {
+      // The parameters simply are not offered without their contract; the
+      // identity and drive fields still are, and the failure is reported
+      // rather than shown as a model with no parameters.
+      set({
+        ...studioGraphFailureState(e, `Model contract for ${model} could not be loaded`),
+        populationModelContract: null,
+      });
+    }
   },
 
   validateGraphAction: async () => {

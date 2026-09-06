@@ -31,6 +31,7 @@ import {
 import type { GraphSimResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 import NetworkGraphTable from "./NetworkGraphTable";
+import PopulationEditor from "./PopulationEditor";
 import ProjectionEditor from "./ProjectionEditor";
 
 function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
@@ -103,6 +104,7 @@ export default function NetworkCanvas() {
   const {
     graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult,
     selectedProjectionId, selectProjection, updateProjection, validateGraphAction,
+    selectedPopulationId, selectPopulation, populationModelContract, graphModels,
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     undoGraphEdit, redoGraphEdit, graphHistory,
@@ -190,10 +192,20 @@ export default function NetworkCanvas() {
     (_event: unknown, edge: { id: string }) => selectProjection(edge.id),
     [selectProjection],
   );
-  const onPaneClick = useCallback(() => selectProjection(null), [selectProjection]);
+  const onNodeClick = useCallback(
+    (_event: unknown, node: { id: string }) => selectPopulation(node.id),
+    [selectPopulation],
+  );
+  const onPaneClick = useCallback(() => {
+    selectProjection(null);
+    selectPopulation(null);
+  }, [selectPopulation, selectProjection]);
 
   const selectedProjection = graphProjections.find(
     (projection) => projection.id === selectedProjectionId,
+  );
+  const selectedPopulation = graphPopulations.find(
+    (population) => population.id === selectedPopulationId,
   );
 
   const onConnect: OnConnect = useCallback((conn) => {
@@ -312,6 +324,7 @@ export default function NetworkCanvas() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onEdgeClick={onEdgeClick}
+            onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView
@@ -323,6 +336,16 @@ export default function NetworkCanvas() {
           </ReactFlow>
         )}
       </div>
+      {selectedPopulation !== undefined && (
+        <PopulationEditor
+          population={selectedPopulation}
+          models={graphModels}
+          contract={populationModelContract}
+          issues={graphIssues}
+          onChange={updatePopulation}
+          onValidate={() => void validateGraphAction()}
+        />
+      )}
       {selectedProjection !== undefined && (
         <ProjectionEditor
           projection={selectedProjection}

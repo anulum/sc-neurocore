@@ -23,6 +23,7 @@ from sc_neurocore.studio.network_graph import (
     create_projection,
     graph_issues,
     graph_to_nir,
+    population_model_contract,
     nir_to_graph,
     simulate_graph,
 )
@@ -163,6 +164,26 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
                     for k, v in data.items()
                     if k in ("source_id", "target_id", "weight", "delay", "probability", "rule")
                 }
+            )
+        )
+
+    @router.get("/api/graph/models/{name}")
+    def api_graph_model_contract(name: str) -> Any:
+        """Return what a population of one model may be given, and what it may not.
+
+        The canvas has to let a user change a model's parameters, and it cannot
+        do that honestly from a list of names: which constructor fields are
+        numerically overridable, their kind and default, and the reason each
+        other field is not an input are decided here. A browser that guessed
+        would be a second implementation of the run contract, free to drift
+        from the one that validates the graph.
+        """
+        return _safe(
+            lambda: (
+                population_model_contract(name)
+                or (_ for _ in ()).throw(
+                    HTTPException(404, f"Model '{name}' cannot form a population")
+                )
             )
         )
 

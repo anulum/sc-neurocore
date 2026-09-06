@@ -50,6 +50,43 @@ the graph exactly as you saved it. Editing after an undo drops the redo branch,
 because a redo into a graph that no longer follows from the current one would
 reinstate work you have already moved past.
 
+## Editing a population
+
+Click a population to open its property editor: label, model, neuron count,
+neuron type, external input, and the model's own constructor parameters.
+
+The parameters are the half that cannot be guessed. Which constructor fields a
+population may override, each field's kind and its declared default are decided
+by the run contract, and `GET /api/graph/models/{name}` states them:
+
+```json
+{
+  "drive": {"kind": "float", "parameter": "current", "positional_only": false},
+  "model": "SCLapicqueLIFNeuron",
+  "parameters": [{"default": 1.1, "kind": "float", "name": "capacitance"}],
+  "schema_version": "studio.population-model-contract.v1",
+  "unsupported": [{"name": "dt", "reason": "the timestep is set through the dt field, not a parameter override"}]
+}
+```
+
+Nothing the contract offers is refused on use: `dt` is overridable on the class
+and refused as an override by the run contract, so it is reported under
+`unsupported` — with that contract's own wording — rather than offered as an
+input that is rejected every time. The fields that are not inputs are shown in
+the editor with the reason each is not, because a user who cannot find one
+should read why rather than conclude the editor is incomplete.
+
+Until the contract arrives the editor offers **no** parameters and says so;
+changing the model clears the previous model's overrides, which mean nothing to
+the new one and which the graph would refuse. A model this canvas cannot
+execute answers `404` and is not offered in the model list at all.
+
+The external input follows the specification's shapes: a drive of kind `none`
+carries no fields, `constant` carries a current, `poisson` carries a rate, an
+event weight and an optional seed. Changing the kind replaces the drive with
+one carrying only that kind's fields, because a drive carrying a foreign field
+is refused.
+
 ## Editing a projection
 
 Click a projection to open its property editor. Every field the runtime
@@ -234,6 +271,7 @@ not a conformance proof against the NIR specification.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/graph/models` | List catalogue models admissible for populations |
+| GET | `/api/graph/models/{name}` | What a population of one model may override, and why the other fields are not inputs |
 | POST | `/api/graph/population` | Create a population node |
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate a graph; every error at once, each with the field it came from |
@@ -271,6 +309,6 @@ not a conformance proof against the NIR specification.
 | Rust network runner | rejected (default parameters, no stimuli) |
 | Per-synapse delay arrays, plasticity, state traces | not exposed on the canvas |
 | Property editor for a projection's executed fields | weight, rule, probability, delay, seed, autapses; parsed in the browser, admitted by the server |
-| Property editor for a population's model, count, type, drive and params | not yet; the fields are executed and still carry their creation defaults |
+| Property editor for a population's model, count, type, drive and params | driven by `GET /api/graph/models/{name}`; parsed in the browser, admitted by the server |
 | Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph, deletion included |
 | Compiled (hardware) execution of a graph | separate unit; the pipeline compiles a fixed equation |
