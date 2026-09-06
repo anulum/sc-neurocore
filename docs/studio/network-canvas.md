@@ -158,10 +158,33 @@ each editor input is bound to its label and to the statement of its contract,
 that a refused value carries the server's own message to the input that caused
 it, and that every editor input can take focus.
 
-**What it does not cover: colour contrast.** Measuring it needs the resolved
-colours of every text node against its effective background, and this suite
-does not do it. Saying so is better than a check that passes because it looked
-at the wrong pixels.
+### Colour contrast
+
+Contrast is the one property here that has to be **computed** rather than
+queried. A background read from the element itself is `rgba(0,0,0,0)` almost
+everywhere, so the colour a reader actually sees is composited from the
+ancestor chain, and an element whose background cannot be resolved — a
+gradient, an image, a chain that never reaches an opaque colour — is
+**reported, never scored**. Assuming white there would manufacture a pass for
+dark text on an unknown ground. The thresholds are WCAG 2.2 AA: 4.5:1, or 3:1
+for large text (18.66px bold, 24px otherwise).
+
+Measured on the Studio, **ten colour pairs do not meet their threshold**, and
+that is a user-facing defect rather than a matter of taste. The worst is
+**1.45:1**, where 4.5:1 is required; a population node's own
+`SCLapicqueLIFNeuron × 80` sits at **1.75:1**. Seven of the ten are one
+decision — `--text-muted` against seven different grounds.
+
+They are recorded in `contrast-baseline.json`, keyed on the **colours** rather
+than on the element or its text. That distinction is not cosmetic: one palette
+decision fails on dozens of unrelated elements, and the text on screen depends
+on which other tests ran first, so a text-keyed list reported seventeen entries
+alone and nine hundred and sixteen in a full suite. Keyed on colour it is ten
+either way.
+
+The list works in both directions: a pair it does not record fails the run, and
+a recorded pair that no longer fails also fails the run, so it can only shrink
+deliberately and cannot drift into a blanket permission.
 
 ## Reading the graph without the canvas
 

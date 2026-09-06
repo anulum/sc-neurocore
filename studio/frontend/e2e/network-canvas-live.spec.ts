@@ -21,13 +21,32 @@
  * the accessible surface is checked against the graph that is actually
  * validated and run, not against a mock that could agree with a wrong client.
  *
- * **What this does not cover:** colour contrast. Measuring it needs the
- * resolved colours of every text node against its effective background, and
- * this suite does not do it. Saying so is better than a check that passes
- * because it looks at the wrong pixels.
+ * Colour contrast is covered too, and it is the one property here that has to
+ * be *computed* rather than queried: a background read from the element itself
+ * is `rgba(0,0,0,0)` almost everywhere, so the colour a reader actually sees is
+ * composited from the ancestor chain. An element whose background cannot be
+ * resolved is reported, never scored — assuming white would manufacture a pass
+ * for dark text on an unknown ground.
  */
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { expect, test, type Page } from "@playwright/test";
+
+import {
+  compareWithBaseline,
+  judge,
+  parseRgba,
+  resolveBackground,
+  type ContrastBaselineEntry,
+  type ContrastSample,
+} from "../src/contrastAudit";
+
+/** The recorded contrast failures this run is compared against. */
+const BASELINE = JSON.parse(
+  readFileSync(fileURLToPath(new URL("../contrast-baseline.json", import.meta.url)), "utf8"),
+) as { failures: ContrastBaselineEntry[] };
 
 test.describe.configure({ mode: "serial" });
 
@@ -227,4 +246,90 @@ test("every editor input is reachable by keyboard alone", async ({ page }) => {
     // A control that cannot take focus cannot be used without a mouse.
     await expect(control).toBeFocused();
   }
+});
+
+/**
+ * Collect every text-bearing element with the colours a reader sees.
+ *
+ * The background is gathered as the whole ancestor chain rather than one
+ * element's own, because the composite is what the eye receives.
+ */
+async function collectContrastSamples(page: Page): Promise<ContrastSample[]> {
+  const raw = await page.evaluate(() => {
+    const collected: {
+      label: string;
+      text: string;
+      colour: string;
+      layers: string[];
+      fontSize: string;
+      fontWeight: string;
+    }[] = [];
+    for (const element of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
+      const own = Array.from(element.childNodes)
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent ?? "")
+        .join("")
+        .trim();
+      if (own.length === 0) continue;
+      const box = element.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      const style = window.getComputedStyle(element);
+      if (style.visibility === "hidden" || style.opacity === "0") continue;
+      const layers: string[] = [];
+      let node: HTMLElement | null = element;
+      while (node !== null) {
+        const nodeStyle = window.getComputedStyle(node);
+        // A background image hides whatever is behind it and has no single
+        // colour, so the chain stops here and stays unresolved.
+        layers.push(nodeStyle.backgroundImage === "none" ? nodeStyle.backgroundColor : "image");
+        node = node.parentElement;
+      }
+      layers.push(window.getComputedStyle(document.documentElement).backgroundColor);
+      collected.push({
+        colour: style.color,
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        label: `${element.tagName.toLowerCase()}${element.id === "" ? "" : `#${element.id}`}`,
+        layers,
+        text: own,
+      });
+    }
+    return collected;
+  });
+  return raw.map((entry) => {
+    // The browser side only gathers; compositing lives in the audited module.
+    const background = resolveBackground(entry.layers.map((layer) => parseRgba(layer)));
+    return {
+      background,
+      bold: Number(entry.fontWeight) >= 700,
+      fontSize: Number.parseFloat(entry.fontSize),
+      foreground: parseRgba(entry.colour) ?? { a: 1, b: 0, g: 0, r: 0 },
+      label: entry.label,
+      text: entry.text,
+    };
+  });
+}
+
+test("no text falls below its WCAG AA contrast threshold for the first time", async ({
+  page,
+}) => {
+  await openCanvas(page);
+  await addTwoConnectedPopulations(page);
+
+  const samples = await collectContrastSamples(page);
+  expect(samples.length).toBeGreaterThan(10);
+  const results = samples.map(judge);
+  const comparison = compareWithBaseline(results, BASELINE.failures);
+
+  // A background that could not be resolved is never scored, so it must never
+  // be silently absent from the report either.
+  expect(comparison.unresolved).toEqual([]);
+  // Anything failing that the baseline does not list is a new defect.
+  expect(comparison.regressions).toEqual([]);
+  // Anything the baseline lists that no longer fails means the list is stale;
+  // a baseline allowed to drift becomes a blanket permission.
+  expect(comparison.fixed).toEqual([]);
+  // The failures the baseline does record are real, user-facing defects,
+  // tracked in the private TODO rather than accepted.
+  expect(Array.isArray(BASELINE.failures)).toBe(true);
 });

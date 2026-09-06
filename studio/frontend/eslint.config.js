@@ -47,6 +47,8 @@ const AUDITED = [
   "src/components/PopulationEditor.tsx",
   "src/components/ProjectionEditor.test.tsx",
   "src/components/ProjectionEditor.tsx",
+  "src/contrastAudit.test.ts",
+  "src/contrastAudit.ts",
   "src/docstringGate.test.ts",
   "src/evidenceSeal.test.ts",
   "src/evidenceSeal.ts",
