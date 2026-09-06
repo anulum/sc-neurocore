@@ -22,18 +22,31 @@ import type {
 } from "../api/client";
 import { buildAnalysisEvidenceItems, buildSimulationEvidenceItems } from "../plotEvidence";
 import { displayPositionAtTime, rawStepAtTime } from "../simulationRaw";
+import { PLOT_AXIS as AXIS } from "../simulationPlotCanvas";
 import {
-  drawAxes,
-  drawLine,
-  niceStep,
-  PLOT_AXIS as AXIS,
-  PLOT_BG as BG,
-  PLOT_BORDER as BORDER,
-  PLOT_COLORS as COLORS,
-  PLOT_PANEL_BG as PANEL_BG,
-} from "../simulationPlotCanvas";
+  drawBifurcationView,
+  drawFICurveView,
+  drawFrequencyResponseView,
+  drawHeatmapView,
+  drawIsiHistogramView,
+  drawSensitivityView,
+  drawSpikeTriggeredAverageView,
+} from "../plots/analysisViews";
+import {
+  drawCompareView,
+  drawMultiModelView,
+  drawPrecisionView,
+} from "../plots/comparisonViews";
+import { preparePlotCanvas } from "../plots/plotFrame";
+import {
+  drawCharacterizeView,
+  drawNetworkView,
+  drawPhasePortraitView,
+} from "../plots/stateViews";
+import { drawTraceView } from "../plots/traceView";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
+/** Whichever analysis result the active tab is showing, if any. */
 type AnalysisResult =
   | BifurcationResponse
   | CompareResponse
@@ -45,10 +58,27 @@ type AnalysisResult =
   | SensitivityResponse
   | null;
 
+/**
+ * Read an analysis result's metadata, whichever kind it is.
+ *
+ * @param result - The active tab's result, or `null`.
+ * @returns Its metadata, or `null` when there is no result.
+ */
 function resultMetadata(result: AnalysisResult): AnalysisResultMetadata | null {
   return result?.analysis_metadata ?? null;
 }
 
+/**
+ * The plot panel: one canvas, and whichever view the active tab calls for.
+ *
+ * The drawing lives in `../plots`; this owns the canvas, the interaction state
+ * (zoom, drag, crosshair, tooltip) and the choice of view. Splitting it that
+ * way is what let the views acquire cases: they are functions taking a context
+ * and data, where they used to be branches reachable only through a mounted
+ * component and a populated store.
+ *
+ * @returns The panel.
+ */
 export default function SimulationPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,6 +104,11 @@ export default function SimulationPlot() {
     null;
   const simulationMetadata = activeTab === "trace" ? result?.run_metadata ?? null : null;
 
+  /**
+   * On the heatmap, adopt the parameters under the pointer and re-run.
+   *
+   * @param e - The click.
+   */
   function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
     if (activeTab !== "heatmap" || !heatmapResult) return;
     const canvas = canvasRef.current;
@@ -97,10 +132,18 @@ export default function SimulationPlot() {
       } else {
         useStudioStore.setState({ odeParams: params, activeTab: "trace" });
       }
-      store.runSimulation();
+      // Fire-and-forget: the store reports the run's progress and its failure
+       // through its own state, and awaiting here would only delay the redraw
+       // that shows the new parameters.
+      void store.runSimulation();
     }
   }
 
+  /**
+   * Zoom the trace's time axis about the pointer.
+   *
+   * @param e - The wheel event.
+   */
   function handleWheel(e: React.WheelEvent) {
     if (activeTab !== "trace" || !result) return;
     e.preventDefault();
@@ -120,6 +163,11 @@ export default function SimulationPlot() {
     draw();
   }
 
+  /**
+   * Begin a pan, but only when the view is already zoomed.
+   *
+   * @param e - The press.
+   */
   function handleMouseDown(e: React.MouseEvent) {
     if (activeTab !== "trace" || !result) return;
     const z = zoomRef.current;
@@ -127,6 +175,11 @@ export default function SimulationPlot() {
     dragRef.current = { startX: e.clientX, startY: e.clientY, origXMin: z.xMin, origXMax: z.xMax, origYMin: z.yMin, origYMax: z.yMax };
   }
 
+  /**
+   * Pan a zoomed trace, or move the crosshair and its tooltip.
+   *
+   * @param e - The movement.
+   */
   function handleMouseMove(e: React.MouseEvent) {
     const d = dragRef.current;
     if (d && canvasRef.current) {
@@ -172,9 +225,12 @@ export default function SimulationPlot() {
     }
   }
 
+  /** End a pan. */
   function handleMouseUp() { dragRef.current = null; }
+  /** End a pan and clear the crosshair when the pointer leaves the canvas. */
   function handleMouseLeave() { dragRef.current = null; crosshairRef.current = null; setTooltip(null); draw(); }
 
+  /** Return the trace to the whole run. */
   function resetZoom() {
     zoomRef.current = { xMin: NaN, xMax: NaN, yMin: NaN, yMax: NaN };
     draw();
@@ -189,37 +245,23 @@ export default function SimulationPlot() {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
-
     const rect = container.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const w = Math.floor(rect.width);
-    const h = Math.floor(rect.height);
-    if (w < 100 || h < 100) return;
+    const prepared = preparePlotCanvas(
+      canvas,
+      Math.floor(rect.width),
+      Math.floor(rect.height),
+      window.devicePixelRatio || 1,
+    );
+    if (prepared === null) return;
+    const { ctx, frame } = prepared;
 
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    canvas.style.width = `${w}px`;
-    canvas.style.height = `${h}px`;
-    const ctx = canvas.getContext("2d")!;
-    ctx.scale(dpr, dpr);
-    ctx.fillStyle = BG;
-    ctx.fillRect(0, 0, w, h);
-
-    const L = 52, R = 12, T = 8, B = 18;
-    const pw = w - L - R;
-
-    // f-I curve view
+    // Each view is a function in `../plots`; this chooses one. The conditions
+    // are the originals, including which of them fall through to the trace
+    // view rather than leaving a blank canvas: a phase portrait of a
+    // one-variable system, an ISI view of a run with no histogram, and a
+    // spike-triggered average with nothing in it all show the trace instead.
     if (activeTab === "fi-curve" && fiResult) {
-      const ph = h - T - B;
-      const xMin = fiResult.currents[0] ?? 0;
-      const xMax = fiResult.currents[fiResult.currents.length - 1] ?? xMin + 1;
-      let yMax = Math.max(...fiResult.rates, 1);
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, yMax * 1.1, "I (nA)");
-      drawLine(ctx, L, T, pw, ph, fiResult.currents, fiResult.rates, xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
-      ctx.fillStyle = AXIS;
-      ctx.font = "10px monospace";
-      ctx.textAlign = "left";
-      ctx.fillText("f (Hz)", L + 4, T + 12);
+      drawFICurveView(ctx, frame, fiResult);
       return;
     }
 
@@ -227,576 +269,75 @@ export default function SimulationPlot() {
       ctx.fillStyle = AXIS;
       ctx.font = "13px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("Select a model and adjust parameters", w / 2, h / 2);
+      ctx.fillText("Select a model and adjust parameters", frame.width / 2, frame.height / 2);
       return;
     }
 
-    const time = result.time;
-    const vars = Object.keys(result.states);
-    const tMin = time[0] ?? 0;
-    const tMax = time[time.length - 1] ?? tMin + 1;
-    const hasSpikes = result.spikes.length > 0;
-
-    // Phase portrait (2+ variables)
-    if (activeTab === "phase" && vars.length >= 2) {
-      const ph = h - T - B;
-      const xData = result.states[at(vars, 0)] ?? [];
-      const yData = result.states[at(vars, 1)] ?? [];
-      let xMin = Math.min(...xData), xMax = Math.max(...xData);
-      let yMin = Math.min(...yData), yMax = Math.max(...yData);
-      const xPad = (xMax - xMin) * 0.05 || 1;
-      const yPad = (yMax - yMin) * 0.05 || 1;
-      xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
-
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, vars[0]);
-      // Draw trajectory with fading colour
-      for (let i = 1; i < xData.length; i++) {
-        const alpha = 0.15 + 0.85 * (i / xData.length);
-        ctx.strokeStyle = `rgba(79, 195, 247, ${alpha})`;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(
-          L + ((at(xData, i - 1) - xMin) / (xMax - xMin)) * pw,
-          T + ph - ((at(yData, i - 1) - yMin) / (yMax - yMin)) * ph
-        );
-        ctx.lineTo(
-          L + ((at(xData, i) - xMin) / (xMax - xMin)) * pw,
-          T + ph - ((at(yData, i) - yMin) / (yMax - yMin)) * ph
-        );
-        ctx.stroke();
-      }
-      // Start and end markers
-      const sx = L + ((at(xData, 0) - xMin) / (xMax - xMin)) * pw;
-      const sy = T + ph - ((at(yData, 0) - yMin) / (yMax - yMin)) * ph;
-      ctx.fillStyle = "#81c784";
-      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText(at(vars, 1), L + 4, T + 12);
-
-      // Nullcline overlay
-      if (nullclineResult) {
-        const xRange = xMax - xMin || 1;
-        const yRange = yMax - yMin || 1;
-        for (const [nc, color] of [
-          [nullclineResult.nullcline_0, "#ff5252"],
-          [nullclineResult.nullcline_1, "#81c784"],
-        ] as const) {
-          ctx.fillStyle = color;
-          for (const point of nc.points) {
-            const px = at(point, 0);
-            const py = at(point, 1);
-            const cx = L + ((px - xMin) / xRange) * pw;
-            const cy = T + ph - ((py - yMin) / yRange) * ph;
-            if (cx >= L && cx <= L + pw && cy >= T && cy <= T + ph) {
-              ctx.fillRect(cx - 1, cy - 1, 2, 2);
-            }
-          }
-        }
-        ctx.font = "9px monospace"; ctx.textAlign = "right";
-        ctx.fillStyle = "#ff5252"; ctx.fillText(`d${vars[0]}/dt=0`, L + pw - 4, T + ph - 16);
-        ctx.fillStyle = "#81c784"; ctx.fillText(`d${vars[1]}/dt=0`, L + pw - 4, T + ph - 4);
-        // Invalid part of the field (domain errors, overflow, non-finite values): not zero.
-        const domain = nullclineResult.domain;
-        if (domain && domain.status !== "complete") {
-          const fractions = Object.entries(domain.invalid_fraction)
-            .map(([name, fraction]) => `${name} ${(fraction * 100).toFixed(0)}%`)
-            .join(", ");
-          ctx.fillStyle = "#ffb74d"; ctx.textAlign = "left";
-          ctx.fillText(
-            domain.status === "empty"
-              ? `field undefined on the whole grid (${fractions} invalid)`
-              : `partial domain: ${fractions} of samples invalid, no contour there`,
-            L + 4, T + 24,
-          );
-        }
-      }
+    if (activeTab === "phase" && Object.keys(result.states).length >= 2) {
+      drawPhasePortraitView(ctx, frame, result, nullclineResult);
       return;
     }
-
-    // ISI histogram
     if (activeTab === "isi" && result.stats.isi_histogram) {
-      const ph = h - T - B;
-      const hist = result.stats.isi_histogram as { counts: number[]; edges: number[] };
-      const maxCount = Math.max(...hist.counts, 1);
-      const xMin = hist.edges[0] ?? 0;
-      const xMax = hist.edges[hist.edges.length - 1] ?? xMin + 1;
-
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, maxCount * 1.1, "ISI (ms)");
-      ctx.fillStyle = "rgba(79, 195, 247, 0.6)";
-      const xRange = xMax - xMin || 1;
-      for (const [i, count] of hist.counts.entries()) {
-        const edge = at(hist.edges, i);
-        const bx = L + ((edge - xMin) / xRange) * pw;
-        // The last bin has no right edge when the server sent one edge per
-        // count instead of one more; falling back to the bin's own left edge
-        // draws it with zero width rather than a NaN rectangle.
-        const bw = (((hist.edges[i + 1] ?? edge) - edge) / xRange) * pw;
-        const bh = (count / (maxCount * 1.1)) * ph;
-        ctx.fillRect(bx, T + ph - bh, Math.max(bw - 1, 1), bh);
-      }
-      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText("count", L + 4, T + 12);
+      drawIsiHistogramView(ctx, frame, result);
       return;
     }
-
-    // Bifurcation diagram (#2)
     if (activeTab === "bifurcation" && bifResult) {
-      const ph = h - T - B;
-      const { param_values, attractors } = bifResult;
-      const xMin = param_values[0] ?? 0;
-      const xMax = param_values[param_values.length - 1] ?? xMin + 1;
-      let yMin = Infinity, yMax = -Infinity;
-      for (const a of attractors) for (const v of a) { if (v < yMin) yMin = v; if (v > yMax) yMax = v; }
-      if (!isFinite(yMin)) { yMin = -80; yMax = 40; }
-      const yPad = (yMax - yMin) * 0.05 || 1;
-      yMin -= yPad; yMax += yPad;
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, bifResult.param_name);
-      ctx.fillStyle = "rgba(79,195,247,0.5)";
-      for (const [i, paramValue] of param_values.entries()) {
-        const x = L + ((paramValue - xMin) / (xMax - xMin || 1)) * pw;
-        for (const v of attractors[i] ?? []) {
-          const y = T + ph - ((v - yMin) / (yMax - yMin)) * ph;
-          ctx.fillRect(x - 1, y - 1, 2, 2);
-        }
-      }
-      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText("V attractor", L + 4, T + 12);
+      drawBifurcationView(ctx, frame, bifResult);
       return;
     }
-
-    // 2D Heatmap
     if (activeTab === "heatmap" && heatmapResult) {
-      const ph = h - T - B - 16;
-      const { x_values, y_values, rates, rate_min, rate_max } = heatmapResult;
-      const xMin = x_values[0] ?? 0;
-      const xMax = x_values[x_values.length - 1] ?? xMin + 1;
-      const yMin = y_values[0] ?? 0;
-      const yMax = y_values[y_values.length - 1] ?? yMin + 1;
-      const rRange = rate_max - rate_min || 1;
-
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, heatmapResult.param_x);
-      const cellW = pw / x_values.length;
-      const cellH = ph / y_values.length;
-      for (let j = 0; j < y_values.length; j++) {
-        const row = rates[j] ?? [];
-        for (let i = 0; i < x_values.length; i++) {
-          const norm = ((row[i] ?? rate_min) - rate_min) / rRange;
-          const r = Math.floor(norm * 200 + 20);
-          const g = Math.floor(norm * 50);
-          const b = Math.floor((1 - norm) * 200 + 55);
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          const cx = L + (i / x_values.length) * pw;
-          const cy = T + ph - ((j + 1) / y_values.length) * ph;
-          ctx.fillRect(cx, cy, cellW + 1, cellH + 1);
-        }
-      }
-      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText(`${heatmapResult.param_y} vs ${heatmapResult.param_x}  (${rate_min.toFixed(0)}–${rate_max.toFixed(0)} Hz)`, L + 4, T + 12);
+      drawHeatmapView(ctx, frame, heatmapResult);
       return;
     }
-
-    // Sensitivity (#8)
     if (activeTab === "sensitivity" && sensResult) {
-      const ph = h - T - B - 20;
-      const sens = sensResult.sensitivities.slice(0, 15);
-      if (sens.length === 0) return;
-      const defined = sens.map((s) => s.sensitivity).filter((v): v is number => v !== null);
-      const maxS = Math.max(...defined, 0.01);
-      const barH = Math.min(20, ph / sens.length - 2);
-      ctx.font = "10px monospace";
-      sens.forEach((s, i) => {
-        const y = T + i * (barH + 2);
-        ctx.fillStyle = AXIS; ctx.textAlign = "right";
-        ctx.fillText(s.param, L + 65, y + barH - 4);
-        ctx.textAlign = "left";
-        if (s.sensitivity === null) {
-          // Undefined elasticity (zero base rate or zero parameter): no bar, the reason instead of a zero.
-          ctx.fillStyle = "#ffb74d";
-          ctx.fillText(`undefined: ${s.reason ?? "no reason given"}`, L + 75, y + barH - 4);
-          return;
-        }
-        const bw = (s.sensitivity / maxS) * (pw - 80);
-        ctx.fillStyle = "rgba(79,195,247,0.6)";
-        ctx.fillRect(L + 70, y, bw, barH);
-        ctx.fillStyle = AXIS;
-        ctx.fillText(s.sensitivity.toFixed(3), L + 75 + bw, y + barH - 4);
-      });
-      ctx.fillStyle = AXIS; ctx.textAlign = "left";
-      ctx.fillText(`base rate: ${sensResult.base_rate} Hz (elasticity |Δrate/Δp|·|p|/rate)`, L + 4, h - 8);
+      drawSensitivityView(ctx, frame, sensResult);
       return;
     }
-
-    // Precision compare (#5)
     if (activeTab === "precision" && precResult) {
-      const ph = (h - T - B - 30) / 2;
-      const variable = precResult.error.variable;
-      const float_v = precResult.float_result.states[variable] ?? [];
-      const fixed_v = precResult.fixed_result.states[variable] ?? [];
-      const time_f = precResult.float_result.time;
-      const time_x = precResult.fixed_result.time;
-      const tMin = time_f[0] ?? 0;
-      const tMax = time_f[time_f.length - 1] ?? tMin + 1;
-      let vMin = Math.min(...float_v, ...fixed_v);
-      let vMax = Math.max(...float_v, ...fixed_v);
-      const vPad = (vMax - vMin) * 0.05 || 1;
-      vMin -= vPad; vMax += vPad;
-      const qLabel = precResult.arithmetic?.q_format ?? precResult.encoding?.q_format ?? "fixed-point";
-      const arithmeticLabel = precResult.arithmetic
-        ? `bit-true ${qLabel} kernel (${precResult.arithmetic.overflow}, ${precResult.arithmetic.rounding})`
-        : `${qLabel}`;
-
-      drawAxes(ctx, L, T, pw, ph, tMin, tMax, vMin, vMax);
-      drawLine(ctx, L, T, pw, ph, time_f, float_v, tMin, tMax, vMin, vMax, "#4fc3f7", 1.2);
-      // Each result is drawn on its own display sample times: the projections
-      // of the two runs are chosen independently.
-      drawLine(ctx, L, T, pw, ph, time_x, fixed_v, tMin, tMax, vMin, vMax, "#ff5252", 1.2);
-      ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillStyle = "#4fc3f7"; ctx.fillText("float64", L + 6, T + 12);
-      ctx.fillStyle = "#ff5252"; ctx.fillText(arithmeticLabel, L + 60, T + 12);
-
-      // Error trace at the float result's display samples (the raw error stays in error.trace).
-      const errorSeries = precResult.error.display ?? precResult.error.trace;
-      const errY = T + ph + 16;
-      const errH = ph - 8;
-      const paramError = precResult.comparison?.parameter_quantisation.variables[variable];
-      const errMax = Math.max(...errorSeries, paramError?.max_abs_error ?? 0, 0.001);
-      drawAxes(ctx, L, errY, pw, errH, tMin, tMax, 0, errMax * 1.1, "ms");
-      if (paramError && paramError.display.length === time_f.length) {
-        drawLine(ctx, L, errY, pw, errH, time_f, paramError.display, tMin, tMax, 0, errMax * 1.1, "#b39ddb", 1.0);
-      }
-      if (errorSeries.length === time_f.length) {
-        drawLine(ctx, L, errY, pw, errH, time_f, errorSeries, tMin, tMax, 0, errMax * 1.1, "#ffb74d", 1.5);
-      }
-      ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      const divergence = precResult.error.first_divergence_step;
-      ctx.fillText(
-        `|float64 − bit-true| (max=${precResult.error.max_error.toFixed(4)}, rms=${precResult.error.rms_error.toFixed(4)}`
-          + (divergence === null || divergence === undefined ? ", never beyond ½ LSB)" : `, diverges at step ${divergence})`),
-        L + 6, errY + 12,
-      );
-      if (paramError) {
-        ctx.fillStyle = "#b39ddb";
-        ctx.fillText(
-          `|float64 − quantised-parameter float64| (max=${paramError.max_abs_error.toFixed(4)}, rms=${paramError.rms_error.toFixed(4)})`,
-          L + 6, errY + 24,
-        );
-      }
-      const events = precResult.comparison?.bit_true.events;
-      if (events) {
-        ctx.fillStyle = AXIS;
-        ctx.fillText(
-          events.identical
-            ? `spikes identical (${events.reference_count})`
-            : `spikes differ: float64 ${events.reference_count}, bit-true ${events.candidate_count}, first at #${events.first_divergence?.index ?? "?"}`,
-          L + 6, errY + 36,
-        );
-      }
+      drawPrecisionView(ctx, frame, precResult);
       return;
     }
-
-    // Comparison view
     if (activeTab === "compare" && compareResult) {
-      const ph = (h - T - B - 10) / 2;
-      for (const [idx, label, res] of [[0, "A", compareResult.a], [1, "B", compareResult.b]] as const) {
-        const yOff = T + idx * (ph + 10);
-        const v0 = Object.keys(res.states)[0];
-        const data = v0 === undefined ? [] : res.states[v0] ?? [];
-        const tm = res.time;
-        let yMin = Math.min(...data), yMax = Math.max(...data);
-        const yPad = (yMax - yMin) * 0.05 || 1;
-        yMin -= yPad; yMax += yPad;
-        const tStart = tm[0] ?? 0;
-        const tEnd = tm[tm.length - 1] ?? tStart + 1;
-        const colour = at(COLORS as readonly string[], idx);
-        drawAxes(ctx, L, yOff, pw, ph, tStart, tEnd, yMin, yMax);
-        drawLine(ctx, L, yOff, pw, ph, tm, data, tStart, tEnd, yMin, yMax, colour, 1.2);
-        ctx.fillStyle = colour; ctx.font = "10px monospace"; ctx.textAlign = "left";
-        ctx.fillText(`${label}: ${res.model_name || "custom"} (${res.stats.rate_hz} Hz)`, L + 6, yOff + 12);
-      }
+      drawCompareView(ctx, frame, compareResult);
       return;
     }
-
-    // Frequency response
     if (activeTab === "freq" && freqResult) {
-      const ph = h - T - B;
-      const xMin = freqResult.frequencies_hz[0] ?? 0;
-      const xMax = freqResult.frequencies_hz[freqResult.frequencies_hz.length - 1] ?? xMin + 1;
-      const yMax = Math.max(...freqResult.rates, 1);
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, yMax * 1.1, "freq (Hz)");
-      drawLine(ctx, L, T, pw, ph, freqResult.frequencies_hz, freqResult.rates,
-        xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
-      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText(`rate (Hz) @ amplitude=${freqResult.amplitude}`, L + 4, T + 12);
+      drawFrequencyResponseView(ctx, frame, freqResult);
       return;
     }
-
-    // Spike-triggered average
     if (activeTab === "sta" && staResult && staResult.time_ms.length > 0) {
-      const ph = h - T - B;
-      const xMin = at(staResult.time_ms, 0);
-      const xMax = at(staResult.time_ms, staResult.time_ms.length - 1);
-      let yMin = Math.min(...staResult.average), yMax = Math.max(...staResult.average);
-      const yPad = (yMax - yMin) * 0.05 || 1;
-      yMin -= yPad; yMax += yPad;
-      drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, "ms (relative to spike)");
-      drawLine(ctx, L, T, pw, ph, staResult.time_ms, staResult.average, xMin, xMax, yMin, yMax, "#4fc3f7", 2);
-      // Vertical line at t=0
-      const x0 = L + ((0 - xMin) / (xMax - xMin)) * pw;
-      ctx.strokeStyle = "#ff5252"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(x0, T); ctx.lineTo(x0, T + ph); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText(`STA (n=${staResult.n_spikes} spikes)`, L + 4, T + 12);
+      drawSpikeTriggeredAverageView(ctx, frame, staResult);
       return;
     }
-
-    // Characterize dashboard
     if (activeTab === "characterize" && charResult) {
-      ctx.fillStyle = "#e6edf3"; ctx.font = "12px sans-serif"; ctx.textAlign = "left";
-      let y = T + 16;
-      const lineH = 18;
-      const col1 = L, col2 = L + pw / 2;
-
-      ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 13px sans-serif";
-      ctx.fillText("Model Characterisation", col1, y); y += lineH + 4;
-
-      ctx.font = "11px monospace"; ctx.fillStyle = "#e6edf3";
-      ctx.fillText(`Pattern: ${charResult.pattern.description}`, col1, y); y += lineH;
-      ctx.fillText(`Threshold current: ${charResult.threshold_current ?? "N/A"} nA`, col1, y); y += lineH;
-      ctx.fillText(`Max firing rate: ${charResult.max_rate} Hz`, col1, y); y += lineH;
-      ctx.fillText(`Spikes: ${charResult.spike_count}`, col1, y); y += lineH;
-      if (charResult.stats.isi_mean_ms) {
-        ctx.fillText(`ISI: ${charResult.stats.isi_mean_ms} ms (CV=${charResult.stats.isi_cv})`, col1, y); y += lineH;
-      }
-
-      y += 8;
-      ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 11px sans-serif";
-      ctx.fillText("State Variable Ranges", col1, y); y += lineH;
-      ctx.font = "10px monospace"; ctx.fillStyle = "#8b949e";
-      for (const [v, r] of Object.entries(charResult.state_ranges)) {
-        ctx.fillText(`${v}: [${r.min}, ${r.max}] mean=${r.mean}`, col1, y); y += lineH - 2;
-      }
-
-      y += 8;
-      ctx.fillStyle = "#4fc3f7"; ctx.font = "bold 11px sans-serif";
-      ctx.fillText("Top Sensitive Parameters", col1, y); y += lineH;
-      ctx.font = "10px monospace"; ctx.fillStyle = "#8b949e";
-      for (const s of charResult.top_sensitivities) {
-        ctx.fillText(`${s.param}: ±${s.rate_change} Hz`, col1, y); y += lineH - 2;
-      }
-
-      // f-I curve in right half
-      const fiX = col2, fiY = T + 20, fiW = pw / 2 - 20, fiH = h - T - B - 40;
-      const curs = charResult.fi_curve.currents;
-      const rts = charResult.fi_curve.rates;
-      const rMax = Math.max(...rts, 1);
-      const curMin = curs[0] ?? 0;
-      const curMax = curs[curs.length - 1] ?? curMin + 1;
-      drawAxes(ctx, fiX, fiY, fiW, fiH, curMin, curMax, 0, rMax * 1.1, "I (nA)");
-      drawLine(ctx, fiX, fiY, fiW, fiH, curs, rts, curMin, curMax, 0, rMax * 1.1, "#4fc3f7", 2);
-      ctx.fillStyle = "#4fc3f7"; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText("f-I curve", fiX + 4, fiY + 12);
+      drawCharacterizeView(ctx, frame, charResult);
       return;
     }
-
-    // Multi-model overlay
     if (activeTab === "multi" && multiResults && multiResults.length > 0) {
-      const ph = h - T - B;
-      let tMin = Infinity, tMax = -Infinity, vMin = Infinity, vMax = -Infinity;
-      for (const r of multiResults) {
-        const start = r.time[0];
-        const end = r.time[r.time.length - 1];
-        if (start !== undefined && start < tMin) tMin = start;
-        if (end !== undefined && end > tMax) tMax = end;
-        const v0 = Object.keys(r.states)[0];
-        for (const v of (v0 === undefined ? [] : r.states[v0] ?? [])) {
-          if (isFinite(v)) { if (v < vMin) vMin = v; if (v > vMax) vMax = v; }
-        }
-      }
-      const vPad = (vMax - vMin) * 0.06 || 1;
-      vMin -= vPad; vMax += vPad;
-      drawAxes(ctx, L, T, pw, ph, tMin, tMax, vMin, vMax, "ms");
-      multiResults.forEach((r, i) => {
-        const v0 = Object.keys(r.states)[0];
-        const trace = v0 === undefined ? [] : r.states[v0] ?? [];
-        const colour = at(COLORS as readonly string[], i % COLORS.length);
-        drawLine(ctx, L, T, pw, ph, r.time, trace, tMin, tMax, vMin, vMax, colour, 1.5);
-      });
-      ctx.font = "10px monospace";
-      multiResults.forEach((r, i) => {
-        const name = r.model_name || `Model ${i + 1}`;
-        const colour = at(COLORS as readonly string[], i % COLORS.length);
-        ctx.fillStyle = colour;
-        ctx.fillRect(L + 6 + i * 120, T + 4, 8, 2);
-        ctx.textAlign = "left";
-        ctx.fillText(`${name} (${r.stats.rate_hz}Hz)`, L + 17 + i * 120, T + 9);
-      });
+      drawMultiModelView(ctx, frame, multiResults);
       return;
     }
-
-    // Network E-I raster + rates
     if (activeTab === "network" && networkResult) {
-      const rasterH = Math.floor((h - T - B) * 0.6);
-      const rateH = h - T - B - rasterH - 10;
-
-      // Raster plot
-      ctx.fillStyle = PANEL_BG; ctx.fillRect(L, T, pw, rasterH);
-      ctx.strokeStyle = BORDER; ctx.strokeRect(L, T, pw, rasterH);
-      const dur = networkResult.duration;
-      for (const [i, t] of networkResult.spike_times.entries()) {
-        const n = at(networkResult.spike_neurons, i);
-        const x = L + (t / dur) * pw;
-        const y = T + (n / networkResult.n_total) * rasterH;
-        ctx.fillStyle = n < networkResult.n_exc ? "#4fc3f7" : "#ff5252";
-        ctx.fillRect(x, y, 1.5, 1.5);
-      }
-      ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "left";
-      ctx.fillText(`E (${networkResult.n_exc})`, L + 4, T + 10);
-      ctx.fillStyle = "#ff5252";
-      ctx.fillText(`I (${networkResult.n_inh})`, L + 60, T + 10);
-      ctx.fillStyle = AXIS;
-      ctx.fillText(`${networkResult.n_spikes} spikes`, L + 120, T + 10);
-
-      // Population rates
-      const rateY = T + rasterH + 10;
-      const rt = networkResult.rate_time;
-      if (rt.length > 1) {
-        const rMax = Math.max(...networkResult.exc_rates, ...networkResult.inh_rates, 1);
-        const rtMin = at(rt, 0);
-        const rtMax = at(rt, rt.length - 1);
-        drawAxes(ctx, L, rateY, pw, rateH, rtMin, rtMax, 0, rMax * 1.1, "ms");
-        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.exc_rates, rtMin, rtMax, 0, rMax * 1.1, "#4fc3f7", 1.5);
-        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.inh_rates, rtMin, rtMax, 0, rMax * 1.1, "#ff5252", 1.5);
-        ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "left";
-        ctx.fillText(`E: ${networkResult.mean_exc_rate}Hz  I: ${networkResult.mean_inh_rate}Hz`, L + 4, rateY + 10);
-      }
+      drawNetworkView(ctx, frame, networkResult);
       return;
     }
 
-    // Default: Trace view (with nullcline overlay on phase + imported trace overlay)
-    // Apply zoom viewport if set
-    const z = zoomRef.current;
-    const zTMin = isNaN(z.xMin) ? tMin : z.xMin;
-    const zTMax = isNaN(z.xMax) ? tMax : z.xMax;
-
-    // Layout: voltage 65%, current 15%, raster 8%, x-labels
-    const gap = 4;
-    const rasterH = hasSpikes ? 22 : 0;
-    const currentH = 40;
-    const xLabelH = 16;
-    const voltH = h - T - currentH - rasterH - gap * 2 - xLabelH;
-    if (voltH < 30) return;
-
-    // Compute Y range
-    let vMin = Infinity, vMax = -Infinity;
-    for (const v of vars) {
-      for (const val of result.states[v] ?? []) {
-        if (isFinite(val)) { if (val < vMin) vMin = val; if (val > vMax) vMax = val; }
-      }
-    }
-    const vPad = (vMax - vMin) * 0.06 || 1;
-    vMin -= vPad; vMax += vPad;
-
-    // Voltage plot
-    drawAxes(ctx, L, T, pw, voltH, zTMin, zTMax, vMin, vMax);
-    vars.forEach((v, i) => {
-      const trace = result.states[v] ?? [];
-      drawLine(ctx, L, T, pw, voltH, time, trace, zTMin, zTMax, vMin, vMax,
-        at(COLORS as readonly string[], i % COLORS.length));
+    drawTraceView(ctx, frame, result, {
+      crosshair: crosshairRef.current,
+      importedTrace,
+      zoom: zoomRef.current,
     });
-    // Y-axis label
-    ctx.save();
-    ctx.translate(10, T + voltH / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "center";
-    ctx.fillText("mV", 0, 0);
-    ctx.restore();
-    // Spike markers
-    if (hasSpikes) {
-      ctx.strokeStyle = "rgba(255,82,82,0.2)"; ctx.lineWidth = 1;
-      for (const idx of result.spikes) {
-        const x = L + (((idx + 1) * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
-        ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + voltH); ctx.stroke();
-      }
-    }
-    // Legend
-    ctx.font = "10px monospace";
-    vars.forEach((v, i) => {
-      const colour = at(COLORS as readonly string[], i % COLORS.length);
-      ctx.fillStyle = colour;
-      ctx.fillRect(L + 6 + i * 52, T + 4, 8, 2);
-      ctx.textAlign = "left"; ctx.fillText(v, L + 17 + i * 52, T + 9);
-    });
-
-    // Imported trace overlay
-    if (importedTrace) {
-      ctx.setLineDash([4, 3]);
-      drawLine(ctx, L, T, pw, voltH, importedTrace.time, importedTrace.voltage,
-        zTMin, zTMax, vMin, vMax, "#ff9800", 1.5);
-      ctx.setLineDash([]);
-      ctx.fillStyle = "#ff9800"; ctx.font = "9px monospace"; ctx.textAlign = "left";
-      ctx.fillText("imported", L + 6 + vars.length * 52, T + 9);
-    }
-
-    // Current plot
-    const curY = T + voltH + gap;
-    const I = result.current_trace;
-    let iMin = Math.min(...I), iMax = Math.max(...I);
-    if (iMin === iMax) { iMin -= 1; iMax += 1; }
-    drawAxes(ctx, L, curY, pw, currentH, zTMin, zTMax, iMin, iMax * 1.1);
-    drawLine(ctx, L, curY, pw, currentH, time, I, zTMin, zTMax, iMin, iMax * 1.1, "#ffb74d", 1.5);
-    ctx.fillStyle = "#ffb74d"; ctx.font = "10px monospace"; ctx.textAlign = "left";
-    ctx.fillText("I", L + 4, curY + 10);
-    // Y-axis label for current
-    ctx.save();
-    ctx.translate(10, curY + currentH / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "center";
-    ctx.fillText("nA", 0, 0);
-    ctx.restore();
-
-    // Spike raster
-    if (hasSpikes) {
-      const rasY = curY + currentH + gap;
-      ctx.fillStyle = PANEL_BG; ctx.fillRect(L, rasY, pw, rasterH);
-      ctx.strokeStyle = BORDER; ctx.lineWidth = 1; ctx.strokeRect(L, rasY, pw, rasterH);
-      ctx.strokeStyle = "#ff5252"; ctx.lineWidth = 1.5;
-      for (const idx of result.spikes) {
-        const x = L + (((idx + 1) * result.dt - zTMin) / (zTMax - zTMin || 1)) * pw;
-        ctx.beginPath(); ctx.moveTo(x, rasY + 2); ctx.lineTo(x, rasY + rasterH - 2); ctx.stroke();
-      }
-    }
-
-    // X-axis labels
-    ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "center";
-    const xs = niceStep(zTMax - zTMin, 6);
-    for (let v = Math.ceil(zTMin / xs) * xs; v <= zTMax; v += xs) {
-      const x = L + ((v - zTMin) / (zTMax - zTMin || 1)) * pw;
-      ctx.fillText(v.toFixed(0), x, h - 2);
-    }
-    ctx.textAlign = "right"; ctx.fillText("ms", L + pw, h - 2);
-
-    // Crosshair
-    if (crosshairRef.current !== null) {
-      const cx = crosshairRef.current;
-      ctx.strokeStyle = "rgba(79,195,247,0.3)"; ctx.lineWidth = 1;
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath(); ctx.moveTo(cx, T); ctx.lineTo(cx, h - 10); ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Zoom indicator
-    if (!isNaN(zoomRef.current.xMin)) {
-      ctx.fillStyle = "#4fc3f7"; ctx.font = "9px monospace"; ctx.textAlign = "right";
-      ctx.fillText(`zoom: ${zTMin.toFixed(1)}–${zTMax.toFixed(1)} ms (dbl-click to reset)`, L + pw - 2, h - 2);
-    }
   }, [result, activeTab, fiResult, bifResult, sensResult, precResult, heatmapResult, compareResult, nullclineResult, freqResult, staResult, charResult, multiResults, importedTrace, networkResult]);
 
   useEffect(() => {
     draw();
-    const onResize = () => draw();
+    const onResize = () => {
+      draw();
+    };
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
   }, [draw]);
 
   return (

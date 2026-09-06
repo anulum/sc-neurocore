@@ -266,7 +266,21 @@ describe("the Studio's declared colours", () => {
   });
 
   it("holds every colour the plot canvas paints text with to AA", () => {
-    const scanned = canvasTextColours(source("components/SimulationPlot.tsx"));
+    // The views live in `src/plots` since the plot panel was split; the scan
+    // follows them. It found nothing in `SimulationPlot.tsx` the moment they
+    // moved and failed rather than reporting the file clean, which is what the
+    // fail-closed check in `canvasTextColours` is for.
+    const scanned = canvasTextColours(
+      [
+        "components/SimulationPlot.tsx",
+        "plots/analysisViews.ts",
+        "plots/comparisonViews.ts",
+        "plots/stateViews.ts",
+        "plots/traceView.ts",
+      ]
+        .map((file) => source(file))
+        .join("\n"),
+    );
     expect(scanned.literals.length).toBeGreaterThan(5);
     // Two identifiers paint text: `AXIS` and `colour`, the latter always an
     // entry of `PLOT_COLORS`. Both are in the requirements below, and a third
