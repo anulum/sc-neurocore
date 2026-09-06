@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 467
+expected_file_count = 468
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1883,3 +1883,7 @@ rationale = "Public generator of the committed random-double corpus both seal im
 [[file]]
 path = "tools/documentation_debt.py"
 rationale = "Public per-language documentation-debt measurement: the tools it drives, what each figure covers, and why a language with no installed tool is recorded as not measured rather than given a substitute number."
+
+[[file]]
+path = "tools/rust_doc_ratchet.py"
+rationale = "Public ratchet on the engine crate's undocumented items: why a crate-level lint is unavailable here, how the ceiling falls and never rises, and what a check does when it cannot run."
