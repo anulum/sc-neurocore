@@ -35256,7 +35256,8 @@ result_payload:
 Returns
 -------
 dict&#91;str, Any&#93;
-    The same result object with ``analysis_metadata`` set.
+    The result with ``analysis_metadata`` set and its produced-evidence
+    receipt attached.
 
 ### Function `infer_analysis_source(request_payload)`
 Infer the Studio input surface from an analysis request payload.
@@ -36155,6 +36156,73 @@ that the learnable-delay kernel is hardware-faithful across the whole stack.
 
 ---
 
+## Module `studio.evidence_chain`
+
+### Class `EvidenceChainEntry`
+The verdict reached for one subject in a pack.
+
+Attributes
+----------
+name : str
+    Pack-relative name of the subject, used for operator reporting.
+verdict : str
+    One of the :data:`EvidenceVerdict` values.
+receipt_id : str
+    Receipt identifier, empty for an ``unsealed`` subject.
+reason : str
+    What the verifier observed, in words an operator can act on.
+
+- **to_public_dict**()
+  - Return the entry as it is written into a chain document.
+
+### Class `EvidenceChainReport`
+The result of verifying a whole pack.
+
+Attributes
+----------
+entries : tuple of EvidenceChainEntry
+    One entry per subject, in the order supplied.
+verified : bool
+    True when nothing in the pack contradicts anything else in it.
+complete : bool
+    True when every subject was checkable and checked. A pack can be
+    verified without being complete: exporting a run without its inputs
+    leaves links this pack cannot check.
+verified_at_utc : str
+    When the verification ran.
+
+- **verdict_counts**()
+  - Return how many subjects reached each verdict.
+- **unverified**()
+  - Return every entry that did not verify, including unsealed ones.
+- **contradicted**()
+  - Return every entry whose verdict contradicts the rest of the pack.
+- **to_public_dict**()
+  - Return the chain document written beside a bundle manifest.
+
+### Function `verify_evidence_chain(subjects)`
+Verify a whole pack of evidence against its own receipts.
+
+Parameters
+----------
+subjects : mapping of str to mapping
+    Pack-relative name to payload, as read back from the exported files.
+now : datetime, optional
+    Verification time recorded in the report.
+
+Returns
+-------
+EvidenceChainReport
+    One verdict per subject, plus whether the pack verified as a whole.
+
+Raises
+------
+EvidenceReceiptError
+    If a receipt is present but cannot be read. A malformed receipt is a
+    broken pack, not a subject that merely failed.
+
+---
+
 ## Module `studio.evidence_classification`
 
 ### Function `validate_studio_evidence_classification(value)`
@@ -36192,6 +36260,366 @@ Raises
 ------
 ValueError
     If ``value`` is not a supported terminal evidence status.
+
+---
+
+## Module `studio.evidence_receipt`
+
+### Class `EvidenceReceiptError`
+Raised when a receipt is malformed and cannot be read at all.
+
+
+### Class `EvidenceDependency`
+One input a piece of evidence rests on.
+
+Attributes
+----------
+lane : str
+    Evidence class of the input, such as ``simulation``.
+key : str
+    Scope field that identifies the input, such as ``experiment_sha256``.
+value : str
+    Value that field must carry on the input.
+
+- **to_public_dict**()
+  - Return the dependency as it is written into a receipt.
+
+### Class `EvidenceReceipt`
+What one piece of evidence is, rests on, and was produced under.
+
+Attributes
+----------
+receipt_id : str
+    Content address ``<lane>.<first 32 characters of the seal>``. It names
+    the sealed artefact, so the same artefact exported from any session
+    carries the same identifier; the run behind it is named by ``scope``.
+lane : str
+    Controlled evidence class.
+status : str
+    Terminal status of the action that produced the subject.
+binding : str
+    Whether the receipt attests production or only export; see
+    :data:`EvidenceBinding`.
+seal_algorithm : str
+    Digest algorithm of ``seal_sha256``.
+seal_sha256 : str
+    Cross-runtime seal of the subject without its receipt.
+scope : mapping of str to str
+    Identity the subject was produced under — model class, descriptor and
+    schema digests, numerical profile, experiment digest.
+depends_on : tuple of EvidenceDependency
+    Inputs this evidence rests on.
+produced_at_utc : str
+    Second-precision UTC timestamp, ``Z``-suffixed.
+
+- **to_public_dict**()
+  - Return the receipt block as it is embedded in a subject payload.
+
+### Function `subject_of(payload)`
+Return the sealed part of a payload: everything but its own receipt.
+
+Parameters
+----------
+payload : mapping
+    A payload that may already carry a receipt.
+
+Returns
+-------
+dict
+    The payload without :data:`EVIDENCE_RECEIPT_KEY`.
+
+### Function `build_evidence_receipt(payload)`
+Seal a payload and describe what it rests on.
+
+Parameters
+----------
+payload : mapping
+    The evidence payload. Any receipt already present is excluded from the
+    seal, so re-sealing an exported payload reproduces the same receipt.
+lane : str
+    Controlled evidence class.
+status : str
+    Terminal status of the producing action.
+binding : str
+    ``produced`` or ``exported``; see :data:`EvidenceBinding`.
+scope : mapping of str to str
+    Identity fields the subject was produced under.
+depends_on : sequence of EvidenceDependency
+    Inputs this evidence rests on.
+produced_at_utc : str
+    Second-precision UTC timestamp, ``Z``-suffixed.
+
+Returns
+-------
+EvidenceReceipt
+    The receipt for this payload.
+
+Raises
+------
+EvidenceReceiptError
+    If the lane, status or timestamp is not valid.
+EvidenceSealError
+    If the payload cannot be sealed identically in both runtimes.
+
+### Function `attach_evidence_receipt(payload)`
+Return the payload with its receipt embedded.
+
+Parameters
+----------
+payload : mapping
+    The evidence payload.
+lane : str
+    Controlled evidence class.
+status : str
+    Terminal status of the producing action.
+binding : str
+    ``produced`` or ``exported``; see :data:`EvidenceBinding`.
+scope : mapping of str to str
+    Identity fields the subject was produced under.
+depends_on : sequence of EvidenceDependency
+    Inputs this evidence rests on.
+now : datetime, optional
+    Production time; the current UTC time when omitted.
+
+Returns
+-------
+dict
+    A new payload carrying :data:`EVIDENCE_RECEIPT_KEY`.
+
+### Function `read_evidence_receipt(payload)`
+Return the receipt embedded in a payload, or ``None`` when absent.
+
+Parameters
+----------
+payload : mapping
+    A payload that may carry a receipt.
+
+Returns
+-------
+EvidenceReceipt or None
+    The parsed receipt, or ``None`` for a payload written before receipts
+    existed.
+
+Raises
+------
+EvidenceReceiptError
+    If a receipt is present but malformed. A receipt that cannot be read is
+    never treated as an absent one.
+
+### Function `utc_timestamp(now)`
+Return a second-precision ``Z``-suffixed UTC timestamp.
+
+Parameters
+----------
+now : datetime, optional
+    Moment to render; the current UTC time when omitted.
+
+Returns
+-------
+str
+    For example ``2026-09-06T11:22:33Z``.
+
+### Function `validate_lane(value)`
+Return a controlled evidence class or refuse the receipt.
+
+Parameters
+----------
+value : object
+    Candidate lane read from a receipt.
+
+Returns
+-------
+StudioEvidenceClassification
+    The validated evidence class.
+
+Raises
+------
+EvidenceReceiptError
+    If the value is not a Studio evidence class.
+
+### Function `validate_status(value)`
+Return a controlled terminal status or refuse the receipt.
+
+Parameters
+----------
+value : object
+    Candidate status read from a receipt.
+
+Returns
+-------
+StudioEvidenceStatus
+    The validated terminal status.
+
+Raises
+------
+EvidenceReceiptError
+    If the value is not a terminal evidence status.
+
+### Function `validate_binding(value)`
+Return a controlled receipt binding or refuse the receipt.
+
+Parameters
+----------
+value : object
+    Candidate binding read from a receipt.
+
+Returns
+-------
+EvidenceBinding
+    ``produced`` or ``exported``.
+
+Raises
+------
+EvidenceReceiptError
+    If the value names neither.
+
+### Function `parse_timestamp(value)`
+Return the moment a ``Z``-suffixed UTC timestamp names.
+
+Parameters
+----------
+value : str
+    Timestamp text from a receipt.
+
+Returns
+-------
+datetime
+    The parsed, timezone-aware moment.
+
+Raises
+------
+EvidenceReceiptError
+    If the text is not a UTC ISO-8601 timestamp.
+
+### Function `is_sha256_hex(value)`
+Return whether ``value`` is a lowercase 64-character SHA-256 digest.
+
+---
+
+## Module `studio.evidence_scope`
+
+### Function `simulation_scope(payload)`
+Return the identity a simulation result was produced under.
+
+Parameters
+----------
+payload : mapping
+    A Studio simulation result carrying an ``experiment`` block.
+
+Returns
+-------
+dict of str to str
+    Experiment digest, model identity and numerical profile, omitting any
+    field the payload does not record.
+
+### Function `analysis_scope(payload, request_payload)`
+Return the identity an analysis result was produced under.
+
+Parameters
+----------
+payload : mapping
+    The analysis result, carrying ``analysis_metadata``.
+request_payload : mapping
+    The request the analysis ran, which names the model when there is one.
+
+Returns
+-------
+dict of str to str
+    Analysis type, input digest and model class where the request named one.
+
+### Function `action_scope()`
+Return the identity of one worker-backed Studio action.
+
+Parameters
+----------
+job_id : str
+    Job that executed the action; what dependent evidence resolves against.
+action_kind : str
+    Stable action identifier, such as ``studio.compile``.
+
+Returns
+-------
+dict of str to str
+    The job and action identity.
+
+### Function `weight_restore_scope(payload)`
+Return the identity of a materialised training checkpoint.
+
+The architecture and the weight digest live in the materialisation block,
+and they are what an attach has to agree with: attaching a checkpoint to a
+network of a different shape is the wrong-model case for this lane.
+
+### Function `weight_restore_dependencies(payload)`
+Return the training job a materialised checkpoint rests on.
+
+### Function `weight_restore_attach_scope(payload)`
+Return the identity of a checkpoint attached to a new training run.
+
+### Function `weight_restore_attach_dependencies(payload)`
+Return the materialised checkpoint an attach rests on.
+
+### Function `default_flow_run_scope(payload)`
+Return the identity of one guided default-flow run.
+
+### Function `default_flow_attestation_scope(payload)`
+Return the identity of one guided default-flow attestation.
+
+### Function `default_flow_attestation_dependencies(payload)`
+Return the guided-flow run an attestation rests on.
+
+### Function `model_scan_scope(payload)`
+Return the identity of one catalogue scan.
+
+### Function `project_scope(payload)`
+Return the identity of one saved project workspace.
+
+---
+
+## Module `studio.evidence_seal`
+
+### Class `EvidenceSealError`
+Raised when a value cannot be sealed identically in both runtimes.
+
+
+### Function `seal_sha256(value)`
+Return the SHA-256 digest of the canonical form of ``value``.
+
+Parameters
+----------
+value : object
+    Any JSON-shaped value: ``None``, ``bool``, ``int``, ``float``, ``str``,
+    a mapping with string keys, or a sequence of the same.
+
+Returns
+-------
+str
+    Lowercase 64-character hexadecimal digest.
+
+Raises
+------
+EvidenceSealError
+    If the value contains anything that would not survive a JSON round
+    trip through the browser unchanged.
+
+### Function `canonical_seal_text(value)`
+Return the canonical JSON text used as the seal input.
+
+Parameters
+----------
+value : object
+    The value to encode.
+
+Returns
+-------
+str
+    Canonical JSON: object keys in code-point order, no insignificant
+    whitespace, numbers in the shared normal form, minimal string escapes.
+
+Raises
+------
+EvidenceSealError
+    If the value is not JSON-shaped, carries a non-finite float, an integer
+    no double holds exactly, or an unpaired surrogate.
 
 ---
 

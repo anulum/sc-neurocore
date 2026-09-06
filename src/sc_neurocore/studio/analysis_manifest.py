@@ -17,6 +17,11 @@ from dataclasses import dataclass
 from typing import Any, Literal, TypeAlias
 
 from sc_neurocore.studio.analysis_contract import DomainStatus, contract_summary
+from sc_neurocore.studio.evidence_receipt import (
+    EVIDENCE_RECEIPT_KEY,
+    attach_evidence_receipt,
+)
+from sc_neurocore.studio.evidence_scope import analysis_scope
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
     StudioEvidenceStatus,
@@ -119,8 +124,12 @@ def build_analysis_result_manifest(
         If request or result payloads cannot be encoded as portable JSON, or
         the payload's contract block carries an unknown domain verdict.
     """
+    # The receipt describes the result; it is not one of the result's outputs,
+    # so it is excluded here exactly as the metadata block is.
     result_without_manifest = {
-        key: value for key, value in result_payload.items() if key != "analysis_metadata"
+        key: value
+        for key, value in result_payload.items()
+        if key not in ("analysis_metadata", EVIDENCE_RECEIPT_KEY)
     }
     contract, domain = contract_summary(result_without_manifest)
     return StudioAnalysisResultManifest(
@@ -157,7 +166,8 @@ def attach_analysis_result_manifest(
     Returns
     -------
     dict[str, Any]
-        The same result object with ``analysis_metadata`` set.
+        The result with ``analysis_metadata`` set and its produced-evidence
+        receipt attached.
     """
     result_payload["analysis_metadata"] = build_analysis_result_manifest(
         analysis_type=analysis_type,
@@ -165,7 +175,13 @@ def attach_analysis_result_manifest(
         request_payload=request_payload,
         result_payload=result_payload,
     ).to_public_dict()
-    return result_payload
+    return attach_evidence_receipt(
+        result_payload,
+        lane="analysis",
+        status="completed",
+        binding="produced",
+        scope=analysis_scope(result_payload, request_payload),
+    )
 
 
 def infer_analysis_source(request_payload: Mapping[str, Any]) -> AnalysisSource:

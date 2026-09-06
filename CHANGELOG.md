@@ -11,6 +11,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- An exported evidence pack can now be rechecked by whoever receives it.
+  Measured on the real surface before this change: a model run of `AdExNeuron`
+  recorded `result_sha256` `771d8e51…`, and the identical payload — after the
+  JSON round trip every exported artefact makes through the operator's browser —
+  re-sealed to `813d3005…`. Nothing about the run had changed; `1.0` had come
+  back as `1`, `-70.0` as `-70` and `1e-07` as `1e-7`. No verifier could exist
+  while a recorded seal failed to reproduce for every honest run.
+  `studio.evidence-seal.v1` encodes values rather than one runtime's rendering
+  of them, and the server and the browser implement it identically against one
+  shared vector set. A value that would not survive the trip intact — a
+  non-finite number, an integer no double holds exactly, an unpaired surrogate —
+  is refused rather than silently altered.
+- Every Studio evidence payload now carries a receipt
+  (`studio.evidence-receipt.v1`) in one shape across the simulation, analysis,
+  training, compile, co-simulation and synthesis lanes: the seal of its subject,
+  the identity it was produced under, the inputs it rests on named by value
+  rather than by position, and whether it attests production or only the export.
+  A bundle is verified before it is written (`studio.evidence-chain.v1`) and
+  refuses to publish a pack that contradicts itself — a payload that no longer
+  matches its seal, two subjects that disagree about the model or the numerical
+  profile, evidence produced before the input it claims. A pack exported without
+  its inputs is reported as incomplete rather than refused, and `verified` and
+  `complete` are recorded separately.
 - Continuing a training run is now a different operation from starting one
   from its weights, and the difference is measurable. Restoring weights alone
   is a **warm start**: a new run with a fresh optimiser and generator at epoch
@@ -56,6 +79,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   place the reason can survive.
 
 ### Added
+- `tools/studio_evidence_verify.py` rechecks an exported evidence pack without
+  the Studio: it recomputes every file digest against the manifest, re-seals
+  every subject against its receipt, re-resolves the dependency graph, and
+  compares its own finding with the verdict the pack records — the exporter
+  wrote both the evidence and that verdict. It exits non-zero when a file is
+  missing or altered, when a subject no longer matches its seal, or when the two
+  verdicts disagree. `docs/studio/evidence-verification.md` documents the
+  receipt fields, the verdicts, and what a receipt does not claim.
 - The reference-trace corpus now says, per identity, what it is a reference
   *for*. Backends agreeing with each other can reproduce one shared scientific
   error, so `provenance.kind` — previously free text — is a closed vocabulary

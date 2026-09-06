@@ -15,6 +15,9 @@ import matplotlib
 
 matplotlib.use("Agg")
 
+from sc_neurocore.studio.evidence_receipt import read_evidence_receipt, subject_of
+from sc_neurocore.studio.evidence_seal import seal_sha256
+
 REPO = Path(__file__).resolve().parents[2]
 NOTEBOOK = REPO / "notebooks/43_studio_evidence_cart_lab.ipynb"
 
@@ -46,6 +49,11 @@ def test_studio_evidence_cart_lab_executes_digest_round_trip() -> None:
 
     entry = namespace["entry"]
     bundle = namespace["bundle"]
-    assert namespace["sha256_hex"](entry["payload"]) == entry["payload_sha256"]
+    assert seal_sha256(entry["payload"]) == entry["payload_sha256"]
     assert len(bundle["bundle_sha256"]) == 64
     assert entry["payload"]["spike_count"] > 0
+
+    receipt = read_evidence_receipt(entry["payload"])
+    assert receipt is not None
+    assert receipt.receipt_id == entry["receipt_id"]
+    assert receipt.seal_sha256 == seal_sha256(subject_of(entry["payload"]))

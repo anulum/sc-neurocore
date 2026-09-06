@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from tests.studio_evidence_bundle_support import *  # noqa: F403
 
+from sc_neurocore.studio.evidence_chain import EVIDENCE_VERIFIER_VERSION
+
 
 def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     tmp_path: Path,
@@ -101,8 +103,11 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     source_job_kind_counts = cast(dict[str, int], summary["source_job_kind_counts"])
     source_job_owner_counts = cast(dict[str, int], summary["source_job_owner_counts"])
     assert summary["artifact_path_count"] == len(result.artifact_paths)
-    assert summary["entry_count"] == 10
+    assert summary["entry_count"] == 11
     assert entry_type_counts["action_evidence"] == 1
+    assert entry_type_counts["evidence_chain"] == 1
+    assert summary["chain_verified"] is True
+    assert summary["chain_verifier_version"] == EVIDENCE_VERIFIER_VERSION
     assert entry_type_counts["default_flow_attestation"] == 1
     assert entry_type_counts["default_flow_run"] == 1
     assert entry_type_counts["analysis_result"] == 1

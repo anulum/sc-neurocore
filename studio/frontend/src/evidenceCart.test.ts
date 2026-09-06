@@ -17,6 +17,7 @@ import {
   evidenceCartExportToBlob,
   evidenceCartHasSimAndAnalysis,
   removeEvidenceCartArtefact,
+  evidenceCartReceiptId,
   sha256HexOfCanonicalJson,
   simulationCartDraft,
   EVIDENCE_CART_SCHEMA_VERSION,
@@ -162,6 +163,10 @@ describe("evidence cart export digests", () => {
     expect(exportA.entries[0]?.payload).toEqual(simPayload);
     expect(exportA.entries[1]?.payload).toEqual(analysisPayload);
 
+    // A queued payload that carries a receipt keeps its identity in the export,
+    // so a bundle assembled in a later session still points at the exact run.
+    expect(exportA.entries[0]?.receipt_id).toBeNull();
+
     // Key order must not change digests (canonical JSON).
     const reordered = await sha256HexOfCanonicalJson({
       spikes: [10, 20, 30],
@@ -200,5 +205,40 @@ describe("evidence cart export digests", () => {
     expect(result).toEqual({
       error: "Evidence cart is empty; queue at least one artefact",
     });
+  });
+});
+
+describe("receipt identity in the cart", () => {
+  it("carries the receipt a produced payload arrived with", async () => {
+    const payload = {
+      evidence_receipt: { receipt_id: "simulation.abc123", lane: "simulation" },
+      spikes: [1],
+    };
+    const queued = enqueueEvidenceCartArtefact(
+      emptyEvidenceCart(),
+      simulationCartDraft("AdExNeuron", payload),
+    );
+    expect(queued.ok).toBe(true);
+    if (!queued.ok) {
+      return;
+    }
+
+    const bundle = await buildEvidenceCartExport(queued.cart);
+
+    expect("error" in bundle).toBe(false);
+    if ("error" in bundle) {
+      return;
+    }
+    expect(bundle.entries[0]?.receipt_id).toBe("simulation.abc123");
+  });
+
+  it("reports no identity for a payload that carries none", () => {
+    expect(evidenceCartReceiptId({ spikes: [1] })).toBeNull();
+    expect(evidenceCartReceiptId(null)).toBeNull();
+    expect(evidenceCartReceiptId([1, 2])).toBeNull();
+    expect(evidenceCartReceiptId({ evidence_receipt: null })).toBeNull();
+    expect(evidenceCartReceiptId({ evidence_receipt: [1] })).toBeNull();
+    expect(evidenceCartReceiptId({ evidence_receipt: { receipt_id: "" } })).toBeNull();
+    expect(evidenceCartReceiptId({ evidence_receipt: { receipt_id: 7 } })).toBeNull();
   });
 });

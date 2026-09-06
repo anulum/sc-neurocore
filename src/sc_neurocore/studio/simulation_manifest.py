@@ -22,6 +22,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, TypeAlias
 
+from sc_neurocore.studio.evidence_receipt import EVIDENCE_RECEIPT_KEY
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
     StudioEvidenceStatus,
@@ -166,8 +167,12 @@ def build_simulation_run_manifest(
     layout = result_payload.get("state_layout")
     observation = result_payload.get("observation")
     experiment = result_payload.get("experiment")
+    # The receipt describes the result; it is not part of it, so it is excluded
+    # here exactly as the metadata block is.
     result_without_manifest = {
-        key: value for key, value in result_payload.items() if key != "run_metadata"
+        key: value
+        for key, value in result_payload.items()
+        if key not in ("run_metadata", EVIDENCE_RECEIPT_KEY)
     }
     recorded: list[str]
     if isinstance(layout, Mapping) and isinstance(layout.get("recorded"), list):

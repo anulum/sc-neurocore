@@ -9,7 +9,17 @@
 """Evidence bundle export contracts for SC-NeuroCore Studio.
 
 On-disk bundle assembly lives here. Payload normalisation for each evidence
-kind lives in ``evidence_bundle_payloads``.
+kind lives in ``evidence_bundle_payloads``; the receipt each subject carries and
+the verification of the whole pack live in ``evidence_receipt`` and
+``evidence_chain``.
+
+A bundle is verified before it is written. A payload that arrives already
+carrying a produced receipt keeps it, so the pack records what actually ran;
+one that does not is sealed here and marked ``exported``, which attests only
+what the exporter received. If the pack contradicts itself — a payload that no
+longer matches its seal, an input that is absent, two subjects that disagree
+about the model — the export fails instead of producing an artefact that looks
+sealed.
 """
 
 from __future__ import annotations
@@ -20,10 +30,21 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TypeAlias, cast
 
+from sc_neurocore.studio.evidence_chain import (
+    EVIDENCE_VERIFIER_VERSION,
+    EvidenceChainReport,
+    verify_evidence_chain,
+)
 from sc_neurocore.studio.evidence_classification import (
     STUDIO_EVIDENCE_CLASSIFICATIONS,
     STUDIO_EVIDENCE_TERMINAL_STATUSES,
 )
+from sc_neurocore.studio.evidence_receipt import (
+    EvidenceDependency,
+    attach_evidence_receipt,
+    read_evidence_receipt,
+)
+from sc_neurocore.studio import evidence_scope
 from sc_neurocore.studio.platform.jobs import (
     StudioJobArtifactPayload,
     StudioJobContext,
@@ -167,82 +188,97 @@ def write_studio_evidence_bundle(
     bundle_id = f"seb_{context.job_id}"
     written_paths: list[str] = []
     entries: list[dict[str, JsonValue]] = []
+    subjects: dict[str, Mapping[str, JsonValue]] = {}
 
     if project_payload is not None:
         payload = _project_workspace_payload(project_payload)
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "project",
                 "evidence/project.json",
                 payload,
                 evidence_classification="project_workspace",
+                scope=evidence_scope.project_scope(payload),
             )
         )
 
     for index, simulation_payload in enumerate(simulation_payloads):
         payload = _simulation_result_payload(simulation_payload)
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "simulation_result",
                 f"evidence/simulations/{index:03d}.json",
                 payload,
                 evidence_classification="simulation",
+                scope=evidence_scope.simulation_scope(payload),
             )
         )
 
     for index, analysis_payload in enumerate(analysis_payloads):
         payload = _analysis_result_payload(analysis_payload)
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "analysis_result",
                 f"evidence/analyses/{index:03d}.json",
                 payload,
                 evidence_classification="analysis",
+                scope=evidence_scope.analysis_scope(payload, {}),
             )
         )
 
     for index, model_scan_payload in enumerate(model_scan_payloads):
         payload = _model_scan_payload(model_scan_payload)
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "model_scan_result",
                 f"evidence/model-scans/{index:03d}.json",
                 payload,
                 evidence_classification="analysis",
+                scope=evidence_scope.model_scan_scope(payload),
             )
         )
 
     for index, weight_restore_payload in enumerate(weight_restore_payloads):
         payload = _weight_restore_payload(weight_restore_payload)
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "training_weight_restore_result",
                 f"evidence/training-weight-restores/{index:03d}.json",
                 payload,
                 evidence_classification="training",
+                scope=evidence_scope.weight_restore_scope(payload),
+                depends_on=evidence_scope.weight_restore_dependencies(payload),
             )
         )
 
     for index, weight_restore_attach_payload in enumerate(weight_restore_attach_payloads):
         payload = _weight_restore_attach_payload(weight_restore_attach_payload)
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "training_weight_restore_attach_result",
                 f"evidence/training-weight-restore-attaches/{index:03d}.json",
                 payload,
                 evidence_classification="training",
+                scope=evidence_scope.weight_restore_attach_scope(payload),
+                depends_on=evidence_scope.weight_restore_attach_dependencies(payload),
             )
         )
 
@@ -253,13 +289,15 @@ def write_studio_evidence_bundle(
             payload
         )
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "default_flow_run",
                 f"evidence/default-flows/runs/{index:03d}.json",
                 payload,
                 evidence_classification="default_flow",
+                scope=evidence_scope.default_flow_run_scope(payload),
             )
         )
 
@@ -269,13 +307,16 @@ def write_studio_evidence_bundle(
             run_fingerprints=default_flow_run_fingerprints,
         )
         entries.append(
-            _write_classified_json_entry(
+            _write_sealed_entry(
                 context,
                 written_paths,
+                subjects,
                 "default_flow_attestation",
                 f"evidence/default-flows/attestations/{index:03d}.json",
                 payload,
                 evidence_classification="default_flow",
+                scope=evidence_scope.default_flow_attestation_scope(payload),
+                depends_on=evidence_scope.default_flow_attestation_dependencies(payload),
             )
         )
 
@@ -324,21 +365,43 @@ def write_studio_evidence_bundle(
             artifact_payload = reader(record.job_id, artifact.relative_path)
             written = context.write_artifact(bundle_path, artifact_payload.payload)
             written_paths.append(written.relative_path)
-            entries.append(
-                _job_artifact_entry(
-                    record=record,
-                    source_path=artifact.relative_path,
-                    bundle_path=written.relative_path,
-                    sha256=written.sha256,
-                    size_bytes=written.size_bytes,
-                    payload=artifact_payload.payload,
-                )
+            entry = _job_artifact_entry(
+                record=record,
+                source_path=artifact.relative_path,
+                bundle_path=written.relative_path,
+                sha256=written.sha256,
+                size_bytes=written.size_bytes,
+                payload=artifact_payload.payload,
             )
+            if entry["type"] == "action_evidence":
+                action_payload = _action_evidence_payload(
+                    artifact_payload.payload, source_job_id=record.job_id
+                )
+                subjects[written.relative_path] = action_payload
+                entry["receipt_id"] = _receipt_id_of(action_payload)
+            entries.append(entry)
+
+    chain = verify_evidence_chain(subjects, now=now)
+    contradicted = chain.contradicted()
+    if contradicted:
+        raise ValueError(
+            "Studio evidence bundle contradicts itself: "
+            + "; ".join(f"{entry.name} {entry.verdict} — {entry.reason}" for entry in contradicted)
+        )
+    chain_entry = _write_json_entry(
+        context,
+        written_paths,
+        "evidence_chain",
+        "evidence/chain.json",
+        cast(dict[str, JsonValue], chain.to_public_dict()),
+    )
+    entries.append(chain_entry)
 
     summary = _bundle_summary(
         entries,
         artifact_path_count=len(written_paths) + 1,
         job_records=job_records,
+        chain=chain,
     )
     manifest: dict[str, JsonValue] = {
         "artifact_count": len(entries),
@@ -370,6 +433,7 @@ def _bundle_summary(
     *,
     artifact_path_count: int,
     job_records: Sequence[StudioJobRecord],
+    chain: EvidenceChainReport,
 ) -> dict[str, JsonValue]:
     entry_type_counts: dict[str, int] = {}
     evidence_classification_counts: dict[str, int] = {}
@@ -392,6 +456,10 @@ def _bundle_summary(
 
     return {
         "artifact_path_count": artifact_path_count,
+        "chain_complete": chain.complete,
+        "chain_verdict_counts": cast(dict[str, JsonValue], dict(chain.verdict_counts())),
+        "chain_verified": chain.verified,
+        "chain_verifier_version": EVIDENCE_VERIFIER_VERSION,
         "entry_count": len(entries),
         "entry_type_counts": dict(sorted(entry_type_counts.items())),
         "evidence_classification_counts": dict(sorted(evidence_classification_counts.items())),
@@ -427,18 +495,48 @@ def _write_json_entry(
     }
 
 
-def _write_classified_json_entry(
+def _write_sealed_entry(
     context: StudioJobContext,
     written_paths: list[str],
+    subjects: dict[str, Mapping[str, JsonValue]],
     entry_type: str,
     relative_path: str,
     payload: Mapping[str, JsonValue],
     *,
     evidence_classification: str,
+    scope: Mapping[str, str],
+    depends_on: Sequence[EvidenceDependency] = (),
 ) -> dict[str, JsonValue]:
-    entry = _write_json_entry(context, written_paths, entry_type, relative_path, payload)
+    """Write one classified subject, sealing it when it arrives unsealed.
+
+    A payload that already carries a produced receipt keeps it: re-sealing here
+    would replace an attestation of what ran with an attestation of what was
+    handed over.
+    """
+    sealed = payload
+    if read_evidence_receipt(payload) is None:
+        sealed = cast(
+            dict[str, JsonValue],
+            attach_evidence_receipt(
+                payload,
+                lane=evidence_classification,
+                status="completed",
+                binding="exported",
+                scope=scope,
+                depends_on=depends_on,
+            ),
+        )
+    entry = _write_json_entry(context, written_paths, entry_type, relative_path, sealed)
     entry["evidence_classification"] = evidence_classification
+    entry["receipt_id"] = _receipt_id_of(sealed)
+    subjects[str(entry["bundle_path"])] = sealed
     return entry
+
+
+def _receipt_id_of(payload: Mapping[str, JsonValue]) -> str:
+    """Return the receipt identifier a sealed payload carries."""
+    receipt = read_evidence_receipt(payload)
+    return receipt.receipt_id if receipt is not None else ""
 
 
 def _job_artifact_entry(

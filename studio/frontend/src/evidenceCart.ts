@@ -14,7 +14,14 @@
  * over canonical JSON payloads. This is distinct from server-side job evidence
  * bundles (`studio.evidence-bundle.v1`): the cart is the operator session ledger
  * before or alongside project/admin bundle export.
+ *
+ * Digests come from the shared evidence seal, so a payload the server sealed
+ * carries the same digest here. `JSON.stringify` did not: it renders `1` where
+ * Python renders `1.0`, so a cart digest and a server digest of one identical
+ * run never agreed and neither could check the other.
  */
+
+import { canonicalSealText, sealSha256 } from "./evidenceSeal";
 
 export const EVIDENCE_CART_SCHEMA_VERSION = "studio.evidence-cart.v1" as const;
 
@@ -61,6 +68,12 @@ export interface EvidenceCartExportEntry {
   id: string;
   kind: EvidenceCartItemKind;
   label: string;
+  /**
+   * Identifier of the receipt the payload carries, or `null` when it carries
+   * none. It names the originating run, so an export made in a later session
+   * still points at the exact run rather than at whatever is current.
+   */
+  receipt_id: string | null;
   /**
    * Canonical JSON payload of the queued artefact (must round-trip with
    * ``payload_sha256``).
@@ -190,6 +203,7 @@ export async function buildEvidenceCartExport(
       payload: item.payload,
       payload_sha256: payloadSha,
       queued_at_utc: item.queuedAtUtc,
+      receipt_id: evidenceCartReceiptId(item.payload),
       source_name: item.sourceName ?? null,
     });
   }
@@ -204,6 +218,7 @@ export async function buildEvidenceCartExport(
       label: entry.label,
       payload_sha256: entry.payload_sha256,
       queued_at_utc: entry.queued_at_utc,
+      receipt_id: entry.receipt_id,
       source_name: entry.source_name,
     })),
     exported_at_utc: exportedAtUtc,
@@ -246,6 +261,7 @@ export async function verifyEvidenceCartExportRoundTrip(
       label: entry.label,
       payload_sha256: entry.payload_sha256,
       queued_at_utc: entry.queued_at_utc,
+      receipt_id: entry.receipt_id,
       source_name: entry.source_name,
     })),
     exported_at_utc: bundle.exported_at_utc,
@@ -319,40 +335,33 @@ export function analysisCartDraft(
 }
 
 /**
- * Compute SHA-256 hex of the canonical JSON encoding of ``value``.
+ * Return the receipt identifier a queued payload carries, or `null`.
  */
-export async function sha256HexOfCanonicalJson(value: unknown): Promise<string> {
-  const canonical = canonicalJsonString(value);
-  return sha256HexUtf8(canonical);
+export function evidenceCartReceiptId(payload: unknown): string | null {
+  if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+  const receipt = (payload as Record<string, unknown>).evidence_receipt;
+  if (receipt === null || typeof receipt !== "object" || Array.isArray(receipt)) {
+    return null;
+  }
+  const identifier = (receipt as Record<string, unknown>).receipt_id;
+  return typeof identifier === "string" && identifier.length > 0 ? identifier : null;
 }
 
 /**
- * Canonical JSON: sorted object keys, no insignificant whitespace, stable
- * array order, finite numbers only (throws on non-serialisable values).
+ * Compute SHA-256 hex of the shared canonical seal encoding of `value`.
  */
-export function canonicalJsonString(value: unknown): string {
-  return JSON.stringify(sortKeysDeep(value));
+export async function sha256HexOfCanonicalJson(value: unknown): Promise<string> {
+  return sealSha256(value);
 }
 
-function sortKeysDeep(value: unknown): unknown {
-  if (value === null || typeof value !== "object") {
-    if (typeof value === "number" && !Number.isFinite(value)) {
-      throw new TypeError("Evidence cart payload must not contain non-finite numbers");
-    }
-    if (typeof value === "undefined" || typeof value === "function" || typeof value === "symbol") {
-      throw new TypeError("Evidence cart payload must be JSON-serialisable");
-    }
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return value.map((entry) => sortKeysDeep(entry));
-  }
-  const record = value as Record<string, unknown>;
-  const sorted: Record<string, unknown> = {};
-  for (const key of Object.keys(record).sort()) {
-    sorted[key] = sortKeysDeep(record[key]);
-  }
-  return sorted;
+/**
+ * Canonical seal text: sorted object keys, no insignificant whitespace, stable
+ * array order, one normal form per number, finite numbers only.
+ */
+export function canonicalJsonString(value: unknown): string {
+  return canonicalSealText(value);
 }
 
 function isJsonSerialisable(value: unknown): boolean {
@@ -369,19 +378,4 @@ function newEvidenceCartItemId(): string {
     return `ec_${crypto.randomUUID()}`;
   }
   return `ec_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-async function sha256HexUtf8(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text);
-  if (typeof globalThis.crypto === "undefined" || !globalThis.crypto.subtle) {
-    throw new Error("Web Crypto SHA-256 is required for evidence cart digests");
-  }
-  const digest = await globalThis.crypto.subtle.digest("SHA-256", data);
-  return bufferToHex(digest);
-}
-
-function bufferToHex(buffer: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }

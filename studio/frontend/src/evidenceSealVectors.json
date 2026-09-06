@@ -1,0 +1,215 @@
+{
+  "note": "Shared cross-runtime vectors for studio.evidence-seal.v1. tests/test_studio_evidence_seal.py and evidenceSeal.test.ts both read this file; a divergence between the two runtimes fails one of them.",
+  "schema_version": "studio.evidence-seal.v1",
+  "vectors": [
+    {
+      "canonical": "null",
+      "value": null
+    },
+    {
+      "canonical": "true",
+      "value": true
+    },
+    {
+      "canonical": "false",
+      "value": false
+    },
+    {
+      "canonical": "0",
+      "value": 0
+    },
+    {
+      "canonical": "1",
+      "value": 1
+    },
+    {
+      "canonical": "-1",
+      "value": -1
+    },
+    {
+      "canonical": "42",
+      "value": 42
+    },
+    {
+      "canonical": "9007199254740991",
+      "value": 9007199254740991
+    },
+    {
+      "canonical": "0",
+      "value": 0.0
+    },
+    {
+      "canonical": "0",
+      "value": -0.0
+    },
+    {
+      "canonical": "1",
+      "value": 1.0
+    },
+    {
+      "canonical": "-70",
+      "value": -70.0
+    },
+    {
+      "canonical": "1e-1",
+      "value": 0.1
+    },
+    {
+      "canonical": "-5e-1",
+      "value": -0.5
+    },
+    {
+      "canonical": "2.5e-10",
+      "value": 2.5e-10
+    },
+    {
+      "canonical": "1e-7",
+      "value": 1e-07
+    },
+    {
+      "canonical": "1e-6",
+      "value": 1e-06
+    },
+    {
+      "canonical": "1e-4",
+      "value": 0.0001
+    },
+    {
+      "canonical": "3.0000000000000004e0",
+      "value": 3.0000000000000004
+    },
+    {
+      "canonical": "3.0000000000000004e-1",
+      "value": 0.30000000000000004
+    },
+    {
+      "canonical": "179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368",
+      "value": 1.7976931348623157e+308
+    },
+    {
+      "canonical": "5e-324",
+      "value": 5e-324
+    },
+    {
+      "canonical": "10000000000000000",
+      "value": 1e+16
+    },
+    {
+      "canonical": "100000000000000000000",
+      "value": 1e+20
+    },
+    {
+      "canonical": "1.2345678e3",
+      "value": 1234.5678
+    },
+    {
+      "canonical": "1.005e2",
+      "value": 100.5
+    },
+    {
+      "canonical": "\"\"",
+      "value": ""
+    },
+    {
+      "canonical": "\"a\"",
+      "value": "a"
+    },
+    {
+      "canonical": "\"ä\"",
+      "value": "ä"
+    },
+    {
+      "canonical": "\"☃\"",
+      "value": "☃"
+    },
+    {
+      "canonical": "\"a\\\"b\\\\c\"",
+      "value": "a\"b\\c"
+    },
+    {
+      "canonical": "\"line\\nbreak\"",
+      "value": "line\nbreak"
+    },
+    {
+      "canonical": "\"tab\\tstop\"",
+      "value": "tab\tstop"
+    },
+    {
+      "canonical": "\"😀\"",
+      "value": "😀"
+    },
+    {
+      "canonical": "[]",
+      "value": []
+    },
+    {
+      "canonical": "[1,2.5e0,\"x\"]",
+      "value": [
+        1,
+        2.5,
+        "x"
+      ]
+    },
+    {
+      "canonical": "[[1],[2]]",
+      "value": [
+        [
+          1
+        ],
+        [
+          2
+        ]
+      ]
+    },
+    {
+      "canonical": "{}",
+      "value": {}
+    },
+    {
+      "canonical": "{\"a\":2,\"b\":1}",
+      "value": {
+        "a": 2,
+        "b": 1
+      }
+    },
+    {
+      "canonical": "{\"k\":[{\"y\":null,\"z\":5e-1}]}",
+      "value": {
+        "k": [
+          {
+            "y": null,
+            "z": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "canonical": "{\"Z\":3,\"z\":2,\"á\":1}",
+      "value": {
+        "Z": 3,
+        "z": 2,
+        "á": 1
+      }
+    },
+    {
+      "canonical": "{\"￿\":2,\"😀\":1}",
+      "value": {
+        "￿": 2,
+        "😀": 1
+      }
+    },
+    {
+      "canonical": "{\"dt\":1,\"n_steps\":100,\"spike_count\":3,\"v\":[1e-1,-70,1e-7]}",
+      "value": {
+        "dt": 1.0,
+        "n_steps": 100,
+        "spike_count": 3.0,
+        "v": [
+          0.1,
+          -70.0,
+          1e-07
+        ]
+      }
+    }
+  ]
+}

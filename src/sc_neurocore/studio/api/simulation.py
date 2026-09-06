@@ -40,6 +40,8 @@ from sc_neurocore.studio.api.analysis_jobs import (
     submit_analysis_job,
 )
 from sc_neurocore.studio.api.common import _safe
+from sc_neurocore.studio.evidence_receipt import attach_evidence_receipt
+from sc_neurocore.studio.evidence_scope import simulation_scope
 from sc_neurocore.studio.bit_true_execution import NativeToolUnavailable
 from sc_neurocore.studio.model_run_contract import ModelInputError
 from sc_neurocore.studio.api.runtime import StudioApiContext
@@ -170,7 +172,13 @@ def _request_payload(req: Any) -> dict[str, Any]:
 
 
 def _cached_replay(spec: ExperimentSpec) -> dict[str, Any] | None:
-    """Return the cached result of a replayable experiment, marked as a cache hit."""
+    """Return the cached result of a replayable experiment, marked as a cache hit.
+
+    The replay carries its own receipt rather than the fresh run's: the two
+    responses differ in their ``cache`` block, so a receipt copied across would
+    no longer seal what it accompanies. Both name the same run through
+    ``scope.experiment_sha256``.
+    """
     if not spec.cacheable:
         return None
     cached = _cache.get(spec.experiment_sha256)
@@ -178,7 +186,7 @@ def _cached_replay(spec: ExperimentSpec) -> dict[str, Any] | None:
         return None
     replay = dict(cached)
     replay["cache"] = {"hit": True, "key": spec.experiment_sha256}
-    return replay
+    return _sealed_simulation(replay)
 
 
 def _run_and_record(
@@ -195,7 +203,18 @@ def _run_and_record(
     ).to_public_dict()
     if spec.cacheable:
         _cache.put(spec.experiment_sha256, result)
-    return result
+    return _sealed_simulation(result)
+
+
+def _sealed_simulation(result: dict[str, Any]) -> dict[str, Any]:
+    """Attach the produced-evidence receipt for one simulation response."""
+    return attach_evidence_receipt(
+        result,
+        lane="simulation",
+        status="completed",
+        binding="produced",
+        scope=simulation_scope(result),
+    )
 
 
 def build_simulation_router(context: StudioApiContext) -> APIRouter:

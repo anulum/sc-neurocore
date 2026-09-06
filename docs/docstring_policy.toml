@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 457
+expected_file_count = 462
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1843,3 +1843,23 @@ rationale = "Typed training capability contract: what the Studio can run, refuse
 [[file]]
 path = "src/sc_neurocore/studio/training_resume.py"
 rationale = "Exact resume separated from warm start: the optimiser, generator and epoch position a continuation needs, and the refusals that stop one being restored into a different run."
+
+[[file]]
+path = "src/sc_neurocore/studio/evidence_seal.py"
+rationale = "One canonical form both the server and the browser reach from the same value, so a recorded seal can be rechecked after the round trip an exported artefact makes."
+
+[[file]]
+path = "src/sc_neurocore/studio/evidence_receipt.py"
+rationale = "One receipt shape for every evidence lane: the seal of its subject, the identity it was produced under, the inputs it rests on, and whether it attests production or only export."
+
+[[file]]
+path = "src/sc_neurocore/studio/evidence_chain.py"
+rationale = "Verification of a whole evidence pack against its own receipts, with the verdict each subject reaches and the ones that refuse an export."
+
+[[file]]
+path = "src/sc_neurocore/studio/evidence_scope.py"
+rationale = "What identity each Studio lane hands to its receipt, and the derivations it declares rather than invents."
+
+[[file]]
+path = "tools/studio_evidence_verify.py"
+rationale = "Offline recheck of an exported evidence pack: file digests, subject seals, the dependency graph, and whether the recorded verdict holds."

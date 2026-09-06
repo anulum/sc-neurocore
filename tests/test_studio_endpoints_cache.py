@@ -12,6 +12,13 @@ from __future__ import annotations
 
 from tests.studio_endpoints_support import *  # noqa: F403
 
+from sc_neurocore.studio.evidence_receipt import (
+    EVIDENCE_RECEIPT_KEY,
+    read_evidence_receipt,
+    subject_of,
+)
+from sc_neurocore.studio.evidence_seal import seal_sha256
+
 
 class TestCacheStats:
     def test_cache_stats(self, client):
@@ -49,14 +56,22 @@ class TestCacheStats:
             200,
         ]
         # A cached response is the first one, apart from the cache report that
-        # says where it came from — which is the one field that must differ.
+        # says where it came from — which is the one field that must differ —
+        # and the receipt, which seals the response it accompanies and so
+        # differs with it. Both receipts name the same run.
         first_body = first.json()
         cached_body = cached.json()
         assert first_body["cache"] == {"hit": False, "key": first_body["cache"]["key"]}
         assert cached_body["cache"] == {"hit": True, "key": first_body["cache"]["key"]}
-        assert {k: v for k, v in cached_body.items() if k != "cache"} == {
-            k: v for k, v in first_body.items() if k != "cache"
-        }
+        assert {
+            k: v for k, v in cached_body.items() if k not in ("cache", EVIDENCE_RECEIPT_KEY)
+        } == {k: v for k, v in first_body.items() if k not in ("cache", EVIDENCE_RECEIPT_KEY)}
+        first_receipt = read_evidence_receipt(first_body)
+        cached_receipt = read_evidence_receipt(cached_body)
+        assert first_receipt is not None and cached_receipt is not None
+        assert first_receipt.scope == cached_receipt.scope
+        assert first_receipt.seal_sha256 != cached_receipt.seal_sha256
+        assert cached_receipt.seal_sha256 == seal_sha256(subject_of(cached_body))
         assert cache.hits == 1
         assert cache.misses == 3
         assert len(cache._cache) == 1

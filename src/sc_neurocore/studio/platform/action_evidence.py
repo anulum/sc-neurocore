@@ -15,7 +15,10 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import cast
 
+from sc_neurocore.studio.evidence_receipt import attach_evidence_receipt
+from sc_neurocore.studio.evidence_scope import action_scope
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.evidence_classification import (
     STUDIO_EVIDENCE_CLASSIFICATIONS,
@@ -128,9 +131,19 @@ def write_studio_action_evidence_manifest(
     }
     if error_message is not None:
         payload["error_message"] = error_message
-    encoded = json.dumps(payload, indent=2, sort_keys=True)
+    sealed = cast(
+        dict[str, JsonValue],
+        attach_evidence_receipt(
+            payload,
+            lane=evidence_classification,
+            status=status,
+            binding="produced",
+            scope=action_scope(job_id=context.job_id, action_kind=action_kind),
+        ),
+    )
+    encoded = json.dumps(sealed, indent=2, sort_keys=True)
     artifact = context.write_artifact(evidence_artifact_path, f"{encoded}\n")
-    return StudioActionEvidence(payload=payload, artifact=artifact)
+    return StudioActionEvidence(payload=sealed, artifact=artifact)
 
 
 def _payload_sha256(result: Mapping[str, object]) -> str:

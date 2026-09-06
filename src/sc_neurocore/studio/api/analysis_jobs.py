@@ -40,6 +40,8 @@ from sc_neurocore.studio.experiment_spec import (
     run_experiment,
 )
 from sc_neurocore.studio.model_run_contract import ModelInputError
+from sc_neurocore.studio.evidence_receipt import attach_evidence_receipt
+from sc_neurocore.studio.evidence_scope import simulation_scope
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
 from sc_neurocore.studio.platform.jobs_manager import StudioJobManager
@@ -136,7 +138,13 @@ def run_analysis_job_task(
             request_payload=payload_dump,
             result_payload=result,
         ).to_public_dict()
-        return dict(result)
+        return attach_evidence_receipt(
+            result,
+            lane="simulation",
+            status="completed",
+            binding="produced",
+            scope=simulation_scope(result),
+        )
     if analysis == "fi_curve":
         fi = FICurveRequest.model_validate(payload_dump)
         sim_fn = _make_simulate_fn(fi.model_dump())

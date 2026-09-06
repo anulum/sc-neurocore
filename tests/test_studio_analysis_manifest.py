@@ -18,6 +18,12 @@ from typing import Any, cast
 import pytest
 from starlette.testclient import TestClient
 
+from sc_neurocore.studio.evidence_receipt import (
+    EVIDENCE_RECEIPT_KEY,
+    read_evidence_receipt,
+    subject_of,
+)
+from sc_neurocore.studio.evidence_seal import seal_sha256
 from sc_neurocore.studio.analysis_manifest import (
     STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION,
     JsonValue,
@@ -238,10 +244,17 @@ def test_analysis_routes_return_metadata(
     assert isinstance(metadata["input_sha256"], str)
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["input_sha256"])
     result_without_metadata = {
-        key: value for key, value in payload.items() if key != "analysis_metadata"
+        key: value
+        for key, value in payload.items()
+        if key not in ("analysis_metadata", EVIDENCE_RECEIPT_KEY)
     }
     assert metadata["output_keys"] == sorted(result_without_metadata)
     assert metadata["result_sha256"] == _sha256_json(result_without_metadata)
+    receipt = read_evidence_receipt(payload)
+    assert receipt is not None
+    assert receipt.lane == "analysis"
+    assert receipt.binding == "produced"
+    assert receipt.seal_sha256 == seal_sha256(subject_of(payload))
 
 
 def test_compare_route_returns_mixed_analysis_metadata(client: TestClient) -> None:
