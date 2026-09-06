@@ -8,6 +8,7 @@
 // Studio API: graph endpoints.
 import { post, get } from "./http";
 import type {
+  PopulationCreateRequest,
   PopulationNode,
   ProjectionEdge,
   NetworkGraph,
@@ -20,7 +21,7 @@ import type {
 
 export const fetchGraphModels = () => get<string[]>("/graph/models");
 
-export const createPopulation = (data: Partial<PopulationNode>) =>
+export const createPopulation = (data: PopulationCreateRequest) =>
   post<PopulationNode>("/graph/population", data);
 
 export const createProjection = (data: {

@@ -53,6 +53,8 @@ const AUDITED = [
   "src/simulationRaw.test.ts",
   "src/simulationRaw.ts",
   "src/stores/studioStoreActions.test.ts",
+  "src/studioGraphDuplicate.test.ts",
+  "src/studioGraphDuplicate.ts",
   "src/studioGraphHistory.test.ts",
   "src/studioGraphHistory.ts",
   "src/studioGraphTable.test.ts",

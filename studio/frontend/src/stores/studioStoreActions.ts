@@ -158,6 +158,7 @@ import {
   studioGraphValidatedState,
   studioGraphValidationLocatedState,
 } from "../studioGraphValidation";
+import { studioDuplicatePlan, studioDuplicateSummary } from "../studioGraphDuplicate";
 import {
   copyStudioShareUrlInRuntime,
   scheduleStudioShareStatusClear,
@@ -1271,6 +1272,78 @@ export function createStudioStoreActions(
 
   selectProjection: (id) => {
     set({ selectedProjectionId: id, selectedPopulationId: null });
+  },
+
+  selectPopulations: (ids) => {
+    set({ selectedPopulationIds: ids });
+  },
+
+  duplicateSelection: async () => {
+    const s = get();
+    const plan = studioDuplicatePlan(s.graphPopulations, s.graphProjections, s.selectedPopulationIds);
+    if (plan.populations.length === 0) {
+      set({ graphNotice: null });
+      return;
+    }
+    const before = studioGraphEditRecordedFrom(s);
+    try {
+      // Identity is the server's: a client that minted ids would be a second
+      // implementation of it, free to collide with the first.
+      const created = new Map<string, string>();
+      const populations: PopulationNode[] = [];
+      for (const copy of plan.populations) {
+        const made = await apiCreatePop({
+          count: copy.count,
+          drive: copy.drive,
+          label: copy.label,
+          model: copy.model,
+          neuron_type: copy.neuron_type,
+          params: copy.params,
+          x: copy.x,
+          y: copy.y,
+        });
+        created.set(copy.sourceId, made.id);
+        populations.push(made);
+      }
+      const projections: ProjectionEdge[] = [];
+      for (const copy of plan.projections) {
+        const source = created.get(copy.sourceId);
+        const target = created.get(copy.targetId);
+        if (source === undefined || target === undefined) {
+          // The plan only ever carries projections whose both endpoints were
+          // copied, so this cannot happen — and if it ever did, dropping the
+          // projection would hand back a graph quietly smaller than the one
+          // the user asked for, which reads as success.
+          throw new Error(
+            `Duplicate produced a projection whose endpoint was not copied: ${copy.sourceId} → ${copy.targetId}`,
+          );
+        }
+        const made = await apiCreateProj({
+          delay: copy.delay,
+          probability: copy.probability,
+          rule: copy.rule,
+          source_id: source,
+          target_id: target,
+          weight: copy.weight,
+        });
+        // The creation route carries neither seed nor autapses, and both are
+        // executed; they are applied here so the copy runs as its original does.
+        projections.push({
+          ...made,
+          ...(copy.autapses === undefined ? {} : { autapses: copy.autapses }),
+          ...(copy.seed === undefined ? {} : { seed: copy.seed }),
+        });
+      }
+      set((prev) => ({
+        graphHistory: before,
+        graphNotice: studioDuplicateSummary(plan),
+        graphPopulations: [...prev.graphPopulations, ...populations],
+        graphProjections: [...prev.graphProjections, ...projections],
+        selectedPopulationIds: populations.map((population) => population.id),
+      }));
+    } catch (e) {
+      set(studioGraphFailureState(e, "Duplicating the selection failed"));
+    }
   },
 
   selectPopulation: (id) => {

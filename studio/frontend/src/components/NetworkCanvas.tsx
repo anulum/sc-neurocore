@@ -105,6 +105,7 @@ export default function NetworkCanvas() {
     graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult,
     selectedProjectionId, selectProjection, updateProjection, validateGraphAction,
     selectedPopulationId, selectPopulation, populationModelContract, graphModels,
+    selectedPopulationIds, selectPopulations, duplicateSelection, graphNotice,
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     undoGraphEdit, redoGraphEdit, graphHistory,
@@ -192,6 +193,14 @@ export default function NetworkCanvas() {
     (_event: unknown, edge: { id: string }) => selectProjection(edge.id),
     [selectProjection],
   );
+  // The canvas's own selection drives the group operations; the editor's
+  // single selection is separate, because an editor edits exactly one thing.
+  const onSelectionChange = useCallback(
+    ({ nodes }: { nodes: { id: string }[] }) =>
+      selectPopulations(nodes.map((node) => node.id)),
+    [selectPopulations],
+  );
+
   const onNodeClick = useCallback(
     (_event: unknown, node: { id: string }) => selectPopulation(node.id),
     [selectPopulation],
@@ -253,6 +262,20 @@ export default function NetworkCanvas() {
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Redo</button>
+        <button
+          onClick={() => void duplicateSelection()}
+          disabled={selectedPopulationIds.length === 0}
+          aria-label={
+            selectedPopulationIds.length === 1
+              ? "Duplicate the selected population"
+              : `Duplicate the ${selectedPopulationIds.length} selected populations and the projections between them`
+          }
+          title="Copy the selection, with the projections whose both ends are inside it. A projection leaving the selection is not copied."
+          style={{
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)",
+            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          }}
+        >Duplicate</button>
         <button onClick={simulateGraphAction} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#81c784", color: "#0d1117", border: "none",
           padding: "3px 10px", fontSize: 10, cursor: "pointer",
@@ -284,6 +307,15 @@ export default function NetworkCanvas() {
           {graphPopulations.length} pop · {graphProjections.length} proj · drag to connect
         </span>
       </div>
+
+      {graphNotice !== null && (
+        <div role="status" style={{
+          padding: "4px 12px", borderTop: "1px solid var(--border)",
+          fontSize: 10, color: "var(--text-secondary)",
+        }}>
+          {graphNotice}
+        </div>
+      )}
 
       {/* Errors */}
       {graphErrors.length > 0 && (
@@ -325,6 +357,7 @@ export default function NetworkCanvas() {
             onConnect={onConnect}
             onEdgeClick={onEdgeClick}
             onNodeClick={onNodeClick}
+            onSelectionChange={onSelectionChange}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView

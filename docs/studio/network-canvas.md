@@ -50,6 +50,29 @@ the graph exactly as you saved it. Editing after an undo drops the redo branch,
 because a redo into a graph that no longer follows from the current one would
 reinstate work you have already moved past.
 
+## Duplicating part of a graph
+
+Select one or more populations and press **Duplicate**. The copies carry every
+field the runtime executes — model, count, type, drive and parameter overrides
+— offset so they are visible as copies, and labelled distinguishably (`Exc 0
+copy`, then `Exc 0 copy 2`).
+
+**A projection is copied only when both of its ends are inside the
+selection.** One that crosses the boundary is left behind, and the canvas says
+how many were. There is no answer that is right for everyone: pointing the copy
+at the original preserves a fan-in someone may have been reproducing, pointing
+it at the copy preserves the motif's shape, and either is silently wrong for
+the other reader. A wrong graph that ran is worse than one that refused.
+
+Identifiers come from the server, through the same routes that mint them for
+anything else; a duplicate never invents one. The whole operation is a single
+undo step, not one per object created, and the copies are left selected so a
+second duplicate copies the copy.
+
+The projection creation route carries neither `seed` nor `autapses`, so a
+duplicate applies those two from the original after the copy exists — without
+that, a copy would silently run with a different connectivity draw.
+
 ## Editing a population
 
 Click a population to open its property editor: label, model, neuron count,
@@ -337,6 +360,7 @@ not a conformance proof against the NIR specification.
 | Multiple projections between one pair | executed, currents add |
 | Rust network runner | rejected (default parameters, no stimuli) |
 | Per-synapse delay arrays, plasticity, state traces | not exposed on the canvas |
+| Duplicate a selection, with the projections inside it | copies every executed field; a projection crossing the selection is reported, not guessed |
 | Property editor for a projection's executed fields | weight, rule, probability, delay, seed, autapses; parsed in the browser, admitted by the server |
 | Property editor for a population's model, count, type, drive and params | driven by `GET /api/graph/models/{name}`; parsed in the browser, admitted by the server |
 | Keyboard and screen-reader table equivalent of the canvas | rendered from the same graph, deletion included |

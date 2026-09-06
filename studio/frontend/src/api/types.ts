@@ -1374,6 +1374,24 @@ export interface ProjectionEdge {
   autapses?: boolean;
 }
 
+/**
+ * The body `POST /api/graph/population` accepts.
+ *
+ * Not a `Partial<PopulationNode>`: the route takes a position as `x` and `y`
+ * and has no use for `id`, `type` or `position`, so describing it as a partial
+ * node both offered fields the route ignores and hid the two it needs.
+ */
+export interface PopulationCreateRequest {
+  count: number;
+  drive?: PopulationDrive;
+  label: string;
+  model: string;
+  neuron_type: StudioNeuronType;
+  params?: Record<string, number>;
+  x: number;
+  y: number;
+}
+
 /** One constructor field a population of this model may override. */
 export interface PopulationModelParameter {
   default: number | null;

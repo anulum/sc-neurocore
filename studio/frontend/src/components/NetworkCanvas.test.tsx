@@ -359,3 +359,181 @@ describe("NetworkCanvas population editor", () => {
     expect(useStudioStore.getState().selectedPopulationId).toBe("p1");
   });
 });
+
+/**
+ * The duplicate is the first canvas operation that reaches the server several
+ * times for one user action, and the first that has to tell the user about
+ * something the diagram does not show.
+ */
+describe("NetworkCanvas duplicate", () => {
+  const pristine = useStudioStore.getState();
+
+  beforeEach(() => {
+    let minted = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown, init?: { body?: string }) => {
+        const url = String(input);
+        const body = JSON.parse(init?.body ?? "{}") as Record<string, unknown>;
+        minted += 1;
+        if (url.includes("/graph/population")) {
+          return new Response(
+            JSON.stringify({
+              count: body.count,
+              drive: body.drive,
+              id: `pop_new${minted}`,
+              label: body.label,
+              model: body.model,
+              neuron_type: body.neuron_type,
+              params: body.params ?? {},
+              position: { x: body.x, y: body.y },
+              type: "population",
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+        }
+        if (url.includes("/graph/projection")) {
+          return new Response(
+            JSON.stringify({
+              delay: body.delay,
+              id: `proj_new${minted}`,
+              probability: body.probability,
+              rule: body.rule,
+              source: body.source_id,
+              target: body.target_id,
+              weight: body.weight,
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response("[]", { headers: { "content-type": "application/json" } });
+      }),
+    );
+    useStudioStore.setState({ graphPopulations: POPULATIONS, graphProjections: PROJECTIONS });
+  });
+
+  afterEach(() => {
+    useStudioStore.setState(pristine, true);
+    vi.unstubAllGlobals();
+  });
+
+  it("copies the selected populations and the projection between them", async () => {
+    useStudioStore.getState().selectPopulations(["p1", "p2"]);
+
+    await useStudioStore.getState().duplicateSelection();
+
+    const state = useStudioStore.getState();
+    expect(state.graphPopulations).toHaveLength(4);
+    expect(state.graphProjections).toHaveLength(2);
+    // The copy joins the originals; it does not replace them.
+    expect(state.graphPopulations.map((one) => one.label)).toEqual([
+      "Input",
+      "Output",
+      "Input copy",
+      "Output copy",
+    ]);
+  });
+
+  it("wires the copied projection between the copies, not the originals", async () => {
+    useStudioStore.getState().selectPopulations(["p1", "p2"]);
+
+    await useStudioStore.getState().duplicateSelection();
+
+    const state = useStudioStore.getState();
+    const copies = new Set(state.graphPopulations.slice(2).map((one) => one.id));
+    const copied = state.graphProjections[1];
+    expect(copies.has(copied.source)).toBe(true);
+    expect(copies.has(copied.target)).toBe(true);
+  });
+
+  it("leaves a projection that crosses the selection, and says so", async () => {
+    useStudioStore.getState().selectPopulations(["p1"]);
+
+    await useStudioStore.getState().duplicateSelection();
+
+    const state = useStudioStore.getState();
+    expect(state.graphProjections).toHaveLength(1);
+    expect(state.graphNotice).toContain("1 projection left the selection");
+  });
+
+  it("selects the copies, so a second duplicate copies the copy", async () => {
+    useStudioStore.getState().selectPopulations(["p1"]);
+
+    await useStudioStore.getState().duplicateSelection();
+
+    expect(useStudioStore.getState().selectedPopulationIds).toEqual(["pop_new1"]);
+  });
+
+  it("is one undo, not one per created object", async () => {
+    useStudioStore.getState().selectPopulations(["p1", "p2"]);
+
+    await useStudioStore.getState().duplicateSelection();
+    useStudioStore.getState().undoGraphEdit();
+
+    const state = useStudioStore.getState();
+    expect(state.graphPopulations).toHaveLength(2);
+    expect(state.graphProjections).toHaveLength(1);
+  });
+
+  it("does nothing at all when the selection is empty", async () => {
+    useStudioStore.getState().selectPopulations([]);
+
+    await useStudioStore.getState().duplicateSelection();
+
+    expect(useStudioStore.getState().graphPopulations).toHaveLength(2);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses loudly if a copied projection loses an endpoint", async () => {
+    // The plan cannot produce this; if it ever did, dropping the projection
+    // would return a graph quietly smaller than the one asked for.
+    const { studioDuplicatePlan } = await import("../studioGraphDuplicate");
+    const spy = vi.spyOn(await import("../studioGraphDuplicate"), "studioDuplicatePlan");
+    spy.mockImplementation((populations, projections, ids) => ({
+      ...studioDuplicatePlan(populations, projections, ids),
+      projections: [
+        {
+          autapses: undefined,
+          delay: 0,
+          probability: 0.1,
+          rule: "random" as const,
+          seed: undefined,
+          sourceId: "p1",
+          targetId: "not-copied",
+          weight: 0.5,
+        },
+      ],
+    }));
+    useStudioStore.getState().selectPopulations(["p1"]);
+
+    await useStudioStore.getState().duplicateSelection();
+
+    expect(useStudioStore.getState().error).toContain("endpoint was not copied");
+    spy.mockRestore();
+  });
+
+  it("offers the duplicate control only when something is selected", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<NetworkCanvas />);
+    });
+    const duplicate = container.querySelector<HTMLButtonElement>(
+      'button[aria-label^="Duplicate the"]',
+    );
+
+    expect(duplicate?.disabled).toBe(true);
+
+    await act(async () => useStudioStore.getState().selectPopulations(["p1", "p2"]));
+
+    expect(
+      container.querySelector<HTMLButtonElement>('button[aria-label^="Duplicate the"]')?.disabled,
+    ).toBe(false);
+    expect(
+      container.querySelector('button[aria-label^="Duplicate the"]')?.getAttribute("aria-label"),
+    ).toBe("Duplicate the 2 selected populations and the projections between them");
+    await act(async () => root.unmount());
+    container.remove();
+  });
+});

@@ -144,6 +144,20 @@ export interface StudioState {
   /** Which population the property editor is editing, if any. */
   selectedPopulationId: string | null;
   /**
+   * Every population the canvas currently has selected.
+   *
+   * Separate from the editor's single selection: a duplicate operates on a
+   * whole group, and the editor on exactly one.
+   */
+  selectedPopulationIds: string[];
+  /**
+   * What the last graph operation did, in words, or `null`.
+   *
+   * A duplicate leaves projections at the boundary of its selection, and that
+   * is not visible in the diagram; it has to be said.
+   */
+  graphNotice: string | null;
+  /**
    * The contract of the selected population's model, once it has arrived.
    *
    * Which constructor fields a population may override is the server's answer,
@@ -295,6 +309,15 @@ export interface StudioState {
   selectProjection: (id: string | null) => void;
   /** Select the population the property editor edits, or clear the selection. */
   selectPopulation: (id: string | null) => void;
+  /** Record the canvas's current multi-selection of populations. */
+  selectPopulations: (ids: string[]) => void;
+  /**
+   * Duplicate the selected populations and the projections between them.
+   *
+   * A projection with one end outside the selection is not copied; the notice
+   * says how many were left behind.
+   */
+  duplicateSelection: () => Promise<void>;
   /** Fetch the contract of one model, so its parameters can be edited. */
   loadPopulationModelContract: (model: string) => Promise<void>;
   /**
