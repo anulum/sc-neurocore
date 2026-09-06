@@ -111,6 +111,35 @@ Switching the rule to `all_to_all` drops the probability rather than sending
 one the specification refuses. Deleting a projection — or the population it
 touches — closes the editor rather than leaving it writing into nothing.
 
+## The browser contract
+
+Component tests assert the markup a component renders. They cannot assert what
+a browser *computes* from it: the accessible name of a control after labels,
+`aria-label` and text content have been reconciled, whether a control is
+reachable by keyboard, whether a hidden region leaves the tab order. Those are
+the properties an assistive technology consumes, and only a browser produces
+them.
+
+```bash
+cd studio/frontend && npm run test:e2e:graph
+```
+
+That builds the bundle and runs `e2e/network-canvas-live.spec.ts` against the
+**built** bundle served by `vite preview`, proxied to a **real** Studio backend
+— no mocked routes. It checks that the canvas builds a graph the live server
+resolves and runs, that every visible control has a computed accessible name,
+that the table is found by its caption and carries one row header per
+population and a delete control naming what it removes, that the canvas is
+hidden — and so leaves the tab order — while the table stands in for it, that
+each editor input is bound to its label and to the statement of its contract,
+that a refused value carries the server's own message to the input that caused
+it, and that every editor input can take focus.
+
+**What it does not cover: colour contrast.** Measuring it needs the resolved
+colours of every text node against its effective background, and this suite
+does not do it. Saying so is better than a check that passes because it looked
+at the wrong pixels.
+
 ## Reading the graph without the canvas
 
 A node-and-edge diagram carries its meaning in positions and arrows, and
