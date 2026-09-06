@@ -41,6 +41,13 @@ from sc_neurocore.studio.model_run_contract import (
     resolve_model_run_inputs,
     run_receipt,
 )
+from sc_neurocore.studio.runtime_state_packet import (
+    RUST_BATCH_PACKET,
+    PacketCoverage,
+    packet_coverage,
+    validate_scalar_trace,
+    validate_spike_indices,
+)
 from sc_neurocore.studio.simulation import MAX_STEPS, _spike_stats
 from sc_neurocore.studio.state_layout import (
     ObservedState,
@@ -55,7 +62,6 @@ from sc_neurocore.studio.state_layout import (
 )
 from sc_neurocore.studio.trace_projection import RAW_ELEMENT_BUDGET, custody_payload
 
-_RUST_STATE_EXPORTS: tuple[str, ...] = ("v",)
 _RUST_INITIAL_SNAPSHOT_NOTE = "the Rust batch backend exposes no initial snapshot"
 
 
@@ -106,22 +112,42 @@ def _state_recording(layout: StateLayout) -> tuple[tuple[str, ...], tuple[tuple[
     return recorded, tuple(excluded)
 
 
+def _rust_coverage(name: str) -> PacketCoverage:
+    """Return what the Rust batch packet accounts for in this model's state."""
+    _source, _stem, declared = declared_state(name)
+    return packet_coverage(RUST_BATCH_PACKET, [spec.name for spec in declared])
+
+
 def _rust_layout(name: str) -> StateLayout:
-    """Return the declared layout as the Rust batch backend can honour it."""
+    """Return the declared layout as the Rust batch backend can honour it.
+
+    Observability follows the packet's coverage rather than a fixed name list,
+    so a model that declares no variable the lane can name records nothing —
+    and the layout says why, instead of leaving the payload to imply otherwise.
+    """
     source, stem, declared = declared_state(name)
+    coverage = _rust_coverage(name)
+    carried = set(coverage.carried)
     variables = tuple(
         ObservedState(spec, "scalar", (), True, "", "per-step")
-        if spec.name in _RUST_STATE_EXPORTS
+        if spec.name in carried
         else ObservedState(
             spec, None, None, False, "not exported by the Rust batch backend", "none"
         )
         for spec in declared
     )
+    notes = [_RUST_INITIAL_SNAPSHOT_NOTE]
+    if coverage.names_nothing:
+        notes.append(
+            "the Rust batch backend exports "
+            + ", ".join(coverage.unnameable)
+            + ", which this model does not declare, so no state is recorded"
+        )
     return StateLayout(
         source=source,
         schema_profile=stem,
         variables=variables,
-        custody_notes=(_RUST_INITIAL_SNAPSHOT_NOTE,),
+        custody_notes=tuple(notes),
     )
 
 
@@ -156,7 +182,13 @@ def _try_rust_simulate(
             f"Studio Rust batch simulation failed for model '{name}'"
         ) from exc
 
-    voltages = np.asarray(result["voltages"], dtype=np.float64)
+    coverage = _rust_coverage(name)
+    voltages = validate_scalar_trace(
+        result["voltages"],
+        runtime=RUST_BATCH_PACKET.runtime,
+        name=RUST_BATCH_PACKET.exports[0],
+        n_steps=n_steps,
+    )
     bad_step = _first_non_finite(voltages)
     if bad_step is not None:
         raise ModelSimulationFailure(
@@ -166,16 +198,25 @@ def _try_rust_simulate(
             time_ms=bad_step * actual_dt,
             diagnostic=f"state 'v' became non-finite ({voltages[bad_step]!r})",
         )
-    spikes = [int(step) for step in np.asarray(result["spikes"]).tolist()]
+    spikes = validate_spike_indices(
+        result["spikes"], runtime=RUST_BATCH_PACKET.runtime, n_steps=n_steps
+    )
     stats = _spike_stats(spikes, actual_dt, n_steps)
     layout = _rust_layout(name)
+    # A trace is placed under a declared name or not at all: naming it after a
+    # variable the model does not have would make the payload contradict the
+    # layout beside it.
+    carried: dict[str, np.ndarray[Any, Any]] = {variable: voltages for variable in coverage.carried}
+    final_state: dict[str, float | np.ndarray[Any, Any]] = {
+        variable: float(voltages[-1]) for variable in coverage.carried if n_steps
+    }
     payload = custody_payload(
         dt=actual_dt,
         n_steps=n_steps,
         layout=layout,
         initial_state={},
-        final_state={"v": float(voltages[-1])},
-        scalar_traces={"v": voltages},
+        final_state=final_state,
+        scalar_traces=carried,
         vector_traces={},
         vector_omitted=(),
         drive=current_arr,
@@ -333,9 +374,12 @@ def simulate_model(
         Sine frequency; must be positive and finite.
     use_fast_path : bool
         Allow the Rust batch backend when no override or explicit ``dt`` is
-        given. The Rust result exports the membrane voltage only and no
-        initial snapshot, and says so in its ``state_layout``; callers that
-        need complete-state custody pass ``False``.
+        given. That lane transports one scalar trace, the soma voltage, and no
+        initial snapshot (``sc-neurocore.runtime-state-packet.v1``). It records
+        that trace only under a name the model declares: a model whose declared
+        state contains no ``v`` records no state at all, and its
+        ``state_layout`` says so. Callers that need complete-state custody pass
+        ``False``.
     max_steps : int
         Step cap of this caller (``MAX_STEPS`` for synchronous routes; a job
         may pass more). A longer request is truncated and declared as

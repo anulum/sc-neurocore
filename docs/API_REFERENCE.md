@@ -37047,9 +37047,12 @@ frequency_hz : float
     Sine frequency; must be positive and finite.
 use_fast_path : bool
     Allow the Rust batch backend when no override or explicit ``dt`` is
-    given. The Rust result exports the membrane voltage only and no
-    initial snapshot, and says so in its ``state_layout``; callers that
-    need complete-state custody pass ``False``.
+    given. That lane transports one scalar trace, the soma voltage, and no
+    initial snapshot (``sc-neurocore.runtime-state-packet.v1``). It records
+    that trace only under a name the model declares: a model whose declared
+    state contains no ``v`` records no state at all, and its
+    ``state_layout`` says so. Callers that need complete-state custody pass
+    ``False``.
 max_steps : int
     Step cap of this caller (``MAX_STEPS`` for synchronous routes; a job
     may pass more). A longer request is truncated and declared as
@@ -40532,6 +40535,127 @@ Replay a pack from the command line.
 
 Exit code 0 means the experiment reproduced, 1 that it did not, and 2 that
 the pack was refused before it ran.
+
+---
+
+## Module `studio.runtime_state_packet`
+
+### Class `ForeignRuntimeError`
+Raised when a foreign runtime returns something the boundary cannot use.
+
+
+### Class `RuntimeStatePacket`
+What one foreign runtime transports across the boundary.
+
+Attributes
+----------
+runtime : str
+    Stable lane identifier, such as ``rust-batch``.
+exports : tuple of str
+    Declared-state variable names the lane can return, in the model's own
+    vocabulary. A lane that returns a value it cannot name in that
+    vocabulary declares nothing for it.
+carries_initial_snapshot : bool
+    Whether the lane reports the state the run started from.
+carries_parameters : bool
+    Whether the lane accepts parameter overrides. A lane that does not runs
+    the model's defaults whatever the caller asked for.
+
+- **to_public_dict**()
+  - Return the packet as evidence and receipts record it.
+
+### Class `PacketCoverage`
+How much of one model's declared state a packet accounts for.
+
+Attributes
+----------
+runtime : str
+    The lane the coverage was computed for.
+carried : tuple of str
+    Declared variables the lane returns, in declaration order.
+dropped : tuple of str
+    Declared variables it does not return.
+unnameable : tuple of str
+    Values the lane exports that this model does not declare. They cannot
+    be placed in the payload under those names, because the model has no
+    such state.
+
+- **complete**()
+  - Return whether the lane carries every declared variable.
+- **names_nothing**()
+  - Return whether the lane can name none of this model's state.
+- **to_public_dict**()
+  - Return the coverage as evidence and receipts record it.
+
+### Function `packet_coverage(packet, declared_names)`
+Return what a packet accounts for against one model's declared state.
+
+Parameters
+----------
+packet : RuntimeStatePacket
+    The lane's transport contract.
+declared_names : sequence of str
+    The model's declared state variables, in declaration order.
+
+Returns
+-------
+PacketCoverage
+    Which declared variables the lane carries, which it drops, and which of
+    its exports this model cannot name.
+
+### Function `validate_scalar_trace(values)`
+Return one scalar trace from a foreign runtime, or refuse it.
+
+Structure only: the trace must be one-dimensional real numbers of exactly
+the requested length. Whether the values are finite is the caller's
+question, because a diverged membrane voltage is a failed simulation rather
+than a malformed boundary.
+
+Parameters
+----------
+values : object
+    Whatever the lane returned for this trace.
+runtime : str
+    Lane identifier, named in the refusal.
+name : str
+    Variable name, named in the refusal.
+n_steps : int
+    Number of steps the run asked for.
+
+Returns
+-------
+numpy.ndarray
+    The trace as float64.
+
+Raises
+------
+ForeignRuntimeError
+    If the trace is not one-dimensional real numbers of length ``n_steps``.
+
+### Function `validate_spike_indices(values)`
+Return spike sample positions from a foreign runtime, or refuse them.
+
+Parameters
+----------
+values : object
+    Whatever the lane returned for its spike indices.
+runtime : str
+    Lane identifier, named in the refusal.
+n_steps : int
+    Number of steps the run asked for; every index must fall inside it.
+
+Returns
+-------
+list of int
+    The indices, in the order the lane produced them.
+
+Raises
+------
+ForeignRuntimeError
+    If the indices are not a one-dimensional integer series inside the run
+    and in increasing order. Order matters: the statistics take differences
+    between consecutive entries, and an unordered series would report a
+    negative interval as a real measurement.
 
 ---
 

@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4830
+    "test_files": 4831
   },
   "documentation": {
     "public_pages": [
@@ -7404,6 +7404,7 @@
       "tests/test_studio_runtime_settings_parsing_jobs_and_audit.py",
       "tests/test_studio_runtime_settings_parsing_route_policy_and_body.py",
       "tests/test_studio_runtime_settings_parsing_security_and_profile.py",
+      "tests/test_studio_runtime_state_packet.py",
       "tests/test_studio_rust_integration_batch_simulate.py",
       "tests/test_studio_rust_integration_ei_network.py",
       "tests/test_studio_simulate_custody_http.py",

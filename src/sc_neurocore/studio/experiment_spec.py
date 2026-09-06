@@ -438,7 +438,7 @@ def resolve_model_experiment(
             "rejected": [
                 {
                     "name": "rust-batch",
-                    "reason": "exports the membrane voltage only, no initial snapshot, default construction; not admitted for custody runs",
+                    "reason": "transports the soma voltage only, under a declared name or not at all; no initial snapshot, default construction; not admitted for custody runs",
                 }
             ],
         },

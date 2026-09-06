@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 462
+expected_file_count = 463
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1863,3 +1863,7 @@ rationale = "What identity each Studio lane hands to its receipt, and the deriva
 [[file]]
 path = "tools/studio_evidence_verify.py"
 rationale = "Offline recheck of an exported evidence pack: file digests, subject seals, the dependency graph, and whether the recorded verdict holds."
+
+[[file]]
+path = "src/sc_neurocore/studio/runtime_state_packet.py"
+rationale = "What a foreign runtime transports across the boundary, which of the model's declared variables it may name, and the structural checks its arrays pass before anything is built from them."

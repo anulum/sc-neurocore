@@ -48,10 +48,32 @@ class TestRustBatchSimulate:
         from sc_neurocore.studio.simulation import _make_current_trace
 
         I = _make_current_trace("constant", 500.0, 1000)
-        result = _try_rust_simulate("AdEx", 1000, I, 0.1)
+        result = _try_rust_simulate("AdExNeuron", 1000, I, 0.1)
         assert result is not None
         assert "states" in result
         assert "v" in result["states"]
+        assert result["state_layout"]["recorded"] == ["v"]
+
+    def test_rust_path_names_nothing_for_an_undeclared_model(self):
+        """The lane's export needs a declared name; `AdEx` has no declaration.
+
+        The Rust factory accepts short aliases the Python contract layer does
+        not know, and the payload used to place the lane's soma voltage under
+        `states["v"]` beside a layout with no variables at all. The run
+        contract refuses such a name before this point in production, so this
+        drives the private boundary directly.
+        """
+        _bridge_engine()
+        from sc_neurocore.studio.models import _try_rust_simulate
+        from sc_neurocore.studio.simulation import _make_current_trace
+
+        I = _make_current_trace("constant", 500.0, 100)
+        result = _try_rust_simulate("AdEx", 100, I, 0.1)
+
+        assert result is not None
+        assert result["states"] == {}
+        assert result["final_state"] == {}
+        assert any("does not declare" in note for note in result["state_layout"]["custody_notes"])
 
     def test_model_simulate_returns_none_when_backend_unavailable(self, monkeypatch):
         import sc_neurocore.studio.model_simulate as simulate_mod

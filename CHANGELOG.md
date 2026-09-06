@@ -11,6 +11,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- A foreign runtime may no longer name a state variable the model does not
+  have. The Studio's Rust batch lane transports one scalar trace, the soma
+  voltage, and the payload placed it under `states["v"]` unconditionally.
+  Measured over the catalogue: the lane runs 158 of the 185 models; of the 152
+  with a declared layout it carries 111 declared variables and drops 356; and
+  41 of them declare no `v` at all — `PinskyRinzelNeuron` declares
+  `v_s, v_d, h, n, s, c, q, ca` — so the payload named a trace after a
+  variable that model does not have, while the layout printed beside it
+  correctly reported `recorded: []`. The lane now records its trace only under
+  a declared name, and a model it can name nothing for records no state and
+  says why in its custody notes. `sc-neurocore.runtime-state-packet.v1` states
+  what a lane transports and how much of a model's declared state that
+  accounts for.
+- The same boundary now validates structure before anything is built from it.
+  A 100-step request against a ten-sample drive returned ten voltages into a
+  payload built for 100, so the reported rate covered a duration the trace
+  never spanned; spike indices were used as sample positions without a check
+  that they fall inside the run or arrive in order. Both are refused by name.
+  Finiteness is deliberately not part of this check: a diverged membrane
+  voltage is a failed simulation, and is still reported as one at the step
+  where it diverged.
 - Pressing Stop on a training run that had just finished returned a server
   error. `cancel` reads the job's status and then writes the transition, and
   the read is outside the ledger transaction, so under load a run reached a
