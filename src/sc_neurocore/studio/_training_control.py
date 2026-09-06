@@ -33,6 +33,7 @@ from sc_neurocore.studio.platform.training_checkpoint import (
     import_training_checkpoint_payload,
 )
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
+from sc_neurocore.studio.training_contract import resolve_training_config
 
 _jobs: dict[str, TrainingJob] = {}
 _jobs_lock = threading.Lock()
@@ -63,7 +64,21 @@ def _start_training(
     config: dict[str, Any],
     job_manager: StudioJobManager | None = None,
 ) -> dict[str, Any]:
-    """Start a process-backed or legacy-thread training job."""
+    """Start a process-backed or legacy-thread training job.
+
+    The request is resolved against the training contract first, so a dataset,
+    surrogate or layer width the Studio cannot run is refused here — before a
+    job id exists, before a sandbox is allocated and before any tensor is
+    built. What is submitted is the resolved configuration, so the run and the
+    checkpoint cannot describe different networks.
+
+    Raises
+    ------
+    TrainingConfigError
+        The request names something unsupported.
+    """
+    resolved = resolve_training_config(config)
+    config = dict(resolved.to_public_dict())
     if job_manager is not None:
         from sc_neurocore.studio.platform.training_process import TRAINING_PROCESS_TASK
 

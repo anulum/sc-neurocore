@@ -24,6 +24,7 @@ from sc_neurocore.studio.platform.training_weights import (
     materialize_training_weight_payload,
 )
 from sc_neurocore.studio.training import TRAINING_EVENT_LOG_ARTIFACT_PATH, TrainingJob
+from sc_neurocore.studio.training_contract import TrainingConfigError
 
 TRAINING_PROCESS_TASK = "sc_neurocore.studio.platform.training_process:run_training_process_task"
 TRAINING_ATTACH_PROCESS_TASK = (
@@ -59,15 +60,22 @@ def run_training_process_task(
         configuration.
     """
     config = _training_config_from_payload(payload)
-    job = TrainingJob(
-        config,
-        job_id=context.job_id,
-        cancelled=lambda: context.cancelled,
-        event_sink=lambda event: context.append_artifact_event(
-            TRAINING_EVENT_LOG_ARTIFACT_PATH,
-            event,
-        ),
-    )
+    try:
+        job = TrainingJob(
+            config,
+            job_id=context.job_id,
+            cancelled=lambda: context.cancelled,
+            event_sink=lambda event: context.append_artifact_event(
+                TRAINING_EVENT_LOG_ARTIFACT_PATH,
+                event,
+            ),
+        )
+    except TrainingConfigError as exc:
+        # A worker handed a configuration nobody can run still owes an
+        # explanation: no HTTP client saw this refusal, so the sandbox is the
+        # only place the reason can survive.
+        TrainingJob.write_refused_evidence(context, str(exc))
+        raise
     return job.run_blocking(context)
 
 

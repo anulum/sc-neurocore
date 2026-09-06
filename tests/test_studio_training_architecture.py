@@ -26,6 +26,7 @@ _MODULE_PATHS = {
     "_training_control": _REPO_ROOT / "src/sc_neurocore/studio/_training_control.py",
     "_training_events": _REPO_ROOT / "src/sc_neurocore/studio/_training_events.py",
     "_training_job": _REPO_ROOT / "src/sc_neurocore/studio/_training_job.py",
+    "_training_datasets": _REPO_ROOT / "src/sc_neurocore/studio/_training_datasets.py",
 }
 _MODULE_LINE_CEILINGS = {
     "training": 375,
@@ -33,6 +34,7 @@ _MODULE_LINE_CEILINGS = {
     "_training_control": 350,
     "_training_events": 175,
     "_training_job": 675,
+    "_training_datasets": 100,
 }
 _EXPECTED_DEPENDENCIES = {
     "training": {
@@ -44,7 +46,8 @@ _EXPECTED_DEPENDENCIES = {
     "_training_attach": {"_training_control", "_training_job"},
     "_training_control": {"_training_events", "_training_job"},
     "_training_events": set(),
-    "_training_job": {"_training_events"},
+    "_training_job": {"_training_events", "_training_datasets"},
+    "_training_datasets": set(),
 }
 _EXPECTED_EXPORTS = {
     "HAS_TORCH",

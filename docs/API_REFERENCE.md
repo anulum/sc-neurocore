@@ -34950,7 +34950,9 @@ Manage one Studio training run for thread or process execution.
 Parameters
 ----------
 config : dict&#91;str, Any&#93;
-    Training configuration consumed by the Studio Training Monitor.
+    Training request. It is resolved against the training contract here, so
+    an unsupported dataset, surrogate or layer width is refused before the
+    job exists rather than part-way through a run.
 job_id : str or None, optional
     Stable platform job identifier. A random legacy identifier is generated
     when omitted.
@@ -34961,6 +34963,11 @@ event_sink : Callable&#91;&#91;dict&#91;str, object&#93;&#93;, None&#93; or None
 initial_state_dict : Mapping&#91;str, object&#93; or None, optional
     Verified model state loaded before the first optimisation step.
 
+Raises
+------
+TrainingConfigError
+    The request names something the Studio cannot run.
+
 - **__init__**(config)
 - **start**()
   - Start the legacy in-process training thread.
@@ -34968,6 +34975,8 @@ initial_state_dict : Mapping&#91;str, object&#93; or None, optional
   - Request cooperative cancellation at the next training boundary.
 - **run_blocking**(context)
   - Run this training job inside a bounded Studio job context.
+- **write_refused_evidence**(context, message)
+  - Seal failed evidence for a request that was refused before it ran.
 
 ---
 
@@ -40802,6 +40811,73 @@ ValueError
 
 ---
 
+## Module `studio.training_contract`
+
+### Class `TrainingConfigError`
+Raised when a training request names something the Studio cannot run.
+
+Attributes
+----------
+field : str
+    The request key that was refused.
+reason : str
+    What is wrong, in words a caller can act on.
+supported : tuple of str
+    The accepted values, when the field has a closed set.
+
+- **__init__**(field, reason, supported)
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `ResolvedTrainingConfig`
+A training request that the runner is able to execute exactly.
+
+Attributes
+----------
+dataset : str
+    One of :data:`SUPPORTED_DATASETS`.
+epochs, batch_size, timesteps : int
+    Positive integers.
+learning_rate, max_grad_norm : float
+    Positive finite floats.
+hidden_widths : tuple of int
+    One width per hidden layer, in order, each honoured as given.
+surrogate : str
+    One of :data:`SUPPORTED_SURROGATES`.
+learn_beta, learn_threshold : bool
+    Whether the cell parameters are learned.
+seed : int
+    Seed applied to every relevant generator, so a run is replayable.
+
+- **architecture**(n_inputs, n_outputs)
+  - Return the layer sizes this configuration builds, in order.
+- **to_public_dict**()
+  - Return the resolved configuration as the checkpoint records it.
+
+### Function `resolve_training_config(payload)`
+Resolve a training request, refusing anything the Studio cannot run.
+
+Parameters
+----------
+payload : mapping
+    The request as received. Absent keys take their default; unknown keys
+    are refused rather than ignored, because a silently dropped ``hiddens``
+    is a request nobody honoured.
+
+Returns
+-------
+ResolvedTrainingConfig
+    Exactly what the runner will execute.
+
+Raises
+------
+TrainingConfigError
+    Any field names something unsupported, is the wrong type, or is out of
+    range. The refusal happens before the dataset is loaded and before a
+    model is built, so a rejected request costs nothing and leaves nothing.
+
+---
+
 ## Module `studio.workspace_lifecycle`
 
 ### Function `fork_workspace(store, name, new_name)`
@@ -41942,8 +42018,37 @@ LIF with trainable recurrent weights.
 ### Class `SpikingNet`
 Multi-layer feedforward SNN for classification.
 
-Architecture: &#91;Linear -> LIF&#93; x (n_layers+1)
+Architecture: &#91;Linear -> LIF&#93; x (hidden layers + 1)
 Readout: spike count and membrane accumulation over T timesteps.
+
+Parameters
+----------
+n_input : int
+    Input feature count.
+n_hidden : int or sequence of int
+    One width for every hidden layer, or a single width repeated
+    ``n_layers`` times. A sequence is honoured exactly: ``&#91;128, 64&#93;``
+    builds a 128-unit layer and then a 64-unit layer, never 128 twice.
+n_output : int
+    Output class count.
+n_layers : int
+    Hidden layer count when ``n_hidden`` is a single width. Ignored when
+    ``n_hidden`` is a sequence, which already states how many layers there
+    are; passing a contradicting value is refused rather than silently
+    resolved one way.
+beta : float
+    Membrane decay for every cell.
+surrogate_fn : callable
+    Surrogate gradient used by every cell.
+learn_beta, learn_threshold : bool
+    Whether the cell parameters are learned.
+
+Raises
+------
+ValueError
+    ``n_hidden`` names a non-positive width, or is a sequence whose
+    length contradicts an explicit ``n_layers``. An empty sequence is
+    accepted: it builds the direct input-to-output layer.
 
 - **__init__**(n_input, n_hidden, n_output, n_layers, beta, surrogate_fn, learn_beta, learn_threshold)
 - **forward**(x)

@@ -14,7 +14,7 @@ Train in float with PyTorch autograd, deploy to SC bitstreams via to_sc_weights(
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, List, Mapping, Tuple, cast
+from typing import Any, Callable, List, Mapping, Sequence, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -627,17 +627,88 @@ class RecurrentLIFCell(nn.Module):
         return self.lif.forward(current + self.recurrent(spike_prev), v)
 
 
+def _hidden_layer_widths(n_hidden: int | Sequence[int], n_layers: int) -> Tuple[int, ...]:
+    """Return one width per hidden layer, honouring a sequence exactly.
+
+    Parameters
+    ----------
+    n_hidden : int or sequence of int
+        A single width to repeat, or the widths themselves.
+    n_layers : int
+        Layer count, used only when ``n_hidden`` is a single width.
+
+    Returns
+    -------
+    tuple of int
+        The hidden layer widths in order.
+
+    Raises
+    ------
+    ValueError
+        A width is not a positive integer, or a sequence contradicts an
+        explicit ``n_layers``.
+    """
+    if isinstance(n_hidden, bool):
+        raise ValueError(f"n_hidden must be a width or a sequence of widths, got {n_hidden!r}.")
+    if isinstance(n_hidden, int):
+        widths = (n_hidden,) * n_layers
+    else:
+        widths = tuple(n_hidden)
+        if n_layers != len(widths) and n_layers != 2:
+            raise ValueError(
+                f"n_hidden names {len(widths)} hidden layers but n_layers is {n_layers}; "
+                "pass the widths alone."
+            )
+    # No hidden layer is a legitimate request: it builds the direct
+    # input-to-output spiking layer, which is what n_layers=0 always meant.
+    for index, width in enumerate(widths):
+        if isinstance(width, bool) or not isinstance(width, int) or width < 1:
+            raise ValueError(
+                f"hidden layer {index} width must be a positive integer, got {width!r}."
+            )
+    return widths
+
+
 class SpikingNet(nn.Module):
     """Multi-layer feedforward SNN for classification.
 
-    Architecture: [Linear -> LIF] x (n_layers+1)
+    Architecture: [Linear -> LIF] x (hidden layers + 1)
     Readout: spike count and membrane accumulation over T timesteps.
+
+    Parameters
+    ----------
+    n_input : int
+        Input feature count.
+    n_hidden : int or sequence of int
+        One width for every hidden layer, or a single width repeated
+        ``n_layers`` times. A sequence is honoured exactly: ``[128, 64]``
+        builds a 128-unit layer and then a 64-unit layer, never 128 twice.
+    n_output : int
+        Output class count.
+    n_layers : int
+        Hidden layer count when ``n_hidden`` is a single width. Ignored when
+        ``n_hidden`` is a sequence, which already states how many layers there
+        are; passing a contradicting value is refused rather than silently
+        resolved one way.
+    beta : float
+        Membrane decay for every cell.
+    surrogate_fn : callable
+        Surrogate gradient used by every cell.
+    learn_beta, learn_threshold : bool
+        Whether the cell parameters are learned.
+
+    Raises
+    ------
+    ValueError
+        ``n_hidden`` names a non-positive width, or is a sequence whose
+        length contradicts an explicit ``n_layers``. An empty sequence is
+        accepted: it builds the direct input-to-output layer.
     """
 
     def __init__(
         self,
         n_input: int,
-        n_hidden: int,
+        n_hidden: int | Sequence[int],
         n_output: int,
         n_layers: int = 2,
         beta: float = 0.9,
@@ -647,7 +718,9 @@ class SpikingNet(nn.Module):
     ):
         super().__init__()
         self.n_output = n_output
-        sizes = [n_input] + [n_hidden] * n_layers + [n_output]
+        hidden_widths = _hidden_layer_widths(n_hidden, n_layers)
+        self.hidden_widths: Tuple[int, ...] = hidden_widths
+        sizes = [n_input, *hidden_widths, n_output]
         self.linears = nn.ModuleList(
             nn.Linear(sizes[i], sizes[i + 1]) for i in range(len(sizes) - 1)
         )

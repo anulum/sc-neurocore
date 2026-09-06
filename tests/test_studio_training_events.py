@@ -26,12 +26,14 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobRecord,
     StudioJobTask,
 )
+from sc_neurocore.studio._training_events import _json_event_payload
 from sc_neurocore.studio.training import (
     TRAINING_EVENT_LOG_ARTIFACT_PATH,
     TrainingJob,
     _register_job,
     stream_metrics,
 )
+from sc_neurocore.studio.training_contract import TrainingConfigError
 
 
 def _manager(root: Path, *, timeout: float = 10.0) -> StudioJobManager:
@@ -199,44 +201,47 @@ def test_stream_tolerates_partial_and_malformed_live_event_rows(tmp_path: Path) 
 
 
 @pytest.mark.parametrize(
-    ("dataset", "expected"),
+    ("value", "expected"),
     [
         (("synthetic",), ["synthetic"]),
         (float("nan"), None),
         (Path("synthetic"), "synthetic"),
     ],
 )
-def test_persisted_events_normalize_library_values(
-    tmp_path: Path,
-    dataset: object,
-    expected: object,
-) -> None:
-    """Persisted worker events remain JSON-safe for supported library values."""
+def test_persisted_events_normalize_library_values(value: object, expected: object) -> None:
+    """Persisted worker events remain JSON-safe for supported library values.
+
+    A tuple, a NaN and a path reach an event through model and device metadata
+    the training libraries produce. They are normalised at the event boundary
+    rather than at each producer, so this exercises that boundary directly.
+    """
+    payload = _json_event_payload({"device": value})
+
+    assert payload["device"] == expected
+    assert json.dumps(payload) is not None
+
+
+def test_an_unsupported_dataset_never_reaches_an_event(tmp_path: Path) -> None:
+    """The contract refuses before the worker emits anything at all.
+
+    This case used to drive an exotic value through ``dataset`` because the
+    runner accepted anything; it now refuses, which is the point.
+    """
     pytest.importorskip("torch")
-    context = _context(tmp_path, f"sj_training_json_{type(dataset).__name__}")
+    context = _context(tmp_path, "sj_training_refused_dataset")
     events: list[dict[str, object]] = []
 
-    def event_sink(event: dict[str, object]) -> None:
-        events.append(event)
-        context.append_artifact_event(TRAINING_EVENT_LOG_ARTIFACT_PATH, event)
+    with pytest.raises(TrainingConfigError, match="not supported"):
+        TrainingJob(
+            {
+                "dataset": "not-a-dataset",
+                "epochs": 1,
+                "batch_size": 64,
+                "hidden": [8],
+                "timesteps": 1,
+            },
+            job_id=context.job_id,
+            event_sink=events.append,
+        )
 
-    job = TrainingJob(
-        {
-            "dataset": dataset,
-            "epochs": 1,
-            "batch_size": 64,
-            "hidden": [8],
-            "timesteps": 1,
-        },
-        job_id=context.job_id,
-        cancelled=lambda: True,
-        event_sink=event_sink,
-    )
-
-    with pytest.raises(StudioJobCancelled, match="stopped"):
-        job.run_blocking(context)
-
-    config_event = events[0]
-    data = cast(dict[str, object], config_event["data"])
-    assert data["dataset"] == expected
-    assert math.isfinite(cast(float, config_event["timestamp"]))
+    assert events == []

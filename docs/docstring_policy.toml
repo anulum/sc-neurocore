@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 455
+expected_file_count = 456
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1835,3 +1835,7 @@ rationale = "Negative controls that demonstrate a reference trace fails when the
 [[file]]
 path = "tools/reference_trace_evidence.py"
 rationale = "Operator-facing evidence for the reference corpus: which identities rest on a published source, and whether each trace can fail at all."
+
+[[file]]
+path = "src/sc_neurocore/studio/training_contract.py"
+rationale = "Typed training capability contract: what the Studio can run, refused before any work rather than substituted."

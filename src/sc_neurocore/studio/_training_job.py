@@ -21,6 +21,12 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Protocol, cast
 
+from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic
+from sc_neurocore.studio.training_contract import (
+    SUPPORTED_CELL_TYPES,
+    SUPPORTED_SURROGATES,
+    resolve_training_config,
+)
 from sc_neurocore.studio._training_events import (
     TRAINING_EVENT_LOG_ARTIFACT_PATH,
     _json_event_payload,
@@ -42,33 +48,17 @@ from sc_neurocore.studio.platform.training_weights import (
 
 try:
     import torch
-    from torch.utils.data import DataLoader, TensorDataset
 
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
 
 
-_SURROGATES = (
-    "fast_sigmoid",
-    "superspike",
-    "atan_surrogate",
-    "sigmoid_surrogate",
-    "straight_through",
-    "triangular",
-)
-
-_CELL_TYPES = (
-    "LIFCell",
-    "IFCell",
-    "ALIFCell",
-    "ExpIFCell",
-    "AdExCell",
-    "LapicqueCell",
-    "AlphaCell",
-    "SecondOrderLIFCell",
-    "RecurrentLIFCell",
-)
+# One owner for the supported vocabularies: the contract that refuses an
+# unsupported choice is the same list the capability routes advertise, so the
+# Studio cannot offer a name its runner would reject.
+_SURROGATES = SUPPORTED_SURROGATES
+_CELL_TYPES = SUPPORTED_CELL_TYPES
 
 _PERSISTED_TRAINING_EVENT_TYPES = frozenset({"config", "epoch", "completed", "stopped", "error"})
 
@@ -92,13 +82,42 @@ class _CapturedWeightCheckpoint:
     parameter_count: int
 
 
+def _seed_everything(seed: int) -> None:
+    """Seed every generator a training run draws from.
+
+    Parameters
+    ----------
+    seed : int
+        The seed recorded in the resolved configuration.
+
+    Notes
+    -----
+    The synthetic dataset, the weight initialisation and any dropout draw from
+    the Python, NumPy and Torch global generators. Seeding one of the three
+    leaves a run that still cannot be replayed, so all three are set together,
+    before the loaders and the model exist.
+    """
+    import random
+
+    import numpy as np
+
+    random.seed(seed)
+    np.random.seed(seed)
+    if HAS_TORCH:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():  # pragma: no cover - no CUDA in this environment
+            torch.cuda.manual_seed_all(seed)
+
+
 class TrainingJob:
     """Manage one Studio training run for thread or process execution.
 
     Parameters
     ----------
     config : dict[str, Any]
-        Training configuration consumed by the Studio Training Monitor.
+        Training request. It is resolved against the training contract here, so
+        an unsupported dataset, surrogate or layer width is refused before the
+        job exists rather than part-way through a run.
     job_id : str or None, optional
         Stable platform job identifier. A random legacy identifier is generated
         when omitted.
@@ -108,6 +127,11 @@ class TrainingJob:
         Sink used to persist path-free JSON events from a process worker.
     initial_state_dict : Mapping[str, object] or None, optional
         Verified model state loaded before the first optimisation step.
+
+    Raises
+    ------
+    TrainingConfigError
+        The request names something the Studio cannot run.
     """
 
     def __init__(
@@ -119,7 +143,11 @@ class TrainingJob:
         event_sink: Callable[[dict[str, object]], None] | None = None,
         initial_state_dict: Mapping[str, object] | None = None,
     ) -> None:
-        self.config = config
+        # Resolved here so an unrunnable job cannot be constructed at all: a
+        # refusal after the artifact machinery has started produces a second,
+        # confusing error about a missing artifact instead of the real one.
+        self.resolved_config = resolve_training_config(config)
+        self.config = dict(self.resolved_config.to_public_dict())
         self.id = job_id or f"j{secrets.token_hex(6)}"
         self.status = "pending"
         self.metrics: queue.Queue[dict[str, Any]] = queue.Queue(maxsize=500)
@@ -189,6 +217,47 @@ class TrainingJob:
             "final_metrics": self.final_metrics,
             "weight_checkpoint": self.weight_checkpoint,
         }
+
+    @staticmethod
+    def write_refused_evidence(context: StudioJobContext, message: str) -> None:
+        """Seal failed evidence for a request that was refused before it ran.
+
+        Parameters
+        ----------
+        context : StudioJobContext
+            Job sandbox to write the status and evidence artifacts into.
+        message : str
+            The refusal, as the caller will read it.
+
+        Notes
+        -----
+        A refused configuration never builds a model, so there is no weight
+        checkpoint and no event log to publish — only the reason. Writing it
+        keeps the sandbox's account complete: every job that ends has an
+        evidence artifact saying how.
+        """
+        status_payload: dict[str, object] = {
+            "job_id": context.job_id,
+            "status": "failed",
+            "error": message,
+            "final_metrics": None,
+            "weight_checkpoint": None,
+        }
+        status_artifact = context.write_artifact(
+            "training/status.json",
+            json.dumps(status_payload, sort_keys=True),
+        )
+        write_studio_action_evidence_manifest(
+            context,
+            action_kind="studio.training.run",
+            result=status_payload,
+            result_artifact=status_artifact,
+            evidence_artifact_path="training/evidence.json",
+            evidence_classification="training",
+            replay_route="POST /api/training/start",
+            status="failed",
+            error_message=message,
+        )
 
     def _write_terminal_artifacts(
         self,
@@ -271,19 +340,21 @@ class TrainingJob:
         )
         from sc_neurocore.training import surrogate as surr_mod
 
-        cfg = self.config
-        dataset = cfg.get("dataset", "synthetic")
-        n_epochs = cfg.get("epochs", 10)
-        batch_size = cfg.get("batch_size", 64)
-        learning_rate = cfg.get("lr", 1e-3)
-        hidden = cfg.get("hidden", [128])
-        n_timesteps = cfg.get("timesteps", 25)
-        surrogate_name = cfg.get("surrogate", "atan_surrogate")
-        learn_beta = cfg.get("learn_beta", False)
-        learn_threshold = cfg.get("learn_threshold", False)
-        max_grad_norm = cfg.get("max_grad_norm", 1.0)
+        resolved = self.resolved_config
+        dataset = resolved.dataset
+        n_epochs = resolved.epochs
+        batch_size = resolved.batch_size
+        learning_rate = resolved.learning_rate
+        n_timesteps = resolved.timesteps
+        surrogate_name = resolved.surrogate
+        max_grad_norm = resolved.max_grad_norm
 
-        surrogate_fn = getattr(surr_mod, surrogate_name, surr_mod.atan_surrogate)
+        # Seeded before the loaders and the model, because both draw from the
+        # global generators: an unseeded run cannot be replayed and its
+        # checkpoint records a result nobody can reproduce.
+        _seed_everything(resolved.seed)
+
+        surrogate_fn = getattr(surr_mod, surrogate_name)
         device = auto_device()
 
         if dataset == "mnist":
@@ -291,16 +362,14 @@ class TrainingJob:
         else:
             train_loader, test_loader, n_inputs, n_outputs = _make_synthetic(batch_size)
 
-        n_hidden = hidden[0] if hidden else 128
-        n_layers = len(hidden)
         model = SpikingNet(
             n_input=n_inputs,
-            n_hidden=n_hidden,
+            n_hidden=list(resolved.hidden_widths),
             n_output=n_outputs,
-            n_layers=n_layers,
+            n_layers=len(resolved.hidden_widths),
             surrogate_fn=surrogate_fn,
-            learn_beta=learn_beta,
-            learn_threshold=learn_threshold,
+            learn_beta=resolved.learn_beta,
+            learn_threshold=resolved.learn_threshold,
         ).to(device)
         initial_state_dict = self._initial_state_dict
         if initial_state_dict is not None:
@@ -317,9 +386,8 @@ class TrainingJob:
                 "model_info": info,
                 "dataset": dataset,
                 "n_epochs": n_epochs,
-                "architecture": (
-                    f"{n_inputs}→{'→'.join(str(n_hidden) for _ in range(n_layers))}→{n_outputs}"
-                ),
+                "architecture": resolved.architecture(n_inputs, n_outputs),
+                "resolved_config": resolved.to_public_dict(),
             },
         )
 
@@ -428,7 +496,7 @@ class TrainingJob:
             "val_loss": round(val_loss, 6),
             "val_accuracy": round(val_acc, 4),
         }
-        hidden_architecture = "->".join(str(n_hidden) for _ in range(n_layers))
+        hidden_architecture = "->".join(str(width) for width in resolved.hidden_widths)
         architecture = (
             f"{n_inputs}->{hidden_architecture}->{n_outputs}"
             if hidden_architecture
@@ -567,55 +635,3 @@ class TrainingJob:
             parameter_count=checkpoint.parameter_count,
             final_metrics=self.final_metrics,
         ).to_public_dict()
-
-
-def _make_synthetic(batch_size: int) -> tuple[Any, Any, int, int]:
-    """Generate synthetic classification data for quick demonstrations."""
-    import torch
-
-    n_samples = 512
-    n_inputs = 64
-    n_classes = 10
-    features = torch.randn(n_samples, n_inputs)
-    labels = torch.randint(0, n_classes, (n_samples,))
-    split = int(0.8 * n_samples)
-    train_dataset = TensorDataset(features[:split], labels[:split])
-    test_dataset = TensorDataset(features[split:], labels[split:])
-    return (
-        DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True),
-        DataLoader(test_dataset, batch_size=batch_size, drop_last=True),
-        n_inputs,
-        n_classes,
-    )
-
-
-def _load_mnist(batch_size: int) -> tuple[Any, Any, int, int]:
-    """Load MNIST through torchvision, or use the synthetic fallback."""
-    try:
-        from torchvision import datasets, transforms
-
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,)),
-            ]
-        )
-        train_dataset = datasets.MNIST(
-            "~/.cache/mnist",
-            train=True,
-            download=True,
-            transform=transform,
-        )
-        test_dataset = datasets.MNIST(
-            "~/.cache/mnist",
-            train=False,
-            transform=transform,
-        )
-        return (
-            DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
-            DataLoader(test_dataset, batch_size=batch_size),
-            784,
-            10,
-        )
-    except ImportError:
-        return _make_synthetic(batch_size)

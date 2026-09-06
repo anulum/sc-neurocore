@@ -191,6 +191,51 @@ state dictionary never leaves the worker, so no raw weights reach the API
 response. The Training panel surfaces that materialization evidence after the
 operator triggers the restore.
 
+## What a training request may ask for
+
+Every request is resolved against the training contract
+(`studio.training-config.v1`) before a dataset is loaded or a model is built. A
+choice the Studio cannot execute is refused with HTTP 422 naming the field and
+the supported set — it is never substituted.
+
+| Field | Accepted |
+|---|---|
+| `dataset` | `synthetic`, `mnist` |
+| `surrogate` | `fast_sigmoid`, `superspike`, `atan_surrogate`, `sigmoid_surrogate`, `straight_through`, `triangular` |
+| `hidden` | A list of hidden-layer widths, each a positive integer. `[]` builds the direct input-to-output layer |
+| `epochs`, `batch_size`, `timesteps` | Positive integers |
+| `lr` | A positive finite number |
+| `max_grad_norm` | A finite number at or above zero; `0` clips every gradient, running the loop without learning |
+| `learn_beta`, `learn_threshold` | `true` or `false` |
+| `seed` | An integer in `[0, 2**32)`, applied to the Python, NumPy and Torch generators |
+
+A field nobody reads is refused too: a request carrying `hiddens` is a request
+whose architecture nobody honoured, so it is rejected rather than ignored.
+
+### Every hidden width is honoured
+
+`hidden: [128, 64]` builds a 128-unit layer followed by a 64-unit one. It used
+to build 128 twice — the request's first width repeated for as many layers as
+the list was long — and the exported checkpoint recorded the request beside the
+architecture that actually ran, both sealed under one digest. The two blocks
+now come from the same resolved configuration and cannot disagree.
+
+### A run is replayable from its recorded seed
+
+`seed` is applied to the Python, NumPy and Torch generators before the loaders
+and the model exist, and it is recorded in the checkpoint. Two runs with the
+same seed and configuration produce identical metrics; a different seed
+produces a different run. The seed lives in the request rather than in ambient
+process state, so a checkpoint's seed is what actually produced it.
+
+### What is not yet separated
+
+Warm-starting from exported weights is supported. **Exact resume** — continuing
+a run with its optimiser, scheduler, generator state and epoch/batch position —
+is not: importing a checkpoint restores weights and configuration, not the
+position in a run. Treat a resumed run as a new run initialised from those
+weights.
+
 ## API Endpoints
 
 | Method | Endpoint | Description |

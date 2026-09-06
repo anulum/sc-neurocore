@@ -10,6 +10,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+- The Studio trains what was asked for, or refuses before it starts. Measured
+  through the public HTTP surface: a request for hidden widths `[128, 64]` on
+  `cifar10` with surrogate `not_a_real_surrogate` completed successfully, and
+  its exported checkpoint recorded that request beside the architecture
+  `64->128->128->10` — 128 twice, 64 nowhere, on synthetic data, with the
+  default surrogate — both blocks sealed under one `config_sha256`, so a
+  digest-verified artefact attested a configuration that never ran. Every
+  request is now resolved against a typed contract
+  (`studio.training-config.v1`) before a dataset is loaded or a model is built:
+  an unsupported dataset or surrogate, a width that is not a positive integer,
+  or a field nobody reads is refused with HTTP 422 naming the field and the
+  supported set. `SpikingNet` accepts a width per hidden layer, so `[128, 64]`
+  builds that network; a single width with a layer count still works. The
+  capability routes and the contract share one list, so the Studio cannot offer
+  a name its runner would reject.
+- A training run is replayable from the seed its checkpoint records. The seed
+  now travels in the request and is applied to the Python, NumPy and Torch
+  generators before the loaders and the model exist; two runs with the same
+  seed and configuration produce identical metrics, and a different seed does
+  not. It used to depend on whatever the calling process had seeded.
+- A process worker handed a configuration nobody can run seals failed evidence
+  saying why. No HTTP client sees that refusal, so the sandbox is the only
+  place the reason can survive.
+
 ### Added
 - The reference-trace corpus now says, per identity, what it is a reference
   *for*. Backends agreeing with each other can reproduce one shared scientific

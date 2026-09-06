@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4821
+    "test_files": 4822
   },
   "documentation": {
     "public_pages": [
@@ -7428,6 +7428,7 @@
       "tests/test_studio_training_attach_failures.py",
       "tests/test_studio_training_checkpoint.py",
       "tests/test_studio_training_config.py",
+      "tests/test_studio_training_config_fidelity.py",
       "tests/test_studio_training_control.py",
       "tests/test_studio_training_endpoints.py",
       "tests/test_studio_training_events.py",

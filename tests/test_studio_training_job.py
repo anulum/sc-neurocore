@@ -33,12 +33,15 @@ from sc_neurocore.studio.platform.training_weights import (
 from sc_neurocore.studio.training import TRAINING_EVENT_LOG_ARTIFACT_PATH, TrainingJob
 
 _SOURCE_PATH = Path(__file__).resolve().parents[1] / "src/sc_neurocore/studio/_training_job.py"
+#: The seed now travels in the request rather than in ambient process state,
+#: so a checkpoint's recorded seed is what actually produced the run.
 _SYNTHETIC_CONFIG = {
     "dataset": "synthetic",
     "epochs": 1,
     "batch_size": 64,
     "hidden": [8],
     "timesteps": 2,
+    "seed": 20260714,
 }
 
 
@@ -116,8 +119,7 @@ def test_seeded_synthetic_training_preserves_metrics_and_weight_artifact(
     tmp_path: Path,
 ) -> None:
     """A seeded real run pins the parent-compatible metrics and tensor state."""
-    torch = pytest.importorskip("torch")
-    torch.manual_seed(20260714)
+    pytest.importorskip("torch")
     context = _context(tmp_path, "sj_training_seeded")
 
     result = run_training_process_task(context, dict(_SYNTHETIC_CONFIG))
