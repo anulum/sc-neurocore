@@ -38,6 +38,7 @@ import tseslint from "typescript-eslint";
  * enforce. Sorted, so an addition is one reviewable line of diff.
  */
 const AUDITED = [
+  "e2e/experiment-export-live.spec.ts",
   "e2e/network-canvas-live.spec.ts",
   "playwright.export.config.ts",
   "playwright.graph.config.ts",
@@ -92,12 +93,21 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * would have enforced the estimate rather than the surface.
    */
   declarations: 1297,
-  files: 190,
+  /**
+   * Files carrying at least one of those declarations.
+   *
+   * Recorded as 190 when the figure was first taken, which counted files with
+   * *any* finding from the measurement config rather than files with the rule
+   * this figure is about. Re-counted by the stated method it is **176**. The
+   * declaration count did not move; only the file count was measuring
+   * something other than what it said.
+   */
+  files: 176,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
   measuredOn: "2026-09-06",
-  measuredOnSourceSha: "5a8669d0f1e6e1909fa2067a680352981d6a92ae",
+  measuredOnSourceSha: "62583819a1cd9c160b9988f82f8f15b7cb9cfe53",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**
@@ -105,20 +115,35 @@ export const LEGACY_OUTSIDE_SCOPE = {
    *
    * `noUncheckedIndexedAccess` is the compiler option that stops an index
    * lookup pretending it always finds something. Turning it on today reports
-   * **198** errors across the frontend, so it is recorded here as the next
-   * increment instead of being switched on and suppressed.
+   * **218** errors across the frontend, up from 198 when it was first taken:
+   * twenty of the increase are in files this scope has since audited, so the
+   * figure is debt this work created and has not yet paid. The heaviest are
+   * `src/components/SimulationPlot.tsx` (90), `src/studioGraphTable.test.ts`
+   * (28) and `src/studioGraphValidation.test.ts` (22).
    */
-  noUncheckedIndexedAccessErrors: 198,
+  noUncheckedIndexedAccessErrors: 218,
   /**
-   * The file to audit next, and what it will cost.
+   * What auditing the rest of the `e2e` suite would cost, per file.
    *
-   * `e2e/experiment-export-live.spec.ts` parses untyped JSON from the server
-   * and carries **25** `no-unsafe-*` findings as a result. Typing those
-   * payloads is worth doing and is its own piece of work; listing the file
-   * before it is done would mean either a red gate or a suppression, and both
-   * are worse than saying what is left.
+   * Measured by putting every spec into a type-aware project and running the
+   * audited profile over it — 103 findings in ten files, almost all
+   * `no-unsafe-*` from untyped JSON. Four of the files are nearly free, which
+   * is why the list is here rather than a single "next": the cheap ones can be
+   * taken in any order, and the six admin-operator specs are one shape of
+   * problem that is better solved once than six times.
    */
-  nextToAudit: { file: "e2e/experiment-export-live.spec.ts", findings: 25 },
+  e2eOutsideScope: {
+    "admin-operator-audit-archive.spec.ts": 13,
+    "admin-operator-capabilities.spec.ts": 14,
+    "admin-operator-evidence-bundle.spec.ts": 17,
+    "admin-operator-project-evidence.spec.ts": 17,
+    "admin-operator-status.spec.ts": 18,
+    "admin-operator-synthesis.spec.ts": 15,
+    "analysis-job-host.spec.ts": 3,
+    "catalogue-to-silicon-live.spec.ts": 2,
+    "guided-operator-run.spec.ts": 3,
+    "module-federation-host.spec.ts": 1,
+  },
 };
 
 export default tseslint.config(

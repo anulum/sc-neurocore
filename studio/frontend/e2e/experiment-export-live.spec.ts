@@ -13,6 +13,23 @@ import { join } from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import type { CodegenResponse, ReplayPack } from "../src/api/types";
+
+/**
+ * What `python -m sc_neurocore.studio.replay_pack --json` prints.
+ *
+ * The runner's contract, not the browser's, so it is stated here rather than
+ * in `src/api/types.ts`: nothing the Studio ships reads this document.
+ */
+interface ReplayOutcome {
+  /** `"match"` when the replay reproduced the sealed expectation. */
+  verdict: string;
+  /** Every field that did not reproduce, empty on a match. */
+  differences: readonly unknown[];
+  /** The identity the pack was sealed under, echoed back. */
+  experiment_identity_sha256: string;
+}
+
 const MODEL_NAME = "HodgkinHuxleyNeuron";
 // The model's own default timestep is 0.01 ms and its default drive is
 // constant. Asking the UI for neither is the case a syntax-only export got
@@ -64,7 +81,7 @@ test("the browser exports a script that states the experiment the server resolve
     (response) => new URL(response.url()).pathname === "/api/codegen" && response.ok(),
   );
   await page.getByTestId("run-codegen").click();
-  const payload = await (await codegen).json();
+  const payload = (await (await codegen).json()) as CodegenResponse;
 
   expect(payload.request).toMatchObject({
     name: MODEL_NAME,
@@ -94,7 +111,7 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
       new URL(response.url()).pathname === "/api/export/replay-pack" && response.ok(),
   );
   await page.getByTestId("export-replay-pack").click();
-  const served = await (await packResponse).json();
+  const served = (await (await packResponse).json()) as ReplayPack;
   const artefact = await download;
 
   expect(artefact.suggestedFilename()).toContain(
@@ -106,7 +123,7 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
   await artefact.saveAs(packPath);
 
   // What the browser wrote to disk is what the server sealed.
-  const saved = JSON.parse(readFileSync(packPath, "utf-8"));
+  const saved = JSON.parse(readFileSync(packPath, "utf-8")) as ReplayPack;
   expect(saved).toEqual(served);
   expect(saved.schema_version).toBe("studio.replay-pack.v1");
   expect(saved.request).toMatchObject({
@@ -124,7 +141,7 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
     ["-m", "sc_neurocore.studio.replay_pack", packPath, "--json"],
     { cwd: workspace, env: environment, encoding: "utf-8", timeout: 900_000 },
   );
-  const outcome = JSON.parse(replayed);
+  const outcome = JSON.parse(replayed) as ReplayOutcome;
 
   expect(outcome.verdict).toBe("match");
   expect(outcome.differences).toEqual([]);
@@ -132,12 +149,22 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
 
   // A pack whose expectation no longer describes the run is reported, not
   // rounded away.
-  const tampered = { ...saved };
-  tampered.expectation = { ...saved.expectation, spike_count: saved.expectation.spike_count + 3 };
+  // `expectation` travels opaquely to the Python runner, so its fields are
+  // `unknown` here. Reading the count through a check rather than a cast keeps
+  // the tamper honest: if the pack stops carrying a numeric spike count, this
+  // fails loudly instead of writing `NaN` into the file and asserting on it.
+  const spikeCount = saved.expectation.spike_count;
+  if (typeof spikeCount !== "number") {
+    throw new TypeError(`the pack's expectation carries no numeric spike_count: ${typeof spikeCount}`);
+  }
+  const tampered: ReplayPack = {
+    ...saved,
+    expectation: { ...saved.expectation, spike_count: spikeCount + 3 },
+  };
   const tamperedPath = join(workspace, "tampered.json");
   writeFileSync(tamperedPath, JSON.stringify(tampered), "utf-8");
   let status = 0;
-  let output = "";
+  let output: string;
   try {
     output = execFileSync(
       "python",

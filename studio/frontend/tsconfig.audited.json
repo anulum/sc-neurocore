@@ -1,7 +1,8 @@
 {
-  "// note": "Type-aware linting needs a project that contains the audited files outside src/. The e2e suite as a whole is not here yet: it carries 76 unused-symbol errors that belong to their own authors.",
+  "// note": "Type-aware linting needs a project that contains the audited files outside src/. Files join one at a time, as they are brought to the audited bar. The rest of the e2e suite is not here yet: it carries unused-symbol errors that belong to their own authors.",
   "extends": "./tsconfig.json",
   "include": [
+    "e2e/experiment-export-live.spec.ts",
     "e2e/network-canvas-live.spec.ts",
     "playwright.export.config.ts",
     "playwright.graph.config.ts"
