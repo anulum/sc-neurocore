@@ -25,10 +25,52 @@ export function authHeaders(): Record<string, string> {
   return studioAuthToken === null ? {} : { Authorization: `Bearer ${studioAuthToken}` };
 }
 
+/**
+ * A failed Studio request, carrying the status and the structured detail.
+ *
+ * FastAPI returns `detail` as an object for errors that have more to say than
+ * a sentence — a save conflict names the revision that is actually current.
+ * `new Error(detail)` would stringify that to "[object Object]", so the
+ * message is read out of the object and the object itself is kept for callers
+ * that need to act on it.
+ */
+export class StudioRequestError extends Error {
+  readonly status: number;
+  readonly detail: unknown;
+
+  constructor(message: string, status: number, detail: unknown) {
+    super(message);
+    this.name = "StudioRequestError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+function errorMessage(detail: unknown, status: number): string {
+  if (typeof detail === "string" && detail.length > 0) {
+    return detail;
+  }
+  if (typeof detail === "object" && detail !== null) {
+    const record = detail as Record<string, unknown>;
+    for (const key of ["reason", "message", "error"]) {
+      const value = record[key];
+      if (typeof value === "string" && value.length > 0) {
+        return value;
+      }
+    }
+  }
+  return `${status}`;
+}
+
+async function requestError(r: Response): Promise<StudioRequestError> {
+  const body = await r.json().catch(() => ({ detail: r.statusText }));
+  const detail = (body as { detail?: unknown }).detail;
+  return new StudioRequestError(errorMessage(detail, r.status), r.status, detail);
+}
+
 export async function json<T>(r: Response): Promise<T> {
   if (!r.ok) {
-    const err = await r.json().catch(() => ({ detail: r.statusText }));
-    throw new Error(err.detail || `${r.status}`);
+    throw await requestError(r);
   }
   return r.json();
 }
@@ -53,8 +95,7 @@ export function get<T>(path: string): Promise<T> {
 
 export async function blob(r: Response): Promise<Blob> {
   if (!r.ok) {
-    const err = await r.json().catch(() => ({ detail: r.statusText }));
-    throw new Error(err.detail || `${r.status}`);
+    throw await requestError(r);
   }
   return r.blob();
 }

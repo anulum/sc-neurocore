@@ -631,6 +631,12 @@ export default function App() {
                 color: "var(--text-secondary)", border: "1px solid var(--border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Refresh</button>
+              <button aria-label="Show deleted projects"
+                onClick={() => void s.listDeletedServerProjects()} style={{
+                fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
+                color: "var(--text-secondary)", border: "1px solid var(--border)",
+                borderRadius: 3, cursor: "pointer",
+              }}>Deleted</button>
             </div>
             {s.serverProjects.length > 0 && (
               <div style={{ maxHeight: 60, overflowY: "auto" }}>
@@ -639,9 +645,27 @@ export default function App() {
                     display: "flex", justifyContent: "space-between", fontSize: 10,
                     padding: "1px 4px", color: "var(--text-secondary)",
                   }}>
-                    <span style={{ cursor: "pointer" }} onClick={() => s.loadProjectFromServer(p.name)}>{p.name}</span>
+                    <span style={{ cursor: "pointer" }} onClick={() => s.loadProjectFromServer(p.name)}>
+                      {p.name}{p.revision === null ? "" : ` r${p.revision}`}
+                    </span>
                     <span style={{ cursor: "pointer", color: "var(--text-muted)" }}
                       onClick={() => s.deleteServerProject(p.name)}>x</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {s.deletedProjects.length > 0 && (
+              <div style={{ maxHeight: 60, overflowY: "auto", marginTop: 4 }}>
+                <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Deleted (restorable)</div>
+                {s.deletedProjects.map((entry) => (
+                  <div key={entry.token} style={{
+                    display: "flex", justifyContent: "space-between", fontSize: 10,
+                    padding: "1px 4px", color: "var(--text-secondary)",
+                  }}>
+                    <span>{entry.name}</span>
+                    <span aria-label={`Restore ${entry.name}`}
+                      style={{ cursor: "pointer", color: "var(--text-muted)" }}
+                      onClick={() => void s.restoreDeletedServerProject(entry.token)}>restore</span>
                   </div>
                 ))}
               </div>

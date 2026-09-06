@@ -39375,16 +39375,93 @@ Return the route-facing catalogue of preset action identifiers.
 ## Module `studio.project`
 
 ### Function `save_project(name, state)`
-Save full Studio state and return path-free evidence metadata.
+Save full Studio state as a new immutable revision.
+
+Parameters
+----------
+name:
+    Workspace name; one directory under the Studio project root.
+state:
+    Complete Studio state to persist.
+expected_revision:
+    The revision the caller edited. ``None`` means the caller believes the
+    workspace is new. A save from a revision that is no longer current is
+    refused with :class:`~sc_neurocore.studio.workspace_store.WorkspaceConflict`
+    rather than silently replacing the other editor's work.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    Path-free evidence metadata, including the revision written and the
+    revision it descends from.
+
+Raises
+------
+ValueError
+    The name is unusable, the state is not an object, or it carries an
+    identifier that would later interpolate into HDL or MLIR source.
+WorkspaceConflict
+    The workspace moved on while the caller was editing.
 
 ### Function `load_project(name)`
-Load a saved project by name.
+Load one revision of a saved workspace, defaulting to the current one.
+
+Parameters
+----------
+name:
+    Workspace name.
+revision:
+    Revision to read. ``None`` reads the current one; an earlier number
+    reads history, which no later save can have rewritten.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    The stored document, or ``{"error": ...}`` when the workspace or the
+    requested revision does not exist.
+
+Raises
+------
+ValueError
+    The name is unusable, the stored document is not a workspace this
+    build reads, or it carries an unsafe HDL-facing identifier.
 
 ### Function `list_projects()`
-List all saved projects.
+List every saved workspace with its current revision.
+
+A workspace whose revisions cannot be read is reported with a ``null``
+revision rather than omitted, so a corrupt store is visible instead of
+looking empty.
 
 ### Function `delete_project(name)`
-Delete a saved project.
+Move a workspace to the recoverable trash.
+
+Nothing is erased: the workspace and its whole revision history move
+aside, and :func:`restore_project` brings them back. The returned token
+identifies the deleted copy.
+
+### Function `list_deleted_projects()`
+List the workspaces waiting in the recoverable trash, newest first.
+
+### Function `restore_project(token)`
+Restore one deleted workspace under its original name.
+
+Restoring onto a name that is in use is refused rather than performed:
+overwriting a live workspace is the loss this store exists to prevent.
+
+### Function `fork_project(name, new_name)`
+Copy one revision of a workspace into a new one.
+
+The source workspace is untouched; the fork starts at revision 1.
+
+### Function `project_revisions(name)`
+Return every stored revision of one workspace, oldest first.
+
+### Function `export_project(name)`
+Return one revision as a self-contained document for transfer.
+
+### Function `import_project(name, document)`
+Create a workspace from an exported document.
 
 ### Function `run_pipeline(graph, target)`
 Run the Studio graph-to-synthesis pipeline.
@@ -40483,6 +40560,200 @@ Raises
 ------
 ValueError
     If the checkpoint schema or any protected digest is invalid.
+
+---
+
+## Module `studio.workspace_lifecycle`
+
+### Function `fork_workspace(store, name, new_name)`
+Copy one revision into a new workspace as its first revision.
+
+Raises
+------
+KeyError
+    The source workspace or revision does not exist.
+WorkspaceConflict
+    The destination workspace already exists; forking never
+    overwrites one.
+
+### Function `delete_workspace(store, name)`
+Move a workspace aside so it can be restored.
+
+Returns
+-------
+pathlib.Path
+    Where the workspace now lives.
+
+Raises
+------
+KeyError
+    The workspace does not exist.
+
+### Function `deleted_workspaces(store)`
+Return the workspaces waiting in the trash, newest first.
+
+### Function `restore_workspace(store, token)`
+Bring one deleted workspace back under its original name.
+
+Raises
+------
+KeyError
+    No deleted workspace carries that token.
+WorkspaceConflict
+    A live workspace already holds the name; restoring would overwrite
+    it, which is the loss this store exists to prevent.
+
+### Function `export_workspace(store, name)`
+Return one revision as a self-contained document.
+
+### Function `import_workspace(store, name, document)`
+Create a workspace from an exported document.
+
+Raises
+------
+WorkspaceSchemaError
+    The document is not a workspace this build reads.
+WorkspaceConflict
+    The destination already exists.
+
+---
+
+## Module `studio.workspace_schema`
+
+### Class `WorkspaceSchemaError`
+Raised when a stored workspace cannot be read as one.
+
+
+### Function `migrate_document(document)`
+Bring one stored workspace document forward to this schema.
+
+Parameters
+----------
+document : mapping
+    The parsed contents of a revision file, or a legacy single-file
+    project payload.
+
+Returns
+-------
+dict
+    The document at the current schema version.
+
+Raises
+------
+WorkspaceSchemaError
+    The document is not an object, is missing its state, or was written by
+    a newer schema. A newer document is refused rather than downgraded:
+    dropping fields a future build added would lose a user's work quietly.
+
+### Function `dump_canonical(document)`
+Serialise a workspace document deterministically.
+
+### Function `write_atomic(path, payload)`
+Write one file so a reader never sees a partial one.
+
+The payload goes to a temporary file beside the target, is flushed and
+``fsync``ed, and is then moved into place with ``os.replace``. The
+directory is ``fsync``ed too, so the rename itself survives a power loss.
+A failure anywhere before the replace leaves the existing file untouched
+and removes the temporary one.
+
+Parameters
+----------
+path : pathlib.Path
+    Target file. Its parent directory must exist.
+payload : str
+    Complete file contents.
+
+### Function `read_document(path)`
+Read and migrate one stored workspace document.
+
+Raises
+------
+WorkspaceSchemaError
+    The file is unreadable, is not JSON, or is not a workspace this build
+    understands. The message never contains the path.
+
+---
+
+## Module `studio.workspace_store`
+
+### Class `WorkspaceConflict`
+Raised when a save is made from a revision that is no longer current.
+
+Attributes
+----------
+expected : int or None
+    The revision the caller believed was current.
+actual : int
+    The revision that is current.
+
+- **__init__**()
+- **to_public_detail**()
+  - Return the path-free public error detail.
+
+### Class `WorkspaceRevision`
+One immutable saved revision of a workspace.
+
+Attributes
+----------
+name : str
+    Workspace name.
+revision : int
+    Monotonic revision number, starting at 1.
+saved_at : float
+    Unix timestamp the revision was written.
+state_sha256 : str
+    Digest of the canonical state JSON.
+parent : int or None
+    The revision this one was saved from.
+
+- **to_public_dict**()
+  - Return a path-free JSON representation of this revision.
+
+### Class `WorkspaceStore`
+A directory of workspaces, each an append-only list of revisions.
+
+Parameters
+----------
+root : pathlib.Path
+    Directory holding one subdirectory per workspace.
+clock : callable, optional
+    Returns the current Unix timestamp; defaults to :func:`time.time`.
+
+- **__init__**()
+- **root**()
+  - Return the directory this store keeps workspaces in.
+- **workspace_dir**(name)
+  - Return the directory holding one workspace's revisions and head.
+- **now**()
+  - Return this store's clock, so collaborators stamp the same time.
+- **exists**(name)
+  - Return whether a workspace has at least one revision.
+- **head_revision**(name)
+  - Return the current revision number, or ``None`` for a new workspace.
+- **save**(name, state)
+  - Append one revision, refusing a save made from a stale one.
+- **load**(name)
+  - Return one revision's document, defaulting to the current one.
+- **revisions**(name)
+  - Return every stored revision of one workspace, oldest first.
+- **list_workspaces**()
+  - Return one summary per workspace, by name.
+- **fork**(name, new_name)
+  - Copy one revision into a new workspace; see ``workspace_lifecycle``.
+- **delete**(name)
+  - Move a workspace aside so it can be restored.
+- **deleted**()
+  - Return the workspaces waiting in the trash, newest first.
+- **restore**(token)
+  - Bring one deleted workspace back under its original name.
+- **export_document**(name)
+  - Return one revision as a self-contained document.
+- **import_document**(name, document)
+  - Create a workspace from an exported document.
+
+### Function `state_digest(state)`
+Return the digest of one workspace state's canonical JSON.
 
 ---
 

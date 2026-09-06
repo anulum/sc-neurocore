@@ -967,11 +967,11 @@
     "model_documentation_pages": 200,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 629,
+    "public_documentation_pages": 630,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4815
+    "test_files": 4817
   },
   "documentation": {
     "public_pages": [
@@ -1480,6 +1480,7 @@
       "docs/studio/synthesis-dashboard.md",
       "docs/studio/training-monitor.md",
       "docs/studio/websocket-progress.md",
+      "docs/studio/workspaces.md",
       "docs/tutorials/01_stochastic_computing_fundamentals.md",
       "docs/tutorials/02_building_your_first_snn.md",
       "docs/tutorials/03_surrogate_gradient_training.md",
@@ -7442,6 +7443,8 @@
       "tests/test_studio_training_weight_restore.py",
       "tests/test_studio_training_weight_route_failures.py",
       "tests/test_studio_worker_routes.py",
+      "tests/test_studio_workspace_revisions.py",
+      "tests/test_studio_workspace_routes.py",
       "tests/test_supply_chain_audit.py",
       "tests/test_surrogate_python_differentiable_dense_layer.py",
       "tests/test_surrogate_python_surrogate_lif.py",

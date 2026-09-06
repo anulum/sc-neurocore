@@ -149,29 +149,120 @@ export function studioSavedSessionRestoreState(
   };
 }
 
+/**
+ * What reading the browser cache actually found.
+ *
+ * `corrupt` and `partial` are distinct from `empty` on purpose: a payload the
+ * browser mangled used to be reported as "you have no saved sessions", which
+ * looks exactly like data loss and tells the user nothing.
+ */
+export type StudioSessionReadStatus = "ok" | "empty" | "unavailable" | "corrupt" | "partial";
+
+export interface StudioSessionReadResult {
+  sessions: StudioSavedSession[];
+  status: StudioSessionReadStatus;
+  /** Entries that were present but unreadable; zero unless `partial`. */
+  discarded: number;
+}
+
+/** What writing to the browser cache achieved. */
+export type StudioSessionWriteStatus = "ok" | "unavailable" | "quota-exceeded" | "failed";
+
+export interface StudioSessionWriteResult {
+  status: StudioSessionWriteStatus;
+  /** Operator-facing reason; empty when the write succeeded. */
+  message: string;
+}
+
+function isQuotaError(error: unknown): boolean {
+  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
+    return error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED";
+  }
+  return error instanceof Error && /quota/i.test(error.message);
+}
+
+/**
+ * Read the cached sessions and say what state the cache was in.
+ *
+ * The browser cache is a convenience copy of workspaces the server holds; it
+ * is never the record of truth. Reporting corruption instead of silently
+ * returning an empty list is what lets the caller say so.
+ */
+export function readStudioSessionsResult(
+  storage: StudioSavedSessionStorage | null = browserSavedSessionStorage(),
+): StudioSessionReadResult {
+  if (storage === null) {
+    return { sessions: [], status: "unavailable", discarded: 0 };
+  }
+  let storedSessions: string | null | undefined;
+  try {
+    storedSessions = storage.getItem(STUDIO_SAVED_SESSIONS_KEY);
+  } catch {
+    return { sessions: [], status: "unavailable", discarded: 0 };
+  }
+  if (storedSessions === undefined || storedSessions === null) {
+    return { sessions: [], status: "empty", discarded: 0 };
+  }
+  let parsedSessions: unknown;
+  try {
+    parsedSessions = JSON.parse(storedSessions);
+  } catch {
+    return { sessions: [], status: "corrupt", discarded: 0 };
+  }
+  if (!Array.isArray(parsedSessions)) {
+    return { sessions: [], status: "corrupt", discarded: 0 };
+  }
+  const sessions = parsedSessions.filter(isStudioSavedSession);
+  const discarded = parsedSessions.length - sessions.length;
+  if (discarded > 0) {
+    return { sessions, status: "partial", discarded };
+  }
+  return { sessions, status: sessions.length === 0 ? "empty" : "ok", discarded: 0 };
+}
+
 export function readStoredStudioSessions(
   storage: StudioSavedSessionStorage | null = browserSavedSessionStorage(),
 ): StudioSavedSession[] {
-  const storedSessions = storage?.getItem(STUDIO_SAVED_SESSIONS_KEY);
-  if (storedSessions === undefined || storedSessions === null) {
-    return [];
-  }
-  try {
-    const parsedSessions: unknown = JSON.parse(storedSessions);
-    if (!Array.isArray(parsedSessions)) {
-      return [];
-    }
-    return parsedSessions.filter(isStudioSavedSession);
-  } catch {
-    return [];
-  }
+  return readStudioSessionsResult(storage).sessions;
 }
 
+/**
+ * Write the cached sessions and say whether it worked.
+ *
+ * A denied quota used to throw out of this call. The caller now gets a status
+ * it can show, and the server-side workspace revision remains the copy that
+ * matters.
+ */
 export function writeStoredStudioSessions(
   sessions: readonly StudioSavedSession[],
   storage: StudioSavedSessionStorage | null = browserSavedSessionStorage(),
-): void {
-  storage?.setItem(STUDIO_SAVED_SESSIONS_KEY, JSON.stringify(sessions));
+): StudioSessionWriteResult {
+  if (storage === null) {
+    return {
+      status: "unavailable",
+      message: "This browser has no local storage; sessions are kept on the server only.",
+    };
+  }
+  try {
+    storage.setItem(STUDIO_SAVED_SESSIONS_KEY, JSON.stringify(sessions));
+    return { status: "ok", message: "" };
+  } catch (error) {
+    if (isQuotaError(error)) {
+      return {
+        status: "quota-exceeded",
+        message:
+          "The browser refused to cache this session: local storage is full. " +
+          "Saved workspaces on the server are unaffected.",
+      };
+    }
+    return {
+      status: "failed",
+      message:
+        error instanceof Error
+          ? `The browser could not cache this session: ${error.message}`
+          : "The browser could not cache this session.",
+    };
+  }
 }
 
 export function upsertStudioSavedSession(

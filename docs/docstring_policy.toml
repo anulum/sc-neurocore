@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 449
+expected_file_count = 452
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1811,3 +1811,15 @@ rationale = "Generated model profile ledger writer and checker exposed through t
 [[file]]
 path = "tools/readiness_evidence_ledger.py"
 rationale = "Generated readiness evidence ledger writer and freshness check used by the readiness regression."
+
+[[file]]
+path = "src/sc_neurocore/studio/workspace_schema.py"
+rationale = "Workspace revision schema, forward migration and the atomic write that replaces the truncating save."
+
+[[file]]
+path = "src/sc_neurocore/studio/workspace_store.py"
+rationale = "Append-only workspace revisions with conflict detection on save; the public surface Studio persistence is built on."
+
+[[file]]
+path = "src/sc_neurocore/studio/workspace_lifecycle.py"
+rationale = "Fork, recoverable delete, restore, export and import over stored workspace revisions."

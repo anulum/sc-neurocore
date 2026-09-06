@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  readStudioSessionsResult,
   STUDIO_SAVED_SESSIONS_KEY,
   readStoredStudioSessions,
   removeStudioSavedSession,
@@ -198,5 +199,90 @@ describe("Studio saved-session persistence", () => {
       trial: "fresh",
       frequencyHz: 40,
     })).toEqual({ ...demoInput, seed: null, trial: "fresh", frequencyHz: 40 });
+  });
+});
+
+describe("browser cache status", () => {
+  const key = "sc-studio-sessions";
+
+  function storage(initial: Record<string, string> = {}, onSet?: (value: string) => void) {
+    const data = { ...initial };
+    return {
+      getItem: (name: string) => (name in data ? data[name] : null),
+      setItem: (name: string, value: string) => {
+        onSet?.(value);
+        data[name] = value;
+      },
+      removeItem: (name: string) => {
+        delete data[name];
+      },
+    };
+  }
+
+  it("reports an absent cache rather than pretending it is empty", () => {
+    expect(readStudioSessionsResult(null)).toEqual({
+      sessions: [],
+      status: "unavailable",
+      discarded: 0,
+    });
+  });
+
+  it("reports a corrupt payload instead of silently losing the sessions", () => {
+    const result = readStudioSessionsResult(storage({ [key]: "{not json" }));
+    expect(result.status).toBe("corrupt");
+    expect(result.sessions).toEqual([]);
+  });
+
+  it("reports how many entries it had to discard", () => {
+    const good = { name: "a", savedAt: 1, state: {} };
+    const result = readStudioSessionsResult(
+      storage({ [key]: JSON.stringify([good, { rubbish: true }]) }),
+    );
+    expect(result.status).toBe("partial");
+    expect(result.discarded).toBe(1);
+    expect(result.sessions).toHaveLength(1);
+  });
+
+  it("distinguishes an empty cache from a populated one", () => {
+    expect(readStudioSessionsResult(storage({ [key]: "[]" })).status).toBe("empty");
+    const good = { name: "a", savedAt: 1, state: {} };
+    expect(readStudioSessionsResult(storage({ [key]: JSON.stringify([good]) })).status).toBe("ok");
+  });
+
+  it("turns a denied quota into a message instead of an exception", () => {
+    const denying = storage({}, () => {
+      throw new DOMException("out of space", "QuotaExceededError");
+    });
+
+    const result = writeStoredStudioSessions([], denying);
+
+    expect(result.status).toBe("quota-exceeded");
+    expect(result.message).toContain("local storage is full");
+    // The server-side workspace is the copy that matters, and the message says so.
+    expect(result.message).toContain("server");
+  });
+
+  it("reports any other write failure without throwing", () => {
+    const failing = storage({}, () => {
+      throw new Error("disk on fire");
+    });
+
+    const result = writeStoredStudioSessions([], failing);
+
+    expect(result.status).toBe("failed");
+    expect(result.message).toContain("disk on fire");
+  });
+
+  it("says when there is no storage to write to", () => {
+    expect(writeStoredStudioSessions([], null).status).toBe("unavailable");
+  });
+
+  it("succeeds quietly when the browser cooperates", () => {
+    const store = storage();
+    expect(writeStoredStudioSessions([{ name: "a", state: {} }], store)).toEqual({
+      status: "ok",
+      message: "",
+    });
+    expect(readStudioSessionsResult(store).sessions).toHaveLength(1);
   });
 });

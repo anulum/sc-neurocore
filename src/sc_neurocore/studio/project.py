@@ -8,23 +8,24 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
-import time
 from pathlib import Path
 from typing import Any
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
-from sc_neurocore.studio.project_manifest import (
-    build_project_save_manifest,
-    dump_project_payload,
-)
+from sc_neurocore.studio.project_manifest import build_project_save_manifest
 from sc_neurocore.studio.synthesis import EdaProcessLimits
+from sc_neurocore.studio.workspace_schema import PROJECT_PAYLOAD_VERSION, WorkspaceSchemaError
+from sc_neurocore.studio.workspace_store import WorkspaceStore
 
 _PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".sc-neurocore", "studio", "projects")
 
 logger = logging.getLogger(__name__)
+
+#: Payload version reported in save manifests; the revision document carries
+#: the same value so it satisfies the evidence-bundle project contract.
+_PROJECT_PAYLOAD_VERSION = PROJECT_PAYLOAD_VERSION
 
 _IDENTIFIER_KEY_CONTEXTS = {
     "module_name": "module name",
@@ -120,85 +121,209 @@ def _safe_path(name: str) -> Path:
     return path
 
 
-def save_project(name: str, state: dict[str, Any]) -> dict[str, Any]:
-    """Save full Studio state and return path-free evidence metadata."""
+def _store() -> WorkspaceStore:
+    """Return the versioned workspace store rooted at the project directory."""
+    return WorkspaceStore(root=_projects_root())
+
+
+def save_project(
+    name: str, state: dict[str, Any], *, expected_revision: int | None = None
+) -> dict[str, Any]:
+    """Save full Studio state as a new immutable revision.
+
+    Parameters
+    ----------
+    name:
+        Workspace name; one directory under the Studio project root.
+    state:
+        Complete Studio state to persist.
+    expected_revision:
+        The revision the caller edited. ``None`` means the caller believes the
+        workspace is new. A save from a revision that is no longer current is
+        refused with :class:`~sc_neurocore.studio.workspace_store.WorkspaceConflict`
+        rather than silently replacing the other editor's work.
+
+    Returns
+    -------
+    dict[str, Any]
+        Path-free evidence metadata, including the revision written and the
+        revision it descends from.
+
+    Raises
+    ------
+    ValueError
+        The name is unusable, the state is not an object, or it carries an
+        identifier that would later interpolate into HDL or MLIR source.
+    WorkspaceConflict
+        The workspace moved on while the caller was editing.
+    """
     _ensure_dir()
-    path = _safe_path(name)
     name = _safe_name(name)
     if not isinstance(state, dict):
         raise ValueError("Project state must be an object")
-    saved_at = time.time()
-    version = "0.3.0"
-    payload = {
-        "name": name,
-        "saved_at": saved_at,
-        "version": version,
-        "state": state,
-    }
-    _validate_hdl_identifiers(payload)
+    payload_for_validation = {"name": name, "state": state}
+    _validate_hdl_identifiers(payload_for_validation)
+    store = _store()
+    revision = store.save(name, state, expected_revision=expected_revision)
     manifest = build_project_save_manifest(
         name=name,
-        saved_at=saved_at,
-        version=version,
+        saved_at=revision.saved_at,
+        version=_PROJECT_PAYLOAD_VERSION,
         state=state,
-        project_payload=payload,
+        project_payload={
+            "name": name,
+            "saved_at": revision.saved_at,
+            "version": _PROJECT_PAYLOAD_VERSION,
+            "state": state,
+        },
     )
-    with open(path, "w") as f:
-        f.write(dump_project_payload(payload))
-        f.write("\n")
-    return manifest.to_public_dict()
+    public = manifest.to_public_dict()
+    public["revision"] = revision.revision
+    public["parent_revision"] = revision.parent
+    return public
 
 
-def load_project(name: str) -> dict[str, Any]:
-    """Load a saved project by name."""
-    path = _safe_path(name)
+def load_project(name: str, *, revision: int | None = None) -> dict[str, Any]:
+    """Load one revision of a saved workspace, defaulting to the current one.
+
+    Parameters
+    ----------
+    name:
+        Workspace name.
+    revision:
+        Revision to read. ``None`` reads the current one; an earlier number
+        reads history, which no later save can have rewritten.
+
+    Returns
+    -------
+    dict[str, Any]
+        The stored document, or ``{"error": ...}`` when the workspace or the
+        requested revision does not exist.
+
+    Raises
+    ------
+    ValueError
+        The name is unusable, the stored document is not a workspace this
+        build reads, or it carries an unsafe HDL-facing identifier.
+    """
     name = _safe_name(name)
-    if not os.path.exists(path):
-        return {"error": f"Project '{name}' not found"}
-    with open(path) as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise ValueError("Invalid project payload: expected object")
-    if not isinstance(data.get("state"), dict):
-        raise ValueError("Invalid project payload: 'state' must be an object")
-    stored_name = data.get("name")
-    if not isinstance(stored_name, str) or _safe_name(stored_name) != name:
+    store = _store()
+    try:
+        document = store.load(name, revision=revision)
+    except KeyError:
+        target = "" if revision is None else f" revision {revision}"
+        return {"error": f"Project '{name}'{target} not found"}
+    except WorkspaceSchemaError as exc:
+        raise ValueError(f"Invalid project payload: {exc}") from exc
+    stored_name = document.get("name")
+    if stored_name is not None and _safe_name(str(stored_name)) != name:
         raise ValueError("Invalid project payload: inconsistent project name")
-    _validate_hdl_identifiers(data)
-    return data
+    _validate_hdl_identifiers(document)
+    return document
 
 
 def list_projects() -> list[dict[str, Any]]:
-    """List all saved projects."""
+    """List every saved workspace with its current revision.
+
+    A workspace whose revisions cannot be read is reported with a ``null``
+    revision rather than omitted, so a corrupt store is visible instead of
+    looking empty.
+    """
     _ensure_dir()
-    projects = []
-    for fname in sorted(os.listdir(_projects_root())):
-        if not fname.endswith(".json"):
-            continue
-        path = _projects_root() / fname
+    store = _store()
+    projects: list[dict[str, Any]] = []
+    for summary in store.list_workspaces():
+        name = str(summary["name"])
         try:
-            with open(path) as f:
-                data = json.load(f)
-            projects.append(
-                {
-                    "name": data.get("name", fname[:-5]),
-                    "saved_at": data.get("saved_at"),
-                    "version": data.get("version"),
-                }
-            )
-        except (json.JSONDecodeError, OSError):
-            continue
+            document = store.load(name)
+            saved_at = document.get("saved_at")
+        except (KeyError, WorkspaceSchemaError):
+            saved_at = None
+        projects.append(
+            {
+                "name": name,
+                "revision": summary["revision"],
+                "revision_count": summary["revision_count"],
+                "saved_at": saved_at,
+                "version": _PROJECT_PAYLOAD_VERSION,
+            }
+        )
     return projects
 
 
 def delete_project(name: str) -> dict[str, Any]:
-    """Delete a saved project."""
-    path = _safe_path(name)
+    """Move a workspace to the recoverable trash.
+
+    Nothing is erased: the workspace and its whole revision history move
+    aside, and :func:`restore_project` brings them back. The returned token
+    identifies the deleted copy.
+    """
     name = _safe_name(name)
-    if not os.path.exists(path):
+    store = _store()
+    try:
+        destination = store.delete(name)
+    except KeyError:
         return {"error": f"Project '{name}' not found"}
-    os.remove(path)
-    return {"deleted": name}
+    return {"deleted": name, "recoverable": True, "token": destination.name}
+
+
+def list_deleted_projects() -> list[dict[str, Any]]:
+    """List the workspaces waiting in the recoverable trash, newest first."""
+    return [dict(entry) for entry in _store().deleted()]
+
+
+def restore_project(token: str) -> dict[str, Any]:
+    """Restore one deleted workspace under its original name.
+
+    Restoring onto a name that is in use is refused rather than performed:
+    overwriting a live workspace is the loss this store exists to prevent.
+    """
+    store = _store()
+    try:
+        name = store.restore(token)
+    except KeyError:
+        return {"error": "Deleted project not found"}
+    return {"restored": name, "revision": store.head_revision(name)}
+
+
+def fork_project(name: str, new_name: str, *, revision: int | None = None) -> dict[str, Any]:
+    """Copy one revision of a workspace into a new one.
+
+    The source workspace is untouched; the fork starts at revision 1.
+    """
+    name = _safe_name(name)
+    new_name = _safe_name(new_name)
+    store = _store()
+    try:
+        created = store.fork(name, new_name, revision=revision)
+    except KeyError:
+        return {"error": f"Project '{name}' not found"}
+    return {"forked": new_name, "from": name, "revision": created.revision}
+
+
+def project_revisions(name: str) -> list[dict[str, Any]]:
+    """Return every stored revision of one workspace, oldest first."""
+    return [revision.to_public_dict() for revision in _store().revisions(_safe_name(name))]
+
+
+def export_project(name: str, *, revision: int | None = None) -> dict[str, Any]:
+    """Return one revision as a self-contained document for transfer."""
+    name = _safe_name(name)
+    try:
+        return _store().export_document(name, revision=revision)
+    except KeyError:
+        return {"error": f"Project '{name}' not found"}
+
+
+def import_project(name: str, document: dict[str, Any]) -> dict[str, Any]:
+    """Create a workspace from an exported document."""
+    name = _safe_name(name)
+    store = _store()
+    try:
+        created = store.import_document(name, document)
+    except WorkspaceSchemaError as exc:
+        return {"error": f"Invalid workspace document: {exc}"}
+    return {"imported": name, "revision": created.revision}
 
 
 def run_pipeline(

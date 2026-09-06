@@ -10,6 +10,7 @@
 export {
   setStudioAuthToken,
   progressWebSocketProtocols,
+  StudioRequestError,
 } from "./http";
 
 export type * from "./types";
@@ -131,8 +132,11 @@ export {
 export {
   saveProject,
   loadProject,
+  listDeletedProjects,
+  listProjectRevisions,
   listProjects,
   deleteProject,
+  restoreProject,
   runPipeline,
 } from "./projectApi";
 

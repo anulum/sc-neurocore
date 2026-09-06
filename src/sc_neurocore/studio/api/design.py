@@ -28,8 +28,14 @@ from sc_neurocore.studio.network_graph import (
 )
 from sc_neurocore.studio.project import (
     delete_project,
+    export_project,
+    fork_project,
+    import_project,
+    list_deleted_projects,
     list_projects,
     load_project,
+    project_revisions,
+    restore_project,
     save_project,
 )
 
@@ -40,28 +46,96 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/project/save")
     def api_project_save(data: dict[str, Any]) -> Any:
+        """Save Studio state as a new immutable workspace revision.
+
+        ``expected_revision`` is the revision the caller loaded. Omitting it
+        claims the workspace is new; saving from a revision that is no longer
+        current is refused by the error boundary with HTTP 409 and the revision
+        that is current, so a second editor is told rather than overwritten.
+        """
         name = data.get("name", "")
         state = data.get("state", {})
         if not name:
             raise HTTPException(422, "Project name required")
-        return _safe(lambda: save_project(name, state))
+        expected = data.get("expected_revision")
+        if expected is not None and not isinstance(expected, int):
+            raise HTTPException(422, "expected_revision must be an integer revision number")
+        return _safe(lambda: save_project(name, state, expected_revision=expected))
 
     @router.get("/api/project/list")
     def api_project_list() -> Any:
+        """List saved workspaces with their current revision and history depth."""
         return list_projects()
 
     @router.get("/api/project/load/{name}")
-    def api_project_load(name: str) -> Any:
-        result = _safe(lambda: load_project(name))
+    def api_project_load(name: str, revision: int | None = None) -> Any:
+        """Load one workspace revision, defaulting to the current one."""
+        result = _safe(lambda: load_project(name, revision=revision))
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @router.get("/api/project/{name}/revisions")
+    def api_project_revisions(name: str) -> Any:
+        """List every stored revision of one workspace, oldest first."""
+        return _safe(lambda: {"name": name, "revisions": project_revisions(name)})
+
+    @router.post("/api/project/{name}/fork")
+    def api_project_fork(name: str, data: dict[str, Any]) -> Any:
+        """Copy one revision of a workspace into a new one, leaving the source alone."""
+        new_name = data.get("new_name", "")
+        if not new_name:
+            raise HTTPException(422, "new_name required")
+        revision = data.get("revision")
+        if revision is not None and not isinstance(revision, int):
+            raise HTTPException(422, "revision must be an integer revision number")
+        result = _safe(lambda: fork_project(name, new_name, revision=revision))
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result
 
     @router.delete("/api/project/{name}")
     def api_project_delete(name: str) -> Any:
+        """Move a workspace to the recoverable trash; nothing is erased."""
         result = _safe(lambda: delete_project(name))
         if "error" in result:
             raise HTTPException(404, result["error"])
+        return result
+
+    @router.get("/api/project/deleted")
+    def api_project_deleted() -> Any:
+        """List the workspaces waiting in the recoverable trash."""
+        return _safe(lambda: {"deleted": list_deleted_projects()})
+
+    @router.post("/api/project/restore")
+    def api_project_restore(data: dict[str, Any]) -> Any:
+        """Restore one deleted workspace under its original name."""
+        token = data.get("token", "")
+        if not token:
+            raise HTTPException(422, "token required")
+        result = _safe(lambda: restore_project(token))
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @router.get("/api/project/{name}/export")
+    def api_project_export(name: str, revision: int | None = None) -> Any:
+        """Export one revision as a self-contained transfer document."""
+        result = _safe(lambda: export_project(name, revision=revision))
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @router.post("/api/project/import")
+    def api_project_import(data: dict[str, Any]) -> Any:
+        """Create a workspace from an exported document."""
+        name = data.get("name", "")
+        document = data.get("document")
+        if not name or not isinstance(document, dict):
+            raise HTTPException(422, "name and document required")
+        result = _safe(lambda: import_project(name, document))
+        if "error" in result:
+            raise HTTPException(422, result["error"])
         return result
 
     @router.get("/api/graph/models")

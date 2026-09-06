@@ -14,7 +14,9 @@ import { buildProjectEvidenceModel } from "./projectEvidence";
 const response: ProjectSaveResponse = {
   evidence_classification: "project_workspace",
   name: "saved-network",
+  parent_revision: null,
   project_sha256: "a".repeat(64),
+  revision: 1,
   saved_at: 1_782_000_000,
   schema_version: "studio.project-save.v1",
   state_sha256: "b".repeat(64),

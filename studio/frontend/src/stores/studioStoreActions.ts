@@ -71,6 +71,8 @@ import {
   importNIR as apiImportNIR,
   saveProject as apiSaveProject,
   loadProject as apiLoadProject,
+  listDeletedProjects as apiListDeletedProjects,
+  restoreProject as apiRestoreProject,
   listProjects as apiListProjects,
   deleteProject as apiDeleteProject,
   runPipeline as apiRunPipeline,
@@ -112,9 +114,13 @@ import {
 } from "../studioSavedSessions";
 import {
   studioProjectSaveState,
+  studioProjectDeletedListedState,
+  studioProjectExpectedRevision,
   studioProjectFailureState,
   studioProjectListLoadedState,
   studioProjectRestoreState,
+  studioProjectRevisionFromLoadResponse,
+  studioProjectSaveFailureState,
   studioProjectSavedState,
   studioProjectStateFromLoadResponse,
 } from "../studioProjectState";
@@ -1048,20 +1054,22 @@ export function createStudioStoreActions(
 
   saveProjectToServer: async (name) => {
     const state = studioProjectSaveState(get());
+    const expected = studioProjectExpectedRevision(get().projectRevision, name);
     try {
-      const projectSaveResult = await apiSaveProject(name, state);
+      const projectSaveResult = await apiSaveProject(name, state, expected);
       set(studioProjectSavedState(projectSaveResult));
       await get().listServerProjects();
-    } catch (e) { set(studioProjectFailureState(e, "Project save failed")); }
+    } catch (e) { set(studioProjectSaveFailureState(e)); }
   },
 
-  loadProjectFromServer: async (name) => {
+  loadProjectFromServer: async (name, revision = null) => {
     try {
-      const data = await apiLoadProject(name);
+      const data = await apiLoadProject(name, revision);
       const projectState = studioProjectStateFromLoadResponse(data, get().trainingConfig);
       set({
         ...studioProjectRestoreState(projectState),
         ...compilerConfigurationInvalidatedState(),
+        projectRevision: studioProjectRevisionFromLoadResponse(data, name),
       });
       get().runSimulation();
     } catch (e) { set(studioProjectFailureState(e, "Project load failed")); }
@@ -1078,7 +1086,25 @@ export function createStudioStoreActions(
     try {
       await apiDeleteProject(name);
       await get().listServerProjects();
+      // A delete is recoverable, so the trash is refreshed with the list:
+      // the workspace has to be visible somewhere the moment it leaves here.
+      await get().listDeletedServerProjects();
     } catch (e) { set(studioProjectFailureState(e, "Project delete failed")); }
+  },
+
+  listDeletedServerProjects: async () => {
+    try {
+      const { deleted } = await apiListDeletedProjects();
+      set(studioProjectDeletedListedState(deleted));
+    } catch (e) { set(studioProjectFailureState(e, "Deleted project list failed")); }
+  },
+
+  restoreDeletedServerProject: async (token) => {
+    try {
+      await apiRestoreProject(token);
+      await get().listServerProjects();
+      await get().listDeletedServerProjects();
+    } catch (e) { set(studioProjectFailureState(e, "Project restore failed")); }
   },
 
   runPipelineAction: async () => {

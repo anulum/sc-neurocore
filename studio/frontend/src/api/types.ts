@@ -1465,18 +1465,55 @@ export interface NIRFormat {
 
 export interface ProjectSummary {
   name: string;
-  saved_at: number;
+  /** Null when the workspace's revisions cannot be read; it is still listed. */
+  saved_at: number | null;
+  revision: number | null;
+  revision_count: number;
   version: string;
+}
+
+/** One workspace waiting in the recoverable trash. */
+export interface DeletedProjectSummary {
+  deleted_at: number | null;
+  name: string;
+  token: string;
 }
 
 export interface ProjectSaveResponse {
   evidence_classification: "project_workspace";
   name: string;
+  /** The revision this save descends from; null for the first one. */
+  parent_revision: number | null;
   project_sha256: string;
+  /** The immutable revision this save wrote. */
+  revision: number;
   saved_at: number;
   schema_version: "studio.project-save.v1";
   state_sha256: string;
   version: string;
+}
+
+/** One immutable revision as reported by `/api/project/{name}/revisions`. */
+export interface ProjectRevision {
+  name: string;
+  parent: number | null;
+  revision: number;
+  saved_at: number;
+  schema_version: string;
+  state_sha256: string;
+}
+
+export interface ProjectRevisionList {
+  name: string;
+  revisions: ProjectRevision[];
+}
+
+/** The 409 body of a save made from a revision that is no longer current. */
+export interface WorkspaceConflictDetail {
+  actual_revision: number;
+  error: "workspace_conflict";
+  expected_revision: number | null;
+  reason: string;
 }
 
 export interface PipelineResult {

@@ -22,6 +22,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from sc_neurocore.studio.model_run_contract import ModelInputError, ModelSimulationFailure
+from sc_neurocore.studio.workspace_store import WorkspaceConflict
 
 
 logger = logging.getLogger("sc_neurocore.studio.app")
@@ -34,11 +35,18 @@ def _safe(fn: Callable[..., Any]) -> Any:
     :class:`ModelSimulationFailure`) become HTTP 422 with their structured
     public detail; other input errors become a generic 422 and anything else a
     logged 500 without internal details.
+
+    A :class:`WorkspaceConflict` becomes HTTP 409 with the revision that is
+    actually current. It is translated here rather than per route because it is
+    a ``ValueError``: a route that forgot it would report "invalid input" for a
+    save that was perfectly valid and simply arrived second.
     """
     try:
         return fn()
     except HTTPException:
         raise
+    except WorkspaceConflict as exc:
+        raise HTTPException(status_code=409, detail=exc.to_public_detail()) from None
     except (ModelInputError, ModelSimulationFailure) as exc:
         raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
     except (ValueError, TypeError, KeyError):

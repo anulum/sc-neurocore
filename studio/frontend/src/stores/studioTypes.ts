@@ -16,7 +16,8 @@ import type {
   SynthEstimate, MultiTargetResult, SynthToolInfo, SurrogateInfo, TrainingEpochMetrics,
   TrainingWeightRestorePlan, TrainingWeightRestoreResult, TrainingWeightAttachResult,
   TrainingWeightLiveAttachResult, PopulationNode, ProjectionEdge, GraphSimResult,
-  NIRFormat, ProjectSaveResponse, ProjectSummary, PipelineResult, StudioAuditExport,
+  DeletedProjectSummary, NIRFormat, ProjectSaveResponse, ProjectSummary, PipelineResult,
+  StudioAuditExport,
   StudioAuditStatus, StudioCapability, StudioAuditQuarantineArchivePurgeResult,
   StudioAuditQuarantineArchiveResult, StudioAuditQuarantineArchiveRetentionPlan,
   StudioAuditQuarantineArchiveRestoreResult, StudioAuditQuarantineArchiveValidation,
@@ -25,7 +26,10 @@ import type {
   StudioJobRecord, StudioJobStatus, StudioOperatorStatus,
 } from "../api/client";
 import type { StudioSavedSession } from "../studioSavedSessions";
-import type { StudioProjectTrainingConfig } from "../studioProjectState";
+import type {
+  StudioProjectRevisionPointer,
+  StudioProjectTrainingConfig,
+} from "../studioProjectState";
 import type { StudioNetworkParams } from "../studioInputState";
 import type { EvidenceBundleSurface } from "../evidenceBundles";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
@@ -126,6 +130,10 @@ export interface StudioState {
   progressMsg: string;
   graphErrors: string[];
   projectSaveResult: ProjectSaveResponse | null;
+  /** The workspace revision the editor loaded or last wrote. */
+  projectRevision: StudioProjectRevisionPointer | null;
+  /** Workspaces waiting in the recoverable trash, newest first. */
+  deletedProjects: DeletedProjectSummary[];
   serverProjects: ProjectSummary[];
   pipelineResult: PipelineResult | null;
   trainingJobId: string | null;
@@ -247,9 +255,11 @@ export interface StudioState {
   runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;
   saveProjectToServer: (name: string) => Promise<void>;
-  loadProjectFromServer: (name: string) => Promise<void>;
+  loadProjectFromServer: (name: string, revision?: number | null) => Promise<void>;
   listServerProjects: () => Promise<void>;
   deleteServerProject: (name: string) => Promise<void>;
+  listDeletedServerProjects: () => Promise<void>;
+  restoreDeletedServerProject: (token: string) => Promise<void>;
   runPipelineAction: () => Promise<void>;
   loadGraphModels: () => Promise<void>;
   addPopulation: (neuronType: "excitatory" | "inhibitory") => Promise<void>;

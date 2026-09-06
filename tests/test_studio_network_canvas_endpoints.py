@@ -123,7 +123,7 @@ class TestEndpoints:
         monkeypatch.setattr(
             design_routes,
             "load_project",
-            lambda name: {"name": name, "state": {"zoom": 2}},
+            lambda name, revision=None: {"name": name, "state": {"zoom": 2}},
         )
 
         response = client.get("/api/project/load/example")

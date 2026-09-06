@@ -11,6 +11,44 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Saving a Studio workspace can no longer destroy what was already saved.
+  Three failures, each reproduced through the public API before it was
+  replaced: two editors loaded the same workspace and the second save silently
+  replaced the first; `delete_project` removed the file with no way back; and a
+  save truncated the live file and wrote into it, so under a real
+  `RLIMIT_FSIZE` refusal a 156-byte workspace became 65,536 bytes of
+  unterminated JSON and loading it raised. A workspace is now an append-only
+  list of immutable revisions (`studio.workspace.v1`). A save states the
+  revision it was made from and a stale one is refused with HTTP 409 and the
+  revision that is current; a delete moves the workspace, with its whole
+  history, to a trash it can be restored from; and a revision is written to a
+  sibling temporary file, `fsync`ed and `os.replace`d into place, so a failed
+  write leaves the previous revision untouched. A workspace conflict is
+  translated once, in the Studio API error boundary, because it is a
+  `ValueError` and a route that forgot it would report "invalid input" for a
+  save that was valid and merely arrived second.
+- The Studio editor carries the revision it loaded and sends it with every
+  save. It does not adopt the revision a conflict reports: saving again with
+  the state it still holds is the lost update the conflict exists to prevent.
+  A refused save says so and says nothing was overwritten, and a failed request
+  now surfaces a structured error detail instead of `[object Object]`.
+
+### Added
+- Workspace history, forking and transfer: `GET /api/project/{name}/revisions`
+  lists every revision with its parent and state digest,
+  `GET /api/project/load/{name}?revision=N` reads one as it was written,
+  `POST /api/project/{name}/fork` copies a revision into a new workspace
+  without touching the source, and `GET /api/project/{name}/export` with
+  `POST /api/project/import` moves a workspace between installations. Forking
+  or importing onto a name in use is refused, not merged.
+- Recoverable deletion: `GET /api/project/deleted` lists what is waiting with a
+  restore token, `POST /api/project/restore` brings a workspace back under its
+  original name with every revision it had, and restoring onto a live name is
+  refused. The Studio projects panel shows the trash with a restore action, so
+  recovery does not require an API call.
+- `docs/studio/workspaces.md`: the on-disk layout, the save-against-a-revision
+  contract, history, transfer, deletion and what happens to a workspace written
+  by a newer schema.
 - A Studio started without a configured job root no longer shares one fixed
   directory with every other Studio on the host. Since the job ledger became
   durable, that shared path meant a second process — or a later run — opened

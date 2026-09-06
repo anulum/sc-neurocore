@@ -88,6 +88,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         },
     )
     body = response.json()
+    assert response.status_code == 200, body
     manager = _job_manager(app)
     evidence_job_id = body["job_id"]
     manifest = _json_artifact(manager, evidence_job_id, "evidence/manifest.json")

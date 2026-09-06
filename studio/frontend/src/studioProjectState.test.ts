@@ -8,10 +8,15 @@
 
 import { describe, expect, it } from "vitest";
 
+import { StudioRequestError } from "./api/client";
 import {
+  studioProjectDeletedListedState,
+  studioProjectExpectedRevision,
   studioProjectFailureState,
   studioProjectListLoadedState,
   studioProjectRestoreState,
+  studioProjectRevisionFromLoadResponse,
+  studioProjectSaveFailureState,
   studioProjectSaveState,
   studioProjectSavedState,
   studioProjectStateFromLoadResponse,
@@ -169,6 +174,8 @@ describe("Studio project state helpers", () => {
       evidence_classification: "project_workspace" as const,
       name: "demo",
       project_sha256: "a".repeat(64),
+      parent_revision: 2,
+      revision: 3,
       saved_at: 1782028800,
       schema_version: "studio.project-save.v1" as const,
       state_sha256: "b".repeat(64),
@@ -176,16 +183,88 @@ describe("Studio project state helpers", () => {
     };
     const summaries = [{
       name: "demo",
+      revision: 3,
+      revision_count: 3,
       saved_at: 1782028800,
       version: "studio.project.v1",
     }];
 
-    expect(studioProjectSavedState(saved)).toEqual({ projectSaveResult: saved });
+    expect(studioProjectSavedState(saved)).toEqual({
+      projectRevision: { name: saved.name, revision: 3 },
+      projectSaveResult: saved,
+    });
     expect(studioProjectListLoadedState(summaries)).toEqual({ serverProjects: summaries });
     expect(studioProjectRestoreState(snapshot())).toEqual(snapshot());
     expect(studioProjectFailureState(new Error("storage offline"), "fallback")).toEqual({
       error: "storage offline",
     });
     expect(studioProjectFailureState("bad", "fallback")).toEqual({ error: "fallback" });
+  });
+});
+
+describe("the revision an editor saves from", () => {
+  it("is the one it loaded, for the workspace it loaded", () => {
+    expect(studioProjectExpectedRevision({ name: "demo", revision: 4 }, "demo")).toBe(4);
+  });
+
+  it("is absent under a different name, so a save-as claims a new workspace", () => {
+    // Sending revision 4 under "copy" would refuse a legitimate first save of
+    // a workspace that does not exist yet.
+    expect(studioProjectExpectedRevision({ name: "demo", revision: 4 }, "copy")).toBeNull();
+  });
+
+  it("is absent before anything is loaded", () => {
+    expect(studioProjectExpectedRevision(null, "demo")).toBeNull();
+  });
+
+  it("comes back from a load response", () => {
+    expect(studioProjectRevisionFromLoadResponse({ revision: 7, state: {} }, "demo")).toEqual({
+      name: "demo",
+      revision: 7,
+    });
+  });
+
+  it("is null when the response carries no usable revision", () => {
+    // A legacy payload, an error body, or a nonsense number: the editor then
+    // saves as if the workspace were new, and the server decides.
+    expect(studioProjectRevisionFromLoadResponse({ state: {} }, "demo")).toBeNull();
+    expect(studioProjectRevisionFromLoadResponse({ revision: 0 }, "demo")).toBeNull();
+    expect(studioProjectRevisionFromLoadResponse({ revision: 1.5 }, "demo")).toBeNull();
+    expect(studioProjectRevisionFromLoadResponse("not a document", "demo")).toBeNull();
+  });
+});
+
+describe("a refused save", () => {
+  it("reports the conflict in words and says nothing was overwritten", () => {
+    const conflict = new StudioRequestError(
+      "the workspace moved to revision 5 while you were editing revision 3; reload and reapply your change.",
+      409,
+      { actual_revision: 5, error: "workspace_conflict", expected_revision: 3 },
+    );
+
+    expect(studioProjectSaveFailureState(conflict)).toEqual({
+      error:
+        "the workspace moved to revision 5 while you were editing revision 3; "
+        + "reload and reapply your change. Nothing was overwritten.",
+    });
+  });
+
+  it("falls back to the ordinary failure message for anything else", () => {
+    expect(studioProjectSaveFailureState(new Error("network down"))).toEqual({
+      error: "network down",
+    });
+    expect(studioProjectSaveFailureState("nonsense")).toEqual({ error: "Project save failed" });
+  });
+});
+
+describe("the recoverable trash", () => {
+  it("is carried into state as the server listed it", () => {
+    const deleted = [{ deleted_at: 1782028800, name: "demo", token: "demo.1782028800000" }];
+
+    expect(studioProjectDeletedListedState(deleted)).toEqual({ deletedProjects: deleted });
+  });
+
+  it("is empty rather than absent when nothing is deleted", () => {
+    expect(studioProjectDeletedListedState([])).toEqual({ deletedProjects: [] });
   });
 });

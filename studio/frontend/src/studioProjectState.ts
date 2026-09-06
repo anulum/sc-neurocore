@@ -6,7 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio project state snapshot helpers
 
+import { StudioRequestError } from "./api/client";
 import type {
+  DeletedProjectSummary,
   PopulationNode,
   ProjectSaveResponse,
   ProjectSummary,
@@ -48,12 +50,27 @@ export interface StudioProjectSnapshotInput {
 export interface StudioProjectStateSnapshot
   extends StudioProjectSnapshotInput, Record<string, unknown> {}
 
+/** Which workspace revision the editor is currently working from. */
+export interface StudioProjectRevisionPointer {
+  name: string;
+  revision: number;
+}
+
 export interface StudioProjectSavedStatePatch {
   projectSaveResult: ProjectSaveResponse;
+  projectRevision: StudioProjectRevisionPointer;
+}
+
+export interface StudioProjectRestorePointerPatch {
+  projectRevision: StudioProjectRevisionPointer | null;
 }
 
 export interface StudioProjectListLoadedStatePatch {
   serverProjects: ProjectSummary[];
+}
+
+export interface StudioProjectDeletedListedStatePatch {
+  deletedProjects: DeletedProjectSummary[];
 }
 
 export interface StudioProjectFailureStatePatch {
@@ -84,13 +101,69 @@ export function studioProjectSaveState(input: StudioProjectSnapshotInput): Studi
 export function studioProjectSavedState(
   projectSaveResult: ProjectSaveResponse,
 ): StudioProjectSavedStatePatch {
-  return { projectSaveResult };
+  return {
+    projectRevision: {
+      name: projectSaveResult.name,
+      revision: projectSaveResult.revision,
+    },
+    projectSaveResult,
+  };
+}
+
+/**
+ * The revision to send as `expected_revision` when saving under `name`.
+ *
+ * Null means "the editor has not loaded this workspace", which the server
+ * reads as a claim that it is new. Saving under a different name than the one
+ * that was loaded is such a claim, so the pointer only counts for its own
+ * workspace.
+ */
+export function studioProjectExpectedRevision(
+  pointer: StudioProjectRevisionPointer | null,
+  name: string,
+): number | null {
+  return pointer !== null && pointer.name === name ? pointer.revision : null;
+}
+
+/** Read the revision out of a load response, or null when it carries none. */
+export function studioProjectRevisionFromLoadResponse(
+  response: unknown,
+  name: string,
+): StudioProjectRevisionPointer | null {
+  const revision = recordValue(response).revision;
+  if (typeof revision !== "number" || !Number.isInteger(revision) || revision < 1) {
+    return null;
+  }
+  return { name, revision };
+}
+
+/**
+ * Report a refused save without adopting the revision that refused it.
+ *
+ * Taking the server's current revision here would make the next save
+ * overwrite the other editor's work with the state this one still holds —
+ * the lost update the conflict exists to prevent. The editor keeps its own
+ * revision and the message says the workspace was left alone.
+ */
+export function studioProjectSaveFailureState(
+  error: unknown,
+): StudioProjectFailureStatePatch {
+  if (error instanceof StudioRequestError && error.status === 409) {
+    return { error: `${error.message} Nothing was overwritten.` };
+  }
+  return studioProjectFailureState(error, "Project save failed");
 }
 
 export function studioProjectListLoadedState(
   serverProjects: ProjectSummary[],
 ): StudioProjectListLoadedStatePatch {
   return { serverProjects };
+}
+
+export function studioProjectDeletedListedState(
+  deletedProjects: DeletedProjectSummary[],
+): StudioProjectDeletedListedStatePatch {
+  return { deletedProjects };
 }
 
 export function studioProjectRestoreState(

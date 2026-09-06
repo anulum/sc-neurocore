@@ -13,6 +13,30 @@ from __future__ import annotations
 from tests.studio_integration_support import *  # noqa: F403
 
 
+def _write_revision(root: Path, name: str, document: object, *, revision: int = 1) -> None:
+    """Store one revision file directly, bypassing the save path.
+
+    These cases are about a workspace on disk that nobody validated — a hand
+    edit, a partial restore, a foreign file — so they write the revision
+    themselves rather than going through ``save_project``.
+    """
+
+    directory = root / name / "revisions"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"{revision}.json").write_text(json.dumps(document), encoding="utf-8")
+    (root / name / "head.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "studio.workspace.v1",
+                "schema_number": 1,
+                "name": name,
+                "state": {"revision": revision, "saved_at": 1.0},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 class TestProjectSaveLoad:
     def test_save_project(
         self,
@@ -57,9 +81,8 @@ class TestProjectSaveLoad:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
-        bad_path = tmp_path / "bad_payload.json"
-        bad_path.write_text(json.dumps({"name": "bad_payload", "state": []}), encoding="utf-8")
-        with pytest.raises(ValueError, match="'state' must be an object"):
+        _write_revision(tmp_path, "bad_payload", {"name": "bad_payload", "state": []})
+        with pytest.raises(ValueError, match="'state' object"):
             load_project("bad_payload")
 
     def test_load_rejects_non_object_project_payload(
@@ -68,10 +91,9 @@ class TestProjectSaveLoad:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
-        bad_path = tmp_path / "bad_payload.json"
-        bad_path.write_text(json.dumps(["not", "an", "object"]), encoding="utf-8")
+        _write_revision(tmp_path, "bad_payload", ["not", "an", "object"])
 
-        with pytest.raises(ValueError, match="expected object"):
+        with pytest.raises(ValueError, match="must be an object"):
             load_project("bad_payload")
 
     def test_load_rejects_inconsistent_project_name(
@@ -80,11 +102,7 @@ class TestProjectSaveLoad:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr("sc_neurocore.studio.project._PROJECTS_DIR", str(tmp_path))
-        bad_path = tmp_path / "expected.json"
-        bad_path.write_text(
-            json.dumps({"name": "other", "state": {}}),
-            encoding="utf-8",
-        )
+        _write_revision(tmp_path, "expected", {"name": "other", "state": {}})
 
         with pytest.raises(ValueError, match="inconsistent project name"):
             load_project("expected")

@@ -5365,8 +5365,69 @@
         "summary": "Api Preset Default Flow Verify"
       }
     },
+    "/api/project/deleted": {
+      "get": {
+        "description": "List the workspaces waiting in the recoverable trash.",
+        "operationId": "api_project_deleted_api_project_deleted_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Deleted Api Project Deleted Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Project Deleted"
+      }
+    },
+    "/api/project/import": {
+      "post": {
+        "description": "Create a workspace from an exported document.",
+        "operationId": "api_project_import_api_project_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Import Api Project Import Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Import"
+      }
+    },
     "/api/project/list": {
       "get": {
+        "description": "List saved workspaces with their current revision and history depth.",
         "operationId": "api_project_list_api_project_list_get",
         "responses": {
           "200": {
@@ -5385,6 +5446,7 @@
     },
     "/api/project/load/{name}": {
       "get": {
+        "description": "Load one workspace revision, defaulting to the current one.",
         "operationId": "api_project_load_api_project_load__name__get",
         "parameters": [
           {
@@ -5394,6 +5456,22 @@
             "schema": {
               "title": "Name",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
             }
           }
         ],
@@ -5422,8 +5500,50 @@
         "summary": "Api Project Load"
       }
     },
+    "/api/project/restore": {
+      "post": {
+        "description": "Restore one deleted workspace under its original name.",
+        "operationId": "api_project_restore_api_project_restore_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Restore Api Project Restore Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Restore"
+      }
+    },
     "/api/project/save": {
       "post": {
+        "description": "Save Studio state as a new immutable workspace revision.\n\n``expected_revision`` is the revision the caller loaded. Omitting it\nclaims the workspace is new; saving from a revision that is no longer\ncurrent is refused by the error boundary with HTTP 409 and the revision\nthat is current, so a second editor is told rather than overwritten.",
         "operationId": "api_project_save_api_project_save_post",
         "requestBody": {
           "content": {
@@ -5464,6 +5584,7 @@
     },
     "/api/project/{name}": {
       "delete": {
+        "description": "Move a workspace to the recoverable trash; nothing is erased.",
         "operationId": "api_project_delete_api_project__name__delete",
         "parameters": [
           {
@@ -5499,6 +5620,154 @@
           }
         },
         "summary": "Api Project Delete"
+      }
+    },
+    "/api/project/{name}/export": {
+      "get": {
+        "description": "Export one revision as a self-contained transfer document.",
+        "operationId": "api_project_export_api_project__name__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Export Api Project  Name  Export Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Export"
+      }
+    },
+    "/api/project/{name}/fork": {
+      "post": {
+        "description": "Copy one revision of a workspace into a new one, leaving the source alone.",
+        "operationId": "api_project_fork_api_project__name__fork_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Fork Api Project  Name  Fork Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Fork"
+      }
+    },
+    "/api/project/{name}/revisions": {
+      "get": {
+        "description": "List every stored revision of one workspace, oldest first.",
+        "operationId": "api_project_revisions_api_project__name__revisions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Revisions Api Project  Name  Revisions Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Revisions"
       }
     },
     "/api/sensitivity": {
