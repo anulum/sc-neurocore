@@ -13,6 +13,8 @@
  * rendering can be unit-tested without mounting SimulationPlot.
  */
 
+import { at } from "./arrayAt";
+
 export const PLOT_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8", "#90a4ae"] as const;
 export const PLOT_BG = "#0d1117";
 export const PLOT_PANEL_BG = "#0a0e14";
@@ -105,6 +107,14 @@ export function drawAxes(
 
 /**
  * Stroke a polyline of ``(xData[i], yData[i])`` samples into a plot panel.
+ *
+ * The two lists are paired samples of one trace and callers pass them from the
+ * same response, so a length mismatch means the response itself is malformed.
+ * This draws the paired prefix rather than throwing: a render path that fails
+ * takes the whole plot down for one bad trace, and the previous behaviour —
+ * reading past the end and stroking `NaN` coordinates — was worse than either.
+ * Surfacing a malformed response to the reader belongs to whoever validates
+ * responses, not to a drawing primitive.
  */
 export function drawLine(
   ctx: CanvasRenderingContext2D,
@@ -121,14 +131,15 @@ export function drawLine(
   color: string,
   lineWidth = 1.2,
 ): void {
+  const paired = Math.min(xData.length, yData.length);
   const xRange = xMax - xMin || 1;
   const yRange = yMax - yMin || 1;
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
   ctx.beginPath();
-  for (let i = 0; i < xData.length; i++) {
-    const x = x0 + ((xData[i] - xMin) / xRange) * pw;
-    const y = y0 + ph - ((yData[i] - yMin) / yRange) * ph;
+  for (let i = 0; i < paired; i++) {
+    const x = x0 + ((at(xData, i) - xMin) / xRange) * pw;
+    const y = y0 + ph - ((at(yData, i) - yMin) / yRange) * ph;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }

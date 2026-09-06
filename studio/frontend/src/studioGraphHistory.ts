@@ -137,9 +137,7 @@ export function graphUndone(
   current: StudioGraphSnapshot,
 ): StudioGraphHistoryStep | null {
   const snapshot = history.past[history.past.length - 1];
-  // An empty history yields `undefined` here; the array type says otherwise
-  // only because `noUncheckedIndexedAccess` is not on yet.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  // An empty history yields `undefined` here.
   if (snapshot === undefined) {
     return null;
   }
@@ -164,9 +162,7 @@ export function graphRedone(
   current: StudioGraphSnapshot,
 ): StudioGraphHistoryStep | null {
   const [snapshot, ...future] = history.future;
-  // An empty history yields `undefined` here; the array type says otherwise
-  // only because `noUncheckedIndexedAccess` is not on yet.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  // An empty history yields `undefined` here.
   if (snapshot === undefined) {
     return null;
   }

@@ -87,11 +87,8 @@ export function studioGraphIssueLocations(
     const attribute = matched?.[3] ?? "";
     if (matched?.[1] === "populations") {
       const population = populations[Number(matched[2])];
-      // An index the graph no longer holds is `undefined` at runtime; the
-      // array type says otherwise only because `noUncheckedIndexedAccess`
-      // is not on yet, and this guard is what keeps an unplaceable message
-      // from being dropped.
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      // An index the graph no longer holds is `undefined`, and this guard is
+      // what keeps an unplaceable message from being dropped.
       if (population !== undefined) {
         return {
           attribute,
@@ -105,11 +102,8 @@ export function studioGraphIssueLocations(
     }
     if (matched?.[1] === "projections") {
       const projection = projections[Number(matched[2])];
-      // An index the graph no longer holds is `undefined` at runtime; the
-      // array type says otherwise only because `noUncheckedIndexedAccess`
-      // is not on yet, and this guard is what keeps an unplaceable message
-      // from being dropped.
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      // An index the graph no longer holds is `undefined`, and this guard is
+      // what keeps an unplaceable message from being dropped.
       if (projection !== undefined) {
         return {
           attribute,

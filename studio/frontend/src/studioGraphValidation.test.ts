@@ -15,6 +15,7 @@
  * being dropped because its field did not fit the shape this build expects.
  */
 
+import { at } from "./arrayAt";
 import { describe, expect, it } from "vitest";
 
 import type { GraphValidation, PopulationNode, ProjectionEdge } from "./api/client";
@@ -59,7 +60,7 @@ const DT_ISSUE = { field: "dt", message: "Graph dt must be a positive finite num
 
 describe("locating a failure", () => {
   it("resolves a population index to that population", () => {
-    const [located] = studioGraphIssueLocations([COUNT_ISSUE], POPULATIONS, PROJECTIONS);
+    const located = at(studioGraphIssueLocations([COUNT_ISSUE], POPULATIONS, PROJECTIONS), 0);
 
     expect(located.kind).toBe("population");
     expect(located.id).toBe("p2");
@@ -69,7 +70,7 @@ describe("locating a failure", () => {
   });
 
   it("names a projection by its endpoints, which is how the canvas shows it", () => {
-    const [located] = studioGraphIssueLocations([WEIGHT_ISSUE], POPULATIONS, PROJECTIONS);
+    const located = at(studioGraphIssueLocations([WEIGHT_ISSUE], POPULATIONS, PROJECTIONS), 0);
 
     expect(located.kind).toBe("projection");
     expect(located.id).toBe("e1");
@@ -78,13 +79,13 @@ describe("locating a failure", () => {
   });
 
   it("falls back to the identifier when an endpoint has no label to give", () => {
-    const [located] = studioGraphIssueLocations([WEIGHT_ISSUE], [], PROJECTIONS);
+    const located = at(studioGraphIssueLocations([WEIGHT_ISSUE], [], PROJECTIONS), 0);
 
     expect(located.subject).toBe("p1 → p2");
   });
 
   it("keeps a failure about the run as a whole", () => {
-    const [located] = studioGraphIssueLocations([DT_ISSUE], POPULATIONS, PROJECTIONS);
+    const located = at(studioGraphIssueLocations([DT_ISSUE], POPULATIONS, PROJECTIONS), 0);
 
     expect(located.kind).toBe("graph");
     expect(located.id).toBeNull();
@@ -93,10 +94,13 @@ describe("locating a failure", () => {
   });
 
   it("carries a nested attribute path whole", () => {
-    const [located] = studioGraphIssueLocations(
-      [{ field: "populations[0].params.tau", message: "unknown parameter tau" }],
-      POPULATIONS,
-      PROJECTIONS,
+    const located = at(
+      studioGraphIssueLocations(
+        [{ field: "populations[0].params.tau", message: "unknown parameter tau" }],
+        POPULATIONS,
+        PROJECTIONS,
+      ),
+      0,
     );
 
     expect(located.id).toBe("p1");
@@ -106,10 +110,13 @@ describe("locating a failure", () => {
   it("keeps an index the graph no longer holds instead of dropping the message", () => {
     // The graph can change between the request and the answer. A message that
     // cannot be placed still has to be read.
-    const [located] = studioGraphIssueLocations(
-      [{ field: "projections[7].delay", message: "Projection e8 delay is not a whole step" }],
-      POPULATIONS,
-      PROJECTIONS,
+    const located = at(
+      studioGraphIssueLocations(
+        [{ field: "projections[7].delay", message: "Projection e8 delay is not a whole step" }],
+        POPULATIONS,
+        PROJECTIONS,
+      ),
+      0,
     );
 
     expect(located.kind).toBe("graph");
@@ -119,10 +126,13 @@ describe("locating a failure", () => {
   });
 
   it("keeps a field shape this build does not recognise", () => {
-    const [located] = studioGraphIssueLocations(
-      [{ field: "monitors[0].kind", message: "unsupported monitor" }],
-      POPULATIONS,
-      PROJECTIONS,
+    const located = at(
+      studioGraphIssueLocations(
+        [{ field: "monitors[0].kind", message: "unsupported monitor" }],
+        POPULATIONS,
+        PROJECTIONS,
+      ),
+      0,
     );
 
     expect(located.kind).toBe("graph");

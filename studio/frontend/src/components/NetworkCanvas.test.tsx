@@ -7,6 +7,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { at } from "../arrayAt";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -230,7 +231,7 @@ describe("NetworkCanvas projection editor", () => {
       delay!.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
-    expect(useStudioStore.getState().graphProjections[0].delay).toBe(2);
+    expect(at(useStudioStore.getState().graphProjections, 0).delay).toBe(2);
     await act(async () => root.unmount());
     container.remove();
   });
@@ -441,7 +442,7 @@ describe("NetworkCanvas duplicate", () => {
 
     const state = useStudioStore.getState();
     const copies = new Set(state.graphPopulations.slice(2).map((one) => one.id));
-    const copied = state.graphProjections[1];
+    const copied = at(state.graphProjections, 1);
     expect(copies.has(copied.source)).toBe(true);
     expect(copies.has(copied.target)).toBe(true);
   });

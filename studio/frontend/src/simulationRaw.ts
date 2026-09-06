@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio raw-trace accessors
 
+import { at } from "./arrayAt";
 import type { SimulateResponse } from "./api/client";
 
 /**
@@ -94,16 +95,17 @@ export function rawStepAtTime(result: SimulateResponse, timeMs: number): number 
   let hi = times.length - 1;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (times[mid] < timeMs) {
+    if (at(times, mid) < timeMs) {
       lo = mid + 1;
     } else {
       hi = mid;
     }
   }
-  const candidate = lo > 0 && Math.abs(times[lo - 1] - timeMs) <= Math.abs(times[lo] - timeMs) ? lo - 1 : lo;
+  const candidate =
+    lo > 0 && Math.abs(at(times, lo - 1) - timeMs) <= Math.abs(at(times, lo) - timeMs) ? lo - 1 : lo;
   const sampleIndex = result.display?.sample_index;
   if (sampleIndex?.length === times.length) {
-    return sampleIndex[candidate];
+    return at(sampleIndex, candidate);
   }
   return Math.min(Math.max(Math.round(timeMs / result.dt) - 1, 0), result.n_steps - 1);
 }
@@ -124,11 +126,13 @@ export function displayPositionAtTime(result: SimulateResponse, timeMs: number):
   let hi = times.length - 1;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (times[mid] < timeMs) {
+    if (at(times, mid) < timeMs) {
       lo = mid + 1;
     } else {
       hi = mid;
     }
   }
-  return lo > 0 && Math.abs(times[lo - 1] - timeMs) <= Math.abs(times[lo] - timeMs) ? lo - 1 : lo;
+  return lo > 0 && Math.abs(at(times, lo - 1) - timeMs) <= Math.abs(at(times, lo) - timeMs)
+    ? lo - 1
+    : lo;
 }

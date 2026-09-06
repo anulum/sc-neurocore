@@ -17,6 +17,7 @@
  * division as the projection editor — parse here, decide there.
  */
 
+import { at } from "./arrayAt";
 import { describe, expect, it } from "vitest";
 
 import type { PopulationModelContract, PopulationNode } from "./api/client";
@@ -110,7 +111,7 @@ describe("the external input", () => {
     const fields = studioPopulationDriveFields(population());
 
     expect(fields.map((field) => field.field)).toEqual(["drive.kind"]);
-    expect(fields[0].choices).toEqual([...STUDIO_DRIVE_KINDS]);
+    expect(at(fields, 0).choices).toEqual([...STUDIO_DRIVE_KINDS]);
   });
 
   it("offers the current of a constant drive", () => {

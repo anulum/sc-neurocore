@@ -84,4 +84,18 @@ describe("drawLine", () => {
     expect(ctx.lineTo).toHaveBeenCalledWith(100, 0);
     expect(ctx.stroke).toHaveBeenCalled();
   });
+
+  it("draws the paired prefix when the two lists disagree in length", () => {
+    const ctx = mockContext() as CanvasRenderingContext2D;
+    drawLine(ctx, 0, 0, 100, 50, [0, 0.5, 1], [0, 10], 0, 1, 0, 10, "#4fc3f7", 2);
+    expect(ctx.moveTo).toHaveBeenCalledExactlyOnceWith(0, 50);
+    expect(ctx.lineTo).toHaveBeenCalledExactlyOnceWith(50, 0);
+  });
+
+  it("draws nothing at all rather than a NaN path when one list is empty", () => {
+    const ctx = mockContext() as CanvasRenderingContext2D;
+    drawLine(ctx, 0, 0, 100, 50, [0, 1], [], 0, 1, 0, 10, "#4fc3f7", 2);
+    expect(ctx.moveTo).not.toHaveBeenCalled();
+    expect(ctx.lineTo).not.toHaveBeenCalled();
+  });
 });

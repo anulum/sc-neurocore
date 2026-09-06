@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio compiler request state custody tests
 
+import { at } from "../arrayAt";
 import { afterEach, expect, it, vi } from "vitest";
 import { useStudioStore } from "./studio";
 
@@ -33,7 +34,7 @@ it.each([
   });
   await useStudioStore.getState()[action]();
   expect(fetch).toHaveBeenCalledOnce();
-  const [url, options] = fetch.mock.calls[0];
+  const [url, options] = at(fetch.mock.calls, 0);
   expect(url).toBe(route);
   const body = options?.body;
   expect(JSON.parse(typeof body === "string" ? body : JSON.stringify(body))).toMatchObject({

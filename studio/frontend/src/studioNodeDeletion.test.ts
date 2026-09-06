@@ -22,6 +22,7 @@
  * back and cannot be referenced by a run.
  */
 
+import { at } from "./arrayAt";
 import { applyNodeChanges, type NodeChange } from "@xyflow/react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -142,7 +143,7 @@ describe("what the graph looks like afterwards", () => {
 
     const graph = studioGraphWithoutPopulation(
       { populations: POPULATIONS, projections: PROJECTIONS },
-      plan.removed[0],
+      at(plan.removed, 0),
     );
 
     expect(graph.populations.map((p) => p.id)).toEqual(["p1", "p3"]);

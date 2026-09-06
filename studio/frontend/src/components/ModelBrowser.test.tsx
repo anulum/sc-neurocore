@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { at } from "../arrayAt";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -234,7 +235,7 @@ describe("ModelBrowser", () => {
       "Integrate-and-Fire",
       "Map-based",
     ]);
-    expect(grouped["Integrate-and-Fire"].map((m) => m.name)).toEqual([
+    expect((grouped["Integrate-and-Fire"] ?? []).map((m) => m.name)).toEqual([
       "AdExNeuron",
       "GLIFNeuron",
     ]);
@@ -249,7 +250,7 @@ describe("ModelBrowser", () => {
       behaviors: NONE,
     });
     expect(Object.keys(grouped)).toEqual(["Cerebellar"]);
-    expect(grouped["Cerebellar"].map((m) => m.name)).toEqual(["GolgiCell"]);
+    expect((grouped["Cerebellar"] ?? []).map((m) => m.name)).toEqual(["GolgiCell"]);
   });
 
   it("restricts the catalogue to a minimum evidence tier", () => {
@@ -292,10 +293,10 @@ describe("ModelBrowser", () => {
 
   it("restricts the catalogue to a measured behaviour tag", () => {
     const tagged = [
-      { ...CATALOGUE[0], behavior_tags: ["excitable", "tonic", "rate-coded"] },
-      { ...CATALOGUE[1], behavior_tags: ["excitable", "adapting"] },
-      { ...CATALOGUE[2], behavior_tags: ["quiescent"] },
-      { ...CATALOGUE[3], behavior_tags: ["excitable", "bursting"] },
+      { ...at(CATALOGUE, 0), behavior_tags: ["excitable", "tonic", "rate-coded"] },
+      { ...at(CATALOGUE, 1), behavior_tags: ["excitable", "adapting"] },
+      { ...at(CATALOGUE, 2), behavior_tags: ["quiescent"] },
+      { ...at(CATALOGUE, 3), behavior_tags: ["excitable", "bursting"] },
     ];
     const adapting = filterAndGroupModels(tagged, {
       modelFilter: "",
@@ -323,7 +324,7 @@ describe("ModelBrowser", () => {
   });
 
   it("ignores a behaviour filter that no model carries", () => {
-    const tagged = [{ ...CATALOGUE[0], behavior_tags: ["excitable", "tonic"] }];
+    const tagged = [{ ...at(CATALOGUE, 0), behavior_tags: ["excitable", "tonic"] }];
     const grouped = filterAndGroupModels(tagged, {
       modelFilter: "",
       familyFilter: "",

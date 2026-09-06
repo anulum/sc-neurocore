@@ -11,6 +11,7 @@ import type { ReplayPack } from "./api/types";
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
 import { downloadCanvasPng } from "./browserCanvasExport";
 import { fullDriveTrace, fullSampleTimes, fullStateNames, fullStateTrace } from "./simulationRaw";
+import { at } from "./arrayAt";
 import { PLOT_AXIS } from "./simulationPlotCanvas";
 
 const SVG_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"] as const;
@@ -114,7 +115,7 @@ export function simulationSvgText(result: SimulateResponse): string {
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const variables = Object.keys(result.states);
-  const values = variables.flatMap((variable) => result.states[variable]);
+  const values = variables.flatMap((variable) => result.states[variable] ?? []);
   const yMin = values.length > 0 ? Math.min(...values) : 0;
   const yMax = values.length > 0 ? Math.max(...values) : 1;
   const yRange = yMax - yMin || 1;
@@ -132,12 +133,12 @@ export function simulationSvgText(result: SimulateResponse): string {
     svg += `<line x1="${padding.left}" y1="${y}" x2="${padding.left + plotWidth}" y2="${y}" stroke="#1a1f2a" stroke-width="0.5"/>\n`;
   }
   const stride = Math.max(1, Math.floor(result.time.length / 2000));
-  for (let variableIndex = 0; variableIndex < variables.length; variableIndex++) {
-    const variableValues = result.states[variables[variableIndex]];
+  for (const [variableIndex, variable] of variables.entries()) {
+    const variableValues = result.states[variable] ?? [];
     const points: string[] = [];
     for (let index = 0; index < result.time.length; index += stride) {
       points.push(
-        `${toX(result.time[index]).toFixed(1)},${toY(variableValues[index]).toFixed(1)}`,
+        `${toX(at(result.time, index)).toFixed(1)},${toY(at(variableValues, index)).toFixed(1)}`,
       );
     }
     svg += `<polyline points="${points.join(" ")}" fill="none" stroke="${SVG_COLORS[variableIndex % SVG_COLORS.length]}" stroke-width="1.5"/>\n`;
@@ -154,9 +155,10 @@ export function simulationSvgText(result: SimulateResponse): string {
     const value = yMin + (yRange * index) / 4;
     svg += `<text x="${padding.left - 5}" y="${toY(value) + 3}" text-anchor="end" fill="#8b949e" font-size="9" font-family="monospace">${value.toFixed(1)}</text>\n`;
   }
-  for (let variableIndex = 0; variableIndex < variables.length; variableIndex++) {
+  for (const [variableIndex, variable] of variables.entries()) {
     const x = padding.left + variableIndex * 80;
-    svg += `<line x1="${x}" y1="10" x2="${x + 15}" y2="10" stroke="${SVG_COLORS[variableIndex % SVG_COLORS.length]}" stroke-width="2"/><text x="${x + 18}" y="13" fill="#8b949e" font-size="10">${escapeSvgText(variables[variableIndex])}</text>\n`;
+    const stroke = at(SVG_COLORS as readonly string[], variableIndex % SVG_COLORS.length);
+    svg += `<line x1="${x}" y1="10" x2="${x + 15}" y2="10" stroke="${stroke}" stroke-width="2"/><text x="${x + 18}" y="13" fill="#8b949e" font-size="10">${escapeSvgText(variable)}</text>\n`;
   }
   if (result.model_name) {
     svg += `<text x="${width - padding.right}" y="13" text-anchor="end" fill="${PLOT_AXIS}" font-size="9" font-family="monospace">${escapeSvgText(result.model_name)}</text>\n`;

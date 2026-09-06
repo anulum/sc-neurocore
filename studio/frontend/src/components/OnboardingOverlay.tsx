@@ -71,6 +71,10 @@ export default function OnboardingOverlay() {
   }
 
   const current = steps[step];
+  // `step` only ever moves inside the tour's own bounds, so this cannot miss;
+  // rendering nothing rather than asserting keeps a future off-by-one from
+  // putting a blank modal over the whole Studio with no way out.
+  if (current === undefined) return null;
 
   return (
     <div style={{

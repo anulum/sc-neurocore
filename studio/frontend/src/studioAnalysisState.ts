@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio analysis store state helpers
+import { at } from "./arrayAt";
 import type {
   BifurcationResponse,
   CompareResponse,
@@ -236,7 +237,11 @@ export function studioSTAResultState(result: SimulateResponse): StudioSTAResultS
   // Spike indices are raw steps, so the average must be taken over the
   // full-resolution trace, never over the display projection.
   const variables = fullStateNames(result);
-  const voltage = fullStateTrace(result, variables[0]);
+  const firstVariable = variables[0];
+  if (firstVariable === undefined) {
+    return null;
+  }
+  const voltage = fullStateTrace(result, firstVariable);
   if (voltage === undefined) {
     return null;
   }
@@ -250,8 +255,8 @@ export function studioSTAResultState(result: SimulateResponse): StudioSTAResultS
   if (snippets.length === 0) {
     return null;
   }
-  const average = snippets[0].map((_, index) =>
-    snippets.reduce((sum, snippet) => sum + snippet[index], 0) / snippets.length,
+  const average = at(snippets, 0).map((_, index) =>
+    snippets.reduce((sum, snippet) => sum + at(snippet, index), 0) / snippets.length,
   );
   const timeMs = average.map((_, index) => (index - halfWin) * result.dt);
   return {

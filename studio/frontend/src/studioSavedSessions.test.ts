@@ -208,7 +208,7 @@ describe("browser cache status", () => {
   function storage(initial: Record<string, string> = {}, onSet?: (value: string) => void) {
     const data = { ...initial };
     return {
-      getItem: (name: string) => (name in data ? data[name] : null),
+      getItem: (name: string) => data[name] ?? null,
       setItem: (name: string, value: string) => {
         onSet?.(value);
         data[name] = value;

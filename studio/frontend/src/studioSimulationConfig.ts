@@ -174,7 +174,11 @@ export function studioNullclineRequest(input: StudioNullclineRequestInput): Stud
   const vars = Object.keys(input.odeInit);
   const held: Record<string, number> = {};
   for (const name of vars.slice(2)) {
-    held[name] = input.odeInit[name];
+    const value = input.odeInit[name];
+    // `vars` is this object's own key list, so the lookup cannot miss; the
+    // guard is here because the index type cannot say that, and skipping is
+    // the only sane answer if the object is ever mutated between the two.
+    if (value !== undefined) held[name] = value;
   }
   return {
     equations: input.equations,

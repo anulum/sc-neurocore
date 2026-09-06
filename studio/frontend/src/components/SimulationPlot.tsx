@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { at } from "../arrayAt";
 import { useRef, useEffect, useCallback, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import type {
@@ -89,8 +90,8 @@ export default function SimulationPlot() {
     const yi = y_values.length - 1 - Math.floor(((y - T * dpr) / ph) * y_values.length);
     if (xi >= 0 && xi < x_values.length && yi >= 0 && yi < y_values.length) {
       const params = store.sourceMode === "model" ? { ...store.modelParams } : { ...store.odeParams };
-      params[heatmapResult.param_x] = x_values[xi];
-      params[heatmapResult.param_y] = y_values[yi];
+      params[heatmapResult.param_x] = at(x_values, xi);
+      params[heatmapResult.param_y] = at(y_values, yi);
       if (store.sourceMode === "model") {
         useStudioStore.setState({ modelParams: params, activeTab: "trace" });
       } else {
@@ -105,7 +106,7 @@ export default function SimulationPlot() {
     e.preventDefault();
     const z = zoomRef.current;
     const time = result.time;
-    if (isNaN(z.xMin)) { z.xMin = time[0]; z.xMax = time[time.length - 1]; }
+    if (isNaN(z.xMin)) { z.xMin = time[0] ?? 0; z.xMax = time[time.length - 1] ?? 0; }
     const range = z.xMax - z.xMin;
     const factor = e.deltaY > 0 ? 1.2 : 0.8;
     const canvas = canvasRef.current;
@@ -145,8 +146,8 @@ export default function SimulationPlot() {
       const fracX = (e.clientX - rect.left - L) / pw;
       if (fracX < 0 || fracX > 1) { setTooltip(null); return; }
       const z = zoomRef.current;
-      const t0 = isNaN(z.xMin) ? result.time[0] : z.xMin;
-      const t1 = isNaN(z.xMax) ? result.time[result.time.length - 1] : z.xMax;
+      const t0 = isNaN(z.xMin) ? result.time[0] ?? 0 : z.xMin;
+      const t1 = isNaN(z.xMax) ? result.time[result.time.length - 1] ?? 0 : z.xMax;
       const tAt = t0 + fracX * (t1 - t0);
       // Display arrays are a projection of the raw steps: read them at the
       // display position nearest to the cursor time and report the raw step.
@@ -154,15 +155,15 @@ export default function SimulationPlot() {
       const step = rawStepAtTime(result, tAt);
       const vars = Object.keys(result.states);
       const vals = vars.map((v) => {
-        const arr = result.states[v];
+        const arr = result.states[v] ?? [];
         const i = Math.min(Math.max(position, 0), arr.length - 1);
-        return `${v}=${arr[i].toFixed(2)}`;
+        return `${v}=${(arr[i] ?? 0).toFixed(2)}`;
       }).join(" ");
       crosshairRef.current = e.clientX - rect.left;
       setTooltip({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
-        text: `t=${result.time[position].toFixed(1)} step=${step} ${vals}`,
+        text: `t=${(result.time[position] ?? 0).toFixed(1)} step=${step} ${vals}`,
       });
       draw();
     } else {
@@ -210,7 +211,8 @@ export default function SimulationPlot() {
     // f-I curve view
     if (activeTab === "fi-curve" && fiResult) {
       const ph = h - T - B;
-      const xMin = fiResult.currents[0], xMax = fiResult.currents[fiResult.currents.length - 1];
+      const xMin = fiResult.currents[0] ?? 0;
+      const xMax = fiResult.currents[fiResult.currents.length - 1] ?? xMin + 1;
       let yMax = Math.max(...fiResult.rates, 1);
       drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, yMax * 1.1, "I (nA)");
       drawLine(ctx, L, T, pw, ph, fiResult.currents, fiResult.rates, xMin, xMax, 0, yMax * 1.1, "#4fc3f7", 2);
@@ -231,13 +233,15 @@ export default function SimulationPlot() {
 
     const time = result.time;
     const vars = Object.keys(result.states);
-    const tMin = time[0], tMax = time[time.length - 1];
+    const tMin = time[0] ?? 0;
+    const tMax = time[time.length - 1] ?? tMin + 1;
     const hasSpikes = result.spikes.length > 0;
 
     // Phase portrait (2+ variables)
     if (activeTab === "phase" && vars.length >= 2) {
       const ph = h - T - B;
-      const xData = result.states[vars[0]], yData = result.states[vars[1]];
+      const xData = result.states[at(vars, 0)] ?? [];
+      const yData = result.states[at(vars, 1)] ?? [];
       let xMin = Math.min(...xData), xMax = Math.max(...xData);
       let yMin = Math.min(...yData), yMax = Math.max(...yData);
       const xPad = (xMax - xMin) * 0.05 || 1;
@@ -252,22 +256,22 @@ export default function SimulationPlot() {
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(
-          L + ((xData[i - 1] - xMin) / (xMax - xMin)) * pw,
-          T + ph - ((yData[i - 1] - yMin) / (yMax - yMin)) * ph
+          L + ((at(xData, i - 1) - xMin) / (xMax - xMin)) * pw,
+          T + ph - ((at(yData, i - 1) - yMin) / (yMax - yMin)) * ph
         );
         ctx.lineTo(
-          L + ((xData[i] - xMin) / (xMax - xMin)) * pw,
-          T + ph - ((yData[i] - yMin) / (yMax - yMin)) * ph
+          L + ((at(xData, i) - xMin) / (xMax - xMin)) * pw,
+          T + ph - ((at(yData, i) - yMin) / (yMax - yMin)) * ph
         );
         ctx.stroke();
       }
       // Start and end markers
-      const sx = L + ((xData[0] - xMin) / (xMax - xMin)) * pw;
-      const sy = T + ph - ((yData[0] - yMin) / (yMax - yMin)) * ph;
+      const sx = L + ((at(xData, 0) - xMin) / (xMax - xMin)) * pw;
+      const sy = T + ph - ((at(yData, 0) - yMin) / (yMax - yMin)) * ph;
       ctx.fillStyle = "#81c784";
       ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
-      ctx.fillText(vars[1], L + 4, T + 12);
+      ctx.fillText(at(vars, 1), L + 4, T + 12);
 
       // Nullcline overlay
       if (nullclineResult) {
@@ -278,7 +282,9 @@ export default function SimulationPlot() {
           [nullclineResult.nullcline_1, "#81c784"],
         ] as const) {
           ctx.fillStyle = color;
-          for (const [px, py] of nc.points) {
+          for (const point of nc.points) {
+            const px = at(point, 0);
+            const py = at(point, 1);
             const cx = L + ((px - xMin) / xRange) * pw;
             const cy = T + ph - ((py - yMin) / yRange) * ph;
             if (cx >= L && cx <= L + pw && cy >= T && cy <= T + ph) {
@@ -312,15 +318,20 @@ export default function SimulationPlot() {
       const ph = h - T - B;
       const hist = result.stats.isi_histogram as { counts: number[]; edges: number[] };
       const maxCount = Math.max(...hist.counts, 1);
-      const xMin = hist.edges[0], xMax = hist.edges[hist.edges.length - 1];
+      const xMin = hist.edges[0] ?? 0;
+      const xMax = hist.edges[hist.edges.length - 1] ?? xMin + 1;
 
       drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, maxCount * 1.1, "ISI (ms)");
       ctx.fillStyle = "rgba(79, 195, 247, 0.6)";
       const xRange = xMax - xMin || 1;
-      for (let i = 0; i < hist.counts.length; i++) {
-        const bx = L + ((hist.edges[i] - xMin) / xRange) * pw;
-        const bw = ((hist.edges[i + 1] - hist.edges[i]) / xRange) * pw;
-        const bh = (hist.counts[i] / (maxCount * 1.1)) * ph;
+      for (const [i, count] of hist.counts.entries()) {
+        const edge = at(hist.edges, i);
+        const bx = L + ((edge - xMin) / xRange) * pw;
+        // The last bin has no right edge when the server sent one edge per
+        // count instead of one more; falling back to the bin's own left edge
+        // draws it with zero width rather than a NaN rectangle.
+        const bw = (((hist.edges[i + 1] ?? edge) - edge) / xRange) * pw;
+        const bh = (count / (maxCount * 1.1)) * ph;
         ctx.fillRect(bx, T + ph - bh, Math.max(bw - 1, 1), bh);
       }
       ctx.fillStyle = AXIS; ctx.font = "10px monospace"; ctx.textAlign = "left";
@@ -332,7 +343,8 @@ export default function SimulationPlot() {
     if (activeTab === "bifurcation" && bifResult) {
       const ph = h - T - B;
       const { param_values, attractors } = bifResult;
-      const xMin = param_values[0], xMax = param_values[param_values.length - 1];
+      const xMin = param_values[0] ?? 0;
+      const xMax = param_values[param_values.length - 1] ?? xMin + 1;
       let yMin = Infinity, yMax = -Infinity;
       for (const a of attractors) for (const v of a) { if (v < yMin) yMin = v; if (v > yMax) yMax = v; }
       if (!isFinite(yMin)) { yMin = -80; yMax = 40; }
@@ -340,9 +352,9 @@ export default function SimulationPlot() {
       yMin -= yPad; yMax += yPad;
       drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, bifResult.param_name);
       ctx.fillStyle = "rgba(79,195,247,0.5)";
-      for (let i = 0; i < param_values.length; i++) {
-        const x = L + ((param_values[i] - xMin) / (xMax - xMin || 1)) * pw;
-        for (const v of attractors[i]) {
+      for (const [i, paramValue] of param_values.entries()) {
+        const x = L + ((paramValue - xMin) / (xMax - xMin || 1)) * pw;
+        for (const v of attractors[i] ?? []) {
           const y = T + ph - ((v - yMin) / (yMax - yMin)) * ph;
           ctx.fillRect(x - 1, y - 1, 2, 2);
         }
@@ -356,16 +368,19 @@ export default function SimulationPlot() {
     if (activeTab === "heatmap" && heatmapResult) {
       const ph = h - T - B - 16;
       const { x_values, y_values, rates, rate_min, rate_max } = heatmapResult;
-      const xMin = x_values[0], xMax = x_values[x_values.length - 1];
-      const yMin = y_values[0], yMax = y_values[y_values.length - 1];
+      const xMin = x_values[0] ?? 0;
+      const xMax = x_values[x_values.length - 1] ?? xMin + 1;
+      const yMin = y_values[0] ?? 0;
+      const yMax = y_values[y_values.length - 1] ?? yMin + 1;
       const rRange = rate_max - rate_min || 1;
 
       drawAxes(ctx, L, T, pw, ph, xMin, xMax, yMin, yMax, heatmapResult.param_x);
       const cellW = pw / x_values.length;
       const cellH = ph / y_values.length;
       for (let j = 0; j < y_values.length; j++) {
+        const row = rates[j] ?? [];
         for (let i = 0; i < x_values.length; i++) {
-          const norm = (rates[j][i] - rate_min) / rRange;
+          const norm = ((row[i] ?? rate_min) - rate_min) / rRange;
           const r = Math.floor(norm * 200 + 20);
           const g = Math.floor(norm * 50);
           const b = Math.floor((1 - norm) * 200 + 55);
@@ -415,11 +430,12 @@ export default function SimulationPlot() {
     if (activeTab === "precision" && precResult) {
       const ph = (h - T - B - 30) / 2;
       const variable = precResult.error.variable;
-      const float_v = precResult.float_result.states[variable];
-      const fixed_v = precResult.fixed_result.states[variable];
+      const float_v = precResult.float_result.states[variable] ?? [];
+      const fixed_v = precResult.fixed_result.states[variable] ?? [];
       const time_f = precResult.float_result.time;
       const time_x = precResult.fixed_result.time;
-      const tMin = time_f[0], tMax = time_f[time_f.length - 1];
+      const tMin = time_f[0] ?? 0;
+      const tMax = time_f[time_f.length - 1] ?? tMin + 1;
       let vMin = Math.min(...float_v, ...fixed_v);
       let vMax = Math.max(...float_v, ...fixed_v);
       const vPad = (vMax - vMin) * 0.05 || 1;
@@ -484,14 +500,17 @@ export default function SimulationPlot() {
       for (const [idx, label, res] of [[0, "A", compareResult.a], [1, "B", compareResult.b]] as const) {
         const yOff = T + idx * (ph + 10);
         const v0 = Object.keys(res.states)[0];
-        const data = res.states[v0];
+        const data = v0 === undefined ? [] : res.states[v0] ?? [];
         const tm = res.time;
         let yMin = Math.min(...data), yMax = Math.max(...data);
         const yPad = (yMax - yMin) * 0.05 || 1;
         yMin -= yPad; yMax += yPad;
-        drawAxes(ctx, L, yOff, pw, ph, tm[0], tm[tm.length - 1], yMin, yMax);
-        drawLine(ctx, L, yOff, pw, ph, tm, data, tm[0], tm[tm.length - 1], yMin, yMax, COLORS[idx], 1.2);
-        ctx.fillStyle = COLORS[idx]; ctx.font = "10px monospace"; ctx.textAlign = "left";
+        const tStart = tm[0] ?? 0;
+        const tEnd = tm[tm.length - 1] ?? tStart + 1;
+        const colour = at(COLORS as readonly string[], idx);
+        drawAxes(ctx, L, yOff, pw, ph, tStart, tEnd, yMin, yMax);
+        drawLine(ctx, L, yOff, pw, ph, tm, data, tStart, tEnd, yMin, yMax, colour, 1.2);
+        ctx.fillStyle = colour; ctx.font = "10px monospace"; ctx.textAlign = "left";
         ctx.fillText(`${label}: ${res.model_name || "custom"} (${res.stats.rate_hz} Hz)`, L + 6, yOff + 12);
       }
       return;
@@ -500,8 +519,8 @@ export default function SimulationPlot() {
     // Frequency response
     if (activeTab === "freq" && freqResult) {
       const ph = h - T - B;
-      const xMin = freqResult.frequencies_hz[0];
-      const xMax = freqResult.frequencies_hz[freqResult.frequencies_hz.length - 1];
+      const xMin = freqResult.frequencies_hz[0] ?? 0;
+      const xMax = freqResult.frequencies_hz[freqResult.frequencies_hz.length - 1] ?? xMin + 1;
       const yMax = Math.max(...freqResult.rates, 1);
       drawAxes(ctx, L, T, pw, ph, xMin, xMax, 0, yMax * 1.1, "freq (Hz)");
       drawLine(ctx, L, T, pw, ph, freqResult.frequencies_hz, freqResult.rates,
@@ -514,7 +533,8 @@ export default function SimulationPlot() {
     // Spike-triggered average
     if (activeTab === "sta" && staResult && staResult.time_ms.length > 0) {
       const ph = h - T - B;
-      const xMin = staResult.time_ms[0], xMax = staResult.time_ms[staResult.time_ms.length - 1];
+      const xMin = at(staResult.time_ms, 0);
+      const xMax = at(staResult.time_ms, staResult.time_ms.length - 1);
       let yMin = Math.min(...staResult.average), yMax = Math.max(...staResult.average);
       const yPad = (yMax - yMin) * 0.05 || 1;
       yMin -= yPad; yMax += yPad;
@@ -570,8 +590,10 @@ export default function SimulationPlot() {
       const curs = charResult.fi_curve.currents;
       const rts = charResult.fi_curve.rates;
       const rMax = Math.max(...rts, 1);
-      drawAxes(ctx, fiX, fiY, fiW, fiH, curs[0], curs[curs.length - 1], 0, rMax * 1.1, "I (nA)");
-      drawLine(ctx, fiX, fiY, fiW, fiH, curs, rts, curs[0], curs[curs.length - 1], 0, rMax * 1.1, "#4fc3f7", 2);
+      const curMin = curs[0] ?? 0;
+      const curMax = curs[curs.length - 1] ?? curMin + 1;
+      drawAxes(ctx, fiX, fiY, fiW, fiH, curMin, curMax, 0, rMax * 1.1, "I (nA)");
+      drawLine(ctx, fiX, fiY, fiW, fiH, curs, rts, curMin, curMax, 0, rMax * 1.1, "#4fc3f7", 2);
       ctx.fillStyle = "#4fc3f7"; ctx.font = "10px monospace"; ctx.textAlign = "left";
       ctx.fillText("f-I curve", fiX + 4, fiY + 12);
       return;
@@ -582,10 +604,12 @@ export default function SimulationPlot() {
       const ph = h - T - B;
       let tMin = Infinity, tMax = -Infinity, vMin = Infinity, vMax = -Infinity;
       for (const r of multiResults) {
-        if (r.time[0] < tMin) tMin = r.time[0];
-        if (r.time[r.time.length - 1] > tMax) tMax = r.time[r.time.length - 1];
+        const start = r.time[0];
+        const end = r.time[r.time.length - 1];
+        if (start !== undefined && start < tMin) tMin = start;
+        if (end !== undefined && end > tMax) tMax = end;
         const v0 = Object.keys(r.states)[0];
-        for (const v of r.states[v0]) {
+        for (const v of (v0 === undefined ? [] : r.states[v0] ?? [])) {
           if (isFinite(v)) { if (v < vMin) vMin = v; if (v > vMax) vMax = v; }
         }
       }
@@ -594,12 +618,15 @@ export default function SimulationPlot() {
       drawAxes(ctx, L, T, pw, ph, tMin, tMax, vMin, vMax, "ms");
       multiResults.forEach((r, i) => {
         const v0 = Object.keys(r.states)[0];
-        drawLine(ctx, L, T, pw, ph, r.time, r.states[v0], tMin, tMax, vMin, vMax, COLORS[i % COLORS.length], 1.5);
+        const trace = v0 === undefined ? [] : r.states[v0] ?? [];
+        const colour = at(COLORS as readonly string[], i % COLORS.length);
+        drawLine(ctx, L, T, pw, ph, r.time, trace, tMin, tMax, vMin, vMax, colour, 1.5);
       });
       ctx.font = "10px monospace";
       multiResults.forEach((r, i) => {
         const name = r.model_name || `Model ${i + 1}`;
-        ctx.fillStyle = COLORS[i % COLORS.length];
+        const colour = at(COLORS as readonly string[], i % COLORS.length);
+        ctx.fillStyle = colour;
         ctx.fillRect(L + 6 + i * 120, T + 4, 8, 2);
         ctx.textAlign = "left";
         ctx.fillText(`${name} (${r.stats.rate_hz}Hz)`, L + 17 + i * 120, T + 9);
@@ -616,9 +643,8 @@ export default function SimulationPlot() {
       ctx.fillStyle = PANEL_BG; ctx.fillRect(L, T, pw, rasterH);
       ctx.strokeStyle = BORDER; ctx.strokeRect(L, T, pw, rasterH);
       const dur = networkResult.duration;
-      for (let i = 0; i < networkResult.spike_times.length; i++) {
-        const t = networkResult.spike_times[i];
-        const n = networkResult.spike_neurons[i];
+      for (const [i, t] of networkResult.spike_times.entries()) {
+        const n = at(networkResult.spike_neurons, i);
         const x = L + (t / dur) * pw;
         const y = T + (n / networkResult.n_total) * rasterH;
         ctx.fillStyle = n < networkResult.n_exc ? "#4fc3f7" : "#ff5252";
@@ -636,9 +662,11 @@ export default function SimulationPlot() {
       const rt = networkResult.rate_time;
       if (rt.length > 1) {
         const rMax = Math.max(...networkResult.exc_rates, ...networkResult.inh_rates, 1);
-        drawAxes(ctx, L, rateY, pw, rateH, rt[0], rt[rt.length - 1], 0, rMax * 1.1, "ms");
-        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.exc_rates, rt[0], rt[rt.length - 1], 0, rMax * 1.1, "#4fc3f7", 1.5);
-        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.inh_rates, rt[0], rt[rt.length - 1], 0, rMax * 1.1, "#ff5252", 1.5);
+        const rtMin = at(rt, 0);
+        const rtMax = at(rt, rt.length - 1);
+        drawAxes(ctx, L, rateY, pw, rateH, rtMin, rtMax, 0, rMax * 1.1, "ms");
+        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.exc_rates, rtMin, rtMax, 0, rMax * 1.1, "#4fc3f7", 1.5);
+        drawLine(ctx, L, rateY, pw, rateH, rt, networkResult.inh_rates, rtMin, rtMax, 0, rMax * 1.1, "#ff5252", 1.5);
         ctx.fillStyle = AXIS; ctx.font = "9px monospace"; ctx.textAlign = "left";
         ctx.fillText(`E: ${networkResult.mean_exc_rate}Hz  I: ${networkResult.mean_inh_rate}Hz`, L + 4, rateY + 10);
       }
@@ -662,7 +690,7 @@ export default function SimulationPlot() {
     // Compute Y range
     let vMin = Infinity, vMax = -Infinity;
     for (const v of vars) {
-      for (const val of result.states[v]) {
+      for (const val of result.states[v] ?? []) {
         if (isFinite(val)) { if (val < vMin) vMin = val; if (val > vMax) vMax = val; }
       }
     }
@@ -672,7 +700,9 @@ export default function SimulationPlot() {
     // Voltage plot
     drawAxes(ctx, L, T, pw, voltH, zTMin, zTMax, vMin, vMax);
     vars.forEach((v, i) => {
-      drawLine(ctx, L, T, pw, voltH, time, result.states[v], zTMin, zTMax, vMin, vMax, COLORS[i % COLORS.length]);
+      const trace = result.states[v] ?? [];
+      drawLine(ctx, L, T, pw, voltH, time, trace, zTMin, zTMax, vMin, vMax,
+        at(COLORS as readonly string[], i % COLORS.length));
     });
     // Y-axis label
     ctx.save();
@@ -692,7 +722,8 @@ export default function SimulationPlot() {
     // Legend
     ctx.font = "10px monospace";
     vars.forEach((v, i) => {
-      ctx.fillStyle = COLORS[i % COLORS.length];
+      const colour = at(COLORS as readonly string[], i % COLORS.length);
+      ctx.fillStyle = colour;
       ctx.fillRect(L + 6 + i * 52, T + 4, 8, 2);
       ctx.textAlign = "left"; ctx.fillText(v, L + 17 + i * 52, T + 9);
     });

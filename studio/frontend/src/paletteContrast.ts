@@ -19,6 +19,7 @@
  * not a second copy of it.
  */
 
+import { at } from "./arrayAt";
 import {
   CONTRAST_AA_NORMAL,
   composite,
@@ -102,7 +103,7 @@ export function readCssTokens(css: string): Map<string, string> {
   CUSTOM_PROPERTY.lastIndex = 0;
   let matched = CUSTOM_PROPERTY.exec(css);
   while (matched !== null) {
-    tokens.set(matched[1], matched[2].trim());
+    tokens.set(at(matched, 1), at(matched, 2).trim());
     matched = CUSTOM_PROPERTY.exec(css);
   }
   return tokens;
@@ -125,7 +126,7 @@ export function parseCssColour(
   const trimmed = value.trim();
   const reference = VAR_REFERENCE.exec(trimmed);
   if (reference !== null) {
-    const referenced = tokens.get(reference[1]);
+    const referenced = tokens.get(at(reference, 1));
     return referenced === undefined ? null : parseCssColour(referenced, tokens);
   }
   if (HEX.test(trimmed)) {
@@ -165,10 +166,10 @@ export function resolveGround(
     resolved.push(colour);
   }
   if (resolved.length === 0) return null;
-  let ground = resolved[resolved.length - 1];
+  let ground = at(resolved, resolved.length - 1);
   if (ground.a !== 1) return null;
   for (let index = resolved.length - 2; index >= 0; index--) {
-    ground = composite(resolved[index], ground);
+    ground = composite(at(resolved, index), ground);
   }
   return ground;
 }
@@ -361,11 +362,9 @@ export function canvasTextColours(source: string): CanvasTextColours {
     const assigned = FILL_STYLE.exec(line);
     if (assigned !== null) {
       // Only one of the two alternation groups participates in any match, so
-      // the other is `undefined` at runtime. The index type claims otherwise
-      // only because `noUncheckedIndexedAccess` is not on yet; the casts state
-      // the runtime truth rather than letting the checks below be read as dead.
-      const literal = assigned[1] as string | undefined;
-      const symbol = assigned[2] as string | undefined;
+      // the other is `undefined`.
+      const literal = assigned[1];
+      const symbol = assigned[2];
       current = {
         literal: literal ?? null,
         symbol: symbol ?? null,

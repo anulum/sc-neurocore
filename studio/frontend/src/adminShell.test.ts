@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+import { at } from "./arrayAt";
 import { describe, expect, it } from "vitest";
 
 import type {
@@ -145,9 +146,9 @@ const auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan = {
 
 const auditArchivePurge: StudioAuditQuarantineArchivePurgeResult = {
   purged_archive_count: 1,
-  purged_entries: [auditArchiveRetention.entries[1]],
+  purged_entries: [at(auditArchiveRetention.entries, 1)],
   retained_archive_count: 1,
-  retained_entries: [auditArchiveRetention.entries[0]],
+  retained_entries: [at(auditArchiveRetention.entries, 0)],
   retain_latest: 1,
   schema_version: "studio.audit-quarantine-archive.purge.v1",
   skipped_record_count: 0,

@@ -19,6 +19,7 @@
  * on every frame, and recording those would bury the edits worth undoing.
  */
 
+import { at } from "./arrayAt";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { PopulationNode, ProjectionEdge } from "./api/client";
@@ -101,7 +102,7 @@ describe("the history structure", () => {
     }
 
     expect(history.past).toHaveLength(STUDIO_GRAPH_HISTORY_LIMIT);
-    expect(history.past[0].populations[0].id).toBe("p10");
+    expect(at(at(history.past, 0).populations, 0).id).toBe("p10");
   });
 
   it("copies the arrays it records", () => {
@@ -204,11 +205,11 @@ describe("undo through the live store", () => {
     seed();
 
     useStudioStore.getState().updatePopulation("p1", { count: 99 });
-    expect(useStudioStore.getState().graphPopulations[0].count).toBe(99);
+    expect(at(useStudioStore.getState().graphPopulations, 0).count).toBe(99);
 
     useStudioStore.getState().undoGraphEdit();
 
-    expect(useStudioStore.getState().graphPopulations[0].count).toBe(4);
+    expect(at(useStudioStore.getState().graphPopulations, 0).count).toBe(4);
   });
 
   it("records a projection removal and brings it back", () => {

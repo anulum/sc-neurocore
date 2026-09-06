@@ -701,7 +701,8 @@ export function createStudioStoreActions(
   loadModels: async () => {
     const models = await fetchModels();
     set(modelsLoadedState(models));
-    if (models.length > 0 && !get().selectedModelName) await get().selectModel(models[0].name);
+    const firstModel = models[0];
+    if (firstModel !== undefined && !get().selectedModelName) await get().selectModel(firstModel.name);
   },
   loadPresets: async () => set(presetsLoadedState(await fetchPresets())),
 
@@ -933,9 +934,10 @@ export function createStudioStoreActions(
     set(studioAnalysisStartState());
     try {
       const vars = Object.keys(s.odeInit);
-      if (vars.length < 2) { set(studioAnalysisIdleState()); return; }
-      const v0vals = s.result?.states[vars[0]];
-      const v1vals = s.result?.states[vars[1]];
+      const [var0, var1] = vars;
+      if (var0 === undefined || var1 === undefined) { set(studioAnalysisIdleState()); return; }
+      const v0vals = s.result?.states[var0];
+      const v1vals = s.result?.states[var1];
       const r0: [number, number] = v0vals
         ? [Math.min(...v0vals) - 10, Math.max(...v0vals) + 10]
         : [-80, 40];
@@ -949,7 +951,7 @@ export function createStudioStoreActions(
           odeInit: s.odeInit,
           protocol: s.protocol,
           current: s.current,
-          ranges: { [vars[0]]: r0, [vars[1]]: r1 },
+          ranges: { [var0]: r0, [var1]: r1 },
           gridSize: 60,
         }),
       );

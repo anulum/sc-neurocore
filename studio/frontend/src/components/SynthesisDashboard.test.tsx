@@ -142,13 +142,18 @@ describe("SynthesisEvidenceControls", () => {
 
 describe("SiliconTerminalSummary", () => {
   it("renders digest-bound route and timing evidence", () => {
+    // `targets` is keyed by target name, so the lookup is `| undefined`. The
+    // fixture above defines `ice40`; saying so here means a fixture that stops
+    // defining it fails on that fact rather than on a downstream shape.
+    const ice40 = provenanceMatrix.targets.ice40;
+    if (ice40 === undefined) throw new Error("the provenance fixture must define ice40");
     const synthesis = {
       capacity: { brams: 56, dsps: 28, ffs: 24576, luts: 24576 },
       log_excerpt: "complete",
       resources: { brams: 0, cells: 20, dsps: 0, ffs: 8, luts: 12, wires: 30 },
       success: true,
       target: "ecp5",
-      target_provenance: provenanceMatrix.targets.ice40,
+      target_provenance: ice40,
       utilisation: { brams: 0, dsps: 0, ffs: 0.1, luts: 0.1 },
     };
     const terminal: SiliconTerminalResult = {

@@ -25,6 +25,8 @@
  * refuse, because every number here is already a double.
  */
 
+import { at } from "./arrayAt";
+
 /** Contract version of the canonical form. */
 export const EVIDENCE_SEAL_SCHEMA_VERSION = "studio.evidence-seal.v1" as const;
 
@@ -179,8 +181,10 @@ function compareCodePoints(left: string, right: string): number {
   const rightPoints = Array.from(right, (character) => character.codePointAt(0) ?? 0);
   const shared = Math.min(leftPoints.length, rightPoints.length);
   for (let index = 0; index < shared; index += 1) {
-    if (leftPoints[index] !== rightPoints[index]) {
-      return leftPoints[index] < rightPoints[index] ? -1 : 1;
+    const leftPoint = at(leftPoints, index);
+    const rightPoint = at(rightPoints, index);
+    if (leftPoint !== rightPoint) {
+      return leftPoint < rightPoint ? -1 : 1;
     }
   }
   return leftPoints.length - rightPoints.length;
@@ -228,14 +232,11 @@ function canonicalFraction(value: number): string {
   if (matched === null) {
     throw new EvidenceSealError(`${text} has no canonical numeric form.`);
   }
-  // A group that did not participate is `undefined` at runtime; the index type
-  // says otherwise only because `noUncheckedIndexedAccess` is not on yet.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  // A group that did not participate is `undefined`.
   const fraction = matched[2] ?? "";
   // The shortest round-tripping form never ends in a redundant zero, in either
   // runtime, so only the leading zeros of a value below one are dropped.
-  const digits = `${matched[1]}${fraction}`.replace(/^0+(?=\d)/, "");
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const digits = `${matched[1] ?? ""}${fraction}`.replace(/^0+(?=\d)/, "");
   const exponent = Number(matched[3] ?? "0") - fraction.length + digits.length - 1;
   const mantissa = digits.length > 1 ? `${digits[0]}.${digits.slice(1)}` : digits;
   return `${negative ? "-" : ""}${mantissa}e${exponent}`;
@@ -256,9 +257,7 @@ function canonicalString(value: string): string {
   const parts = ['"'];
   for (const character of value) {
     const escape = SHORT_ESCAPES[character];
-    // A record's index type promises a string for every key; this record
-    // carries only the few characters that need a short escape.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    // This record carries only the few characters that need a short escape.
     if (escape !== undefined) {
       parts.push(escape);
       continue;

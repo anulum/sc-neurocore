@@ -20,6 +20,7 @@
  * the original.
  */
 
+import { at } from "./arrayAt";
 import { describe, expect, it } from "vitest";
 
 import type { PopulationNode, ProjectionEdge } from "./api/client";
@@ -129,7 +130,7 @@ describe("the plan for one selection", () => {
       params: { tau: 11 },
     });
 
-    const [copy] = studioDuplicatePlan([source], [], ["a"]).populations;
+    const copy = at(studioDuplicatePlan([source], [], ["a"]).populations, 0);
 
     expect(copy.count).toBe(12);
     expect(copy.model).toBe("AdExNeuron");
@@ -143,14 +144,14 @@ describe("the plan for one selection", () => {
     // A shared object would let an edit to the copy reach the original.
     const source = population({ id: "a", params: { tau: 11 } });
 
-    const [copy] = studioDuplicatePlan([source], [], ["a"]).populations;
+    const copy = at(studioDuplicatePlan([source], [], ["a"]).populations, 0);
     copy.params.tau = 99;
 
     expect(source.params.tau).toBe(11);
   });
 
   it("offsets the copy so it is visible as one", () => {
-    const [copy] = studioDuplicatePlan([A], [], ["a"]).populations;
+    const copy = at(studioDuplicatePlan([A], [], ["a"]).populations, 0);
 
     expect(copy.x).toBe(A.position.x + STUDIO_DUPLICATE_OFFSET.x);
     expect(copy.y).toBe(A.position.y + STUDIO_DUPLICATE_OFFSET.y);
@@ -169,7 +170,7 @@ describe("the plan for one selection", () => {
       weight: -3.5,
     });
 
-    const [copy] = studioDuplicatePlan([A, B], [edge], ["a", "b"]).projections;
+    const copy = at(studioDuplicatePlan([A, B], [edge], ["a", "b"]).projections, 0);
 
     expect(copy).toEqual({
       autapses: true,
@@ -186,7 +187,7 @@ describe("the plan for one selection", () => {
   it("treats a projection saved before rules existed as random", () => {
     const edge = projection({ id: "ab", probability: undefined, rule: undefined });
 
-    const [copy] = studioDuplicatePlan([A, B], [edge], ["a", "b"]).projections;
+    const copy = at(studioDuplicatePlan([A, B], [edge], ["a", "b"]).projections, 0);
 
     expect(copy.rule).toBe("random");
   });

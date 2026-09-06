@@ -19,6 +19,7 @@
  * derived from the same fields the canvas draws and the server runs.
  */
 
+import { at } from "./arrayAt";
 import { describe, expect, it } from "vitest";
 
 import type { PopulationNode, ProjectionEdge } from "./api/client";
@@ -85,7 +86,9 @@ describe("studioGraphTable", () => {
     const table = studioGraphTable([input, hidden, output], [inputToHidden, hiddenToOutput]);
 
     expect(table.rows.map((row) => row.id)).toEqual(["input", "hidden", "output"]);
-    const [first, second, third] = table.rows;
+    const first = at(table.rows, 0);
+    const second = at(table.rows, 1);
+    const third = at(table.rows, 2);
     expect(first.incoming).toEqual([]);
     expect(first.outgoing).toEqual([
       { detail: "w=0.5 p=0.1", id: "p1", issues: [], populationLabel: "Hidden" },
@@ -100,7 +103,7 @@ describe("studioGraphTable", () => {
   });
 
   it("carries the population's own identity in the row", () => {
-    const [, row] = studioGraphTable([input, hidden], [inputToHidden]).rows;
+    const row = at(studioGraphTable([input, hidden], [inputToHidden]).rows, 1);
 
     expect(row.label).toBe("Hidden");
     expect(row.model).toBe("AdEx");
@@ -110,7 +113,7 @@ describe("studioGraphTable", () => {
   });
 
   it("describes a connected population in one sentence", () => {
-    const [, row] = studioGraphTable([input, hidden, output], [inputToHidden, hiddenToOutput]).rows;
+    const row = at(studioGraphTable([input, hidden, output], [inputToHidden, hiddenToOutput]).rows, 1);
 
     expect(row.description).toBe(
       "Hidden: 1 inhibitory AdEx neurons, no input; " +
@@ -120,7 +123,7 @@ describe("studioGraphTable", () => {
   });
 
   it("says plainly when a population is connected to nothing", () => {
-    const [row] = studioGraphTable([output], []).rows;
+    const row = at(studioGraphTable([output], []).rows, 0);
 
     expect(row.description).toBe(
       "Output: 20 excitatory LIF neurons, no input; " +
@@ -129,14 +132,14 @@ describe("studioGraphTable", () => {
   });
 
   it("names the drive the canvas names", () => {
-    const [row] = studioGraphTable([input], []).rows;
+    const row = at(studioGraphTable([input], []).rows, 0);
 
     expect(row.drive).toBe("I = 1.2");
     expect(row.description).toContain("I = 1.2");
   });
 
   it("falls back to the identifier when a projection names a population the graph lost", () => {
-    const [row] = studioGraphTable([hidden], [inputToHidden]).rows;
+    const row = at(studioGraphTable([hidden], [inputToHidden]).rows, 0);
 
     expect(row.incoming).toEqual([
       { detail: "w=0.5 p=0.1", id: "p1", issues: [], populationLabel: "input" },
@@ -183,22 +186,22 @@ describe("studioGraphTableCaption", () => {
 
 describe("studioGraphTableRemoveLabel", () => {
   it("names the population a delete control removes", () => {
-    const [row] = studioGraphTable([output], []).rows;
+    const row = at(studioGraphTable([output], []).rows, 0);
 
     expect(studioGraphTableRemoveLabel(row)).toBe("Delete population Output");
   });
 
   it("warns that one incident projection leaves with the population", () => {
-    const [row] = studioGraphTable([input, hidden], [inputToHidden]).rows;
+    const row = at(studioGraphTable([input, hidden], [inputToHidden]).rows, 0);
 
     expect(studioGraphTableRemoveLabel(row)).toBe("Delete population Input and its 1 projection");
   });
 
   it("counts projections at both ends of the population", () => {
-    const [, row] = studioGraphTable(
-      [input, hidden, output],
-      [inputToHidden, hiddenToOutput],
-    ).rows;
+    const row = at(
+      studioGraphTable([input, hidden, output], [inputToHidden, hiddenToOutput]).rows,
+      1,
+    );
 
     expect(studioGraphTableRemoveLabel(row)).toBe("Delete population Hidden and its 2 projections");
   });
@@ -225,23 +228,25 @@ describe("a graph validation refused", () => {
   ];
 
   it("puts a population's failure on that population's row", () => {
-    const [, row] = studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows;
+    const row = at(studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows, 1);
 
     expect(row.issues).toEqual(["Population Hidden count must be a positive integer"]);
   });
 
   it("puts a projection's failure on that projection's connection entries", () => {
-    const [first, second] = studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows;
+    const { rows } = studioGraphTable([input, hidden], [inputToHidden], ISSUES);
+    const first = at(rows, 0);
+    const second = at(rows, 1);
 
-    expect(first.outgoing[0].issues).toEqual([
+    expect(at(first.outgoing, 0).issues).toEqual([
       "Projection p1 weight -4 conflicts with the excitatory source population input",
     ]);
-    expect(second.incoming[0].issues).toEqual(first.outgoing[0].issues);
+    expect(at(second.incoming, 0).issues).toEqual(at(first.outgoing, 0).issues);
     expect(first.issues).toEqual([]);
   });
 
   it("says in the row's sentence that the population was refused", () => {
-    const [, row] = studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows;
+    const row = at(studioGraphTable([input, hidden], [inputToHidden], ISSUES).rows, 1);
 
     expect(row.description).toContain(
       "Validation refused it: Population Hidden count must be a positive integer",
@@ -252,6 +257,6 @@ describe("a graph validation refused", () => {
     const table = studioGraphTable([input, hidden], [inputToHidden]);
 
     expect(table.rows.every((row) => row.issues.length === 0)).toBe(true);
-    expect(table.rows[0].description).not.toContain("Validation refused");
+    expect(at(table.rows, 0).description).not.toContain("Validation refused");
   });
 });

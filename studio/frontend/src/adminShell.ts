@@ -525,7 +525,7 @@ function buildJobRecords(records: StudioJobRecord[]): AdminJobRecordModel[] {
 
 function isEvidenceArtifactPath(path: string): boolean {
   const parts = path.split("/");
-  const filename = parts.length > 0 ? parts[parts.length - 1] : path;
+  const filename = parts[parts.length - 1] ?? path;
   return filename === "evidence.json" || filename.endsWith("-evidence.json");
 }
 

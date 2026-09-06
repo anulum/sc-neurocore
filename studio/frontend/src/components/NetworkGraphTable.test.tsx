@@ -16,6 +16,7 @@
  * rather than the styling, because the semantics are what a reader navigates.
  */
 
+import { at } from "../arrayAt";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -107,7 +108,7 @@ describe("NetworkGraphTable", () => {
   });
 
   it("names an unconnected population's delete control without a projection count", () => {
-    const html = render([populations[1]], []);
+    const html = render([at(populations, 1)], []);
 
     expect(html).toContain('aria-label="Delete population Output"');
   });
@@ -192,7 +193,7 @@ describe("NetworkGraphTable", () => {
       );
     });
     const controls = container.querySelectorAll<HTMLButtonElement>("tbody button");
-    controls[1].click();
+    at([...controls], 1).click();
 
     expect(onRemovePopulation).toHaveBeenCalledExactlyOnceWith("output");
     await act(async () => { root.unmount(); });

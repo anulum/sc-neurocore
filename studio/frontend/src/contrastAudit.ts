@@ -103,11 +103,9 @@ export function parseRgba(value: string): Rgba | null {
     value.trim(),
   );
   if (matched === null) return null;
-  // The alpha group is optional, so it is `undefined` at runtime whenever the
-  // colour was written without one. The index type claims otherwise only
-  // because `noUncheckedIndexedAccess` is not on yet, and the cast states the
-  // runtime truth rather than letting the check be optimised away as dead.
-  const alpha = matched[4] as string | undefined;
+  // The alpha group is optional, so it is `undefined` whenever the colour was
+  // written without one.
+  const alpha = matched[4];
   return {
     a: alpha === undefined ? 1 : Number(alpha),
     b: Number(matched[3]),

@@ -343,7 +343,7 @@ export default function TrainingMonitor() {
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
 
-  const latestEpoch = trainingEpochs.length > 0 ? trainingEpochs[trainingEpochs.length - 1] : null;
+  const latestEpoch = trainingEpochs[trainingEpochs.length - 1] ?? null;
   const isRunning = trainingStatus === "running" || trainingStatus === "starting";
   const evidence = buildTrainingEvidenceModel(
     trainingJobId,

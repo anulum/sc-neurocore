@@ -42,6 +42,8 @@ const AUDITED = [
   "e2e/network-canvas-live.spec.ts",
   "playwright.export.config.ts",
   "playwright.graph.config.ts",
+  "src/arrayAt.test.ts",
+  "src/arrayAt.ts",
   "src/components/NetworkGraphTable.test.tsx",
   "src/components/NetworkGraphTable.tsx",
   "src/components/PopulationEditor.test.tsx",
@@ -111,17 +113,17 @@ export const LEGACY_OUTSIDE_SCOPE = {
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**
-   * The next strictness step, measured rather than guessed at.
+   * The strictness step that used to be recorded here, now taken.
    *
-   * `noUncheckedIndexedAccess` is the compiler option that stops an index
-   * lookup pretending it always finds something. Turning it on today reports
-   * **218** errors across the frontend, up from 198 when it was first taken:
-   * twenty of the increase are in files this scope has since audited, so the
-   * figure is debt this work created and has not yet paid. The heaviest are
-   * `src/components/SimulationPlot.tsx` (90), `src/studioGraphTable.test.ts`
-   * (28) and `src/studioGraphValidation.test.ts` (22).
+   * `noUncheckedIndexedAccess` stops an index lookup pretending it always
+   * finds something. It reported 198 errors when first measured and 218 by the
+   * time the audited scope had grown; it is now **on** in `tsconfig.json` and
+   * reports zero. Every site was narrowed, given a stated fallback, or read
+   * through `src/arrayAt.ts`, which fails with the index and the length rather
+   * than asserting the element exists. No `!` was used and no rule was
+   * relaxed, so this number is not coming back.
    */
-  noUncheckedIndexedAccessErrors: 218,
+  noUncheckedIndexedAccessErrors: 0,
   /**
    * What auditing the rest of the `e2e` suite would cost, per file.
    *

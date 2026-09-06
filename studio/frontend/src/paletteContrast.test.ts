@@ -15,6 +15,7 @@
  * text — is covered only here.
  */
 
+import { at } from "./arrayAt";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -235,7 +236,12 @@ describe("the Studio's declared colours", () => {
   it("holds every colour the plot canvas paints text with to AA", () => {
     const scanned = canvasTextColours(source("components/SimulationPlot.tsx"));
     expect(scanned.literals.length).toBeGreaterThan(5);
-    expect(scanned.symbols.sort()).toEqual(["AXIS", "COLORS"]);
+    // Two identifiers paint text: `AXIS` and `colour`, the latter always an
+    // entry of `PLOT_COLORS`. Both are in the requirements below, and a third
+    // name appearing here fails until someone says where its colour comes
+    // from — which is the point of naming identifiers rather than skipping
+    // them.
+    expect(scanned.symbols.sort()).toEqual(["AXIS", "colour"]);
     const requirements = [
       ...plotTextRequirements(scanned.literals, "SimulationPlot"),
       ...plotTextRequirements([PLOT_AXIS], "PLOT_AXIS"),
@@ -247,7 +253,7 @@ describe("the Studio's declared colours", () => {
   it("holds every colour the SVG export writes text with to AA", () => {
     const exporter = source("simulationExports.ts");
     const fills = [...exporter.matchAll(/<text\b[^>]*fill="(\$\{[A-Z_]+\}|#[0-9a-f]{6})"/g)].map(
-      (match) => match[1],
+      (match) => at(match, 1),
     );
     expect(fills.length).toBeGreaterThan(3);
     const resolved = fills.map((fill) => (fill === "${PLOT_AXIS}" ? PLOT_AXIS : fill));
