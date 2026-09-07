@@ -11,6 +11,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Benchmark records name the compiler that actually built the lane. `GOTOOLCHAIN`
+  resolves a Go toolchain per module, so `go version` asked at the repository
+  root reported the installed Go — 1.24.0 on the measuring host — while the lane
+  is built inside `accel/go` by the 1.26.7 its `go.mod` requires and hosted CI
+  pins. And `mojo` on `PATH` was a prerelease, while the build and CI both use
+  the version `accel/mojo/pixi.toml` pins. Nine records published compilers that
+  did not build their lanes; all now record `go1.26.7` and `Mojo 1.0.0`, matching
+  the CI pins. The probes ask Go inside the accelerator module and Mojo through
+  the pinned manifest, the way CI exposes it.
 - A run of Brunel-Wang or Compte-WM now records the role its own profile states.
   Two defects met in one variable. The committed descriptor calls the refractory
   register `ref_remaining` while the canonical schema calls it

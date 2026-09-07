@@ -11,17 +11,17 @@
         0.9783683917582965,
         0.5288807408715824
       ],
-      "max_ns_per_step": 9955.73046875,
-      "median_ns_per_step": 9014.95703125,
-      "min_ns_per_step": 8538.0625,
+      "max_ns_per_step": 13293.212890625,
+      "median_ns_per_step": 10583.634765625,
+      "min_ns_per_step": 9134.689453125,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        5097334,
-        4631583,
-        4371488,
-        4615658,
-        4448270
+        6806125,
+        4676961,
+        5488338,
+        4941642,
+        5418821
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -35,17 +35,17 @@
         0.9783683917582965,
         0.5288807408715824
       ],
-      "max_ns_per_step": 35876.18359375,
-      "median_ns_per_step": 13505.556640625,
-      "min_ns_per_step": 12604.701171875,
+      "max_ns_per_step": 82353.103515625,
+      "median_ns_per_step": 16340.720703125,
+      "min_ns_per_step": 14453.42578125,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        18368606,
-        8481934,
-        6914845,
-        6453607,
-        6689183
+        42164789,
+        8052856,
+        8366449,
+        10634081,
+        7400154
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -59,17 +59,17 @@
         0.9783683917582966,
         0.5288807408715823
       ],
-      "max_ns_per_step": 7477.072265625,
-      "median_ns_per_step": 6695.12109375,
-      "min_ns_per_step": 6363.517578125,
+      "max_ns_per_step": 7587.361328125,
+      "median_ns_per_step": 7449.71484375,
+      "min_ns_per_step": 7386.953125,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 2.220446049250313e-16,
       "samples_ns": [
-        3828261,
-        3545176,
-        3273397,
-        3258121,
-        3427902
+        3814254,
+        3884729,
+        3782120,
+        3790022,
+        3854005
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -83,17 +83,17 @@
         0.9783683917582965,
         0.5288807408715824
       ],
-      "max_ns_per_step": 6978.734375,
-      "median_ns_per_step": 6592.474609375,
-      "min_ns_per_step": 6015.62109375,
+      "max_ns_per_step": 6739.208984375,
+      "median_ns_per_step": 6572.728515625,
+      "min_ns_per_step": 6491.294921875,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3381905,
-        3375347,
-        3157426,
-        3079998,
-        3573112
+        3323543,
+        3365237,
+        3423643,
+        3450475,
+        3344984
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -107,17 +107,17 @@
         0.9783683917582965,
         0.5288807408715824
       ],
-      "max_ns_per_step": 3154.3046875,
-      "median_ns_per_step": 3113.517578125,
-      "min_ns_per_step": 3078.91796875,
+      "max_ns_per_step": 4386.193359375,
+      "median_ns_per_step": 3897.603515625,
+      "min_ns_per_step": 3645.552734375,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1615004,
-        1590737,
-        1597414,
-        1594121,
-        1576406
+        1866523,
+        1945232,
+        2245731,
+        2016171,
+        1995573
       ],
       "spikes": 1,
       "trace_matches_python": true,
@@ -147,9 +147,9 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    7.26513671875,
-    7.79248046875,
-    7.49755859375
+    10.61083984375,
+    11.3427734375,
+    10.4794921875
   ],
   "model": "SCTriangularMcKeanNeuron",
   "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
@@ -163,9 +163,9 @@
     },
     "benchmarks/_mckean_benchmark.py": "8eedbbd99007e7fda5b811e1351b9899d2769cc93350a81c78e5a47fdfbca97a",
     "benchmarks/_non_resetting_lif_benchmark": {
-      "py": "9f3d712def34f48e7cc7b99da5facb8389c0b21e43726162a5013d3903b6a998"
+      "py": "910997c18e60d4f79e34abbdbf98f409d083acec6bcad0fe31e5fe8a792d6c92"
     },
-    "benchmarks/_non_resetting_lif_benchmark.py": "9f3d712def34f48e7cc7b99da5facb8389c0b21e43726162a5013d3903b6a998",
+    "benchmarks/_non_resetting_lif_benchmark.py": "910997c18e60d4f79e34abbdbf98f409d083acec6bcad0fe31e5fe8a792d6c92",
     "benchmarks/bench_model_sc_triangular_mckean": {
       "py": "c66292bd3d23a905f7235a69b6d44cd6ab49224b36e709f0b6fc1f99c6c48f21"
     },
@@ -218,11 +218,11 @@
     "src/sc_neurocore/neurons/reference_trace_data/sc_triangular_mckean_project.json": "f13ad77c5557e07ab8aed9c1a87247c4fa2d3ac8e028a78a4e7531109f38c0ec"
   },
   "steps": 512,
-  "timestamp_utc": "2026-09-07T13:54:03.441497+00:00",
+  "timestamp_utc": "2026-09-07T15:07:23.207310+00:00",
   "tool_versions": {
-    "go": "go version go1.24.0 linux/amd64",
+    "go": "go version go1.26.7 linux/amd64",
     "julia": "julia version 1.11.4",
-    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "mojo": "Mojo 1.0.0 (ed45d567)",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   }
 }

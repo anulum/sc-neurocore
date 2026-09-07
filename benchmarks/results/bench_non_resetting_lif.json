@@ -12,17 +12,17 @@
         26.641928883271085,
         0.0
       ],
-      "max_ns_per_step": 86.01997,
-      "median_ns_per_step": 80.111535,
-      "min_ns_per_step": 70.37596,
+      "max_ns_per_step": 86.791665,
+      "median_ns_per_step": 80.52988,
+      "min_ns_per_step": 71.228305,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        16212956,
-        15311626,
-        14075192,
-        17203994,
-        16022307
+        17358333,
+        16064671,
+        14245661,
+        16507342,
+        16105976
       ],
       "spikes": 4,
       "trace_matches_python": true,
@@ -37,17 +37,17 @@
         26.641928883271085,
         0.0
       ],
-      "max_ns_per_step": 123.813815,
-      "median_ns_per_step": 56.340405,
-      "min_ns_per_step": 52.48461,
+      "max_ns_per_step": 175.80545,
+      "median_ns_per_step": 61.34691,
+      "min_ns_per_step": 59.10099,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        11268081,
-        10566220,
-        11568576,
-        24762763,
-        10496922
+        12269382,
+        13000921,
+        11820198,
+        35161090,
+        12264466
       ],
       "spikes": 4,
       "trace_matches_python": true,
@@ -62,17 +62,17 @@
         26.641928883271085,
         0.0
       ],
-      "max_ns_per_step": 36.660275,
-      "median_ns_per_step": 34.607925,
-      "min_ns_per_step": 21.585095,
+      "max_ns_per_step": 35.38324,
+      "median_ns_per_step": 29.808,
+      "min_ns_per_step": 22.121395,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_ns": [
-        5808044,
-        7332055,
-        6955668,
-        6921585,
-        4317019
+        6869872,
+        7076648,
+        4775995,
+        5961600,
+        4424279
       ],
       "spikes": 4,
       "trace_matches_python": true,
@@ -87,17 +87,17 @@
         26.641928883271085,
         0.0
       ],
-      "max_ns_per_step": 2933.78436,
-      "median_ns_per_step": 2695.064195,
-      "min_ns_per_step": 2621.561575,
+      "max_ns_per_step": 5016.51324,
+      "median_ns_per_step": 3737.39778,
+      "min_ns_per_step": 2852.221875,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        586756872,
-        539012839,
-        553878133,
-        530525779,
-        524312315
+        570444375,
+        855511509,
+        1003302648,
+        747479556,
+        694436940
       ],
       "spikes": 4,
       "trace_matches_python": true,
@@ -112,17 +112,17 @@
         26.641928883271085,
         0.0
       ],
-      "max_ns_per_step": 43.14588,
-      "median_ns_per_step": 27.855635,
-      "min_ns_per_step": 22.278155,
+      "max_ns_per_step": 39.953155,
+      "median_ns_per_step": 29.57705,
+      "min_ns_per_step": 25.338965,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4585333,
-        5571127,
-        4455631,
-        8629176,
-        8128916
+        5915410,
+        7990631,
+        5889474,
+        6946941,
+        5067793
       ],
       "spikes": 4,
       "trace_matches_python": true,
@@ -152,9 +152,9 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    7.2294921875,
-    7.81494140625,
-    7.5
+    10.4453125,
+    11.33740234375,
+    10.46826171875
   ],
   "model": "NonResettingLIFNeuron",
   "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
@@ -164,9 +164,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/_non_resetting_lif_benchmark": {
-      "py": "9f3d712def34f48e7cc7b99da5facb8389c0b21e43726162a5013d3903b6a998"
+      "py": "910997c18e60d4f79e34abbdbf98f409d083acec6bcad0fe31e5fe8a792d6c92"
     },
-    "benchmarks/_non_resetting_lif_benchmark.py": "9f3d712def34f48e7cc7b99da5facb8389c0b21e43726162a5013d3903b6a998",
+    "benchmarks/_non_resetting_lif_benchmark.py": "910997c18e60d4f79e34abbdbf98f409d083acec6bcad0fe31e5fe8a792d6c92",
     "benchmarks/bench_model_non_resetting_lif": {
       "py": "be3e475ad624116e91e423cba227afe883fa73bea3972a97702e33ccabb312cf"
     },
@@ -235,11 +235,11 @@
     "src/sc_neurocore/neurons/reference_trace_data/non_resetting_lif_mat1.json": "c4a534cf6ac155360c7f774d02b50631e737bf14a61b58923d5d4783a69270d2"
   },
   "steps": 200000,
-  "timestamp_utc": "2026-09-07T13:53:49.147800+00:00",
+  "timestamp_utc": "2026-09-07T15:07:17.231380+00:00",
   "tool_versions": {
-    "go": "go version go1.24.0 linux/amd64",
+    "go": "go version go1.26.7 linux/amd64",
     "julia": "julia version 1.11.4",
-    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "mojo": "Mojo 1.0.0 (ed45d567)",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   }
 }

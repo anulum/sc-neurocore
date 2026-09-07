@@ -11,17 +11,17 @@
         -50.37751782881152,
         0.09580083971250167
       ],
-      "max_ns_per_step": 136.547885,
-      "median_ns_per_step": 130.724185,
-      "min_ns_per_step": 126.445215,
+      "max_ns_per_step": 158.60724,
+      "median_ns_per_step": 147.08446,
+      "min_ns_per_step": 140.34118,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_ns": [
-        26682448,
-        26144837,
-        25554223,
-        27309577,
-        25289043
+        30965234,
+        31721448,
+        28068236,
+        28527258,
+        29416892
       ],
       "spikes": 17,
       "trace_matches_python": true,
@@ -35,17 +35,17 @@
         -50.37751782881152,
         0.09580083971250167
       ],
-      "max_ns_per_step": 160.959495,
-      "median_ns_per_step": 96.258485,
-      "min_ns_per_step": 94.31751,
+      "max_ns_per_step": 155.78975,
+      "median_ns_per_step": 110.25976,
+      "min_ns_per_step": 105.54957,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_ns": [
-        23786947,
-        32191899,
-        19251697,
-        18880143,
-        18863502
+        22051952,
+        22311120,
+        21771089,
+        21109914,
+        31157950
       ],
       "spikes": 17,
       "trace_matches_python": true,
@@ -59,17 +59,17 @@
         -50.37751782881152,
         0.09580083971250167
       ],
-      "max_ns_per_step": 105.310595,
-      "median_ns_per_step": 100.955405,
-      "min_ns_per_step": 96.283635,
+      "max_ns_per_step": 145.538895,
+      "median_ns_per_step": 109.420095,
+      "min_ns_per_step": 104.79443,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_ns": [
-        20474910,
-        21062119,
-        19256727,
-        19467727,
-        20191081
+        20958886,
+        21405118,
+        21884019,
+        29107779,
+        26210858
       ],
       "spikes": 17,
       "trace_matches_python": true,
@@ -83,17 +83,17 @@
         -50.37751782881152,
         0.09580083971250167
       ],
-      "max_ns_per_step": 4093.2337,
-      "median_ns_per_step": 3915.51454,
-      "min_ns_per_step": 3811.257165,
+      "max_ns_per_step": 4739.04643,
+      "median_ns_per_step": 4448.17387,
+      "min_ns_per_step": 3976.027065,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        783575880,
-        783102908,
-        762251433,
-        818646740,
-        767357179
+        795205413,
+        889634774,
+        854416791,
+        903982710,
+        947809286
       ],
       "spikes": 17,
       "trace_matches_python": true,
@@ -107,17 +107,17 @@
         -50.37751782881152,
         0.09580083971250167
       ],
-      "max_ns_per_step": 90.304695,
-      "median_ns_per_step": 87.69005,
-      "min_ns_per_step": 84.24586,
+      "max_ns_per_step": 127.617545,
+      "median_ns_per_step": 106.564555,
+      "min_ns_per_step": 98.266695,
       "parity_atol": 2e-12,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "samples_ns": [
-        17650168,
-        18060939,
-        16849172,
-        17538010,
-        16929102
+        19653339,
+        21038411,
+        21312911,
+        22679060,
+        25523509
       ],
       "spikes": 17,
       "trace_matches_python": true,
@@ -147,9 +147,9 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    6.5009765625,
-    6.46875,
-    6.93310546875
+    10.15185546875,
+    11.33642578125,
+    10.45361328125
   ],
   "model": "EnergyLIFNeuron",
   "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
@@ -163,9 +163,9 @@
     },
     "benchmarks/_energy_lif_benchmark.py": "00b572b24e64d821e3e7b8b023c1ee08abd09fdc5a8a8c3f0ea8ce1ab823808f",
     "benchmarks/_non_resetting_lif_benchmark": {
-      "py": "9f3d712def34f48e7cc7b99da5facb8389c0b21e43726162a5013d3903b6a998"
+      "py": "910997c18e60d4f79e34abbdbf98f409d083acec6bcad0fe31e5fe8a792d6c92"
     },
-    "benchmarks/_non_resetting_lif_benchmark.py": "9f3d712def34f48e7cc7b99da5facb8389c0b21e43726162a5013d3903b6a998",
+    "benchmarks/_non_resetting_lif_benchmark.py": "910997c18e60d4f79e34abbdbf98f409d083acec6bcad0fe31e5fe8a792d6c92",
     "benchmarks/bench_model_energy_lif": {
       "py": "f954c37efff27b501510fe3e254c20ffe1eec067bed2912cec162cfa3f6e5cae"
     },
@@ -226,11 +226,11 @@
     "src/sc_neurocore/neurons/reference_receipts/energy_lif_fardet_levina.json": "5601a2efe3e8e66a2df8908bac70d67494adf789e0bca8c6ae23ab861a68b7cb"
   },
   "steps": 200000,
-  "timestamp_utc": "2026-09-07T13:38:07.622799+00:00",
+  "timestamp_utc": "2026-09-07T15:06:58.726033+00:00",
   "tool_versions": {
-    "go": "go version go1.24.0 linux/amd64",
+    "go": "go version go1.26.7 linux/amd64",
     "julia": "julia version 1.11.4",
-    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "mojo": "Mojo 1.0.0 (ed45d567)",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
-  "generated_at": "2026-09-07T13:37:57.181941+00:00",
+  "generated_at": "2026-09-07T15:06:35.398838+00:00",
   "kernel": "compte_wm_pyramidal_rk2_batch",
   "model": "CompteWMNeuron",
   "evidence_class": "local_regression",
@@ -29,17 +29,17 @@
       8
     ],
     "load_average": [
-      6.95556640625,
-      6.55322265625,
-      6.96533203125
+      10.46630859375,
+      11.490234375,
+      10.478515625
     ],
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
-    "go": "go version go1.24.0 linux/amd64",
+    "go": "go version go1.26.7 linux/amd64",
     "julia": "julia version 1.11.4",
-    "mojo": "Mojo 1.0.0b1 (a9591de6)"
+    "mojo": "Mojo 1.0.0 (ed45d567)"
   },
   "source_hashes": {
-    "benchmarks/bench_compte_wm.py": "f812182ad83586955aa7da703d330525de14f16e46ec5a1d9074927503b012ca",
+    "benchmarks/bench_compte_wm.py": "5be8fd8c054d35bc280211d7582f3653af1841f1752a43814dd2aa8e38fdff8e",
     "engine/src/bindings/rate/compte_wm.rs": "ec578985d8570b5c66da551f714410dfd965272999ccb23ee1761e515d51370a",
     "engine/src/neurons/rate/compte_wm.rs": "1e2098688040af0f5ed43e4a279d440315ec572cd89ac038803a5b8ea0ca4f1f",
     "hdl/formal/catalogue/sc_compte_wm.v": "a7c57947a60a592752db1743a716849b23a0715baf793a1bb7dadc55701613c7",
@@ -50,8 +50,8 @@
     "src/sc_neurocore/accel/mojo/compte_wm/compte_wm.mojo": "1d2afaab7bca0f4a7f8c9d67022cb47684f444f6a94674638fe8b5f6f469351f",
     "src/sc_neurocore/accel/rust/safety/compte_wm.rs": "15f916bd10d47314a7300e3b94bce6d94cc11237707cf4560e017a149b1507ea",
     "src/sc_neurocore/neurons/model_descriptors/CompteWMNeuron.toml": "5c44a636d5d560dd0e708c0a555148baadae1707096c4d22eb70aaa8b12475db",
-    "src/sc_neurocore/neurons/model_schemas/compte_wm.json": "52d8403456c03baae054b02367e8a292b83e022d2f12d3e38de6874e7e74fafd",
-    "src/sc_neurocore/neurons/model_schemas/compte_wm.toml": "a8649296a792b5a0a9b5ea17a70e2566d080708df2578585343cc68e5ac2a732",
+    "src/sc_neurocore/neurons/model_schemas/compte_wm.json": "36740c5ac4c9544ea3f9f11de9a1ed732beed24b0cad98af0d80c387006977b3",
+    "src/sc_neurocore/neurons/model_schemas/compte_wm.toml": "1ec85cbcaede436701cfde0e963d1893b3b628e4d684ed2e49162ccc11d2823d",
     "src/sc_neurocore/neurons/models/compte_wm.py": "34a872bbc0304d396d114a5b8da4061f4ba19b6489a2aa4e0ad8bf3a922f219d",
     "src/sc_neurocore/neurons/reference_trace_data/compte_wm_2000_pyramidal.json": "8001cb40d9764fbf7e6ba5b56b0278d667a80980bd1d772c184529c4d8026c61"
   },
@@ -91,12 +91,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        3621374196,
-        2810936933,
-        2745861340
+        3428716901,
+        3057750347,
+        2817623081
       ],
-      "median_ns": 2810936933,
-      "ns_per_step": 14054.684665,
+      "median_ns": 3057750347,
+      "ns_per_step": 15288.751735,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 0.0,
       "events_exact": true,
@@ -108,12 +108,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        374565323,
-        355953664,
-        364551603
+        384805946,
+        359771890,
+        346905051
       ],
-      "median_ns": 364551603,
-      "ns_per_step": 1822.758015,
+      "median_ns": 359771890,
+      "ns_per_step": 1798.85945,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "events_exact": true,
@@ -125,12 +125,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        35060425,
-        30870347,
-        31165607
+        34695512,
+        33453016,
+        34800206
       ],
-      "median_ns": 31165607,
-      "ns_per_step": 155.828035,
+      "median_ns": 34695512,
+      "ns_per_step": 173.47756,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "events_exact": true,
@@ -142,12 +142,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        47808050,
-        43505047,
-        39822266
+        50817123,
+        50090291,
+        49470029
       ],
-      "median_ns": 43505047,
-      "ns_per_step": 217.525235,
+      "median_ns": 50090291,
+      "ns_per_step": 250.451455,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "events_exact": true,
@@ -159,12 +159,12 @@
       "available": true,
       "used": true,
       "samples_ns": [
-        20827042,
-        22865981,
-        23901120
+        23696279,
+        22682391,
+        24060731
       ],
-      "median_ns": 22865981,
-      "ns_per_step": 114.329905,
+      "median_ns": 23696279,
+      "ns_per_step": 118.481395,
       "parity_max_abs_diff": 3.552713678800501e-14,
       "parity_tolerance": 2e-10,
       "events_exact": true,

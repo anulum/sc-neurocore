@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 480
+expected_file_count = 481
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1935,3 +1935,7 @@ rationale = "Public SC sigma-delta accumulator benchmark entry point and the sou
 [[file]]
 path = "benchmarks/bench_model_sigma_delta.py"
 rationale = "Public sigma-delta benchmark entry point and the source set its evidence is bound to."
+
+[[file]]
+path = "benchmarks/bench_brunel_wang.py"
+rationale = "Public Brunel-Wang benchmark entry point: what it measures across five runtimes, the source set its evidence binds, and how it resolves the Go and Mojo toolchains so a record names the compiler that built the lane."

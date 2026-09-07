@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import platform
 import statistics
+import shutil
 import subprocess
 import time
 from typing import Any, TypeAlias, cast
@@ -177,10 +178,48 @@ def _toolchain_command(tool: str, *arguments: str) -> list[str]:
     return [str(shim) if shim.exists() else tool, *arguments]
 
 
-def _version(command: list[str]) -> str:
-    """Return the first line a tool prints for its version, or ``unavailable``."""
+#: The Go accelerator module. ``GOTOOLCHAIN`` resolves a toolchain per module,
+#: so ``go version`` asked at the repository root reports the *installed* Go
+#: while a build inside this directory uses the one ``go.mod`` requires. Asking
+#: at the root recorded a compiler that did not build the lane.
+GO_MODULE = REPOSITORY / "src" / "sc_neurocore" / "accel" / "go"
+
+
+#: The Mojo toolchain is pinned by ``accel/mojo/pixi.toml`` and hosted CI
+#: exposes it through ``pixi run`` for exactly that reason. Asking ``mojo`` on
+#: ``PATH`` finds whatever is installed there — a prerelease on this host —
+#: which is not the compiler the pinned build uses.
+MOJO_MANIFEST = REPOSITORY / "src" / "sc_neurocore" / "accel" / "mojo" / "pixi.toml"
+
+
+def _mojo_command() -> list[str]:
+    """Return the argv that asks the *pinned* Mojo for its version.
+
+    Falls back to a ``.venv`` shim and then to ``PATH`` so a host without pixi
+    still records something, but the pin is preferred because it is what the
+    build and hosted CI use.
+    """
+    if MOJO_MANIFEST.exists() and shutil.which("pixi"):
+        return ["pixi", "run", "--manifest-path", str(MOJO_MANIFEST), "mojo", "--version"]
+    return _toolchain_command("mojo", "--version")
+
+
+def _version(command: list[str], *, cwd: Path | None = None) -> str:
+    """Return the first line a tool prints for its version, or ``unavailable``.
+
+    Parameters
+    ----------
+    command : list of str
+        The argv to run.
+    cwd : Path or None
+        Directory to ask from. It matters for Go, whose toolchain is resolved
+        per module: the answer at the repository root is not the compiler that
+        built the lane.
+    """
     try:
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+        completed = subprocess.run(
+            command, capture_output=True, text=True, timeout=30, check=False, cwd=cwd
+        )
     except OSError:
         return "unavailable"
     lines = (completed.stdout or completed.stderr).strip().splitlines()
@@ -233,9 +272,9 @@ def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
         "binary_hashes": _binary_hashes(spec),
         "tool_versions": {
             "rustc": _version(_toolchain_command("rustc", "--version")),
-            "go": _version(_toolchain_command("go", "version")),
+            "go": _version(_toolchain_command("go", "version"), cwd=GO_MODULE),
             "julia": _version(_toolchain_command("julia", "--version")),
-            "mojo": _version(_toolchain_command("mojo", "--version")),
+            "mojo": _version(_mojo_command()),
         },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

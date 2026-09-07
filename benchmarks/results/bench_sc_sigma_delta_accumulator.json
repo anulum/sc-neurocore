@@ -10,17 +10,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 28.25332,
-      "median_ns_per_step": 18.0216,
-      "min_ns_per_step": 14.033035,
+      "max_ns_per_step": 24.48665,
+      "median_ns_per_step": 21.680895,
+      "min_ns_per_step": 17.714885,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3581505,
-        5650664,
-        4134264,
-        3604320,
-        2806607
+        4897330,
+        4650754,
+        3555848,
+        4336179,
+        3542977
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -33,17 +33,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 27.605765,
-      "median_ns_per_step": 14.793325,
-      "min_ns_per_step": 13.57498,
+      "max_ns_per_step": 28.42261,
+      "median_ns_per_step": 20.14921,
+      "min_ns_per_step": 19.298345,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        5521153,
-        3535182,
-        2958665,
-        2714996,
-        2790239
+        4029842,
+        3880999,
+        5684522,
+        4487216,
+        3859669
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -56,17 +56,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 19.646055,
-      "median_ns_per_step": 15.28934,
-      "min_ns_per_step": 11.98421,
+      "max_ns_per_step": 26.116875,
+      "median_ns_per_step": 20.98768,
+      "min_ns_per_step": 19.52129,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2879522,
-        3057868,
-        2396842,
-        3788799,
-        3929211
+        3904258,
+        4197536,
+        4194401,
+        5223375,
+        4200434
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -79,17 +79,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 439.50447,
-      "median_ns_per_step": 403.240725,
-      "min_ns_per_step": 392.482315,
+      "max_ns_per_step": 513.739745,
+      "median_ns_per_step": 452.391925,
+      "min_ns_per_step": 436.87852,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        78496463,
-        79862265,
-        80648145,
-        87900894,
-        87574918
+        90478385,
+        87375704,
+        88975819,
+        95561944,
+        102747949
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -102,17 +102,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 19.961045,
-      "median_ns_per_step": 15.781775,
-      "min_ns_per_step": 14.850945,
+      "max_ns_per_step": 16.94873,
+      "median_ns_per_step": 15.622845,
+      "min_ns_per_step": 14.90229,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3156355,
-        3777734,
-        3010053,
-        2970189,
-        3992209
+        3124569,
+        3389746,
+        2980458,
+        3287409,
+        3036135
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -142,9 +142,9 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    6.53076171875,
-    6.47802734375,
-    6.92822265625
+    11.103515625,
+    11.40869140625,
+    10.525390625
   ],
   "model": "SCSigmaDeltaAccumulatorNeuron",
   "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
@@ -217,11 +217,11 @@
     "src/sc_neurocore/neurons/reference_trace_data/sc_sigma_delta_accumulator_project.json": "a8e9ae2fe3214904cfd385573af86d29ec7d38fa0a7caee31b680718ec49178f"
   },
   "steps": 200000,
-  "timestamp_utc": "2026-09-07T13:38:25.133324+00:00",
+  "timestamp_utc": "2026-09-07T15:07:50.627794+00:00",
   "tool_versions": {
-    "go": "go version go1.24.0 linux/amd64",
+    "go": "go version go1.26.7 linux/amd64",
     "julia": "julia version 1.11.4",
-    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "mojo": "Mojo 1.0.0 (ed45d567)",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   }
 }

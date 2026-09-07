@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import platform
 import statistics
+import shutil
 import subprocess
 import tempfile
 import time
@@ -127,9 +128,41 @@ def _measure(backend: str, steps: int, repeats: int) -> tuple[list[int], backend
     return samples, result
 
 
-def _tool_version(command: list[str]) -> str:
+#: The Go accelerator module. ``GOTOOLCHAIN`` resolves a toolchain per module,
+#: so ``go version`` asked at the repository root reports the *installed* Go
+#: while a build inside this directory uses the one ``go.mod`` requires. Asking
+#: at the root recorded a compiler that did not build the lane.
+GO_MODULE = REPOSITORY / "src" / "sc_neurocore" / "accel" / "go"
+
+
+#: The Mojo toolchain is pinned by ``accel/mojo/pixi.toml`` and hosted CI
+#: exposes it through ``pixi run`` for exactly that reason. Asking ``mojo`` on
+#: ``PATH`` finds whatever is installed there — a prerelease on this host —
+#: which is not the compiler the pinned build uses.
+MOJO_MANIFEST = REPOSITORY / "src" / "sc_neurocore" / "accel" / "mojo" / "pixi.toml"
+
+
+def _mojo_command() -> list[str]:
+    """Return the argv that asks the *pinned* Mojo for its version.
+
+    Falls back to ``PATH`` so a host without pixi still records something, but
+    the pin is preferred because it is what the build and hosted CI use.
+    """
+    if MOJO_MANIFEST.exists() and shutil.which("pixi"):
+        return ["pixi", "run", "--manifest-path", str(MOJO_MANIFEST), "mojo", "--version"]
+    return ["mojo", "--version"]
+
+
+def _tool_version(command: list[str], *, cwd: Path | None = None) -> str:
+    """Return the first line a tool prints for its version, or ``unavailable``.
+
+    ``cwd`` matters for Go, whose toolchain is resolved per module: the answer
+    at the repository root is not the compiler that built the lane.
+    """
     try:
-        completed = subprocess.run(command, check=False, capture_output=True, text=True, timeout=30)
+        completed = subprocess.run(
+            command, check=False, capture_output=True, text=True, timeout=30, cwd=cwd
+        )
     except OSError:
         return "unavailable"
     lines = (completed.stdout or completed.stderr).strip().splitlines()
@@ -144,9 +177,9 @@ def _environment() -> dict[str, object]:
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else [],
         "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else [],
         "rustc": _tool_version(["rustc", "--version"]),
-        "go": _tool_version(["go", "version"]),
+        "go": _tool_version(["go", "version"], cwd=GO_MODULE),
         "julia": _tool_version(["julia", "--version"]),
-        "mojo": _tool_version(["mojo", "--version"]),
+        "mojo": _tool_version(_mojo_command()),
     }
 
 
@@ -249,6 +282,15 @@ def build_payload(steps: int, repeats: int) -> tuple[dict[str, object], bool]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the benchmark and write its source- and binary-bound evidence.
+
+    Returns
+    -------
+    int
+        ``0`` when every measured runtime passed its parity check, non-zero
+        otherwise. The record carries its own verdict either way, so a failed
+        run is visible rather than absent.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--steps", type=int, default=N_STEPS)
