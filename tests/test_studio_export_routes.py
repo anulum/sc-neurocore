@@ -51,7 +51,11 @@ def test_svg_export_returns_rendered_vector_response(
     """The HTTP adapter simulates once and returns SVG media."""
 
     def _simulate_model(**_kwargs: object) -> dict[str, Any]:
+        # The custody result shape, including `dt`: the route draws the time
+        # axis from the run rather than from the request, and a mock that
+        # omits the field is the reason a fallback used to stand there.
         return {
+            "dt": 0.1,
             "model_name": "LIFNeuron",
             "spikes": [1],
             "states": {"v": [-65.0, -50.0, -65.0]},

@@ -36,7 +36,17 @@ def build_export_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/export/svg", responses=MODEL_RUN_ERROR_RESPONSES)
     def export_svg(req: ModelSimulateRequest) -> Any:
-        """Render one catalogue model run as SVG under the fail-closed run contract."""
+        """Render one catalogue model run as SVG under the fail-closed run contract.
+
+        The time base comes from the run, never from the request. `dt` is part
+        of the run contract -- a model with a fixed step accepts only its own,
+        so the effective step need not be the requested one -- and the axis
+        drawn under a trace has to be the axis the trace was produced on. The
+        fallback that used to stand here read the requested step, or 0.1 ms,
+        when the result carried none; it could not fire against the real
+        runner, which always reports `dt`, and it existed because a test's mock
+        omitted the field.
+        """
         from fastapi.responses import Response
         from sc_neurocore.studio.svg_export import traces_to_svg
 
@@ -55,7 +65,7 @@ def build_export_router(context: StudioApiContext) -> APIRouter:
                 states=result["states"],
                 spikes=result.get("spikes", []),
                 model_name=result.get("model_name", req.name),
-                dt=float(result["dt"]) if "dt" in result else (req.dt or 0.1),
+                dt=float(result["dt"]),
             )
             return Response(content=svg, media_type="image/svg+xml")
 
