@@ -11,6 +11,77 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Spike gating returns the same numbers as an ungated run. A neuron was skipped
+  when its input was zero and its voltage sat within one percent of rest, which
+  froze the leak, the adaptation current and the refractory countdown of
+  exactly the neurons that still had relaxation to do; the documented claim
+  that skipped neurons still decayed by leak was not true of the code. A neuron
+  is now skipped only when its input is exactly zero and its whole state
+  matches a state that model's zero-input map was measured to leave unchanged,
+  so a gated run and an ungated run agree exactly. Across the catalogue, 179
+  models are comparable under a zero drive and none of them now differs;
+  previously 108 of 185 had no fixed point at rest and were skipped anyway.
+  Fewer neurons are skipped than before, which is the cost of the agreement.
+- `backend='auto'` no longer runs a different network than the one it was
+  given. The native network runner receives a model name and a neuron count, so
+  it builds default neurons; a population carrying constructor parameters,
+  independently derived seeds, or state from an earlier run was replaced by
+  defaults while every Python object went on reporting the caller's values. A
+  two-population AdEx network with `v_threshold=-45` and `v_rest=-60` ended at
+  a summed membrane voltage of -1273.982376 in Python and -1299.940210 under
+  `auto`, the latter being the default network's own result. `auto` now runs
+  such a network in Python and a forced `backend='rust'` raises, naming the
+  population and the attributes; the MPI rank-local runner keeps the Python
+  path for a rank it cannot reproduce. Neurons changed in place before a run,
+  and a second `run()` on the same network, were discarded the same way and are
+  fixed with it.
+- Importing `sc_neurocore.network` no longer provisions a Julia toolchain. The
+  cortical column discovered its native accelerators, and the gamma-oscillation
+  circuit loaded its Julia kernel, while their modules were being read, so
+  importing any module in the package resolved and could install a Julia
+  environment. Both now load on first construction of the object that uses
+  them.
+- A run's custody audit sees a random generator advance. Attribute
+  fingerprinting used `repr`, which for a NumPy generator is the address-based
+  default and does not change between draws, so `GLMNeuron`,
+  `GammaRenewalNeuron` and `SCStochasticRateAdaptationNeuron` reported complete
+  custody while the register that determines their whole trajectory moved every
+  step. A generator now fingerprints by its generator state, and a value that
+  cannot be fingerprinted is recorded as opaque rather than reported unchanged.
+- Every neuron of a population receives its own random stream. The population
+  constructed every neuron with identical keyword arguments, so a seeded model
+  gave all of them the same stream; each neuron now takes a distinct seed
+  derived reproducibly from the population's base seed.
+- `sc_neurocore.benchmarks` imports without the optional training extras. The
+  package eagerly imported a Torch-backed module, so the metrics, the MLPerf-SC
+  schema, the runner and report, the online-O1 benchmark and the task registry
+  were all unreachable in an installation without `training`, `research` or
+  `full`. The Torch-backed names now resolve lazily and raise at the point of
+  use.
+- The Studio simulation plot draws its time axis from the run rather than from
+  the request, so an exported figure carries the timebase the model actually
+  ran at.
+
+### Added
+- `Projection.delay_steps` reports the delay that executes, beside `delay`
+  which keeps the value that was asked for. The class documents that its delay
+  is in timesteps rather than milliseconds, that rounding is half to even, that
+  a positive value below half a step is floored at one step, and that the
+  scalar and per-synapse forms round differently.
+- A model may declare a state variable it holds as a vector. The descriptor's
+  initial value is now optional, because a compartment vector, a ring-attractor
+  activity profile or a competing-unit array has no single number to declare as
+  its start, and the layout reads a numeric list or tuple as the vector it is.
+  `ContinuousAttractorNeuron`, `LeakyCompeteFireNeuron` and `RallCableNeuron`
+  declare and record their state and report complete custody;
+  `AmariNeuralField.u` and `SCResettingParallelSpikingNeuron.buffer` no longer
+  claim a scalar start they do not have.
+
+### Changed
+- `BrunelWangNeuron` and `CompteWMNeuron` expose `ref_remaining` under the name
+  their descriptors declare and `get_state` already returned, in place of the
+  private `_ref_remaining`. The refractory guard's message names the same
+  attribute.
 - Deleting a population on the Network Canvas now deletes it. The canvas
   computed the new node array from a change batch and then wrote back positions
   only, so a removal was computed and discarded: the population and every
