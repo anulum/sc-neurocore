@@ -27,7 +27,11 @@ from extract_shd_weights import (  # noqa: E402
 )
 from sc_neurocore.security.checkpoint_loading import CheckpointTrustError  # noqa: E402
 
-REPO = "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE"
+#: Resolved from this file rather than written down: the previous absolute
+#: path named the retired NTFS mirror, which
+#: `BROADCAST_2026-09-01_ntfs_gotm_mirror_retired.md` forbids and which no
+#: longer exists, so nothing here could open the checkpoint on any machine.
+REPO = str(Path(__file__).resolve().parents[1])
 CKPT = f"{REPO}/data/masquelier_shd/cloud_results/dcls_max/dcls_max/last.pth"
 
 
