@@ -33,14 +33,17 @@ const DIGEST_A = "a".repeat(64);
 const DIGEST_B = "b".repeat(64);
 const DIGEST_C = "c".repeat(64);
 
-type StoreSlice = {
+/**
+ * The slice of the store the hook reads, as the cases stand it up.
+ */
+interface StoreSlice {
   fiResult: FICurveResponse | null;
   result: SimulateResponse | null;
   selectedModelName: string;
   sourceMode: "model" | "ode";
   runFICurve: () => Promise<void>;
   runSimulation: () => Promise<void>;
-};
+}
 
 const mockStore = vi.hoisted(() => ({
   state: null as unknown as StoreSlice,
@@ -52,6 +55,16 @@ vi.mock("./stores/studio", () => ({
   },
 }));
 
+/**
+ * Build an f-I curve result carrying the given digest.
+ *
+ * The digest is what the cart identifies a result by, so it is the
+ * parameter: two results differing only in it are two different runs.
+ *
+ * @param resultSha256 - The result digest its metadata declares.
+ * @param rates - The rates it reports.
+ * @returns The result.
+ */
 function fiCurve(resultSha256: string, rates: number[] = [0, 5]): FICurveResponse {
   return {
     analysis_metadata: {
@@ -69,6 +82,11 @@ function fiCurve(resultSha256: string, rates: number[] = [0, 5]): FICurveRespons
   };
 }
 
+/**
+ * Stand the mocked store up again between cases.
+ *
+ * @param partial - The fields to set; the rest return to their defaults.
+ */
 function resetStore(partial: Partial<StoreSlice> = {}): void {
   mockStore.state = {
     fiResult: null,
@@ -107,10 +125,19 @@ describe("useEvidenceCartSession runAnalysisIntoCart await parity (W12-G)", () =
     latest = null;
   });
 
+  /**
+   * Mount the hook in a real React root and keep its latest value.
+   */
   function mountHook(): void {
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
+    /**
+     * The component under test: it renders the cart and records the hook's
+     * value.
+     *
+     * @returns The rendered host element.
+     */
     function Host() {
       const value = useEvidenceCartSession();
       useEffect(() => {

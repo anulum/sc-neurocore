@@ -7,8 +7,20 @@
 // SC-NeuroCore — Studio evidence cart orchestration (outside App.tsx)
 
 /**
- * Pure controller helpers for session evidence-cart enqueue/export decisions.
- * Keeps App.tsx composition-only: no queue policy lives in the shell file.
+ * Deciding what belongs in the evidence cart, and what would be a duplicate.
+ *
+ * The rule this layer exists for is **identity by digest, not by shape**. Two
+ * runs of the same model with the same parameters produce results of identical
+ * shape and different values; comparing anything but the server's own
+ * `result_sha256` would treat the second as unchanged and drop it. So a run
+ * whose digest matches what was there before it started is skipped, and a run
+ * whose digest cannot be read is skipped too -- failing closed, because
+ * queueing an artefact that cannot be identified puts an unverifiable entry
+ * into a ledger whose whole purpose is verifiability.
+ *
+ * Every decision is returned with a stable reason, so the panel can say why a
+ * successful run did not reach the cart. Nothing here mutates the cart or
+ * touches the store; `App.tsx` stays composition only.
  */
 
 import type { SimulateResponse } from "./api/client";
@@ -26,6 +38,7 @@ import {
 } from "./evidenceCart";
 export { analysisResultIdentity } from "./evidenceCartIdentity";
 
+/** What the store reports after a simulation run. */
 export interface SimulationQueueInput {
   /** True when the store reports the last run completed successfully. */
   runSucceeded: boolean;
@@ -36,6 +49,7 @@ export interface SimulationQueueInput {
   resultIdentityBefore: string | null;
 }
 
+/** What the store reports after an analysis run. */
 export interface AnalysisQueueInput {
   runSucceeded: boolean;
   sourceMode: "model" | "ode";
@@ -48,21 +62,28 @@ export interface AnalysisQueueInput {
   resultIdentityAfter: string | null;
 }
 
+/** The cart with the artefact queued, or the reason it was not. */
 export type QueueDecision =
   | { action: "enqueue"; cart: EvidenceCart; kind: EvidenceCartItemKind }
   | { action: "skip"; reason: string; cart: EvidenceCart };
 
 /**
- * Build a content-faithful identity for a simulation result snapshot.
+ * Identify a simulation result by what it contains.
  *
- * Uses the authoritative ``run_metadata.result_sha256`` so two same-shape
- * traces with different values cannot collide and be treated as unchanged.
+ * The server's own `result_sha256` is the identity. Two traces of the same
+ * shape with different values must not collide, and only a digest over the
+ * values distinguishes them.
+ *
+ * @param result - The run's result, or `null` when there is none.
+ * @returns The digest, or `null` when the result carries none. A result
+ *   without a digest is unidentifiable, and the callers treat that as a reason
+ *   to skip rather than a reason to queue.
  */
 export function simulationResultIdentity(result: SimulateResponse | null): string | null {
   if (result === null) {
     return null;
   }
-  const digest = result.run_metadata?.result_sha256;
+  const digest = result.run_metadata.result_sha256;
   if (typeof digest !== "string" || digest.length === 0) {
     return null;
   }
@@ -70,7 +91,12 @@ export function simulationResultIdentity(result: SimulateResponse | null): strin
 }
 
 /**
- * Decide whether to enqueue a simulation artefact after a store run.
+ * Decide whether a finished simulation belongs in the cart.
+ *
+ * @param cart - The cart as it stands.
+ * @param input - What the store reports about the run, including the result
+ *   identity from before it started.
+ * @returns The new cart, or the reason nothing was queued.
  */
 export function decideSimulationEnqueue(
   cart: EvidenceCart,
@@ -109,10 +135,17 @@ export function decideSimulationEnqueue(
 }
 
 /**
- * Decide whether to enqueue the exact analysis artefact that just succeeded.
+ * Decide whether a finished analysis belongs in the cart.
  *
- * Identity is metadata ``result_sha256`` only (see {@link analysisResultIdentity}).
- * Unchanged digests skip for every analysis kind; missing after-identity fails closed.
+ * The payload queued is the analysis that just succeeded, not a snapshot of
+ * every analysis field the store happens to hold: a cart entry should be one
+ * result, identifiable by its own digest.
+ *
+ * @param cart - The cart as it stands.
+ * @param input - What the store reports about the run, with the result
+ *   identity from before and after it.
+ * @returns The new cart, or the reason nothing was queued. An analysis whose
+ *   identity cannot be read is skipped rather than queued unidentified.
  */
 export function decideAnalysisEnqueue(
   cart: EvidenceCart,
@@ -147,9 +180,16 @@ export function decideAnalysisEnqueue(
 }
 
 /**
- * True when guided-flow may treat evidence as exported for the current cart.
+ * Whether the guided flow's export step is satisfied by what has been exported.
  *
- * A previous export must not satisfy the export step after new items are queued.
+ * Both counts must match the cart. An export made before the reader queued
+ * more must not tick the step: the flow would report evidence exported for
+ * artefacts that are not in any bundle.
+ *
+ * @param cart - The cart as it stands.
+ * @param lastExport - The last bundle built, if any.
+ * @param exportItemCount - How many items the cart held when it was built.
+ * @returns Whether the step is satisfied.
  */
 export function evidenceCartExportSatisfiesGuided(
   cart: EvidenceCart,
@@ -163,7 +203,16 @@ export function evidenceCartExportSatisfiesGuided(
 }
 
 /**
- * Build export blob with payload-bearing entries and verified digests.
+ * Build the export and check it before handing it over.
+ *
+ * The verification is not ceremony: the bundle is what someone else will check
+ * later, and a bundle that fails its own round-trip should never reach a
+ * downloads folder where it looks like evidence.
+ *
+ * @param cart - The cart to export.
+ * @param options - An export timestamp, for reproducible tests.
+ * @returns The bundle with its bytes and filename, or the reason there is
+ *   none.
  */
 export async function exportEvidenceCartWithVerification(
   cart: EvidenceCart,

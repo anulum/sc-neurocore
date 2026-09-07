@@ -23,6 +23,12 @@ import {
   simulationResultIdentity,
 } from "./evidenceCartController";
 
+/**
+ * Build a simulation response, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The response.
+ */
 function simulateResult(overrides: Partial<SimulateResponse> = {}): SimulateResponse {
   return {
     time: [0, 0.1, 0.2],

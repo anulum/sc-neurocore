@@ -172,6 +172,12 @@ const AUDITED = [
   "src/docstringGate.test.ts",
   "src/evidenceBundles.test.ts",
   "src/evidenceBundles.ts",
+  "src/evidenceCart.test.ts",
+  "src/evidenceCart.ts",
+  "src/evidenceCartController.test.ts",
+  "src/evidenceCartController.ts",
+  "src/evidenceCartIdentity.test.ts",
+  "src/evidenceCartIdentity.ts",
   "src/evidenceSeal.test.ts",
   "src/evidenceSeal.ts",
   "src/modelSelectionStoreState.test.ts",
@@ -208,6 +214,8 @@ const AUDITED = [
   "src/studioAnalysisResultSink.ts",
   "src/studioAnalysisState.test.ts",
   "src/studioAnalysisState.ts",
+  "src/studioAuthSession.test.ts",
+  "src/studioAuthSession.ts",
   "src/studioGraphDuplicate.test.ts",
   "src/studioGraphDuplicate.ts",
   "src/studioGraphHistory.test.ts",
@@ -225,8 +233,16 @@ const AUDITED = [
   "src/studioProjectState.ts",
   "src/studioProjectionEditor.test.ts",
   "src/studioProjectionEditor.ts",
+  "src/studioSavedSessions.test.ts",
+  "src/studioSavedSessions.ts",
+  "src/studioShareRuntime.test.ts",
+  "src/studioShareRuntime.ts",
+  "src/studioStartupRuntime.test.ts",
+  "src/studioStartupRuntime.ts",
   "src/studioTrainingStream.test.ts",
   "src/studioTrainingStream.ts",
+  "src/studioUrlState.test.ts",
+  "src/studioUrlState.ts",
   "src/synthesisStoreState.test.ts",
   "src/synthesisStoreState.ts",
   "src/trainingCheckpoint.test.ts",
@@ -237,6 +253,8 @@ const AUDITED = [
   "src/trainingStoreState.ts",
   "src/useAnalysisJob.test.ts",
   "src/useAnalysisJob.ts",
+  "src/useEvidenceCartSession.test.ts",
+  "src/useEvidenceCartSession.ts",
   "src/useStudioAnalysisJobIntegration.test.ts",
   "src/useStudioAnalysisJobIntegration.ts",
 ];
@@ -265,7 +283,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * evidence and export group each grew `AUDITED`, and the remainder was
    * re-taken with the tool afterwards rather than reduced on paper.
    */
-  declarations: 252,
+  declarations: 161,
   /**
    * Files carrying at least one of those declarations.
    *
@@ -275,7 +293,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 49,
+  files: 36,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
@@ -288,7 +306,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * is the parent; the commit this figure lands in adds files to `AUDITED`
    * and nothing else that ESLint reads.
    */
-  measuredOnSourceSha: "0370aa0830c829c92ba51bd123492b8d467c9c00",
+  measuredOnSourceSha: "56d482b3c9ee33a061481533a1e7bf387af644c4",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**

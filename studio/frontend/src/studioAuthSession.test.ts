@@ -24,6 +24,12 @@ import {
   type StudioAuthTokenStorage,
 } from "./studioAuthSession";
 
+/**
+ * Build a token storage holding the given token.
+ *
+ * @param initialToken - What it starts with.
+ * @returns The storage.
+ */
 function createStorage(initialToken: string | null = null): StudioAuthTokenStorage {
   const values = new Map<string, string>();
   if (initialToken !== null) {
@@ -42,7 +48,7 @@ function createStorage(initialToken: string | null = null): StudioAuthTokenStora
 
 describe("Studio auth token persistence", () => {
   it("treats unavailable browser storage as an unauthenticated session", () => {
-    const syncedTokens: Array<string | null> = [];
+    const syncedTokens: (string | null)[] = [];
     const setToken = (token: string | null): void => {
       syncedTokens.push(token);
     };
@@ -69,7 +75,7 @@ describe("Studio auth token persistence", () => {
 
   it("syncs the persisted browser token into the API client state", () => {
     const storage = createStorage("persisted-token");
-    const syncedTokens: Array<string | null> = [];
+    const syncedTokens: (string | null)[] = [];
     const setToken = (token: string | null): void => {
       syncedTokens.push(token);
     };

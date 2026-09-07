@@ -23,6 +23,7 @@
 
 import { canonicalSealText, sealSha256 } from "./evidenceSeal";
 
+/** The schema every cart and every export declares. */
 export const EVIDENCE_CART_SCHEMA_VERSION = "studio.evidence-cart.v1" as const;
 
 /** Artefact kinds that the cart accepts for Phase 0 operator workflows. */
@@ -97,12 +98,15 @@ export interface EvidenceCartExportBundle {
   schema_version: typeof EVIDENCE_CART_SCHEMA_VERSION;
 }
 
+/** The new cart and the item queued, or the refusal and the cart unchanged. */
 export type EvidenceCartEnqueueResult =
   | { ok: true; cart: EvidenceCart; item: EvidenceCartItem }
   | { ok: false; error: string; cart: EvidenceCart };
 
 /**
- * Return an empty cart with the current schema version.
+ * Start an empty cart.
+ *
+ * @returns The cart, carrying the schema version its exports will declare.
  */
 export function emptyEvidenceCart(): EvidenceCart {
   return {
@@ -112,10 +116,35 @@ export function emptyEvidenceCart(): EvidenceCart {
 }
 
 /**
- * Enqueue a simulation, analysis, or other run artefact into the cart.
+ * Read a source name, treating a blank one as no name at all.
  *
- * Rejects empty labels and non-serialisable payloads. Does not mutate the input
- * cart; returns a new cart with the item appended.
+ * This is a function rather than an inline `||` so the reason has somewhere to
+ * live: a name of `"   "` is not a name, and `??` would keep it, putting an
+ * empty label on a cart entry the reader has to identify later.
+ *
+ * @param sourceName - The name as it was typed, if one was.
+ * @returns The trimmed name, or `undefined` when there is nothing left of it.
+ */
+function presentSourceName(sourceName: string | undefined): string | undefined {
+  const trimmed = sourceName?.trim();
+  return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined;
+}
+
+/**
+ * Queue one run artefact.
+ *
+ * A blank label and a payload that will not survive JSON are both refused: the
+ * cart is a ledger the reader comes back to, and an entry they cannot name or
+ * that cannot be exported is worse than one they were told to fix.
+ *
+ * The cart is not mutated. A new one is returned with the item appended, so a
+ * caller holding the old cart still holds what it held.
+ *
+ * @param cart - The cart as it stands.
+ * @param draft - The artefact to queue.
+ * @param options - An id and a timestamp, for reproducible tests; both are
+ *   generated when absent.
+ * @returns The new cart and the item, or the refusal with the cart unchanged.
  */
 export function enqueueEvidenceCartArtefact(
   cart: EvidenceCart,
@@ -140,7 +169,7 @@ export function enqueueEvidenceCartArtefact(
     label,
     payload: draft.payload,
     queuedAtUtc: options.nowUtc ?? new Date().toISOString(),
-    sourceName: draft.sourceName?.trim() || undefined,
+    sourceName: presentSourceName(draft.sourceName),
   };
   return {
     ok: true,
@@ -153,8 +182,15 @@ export function enqueueEvidenceCartArtefact(
 }
 
 /**
- * Remove a cart item by id. Returns the same cart reference when the id is
- * missing (no silent create).
+ * Remove one item.
+ *
+ * An id that is not in the cart returns the same cart, by reference. Nothing
+ * is created and nothing is logged: removing something that is not there is
+ * not an error, and a caller comparing references can see that nothing moved.
+ *
+ * @param cart - The cart as it stands.
+ * @param itemId - The item to remove.
+ * @returns The new cart, or the same one when there was nothing to remove.
  */
 export function removeEvidenceCartArtefact(
   cart: EvidenceCart,
@@ -170,17 +206,31 @@ export function removeEvidenceCartArtefact(
 }
 
 /**
- * Clear all items from the cart.
+ * Empty the cart.
+ *
+ * @returns A fresh empty cart. The old one is untouched, so a caller that kept
+ *   a reference to it still has what the reader queued.
  */
 export function clearEvidenceCart(): EvidenceCart {
   return emptyEvidenceCart();
 }
 
 /**
- * Build a single export bundle with per-item and bundle digests.
+ * Turn the whole cart into one export bundle.
  *
- * Digests are computed from canonical JSON so the same payloads always yield
- * the same hex digest regardless of object key insertion order.
+ * Every payload gets its own digest and the bundle gets one of its own. The
+ * bundle digest is taken over the metadata only -- ids, labels, payload
+ * digests, timestamps -- and deliberately not over the payloads themselves, so
+ * two exports of the same cart agree on the bundle digest while each entry
+ * still carries what is needed to reconstruct and check it.
+ *
+ * The digests come from the shared evidence seal rather than `JSON.stringify`,
+ * which is what lets a digest taken here be compared with one the server took.
+ *
+ * @param cart - The cart to export.
+ * @param options - An export timestamp, for reproducible tests.
+ * @returns The bundle, or the reason there is none. An empty cart is refused:
+ *   a bundle of nothing would still carry a digest and read as evidence.
  */
 export async function buildEvidenceCartExport(
   cart: EvidenceCart,
@@ -237,8 +287,14 @@ export async function buildEvidenceCartExport(
 }
 
 /**
- * Verify that every export entry's ``payload_sha256`` matches its payload and
- * that the bundle digest matches the metadata-only digest body.
+ * Check a bundle against itself.
+ *
+ * Recomputes every payload digest and the bundle digest. This is what makes
+ * the export checkable by whoever receives it, and it is the reason the
+ * digest body is built the same way in both places rather than remembered.
+ *
+ * @param bundle - The bundle to check.
+ * @returns Whether it holds together, and which entry failed when it does not.
  */
 export async function verifyEvidenceCartExportRoundTrip(
   bundle: EvidenceCartExportBundle,
@@ -276,7 +332,11 @@ export async function verifyEvidenceCartExportRoundTrip(
 }
 
 /**
- * Serialise an export bundle to a downloadable JSON Blob.
+ * Serialise a bundle for download.
+ *
+ * @param bundle - The bundle.
+ * @returns The bytes, indented and newline-terminated so the file reads well
+ *   in a terminal and diffs line by line.
  */
 export function evidenceCartExportToBlob(bundle: EvidenceCartExportBundle): Blob {
   const text = `${JSON.stringify(bundle, null, 2)}\n`;
@@ -284,7 +344,14 @@ export function evidenceCartExportToBlob(bundle: EvidenceCartExportBundle): Blob
 }
 
 /**
- * Suggested download filename for a cart export.
+ * Name the file a bundle is saved as.
+ *
+ * The name carries the first twelve characters of the bundle digest, so two
+ * exports of different carts cannot overwrite each other in a downloads
+ * folder and the file can be matched to its bundle by eye.
+ *
+ * @param bundle - The bundle.
+ * @returns The filename.
  */
 export function evidenceCartExportFilename(bundle: EvidenceCartExportBundle): string {
   const short = bundle.bundle_sha256.slice(0, 12);
@@ -292,8 +359,13 @@ export function evidenceCartExportFilename(bundle: EvidenceCartExportBundle): st
 }
 
 /**
- * True when the cart has both a simulation and an analysis artefact (Phase 0
- * explore-one-model success path attachment).
+ * Whether the cart holds both halves of a complete story.
+ *
+ * A run and an analysis of that run is the pair the guided flow attaches; one
+ * without the other is a partial record.
+ *
+ * @param cart - The cart.
+ * @returns Whether it holds at least one of each.
  */
 export function evidenceCartHasSimAndAnalysis(cart: EvidenceCart): boolean {
   const kinds = new Set(cart.items.map((item) => item.kind));
@@ -301,7 +373,12 @@ export function evidenceCartHasSimAndAnalysis(cart: EvidenceCart): boolean {
 }
 
 /**
- * Draft a simulation cart artefact from a model name and run result payload.
+ * Draft a cart entry for a simulation run.
+ *
+ * @param sourceName - The model the run was of.
+ * @param payload - The run's result.
+ * @param classification - The evidence class to record it under.
+ * @returns The draft, ready to queue.
  */
 export function simulationCartDraft(
   sourceName: string,
@@ -318,7 +395,12 @@ export function simulationCartDraft(
 }
 
 /**
- * Draft an analysis cart artefact from a model name and analysis result payload.
+ * Draft a cart entry for an analysis.
+ *
+ * @param sourceName - The model the analysis was of.
+ * @param payload - The analysis's result.
+ * @param classification - The evidence class to record it under.
+ * @returns The draft, ready to queue.
  */
 export function analysisCartDraft(
   sourceName: string,
@@ -335,35 +417,61 @@ export function analysisCartDraft(
 }
 
 /**
- * Return the receipt identifier a queued payload carries, or `null`.
+ * Read the receipt identifier out of a queued payload.
+ *
+ * The identifier names the run that produced the payload, which is what lets
+ * an export made in a later session still point at that exact run rather than
+ * at whatever the panel is showing now.
+ *
+ * @param payload - The queued payload, whatever shape it is.
+ * @returns The identifier, or `null` when the payload carries none.
  */
 export function evidenceCartReceiptId(payload: unknown): string | null {
   if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
     return null;
   }
-  const receipt = (payload as Record<string, unknown>).evidence_receipt;
-  if (receipt === null || typeof receipt !== "object" || Array.isArray(receipt)) {
+  if (!("evidence_receipt" in payload)) {
     return null;
   }
-  const identifier = (receipt as Record<string, unknown>).receipt_id;
+  const { evidence_receipt: receipt } = payload;
+  if (receipt === null || typeof receipt !== "object" || Array.isArray(receipt)
+    || !("receipt_id" in receipt)) {
+    return null;
+  }
+  const { receipt_id: identifier } = receipt;
   return typeof identifier === "string" && identifier.length > 0 ? identifier : null;
 }
 
 /**
- * Compute SHA-256 hex of the shared canonical seal encoding of `value`.
+ * Digest a value the way the seal does.
+ *
+ * @param value - The value.
+ * @returns Its SHA-256, as lowercase hexadecimal.
  */
 export async function sha256HexOfCanonicalJson(value: unknown): Promise<string> {
   return sealSha256(value);
 }
 
 /**
- * Canonical seal text: sorted object keys, no insignificant whitespace, stable
- * array order, one normal form per number, finite numbers only.
+ * Render a value the way the seal renders it: sorted keys, no insignificant
+ * whitespace, stable array order, one normal form per number, and finite
+ * numbers only.
+ *
+ * @param value - The value.
+ * @returns Its canonical text.
+ * @throws {Error} When the value cannot be rendered canonically -- a
+ *   non-finite number, or something JSON has no form for.
  */
 export function canonicalJsonString(value: unknown): string {
   return canonicalSealText(value);
 }
 
+/**
+ * Whether a payload can be rendered canonically, and so digested and exported.
+ *
+ * @param value - The payload.
+ * @returns Whether it survives the canonical rendering.
+ */
 function isJsonSerialisable(value: unknown): boolean {
   try {
     canonicalJsonString(value);
@@ -373,6 +481,11 @@ function isJsonSerialisable(value: unknown): boolean {
   }
 }
 
+/**
+ * Mint an id for a cart item.
+ *
+ * @returns An identifier unique within one cart.
+ */
 function newEvidenceCartItemId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `ec_${crypto.randomUUID()}`;

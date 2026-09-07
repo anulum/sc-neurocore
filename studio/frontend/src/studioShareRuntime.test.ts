@@ -35,9 +35,13 @@ const input: StudioShareUrlInput = {
   threshold: "v > 1",
 };
 
+/**
+ * A scheduler that records what it was asked to do instead of doing it, so a
+ * case can run the delay itself.
+ */
 class RecordingClearScheduler implements StudioShareStatusClearScheduler {
   readonly delays: number[] = [];
-  private callbacks: Array<() => void> = [];
+  private callbacks: (() => void)[] = [];
 
   setTimeout(callback: () => void, delayMs: number): StudioShareStatusClearTimer {
     this.callbacks.push(callback);

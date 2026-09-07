@@ -24,6 +24,12 @@ import {
   type StudioSavedSessionStorage,
 } from "./studioSavedSessions";
 
+/**
+ * Build a storage holding one raw stored value.
+ *
+ * @param initialValue - The stored text, or `null` for an empty cache.
+ * @returns The storage.
+ */
 function createStorage(initialValue: string | null = null): StudioSavedSessionStorage {
   const values = new Map<string, string>();
   if (initialValue !== null) {
@@ -205,16 +211,27 @@ describe("Studio saved-session persistence", () => {
 describe("browser cache status", () => {
   const key = "sc-studio-sessions";
 
-  function storage(initial: Record<string, string> = {}, onSet?: (value: string) => void) {
-    const data = { ...initial };
+  /**
+   * Build a storage that keeps its entries in a map.
+   *
+   * It carried a `removeItem` the storage contract does not declare and no
+   * case called; a map holds the entries now and that method is gone.
+   *
+   * @param initial - The entries it starts with.
+   * @param onSet - Called with each value written, when a case wants to see
+   *   what was stored.
+   * @returns The storage.
+   */
+  function storage(
+    initial: Record<string, string> = {},
+    onSet?: (value: string) => void,
+  ): StudioSavedSessionStorage {
+    const data = new Map(Object.entries(initial));
     return {
-      getItem: (name: string) => data[name] ?? null,
+      getItem: (name: string) => data.get(name) ?? null,
       setItem: (name: string, value: string) => {
         onSet?.(value);
-        data[name] = value;
-      },
-      removeItem: (name: string) => {
-        delete data[name];
+        data.set(name, value);
       },
     };
   }

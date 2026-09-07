@@ -30,6 +30,7 @@ import {
 } from "./evidenceCartController";
 import { useStudioStore } from "./stores/studio";
 
+/** What a panel needs: the cart, the last export, and the actions. */
 export interface EvidenceCartSession {
   cart: EvidenceCart;
   error: string | null;
@@ -41,7 +42,15 @@ export interface EvidenceCartSession {
 }
 
 /**
- * Session-scoped evidence cart state and success-only queue/export actions.
+ * Hold the evidence cart for as long as the reader's session lasts.
+ *
+ * The actions here run a job **and then decide** whether its result belongs in
+ * the cart, which is why they are one call rather than two: the identity of
+ * the result before the run is what tells a genuinely new result from a repeat,
+ * and only the caller that started the run holds it.
+ *
+ * @returns The cart, the last export, whether the guided flow's export step is
+ *   satisfied, and the three actions a panel offers.
  */
 export function useEvidenceCartSession(): EvidenceCartSession {
   const [cart, setCart] = useState<EvidenceCart>(() => emptyEvidenceCart());
