@@ -43,21 +43,24 @@ class FittedModel:
     model_features: dict[str, Any] = field(repr=False, default_factory=dict)
 
 
-# Models that can be auto-fitted (single-compartment with step(current))
+# Models that can be auto-fitted (single-compartment with step(current)).
+# Every name here must resolve: `fit` skips a candidate it cannot resolve, so a
+# name that does not exist silently narrows the sweep instead of failing.
+# `tests/test_autofit_fit.py` holds that contract.
 _FITTABLE_MODELS = [
     "StochasticLIFNeuron",
     "HodgkinHuxleyNeuron",
-    "IzhikevichNeuron",
+    "Izhikevich2007Neuron",
     "AdExNeuron",
     "FitzHughNagumoNeuron",
     "MorrisLecarNeuron",
     "HindmarshRoseNeuron",
     "LapicqueNeuron",
     "QuadraticIFNeuron",
-    "ExpIfNeuron",
+    "ExpIFNeuron",
     "AlphaNeuron",
     "ThetaNeuron",
-    "ResNFNeuron",
+    "ResonateAndFireNeuron",
 ]
 
 

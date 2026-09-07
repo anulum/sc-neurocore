@@ -37,6 +37,23 @@ class TestFit:
         cls = _get_model_class("DefinitelyNotAModel")
         assert cls is None
 
+    def test_every_shipped_candidate_resolves(self):
+        """A name the sweep cannot resolve narrows it silently, so none may exist.
+
+        `fit` skips a candidate `_get_model_class` returns None for — a
+        deliberate tolerance for a caller's own list, asserted by
+        `test_no_matching_candidates`. It also means a typo in the shipped list
+        removes a model from every sweep without a word. Three names sat there:
+        `IzhikevichNeuron`, `ExpIfNeuron` and `ResNFNeuron`, none of which
+        exists, so the sweep tried ten of its thirteen candidates and reported a
+        best fit chosen from a set the caller was never told was smaller.
+        """
+        from sc_neurocore.autofit.fitter import _FITTABLE_MODELS, _get_model_class
+
+        unresolvable = [name for name in _FITTABLE_MODELS if _get_model_class(name) is None]
+
+        assert unresolvable == [], f"shipped fit candidates that no longer resolve: {unresolvable}"
+
     def test_fit_with_real_models(self):
         v = np.random.randn(50) * 0.5
         c = np.ones(50) * 0.5
