@@ -70,11 +70,12 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
 
-    # 126 since `GET /api/graph/models/{name}` (studio.population-model-contract.v1)
-    # joined the canvas property editor. The count is pinned so a route cannot
+    # 127 since `POST /api/project/{name}/branch-refused-edit`, which keeps an
+    # edit a save conflict refused instead of asking for it to be reapplied.
+    # The count is pinned so a route cannot
     # appear without a deliberate change here; raising it is how a new route is
     # admitted, never by relaxing the assertion.
-    assert len(backend_routes) == 126
+    assert len(backend_routes) == 127
     assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
     assert len(root_routes) <= 1
     assert all(

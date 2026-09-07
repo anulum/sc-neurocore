@@ -5672,6 +5672,58 @@
         "summary": "Api Project Delete"
       }
     },
+    "/api/project/{name}/branch-refused-edit": {
+      "post": {
+        "description": "Keep an edit that a save conflict refused, as a branch of its own.\n\n`POST /api/project/save` refuses a save made from a stale revision so it\ncannot overwrite the other editor's work. That leaves the refused edit\nonly in the browser that made it. Posting it here stores it as the first\nrevision of its own workspace, so both edits survive and can be\nreconciled afterwards rather than one being retyped.",
+        "operationId": "api_project_branch_refused_edit_api_project__name__branch_refused_edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Branch Refused Edit Api Project  Name  Branch Refused Edit Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Branch Refused Edit"
+      }
+    },
     "/api/project/{name}/export": {
       "get": {
         "description": "Export one revision as a self-contained transfer document.",

@@ -111,6 +111,23 @@ with every save. It does **not** adopt the revision a conflict reports —
 saving again with the state it still holds is exactly the lost update the
 conflict prevents. Reload, reapply, save.
 
+## Keeping the edit that was refused
+
+Refusing the save protects the other editor's work, and on its own it leaves
+the refused edit in one browser and nowhere else: "reapply your change" means
+retype it, and a closed tab loses it. That is a second way to lose an update,
+slower than the first.
+
+`POST /api/project/{name}/branch-refused-edit` stores the refused state as the
+first revision of its own workspace, named for what it diverged from —
+`column (from revision 1)`. Both edits then exist as revisions and either can
+be loaded, exported or compared; nothing merges them automatically, because a
+merge of two Studio states is a scientific judgement and not a textual one.
+
+It refuses a `base_revision` that does not exist — an edit that diverged from
+nothing is not a divergence — and it never overwrites an existing workspace, so
+a second conflict cannot bury the first branch.
+
 A `503` is a different answer and the editor says so differently: nothing was
 written, no other editor's work is at stake, and the same save can simply be
 sent again. Treating it like a conflict would push a user into reloading and

@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any
 
 from sc_neurocore.hdl_gen._ident import sanitize_ident
@@ -305,6 +306,54 @@ def restore_project(token: str) -> dict[str, Any]:
     except KeyError:
         return {"error": "Deleted project not found"}
     return {"restored": name, "revision": store.head_revision(name)}
+
+
+def branch_refused_edit(
+    name: str,
+    state: Mapping[str, Any],
+    *,
+    base_revision: int,
+    branch_name: str | None = None,
+) -> dict[str, Any]:
+    """Keep an edit a save conflict refused, as a branch of its own.
+
+    A conflicting save is refused so it cannot overwrite the other editor's
+    work. Without this the refused edit exists only in the browser that made
+    it, and the conflict message asks for it to be reapplied by hand. Here it
+    becomes the first revision of its own workspace, so both edits survive.
+
+    Parameters
+    ----------
+    name : str
+        Workspace whose save was refused.
+    state : Mapping[str, Any]
+        The refused Studio state.
+    base_revision : int
+        Revision the editor was working from.
+    branch_name : str, optional
+        Name for the branch; defaults to one naming the source and revision.
+
+    Returns
+    -------
+    dict
+        ``branched`` name, the source ``from``, and ``base_revision``; or an
+        ``error`` when the source workspace or revision does not exist.
+    """
+    name = _safe_name(name)
+    store = _store()
+    target = _safe_name(branch_name) if branch_name else None
+    try:
+        created = store.branch_conflicting_edit(
+            name, state, base_revision=base_revision, branch_name=target
+        )
+    except KeyError:
+        return {"error": f"Project '{name}' revision {base_revision} not found"}
+    return {
+        "branched": created.name,
+        "from": name,
+        "base_revision": base_revision,
+        "revision": created.revision,
+    }
 
 
 def fork_project(name: str, new_name: str, *, revision: int | None = None) -> dict[str, Any]:

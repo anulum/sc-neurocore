@@ -30,6 +30,7 @@ from sc_neurocore.studio.network_graph import (
 from sc_neurocore.studio.project import (
     delete_project,
     export_project,
+    branch_refused_edit,
     fork_project,
     import_project,
     list_deleted_projects,
@@ -91,6 +92,34 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
         if revision is not None and not isinstance(revision, int):
             raise HTTPException(422, "revision must be an integer revision number")
         result = _safe(lambda: fork_project(name, new_name, revision=revision))
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+
+    @router.post("/api/project/{name}/branch-refused-edit")
+    def api_project_branch_refused_edit(name: str, data: dict[str, Any]) -> Any:
+        """Keep an edit that a save conflict refused, as a branch of its own.
+
+        `POST /api/project/save` refuses a save made from a stale revision so it
+        cannot overwrite the other editor's work. That leaves the refused edit
+        only in the browser that made it. Posting it here stores it as the first
+        revision of its own workspace, so both edits survive and can be
+        reconciled afterwards rather than one being retyped.
+        """
+        state = data.get("state")
+        if not isinstance(state, dict):
+            raise HTTPException(422, "state required")
+        base_revision = data.get("base_revision")
+        if not isinstance(base_revision, int):
+            raise HTTPException(422, "base_revision must be an integer revision number")
+        branch_name = data.get("branch_name")
+        if branch_name is not None and not isinstance(branch_name, str):
+            raise HTTPException(422, "branch_name must be a string")
+        result = _safe(
+            lambda: branch_refused_edit(
+                name, state, base_revision=base_revision, branch_name=branch_name
+            )
+        )
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result

@@ -70,6 +70,56 @@ def fork_workspace(
     return store.save(new_name, document["state"], expected_revision=None)
 
 
+def branch_conflicting_edit(
+    store: WorkspaceStore,
+    name: str,
+    state: Mapping[str, Any],
+    *,
+    base_revision: int,
+    branch_name: str | None = None,
+) -> WorkspaceRevision:
+    """Keep an edit that lost a save conflict, instead of asking for it again.
+
+    A save from a stale revision is refused so it cannot overwrite the other
+    editor's work, which is correct — but the refused edit then exists only in
+    the editor's browser, and the message asks them to reapply it. This stores
+    it as the first revision of its own workspace, so both edits survive and
+    either can be compared, exported or merged by hand afterwards.
+
+    The branch records the workspace and revision it diverged from in its name,
+    which is what a reader needs to reconcile the two later.
+
+    Parameters
+    ----------
+    store : WorkspaceStore
+        Store holding the workspace whose save was refused.
+    name : str
+        Workspace the edit was made against.
+    state : Mapping[str, Any]
+        The refused state, exactly as the editor had it.
+    base_revision : int
+        The revision the editor was working from.
+    branch_name : str, optional
+        Name for the branch. Defaults to ``"<name> (from revision <n>)"``.
+
+    Returns
+    -------
+    WorkspaceRevision
+        The first revision of the branch.
+
+    Raises
+    ------
+    KeyError
+        The source workspace or ``base_revision`` does not exist, so the edit
+        does not describe a divergence from anything.
+    WorkspaceConflict
+        A workspace of that name already exists; branching never overwrites one.
+    """
+    store.load(name, revision=base_revision)
+    target = branch_name or f"{name} (from revision {base_revision})"
+    return store.save(target, state, expected_revision=None)
+
+
 def delete_workspace(store: WorkspaceStore, name: str) -> Path:
     """Move a workspace aside so it can be restored.
 

@@ -40528,6 +40528,31 @@ Restore one deleted workspace under its original name.
 Restoring onto a name that is in use is refused rather than performed:
 overwriting a live workspace is the loss this store exists to prevent.
 
+### Function `branch_refused_edit(name, state)`
+Keep an edit a save conflict refused, as a branch of its own.
+
+A conflicting save is refused so it cannot overwrite the other editor's
+work. Without this the refused edit exists only in the browser that made
+it, and the conflict message asks for it to be reapplied by hand. Here it
+becomes the first revision of its own workspace, so both edits survive.
+
+Parameters
+----------
+name : str
+    Workspace whose save was refused.
+state : Mapping&#91;str, Any&#93;
+    The refused Studio state.
+base_revision : int
+    Revision the editor was working from.
+branch_name : str, optional
+    Name for the branch; defaults to one naming the source and revision.
+
+Returns
+-------
+dict
+    ``branched`` name, the source ``from``, and ``base_revision``; or an
+    ``error`` when the source workspace or revision does not exist.
+
 ### Function `fork_project(name, new_name)`
 Copy one revision of a workspace into a new one.
 
@@ -42051,6 +42076,44 @@ WorkspaceConflict
     The destination workspace already exists; forking never
     overwrites one.
 
+### Function `branch_conflicting_edit(store, name, state)`
+Keep an edit that lost a save conflict, instead of asking for it again.
+
+A save from a stale revision is refused so it cannot overwrite the other
+editor's work, which is correct — but the refused edit then exists only in
+the editor's browser, and the message asks them to reapply it. This stores
+it as the first revision of its own workspace, so both edits survive and
+either can be compared, exported or merged by hand afterwards.
+
+The branch records the workspace and revision it diverged from in its name,
+which is what a reader needs to reconcile the two later.
+
+Parameters
+----------
+store : WorkspaceStore
+    Store holding the workspace whose save was refused.
+name : str
+    Workspace the edit was made against.
+state : Mapping&#91;str, Any&#93;
+    The refused state, exactly as the editor had it.
+base_revision : int
+    The revision the editor was working from.
+branch_name : str, optional
+    Name for the branch. Defaults to ``"<name> (from revision <n>)"``.
+
+Returns
+-------
+WorkspaceRevision
+    The first revision of the branch.
+
+Raises
+------
+KeyError
+    The source workspace or ``base_revision`` does not exist, so the edit
+    does not describe a divergence from anything.
+WorkspaceConflict
+    A workspace of that name already exists; branching never overwrites one.
+
 ### Function `delete_workspace(store, name)`
 Move a workspace aside so it can be restored.
 
@@ -42284,6 +42347,8 @@ lock_timeout : float, optional
   - Return one summary per workspace, by name.
 - **fork**(name, new_name)
   - Copy one revision into a new workspace; see ``workspace_lifecycle``.
+- **branch_conflicting_edit**(name, state)
+  - Keep an edit refused by a save conflict; see ``workspace_lifecycle``.
 - **delete**(name)
   - Move a workspace aside so it can be restored.
 - **deleted**()

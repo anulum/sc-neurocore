@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4861
+    "test_files": 4862
   },
   "documentation": {
     "public_pages": [
@@ -7314,6 +7314,7 @@
       "tests/test_studio_compiler_ir_build.py",
       "tests/test_studio_compiler_ir_verify.py",
       "tests/test_studio_compiler_sv_emit.py",
+      "tests/test_studio_conflicting_edit_branch.py",
       "tests/test_studio_dcls.py",
       "tests/test_studio_declared_state_observable.py",
       "tests/test_studio_deployment_profiles.py",

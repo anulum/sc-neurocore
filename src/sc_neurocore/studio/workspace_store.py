@@ -48,6 +48,7 @@ from pathlib import Path
 from typing import Any
 
 from sc_neurocore.studio.workspace_lifecycle import (
+    branch_conflicting_edit,
     delete_workspace,
     deleted_workspaces,
     export_workspace,
@@ -462,6 +463,19 @@ class WorkspaceStore:
     def fork(self, name: str, new_name: str, *, revision: int | None = None) -> WorkspaceRevision:
         """Copy one revision into a new workspace; see ``workspace_lifecycle``."""
         return fork_workspace(self, name, new_name, revision=revision)
+
+    def branch_conflicting_edit(
+        self,
+        name: str,
+        state: Mapping[str, Any],
+        *,
+        base_revision: int,
+        branch_name: str | None = None,
+    ) -> WorkspaceRevision:
+        """Keep an edit refused by a save conflict; see ``workspace_lifecycle``."""
+        return branch_conflicting_edit(
+            self, name, state, base_revision=base_revision, branch_name=branch_name
+        )
 
     def delete(self, name: str) -> Path:
         """Move a workspace aside so it can be restored."""
