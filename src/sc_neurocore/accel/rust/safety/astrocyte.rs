@@ -81,8 +81,44 @@ impl AstrocyteModel {
     }
 }
 
+/// Return whether state and configured parameters remain in their valid domain.
+///
+/// Mirrors what the maintained model enforces at construction: `ca`, `ip3`,
+/// `leak`, `ip3_prod` and `ip3_decay` finite and non-negative; the ER, SERCA,
+/// IP3-receptor and timestep parameters finite and strictly positive; the
+/// gating variable `h` finite and within `[0, 1]`; and cytosolic calcium below
+/// the total cell calcium `c0`.
+#[must_use]
 pub fn validate_astrocyte(state: &AstrocyteModel) -> bool {
-    true
+    let non_negative = [
+        state.ca,
+        state.ip3,
+        state.leak,
+        state.ip3_prod,
+        state.ip3_decay,
+    ];
+    let positive = [
+        state.v_er,
+        state.k_er,
+        state.v_serca,
+        state.d1,
+        state.d2,
+        state.d3,
+        state.d5,
+        state.a2,
+        state.c0,
+        state.c1,
+        state.dt,
+    ];
+    non_negative
+        .iter()
+        .all(|value| value.is_finite() && *value >= 0.0)
+        && positive
+            .iter()
+            .all(|value| value.is_finite() && *value > 0.0)
+        && state.h.is_finite()
+        && (0.0..=1.0).contains(&state.h)
+        && state.ca < state.c0
 }
 
 #[cfg(test)]
@@ -100,5 +136,64 @@ mod tests {
         let mut state = AstrocyteModel::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    /// Every case below fails against the former `true` stub: it is what makes
+    /// the validator evidence rather than decoration.
+    #[test]
+    fn rejects_a_non_finite_calcium() {
+        let mut state = AstrocyteModel::new();
+        state.ca = f64::NAN;
+        assert!(!validate_astrocyte(&state));
+    }
+
+    #[test]
+    fn rejects_a_negative_calcium() {
+        let mut state = AstrocyteModel::new();
+        state.ca = -1.0e-9;
+        assert!(!validate_astrocyte(&state));
+    }
+
+    #[test]
+    fn rejects_a_gating_variable_outside_the_unit_interval() {
+        for value in [-1.0e-9, 1.0 + 1.0e-9, f64::INFINITY] {
+            let mut state = AstrocyteModel::new();
+            state.h = value;
+            assert!(!validate_astrocyte(&state), "h = {value} must be refused");
+        }
+    }
+
+    #[test]
+    fn accepts_both_ends_of_the_gating_interval() {
+        for value in [0.0, 1.0] {
+            let mut state = AstrocyteModel::new();
+            state.h = value;
+            assert!(validate_astrocyte(&state), "h = {value} must be accepted");
+        }
+    }
+
+    #[test]
+    fn rejects_a_non_positive_timestep() {
+        for value in [0.0, -0.1] {
+            let mut state = AstrocyteModel::new();
+            state.dt = value;
+            assert!(!validate_astrocyte(&state), "dt = {value} must be refused");
+        }
+    }
+
+    #[test]
+    fn rejects_calcium_at_or_above_the_total_cell_calcium() {
+        let mut state = AstrocyteModel::new();
+        state.ca = state.c0;
+        assert!(!validate_astrocyte(&state));
+    }
+
+    #[test]
+    fn accepts_a_zero_leak_but_refuses_a_negative_one() {
+        let mut state = AstrocyteModel::new();
+        state.leak = 0.0;
+        assert!(validate_astrocyte(&state));
+        state.leak = -1.0e-12;
+        assert!(!validate_astrocyte(&state));
     }
 }

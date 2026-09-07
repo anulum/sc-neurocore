@@ -10,6 +10,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+- Three Rust safety validators check something. `validate_astrocyte`,
+  `validate_astrocyte_adapter` and `validate_quantum_inspired_lif` returned
+  `true` unconditionally; each now mirrors exactly what the maintained model
+  enforces at construction — non-negative calcium and IP3, a gating variable
+  within `[0, 1]`, strictly positive ER, SERCA, receptor and timestep
+  parameters, cytosolic calcium below the total cell calcium, and a whole-valued
+  seed in `[1, 2**64)`. 15 cases were added; reverting the three bodies to the
+  old stub fails 12 of them, which is what makes them evidence.
+- A module comment in the Compte safety kernel documented the constant beneath
+  it rather than the module, so `cargo clippy -D warnings` failed on the crate
+  before any of the above could be verified.
+
 ### Added
 - `tools/benchmark_coverage_census.py` counts how many catalogue models have a
   benchmark measured, so the figure stops being asserted by hand. It separates

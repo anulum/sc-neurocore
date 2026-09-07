@@ -76,8 +76,27 @@ impl QuantumInspiredLIFNeuron {
     }
 }
 
+/// Exclusive upper bound of the seed domain the maintained model enforces:
+/// `seed` is an integer in `[1, 2**64)`, mirrored here as a whole-valued `f64`.
+const SEED_EXCLUSIVE_UPPER_BOUND: f64 = 18_446_744_073_709_551_616.0;
+
+/// Return whether state and configured parameters remain in their valid domain.
+///
+/// Mirrors what the maintained model enforces at construction: `tau`, `theta`
+/// and `dt` finite and strictly positive; `v_reset`, `z_re` and `z_im` finite;
+/// and `seed` a whole number in `[1, 2**64)`.
+#[must_use]
 pub fn validate_quantum_inspired_lif(state: &QuantumInspiredLIFNeuron) -> bool {
-    true
+    let positive = [state.tau, state.theta, state.dt];
+    let finite = [state.v_reset, state.z_re, state.z_im];
+    positive
+        .iter()
+        .all(|value| value.is_finite() && *value > 0.0)
+        && finite.iter().all(|value| value.is_finite())
+        && state.seed.is_finite()
+        && state.seed > 0.0
+        && state.seed < SEED_EXCLUSIVE_UPPER_BOUND
+        && state.seed.fract() == 0.0
 }
 
 #[cfg(test)]
@@ -95,5 +114,63 @@ mod tests {
         let mut state = QuantumInspiredLIFNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    /// Every case below fails against the former `true` stub.
+    #[test]
+    fn rejects_a_non_positive_time_constant() {
+        for value in [0.0, -1.0, f64::NAN] {
+            let mut state = QuantumInspiredLIFNeuron::new();
+            state.tau = value;
+            assert!(
+                !validate_quantum_inspired_lif(&state),
+                "tau = {value} must be refused"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_a_non_finite_amplitude() {
+        for value in [f64::NAN, f64::INFINITY] {
+            let mut state = QuantumInspiredLIFNeuron::new();
+            state.z_re = value;
+            assert!(
+                !validate_quantum_inspired_lif(&state),
+                "z_re = {value} must be refused"
+            );
+        }
+    }
+
+    #[test]
+    fn refuses_a_seed_outside_the_maintained_domain() {
+        for value in [0.0, -1.0, SEED_EXCLUSIVE_UPPER_BOUND] {
+            let mut state = QuantumInspiredLIFNeuron::new();
+            state.seed = value;
+            assert!(
+                !validate_quantum_inspired_lif(&state),
+                "seed = {value} must be refused"
+            );
+        }
+    }
+
+    #[test]
+    fn refuses_a_fractional_seed() {
+        let mut state = QuantumInspiredLIFNeuron::new();
+        state.seed = 1.5;
+        assert!(!validate_quantum_inspired_lif(&state));
+    }
+
+    #[test]
+    fn accepts_the_lowest_seed_the_domain_admits() {
+        let mut state = QuantumInspiredLIFNeuron::new();
+        state.seed = 1.0;
+        assert!(validate_quantum_inspired_lif(&state));
+    }
+
+    #[test]
+    fn accepts_a_negative_reset_potential() {
+        let mut state = QuantumInspiredLIFNeuron::new();
+        state.v_reset = -70.0;
+        assert!(validate_quantum_inspired_lif(&state));
     }
 }

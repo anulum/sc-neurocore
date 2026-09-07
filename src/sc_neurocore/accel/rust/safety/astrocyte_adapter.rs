@@ -47,8 +47,17 @@ impl AstrocyteNeuron {
     }
 }
 
+/// Return whether state and configured parameters remain in their valid domain.
+///
+/// Mirrors what the maintained adapter enforces at construction:
+/// `ca_threshold` finite and non-negative, and the timestep finite and
+/// strictly positive.
+#[must_use]
 pub fn validate_astrocyte_adapter(state: &AstrocyteNeuron) -> bool {
-    true
+    state.ca_threshold.is_finite()
+        && state.ca_threshold >= 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
 }
 
 #[cfg(test)]
@@ -66,5 +75,27 @@ mod tests {
         let mut state = AstrocyteNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    /// Both cases fail against the former `true` stub.
+    #[test]
+    fn rejects_a_negative_or_non_finite_threshold() {
+        for value in [-1.0e-9, f64::NAN, f64::NEG_INFINITY] {
+            let mut state = AstrocyteNeuron::new();
+            state.ca_threshold = value;
+            assert!(
+                !validate_astrocyte_adapter(&state),
+                "ca_threshold = {value} must be refused"
+            );
+        }
+    }
+
+    #[test]
+    fn accepts_a_zero_threshold_and_refuses_a_non_positive_timestep() {
+        let mut state = AstrocyteNeuron::new();
+        state.ca_threshold = 0.0;
+        assert!(validate_astrocyte_adapter(&state));
+        state.dt = 0.0;
+        assert!(!validate_astrocyte_adapter(&state));
     }
 }
