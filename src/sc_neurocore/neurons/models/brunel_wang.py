@@ -29,6 +29,17 @@ class BrunelWangNeuron:
     public step holds those gates constant and applies explicit midpoint RK2,
     matching the paper's stated second-order integration class at ``0.1 ms``.
 
+    Attributes
+    ----------
+    ref_remaining : float
+        Absolute refractory time remaining, in milliseconds. This is dynamic
+        state rather than a construction parameter: it starts at zero, is set
+        to ``tau_ref`` by a threshold crossing, and decays by ``dt`` per step
+        while positive. The name is the one the committed descriptor declares
+        in its ``[state]`` table and the one :meth:`get_state` returns, so a
+        run observes it directly on the instance. A private spelling would
+        make it declared state that no run can record.
+
     Notes
     -----
     The retained ``tau_*`` synaptic parameters document the source boundary
@@ -100,7 +111,7 @@ class BrunelWangNeuron:
             if getattr(self, name) < 0.0:
                 raise ValueError(f"{name} must be non-negative")
         self._validate_voltage(self.v)
-        self._ref_remaining = 0.0
+        self.ref_remaining = 0.0
 
     @staticmethod
     def _validate_voltage(v: float) -> float:
@@ -169,11 +180,11 @@ class BrunelWangNeuron:
         nmda_rec = self._validate_aggregate_gate("s_nmda_rec", s_nmda_rec)
         gaba = self._validate_aggregate_gate("s_gaba", s_gaba)
         v = self._validate_voltage(self.v)
-        ref_remaining = self._validate_nonnegative("_ref_remaining", self._ref_remaining)
+        ref_remaining = self._validate_nonnegative("ref_remaining", self.ref_remaining)
 
         if ref_remaining > 0:
             self.v = self.v_reset
-            self._ref_remaining = max(0.0, ref_remaining - self.dt)
+            self.ref_remaining = max(0.0, ref_remaining - self.dt)
             return 0
 
         k1 = self._dv_dt(v, ampa_ext, ampa_rec, nmda_rec, gaba)
@@ -189,7 +200,7 @@ class BrunelWangNeuron:
 
         if next_v >= self.v_threshold:
             self.v = self.v_reset
-            self._ref_remaining = self.tau_ref
+            self.ref_remaining = self.tau_ref
             return 1
         return 0
 
@@ -217,14 +228,14 @@ class BrunelWangNeuron:
         # Dynamic-state failures retain their public boundary exception types;
         # parameter revalidation below must not obscure a corrupted voltage.
         self._validate_voltage(self.v)
-        self._validate_nonnegative("_ref_remaining", self._ref_remaining)
-        dynamic = (self.v, self._ref_remaining)
+        self._validate_nonnegative("ref_remaining", self.ref_remaining)
+        dynamic = (self.v, self.ref_remaining)
         try:
             self.__post_init__()
         except ValueError as exc:
-            self.v, self._ref_remaining = dynamic
+            self.v, self.ref_remaining = dynamic
             raise ValueError(f"Brunel-Wang runtime parameters invalid: {exc}") from exc
-        self.v, self._ref_remaining = dynamic
+        self.v, self.ref_remaining = dynamic
 
     def simulate(
         self,
@@ -240,7 +251,7 @@ class BrunelWangNeuron:
 
         result = simulate_brunel_wang(
             self.v,
-            self._ref_remaining,
+            self.ref_remaining,
             self.v_rest,
             self.v_reset,
             self.v_threshold,
@@ -263,17 +274,17 @@ class BrunelWangNeuron:
             backend=backend,
         )
         self.v = float(result["v_final"])
-        self._ref_remaining = float(result["ref_final"])
+        self.ref_remaining = float(result["ref_final"])
         return cast(dict[str, object], result)
 
     def reset(self) -> None:
         """Reset dynamic state while preserving every configuration field."""
         self.v = self.v_rest
-        self._ref_remaining = 0.0
+        self.ref_remaining = 0.0
 
     def get_state(self) -> dict[str, float]:
         """Return the complete dynamic membrane/refractory state."""
-        return {"v": self.v, "ref_remaining": self._ref_remaining}
+        return {"v": self.v, "ref_remaining": self.ref_remaining}
 
 
 __all__ = ["BrunelWangNeuron"]

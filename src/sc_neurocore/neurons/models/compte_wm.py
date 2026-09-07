@@ -37,6 +37,17 @@ class CompteWMNeuron:
     the source 0.02 ms timestep. Threshold detection is sampled at the end of
     the step; the paper's within-step firing-time interpolation is not claimed.
 
+    Attributes
+    ----------
+    ref_remaining : float
+        Absolute refractory time remaining, in milliseconds. This is dynamic
+        state rather than a construction parameter: it starts at zero, is set
+        to ``tau_ref`` by a threshold crossing, and decays by ``dt`` per step
+        while positive. The name is the one the committed descriptor declares
+        in its ``[state]`` table and the one :meth:`get_state` returns, so a
+        run observes it directly on the instance. A private spelling would
+        make it declared state that no run can record.
+
     Notes
     -----
     This scalar reference model does not include the paper's 2,560-cell ring.
@@ -102,7 +113,7 @@ class CompteWMNeuron:
             "dt",
         ):
             setattr(self, name, float(getattr(self, name)))
-        self._ref_remaining = 0.0
+        self.ref_remaining = 0.0
         self._validate()
 
     @staticmethod
@@ -148,8 +159,8 @@ class CompteWMNeuron:
             self._finite(name, getattr(self, name))
         if not self._V_MIN <= self.v_reset <= self._V_MAX:
             raise ValueError("v_reset outside Compte WM safety envelope")
-        if self._finite("_ref_remaining", self._ref_remaining) < 0.0:
-            raise ValueError("_ref_remaining must be non-negative")
+        if self._finite("ref_remaining", self.ref_remaining) < 0.0:
+            raise ValueError("ref_remaining must be non-negative")
 
     def _mg_block(self, v: float) -> float:
         """Return the source Jahr--Stevens magnesium-unblock factor."""
@@ -229,7 +240,7 @@ class CompteWMNeuron:
         current_value = self._finite("current", current)
         self._validate()
         v0 = self.v
-        ref0 = self._ref_remaining
+        ref0 = self.ref_remaining
         s0 = (
             self.s_ampa + (1.0 if external_spike else 0.0),
             self.s_nmda,
@@ -285,7 +296,7 @@ class CompteWMNeuron:
         self.s_nmda = nmda_next
         self.x_nmda = x_next
         self.s_gaba = gaba_next
-        self._ref_remaining = ref_next
+        self.ref_remaining = ref_next
         return event
 
     def simulate(
@@ -306,7 +317,7 @@ class CompteWMNeuron:
             self.s_nmda,
             self.x_nmda,
             self.s_gaba,
-            self._ref_remaining,
+            self.ref_remaining,
             self.g_l,
             self.g_ampa,
             self.g_nmda,
@@ -336,7 +347,7 @@ class CompteWMNeuron:
         self.s_nmda = float(result["s_nmda_final"])
         self.x_nmda = float(result["x_nmda_final"])
         self.s_gaba = float(result["s_gaba_final"])
-        self._ref_remaining = float(result["ref_final"])
+        self.ref_remaining = float(result["ref_final"])
         return cast(dict[str, object], result)
 
     def reset(self) -> None:
@@ -346,7 +357,7 @@ class CompteWMNeuron:
         self.s_nmda = 0.0
         self.x_nmda = 0.0
         self.s_gaba = 0.0
-        self._ref_remaining = 0.0
+        self.ref_remaining = 0.0
 
     def get_state(self) -> dict[str, float]:
         """Return the complete membrane, channel, and refractory state."""
@@ -356,7 +367,7 @@ class CompteWMNeuron:
             "s_nmda": self.s_nmda,
             "x_nmda": self.x_nmda,
             "s_gaba": self.s_gaba,
-            "ref_remaining": self._ref_remaining,
+            "ref_remaining": self.ref_remaining,
         }
 
 

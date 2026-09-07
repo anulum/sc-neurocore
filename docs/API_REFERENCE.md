@@ -24119,6 +24119,17 @@ variables, not spike counts and not internally integrated synapses.  One
 public step holds those gates constant and applies explicit midpoint RK2,
 matching the paper's stated second-order integration class at ``0.1 ms``.
 
+Attributes
+----------
+ref_remaining : float
+    Absolute refractory time remaining, in milliseconds. This is dynamic
+    state rather than a construction parameter: it starts at zero, is set
+    to ``tau_ref`` by a threshold crossing, and decays by ``dt`` per step
+    while positive. The name is the one the committed descriptor declares
+    in its ``&#91;state&#93;`` table and the one :meth:`get_state` returns, so a
+    run observes it directly on the instance. A private spelling would
+    make it declared state that no run can record.
+
 Notes
 -----
 The retained ``tau_*`` synaptic parameters document the source boundary
@@ -24423,6 +24434,17 @@ are the paper's control-set pyramidal pathways: 3.1 nS external AMPA,
 One public step applies event jumps, then an explicit midpoint RK2 flow at
 the source 0.02 ms timestep. Threshold detection is sampled at the end of
 the step; the paper's within-step firing-time interpolation is not claimed.
+
+Attributes
+----------
+ref_remaining : float
+    Absolute refractory time remaining, in milliseconds. This is dynamic
+    state rather than a construction parameter: it starts at zero, is set
+    to ``tau_ref`` by a threshold crossing, and decays by ``dt`` per step
+    while positive. The name is the one the committed descriptor declares
+    in its ``&#91;state&#93;`` table and the one :meth:`get_state` returns, so a
+    run observes it directly on the instance. A private spelling would
+    make it declared state that no run can record.
 
 Notes
 -----

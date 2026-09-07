@@ -132,7 +132,7 @@ def _python_runner(
         mg_conc=config[15],
         dt=config[16],
     )
-    state._ref_remaining = config[1]
+    state.ref_remaining = config[1]
     steps = gates[0].size
     voltages = np.empty(steps, dtype=np.float64)
     refractory = np.empty(steps, dtype=np.float64)
@@ -140,13 +140,13 @@ def _python_runner(
     for index, values in enumerate(zip(*gates, strict=True)):
         events[index] = state.step(*values)
         voltages[index] = state.v
-        refractory[index] = state._ref_remaining
+        refractory[index] = state.ref_remaining
     return {
         "voltages": voltages,
         "refractory": refractory,
         "events": events,
         "v_final": state.v,
-        "ref_final": state._ref_remaining,
+        "ref_final": state.ref_remaining,
     }
 
 

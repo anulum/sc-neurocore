@@ -45,10 +45,16 @@ def test_complete_configured_contract_matches_python(backend: str) -> None:
     actual = BrunelWangNeuron().simulate(*gates, backend=backend)
     np.testing.assert_array_equal(actual["events"], expected["events"])
     np.testing.assert_allclose(
-        actual["voltages"], expected["voltages"], rtol=0.0, atol=backends.PARITY_ATOL[backend]
+        cast(npt.NDArray[np.float64], actual["voltages"]),
+        cast(npt.NDArray[np.float64], expected["voltages"]),
+        rtol=0.0,
+        atol=backends.PARITY_ATOL[backend],
     )
     np.testing.assert_allclose(
-        actual["refractory"], expected["refractory"], rtol=0.0, atol=backends.PARITY_ATOL[backend]
+        cast(npt.NDArray[np.float64], actual["refractory"]),
+        cast(npt.NDArray[np.float64], expected["refractory"]),
+        rtol=0.0,
+        atol=backends.PARITY_ATOL[backend],
     )
     assert actual["v_final"] == pytest.approx(
         expected["v_final"], abs=backends.PARITY_ATOL[backend]
@@ -62,10 +68,10 @@ def test_complete_configured_contract_matches_python(backend: str) -> None:
 def test_empty_batch_preserves_dynamic_state(backend: str) -> None:
     """Make zero work a complete state-preserving backend contract."""
     neuron = BrunelWangNeuron(v=-63.0)
-    neuron._ref_remaining = 0.7
+    neuron.ref_remaining = 0.7
     result = neuron.simulate([], [], [], [], backend=backend)
     assert cast(npt.NDArray[np.float64], result["voltages"]).shape == (0,)
-    assert (neuron.v, neuron._ref_remaining) == (-63.0, 0.7)
+    assert (neuron.v, neuron.ref_remaining) == (-63.0, 0.7)
 
 
 @pytest.mark.parametrize("backend", ("go", "mojo"))
@@ -146,5 +152,11 @@ fn main() {{
     output = subprocess.run([str(binary)], check=True, capture_output=True, text=True).stdout
     actual = np.asarray([[float(value) for value in line.split()] for line in output.splitlines()])
     expected = BrunelWangNeuron().simulate(*_gates(32), backend="python")
-    target = np.column_stack((expected["voltages"], expected["refractory"], expected["events"]))
+    target = np.column_stack(
+        (
+            cast(npt.NDArray[np.float64], expected["voltages"]),
+            cast(npt.NDArray[np.float64], expected["refractory"]),
+            cast(npt.NDArray[np.int64], expected["events"]),
+        )
+    )
     np.testing.assert_allclose(actual, target, rtol=0.0, atol=2.0e-14)

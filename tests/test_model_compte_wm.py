@@ -60,11 +60,11 @@ def test_output_spike_resets_and_starts_source_refractory_without_autapse() -> N
     neuron = CompteWMNeuron(v=-50.01)
     assert neuron.step(1.0) == 1
     assert neuron.v == -60.0
-    assert neuron._ref_remaining == 2.0
+    assert neuron.ref_remaining == 2.0
     assert neuron.s_gaba == 0.0
     assert neuron.step(100.0) == 0
     assert neuron.v == -60.0
-    assert neuron._ref_remaining == pytest.approx(1.98)
+    assert neuron.ref_remaining == pytest.approx(1.98)
 
 
 def test_synaptic_states_continue_during_refractory() -> None:
@@ -129,7 +129,7 @@ def test_reset_preserves_configuration() -> None:
         ("v_reset", -250.0),
         ("tau_ref", 0.0),
         ("dt", 0.0),
-        ("_ref_remaining", -1.0),
+        ("ref_remaining", -1.0),
     ],
 )
 def test_invalid_mutated_state_is_atomic(field: str, value: float) -> None:

@@ -125,17 +125,39 @@ class TestDeclaredLayout:
         assert any(name.startswith("_") for name in layout["undeclared_mutable"])
         assert any("not declared state" in reason for reason in layout["incomplete_reasons"])
 
-    def test_declared_variable_missing_on_the_instance_is_named(self) -> None:
+    def test_declared_variable_missing_on_the_instance_is_named(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         result = _run("PoissonNeuron", duration=2.0)
         assert result["state_layout"]["complete"] is True
+
         # A declaration the instance does not carry is reported, never dropped.
-        result = _run("CompteWMNeuron", duration=2.0)
+        # No catalogue model declares such a variable any more — every declared
+        # name is an attribute, held by
+        # tests/test_studio_declared_state_observable.py — so the declaration is
+        # injected here. Pinning this against a model that happened to be broken
+        # would have tied the guarantee to the defect's lifetime.
+        phantom = DeclaredState(
+            name="never_carried",
+            role="auxiliary",
+            unit="ms",
+            meaning="declared register the instance does not carry",
+            declared_init=0.0,
+        )
+        real_declared_state = model_simulate.declared_state
+
+        def _with_phantom(name: str) -> tuple[Any, str, tuple[DeclaredState, ...]]:
+            source, stem, variables = real_declared_state(name)
+            return source, stem, (*variables, phantom)
+
+        monkeypatch.setattr(model_simulate, "declared_state", _with_phantom)
+        result = _run("PoissonNeuron", duration=2.0)
         by_name = {v["name"]: v for v in result["state_layout"]["variables"]}
-        assert by_name["ref_remaining"]["observable"] is False
-        assert by_name["ref_remaining"]["reason"] == "not an attribute of the model instance"
-        assert "ref_remaining" not in result["states"]
+        assert by_name["never_carried"]["observable"] is False
+        assert by_name["never_carried"]["reason"] == "not an attribute of the model instance"
+        assert "never_carried" not in result["states"]
         assert result["state_layout"]["complete"] is False
-        assert {"name": "ref_remaining", "reason": "not an attribute of the model instance"} in (
+        assert {"name": "never_carried", "reason": "not an attribute of the model instance"} in (
             result["effective_inputs"]["state_recording"]["excluded"]
         )
 

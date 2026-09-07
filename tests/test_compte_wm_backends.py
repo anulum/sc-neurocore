@@ -68,7 +68,7 @@ def test_complete_configured_contract_matches_python(backend: str) -> None:
 @pytest.mark.parametrize("backend", _LANES)
 def test_empty_batch_preserves_complete_dynamic_state(backend: str) -> None:
     neuron = CompteWMNeuron(v=-63.0, s_ampa=0.2, s_nmda=0.1, x_nmda=0.3, s_gaba=0.4)
-    neuron._ref_remaining = 0.7
+    neuron.ref_remaining = 0.7
     before = neuron.get_state()
     result = neuron.simulate([], [], [], [], backend=backend)
     assert cast(npt.NDArray[np.float64], result["voltages"]).shape == (0,)

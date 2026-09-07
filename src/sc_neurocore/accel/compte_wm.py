@@ -170,7 +170,7 @@ def _python_runner(
         tau_ref=config[22],
         dt=config[23],
     )
-    state._ref_remaining = config[5]
+    state.ref_remaining = config[5]
     steps = inputs[0].size
     traces = {key: np.empty(steps, dtype=np.float64) for key in _TRACE_KEYS}
     output_events = np.empty(steps, dtype=np.int64)

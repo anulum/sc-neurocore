@@ -18,12 +18,13 @@ import subprocess
 import tempfile
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover
-    import tomli as tomllib
+    import tomli as tomllib  # type: ignore[no-redef] # Python 3.10 has no tomllib
 
 from sc_neurocore.neurons.models.brunel_wang import BrunelWangNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
@@ -55,7 +56,9 @@ def _literal(value: float) -> str:
     return f"-32'sd{-encoded}" if encoded < 0 else f"32'sd{encoded}"
 
 
-def _rtl_trace(steps: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _rtl_trace(
+    steps: int,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.int64]]:
     drives: list[str] = []
     for index in range(steps):
         ext, ampa, nmda, gaba = _gates(index)
@@ -129,9 +132,7 @@ def test_seven_edge_schemas_match_hand_midpoint_rk2() -> None:
         for schema in schemas:
             _drive_schema(schema, _gates(index))
             assert schema.state["v"] == pytest.approx(hand.v, abs=2.0e-12)
-            assert schema.state["refractory_time"] == pytest.approx(
-                hand._ref_remaining, abs=2.0e-12
-            )
+            assert schema.state["refractory_time"] == pytest.approx(hand.ref_remaining, abs=2.0e-12)
             assert int(schema.state["spike_flag"]) == event
 
 
@@ -142,7 +143,7 @@ def test_q1616_rtl_preserves_events_and_bounded_state() -> None:
     for index in range(128):
         expected_events.append(hand.step(*_gates(index)))
         expected_v.append(hand.v)
-        expected_ref.append(hand._ref_remaining)
+        expected_ref.append(hand.ref_remaining)
     actual_v, actual_ref, actual_events = _rtl_trace(128)
     np.testing.assert_array_equal(actual_events, expected_events)
     assert np.max(np.abs(actual_v - expected_v)) < 0.12

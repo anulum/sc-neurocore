@@ -138,9 +138,7 @@ def test_nine_edge_schemas_match_hand_midpoint_rk2() -> None:
             _drive_schema(schema, values)
             for key in _STATE_KEYS[:5]:
                 assert schema.state[key] == pytest.approx(getattr(hand, key), abs=2.0e-12)
-            assert schema.state["refractory_time"] == pytest.approx(
-                hand._ref_remaining, abs=2.0e-12
-            )
+            assert schema.state["refractory_time"] == pytest.approx(hand.ref_remaining, abs=2.0e-12)
             assert int(schema.state["spike_flag"]) == event
 
 
