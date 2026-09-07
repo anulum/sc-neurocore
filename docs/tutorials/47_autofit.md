@@ -109,8 +109,8 @@ print(f"Verified RMSE: {rmse:.2f} mV")
 
 | Model | Parameters | Best For |
 |-------|-----------|----------|
-| LIFNeuron | 4 | Regular spiking, fast FPGA |
-| IzhikevichNeuron | 6 | Diverse patterns |
+| StochasticLIFNeuron | 4 | Regular spiking, fast FPGA |
+| Izhikevich2007Neuron | 6 | Diverse patterns |
 | AdExNeuron | 7 | Adaptation, bursting |
 | HodgkinHuxleyNeuron | 12 | Biophysical accuracy |
 | FitzHughNagumoNeuron | 5 | Oscillations |

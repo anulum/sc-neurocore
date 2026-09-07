@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4860
+    "test_files": 4861
   },
   "documentation": {
     "public_pages": [
@@ -7727,6 +7727,7 @@
       "tests/test_triplet_stdp.py",
       "tests/test_triplet_stdp_contracts.py",
       "tests/test_ttype_ca_neuron_backends.py",
+      "tests/test_tutorial_names_released_models.py",
       "tests/test_twinsync/test_twinsync_adaptive_checkpoint_interval.py",
       "tests/test_twinsync/test_twinsync_backpressure.py",
       "tests/test_twinsync/test_twinsync_causal_order.py",

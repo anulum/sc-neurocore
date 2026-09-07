@@ -32,7 +32,7 @@ The left panel lists all models by category. Click any model to load it:
 
 1. Click **Multi** tab in the tab bar
 2. Select 2-3 models from the multi-model picker (left panel):
-   - LIFNeuron (simple, fast)
+   - StochasticLIFNeuron (simple, fast)
    - AdExNeuron (adaptive)
    - HodgkinHuxleyNeuron (biophysical)
 3. All traces overlay in one plot for direct comparison

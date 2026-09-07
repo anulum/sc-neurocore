@@ -188,7 +188,7 @@ Rulkov, Chialvo, CourageNekorkin, Medvedev, IbarzTanaka, Cazelles
 ### 8. Population / Neural Mass (6 models)
 Model whole brain regions, not individual neurons.
 
-WilsonCowan, JansenRit, WongWang, ErmentroutKopell, AmariField,
+WilsonCowan, JansenRit, WongWang, ErmentroutKopell, AmariNeuralField,
 Wendling, LarterBreakspear
 
 ### 9. Hardware-Specific (9 models)
