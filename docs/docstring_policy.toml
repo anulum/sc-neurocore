@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 472
+expected_file_count = 480
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1903,3 +1903,35 @@ rationale = "Public per-language documentation-debt measurement: the tools it dr
 [[file]]
 path = "tools/rust_doc_ratchet.py"
 rationale = "Public ratchet on the engine crate's undocumented items: why a crate-level lint is unavailable here, how the ceiling falls and never rises, and what a check does when it cannot run."
+
+[[file]]
+path = "benchmarks/_non_resetting_lif_benchmark.py"
+rationale = "Shared five-runtime benchmark runner behind the eLIF and sigma-delta records: how a lane is measured, why evidence is written only after parity, and how a toolchain is resolved so a rerun cannot silently record 'unavailable' for a compiler that was in use."
+
+[[file]]
+path = "benchmarks/_energy_lif_benchmark.py"
+rationale = "Public specification surface for the Fardet-Levina eLIF benchmark family: the parity tolerances, source paths and binaries each record binds."
+
+[[file]]
+path = "benchmarks/_sigma_delta_benchmark.py"
+rationale = "Public specification surface for the sigma-delta benchmark family: the parity tolerances, source paths and binaries each record binds."
+
+[[file]]
+path = "benchmarks/bench_compte_wm.py"
+rationale = "Public Compte working-memory benchmark entry point: what it measures across five runtimes and what its exit status claims about parity."
+
+[[file]]
+path = "benchmarks/bench_model_energy_lif.py"
+rationale = "Public Fardet-Levina eLIF benchmark entry point and the source set its evidence is bound to."
+
+[[file]]
+path = "benchmarks/bench_model_sc_normalized_energy_lif.py"
+rationale = "Public SC normalized eLIF benchmark entry point and the source set its evidence is bound to."
+
+[[file]]
+path = "benchmarks/bench_model_sc_sigma_delta_accumulator.py"
+rationale = "Public SC sigma-delta accumulator benchmark entry point and the source set its evidence is bound to."
+
+[[file]]
+path = "benchmarks/bench_model_sigma_delta.py"
+rationale = "Public sigma-delta benchmark entry point and the source set its evidence is bound to."

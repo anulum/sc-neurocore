@@ -11,6 +11,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Five published benchmark records no longer rate the Rust lane against a debug
+  build. They bound a 525 MB unoptimised engine extension where every other
+  record bound the ~35 MB release build, so the Rust lane was measured several
+  times slower than it runs: 2.3x to 5.8x on the four records that carry
+  per-lane timings, and in all four the lane moved from *last* of the four
+  native lanes to first or second. The measurement configuration of each record
+  is unchanged — same step count, same drive, same pinned CPU — so the binary is
+  the only thing that differs. The whole record is refreshed, and the machine's
+  Go, Julia and Mojo toolchains are older now than when the records were taken,
+  so the other lanes' absolute times moved too and are not comparable with the
+  August figures; the Rust correction is the claim being made.
+- A benchmark rerun can no longer lose the name of the compiler that produced
+  it. The shared runner behind four of those records asked for versions only
+  through `.venv/bin`, where three of the four shims do not exist, so every
+  rerun silently recorded `unavailable` for compilers that were installed and in
+  use. A pinned shim is now preferred when present and the tool is otherwise
+  resolved on `PATH`, which is how the rest of the benchmark surface finds it.
+  `tests/test_benchmark_evidence_provenance.py` refuses both defects across the
+  committed corpus: no record may bind an unoptimised extension, and no record
+  that names a toolchain may leave one unrecorded.
+
+### Changed
+- The eight benchmark files this touched are now inside the docstring ratchet
+  (`docs/docstring_policy.toml`), so their public surface is enforced rather
+  than merely documented. The benchmark tree was entirely outside that scope.
 - A model that holds no state can now say so. `declared_state` answered
   `undeclared` both when a descriptor was absent and when it declared nothing,
   so `McCullochPittsNeuron` and `SiegertTransferFunction` — which evolve nothing

@@ -48,6 +48,15 @@ SPEC = BenchmarkSpec(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the five-runtime benchmark and write its source-bound evidence.
+
+    Returns
+    -------
+    int
+        ``0`` when every runtime reached parity with the Python reference and
+        the evidence was written, non-zero otherwise. Evidence is written only
+        after parity, so a non-zero exit leaves the committed record untouched.
+    """
     return int(run(SPEC, argv))
 
 

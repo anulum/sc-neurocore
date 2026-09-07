@@ -146,7 +146,39 @@ def _row(
     }
 
 
+def _toolchain_command(tool: str, *arguments: str) -> list[str]:
+    """Return the argv that asks *tool* for its version.
+
+    A shim under ``.venv/bin`` is preferred when it exists, because a project
+    that pins a toolchain pins it there and the recorded version must be the
+    one that actually built the lane. Otherwise the tool is resolved on
+    ``PATH``, which is how every other benchmark in this repository finds it.
+
+    Resolving only through the shim is what made this record lose its
+    provenance: three of the four shims are absent from the environment that
+    produced the committed evidence, so every rerun silently recorded
+    ``unavailable`` for compilers that were installed and in use.
+
+    Parameters
+    ----------
+    tool : str
+        Executable name, for example ``"rustc"``.
+    *arguments : str
+        Arguments that make the tool print its version.
+
+    Returns
+    -------
+    list of str
+        The argv to run, using the shim when present and the bare name
+        otherwise; a bare name that resolves nowhere is reported as
+        ``unavailable`` by :func:`_version`.
+    """
+    shim = REPOSITORY / ".venv" / "bin" / tool
+    return [str(shim) if shim.exists() else tool, *arguments]
+
+
 def _version(command: list[str]) -> str:
+    """Return the first line a tool prints for its version, or ``unavailable``."""
     try:
         completed = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
     except OSError:
@@ -200,10 +232,10 @@ def run(spec: BenchmarkSpec, argv: list[str] | None = None) -> int:
         "source_hashes": _source_hashes(spec.source_paths),
         "binary_hashes": _binary_hashes(spec),
         "tool_versions": {
-            "rustc": _version([str(REPOSITORY / ".venv/bin/rustc"), "--version"]),
-            "go": _version([str(REPOSITORY / ".venv/bin/go"), "version"]),
-            "julia": _version([str(REPOSITORY / ".venv/bin/julia"), "--version"]),
-            "mojo": _version([str(REPOSITORY / ".venv/bin/mojo"), "--version"]),
+            "rustc": _version(_toolchain_command("rustc", "--version")),
+            "go": _version(_toolchain_command("go", "version")),
+            "julia": _version(_toolchain_command("julia", "--version")),
+            "mojo": _version(_toolchain_command("mojo", "--version")),
         },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -10,17 +10,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 20.720265,
-      "median_ns_per_step": 16.054665,
-      "min_ns_per_step": 13.49301,
+      "max_ns_per_step": 28.25332,
+      "median_ns_per_step": 18.0216,
+      "min_ns_per_step": 14.033035,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3210933,
-        3242420,
-        3093550,
-        4144053,
-        2698602
+        3581505,
+        5650664,
+        4134264,
+        3604320,
+        2806607
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -33,17 +33,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 17.28103,
-      "median_ns_per_step": 15.267715,
-      "min_ns_per_step": 11.94879,
+      "max_ns_per_step": 27.605765,
+      "median_ns_per_step": 14.793325,
+      "min_ns_per_step": 13.57498,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3456206,
-        2763297,
-        3053543,
-        2389758,
-        3097086
+        5521153,
+        3535182,
+        2958665,
+        2714996,
+        2790239
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -56,17 +56,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 18.672435,
-      "median_ns_per_step": 15.854295,
-      "min_ns_per_step": 10.82171,
+      "max_ns_per_step": 19.646055,
+      "median_ns_per_step": 15.28934,
+      "min_ns_per_step": 11.98421,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3734487,
-        3170859,
-        2164342,
-        3714874,
-        2236853
+        2879522,
+        3057868,
+        2396842,
+        3788799,
+        3929211
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -79,17 +79,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 501.651145,
-      "median_ns_per_step": 445.800725,
-      "min_ns_per_step": 409.865655,
+      "max_ns_per_step": 439.50447,
+      "median_ns_per_step": 403.240725,
+      "min_ns_per_step": 392.482315,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        91804050,
-        85262204,
-        100330229,
-        89160145,
-        81973131
+        78496463,
+        79862265,
+        80648145,
+        87900894,
+        87574918
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -102,17 +102,17 @@
       "final_state": [
         0.9999999999999998
       ],
-      "max_ns_per_step": 40.921945,
-      "median_ns_per_step": 36.612725,
-      "min_ns_per_step": 31.677575,
+      "max_ns_per_step": 19.961045,
+      "median_ns_per_step": 15.781775,
+      "min_ns_per_step": 14.850945,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        8184389,
-        7121401,
-        6335515,
-        7732067,
-        7322545
+        3156355,
+        3777734,
+        3010053,
+        2970189,
+        3992209
       ],
       "spikes": 59999,
       "trace_matches_python": true,
@@ -132,9 +132,9 @@
       "size_bytes": 15032
     },
     "rust_extension": {
-      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
-      "size_bytes": 525572993
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "522c0b5d93ad56ee8a3bc5890c6796023ff94ee6a20272b677eef4fb078558e4",
+      "size_bytes": 34833897
     }
   },
   "current": 0.3,
@@ -142,12 +142,12 @@
   "hardware_measurement_claimed": false,
   "host": "aaarthuus",
   "load_average": [
-    15.46875,
-    13.5537109375,
-    11.5693359375
+    6.53076171875,
+    6.47802734375,
+    6.92822265625
   ],
   "model": "SCSigmaDeltaAccumulatorNeuron",
-  "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
   "production_speed_claim": false,
   "python": "3.12.3",
   "repeats": 5,
@@ -217,11 +217,11 @@
     "src/sc_neurocore/neurons/reference_trace_data/sc_sigma_delta_accumulator_project.json": "a8e9ae2fe3214904cfd385573af86d29ec7d38fa0a7caee31b680718ec49178f"
   },
   "steps": 200000,
-  "timestamp_utc": "2026-08-26T05:19:53.366400+00:00",
+  "timestamp_utc": "2026-09-07T13:38:25.133324+00:00",
   "tool_versions": {
-    "go": "go version go1.26.2 linux/amd64",
-    "julia": "julia version 1.12.6",
-    "mojo": "Mojo 0.26.2.0 (d627decc)",
-    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    "go": "go version go1.24.0 linux/amd64",
+    "julia": "julia version 1.11.4",
+    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   }
 }

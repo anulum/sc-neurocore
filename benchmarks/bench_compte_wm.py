@@ -126,6 +126,32 @@ def _measure(backend: str, steps: int, repeats: int) -> tuple[list[int], backend
     return samples, result
 
 
+def _toolchain_command(tool: str, *arguments: str) -> list[str]:
+    """Return the argv that asks *tool* for its version.
+
+    A shim under ``.venv/bin`` is preferred when it exists, because a project
+    that pins a toolchain pins it there; the pinned Mojo and the one on
+    ``PATH`` are different releases here, so asking the bare name records a
+    compiler the pinned build did not use. Otherwise the tool is resolved on
+    ``PATH``.
+
+    Parameters
+    ----------
+    tool : str
+        Executable name, for example ``"rustc"``.
+    *arguments : str
+        Arguments that make the tool print its version.
+
+    Returns
+    -------
+    list of str
+        The argv to run, using the shim when present and the bare name
+        otherwise.
+    """
+    shim = REPOSITORY / ".venv" / "bin" / tool
+    return [str(shim) if shim.exists() else tool, *arguments]
+
+
 def _tool_version(command: list[str]) -> str:
     try:
         completed = subprocess.run(command, check=False, capture_output=True, text=True, timeout=30)
@@ -142,10 +168,10 @@ def _environment() -> dict[str, object]:
         "processor": platform.processor() or "unknown",
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else [],
         "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else [],
-        "rustc": _tool_version(["rustc", "--version"]),
-        "go": _tool_version(["go", "version"]),
-        "julia": _tool_version(["julia", "--version"]),
-        "mojo": _tool_version(["mojo", "--version"]),
+        "rustc": _tool_version(_toolchain_command("rustc", "--version")),
+        "go": _tool_version(_toolchain_command("go", "version")),
+        "julia": _tool_version(_toolchain_command("julia", "--version")),
+        "mojo": _tool_version(_toolchain_command("mojo", "--version")),
     }
 
 
@@ -254,6 +280,15 @@ def build_payload(steps: int, repeats: int) -> tuple[dict[str, object], bool]:
 
 
 def main() -> int:
+    """Run the benchmark and write its source- and binary-bound evidence.
+
+    Returns
+    -------
+    int
+        ``0`` when every measured runtime passed its parity check, ``1``
+        otherwise. The record is written either way, carrying its own
+        ``passed`` verdict, so a failed run is visible rather than absent.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=N_STEPS)
     parser.add_argument("--repeats", type=int, default=N_REPEATS)
