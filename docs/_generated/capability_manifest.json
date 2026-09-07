@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4859
+    "test_files": 4860
   },
   "documentation": {
     "public_pages": [
@@ -4476,6 +4476,7 @@
       "tests/test_dm04_synthesis_report_reader.py",
       "tests/test_docs/test_public_licensing_page.py",
       "tests/test_docs/test_security_scanner_ci_docs.py",
+      "tests/test_docs_are_path_free.py",
       "tests/test_docs_internal_link_hygiene.py",
       "tests/test_docs_navigation_policy.py",
       "tests/test_doctor_diagnose_architecture.py",

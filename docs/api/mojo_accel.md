@@ -250,7 +250,7 @@ Verified output on the reference host (Linux x86-64, Mojo from pixi,
 
 ```
 kernel dir : /<repo>/src/sc_neurocore/accel/mojo
-pixi bin   : /home/anulum/.pixi/bin/pixi
+pixi bin   : <your-home>/.pixi/bin/pixi
 popcount([65280, 4080, 3405691582]) = 38
 ```
 

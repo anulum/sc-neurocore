@@ -62,7 +62,7 @@ Run the audit against the shared SC-NeuroCore stimulus directory:
 ```bash
 python tools/snn_memory_discipline_audit.py \
   --repo . \
-  --stimulus-dir /media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli/SC-NEUROCORE \
+  --stimulus-dir "$SC_NEUROCORE_GOTM_ROOT/04_ARCANE_SAPIENCE/snn_stimuli/SC-NEUROCORE" \
   --output docs/internal/snn_memory_discipline_audit.json
 ```
 
@@ -89,7 +89,7 @@ PYTHONPATH=src:. python -m pytest tests/test_tools/test_systematic_audit_rerun_c
 PYTHONPATH=src:. python tools/spdx_header_audit.py --check
 PYTHONPATH=src:. python tools/snn_memory_discipline_audit.py \
   --repo . \
-  --stimulus-dir /media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli/SC-NEUROCORE \
+  --stimulus-dir "$SC_NEUROCORE_GOTM_ROOT/04_ARCANE_SAPIENCE/snn_stimuli/SC-NEUROCORE" \
   --output docs/internal/snn_memory_discipline_audit.json
 ```
 

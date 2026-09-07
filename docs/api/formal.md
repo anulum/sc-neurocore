@@ -310,7 +310,7 @@ Verified output on the reference host (Linux x86-64, Lean
 4.30.0-rc2 from ``elan``, 2026-04-20):
 
 ```
-Lean binary: /home/anulum/.elan/bin/lean
+Lean binary: <your-home>/.elan/bin/lean
 Proof file : /<repo>/src/sc_neurocore/formal/proofs/safety_bounds.lean
 Available  : True
 [Formal] Running formal checking across physical stochastic theorems...

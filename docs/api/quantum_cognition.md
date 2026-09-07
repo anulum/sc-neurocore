@@ -467,11 +467,13 @@ processes content:
 python -m sc_neurocore.quantum_cognition learn /path/to/repo --snn-dir ./snn_stimuli
 ```
 
-The default repository root and stimulus directory point at the Samsung ext4
-GOTM working tree:
+There is no built-in default root. Set `SC_NEUROCORE_GOTM_ROOT` to your
+collection, or pass the path to `learn` directly; without either the command
+refuses rather than reading whatever tree it happens to be in. The stimulus
+directory and the agentic-shared directory are derived from that root:
 
-- `/media/anulum/GOTM/aaa_God_of_the_Math_Collection`
-- `/media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli`
+- `$SC_NEUROCORE_GOTM_ROOT`
+- `$SC_NEUROCORE_GOTM_ROOT/04_ARCANE_SAPIENCE/snn_stimuli`
 
 Every emitted `qc_*.json` stimulus uses the fleet memory-write schema:
 

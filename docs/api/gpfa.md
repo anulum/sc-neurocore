@@ -155,9 +155,11 @@ numerics (its parity is the tightest of the four).
 
 ```bash
 # Rust (PyO3, depends on nalgebra) -- build the engine, then refresh the bridge .so
-CARGO_TARGET_DIR=/media/anulum/GOTM/_scratch/sc-neurocore-cargo-target \
+# A target directory outside the repository keeps a large build tree off the
+# checkout; any writable path works, and plain `target/` is the default.
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-target}" \
     maturin develop --release -m engine/Cargo.toml
-cp /media/anulum/GOTM/_scratch/sc-neurocore-cargo-target/release/libsc_neurocore_engine.so \
+cp "${CARGO_TARGET_DIR:-target}"/release/libsc_neurocore_engine.so \
     bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so
 
 # Go (cgo c-shared)
