@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import tempfile
 import time
 import venv
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -59,13 +61,78 @@ EXPECTED_STATIC_PRIMITIVES = (
     "hdl/primitives/sc_firing_rate_bank.v",
     "hdl/primitives/sc_lif_neuron.v",
 )
-EXPECTED_CONDA_RUN_DEPENDENCIES = (
-    "python >=3.10",
-    "numpy >=1.24",
-    "scipy >=1.10",
-    "defusedxml >=0.7.1",
-    "tomli >=2.0  # [py<311]",
+#: A dependency name followed by its version specifier, as ``pyproject.toml``
+#: writes it. The specifier may be empty for an unconstrained requirement.
+_REQUIREMENT = re.compile(r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)\s*(?P<specifier>.*)$")
+
+#: The only environment marker the conda recipe can express, as a selector
+#: comment. A requirement carrying any other marker cannot be translated and is
+#: reported rather than silently dropped from the expected recipe.
+_PYTHON_VERSION_MARKER = re.compile(
+    r"^python_version\s*(?P<operator>[<>=!]+)\s*[\'\"](?P<version>\d+\.\d+)[\'\"]$"
 )
+
+
+class InstallProfileAuditError(RuntimeError):
+    """Raised when project metadata cannot be translated into a conda recipe."""
+
+
+def conda_run_dependencies(requires_python: str, dependencies: Sequence[str]) -> tuple[str, ...]:
+    """Return the conda ``run:`` list that the project metadata implies.
+
+    The recipe is checked against this derivation rather than against a copy of
+    itself, so a dependency added to ``pyproject.toml`` and nowhere else is a
+    reported misalignment instead of two stale statements agreeing.
+
+    Parameters
+    ----------
+    requires_python : str
+        The ``project.requires-python`` specifier, for example ``">=3.10"``.
+    dependencies : Sequence[str]
+        The ``project.dependencies`` requirements, in the order authored.
+
+    Returns
+    -------
+    tuple of str
+        The interpreter row followed by one row per requirement, formatted the
+        way ``conda/meta.yaml`` writes them.
+
+    Raises
+    ------
+    InstallProfileAuditError
+        If a requirement is unparsable, or carries an environment marker that
+        a conda selector cannot express.
+    """
+    rows = [f"python {requires_python.strip()}"]
+    rows.extend(_conda_requirement(requirement) for requirement in dependencies)
+    return tuple(rows)
+
+
+def _conda_requirement(requirement: str) -> str:
+    """Return one ``pyproject.toml`` requirement as a conda recipe row."""
+    specification, _, marker = requirement.partition(";")
+    match = _REQUIREMENT.match(specification.strip())
+    if match is None:
+        raise InstallProfileAuditError(f"Cannot parse base requirement {requirement!r}")
+    name = match["name"].strip().lower().replace("_", "-")
+    specifier = match["specifier"].strip()
+    row = f"{name} {specifier}".strip()
+    if marker.strip():
+        row = f"{row}{_conda_selector(marker)}"
+    return row
+
+
+def _conda_selector(marker: str) -> str:
+    """Return the conda selector comment for a Python-version marker."""
+    match = _PYTHON_VERSION_MARKER.match(marker.strip())
+    if match is None:
+        raise InstallProfileAuditError(
+            f"Environment marker {marker.strip()!r} has no conda selector equivalent"
+        )
+    version = match["version"].replace(".", "")
+    return f"  # [py{match['operator']}{version}]"
+
+
 EXPECTED_HUB_DEPENDENCY_MIRRORS = (
     "mirrors/wheelhouse",
     "mirrors/huggingface",
@@ -109,6 +176,8 @@ def build_install_profile_audit(
         repo=repo,
         project_version=project["version"],
         package_data=package_data,
+        requires_python=str(project["requires-python"]),
+        dependencies=dependencies,
     )
     install_measurement = (
         _measure_local_base_install(repo) if measure_install else {"measured": False}
@@ -153,6 +222,8 @@ def _build_offline_hardware_profile(
     repo: Path,
     project_version: str,
     package_data: list[str],
+    requires_python: str,
+    dependencies: Sequence[str],
 ) -> dict[str, Any]:
     matched_package_data = _matched_package_data(repo, package_data)
     missing_static_primitives = sorted(
@@ -161,9 +232,16 @@ def _build_offline_hardware_profile(
         if primitive not in matched_package_data
     )
     conda_recipe = _read_conda_recipe(repo)
+    expected_run = conda_run_dependencies(requires_python, dependencies)
+    recorded_run = list(conda_recipe["run_dependencies"])
+    # Reported as two ordered lists rather than one boolean: a recipe that has
+    # fallen behind the project metadata should name the rows it is missing.
+    missing_run = [row for row in expected_run if row not in recorded_run]
+    unexpected_run = [row for row in recorded_run if row not in expected_run]
     conda_recipe_aligned = (
         conda_recipe["version"] == project_version
-        and conda_recipe["run_dependencies"] == list(EXPECTED_CONDA_RUN_DEPENDENCIES)
+        and not missing_run
+        and not unexpected_run
         and "sc_neurocore.hdl.resources" in conda_recipe["test_imports"]
         and any(
             "list_baseline_primitive_rtl" in command for command in conda_recipe["test_commands"]
@@ -183,6 +261,10 @@ def _build_offline_hardware_profile(
         "static_primitive_pattern": STATIC_PRIMITIVE_PATTERN,
         "expected_static_primitives": list(EXPECTED_STATIC_PRIMITIVES),
         "missing_static_primitives": missing_static_primitives,
+        "conda_run_dependencies_expected": list(expected_run),
+        "conda_run_dependencies_recorded": recorded_run,
+        "conda_run_dependencies_missing": missing_run,
+        "conda_run_dependencies_unexpected": unexpected_run,
         "conda_recipe_aligned": conda_recipe_aligned,
         "docker_wheel_build_covers_static_primitives": docker_wheel_build_covers_static_primitives,
         "hub_dependency_mirrors": hub_profile["hub_dependency_mirrors"],

@@ -28,6 +28,8 @@ conda build conda/
 
 The recipe must stay aligned with the base install contract in
 `pyproject.toml`: Python >=3.10, NumPy >=1.24, SciPy >=1.10, defusedxml
->=0.7.1, and tomli only on Python <3.11. Its import tests also verify the
-packaged offline HDL primitive resources used by pre-built wheels and Docker
-images.
+>=0.7.1, tomli-w >=1.0, and tomli only on Python <3.11. `tools/install_profile_audit.py`
+derives the expected `run:` list from `pyproject.toml` rather than from a copy
+of this recipe, and reports any row the recipe is missing by name. Its import
+tests also verify the packaged offline HDL primitive resources used by
+pre-built wheels and Docker images.

@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+
+import pytest
 
 
 def _repo_root() -> Path:
@@ -43,11 +46,15 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
 
     assert report["schema_version"] == tool.INSTALL_PROFILE_AUDIT_SCHEMA_VERSION
     assert report["project"]["name"] == "sc-neurocore"
+    # An exhaustive list, so adding a base dependency fails here and forces the
+    # judgement that it belongs in the wheel. ``tomli-w`` does: the shipped
+    # ``UniversalNeuron.to_toml`` imports it.
     assert report["base_dependencies"] == [
         "numpy>=1.24",
         "scipy>=1.10",
         "defusedxml>=0.7.1",
         "tomli>=2.0; python_version < '3.11'",
+        "tomli-w>=1.0",
     ]
     assert report["heavy_dependencies_in_base"] == []
     assert report["polyglot_research_sources_in_wheel"] == []
@@ -68,6 +75,24 @@ def test_install_profile_audit_reports_trimmed_base_boundary() -> None:
             "hdl/primitives/sc_lif_neuron.v",
         ],
         "missing_static_primitives": [],
+        "conda_run_dependencies_expected": [
+            "python >=3.10",
+            "numpy >=1.24",
+            "scipy >=1.10",
+            "defusedxml >=0.7.1",
+            "tomli >=2.0  # [py<311]",
+            "tomli-w >=1.0",
+        ],
+        "conda_run_dependencies_recorded": [
+            "python >=3.10",
+            "numpy >=1.24",
+            "scipy >=1.10",
+            "defusedxml >=0.7.1",
+            "tomli >=2.0  # [py<311]",
+            "tomli-w >=1.0",
+        ],
+        "conda_run_dependencies_missing": [],
+        "conda_run_dependencies_unexpected": [],
         "conda_recipe_aligned": True,
         "docker_wheel_build_covers_static_primitives": True,
         "hub_dependency_mirrors": ["mirrors/wheelhouse", "mirrors/huggingface"],
@@ -92,6 +117,7 @@ def test_conda_recipe_tracks_base_install_contract() -> None:
         "scipy >=1.10",
         "defusedxml >=0.7.1",
         "tomli >=2.0  # [py<311]",
+        "tomli-w >=1.0",
     ]
     assert "sc_neurocore.hdl.resources" in recipe["test_imports"]
     assert any("list_baseline_primitive_rtl" in command for command in recipe["test_commands"])
@@ -192,3 +218,91 @@ def test_install_measurement_uses_base_install_and_records_diagnostics(
     assert measurement["installed_package_count"] == 2
     assert measurement["heavy_optional_packages_installed"] == []
     assert measurement["passed"] is False
+
+
+def test_conda_run_list_is_derived_from_project_metadata() -> None:
+    """The expected recipe follows ``pyproject.toml``, not a copy of the recipe."""
+    tool = _load_tool()
+
+    derived = tool.conda_run_dependencies(
+        ">=3.10",
+        [
+            "numpy>=1.24",
+            "tomli>=2.0; python_version < '3.11'",
+            "tomli-w>=1.0",
+        ],
+    )
+
+    assert derived == (
+        "python >=3.10",
+        "numpy >=1.24",
+        "tomli >=2.0  # [py<311]",
+        "tomli-w >=1.0",
+    )
+
+
+def test_conda_run_list_rejects_a_marker_with_no_selector() -> None:
+    """A marker conda cannot express is reported, never dropped from the recipe."""
+    tool = _load_tool()
+
+    with pytest.raises(tool.InstallProfileAuditError, match="no conda selector equivalent"):
+        tool.conda_run_dependencies(">=3.10", ["torch>=2.0; platform_system == 'Linux'"])
+
+
+def test_conda_run_list_rejects_an_unparsable_requirement() -> None:
+    """A requirement the audit cannot read stops the audit rather than the row."""
+    tool = _load_tool()
+
+    with pytest.raises(tool.InstallProfileAuditError, match="Cannot parse base requirement"):
+        tool.conda_run_dependencies(">=3.10", ["<<broken>>"])
+
+
+def _repo_overlay(destination: Path, *, replace: str) -> Path:
+    """Mirror the repository with symlinks, giving ``conda/`` a real copy.
+
+    The audit reads several trees, so the overlay links them rather than
+    copying; only the directory under test is materialised, which keeps the
+    fault injection to one file.
+    """
+    source = _repo_root()
+    destination.mkdir()
+    for entry in source.iterdir():
+        if entry.name == "conda":
+            continue
+        (destination / entry.name).symlink_to(entry)
+    shutil.copytree(source / "conda", destination / "conda")
+    recipe = destination / "conda" / "meta.yaml"
+    recipe.write_text(recipe.read_text(encoding="utf-8").replace(replace, ""), encoding="utf-8")
+    return destination
+
+
+def test_a_base_dependency_absent_from_the_recipe_breaks_alignment(tmp_path: Path) -> None:
+    """Restore the fault this unit fixed and confirm the gate names the missing row."""
+    tool = _load_tool()
+    repo = _repo_overlay(tmp_path / "repo", replace="    - tomli-w >=1.0\n")
+
+    report = tool.build_install_profile_audit(repo)
+    profile = report["offline_hardware_profile"]
+
+    assert profile["conda_run_dependencies_missing"] == ["tomli-w >=1.0"]
+    assert profile["conda_run_dependencies_unexpected"] == []
+    assert profile["conda_recipe_aligned"] is False
+    assert report["passed"] is False
+
+
+def test_committed_audit_report_matches_a_fresh_derivation() -> None:
+    """The recorded report is a derivation, so drift from the metadata is a defect.
+
+    Every field the audit records is computed from committed files — the report
+    carries ``install_measurement.measured == False`` — so nothing here depends
+    on the machine that ran it. Without this binding the artefact had already
+    fallen a base dependency behind ``pyproject.toml``.
+    """
+    tool = _load_tool()
+    artifact = _repo_root() / "benchmarks" / "results" / "install_profile_audit.json"
+
+    recorded = json.loads(artifact.read_text(encoding="utf-8"))
+    fresh = tool.build_install_profile_audit(_repo_root())
+
+    assert recorded["install_measurement"] == {"measured": False}
+    assert recorded == fresh
