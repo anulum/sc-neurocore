@@ -7,8 +7,23 @@
 // SC-NeuroCore — Analysis job session policy (outside UI)
 
 /**
- * Pure view-state machine for POST /api/analysis/jobs.
- * Timer/API lifecycle lives in analysisJobSession.ts.
+ * What an analysis job looks like to the reader, as a state machine.
+ *
+ * A job is submitted, then polled until it stops. This module owns only the
+ * question "given where we were and what just happened, what should be on
+ * screen"; timers, requests and cancellation live in `analysisJobSession.ts`,
+ * and the answer's shape is checked in `analysisJobValidation.ts`.
+ *
+ * The phases separate two kinds of ending that a single `failed` would blur.
+ * `failed`, `cancelled` and `timed_out` are the server's verdicts on the job.
+ * `malformed` is this build's verdict on the *answer*: the job succeeded and
+ * returned something that is not the analysis it claimed to be. An operator
+ * needs to know which of those happened, because one is a job to rerun and the
+ * other is a server to fix.
+ *
+ * Every error message the reducer stores passes through `publicErrorMessage`,
+ * so a server error quoting a filesystem path does not put that path on
+ * screen.
  */
 
 import type {
@@ -31,6 +46,11 @@ export {
   type AnalysisJobSessionOptions,
 } from "./analysisJobSession";
 
+/**
+ * Where a job is. The three terminal failures are distinct on purpose:
+ * `failed`, `cancelled` and `timed_out` are the server's verdicts on the job,
+ * and `malformed` is this build's verdict on the answer it returned.
+ */
 export type AnalysisJobPhase =
   | "idle"
   | "submitting"
@@ -42,6 +62,10 @@ export type AnalysisJobPhase =
   | "timed_out"
   | "malformed";
 
+/**
+ * Everything the view needs about a job: which analysis it is, where it is,
+ * what it returned, and where to ask again.
+ */
 export interface AnalysisJobViewState {
   analysis: AnalysisJobKind | null;
   error: string | null;
@@ -51,6 +75,7 @@ export interface AnalysisJobViewState {
   statusRoute: string | null;
 }
 
+/** Everything that can happen to a job while the reader watches it. */
 export type AnalysisJobEvent =
   | { type: "submit_started"; analysis: AnalysisJobKind }
   | { type: "submit_succeeded"; receipt: AnalysisJobReceipt }
@@ -58,6 +83,7 @@ export type AnalysisJobEvent =
   | { type: "poll"; record: StudioJobRecord }
   | { type: "poll_failed"; message: string };
 
+/** The phases in which a job is still going. */
 const BUSY: ReadonlySet<AnalysisJobPhase> = new Set([
   "submitting",
   "pending",
@@ -65,7 +91,9 @@ const BUSY: ReadonlySet<AnalysisJobPhase> = new Set([
 ]);
 
 /**
- * Initial idle analysis-job view state.
+ * The state before anything has been submitted.
+ *
+ * @returns The idle state.
  */
 export function initialAnalysisJobState(): AnalysisJobViewState {
   return {
@@ -79,21 +107,36 @@ export function initialAnalysisJobState(): AnalysisJobViewState {
 }
 
 /**
- * True while submit or poll is in flight.
+ * Whether the job is still going.
+ *
+ * @param phase - The phase.
+ * @returns Whether a submit or a poll is in flight.
  */
 export function isAnalysisJobBusy(phase: AnalysisJobPhase): boolean {
   return BUSY.has(phase);
 }
 
 /**
- * True when a new analysis job may be submitted.
+ * Whether a new job may be started.
+ *
+ * A finished job -- however it finished -- may be replaced. Only a job still
+ * running blocks another, which is what stops a double-click submitting twice.
+ *
+ * @param state - The current state.
+ * @returns Whether a submit is allowed.
  */
 export function canSubmitAnalysisJob(state: AnalysisJobViewState): boolean {
   return !isAnalysisJobBusy(state.phase);
 }
 
 /**
- * Path-free operator label for the current real phase.
+ * Name a phase for the reader.
+ *
+ * `malformed` is shown as `invalid`, because "malformed" describes the
+ * response and the reader is being told about their run.
+ *
+ * @param phase - The phase.
+ * @returns Its label.
  */
 export function analysisJobPhaseLabel(phase: AnalysisJobPhase): string {
   switch (phase) {
@@ -122,6 +165,16 @@ export function analysisJobPhaseLabel(phase: AnalysisJobPhase): string {
   }
 }
 
+/**
+ * Reduce a server error to something safe to show.
+ *
+ * Absolute paths under the deployment's own directories are replaced with
+ * `[path]`: an error message is written for an operator reading a log, and the
+ * browser shows it to whoever opened the panel.
+ *
+ * @param raw - The server's message.
+ * @returns The message to show, or a generic identifier when it was blank.
+ */
 function publicErrorMessage(raw: string): string {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
@@ -131,7 +184,13 @@ function publicErrorMessage(raw: string): string {
 }
 
 /**
- * Reduce one analysis-job event into the next view state.
+ * Apply one event to the state.
+ *
+ * @param state - Where the job was.
+ * @param event - What happened.
+ * @returns Where the job is now. Every returned state is complete: a
+ *   transition that clears the result says so rather than leaving the previous
+ *   analysis's numbers beside a new phase.
  */
 export function reduceAnalysisJob(
   state: AnalysisJobViewState,
@@ -242,36 +301,34 @@ export function reduceAnalysisJob(
           result: null,
         };
       }
-      if (record.status === "completed") {
-        if (state.analysis === null) {
-          return {
-            ...state,
-            error: "analysis_job_session_kind_missing",
-            phase: "malformed",
-            result: null,
-          };
-        }
-        const validated = validateAnalysisJobResult(record.result, state.analysis);
-        if (!validated.ok) {
-          return {
-            ...state,
-            error: validated.error,
-            phase: "malformed",
-            result: null,
-          };
-        }
+      // Every other status has returned by now, so the record is completed.
+      // There used to be a further `status === "completed"` test and an
+      // `analysis_job_status_unknown` fallback beneath it. The fallback was
+      // unreachable: the poll record is validated against the contract's own
+      // status list before it gets here, so an unknown status is refused there
+      // as `job_status_invalid` and never reaches this reducer.
+      if (state.analysis === null) {
         return {
           ...state,
-          error: null,
-          phase: "completed",
-          result: validated.value,
+          error: "analysis_job_session_kind_missing",
+          phase: "malformed",
+          result: null,
+        };
+      }
+      const validated = validateAnalysisJobResult(record.result, state.analysis);
+      if (!validated.ok) {
+        return {
+          ...state,
+          error: validated.error,
+          phase: "malformed",
+          result: null,
         };
       }
       return {
         ...state,
-        error: "analysis_job_status_unknown",
-        phase: "failed",
-        result: null,
+        error: null,
+        phase: "completed",
+        result: validated.value,
       };
     }
     default: {

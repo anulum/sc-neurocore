@@ -14,6 +14,13 @@ import {
   validateAnalysisPollRecord,
 } from "./analysisJobValidation";
 
+/**
+ * Build result metadata declaring the given analysis.
+ *
+ * @param analysisType - The analysis the result claims to be.
+ * @param outputKeys - The fields it claims to carry.
+ * @returns The metadata.
+ */
 function metadata(analysisType: AnalysisJobKind, outputKeys: string[]) {
   return {
     analysis_type: analysisType,
@@ -110,6 +117,13 @@ describe("validateAnalysisJobResult by kind", () => {
   });
 });
 
+/**
+ * Build a valid job envelope, for cases to invalidate one field of at a time.
+ *
+ * @param overrides - The fields to change or remove.
+ * @returns The envelope, as parsed JSON rather than as a typed record, since
+ *   most cases put something invalid in it.
+ */
 function jobEnvelope(overrides: Record<string, unknown> = {}) {
   return {
     artifacts: [],

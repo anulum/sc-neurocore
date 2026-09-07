@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Analysis job session/policy tests
+import { at } from "./arrayAt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AnalysisJobReceipt, StudioJobRecord } from "./api/client";
@@ -16,6 +17,12 @@ import {
   reduceAnalysisJob,
 } from "./analysisJob";
 
+/**
+ * Build a job record in the given status.
+ *
+ * @param overrides - The fields to change.
+ * @returns The record.
+ */
 function jobRecord(
   overrides: Partial<StudioJobRecord> & Pick<StudioJobRecord, "status">,
 ): StudioJobRecord {
@@ -35,6 +42,12 @@ function jobRecord(
   };
 }
 
+/**
+ * Build a submit receipt for an f-I curve job.
+ *
+ * @param overrides - The fields to change.
+ * @returns The receipt.
+ */
 function receipt(overrides: Partial<AnalysisJobReceipt> = {}): AnalysisJobReceipt {
   return {
     analysis: "fi_curve",
@@ -163,7 +176,7 @@ describe("createAnalysisJobSession", () => {
     let idx = 0;
     const submit = vi.fn(async () => receipt());
     const fetchJob = vi.fn(async () => {
-      const next = polls[Math.min(idx, polls.length - 1)]!;
+      const next = at(polls, Math.min(idx, polls.length - 1));
       idx += 1;
       return next;
     });

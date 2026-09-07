@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — useAnalysisJob adapter tests (binding + hook contract)
+import { at } from "./arrayAt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AnalysisJobReceipt, StudioJobRecord } from "./api/client";
@@ -21,6 +22,12 @@ import {
   useAnalysisJob,
 } from "./useAnalysisJob";
 
+/**
+ * Build a job record in the given status.
+ *
+ * @param overrides - The fields to change.
+ * @returns The record.
+ */
 function jobRecord(
   overrides: Partial<StudioJobRecord> & Pick<StudioJobRecord, "status">,
 ): StudioJobRecord {
@@ -40,6 +47,12 @@ function jobRecord(
   };
 }
 
+/**
+ * Build a submit receipt for an f-I curve job.
+ *
+ * @param overrides - The fields to change.
+ * @returns The receipt.
+ */
 function receipt(overrides: Partial<AnalysisJobReceipt> = {}): AnalysisJobReceipt {
   return {
     analysis: "fi_curve",
@@ -103,7 +116,7 @@ describe("attachAnalysisJobReactBinding / useAnalysisJob contract", () => {
     let idx = 0;
     const submit = vi.fn(async () => receipt());
     const fetchJob = vi.fn(async () => {
-      const next = polls[Math.min(idx, polls.length - 1)]!;
+      const next = at(polls, Math.min(idx, polls.length - 1));
       idx += 1;
       return next;
     });
@@ -116,9 +129,9 @@ describe("attachAnalysisJobReactBinding / useAnalysisJob contract", () => {
         phases.push(s.phase);
       },
     });
-    const run = binding.startJob({ analysis: "fi_curve", payload: {} });
+    binding.startJob({ analysis: "fi_curve", payload: {} });
     await vi.advanceTimersByTimeAsync(0);
-    await Promise.resolve(run);
+    await Promise.resolve();
     expect(binding.getState().phase).toBe("pending");
     await vi.advanceTimersByTimeAsync(50);
     expect(binding.getState().phase).toBe("running");
@@ -142,9 +155,9 @@ describe("attachAnalysisJobReactBinding / useAnalysisJob contract", () => {
       api: { submit, fetchJob },
       pollIntervalMs: 20,
     });
-    const run = binding.startJob({ analysis: "fi_curve", payload: {} });
+    binding.startJob({ analysis: "fi_curve", payload: {} });
     await vi.advanceTimersByTimeAsync(0);
-    await Promise.resolve(run);
+    await Promise.resolve();
     expect(binding.getState().phase).toBe("malformed");
     expect(binding.getState().result).toBeNull();
     expect(binding.getState().error).toBeTruthy();
@@ -163,8 +176,8 @@ describe("attachAnalysisJobReactBinding / useAnalysisJob contract", () => {
       },
       pollIntervalMs: 50,
     });
-    void busy.startJob({ analysis: "fi_curve", payload: {} });
-    void busy.startJob({ analysis: "fi_curve", payload: {} });
+    busy.startJob({ analysis: "fi_curve", payload: {} });
+    busy.startJob({ analysis: "fi_curve", payload: {} });
     await vi.advanceTimersByTimeAsync(0);
     expect(busySubmit).toHaveBeenCalledTimes(1);
     busy.dispose();

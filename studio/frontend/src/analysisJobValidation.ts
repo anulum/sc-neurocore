@@ -7,8 +7,20 @@
 // SC-NeuroCore — Fail-closed runtime guards for analysis job payloads
 
 /**
- * Nested type guards for analysis-job receipts, poll records, and completed
- * results for fi_curve, bifurcation, heatmap, and sensitivity.
+ * Checking that a finished analysis returned the analysis that was asked for.
+ *
+ * A completed job is the dangerous case. A failed job is obvious; a job that
+ * succeeds and returns the wrong shape gets plotted. So the result is read
+ * twice: its metadata must declare the analysis that was requested, and its
+ * body must have that analysis's fields, with every number finite and every
+ * paired list the same length as its partner.
+ *
+ * The length checks are not pedantry. An f-I curve whose currents and rates
+ * differ in length draws a line through points that were never measured
+ * together, and nothing downstream would notice.
+ *
+ * Refusals are stable identifiers naming the field, so the panel can say what
+ * was wrong with a result rather than only that something was.
  */
 
 import type {
@@ -28,25 +40,62 @@ export {
   validateAnalysisPollRecord,
 } from "./analysisJobRecordValidation";
 
+/** A 64-character hexadecimal digest, in either case. */
 const HEX64 = /^[0-9a-fA-F]{64}$/;
+/** Where a result may say its numbers came from. */
 const ANALYSIS_SOURCES = new Set(["ode", "model", "mixed", "unknown"]);
 
+/**
+ * Whether a value is a plain object.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+/**
+ * Whether a value is a number that is actually a number.
+ *
+ * @param value - The value.
+ * @returns Whether it is finite.
+ */
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+/**
+ * Whether a value is a string with something in it.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
+/**
+ * Whether a value looks like a SHA-256 digest.
+ *
+ * @param value - The value.
+ * @returns Whether it has that shape.
+ */
 function isSha256Hex(value: unknown): value is string {
   return typeof value === "string" && HEX64.test(value);
 }
 
+/**
+ * Read a list of numbers, rejecting it whole if any entry is not one.
+ *
+ * A trace with one `NaN` in it is not a trace, so the list is refused
+ * rather than filtered: dropping the bad entry would silently shorten a
+ * series whose length is compared against its partner's.
+ *
+ * @param value - The list, as it arrived.
+ * @param error - The identifier to refuse it with.
+ * @returns The numbers, or the refusal.
+ */
 function parseFiniteNumberArray(value: unknown, error: string): ValidationResult<number[]> {
   if (!Array.isArray(value)) {
     return { ok: false, error };
@@ -62,7 +111,15 @@ function parseFiniteNumberArray(value: unknown, error: string): ValidationResult
 }
 
 /**
- * Guard analysis_metadata for a completed analysis evidence object.
+ * Read the metadata a completed result carries about itself.
+ *
+ * The declared type must be the analysis that was requested. A result that
+ * declares a different one is refused rather than parsed as what it claims:
+ * the caller asked a question and this is an answer to another.
+ *
+ * @param value - The metadata, as it arrived.
+ * @param expectedType - The analysis that was requested.
+ * @returns The metadata, or the identifier of what was wrong.
  */
 export function parseAnalysisResultMetadata(
   value: unknown,
@@ -117,6 +174,17 @@ export function parseAnalysisResultMetadata(
   };
 }
 
+/**
+ * Read a completed f-I curve result.
+ *
+ * The currents and the rates must be the same length: they are read as
+ * pairs, and a mismatch would plot points that were never measured
+ * together.
+ *
+ * @param body - The result body, already known to be an object.
+ * @param metadata - Its metadata, already validated.
+ * @returns The result, or the identifier of what was wrong.
+ */
 function parseFiCurve(
   body: Record<string, unknown>,
   metadata: AnalysisResultMetadata,
@@ -142,6 +210,13 @@ function parseFiCurve(
   };
 }
 
+/**
+ * Read a completed bifurcation sweep result.
+ *
+ * @param body - The result body, already known to be an object.
+ * @param metadata - Its metadata, already validated.
+ * @returns The result, or the identifier of what was wrong.
+ */
 function parseBifurcation(
   body: Record<string, unknown>,
   metadata: AnalysisResultMetadata,
@@ -181,6 +256,13 @@ function parseBifurcation(
   };
 }
 
+/**
+ * Read a completed two-parameter heatmap result.
+ *
+ * @param body - The result body, already known to be an object.
+ * @param metadata - Its metadata, already validated.
+ * @returns The result, or the identifier of what was wrong.
+ */
 function parseHeatmap(
   body: Record<string, unknown>,
   metadata: AnalysisResultMetadata,
@@ -231,6 +313,13 @@ function parseHeatmap(
   };
 }
 
+/**
+ * Read a completed sensitivity analysis result.
+ *
+ * @param body - The result body, already known to be an object.
+ * @param metadata - Its metadata, already validated.
+ * @returns The result, or the identifier of what was wrong.
+ */
 function parseSensitivity(
   body: Record<string, unknown>,
   metadata: AnalysisResultMetadata,
@@ -273,7 +362,11 @@ function parseSensitivity(
 }
 
 /**
- * Validate a completed analysis job result for the selected analysis kind.
+ * Read a completed result as the analysis that was asked for.
+ *
+ * @param result - The result, as it arrived.
+ * @param expectedKind - The analysis that was requested.
+ * @returns The result, or the identifier of what was wrong.
  */
 export function validateAnalysisJobResult(
   result: unknown,
@@ -297,7 +390,7 @@ export function validateAnalysisJobResult(
       return parseSensitivity(result, metadata.value);
     default: {
       const _exhaustive: never = expectedKind;
-      return { ok: false, error: `analysis_kind_unsupported:${_exhaustive}` };
+      return { ok: false, error: `analysis_kind_unsupported:${String(_exhaustive)}` };
     }
   }
 }

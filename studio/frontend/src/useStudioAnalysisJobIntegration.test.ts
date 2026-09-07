@@ -8,6 +8,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — real React DOM mount of useStudioAnalysisJobIntegration
+import { at } from "./arrayAt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, createElement, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -73,17 +74,28 @@ const fiResult: FICurveResponse = {
   rates: [0, 5],
 };
 
+/**
+ * Build a job record in the given status.
+ *
+ * @param overrides - The fields to change.
+ * @returns The record.
+ */
 function jobRecord(
-  o: Partial<StudioJobRecord> & Pick<StudioJobRecord, "status">,
+  overrides: Partial<StudioJobRecord> & Pick<StudioJobRecord, "status">,
 ): StudioJobRecord {
   return {
     artifacts: [], created_at_utc: "2026-07-20T00:00:00Z", error: null,
     execution_model: "thread", finished_at_utc: null, job_id: "sj_dom",
     kind: "analysis", owner: "studio", request_id: null, result: null,
-    started_at_utc: null, ...o,
+    started_at_utc: null, ...overrides,
   };
 }
 
+/**
+ * Build a submit receipt for an f-I curve job.
+ *
+ * @returns The receipt.
+ */
 function receipt(): AnalysisJobReceipt {
   return {
     analysis: "fi_curve", execution_mode: "async_job",
@@ -129,6 +141,12 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
     latest = null;
   });
 
+  /**
+   * Mount the hook in a real React root and keep its latest value.
+   *
+   * @param input - What the panel has selected.
+   * @param options - The gates and the patch sink.
+   */
   function mountHook(
     input: StudioAnalysisJobIntegrationInput,
     options: UseStudioAnalysisJobIntegrationOptions = {},
@@ -136,6 +154,11 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
+    /**
+     * The component under test: it renders the hook's label and records its value.
+     *
+     * @returns The rendered host element.
+     */
     function Host() {
       const value = useStudioAnalysisJobIntegration(input, options);
       useEffect(() => {
@@ -177,7 +200,7 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
     const api: AnalysisJobApi = {
       submit: async () => receipt(),
       fetchJob: async () => {
-        const next = polls[Math.min(idx, polls.length - 1)]!;
+        const next = at(polls, Math.min(idx, polls.length - 1));
         idx += 1;
         return next;
       },
@@ -187,8 +210,8 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
       onChange = opts.onChange;
       const session = createAnalysisJobSession({
         ...opts,
-        setTimeoutFn: setTimeout as typeof setTimeout,
-        clearTimeoutFn: clearTimeout as typeof clearTimeout,
+        setTimeoutFn: setTimeout,
+        clearTimeoutFn: clearTimeout,
       });
       return {
         dispose: () => {

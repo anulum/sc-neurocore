@@ -7,8 +7,14 @@
 // SC-NeuroCore — React adapter for W07 analysis-job session
 
 /**
- * Thin React wiring over {@link createAnalysisJobSession}. Does not reimplement
- * validation, reducers, polling, or timers.
+ * Holding an analysis job for as long as a React surface is on screen.
+ *
+ * The binding underneath is deliberately React-free: it owns the session and a
+ * `live` flag, and drops every state change once disposed. That is what stops
+ * a job that outlives its panel from setting state on an unmounted component,
+ * and it is why the same binding can be driven by a test with no React at all.
+ *
+ * Nothing here re-implements validation, reducing or polling. It is wiring.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -29,15 +35,20 @@ import {
   type AnalysisJobViewState,
 } from "./analysisJob";
 
+/** What the hook may be given instead of its defaults. */
 export interface UseAnalysisJobOptions {
   api?: AnalysisJobApi;
-  /** Test seam only; production uses createAnalysisJobSession. */
+  /**
+   * How a session is created. Replaced in tests to control timers; production
+   * leaves it unset.
+   */
   createSession?: (
     options: AnalysisJobSessionOptions,
   ) => AnalysisJobSession;
   pollIntervalMs?: number;
 }
 
+/** What a view needs: where the job is, and how to start another. */
 export interface UseAnalysisJobResult {
   busy: boolean;
   canSubmit: boolean;
@@ -45,21 +56,32 @@ export interface UseAnalysisJobResult {
   state: AnalysisJobViewState;
 }
 
+/**
+ * The React-free half of the hook: a session, a way to read it, and a dispose
+ * that stops it reporting.
+ */
 export interface AnalysisJobReactBinding {
   dispose: () => void;
   getState: () => AnalysisJobViewState;
   startJob: (request: AnalysisJobRequestBody) => void;
 }
 
+/** The real Studio routes, used unless a caller passes its own. */
 const defaultApi: AnalysisJobApi = {
   fetchJob: fetchStudioJobAtStatusRoute,
   submit: submitAnalysisJob,
 };
 
 /**
- * Pure React-free binding used by {@link useAnalysisJob} and unit tests.
+ * Attach a session and report its state until disposed.
  *
- * Applies session onChange only while the binding is live (mounted).
+ * The current state is reported once immediately, so a caller does not have to
+ * wait for the first change to know where it is starting from.
+ *
+ * @param options - The API, the session factory, the poll interval, and where
+ *   to report state.
+ * @returns The binding. Its `startJob` is fire-and-forget: the job continues
+ *   through polls and its progress arrives through `onState`.
  */
 export function attachAnalysisJobReactBinding(options: {
   api?: AnalysisJobApi;
@@ -95,7 +117,11 @@ export function attachAnalysisJobReactBinding(options: {
 }
 
 /**
- * Session-scoped analysis job state for React surfaces.
+ * Track one analysis job for the lifetime of a component.
+ *
+ * @param options - The API, the session factory and the poll interval.
+ * @returns The job's state and the calls a view needs: whether it is busy,
+ *   whether another may be started, and how to start one.
  */
 export function useAnalysisJob(
   options: UseAnalysisJobOptions = {},

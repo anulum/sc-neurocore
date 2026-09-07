@@ -7,8 +7,20 @@
 // SC-NeuroCore — React integration for async analysis jobs (W12-E)
 
 /**
- * Binds W12-A selection, W08 session, and W12-B sink for App hosts.
- * Patches only via optional applyPatch; returns memoised control/workbench props.
+ * The one hook a panel needs to run an analysis job.
+ *
+ * It joins three things that are separately testable: resolving what the
+ * reader selected, holding the session that runs it, and turning a completed
+ * result into a store patch. The join is the only part that needs React, so it
+ * is the only part that lives in a hook -- `resolveStudioAnalysisJobIntegration`
+ * and `applyCompletedAnalysisJobResult` are plain functions, and the tests use
+ * them directly.
+ *
+ * Submission is gated three ways and all three must agree: the session must be
+ * free, the capability must be enabled, and the request must have built. A
+ * disabled submit button therefore always has a stated reason available.
+ *
+ * The store is written only through `applyPatch`, which a caller may omit.
  */
 
 import { useEffect, useMemo, useRef } from "react";
@@ -37,10 +49,12 @@ import {
   type UseAnalysisJobResult,
 } from "./useAnalysisJob";
 
+/** What this hook writes to the store: a result, or a failure. */
 export type StudioAnalysisJobIntegrationPatch =
   | StudioAnalysisFailureStatePatch
   | StudioAnalysisResultSinkPatch;
 
+/** What the panel has selected, as the reader left it. */
 export interface StudioAnalysisJobIntegrationInput {
   simulation: StudioSimulationConfigInput;
   analysis: AnalysisJobKind;
@@ -48,14 +62,20 @@ export interface StudioAnalysisJobIntegrationInput {
   sweepParamY: string;
 }
 
+/** The gates, the patch sink, and anything the session needs. */
 export interface UseStudioAnalysisJobIntegrationOptions {
   disabled?: boolean;
-  /** Capability gate; false disables submit. Omitted defaults to enabled. */
+  /**
+   * Whether the capability governing this panel is enabled. Omitted counts as
+   * enabled, so a caller that does not consult the registry is not silently
+   * locked out.
+   */
   capabilityEnabled?: boolean;
   applyPatch?: (patch: StudioAnalysisJobIntegrationPatch) => void;
   hookOptions?: UseAnalysisJobOptions;
 }
 
+/** What the panel shows before anything is submitted. */
 export interface StudioAnalysisJobIntegrationResolved {
   selection: AnalysisJobSelection | null;
   selectionError: string | null;
@@ -65,7 +85,17 @@ export interface StudioAnalysisJobIntegrationResolved {
   workbenchProps: AnalysisJobWorkbenchProps | null;
 }
 
-/** Pure resolve: selection + request + disabled + workbench props. */
+/**
+ * Work out what the panel should show and whether it may submit.
+ *
+ * @param input - The simulation configuration, the analysis, and the sweep
+ *   names as typed.
+ * @param options - Whether the panel is disabled, and whether the capability
+ *   governing it is enabled. An omitted capability counts as enabled.
+ * @returns The resolved selection, the built request, whether submit is
+ *   disabled, and the workbench's props -- `null` when the selection did not
+ *   resolve, so the workbench is not rendered against a selection that failed.
+ */
 export function resolveStudioAnalysisJobIntegration(
   input: StudioAnalysisJobIntegrationInput,
   options: Pick<
@@ -112,7 +142,13 @@ export function resolveStudioAnalysisJobIntegration(
   };
 }
 
-/** Effective canSubmit (session ∧ capability ∧ request). */
+/**
+ * Whether submit is allowed, given all three gates.
+ *
+ * @param input - Whether the session is free, whether the panel is disabled,
+ *   and whether the request built.
+ * @returns Whether the reader may submit.
+ */
 export function studioAnalysisJobIntegrationCanSubmit(input: {
   sessionCanSubmit: boolean;
   disabled: boolean;
@@ -121,7 +157,18 @@ export function studioAnalysisJobIntegrationCanSubmit(input: {
   return input.sessionCanSubmit && !input.disabled && input.requestOk;
 }
 
-/** Apply a completed session result through the W12-B sink. */
+/**
+ * Turn a completed job's result into a patch, if it is one.
+ *
+ * A job that has not completed is not an error here: the answer is simply that
+ * nothing was applied. A job that completed and returned an unreadable result
+ * is an error, and its failure patch is applied so the panel says so.
+ *
+ * @param input - The analysis that was run, the terminal state, and where to
+ *   write the patch.
+ * @returns Whether a result was applied, and the refusal when one was read and
+ *   rejected.
+ */
 export function applyCompletedAnalysisJobResult(input: {
   kind: AnalysisJobKind;
   state: AnalysisJobViewState;
@@ -139,6 +186,10 @@ export function applyCompletedAnalysisJobResult(input: {
   return { applied: true, error: null };
 }
 
+/**
+ * Everything the panel renders from: the resolved selection, the running
+ * job's state, the gates, and the call that starts one.
+ */
 export interface UseStudioAnalysisJobIntegrationResult {
   selection: AnalysisJobSelection | null;
   selectionError: string | null;
@@ -153,7 +204,15 @@ export interface UseStudioAnalysisJobIntegrationResult {
   session: UseAnalysisJobResult;
 }
 
-/** Memoised resolve + W08 session + sink on completed. */
+/**
+ * Run an analysis job from a panel.
+ *
+ * @param input - The simulation configuration, the analysis, and the sweep
+ *   names as typed.
+ * @param options - Whether the panel is disabled, the capability gate, where
+ *   to write patches, and anything the session needs.
+ * @returns Everything the panel renders from, and `startJob` to begin.
+ */
 export function useStudioAnalysisJobIntegration(
   input: StudioAnalysisJobIntegrationInput,
   options: UseStudioAnalysisJobIntegrationOptions = {},

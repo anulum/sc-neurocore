@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — studioAnalysisJobRunner tests (fake API like W08)
+import { at } from "./arrayAt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -56,6 +57,12 @@ const fiResult: FICurveResponse = {
   rates: [0, 5],
 };
 
+/**
+ * Build a job record in the given status.
+ *
+ * @param overrides - The fields to change.
+ * @returns The record.
+ */
 function jobRecord(
   overrides: Partial<StudioJobRecord> & Pick<StudioJobRecord, "status">,
 ): StudioJobRecord {
@@ -75,6 +82,12 @@ function jobRecord(
   };
 }
 
+/**
+ * Build a submit receipt for an f-I curve job.
+ *
+ * @param overrides - The fields to change.
+ * @returns The receipt.
+ */
 function receipt(overrides: Partial<AnalysisJobReceipt> = {}): AnalysisJobReceipt {
   return {
     analysis: "fi_curve",
@@ -87,12 +100,21 @@ function receipt(overrides: Partial<AnalysisJobReceipt> = {}): AnalysisJobReceip
   };
 }
 
+/**
+ * Build a session factory that uses the suite's fake timers.
+ *
+ * The timer functions are passed explicitly because the session captures them
+ * when it is created, and `vi.useFakeTimers` replaces the globals after the
+ * module was loaded.
+ *
+ * @returns The factory.
+ */
 function fakeTimersCreateSession() {
   return (opts: Parameters<typeof createAnalysisJobSession>[0]) =>
     createAnalysisJobSession({
       ...opts,
-      setTimeoutFn: setTimeout as typeof setTimeout,
-      clearTimeoutFn: clearTimeout as typeof clearTimeout,
+      setTimeoutFn: setTimeout,
+      clearTimeoutFn: clearTimeout,
     });
 }
 
@@ -141,7 +163,7 @@ describe("runStudioAnalysisJob", () => {
     let idx = 0;
     const submit = vi.fn(async () => receipt());
     const fetchJob = vi.fn(async () => {
-      const next = polls[Math.min(idx, polls.length - 1)]!;
+      const next = at(polls, Math.min(idx, polls.length - 1));
       idx += 1;
       return next;
     });
@@ -239,8 +261,8 @@ describe("runStudioAnalysisJob", () => {
       (opts: Parameters<typeof createAnalysisJobSession>[0]) => {
         const session = createAnalysisJobSession({
           ...opts,
-          setTimeoutFn: setTimeout as typeof setTimeout,
-          clearTimeoutFn: clearTimeout as typeof clearTimeout,
+          setTimeoutFn: setTimeout,
+          clearTimeoutFn: clearTimeout,
         });
         return {
           dispose: () => {

@@ -7,9 +7,18 @@
 // SC-NeuroCore — Fail-closed analysis-job request policy
 
 /**
- * Converts Studio simulation/sweep inputs into AnalysisJobRequestBody for
- * fi_curve, bifurcation, heatmap, and sensitivity. Reuses existing request
- * builders; does not invent API, evidence, or progress state.
+ * Turning what the reader filled in into a request the server will accept.
+ *
+ * Every number is checked here rather than at the server, and a request that
+ * would not make sense is refused before it is sent. That is not politeness:
+ * an analysis job runs for minutes, and a sweep whose two axes are the same
+ * parameter, or whose step is `NaN`, costs that time before failing. Refusing
+ * it here costs nothing and says which field was wrong.
+ *
+ * The payloads themselves are built by `studioSimulationConfig.ts`, which the
+ * synchronous panels use too. This module adds the job wrapper and the checks,
+ * and invents nothing about the request that those builders do not already
+ * express.
  */
 
 import type { AnalysisJobKind, AnalysisJobRequestBody } from "./api/client";
@@ -23,20 +32,38 @@ import {
   type StudioSimulationConfigInput,
 } from "./studioSimulationConfig";
 
+/**
+ * Which analysis to run. The two sweeps carry their own inputs, so a selection
+ * cannot name a sweep analysis without the sweep it needs.
+ */
 export type AnalysisJobSelection =
   | { analysis: "fi_curve" }
   | { analysis: "sensitivity" }
   | { analysis: "bifurcation"; sweep: StudioBifurcationSweepInput }
   | { analysis: "heatmap"; sweep: StudioHeatmapSweepInput };
 
+/** The request to send, or the identifier of what stopped it being built. */
 export type AnalysisJobRequestBuildResult =
   | { ok: true; value: AnalysisJobRequestBody }
   | { ok: false; error: string };
 
+/**
+ * Whether a value is a number that is actually a number.
+ *
+ * @param value - The value.
+ * @returns Whether it is finite.
+ */
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+/**
+ * Find the first parameter in a map that is not a real number.
+ *
+ * @param values - The parameters.
+ * @param error - The identifier to refuse the whole map with.
+ * @returns The refusal, or `null` when every value is finite.
+ */
 function recordHasNonFinite(
   values: Record<string, number>,
   error: string,
@@ -50,7 +77,11 @@ function recordHasNonFinite(
 }
 
 /**
- * Validate core simulation numerics shared by every analysis kind.
+ * Check the numbers every analysis needs, whatever it is.
+ *
+ * @param input - The simulation configuration the reader filled in.
+ * @returns The identifier of the first field that was wrong, or `null` when
+ *   all of them are numbers.
  */
 export function validateStudioSimulationCoreNumerics(
   input: StudioSimulationConfigInput,
@@ -88,6 +119,12 @@ export function validateStudioSimulationCoreNumerics(
   return null;
 }
 
+/**
+ * Check a one-parameter sweep.
+ *
+ * @param sweep - The sweep the reader filled in.
+ * @returns The identifier of what was wrong, or `null`.
+ */
 function validateBifurcationSweep(sweep: StudioBifurcationSweepInput): string | null {
   if (sweep.sweepParam.trim().length === 0) {
     return "analysis_request_sweep_param_blank";
@@ -98,6 +135,16 @@ function validateBifurcationSweep(sweep: StudioBifurcationSweepInput): string | 
   return null;
 }
 
+/**
+ * Check a two-parameter sweep.
+ *
+ * Identical axes are refused: the run would be valid and the heatmap
+ * meaningless, which is worse than a refusal because it looks like a
+ * result.
+ *
+ * @param sweep - The sweep the reader filled in.
+ * @returns The identifier of what was wrong, or `null`.
+ */
 function validateHeatmapSweep(sweep: StudioHeatmapSweepInput): string | null {
   const x = sweep.sweepParamX.trim();
   const y = sweep.sweepParamY.trim();
@@ -114,9 +161,15 @@ function validateHeatmapSweep(sweep: StudioHeatmapSweepInput): string | null {
 }
 
 /**
- * Build a typed async analysis job request from Studio simulation inputs.
+ * Build the request for one analysis.
  *
- * Returns a typed success/failure result; never throws for policy violations.
+ * A refused request is a returned result, never a thrown error: the caller is
+ * a form handler, and a rejected form is an ordinary outcome rather than an
+ * exceptional one.
+ *
+ * @param input - The simulation configuration.
+ * @param selection - Which analysis to run, with the sweep it needs.
+ * @returns The request body, or the identifier of the field that was wrong.
  */
 export function buildAnalysisJobRequest(
   input: StudioSimulationConfigInput,
@@ -170,7 +223,7 @@ export function buildAnalysisJobRequest(
     }
     default: {
       const _exhaustive: never = selection;
-      return { ok: false, error: `analysis_request_kind_unsupported:${_exhaustive}` };
+      return { ok: false, error: `analysis_request_kind_unsupported:${String(_exhaustive)}` };
     }
   }
 

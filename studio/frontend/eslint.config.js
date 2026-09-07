@@ -59,6 +59,14 @@ const AUDITED = [
   "src/adminShell.ts",
   "src/adminStoreState.test.ts",
   "src/adminStoreState.ts",
+  "src/analysisJob.test.ts",
+  "src/analysisJob.ts",
+  "src/analysisJobRecordValidation.ts",
+  "src/analysisJobRequest.test.ts",
+  "src/analysisJobRequest.ts",
+  "src/analysisJobSession.ts",
+  "src/analysisJobValidation.test.ts",
+  "src/analysisJobValidation.ts",
   "src/api/adminApi.ts",
   "src/api/analysisApi.ts",
   "src/api/benchmarksApi.ts",
@@ -192,6 +200,10 @@ const AUDITED = [
   "src/simulationRaw.test.ts",
   "src/simulationRaw.ts",
   "src/stores/studioStoreActions.test.ts",
+  "src/studioAnalysisJobRunner.test.ts",
+  "src/studioAnalysisJobRunner.ts",
+  "src/studioAnalysisJobSelection.test.ts",
+  "src/studioAnalysisJobSelection.ts",
   "src/studioAnalysisResultSink.test.ts",
   "src/studioAnalysisResultSink.ts",
   "src/studioAnalysisState.test.ts",
@@ -223,6 +235,10 @@ const AUDITED = [
   "src/trainingExports.ts",
   "src/trainingStoreState.test.ts",
   "src/trainingStoreState.ts",
+  "src/useAnalysisJob.test.ts",
+  "src/useAnalysisJob.ts",
+  "src/useStudioAnalysisJobIntegration.test.ts",
+  "src/useStudioAnalysisJobIntegration.ts",
 ];
 
 /**
@@ -249,7 +265,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * evidence and export group each grew `AUDITED`, and the remainder was
    * re-taken with the tool afterwards rather than reduced on paper.
    */
-  declarations: 312,
+  declarations: 252,
   /**
    * Files carrying at least one of those declarations.
    *
@@ -259,7 +275,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 63,
+  files: 49,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
@@ -272,7 +288,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * is the parent; the commit this figure lands in adds files to `AUDITED`
    * and nothing else that ESLint reads.
    */
-  measuredOnSourceSha: "68471d70fc45d98e9f7d19e10d2f76344b573943",
+  measuredOnSourceSha: "0370aa0830c829c92ba51bd123492b8d467c9c00",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**
