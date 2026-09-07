@@ -6,6 +6,27 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+/**
+ * The Admin panel's whole state, derived in one pass from what the server said.
+ *
+ * Everything an operator reads in that panel is a string built here. The
+ * component renders the model and decides nothing: no formatting, no
+ * fallbacks, no arithmetic. That is what makes the panel testable without a
+ * browser, and it is why every "unknown", "none" and "unavailable" in the
+ * interface is a value chosen in this file rather than an empty render.
+ *
+ * The recurring pattern is that a missing answer and a zero answer must not
+ * look alike. A count the server did not send reads `unknown`; a count it sent
+ * as zero reads `0`. An operator judging a deployment needs to tell "nothing
+ * happened" from "I could not ask", and a panel that renders both as blank
+ * takes that distinction away.
+ *
+ * Where the operator status carries a block the older panel fields also carry
+ * — audit health, job counts, capability counts — the operator status wins and
+ * the separate fetch is the fallback, because the operator route answers them
+ * all from one consistent snapshot.
+ */
+
 import type {
   StudioAuditEvent,
   StudioAuditExport,
@@ -26,6 +47,11 @@ import type {
 import { summarizeAuditExport } from "./auditShell";
 import { buildStudioReadinessModel, type StudioReadinessModel } from "./studioReadiness";
 
+/**
+ * Everything the panel is given: each server payload, each error, each loading
+ * flag. A payload that has not arrived is `null` rather than absent, so the
+ * builder distinguishes "not fetched" from "fetched and empty".
+ */
 export interface AdminShellInput {
   auditError: string | null;
   auditArchive: StudioAuditQuarantineArchiveResult | null;
@@ -46,6 +72,7 @@ export interface AdminShellInput {
   operatorStatus: StudioOperatorStatus | null;
 }
 
+/** The audit row: counts by category, health, and the latest action seen. */
 export interface AdminAuditModel {
   denied: number;
   error: string | null;
@@ -65,12 +92,14 @@ export interface AdminAuditModel {
   truncated: boolean;
 }
 
+/** The capability row: how many are registered and how many are unhealthy. */
 export interface AdminCapabilityModel {
   registered: number;
   unhealthy: number;
   healthLabel: "ready" | "degraded";
 }
 
+/** The job-queue row: counts, configuration, and what the queue accepts. */
 export interface AdminJobModel {
   active: number;
   allowedKinds: string;
@@ -84,6 +113,7 @@ export interface AdminJobModel {
   timedOut: number;
 }
 
+/** One job in the recent-jobs table, with its artefacts already counted. */
 export interface AdminJobRecordModel {
   artifactCount: number;
   artifactPaths: string;
@@ -98,6 +128,7 @@ export interface AdminJobRecordModel {
   status: StudioJobRecord["status"];
 }
 
+/** The evidence-bundle panel: the bundle, its artefacts and its manifest. */
 export interface AdminEvidenceBundleModel {
   artifactCount: number;
   artifacts: AdminEvidenceBundleArtifactModel[];
@@ -112,6 +143,11 @@ export interface AdminEvidenceBundleModel {
   sourceJobs: string;
 }
 
+/**
+ * One artefact of a bundle, with both the raw digest and the short label the
+ * table shows. Both are kept: the label is for reading, the digest is for
+ * comparing.
+ */
 export interface AdminEvidenceBundleArtifactModel {
   relativePath: string;
   sha256: string;
@@ -120,6 +156,7 @@ export interface AdminEvidenceBundleArtifactModel {
   sizeLabel: string;
 }
 
+/** One manifest entry, reduced to the four fields the table displays. */
 export interface AdminEvidenceBundleEntryModel {
   classification: string;
   detail: string;
@@ -128,6 +165,12 @@ export interface AdminEvidenceBundleEntryModel {
   type: string;
 }
 
+/**
+ * The audit-archive panel, which shows five independent results at once: the
+ * archive just written, the retention plan, the last purge, a validation and a
+ * restore. Each has its own "none" so a reader can see which of the five has
+ * actually been run.
+ */
 export interface AdminAuditArchiveModel {
   archiveCount: number;
   archivedEventCount: number;
@@ -153,6 +196,7 @@ export interface AdminAuditArchiveModel {
   validationWarnings: string;
 }
 
+/** One archive in the retention plan, and whether it is a prune candidate. */
 export interface AdminAuditArchiveEntryModel {
   archiveId: string;
   disposition: "retain" | "prune_candidate";
@@ -162,6 +206,7 @@ export interface AdminAuditArchiveEntryModel {
   retainedEventCount: number;
 }
 
+/** One service account, sorted and labelled for the identity table. */
 export interface AdminIdentityAccountModel {
   active: boolean;
   activeLabel: "active" | "disabled";
@@ -170,6 +215,7 @@ export interface AdminIdentityAccountModel {
   rolesText: string;
 }
 
+/** One browser user, sorted and labelled for the identity table. */
 export interface AdminIdentityBrowserUserModel {
   active: boolean;
   activeLabel: "active" | "disabled";
@@ -179,6 +225,13 @@ export interface AdminIdentityBrowserUserModel {
   username: string;
 }
 
+/**
+ * The deployment's own settings, every one a string.
+ *
+ * They are strings because each has an `unknown` state that no number can
+ * express, and because the panel shows them beside their units — seconds,
+ * bytes, `supported` — rather than raw.
+ */
 export interface AdminOperatorModel {
   browserLoginActiveBuckets: string;
   browserLoginCooldown: string;
@@ -199,6 +252,7 @@ export interface AdminOperatorModel {
   schemaVersion: string;
 }
 
+/** The whole panel: one field per section, all derived, none live. */
 export interface AdminShellModel {
   audit: AdminAuditModel;
   auditArchive: AdminAuditArchiveModel;
@@ -214,7 +268,12 @@ export interface AdminShellModel {
   unhealthyCapabilities: StudioCapability[];
 }
 
-/** Build the operator-facing Admin panel state from backend contract payloads. */
+/**
+ * Build the operator-facing Admin panel state from the server's payloads.
+ *
+ * @param input - Everything that has arrived, and what has not.
+ * @returns The whole panel's state.
+ */
 export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
   const auditSummary = summarizeAuditExport(input.auditExport);
   const unhealthyCapabilities = input.capabilities.filter((capability) => !capability.healthy);
@@ -272,6 +331,17 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
   };
 }
 
+/**
+ * Build the audit-archive panel from whichever of its five results exist.
+ *
+ * @param archive - The archive just written, or `null`.
+ * @param retention - The retention plan, or `null`.
+ * @param purge - The last purge's result, or `null`.
+ * @param validation - The last validation, or `null`.
+ * @param restore - The last restore, or `null`.
+ * @param error - The audit error to surface, or `null`.
+ * @returns The panel's state.
+ */
 function buildAuditArchiveModel(
   archive: StudioAuditQuarantineArchiveResult | null,
   retention: StudioAuditQuarantineArchiveRetentionPlan | null,
@@ -316,6 +386,18 @@ function buildAuditArchiveModel(
   };
 }
 
+/**
+ * Build the evidence-bundle panel.
+ *
+ * The summary's counts are preferred over counting the arrays, because the
+ * server counts what it wrote and the browser can only count what it was
+ * sent; they differ if a response was truncated.
+ *
+ * @param evidenceBundle - The bundle, or `null` when none has been built.
+ * @param error - The error to surface, or `null`.
+ * @param loading - Whether a bundle is being built now.
+ * @returns The panel's state.
+ */
 function buildEvidenceBundleModel(
   evidenceBundle: StudioEvidenceBundleResponse | null,
   error: string | null,
@@ -338,6 +420,16 @@ function buildEvidenceBundleModel(
   };
 }
 
+/**
+ * List a bundle's artefacts, joining each path to its metadata.
+ *
+ * The path list is authoritative: an artefact named there but missing from
+ * the metadata is still shown, with its digest and size as `unknown`,
+ * because hiding it would hide the inconsistency.
+ *
+ * @param evidenceBundle - The bundle, or `null`.
+ * @returns One row per artefact path, in the order the bundle lists them.
+ */
 function buildEvidenceBundleArtifacts(
   evidenceBundle: StudioEvidenceBundleResponse | null,
 ): AdminEvidenceBundleArtifactModel[] {
@@ -360,6 +452,16 @@ function buildEvidenceBundleArtifacts(
   });
 }
 
+/**
+ * List a manifest's entries, skipping anything that is not a record.
+ *
+ * Manifest entries are open-ended by design -- each evidence class writes
+ * its own fields -- so they arrive as unknown records and are read field by
+ * field rather than typed.
+ *
+ * @param evidenceBundle - The bundle, or `null`.
+ * @returns One row per readable entry, indexed as the manifest orders them.
+ */
 function buildEvidenceBundleEntries(
   evidenceBundle: StudioEvidenceBundleResponse | null,
 ): AdminEvidenceBundleEntryModel[] {
@@ -378,6 +480,15 @@ function buildEvidenceBundleEntries(
     }));
 }
 
+/**
+ * Render a count map as `name:count` pairs, alphabetically.
+ *
+ * Zero counts are dropped: a map listing every possible name with most at
+ * zero is unreadable, and the names that matter are the ones with a count.
+ *
+ * @param counts - The map, or `undefined` when the server sent none.
+ * @returns The rendered pairs, or `none`.
+ */
 function formatCounts(counts: Record<string, number> | undefined): string {
   if (counts === undefined) {
     return "none";
@@ -389,6 +500,13 @@ function formatCounts(counts: Record<string, number> | undefined): string {
   return parts.length > 0 ? parts.join(", ") : "none";
 }
 
+/**
+ * Render how many jobs a bundle drew from, and of what kinds.
+ *
+ * @param sourceJobCount - The count, or `undefined`.
+ * @param sourceJobKindCounts - The counts by kind, or `undefined`.
+ * @returns The count alone, or the count and its kinds.
+ */
 function formatSourceJobs(
   sourceJobCount: number | undefined,
   sourceJobKindCounts: Record<string, number> | undefined,
@@ -398,6 +516,16 @@ function formatSourceJobs(
   return kinds === "none" ? `${count}` : `${count} - ${kinds}`;
 }
 
+/**
+ * Name where a manifest entry came from.
+ *
+ * The fields are tried in order of how specific they are: the job that
+ * produced it, then what it says about itself, then the route that would
+ * replay it, then the path it sits at.
+ *
+ * @param entry - The manifest entry.
+ * @returns The most specific source it carries.
+ */
 function formatEvidenceBundleEntrySource(entry: Record<string, unknown>): string {
   const sourceJobId = textField(entry, "source_job_id");
   if (sourceJobId !== null) {
@@ -409,6 +537,13 @@ function formatEvidenceBundleEntrySource(entry: Record<string, unknown>): string
     ?? "bundle";
 }
 
+/**
+ * Say the one further thing worth showing about a manifest entry.
+ *
+ * @param entry - The manifest entry.
+ * @returns Its artefact path, bundle path, replay route or short digest,
+ *   whichever it carries first.
+ */
 function formatEvidenceBundleEntryDetail(entry: Record<string, unknown>): string {
   const artifactPath = textField(entry, "source_job_artifact_path");
   if (artifactPath !== null) {
@@ -429,15 +564,34 @@ function formatEvidenceBundleEntryDetail(entry: Record<string, unknown>): string
   return "manifest entry";
 }
 
+/**
+ * Read a field that must be a non-empty string to count as present.
+ *
+ * @param entry - The record.
+ * @param key - The field.
+ * @returns The string, or `null` when it is absent, empty or another type.
+ */
 function textField(entry: Record<string, unknown>, key: string): string | null {
   const value = entry[key];
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+/**
+ * Whether a value is a plain object.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * List browser users by username, without disturbing the caller's array.
+ *
+ * @param users - The users, in whatever order they arrived.
+ * @returns The rows, sorted by username.
+ */
 function buildIdentityBrowserUsers(
   users: StudioIdentityBrowserUser[],
 ): AdminIdentityBrowserUserModel[] {
@@ -454,6 +608,12 @@ function buildIdentityBrowserUsers(
     }));
 }
 
+/**
+ * List service accounts by principal, without disturbing the caller's array.
+ *
+ * @param accounts - The accounts, in whatever order they arrived.
+ * @returns The rows, sorted by principal.
+ */
 function buildIdentityAccounts(
   accounts: StudioIdentityServiceAccount[],
 ): AdminIdentityAccountModel[] {
@@ -469,6 +629,15 @@ function buildIdentityAccounts(
     }));
 }
 
+/**
+ * Build the job-queue row.
+ *
+ * A queue that has not answered is `unconfigured` rather than empty: zero
+ * jobs and no queue are different states and the label says which.
+ *
+ * @param jobStatus - The queue's status, or `null`.
+ * @returns The row's state.
+ */
 function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
   if (jobStatus === null) {
     return {
@@ -501,6 +670,12 @@ function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {
   };
 }
 
+/**
+ * Take the eight most recent jobs, newest first.
+ *
+ * @param records - The jobs, oldest first as the server lists them.
+ * @returns The rows, newest first.
+ */
 function buildJobRecords(records: StudioJobRecord[]): AdminJobRecordModel[] {
   return records
     .slice(-8)
@@ -523,12 +698,28 @@ function buildJobRecords(records: StudioJobRecord[]): AdminJobRecordModel[] {
     });
 }
 
+/**
+ * Whether an artefact path names an evidence document.
+ *
+ * @param path - The artefact's relative path.
+ * @returns Whether its filename is `evidence.json` or ends in
+ *   `-evidence.json`.
+ */
 function isEvidenceArtifactPath(path: string): boolean {
   const parts = path.split("/");
   const filename = parts[parts.length - 1] ?? path;
   return filename === "evidence.json" || filename.endsWith("-evidence.json");
 }
 
+/**
+ * Build the deployment-settings row.
+ *
+ * Every field is `unknown` when the operator status has not arrived, which
+ * is why the whole row is strings.
+ *
+ * @param operatorStatus - The status, or `null`.
+ * @returns The row's state.
+ */
 function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminOperatorModel {
   if (operatorStatus === null) {
     return {
@@ -551,26 +742,23 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
       schemaVersion: "unavailable",
     };
   }
+  // The three blocks below are required fields of the operator status, and the
+  // browser-login one used to be read through six `=== undefined` guards while
+  // the other two were dereferenced directly one line later. Those guards
+  // bought nothing: a response missing one block would throw on the next, so
+  // they defended one field of an answer nothing validates. Response
+  // validation at the API boundary is a real gap and is recorded as its own
+  // unit; a guard on one block of one route is not a substitute for it.
   const browserLogin = operatorStatus.browser_login;
   const limits = operatorStatus.resource_limits;
   const routePolicies = operatorStatus.route_policies;
   return {
-    browserLoginActiveBuckets: browserLogin === undefined
-      ? "unknown"
-      : `${browserLogin.active_bucket_count}`,
-    browserLoginCooldown: browserLogin === undefined
-      ? "unknown"
-      : formatSeconds(browserLogin.cooldown_seconds),
-    browserLoginLockedBuckets: browserLogin === undefined
-      ? "unknown"
-      : `${browserLogin.locked_bucket_count}`,
-    browserLoginLimit: browserLogin === undefined ? "unknown" : `${browserLogin.max_failures}`,
-    browserLoginMaxRetryAfter: browserLogin === undefined
-      ? "unknown"
-      : formatSeconds(browserLogin.max_retry_after_seconds),
-    browserLoginWindow: browserLogin === undefined
-      ? "unknown"
-      : formatSeconds(browserLogin.failure_window_seconds),
+    browserLoginActiveBuckets: `${browserLogin.active_bucket_count}`,
+    browserLoginCooldown: formatSeconds(browserLogin.cooldown_seconds),
+    browserLoginLockedBuckets: `${browserLogin.locked_bucket_count}`,
+    browserLoginLimit: `${browserLogin.max_failures}`,
+    browserLoginMaxRetryAfter: formatSeconds(browserLogin.max_retry_after_seconds),
+    browserLoginWindow: formatSeconds(browserLogin.failure_window_seconds),
     deploymentProfile: operatorStatus.deployment_profile,
     edaCpuLimit: formatSeconds(limits.eda_process_cpu_seconds),
     edaMemoryLimit: formatBytes(limits.eda_process_memory_bytes),
@@ -586,6 +774,12 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
   };
 }
 
+/**
+ * Render a duration in seconds, or say it is unlimited.
+ *
+ * @param value - The seconds, or `null` for no limit.
+ * @returns The rendered duration.
+ */
 function formatSeconds(value: number | null): string {
   if (value === null) {
     return "unbounded";
@@ -593,6 +787,12 @@ function formatSeconds(value: number | null): string {
   return Number.isInteger(value) ? `${value}s` : `${value.toFixed(1)}s`;
 }
 
+/**
+ * Render a size in bytes, or say it is unlimited.
+ *
+ * @param value - The bytes, or `null` for no limit.
+ * @returns The rendered size.
+ */
 function formatBytes(value: number | null): string {
   if (value === null) {
     return "unbounded";

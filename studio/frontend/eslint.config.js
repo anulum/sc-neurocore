@@ -53,6 +53,12 @@ const AUDITED = [
   "e2e/network-canvas-live.spec.ts",
   "playwright.export.config.ts",
   "playwright.graph.config.ts",
+  "src/adminFormParsers.test.ts",
+  "src/adminFormParsers.ts",
+  "src/adminShell.test.ts",
+  "src/adminShell.ts",
+  "src/adminStoreState.test.ts",
+  "src/adminStoreState.ts",
   "src/api/adminApi.ts",
   "src/api/analysisApi.ts",
   "src/api/benchmarksApi.ts",
@@ -71,6 +77,11 @@ const AUDITED = [
   "src/api/types.ts",
   "src/arrayAt.test.ts",
   "src/arrayAt.ts",
+  "src/auditArchiveShell.test.ts",
+  "src/auditShell.test.ts",
+  "src/auditShell.ts",
+  "src/capabilityShell.test.ts",
+  "src/capabilityShell.ts",
   "src/characterizeStoreState.test.ts",
   "src/characterizeStoreState.ts",
   "src/compilerStoreState.test.ts",
@@ -238,7 +249,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * evidence and export group each grew `AUDITED`, and the remainder was
    * re-taken with the tool afterwards rather than reduced on paper.
    */
-  declarations: 413,
+  declarations: 312,
   /**
    * Files carrying at least one of those declarations.
    *
@@ -248,7 +259,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 72,
+  files: 63,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
@@ -258,10 +269,10 @@ export const LEGACY_OUTSIDE_SCOPE = {
    *
    * A scope figure can only be taken from the tree that carries the scope, so
    * it is measured before the commit that records it exists. What is pinned
-   * is the parent; the commit this figure lands in adds the fourteen evidence
-   * and export files to `AUDITED` and nothing else that ESLint reads.
+   * is the parent; the commit this figure lands in adds files to `AUDITED`
+   * and nothing else that ESLint reads.
    */
-  measuredOnSourceSha: "6af7b710060d9cf06a798a0ba30b5112cfb32f2f",
+  measuredOnSourceSha: "68471d70fc45d98e9f7d19e10d2f76344b573943",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**

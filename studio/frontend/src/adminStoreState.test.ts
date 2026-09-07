@@ -25,6 +25,12 @@ import {
   operatorStatusLoadedState,
 } from "./adminStoreState";
 
+/**
+ * Build a healthy audit status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditStatus {
   return {
     configured: overrides.configured ?? true,
@@ -35,6 +41,12 @@ function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditSta
   };
 }
 
+/**
+ * Build an audit export, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditExport(overrides: Partial<StudioAuditExport> = {}): StudioAuditExport {
   return {
     configured: overrides.configured ?? true,
@@ -46,6 +58,12 @@ function auditExport(overrides: Partial<StudioAuditExport> = {}): StudioAuditExp
   };
 }
 
+/**
+ * Build a job-queue status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   return {
     active_count: overrides.active_count ?? 1,
@@ -61,6 +79,12 @@ function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   };
 }
 
+/**
+ * Build a job listing, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListResponse {
   return {
     jobs: overrides.jobs ?? [],
@@ -68,6 +92,12 @@ function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListR
   };
 }
 
+/**
+ * Build a service-accounts response, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function accountsResponse(
   overrides: Partial<StudioIdentityServiceAccountsResponse> = {},
 ): StudioIdentityServiceAccountsResponse {
@@ -82,6 +112,12 @@ function accountsResponse(
   };
 }
 
+/**
+ * Build a browser-users response, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function usersResponse(
   overrides: Partial<StudioIdentityBrowserUsersResponse> = {},
 ): StudioIdentityBrowserUsersResponse {
@@ -97,6 +133,12 @@ function usersResponse(
   };
 }
 
+/**
+ * Build a whole operator status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOperatorStatus {
   return {
     audit: overrides.audit ?? auditStatus(),

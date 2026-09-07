@@ -25,8 +25,14 @@ import type {
   StudioJobStatus,
   StudioOperatorStatus,
 } from "./api/client";
-import { buildAdminShellModel } from "./adminShell";
+import { buildAdminShellModel, type AdminShellModel } from "./adminShell";
 
+/**
+ * Build a healthy capability, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The capability.
+ */
 function capability(overrides: Partial<StudioCapability> = {}): StudioCapability {
   return {
     capability_id: overrides.capability_id ?? "studio.simulation_workbench",
@@ -348,36 +354,49 @@ const operatorStatus: StudioOperatorStatus = {
   schema_version: "studio.operator.status.v1",
 };
 
+/**
+ * Build the whole panel from one fully populated set of payloads.
+ *
+ * Every case below reads one section of this model, and each builds it again.
+ * A single case asserting the whole model reports the first field that moved
+ * and hides every other; one case per section reports each independently.
+ *
+ * @returns The model.
+ */
+function fullModel(): AdminShellModel {
+  return buildAdminShellModel({
+    auditArchive,
+    auditArchivePurge,
+    auditArchiveRetention,
+    auditArchiveRestore,
+    auditArchiveValidation,
+    auditError: "Audit export failed",
+    auditExport,
+    auditStatus,
+    capabilities: [
+      capability(),
+      capability({
+        capability_id: "studio.synthesis_dashboard",
+        title: "Synthesis Dashboard",
+        status: "unavailable",
+        healthy: false,
+        message: "Yosys unavailable.",
+      }),
+    ],
+    evidenceBundle,
+    evidenceBundleError: null,
+    evidenceBundleLoading: false,
+    identityBrowserUsers: [identityBrowserUser],
+    identityServiceAccounts: [identityServiceAccount],
+    jobRecords: [jobRecord],
+    jobStatus,
+    operatorStatus,
+  });
+}
+
 describe("admin shell model", () => {
-  it("aggregates audit and capability health for the operator view", () => {
-    const model = buildAdminShellModel({
-      auditArchive,
-      auditArchivePurge,
-      auditArchiveRetention,
-      auditArchiveRestore,
-      auditArchiveValidation,
-      auditError: "Audit export failed",
-      auditExport,
-      auditStatus,
-      capabilities: [
-        capability(),
-        capability({
-          capability_id: "studio.synthesis_dashboard",
-          title: "Synthesis Dashboard",
-          status: "unavailable",
-          healthy: false,
-          message: "Yosys unavailable.",
-        }),
-      ],
-      evidenceBundle,
-      evidenceBundleError: null,
-      evidenceBundleLoading: false,
-      identityBrowserUsers: [identityBrowserUser],
-      identityServiceAccounts: [identityServiceAccount],
-      jobRecords: [jobRecord],
-      jobStatus,
-      operatorStatus,
-    });
+  it("summarises audit health, its counts and its latest actions", () => {
+    const model = fullModel();
 
     expect(model.audit).toEqual({
       denied: 1,
@@ -397,11 +416,21 @@ describe("admin shell model", () => {
       total: 2,
       truncated: true,
     });
+  });
+
+  it("counts registered and unhealthy capabilities", () => {
+    const model = fullModel();
+
     expect(model.capabilities).toEqual({
       registered: 2,
       unhealthy: 1,
       healthLabel: "degraded",
     });
+  });
+
+  it("reports all five audit-archive results side by side", () => {
+    const model = fullModel();
+
     expect(model.auditArchive).toEqual({
       archiveCount: 2,
       archivedEventCount: 3,
@@ -443,6 +472,11 @@ describe("admin shell model", () => {
       validationStatus: "valid",
       validationWarnings: "manifest_recomputed",
     });
+  });
+
+  it("reports the job queue and flags one that needs attention", () => {
+    const model = fullModel();
+
     expect(model.jobs).toEqual({
       active: 1,
       allowedKinds: "compiler, evidence, synthesis, training",
@@ -455,6 +489,11 @@ describe("admin shell model", () => {
       threadCount: 2,
       timedOut: 1,
     });
+  });
+
+  it("describes an evidence bundle, its artefacts and its manifest", () => {
+    const model = fullModel();
+
     expect(model.evidenceBundle).toEqual({
       artifactCount: 2,
       artifacts: [
@@ -505,6 +544,11 @@ describe("admin shell model", () => {
       manifestEntryCount: 3,
       sourceJobs: "1 - compiler:1",
     });
+  });
+
+  it("lists recent job records newest first, counting evidence artefacts", () => {
+    const model = fullModel();
+
     expect(model.jobRecords).toEqual([
       {
         artifactCount: 2,
@@ -520,6 +564,11 @@ describe("admin shell model", () => {
         status: "completed",
       },
     ]);
+  });
+
+  it("lists service accounts by principal", () => {
+    const model = fullModel();
+
     expect(model.identityAccounts).toEqual([
       {
         active: true,
@@ -529,6 +578,11 @@ describe("admin shell model", () => {
         rolesText: "studio.admin, studio.viewer",
       },
     ]);
+  });
+
+  it("lists browser users by username", () => {
+    const model = fullModel();
+
     expect(model.identityBrowserUsers).toEqual([
       {
         active: false,
@@ -539,6 +593,11 @@ describe("admin shell model", () => {
         username: "operator",
       },
     ]);
+  });
+
+  it("renders every deployment setting as a labelled string", () => {
+    const model = fullModel();
+
     expect(model.operator).toEqual({
       browserLoginActiveBuckets: "2",
       browserLoginCooldown: "900s",
@@ -558,6 +617,11 @@ describe("admin shell model", () => {
       routePolicyLabel: "enforced",
       schemaVersion: "studio.operator.status.v1",
     });
+  });
+
+  it("summarises readiness posture", () => {
+    const model = fullModel();
+
     expect(model.readiness).toMatchObject({
       blockingCount: 0,
       headline: "Readiness has warnings",
@@ -565,6 +629,11 @@ describe("admin shell model", () => {
       readyCount: 4,
       warningCount: 3,
     });
+  });
+
+  it("orders the readiness items as the panel shows them", () => {
+    const model = fullModel();
+
     expect(model.readiness.items.map((item) => [item.key, item.status])).toEqual([
       ["profile", "ready"],
       ["routes", "ready"],
@@ -574,7 +643,17 @@ describe("admin shell model", () => {
       ["resources", "ready"],
       ["capabilities", "warning"],
     ]);
+  });
+
+  it("keeps the unhealthy capabilities for the panel to name", () => {
+    const model = fullModel();
+
     expect(model.unhealthyCapabilities).toHaveLength(1);
+  });
+
+  it("keeps the most recent audit events, newest first", () => {
+    const model = fullModel();
+
     expect(model.recentAuditEvents.map((event) => event.action)).toEqual([
       "studio.audit.export",
       "studio.simulation.run",

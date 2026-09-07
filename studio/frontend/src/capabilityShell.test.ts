@@ -18,6 +18,12 @@ import {
   summarizeCapabilities,
 } from "./capabilityShell";
 
+/**
+ * Build a capability the registry reports as healthy, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function capability(
   overrides: Partial<StudioCapability> & Pick<StudioCapability, "capability_id" | "title">,
 ): StudioCapability {

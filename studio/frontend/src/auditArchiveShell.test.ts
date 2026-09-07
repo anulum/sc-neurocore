@@ -30,6 +30,12 @@ import {
   auditArchiveValidationLoadedState,
 } from "./auditShell";
 
+/**
+ * Build a healthy audit status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditStatus {
   return {
     configured: overrides.configured ?? true,
@@ -40,6 +46,12 @@ function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditSta
   };
 }
 
+/**
+ * Build an audit export, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditExport(overrides: Partial<StudioAuditExport> = {}): StudioAuditExport {
   return {
     configured: overrides.configured ?? true,
@@ -51,6 +63,12 @@ function auditExport(overrides: Partial<StudioAuditExport> = {}): StudioAuditExp
   };
 }
 
+/**
+ * Build a job-queue status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   return {
     active_count: overrides.active_count ?? 1,
@@ -66,6 +84,12 @@ function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   };
 }
 
+/**
+ * Build a job listing, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListResponse {
   return {
     jobs: overrides.jobs ?? [],
@@ -73,6 +97,12 @@ function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListR
   };
 }
 
+/**
+ * Build a whole operator status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOperatorStatus {
   return {
     audit: overrides.audit ?? auditStatus(),
@@ -120,6 +150,12 @@ function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOp
   };
 }
 
+/**
+ * Build the summary of one archive, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function archiveSummary(
   overrides: Partial<StudioAuditQuarantineArchiveSummary> = {},
 ): StudioAuditQuarantineArchiveSummary {
@@ -134,6 +170,12 @@ function archiveSummary(
   };
 }
 
+/**
+ * Build the result of writing an archive, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function archiveResult(
   overrides: Partial<StudioAuditQuarantineArchiveResult> = {},
 ): StudioAuditQuarantineArchiveResult {
@@ -148,6 +190,12 @@ function archiveResult(
   };
 }
 
+/**
+ * Build one archive in a retention plan, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function archiveRetentionEntry(
   overrides: Partial<StudioAuditQuarantineArchiveRetentionEntry> = {},
 ): StudioAuditQuarantineArchiveRetentionEntry {
@@ -164,6 +212,12 @@ function archiveRetentionEntry(
   };
 }
 
+/**
+ * Build a retention plan, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function retentionPlan(
   overrides: Partial<StudioAuditQuarantineArchiveRetentionPlan> = {},
 ): StudioAuditQuarantineArchiveRetentionPlan {
@@ -178,6 +232,12 @@ function retentionPlan(
   };
 }
 
+/**
+ * Build the result of validating an archive, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function archiveValidation(
   overrides: Partial<StudioAuditQuarantineArchiveValidation> = {},
 ): StudioAuditQuarantineArchiveValidation {
@@ -191,6 +251,12 @@ function archiveValidation(
   };
 }
 
+/**
+ * Build the result of purging archives, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function archivePurge(
   overrides: Partial<StudioAuditQuarantineArchivePurgeResult> = {},
 ): StudioAuditQuarantineArchivePurgeResult {
@@ -207,6 +273,12 @@ function archivePurge(
   };
 }
 
+/**
+ * Build the result of restoring an archive, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function archiveRestore(
   overrides: Partial<StudioAuditQuarantineArchiveRestoreResult> = {},
 ): StudioAuditQuarantineArchiveRestoreResult {

@@ -17,6 +17,12 @@ import {
   summarizeAuditExport,
 } from "./auditShell";
 
+/**
+ * Build a healthy audit status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditStatus {
   return {
     configured: overrides.configured ?? true,
@@ -27,6 +33,12 @@ function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditSta
   };
 }
 
+/**
+ * Build one audit event, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditEvent(overrides: Partial<StudioAuditEvent> = {}): StudioAuditEvent {
   return {
     action: overrides.action ?? "studio.audit.status",
@@ -42,6 +54,12 @@ function auditEvent(overrides: Partial<StudioAuditEvent> = {}): StudioAuditEvent
   };
 }
 
+/**
+ * Build an audit export, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns It.
+ */
 function auditExport(overrides: Partial<StudioAuditExport> = {}): StudioAuditExport {
   return {
     configured: overrides.configured ?? true,

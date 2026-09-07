@@ -6,17 +6,37 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+/**
+ * What each Studio panel may do, according to the backend's capability
+ * registry.
+ *
+ * A panel is available, unavailable, or **unregistered**, and the third is not
+ * a failure. Some panels have no backend contract at all -- `delays` is one --
+ * and those are shown and usable; only a panel whose contract exists and is
+ * unhealthy is closed. Treating "no contract" as "not available" would hide
+ * working panels, so the two are separate states with separate messages.
+ *
+ * Only *unmet* requirements are projected. A panel that is closed should say
+ * what is missing, not list everything it needs and leave the reader to find
+ * the one that failed.
+ */
+
 import type { StudioCapability } from "./api/client";
 
+/** The states the backend registry gives a capability. */
 export type CapabilityStatus =
   | "stable"
   | "experimental"
   | "degraded"
   | "unavailable";
 
+/**
+ * What the shell shows for a panel: a capability's status, or `unregistered`
+ * for a panel the registry has no contract for.
+ */
 export type ShellStatus = CapabilityStatus | "unregistered";
 
-/** Stable Studio panel identifiers used by the frontend shell. */
+/** Every panel the shell can show, named by a stable key. */
 export type PanelKey =
   | "trace"
   | "phase"
@@ -41,7 +61,7 @@ export type PanelKey =
   | "delays"
   | "admin";
 
-/** Aggregate health projection for the backend capability registry. */
+/** The registry counted by status, with the worst one named. */
 export interface CapabilitySummary {
   total: number;
   healthy: number;
@@ -53,7 +73,7 @@ export interface CapabilitySummary {
   worstStatus: CapabilityStatus | "none";
 }
 
-/** Frontend-ready availability state for one Studio panel. */
+/** What one panel may do, and what to say when it may not. */
 export interface PanelCapabilityState {
   panelKey: PanelKey;
   capabilityId: string | null;
@@ -66,12 +86,22 @@ export interface PanelCapabilityState {
   docsPath: string | null;
 }
 
+/**
+ * A patch from the capability request. The fields are optional because the
+ * loading patch deliberately leaves the previous list on screen rather than
+ * blanking the shell while a refresh is in flight.
+ */
 export interface CapabilityLoadStatePatch {
   capabilities?: StudioCapability[];
   capabilitiesError?: string | null;
   capabilitiesLoading: boolean;
 }
 
+/**
+ * Which backend capability governs each panel. Several panels share one
+ * contract because they are views of the same backend surface. A panel absent
+ * here is unregistered, not unavailable.
+ */
 const PANEL_CAPABILITY_IDS: Partial<Record<PanelKey, string>> = {
   trace: "studio.simulation_workbench",
   phase: "studio.simulation_workbench",
@@ -96,6 +126,7 @@ const PANEL_CAPABILITY_IDS: Partial<Record<PanelKey, string>> = {
   admin: "studio.capability_registry",
 };
 
+/** The name each panel is shown under before its contract is consulted. */
 const PANEL_TITLES: Record<PanelKey, string> = {
   trace: "Trace",
   phase: "Phase",
@@ -121,7 +152,13 @@ const PANEL_TITLES: Record<PanelKey, string> = {
   admin: "Admin",
 };
 
-/** Return one capability by its stable backend identifier. */
+/**
+ * Find one capability by its backend identifier.
+ *
+ * @param capabilities - The registry as it was last read.
+ * @param capabilityId - The identifier to look for.
+ * @returns The capability, or `null` when the registry has no such contract.
+ */
 export function capabilityById(
   capabilities: readonly StudioCapability[],
   capabilityId: string,
@@ -129,6 +166,11 @@ export function capabilityById(
   return capabilities.find((capability) => capability.capability_id === capabilityId) ?? null;
 }
 
+/**
+ * Start a capability request, keeping the list already on screen.
+ *
+ * @returns The patch.
+ */
 export function capabilityLoadingState(): CapabilityLoadStatePatch {
   return {
     capabilitiesError: null,
@@ -136,6 +178,12 @@ export function capabilityLoadingState(): CapabilityLoadStatePatch {
   };
 }
 
+/**
+ * Record a capability list that arrived.
+ *
+ * @param capabilities - The list.
+ * @returns The patch.
+ */
 export function capabilityLoadedState(
   capabilities: StudioCapability[],
 ): CapabilityLoadStatePatch {
@@ -146,6 +194,12 @@ export function capabilityLoadedState(
   };
 }
 
+/**
+ * Record a capability request that failed.
+ *
+ * @param error - What was thrown, which need not be an `Error`.
+ * @returns The patch.
+ */
 export function capabilityFailureState(error: unknown): CapabilityLoadStatePatch {
   return {
     capabilitiesError: error instanceof Error && error.message.length > 0
@@ -155,7 +209,16 @@ export function capabilityFailureState(error: unknown): CapabilityLoadStatePatch
   };
 }
 
-/** Summarize backend capability health without storing duplicate UI state. */
+/**
+ * Count the registry by status, for the shell's health line.
+ *
+ * `unavailable` counts a capability the registry reports as unhealthy *or* as
+ * unavailable, so a contract that disagrees with itself is counted as broken
+ * rather than overlooked.
+ *
+ * @param capabilities - The registry as it was last read.
+ * @returns The counts, a headline, and the worst status present.
+ */
 export function summarizeCapabilities(
   capabilities: readonly StudioCapability[],
 ): CapabilitySummary {
@@ -182,7 +245,15 @@ export function summarizeCapabilities(
   };
 }
 
-/** Project backend capability health into frontend panel availability. */
+/**
+ * Decide what one panel may do.
+ *
+ * @param capabilities - The registry as it was last read.
+ * @param panelKey - The panel.
+ * @returns Its state: available and unregistered when no contract governs it,
+ *   unavailable when its contract is missing from the registry, and otherwise
+ *   whatever its contract reports, with the unmet requirements listed.
+ */
 export function panelCapabilityState(
   capabilities: readonly StudioCapability[],
   panelKey: PanelKey,
@@ -232,6 +303,16 @@ export function panelCapabilityState(
   };
 }
 
+/**
+ * Name the worst status in a list, for the shell's single indicator.
+ *
+ * Unhealthy and `unavailable` are both worst: a capability the registry
+ * calls healthy while reporting `unavailable` is still a panel that will
+ * not work.
+ *
+ * @param capabilities - The list.
+ * @returns The worst status, or `none` for an empty list.
+ */
 function selectWorstStatus(
   capabilities: readonly StudioCapability[],
 ): CapabilityStatus | "none" {
