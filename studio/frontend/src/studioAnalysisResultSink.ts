@@ -33,34 +33,66 @@ import {
   type StudioSensitivityResultStatePatch,
 } from "./studioAnalysisState";
 
+/** The Studio tabs an analysis result can be shown in. */
 export type StudioAnalysisResultViewTab =
   | "fi-curve"
   | "bifurcation"
   | "heatmap"
   | "sensitivity";
 
+/**
+ * A patch that stores one analysis result and opens its tab.
+ *
+ * Each member clears `error`, because a patch is only built from a result that
+ * has already passed every check.
+ */
 export type StudioAnalysisResultSinkPatch =
   | (StudioFICurveResultStatePatch & { activeTab: "fi-curve"; error: null })
   | (StudioBifurcationResultStatePatch & { activeTab: "bifurcation"; error: null })
   | (StudioHeatmapResultStatePatch & { activeTab: "heatmap"; error: null })
   | (StudioSensitivityResultStatePatch & { activeTab: "sensitivity"; error: null });
 
+/** Either a patch to apply, or the identifier of the reason there is none. */
 export type StudioAnalysisResultSinkResult =
   | { ok: true; patch: StudioAnalysisResultSinkPatch }
   | { ok: false; error: string };
 
+/**
+ * Whether a value is a plain object.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Whether a value is an array of numbers.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isNumberArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.every((item) => typeof item === "number");
 }
 
+/**
+ * Whether a value is an array of arrays of numbers.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isNestedNumberArray(value: unknown): value is number[][] {
   return Array.isArray(value) && value.every((row) => isNumberArray(row));
 }
 
+/**
+ * Read the analysis type a result declares about itself.
+ *
+ * @param result - The job's result.
+ * @returns The declared type, or `null` when the result declares none.
+ */
 function metadataType(result: AnalysisJobResult): string | null {
   if (!isRecord(result)) {
     return null;
@@ -75,6 +107,12 @@ function metadataType(result: AnalysisJobResult): string | null {
     : null;
 }
 
+/**
+ * Whether a result has the shape of an f-I curve.
+ *
+ * @param result - The job's result.
+ * @returns Whether it is one.
+ */
 function isFICurveResponse(result: AnalysisJobResult): result is FICurveResponse {
   return (
     isRecord(result)
@@ -85,6 +123,12 @@ function isFICurveResponse(result: AnalysisJobResult): result is FICurveResponse
   );
 }
 
+/**
+ * Whether a result has the shape of a bifurcation sweep.
+ *
+ * @param result - The job's result.
+ * @returns Whether it is one.
+ */
 function isBifurcationResponse(
   result: AnalysisJobResult,
 ): result is BifurcationResponse {
@@ -97,6 +141,12 @@ function isBifurcationResponse(
   );
 }
 
+/**
+ * Whether a result has the shape of a two-parameter heatmap.
+ *
+ * @param result - The job's result.
+ * @returns Whether it is one.
+ */
 function isHeatmapResponse(result: AnalysisJobResult): result is HeatmapResponse {
   return (
     isRecord(result)
@@ -110,6 +160,12 @@ function isHeatmapResponse(result: AnalysisJobResult): result is HeatmapResponse
   );
 }
 
+/**
+ * Whether a result has the shape of a sensitivity analysis.
+ *
+ * @param result - The job's result.
+ * @returns Whether it is one.
+ */
 function isSensitivityResponse(
   result: AnalysisJobResult,
 ): result is SensitivityResponse {
@@ -130,7 +186,10 @@ function isSensitivityResponse(
 }
 
 /**
- * Map analysis job kind to the Studio view tab used by sync runners.
+ * Name the view tab that shows a given kind of analysis.
+ *
+ * @param kind - The job's kind.
+ * @returns The tab that displays its result.
  */
 export function studioAnalysisResultViewTab(
   kind: AnalysisJobKind,
@@ -152,7 +211,17 @@ export function studioAnalysisResultViewTab(
 }
 
 /**
- * Build the store patch for a completed async analysis job of the given kind.
+ * Turn a finished analysis job's result into the patch that displays it.
+ *
+ * The result is checked twice over: the metadata must say it is the kind of
+ * analysis that was asked for, and the body must have that kind's shape. A
+ * result that passes the first check and fails the second is a server that
+ * answered the wrong question, which is worth refusing rather than plotting.
+ *
+ * @param kind - The kind of analysis the job ran.
+ * @param result - The job's result, as it arrived.
+ * @returns The patch, or the reason the result was refused. Each reason is a
+ *   stable identifier rather than a sentence, so callers can branch on it.
  */
 export function studioAnalysisResultSink(
   kind: AnalysisJobKind,

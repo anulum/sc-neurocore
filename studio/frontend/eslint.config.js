@@ -71,6 +71,10 @@ const AUDITED = [
   "src/api/types.ts",
   "src/arrayAt.test.ts",
   "src/arrayAt.ts",
+  "src/characterizeStoreState.test.ts",
+  "src/characterizeStoreState.ts",
+  "src/compilerStoreState.test.ts",
+  "src/compilerStoreState.ts",
   "src/components/AdminAuditArchiveSection.tsx",
   "src/components/AdminPanel.test.tsx",
   "src/components/AdminPanel.tsx",
@@ -144,33 +148,23 @@ const AUDITED = [
   "src/components/TrainingMonitor.tsx",
   "src/components/VerilogPreview.test.tsx",
   "src/components/VerilogPreview.tsx",
-  "src/characterizeStoreState.test.ts",
-  "src/characterizeStoreState.ts",
-  "src/compilerStoreState.test.ts",
-  "src/compilerStoreState.ts",
+  "src/contrastAudit.test.ts",
+  "src/contrastAudit.ts",
+  "src/docstringGate.test.ts",
+  "src/evidenceBundles.test.ts",
+  "src/evidenceBundles.ts",
+  "src/evidenceSeal.test.ts",
+  "src/evidenceSeal.ts",
   "src/modelSelectionStoreState.test.ts",
   "src/modelSelectionStoreState.ts",
   "src/operatorWorkbenchState.test.ts",
   "src/operatorWorkbenchState.ts",
-  "src/studioAnalysisState.test.ts",
-  "src/studioAnalysisState.ts",
-  "src/studioInputState.test.ts",
-  "src/studioInputState.ts",
-  "src/studioProjectState.test.ts",
-  "src/studioProjectState.ts",
-  "src/studioTrainingStream.test.ts",
-  "src/studioTrainingStream.ts",
-  "src/synthesisStoreState.test.ts",
-  "src/synthesisStoreState.ts",
-  "src/trainingStoreState.test.ts",
-  "src/trainingStoreState.ts",
-  "src/contrastAudit.test.ts",
-  "src/contrastAudit.ts",
-  "src/docstringGate.test.ts",
   "src/paletteContrast.test.ts",
   "src/paletteContrast.ts",
-  "src/evidenceSeal.test.ts",
-  "src/evidenceSeal.ts",
+  "src/pipelineEvidence.test.ts",
+  "src/pipelineEvidence.ts",
+  "src/plotEvidence.test.ts",
+  "src/plotEvidence.ts",
   "src/plots/analysisViews.test.ts",
   "src/plots/analysisViews.ts",
   "src/plots/comparisonViews.test.ts",
@@ -182,9 +176,15 @@ const AUDITED = [
   "src/plots/stateViews.ts",
   "src/plots/traceView.test.ts",
   "src/plots/traceView.ts",
+  "src/simulationExports.test.ts",
+  "src/simulationExports.ts",
   "src/simulationRaw.test.ts",
   "src/simulationRaw.ts",
   "src/stores/studioStoreActions.test.ts",
+  "src/studioAnalysisResultSink.test.ts",
+  "src/studioAnalysisResultSink.ts",
+  "src/studioAnalysisState.test.ts",
+  "src/studioAnalysisState.ts",
   "src/studioGraphDuplicate.test.ts",
   "src/studioGraphDuplicate.ts",
   "src/studioGraphHistory.test.ts",
@@ -193,11 +193,25 @@ const AUDITED = [
   "src/studioGraphTable.ts",
   "src/studioGraphValidation.test.ts",
   "src/studioGraphValidation.ts",
+  "src/studioInputState.test.ts",
+  "src/studioInputState.ts",
   "src/studioNodeDeletion.test.ts",
   "src/studioPopulationEditor.test.ts",
   "src/studioPopulationEditor.ts",
+  "src/studioProjectState.test.ts",
+  "src/studioProjectState.ts",
   "src/studioProjectionEditor.test.ts",
   "src/studioProjectionEditor.ts",
+  "src/studioTrainingStream.test.ts",
+  "src/studioTrainingStream.ts",
+  "src/synthesisStoreState.test.ts",
+  "src/synthesisStoreState.ts",
+  "src/trainingCheckpoint.test.ts",
+  "src/trainingCheckpoint.ts",
+  "src/trainingExports.test.ts",
+  "src/trainingExports.ts",
+  "src/trainingStoreState.test.ts",
+  "src/trainingStoreState.ts",
 ];
 
 /**
@@ -215,26 +229,39 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * The first figure recorded here was 719, taken with a regex over source
    * lines. The owner directive of 2026-09-06 is explicit that a heuristic may
    * size a problem but may not become a ceiling, and this is why: re-taken
-   * with the real tool the same surface reports **1297**. The heuristic
+   * with the real tool the same surface reported **1297**. The heuristic
    * understated the debt by nearly half, and had it been used as a ratchet it
    * would have enforced the estimate rather than the surface.
+   *
+   * Every figure below is a re-measurement, never a subtraction: the sweeps
+   * that closed the components, the plots, the state layer and now the
+   * evidence and export group each grew `AUDITED`, and the remainder was
+   * re-taken with the tool afterwards rather than reduced on paper.
    */
-  declarations: 1297,
+  declarations: 413,
   /**
    * Files carrying at least one of those declarations.
    *
    * Recorded as 190 when the figure was first taken, which counted files with
    * *any* finding from the measurement config rather than files with the rule
-   * this figure is about. Re-counted by the stated method it is **176**. The
+   * this figure is about. Re-counted by the stated method it was **176**. The
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 176,
+  files: 72,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
-  measuredOn: "2026-09-06",
-  measuredOnSourceSha: "62583819a1cd9c160b9988f82f8f15b7cb9cfe53",
+  measuredOn: "2026-09-07",
+  /**
+   * The commit the measurement was taken over, plus this file's own change.
+   *
+   * A scope figure can only be taken from the tree that carries the scope, so
+   * it is measured before the commit that records it exists. What is pinned
+   * is the parent; the commit this figure lands in adds the fourteen evidence
+   * and export files to `AUDITED` and nothing else that ESLint reads.
+   */
+  measuredOnSourceSha: "6af7b710060d9cf06a798a0ba30b5112cfb32f2f",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**

@@ -15,6 +15,14 @@ import {
 
 const digest = "a".repeat(64);
 
+/**
+ * Build a valid checkpoint document, for tests to invalidate one field
+ *
+ * of at a time.
+ *
+ * @returns The document, as parsed JSON rather than as a typed
+ *   checkpoint, since most cases put something invalid in it.
+ */
 function checkpointPayload(): Record<string, unknown> {
   return {
     checkpoint_sha256: digest,

@@ -50,6 +50,15 @@ const bundle: StudioEvidenceBundleResponse = {
   },
 };
 
+/**
+ * Build a completed job carrying the given artefacts.
+ *
+ * @param jobId - The job's identifier.
+ * @param createdAt - The instant it was created, started and finished.
+ * @param kind - The kind of job it was.
+ * @param artefactPaths - The artefacts it produced, by relative path.
+ * @returns The job record.
+ */
 function jobRecord(
   jobId: string,
   createdAt: string,
@@ -76,6 +85,12 @@ function jobRecord(
   };
 }
 
+/**
+ * Build a healthy audit status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The status.
+ */
 function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditStatus {
   return {
     configured: overrides.configured ?? true,
@@ -86,6 +101,12 @@ function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditSta
   };
 }
 
+/**
+ * Build a job-queue status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The status.
+ */
 function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   return {
     active_count: overrides.active_count ?? 1,
@@ -101,6 +122,12 @@ function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   };
 }
 
+/**
+ * Build an empty job listing, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The listing.
+ */
 function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListResponse {
   return {
     jobs: overrides.jobs ?? [],
@@ -108,6 +135,12 @@ function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListR
   };
 }
 
+/**
+ * Build a whole operator status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The status.
+ */
 function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOperatorStatus {
   return {
     audit: overrides.audit ?? auditStatus(),
@@ -311,7 +344,7 @@ describe("evidence bundle surface helpers", () => {
       throw new Error("expected available evidence bundle artifact plan");
     }
 
-    const downloads: Array<{ payload: Blob; relativePath: string }> = [];
+    const downloads: { payload: Blob; relativePath: string }[] = [];
     const payload = new Blob(["manifest"], { type: "application/json" });
     plan.writePayload(payload, (downloadedPayload, relativePath) => {
       downloads.push({ payload: downloadedPayload, relativePath });

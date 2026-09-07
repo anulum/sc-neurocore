@@ -146,7 +146,7 @@ describe("Studio simulation export builders", () => {
       throw new Error("expected available simulation export plan");
     }
 
-    const downloads: Array<{ filename: string; payload: Blob }> = [];
+    const downloads: { filename: string; payload: Blob }[] = [];
     plan.writeArtefact((payload, filename) => {
       downloads.push({ filename, payload });
     });

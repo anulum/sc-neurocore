@@ -23,6 +23,12 @@ import {
 
 const digest = "a".repeat(64);
 
+/**
+ * Build a checkpoint whose job identifier needs reducing to a filename.
+ *
+ * @param jobId - The job's identifier.
+ * @returns The checkpoint.
+ */
 function checkpoint(jobId = "job/with spaces"): TrainingCheckpointPayload {
   return {
     checkpoint_sha256: digest,
@@ -38,6 +44,11 @@ function checkpoint(jobId = "job/with spaces"): TrainingCheckpointPayload {
   };
 }
 
+/**
+ * Build a restore plan for verified weights.
+ *
+ * @returns The plan.
+ */
 function restorePlan(): TrainingWeightRestorePlan {
   return {
     architecture: "64->128->10",
@@ -64,6 +75,11 @@ function restorePlan(): TrainingWeightRestorePlan {
   };
 }
 
+/**
+ * Build a verification whose digests agree.
+ *
+ * @returns The verification.
+ */
 function verification(): TrainingWeightRestoreVerification {
   return {
     actual_sha256: digest,
@@ -94,7 +110,7 @@ describe("training export helpers", () => {
     const plan = trainingCheckpointExportPlan(checkpoint("job-1"));
 
     expect(plan.available).toBe(true);
-    const downloads: Array<{ filename: string; payload: Blob }> = [];
+    const downloads: { filename: string; payload: Blob }[] = [];
     plan.writeExport((payload, filename) => {
       downloads.push({ filename, payload });
     });
@@ -131,7 +147,7 @@ describe("training export helpers", () => {
       throw new Error("expected available weight-restore verification export plan");
     }
 
-    const downloads: Array<{ filename: string; payload: Blob }> = [];
+    const downloads: { filename: string; payload: Blob }[] = [];
     plan.writeExport((payload, filename) => {
       downloads.push({ filename, payload });
     });

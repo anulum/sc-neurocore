@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    // ES2022 for its type declarations only; `target` stays ES2020, so this
+    // changes what the checker knows about and not what is emitted. It is here
+    // for `Error`'s `cause` option, which is how a rethrow keeps the original
+    // error's stack instead of quoting its message and discarding it.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",

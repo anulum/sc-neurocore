@@ -27,6 +27,12 @@ import {
   studioAnalysisResultViewTab,
 } from "./studioAnalysisResultSink";
 
+/**
+ * Build result metadata declaring the given analysis type.
+ *
+ * @param analysisType - The type the result claims to be.
+ * @returns The metadata.
+ */
 function meta(analysisType: string): AnalysisResultMetadata {
   return {
     analysis_type: analysisType,
@@ -77,7 +83,7 @@ const sens: SensitivityResponse = {
 
 describe("studioAnalysisResultSink success paths", () => {
   it("matches legacy result patches for all four kinds and sets view tabs", () => {
-    const cases: Array<{
+    const cases: {
       kind: AnalysisJobKind;
       result: AnalysisJobResult;
       expected:
@@ -86,7 +92,7 @@ describe("studioAnalysisResultSink success paths", () => {
         | ReturnType<typeof studioHeatmapResultState>
         | ReturnType<typeof studioSensitivityResultState>;
       tab: ReturnType<typeof studioAnalysisResultViewTab>;
-    }> = [
+    }[] = [
       {
         kind: "fi_curve",
         result: fi,

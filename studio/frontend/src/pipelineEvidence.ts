@@ -8,6 +8,10 @@
 
 import type { PipelineResult } from "./api/client";
 
+/**
+ * What the evidence header states about one pipeline run: what was run, on
+ * what, how it ended, and where the artefacts recording it are.
+ */
 export interface PipelineEvidenceModel {
   actionKind: string;
   classification: string;
@@ -20,6 +24,16 @@ export interface PipelineEvidenceModel {
   target: string;
 }
 
+/**
+ * Describe a pipeline run for its evidence header.
+ *
+ * A failed run still has a step: the one it stopped at. A run that
+ * reports no step at all is shown as `unknown` rather than as blank,
+ * so the gap is visible to the reader.
+ *
+ * @param result - The run, as the server reported it.
+ * @returns What the header should state.
+ */
 export function buildPipelineEvidenceModel(result: PipelineResult): PipelineEvidenceModel {
   return {
     actionKind: "studio.pipeline.run",
