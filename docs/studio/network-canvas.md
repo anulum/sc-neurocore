@@ -272,6 +272,16 @@ canvas, undo included. While the table is shown the canvas is hidden, so it
 does not sit in the tab order behind it; the canvas keeps its viewport, and the
 toggle returns you to it.
 
+Below the table, **Source** and **Target** choose two populations by name and
+**Connect** creates the projection between them. On the canvas a projection is
+made by dragging between node handles, which no keyboard reaches; without this
+a network could be added to, edited, deleted from and undone without a mouse,
+but never connected — so it could not be built at all. Both controls choose by
+name rather than by position, and the button calls the same store action the
+drag calls, including its Dale's-principle sign derivation and its failure
+reporting, so the two paths cannot diverge. It says what it needs while only
+one population exists, and stays disabled until both ends are chosen.
+
 ## Populations
 
 Each population is a group of identical neurons of one catalogue model:

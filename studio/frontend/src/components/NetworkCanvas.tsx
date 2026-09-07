@@ -30,6 +30,7 @@ import {
 } from "../studioGraphRequests";
 import type { GraphSimResult, PipelineResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
+import NetworkGraphConnect from "./NetworkGraphConnect";
 import NetworkGraphTable from "./NetworkGraphTable";
 import PopulationEditor from "./PopulationEditor";
 import ProjectionEditor from "./ProjectionEditor";
@@ -372,6 +373,10 @@ export default function NetworkCanvas() {
             projections={graphProjections}
             issues={graphIssues}
             onRemovePopulation={removePopulation}
+          />
+          <NetworkGraphConnect
+            populations={graphPopulations}
+            onConnect={(sourceId, targetId) => { void addProjection(sourceId, targetId); }}
           />
         </div>
       )}
