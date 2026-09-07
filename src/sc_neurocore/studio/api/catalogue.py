@@ -39,6 +39,7 @@ from sc_neurocore.studio.dcls import (
     dcls_tent_profile,
 )
 from sc_neurocore.studio.model_scan import scan_all_models
+from sc_neurocore.studio.model_catalogue import ModelDocumentationUnavailable
 from sc_neurocore.studio.models import (
     get_model_detail,
     list_models,
@@ -132,12 +133,20 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
 
     @router.get("/api/models/{name}/doc")
     def api_model_doc(name: str) -> Any:
-        return _safe(
-            lambda: (
-                model_documentation(name)
-                or (_ for _ in ()).throw(HTTPException(404, f"No documentation for model '{name}'"))
-            )
-        )
+        """Serve one model's reference page, or say why there is none.
+
+        A model without a page and a distribution that packages no pages at all
+        are different answers. Reporting the second as the first told an
+        operator that this model is undocumented when every model is, for a
+        reason that has nothing to do with the model.
+        """
+        try:
+            page = model_documentation(name)
+        except ModelDocumentationUnavailable as unavailable:
+            raise HTTPException(503, str(unavailable)) from None
+        if page is None:
+            raise HTTPException(404, f"No documentation for model '{name}'")
+        return page
 
     @router.get("/api/dcls/info")
     def api_dcls_info() -> Any:

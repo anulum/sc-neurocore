@@ -614,20 +614,71 @@ def model_facets() -> dict[str, Any]:
     }
 
 
-_DOCS_DIR = Path(__file__).resolve().parents[3] / "docs" / "api" / "models"
+#: Where the per-model reference pages are looked for, in order. The packaged
+#: location is tried first so an installed distribution serves its own copy; the
+#: checkout's `docs/api/models` is the fallback a working tree resolves to.
+#: Neither is assumed to exist — :func:`documentation_root` says which, if
+#: either, is actually there.
+_PACKAGED_DOCS_DIR = Path(__file__).resolve().parent / "model_docs"
+_CHECKOUT_DOCS_DIR = Path(__file__).resolve().parents[3] / "docs" / "api" / "models"
+_DOCS_DIR = _CHECKOUT_DOCS_DIR
+
+
+class ModelDocumentationUnavailable(RuntimeError):
+    """Raised when no reference-page directory is installed at all.
+
+    Distinct from a model simply having no page: the first is a packaging
+    state that applies to every model, the second is a fact about one. Reporting
+    the first as the second blames the model for the distribution.
+    """
+
+
+def documentation_root() -> Path | None:
+    """Return the directory holding the per-model reference pages, or ``None``.
+
+    Returns
+    -------
+    pathlib.Path or None
+        The packaged directory when the distribution carries one, otherwise the
+        checkout's ``docs/api/models`` when running from a working tree, and
+        ``None`` when neither is present.
+    """
+    for candidate in (_PACKAGED_DOCS_DIR, _CHECKOUT_DOCS_DIR):
+        if candidate.is_dir():
+            return candidate
+    return None
 
 
 def model_documentation(name: str) -> dict[str, Any] | None:
     """Return the rendered reference documentation for a model, or ``None``.
 
-    The per-model reference page lives at ``docs/api/models/<module>.md``; the
-    Studio serves its Markdown so the documentation is browsable inline next to
-    the live model rather than only in the built docs site.
+    The per-model reference page lives at ``docs/api/models/<module>.md`` in a
+    checkout and at ``sc_neurocore/studio/model_docs/<module>.md`` in a
+    distribution that packages them. The Studio serves the Markdown so the
+    documentation is browsable next to the live model.
+
+    Returns
+    -------
+    dict or None
+        The page, or ``None`` when this model has none.
+
+    Raises
+    ------
+    ModelDocumentationUnavailable
+        When no reference-page directory is installed. Every model is then
+        undocumented for the same reason, which is a fact about the
+        distribution and not about any model.
     """
     if name not in _CLASS_TO_MODULE:
         return None
+    root = documentation_root()
+    if root is None:
+        raise ModelDocumentationUnavailable(
+            "no model reference pages are installed: this distribution packages "
+            "none and no checkout was found beside it"
+        )
     module = _CLASS_TO_MODULE[name]
-    path = _DOCS_DIR / f"{module}.md"
+    path = root / f"{module}.md"
     if not path.is_file():
         return None
     return {"name": name, "slug": f"models/{module}", "markdown": path.read_text(encoding="utf-8")}

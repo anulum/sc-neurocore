@@ -36976,6 +36976,14 @@ dict
 Raised when Studio model metadata loading fails for a known model.
 
 
+### Class `ModelDocumentationUnavailable`
+Raised when no reference-page directory is installed at all.
+
+Distinct from a model simply having no page: the first is a packaging
+state that applies to every model, the second is a fact about one. Reporting
+the first as the second blames the model for the distribution.
+
+
 ### Function `corpus_revision(models)`
 Return a digest identifying the catalogue corpus and its health.
 
@@ -37028,12 +37036,35 @@ dict
     ``metadata_states`` census, the ``invalid_models`` by name, and the
     family, maturity, behaviour and tier facets.
 
+### Function `documentation_root()`
+Return the directory holding the per-model reference pages, or ``None``.
+
+Returns
+-------
+pathlib.Path or None
+    The packaged directory when the distribution carries one, otherwise the
+    checkout's ``docs/api/models`` when running from a working tree, and
+    ``None`` when neither is present.
+
 ### Function `model_documentation(name)`
 Return the rendered reference documentation for a model, or ``None``.
 
-The per-model reference page lives at ``docs/api/models/<module>.md``; the
-Studio serves its Markdown so the documentation is browsable inline next to
-the live model rather than only in the built docs site.
+The per-model reference page lives at ``docs/api/models/<module>.md`` in a
+checkout and at ``sc_neurocore/studio/model_docs/<module>.md`` in a
+distribution that packages them. The Studio serves the Markdown so the
+documentation is browsable next to the live model.
+
+Returns
+-------
+dict or None
+    The page, or ``None`` when this model has none.
+
+Raises
+------
+ModelDocumentationUnavailable
+    When no reference-page directory is installed. Every model is then
+    undocumented for the same reason, which is a fact about the
+    distribution and not about any model.
 
 ---
 

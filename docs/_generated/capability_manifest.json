@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4864
+    "test_files": 4865
   },
   "documentation": {
     "public_pages": [
@@ -7387,6 +7387,7 @@
       "tests/test_studio_model_compile_process.py",
       "tests/test_studio_model_cosim.py",
       "tests/test_studio_model_cosim_process.py",
+      "tests/test_studio_model_documentation_availability.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_model_scan_budget.py",
       "tests/test_studio_model_simulate_contract.py",

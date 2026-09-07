@@ -4471,6 +4471,7 @@
     },
     "/api/models/{name}/doc": {
       "get": {
+        "description": "Serve one model's reference page, or say why there is none.\n\nA model without a page and a distribution that packages no pages at all\nare different answers. Reporting the second as the first told an\noperator that this model is undocumented when every model is, for a\nreason that has nothing to do with the model.",
         "operationId": "api_model_doc_api_models__name__doc_get",
         "parameters": [
           {

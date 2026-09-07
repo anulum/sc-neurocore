@@ -16,6 +16,7 @@ split by responsibility into ``model_catalogue``, ``model_simulate``, and
 from __future__ import annotations
 
 from sc_neurocore.studio.model_catalogue import (
+    ModelDocumentationUnavailable,
     ModelMetadataError,
     _introspected_summary,
     get_model_detail,
@@ -33,6 +34,7 @@ from sc_neurocore.studio.model_simulate import (
 )
 
 __all__ = [
+    "ModelDocumentationUnavailable",
     "ModelMetadataError",
     "RustStudioBackendError",
     "RustStudioBackendUnavailable",
