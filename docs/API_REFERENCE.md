@@ -41112,6 +41112,14 @@ Fingerprint every instance attribute (public and private) for the mutation audit
 ### Function `undeclared_mutations(before, after, layout)`
 Return attributes that changed between two fingerprints without being declared.
 
+A declared variable may be a public view of a private one. The library's
+generator contract is exactly that: a model exposes ``rng_state`` as a
+read-only property over a private generator, and the descriptor declares
+the property. The generator object then moves under a name the layout never
+names, but its movement *is* the declared variable's movement, so it is
+accounted for rather than reported. A model that carries a generator
+without declaring ``rng_state`` is not accounted for, and is reported.
+
 ---
 
 ## Module `studio.svg_export`

@@ -36,6 +36,14 @@ from sc_neurocore.neurons.universal_dsl import load_schema
 LAYOUT_SCHEMA_VERSION = "studio.state-layout.v1"
 FINGERPRINT_LIMIT = 4096
 
+#: The declared variable through which a model publishes its generator state.
+#: The same name is the generator contract in ``descriptor_generator``.
+RNG_STATE_VARIABLE = "rng_state"
+
+#: The private attributes a model holds its generator in behind that variable.
+#: Their movement is the declared variable's movement, not undeclared state.
+RNG_STATE_BACKING = ("_rng", "_rng_state")
+
 LayoutSource = Literal["descriptor", "equations", "undeclared"]
 StateKind = Literal["scalar", "vector"]
 StateRole = Literal["biological", "auxiliary", "unassigned"]
@@ -475,7 +483,48 @@ def public_snapshot(
     return public
 
 
+def _generator_state(value: object) -> str | None:
+    """Return the state of a random generator, or ``None`` when it is not one.
+
+    A generator advances on every draw, and that advance is the difference
+    between a run that can be replayed from its snapshot and one that cannot.
+    A NumPy ``Generator`` reports it through its bit generator; the library's
+    own generators expose a ``state`` attribute. Neither shows in ``repr``.
+    """
+    bit_generator = getattr(value, "bit_generator", None)
+    if bit_generator is None:
+        inner = getattr(value, "_rng", None)
+        bit_generator = getattr(inner, "bit_generator", None)
+    if bit_generator is not None:
+        return f"bitgenerator:{bit_generator.state!r}"[:FINGERPRINT_LIMIT]
+    state = getattr(value, "state", None)
+    if isinstance(state, (bool, int, float, np.integer, np.floating)):
+        return f"state:{state!r}"
+    return None
+
+
+def _is_opaque(value: object) -> bool:
+    """Return whether an object's ``repr`` is the address-based default.
+
+    ``object.__repr__`` prints an identity, not a value, so it is constant
+    across every mutation of the object it names. Fingerprinting such a value
+    cannot detect a change inside it; the audit records that it could not look
+    rather than reporting the object as unchanged.
+    """
+    return type(value).__repr__ is object.__repr__
+
+
 def _fingerprint(value: object) -> str:
+    """Return a value's fingerprint for the start-to-end mutation audit.
+
+    The fingerprint must change when the value changes, or the audit reports a
+    register that moved as one that did not. Numbers, arrays, text and
+    containers fingerprint by their contents. A random generator fingerprints
+    by its generator state, which no ``repr`` exposes. Anything else falls back
+    to ``repr``, and an object whose ``repr`` is the address-based default is
+    marked opaque rather than treated as a value, so a blind spot is
+    enumerable instead of silent.
+    """
     if isinstance(value, (bool, int, float, np.integer, np.floating)):
         return repr(value)
     if isinstance(value, np.ndarray):
@@ -484,6 +533,11 @@ def _fingerprint(value: object) -> str:
         return repr(value)[:FINGERPRINT_LIMIT]
     if isinstance(value, (list, tuple, dict, set, frozenset)):
         return repr(value)[:FINGERPRINT_LIMIT]
+    generator = _generator_state(value)
+    if generator is not None:
+        return generator
+    if _is_opaque(value):
+        return f"opaque:{type(value).__module__}.{type(value).__qualname__}"
     return repr(value)[:FINGERPRINT_LIMIT]
 
 
@@ -515,12 +569,22 @@ def attribute_fingerprints(instance: object) -> dict[str, str]:
 def undeclared_mutations(
     before: Mapping[str, str], after: Mapping[str, str], layout: StateLayout
 ) -> tuple[str, ...]:
-    """Return attributes that changed between two fingerprints without being declared."""
+    """Return attributes that changed between two fingerprints without being declared.
+
+    A declared variable may be a public view of a private one. The library's
+    generator contract is exactly that: a model exposes ``rng_state`` as a
+    read-only property over a private generator, and the descriptor declares
+    the property. The generator object then moves under a name the layout never
+    names, but its movement *is* the declared variable's movement, so it is
+    accounted for rather than reported. A model that carries a generator
+    without declaring ``rng_state`` is not accounted for, and is reported.
+    """
     declared = {variable.name for variable in layout.variables}
+    accounted = set(RNG_STATE_BACKING) if RNG_STATE_VARIABLE in declared else set()
     changed = [
         name
         for name in sorted(set(before) | set(after))
-        if name not in declared and before.get(name) != after.get(name)
+        if name not in declared and name not in accounted and before.get(name) != after.get(name)
     ]
     return tuple(changed)
 
@@ -528,6 +592,8 @@ def undeclared_mutations(
 __all__ = [
     "FINGERPRINT_LIMIT",
     "LAYOUT_SCHEMA_VERSION",
+    "RNG_STATE_BACKING",
+    "RNG_STATE_VARIABLE",
     "DeclaredState",
     "LayoutSource",
     "ObservedState",

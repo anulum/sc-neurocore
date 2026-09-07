@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4846
+    "test_files": 4847
   },
   "documentation": {
     "public_pages": [
@@ -7333,6 +7333,7 @@
       "tests/test_studio_experiment_http.py",
       "tests/test_studio_experiment_spec.py",
       "tests/test_studio_export_routes.py",
+      "tests/test_studio_generator_state_visibility.py",
       "tests/test_studio_graph_model_contract.py",
       "tests/test_studio_graph_validation_locations.py",
       "tests/test_studio_identity_admin_records.py",
