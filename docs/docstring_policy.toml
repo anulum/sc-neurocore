@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 468
+expected_file_count = 469
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -999,6 +999,10 @@ rationale = "Public MPI distributed network runner."
 [[file]]
 path = "src/sc_neurocore/network/network.py"
 rationale = "Public spiking-network engine."
+
+[[file]]
+path = "src/sc_neurocore/network/population_seeds.py"
+rationale = "Public per-neuron seed derivation for populations: distinct, reproducible seeds inside the narrowest declared seed domain, with the refusal that keeps two neurons from sharing a stream."
 
 [[file]]
 path = "src/sc_neurocore/network/population.py"

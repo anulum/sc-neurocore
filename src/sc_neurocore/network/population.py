@@ -10,11 +10,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import inspect
+from collections.abc import Callable, Iterator
 from typing import Any
 
 import numpy as np
 
+from sc_neurocore.network.population_seeds import derive_population_seeds
 from sc_neurocore.neurons import models as _model_registry
 
 
@@ -26,6 +28,78 @@ def _resolve_model(model: type[Any] | str) -> type[Any]:
             raise ValueError(f"Unknown model '{model}'. Check neurons.models.__all__.")
         return cls
     return model
+
+
+def _seed_default(factory: object) -> int | None:
+    """Return the seed a factory would use when the caller names none.
+
+    Parameters
+    ----------
+    factory : object
+        The constructor a population's neurons are built with. Typed as
+        ``object`` rather than as a callable because the answer for something
+        that cannot be asked — a builtin with no signature, or a value that is
+        not callable at all — is part of this function's contract.
+
+    Returns
+    -------
+    int or None
+        The default seed, or ``None`` when the factory takes no ``seed``
+        parameter or defaults it to independent entropy. ``None`` is returned
+        unchanged because a model that defaults to entropy already gives every
+        neuron its own stream.
+    """
+    if not callable(factory):
+        # Not every value handed to a population is a constructor; one that is
+        # not callable declares nothing, and is given no seed.
+        return None
+    try:
+        parameter = inspect.signature(factory).parameters.get("seed")
+    except ValueError:
+        # A C-implemented factory need not carry a signature at all: `inspect`
+        # raises ValueError for a builtin type. It cannot be asked about a
+        # seed, so it is not given one. Exercised rather than assumed.
+        return None
+    if parameter is None or parameter.default is inspect.Parameter.empty:
+        return None
+    default = parameter.default
+    return default if isinstance(default, int) and not isinstance(default, bool) else None
+
+
+def _per_neuron_kwargs(
+    factory: Callable[..., Any], kw: dict[str, Any], n: int
+) -> Iterator[dict[str, Any]]:
+    """Yield the constructor arguments for each neuron of a population.
+
+    Every neuron of a seeded model used to receive the same seed, so a
+    population of stochastic neurons produced one spike train repeated ``n``
+    times. Each neuron is given its own derived seed instead, distinct and
+    reproducible from the population's base seed.
+
+    An explicit ``seed=None`` is passed through unchanged: it already asks each
+    model for independent entropy, and deriving over it would replace the
+    caller's request for unpredictability with a reproducible sequence.
+
+    Parameters
+    ----------
+    factory : callable
+        The constructor the neurons are built with.
+    kw : dict
+        The parameters every neuron shares.
+    n : int
+        How many neurons the population holds.
+
+    Yields
+    ------
+    dict
+        One neuron's constructor arguments.
+    """
+    base_seed = kw["seed"] if "seed" in kw else _seed_default(factory)
+    if base_seed is None or isinstance(base_seed, bool) or not isinstance(base_seed, int):
+        yield from ({**kw} for _ in range(n))
+        return
+    for seed in derive_population_seeds(base_seed, n):
+        yield {**kw, "seed": seed}
 
 
 class Population:
@@ -61,7 +135,7 @@ class Population:
                         + ", ".join(unexpected)
                     )
                 factory = cls.lapicque_1907
-        self.neurons = [factory(**kw) for _ in range(n)]
+        self.neurons = [factory(**kwargs) for kwargs in _per_neuron_kwargs(factory, kw, n)]
         self.n = n
         self.model_name = cls.__name__
         self.label = label or cls.__name__
