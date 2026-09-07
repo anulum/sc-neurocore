@@ -42,8 +42,13 @@ from .gotm_brain import HAS_LLM, GOTMBrain
 
 logger = logging.getLogger("sc_neurocore.quantum_cognition")
 
-# GOTM collection master path on the Samsung ext4 working drive.
-_DEFAULT_GOTM_PATH = "/media/anulum/GOTM/aaa_God_of_the_Math_Collection"
+#: Root of the operator's collection, taken from the environment rather than
+#: written down. A published wheel must not carry one workstation's absolute
+#: path as a default: it exists on exactly one machine, and every other
+#: installation would silently point at nothing. Unset means "no default" —
+#: ``--repo-path`` is then required, and the CLI says so.
+GOTM_ROOT_ENV_VAR = "SC_NEUROCORE_GOTM_ROOT"
+_DEFAULT_GOTM_PATH = os.environ.get(GOTM_ROOT_ENV_VAR, "")
 _AGENTIC_SHARED_PATH = os.path.join(_DEFAULT_GOTM_PATH, "agentic-shared")
 _DEFAULT_STATE_FILE = "gotm_brain_state.json"
 _DEFAULT_SNN_DIR = os.path.join(_DEFAULT_GOTM_PATH, "04_ARCANE_SAPIENCE", "snn_stimuli")
@@ -138,6 +143,14 @@ def cmd_learn(args: argparse.Namespace) -> int:
         logger.info("Resumed from %s (%d prior steps)", args.state_file, brain._total_steps)
 
     repo_path = args.repo_path or _DEFAULT_GOTM_PATH
+    if not repo_path:
+        # Refuse rather than learn from the working directory by accident: a
+        # silent fallback would read whatever tree the process happens to be in.
+        logger.error(
+            "No repository given. Pass a path, or set %s to the root of your collection.",
+            GOTM_ROOT_ENV_VAR,
+        )
+        return 2
     logger.info("Learning from: %s", repo_path)
     steps = brain.learn_from_repo(
         repo_path,

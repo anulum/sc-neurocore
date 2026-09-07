@@ -39,6 +39,7 @@ Example
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -50,7 +51,11 @@ from .fisher_posner import HybridFisherPosnerLIF
 from .spin_pool import SpinPoolMPS
 
 logger = logging.getLogger(__name__)
-_GOTM_ROOT = "/media/anulum/GOTM/aaa_God_of_the_Math_Collection"
+#: Same contract as the CLI: the collection root comes from the environment,
+#: never from a path baked into the wheel. Unset simply means the optional
+#: local adapter below is not found, which is correct off the workstation.
+GOTM_ROOT_ENV_VAR = "SC_NEUROCORE_GOTM_ROOT"
+_GOTM_ROOT = os.environ.get(GOTM_ROOT_ENV_VAR, "")
 _AGENTIC_SHARED_PATH = f"{_GOTM_ROOT}/agentic-shared"
 
 # Attempt to import the local LLM adapter
