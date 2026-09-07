@@ -10,6 +10,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Changed
+- The Studio network interchange envelope says what it is. Export wrote
+  `{"format": "nir", "version": "0.1"}` for a payload whose node `type` is a
+  catalogue model name and whose edges carry a weight and a delay — no NIR
+  primitive is mapped anywhere in it, and the importer never checked the field
+  at all. It now writes `sc-neurocore.studio.network-graph` at version `1`.
+  The loader still accepts the legacy `nir` envelope and a payload that
+  declares no format, so nothing an operator saved stops opening, and it now
+  refuses an envelope it cannot read — a real NIR file used to fail on an
+  unrecognised node type instead. The route names are unchanged.
+
 ### Fixed
 - The Studio pipeline no longer reports a hardware result for a graph it cannot
   lower. `POST /api/pipeline/run` validated and simulated the caller's network,

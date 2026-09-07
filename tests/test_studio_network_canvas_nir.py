@@ -20,9 +20,45 @@ class TestNIR:
         proj = create_projection(exc["id"], inh["id"])
         graph = {"populations": [exc, inh], "projections": [proj]}
         nir = graph_to_nir(graph)
-        assert nir["format"] == "nir"
+        assert nir["format"] == GRAPH_ENVELOPE_FORMAT
+        assert nir["version"] == GRAPH_ENVELOPE_VERSION
         assert len(nir["nodes"]) == 2
         assert len(nir["edges"]) == 1
+
+    def test_the_envelope_no_longer_claims_to_be_nir(self):
+        """It never was: node types are catalogue models, not NIR primitives."""
+        graph = {
+            "populations": [create_population(label="E", count=8)],
+            "projections": [],
+        }
+        assert graph_to_nir(graph)["format"] != LEGACY_GRAPH_ENVELOPE_FORMAT
+
+    def test_a_file_exported_before_the_rename_still_opens(self):
+        """The versioned loader is preserved; an operator loses no saved work."""
+        graph = {
+            "populations": [create_population(label="E", count=8)],
+            "projections": [],
+        }
+        legacy = dict(graph_to_nir(graph))
+        legacy["format"] = LEGACY_GRAPH_ENVELOPE_FORMAT
+        legacy["version"] = "0.1"
+
+        assert nir_to_graph(legacy)["populations"]
+
+    def test_an_envelope_this_loader_cannot_read_is_named_as_such(self):
+        """A real NIR file used to fail on a node type; now it fails on the format."""
+        with pytest.raises(ValueError, match="unreadable interchange format"):
+            nir_to_graph({"format": "nir-2.0", "nodes": {}, "edges": []})
+
+    def test_an_envelope_without_a_format_is_still_accepted(self):
+        """Hand-written payloads and older fixtures declare nothing; keep them."""
+        graph = {
+            "populations": [create_population(label="E", count=8)],
+            "projections": [],
+        }
+        payload = {k: v for k, v in graph_to_nir(graph).items() if k != "format"}
+
+        assert nir_to_graph(payload)["populations"]
 
     def test_import_nir(self):
         nir = {

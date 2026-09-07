@@ -42,6 +42,25 @@ from sc_neurocore.studio.network_graph_spec import (
 )
 
 
+#: What this interchange actually is: a Studio network graph, whose node
+#: ``type`` is a catalogue model name and whose edges carry a weight and a
+#: delay. It is NOT the Neuromorphic Intermediate Representation. Earlier
+#: exports named themselves ``nir`` at version ``0.1``, which was never true —
+#: no NIR primitive is mapped here, and a real NIR file cannot be read by this
+#: loader. `sc_neurocore.nir_bridge` is the surface that speaks actual NIR.
+GRAPH_ENVELOPE_FORMAT = "sc-neurocore.studio.network-graph"
+
+#: Version of the honest envelope. The loader still accepts the legacy pair
+#: below, so files exported before the rename keep opening.
+GRAPH_ENVELOPE_VERSION = "1"
+
+#: The envelope earlier exports wrote. Accepted on import, never written.
+LEGACY_GRAPH_ENVELOPE_FORMAT = "nir"
+
+#: Envelope names this loader accepts.
+ACCEPTED_GRAPH_ENVELOPE_FORMATS = frozenset({GRAPH_ENVELOPE_FORMAT, LEGACY_GRAPH_ENVELOPE_FORMAT})
+
+
 #: Contract version of the population model contract a canvas editor reads.
 POPULATION_MODEL_CONTRACT_VERSION = "studio.population-model-contract.v1"
 
@@ -259,8 +278,8 @@ def graph_to_nir(graph: object) -> dict[str, Any]:
         )
 
     return {
-        "format": "nir",
-        "version": "0.1",
+        "format": GRAPH_ENVELOPE_FORMAT,
+        "version": GRAPH_ENVELOPE_VERSION,
         "nodes": nodes,
         "edges": edges,
     }
@@ -287,7 +306,16 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
         an assembled graph that does not validate.
     """
     if not isinstance(nir_data, Mapping):
-        raise ValueError("NIR payload must be an object")
+        raise ValueError("Network graph payload must be an object")
+    declared = nir_data.get("format")
+    if declared is not None and declared not in ACCEPTED_GRAPH_ENVELOPE_FORMATS:
+        raise ValueError(
+            f"unreadable interchange format {declared!r}: this loader reads the "
+            f"Studio network graph envelope ({GRAPH_ENVELOPE_FORMAT!r}, or the "
+            f"legacy {LEGACY_GRAPH_ENVELOPE_FORMAT!r} an earlier export wrote). "
+            "It does not read the Neuromorphic Intermediate Representation; no "
+            "NIR primitive is mapped to a model here."
+        )
     raw_nodes = nir_data.get("nodes", {})
     raw_edges = nir_data.get("edges", [])
     if not isinstance(raw_nodes, Mapping):

@@ -97,7 +97,10 @@ class TestEndpoints:
         r = client.post("/api/graph/export-nir", json={"populations": [pop], "projections": []})
         assert r.status_code == 200
         data = r.json()
-        assert data["format"] == "nir"
+        # The route name is unchanged and operator-visible; the envelope it
+        # returns now says what it is. Renaming the route is a separate,
+        # owner-visible decision tracked as DISCOVERED-NIR-PRIMITIVES-UNMAPPED.
+        assert data["format"] == GRAPH_ENVELOPE_FORMAT
 
     def test_import_nir_endpoint(self, client):
         nir = {"nodes": {"a": {"type": "SCLapicqueLIFNeuron", "count": 10}}, "edges": []}
