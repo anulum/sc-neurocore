@@ -177,6 +177,39 @@ test("the canvas leaves the tab order while the table stands in for it", async (
   await expect(page.locator(".react-flow__node").first()).toBeVisible();
 });
 
+test("a reader who asked for less motion gets none, inline styles included", async ({
+  page,
+}) => {
+  await openCanvas(page);
+
+  // Three progress indicators animate their width from an inline `style`
+  // attribute, which a stylesheet reaches only through `!important`. Measuring
+  // the shipped stylesheet against an inline declaration is the only way to
+  // know the rule is written widely enough; a component test can read the CSS
+  // text but not what a browser computes from it.
+  const probe = async () =>
+    page.evaluate(() => {
+      const element = document.createElement("div");
+      element.setAttribute("style", "transition: width 0.3s; animation: spin 2s linear infinite");
+      document.body.append(element);
+      const computed = getComputedStyle(element);
+      const measured = {
+        transition: computed.transitionDuration,
+        animation: computed.animationDuration,
+      };
+      element.remove();
+      return measured;
+    });
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  expect((await probe()).transition).toBe("0.3s");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const reduced = await probe();
+  expect(Number.parseFloat(reduced.transition)).toBeLessThan(0.001);
+  expect(Number.parseFloat(reduced.animation)).toBeLessThan(0.001);
+});
+
 test("the population editor labels every input and states its contract", async ({ page }) => {
   await openCanvas(page);
   await addTwoConnectedPopulations(page);

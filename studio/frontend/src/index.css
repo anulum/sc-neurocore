@@ -1054,3 +1054,26 @@ input[type="range"]::-moz-range-thumb {
     grid-column: span 1;
   }
 }
+
+/*
+ * Reduced motion.
+ *
+ * A reader who has asked their system to reduce motion gets no animated
+ * movement from the Studio. Three progress indicators animate their width from
+ * inline `style` attributes, which a stylesheet cannot override without
+ * `!important` — that is what it is for here, and the reason this rule is
+ * written against `*` rather than a selector list.
+ *
+ * `0.01ms` rather than `none` so that transition-end handlers still fire and
+ * nothing waits forever for an event that was cancelled.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

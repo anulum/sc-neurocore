@@ -158,6 +158,16 @@ each editor input is bound to its label and to the statement of its contract,
 that a refused value carries the server's own message to the input that caused
 it, and that every editor input can take focus.
 
+It also checks that a reader who has asked their system for less motion gets
+none. Three progress indicators animate their width from an inline `style`
+attribute, which a stylesheet reaches only through `!important`, so the
+`prefers-reduced-motion` rule in `index.css` is written against `*`. The check
+measures what the browser computes from the shipped stylesheet against an
+inline declaration under both media states — 0.3 s without the preference, and
+effectively nothing with it. Durations become `0.01ms` rather than `none` so
+that `transitionend` handlers still fire and nothing waits for an event that
+was cancelled.
+
 ### Colour contrast
 
 Contrast is the one property here that has to be **computed** rather than
