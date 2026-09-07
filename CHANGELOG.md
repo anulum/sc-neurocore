@@ -11,6 +11,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- A model that holds no state can now say so. `declared_state` answered
+  `undeclared` both when a descriptor was absent and when it declared nothing,
+  so `McCullochPittsNeuron` and `SiegertTransferFunction` — which evolve nothing
+  by construction — were reported with `complete=false` for ever and could not
+  be told apart from a model whose state nobody had declared. A descriptor now
+  asserts `stateless` per identity, and such a model answers `descriptor` with
+  no variables and complete custody. The published `studio.state-layout.v1`
+  payload is unchanged: `source` keeps its three values and no field was added
+  or removed.
+  The assertion is never inferred — no static rule and no single drive can tell
+  "holds nothing" from "was not exercised" — and it stays falsifiable, because
+  an asserted-stateless model that mutates anything is still reported
+  incomplete, naming what moved. Both identities were measured over 100
+  exercised steps with varying output before the assertion was recorded.
+  `InhomogeneousPoissonNeuron` mutates no attribute either and is deliberately
+  not asserted: it draws from the process-wide NumPy generator, so its run
+  cannot be reproduced from anything recorded.
 - The Amari neural field no longer records its site count as state. `n`, the
   number of uniformly spaced sites on the periodic ring, is fixed at
   construction and read by every step without ever being written, yet the

@@ -413,19 +413,22 @@ class TestLayoutPrimitives:
         )
         # Descriptors that declare no state are reported as undeclared, never
         # guessed. The census is pinned rather than sampled, so the gap shrinks
-        # only by a deliberate test change. Two families remain, each with its
-        # own ledger row: four models carry their state under a private name
-        # (DISCOVERED-PRIVATE-REGISTERS-OUTSIDE-LAYOUT), and three mutate
-        # nothing at all, so an empty declaration is the truthful one and the
-        # layout has no way to say so
-        # (DISCOVERED-STATELESS-MODEL-CANNOT-DECLARE-ITSELF).
+        # only by a deliberate test change. Two families remain. Four models
+        # carry their state under a private name
+        # (DISCOVERED-PRIVATE-REGISTERS-OUTSIDE-LAYOUT). The fifth,
+        # InhomogeneousPoissonNeuron, mutates no attribute at all and is still
+        # here on purpose: it draws from the process-wide NumPy generator, so
+        # its run cannot be reproduced from anything recorded and an empty
+        # declaration would publish it as complete
+        # (DISCOVERED-MODELS-DRAW-FROM-THE-GLOBAL-GENERATOR). The two that left
+        # this list, McCullochPittsNeuron and SiegertTransferFunction, now
+        # assert `stateless` in their descriptors and are covered by
+        # tests/test_stateless_declaration.py.
         assert undeclared == [
             "AstrocyteNeuron",
             "GLMNeuron",
             "GammaRenewalNeuron",
             "HybridFisherPosnerLIFNeuron",
             "InhomogeneousPoissonNeuron",
-            "McCullochPittsNeuron",
-            "SiegertTransferFunction",
         ]
         assert declared_state(ATIF)[0] == "descriptor"

@@ -252,13 +252,25 @@ def declared_state(class_name: str) -> tuple[LayoutSource, str, tuple[DeclaredSt
     tuple
         ``(source, schema_profile, variables)``: ``descriptor`` with the
         committed ``[state]`` table joined with the canonical profile roles, or
-        ``undeclared`` with no variables when the descriptor is absent or
-        declares no state. The descriptor is the authority; the profile only
-        assigns roles.
+        ``undeclared`` with no variables when the descriptor is absent or its
+        state has not been declared. The descriptor is the authority; the
+        profile only assigns roles.
+
+        A descriptor that asserts ``stateless`` answers ``descriptor`` with no
+        variables. Emptiness is then a declaration rather than a silence: the
+        run records everything the model declares, so its custody is complete,
+        where a model whose state nobody has declared stays ``undeclared`` and
+        incomplete. The assertion does not exempt the model from the mutation
+        audit — anything that moves is still reported as undeclared state.
     """
     descriptor = load_descriptor(class_name)
-    if descriptor is None or not descriptor.state:
+    if descriptor is None:
         return "undeclared", "", ()
+    if not descriptor.state:
+        if not descriptor.stateless:
+            return "undeclared", "", ()
+        stem, _roles = _profile_roles(class_name)
+        return "descriptor", stem, ()
     stem, roles = _profile_roles(class_name)
     variables = tuple(
         DeclaredState(

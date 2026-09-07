@@ -138,6 +138,12 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
     # placed a construction count in the state table.  This is a decision about
     # this identity; the name stays state everywhere it means the gate.
     "AmariNeuralField": {"parameters": {"n"}},
+    # Measured over 100 exercised steps with varying output: no attribute moves
+    # and the process-wide generator does not advance.  The assertion is what
+    # separates "holds nothing" from "nobody has declared it yet", which no
+    # static rule and no single drive can decide on its own.
+    "McCullochPittsNeuron": {"stateless": True},
+    "SiegertTransferFunction": {"stateless": True},
 }
 
 
@@ -531,6 +537,7 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
             "intended_use": [],
             "hardware_fit": [],
             "behavior_tags": [],
+            **({"stateless": True} if structural.get("stateless") else {}),
         },
         "provenance": provenance,
         "state": state,

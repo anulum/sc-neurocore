@@ -41133,9 +41133,16 @@ Returns
 tuple
     ``(source, schema_profile, variables)``: ``descriptor`` with the
     committed ``&#91;state&#93;`` table joined with the canonical profile roles, or
-    ``undeclared`` with no variables when the descriptor is absent or
-    declares no state. The descriptor is the authority; the profile only
-    assigns roles.
+    ``undeclared`` with no variables when the descriptor is absent or its
+    state has not been declared. The descriptor is the authority; the
+    profile only assigns roles.
+
+    A descriptor that asserts ``stateless`` answers ``descriptor`` with no
+    variables. Emptiness is then a declaration rather than a silence: the
+    run records everything the model declares, so its custody is complete,
+    where a model whose state nobody has declared stays ``undeclared`` and
+    incomplete. The assertion does not exempt the model from the mutation
+    audit — anything that moves is still reported as undeclared state.
 
 ### Function `equation_state(names, init)`
 Return the declared state of an equation-playground neuron.

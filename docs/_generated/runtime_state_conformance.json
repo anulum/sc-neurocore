@@ -2355,7 +2355,7 @@
           ]
         }
       },
-      "layout_source": "undeclared",
+      "layout_source": "descriptor",
       "model": "McCullochPittsNeuron"
     },
     {
@@ -3827,7 +3827,7 @@
           ]
         }
       },
-      "layout_source": "undeclared",
+      "layout_source": "descriptor",
       "model": "SiegertTransferFunction"
     },
     {

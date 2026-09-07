@@ -304,6 +304,14 @@ class ModelDescriptor:
     notes: str = ""
     validation: Validation = field(default_factory=Validation)
     silicon: Silicon = field(default_factory=Silicon)
+    #: The model asserts it holds no state at all. An empty ``state`` table is
+    #: otherwise indistinguishable from state nobody has declared yet, so a
+    #: model that genuinely evolves nothing cannot say so without this. It is a
+    #: per-identity assertion, never inferred: no static rule and no single
+    #: drive can tell "holds nothing" from "was not exercised". Runs still
+    #: audit it — an asserted-stateless model that mutates anything is reported
+    #: with incomplete custody naming what moved.
+    stateless: bool = False
     schema_version: int = MODEL_DESCRIPTOR_SCHEMA_VERSION
 
 
@@ -395,6 +403,7 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
         intended_use=_str_tuple(metadata.get("intended_use")),
         hardware_fit=_str_tuple(metadata.get("hardware_fit")),
         behavior_tags=_str_tuple(metadata.get("behavior_tags")),
+        stateless=_opt_bool(metadata, "stateless"),
         provenance=_parse_provenance(_section(payload, "provenance", required=False)),
         state=_parse_state(_section(payload, "state", required=False)),
         parameters=_parse_parameters(_section(payload, "parameters", required=False)),
@@ -411,6 +420,11 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
         validation=_parse_validation(_section(payload, "validation", required=False)),
         silicon=_parse_silicon(_section(payload, "silicon", required=False)),
     )
+    if descriptor.stateless and descriptor.state:
+        raise ModelDescriptorError(
+            "descriptor asserts stateless and declares "
+            f"{len(descriptor.state)} state variables; it cannot be both"
+        )
     return descriptor
 
 

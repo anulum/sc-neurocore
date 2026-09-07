@@ -23,6 +23,7 @@ behavior_tags = [
     "excitable",
     "tonic",
 ]
+stateless = true
 
 [provenance]
 authors = [

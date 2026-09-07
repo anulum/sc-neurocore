@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4853
+    "test_files": 4854
   },
   "documentation": {
     "public_pages": [
@@ -7235,6 +7235,7 @@
       "tests/test_spintronic/test_spintronic_mapper_variability_model.py",
       "tests/test_spintronic/test_spintronic_mapper_write_verify.py",
       "tests/test_spintronic/test_spintronic_package_api.py",
+      "tests/test_stateless_declaration.py",
       "tests/test_static_analysis_fixed_point_envelope_proof.py",
       "tests/test_static_analysis_guard_bits.py",
       "tests/test_static_analysis_interval_arithmetic.py",
