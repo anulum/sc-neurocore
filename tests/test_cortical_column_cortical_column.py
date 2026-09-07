@@ -53,6 +53,12 @@ class TestCorticalColumn:
         availability_flag,
         match,
     ):
+        # `CorticalColumn.__init__` runs one-shot native discovery, which
+        # rewrites these module flags from what it finds. Discovering first
+        # means the patch below survives construction; without it only the
+        # first parametrisation to execute reaches the guard at all, and the
+        # rest assert against a flag the constructor has already overwritten.
+        cortical_column_module._ensure_native_backends()
         monkeypatch.setattr(cortical_column_module, availability_flag, False)
         with pytest.raises(RuntimeError, match=match):
             CorticalColumn(scale=0.02, backend=backend)
