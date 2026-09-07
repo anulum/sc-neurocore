@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 482
+expected_file_count = 483
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1943,3 +1943,7 @@ rationale = "Public Brunel-Wang benchmark entry point: what it measures across f
 [[file]]
 path = "tools/benchmark_coverage_census.py"
 rationale = "Public benchmark coverage census: what each of the three states means, why a benchmark script that names a model is apparatus rather than a measurement, and how this differs from the evidence gate that judges artefact quality."
+
+[[file]]
+path = "src/sc_neurocore/studio/project.py"
+rationale = "Public Studio project storage and graph-to-target pipeline: what each step does and why the compile step refuses a hardware claim it cannot substantiate."

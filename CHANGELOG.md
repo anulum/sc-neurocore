@@ -11,6 +11,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- The Studio pipeline no longer reports a hardware result for a graph it cannot
+  lower. `POST /api/pipeline/run` validated and simulated the caller's network,
+  then compiled one hardcoded leaky integrate-and-fire equation — ignoring the
+  graph entirely — synthesised it, and returned success labelled
+  `graph → simulate → compile → synthesise`. An operator building a
+  Hodgkin-Huxley network received a successful synthesis report for a generic
+  neuron that shared nothing with it. The compile step now refuses, names why,
+  and lists any declared model whose descriptor records no silicon lowering.
+  The validation and simulation it genuinely performed are still reported.
+
+### Fixed
 - Three Rust safety validators check something. `validate_astrocyte`,
   `validate_astrocyte_adapter` and `validate_quantum_inspired_lif` returned
   `true` unconditionally; each now mirrors exactly what the maintained model

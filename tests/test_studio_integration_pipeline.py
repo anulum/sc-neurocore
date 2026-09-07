@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from tests.studio_integration_support import *  # noqa: F403
 
 
@@ -59,24 +61,46 @@ class TestPipeline:
             "errors": ["sim failed"],
         }
 
-    def test_pipeline_reports_compile_failure(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        graph = self._make_graph()
+    def test_the_compile_step_refuses_to_claim_a_hardware_result(self) -> None:
+        """The pipeline cannot lower a graph, so it must not report that it did.
 
-        def fail_compile(*_args: object, **_kwargs: object) -> tuple[object, str]:
-            raise RuntimeError("compiler failure")
+        This case replaces one that asserted a bounded ``Compilation failed``
+        after monkeypatching the equation compiler to raise. That guarantee —
+        a client-facing error that leaks no internals — is preserved below
+        against the behaviour that now exists: the step never reaches a
+        compiler, because there is no graph lowering to reach it with.
+        """
+        result = run_pipeline(self._make_graph())
 
-        monkeypatch.setattr(
-            "sc_neurocore.compiler.equation_compiler.equation_to_fpga",
-            fail_compile,
-        )
+        assert result["success"] is False
+        assert result["step"] == "compile"
+        assert result["error"] == NO_GRAPH_LOWERING_REASON
+        assert result["pipeline"] == "graph → simulate → (no graph lowering)"
 
-        result = run_pipeline(graph)
+    def test_the_refusal_leaks_nothing_about_the_host(self) -> None:
+        """The guarantee the replaced case protected, held against the new path."""
+        result = run_pipeline(self._make_graph())
 
-        assert result == {
-            "success": False,
-            "step": "compile",
-            "error": "Compilation failed",
-        }
+        text = str(result)
+        assert "Traceback" not in text
+        assert "/home/" not in text
+        assert "/media/" not in text
+
+    def test_the_simulation_it_did_run_is_still_reported(self) -> None:
+        """Refusing the hardware claim must not discard the honest steps."""
+        result = run_pipeline(self._make_graph())
+
+        assert result["steps"]["validate"] == {"passed": True}
+        assert "n_spikes" in result["steps"]["simulate"]
+
+    def test_a_model_without_recorded_silicon_is_named(self) -> None:
+        """A reader must see which declared models carry no lowering at all."""
+
+        def graph_using(model: str) -> dict[str, Any]:
+            graph = self._make_graph()
+            populations = cast(list[dict[str, Any]], graph["populations"])
+            populations[0]["model"] = model
+            return graph
+
+        assert run_pipeline(graph_using("AmariNeuralField"))["unsupported_models"] == []
+        assert run_pipeline(graph_using("ArcaneNeuron"))["unsupported_models"] == ["ArcaneNeuron"]

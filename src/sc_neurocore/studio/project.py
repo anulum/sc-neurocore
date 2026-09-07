@@ -6,6 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Project save/load and pipeline for Studio (Block 6)
 
+"""Studio project storage and the graph-to-target pipeline.
+
+Projects are saved, listed, loaded and deleted here, and :func:`run_pipeline`
+takes a canvas graph through validation and simulation. It stops there: it
+reports a hardware result only if it can lower the graph it was given, and no
+graph-level lowering exists, so the compile step refuses and says why rather
+than synthesising a stand-in neuron and presenting it as the caller's network.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -338,17 +347,75 @@ def import_project(name: str, document: dict[str, Any]) -> dict[str, Any]:
     return {"imported": name, "revision": created.revision}
 
 
+#: What the compile step refuses with when no graph lowering exists. Named so a
+#: caller can match the contract rather than the prose.
+NO_GRAPH_LOWERING_REASON = (
+    "no supported lowering exists for this graph: the pipeline lowers a single "
+    "equation, a population declares a catalogue model, and no graph-level "
+    "lowering is implemented. Refusing rather than synthesising a stand-in "
+    "neuron and reporting it as this graph's hardware result."
+)
+
+
+def graph_lowering_refusal(graph: dict[str, Any]) -> dict[str, Any]:
+    """Return why this graph cannot be lowered to hardware.
+
+    Parameters
+    ----------
+    graph : dict
+        Studio network graph payload.
+
+    Returns
+    -------
+    dict
+        ``reason`` naming why no hardware result is claimed, and
+        ``unsupported_models`` listing the declared models whose descriptor
+        records no silicon lowering. The list is informational: the refusal
+        stands even when every model carries one, because lowering a *network*
+        is not the same capability as lowering one model and neither exists
+        here yet.
+    """
+    from sc_neurocore.neurons.descriptor_tiers import silicon_tier
+    from sc_neurocore.neurons.model_catalogue import load_descriptor
+
+    declared: list[str] = []
+    populations = graph.get("populations")
+    if isinstance(populations, list):
+        for population in populations:
+            if isinstance(population, dict):
+                model = population.get("model")
+                if isinstance(model, str) and model not in declared:
+                    declared.append(model)
+
+    unsupported: list[str] = []
+    for model in declared:
+        descriptor = load_descriptor(model)
+        if descriptor is None or silicon_tier(descriptor) is None:
+            unsupported.append(model)
+
+    return {"reason": NO_GRAPH_LOWERING_REASON, "unsupported_models": sorted(unsupported)}
+
+
 def run_pipeline(
     graph: dict[str, Any],
     target: str = "ice40",
     *,
     process_limits: EdaProcessLimits | None = None,
 ) -> dict[str, Any]:
-    """Run the Studio graph-to-synthesis pipeline.
+    """Run the Studio graph-to-synthesis pipeline, or refuse to claim one.
 
-    If the graph has ODE equations in population params, the pipeline compiles
-    them to SystemVerilog and runs synthesis. Otherwise it uses a default LIF
-    compile path.
+    The pipeline validates and simulates the graph, then reports a hardware
+    result **only if it can lower the graph the caller supplied**. It cannot:
+    no graph-level lowering exists, and a population declares a catalogue model
+    rather than an equation, so there is nothing here to compile into hardware
+    that is the caller's network. The compile step therefore refuses and names
+    the reason instead of synthesising a stand-in.
+
+    Until that refusal was added the step compiled one hardcoded leaky
+    integrate-and-fire equation, ignoring the graph entirely, and returned its
+    synthesis as ``graph -> simulate -> compile -> synthesise``. An operator
+    building a Hodgkin-Huxley network received a successful hardware report for
+    a generic neuron that shared nothing with it.
 
     Parameters
     ----------
@@ -366,8 +433,7 @@ def run_pipeline(
         Pipeline result containing validation, simulation, compile, and
         synthesis step payloads, or a bounded failure payload.
     """
-    from sc_neurocore.studio.network_graph import validate_graph, simulate_graph
-    from sc_neurocore.studio.synthesis import run_synthesis
+    from sc_neurocore.studio.network_graph import simulate_graph, validate_graph
 
     steps: dict[str, Any] = {}
 
@@ -386,30 +452,14 @@ def run_pipeline(
         "n_total": sim_result.get("n_total", 0),
     }
 
-    # Step 3: Compile to Verilog
-    try:
-        from sc_neurocore.compiler.equation_compiler import equation_to_fpga
-
-        eq = "dv/dt = -(v - (-65)) / 20 + I / 1"
-        _, verilog = equation_to_fpga(
-            eq,
-            threshold="v > -50",
-            reset="v = -65",
-            module_name="sc_pipeline_neuron",
-        )
-        steps["compile"] = {"chars": len(verilog), "module": "sc_pipeline_neuron"}
-    except Exception as e:
-        # Log detailed exception server-side, but return a generic message to the client
-        logger.exception("Error during pipeline compile step")
-        return {"success": False, "step": "compile", "error": "Compilation failed"}
-
-    # Step 4: Synthesise
-    synth_result = run_synthesis(verilog, target, process_limits=process_limits)
-    steps["synthesise"] = synth_result
-
+    # Step 3: Lower the graph — or refuse, rather than synthesise a stand-in.
+    refusal = graph_lowering_refusal(graph)
     return {
-        "success": synth_result.get("success", False),
+        "success": False,
+        "step": "compile",
         "target": target,
         "steps": steps,
-        "pipeline": "graph → simulate → compile → synthesise",
+        "error": refusal["reason"],
+        "unsupported_models": refusal["unsupported_models"],
+        "pipeline": "graph → simulate → (no graph lowering)",
     }
