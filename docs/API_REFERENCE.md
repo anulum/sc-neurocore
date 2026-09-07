@@ -11212,7 +11212,7 @@ Contract for dynamic updates through bus-mapped control registers.
 - **status_bits**()
   - Return host-visible status-bit assignments.
 - **control_bits**()
-  - Return host-writeable control-bit assignments.
+  - Return host-writable control-bit assignments.
 - **trap_bits**()
   - Return deterministic trap-bit assignments for generated parameter banks.
 - **effective_trap_width**()
