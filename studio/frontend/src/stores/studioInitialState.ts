@@ -8,9 +8,20 @@
 // Default initial field values for the Studio Zustand store.
 
 import { emptyGraphHistory } from "../studioGraphHistory";
+import type { StudioStateData } from "./studioTypes";
 import { readStoredStudioSessions } from "../studioSavedSessions";
 
-/** Data-field defaults for useStudioStore (actions attached in studio.ts). */
+/**
+ * What every Studio field holds before anything has happened.
+ *
+ * Declared with `satisfies` rather than annotated, so each literal keeps its
+ * own narrow type -- `sourceMode` stays `"model"` and not `string` -- while
+ * still being checked against the state it initialises. That is what lets the
+ * store be assembled without a cast: an annotation would widen the literals
+ * and a cast would stop checking them altogether.
+ *
+ * The actions are attached in `studio.ts`; this is only the data.
+ */
 export const studioInitialData = {
   sourceMode: "model",
   equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
@@ -65,4 +76,4 @@ export const studioInitialData = {
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
-};
+} satisfies StudioStateData;

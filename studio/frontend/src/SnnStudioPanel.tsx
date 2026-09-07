@@ -10,7 +10,13 @@ import App from "./App";
 import "./index.css";
 
 /**
- * Render the production SNN Studio shell for standalone and federated hosts.
+ * The Studio's entry component, for standalone and federated hosts alike.
+ *
+ * It exists so the federation boundary has one stable export to name, and it
+ * carries the stylesheet import so a federated host gets the Studio's styles
+ * by mounting it rather than by knowing to load them.
+ *
+ * @returns The Studio shell.
  */
 export default function SnnStudioPanel() {
   return <App />;

@@ -12,10 +12,15 @@
     "e2e/analysis-job-host.spec.ts",
     "e2e/catalogue-to-silicon-live.spec.ts",
     "e2e/experiment-export-live.spec.ts",
+    "e2e/federation-host/vite.config.ts",
     "e2e/guided-operator-run.spec.ts",
     "e2e/module-federation-host.spec.ts",
     "e2e/network-canvas-live.spec.ts",
+    "playwright.config.ts",
     "playwright.export.config.ts",
-    "playwright.graph.config.ts"
+    "playwright.federation.config.ts",
+    "playwright.graph.config.ts",
+    "playwright.live.config.ts",
+    "vite.config.ts"
   ]
 }

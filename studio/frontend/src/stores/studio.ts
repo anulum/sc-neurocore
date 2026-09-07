@@ -21,20 +21,22 @@ export type { EvidenceBundleSurface } from "../evidenceBundles";
 syncStoredStudioAuthToken(setStudioAuthToken);
 
 export const useStudioStore = create<StudioState>((set, get) => {
-  const actions = createStudioStoreActions(
-    set as (partial: Partial<StudioState> | ((state: StudioState) => Partial<StudioState>)) => void,
-    get,
-  );
-  return {
+  const actions = createStudioStoreActions(set, get);
+  const state: StudioState = {
     ...studioInitialData,
     ...actions,
-  } as StudioState;
+  };
+  return state;
 });
 
 
 const startupHashState = readStudioStartupHashState();
 if (startupHashState !== null) {
-  useStudioStore.getState().selectModel(startupHashState.selectedModelName);
+  // Fire-and-forget on purpose: this runs while the module is being evaluated,
+  // before anything can await it, and a share link that names a model the
+  // catalogue no longer has should leave the Studio open on its defaults
+  // rather than fail to start.
+  void useStudioStore.getState().selectModel(startupHashState.selectedModelName);
   useStudioStore.setState({
     current: startupHashState.current,
     duration: startupHashState.duration,

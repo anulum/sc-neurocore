@@ -36,12 +36,21 @@ import type { StudioNetworkParams } from "../studioInputState";
 import type { EvidenceBundleSurface } from "../evidenceBundles";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
 
+/** Whether a run is driven by a catalogue model or by an ODE. */
 export type SourceMode = "model" | "ode";
+/** Every panel the Studio can show. */
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
   "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "delays" | "admin";
 export type { EvidenceBundleSurface };
 
+/**
+ * The whole Studio: every field it holds, and every action that changes one.
+ *
+ * Data and actions are declared together because that is what a component
+ * selects from, and split apart by `StudioStateData` and `StudioStoreActions`
+ * below for the two places that need one half without the other.
+ */
 export interface StudioState {
   sourceMode: SourceMode;
   equations: string[];
@@ -270,7 +279,7 @@ export interface StudioState {
   exportReplayPack: () => Promise<void>;
   runCompile: () => Promise<void>;
   runCosim: () => Promise<void>;
-  runCharacterize: () => Promise<void>;
+  runCharacterize: () => void;
   runMultiSimulate: (modelNames: string[]) => Promise<void>;
   runNetwork: () => Promise<void>;
   setNetworkParam: <K extends keyof StudioNetworkParams>(
@@ -357,3 +366,21 @@ export interface StudioState {
   sweepParamY: string;
   setSweepParamY: (p: string) => void;
 }
+
+/**
+ * The store's action half: every field of the state that is callable.
+ *
+ * Derived rather than written out, so an action added to `StudioState` is
+ * automatically required of the actions factory instead of quietly becoming
+ * optional. Before this existed the factory returned `Partial<StudioState>`
+ * and the store was assembled through a cast, which meant a forgotten action
+ * was a runtime `undefined` rather than a type error.
+ */
+export type StudioStoreActions = {
+  [K in keyof StudioState as StudioState[K] extends (...args: never[]) => unknown
+    ? K
+    : never]: StudioState[K];
+};
+
+/** The store's data half: everything the state holds that is not an action. */
+export type StudioStateData = Omit<StudioState, keyof StudioStoreActions>;

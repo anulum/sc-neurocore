@@ -6,7 +6,9 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+
+import { mockPlotContext, drewNonFinite } from "./plots/mockPlotContext";
 
 import {
   drawAxes,
@@ -16,31 +18,6 @@ import {
   PLOT_BORDER,
   PLOT_PANEL_BG,
 } from "./simulationPlotCanvas";
-
-function mockContext(): CanvasRenderingContext2D {
-  const path: string[] = [];
-  return {
-    fillStyle: "",
-    strokeStyle: "",
-    lineWidth: 0,
-    font: "",
-    textAlign: "start",
-    fillRect: vi.fn(),
-    strokeRect: vi.fn(),
-    beginPath: vi.fn(() => {
-      path.push("begin");
-    }),
-    moveTo: vi.fn((x: number, y: number) => {
-      path.push(`M${x},${y}`);
-    }),
-    lineTo: vi.fn((x: number, y: number) => {
-      path.push(`L${x},${y}`);
-    }),
-    stroke: vi.fn(),
-    fillText: vi.fn(),
-    __path: path,
-  } as unknown as CanvasRenderingContext2D & { __path: string[] };
-}
 
 describe("niceStep", () => {
   it("returns 1 for non-positive or non-finite ranges", () => {
@@ -58,44 +35,49 @@ describe("niceStep", () => {
 });
 
 describe("drawAxes", () => {
-  it("paints panel background and border then emits grid strokes", () => {
-    const ctx = mockContext();
-    drawAxes(ctx, 10, 20, 200, 100, 0, 10, 0, 5, "t (ms)");
-    expect(ctx.fillStyle).toBe(PLOT_AXIS);
-    expect(ctx.fillRect).toHaveBeenCalledWith(10, 20, 200, 100);
-    expect(ctx.strokeRect).toHaveBeenCalledWith(10, 20, 200, 100);
-    // last strokeStyle before label work uses axis/grid palette
-    expect([PLOT_BORDER, PLOT_AXIS, PLOT_PANEL_BG, "#1a1f2a"]).toContain(
-      // strokeStyle ends as grid during X ticks
-      (ctx as { strokeStyle: string }).strokeStyle,
-    );
-    expect(ctx.fillText).toHaveBeenCalled();
-    expect(ctx.beginPath).toHaveBeenCalled();
+  it("paints the panel, then draws every tick label in the axis colour", () => {
+    const recording = mockPlotContext();
+    drawAxes(recording.ctx, 10, 20, 200, 100, 0, 10, 0, 5, "t (ms)");
+
+    expect(recording.rects).toContainEqual({
+      fill: PLOT_PANEL_BG, height: 100, width: 200, x: 10, y: 20,
+    });
+    expect(recording.strokes).toContain(PLOT_BORDER);
+    expect(recording.texts.length).toBeGreaterThan(0);
+    expect(recording.texts.every((text) => text.fill === PLOT_AXIS)).toBe(true);
+    expect(drewNonFinite(recording)).toBe(false);
+  });
+
+  it("labels the horizontal axis with the unit it was given", () => {
+    const recording = mockPlotContext();
+    drawAxes(recording.ctx, 10, 20, 200, 100, 0, 10, 0, 5, "t (ms)");
+
+    expect(recording.texts.map((text) => text.text)).toContain("t (ms)");
   });
 });
 
 describe("drawLine", () => {
   it("strokes a polyline through scaled data points", () => {
-    const ctx = mockContext() as CanvasRenderingContext2D & { __path: string[] };
-    drawLine(ctx, 0, 0, 100, 50, [0, 1], [0, 10], 0, 1, 0, 10, "#4fc3f7", 2);
-    expect(ctx.strokeStyle).toBe("#4fc3f7");
-    expect(ctx.lineWidth).toBe(2);
-    expect(ctx.moveTo).toHaveBeenCalledWith(0, 50);
-    expect(ctx.lineTo).toHaveBeenCalledWith(100, 0);
-    expect(ctx.stroke).toHaveBeenCalled();
+    const recording = mockPlotContext();
+    drawLine(recording.ctx, 0, 0, 100, 50, [0, 1], [0, 10], 0, 1, 0, 10, "#4fc3f7", 2);
+
+    expect(recording.strokes).toContain("#4fc3f7");
+    expect(recording.path).toEqual(["M0,50", "L100,0"]);
+    expect(drewNonFinite(recording)).toBe(false);
   });
 
   it("draws the paired prefix when the two lists disagree in length", () => {
-    const ctx = mockContext() as CanvasRenderingContext2D;
-    drawLine(ctx, 0, 0, 100, 50, [0, 0.5, 1], [0, 10], 0, 1, 0, 10, "#4fc3f7", 2);
-    expect(ctx.moveTo).toHaveBeenCalledExactlyOnceWith(0, 50);
-    expect(ctx.lineTo).toHaveBeenCalledExactlyOnceWith(50, 0);
+    const recording = mockPlotContext();
+    drawLine(recording.ctx, 0, 0, 100, 50, [0, 0.5, 1], [0, 10], 0, 1, 0, 10, "#4fc3f7", 2);
+
+    expect(recording.path).toEqual(["M0,50", "L50,0"]);
+    expect(drewNonFinite(recording)).toBe(false);
   });
 
   it("draws nothing at all rather than a NaN path when one list is empty", () => {
-    const ctx = mockContext() as CanvasRenderingContext2D;
-    drawLine(ctx, 0, 0, 100, 50, [0, 1], [], 0, 1, 0, 10, "#4fc3f7", 2);
-    expect(ctx.moveTo).not.toHaveBeenCalled();
-    expect(ctx.lineTo).not.toHaveBeenCalled();
+    const recording = mockPlotContext();
+    drawLine(recording.ctx, 0, 0, 100, 50, [0, 1], [], 0, 1, 0, 10, "#4fc3f7", 2);
+
+    expect(recording.path).toEqual([]);
   });
 });

@@ -10,7 +10,15 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import SnnStudioPanel from "./SnnStudioPanel";
 
-createRoot(document.getElementById("root")!).render(
+const container = document.getElementById("root");
+if (container === null) {
+  // The element is in `index.html`; its absence means the document that loaded
+  // this bundle is not the Studio's own. Saying so beats React's message about
+  // a null container.
+  throw new Error("SC-NeuroCore Studio: no #root element to mount into.");
+}
+
+createRoot(container).render(
   <StrictMode>
     <SnnStudioPanel />
   </StrictMode>

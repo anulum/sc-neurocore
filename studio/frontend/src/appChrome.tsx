@@ -7,14 +7,37 @@
 // SC-NeuroCore — Source/config provenance header
 
 /**
- * Shared chrome widgets for the Studio application shell.
+ * The small shared widgets the Studio shell is built from.
  *
- * Extracted from App so the composition root only owns layout orchestration
- * while tab/button/capability blocked-panel presentation stays cohesive.
+ * They live here so the composition root owns layout and nothing else. Each is
+ * presentational: none reads the store, and every one of them is told what to
+ * show and what to do when clicked.
  */
 
 import type { PanelCapabilityState } from "./capabilityShell";
 
+/**
+ * Pick a button's background, falling back to the accent colour.
+ *
+ * A function rather than an inline `||` so the reason has somewhere to live:
+ * callers pass `""` for "no particular colour", and `??` would render a button
+ * with no background at all.
+ *
+ * @param colour - The colour the caller asked for, if any.
+ * @returns The colour to paint.
+ */
+function presentColour(colour: string | undefined): string {
+  return colour !== undefined && colour.length > 0 ? colour : "var(--accent)";
+}
+
+/**
+ * One tab in the Studio's panel bar.
+ *
+ * @param props - The tab's label, its colour when active, whether it is
+ *   active, whether it is disabled, its title, and what to do when it is
+ *   clicked.
+ * @returns The tab button.
+ */
 export function Tab({
   active,
   color,
@@ -54,6 +77,13 @@ export function Tab({
   );
 }
 
+/**
+ * One small action button.
+ *
+ * @param props - The button's label, what to do when it is clicked, and its
+ *   optional colour, outline, title, disabled state and test handle.
+ * @returns The button.
+ */
 export function Btn({
   label,
   onClick,
@@ -80,7 +110,7 @@ export function Btn({
       title={title}
       data-testid={testId}
       style={{
-        background: outline ? "transparent" : color || "var(--accent)",
+        background: outline ? "transparent" : presentColour(color),
         border: outline ? "1px solid var(--control-border)" : "none",
         color: outline ? "var(--text-muted)" : "var(--bg-primary)",
         padding: "2px 7px",
@@ -92,6 +122,16 @@ export function Btn({
   );
 }
 
+/**
+ * What a panel shows instead of itself when its capability is unavailable.
+ *
+ * It names the capability, its status, the server's message and the
+ * requirements that were not met -- rather than an empty panel, which reads as
+ * a broken build rather than a deployment that is missing something.
+ *
+ * @param props - The panel's capability state.
+ * @returns The blocked panel.
+ */
 export function CapabilityUnavailable({ state }: { state: PanelCapabilityState }) {
   return (
     <div className="capability-blocked-panel">

@@ -8,10 +8,15 @@
 
 import type { ModelProvenance } from "./api/client";
 
-/** Build a human-readable citation for a model's source publication.
+/**
+ * Build the citation for a model's source publication.
  *
- * Returns an empty string when there is no citeable provenance, so callers can
- * hide the "How to cite" affordance for models that are not yet curated.
+ * @param provenance - What the catalogue records about where the model came
+ *   from, if anything.
+ * @param modelName - The model's name, used when the provenance has no title.
+ * @returns The citation, or an empty string when there is nothing citeable.
+ *   Callers hide the "How to cite" affordance on an empty string rather than
+ *   showing an incomplete reference, which would be worse than none.
  */
 export function formatCitation(
   provenance: ModelProvenance | null,

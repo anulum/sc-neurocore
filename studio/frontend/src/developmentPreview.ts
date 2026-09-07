@@ -16,14 +16,32 @@ export const DEVELOPMENT_PREVIEW_LABEL = "Development preview" as const;
 export const DEVELOPMENT_PREVIEW_DETAIL =
   "Experimental lab Studio — not a production-validated release surface." as const;
 
-export type StudioDeploymentProfile = "development" | "production" | string | null | undefined;
+/**
+ * What the operator status says the deployment is.
+ *
+ * Any string, because the value arrives from the server and this build must
+ * not decide that an unrecognised profile is impossible. `development` and
+ * `production` are the two it can say something specific about; everything
+ * else, including absent, is treated as unknown and shown the loud banner.
+ */
+export type StudioDeploymentProfile = string | null | undefined;
 
 /**
  * Whether the shell must show the development-preview banner.
  *
- * Production profile still shows the banner until an explicit release criterion
- * flips ``releaseValidated`` (default false). Missing operator status is treated
- * as non-production (safe default: loud preview).
+ * The banner shows until an explicit release criterion says otherwise. A
+ * production profile does not turn it off: the profile describes the
+ * deployment's own defaults, not whether this interface has passed release
+ * criteria, and a preview that presents itself as a validated product is the
+ * failure this exists to prevent.
+ *
+ * The profile is therefore not read at all here -- it only changes the banner's
+ * wording, in `developmentPreviewBannerModel`.
+ *
+ * @param _deploymentProfile - What the deployment says it is. Deliberately
+ *   unused: see above.
+ * @param options - Whether release criteria have passed.
+ * @returns Whether to show the banner.
  */
 export function shouldShowDevelopmentPreviewBanner(
   _deploymentProfile: StudioDeploymentProfile,
@@ -32,13 +50,18 @@ export function shouldShowDevelopmentPreviewBanner(
   if (options.releaseValidated === true) {
     return false;
   }
-  // Always show until releaseValidated; profile only changes tone in banner copy.
-  void _deploymentProfile;
   return true;
 }
 
 /**
- * Build the banner copy for the current deployment profile.
+ * Build the banner's copy.
+ *
+ * @param deploymentProfile - What the deployment says it is.
+ * @param options - Whether release criteria have passed.
+ * @returns The label, the detail line, and whether to show them. A production
+ *   profile gets an extra sentence saying the profile is production and the
+ *   interface is still preview, because that is the pairing most likely to be
+ *   misread.
  */
 export function developmentPreviewBannerModel(
   deploymentProfile: StudioDeploymentProfile,

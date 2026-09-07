@@ -315,7 +315,10 @@ import {
   sweepParamYState,
   thresholdState,
 } from "../studioInputState";
-import type { StudioState } from "./studioTypes";
+import type {
+  StudioState,
+  StudioStoreActions,
+} from "./studioTypes";
 import {
   runStoreHeavyAnalysis,
   simulationConfigInput,
@@ -326,7 +329,12 @@ import {
 } from "../studioAutoSimulation";
 import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
 
-/** The graph the store currently holds, as a history snapshot. */
+/**
+ * The graph the store currently holds, as a history snapshot.
+ *
+ * @param state - The store's graph fields.
+ * @returns The snapshot.
+ */
 function studioGraphSnapshotFrom(state: {
   graphPopulations: PopulationNode[];
   graphProjections: ProjectionEdge[];
@@ -334,7 +342,15 @@ function studioGraphSnapshotFrom(state: {
   return graphSnapshotOf(state.graphPopulations, state.graphProjections);
 }
 
-/** The history after recording the graph as it stands before an edit. */
+/**
+ * The history after recording the graph as it stands before an edit.
+ *
+ * The snapshot is taken *before* the edit, which is what makes undo restore
+ * the state the reader was looking at rather than the one they just created.
+ *
+ * @param state - The store's graph and history fields.
+ * @returns The history with that snapshot recorded.
+ */
 function studioGraphEditRecordedFrom(state: {
   graphHistory: StudioGraphHistory;
   graphPopulations: PopulationNode[];
@@ -343,7 +359,12 @@ function studioGraphEditRecordedFrom(state: {
   return graphEditRecorded(state.graphHistory, studioGraphSnapshotFrom(state));
 }
 
-/** The state patch that reinstates one recorded graph. */
+/**
+ * The state patch that reinstates one recorded graph.
+ *
+ * @param step - The history step to reinstate.
+ * @returns The patch: the graph as it was, and the history that produced it.
+ */
 function studioGraphRestoredState(step: StudioGraphHistoryStep): {
   graphHistory: StudioGraphHistory;
   graphPopulations: PopulationNode[];
@@ -357,14 +378,41 @@ function studioGraphRestoredState(step: StudioGraphHistoryStep): {
 }
 
 
+/**
+ * The pending auto-simulation, if one is scheduled.
+ *
+ * Module-level rather than in the store because it is a timer handle, not
+ * state: nothing renders from it, and putting it in the store would make every
+ * keystroke that reschedules a run also re-render every subscriber.
+ */
 let debounceTimer: StudioAutoSimulationTimer | null = null;
 
+/**
+ * Build every action the Studio store exposes.
+ *
+ * The actions are closures over `set` and `get` rather than methods, which is
+ * what lets each one read the state as it stands when it runs rather than as
+ * it stood when it was created -- an action that awaits a request must see the
+ * store the user has since changed.
+ *
+ * **A run started by an action is deliberately not awaited.** Several actions
+ * end by starting a simulation, and they mark it `void`: the caller changed a
+ * parameter and the run that follows is a consequence, not a result. Awaiting
+ * it would make every setter as slow as a simulation, and the run reports
+ * itself through the store as it progresses.
+ *
+ * @param set - Writes a patch into the store.
+ * @param get - Reads the store as it stands.
+ * @returns Every action, complete. The return type is the derived action half
+ *   of the state rather than a `Partial`, so a forgotten action is a type
+ *   error here instead of a runtime `undefined` at the first click.
+ */
 export function createStudioStoreActions(
   set: (partial: Partial<StudioState> | ((state: StudioState) => Partial<StudioState>)) => void,
   get: () => StudioState,
-): Partial<StudioState> {
+): StudioStoreActions {
   return {
-  setSourceMode: (m) => set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() }),
+  setSourceMode: (m) => { set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() }); },
   setEquations: (eqs) => {
     set({ ...equationsState(eqs), ...compilerConfigurationInvalidatedState() });
     get().autoSimulate();
@@ -398,14 +446,14 @@ export function createStudioStoreActions(
     }));
     get().autoSimulate();
   },
-  setModelIntegrator: (modelIntegrator) => set({
+  setModelIntegrator: (modelIntegrator) => { set({
     modelIntegrator,
     ...compilerConfigurationInvalidatedState(),
-  }),
-  setModelQFormat: (modelQFormat) => set({
+  }); },
+  setModelQFormat: (modelQFormat) => { set({
     modelQFormat,
     ...compilerConfigurationInvalidatedState(),
-  }),
+  }); },
   setDt: (dt) => {
     set({ ...dtState(dt), ...compilerConfigurationInvalidatedState() });
     get().autoSimulate();
@@ -419,12 +467,12 @@ export function createStudioStoreActions(
   setFrequencyHz: (frequencyHz) => { set(frequencyHzState(frequencyHz)); get().autoSimulate(); },
   setSeed: (seed) => { set(seedState(seed)); get().autoSimulate(); },
   setTrial: (trial) => { set(trialState(trial)); get().autoSimulate(); },
-  setActiveTab: (tab) => set(activeTabState(tab)),
-  setModelFilter: (f) => set(modelFilterState(f)),
-  setSweepParam: (p) => set(sweepParamState(p)),
-  setSweepParamY: (p) => set(sweepParamYState(p)),
+  setActiveTab: (tab) => { set(activeTabState(tab)); },
+  setModelFilter: (f) => { set(modelFilterState(f)); },
+  setSweepParam: (p) => { set(sweepParamState(p)); },
+  setSweepParamY: (p) => { set(sweepParamYState(p)); },
 
-  loadTemplates: async () => set(templatesLoadedState(await fetchTemplates())),
+  loadTemplates: async () => { set(templatesLoadedState(await fetchTemplates())); },
   loadCapabilities: async () => {
     set(capabilityLoadingState());
     try {
@@ -704,21 +752,24 @@ export function createStudioStoreActions(
     const firstModel = models[0];
     if (firstModel !== undefined && !get().selectedModelName) await get().selectModel(firstModel.name);
   },
-  loadPresets: async () => set(presetsLoadedState(await fetchPresets())),
+  loadPresets: async () => { set(presetsLoadedState(await fetchPresets())); },
 
   selectTemplate: (name) => {
     const template = get().templates.find((candidate) => candidate.name === name);
     if (template === undefined) return;
     set({ ...templateSelectedState(template), ...compilerConfigurationInvalidatedState() });
-    get().runSimulation();
+    void get().runSimulation();
   },
 
   selectModel: async (name) => {
     set({ ...modelSelectionStartedState(name), ...compilerConfigurationInvalidatedState() });
+    // No `detail === null` guard: the route's contract does not allow one, and
+    // the guard that used to be here defended a single field of a response that
+    // nothing validates. Response validation at the API boundary is recorded as
+    // its own unit.
     const detail = await fetchModelDetail(name);
-    if (detail === null) return;
     set(modelDetailLoadedState(detail));
-    get().runSimulation();
+    void get().runSimulation();
   },
 
   loadPreset: async (id) => {
@@ -730,11 +781,11 @@ export function createStudioStoreActions(
     } else if (selection.odeState !== null) {
       set({ ...selection.odeState, ...compilerConfigurationInvalidatedState() });
     }
-    if (selection.action.kind === "fi-curve") get().runFICurve();
-    else if (selection.action.kind === "precision") get().runPrecision();
+    if (selection.action.kind === "fi-curve") void get().runFICurve();
+    else if (selection.action.kind === "precision") void get().runPrecision();
     else {
       set(activeTabState(selection.action.activeTab));
-      get().runSimulation();
+      void get().runSimulation();
     }
   },
 
@@ -860,7 +911,7 @@ export function createStudioStoreActions(
     }
   },
 
-  runCharacterize: async () => {
+  runCharacterize: () => {
     const s = get();
     if (s.isSimulating || !s.selectedModelName) return;
     set(characterizeRunStartState());
@@ -871,8 +922,8 @@ export function createStudioStoreActions(
     });
     ws.onerror = () => {
       fetchCharacterize(config).then(
-        (charResult) => set(characterizeCompleteState(charResult)),
-        (e) => set(characterizeFailureState(e)),
+        (charResult) => { set(characterizeCompleteState(charResult)); },
+        (e: unknown) => { set(characterizeFailureState(e)); },
       );
     };
   },
@@ -1009,7 +1060,7 @@ export function createStudioStoreActions(
     } catch (e) { set(compilerFailureState(e)); }
   },
 
-  setSynthTarget: (t) => set(synthesisTargetState(t)),
+  setSynthTarget: (t) => { set(synthesisTargetState(t)); },
 
   runSynthesis: async () => {
     const s = get();
@@ -1026,7 +1077,7 @@ export function createStudioStoreActions(
         if (s.compileTraceability === null || s.cosimResult === null) {
           throw new Error("Compile and bit-exact co-simulate the selected model before routing.");
         }
-        if (s.cosimResult.bit_exact !== true
+        if (!s.cosimResult.bit_exact
           || s.cosimResult.rtl.source_sha256 !== s.compileTraceability.output.rtl_sha256) {
           throw new Error("Selected RTL does not have current bit-exact co-simulation parity.");
         }
@@ -1120,7 +1171,7 @@ export function createStudioStoreActions(
         ...compilerConfigurationInvalidatedState(),
         projectRevision: studioProjectRevisionFromLoadResponse(data, name),
       });
-      get().runSimulation();
+      void get().runSimulation();
     } catch (e) { set(studioProjectFailureState(e, "Project load failed")); }
   },
 
@@ -1437,11 +1488,10 @@ export function createStudioStoreActions(
       const result = await apiStartTraining(s.trainingConfig);
       set(trainingStartedState(result.job_id));
       connectStudioTrainingEventSource(result.job_id, {
-        onDisconnected: () => set(trainingStreamDisconnectedState()),
-        onEpoch: (metrics) =>
-          set((prev) => trainingEpochAppendedState(prev.trainingEpochs, metrics)),
-        onError: (message) => set(trainingStreamErrorState(message)),
-        onTerminal: (status) => set(trainingTerminalState(status)),
+        onDisconnected: () => { set(trainingStreamDisconnectedState()); },
+        onEpoch: (metrics) => { set((prev) => trainingEpochAppendedState(prev.trainingEpochs, metrics)); },
+        onError: (message) => { set(trainingStreamErrorState(message)); },
+        onTerminal: (status) => { set(trainingTerminalState(status)); },
       });
     } catch (e) {
       set(trainingFailureState(e, "Training start failed", { markFailed: true }));
@@ -1573,7 +1623,7 @@ export function createStudioStoreActions(
     if (s.sourceMode === "model" && s.modelDetail) {
       set(modelDefaultsState(s.modelDetail));
     }
-    get().runSimulation();
+    void get().runSimulation();
   },
 
   saveSession: (name) => {
@@ -1591,7 +1641,7 @@ export function createStudioStoreActions(
       ...studioSavedSessionRestoreState(session.state),
       ...compilerConfigurationInvalidatedState(),
     });
-    get().runSimulation();
+    void get().runSimulation();
   },
 
   deleteSession: (name) => {
@@ -1617,7 +1667,7 @@ export function createStudioStoreActions(
       protocol: s.protocol,
     }).then((result) => {
       set(studioShareStatusState(result));
-      scheduleStudioShareStatusClear(() => set(studioShareStatusClearedState()));
+      scheduleStudioShareStatusClear(() => { set(studioShareStatusClearedState()); });
     });
   },
   };

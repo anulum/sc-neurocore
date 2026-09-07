@@ -11,6 +11,16 @@ import { join } from "node:path";
 
 import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * Read a port from the environment, refusing anything that is not one.
+ *
+ * @param name - The environment variable to read.
+ * @param fallback - The port to use when it is not set.
+ * @returns The port.
+ * @throws {Error} When the variable is set to something that is not a port.
+ *   A run configured with a bad port should stop here rather than start a
+ *   server somewhere nobody is looking.
+ */
 function configuredPort(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined) return fallback;

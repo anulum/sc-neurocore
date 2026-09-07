@@ -15,9 +15,17 @@
 
 import { at } from "./arrayAt";
 
+/** The series colours, in the order traces are assigned them. */
 export const PLOT_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8", "#90a4ae"] as const;
+/** The ground behind a whole plot. */
 export const PLOT_BG = "#0d1117";
+/** The ground inside a plot panel, one step darker than the plot's. */
 export const PLOT_PANEL_BG = "#0a0e14";
+/**
+ * The gridlines. Deliberately below the 3:1 contrast floor: a gridline is not
+ * information a reader needs to identify, and one at 3:1 competes with the
+ * trace drawn over it.
+ */
 export const PLOT_GRID = "#1a1f2a";
 /**
  * Axis rule and tick-label colour for every Studio plot canvas.
@@ -29,6 +37,7 @@ export const PLOT_GRID = "#1a1f2a";
  * paletteContrast.test.ts.
  */
 export const PLOT_AXIS = "#727d8b";
+/** The rule around a plot panel. */
 export const PLOT_BORDER = "#21262d";
 
 /**
@@ -47,7 +56,23 @@ export function niceStep(range: number, ticks: number): number {
 }
 
 /**
- * Paint a dark plot panel with grid lines and axis tick labels.
+ * Paint a plot panel: its ground, its border, its grid and its tick labels.
+ *
+ * Tick labels are placed on a 1-2-5 ladder rather than at fixed intervals, so
+ * an axis reads in round numbers whatever range it spans. A label that would
+ * land within two pixels of the panel edge is skipped: a half-clipped number
+ * is worse than an unlabelled gridline.
+ *
+ * @param ctx - The canvas to draw on.
+ * @param x0 - The panel's left edge, in canvas pixels.
+ * @param y0 - The panel's top edge, in canvas pixels.
+ * @param pw - The panel's width.
+ * @param ph - The panel's height.
+ * @param xMin - The lowest value on the horizontal axis.
+ * @param xMax - The highest value on the horizontal axis.
+ * @param yMin - The lowest value on the vertical axis.
+ * @param yMax - The highest value on the vertical axis.
+ * @param xLabel - A unit or name to print at the right of the horizontal axis.
  */
 export function drawAxes(
   ctx: CanvasRenderingContext2D,
@@ -115,6 +140,20 @@ export function drawAxes(
  * reading past the end and stroking `NaN` coordinates — was worse than either.
  * Surfacing a malformed response to the reader belongs to whoever validates
  * responses, not to a drawing primitive.
+ *
+ * @param ctx - The canvas to draw on.
+ * @param x0 - The panel's left edge, in canvas pixels.
+ * @param y0 - The panel's top edge, in canvas pixels.
+ * @param pw - The panel's width.
+ * @param ph - The panel's height.
+ * @param xData - The samples' horizontal values.
+ * @param yData - The samples' vertical values, paired with `xData`.
+ * @param xMin - The lowest value on the horizontal axis.
+ * @param xMax - The highest value on the horizontal axis.
+ * @param yMin - The lowest value on the vertical axis.
+ * @param yMax - The highest value on the vertical axis.
+ * @param color - The stroke colour.
+ * @param lineWidth - The stroke width.
  */
 export function drawLine(
   ctx: CanvasRenderingContext2D,

@@ -48,11 +48,17 @@ const AUDITED = [
   "e2e/analysis-job-host.spec.ts",
   "e2e/catalogue-to-silicon-live.spec.ts",
   "e2e/experiment-export-live.spec.ts",
+  "e2e/federation-host/vite.config.ts",
   "e2e/guided-operator-run.spec.ts",
   "e2e/module-federation-host.spec.ts",
   "e2e/network-canvas-live.spec.ts",
+  "playwright.config.ts",
   "playwright.export.config.ts",
+  "playwright.federation.config.ts",
   "playwright.graph.config.ts",
+  "playwright.live.config.ts",
+  "src/App.tsx",
+  "src/SnnStudioPanel.tsx",
   "src/adminFormParsers.test.ts",
   "src/adminFormParsers.ts",
   "src/adminShell.test.ts",
@@ -83,6 +89,7 @@ const AUDITED = [
   "src/api/synthApi.ts",
   "src/api/trainingApi.ts",
   "src/api/types.ts",
+  "src/appChrome.tsx",
   "src/arrayAt.test.ts",
   "src/arrayAt.ts",
   "src/auditArchiveShell.test.ts",
@@ -96,6 +103,8 @@ const AUDITED = [
   "src/capabilityShell.ts",
   "src/characterizeStoreState.test.ts",
   "src/characterizeStoreState.ts",
+  "src/citation.test.ts",
+  "src/citation.ts",
   "src/compilerStoreState.test.ts",
   "src/compilerStoreState.ts",
   "src/components/AdminAuditArchiveSection.tsx",
@@ -173,6 +182,8 @@ const AUDITED = [
   "src/components/VerilogPreview.tsx",
   "src/contrastAudit.test.ts",
   "src/contrastAudit.ts",
+  "src/developmentPreview.test.ts",
+  "src/developmentPreview.ts",
   "src/docstringGate.test.ts",
   "src/evidenceBundles.test.ts",
   "src/evidenceBundles.ts",
@@ -184,6 +195,7 @@ const AUDITED = [
   "src/evidenceCartIdentity.ts",
   "src/evidenceSeal.test.ts",
   "src/evidenceSeal.ts",
+  "src/main.tsx",
   "src/modelComparison.test.ts",
   "src/modelComparison.ts",
   "src/modelCompileConfig.test.ts",
@@ -216,11 +228,20 @@ const AUDITED = [
   "src/plots/stateViews.ts",
   "src/plots/traceView.test.ts",
   "src/plots/traceView.ts",
+  "src/progressAuth.test.ts",
+  "src/projectClientAuth.test.ts",
   "src/simulationExports.test.ts",
   "src/simulationExports.ts",
+  "src/simulationPlotCanvas.test.ts",
+  "src/simulationPlotCanvas.ts",
   "src/simulationRaw.test.ts",
   "src/simulationRaw.ts",
+  "src/stores/studio.ts",
+  "src/stores/studioHeavyAnalysis.ts",
+  "src/stores/studioInitialState.ts",
   "src/stores/studioStoreActions.test.ts",
+  "src/stores/studioStoreActions.ts",
+  "src/stores/studioTypes.ts",
   "src/studioAnalysisJobRunner.test.ts",
   "src/studioAnalysisJobRunner.ts",
   "src/studioAnalysisJobSelection.test.ts",
@@ -277,6 +298,7 @@ const AUDITED = [
   "src/useModelScanJob.ts",
   "src/useStudioAnalysisJobIntegration.test.ts",
   "src/useStudioAnalysisJobIntegration.ts",
+  "vite.config.ts",
 ];
 
 /**
@@ -303,7 +325,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * evidence and export group each grew `AUDITED`, and the remainder was
    * re-taken with the tool afterwards rather than reduced on paper.
    */
-  declarations: 81,
+  declarations: 69,
   /**
    * Files carrying at least one of those declarations.
    *
@@ -313,7 +335,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 21,
+  files: 13,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
@@ -326,7 +348,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * is the parent; the commit this figure lands in adds files to `AUDITED`
    * and nothing else that ESLint reads.
    */
-  measuredOnSourceSha: "15f57b1f14dfd94b19cbc67b8554b605bef1dbde",
+  measuredOnSourceSha: "77b61d36950b4086af19dea8ff28a92c320fcfcd",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**
