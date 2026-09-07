@@ -94,6 +94,13 @@ export interface StudioProjectDeletedListedStatePatch {
 /** A workspace operation failed, with the message to show. */
 export interface StudioProjectFailureStatePatch {
   error: string;
+  /**
+   * The workspace and revision a refused edit diverged from, when the refusal
+   * was a save conflict. Present only then: it is what
+   * `keepRefusedEdit` needs, and its absence is how the UI knows there is
+   * nothing to keep.
+   */
+  refusedEdit?: { name: string; baseRevision: number } | null;
 }
 
 /**
@@ -193,13 +200,23 @@ export function studioProjectRevisionFromLoadResponse(
  * that was never in conflict with anything.
  *
  * @param error - Whatever the save threw or rejected with.
+ * @param name - The workspace the save was for.
+ * @param baseRevision - The revision the edit started from, or `null`.
  * @returns The patch, with the message the reader should see.
  */
 export function studioProjectSaveFailureState(
   error: unknown,
+  name = "",
+  baseRevision: number | null = null,
 ): StudioProjectFailureStatePatch {
   if (error instanceof StudioRequestError && error.status === 409) {
-    return { error: `${error.message} Nothing was overwritten.` };
+    // The refusal protected the other editor. It did not keep this one's work,
+    // which still exists only here — so say that it can be kept, and carry what
+    // keeping it needs.
+    return {
+      error: `${error.message} Nothing was overwritten; this edit can be kept as its own branch.`,
+      refusedEdit: baseRevision === null ? null : { name, baseRevision },
+    };
   }
   if (error instanceof StudioRequestError && error.status === 503) {
     return { error: `${error.message} Nothing was written; save again.` };

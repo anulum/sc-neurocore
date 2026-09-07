@@ -250,8 +250,31 @@ describe("a refused save", () => {
     expect(studioProjectSaveFailureState(conflict)).toEqual({
       error:
         "the workspace moved to revision 5 while you were editing revision 3; "
-        + "reload and reapply your change. Nothing was overwritten.",
+        + "reload and reapply your change. Nothing was overwritten; this edit can be "
+        + "kept as its own branch.",
+      // No workspace or revision was supplied, so there is nothing to keep it
+      // from — the field says so rather than guessing a divergence point.
+      refusedEdit: null,
     });
+  });
+
+  it("carries where the refused edit diverged from, so it can be kept", () => {
+    const conflict = new StudioRequestError(
+      "the workspace moved to revision 5 while you were editing revision 3; reload and reapply your change.",
+      409,
+      { actual_revision: 5, error: "workspace_conflict", expected_revision: 3 },
+    );
+
+    expect(studioProjectSaveFailureState(conflict, "column", 3).refusedEdit).toEqual({
+      name: "column",
+      baseRevision: 3,
+    });
+  });
+
+  it("offers nothing to keep when the failure was not a conflict", () => {
+    const unavailable = new StudioRequestError("busy", 503, {});
+
+    expect(studioProjectSaveFailureState(unavailable, "column", 3).refusedEdit).toBeUndefined();
   });
 
   it("tells the editor a busy workspace can simply be saved again", () => {

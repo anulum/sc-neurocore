@@ -2284,6 +2284,18 @@ export interface ProjectRevisionList {
   revisions: ProjectRevision[];
 }
 
+/** What a refused edit became after being kept as its own branch. */
+export interface ProjectBranchResponse {
+  /** The workspace now holding the refused edit. */
+  branched: string;
+  /** The workspace it diverged from. */
+  from: string;
+  /** The revision it diverged at. */
+  base_revision: number;
+  /** The branch's own first revision, always 1. */
+  revision: number;
+}
+
 /** The 409 body of a save made from a revision that is no longer current. */
 export interface WorkspaceConflictDetail {
   actual_revision: number;

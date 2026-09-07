@@ -81,6 +81,7 @@ import {
   validateGraph as apiValidateGraph,
   exportNIR as apiExportNIR,
   importNIR as apiImportNIR,
+  branchRefusedEdit as apiBranchRefusedEdit,
   saveProject as apiSaveProject,
   loadProject as apiLoadProject,
   listDeletedProjects as apiListDeletedProjects,
@@ -1249,7 +1250,27 @@ export function createStudioStoreActions(
       const projectSaveResult = await apiSaveProject(name, state, expected);
       set(studioProjectSavedState(projectSaveResult));
       await get().listServerProjects();
-    } catch (e) { set(studioProjectSaveFailureState(e)); }
+    } catch (e) { set(studioProjectSaveFailureState(e, name, expected)); }
+  },
+
+  keepRefusedEdit: async () => {
+    // Only reachable after a save conflict, which is the only thing that sets
+    // `refusedEdit`. The state sent is the one still held here — the edit that
+    // was refused — not a reload of what won.
+    const pending = get().refusedEdit;
+    if (!pending) return;
+    try {
+      const branch = await apiBranchRefusedEdit(
+        pending.name,
+        studioProjectSaveState(get()),
+        pending.baseRevision,
+      );
+      set({
+        error: `Kept as "${branch.branched}". Reload ${pending.name} to see the other edit.`,
+        refusedEdit: null,
+      });
+      await get().listServerProjects();
+    } catch (e) { set(studioProjectFailureState(e, "Keeping the refused edit failed")); }
   },
 
   loadProjectFromServer: async (name, revision = null) => {

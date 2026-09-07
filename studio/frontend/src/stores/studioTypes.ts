@@ -223,6 +223,11 @@ export interface StudioState {
   codeExperimentSha256: string;
   savedSessions: StudioSavedSession[];
   error: string | null;
+  /**
+   * Where a refused edit diverged from, set only by a save conflict.
+   * `null` means there is nothing waiting to be kept.
+   */
+  refusedEdit: { name: string; baseRevision: number } | null;
   isSimulating: boolean;
   activeTab: ViewTab;
   modelFilter: string;
@@ -324,6 +329,13 @@ export interface StudioState {
   runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;
   saveProjectToServer: (name: string) => Promise<void>;
+  /**
+   * Store the edit a save conflict refused, as its own branch.
+   *
+   * A no-op unless a conflict has set `refusedEdit`, which is the only
+   * thing that can: there is nothing to keep otherwise.
+   */
+  keepRefusedEdit: () => Promise<void>;
   loadProjectFromServer: (name: string, revision?: number | null) => Promise<void>;
   listServerProjects: () => Promise<void>;
   deleteServerProject: (name: string) => Promise<void>;

@@ -13,6 +13,7 @@ import type {
   ProjectRevisionList,
   ProjectSummary,
   ProjectSaveResponse,
+  ProjectBranchResponse,
   PipelineResult,
 } from "./types";
 
@@ -33,6 +34,29 @@ export const saveProject = (
   state: Record<string, unknown>,
   expectedRevision: number | null = null,
 ) => post<ProjectSaveResponse>("/project/save", { name, state, expected_revision: expectedRevision });
+
+/**
+ * Keep an edit a save conflict refused, as a branch of its own.
+ *
+ * A stale save is refused so it cannot overwrite the other editor's work, which
+ * leaves the refused edit only in this browser. Sending it here stores it as the
+ * first revision of its own workspace, named for the revision it diverged from,
+ * so it survives a closed tab and can be compared against what won.
+ *
+ * @param name - The workspace whose save was refused.
+ * @param state - The refused workspace state, exactly as held here.
+ * @param baseRevision - The revision this edit started from.
+ * @returns The branch that now holds the edit.
+ */
+export const branchRefusedEdit = (
+  name: string,
+  state: Record<string, unknown>,
+  baseRevision: number,
+) =>
+  post<ProjectBranchResponse>(`/project/${name}/branch-refused-edit`, {
+    state,
+    base_revision: baseRevision,
+  });
 
 /**
  * Load a workspace revision; `null` reads the current one.
