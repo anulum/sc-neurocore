@@ -16,6 +16,11 @@ import subprocess
 
 import pytest
 
+# torch is an optional extra (`training`, `research`, `full`). This module
+# cannot run without it, so it skips rather than failing collection in an
+# environment installed with `dev` alone.
+pytest.importorskip("torch")
+
 from sc_neurocore.benchmarks.stochastic_backprop import build_stochastic_backprop_benchmark
 from sc_neurocore.ir.scnir_schema import SCNIR_SCHEMA_VERSION, validate_scnir_dict
 from sc_neurocore.training.sc_estimators import DifferentiableSCConfig

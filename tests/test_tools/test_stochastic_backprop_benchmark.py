@@ -12,6 +12,13 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
+# torch is an optional extra (`training`, `research`, `full`). This module
+# cannot run without it, so it skips rather than failing collection in an
+# environment installed with `dev` alone.
+pytest.importorskip("torch")
+
 from tools import stochastic_backprop_benchmark
 
 

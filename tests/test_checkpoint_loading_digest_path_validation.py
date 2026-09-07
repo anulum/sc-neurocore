@@ -12,6 +12,11 @@ from pathlib import Path
 
 import pytest
 
+# torch is an optional extra (`training`, `research`, `full`). This module
+# cannot run without it, so it skips rather than failing collection in an
+# environment installed with `dev` alone.
+pytest.importorskip("torch")
+
 from sc_neurocore.security.checkpoint_loading import CheckpointTrustError, _checkpoint_digest
 
 
