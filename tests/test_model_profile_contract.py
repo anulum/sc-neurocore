@@ -406,3 +406,41 @@ def test_method_table_matches_the_derived_classes() -> None:
         profile = resolve_profile(schema)
         assert profile.numerical.family == row["family"]
         assert profile.numerical.exactness == row["exactness"]
+
+
+def test_a_model_the_studio_can_configure_for_rtl_declares_it_can_be_lowered() -> None:
+    """No canonical compile schema may exist for a profile that refuses lowering.
+
+    ``resolve_model_compile_configuration`` reads a model's canonical schema and
+    never consults ``lowering.rtl_supported``. Today the two agree — the thirteen
+    models whose profile refuses lowering all lack a canonical schema, so none is
+    reachable — but nothing holds them together. Authoring a schema for one of
+    them would silently make a model the Studio can configure for RTL out of a
+    model that states it cannot be lowered.
+
+    This binds the coincidence into a contract, which is cheaper than the guard
+    the alternative would need: a refusal on a code path that cannot currently
+    be reached is untestable apparatus.
+    """
+    from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+    from sc_neurocore.neurons.schema_module_aliases import schema_for_module
+    from sc_neurocore.studio.models import get_model_detail
+
+    contradictions = []
+    for name, module in sorted(_CLASS_TO_MODULE.items()):
+        try:
+            stem = schema_for_module(module)
+            profile = resolve_profile(load_schema(stem), stem=stem)
+        except Exception:  # noqa: BLE001 - a model with no bundled schema is out of scope
+            continue
+        detail = get_model_detail(name) or {}
+        if (
+            isinstance(detail.get("compile_configuration"), dict)
+            and not profile.lowering.rtl_supported
+        ):
+            contradictions.append(name)
+
+    assert contradictions == [], (
+        "these models carry a canonical compile schema while their profile declares "
+        f"lowering.rtl_supported = false: {contradictions}"
+    )
