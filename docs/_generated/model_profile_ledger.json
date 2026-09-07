@@ -65,7 +65,7 @@
       "Izhikevich2007Neuron",
       "LapicqueNeuron"
     ],
-    "authored_profiles": 12,
+    "authored_profiles": 14,
     "realisation_kinds": {
       "descriptive-record": 13,
       "executable": 67
@@ -659,7 +659,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260905T182918Z__adaptive_threshold_if.json",
+          "receipt": "AdaptiveThresholdIFNeuron__cosim__20260907T075745Z__adaptive_threshold_if.json",
           "validators": [
             {
               "facet": "cosim",
@@ -2001,22 +2001,13 @@
       "counts_in_source_catalogue": true,
       "canonical": true,
       "realisation_kind": "executable",
-      "authored_profile": false,
+      "authored_profile": true,
       "scientific": {
         "name": "BrunelWangNeuron",
         "doi": "10.1023/A:1011204814320",
         "biological_state": [
           "v",
-          "refractory_time",
-          "spike_flag",
-          "phase",
-          "ext_latched",
-          "ampa_latched",
-          "nmda_latched",
-          "gaba_latched",
-          "k1",
-          "midpoint",
-          "k2"
+          "spike_flag"
         ],
         "source_parameters": [
           "v_rest",
@@ -2066,10 +2057,21 @@
         "macro_step": 0.1,
         "evaluation_order": [
           "iterate",
+          "refractory hold inside dynamics (refractory_time)",
           "rising-edge threshold on the macro boundary",
           "no reset rule"
         ],
-        "auxiliary_registers": [],
+        "auxiliary_registers": [
+          "refractory_time",
+          "phase",
+          "ext_latched",
+          "ampa_latched",
+          "nmda_latched",
+          "gaba_latched",
+          "k1",
+          "midpoint",
+          "k2"
+        ],
         "implementation_parameters": [],
         "timebase_parameters": [
           "dt"
@@ -2255,7 +2257,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "BrunelWangNeuron__cosim__20260905T182922Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20260907T144228Z__brunel_wang.json",
           "validators": [
             {
               "facet": "cosim",
@@ -3390,7 +3392,7 @@
       "counts_in_source_catalogue": true,
       "canonical": true,
       "realisation_kind": "executable",
-      "authored_profile": false,
+      "authored_profile": true,
       "scientific": {
         "name": "CompteWMNeuron",
         "doi": "10.1093/cercor/10.9.910",
@@ -3400,32 +3402,7 @@
           "s_nmda",
           "x_nmda",
           "s_gaba",
-          "refractory_time",
-          "spike_flag",
-          "phase",
-          "current_latched",
-          "recurrent_latched",
-          "external_latched",
-          "inhibitory_latched",
-          "pre_ampa",
-          "pre_nmda",
-          "pre_x",
-          "pre_gaba",
-          "k1_v",
-          "k1_ampa",
-          "k1_nmda",
-          "k1_x",
-          "k1_gaba",
-          "mid_v",
-          "mid_ampa",
-          "mid_nmda",
-          "mid_x",
-          "mid_gaba",
-          "k2_v",
-          "k2_ampa",
-          "k2_nmda",
-          "k2_x",
-          "k2_gaba"
+          "spike_flag"
         ],
         "source_parameters": [
           "g_l",
@@ -3494,10 +3471,37 @@
         "macro_step": 0.02,
         "evaluation_order": [
           "iterate",
+          "refractory hold inside dynamics (refractory_time)",
           "rising-edge threshold on the macro boundary",
           "no reset rule"
         ],
-        "auxiliary_registers": [],
+        "auxiliary_registers": [
+          "refractory_time",
+          "phase",
+          "current_latched",
+          "recurrent_latched",
+          "external_latched",
+          "inhibitory_latched",
+          "pre_ampa",
+          "pre_nmda",
+          "pre_x",
+          "pre_gaba",
+          "k1_v",
+          "k1_ampa",
+          "k1_nmda",
+          "k1_x",
+          "k1_gaba",
+          "mid_v",
+          "mid_ampa",
+          "mid_nmda",
+          "mid_x",
+          "mid_gaba",
+          "k2_v",
+          "k2_ampa",
+          "k2_nmda",
+          "k2_x",
+          "k2_gaba"
+        ],
         "implementation_parameters": [],
         "timebase_parameters": [
           "dt"
@@ -9045,7 +9049,7 @@
           "facet": "dynamics_faithful",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__dynamics_faithful__20260905T115557Z__lapicque.json",
+          "receipt": "LapicqueNeuron__dynamics_faithful__20260907T075826Z__lapicque.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -9108,7 +9112,7 @@
           "facet": "class_validated",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__class_validated__20260905T115553Z__lapicque.json",
+          "receipt": "LapicqueNeuron__class_validated__20260907T075830Z__lapicque.json",
           "validators": [
             {
               "facet": "class_validated",
@@ -9225,7 +9229,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "LapicqueNeuron__cosim__20260905T182930Z__lapicque.json",
+          "receipt": "LapicqueNeuron__cosim__20260907T075833Z__lapicque.json",
           "validators": [
             {
               "facet": "cosim",
@@ -10286,7 +10290,7 @@
           "facet": "dynamics_faithful",
           "declared": true,
           "status": "bound",
-          "receipt": "McCullochPittsNeuron__dynamics_faithful__20260905T115421Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__dynamics_faithful__20260907T075752Z__mcculloch_pitts.json",
           "validators": [
             {
               "facet": "dynamics_faithful",
@@ -10305,7 +10309,7 @@
           "facet": "class_validated",
           "declared": true,
           "status": "bound",
-          "receipt": "McCullochPittsNeuron__class_validated__20260905T115418Z__mcculloch_pitts.json",
+          "receipt": "McCullochPittsNeuron__class_validated__20260907T075755Z__mcculloch_pitts.json",
           "validators": [
             {
               "facet": "class_validated",
@@ -13720,7 +13724,7 @@
           "facet": "cosim",
           "declared": true,
           "status": "bound",
-          "receipt": "ResonateAndFireNeuron__cosim__20260905T182926Z__resonate_fire.json",
+          "receipt": "ResonateAndFireNeuron__cosim__20260907T075749Z__resonate_fire.json",
           "validators": [
             {
               "facet": "cosim",

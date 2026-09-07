@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4854
+    "test_files": 4856
   },
   "documentation": {
     "public_pages": [
@@ -3813,6 +3813,7 @@
       "tests/test_bench_wong_wang.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
+      "tests/test_benchmark_evidence_provenance.py",
       "tests/test_benchmark_harness_contracts.py",
       "tests/test_benchmarks/test_bench_autonomous_learning.py",
       "tests/test_benchmarks/test_bench_kl_refine.py",
@@ -6588,6 +6589,7 @@
       "tests/test_privacy_membership_audit.py",
       "tests/test_privacy_privacy_accountant.py",
       "tests/test_privacy_spike_level_dp.py",
+      "tests/test_profile_role_join.py",
       "tests/test_profiler_platform_compare.py",
       "tests/test_profiler_platform_format_table.py",
       "tests/test_profiler_platform_platform_result.py",

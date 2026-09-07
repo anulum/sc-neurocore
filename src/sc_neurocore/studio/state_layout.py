@@ -220,8 +220,36 @@ class StateLayout:
         }
 
 
+#: Descriptor names for the refractory register where the descriptor and the
+#: canonical schema chose different words for one variable. The schema side is
+#: not repeated here: the profile names it itself, in
+#: ``numerical.event.refractory_register``, so only the descriptor's word is
+#: recorded and the two cannot drift apart.
+#:
+#: The divergence is real and deliberate on both sides. The descriptor's name is
+#: what a run records, what ``get_state`` returns and what committed conformance
+#: evidence carries, so renaming it would move operator-visible trace fields;
+#: the schema's name is what the profile and the lowering path use. Joining them
+#: by name alone left the variable ``unassigned`` on every run — carrying none
+#: of the role its own profile states.
+#:
+#: This is a per-identity record, never a rule: a name that matches needs no
+#: entry, and a new divergence must be added deliberately rather than guessed at
+#: by matching whatever is left over.
+_REFRACTORY_ALIASES: dict[str, str] = {
+    "BrunelWangNeuron": "ref_remaining",
+    "CompteWMNeuron": "ref_remaining",
+}
+
+
 def _profile_roles(class_name: str) -> tuple[str, dict[str, StateRole]]:
-    """Return the canonical schema stem and the roles its profile assigns."""
+    """Return the canonical schema stem and the roles its profile assigns.
+
+    Roles are keyed by the name the descriptor uses, because that is the name a
+    run records. Where the two authorities chose different words for the
+    refractory register, :data:`_REFRACTORY_ALIASES` carries the descriptor's
+    word and the profile supplies its own.
+    """
     try:
         stem = schema_for_class(class_name)
     except ModelIdentityError:
@@ -236,6 +264,10 @@ def _profile_roles(class_name: str) -> tuple[str, dict[str, StateRole]]:
         roles[variable.name] = "biological"
     for variable in profile.numerical.auxiliary_registers:
         roles[variable.name] = "auxiliary"
+    alias = _REFRACTORY_ALIASES.get(class_name)
+    schema_name = profile.numerical.event.refractory_register
+    if alias is not None and schema_name in roles:
+        roles[alias] = roles[schema_name]
     return stem, roles
 
 

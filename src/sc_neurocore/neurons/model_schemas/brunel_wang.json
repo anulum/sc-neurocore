@@ -73,5 +73,23 @@
     "serial_input_protocol": "Seven rising edges form one physical step: latch external AMPA, recurrent AMPA, recurrent NMDA, and recurrent GABA; evaluate k1; form midpoint; evaluate k2; then commit sampled threshold/reset and refractory state.",
     "state_scope_note": "v and refractory_time are physical state; spike_flag is the sampled event observable; phase, gate latches, k1, midpoint, and k2 are deterministic lowering registers.",
     "synaptic_boundary": "The four inputs are pre-aggregated gating sums. Synaptic ODEs, presynaptic spikes, latency, network connectivity, and Poisson generation remain outside this single-cell schema."
+  },
+  "profile": {
+    "contract": "sc-neurocore.model-profile.v1",
+    "notes": "Role split transcribed from this schema's own state_scope_note. The note calls refractory_time physical state, meaning it is not one of the RK4 lowering registers; the profile contract classifies it as the auxiliary register that encodes the refractory hold inside the dynamics and refuses to let a refractory_register be biological, so it is declared auxiliary and named below. spike_flag is the sampled event observable, which the two-role vocabulary has no separate name for; it is declared biological because it is an observable of the scientific model rather than a deterministic lowering register.",
+    "refractory_register": "refractory_time",
+    "state": {
+      "ampa_latched": "auxiliary",
+      "ext_latched": "auxiliary",
+      "gaba_latched": "auxiliary",
+      "k1": "auxiliary",
+      "k2": "auxiliary",
+      "midpoint": "auxiliary",
+      "nmda_latched": "auxiliary",
+      "phase": "auxiliary",
+      "refractory_time": "auxiliary",
+      "spike_flag": "biological",
+      "v": "biological"
+    }
   }
 }

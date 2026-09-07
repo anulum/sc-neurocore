@@ -11,6 +11,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- A run of Brunel-Wang or Compte-WM now records the role its own profile states.
+  Two defects met in one variable. The committed descriptor calls the refractory
+  register `ref_remaining` while the canonical schema calls it
+  `refractory_time`, and the role join matched by name alone, so the variable
+  came back `unassigned` on every run. Separately, neither schema authored a
+  `[profile]` section, so all eleven and thirty-one of their state variables
+  resolved as `biological` — including the ones each schema's own
+  `state_scope_note` calls deterministic lowering registers. A role split where
+  everything is biological carries no information.
+  Both schemas now author the split their note already stated: 2 biological and
+  9 auxiliary for Brunel-Wang, 6 and 25 for Compte-WM, resolving with no
+  contract problems. The join carries an explicit per-identity record of the
+  descriptor's word for the refractory register; the schema's word is never
+  repeated, because the profile names it itself and the two cannot drift apart.
+  No public name changed, so committed conformance evidence and operator-visible
+  trace fields are untouched.
 - Seven benchmark gates that were red on stale evidence are green again. Their
   records bound source digests that no longer matched the files they name —
   `ci.yml`, `pyproject.toml`, two model and accelerator sources, two schemas and

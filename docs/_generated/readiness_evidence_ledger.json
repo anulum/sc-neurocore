@@ -4022,7 +4022,7 @@
           "declared": true,
           "status": "bound",
           "evidence_field": "silicon.cosim_evidence",
-          "receipt": "BrunelWangNeuron__cosim__20260907T075722Z__brunel_wang.json",
+          "receipt": "BrunelWangNeuron__cosim__20260907T144228Z__brunel_wang.json",
           "changed_subjects": [],
           "problems": []
         },
