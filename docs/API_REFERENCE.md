@@ -21356,6 +21356,33 @@ A group of N identical neurons with vectorized state access.
 
 ---
 
+## Module `network.population_seeds`
+
+### Function `derive_population_seeds(base_seed, count)`
+Derive one distinct seed per neuron, reproducibly.
+
+Parameters
+----------
+base_seed : int
+    The seed the population was asked for. It is the only entropy used, so
+    two populations built with the same base seed and count are identical.
+count : int
+    How many neurons need a seed.
+
+Returns
+-------
+list of int
+    ``count`` distinct seeds in ``&#91;1, 65535&#93;``, in neuron order.
+
+Raises
+------
+ValueError
+    If ``count`` is negative, or exceeds the number of distinct seeds the
+    domain holds. Refusing is deliberate: the alternative is handing two
+    neurons the same stream, which is the defect this exists to remove.
+
+---
+
 ## Module `network.projection`
 
 ### Class `Projection`
@@ -38283,8 +38310,14 @@ context:
 project_payload:
     Optional saved Studio project payload from ``load_project``.
 simulation_payloads:
-    Optional Studio simulation responses carrying ``studio.simulation-run.v1``
-    run metadata.
+    Optional Studio simulation responses carrying run metadata. Both
+    ``studio.simulation-run.v2``, which the Studio emits, and
+    ``studio.simulation-run.v1``, which older exports carry, are accepted:
+    a bundle assembled from a saved workspace must not refuse the responses
+    that workspace was recorded with. v2 adds the custody fields —
+    ``raw_sha256`` over the full-resolution block and
+    ``state_custody_complete`` — so a v1 payload in a bundle records a run
+    whose custody was never established, and says so by their absence.
 analysis_payloads:
     Optional Studio analysis responses carrying ``studio.analysis-result.v1``
     analysis metadata.

@@ -43,7 +43,7 @@ The workbench keeps the first screen operational:
   server-project and local-session counts.
 - **Design source** reports model or ODE mode and the loaded catalogue count.
 - **Simulation** reports active progress or the latest path-free
-  `studio.simulation-run.v1` state.
+  `studio.simulation-run.v2` state.
 - **Evidence health** reports audit and capability posture from operator
   status without local paths or secrets.
 - **Hardware path** reports compile and synthesis readiness from the guided
@@ -324,11 +324,14 @@ runtime features:
   and `/api/characterize` responses include `studio.analysis-result.v1`
   metadata with the analysis type, evidence classification, terminal status,
   source, input and result SHA-256 digests, and output keys without host-local
-  paths. `/api/multi-simulate` attaches `studio.simulation-run.v1` metadata to
+  paths. `/api/multi-simulate` attaches `studio.simulation-run.v2` metadata to
   each overlaid result, matching `/api/simulate`.
   Studio plot panels surface those class/source/status/digest labels beside
   analysis views, and the trace view surfaces the same labels from
-  `studio.simulation-run.v1` metadata.
+  `studio.simulation-run.v2` metadata. v2 adds the custody fields `raw_sha256`
+  and `state_custody_complete`; `studio.simulation-run.v1` is still accepted
+  wherever a saved workspace or an older export carries it, and its absence of
+  those fields is what marks a run whose custody was never established.
   Simulation, analysis, synthesis provenance, and Training Monitor evidence
   serializers validate their evidence class and terminal status through the
   shared Studio evidence-classification contract before returning public
@@ -417,7 +420,7 @@ runtime features:
   in-flight training run.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
-  selected `studio.simulation-run.v1` simulation responses, selected
+  selected `studio.simulation-run.v2` (or older v1) simulation responses, selected
   `studio.analysis-result.v1` analysis responses, selected `studio.model-scan.v1`
   model-scan responses classified as analysis evidence, selected default-flow run
   and attestation responses classified as `default_flow` evidence, selected

@@ -134,8 +134,14 @@ def write_studio_evidence_bundle(
     project_payload:
         Optional saved Studio project payload from ``load_project``.
     simulation_payloads:
-        Optional Studio simulation responses carrying ``studio.simulation-run.v1``
-        run metadata.
+        Optional Studio simulation responses carrying run metadata. Both
+        ``studio.simulation-run.v2``, which the Studio emits, and
+        ``studio.simulation-run.v1``, which older exports carry, are accepted:
+        a bundle assembled from a saved workspace must not refuse the responses
+        that workspace was recorded with. v2 adds the custody fields —
+        ``raw_sha256`` over the full-resolution block and
+        ``state_custody_complete`` — so a v1 payload in a bundle records a run
+        whose custody was never established, and says so by their absence.
     analysis_payloads:
         Optional Studio analysis responses carrying ``studio.analysis-result.v1``
         analysis metadata.
