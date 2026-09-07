@@ -11,6 +11,12 @@ import { describe, expect, it } from "vitest";
 import type { ModelDetail } from "./api/client";
 import { modelCompileRequest, modelCosimRequest } from "./modelCompileConfig";
 
+/**
+ * Build a model detail carrying a compile configuration.
+ *
+ * @param overrides - The fields to change.
+ * @returns The detail.
+ */
 function detail(overrides: Partial<ModelDetail> = {}): ModelDetail {
   return {
     name: "LapicqueNeuron",

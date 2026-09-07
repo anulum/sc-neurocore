@@ -31,9 +31,9 @@ describe("buildComparisonRows", () => {
       summary({ name: "B", tier: 1, family: "Other", maturity: "experimental" }),
     ]);
     const byLabel = Object.fromEntries(rows.map((r) => [r.label, r.values]));
-    expect(byLabel["evidence"]).toEqual(["T3 verified", "T1 declared"]);
-    expect(byLabel["params"]).toEqual(["7", "5"]);
-    expect(byLabel["doi"]).toEqual(["10.1/a", "—"]);
-    expect(byLabel["family"]).toEqual(["Fam", "Other"]);
+    expect(byLabel.evidence).toEqual(["T3 verified", "T1 declared"]);
+    expect(byLabel.params).toEqual(["7", "5"]);
+    expect(byLabel.doi).toEqual(["10.1/a", "—"]);
+    expect(byLabel.family).toEqual(["Fam", "Other"]);
   });
 });

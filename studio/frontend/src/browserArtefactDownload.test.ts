@@ -14,6 +14,7 @@ import {
   type BrowserDownloadTarget,
 } from "./browserArtefactDownload";
 
+/** An anchor that records the click instead of navigating. */
 class FakeAnchor implements BrowserDownloadAnchor {
   download = "";
   href = "";
@@ -24,6 +25,7 @@ class FakeAnchor implements BrowserDownloadAnchor {
   }
 }
 
+/** A download target that records what it was asked to do. */
 class FakeDownloadTarget implements BrowserDownloadTarget {
   readonly anchor = new FakeAnchor();
   createdPayload: Blob | null = null;
@@ -74,7 +76,8 @@ describe("browser artefact downloads", () => {
       },
     };
 
-    expect(() => downloadBrowserArtefact(new Blob(["{}"]), "evidence/manifest.json", target))
-      .toThrow("anchor failed");
+    expect(() => {
+      downloadBrowserArtefact(new Blob(["{}"]), "evidence/manifest.json", target);
+    }).toThrow("anchor failed");
   });
 });

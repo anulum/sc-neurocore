@@ -88,6 +88,10 @@ const AUDITED = [
   "src/auditArchiveShell.test.ts",
   "src/auditShell.test.ts",
   "src/auditShell.ts",
+  "src/browserArtefactDownload.test.ts",
+  "src/browserArtefactDownload.ts",
+  "src/browserCanvasExport.test.ts",
+  "src/browserCanvasExport.ts",
   "src/capabilityShell.test.ts",
   "src/capabilityShell.ts",
   "src/characterizeStoreState.test.ts",
@@ -180,8 +184,19 @@ const AUDITED = [
   "src/evidenceCartIdentity.ts",
   "src/evidenceSeal.test.ts",
   "src/evidenceSeal.ts",
+  "src/modelComparison.test.ts",
+  "src/modelComparison.ts",
+  "src/modelCompileConfig.test.ts",
+  "src/modelCompileConfig.ts",
+  "src/modelScanJob.test.ts",
+  "src/modelScanJob.ts",
+  "src/modelScanJobValidation.test.ts",
+  "src/modelScanJobValidation.ts",
   "src/modelSelectionStoreState.test.ts",
   "src/modelSelectionStoreState.ts",
+  "src/networkNirExport.test.ts",
+  "src/networkNirExport.ts",
+  "src/ode-language.ts",
   "src/operatorWorkbenchState.test.ts",
   "src/operatorWorkbenchState.ts",
   "src/paletteContrast.test.ts",
@@ -220,6 +235,8 @@ const AUDITED = [
   "src/studioGraphDuplicate.ts",
   "src/studioGraphHistory.test.ts",
   "src/studioGraphHistory.ts",
+  "src/studioGraphRequests.test.ts",
+  "src/studioGraphRequests.ts",
   "src/studioGraphTable.test.ts",
   "src/studioGraphTable.ts",
   "src/studioGraphValidation.test.ts",
@@ -239,6 +256,8 @@ const AUDITED = [
   "src/studioShareRuntime.ts",
   "src/studioStartupRuntime.test.ts",
   "src/studioStartupRuntime.ts",
+  "src/studioTraceImport.test.ts",
+  "src/studioTraceImport.ts",
   "src/studioTrainingStream.test.ts",
   "src/studioTrainingStream.ts",
   "src/studioUrlState.test.ts",
@@ -255,6 +274,7 @@ const AUDITED = [
   "src/useAnalysisJob.ts",
   "src/useEvidenceCartSession.test.ts",
   "src/useEvidenceCartSession.ts",
+  "src/useModelScanJob.ts",
   "src/useStudioAnalysisJobIntegration.test.ts",
   "src/useStudioAnalysisJobIntegration.ts",
 ];
@@ -283,7 +303,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * evidence and export group each grew `AUDITED`, and the remainder was
    * re-taken with the tool afterwards rather than reduced on paper.
    */
-  declarations: 161,
+  declarations: 81,
   /**
    * Files carrying at least one of those declarations.
    *
@@ -293,7 +313,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 36,
+  files: 21,
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
@@ -306,7 +326,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * is the parent; the commit this figure lands in adds files to `AUDITED`
    * and nothing else that ESLint reads.
    */
-  measuredOnSourceSha: "56d482b3c9ee33a061481533a1e7bf387af644c4",
+  measuredOnSourceSha: "15f57b1f14dfd94b19cbc67b8554b605bef1dbde",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**

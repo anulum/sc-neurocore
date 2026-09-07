@@ -7,8 +7,22 @@
 // SC-NeuroCore — Model Browser async model-scan job policy (outside UI)
 
 /**
- * Pure state machine and result validation for job-backed catalogue scans.
- * Polling policy lives here; React components only wire presentation.
+ * Scanning the whole model catalogue, as a state machine.
+ *
+ * A scan runs every model in the catalogue and reports how each behaves. It
+ * takes long enough to be a job rather than a request, so the shape here is
+ * the same as the analysis job's: submit, poll, stop when it stops.
+ *
+ * The phases separate the server's verdict on the job -- `failed`,
+ * `cancelled`, `timed_out` -- from this build's verdict on the answer,
+ * `malformed`. A scan that completes and returns something that is not a scan
+ * result is not a failed scan; it is a server to fix, and the reader should be
+ * told which they have.
+ *
+ * A scan's own failures are not job failures. A model that could not be run is
+ * reported inside the result as a failed model with its reason, and the job
+ * still completes: one broken model in a catalogue of hundreds should not cost
+ * the reader the other results.
  */
 
 import type {
@@ -27,6 +41,10 @@ import {
 export { validateModelScanJobResult } from "./modelScanJobValidation";
 
 /** Terminal and in-flight phases shown to the operator (no invented progress %). */
+/**
+ * Where a scan is. `failed`, `cancelled` and `timed_out` are the server's
+ * verdicts on the job; `malformed` is this build's verdict on the answer.
+ */
 export type ModelScanJobPhase =
   | "idle"
   | "submitting"
@@ -38,6 +56,7 @@ export type ModelScanJobPhase =
   | "timed_out"
   | "malformed";
 
+/** Everything the control needs: where the scan is, and what it found. */
 export interface ModelScanJobViewState {
   behaviors: Record<string, ModelBehavior>;
   error: string | null;
@@ -47,6 +66,7 @@ export interface ModelScanJobViewState {
   statusRoute: string | null;
 }
 
+/** Everything that can happen to a scan while the reader watches it. */
 export type ModelScanJobEvent =
   | { type: "submit_started" }
   | { type: "submit_succeeded"; receipt: ModelScanJobReceipt }
@@ -54,6 +74,7 @@ export type ModelScanJobEvent =
   | { type: "poll"; record: StudioJobRecord }
   | { type: "poll_failed"; message: string };
 
+/** The phases in which a scan is still going. */
 const BUSY_PHASES: ReadonlySet<ModelScanJobPhase> = new Set([
   "submitting",
   "pending",
@@ -61,7 +82,9 @@ const BUSY_PHASES: ReadonlySet<ModelScanJobPhase> = new Set([
 ]);
 
 /**
- * Initial idle view state for a model-scan session.
+ * The state before any scan has been started.
+ *
+ * @returns The idle state.
  */
 export function initialModelScanJobState(): ModelScanJobViewState {
   return {
@@ -75,21 +98,35 @@ export function initialModelScanJobState(): ModelScanJobViewState {
 }
 
 /**
- * True while a submit or poll cycle is in flight (duplicate Scan is forbidden).
+ * Whether a scan is still going.
+ *
+ * @param phase - The phase.
+ * @returns Whether a submit or a poll is in flight. This is what stops a
+ *   second click starting a second scan of the whole catalogue.
  */
 export function isModelScanJobBusy(phase: ModelScanJobPhase): boolean {
   return BUSY_PHASES.has(phase);
 }
 
 /**
- * True when the Scan control may start a new job.
+ * Whether a new scan may be started.
+ *
+ * @param state - The current state.
+ * @returns Whether the control is free. A finished scan -- however it finished
+ *   -- may be replaced.
  */
 export function canSubmitModelScanJob(state: ModelScanJobViewState): boolean {
   return !isModelScanJobBusy(state.phase);
 }
 
 /**
- * Path-free operator label for the current real job phase.
+ * Name a phase for the control's button.
+ *
+ * The idle label is `Scan` rather than `idle`, because the control is a button
+ * and its label is what it will do, not what it is doing.
+ *
+ * @param phase - The phase.
+ * @returns Its label.
  */
 export function modelScanJobPhaseLabel(phase: ModelScanJobPhase): string {
   switch (phase) {
@@ -118,6 +155,16 @@ export function modelScanJobPhaseLabel(phase: ModelScanJobPhase): string {
   }
 }
 
+/**
+ * Reduce a server error to something safe to show.
+ *
+ * Absolute paths under the deployment's own directories are replaced with
+ * `[path]`: the message was written for an operator reading a log, and the
+ * browser shows it to whoever opened the panel.
+ *
+ * @param raw - The server's message.
+ * @returns The message to show, or a generic identifier when it was blank.
+ */
 function publicErrorMessage(raw: string): string {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
@@ -127,18 +174,31 @@ function publicErrorMessage(raw: string): string {
   return trimmed.replace(/\/(?:home|media|tmp|var)\/[^\s"']+/g, "[path]");
 }
 
+/**
+ * Index a scan's models by name, for the browser to look them up.
+ *
+ * @param payload - The validated scan result.
+ * @returns The models, keyed by name.
+ */
 function behaviorsFromPayload(payload: ModelScanResponse): Record<string, ModelBehavior> {
   const map: Record<string, ModelBehavior> = {};
+  // No guard on the entries: `validateModelScanJobResult` has already refused
+  // a payload whose models are not models, so a check here would be a second
+  // opinion on a question already settled.
   for (const model of payload.models) {
-    if (model && typeof model.name === "string") {
-      map[model.name] = model;
-    }
+    map[model.name] = model;
   }
   return map;
 }
 
 /**
- * Reduce one model-scan job event into the next view state.
+ * Apply one event to the state.
+ *
+ * @param state - Where the scan was.
+ * @param event - What happened.
+ * @returns Where the scan is now. A transition that clears the results
+ *   says so, rather than leaving the previous scan's models beside a new
+ *   phase.
  */
 export function reduceModelScanJob(
   state: ModelScanJobViewState,
@@ -246,31 +306,28 @@ export function reduceModelScanJob(
           scanMetadata: null,
         };
       }
-      if (status === "completed") {
-        const validated = validateModelScanJobResult(record.result);
-        if (!validated.ok) {
-          return {
-            ...state,
-            behaviors: {},
-            error: validated.error,
-            phase: "malformed",
-            scanMetadata: null,
-          };
-        }
+      // Every other status has returned by now, so the record is completed.
+      // There used to be a further `status === "completed"` test and a
+      // `model_scan_job_status_unknown` fallback beneath it. The fallback was
+      // unreachable: the poll record is validated against the contract's own
+      // status list before it gets here, so an unknown status is refused there
+      // and never reaches this reducer.
+      const validated = validateModelScanJobResult(record.result);
+      if (!validated.ok) {
         return {
           ...state,
-          behaviors: behaviorsFromPayload(validated.value),
-          error: null,
-          phase: "completed",
-          scanMetadata: validated.value.scan_metadata,
+          behaviors: {},
+          error: validated.error,
+          phase: "malformed",
+          scanMetadata: null,
         };
       }
       return {
         ...state,
-        behaviors: {},
-        error: "model_scan_job_status_unknown",
-        phase: "failed",
-        scanMetadata: null,
+        behaviors: behaviorsFromPayload(validated.value),
+        error: null,
+        phase: "completed",
+        scanMetadata: validated.value.scan_metadata,
       };
     }
     default: {
@@ -280,11 +337,16 @@ export function reduceModelScanJob(
   }
 }
 
+/** The two routes a scan needs: submit one, then ask about it. */
 export interface ModelScanJobApi {
   fetchJob: (statusRoute: string) => Promise<StudioJobRecord>;
   submit: () => Promise<ModelScanJobReceipt>;
 }
 
+/**
+ * What a session may be given instead of its defaults. The timer functions are
+ * injectable so a test can run a poll loop without waiting for it.
+ */
 export interface ModelScanJobSessionOptions {
   api: ModelScanJobApi;
   clearTimeoutFn?: typeof clearTimeout;
@@ -293,6 +355,10 @@ export interface ModelScanJobSessionOptions {
   setTimeoutFn?: typeof setTimeout;
 }
 
+/**
+ * A running session: read its state, start a scan, or throw it away. Disposing
+ * stops the timers and silences every response still in flight.
+ */
 export interface ModelScanJobSession {
   dispose: () => void;
   getState: () => ModelScanJobViewState;
@@ -300,7 +366,16 @@ export interface ModelScanJobSession {
 }
 
 /**
- * Create a non-React session that submits one scan job and polls to terminal.
+ * Start a session that can run one catalogue scan at a time.
+ *
+ * Generations are how a stale answer is dropped: every start bumps a
+ * counter, and a response returning under an old one is discarded, so a
+ * reader who starts a second scan never sees the first one's results
+ * arrive.
+ *
+ * @param options - The API, the poll interval, where to report state, and
+ *   the timer functions.
+ * @returns The session.
  */
 export function createModelScanJobSession(
   options: ModelScanJobSessionOptions,
@@ -313,16 +388,26 @@ export function createModelScanJobSession(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let generation = 0;
 
+  // `disposed` and `state` are read back through these two functions rather
+  // than directly. Both are reassigned from outside the awaiting code -- by
+  // `dispose`, and by every `apply` -- so a direct read is narrowed by the
+  // checker to whatever it was before the `await`, and the guards that follow
+  // an await look dead when they are the only thing keeping a disposed session
+  // from publishing. A call returning a declared type is not narrowed, which is
+  // what makes those guards readable as the live code they are.
+  const isDisposed = (): boolean => disposed;
+  const readState = (): ModelScanJobViewState => state;
+
   const publish = (next: ModelScanJobViewState) => {
     state = next;
     options.onChange?.(state);
   };
 
   const apply = (event: ModelScanJobEvent) => {
-    if (disposed) {
+    if (isDisposed()) {
       return;
     }
-    publish(reduceModelScanJob(state, event));
+    publish(reduceModelScanJob(readState(), event));
   };
 
   const stopPolling = () => {
@@ -336,23 +421,23 @@ export function createModelScanJobSession(
     stopPolling();
     timer = setTimeoutFn(() => {
       void (async () => {
-        if (disposed || gen !== generation) {
+        if (isDisposed() || gen !== generation) {
           return;
         }
         try {
           const record = await options.api.fetchJob(statusRoute);
-          if (disposed || gen !== generation) {
+          if (isDisposed() || gen !== generation) {
             return;
           }
           apply({ type: "poll", record });
-          const phase = state.phase;
+          const phase = readState().phase;
           if (phase === "pending" || phase === "running") {
             schedulePoll(gen, statusRoute);
           } else {
             stopPolling();
           }
         } catch (error: unknown) {
-          if (disposed || gen !== generation) {
+          if (isDisposed() || gen !== generation) {
             return;
           }
           const message = error instanceof Error ? error.message : "model_scan_poll_failed";
@@ -369,9 +454,9 @@ export function createModelScanJobSession(
       generation += 1;
       stopPolling();
     },
-    getState: () => state,
+    getState: readState,
     startScan: async () => {
-      if (disposed || !canSubmitModelScanJob(state)) {
+      if (isDisposed() || !canSubmitModelScanJob(readState())) {
         return;
       }
       generation += 1;
@@ -380,25 +465,30 @@ export function createModelScanJobSession(
       apply({ type: "submit_started" });
       try {
         const receipt = await options.api.submit();
-        if (disposed || gen !== generation) {
+        if (isDisposed() || gen !== generation) {
           return;
         }
         apply({ type: "submit_succeeded", receipt });
-        if (state.phase === "pending" || state.phase === "running") {
-          const route = state.statusRoute;
+        const submitted = readState();
+        if (submitted.phase === "pending" || submitted.phase === "running") {
+          const route = submitted.statusRoute;
           if (route !== null) {
             // Immediate first poll, then interval.
             try {
               const record = await options.api.fetchJob(route);
-              if (disposed || gen !== generation) {
+              if (isDisposed() || gen !== generation) {
                 return;
               }
               apply({ type: "poll", record });
-              if (state.phase === "pending" || state.phase === "running") {
+              const afterFirstPoll = readState();
+              if (
+                afterFirstPoll.phase === "pending"
+                || afterFirstPoll.phase === "running"
+              ) {
                 schedulePoll(gen, route);
               }
             } catch (error: unknown) {
-              if (disposed || gen !== generation) {
+              if (isDisposed() || gen !== generation) {
                 return;
               }
               const message = error instanceof Error ? error.message : "model_scan_poll_failed";
@@ -407,7 +497,7 @@ export function createModelScanJobSession(
           }
         }
       } catch (error: unknown) {
-        if (disposed || gen !== generation) {
+        if (isDisposed() || gen !== generation) {
           return;
         }
         const message = error instanceof Error ? error.message : "model_scan_submit_failed";

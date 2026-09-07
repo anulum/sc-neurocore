@@ -82,6 +82,15 @@ export const odeThemeRules: { token: string; foreground: string; fontStyle?: str
   { token: "identifier.ode", foreground: "D4D4D4" },
 ];
 
+/**
+ * Teach the editor the ODE language: its syntax, its tokens and its theme.
+ *
+ * Registration is skipped when the language is already known. Monaco is a
+ * module-level singleton and a second registration would stack a duplicate
+ * tokeniser on the same identifier.
+ *
+ * @param monaco - The editor module.
+ */
 export function registerODELanguage(monaco: typeof import("monaco-editor")) {
   if (monaco.languages.getLanguages().some((l) => l.id === ODE_LANGUAGE_ID)) return;
 

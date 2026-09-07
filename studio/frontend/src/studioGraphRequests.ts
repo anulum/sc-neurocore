@@ -6,6 +6,23 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio graph request builders
 
+/**
+ * The requests the network canvas sends, and the patches its answers produce.
+ *
+ * Two conventions run through this file. **Layout is not identity**: where a
+ * population sits on the canvas is a drawing concern, and a move writes a
+ * position and nothing else, so dragging a node can never change what the
+ * network computes. And **the sign of a weight follows the source population's
+ * declared type** -- Dale's principle as the population states it -- with the
+ * server refusing a sign that disagrees rather than flipping it, because a
+ * silently corrected weight is a network the reader did not ask for.
+ *
+ * The defaults here are starting points for a reader who has just added a
+ * node, not recommendations: 80 excitatory to 20 inhibitory is the ratio the
+ * literature starts from, and every value is visible and editable in the
+ * panel.
+ */
+
 import type {
   GraphSimResult,
   NetworkGraph,
@@ -20,6 +37,7 @@ import type {
 export type { StudioNeuronType } from "./api/client";
 
 /** Catalogue model every new population starts from (exact-flow hard-reset LIF). */
+/** The neuron model a new population starts with. */
 export const STUDIO_DEFAULT_POPULATION_MODEL = "SCLapicqueLIFNeuron";
 /**
  * Constant drive of a new excitatory population. With the default model
@@ -35,8 +53,10 @@ export const STUDIO_DEFAULT_EXCITATORY_DRIVE: PopulationDrive = { kind: "constan
  * it by a fifth of the threshold. This is a starting value, not a tuned one.
  */
 export const STUDIO_DEFAULT_PROJECTION_WEIGHT = 40;
+/** The connection probability a new random projection starts at. */
 export const STUDIO_DEFAULT_PROJECTION_PROBABILITY = 0.2;
 
+/** What the canvas sends to add a population. */
 export interface StudioPopulationCreateRequest extends Record<string, unknown> {
   label: string;
   model: string;
@@ -47,6 +67,7 @@ export interface StudioPopulationCreateRequest extends Record<string, unknown> {
   drive: PopulationDrive;
 }
 
+/** What the canvas sends to add a projection. */
 export interface StudioProjectionCreateRequest {
   source_id: string;
   target_id: string;
@@ -56,11 +77,13 @@ export interface StudioProjectionCreateRequest {
   probability: number;
 }
 
+/** A graph as the canvas holds it: its populations and its projections. */
 export interface StudioGraphElements {
   populations: PopulationNode[];
   projections: ProjectionEdge[];
 }
 
+/** A graph request has started: clear the error, show it running. */
 export interface StudioGraphBusyStatePatch {
   error: null;
   graphErrors?: [];
@@ -71,51 +94,74 @@ export interface StudioGraphBusyStatePatch {
   pipelineResult?: null;
 }
 
+/** The pipeline finished, with its result. */
 export interface StudioPipelineCompletedStatePatch {
   isSimulating: false;
   pipelineResult: PipelineResult;
 }
 
+/** The catalogue of models a population may use arrived. */
 export interface StudioGraphModelsLoadedStatePatch {
   graphModels: string[];
 }
 
+/** A population was added. */
 export interface StudioPopulationAddedStatePatch {
   graphPopulations: PopulationNode[];
 }
 
+/** A population changed. */
 export interface StudioPopulationUpdatedStatePatch {
   graphPopulations: PopulationNode[];
 }
 
+/** A projection was added. */
 export interface StudioProjectionAddedStatePatch {
   graphProjections: ProjectionEdge[];
 }
 
+/** A projection changed. */
 export interface StudioProjectionUpdatedStatePatch {
   graphProjections: ProjectionEdge[];
 }
 
+/** A projection was removed. */
 export interface StudioProjectionRemovedStatePatch {
   graphProjections: ProjectionEdge[];
 }
 
+/** A graph simulation finished, with its result. */
 export interface StudioGraphSimulationCompletedStatePatch {
   graphSimResult: GraphSimResult;
   isSimulating: false;
 }
 
+/** A whole graph was imported, replacing what was on the canvas. */
 export interface StudioGraphImportedStatePatch {
   activeTab: "canvas";
   graphPopulations: PopulationNode[];
   graphProjections: ProjectionEdge[];
 }
 
+/** A graph request failed, with the message to show. */
 export interface StudioGraphFailureStatePatch {
   error: string;
   isSimulating?: false;
 }
 
+/**
+ * Build the graph payload a run is submitted with.
+ *
+ * The seed is omitted rather than sent as null when there is none, so the
+ * server draws its own and the request says what it means.
+ *
+ * @param populations - The populations.
+ * @param projections - The projections between them.
+ * @param duration - How long to run, in milliseconds.
+ * @param dt - The integration step, in milliseconds.
+ * @param seed - The seed, or `null` to let the server choose.
+ * @returns The graph to submit.
+ */
 export function studioGraphRequest(
   populations: PopulationNode[],
   projections: ProjectionEdge[],
@@ -132,6 +178,11 @@ export function studioGraphRequest(
   };
 }
 
+/**
+ * The pipeline has started.
+ *
+ * @returns The patch.
+ */
 export function studioPipelineStartState(): StudioGraphBusyStatePatch {
   return {
     error: null,
@@ -140,6 +191,12 @@ export function studioPipelineStartState(): StudioGraphBusyStatePatch {
   };
 }
 
+/**
+ * The pipeline finished.
+ *
+ * @param pipelineResult - What it produced.
+ * @returns The patch.
+ */
 export function studioPipelineCompletedState(
   pipelineResult: PipelineResult,
 ): StudioPipelineCompletedStatePatch {
@@ -149,6 +206,11 @@ export function studioPipelineCompletedState(
   };
 }
 
+/**
+ * A graph simulation has started.
+ *
+ * @returns The patch.
+ */
 export function studioGraphSimulationStartState(): StudioGraphBusyStatePatch {
   return {
     error: null,
@@ -158,6 +220,12 @@ export function studioGraphSimulationStartState(): StudioGraphBusyStatePatch {
   };
 }
 
+/**
+ * A graph simulation finished.
+ *
+ * @param graphSimResult - What it produced.
+ * @returns The patch.
+ */
 export function studioGraphSimulationCompletedState(
   graphSimResult: GraphSimResult,
 ): StudioGraphSimulationCompletedStatePatch {
@@ -167,12 +235,25 @@ export function studioGraphSimulationCompletedState(
   };
 }
 
+/**
+ * The model catalogue arrived.
+ *
+ * @param graphModels - The models a population may use.
+ * @returns The patch.
+ */
 export function studioGraphModelsLoadedState(
   graphModels: string[],
 ): StudioGraphModelsLoadedStatePatch {
   return { graphModels };
 }
 
+/**
+ * A population was added.
+ *
+ * @param graphPopulations - The populations as they stand.
+ * @param population - The population the server created.
+ * @returns The patch.
+ */
 export function studioPopulationAddedState(
   graphPopulations: PopulationNode[],
   population: PopulationNode,
@@ -182,6 +263,14 @@ export function studioPopulationAddedState(
   };
 }
 
+/**
+ * A population changed.
+ *
+ * @param graphPopulations - The populations as they stand.
+ * @param populationId - The population that changed.
+ * @param updates - What changed about it.
+ * @returns The patch.
+ */
 export function studioPopulationUpdatedState(
   graphPopulations: PopulationNode[],
   populationId: string,
@@ -193,6 +282,13 @@ export function studioPopulationUpdatedState(
   };
 }
 
+/**
+ * A projection was added.
+ *
+ * @param graphProjections - The projections as they stand.
+ * @param projection - The projection the server created.
+ * @returns The patch.
+ */
 export function studioProjectionAddedState(
   graphProjections: ProjectionEdge[],
   projection: ProjectionEdge,
@@ -202,6 +298,14 @@ export function studioProjectionAddedState(
   };
 }
 
+/**
+ * A projection changed.
+ *
+ * @param graphProjections - The projections as they stand.
+ * @param projectionId - The projection that changed.
+ * @param updates - What changed about it.
+ * @returns The patch.
+ */
 export function studioProjectionUpdatedState(
   graphProjections: ProjectionEdge[],
   projectionId: string,
@@ -213,6 +317,13 @@ export function studioProjectionUpdatedState(
   };
 }
 
+/**
+ * A projection was removed.
+ *
+ * @param graphProjections - The projections as they stand.
+ * @param projectionId - The projection that is gone.
+ * @returns The patch.
+ */
 export function studioProjectionRemovedState(
   graphProjections: ProjectionEdge[],
   projectionId: string,
@@ -222,6 +333,12 @@ export function studioProjectionRemovedState(
   };
 }
 
+/**
+ * A graph was imported.
+ *
+ * @param nir - The imported network.
+ * @returns The patch, replacing the canvas entirely.
+ */
 export function studioGraphImportedState(nir: NetworkGraph): StudioGraphImportedStatePatch {
   return {
     activeTab: "canvas",
@@ -230,6 +347,15 @@ export function studioGraphImportedState(nir: NetworkGraph): StudioGraphImported
   };
 }
 
+/**
+ * A graph request failed.
+ *
+ * @param error - What was thrown, which need not be an `Error`.
+ * @param fallbackMessage - What to say when it carries no message.
+ * @param options - Whether this failure also ends a run that was showing
+ *   as busy.
+ * @returns The patch.
+ */
 export function studioGraphFailureState(
   error: unknown,
   fallbackMessage: string,
@@ -243,6 +369,17 @@ export function studioGraphFailureState(
   };
 }
 
+/**
+ * Build the request for a population the reader just added.
+ *
+ * The counts and the position are starting points, all of them visible and
+ * editable in the panel: 80 excitatory against 20 inhibitory is where the
+ * literature starts, not a recommendation this build is making.
+ *
+ * @param neuronType - Whether it excites or inhibits.
+ * @param index - Which population this is, which sets where it is drawn.
+ * @returns The request.
+ */
 export function studioDefaultPopulationRequest(
   neuronType: StudioNeuronType,
   index: number,
@@ -259,9 +396,17 @@ export function studioDefaultPopulationRequest(
 }
 
 /**
- * Default projection request. The weight sign follows the source population's
- * declared type (Dale's principle as the population states it); the server
- * rejects a sign that disagrees instead of flipping it.
+ * Build the request for a projection the reader just drew.
+ *
+ * The weight's sign follows the source population's declared type -- Dale's
+ * principle as the population states it. The server refuses a sign that
+ * disagrees rather than flipping it, because a silently corrected weight is a
+ * network the reader did not ask for.
+ *
+ * @param sourceId - The population the projection leaves.
+ * @param targetId - The population it reaches.
+ * @param sourceNeuronType - What the source population declares itself to be.
+ * @returns The request.
  */
 export function studioDefaultProjectionRequest(
   sourceId: string,
@@ -280,12 +425,28 @@ export function studioDefaultProjectionRequest(
   };
 }
 
+/**
+ * Describe a population's input in one phrase.
+ *
+ * @param drive - The drive, if it has one.
+ * @returns The phrase the canvas shows.
+ */
 export function studioPopulationDriveLabel(drive: PopulationDrive | undefined): string {
   if (!drive || drive.kind === "none") return "no input";
   if (drive.kind === "constant") return `I = ${drive.current}`;
   return `Poisson ${drive.rate_hz} Hz × ${drive.weight}`;
 }
 
+/**
+ * Describe a projection in one phrase: its weight, its rule, its delay.
+ *
+ * A zero delay is left out rather than shown as `d=0ms`, because every
+ * projection has a delay and only a non-zero one tells the reader
+ * something.
+ *
+ * @param projection - The projection.
+ * @returns The phrase the canvas shows.
+ */
 export function studioProjectionLabel(projection: ProjectionEdge): string {
   const rule = projection.rule === "all_to_all" ? "all" : `p=${projection.probability}`;
   const delay = projection.delay > 0 ? ` d=${projection.delay}ms` : "";
@@ -316,9 +477,13 @@ export interface StudioNodeChangePlan {
 /**
  * Read a batch of canvas node changes as moves and removals.
  *
- * `nextNodes` is the array the canvas library produced from the change batch;
- * `populations` is the graph as it stands. A position is reported only when it
- * actually differs, so a render that reasserts the same layout writes nothing.
+ * A position is reported only when it actually differs, so a render that
+ * reasserts the same layout writes nothing.
+ *
+ * @param changes - The change batch the canvas produced.
+ * @param nextNodes - The nodes as the canvas library now holds them.
+ * @param populations - The graph as it stands.
+ * @returns Which populations moved where, and which were removed.
  */
 export function studioNodeChangePlan(
   changes: readonly { type: string; id?: string }[],
@@ -346,6 +511,17 @@ export function studioNodeChangePlan(
   return { moved, removed };
 }
 
+/**
+ * Remove a population and everything attached to it.
+ *
+ * Both directions are removed. A projection whose source or target is gone
+ * is not a projection, and leaving it would put an edge on the canvas with
+ * one end attached to nothing.
+ *
+ * @param graph - The graph as it stands.
+ * @param populationId - The population to remove.
+ * @returns The graph without it.
+ */
 export function studioGraphWithoutPopulation(
   graph: StudioGraphElements,
   populationId: string,

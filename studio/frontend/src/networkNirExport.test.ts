@@ -44,7 +44,7 @@ describe("network NIR export", () => {
 
   it("plans browser downloads with an injectable writer", () => {
     const plan = networkNirExportPlan(nir);
-    const downloads: Array<{ filename: string; payload: Blob }> = [];
+    const downloads: { filename: string; payload: Blob }[] = [];
 
     plan.writeArtefact((payload, filename) => {
       downloads.push({ filename, payload });

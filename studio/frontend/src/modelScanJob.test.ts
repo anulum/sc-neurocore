@@ -5,6 +5,7 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Model-scan job policy tests
+import { at } from "./arrayAt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ModelScanJobReceipt, StudioJobRecord } from "./api/client";
@@ -18,6 +19,12 @@ import {
   validateModelScanJobResult,
 } from "./modelScanJob";
 
+/**
+ * Build a scan job record in the given status.
+ *
+ * @param overrides - The fields to change.
+ * @returns The record.
+ */
 function jobRecord(
   overrides: Partial<StudioJobRecord> & Pick<StudioJobRecord, "status">,
 ): StudioJobRecord {
@@ -37,6 +44,12 @@ function jobRecord(
   };
 }
 
+/**
+ * Build a scan submit receipt.
+ *
+ * @param overrides - The fields to change.
+ * @returns The receipt.
+ */
 function receipt(
   overrides: Partial<ModelScanJobReceipt> = {},
 ): ModelScanJobReceipt {
@@ -220,7 +233,7 @@ describe("createModelScanJobSession polling", () => {
     let pollIndex = 0;
     const submit = vi.fn(async () => receipt());
     const fetchJob = vi.fn(async () => {
-      const next = polls[Math.min(pollIndex, polls.length - 1)]!;
+      const next = at(polls, Math.min(pollIndex, polls.length - 1));
       pollIndex += 1;
       return next;
     });

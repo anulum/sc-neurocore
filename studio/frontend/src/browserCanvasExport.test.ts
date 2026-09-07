@@ -16,6 +16,7 @@ import {
   type BrowserCanvasExportTarget,
 } from "./browserCanvasExport";
 
+/** An anchor that records the click instead of navigating. */
 class FakeAnchor implements BrowserDownloadAnchor {
   download = "";
   href = "";
@@ -26,6 +27,7 @@ class FakeAnchor implements BrowserDownloadAnchor {
   }
 }
 
+/** A canvas that records the format it was asked to render. */
 class FakeCanvas implements BrowserCanvasExportCanvas {
   requestedType: string | undefined;
   requestedQuality: unknown;

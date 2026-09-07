@@ -28,11 +28,13 @@ import {
   type ModelScanJobViewState,
 } from "./modelScanJob";
 
+/** What the hook may be given instead of its defaults. */
 export interface UseModelScanJobOptions {
   api?: ModelScanJobApi;
   pollIntervalMs?: number;
 }
 
+/** What the control needs: where the scan is, and how to start another. */
 export interface UseModelScanJobResult {
   busy: boolean;
   canSubmit: boolean;
@@ -41,13 +43,19 @@ export interface UseModelScanJobResult {
   state: ModelScanJobViewState;
 }
 
+/** The real Studio routes, used unless a caller passes its own. */
 const defaultApi: ModelScanJobApi = {
   fetchJob: fetchStudioJobAtStatusRoute,
   submit: submitModelScanJob,
 };
 
 /**
- * Session-scoped model-scan job state for the Model Browser Scan control.
+ * Run a catalogue scan for as long as the control is on screen.
+ *
+ * @param options - The API and the poll interval.
+ * @returns The scan's state and the calls the control needs: whether it is
+ *   busy, whether another may be started, its phase as a label, and how to
+ *   start one.
  */
 export function useModelScanJob(
   options: UseModelScanJobOptions = {},

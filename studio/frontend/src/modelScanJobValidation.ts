@@ -7,10 +7,18 @@
 // SC-NeuroCore — Fail-closed runtime guards for model-scan job payloads
 
 /**
- * Nested type guards for model-scan job receipts, poll records, and completed
- * ``studio.model-scan.v1`` results. No unchecked casts of untrusted JSON.
+ * Reading a catalogue scan's answer, field by field.
+ *
+ * No untrusted JSON is cast here. Every entry of every nested list is checked
+ * and a bad one refuses the whole payload rather than being dropped: a scan
+ * result is what the reader will cite about a catalogue of models, and one
+ * silently missing model makes it a different claim.
+ *
+ * Refusals are stable identifiers naming the field, so a panel can say what
+ * was wrong rather than only that something was.
  */
 
+import { parseStudioJobArtifact } from "./analysisJobRecordValidation";
 import type {
   ModelBehavior,
   ModelScanFailure,
@@ -20,30 +28,94 @@ import type {
   StudioJobRecord,
 } from "./api/client";
 
+/**
+ * Either a value that has been checked, or the identifier of what was wrong.
+ * Never both, and never a value that has only been asserted.
+ */
 export type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
 
+/** A 64-character hexadecimal digest, in either case. */
 const HEX64 = /^[0-9a-fA-F]{64}$/;
 
+/**
+ * Whether a value is a plain object.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+/**
+ * Whether a value is a number that is actually a number.
+ *
+ * @param value - The value.
+ * @returns Whether it is finite.
+ */
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+/**
+ * Whether a value is a string with something in it.
+ *
+ * @param value - The value.
+ * @returns Whether it is one.
+ */
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
+/**
+ * Whether a value looks like a SHA-256 digest.
+ *
+ * @param value - The value.
+ * @returns Whether it has that shape.
+ */
 function isSha256Hex(value: unknown): value is string {
   return typeof value === "string" && HEX64.test(value);
 }
 
 /**
- * Guard one model behaviour entry from a scan result.
+ * Read a job's artefact list.
+ *
+ * This module's contract is that untrusted JSON is never cast, and this list
+ * used to be the exception: an array of anything was asserted to be an array
+ * of artefacts, so a malformed entry reached callers with a digest field that
+ * might be any type at all. Each entry is checked now, and a bad one refuses
+ * the whole record rather than being dropped -- a job whose artefact list is
+ * partly unreadable is a job whose evidence cannot be trusted.
+ *
+ * @param value - The list, as it arrived. A missing list is read as no
+ *   artefacts, which is what a job that has produced none sends.
+ * @returns The artefacts, or the identifier of the first bad entry.
+ */
+function parseJobArtifacts(value: unknown): ValidationResult<StudioJobRecord["artifacts"]> {
+  if (value === undefined || value === null) {
+    return { ok: true, value: [] };
+  }
+  if (!Array.isArray(value)) {
+    return { ok: false, error: "model_scan_job_artifacts_invalid" };
+  }
+  const artifacts: StudioJobRecord["artifacts"] = [];
+  for (const entry of value) {
+    const parsed = parseStudioJobArtifact(entry);
+    if (!parsed.ok) {
+      return { ok: false, error: `model_scan_${parsed.error}` };
+    }
+    artifacts.push(parsed.value);
+  }
+  return { ok: true, value: artifacts };
+}
+
+/**
+ * Read one model's reported behaviour.
+ *
+ * @param value - The entry, as it arrived.
+ * @returns The behaviour, or the identifier of the field that was wrong.
  */
 export function parseModelBehavior(value: unknown): ValidationResult<ModelBehavior> {
   if (!isRecord(value)) {
@@ -85,7 +157,13 @@ export function parseModelBehavior(value: unknown): ValidationResult<ModelBehavi
 }
 
 /**
- * Guard one scan failure entry.
+ * Read one model the scan could not run, and why.
+ *
+ * These are not job failures: a model that would not run is reported inside a
+ * completed result, so one broken model does not cost the reader the rest.
+ *
+ * @param value - The entry, as it arrived.
+ * @returns The failure, or the identifier of the field that was wrong.
  */
 export function parseModelScanFailure(value: unknown): ValidationResult<ModelScanFailure> {
   if (!isRecord(value)) {
@@ -115,7 +193,12 @@ export function parseModelScanFailure(value: unknown): ValidationResult<ModelSca
 }
 
 /**
- * Guard ``pattern_counts`` as a string-key to finite-number record.
+ * Read the firing-pattern histogram.
+ *
+ * @param value - The counts, as they arrived.
+ * @returns The counts, or the identifier of what was wrong. A single bad entry
+ *   refuses the whole histogram: a count that is partly readable is a
+ *   histogram that does not add up.
  */
 export function parsePatternCounts(
   value: unknown,
@@ -134,7 +217,14 @@ export function parsePatternCounts(
 }
 
 /**
- * Guard scan metadata including digests, counts, and nested failures.
+ * Read a scan's metadata: its inputs, its digests, and what it could not run.
+ *
+ * The status must be `completed`. Metadata is only read from a completed job,
+ * so metadata claiming anything else is a result that disagrees with the job
+ * carrying it.
+ *
+ * @param value - The metadata, as it arrived.
+ * @returns The metadata, or the identifier of what was wrong.
  */
 export function parseModelScanMetadata(value: unknown): ValidationResult<ModelScanMetadata> {
   if (!isRecord(value)) {
@@ -201,8 +291,13 @@ export function parseModelScanMetadata(value: unknown): ValidationResult<ModelSc
 }
 
 /**
- * Validate a completed job ``result`` as full ``studio.model-scan.v1`` evidence.
- * Fails closed on any invalid nested entry (does not drop invalids silently).
+ * Read a completed scan's result.
+ *
+ * @param result - The result, as it arrived.
+ * @returns The scan, or the identifier of the first thing that was wrong. One
+ *   unreadable model refuses the whole result rather than being dropped -- a
+ *   catalogue scan missing a model it does not mention is a different claim
+ *   from the one the reader asked for.
  */
 export function validateModelScanJobResult(
   result: unknown,
@@ -239,7 +334,17 @@ export function validateModelScanJobResult(
 }
 
 /**
- * Validate a model-scan job submit receipt and bind ``job.job_id`` / kind.
+ * Read a submit receipt, and bind it to the scan that was asked for.
+ *
+ * The receipt's own job identifier and the nested job's must agree, and the
+ * kind must be a model scan. A receipt for another job would set the session
+ * polling something whose result it cannot read.
+ *
+ * The job is reconstructed field by field rather than taken whole, because
+ * only the binding matters here; every later poll re-validates the record.
+ *
+ * @param receipt - The receipt, as it arrived.
+ * @returns The receipt, or the identifier of what was wrong.
  */
 export function validateModelScanJobReceipt(
   receipt: unknown,
@@ -282,10 +387,12 @@ export function validateModelScanJobReceipt(
   }
   // Reconstruct a minimal typed receipt; nested job fields beyond binding are
   // re-validated on each poll via validateModelScanPollRecord.
+  const receiptArtifacts = parseJobArtifacts(receipt.job.artifacts);
+  if (!receiptArtifacts.ok) {
+    return receiptArtifacts;
+  }
   const job: StudioJobRecord = {
-    artifacts: Array.isArray(receipt.job.artifacts)
-      ? (receipt.job.artifacts as StudioJobRecord["artifacts"])
-      : [],
+    artifacts: receiptArtifacts.value,
     created_at_utc:
       typeof receipt.job.created_at_utc === "string"
         ? receipt.job.created_at_utc
@@ -321,7 +428,14 @@ export function validateModelScanJobReceipt(
   };
 }
 
-const JOB_STATUSES = new Set([
+/**
+ * Every status the job contract defines.
+ *
+ * Typed as the contract's own union, so a status added to the contract without
+ * being added here is a type error rather than a record refused at runtime,
+ * and so the check below narrows instead of needing a cast.
+ */
+const JOB_STATUSES: readonly StudioJobRecord["status"][] = [
   "pending",
   "running",
   "completed",
@@ -329,10 +443,25 @@ const JOB_STATUSES = new Set([
   "cancelling",
   "cancelled",
   "timed_out",
-]);
+];
 
 /**
- * Bind a polled job record to the retained session job id and model_scan kind.
+ * Whether a value is one of the contract's job statuses.
+ *
+ * @param value - The value, as it arrived.
+ * @returns Whether it is a status this build knows.
+ */
+function isJobStatus(value: unknown): value is StudioJobRecord["status"] {
+  return typeof value === "string" && JOB_STATUSES.some((status) => status === value);
+}
+
+/**
+ * Read a poll response, and bind it to the scan being polled.
+ *
+ * @param record - The response, as it arrived.
+ * @param expectedJobId - The scan being polled. A `null` refuses every record,
+ *   which is what a caller holding no job identifier wants.
+ * @returns The record, or the identifier of what was wrong.
  */
 export function validateModelScanPollRecord(
   record: unknown,
@@ -350,16 +479,18 @@ export function validateModelScanPollRecord(
   if (expectedJobId === null || record.job_id !== expectedJobId) {
     return { ok: false, error: "model_scan_poll_job_id_mismatch" };
   }
-  if (typeof record.status !== "string" || !JOB_STATUSES.has(record.status)) {
+  if (!isJobStatus(record.status)) {
     return { ok: false, error: "model_scan_poll_status_invalid" };
   }
-  const status = record.status as StudioJobRecord["status"];
+  const status = record.status;
+  const artifacts = parseJobArtifacts(record.artifacts);
+  if (!artifacts.ok) {
+    return artifacts;
+  }
   return {
     ok: true,
     value: {
-      artifacts: Array.isArray(record.artifacts)
-        ? (record.artifacts as StudioJobRecord["artifacts"])
-        : [],
+      artifacts: artifacts.value,
       created_at_utc:
         typeof record.created_at_utc === "string" ? record.created_at_utc : "",
       error: typeof record.error === "string" ? record.error : null,
