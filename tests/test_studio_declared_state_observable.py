@@ -32,28 +32,36 @@ from typing import Any
 import pytest
 
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
+from sc_neurocore.studio.models import simulate_model
 from sc_neurocore.studio.state_layout import (
     ObservedState,
     attribute_fingerprints,
     declared_state,
     observe_layout,
+    read_variable,
+    scalar_value,
     undeclared_mutations,
 )
 
 # Declared variables that are attributes of the instance but that a run cannot
-# record, with the exact reason the layout reports. `excited` is a Python bool;
-# the layout admits real scalars and numeric arrays, and the schema lowers the
-# same register as 0.0/1.0, so the value is representable but not admitted.
-# Recorded as DISCOVERED-DECLARED-BOOL-STATE-NOT-RECORDABLE; this pin keeps the
-# set from growing while that row is open.
-UNRECORDABLE_DECLARED_STATE: dict[tuple[str, str], str] = {
-    ("LapicqueNeuron", "excited"): "unsupported state value (bool)",
-}
+# record, with the exact reason the layout reports. The set is empty:
+# `LapicqueNeuron.excited` was the last entry, a declared flag the layout
+# refused although its own schema lowers it as 0.0/1.0, and a declared flag is
+# now read as that number. Keeping the pin as an empty mapping is the point —
+# a new unrecordable variable is a failure here rather than a quiet demotion of
+# somebody's run.
+UNRECORDABLE_DECLARED_STATE: dict[tuple[str, str], str] = {}
 
 # Steps and drive for the two refractory regressions: enough steps at a drive
 # that spikes, so the refractory register is entered, decremented and left
 # non-zero rather than sitting at its initial value for the whole run.
 REFRACTORY_STEPS = 400
+
+# The source profile's drive is a source voltage, and its polarisation
+# asymptotes below threshold for small values; 50 V latches at step 24.
+LATCH_DRIVE = 50.0
+LATCH_STEPS = 300
 
 # Compte-WM integrates at 0.02 ms with a 20 ms membrane time constant, so the
 # drive has to carry the membrane 20 mV within 8 ms of run: 2.0 nA against the
@@ -167,3 +175,59 @@ def test_refractory_register_rejects_a_negative_value_by_its_public_name() -> No
     neuron.ref_remaining = -1.0
     with pytest.raises(ValueError, match="ref_remaining must be finite and non-negative"):
         neuron.step(0.0, 0.0, 0.0, 0.0)
+
+
+class TestADeclaredFlagIsRecorded:
+    """A flag is state, and a run that refuses to record one is incomplete.
+
+    `LapicqueNeuron` declares `excited`, which latches the first threshold
+    attainment and which the canonical schema lowers as 0.0 or 1.0 in the RTL.
+    The layout admitted real scalars and numeric arrays and refused Python
+    booleans, so every run of that model published incomplete custody for a
+    register the model tracks exactly.
+    """
+
+    def test_a_boolean_reads_as_the_number_the_toolchain_carries(self) -> None:
+        """The schema lowers the same register as 0.0 or 1.0; so does the layout."""
+        assert scalar_value(True) == 1.0
+        assert scalar_value(False) == 0.0
+
+    def test_a_declared_flag_is_observed_as_a_scalar(self) -> None:
+        """The defect: this variable was reported unsupported and dropped."""
+        observed = {variable.name: variable for variable in _observed("LapicqueNeuron")}
+        assert observed["excited"].observable
+        assert observed["excited"].kind == "scalar"
+        assert observed["excited"].reason == ""
+
+    def test_a_run_records_the_flag_and_reports_complete_custody(self) -> None:
+        """The run's own verdict is what the refusal was costing."""
+        result = simulate_model("LapicqueNeuron", use_fast_path=False, duration=5.0)
+        layout = result["state_layout"]
+        assert layout["complete"] is True
+        assert layout["incomplete_reasons"] == []
+        assert "excited" in layout["recorded"]
+        assert "excited" in result["initial_state"]
+        assert "excited" in result["final_state"]
+
+    def test_the_recorded_flag_captures_the_latch(self) -> None:
+        """A recorded constant would prove nothing; this one has to move.
+
+        The source profile latches on the first candidate at or above
+        threshold, and `drive` there is a source voltage rather than a current,
+        so the drive is chosen high enough for the polarisation to reach it.
+        """
+        neuron = LapicqueNeuron.lapicque_1907()
+        source, stem, declared = declared_state("LapicqueNeuron")
+        layout = observe_layout(
+            neuron, source, stem, declared, n_steps=LATCH_STEPS, element_budget=1 << 20
+        )
+        flag = {variable.name: variable for variable in layout.variables}["excited"]
+
+        trace: list[float] = []
+        for _ in range(LATCH_STEPS):
+            neuron.step(LATCH_DRIVE)
+            trace.append(float(read_variable(neuron, flag)))
+
+        assert trace[0] == 0.0
+        assert trace[-1] == 1.0
+        assert sorted(set(trace)) == [0.0, 1.0]

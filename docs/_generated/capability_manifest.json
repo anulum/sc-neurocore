@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4850
+    "test_files": 4852
   },
   "documentation": {
     "public_pages": [
@@ -3418,6 +3418,7 @@
       "tests/native/test_learning_bridge_validation_float.py",
       "tests/native/test_learning_bridge_validation_integral.py",
       "tests/native/test_learning_bridge_validation_numeric_vectors.py",
+      "tests/native_lane_requirement.py",
       "tests/network_basic_support.py",
       "tests/network_execution_paths_support.py",
       "tests/network_monitors_stimulus_support.py",
@@ -6248,6 +6249,7 @@
       "tests/test_native/test_learning_bridge_torch_support.py",
       "tests/test_native/test_learning_bridge_validation.py",
       "tests/test_native/test_learning_bridge_wgpu.py",
+      "tests/test_native_lane_requirement_gate.py",
       "tests/test_network/test_projection.py",
       "tests/test_network/test_to_torch_bridge_input_validation.py",
       "tests/test_network/test_to_torch_bridge_projection_graph_rejects.py",

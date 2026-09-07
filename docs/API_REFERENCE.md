@@ -41147,7 +41147,17 @@ init : mapping or None
     ``None``.
 
 ### Function `scalar_value(value)`
-Return ``value`` as a float when it is a real scalar, otherwise ``None``.
+Return a declared state variable as a float, or ``None`` when it is not one.
+
+A flag is state. ``LapicqueNeuron`` declares ``excited``, which latches the
+first threshold attainment and which its canonical schema lowers as 0.0 or
+1.0 in the RTL, and a run that refused to record it published incomplete
+custody for a register the model tracks exactly. A boolean is therefore read
+as the number the rest of the toolchain already carries it as.
+
+This function exists only to read *declared* state: an attribute nobody
+declared is never offered to it, so admitting flags here says nothing about
+an undeclared one.
 
 ### Function `vector_value(value)`
 Return ``value`` as a float64 array when it is a numeric vector.

@@ -147,7 +147,7 @@ class TestDeclaredLayout:
             meaning="declared register the instance does not carry",
             declared_init=0.0,
         )
-        real_declared_state = model_simulate.declared_state
+        real_declared_state = declared_state
 
         def _with_phantom(name: str) -> tuple[Any, str, tuple[DeclaredState, ...]]:
             source, stem, variables = real_declared_state(name)
@@ -278,7 +278,7 @@ class TestRawExportAndReplay:
         cls = _load_class(receipt["model"])
         replay = cls(**receipt["parameters"])
         assert exported["initial_state"] == {"v": replay.v, "theta": replay.theta}
-        replayed = {"v": [], "theta": []}
+        replayed: dict[str, list[float]] = {"v": [], "theta": []}
         spikes: list[int] = []
         for t, sample in enumerate(raw["drive"]):
             if replay.step(sample):
@@ -355,7 +355,10 @@ class TestLayoutPrimitives:
             (3,),
             "per-step",
         )
-        assert by_name["flag"].observable is False
+        # A declared flag is state and reads as the 0.0/1.0 the schema lowers it
+        # as; a declared string is not a quantity and still cannot be recorded.
+        assert (by_name["flag"].kind, by_name["flag"].shape) == ("scalar", ())
+        assert by_name["flag"].observable is True
         assert by_name["name"].observable is False
         assert by_name["absent"].reason == "not an attribute of the model instance"
         assert layout.complete is False
