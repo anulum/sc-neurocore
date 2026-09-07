@@ -123,9 +123,21 @@ async function requestError(r: Response): Promise<StudioRequestError> {
 /**
  * Read a successful response's JSON, or throw what the server said.
  *
- * The caller names `T`; nothing here can check that the server agreed, which
- * is why every route module states the type it expects rather than leaving it
- * to be inferred at the call site.
+ * **`T` is asserted, not checked, and that is a decision rather than an
+ * oversight.** Nothing here can know whether the server agreed. The rule this
+ * codebase follows is: *validate where a payload becomes evidence, assert
+ * elsewhere.* Analysis job receipts, poll records and results, model-scan
+ * payloads, training checkpoints and graph documents each go through a
+ * validator that reads them field by field and refuses what it cannot read,
+ * because those are the payloads whose contents someone later cites. The rest
+ * — panel data, listings, status blocks — are asserted, and a server that
+ * renames a field there shows a blank rather than a false claim.
+ *
+ * The consequence to know when reading a route module: a type on one of these
+ * calls is what the browser *expects*, not what it verified. A guard on one
+ * field of an unvalidated response defends nothing, because the field beside
+ * it is dereferenced unguarded; if a payload needs checking, it needs a
+ * validator, not a conditional.
  *
  * @param r - The response.
  * @returns The parsed body, as the caller's `T`.
