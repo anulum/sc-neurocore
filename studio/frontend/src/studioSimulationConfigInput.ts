@@ -39,8 +39,14 @@ export interface StudioSimulationConfigSource {
 }
 
 /**
- * Build StudioSimulationConfigInput with exact field-for-field copy semantics.
- * Map and array fields are returned by reference without mutation.
+ * Take a run's configuration out of a wider source, field by field.
+ *
+ * Named fields rather than a spread, so a field added to the source does not
+ * silently become part of every request built from it. Maps and arrays are
+ * carried by reference and never mutated: the caller still owns them.
+ *
+ * @param source - Whatever holds the configuration, usually the store.
+ * @returns The configuration a request is built from.
  */
 export function studioSimulationConfigInput(
   source: StudioSimulationConfigSource,

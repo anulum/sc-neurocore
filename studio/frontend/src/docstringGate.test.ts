@@ -52,26 +52,76 @@ const UNDOCUMENTED_INTERFACE = `export interface Carrier {
 }
 `;
 
-/**
- * Lint one candidate as if it were an audited file.
- *
- * The candidate is linted under the path of a file the policy already covers,
- * so it is judged by the same configuration as the rest of the audited scope.
- */
+/** The instance every case shares; building a type-aware program is slow. */
 let shared: ESLint | undefined;
 
 /**
- * Lint one candidate under the audited configuration and return its rule ids.
+ * Lint one candidate under the project's own configuration.
+ *
+ * @param source - The candidate source.
+ * @param filename - The name to lint it under, within `src`. It defaults to an
+ *   existing module; a case passes a name of its own to prove that the scope
+ *   does not depend on the file already being known.
+ * @returns The rule ids that fired, in the order they were reported.
  */
-async function lint(source: string): Promise<string[]> {
+async function lint(source: string, filename = "studioGraphTable.ts"): Promise<string[]> {
   shared ??= new ESLint({ cwd: new URL("..", import.meta.url).pathname });
   const results = await shared.lintText(source, {
-    filePath: new URL("./studioGraphTable.ts", import.meta.url).pathname,
+    filePath: new URL(`./${filename}`, import.meta.url).pathname,
   });
   return results.flatMap((result) => result.messages.map((message) => message.ruleId ?? "unknown"));
 }
 
+/**
+ * The severity a calculated configuration gives one rule.
+ *
+ * The result of `calculateConfigForFile` is read structurally rather than
+ * through a cast: it is a plain object from a tool, and the gate that proves
+ * other files are honest should be honest itself.
+ *
+ * @param config - What the configuration resolved to for some path.
+ * @param ruleId - The rule to look up.
+ * @returns `error`, `warn`, `off`, or `absent` when the rule is not configured
+ *   at all -- which is what an unenforced file looks like.
+ */
+function ruleSeverity(config: unknown, ruleId: string): string {
+  if (typeof config !== "object" || config === null || !("rules" in config)) {
+    return "absent";
+  }
+  const { rules } = config;
+  if (typeof rules !== "object" || rules === null || !(ruleId in rules)) {
+    return "absent";
+  }
+  const entry: unknown = (rules as Record<string, unknown>)[ruleId];
+  const severity: unknown = Array.isArray(entry) ? entry[0] : entry;
+  if (severity === 2 || severity === "error") return "error";
+  if (severity === 1 || severity === "warn") return "warn";
+  return "off";
+}
+
 describe("the documentation gate", () => {
+  it(
+    "covers a file that has never existed, which a list-based scope did not",
+    { timeout: TIMEOUT_MS },
+    async () => {
+      // The scope was a list of audited paths until 2026-09-07, and a new file
+      // nobody added to it was silently unenforced: it produced no finding and
+      // no count anywhere. The scope is a glob now.
+      //
+      // This asks the configuration what it would apply to a path that has
+      // never existed, rather than linting text under it -- the type-aware
+      // parser refuses a path no tsconfig contains, which would prove nothing
+      // about the scope either way.
+      shared ??= new ESLint({ cwd: new URL("..", import.meta.url).pathname });
+      const config: unknown = await shared.calculateConfigForFile(
+        new URL("./aModuleNobodyHasWrittenYet.ts", import.meta.url).pathname,
+      );
+
+      expect(ruleSeverity(config, "jsdoc/require-jsdoc")).toBe("error");
+      expect(ruleSeverity(config, "@typescript-eslint/no-explicit-any")).toBe("error");
+    },
+  );
+
   it("rejects an exported function that carries no docblock", { timeout: TIMEOUT_MS }, async () => {
     const rules = await lint(UNDOCUMENTED);
 

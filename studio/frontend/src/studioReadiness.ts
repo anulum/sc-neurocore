@@ -5,10 +5,30 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio readiness activation state
+
+/**
+ * The first screen's answer to "is this deployment ready?"
+ *
+ * Nothing here runs a check or claims authority it does not have. It reads the
+ * operator status the server already publishes and turns it into seven items
+ * an operator can act on, each with the action that would improve it.
+ *
+ * The severities are the point. `blocked` means something must change before
+ * this deployment is used in earnest; `warning` means something is worth
+ * knowing and is normal in local development. The posture is the worst item,
+ * and an absent operator status is a `warning` rather than `ready` -- a
+ * deployment that cannot answer is not a deployment that is fine.
+ */
 import type { StudioOperatorStatus } from "./api/client";
 
+/**
+ * How badly an item needs attention. `blocked` must change before the
+ * deployment is used in earnest; `warning` is worth knowing and is normal in
+ * local development.
+ */
 export type StudioReadinessSeverity = "ready" | "warning" | "blocked";
 
+/** The seven things readiness looks at. */
 export type StudioReadinessItemKey =
   | "audit"
   | "capabilities"
@@ -18,6 +38,7 @@ export type StudioReadinessItemKey =
   | "resources"
   | "routes";
 
+/** One check: what it found, how bad it is, and what to do about it. */
 export interface StudioReadinessItem {
   action: string;
   key: StudioReadinessItemKey;
@@ -26,6 +47,7 @@ export interface StudioReadinessItem {
   value: string;
 }
 
+/** Every check, counted and summarised, with the action to take first. */
 export interface StudioReadinessModel {
   actionLabel: string;
   blockingCount: number;
@@ -37,6 +59,10 @@ export interface StudioReadinessModel {
   warningCount: number;
 }
 
+/**
+ * What readiness reports when the operator status has not arrived: a warning,
+ * not a pass. A deployment that cannot answer is not a deployment that is fine.
+ */
 const NOT_LOADED_ITEM: StudioReadinessItem = {
   action: "Refresh operator status",
   key: "profile",
@@ -46,11 +72,12 @@ const NOT_LOADED_ITEM: StudioReadinessItem = {
 };
 
 /**
- * Convert the operator status contract into promotion-oriented readiness state.
+ * Read a deployment's readiness off its operator status.
  *
- * The readiness model does not run new checks or introduce authority. It
- * turns the existing operator status payload into stable UI labels that make
- * local development gaps and production blockers explicit on the first screen.
+ * @param status - The status, or `null` when it has not arrived.
+ * @returns The model: seven items, their counts, the worst posture among them,
+ *   and the one action worth taking first. A status that has not arrived
+ *   produces a single warning item rather than an empty ready model.
  */
 export function buildStudioReadinessModel(
   status: StudioOperatorStatus | null,
@@ -69,6 +96,16 @@ export function buildStudioReadinessModel(
   ]);
 }
 
+/**
+ * Count the items and summarise them.
+ *
+ * The action offered is the first item at the worst severity, so an
+ * operator is pointed at something that would actually move the posture
+ * rather than at whichever check happens to be first.
+ *
+ * @param items - The checks, in the order they are shown.
+ * @returns The whole model.
+ */
 function finalizeReadiness(items: StudioReadinessItem[]): StudioReadinessModel {
   const blockingCount = items.filter((item) => item.status === "blocked").length;
   const warningCount = items.filter((item) => item.status === "warning").length;
@@ -89,6 +126,12 @@ function finalizeReadiness(items: StudioReadinessItem[]): StudioReadinessModel {
   };
 }
 
+/**
+ * Name a posture in one line.
+ *
+ * @param posture - The worst severity present.
+ * @returns The headline.
+ */
 function headlineForPosture(posture: StudioReadinessSeverity): string {
   switch (posture) {
     case "blocked":
@@ -100,6 +143,13 @@ function headlineForPosture(posture: StudioReadinessSeverity): string {
   }
 }
 
+/**
+ * Judge which deployment profile is in force.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function profileItem(status: StudioOperatorStatus): StudioReadinessItem {
   if (status.deployment_profile === "production") {
     return {
@@ -119,6 +169,13 @@ function profileItem(status: StudioOperatorStatus): StudioReadinessItem {
   };
 }
 
+/**
+ * Judge whether the protected routes are enforced and audited.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function routePolicyItem(status: StudioOperatorStatus): StudioReadinessItem {
   const routes = status.route_policies;
   if (routes.enforced && routes.protected_routes_audited) {
@@ -139,6 +196,13 @@ function routePolicyItem(status: StudioOperatorStatus): StudioReadinessItem {
   };
 }
 
+/**
+ * Judge how identities are established.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function identityItem(status: StudioOperatorStatus): StudioReadinessItem {
   const identity = status.identity;
   if (identity.configured && identity.mode === "service_account" && !identity.header_principal_allowed) {
@@ -168,6 +232,13 @@ function identityItem(status: StudioOperatorStatus): StudioReadinessItem {
   };
 }
 
+/**
+ * Judge whether the audit sink is configured and healthy.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function auditItem(status: StudioOperatorStatus): StudioReadinessItem {
   const audit = status.audit;
   if (audit.configured && audit.path_configured && audit.healthy && audit.sink_type === "jsonl") {
@@ -197,6 +268,13 @@ function auditItem(status: StudioOperatorStatus): StudioReadinessItem {
   };
 }
 
+/**
+ * Judge whether the job queue is configured and coping.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function jobsItem(status: StudioOperatorStatus): StudioReadinessItem {
   const jobs = status.jobs;
   if (jobs.configured) {
@@ -217,6 +295,13 @@ function jobsItem(status: StudioOperatorStatus): StudioReadinessItem {
   };
 }
 
+/**
+ * Judge whether the process limits are in force.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function resourceLimitItem(status: StudioOperatorStatus): StudioReadinessItem {
   const limits = status.resource_limits;
   const hasJobLimits = limits.job_default_timeout_seconds > 0 && limits.job_max_artifact_bytes > 0;
@@ -248,6 +333,13 @@ function resourceLimitItem(status: StudioOperatorStatus): StudioReadinessItem {
   };
 }
 
+/**
+ * Judge how many registered capabilities are unavailable.
+ *
+ * @param status - The operator status.
+ * @returns The readiness item: its value, its severity, and the
+ *   action that would improve it.
+ */
 function capabilitiesItem(status: StudioOperatorStatus): StudioReadinessItem {
   const capabilities = status.capabilities;
   const value = `${capabilities.healthy_count}/${capabilities.total_count} healthy`;

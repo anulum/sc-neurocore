@@ -5,8 +5,25 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio guided operator run controller
+
+/**
+ * What the guided panel's single button does next.
+ *
+ * The whole controller exists to answer one question -- what should happen when
+ * the reader presses the one button -- and to say why when the answer is
+ * nothing. A blocked flow reports the first blocker the reader can actually
+ * act on: a step blocked merely because its predecessor is not done is not
+ * actionable, so it is skipped in favour of one that names a real obstacle,
+ * and a capability's own message is preferred over the flow's generic one
+ * because it says what the deployment is missing.
+ *
+ * Every action is awaited and its failure returned rather than thrown. The
+ * caller is a click handler, and a rejected promise there is an unhandled
+ * rejection with nothing naming the step that failed.
+ */
 import type { GuidedFlowState, GuidedFlowStepKey } from "./guidedFlowState";
 
+/** What the button will do, including doing nothing and saying why. */
 export type GuidedRunActionKey =
   | "blocked"
   | "complete"
@@ -18,6 +35,7 @@ export type GuidedRunActionKey =
   | "run-synthesis"
   | "skip-training";
 
+/** The work each step performs, supplied by whoever owns it. */
 export interface GuidedRunActions {
   exportEvidence: () => Promise<void>;
   runAnalysis: () => Promise<void>;
@@ -28,6 +46,7 @@ export interface GuidedRunActions {
   skipTraining: () => Promise<void>;
 }
 
+/** The flow, and what the deployment can currently do. */
 export interface GuidedRunControllerInputs {
   capabilityMessages?: Partial<Record<GuidedFlowStepKey, string>>;
   compileConfigured?: boolean;
@@ -37,11 +56,13 @@ export interface GuidedRunControllerInputs {
   sourceMode: "model" | "ode";
 }
 
+/** Whether the step ran, and the message when it did not. */
 export interface GuidedRunResult {
   error?: string;
   ok: boolean;
 }
 
+/** What the panel renders, and the call behind its button. */
 export interface GuidedRunController {
   blockerReason: string | null;
   completedEvidence: string[];
@@ -51,12 +72,14 @@ export interface GuidedRunController {
   runNextStep: () => Promise<GuidedRunResult>;
 }
 
+/** The decided action: its key, its label, and any blocker. */
 interface GuidedRunPlan {
   blockerReason: string | null;
   key: GuidedRunActionKey;
   label: string;
 }
 
+/** What each completed step is called in the evidence summary. */
 const STEP_EVIDENCE_LABELS: Record<GuidedFlowStepKey, string> = {
   analyse: "Analyse",
   compile: "Compile",
@@ -68,6 +91,14 @@ const STEP_EVIDENCE_LABELS: Record<GuidedFlowStepKey, string> = {
   train: "Train",
 };
 
+/**
+ * Decide what the guided panel should offer next.
+ *
+ * @param inputs - The flow and what the deployment can do.
+ * @param actions - The work each step performs.
+ * @returns The controller. `runNextStep` performs whatever the plan chose,
+ *   and returns its failure rather than throwing it.
+ */
 export function buildGuidedRunController(
   inputs: GuidedRunControllerInputs,
   actions: GuidedRunActions,
@@ -85,6 +116,13 @@ export function buildGuidedRunController(
   };
 }
 
+/**
+ * Choose the action for the flow as it stands.
+ *
+ * @param inputs - The flow and what the deployment can do.
+ * @returns The plan: the current step's action, an actionable blocker, or
+ *   completion.
+ */
 function guidedRunPlan(inputs: GuidedRunControllerInputs): GuidedRunPlan {
   const current = inputs.flow.steps.find((step) => step.status === "current") ?? null;
   if (current !== null) {
@@ -97,6 +135,14 @@ function guidedRunPlan(inputs: GuidedRunControllerInputs): GuidedRunPlan {
   return { blockerReason: null, key: "complete", label: "Workflow complete" };
 }
 
+/**
+ * Choose the action for a step that is current.
+ *
+ * @param stepKey - The current step.
+ * @param inputs - The flow and what the deployment can do.
+ * @returns The plan for it, which may still be blocked when the step is
+ *   current but its prerequisites in the deployment are not configured.
+ */
 function currentStepPlan(
   stepKey: GuidedFlowStepKey,
   inputs: GuidedRunControllerInputs,
@@ -142,6 +188,16 @@ function currentStepPlan(
   }
 }
 
+/**
+ * Find the first blocker the reader can do something about.
+ *
+ * A step blocked only because its predecessor is unfinished is not
+ * actionable and is skipped: telling someone their workflow is blocked
+ * because they have not done the previous step is not help.
+ *
+ * @param inputs - The flow and what the deployment can do.
+ * @returns The reason, preferring a capability's own message, or `null`.
+ */
 function firstActionableBlocker(inputs: GuidedRunControllerInputs): string | null {
   const firstBlocked = inputs.flow.steps.find(
     (step) =>
@@ -155,6 +211,14 @@ function firstActionableBlocker(inputs: GuidedRunControllerInputs): string | nul
   return inputs.capabilityMessages?.[firstBlocked.key] ?? firstBlocked.blockedReason;
 }
 
+/**
+ * Perform the planned action.
+ *
+ * @param plan - What was chosen.
+ * @param actions - The work each step performs.
+ * @returns Whether it succeeded, with the message when it did not. A
+ *   failure is returned, never thrown: the caller is a click handler.
+ */
 async function runPlannedAction(
   plan: GuidedRunPlan,
   actions: GuidedRunActions,

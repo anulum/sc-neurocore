@@ -8,6 +8,7 @@
 
 import type { TrainingConfig, TrainingEpochMetrics } from "./api/client";
 
+/** What the evidence strip states about a training run. */
 export interface TrainingEvidenceModel {
   actionKind: string;
   classification: string;
@@ -20,6 +21,19 @@ export interface TrainingEvidenceModel {
   statusArtifact: string;
 }
 
+/**
+ * Describe a training run for its evidence strip.
+ *
+ * A run that has not been submitted shows `not submitted` and `pending`
+ * rather than blanks, so the strip distinguishes a run that has not
+ * started from one whose evidence failed to load.
+ *
+ * @param jobId - The job, once there is one.
+ * @param status - Where the run is.
+ * @param config - The parts of the configuration worth stating.
+ * @param latestEpoch - The most recent epoch's metrics, if any.
+ * @returns What the strip should state.
+ */
 export function buildTrainingEvidenceModel(
   jobId: string | null,
   status: string,

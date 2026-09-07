@@ -10,6 +10,12 @@ import { describe, expect, it } from "vitest";
 import type { StudioOperatorStatus } from "./api/client";
 import { buildStudioReadinessModel } from "./studioReadiness";
 
+/**
+ * Build a fully healthy operator status, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The status.
+ */
 function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOperatorStatus {
   const base: StudioOperatorStatus = {
     audit: {

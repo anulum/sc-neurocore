@@ -11,6 +11,9 @@ import type { ComponentType } from "react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+/**
+ * What the remote's entry is expected to export: a default React component.
+ */
 interface FederatedPanelModule {
   default: ComponentType;
 }

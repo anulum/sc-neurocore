@@ -6,8 +6,25 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+/**
+ * Checking that downloaded training weights are the weights that were trained.
+ *
+ * Two things are compared before any weight is loaded: the artefact's size and
+ * its SHA-256, both against what the restore plan says the server wrote. A
+ * mismatch throws rather than returning a flag, because the caller's next step
+ * is to load the file into a network, and a verification whose failure can be
+ * ignored is not a verification.
+ *
+ * The manifest builder checks the plan and the verification against each other
+ * as well -- same job, same path, same expected digest, and a digest that
+ * actually matched. A manifest is the record someone else reads to believe the
+ * restore happened; assembling one from two documents that disagree would make
+ * that record false.
+ */
+
 import type { TrainingWeightRestorePlan } from "./api/client";
 
+/** What a verification found: both digests, the size, and when it ran. */
 export interface TrainingWeightRestoreVerification {
   actual_sha256: string;
   expected_sha256: string;
@@ -18,6 +35,10 @@ export interface TrainingWeightRestoreVerification {
   verified_at_utc: string;
 }
 
+/**
+ * The record of a verified restore: which job, which artefacts, which digests,
+ * and how a loader is expected to fetch them.
+ */
 export interface TrainingWeightRestoreVerificationManifest {
   artifact_route_template: string;
   loader_policy: string;
@@ -33,6 +54,12 @@ export interface TrainingWeightRestoreVerificationManifest {
   weights_artifact_path: string;
 }
 
+/**
+ * Digest a blob with SHA-256.
+ *
+ * @param blob - The bytes.
+ * @returns The digest, as lowercase hexadecimal.
+ */
 export async function sha256Blob(blob: Blob): Promise<string> {
   const bytes = await blob.arrayBuffer();
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -41,6 +68,21 @@ export async function sha256Blob(blob: Blob): Promise<string> {
     .join("");
 }
 
+/**
+ * Check a downloaded weights artefact against its restore plan.
+ *
+ * The size is checked before the digest, because it is free and it catches
+ * the common failure -- a truncated download -- without hashing megabytes
+ * to find out.
+ *
+ * @param restorePlan - What the server says the artefact should be.
+ * @param blob - The bytes that arrived.
+ * @param clock - Reads the time the verification happened.
+ * @returns The verification.
+ * @throws {Error} When the size or the digest disagrees. It throws rather
+ *   than reporting, because the caller's next step is to load these
+ *   weights into a network.
+ */
 export async function verifyTrainingWeightArtifactBlob(
   restorePlan: TrainingWeightRestorePlan,
   blob: Blob,
@@ -68,6 +110,17 @@ export async function verifyTrainingWeightArtifactBlob(
   };
 }
 
+/**
+ * Build the record of a verified restore.
+ *
+ * @param restorePlan - The plan the verification was made against.
+ * @param verification - What the verification found.
+ * @returns The manifest.
+ * @throws {Error} When the plan and the verification disagree about the
+ *   job, the path, the expected digest or the size, or when the
+ *   verification's own digests do not match. A manifest assembled from
+ *   documents that disagree is a false record.
+ */
 export function buildTrainingWeightRestoreVerificationManifest(
   restorePlan: TrainingWeightRestorePlan,
   verification: TrainingWeightRestoreVerification,

@@ -6,6 +6,24 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio guided default-flow state machine
 
+/**
+ * The guided path from a model to exported evidence, as a state machine.
+ *
+ * Eight steps, each unblocked by the one before it. The order is the argument
+ * the workflow makes: you cannot analyse a run you have not done, cannot claim
+ * parity for RTL you have not compiled, and cannot export evidence of a
+ * synthesis that has not happened. A step is `blocked` with a stated reason
+ * rather than merely disabled, because "why can I not click this" is the
+ * question the reader actually has.
+ *
+ * Two steps bend the chain. `train` is optional and may be skipped, which is
+ * why a later step can be `available` while an earlier one is not complete.
+ * `cosim` is dropped entirely when co-simulation does not apply to the run --
+ * removed from the flow, not shown as permanently blocked, because a step that
+ * can never complete would make the count of remaining work a lie.
+ */
+
+/** The eight steps of the guided workflow, in order. */
 export type GuidedFlowStepKey =
   | "design"
   | "simulate"
@@ -16,6 +34,11 @@ export type GuidedFlowStepKey =
   | "synthesise"
   | "export";
 
+/**
+ * Where a step stands. `current` is the one to do next; `available` is a later
+ * step that is reachable anyway, which happens when an optional step is
+ * skipped.
+ */
 export type GuidedFlowStepStatus = "completed" | "current" | "available" | "blocked";
 
 /** Accomplished-evidence facts that drive the guided flow, derived from the store. */
@@ -35,6 +58,7 @@ export interface GuidedFlowInputs {
 /** Per-step capability availability from the Studio capability registry. */
 export type GuidedFlowCapabilityMap = Record<GuidedFlowStepKey, boolean>;
 
+/** One step: what it is, where it stands, and why it is blocked. */
 export interface GuidedFlowStep {
   key: GuidedFlowStepKey;
   title: string;
@@ -43,6 +67,7 @@ export interface GuidedFlowStep {
   blockedReason: string | null;
 }
 
+/** The whole flow: its steps, the current one, and how far it has got. */
 export interface GuidedFlowState {
   steps: GuidedFlowStep[];
   currentStepKey: GuidedFlowStepKey | null;
@@ -50,6 +75,7 @@ export interface GuidedFlowState {
   totalCount: number;
 }
 
+/** A step's fixed properties: its name, whether it is optional, what it needs. */
 interface GuidedFlowStepDefinition {
   key: GuidedFlowStepKey;
   title: string;
@@ -58,6 +84,7 @@ interface GuidedFlowStepDefinition {
   requires: GuidedFlowStepKey | null;
 }
 
+/** The workflow itself, in the order the steps must happen. */
 const GUIDED_FLOW_STEPS: readonly GuidedFlowStepDefinition[] = [
   { key: "design", title: "Design", optional: false, requires: null },
   { key: "simulate", title: "Simulate", optional: false, requires: "design" },
@@ -69,6 +96,14 @@ const GUIDED_FLOW_STEPS: readonly GuidedFlowStepDefinition[] = [
   { key: "export", title: "Export evidence", optional: false, requires: "synthesise" },
 ];
 
+/**
+ * Assume every step's capability is available.
+ *
+ * The default for callers that do not consult the registry, so a caller
+ * that has not asked is not silently locked out of every step.
+ *
+ * @returns A map marking every step available.
+ */
 function allCapabilitiesAvailable(): GuidedFlowCapabilityMap {
   return {
     design: true,
@@ -82,6 +117,15 @@ function allCapabilitiesAvailable(): GuidedFlowCapabilityMap {
   };
 }
 
+/**
+ * Whether one step's work has been done.
+ *
+ * @param key - The step.
+ * @param inputs - What the store says has been accomplished.
+ * @returns Whether it counts as complete. `train` counts as complete when
+ *   it was skipped: the reader made that decision and the flow should not
+ *   keep asking.
+ */
 function isStepComplete(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boolean {
   switch (key) {
     case "design":
@@ -103,6 +147,12 @@ function isStepComplete(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boole
   }
 }
 
+/**
+ * The name a step is shown under.
+ *
+ * @param key - The step.
+ * @returns Its title.
+ */
 function titleOf(key: GuidedFlowStepKey): string {
   const definition = GUIDED_FLOW_STEPS.find((step) => step.key === key);
   return definition ? definition.title : key;
@@ -118,6 +168,12 @@ function titleOf(key: GuidedFlowStepKey): string {
  * `blockedReason`. The earliest actionable step is `current`; any later
  * actionable step (reachable because the optional `train` step can be skipped)
  * is `available`.
+ *
+ * @param inputs - What the store says has been accomplished.
+ * @param capabilities - Which steps the deployment can actually perform;
+ *   every step is assumed available when this is not given.
+ * @returns The flow: its steps with their statuses, the current one, and how
+ *   many of them are done.
  */
 export function computeGuidedFlowState(
   inputs: GuidedFlowInputs,
@@ -165,6 +221,12 @@ export function computeGuidedFlowState(
   };
 }
 
+/**
+ * The fields a step carries whatever its status.
+ *
+ * @param definition - The step's definition.
+ * @returns Its key, title and optionality.
+ */
 function stepBase(
   definition: GuidedFlowStepDefinition,
 ): Pick<GuidedFlowStep, "key" | "title" | "optional"> {

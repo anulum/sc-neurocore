@@ -8,6 +8,7 @@
 
 import type { ProjectSaveResponse } from "./api/client";
 
+/** What the evidence strip states about a saved project. */
 export interface ProjectEvidenceModel {
   classification: string;
   name: string;
@@ -16,6 +17,15 @@ export interface ProjectEvidenceModel {
   stateDigest: string;
 }
 
+/**
+ * Describe a saved project for its evidence strip.
+ *
+ * The digests are shown as twelve characters: enough to compare two saves
+ * by eye, with the full values in the response for a real check.
+ *
+ * @param response - The save's response.
+ * @returns What the strip should state.
+ */
 export function buildProjectEvidenceModel(response: ProjectSaveResponse): ProjectEvidenceModel {
   return {
     classification: response.evidence_classification,

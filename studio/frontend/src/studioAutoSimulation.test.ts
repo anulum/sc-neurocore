@@ -15,10 +15,14 @@ import {
   type StudioAutoSimulationTimer,
 } from "./studioAutoSimulation";
 
+/**
+ * A scheduler that records what it was asked to do instead of doing it, so a
+ * case can run the delay itself and see which timers were cancelled.
+ */
 class RecordingScheduler implements StudioAutoSimulationScheduler {
   readonly clearedTimers: StudioAutoSimulationTimer[] = [];
   readonly delays: number[] = [];
-  private callbacks: Array<() => void> = [];
+  private callbacks: (() => void)[] = [];
 
   clearTimeout(timer: StudioAutoSimulationTimer): void {
     this.clearedTimers.push(timer);

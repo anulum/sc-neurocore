@@ -34,272 +34,20 @@ import jsdoc from "eslint-plugin-jsdoc";
 import tseslint from "typescript-eslint";
 
 /**
- * Files whose entire surface has been audited, documented and made safe to
- * enforce. Sorted, so an addition is one reviewable line of diff.
+ * Every TypeScript source in this package.
+ *
+ * This used to be a list. It was the incremental scope the documentation lane
+ * grew file by file, from 719 declarations of debt to zero, and while it was a
+ * list a **new** file that nobody added to it was silently unenforced -- the
+ * measurement counted only what the list already covered, so the gap did not
+ * appear as a number anywhere. Verified with exactly that candidate: a new
+ * undocumented module produced no finding at all.
+ *
+ * It is a glob now, so the default for a new file is enforcement rather than
+ * exemption. Anything genuinely outside is named in `LEGACY_OUTSIDE_SCOPE`
+ * with its reason.
  */
-const AUDITED = [
-  "e2e/admin-operator-audit-archive.spec.ts",
-  "e2e/admin-operator-capabilities.spec.ts",
-  "e2e/admin-operator-evidence-bundle.spec.ts",
-  "e2e/admin-operator-project-evidence.spec.ts",
-  "e2e/admin-operator-status.spec.ts",
-  "e2e/admin-operator-synthesis.spec.ts",
-  "e2e/adminOperatorHarness.ts",
-  "e2e/analysis-job-host.spec.ts",
-  "e2e/catalogue-to-silicon-live.spec.ts",
-  "e2e/experiment-export-live.spec.ts",
-  "e2e/federation-host/vite.config.ts",
-  "e2e/guided-operator-run.spec.ts",
-  "e2e/module-federation-host.spec.ts",
-  "e2e/network-canvas-live.spec.ts",
-  "playwright.config.ts",
-  "playwright.export.config.ts",
-  "playwright.federation.config.ts",
-  "playwright.graph.config.ts",
-  "playwright.live.config.ts",
-  "src/App.tsx",
-  "src/SnnStudioPanel.tsx",
-  "src/adminFormParsers.test.ts",
-  "src/adminFormParsers.ts",
-  "src/adminShell.test.ts",
-  "src/adminShell.ts",
-  "src/adminStoreState.test.ts",
-  "src/adminStoreState.ts",
-  "src/analysisJob.test.ts",
-  "src/analysisJob.ts",
-  "src/analysisJobRecordValidation.ts",
-  "src/analysisJobRequest.test.ts",
-  "src/analysisJobRequest.ts",
-  "src/analysisJobSession.ts",
-  "src/analysisJobValidation.test.ts",
-  "src/analysisJobValidation.ts",
-  "src/api/adminApi.ts",
-  "src/api/analysisApi.ts",
-  "src/api/benchmarksApi.ts",
-  "src/api/client.ts",
-  "src/api/compilerApi.ts",
-  "src/api/dclsApi.ts",
-  "src/api/graphApi.ts",
-  "src/api/http.ts",
-  "src/api/modelsApi.ts",
-  "src/api/progressApi.ts",
-  "src/api/projectApi.ts",
-  "src/api/simulationApi.ts",
-  "src/api/synthApi.test.ts",
-  "src/api/synthApi.ts",
-  "src/api/trainingApi.ts",
-  "src/api/types.ts",
-  "src/appChrome.tsx",
-  "src/arrayAt.test.ts",
-  "src/arrayAt.ts",
-  "src/auditArchiveShell.test.ts",
-  "src/auditShell.test.ts",
-  "src/auditShell.ts",
-  "src/browserArtefactDownload.test.ts",
-  "src/browserArtefactDownload.ts",
-  "src/browserCanvasExport.test.ts",
-  "src/browserCanvasExport.ts",
-  "src/capabilityShell.test.ts",
-  "src/capabilityShell.ts",
-  "src/characterizeStoreState.test.ts",
-  "src/characterizeStoreState.ts",
-  "src/citation.test.ts",
-  "src/citation.ts",
-  "src/compilerStoreState.test.ts",
-  "src/compilerStoreState.ts",
-  "src/components/AdminAuditArchiveSection.tsx",
-  "src/components/AdminPanel.test.tsx",
-  "src/components/AdminPanel.tsx",
-  "src/components/AdminPanelView.tsx",
-  "src/components/AnalysisJobControl.test.tsx",
-  "src/components/AnalysisJobControl.tsx",
-  "src/components/AnalysisJobWorkbench.test.tsx",
-  "src/components/AnalysisJobWorkbench.tsx",
-  "src/components/AuthControl.test.tsx",
-  "src/components/AuthControl.tsx",
-  "src/components/BackendMatrix.test.tsx",
-  "src/components/BackendMatrix.tsx",
-  "src/components/BenchmarkContribution.test.tsx",
-  "src/components/BenchmarkContribution.tsx",
-  "src/components/CapabilityStrip.tsx",
-  "src/components/ComparePanel.tsx",
-  "src/components/CompilerInspector.test.tsx",
-  "src/components/CompilerInspector.tsx",
-  "src/components/DclsPanel.test.tsx",
-  "src/components/DclsPanel.tsx",
-  "src/components/DevelopmentPreviewBanner.test.tsx",
-  "src/components/DevelopmentPreviewBanner.tsx",
-  "src/components/EquationEditor.tsx",
-  "src/components/EvidenceBundleArtifactList.test.tsx",
-  "src/components/EvidenceBundleArtifactList.tsx",
-  "src/components/EvidenceCartStrip.test.tsx",
-  "src/components/EvidenceCartStrip.tsx",
-  "src/components/EvidenceSummaryStrip.test.tsx",
-  "src/components/EvidenceSummaryStrip.tsx",
-  "src/components/EvidenceTierBadge.test.tsx",
-  "src/components/EvidenceTierBadge.tsx",
-  "src/components/GuidedFlowPanel.test.tsx",
-  "src/components/GuidedFlowPanel.tsx",
-  "src/components/GuidedRunPanelAction.test.tsx",
-  "src/components/KeyboardHelp.tsx",
-  "src/components/ModelBrowser.test.tsx",
-  "src/components/ModelBrowser.tsx",
-  "src/components/ModelComparison.tsx",
-  "src/components/ModelDocViewer.test.tsx",
-  "src/components/ModelDocViewer.tsx",
-  "src/components/ModelInfo.test.tsx",
-  "src/components/ModelInfo.tsx",
-  "src/components/MultiModelPicker.tsx",
-  "src/components/NetworkCanvas.test.tsx",
-  "src/components/NetworkCanvas.tsx",
-  "src/components/NetworkControls.tsx",
-  "src/components/NetworkGraphTable.test.tsx",
-  "src/components/NetworkGraphTable.tsx",
-  "src/components/OnboardingOverlay.tsx",
-  "src/components/OperatorWorkbenchPanel.test.tsx",
-  "src/components/OperatorWorkbenchPanel.tsx",
-  "src/components/ParameterSliders.test.tsx",
-  "src/components/ParameterSliders.tsx",
-  "src/components/PopulationEditor.test.tsx",
-  "src/components/PopulationEditor.tsx",
-  "src/components/ProjectEvidenceStrip.test.tsx",
-  "src/components/ProjectEvidenceStrip.tsx",
-  "src/components/ProjectionEditor.test.tsx",
-  "src/components/ProjectionEditor.tsx",
-  "src/components/SimulationPlot.test.tsx",
-  "src/components/SimulationPlot.tsx",
-  "src/components/SpikeStats.tsx",
-  "src/components/StatusBar.tsx",
-  "src/components/StudioReadinessPanel.test.tsx",
-  "src/components/StudioReadinessPanel.tsx",
-  "src/components/SynthesisDashboard.test.tsx",
-  "src/components/SynthesisDashboard.tsx",
-  "src/components/SynthesisEvidenceControls.tsx",
-  "src/components/TemplateLibrary.tsx",
-  "src/components/TrainingMonitor.test.tsx",
-  "src/components/TrainingMonitor.tsx",
-  "src/components/VerilogPreview.test.tsx",
-  "src/components/VerilogPreview.tsx",
-  "src/contrastAudit.test.ts",
-  "src/contrastAudit.ts",
-  "src/developmentPreview.test.ts",
-  "src/developmentPreview.ts",
-  "src/docstringGate.test.ts",
-  "src/evidenceBundles.test.ts",
-  "src/evidenceBundles.ts",
-  "src/evidenceCart.test.ts",
-  "src/evidenceCart.ts",
-  "src/evidenceCartController.test.ts",
-  "src/evidenceCartController.ts",
-  "src/evidenceCartIdentity.test.ts",
-  "src/evidenceCartIdentity.ts",
-  "src/evidenceSeal.test.ts",
-  "src/evidenceSeal.ts",
-  "src/main.tsx",
-  "src/modelComparison.test.ts",
-  "src/modelComparison.ts",
-  "src/modelCompileConfig.test.ts",
-  "src/modelCompileConfig.ts",
-  "src/modelScanJob.test.ts",
-  "src/modelScanJob.ts",
-  "src/modelScanJobValidation.test.ts",
-  "src/modelScanJobValidation.ts",
-  "src/modelSelectionStoreState.test.ts",
-  "src/modelSelectionStoreState.ts",
-  "src/networkNirExport.test.ts",
-  "src/networkNirExport.ts",
-  "src/ode-language.ts",
-  "src/operatorWorkbenchState.test.ts",
-  "src/operatorWorkbenchState.ts",
-  "src/paletteContrast.test.ts",
-  "src/paletteContrast.ts",
-  "src/pipelineEvidence.test.ts",
-  "src/pipelineEvidence.ts",
-  "src/plotEvidence.test.ts",
-  "src/plotEvidence.ts",
-  "src/plots/analysisViews.test.ts",
-  "src/plots/analysisViews.ts",
-  "src/plots/comparisonViews.test.ts",
-  "src/plots/comparisonViews.ts",
-  "src/plots/mockPlotContext.ts",
-  "src/plots/plotFrame.test.ts",
-  "src/plots/plotFrame.ts",
-  "src/plots/stateViews.test.ts",
-  "src/plots/stateViews.ts",
-  "src/plots/traceView.test.ts",
-  "src/plots/traceView.ts",
-  "src/progressAuth.test.ts",
-  "src/projectClientAuth.test.ts",
-  "src/simulationExports.test.ts",
-  "src/simulationExports.ts",
-  "src/simulationPlotCanvas.test.ts",
-  "src/simulationPlotCanvas.ts",
-  "src/simulationRaw.test.ts",
-  "src/simulationRaw.ts",
-  "src/stores/studio.ts",
-  "src/stores/studioHeavyAnalysis.ts",
-  "src/stores/studioInitialState.ts",
-  "src/stores/studioStoreActions.test.ts",
-  "src/stores/studioStoreActions.ts",
-  "src/stores/studioTypes.ts",
-  "src/studioAnalysisJobRunner.test.ts",
-  "src/studioAnalysisJobRunner.ts",
-  "src/studioAnalysisJobSelection.test.ts",
-  "src/studioAnalysisJobSelection.ts",
-  "src/studioAnalysisResultSink.test.ts",
-  "src/studioAnalysisResultSink.ts",
-  "src/studioAnalysisState.test.ts",
-  "src/studioAnalysisState.ts",
-  "src/studioAuthSession.test.ts",
-  "src/studioAuthSession.ts",
-  "src/studioGraphDuplicate.test.ts",
-  "src/studioGraphDuplicate.ts",
-  "src/studioGraphHistory.test.ts",
-  "src/studioGraphHistory.ts",
-  "src/studioGraphRequests.test.ts",
-  "src/studioGraphRequests.ts",
-  "src/studioGraphTable.test.ts",
-  "src/studioGraphTable.ts",
-  "src/studioGraphValidation.test.ts",
-  "src/studioGraphValidation.ts",
-  "src/studioInputState.test.ts",
-  "src/studioInputState.ts",
-  "src/studioNodeDeletion.test.ts",
-  "src/studioPopulationEditor.test.ts",
-  "src/studioPopulationEditor.ts",
-  "src/studioProjectState.test.ts",
-  "src/studioProjectState.ts",
-  "src/studioProjectionEditor.test.ts",
-  "src/studioProjectionEditor.ts",
-  "src/studioSavedSessions.test.ts",
-  "src/studioSavedSessions.ts",
-  "src/studioShareRuntime.test.ts",
-  "src/studioShareRuntime.ts",
-  "src/studioStartupRuntime.test.ts",
-  "src/studioStartupRuntime.ts",
-  "src/studioTraceImport.test.ts",
-  "src/studioTraceImport.ts",
-  "src/studioTrainingStream.test.ts",
-  "src/studioTrainingStream.ts",
-  "src/studioUrlState.test.ts",
-  "src/studioUrlState.ts",
-  "src/synthesisStoreState.test.ts",
-  "src/synthesisStoreState.ts",
-  "src/trainingCheckpoint.test.ts",
-  "src/trainingCheckpoint.ts",
-  "src/trainingExports.test.ts",
-  "src/trainingExports.ts",
-  "src/trainingStoreState.test.ts",
-  "src/trainingStoreState.ts",
-  "src/useAnalysisJob.test.ts",
-  "src/useAnalysisJob.ts",
-  "src/useEvidenceCartSession.test.ts",
-  "src/useEvidenceCartSession.ts",
-  "src/useModelScanJob.ts",
-  "src/useStudioAnalysisJobIntegration.test.ts",
-  "src/useStudioAnalysisJobIntegration.ts",
-  "vite.config.ts",
-];
+const AUDITED = ["**/*.ts", "**/*.tsx"];
 
 /**
  * How much of the frontend is still outside the audited scope.
@@ -320,12 +68,25 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * understated the debt by nearly half, and had it been used as a ratchet it
    * would have enforced the estimate rather than the surface.
    *
-   * Every figure below is a re-measurement, never a subtraction: the sweeps
-   * that closed the components, the plots, the state layer and now the
-   * evidence and export group each grew `AUDITED`, and the remainder was
-   * re-taken with the tool afterwards rather than reduced on paper.
+   * Every figure recorded here was a re-measurement, never a subtraction: each
+   * sweep grew `AUDITED` and the remainder was re-taken with the tool
+   * afterwards rather than reduced on paper. The sequence, each figure taken
+   * over the tree that carried it: 1297, 848, 547, 413, 312, 252, 161, 81, 69,
+   * **0**.
+   *
+   * **Zero, as of 2026-09-07**, and the scope is now a glob rather than a
+   * list: every `.ts` and `.tsx` file in this package is enforced at
+   * strictTypeChecked + stylisticTypeChecked with `jsdoc/require-jsdoc` over
+   * every function-like declaration. The three files that are not TypeScript
+   * are named in `unlintableFiles` below; nothing else is excluded.
+   *
+   * That change is the more important half. While the scope was a list, a new
+   * file nobody added to it was silently unenforced and produced no count
+   * anywhere -- verified with exactly that candidate, a new undocumented
+   * module that yielded no finding at all. With a glob the default for a new
+   * file is enforcement, and the same candidate is now reported.
    */
-  declarations: 69,
+  declarations: 0,
   /**
    * Files carrying at least one of those declarations.
    *
@@ -335,7 +96,22 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * declaration count did not move; only the file count was measuring
    * something other than what it said.
    */
-  files: 13,
+  files: 0,
+  /**
+   * The files the measurement config reads that `AUDITED` does not list, and
+   * why each is out.
+   *
+   * Recorded because a scope of zero is only meaningful alongside what it
+   * excludes. None of these is TypeScript: two are the lint configuration
+   * itself and one is a plain build script. ESLint reads all three under the
+   * base configuration; the strict profile applies to `.ts` and `.tsx` only,
+   * which includes `src/vite-env.d.ts`.
+   */
+  unlintableFiles: {
+    "eslint.config.js": "JavaScript: the configuration that defines the scope",
+    "eslint.measure.js": "JavaScript: the configuration that measures the scope",
+    "scripts/verify-federation-build.mjs": "JavaScript, not in any tsconfig",
+  },
   measuredBy:
     "eslint 10.10.0 + eslint-plugin-jsdoc 64.3.6, " +
     "`npx eslint . --config eslint.measure.js -f json`, jsdoc/require-jsdoc",
@@ -348,7 +124,7 @@ export const LEGACY_OUTSIDE_SCOPE = {
    * is the parent; the commit this figure lands in adds files to `AUDITED`
    * and nothing else that ESLint reads.
    */
-  measuredOnSourceSha: "77b61d36950b4086af19dea8ff28a92c320fcfcd",
+  measuredOnSourceSha: "79339c1fe759a0abad2de466220c77c25f455e25",
   nodeVersion: "v22.23.1",
   typescriptVersion: "5.8.3",
   /**
@@ -488,9 +264,7 @@ export default tseslint.config(
     // A test's fixtures and cases are documented at the file and case level;
     // requiring a parameter table on every arrow callback inside a `describe`
     // would produce ceremony, not description.
-    files: AUDITED.filter(
-      (file) => file.includes(".test.") || file.startsWith("e2e/"),
-    ),
+    files: ["**/*.test.ts", "**/*.test.tsx", "e2e/**/*.ts"],
     plugins: { jsdoc },
     rules: {
       "jsdoc/require-jsdoc": [

@@ -29,6 +29,13 @@ const allCapabilities: GuidedFlowCapabilityMap = {
   train: true,
 };
 
+/**
+ * Compute a flow from overridden inputs.
+ *
+ * @param overrides - The evidence facts to change.
+ * @param capabilities - Which steps the deployment can perform.
+ * @returns The flow.
+ */
 function flow(overrides: Partial<GuidedFlowInputs> = {}, capabilities = allCapabilities) {
   return computeGuidedFlowState(
     {
@@ -48,6 +55,12 @@ function flow(overrides: Partial<GuidedFlowInputs> = {}, capabilities = allCapab
   );
 }
 
+/**
+ * Build actions that record which of them ran.
+ *
+ * @param calls - The list each action appends its own key to.
+ * @returns The actions.
+ */
 function actions(calls: GuidedRunActionKey[] = []): GuidedRunActions {
   return {
     exportEvidence: async () => {

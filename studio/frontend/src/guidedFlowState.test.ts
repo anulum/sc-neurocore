@@ -15,6 +15,12 @@ import {
   type GuidedFlowStepStatus,
 } from "./guidedFlowState";
 
+/**
+ * Build a set of accomplished-evidence facts, overridden field by field.
+ *
+ * @param overrides - The fields to change.
+ * @returns The inputs.
+ */
 function inputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInputs {
   return {
     modelSelected: false,
@@ -31,6 +37,15 @@ function inputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInputs {
   };
 }
 
+/**
+ * Read one step's status out of a computed flow.
+ *
+ * @param state - The flow.
+ * @param key - The step to look up.
+ * @returns Its status, or `undefined` when the flow does not carry it --
+ *   which is itself worth asserting, since `cosim` is dropped when it does
+ *   not apply.
+ */
 function statusOf(
   state: ReturnType<typeof computeGuidedFlowState>,
   key: GuidedFlowStepKey,

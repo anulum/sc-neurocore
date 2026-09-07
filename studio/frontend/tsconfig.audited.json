@@ -1,5 +1,5 @@
 {
-  "// note": "Type-aware linting needs a project that contains the audited files outside src/. The whole e2e suite is here now; anything added to e2e/ belongs in this list and in eslint.config.js AUDITED.",
+  "// note": "Type-aware linting needs a project that contains every file the lint scope reaches. `src` is covered by tsconfig.json; everything outside it is listed here. The lint scope is now every .ts/.tsx in the package, so a new file outside `src` belongs in this list.",
   "extends": "./tsconfig.json",
   "include": [
     "e2e/admin-operator-audit-archive.spec.ts",
@@ -12,6 +12,7 @@
     "e2e/analysis-job-host.spec.ts",
     "e2e/catalogue-to-silicon-live.spec.ts",
     "e2e/experiment-export-live.spec.ts",
+    "e2e/federation-host/main.tsx",
     "e2e/federation-host/vite.config.ts",
     "e2e/guided-operator-run.spec.ts",
     "e2e/module-federation-host.spec.ts",
@@ -21,6 +22,7 @@
     "playwright.federation.config.ts",
     "playwright.graph.config.ts",
     "playwright.live.config.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vitest.config.ts"
   ]
 }

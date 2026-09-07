@@ -15,6 +15,16 @@ import {
   verifyTrainingWeightArtifactBlob,
 } from "./trainingRestore";
 
+/**
+ * Build a restore plan describing the given payload exactly.
+ *
+ * The digest and size are computed from the payload rather than written
+ * in, so a case that changes the payload cannot accidentally describe the
+ * old one.
+ *
+ * @param payload - The artefact's contents.
+ * @returns The plan.
+ */
 async function restorePlanForPayload(payload: string): Promise<TrainingWeightRestorePlan> {
   const blob = new Blob([payload]);
   return {
