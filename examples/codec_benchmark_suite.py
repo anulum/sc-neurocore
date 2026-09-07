@@ -4,7 +4,7 @@
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
-# Contact: www.anulum.li | protoscience@anylum.li
+# Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Complete codec benchmark suite (reproducible)
 
 """Reproduce all published spike codec benchmarks.
