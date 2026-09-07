@@ -30787,12 +30787,38 @@ Format comparison results as a readable table.
 ## Module `profiling.energy`
 
 ### Class `EnergyMetrics`
+Running operation counts and the per-operation energies applied to them.
+
+Attributes
+----------
+E_AND, E_XOR, E_ADD : float
+    Energy in joules attributed to one gate operation at a 45 nm CMOS
+    equivalent. Assumed values; see the module docstring on provenance.
+E_MEM : float
+    Energy in joules attributed to reading one bit of memory, same basis.
+total_ops_and, total_ops_xor, total_bits_mem : int
+    Counts accumulated since the last :meth:`reset`.
+
 - **reset**()
+  - Zero every accumulated count, leaving the energy constants alone.
 - **estimate_energy**()
+  - Return the energy the accumulated counts imply, in joules.
 - **co2_emission_g**(carbon_intensity_g_per_kwh)
+  - Return the CO2 the estimated energy implies, in grams.
 
 ### Function `track_energy(func)`
-Decorator to track energy of a layer call (simulated).
+Wrap a layer call so its operation counts reach the global profiler.
+
+Parameters
+----------
+func : Callable
+    The layer call to wrap. Its dimensions determine the counts added.
+
+Returns
+-------
+Callable
+    The same call, adding to :data:`profiler` on each invocation. It
+    accumulates counts, not measurements.
 
 ---
 

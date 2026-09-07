@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 484
+expected_file_count = 485
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -47,6 +47,10 @@ rationale = "Public astrocyte-to-population adapter documented in the model API 
 [[file]]
 path = "src/sc_neurocore/neurons/model_catalogue.py"
 rationale = "Public descriptor-corpus access surface used by Studio catalogue browsing and generated neuron model documentation."
+
+[[file]]
+path = "src/sc_neurocore/profiling/energy.py"
+rationale = "Operation-count energy estimate whose output is easily read as a measurement; its docstrings carry the distinction and the provenance of its constants."
 
 [[file]]
 path = "src/sc_neurocore/studio/model_catalogue.py"

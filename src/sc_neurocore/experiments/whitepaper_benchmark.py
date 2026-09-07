@@ -79,10 +79,14 @@ def run_whitepaper_benchmark() -> None:
     ops_one_pass = N_INPUTS * N_NEURONS * LENGTH
     j_per_op = joules / ops_one_pass
 
-    print("\n[Efficiency Results (45nm Simulation)]")
-    print(f"Energy per Inference: {joules * 1e6:.2f} uJ")
-    print(f"Energy per Bit-Op: {j_per_op * 1e15:.2f} fJ")
-    print(f"CO2 Emissions per Inference: {co2:.2e} g")
+    # Every line below is arithmetic over counted operations and fixed 45 nm
+    # constants. None of it observed power, so none of it is a measurement, and
+    # the labels say so rather than leaving a reader to infer it from a header.
+    print("\n[Efficiency Estimates — operation counts at a 45 nm CMOS equivalent]")
+    print(f"Estimated energy per inference: {joules * 1e6:.2f} uJ")
+    print(f"Estimated energy per bit-op: {j_per_op * 1e15:.2f} fJ")
+    print(f"Implied CO2 per inference at 475 g/kWh: {co2:.2e} g")
+    print("Not measured: no instrument observed power for any figure above.")
 
 
 if __name__ == "__main__":
