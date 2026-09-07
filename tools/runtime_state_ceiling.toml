@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Runtime state transport ratchets (FF-05)
+
+# Measured ceilings, never copied: `--update-ceiling` writes what the
+# matrix currently derives and refuses to loosen one. Dropped state may
+# only fall; fully carried models may only rise. A lane absent here has
+# no ceiling yet and the guard says so rather than passing it.
+
+schema_version = 1
+
+[lanes."rust-batch"]
+max_dropped = 415
+min_complete = 20

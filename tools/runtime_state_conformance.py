@@ -31,11 +31,17 @@ Usage::
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 import json
 from pathlib import Path
 import re
 import sys
+
+try:  # pragma: no cover - covered by the Python-version matrix.
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore[no-redef]
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -50,6 +56,7 @@ from sc_neurocore.studio.runtime_state_packet import (  # noqa: E402
 from sc_neurocore.studio.state_layout import declared_state  # noqa: E402
 
 CONFORMANCE_SCHEMA = "sc-neurocore.runtime-state-conformance.v1"
+DEFAULT_CEILING = Path("tools/runtime_state_ceiling.toml")
 DEFAULT_OUTPUT = Path("docs/_generated/runtime_state_conformance.json")
 
 #: The committed source that names every model the native network runner can be
@@ -232,6 +239,92 @@ def encode(matrix: dict[str, object]) -> str:
     return json.dumps(matrix, indent=2, sort_keys=True) + "\n"
 
 
+class RuntimeStateCeilingError(RuntimeError):
+    """Raised when a ceiling file cannot be read or would be loosened."""
+
+
+def ceiling_verdicts(matrix: Mapping[str, Any], ceiling: Mapping[str, Any]) -> list[str]:
+    """Return one line per lane whose transport is worse than its ceiling.
+
+    FF-05 is a per-model, per-lane campaign that will run for a long time. The
+    matrix already refuses to drift from what it derives, but regenerating it
+    accepts a worse number as readily as a better one. These ceilings make the
+    direction part of the contract: dropped state may only fall, complete
+    models may only rise.
+
+    Parameters
+    ----------
+    matrix : Mapping[str, Any]
+        A matrix as :func:`build_matrix` returns it.
+    ceiling : Mapping[str, Any]
+        Parsed ceiling document, keyed by lane runtime.
+
+    Returns
+    -------
+    list of str
+        Human-readable regressions, empty when every lane is at or better than
+        its ceiling.
+    """
+    summary = matrix["summary"]
+    assert isinstance(summary, Mapping)
+    per_lane = summary["per_lane"]
+    assert isinstance(per_lane, Mapping)
+    lanes = ceiling.get("lanes", {})
+    if not isinstance(lanes, Mapping):
+        raise RuntimeStateCeilingError("ceiling 'lanes' must be a table")
+
+    verdicts: list[str] = []
+    for runtime, counts in sorted(per_lane.items()):
+        limits = lanes.get(runtime)
+        if limits is None:
+            verdicts.append(f"{runtime}: no ceiling recorded; run --update-ceiling")
+            continue
+        dropped = int(counts["dropped"])
+        complete = int(counts["complete"])
+        if dropped > int(limits["max_dropped"]):
+            verdicts.append(
+                f"{runtime}: {dropped} state variables dropped, ceiling "
+                f"{limits['max_dropped']} — transport got worse"
+            )
+        if complete < int(limits["min_complete"]):
+            verdicts.append(
+                f"{runtime}: {complete} models fully carried, floor "
+                f"{limits['min_complete']} — transport got worse"
+            )
+    return verdicts
+
+
+def render_ceiling(matrix: Mapping[str, Any]) -> str:
+    """Return the ceiling document the current matrix justifies."""
+    summary = matrix["summary"]
+    assert isinstance(summary, Mapping)
+    per_lane = summary["per_lane"]
+    assert isinstance(per_lane, Mapping)
+    lines = [
+        "# SPDX-License-Identifier: AGPL-3.0-or-later",
+        "# Commercial license available",
+        "# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.",
+        "# © Code 2020–2026 Miroslav Šotek. All rights reserved.",
+        "# ORCID: 0009-0009-3560-0851",
+        "# Contact: www.anulum.li | protoscience@anulum.li",
+        "# SC-NeuroCore — Runtime state transport ratchets (FF-05)",
+        "",
+        "# Measured ceilings, never copied: `--update-ceiling` writes what the",
+        "# matrix currently derives and refuses to loosen one. Dropped state may",
+        "# only fall; fully carried models may only rise. A lane absent here has",
+        "# no ceiling yet and the guard says so rather than passing it.",
+        "",
+        "schema_version = 1",
+        "",
+    ]
+    for runtime, counts in sorted(per_lane.items()):
+        lines.append(f'[lanes."{runtime}"]')
+        lines.append(f"max_dropped = {int(counts['dropped'])}")
+        lines.append(f"min_complete = {int(counts['complete'])}")
+        lines.append("")
+    return "\n".join(lines).rstrip("\n") + "\n"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Write, check or summarise the matrix from the command line.
 
@@ -252,10 +345,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--check", action="store_true", help="fail when the file has drifted")
     parser.add_argument("--summary", action="store_true", help="print the census")
     parser.add_argument("--output", type=Path, default=REPO_ROOT / DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--check-ceiling",
+        action="store_true",
+        help="fail when a lane transports less state than its recorded ceiling",
+    )
+    parser.add_argument(
+        "--update-ceiling",
+        action="store_true",
+        help="tighten the ceilings to what the matrix now derives; never loosens",
+    )
+    parser.add_argument("--ceiling", type=Path, default=REPO_ROOT / DEFAULT_CEILING)
     arguments = parser.parse_args(argv)
 
     matrix = build_matrix()
     encoded = encode(matrix)
+    if arguments.check_ceiling or arguments.update_ceiling:
+        return _run_ceiling(matrix, arguments)
     if arguments.check:
         if not arguments.output.is_file():
             print(f"{arguments.output} is absent; run --write.", file=sys.stderr)
@@ -271,6 +377,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote {arguments.output}")
     if arguments.summary or not (arguments.write or arguments.check):
         print(render_summary(matrix))
+    return 0
+
+
+def _run_ceiling(matrix: Mapping[str, Any], arguments: argparse.Namespace) -> int:
+    """Check or tighten the transport ceilings; never loosen one."""
+    path = arguments.ceiling
+    if arguments.check_ceiling:
+        if not path.is_file():
+            print(f"{path} is absent; run --update-ceiling.", file=sys.stderr)
+            return 1
+        ceiling = tomllib.loads(path.read_text(encoding="utf-8"))
+        verdicts = ceiling_verdicts(matrix, ceiling)
+        if verdicts:
+            for line in verdicts:
+                print(line, file=sys.stderr)
+            return 1
+        print(f"{path}: every lane is at or better than its ceiling")
+        return 0
+
+    proposed = render_ceiling(matrix)
+    if path.is_file():
+        existing = tomllib.loads(path.read_text(encoding="utf-8"))
+        loosened = ceiling_verdicts(matrix, existing)
+        if loosened:
+            for line in loosened:
+                print(f"refusing to loosen: {line}", file=sys.stderr)
+            return 1
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(proposed, encoding="utf-8")
+    print(f"Wrote {path}")
     return 0
 
 

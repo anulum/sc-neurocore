@@ -55,6 +55,12 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.pre-commit-config\.yaml|engine/src/.*\.rs|tools/(engine_monolith_guard\.py|engine_monolith_ceiling\.toml))$'
+      - id: runtime-state-transport-ratchet
+        name: runtime state transport ratchet
+        entry: python tools/runtime_state_conformance.py --check-ceiling
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|src/sc_neurocore/(neurons|studio)/.*\.py|tools/(runtime_state_conformance\.py|runtime_state_ceiling\.toml))$'
       - id: api-reference-drift
         name: API reference drift
         entry: python scripts/generate_docs.py --check

@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4863
+    "test_files": 4864
   },
   "documentation": {
     "public_pages": [
@@ -7642,6 +7642,7 @@
       "tests/test_tools_documentation_debt.py",
       "tests/test_tools_generate_evidence_seal_vectors.py",
       "tests/test_tools_reference_trace_evidence.py",
+      "tests/test_tools_runtime_state_ceiling.py",
       "tests/test_tools_runtime_state_conformance.py",
       "tests/test_tools_rust_doc_ratchet.py",
       "tests/test_tools_studio_evidence_verify.py",
