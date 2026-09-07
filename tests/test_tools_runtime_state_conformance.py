@@ -38,6 +38,7 @@ from tools.runtime_state_conformance import (
     main,
     model_names,
     render_summary,
+    selectable_models,
 )
 
 _COMMITTED = Path(__file__).resolve().parents[1] / DEFAULT_OUTPUT
@@ -207,3 +208,91 @@ class TestCommandLine:
         printed = capsys.readouterr().out
         assert "Wrote" in printed
         assert "rust-batch" in printed
+
+
+class TestTheSelectableCensus:
+    """The narrower census: what a lane does for the models it can be selected for.
+
+    It used to live on the public page as a number nothing emitted and nothing
+    checked, and its figures could not be reproduced from any definition in the
+    code. It is generated now, from the same committed sources as the matrix.
+    """
+
+    def test_the_selectable_set_is_parsed_from_the_committed_catalogue(self) -> None:
+        """The list is read as text, so the matrix needs no built engine."""
+        catalogue = selectable_models()
+        assert "AdEx" in catalogue
+        assert "LapicqueNeuron" in catalogue
+        assert len(catalogue) > 100
+
+    def test_the_parsed_catalogue_matches_the_built_engine(self) -> None:
+        """A committed list that has drifted from the binary would be a lie."""
+        engine = pytest.importorskip("sc_neurocore_engine")
+        runner = getattr(engine, "NetworkRunner", None)
+        if runner is None or not hasattr(runner, "supported_models"):
+            pytest.skip("the installed engine exposes no supported-model list")
+        assert set(runner.supported_models()) == set(selectable_models())
+
+    def test_every_lane_reports_a_selectable_census(self, matrix: dict[str, Any]) -> None:
+        """A lane without one would leave the page quoting nothing again."""
+        summary = matrix["summary"]
+        assert set(summary["per_lane_selectable"]) == {packet.runtime for packet in LANES}
+
+    def test_the_selectable_census_counts_only_selectable_rows(
+        self, matrix: dict[str, Any]
+    ) -> None:
+        """Recomputed from the rows, so the census cannot drift from the matrix."""
+        catalogue = selectable_models()
+        for packet in LANES:
+            counted = [
+                row
+                for row in matrix["rows"]
+                if str(row["model"]) in catalogue
+                or (str(row["model"]).endswith("Neuron") and str(row["model"])[:-6] in catalogue)
+            ]
+            with_layout = [row for row in counted if row["declared"]]
+            census = matrix["summary"]["per_lane_selectable"][packet.runtime]
+            assert census["models"] == len(counted)
+            assert census["models_with_declared_state"] == len(with_layout)
+            assert census["carried"] == sum(
+                len(row["lanes"][packet.runtime]["carried"]) for row in with_layout
+            )
+            assert census["dropped"] == sum(
+                len(row["lanes"][packet.runtime]["dropped"]) for row in with_layout
+            )
+
+    def test_the_selectable_census_is_no_larger_than_the_whole_catalogue(
+        self, matrix: dict[str, Any]
+    ) -> None:
+        """A restriction that counted more than the whole would be reversed."""
+        for packet in LANES:
+            whole = matrix["summary"]["per_lane"][packet.runtime]
+            restricted = matrix["summary"]["per_lane_selectable"][packet.runtime]
+            assert restricted["models"] <= matrix["summary"]["models"]
+            for key in ("carried", "dropped", "complete", "names_nothing"):
+                assert restricted[key] <= whole[key]
+
+    def test_the_summary_prints_both_censuses(self, matrix: dict[str, Any]) -> None:
+        """An operator reading the tool sees the same two blocks the page quotes."""
+        printed = render_summary(matrix)
+        restricted = matrix["summary"]["per_lane_selectable"]["rust-batch"]
+        assert f"of the {restricted['models']} it can be selected for" in printed
+        assert f"declared variables carried: {restricted['carried']}" in printed
+
+    def test_the_public_page_quotes_the_generated_numbers(self) -> None:
+        """The page must not carry a figure the generator does not produce."""
+        page = (
+            Path(__file__).resolve().parents[1]
+            / "docs"
+            / "validation"
+            / "runtime_state_conformance.md"
+        ).read_text(encoding="utf-8")
+        restricted = build_matrix()["summary"]["per_lane_selectable"]["rust-batch"]
+        for value in (
+            restricted["models"],
+            restricted["models_with_declared_state"],
+            restricted["carried"],
+            restricted["dropped"],
+            restricted["names_nothing"],
+        ):
+            assert f"**{value}**" in page

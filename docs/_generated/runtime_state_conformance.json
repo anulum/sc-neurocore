@@ -4462,6 +4462,16 @@
         "dropped": 416,
         "names_nothing": 53
       }
+    },
+    "per_lane_selectable": {
+      "rust-batch": {
+        "carried": 104,
+        "complete": 15,
+        "dropped": 346,
+        "models": 150,
+        "models_with_declared_state": 146,
+        "names_nothing": 42
+      }
     }
   }
 }

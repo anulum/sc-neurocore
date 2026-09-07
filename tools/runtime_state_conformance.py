@@ -34,6 +34,7 @@ import argparse
 from collections.abc import Sequence
 import json
 from pathlib import Path
+import re
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +52,13 @@ from sc_neurocore.studio.state_layout import declared_state  # noqa: E402
 CONFORMANCE_SCHEMA = "sc-neurocore.runtime-state-conformance.v1"
 DEFAULT_OUTPUT = Path("docs/_generated/runtime_state_conformance.json")
 
+#: The committed source that names every model the native network runner can be
+#: selected for. It is read as text rather than through the built engine so the
+#: matrix stays derivable from committed files on a machine with no engine.
+LANE_CATALOGUE_SOURCE = Path("engine/src/network_runner/model_catalogue.rs")
+
+_CATALOGUE_NAME = re.compile(r'^\s*"([A-Za-z0-9_]+)"\s*,?\s*$')
+
 #: Every lane with a declared transport packet. A lane absent from this tuple
 #: has no packet yet, which the matrix says rather than implying full transport.
 LANES: tuple[RuntimeStatePacket, ...] = (RUST_BATCH_PACKET,)
@@ -60,6 +68,28 @@ def model_names() -> tuple[str, ...]:
     """Return the catalogue model names, sorted."""
     names = {str(entry["name"]) for entry in list_models()}
     return tuple(sorted(names))
+
+
+def selectable_models(repo_root: Path = REPO_ROOT) -> frozenset[str]:
+    """Return the model names the native network runner can be selected for.
+
+    Parsed from the committed Rust catalogue rather than asked of the built
+    engine, so the answer is the same on a machine that has never compiled it.
+    A catalogue entry matches a Python identity either exactly or with the
+    ``Neuron`` suffix removed, which is the rule the dispatcher itself applies.
+    """
+    text = (repo_root / LANE_CATALOGUE_SOURCE).read_text(encoding="utf-8")
+    body = text.split("vec![", 1)[1].split("]", 1)[0] if "vec![" in text else ""
+    return frozenset(
+        match.group(1)
+        for match in (_CATALOGUE_NAME.match(line) for line in body.splitlines())
+        if match
+    )
+
+
+def _is_selectable(model: str, catalogue: frozenset[str]) -> bool:
+    """Return whether the lane can be selected for a Python model identity."""
+    return model in catalogue or (model.endswith("Neuron") and model[:-6] in catalogue)
 
 
 def build_matrix() -> dict[str, object]:
@@ -75,6 +105,21 @@ def build_matrix() -> dict[str, object]:
         packet.runtime: {"carried": 0, "complete": 0, "dropped": 0, "names_nothing": 0}
         for packet in LANES
     }
+    # The same counts restricted to the models each lane can be selected for,
+    # which is the question an operator asks about a run rather than about the
+    # catalogue. Emitted here so one drift gate holds both censuses.
+    selectable_census = {
+        packet.runtime: {
+            "carried": 0,
+            "complete": 0,
+            "dropped": 0,
+            "models": 0,
+            "models_with_declared_state": 0,
+            "names_nothing": 0,
+        }
+        for packet in LANES
+    }
+    catalogue = selectable_models()
     undeclared = 0
     for name in model_names():
         source, _profile, declared = declared_state(name)
@@ -92,6 +137,17 @@ def build_matrix() -> dict[str, object]:
                 counts["complete"] += 1
             if declared_names and coverage.names_nothing:
                 counts["names_nothing"] += 1
+            if _is_selectable(name, catalogue):
+                restricted = selectable_census[packet.runtime]
+                restricted["models"] += 1
+                if declared_names:
+                    restricted["models_with_declared_state"] += 1
+                    restricted["carried"] += len(coverage.carried)
+                    restricted["dropped"] += len(coverage.dropped)
+                    if coverage.complete:
+                        restricted["complete"] += 1
+                    if coverage.names_nothing:
+                        restricted["names_nothing"] += 1
         rows.append(
             {
                 "declared": list(declared_names),
@@ -111,6 +167,10 @@ def build_matrix() -> dict[str, object]:
             "per_lane": {
                 runtime: dict(sorted(counts.items())) for runtime, counts in census.items()
             },
+            "per_lane_selectable": {
+                runtime: dict(sorted(counts.items()))
+                for runtime, counts in selectable_census.items()
+            },
         },
     }
 
@@ -128,7 +188,9 @@ def render_summary(matrix: dict[str, object]) -> str:
     str
         One block per lane: how many models it fully accounts for, how many it
         can name nothing in, and how many declared variables it carries and
-        drops across the catalogue.
+        drops — first across the whole catalogue, then restricted to the models
+        that lane can actually be selected for, which is the question an
+        operator asks about a run rather than about the catalogue.
     """
     summary = matrix["summary"]
     if not isinstance(summary, dict):
@@ -136,6 +198,9 @@ def render_summary(matrix: dict[str, object]) -> str:
     per_lane = summary["per_lane"]
     if not isinstance(per_lane, dict):
         raise TypeError("A conformance matrix expected a mapping for its lane census.")
+    selectable = summary.get("per_lane_selectable", {})
+    if not isinstance(selectable, dict):
+        raise TypeError("A conformance matrix expected a mapping for its selectable census.")
     lines = [
         f"foreign runtime state conformance ({matrix['schema_version']})",
         f"  catalogue models: {summary['models']}"
@@ -149,6 +214,16 @@ def render_summary(matrix: dict[str, object]) -> str:
         lines.append(f"    declared variables dropped: {counts['dropped']}")
         lines.append(f"    models fully accounted for: {counts['complete']}")
         lines.append(f"    models it can name nothing in: {counts['names_nothing']}")
+        restricted = selectable.get(runtime)
+        if isinstance(restricted, dict):
+            lines.append(
+                f"    of the {restricted['models']} it can be selected for,"
+                f" {restricted['models_with_declared_state']} declare a layout:"
+            )
+            lines.append(f"      declared variables carried: {restricted['carried']}")
+            lines.append(f"      declared variables dropped: {restricted['dropped']}")
+            lines.append(f"      models fully accounted for: {restricted['complete']}")
+            lines.append(f"      models it can name nothing in: {restricted['names_nothing']}")
     return "\n".join(lines)
 
 

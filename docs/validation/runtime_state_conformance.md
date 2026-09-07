@@ -48,16 +48,19 @@ declare no state at all):
 | Models fully accounted for | 20 |
 | Models it can name nothing in | 53 |
 
-Those four numbers are the census the generator emits beside the matrix, so they
-move with it and the drift gate holds them.
+A second census answers the narrower question an operator actually asks about a
+run: what happens for the models the lane can be selected for at all, which is
+membership of the network runner's committed model catalogue. Of the **150**
+such models, **146** declare a layout, and across those the lane carries **104**
+declared variables and drops **346**, fully accounting for **15** and naming
+nothing in **42**.
 
-A second census answers a narrower question: what happens for the models the
-lane can actually be selected for, which is membership of the engine's own
-supported-model list. Of the 150 such models, 146 declare a layout, and across
-those the lane carries 104 declared variables and drops 346, naming nothing in
-42. **This second census is measured rather than generated** — nothing emits or
-checks it — so it is dated to the commit that last changed it and should be
-re-measured, not trusted, after any change to the declared layouts.
+Both censuses are emitted by `tools/runtime_state_conformance.py` beside the
+matrix, so they move with it and one drift gate holds both. The selectable set
+is parsed from `engine/src/network_runner/model_catalogue.rs`, a committed
+source, rather than asked of a built engine — the matrix stays derivable on a
+machine that has never compiled one, and a test compares the parsed list against
+the engine's own answer wherever the engine is installed.
 
 `PinskyRinzelNeuron` is one of those 42 — it declares
 `v_s, v_d, h, n, s, c, q, ca` and has no `v` — so the lane records no state for
