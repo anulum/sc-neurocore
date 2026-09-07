@@ -49,6 +49,25 @@ export default defineConfig({
   build: {
     target: "esnext",
   },
+  optimizeDeps: {
+    // The dev server must re-optimise on every start rather than reuse the
+    // cache in `node_modules/.vite`.
+    //
+    // Module federation serves React through its own shared-module graph. With
+    // a cache warm from an earlier dev run, the two disagree about which copy
+    // of `react/jsx-dev-runtime` is in force and the browser fails with
+    // `_jsxDEV is not a function`. The symptom is unusually easy to
+    // misattribute: a cold run passes, so the first thing anyone tries works,
+    // and only the *second* run of the same suite fails. CI checks out fresh
+    // and is therefore always cold, which is why this never showed there.
+    //
+    // Measured 2026-09-07 on the default Playwright suite: cold 5 of 5 passing,
+    // warm 5 of 5 failing, and with this option cold, warm and warm-again all
+    // 5 of 5. Excluding the shared packages from the optimiser was tried first
+    // and did not fix it. `optimizeDeps` is dev-only; the production build is
+    // untouched.
+    force: true,
+  },
   server: {
     proxy: studioApiProxy,
   },
