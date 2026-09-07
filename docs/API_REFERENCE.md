@@ -40478,12 +40478,39 @@ Return one revision as a self-contained document for transfer.
 ### Function `import_project(name, document)`
 Create a workspace from an exported document.
 
-### Function `run_pipeline(graph, target)`
-Run the Studio graph-to-synthesis pipeline.
+### Function `graph_lowering_refusal(graph)`
+Return why this graph cannot be lowered to hardware.
 
-If the graph has ODE equations in population params, the pipeline compiles
-them to SystemVerilog and runs synthesis. Otherwise it uses a default LIF
-compile path.
+Parameters
+----------
+graph : dict
+    Studio network graph payload.
+
+Returns
+-------
+dict
+    ``reason`` naming why no hardware result is claimed, and
+    ``unsupported_models`` listing the declared models whose descriptor
+    records no silicon lowering. The list is informational: the refusal
+    stands even when every model carries one, because lowering a *network*
+    is not the same capability as lowering one model and neither exists
+    here yet.
+
+### Function `run_pipeline(graph, target)`
+Run the Studio graph-to-synthesis pipeline, or refuse to claim one.
+
+The pipeline validates and simulates the graph, then reports a hardware
+result **only if it can lower the graph the caller supplied**. It cannot:
+no graph-level lowering exists, and a population declares a catalogue model
+rather than an equation, so there is nothing here to compile into hardware
+that is the caller's network. The compile step therefore refuses and names
+the reason instead of synthesising a stand-in.
+
+Until that refusal was added the step compiled one hardcoded leaky
+integrate-and-fire equation, ignoring the graph entirely, and returned its
+synthesis as ``graph -> simulate -> compile -> synthesise``. An operator
+building a Hodgkin-Huxley network received a successful hardware report for
+a generic neuron that shared nothing with it.
 
 Parameters
 ----------
