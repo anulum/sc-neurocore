@@ -10,6 +10,14 @@ import { buildAdminShellModel } from "../adminShell";
 import { useStudioStore } from "../stores/studio";
 import AdminPanelView from "./AdminPanelView";
 
+/**
+ * The admin surface, wired to the store.
+ *
+ * A thin container over `AdminPanelView`, which takes every action as a prop
+ * so the panel itself can be rendered in a test without a store.
+ *
+ * @returns The panel.
+ */
 export default function AdminPanel() {
   const {
     auditArchive,

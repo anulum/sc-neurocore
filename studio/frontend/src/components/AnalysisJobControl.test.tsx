@@ -50,6 +50,13 @@ const completedResult: FICurveResponse = {
   rates: [0, 5],
 };
 
+/**
+ * A view state in one phase, with whatever else a case needs set.
+ *
+ * @param phase - The phase to be in.
+ * @param extra - Fields to set on top of it.
+ * @returns The state.
+ */
 function state(phase: AnalysisJobPhase, extra: Partial<AnalysisJobViewState> = {}): AnalysisJobViewState {
   return {
     ...initialAnalysisJobState(),
@@ -58,6 +65,12 @@ function state(phase: AnalysisJobPhase, extra: Partial<AnalysisJobViewState> = {
   };
 }
 
+/**
+ * Render the control to static markup with the given props.
+ *
+ * @param props - Props to set on top of the defaults.
+ * @returns The markup.
+ */
 function renderControl(props: Partial<ComponentProps<typeof AnalysisJobControl>> = {}) {
   return renderToStaticMarkup(
     <AnalysisJobControl
@@ -167,7 +180,7 @@ describe("AnalysisJobControl render", () => {
               : {},
         ),
       });
-      expect(html).toContain(`data-phase=\"${phase}\"`);
+      expect(html).toContain(`data-phase="${phase}"`);
       expect(html).toContain(`Phase: ${analysisJobPhaseLabel(phase)}`);
     }
   });

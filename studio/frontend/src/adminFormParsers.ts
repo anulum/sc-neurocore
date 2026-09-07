@@ -15,9 +15,25 @@
 
 import type { StudioEvidenceBundleRequest } from "./api/client";
 
+/**
+ * Read a form entry as text.
+ *
+ * A `FormData` entry is a string *or* a `File`, and `String(file)` is
+ * `"[object File]"` — a value that passes every length check and means
+ * nothing. A file submitted where text was expected is a defect in the form,
+ * and reading it as empty lets the caller's own validation refuse it instead
+ * of storing that string.
+ *
+ * @param value - The entry, or `null` when the field was absent.
+ * @returns The text, or an empty string when there is none.
+ */
+export function formText(value: FormDataEntryValue | null): string {
+  return typeof value === "string" ? value : "";
+}
+
 /** Split a comma-separated form field into trimmed non-empty tokens. */
 export function textList(value: FormDataEntryValue | null): string[] {
-  return String(value ?? "")
+  return formText(value)
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
@@ -25,7 +41,7 @@ export function textList(value: FormDataEntryValue | null): string[] {
 
 /** Return trimmed text, or null when empty. */
 export function optionalText(value: FormDataEntryValue | null): string | null {
-  const text = String(value ?? "").trim();
+  const text = formText(value).trim();
   return text.length > 0 ? text : null;
 }
 
@@ -54,7 +70,7 @@ export function boundedInteger(
  * (or only the object elements of an array).
  */
 export function jsonObjects(value: FormDataEntryValue | null): Record<string, unknown>[] {
-  const text = String(value ?? "").trim();
+  const text = formText(value).trim();
   if (text.length === 0) {
     return [];
   }

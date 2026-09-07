@@ -28,18 +28,36 @@ const BACKEND_BAR_COLOR: Record<string, string> = {
 
 const Q88 = 256;
 
+/**
+ * The colour standing for one backend's state.
+ *
+ * @param b - The backend.
+ * @returns A CSS colour.
+ */
 export function backendColor(b: DclsBackendStatus): string {
   if (!b.available) return "var(--text-muted)";
   if (!b.live) return "var(--accent)"; // declared, parity verified offline
   return b.bit_exact ? "var(--success)" : "var(--warning)";
 }
 
+/**
+ * The word standing for one backend's state.
+ *
+ * @param b - The backend.
+ * @returns The label.
+ */
 export function backendLabel(b: DclsBackendStatus): string {
   if (!b.available) return "—";
   if (!b.live) return "offline ✓";
   return b.bit_exact ? "bit-exact" : "DIVERGES";
 }
 
+/**
+ * The kernel's gate profile, drawn as a tent about its centre.
+ *
+ * @param props - The gates and the centre tap.
+ * @returns The chart.
+ */
 function TentChart({ gates, centre }: { gates: number[]; centre: number }) {
   const w = 260;
   const h = 90;
@@ -69,6 +87,11 @@ function TentChart({ gates, centre }: { gates: number[]; centre: number }) {
   );
 }
 
+/**
+ * The delay-and-current-learning-synapse panel: kernel, backends, parity.
+ *
+ * @returns The panel.
+ */
 export default function DclsPanel() {
   const [info, setInfo] = useState<DclsInfo | null>(null);
   const [benchmark, setBenchmark] = useState<DclsBenchmark | null>(null);
@@ -78,8 +101,8 @@ export default function DclsPanel() {
   const [nTaps, setNTaps] = useState(12);
 
   useEffect(() => {
-    void fetchDclsInfo().then(setInfo).catch(() => setInfo(null));
-    void fetchDclsBenchmark().then(setBenchmark).catch(() => setBenchmark(null));
+    void fetchDclsInfo().then(setInfo).catch(() => { setInfo(null); });
+    void fetchDclsBenchmark().then(setBenchmark).catch(() => { setBenchmark(null); });
   }, []);
 
   useEffect(() => {
@@ -90,9 +113,9 @@ export default function DclsPanel() {
         n_taps: nTaps,
       })
         .then(setEvaluation)
-        .catch(() => setEvaluation(null));
+        .catch(() => { setEvaluation(null); });
     }, 120);
-    return () => window.clearTimeout(handle);
+    return () => { window.clearTimeout(handle); };
   }, [centre, sigma, nTaps]);
 
   const fwd = evaluation?.forward;
@@ -127,7 +150,7 @@ export default function DclsPanel() {
             <Slider label="sigma (half-width)" value={sigma} min={0.2} max={nTaps} step={0.05}
               onChange={setSigma} />
             <Slider label="delay taps" value={nTaps} min={3} max={32} step={1}
-              onChange={(v) => setNTaps(Math.round(v))} />
+              onChange={(v) => { setNTaps(Math.round(v)); }} />
           </div>
         </div>
 
@@ -174,7 +197,10 @@ export default function DclsPanel() {
           </div>
           <div style={{ display: "grid", gap: 3 }}>
             {benchmark.backends.map((b) => {
-              const max = benchmark.backends[0]?.speedup_over_python || 1;
+              // `||` and not `??`: a recorded speed-up of zero is as unusable as a
+      // missing one, and this value is a divisor.
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      const max = benchmark.backends[0]?.speedup_over_python || 1;
               return (
                 <div key={b.backend} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
                   <span style={{ width: 56, fontFamily: "var(--font-mono)" }}>{b.backend}</span>
@@ -195,7 +221,7 @@ export default function DclsPanel() {
           <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 5 }}>
             {benchmark.cpu} · {benchmark.isolation_mode} ·{" "}
             {benchmark.hardware_measurement_claimed ? "silicon" : "software measurement, not silicon"}
-            {" · "}{benchmark.date_utc?.slice(0, 10)}
+            {" · "}{benchmark.date_utc.slice(0, 10)}
           </div>
         </div>
       )}
@@ -223,6 +249,12 @@ export default function DclsPanel() {
   );
 }
 
+/**
+ * One labelled slider for a kernel parameter.
+ *
+ * @param props - The label, the value, its bounds and the change handler.
+ * @returns The slider.
+ */
 function Slider({ label, value, min, max, step, onChange }: {
   label: string; value: number; min: number; max: number; step: number;
   onChange: (v: number) => void;
@@ -231,7 +263,7 @@ function Slider({ label, value, min, max, step, onChange }: {
     <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
       <span style={{ width: 110, color: "var(--text-secondary)" }}>{label}</span>
       <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))} style={{ flex: 1 }} />
+        onChange={(e) => { onChange(parseFloat(e.target.value)); }} style={{ flex: 1 }} />
       <span style={{ width: 38, textAlign: "right", fontFamily: "var(--font-mono)" }}>
         {value.toFixed(2)}
       </span>

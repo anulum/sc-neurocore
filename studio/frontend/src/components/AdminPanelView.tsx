@@ -6,18 +6,20 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 
 import type { AdminShellModel } from "../adminShell";
 import type { StudioEvidenceBundleRequest } from "../api/client";
 import {
   evidenceBundleRequestFromForm,
   identityUpdateFromForm,
+  formText,
   textList,
 } from "../adminFormParsers";
 import AdminAuditArchiveSection from "./AdminAuditArchiveSection";
 import StudioReadinessPanel from "./StudioReadinessPanel";
 
+/** Everything the admin panel shows and every action it can invoke. */
 export interface AdminPanelViewProps {
   auditLoading: boolean;
   model: AdminShellModel;
@@ -60,6 +62,15 @@ export interface AdminPanelViewProps {
   ) => Promise<void>;
 }
 
+/**
+ * The admin panel: status, identity, jobs, audit and evidence.
+ *
+ * A view rather than a container: every action arrives as a prop, so the panel
+ * can be rendered against fixed state in a test without a store.
+ *
+ * @param props - The state to show and the actions to invoke.
+ * @returns The panel.
+ */
 export default function AdminPanelView({
   auditLoading,
   model,
@@ -82,7 +93,13 @@ export default function AdminPanelView({
 }: AdminPanelViewProps) {
   const [evidenceJobIds, setEvidenceJobIds] = useState("");
 
-  function submitIdentityUpdate(event: FormEvent<HTMLFormElement>, principalId: string) {
+  /**
+   * Change one service account's roles, activity or expiry.
+   *
+   * @param event - The submission.
+   * @param principalId - The account being changed.
+   */
+  function submitIdentityUpdate(event: SyntheticEvent<HTMLFormElement>, principalId: string) {
     event.preventDefault();
     void onUpdateIdentityServiceAccount(
       principalId,
@@ -90,7 +107,12 @@ export default function AdminPanelView({
     );
   }
 
-  function submitBrowserUserCreate(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Create a browser user, then clear the form for the next one.
+   *
+   * @param event - The submission.
+   */
+  function submitBrowserUserCreate(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
@@ -98,10 +120,10 @@ export default function AdminPanelView({
       await onCreateIdentityBrowserUser({
         active: form.get("active") === "on",
         expires_at_utc: null,
-        password: String(form.get("password") ?? ""),
-        principal_id: String(form.get("principalId") ?? "").trim(),
+        password: formText(form.get("password")),
+        principal_id: formText(form.get("principalId")).trim(),
         roles: textList(form.get("roles")),
-        username: String(form.get("username") ?? "").trim(),
+        username: formText(form.get("username")).trim(),
       });
       formElement.reset();
       const activeInput = formElement.elements.namedItem("active");
@@ -111,11 +133,20 @@ export default function AdminPanelView({
     })();
   }
 
-  function submitBrowserUserUpdate(event: FormEvent<HTMLFormElement>, username: string) {
+  /**
+   * Change one browser user, rotating the password only if one was typed.
+   *
+   * The rotation is a second call rather than a field on the update, so a
+   * credential is never changed as a side effect of editing roles.
+   *
+   * @param event - The submission.
+   * @param username - The user being changed.
+   */
+  function submitBrowserUserUpdate(event: SyntheticEvent<HTMLFormElement>, username: string) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const nextSecret = String(form.get("newSecret") ?? "");
+    const nextSecret = formText(form.get("newSecret"));
     void (async () => {
       await onUpdateIdentityBrowserUser(username, identityUpdateFromForm(form));
       if (nextSecret.length > 0) {
@@ -128,11 +159,21 @@ export default function AdminPanelView({
     })();
   }
 
-  function submitEvidenceBundle(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Gather the requested evidence into a bundle.
+   *
+   * @param event - The submission.
+   */
+  function submitEvidenceBundle(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     void onCreateEvidenceBundle(evidenceBundleRequestFromForm(new FormData(event.currentTarget)));
   }
 
+  /**
+   * Add a job to the bundle's list from the jobs table.
+   *
+   * @param jobId - The job to include.
+   */
   function addEvidenceJobId(jobId: string) {
     setEvidenceJobIds((current) => {
       const selected = current
@@ -218,7 +259,7 @@ export default function AdminPanelView({
             <form
               key={account.principalId}
               className="admin-audit-row admin-identity-row"
-              onSubmit={(event) => submitIdentityUpdate(event, account.principalId)}
+              onSubmit={(event) => { submitIdentityUpdate(event, account.principalId); }}
             >
               <span>{account.activeLabel}</span>
               <strong>{account.principalId}</strong>
@@ -325,7 +366,7 @@ export default function AdminPanelView({
             <form
               key={user.username}
               className="admin-audit-row admin-identity-row"
-              onSubmit={(event) => submitBrowserUserUpdate(event, user.username)}
+              onSubmit={(event) => { submitBrowserUserUpdate(event, user.username); }}
             >
               <span>{user.activeLabel}</span>
               <strong>{user.username}</strong>
@@ -478,7 +519,7 @@ export default function AdminPanelView({
               <button
                 aria-label={`Add ${job.jobId} to evidence bundle`}
                 disabled={model.evidenceBundle.loading}
-                onClick={() => addEvidenceJobId(job.jobId)}
+                onClick={() => { addEvidenceJobId(job.jobId); }}
                 type="button"
               >
                 Bundle
@@ -552,7 +593,7 @@ export default function AdminPanelView({
             <input
               aria-label="Evidence job IDs"
               name="jobIds"
-              onChange={(event) => setEvidenceJobIds(event.currentTarget.value)}
+              onChange={(event) => { setEvidenceJobIds(event.currentTarget.value); }}
               value={evidenceJobIds}
               disabled={model.evidenceBundle.loading}
             />

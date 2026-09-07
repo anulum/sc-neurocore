@@ -6,10 +6,11 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 
 import type { AdminAuditArchiveModel } from "../adminShell";
 
+/** What the quarantine-archive section needs to show and act on archives. */
 export interface AdminAuditArchiveSectionProps {
   auditLoading: boolean;
   archive: AdminAuditArchiveModel;
@@ -26,6 +27,16 @@ export interface AdminAuditArchiveSectionProps {
   ) => Promise<void>;
 }
 
+/**
+ * The admin controls for quarantined audit records.
+ *
+ * Creating, validating, restoring and purging are four separate submissions
+ * rather than one form, because each is a different decision about records the
+ * audit log could not accept, and a purge is irreversible.
+ *
+ * @param props - The archive state and the actions to invoke.
+ * @returns The section.
+ */
 export default function AdminAuditArchiveSection({
   archive,
   auditLoading,
@@ -40,6 +51,13 @@ export default function AdminAuditArchiveSection({
   const [manifestJson, setManifestJson] = useState("");
   const [restoreInputError, setRestoreInputError] = useState<string | null>(null);
 
+  /**
+   * Read a count from the form, clamped to what the server will accept.
+   *
+   * @param value - The field's value.
+   * @param fallback - What to use when it is not a number.
+   * @returns A whole number between 1 and 1000.
+   */
   function boundedInteger(value: FormDataEntryValue | null, fallback: number): number {
     const parsed = Number(value ?? fallback);
     if (!Number.isFinite(parsed)) {
@@ -48,13 +66,23 @@ export default function AdminAuditArchiveSection({
     return Math.min(Math.max(Math.trunc(parsed), 1), 1000);
   }
 
-  function submitArchive(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Archive the quarantined records, up to the requested limit.
+   *
+   * @param event - The submission.
+   */
+  function submitArchive(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     void onCreateAuditArchive(boundedInteger(form.get("archiveLimit"), 100));
   }
 
-  function submitRetention(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Ask what a purge would remove, without removing anything.
+   *
+   * @param event - The submission.
+   */
+  function submitRetention(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const nextRetainLatest = boundedInteger(form.get("retainLatest"), archive.retainLatest);
@@ -62,7 +90,12 @@ export default function AdminAuditArchiveSection({
     void onLoadAuditArchiveRetention(nextRetainLatest);
   }
 
-  function submitPurge(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Carry out the purge the retention plan describes.
+   *
+   * @param event - The submission.
+   */
+  function submitPurge(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const nextRetainLatest = boundedInteger(form.get("retainLatest"), archive.retainLatest);
@@ -70,6 +103,16 @@ export default function AdminAuditArchiveSection({
     void onPurgeAuditArchiveRetention(nextRetainLatest);
   }
 
+  /**
+   * Read a pasted JSON object, reporting where it was not one.
+   *
+   * The label is the field's own name, so a malformed archive and a malformed
+   * manifest do not produce the same message.
+   *
+   * @param value - The pasted text.
+   * @param label - The field's name, for the message.
+   * @returns The object, or `null` when the text was not one.
+   */
   function parseObjectJson(value: string, label: string): Record<string, unknown> | null {
     const text = value.trim();
     if (text.length === 0) {
@@ -90,6 +133,11 @@ export default function AdminAuditArchiveSection({
     return parsed as Record<string, unknown>;
   }
 
+  /**
+   * Read the archive and its manifest out of the form.
+   *
+   * @returns The pair, with `null` for whichever could not be read.
+   */
   function archiveRestorePayload(): {
     archivePayload: Record<string, unknown>;
     manifestPayload: Record<string, unknown> | null;
@@ -109,7 +157,12 @@ export default function AdminAuditArchiveSection({
     return { archivePayload, manifestPayload };
   }
 
-  function submitValidation(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Check an archive against its manifest without restoring it.
+   *
+   * @param event - The submission.
+   */
+  function submitValidation(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const payload = archiveRestorePayload();
     if (payload !== null) {
@@ -117,7 +170,12 @@ export default function AdminAuditArchiveSection({
     }
   }
 
-  function submitRestore(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Put an archive's records back into the live audit log.
+   *
+   * @param event - The submission.
+   */
+  function submitRestore(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const payload = archiveRestorePayload();
     if (payload !== null) {
@@ -203,7 +261,7 @@ export default function AdminAuditArchiveSection({
             max={1000}
             min={1}
             name="retainLatest"
-            onChange={(event) => setRetainLatest(event.currentTarget.value)}
+            onChange={(event) => { setRetainLatest(event.currentTarget.value); }}
             type="number"
             value={retainLatest}
           />
@@ -233,7 +291,7 @@ export default function AdminAuditArchiveSection({
             aria-label="Audit archive JSON"
             disabled={auditLoading}
             name="archiveJson"
-            onChange={(event) => setArchiveJson(event.currentTarget.value)}
+            onChange={(event) => { setArchiveJson(event.currentTarget.value); }}
             rows={8}
             value={archiveJson}
           />
@@ -244,7 +302,7 @@ export default function AdminAuditArchiveSection({
             aria-label="Audit archive manifest JSON"
             disabled={auditLoading}
             name="manifestJson"
-            onChange={(event) => setManifestJson(event.currentTarget.value)}
+            onChange={(event) => { setManifestJson(event.currentTarget.value); }}
             rows={6}
             value={manifestJson}
           />

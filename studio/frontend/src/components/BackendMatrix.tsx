@@ -18,12 +18,24 @@ const PARITY_COLOR: Record<string, string> = {
 /** Order backends with the reference (python) first, then the accelerated tiers. */
 const ORDER = ["python", "rust", "julia", "go", "mojo"];
 
+/**
+ * Order backends so the ones a reader cares about come first.
+ *
+ * @param backends - The backends as the server listed them.
+ * @returns The same backends, ordered.
+ */
 export function orderedBackends(backends: ModelBackendSupport[]): ModelBackendSupport[] {
   return [...backends]
     .filter((b) => b.status === "implemented")
     .sort((a, b) => ORDER.indexOf(a.name) - ORDER.indexOf(b.name));
 }
 
+/**
+ * Which backends implement a model, and how closely each matches.
+ *
+ * @param props - The model's backend support.
+ * @returns The matrix.
+ */
 export default function BackendMatrix({ backends }: { backends: ModelBackendSupport[] }) {
   const impl = orderedBackends(backends);
   if (impl.length < 2) return null;

@@ -21,6 +21,11 @@ const SHORTCUTS = [
   ["?", "Toggle this help"],
 ];
 
+/**
+ * The shortcut overlay, shown on `?`.
+ *
+ * @returns The overlay.
+ */
 export default function KeyboardHelp() {
   const [show, setShow] = useState(false);
 
@@ -34,7 +39,7 @@ export default function KeyboardHelp() {
       if (e.key === "Escape") setShow(false);
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => { window.removeEventListener("keydown", handler); };
   }, []);
 
   if (!show) return null;
@@ -44,11 +49,11 @@ export default function KeyboardHelp() {
       position: "fixed", inset: 0, zIndex: 100,
       display: "flex", alignItems: "center", justifyContent: "center",
       background: "rgba(0,0,0,0.6)",
-    }} onClick={() => setShow(false)}>
+    }} onClick={() => { setShow(false); }}>
       <div style={{
         background: "var(--bg-secondary)", border: "1px solid var(--border)",
         borderRadius: 8, padding: "16px 24px", minWidth: 260,
-      }} onClick={(e) => e.stopPropagation()}>
+      }} onClick={(e) => { e.stopPropagation(); }}>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "var(--text-primary)" }}>
           Keyboard Shortcuts
         </div>

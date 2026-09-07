@@ -9,6 +9,11 @@
 import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * Pick a second model and run it beside the current one.
+ *
+ * @returns The panel.
+ */
 export default function ComparePanel() {
   const { activeTab, models, selectedModelName, duration, current, protocol, runCompare, isSimulating } = useStudioStore();
   const [compareModel, setCompareModel] = useState("");
@@ -17,9 +22,10 @@ export default function ComparePanel() {
 
   const available = models.filter((m) => m.name !== selectedModelName);
 
+  /** Run the chosen model on the current experiment. */
   function handleCompare() {
     if (!compareModel) return;
-    runCompare({
+    void runCompare({
       model_name: compareModel,
       params: {},
       duration,
@@ -34,7 +40,7 @@ export default function ComparePanel() {
       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
         <select
           value={compareModel}
-          onChange={(e) => setCompareModel(e.target.value)}
+          onChange={(e) => { setCompareModel(e.target.value); }}
           style={{ flex: 1, fontSize: 10, padding: "2px 4px" }}
         >
           <option value="">Select model B...</option>

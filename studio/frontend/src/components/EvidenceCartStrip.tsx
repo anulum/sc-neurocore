@@ -7,6 +7,7 @@
 // SC-NeuroCore — Session evidence cart summary strip
 import type { EvidenceCart, EvidenceCartExportBundle } from "../evidenceCart";
 
+/** What is gathered for the next evidence bundle, and how to clear it. */
 export interface EvidenceCartStripProps {
   cart: EvidenceCart;
   error: string | null;
@@ -17,8 +18,12 @@ export interface EvidenceCartStripProps {
 /**
  * Compact left-panel strip for the session evidence cart.
  *
- * Surfaces queue size, last export digest prefix, and the single-export action
- * that serialises the whole cart (simulation + analysis + other artefacts).
+ * Shows the queue size, the last export's digest prefix, and the one action
+ * that serialises the whole cart — simulation, analysis and other artefacts
+ * together.
+ *
+ * @param props - The cart's state and the export action.
+ * @returns The strip.
  */
 export default function EvidenceCartStrip({
   cart,

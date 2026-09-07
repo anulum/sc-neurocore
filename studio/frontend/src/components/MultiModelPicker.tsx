@@ -9,10 +9,20 @@
 import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * Choose which models the overlay view runs together.
+ *
+ * @returns The panel.
+ */
 export default function MultiModelPicker() {
   const { models, selectedModelName, runMultiSimulate, isSimulating } = useStudioStore();
   const [selected, setSelected] = useState<string[]>([]);
 
+  /**
+   * Add or remove one model from the overlay.
+   *
+   * @param name - The model to toggle.
+   */
   function toggle(name: string) {
     setSelected((prev) =>
       prev.includes(name)
@@ -23,9 +33,10 @@ export default function MultiModelPicker() {
     );
   }
 
+  /** Run the chosen models, or just the selected one when none are chosen. */
   function run() {
     const names = selected.length > 0 ? selected : [selectedModelName];
-    runMultiSimulate(names);
+    void runMultiSimulate(names);
   }
 
   return (
@@ -40,7 +51,7 @@ export default function MultiModelPicker() {
             color: selected.includes(m.name) ? "var(--accent)" : "var(--text-muted)",
           }}>
             <input type="checkbox" checked={selected.includes(m.name)}
-              onChange={() => toggle(m.name)}
+              onChange={() => { toggle(m.name); }}
               style={{ width: 12, height: 12 }} />
             {m.name.replace("Neuron", "").replace("Model", "")}
           </label>

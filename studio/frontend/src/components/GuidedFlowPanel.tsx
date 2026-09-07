@@ -10,6 +10,7 @@ import { useState } from "react";
 import type { GuidedRunController } from "../guidedRunController";
 import type { GuidedFlowState, GuidedFlowStepStatus } from "../guidedFlowState";
 
+/** The guided flow's controller and the state it is in. */
 export interface GuidedFlowPanelProps {
   controller?: GuidedRunController;
   state: GuidedFlowState;
@@ -29,6 +30,12 @@ const STATUS_COLOR: Record<GuidedFlowStepStatus, string> = {
   blocked: "#c98a8a",
 };
 
+/**
+ * The guided operator run, one step at a time.
+ *
+ * @param props - The controller and the current state.
+ * @returns The panel.
+ */
 export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelProps) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionRunning, setActionRunning] = useState(false);

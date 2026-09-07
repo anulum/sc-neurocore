@@ -12,9 +12,17 @@ import type {
   SiliconTerminalResult,
   SynthesisTargetProvenance,
   SynthesisTargetProvenanceMatrix,
+  SynthResult,
 } from "../api/client";
 import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
 
+/**
+ * One resource's usage against the device's capacity, as a labelled bar.
+ *
+ * @param props - The resource, what it used, what the device holds, and the
+ *   colour to draw it in.
+ * @returns The bar.
+ */
 function ResourceBar({ label, used, total, color }: {
   label: string; used: number; total: number; color: string;
 }) {
@@ -39,21 +47,44 @@ function ResourceBar({ label, used, total, color }: {
   );
 }
 
+/**
+ * The message shown for a target that failed to synthesise.
+ *
+ * `||` and not `??`: an empty message is no message, and the fallback is what
+ * the reader needs to see.
+ *
+ * @param error - The server's message, if it sent one.
+ * @returns The text to show.
+ */
+function failureText(error: string | undefined): string {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  return error?.slice(0, 60) || "Failed";
+}
+
+/**
+ * One target's row in the multi-target comparison.
+ *
+ * A failed target shows its message across the resource columns rather than
+ * empty cells, so a failure is not read as a design that used nothing.
+ *
+ * @param props - The target and its result.
+ * @returns The row.
+ */
 function TargetComparisonRow({ target, result }: {
-  target: string; result: { success: boolean; error?: string; resources?: { luts: number; ffs: number; brams: number; dsps: number }; capacity?: { luts: number; ffs: number; brams: number; dsps: number }; utilisation?: Record<string, number> };
+  target: string; result: SynthResult;
 }) {
   if (!result.success) {
     return (
       <tr>
         <td style={{ padding: "3px 8px", fontWeight: 600 }}>{target.toUpperCase()}</td>
         <td colSpan={4} style={{ padding: "3px 8px", color: "#ff5252", fontSize: 10 }}>
-          {result.error?.slice(0, 60) || "Failed"}
+          {failureText(result.error)}
         </td>
       </tr>
     );
   }
-  const r = result.resources!;
-  const u = result.utilisation!;
+  const r = result.resources;
+  const u = result.utilisation;
   return (
     <tr>
       <td style={{ padding: "3px 8px", fontWeight: 600 }}>{target.toUpperCase()}</td>
@@ -65,6 +96,12 @@ function TargetComparisonRow({ target, result }: {
   );
 }
 
+/**
+ * What a target's figures rest on, stated beside them.
+ *
+ * @param props - The target's provenance.
+ * @returns The summary.
+ */
 function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenance }) {
   const synthesisTool = provenance.tools.find((tool) => tool.role === "synthesis");
   const pnrTool = provenance.tools.find((tool) => tool.role === "place_and_route");
@@ -90,6 +127,12 @@ function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenan
   );
 }
 
+/**
+ * The end of the pipeline: the routed design and the chain that produced it.
+ *
+ * @param props - The terminal result.
+ * @returns The summary.
+ */
 export function SiliconTerminalSummary({ terminal }: { terminal: SiliconTerminalResult }) {
   return (
     <div style={{
@@ -116,10 +159,23 @@ export function SiliconTerminalSummary({ terminal }: { terminal: SiliconTerminal
   );
 }
 
+/**
+ * The word shown for a readiness flag.
+ *
+ * @param isReady - Whether the step can run.
+ * @returns The label.
+ */
 function readinessLabel(isReady: boolean): "ready" | "missing" {
   return isReady ? "ready" : "missing";
 }
 
+/**
+ * Name the tool filling one role for a target, with its version.
+ *
+ * @param provenance - The target's provenance.
+ * @param role - The role to look for.
+ * @returns The tool and version, or a statement that there is none.
+ */
 function toolLabel(provenance: SynthesisTargetProvenance, role: string): string {
   const tool = provenance.tools.find((item) => item.role === role);
   if (tool === undefined) {
@@ -129,6 +185,12 @@ function toolLabel(provenance: SynthesisTargetProvenance, role: string): string 
   return `${tool.executable} ${readinessLabel(tool.available)}${version}`;
 }
 
+/**
+ * Every target's provenance at once, for comparing across devices.
+ *
+ * @param props - The matrix.
+ * @returns The summary.
+ */
 export function ProvenanceMatrixSummary({
   matrix,
 }: {
@@ -180,6 +242,11 @@ export function ProvenanceMatrixSummary({
   );
 }
 
+/**
+ * The synthesis panel: tool availability, runs, targets and their evidence.
+ *
+ * @returns The panel.
+ */
 export default function SynthesisDashboard() {
   const {
     synthResult, synthEstimate, multiTargetResult,
@@ -193,7 +260,7 @@ export default function SynthesisDashboard() {
     checkSynthTools, isSimulating,
   } = useStudioStore();
 
-  useEffect(() => { checkSynthTools(); }, [checkSynthTools]);
+  useEffect(() => { void checkSynthTools(); }, [checkSynthTools]);
 
   const targets = ["ice40", "ecp5", "gowin", "xilinx"];
   const hasSV = svSource.length > 0 || verilogSrc.length > 0;
@@ -209,6 +276,7 @@ export default function SynthesisDashboard() {
     ? latestMultiTargetSynthesisJobId
     : latestSynthesisJobId;
 
+  /** Gather this run's artefacts into an evidence bundle. */
   function exportSynthesisEvidence() {
     if (activeSynthesisJobId === null) {
       return;
@@ -242,7 +310,7 @@ export default function SynthesisDashboard() {
         </span>
         <select
           value={synthTarget}
-          onChange={(e) => setSynthTarget(e.target.value)}
+          onChange={(e) => { setSynthTarget(e.target.value); }}
           style={{ fontSize: 10, padding: "2px 6px" }}
         >
           {targets.map((t) => (
@@ -257,7 +325,7 @@ export default function SynthesisDashboard() {
         </select>
         <button
           className="btn-simulate"
-          onClick={runSynthesis}
+          onClick={() => { void runSynthesis(); }}
           disabled={isSimulating || !hasSV || !selectedTerminalReady}
           style={{
             background: "#a5d6a7", color: "#0d1117", border: "none",
@@ -268,7 +336,7 @@ export default function SynthesisDashboard() {
         </button>
         <button
           className="btn-simulate"
-          onClick={runMultiTargetSynthesis}
+          onClick={() => { void runMultiTargetSynthesis(); }}
           disabled={isSimulating || !hasSV || sourceMode === "model"}
           style={{
             background: "#80cbc4", color: "#0d1117", border: "none",
@@ -280,7 +348,7 @@ export default function SynthesisDashboard() {
         {hasIR && (
           <button
             className="btn-simulate"
-            onClick={runSynthEstimate}
+            onClick={() => { void runSynthEstimate(); }}
             disabled={isSimulating}
             style={{
               background: "#ffcc80", color: "#0d1117", border: "none",

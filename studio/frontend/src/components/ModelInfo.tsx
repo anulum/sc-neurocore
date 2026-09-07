@@ -11,16 +11,25 @@ import { useStudioStore } from "../stores/studio";
 import { formatCitation } from "../citation";
 import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
 
+/**
+ * The selected model's contract, readiness and citation.
+ *
+ * @returns The panel.
+ */
 export default function ModelInfo() {
   const { sourceMode, modelDetail, equations, odeParams, odeInit, dt, duration } = useStudioStore();
   const [copied, setCopied] = useState(false);
 
   const citation = modelDetail ? formatCitation(modelDetail.provenance, modelDetail.name) : "";
+  /** Copy the model's citation, where the browser allows it. */
   function copyCitation() {
     if (!citation) return;
+    // `clipboard` is typed as always present and is absent outside a secure
+    // context; the guard is real and the rule cannot see it.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     void navigator.clipboard?.writeText(citation);
     setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    window.setTimeout(() => { setCopied(false); }, 1500);
   }
 
   const nSteps = Math.min(Math.floor(duration / dt), 100_000);
@@ -35,16 +44,10 @@ export default function ModelInfo() {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
           <DualAxisBadge
             scienceLabel={
-              modelDetail.readiness?.science_label ??
-              modelDetail.science_label ??
-              `S${modelDetail.science_tier ?? 0}`
+              modelDetail.readiness?.science_label ?? modelDetail.science_label
             }
             siliconLabel={
-              modelDetail.readiness?.silicon_label ??
-              modelDetail.silicon_label ??
-              (modelDetail.silicon_tier === null || modelDetail.silicon_tier === undefined
-                ? "none"
-                : `H${modelDetail.silicon_tier}`)
+              modelDetail.readiness?.silicon_label ?? modelDetail.silicon_label
             }
             scienceTier={modelDetail.readiness?.science_tier ?? modelDetail.science_tier}
             siliconTier={

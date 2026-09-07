@@ -250,7 +250,7 @@ describe("ModelBrowser", () => {
       behaviors: NONE,
     });
     expect(Object.keys(grouped)).toEqual(["Cerebellar"]);
-    expect((grouped["Cerebellar"] ?? []).map((m) => m.name)).toEqual(["GolgiCell"]);
+    expect((grouped.Cerebellar ?? []).map((m) => m.name)).toEqual(["GolgiCell"]);
   });
 
   it("restricts the catalogue to a minimum evidence tier", () => {

@@ -9,6 +9,11 @@
 import Editor from "@monaco-editor/react";
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * The generated RTL, as text.
+ *
+ * @returns The panel.
+ */
 export default function VerilogPreview() {
   const {
     cosimResult,

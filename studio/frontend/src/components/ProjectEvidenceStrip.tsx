@@ -11,6 +11,7 @@ import type { ProjectEvidenceModel } from "../projectEvidence";
 import EvidenceBundleArtifactList from "./EvidenceBundleArtifactList";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
+/** The workspace whose evidence can be exported, and how to export it. */
 export interface ProjectEvidenceStripProps {
   artifacts: StudioJobArtifact[];
   evidence: ProjectEvidenceModel;
@@ -22,6 +23,12 @@ export interface ProjectEvidenceStripProps {
   onExportBundle: () => void;
 }
 
+/**
+ * Export a saved workspace's evidence bundle.
+ *
+ * @param props - The workspace and the export action.
+ * @returns The strip.
+ */
 export default function ProjectEvidenceStrip({
   artifacts,
   evidence,

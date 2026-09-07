@@ -10,13 +10,17 @@ import {
   type StudioDeploymentProfile,
 } from "../developmentPreview";
 
+/** What the development-preview banner says and whether it is shown. */
 export interface DevelopmentPreviewBannerProps {
   deploymentProfile: StudioDeploymentProfile;
   releaseValidated?: boolean;
 }
 
 /**
- * Persistent shell banner that labels Studio as a development preview.
+ * The banner that says this deployment is a development preview.
+ *
+ * @param props - What it says and whether it is shown.
+ * @returns The banner.
  */
 export default function DevelopmentPreviewBanner({
   deploymentProfile,

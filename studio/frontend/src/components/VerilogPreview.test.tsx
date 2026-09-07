@@ -10,7 +10,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockStore } = vi.hoisted(() => ({
-  mockStore: { current: {} as Record<string, unknown> },
+  mockStore: { current: {} },
 }));
 
 vi.mock("@monaco-editor/react", () => ({ default: () => <div>editor</div> }));

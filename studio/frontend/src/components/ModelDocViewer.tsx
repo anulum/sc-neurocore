@@ -10,12 +10,19 @@ import { useEffect, useState } from "react";
 import { fetchModelDoc, type ModelDoc } from "../api/client";
 import { useStudioStore } from "../stores/studio";
 
+/** Whether the document is loading, loaded, or failed to load. */
 type DocState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "ready"; doc: ModelDoc }
   | { status: "absent" };
 
+/**
+ * Render a model document's Markdown.
+ *
+ * @param props - The document text.
+ * @returns The rendered document.
+ */
 export function ModelDocMarkdown({ markdown }: { markdown: string }) {
   return (
     <pre
@@ -32,6 +39,11 @@ export function ModelDocMarkdown({ markdown }: { markdown: string }) {
   );
 }
 
+/**
+ * The selected model's prose documentation.
+ *
+ * @returns The viewer.
+ */
 export default function ModelDocViewer() {
   const { sourceMode, selectedModelName } = useStudioStore();
   const [open, setOpen] = useState(false);
@@ -65,7 +77,7 @@ export default function ModelDocViewer() {
     <div className="panel-section">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => !v); }}
         style={{
           width: "100%", textAlign: "left", fontSize: 10, padding: "3px 4px",
           background: "var(--bg-tertiary)", color: "var(--text-secondary)",

@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
+/** How one evidence tier is shown: its short form, its sentence, its colour. */
 export interface TierMeta {
   short: string;
   label: string;
@@ -13,11 +14,17 @@ export interface TierMeta {
   show: boolean;
 }
 
-/** Describe a completeness tier + evidence kind for display.
+/**
+ * Describe a completeness tier and evidence kind for display.
  *
- * Tier 2 is scientifically curated (verified provenance + parameter units);
- * Tier 3 is engineering-verified (>=2 parity-checked backends + a reproducible
- * golden trace). Tier 0/1 are below the curated bar and carry no evidence badge.
+ * Tier 2 is scientifically curated (verified provenance and parameter units);
+ * tier 3 is engineering-verified (two or more parity-checked backends and a
+ * reproducible golden trace). Tiers 0 and 1 are below the curated bar and
+ * carry no badge at all, which is why `show` is part of the answer.
+ *
+ * @param tier - The completeness tier.
+ * @param evidenceKind - What the evidence is, when the server named it.
+ * @returns How to show it.
  */
 export function tierMeta(tier: number, evidenceKind: string): TierMeta {
   if (tier >= 3) {
@@ -29,6 +36,13 @@ export function tierMeta(tier: number, evidenceKind: string): TierMeta {
   return { short: `T${tier}`, label: "declared", color: "var(--text-muted)", show: false };
 }
 
+/**
+ * The badge for one model's evidence tier, or nothing below the curated bar.
+ *
+ * @param props - The tier, its evidence kind, and whether to show the full
+ *   sentence rather than the short form.
+ * @returns The badge, or `null`.
+ */
 export default function EvidenceTierBadge({
   tier,
   evidenceKind,
@@ -58,7 +72,15 @@ export default function EvidenceTierBadge({
   );
 }
 
-/** Dual-axis science (S0–S5) + silicon (none / H0–H5) readiness badges. */
+/**
+ * Science and silicon readiness as two badges rather than one number.
+ *
+ * A model can be scientifically well-founded and nowhere near silicon, or the
+ * reverse; one figure would hide that.
+ *
+ * @param props - Both labels, both tiers, and whether to show the full form.
+ * @returns The pair of badges.
+ */
 export function DualAxisBadge({
   scienceLabel,
   siliconLabel,
@@ -80,7 +102,7 @@ export function DualAxisBadge({
         : "var(--text-muted)";
   const hEnrolled = siliconTier !== null && siliconTier !== undefined;
   const hColor =
-    hEnrolled && (siliconTier as number) >= 2
+    hEnrolled && siliconTier >= 2
       ? "var(--success)"
       : hEnrolled
         ? "var(--accent)"

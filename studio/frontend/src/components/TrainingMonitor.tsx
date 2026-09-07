@@ -18,6 +18,13 @@ import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 
+/**
+ * A small multi-series line chart for training metrics.
+ *
+ * @param props - The rows, which key is the x axis, which are the series, the
+ *   colours to draw them in, the height, and the y-axis label.
+ * @returns The chart.
+ */
 function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
   data: Record<string, unknown>[];
   xKey: string;
@@ -27,7 +34,7 @@ function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
   yLabel: string;
 }) {
   if (data.length === 0) return null;
-  const allYVals = yKeys.flatMap((k) => data.map((d) => d[k] as number).filter((v) => v != null));
+  const allYVals = yKeys.flatMap((k) => data.map((d) => d[k] as number));
   const yMin = Math.min(...allYVals);
   const yMax = Math.max(...allYVals);
   const yRange = yMax - yMin || 1;
@@ -68,7 +75,7 @@ function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
       {yKeys.map((key, ki) => {
         const pts = data
           .map((d) => ({ x: d[xKey] as number, y: d[key] as number }))
-          .filter((p) => p.y != null);
+          ;
         if (pts.length < 2) return null;
         const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${toX(p.x).toFixed(1)},${toY(p.y).toFixed(1)}`).join(" ");
         return <path key={key} d={path} fill="none" stroke={colors[ki]} strokeWidth={1.5} />;
@@ -84,6 +91,12 @@ function MetricChart({ data, xKey, yKeys, colors, height, yLabel }: {
   );
 }
 
+/**
+ * One layer's spike rate as a labelled bar.
+ *
+ * @param props - The layer's name and its rate.
+ * @returns The bar.
+ */
 function LayerRateBar({ name, rate }: { name: string; rate: number }) {
   const pct = Math.min(rate * 100, 100);
   return (
@@ -99,6 +112,12 @@ function LayerRateBar({ name, rate }: { name: string; rate: number }) {
   );
 }
 
+/**
+ * What a training run is, stated beside its numbers.
+ *
+ * @param props - The run's evidence model.
+ * @returns The strip.
+ */
 export function TrainingEvidenceStrip({ evidence }: { evidence: TrainingEvidenceModel }) {
   return (
     <EvidenceSummaryStrip
@@ -117,6 +136,12 @@ export function TrainingEvidenceStrip({ evidence }: { evidence: TrainingEvidence
   );
 }
 
+/**
+ * Export and import controls for a run's checkpoint.
+ *
+ * @param props - The job and the actions to invoke.
+ * @returns The controls.
+ */
 export function TrainingCheckpointControls({
   canExport,
   onExport,
@@ -176,6 +201,15 @@ export function TrainingCheckpointControls({
   );
 }
 
+/**
+ * How a restore intends to fetch and verify a run's weights, before it does.
+ *
+ * The route and the digest are shown because the restore is only safe if the
+ * weights are checked against the configuration they were trained under.
+ *
+ * @param props - The plan.
+ * @returns The strip.
+ */
 export function TrainingWeightRestorePlanStrip({
   onExportVerification,
   onVerify,
@@ -209,7 +243,7 @@ export function TrainingWeightRestorePlanStrip({
           { label: "Params", value: String(restorePlan.parameter_count) },
         ]}
       />
-      {(onVerify || onExportVerification) && (
+      {(onVerify ?? onExportVerification) && (
         <div style={{
           background: "var(--bg-primary)",
           display: "flex",
@@ -256,6 +290,12 @@ export function TrainingWeightRestorePlanStrip({
   );
 }
 
+/**
+ * What a restore actually loaded, as against what it planned to.
+ *
+ * @param props - The materialisation.
+ * @returns The strip.
+ */
 export function TrainingWeightMaterializationStrip({
   materialization,
 }: {
@@ -285,6 +325,12 @@ export function TrainingWeightMaterializationStrip({
   );
 }
 
+/**
+ * A new run started with another run's weights attached.
+ *
+ * @param props - The attachment result.
+ * @returns The strip.
+ */
 export function TrainingWeightAttachStrip({
   attach,
 }: {
@@ -308,6 +354,12 @@ export function TrainingWeightAttachStrip({
   );
 }
 
+/**
+ * Weights attached to a run that was already going.
+ *
+ * @param props - The attachment result.
+ * @returns The strip.
+ */
 export function TrainingWeightLiveAttachStrip({
   liveAttach,
 }: {
@@ -330,6 +382,11 @@ export function TrainingWeightLiveAttachStrip({
   );
 }
 
+/**
+ * The training panel: configuration, live metrics, checkpoints and weights.
+ *
+ * @returns The panel.
+ */
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
@@ -341,7 +398,7 @@ export default function TrainingMonitor() {
     materializeTrainingWeights, attachTrainingWeights, liveAttachTrainingWeights,
   } = useStudioStore();
 
-  useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
+  useEffect(() => { void loadSurrogates(); }, [loadSurrogates]);
 
   const latestEpoch = trainingEpochs[trainingEpochs.length - 1] ?? null;
   const isRunning = trainingStatus === "running" || trainingStatus === "starting";
@@ -376,7 +433,7 @@ export default function TrainingMonitor() {
         </span>
         {!isRunning && (
           <button
-            onClick={startTraining}
+            onClick={() => { void startTraining(); }}
             disabled={isSimulating}
             style={{
               background: "#81c784", color: "#0d1117", border: "none",
@@ -388,7 +445,7 @@ export default function TrainingMonitor() {
         )}
         {isRunning && (
           <button
-            onClick={stopTraining}
+            onClick={() => { void stopTraining(); }}
             style={{
               background: "#ff5252", color: "#fff", border: "none",
               padding: "3px 10px", fontSize: 10, cursor: "pointer",
@@ -469,7 +526,7 @@ export default function TrainingMonitor() {
         }}>
           <label style={{ color: "var(--text-secondary)" }}>
             Dataset
-            <select value={trainingConfig.dataset} onChange={(e) => setTrainingConfig("dataset", e.target.value)}
+            <select value={trainingConfig.dataset} onChange={(e) => { setTrainingConfig("dataset", e.target.value); }}
               style={{ display: "block", width: "100%", fontSize: 10 }}>
               <option value="synthetic">Synthetic (64D, fast)</option>
               <option value="mnist">MNIST (784D)</option>
@@ -478,30 +535,30 @@ export default function TrainingMonitor() {
           <label style={{ color: "var(--text-secondary)" }}>
             Epochs
             <input type="number" value={trainingConfig.epochs} min={1} max={100}
-              onChange={(e) => setTrainingConfig("epochs", parseInt(e.target.value) || 10)}
+              onChange={(e) => { setTrainingConfig("epochs", parseInt(e.target.value) || 10); }}
               style={{ display: "block", width: "100%", fontSize: 10 }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Batch Size
             <input type="number" value={trainingConfig.batch_size} min={8} max={512} step={8}
-              onChange={(e) => setTrainingConfig("batch_size", parseInt(e.target.value) || 64)}
+              onChange={(e) => { setTrainingConfig("batch_size", parseInt(e.target.value) || 64); }}
               style={{ display: "block", width: "100%", fontSize: 10 }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Learning Rate
             <input type="number" value={trainingConfig.lr} min={0.0001} max={0.1} step={0.0001}
-              onChange={(e) => setTrainingConfig("lr", parseFloat(e.target.value) || 0.001)}
+              onChange={(e) => { setTrainingConfig("lr", parseFloat(e.target.value) || 0.001); }}
               style={{ display: "block", width: "100%", fontSize: 10 }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Timesteps
             <input type="number" value={trainingConfig.timesteps} min={5} max={100}
-              onChange={(e) => setTrainingConfig("timesteps", parseInt(e.target.value) || 25)}
+              onChange={(e) => { setTrainingConfig("timesteps", parseInt(e.target.value) || 25); }}
               style={{ display: "block", width: "100%", fontSize: 10 }} />
           </label>
           <label style={{ color: "var(--text-secondary)" }}>
             Surrogate
-            <select value={trainingConfig.surrogate} onChange={(e) => setTrainingConfig("surrogate", e.target.value)}
+            <select value={trainingConfig.surrogate} onChange={(e) => { setTrainingConfig("surrogate", e.target.value); }}
               style={{ display: "block", width: "100%", fontSize: 10 }}>
               {(trainingSurrogates.length > 0 ? trainingSurrogates : [
                 { name: "atan_surrogate" }, { name: "fast_sigmoid" }, { name: "superspike" },
@@ -513,12 +570,12 @@ export default function TrainingMonitor() {
           </label>
           <label style={{ color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
             <input type="checkbox" checked={trainingConfig.learn_beta}
-              onChange={(e) => setTrainingConfig("learn_beta", e.target.checked)} />
+              onChange={(e) => { setTrainingConfig("learn_beta", e.target.checked); }} />
             Learn beta
           </label>
           <label style={{ color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
             <input type="checkbox" checked={trainingConfig.learn_threshold}
-              onChange={(e) => setTrainingConfig("learn_threshold", e.target.checked)} />
+              onChange={(e) => { setTrainingConfig("learn_threshold", e.target.checked); }} />
             Learn threshold
           </label>
         </div>

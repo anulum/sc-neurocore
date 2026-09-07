@@ -25,6 +25,7 @@ import {
 } from "../useAnalysisJob";
 import AnalysisJobControl from "./AnalysisJobControl";
 
+/** What the workbench needs to run and follow one analysis job. */
 export interface AnalysisJobWorkbenchProps {
   simulationInput: StudioSimulationConfigInput;
   selection: AnalysisJobSelection;
@@ -33,7 +34,13 @@ export interface AnalysisJobWorkbenchProps {
 }
 
 /**
- * Compose request policy + session hook + presentational control.
+ * The whole analysis-job flow: build the request, run it, show its status.
+ *
+ * Composes the request policy, the session hook and the presentational
+ * control, which is why none of those three has to know about the others.
+ *
+ * @param props - The simulation input and the analysis to run.
+ * @returns The workbench.
  */
 export default function AnalysisJobWorkbench({
   simulationInput,

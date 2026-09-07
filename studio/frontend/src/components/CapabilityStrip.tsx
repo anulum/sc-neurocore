@@ -9,6 +9,11 @@
 import { useStudioStore } from "../stores/studio";
 import { summarizeCapabilities } from "../capabilityShell";
 
+/**
+ * What this deployment can and cannot do, along the top of the Studio.
+ *
+ * @returns The strip.
+ */
 export default function CapabilityStrip() {
   const { capabilities, capabilitiesError, capabilitiesLoading } = useStudioStore();
 

@@ -8,6 +8,7 @@
 
 import type { StudioJobArtifact } from "../api/client";
 
+/** The artefacts a bundle produced, and how to download one. */
 export interface EvidenceBundleArtifactListProps {
   ariaLabel: string;
   artifacts: StudioJobArtifact[];
@@ -16,12 +17,24 @@ export interface EvidenceBundleArtifactListProps {
   onDownloadArtifact: (relativePath: string) => void;
 }
 
+/**
+ * A file size in the largest unit that keeps it readable.
+ *
+ * @param sizeBytes - The size in bytes.
+ * @returns The formatted size.
+ */
 function formatArtifactSize(sizeBytes: number): string {
   if (sizeBytes < 1024) return `${sizeBytes} B`;
   if (sizeBytes < 1024 * 1024) return `${(sizeBytes / 1024).toFixed(1)} KiB`;
   return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
+/**
+ * One row per artefact, each with its digest and a download.
+ *
+ * @param props - The artefacts and the download action.
+ * @returns The list.
+ */
 export default function EvidenceBundleArtifactList({
   ariaLabel,
   artifacts,
@@ -68,7 +81,7 @@ export default function EvidenceBundleArtifactList({
           <button
             aria-label={`${downloadLabelPrefix} ${artifact.relative_path}`}
             disabled={loading}
-            onClick={() => onDownloadArtifact(artifact.relative_path)}
+            onClick={() => { onDownloadArtifact(artifact.relative_path); }}
             style={{
               background: "var(--bg-tertiary)",
               border: "1px solid var(--control-border)",

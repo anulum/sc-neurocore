@@ -12,6 +12,11 @@ import { buildComparisonRows } from "../modelComparison";
 
 const SHORT = (name: string) => name.replace(/Neuron$|Model$/, "");
 
+/**
+ * Choose which models the comparison view draws.
+ *
+ * @returns The panel.
+ */
 export default function ModelComparison() {
   const { models, selectedModelName } = useStudioStore();
   const [picked, setPicked] = useState<string[]>([]);
@@ -23,6 +28,11 @@ export default function ModelComparison() {
   );
   const rows = useMemo(() => buildComparisonRows(chosen), [chosen]);
 
+  /**
+   * Add or remove one model from the comparison.
+   *
+   * @param name - The model to toggle.
+   */
   function toggle(name: string) {
     setPicked((prev) =>
       prev.includes(name)
@@ -44,7 +54,7 @@ export default function ModelComparison() {
             color: selection.includes(m.name) ? "var(--accent)" : "var(--text-muted)",
           }}>
             <input type="checkbox" checked={picked.includes(m.name)}
-              onChange={() => toggle(m.name)} style={{ width: 11, height: 11 }} />
+              onChange={() => { toggle(m.name); }} style={{ width: 11, height: 11 }} />
             {SHORT(m.name)}
           </label>
         ))}

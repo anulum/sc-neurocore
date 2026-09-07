@@ -17,7 +17,6 @@ import {
   type OnEdgesChange,
   type OnConnect,
   applyNodeChanges,
-  applyEdgeChanges,
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -29,12 +28,33 @@ import {
   studioPopulationDriveLabel,
   studioProjectionLabel,
 } from "../studioGraphRequests";
-import type { GraphSimResult } from "../api/client";
+import type { GraphSimResult, PipelineResult } from "../api/client";
 import EvidenceSummaryStrip from "./EvidenceSummaryStrip";
 import NetworkGraphTable from "./NetworkGraphTable";
 import PopulationEditor from "./PopulationEditor";
 import ProjectionEditor from "./ProjectionEditor";
 
+/**
+ * Why a pipeline run failed, in one line.
+ *
+ * `||` and not `??` throughout: an empty error list joins to an empty string,
+ * and an empty message is no message; both must fall through to the next
+ * source rather than being shown.
+ *
+ * @param result - The failed run.
+ * @returns The reason to show, never empty.
+ */
+function pipelineFailureReason(result: PipelineResult): string {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  return result.errors?.join(", ") || result.error || "unknown";
+}
+
+/**
+ * What one population node shows on the canvas.
+ *
+ * @param props - The node's data, as ReactFlow carries it.
+ * @returns The node's contents.
+ */
 function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   const isExc = data.neuron_type === "excitatory";
   return (
@@ -57,6 +77,12 @@ function PopulationNodeContent({ data }: { data: Record<string, unknown> }) {
   );
 }
 
+/**
+ * What a graph run produced, per population.
+ *
+ * @param props - The run.
+ * @returns The summary.
+ */
 export function GraphResultSummary({ result }: { result: GraphSimResult }) {
   const populations = result.populations ?? [];
   const rejected = result.execution?.backend.rejected ?? [];
@@ -77,13 +103,19 @@ export function GraphResultSummary({ result }: { result: GraphSimResult }) {
       ))}
       <span>backend: {result.execution?.backend.selected ?? "?"}
         {rejected.length > 0 ? ` (rejected: ${rejected.map((r) => r.name).join(", ")})` : ""}</span>
-      {result.spec?.graph_sha256 && <span>graph {String(result.spec.graph_sha256).slice(0, 12)}</span>}
+      {result.spec?.graph_sha256 && <span>graph {result.spec.graph_sha256.slice(0, 12)}</span>}
     </div>
   );
 }
 
 const nodeTypes = { population: PopulationNodeContent };
 
+/**
+ * What a pipeline run is, stated beside its outcome.
+ *
+ * @param props - The run's evidence model.
+ * @returns The strip.
+ */
 export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidenceModel }) {
   return (
     <EvidenceSummaryStrip
@@ -101,6 +133,11 @@ export function PipelineEvidenceStrip({ evidence }: { evidence: PipelineEvidence
   );
 }
 
+/**
+ * The network graph: a canvas, an equivalent table, and the editors.
+ *
+ * @returns The panel.
+ */
 export default function NetworkCanvas() {
   const {
     graphPopulations, graphProjections, graphSimResult, graphErrors, graphIssues, pipelineResult,
@@ -116,7 +153,7 @@ export default function NetworkCanvas() {
 
   const [tableView, setTableView] = useState(false);
 
-  useEffect(() => { loadGraphModels(); }, [loadGraphModels]);
+  useEffect(() => { void loadGraphModels(); }, [loadGraphModels]);
 
   // Ctrl/Cmd+Z steps back through graph edits, Ctrl/Cmd+Shift+Z forward. A key
   // pressed inside a field belongs to that field, not to the graph.
@@ -138,7 +175,7 @@ export default function NetworkCanvas() {
       }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => { window.removeEventListener("keydown", onKeyDown); };
   }, [redoGraphEdit, undoGraphEdit]);
 
   const nodes: Node[] = useMemo(() =>
@@ -180,30 +217,30 @@ export default function NetworkCanvas() {
   }, [nodes, graphPopulations, removePopulation, updatePopulation]);
 
   const onEdgesChange: OnEdgesChange = useCallback((changes) => {
-    const updated = applyEdgeChanges(changes, edges);
+    // The store holds the graph, so the edges ReactFlow would compute here are
+    // discarded; only the removals are acted on. `applyEdgeChanges` used to be
+    // called and its result voided, which read as if it mattered.
     const removedIds = new Set(
       changes.filter((c) => c.type === "remove").map((c) => c.id)
     );
     for (const id of removedIds) removeProjection(id);
-    void updated;
   }, [edges, removeProjection]);
 
   // A click on an edge opens the editor for it; a click on the empty canvas
   // closes it, because an editor for nothing is a panel with stale numbers.
   const onEdgeClick = useCallback(
-    (_event: unknown, edge: { id: string }) => selectProjection(edge.id),
+    (_event: unknown, edge: { id: string }) => { selectProjection(edge.id); },
     [selectProjection],
   );
   // The canvas's own selection drives the group operations; the editor's
   // single selection is separate, because an editor edits exactly one thing.
   const onSelectionChange = useCallback(
-    ({ nodes }: { nodes: { id: string }[] }) =>
-      selectPopulations(nodes.map((node) => node.id)),
+    ({ nodes }: { nodes: { id: string }[] }) => { selectPopulations(nodes.map((node) => node.id)); },
     [selectPopulations],
   );
 
   const onNodeClick = useCallback(
-    (_event: unknown, node: { id: string }) => selectPopulation(node.id),
+    (_event: unknown, node: { id: string }) => { selectPopulation(node.id); },
     [selectPopulation],
   );
   const onPaneClick = useCallback(() => {
@@ -220,7 +257,7 @@ export default function NetworkCanvas() {
 
   const onConnect: OnConnect = useCallback((conn) => {
     if (conn.source && conn.target) {
-      addProjection(conn.source, conn.target);
+      void addProjection(conn.source, conn.target);
     }
   }, [addProjection]);
 
@@ -235,11 +272,11 @@ export default function NetworkCanvas() {
         <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
           Network Canvas
         </span>
-        <button onClick={() => addPopulation("excitatory")} style={{
+        <button onClick={() => { void addPopulation("excitatory"); }} style={{
           background: CANVAS_TINTS.excitatoryButton, color: "#4fc3f7", border: "1px solid #4fc3f7",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>+ Exc</button>
-        <button onClick={() => addPopulation("inhibitory")} style={{
+        <button onClick={() => { void addPopulation("inhibitory"); }} style={{
           background: CANVAS_TINTS.inhibitoryButton, color: "#ff5252", border: "1px solid #ff5252",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>+ Inh</button>
@@ -277,20 +314,20 @@ export default function NetworkCanvas() {
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Duplicate</button>
-        <button onClick={simulateGraphAction} disabled={isSimulating || graphPopulations.length === 0} style={{
+        <button onClick={() => { void simulateGraphAction(); }} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#81c784", color: "#0d1117", border: "none",
           padding: "3px 10px", fontSize: 10, cursor: "pointer",
         }}>
           {isSimulating ? "..." : "Simulate"}
         </button>
-        <button onClick={runPipelineAction} disabled={isSimulating || graphPopulations.length === 0} style={{
+        <button onClick={() => { void runPipelineAction(); }} disabled={isSimulating || graphPopulations.length === 0} style={{
           background: "#a5d6a7", color: "#0d1117", border: "none",
           padding: "3px 10px", fontSize: 10, cursor: "pointer",
         }}>
           Pipeline → {synthTarget.toUpperCase()}
         </button>
         <button
-          onClick={() => setTableView((shown) => !shown)}
+          onClick={() => { setTableView((shown) => !shown); }}
           aria-pressed={tableView}
           title="Everything the canvas shows, as a table a screen reader can read"
           style={{
@@ -300,7 +337,7 @@ export default function NetworkCanvas() {
             padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
           }}
         >Table view</button>
-        <button onClick={exportGraphNIR} disabled={graphPopulations.length === 0} style={{
+        <button onClick={() => { void exportGraphNIR(); }} disabled={graphPopulations.length === 0} style={{
           background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>Export NIR</button>
@@ -399,8 +436,8 @@ export default function NetworkCanvas() {
           background: pipelineResult.success ? CANVAS_TINTS.pipelineSucceeded : CANVAS_TINTS.pipelineFailed,
         }}>
           {pipelineResult.success
-            ? `Pipeline complete: ${pipelineResult.pipeline} → ${pipelineResult.target?.toUpperCase()}`
-            : `Pipeline failed at ${pipelineResult.step}: ${pipelineResult.errors?.join(", ") || pipelineResult.error || "unknown"}`}
+            ? `Pipeline complete: ${pipelineResult.pipeline} → ${pipelineResult.target.toUpperCase()}`
+            : `Pipeline failed at ${pipelineResult.step}: ${pipelineFailureReason(pipelineResult)}`}
           <PipelineEvidenceStrip evidence={buildPipelineEvidenceModel(pipelineResult)} />
         </div>
       )}

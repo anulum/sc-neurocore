@@ -9,10 +9,15 @@
 import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * The editable ODE templates a session can start from.
+ *
+ * @returns The panel.
+ */
 export default function TemplateLibrary() {
   const { templates, loadTemplates, selectTemplate } = useStudioStore();
 
-  useEffect(() => { loadTemplates(); }, [loadTemplates]);
+  useEffect(() => { void loadTemplates(); }, [loadTemplates]);
 
   return (
     <select

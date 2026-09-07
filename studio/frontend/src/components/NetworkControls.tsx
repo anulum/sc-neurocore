@@ -9,8 +9,15 @@
 import { useStudioStore } from "../stores/studio";
 import type { StudioNetworkParams } from "../studioInputState";
 
+/** The name of one balanced-network parameter. */
 type NetworkParamName = keyof StudioNetworkParams;
 
+/**
+ * One labelled slider bound to a network parameter.
+ *
+ * @param props - The label, the parameter, and its bounds.
+ * @returns The slider.
+ */
 function NetSlider({ label, param, min, max, step }: {
   label: string; param: NetworkParamName; min: number; max: number; step: number;
 }) {
@@ -20,12 +27,17 @@ function NetSlider({ label, param, min, max, step }: {
     <div className="slider-row">
       <span className="slider-label">{label}</span>
       <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => setNetworkParam(param, parseFloat(e.target.value))} />
+        onChange={(e) => { setNetworkParam(param, parseFloat(e.target.value)); }} />
       <span className="slider-value">{value.toFixed(step < 0.1 ? 2 : 1)}</span>
     </div>
   );
 }
 
+/**
+ * The balanced-network parameters and its run button.
+ *
+ * @returns The controls.
+ */
 export default function NetworkControls() {
   const { activeTab, runNetwork, isSimulating } = useStudioStore();
   if (activeTab !== "network") return null;
@@ -40,7 +52,7 @@ export default function NetworkControls() {
       <NetSlider label="w I→I" param="w_ii" min={0} max={1} step={0.01} />
       <NetSlider label="p conn" param="p_conn" min={0.01} max={1} step={0.01} />
       <NetSlider label="ext Hz" param="ext_rate" min={0.1} max={100} step={0.5} />
-      <button className="btn-simulate" onClick={runNetwork} disabled={isSimulating}
+      <button className="btn-simulate" onClick={() => { void runNetwork(); }} disabled={isSimulating}
         style={{ width: "100%", marginTop: 4, background: "#80cbc4", color: "#0d1117", border: "none", padding: "3px 0", fontSize: 10 }}>
         {isSimulating ? "..." : "Run Network"}
       </button>

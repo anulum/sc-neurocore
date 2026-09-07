@@ -29,6 +29,12 @@ import type {
 import { buildAdminShellModel } from "../adminShell";
 import AdminPanelView from "./AdminPanelView";
 
+/**
+ * A healthy capability record with the fields these cases read.
+ *
+ * @param overrides - Fields to set on top of the healthy default.
+ * @returns The capability.
+ */
 function capability(overrides: Partial<StudioCapability> = {}): StudioCapability {
   return {
     capability_id: overrides.capability_id ?? "studio.capability_registry",

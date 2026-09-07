@@ -15,7 +15,15 @@ import {
   type DatabankLeaderboard,
 } from "../api/client";
 
-/** A privacy-transparent preview of exactly what a contribution sends. */
+/**
+ * Exactly what a contribution would send, as text.
+ *
+ * Shown before contributing rather than described, because a submission
+ * carries environment details and the reader is entitled to see them first.
+ *
+ * @param s - The measurement that would be sent.
+ * @returns The preview.
+ */
 export function contributionPreview(s: BenchmarkSubmission): string {
   return JSON.stringify(
     {
@@ -34,6 +42,11 @@ export function contributionPreview(s: BenchmarkSubmission): string {
   );
 }
 
+/**
+ * Run a benchmark, see exactly what a contribution would send, then send it.
+ *
+ * @returns The panel.
+ */
 export default function BenchmarkContribution() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<BenchmarkSubmission | null>(null);
@@ -41,21 +54,24 @@ export default function BenchmarkContribution() {
   const [contributed, setContributed] = useState(false);
   const [board, setBoard] = useState<DatabankLeaderboard | null>(null);
 
+  /** Read the contributed databank. */
   function loadBoard() {
-    void fetchDatabank().then(setBoard).catch(() => setBoard(null));
+    void fetchDatabank().then(setBoard).catch(() => { setBoard(null); });
   }
   useEffect(loadBoard, []);
 
+  /** Measure this machine, without contributing the result. */
   function run() {
     setRunning(true);
     setContributed(false);
     setResult(null);
     void runBenchmark({ n_channels: 512, n_taps: 32, repeats: 12 })
       .then(setResult)
-      .catch(() => setResult(null))
-      .finally(() => setRunning(false));
+      .catch(() => { setResult(null); })
+      .finally(() => { setRunning(false); });
   }
 
+  /** Send the measurement shown in the preview, under the entered handle. */
   function contribute() {
     if (!result) return;
     void contributeBenchmark(result, handle)
@@ -63,7 +79,7 @@ export default function BenchmarkContribution() {
         setContributed(true);
         loadBoard();
       })
-      .catch(() => setContributed(false));
+      .catch(() => { setContributed(false); });
   }
 
   const max = result ? Math.max(...result.backends.map((b) => b.speedup_over_python), 1) : 1;
@@ -120,7 +136,7 @@ export default function BenchmarkContribution() {
             No hostname, user, IP or machine-id is collected. The handle is optional.
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input value={handle} onChange={(e) => setHandle(e.target.value)}
+            <input value={handle} onChange={(e) => { setHandle(e.target.value); }}
               placeholder="handle (optional)" maxLength={40} style={{
                 fontSize: 10, padding: "2px 6px", flex: 1,
                 background: "var(--bg-tertiary)", color: "var(--text-primary)",

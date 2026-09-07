@@ -56,7 +56,7 @@ const odeInput: StudioSimulationConfigInput = {
   selectedModelName: "",
 };
 
-const selections: Array<{ selection: AnalysisJobSelection; label: string }> = [
+const selections: { selection: AnalysisJobSelection; label: string }[] = [
   { selection: { analysis: "fi_curve" }, label: "f-I curve" },
   { selection: { analysis: "sensitivity" }, label: "sensitivity" },
   {
@@ -102,6 +102,12 @@ vi.mock("../useAnalysisJob", async () => {
   };
 });
 
+/**
+ * A stand-in result for the analysis-job hook.
+ *
+ * @param overrides - Fields to set on top of the idle default.
+ * @returns The hook result.
+ */
 function hookResult(
   overrides: Partial<UseAnalysisJobResult> = {},
 ): UseAnalysisJobResult {
@@ -113,6 +119,12 @@ function hookResult(
   };
 }
 
+/**
+ * Render the workbench to static markup with the given props.
+ *
+ * @param props - Props to set on top of the defaults.
+ * @returns The markup.
+ */
 function renderWorkbench(
   props: Partial<ComponentProps<typeof AnalysisJobWorkbench>> = {},
 ) {

@@ -129,7 +129,9 @@ test("admin evidence bundle form submits simulation and analysis result payloads
     .getByRole("button", { name: "Download evidence artifact evidence/simulations/000.json" })
     .click();
   const artifactPath = "/api/studio/jobs/sj_browser/artifacts/evidence/simulations/000.json";
-  expect(api.requests(artifactPath)).toBe(1);
+  // The click starts the download and does not wait for it; polling asserts
+  // the request was made rather than that it had already been made.
+  await expect.poll(() => api.requests(artifactPath)).toBe(1);
   expect(api.headers(artifactPath)[0]).toMatchObject({
     authorization: "Bearer browser-token",
   });

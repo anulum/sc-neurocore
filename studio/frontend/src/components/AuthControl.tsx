@@ -6,11 +6,19 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import type { FormEvent } from "react";
+import type { SyntheticEvent } from "react";
 
 import type { StudioAuthSession } from "../api/client";
+import { formText } from "../adminFormParsers";
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * Sign-in, wired to the store.
+ *
+ * A container over `AuthControlView`, which takes its actions as props.
+ *
+ * @returns The control.
+ */
 export default function AuthControl() {
   const { authError, authLoading, authSession, loginBrowserUser, logoutBrowserUser } =
     useStudioStore();
@@ -26,6 +34,7 @@ export default function AuthControl() {
   );
 }
 
+/** The session to show and the actions that change it. */
 export interface AuthControlViewProps {
   authError: string | null;
   authLoading: boolean;
@@ -34,6 +43,12 @@ export interface AuthControlViewProps {
   onLogout: () => Promise<void>;
 }
 
+/**
+ * Sign-in and sign-out, with every action supplied as a prop.
+ *
+ * @param props - The session and the actions.
+ * @returns The control.
+ */
 export function AuthControlView({
   authError,
   authLoading,
@@ -42,11 +57,16 @@ export function AuthControlView({
   onLogout,
 }: AuthControlViewProps) {
 
-  function submitLogin(event: FormEvent<HTMLFormElement>) {
+  /**
+   * Sign in with the typed credentials.
+   *
+   * @param event - The submission.
+   */
+  function submitLogin(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const username = String(form.get("username") ?? "");
-    const password = String(form.get("password") ?? "");
+    const username = formText(form.get("username"));
+    const password = formText(form.get("password"));
     void onLogin(username, password);
   }
 

@@ -9,6 +9,11 @@
 import { useStudioStore } from "../stores/studio";
 import EvidenceBundleArtifactList from "./EvidenceBundleArtifactList";
 
+/**
+ * The compiler's output and the traceability that says where it came from.
+ *
+ * @returns The panel.
+ */
 export default function CompilerInspector() {
   const {
     compileTraceability,
@@ -25,6 +30,7 @@ export default function CompilerInspector() {
   } = useStudioStore();
   const rtlSource = svSource || verilogSrc;
 
+  /** Gather the compile artefacts into an evidence bundle. */
   function exportCompileEvidence() {
     if (compileTraceability === null) {
       return;

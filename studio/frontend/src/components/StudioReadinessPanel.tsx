@@ -7,6 +7,7 @@
 // SC-NeuroCore — Studio readiness panel
 import type { StudioReadinessModel } from "../studioReadiness";
 
+/** The operator status the readiness checklist is derived from. */
 export interface StudioReadinessPanelProps {
   model: StudioReadinessModel;
   onOpenAdmin: () => void;
@@ -14,7 +15,12 @@ export interface StudioReadinessPanelProps {
   primaryActionLabel?: string;
 }
 
-/** Render the promotion-readiness checklist derived from operator status. */
+/**
+ * The promotion-readiness checklist, derived from operator status.
+ *
+ * @param props - The status model and the actions it offers.
+ * @returns The panel.
+ */
 export default function StudioReadinessPanel({
   model,
   onOpenAdmin,

@@ -114,7 +114,8 @@ function field(container: HTMLElement, id: string): HTMLInputElement {
 async function type(element: HTMLInputElement, text: string): Promise<void> {
   // The receiver is supplied by `.call` below, which is the whole point of
   // going through the prototype descriptor.
-  // eslint-disable-next-line @typescript-eslint/unbound-method
+
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- `.call` supplies the receiver
   const setter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,
     "value",

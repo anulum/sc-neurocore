@@ -45,6 +45,11 @@ const steps = [
   },
 ];
 
+/**
+ * The first-run tour, until it is dismissed.
+ *
+ * @returns The overlay, or `null` once dismissed.
+ */
 export default function OnboardingOverlay() {
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
@@ -56,16 +61,19 @@ export default function OnboardingOverlay() {
 
   if (!visible) return null;
 
+  /** End the tour and remember that it was ended. */
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, "true");
     setVisible(false);
   }
 
+  /** Advance one step, ending the tour after the last. */
   function next() {
     if (step < steps.length - 1) setStep(step + 1);
     else dismiss();
   }
 
+  /** Step back, stopping at the first. */
   function prev() {
     if (step > 0) setStep(step - 1);
   }
@@ -111,7 +119,7 @@ export default function OnboardingOverlay() {
               width: 8, height: 8, borderRadius: "50%",
               background: i === step ? "var(--accent)" : "var(--bg-tertiary)",
               cursor: "pointer",
-            }} onClick={() => setStep(i)} />
+            }} onClick={() => { setStep(i); }} />
           ))}
         </div>
 

@@ -13,7 +13,7 @@ import type { FICurveResponse, SimulateResponse } from "../api/client";
 import SimulationPlot from "./SimulationPlot";
 
 const mockStore = vi.hoisted(() => ({
-  state: {} as Record<string, unknown>,
+  state: {},
 }));
 
 vi.mock("../stores/studio", () => ({
@@ -65,6 +65,11 @@ const fiResult: FICurveResponse = {
   rates: [0, 10],
 };
 
+/**
+ * Put the store into a known state before a case renders the plot.
+ *
+ * @param overrides - The store fields this case depends on.
+ */
 function resetStore(overrides: Record<string, unknown>): void {
   mockStore.state = {
     activeTab: "trace",
@@ -87,7 +92,7 @@ function resetStore(overrides: Record<string, unknown>): void {
 }
 
 describe("SimulationPlot", () => {
-  beforeEach(() => resetStore({}));
+  beforeEach(() => { resetStore({}); });
 
   it("renders simulation evidence metadata on the trace view", () => {
     const html = renderToStaticMarkup(<SimulationPlot />);

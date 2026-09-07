@@ -8,11 +8,23 @@
 
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * Bounds and a step for a parameter whose model declared none.
+ *
+ * @param value - The parameter's current value.
+ * @returns Minimum, maximum and step.
+ */
 function sliderRange(value: number): [number, number, number] {
   const absVal = Math.abs(value) || 1;
   return [value - absVal * 2, value + absVal * 2, absVal / 100];
 }
 
+/**
+ * A parameter value, at the precision its magnitude deserves.
+ *
+ * @param n - The value.
+ * @returns The formatted value.
+ */
 function fmt(n: number): string {
   if (Math.abs(n) >= 100) return n.toFixed(1);
   if (Math.abs(n) >= 1) return n.toPrecision(4);
@@ -28,6 +40,13 @@ const PROTOCOLS = [
   { value: "sine", label: "Sine" },
 ];
 
+/**
+ * The bounds a slider should use, preferring the model's own.
+ *
+ * @param value - Its current value.
+ * @param range - The model's declared range, when it has one.
+ * @returns Minimum, maximum and step.
+ */
 export function sliderBounds(
   value: number,
   range?: [number, number] | null,
@@ -39,21 +58,30 @@ export function sliderBounds(
   return sliderRange(value);
 }
 
+/**
+ * One labelled parameter slider.
+ *
+ * @param props - The label, value, change handler, bounds, unit and tooltip.
+ * @returns The slider.
+ */
 function Slider({ label, value, onChange, min, max, step, unit, title }: {
   label: string; value: number;
   onChange: (v: number) => void;
   min?: number; max?: number; step?: number;
   unit?: string; title?: string;
 }) {
+  // A caller that sets one bound sets all three; reading them through the
+  // defaults rather than asserting keeps a caller that sets only `min` from
+  // producing a slider with an undefined range.
   const [lo, hi, st] = min !== undefined
-    ? [min, max!, step!]
+    ? [min, max ?? min + 1, step ?? 1]
     : sliderRange(value);
   return (
     <div className="slider-row" title={title}>
       <span className="slider-label">{label}</span>
       <input type="range" min={lo} max={hi} step={st} value={value}
         data-testid={`slider-${label}`}
-        onChange={(e) => onChange(parseFloat(e.target.value))} />
+        onChange={(e) => { onChange(parseFloat(e.target.value)); }} />
       <span className="slider-value">
         {fmt(value)}
         {unit ? <span style={{ color: "var(--text-muted)", marginLeft: 3 }}>{unit}</span> : null}
@@ -62,6 +90,11 @@ function Slider({ label, value, onChange, min, max, step, unit, title }: {
   );
 }
 
+/**
+ * The selected model's parameters, each within its declared range.
+ *
+ * @returns The sliders.
+ */
 export default function ParameterSliders() {
   const {
     sourceMode, modelDetail, modelParams, setModelParam,
@@ -87,7 +120,7 @@ export default function ParameterSliders() {
               return (
                 <Slider key={p.name} label={p.name}
                   value={modelParams[p.name] ?? p.default}
-                  onChange={(v) => setModelParam(p.name, v)}
+                  onChange={(v) => { setModelParam(p.name, v); }}
                   min={lo} max={hi} step={st}
                   unit={p.unit || undefined}
                   title={p.meaning || undefined} />
@@ -102,7 +135,7 @@ export default function ParameterSliders() {
               {modelDetail.state_vars.map((s) => (
                 <Slider key={`init-${s.name}`} label={`${s.name}₀`}
                   value={modelParams[s.name] ?? s.default}
-                  onChange={(v) => setModelParam(s.name, v)} />
+                  onChange={(v) => { setModelParam(s.name, v); }} />
               ))}
             </div>
           )}
@@ -112,7 +145,7 @@ export default function ParameterSliders() {
               <>
                 <div className="slider-row">
                   <span className="slider-label">integrator</span>
-                  <select value={modelIntegrator} onChange={(event) => setModelIntegrator(event.target.value)}>
+                  <select value={modelIntegrator} onChange={(event) => { setModelIntegrator(event.target.value); }}>
                     {modelDetail.compile_configuration.integrators.map((integrator) => (
                       <option key={integrator} value={integrator}>{integrator}</option>
                     ))}
@@ -120,7 +153,7 @@ export default function ParameterSliders() {
                 </div>
                 <div className="slider-row">
                   <span className="slider-label">Q-format</span>
-                  <select value={modelQFormat} onChange={(event) => setModelQFormat(event.target.value)}>
+                  <select value={modelQFormat} onChange={(event) => { setModelQFormat(event.target.value); }}>
                     {modelDetail.compile_configuration.q_formats.map((qFormat) => (
                       <option key={qFormat} value={qFormat}>{qFormat}</option>
                     ))}
@@ -140,14 +173,14 @@ export default function ParameterSliders() {
             <div className="panel-header">Parameters</div>
             {Object.entries(odeParams).map(([key, value]) => (
               <Slider key={key} label={key} value={value}
-                onChange={(v) => setOdeParam(key, v)} />
+                onChange={(v) => { setOdeParam(key, v); }} />
             ))}
           </div>
           <div className="panel-section">
             <div className="panel-header">Initial State</div>
             {Object.entries(odeInit).map(([key, value]) => (
               <Slider key={`init-${key}`} label={`${key}₀`} value={value}
-                onChange={(v) => setOdeInit(key, v)} />
+                onChange={(v) => { setOdeInit(key, v); }} />
             ))}
           </div>
         </>
@@ -157,7 +190,7 @@ export default function ParameterSliders() {
         <div className="panel-header">Current Injection</div>
         <div className="slider-row">
           <span className="slider-label">protocol</span>
-          <select value={protocol} onChange={(e) => setProtocol(e.target.value)}
+          <select value={protocol} onChange={(e) => { setProtocol(e.target.value); }}
             data-testid="protocol-select"
             style={{ flex: 1 }}>
             {PROTOCOLS.map((p) => (
@@ -181,7 +214,7 @@ export default function ParameterSliders() {
         <div className="panel-header">Randomness</div>
         <div className="slider-row">
           <span className="slider-label">trial</span>
-          <select value={trial} onChange={(e) => setTrial(e.target.value === "fresh" ? "fresh" : "replay")}
+          <select value={trial} onChange={(e) => { setTrial(e.target.value === "fresh" ? "fresh" : "replay"); }}
             style={{ flex: 1 }} aria-label="trial mode">
             <option value="replay">Replay (recorded seed)</option>
             <option value="fresh">Fresh (independent seed)</option>
@@ -191,7 +224,7 @@ export default function ParameterSliders() {
           <span className="slider-label">seed</span>
           <input type="number" min={0} step={1} value={seed ?? ""} placeholder="model default"
             aria-label="seed"
-            onChange={(e) => setSeed(e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value))))}
+            onChange={(e) => { setSeed(e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value)))); }}
             style={{ flex: 1 }} />
         </div>
       </div>

@@ -324,7 +324,9 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
     .getByRole("button", { name: "Download compile evidence artifact evidence/replay.json" })
     .click();
   const compileArtifactPath = "/api/studio/jobs/sj_compile/artifacts/evidence/replay.json";
-  expect(api.requests(compileArtifactPath)).toBe(1);
+  // The click starts the download and does not wait for it; polling asserts
+  // the request was made rather than that it had already been made.
+  await expect.poll(() => api.requests(compileArtifactPath)).toBe(1);
   expect(api.headers(compileArtifactPath)[0]).toMatchObject({
     authorization: "Bearer browser-token",
   });
@@ -362,7 +364,9 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
       name: "Download synthesis evidence artefact evidence/jobs/sj_synthesis/artifacts/synthesis/multi-target-evidence.json",
     })
     .click();
-  expect(api.requests(synthesisArtifactPath)).toBe(1);
+  // The click starts the download and does not wait for it; polling asserts
+  // the request was made rather than that it had already been made.
+  await expect.poll(() => api.requests(synthesisArtifactPath)).toBe(1);
   expect(api.headers(synthesisArtifactPath)[0]).toMatchObject({
     authorization: "Bearer browser-token",
   });

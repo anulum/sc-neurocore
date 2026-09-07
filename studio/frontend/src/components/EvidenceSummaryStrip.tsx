@@ -8,13 +8,21 @@
 
 import type { CSSProperties } from "react";
 
+/** One labelled figure in an evidence strip. */
 export interface EvidenceSummaryItem {
   label: string;
   value: string;
 }
 
+/** Where the strip is being shown, which decides how it is laid out. */
 export type EvidenceSummaryVariant = "banner" | "grid" | "overlay" | "panel";
 
+/**
+ * The container style for one placement.
+ *
+ * @param variant - Where the strip is shown.
+ * @returns The style.
+ */
 function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
   if (variant === "banner") {
     return {
@@ -68,6 +76,13 @@ function buildContainerStyle(variant: EvidenceSummaryVariant): CSSProperties {
   };
 }
 
+/**
+ * One figure, laid out for its placement.
+ *
+ * @param item - The figure.
+ * @param variant - Where the strip is shown.
+ * @returns The item.
+ */
 function renderItem(item: EvidenceSummaryItem, variant: EvidenceSummaryVariant) {
   if (variant === "banner") {
     return (
@@ -83,6 +98,12 @@ function renderItem(item: EvidenceSummaryItem, variant: EvidenceSummaryVariant) 
   return <div key={item.label}>{item.label} {item.value}</div>;
 }
 
+/**
+ * The figures that say what a result is, beside the result.
+ *
+ * @param props - The items and the placement.
+ * @returns The strip.
+ */
 export default function EvidenceSummaryStrip({
   items,
   variant,

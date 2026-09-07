@@ -12,7 +12,7 @@ import type { ModelBackendSupport } from "../api/client";
 import { orderedBackends } from "./BackendMatrix";
 
 const b = (name: string, status: string, parity: string): ModelBackendSupport =>
-  ({ name, status, parity }) as ModelBackendSupport;
+  ({ name, status, parity });
 
 describe("orderedBackends", () => {
   it("keeps only implemented backends, Python reference first", () => {

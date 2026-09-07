@@ -8,6 +8,11 @@
 
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * The bar along the bottom: what is running and what last happened.
+ *
+ * @returns The bar.
+ */
 export default function StatusBar() {
   const { result, activeTab, isSimulating, sourceMode, selectedModelName, networkResult } = useStudioStore();
 

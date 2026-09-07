@@ -13,6 +13,7 @@ import type {
   OperatorWorkbenchState,
 } from "../operatorWorkbenchState";
 
+/** The workbench's cards, its state, and the actions its buttons invoke. */
 export interface OperatorWorkbenchPanelProps {
   onExportEvidence: (target: OperatorWorkbenchEvidenceTarget) => void;
   onOpenAdmin: () => void;
@@ -37,6 +38,12 @@ const STATUS_CLASS: Record<OperatorWorkbenchCardStatus, string> = {
   warning: "operator-workbench-status-warning",
 };
 
+/**
+ * The operator's cards: what needs doing, and the button that does it.
+ *
+ * @param props - The cards, the state and the actions.
+ * @returns The panel.
+ */
 export default function OperatorWorkbenchPanel({
   onExportEvidence,
   onOpenAdmin,
@@ -66,7 +73,7 @@ export default function OperatorWorkbenchPanel({
             <div className="operator-workbench-detail" title={card.detail}>{card.detail}</div>
             <button
               disabled={actionDisabled(card.key, state)}
-              onClick={() => runAction(card, {
+              onClick={() => { runAction(card, {
                 exportEvidence: onExportEvidence,
                 openAdmin: onOpenAdmin,
                 openCompiler: onOpenCompiler,
@@ -74,7 +81,7 @@ export default function OperatorWorkbenchPanel({
                 openProjects: onOpenProjects,
                 runSimulation: onRunSimulation,
                 state,
-              })}
+              }); }}
               type="button"
             >
               {card.action}
@@ -86,6 +93,7 @@ export default function OperatorWorkbenchPanel({
   );
 }
 
+/** The actions a workbench card can invoke, by card. */
 interface OperatorWorkbenchActions {
   exportEvidence: (target: OperatorWorkbenchEvidenceTarget) => void;
   openAdmin: () => void;
@@ -96,10 +104,23 @@ interface OperatorWorkbenchActions {
   state: OperatorWorkbenchState;
 }
 
+/**
+ * Whether one card's action cannot run yet.
+ *
+ * @param key - Which card.
+ * @param state - The workbench's state.
+ * @returns Whether to disable it.
+ */
 function actionDisabled(key: OperatorWorkbenchCardKey, state: OperatorWorkbenchState): boolean {
   return key === "export" && !state.evidenceActionEnabled;
 }
 
+/**
+ * Invoke the action belonging to one card.
+ *
+ * @param card - The card whose action to run.
+ * @param actions - The actions available.
+ */
 function runAction(card: OperatorWorkbenchCard, actions: OperatorWorkbenchActions): void {
   switch (card.key) {
     case "compile":

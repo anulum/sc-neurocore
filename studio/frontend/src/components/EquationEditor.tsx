@@ -6,14 +6,28 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import Editor, { type Monaco } from "@monaco-editor/react";
+import Editor from "@monaco-editor/react";
 import { useStudioStore } from "../stores/studio";
 import { ODE_LANGUAGE_ID, registerODELanguage } from "../ode-language";
 
-function handleEditorMount(monaco: Monaco) {
-  registerODELanguage(monaco as unknown as typeof import("monaco-editor"));
+/**
+ * Register the Studio's ODE language once the editor is up.
+ *
+ * @param monaco - The editor module, as the wrapper hands it over.
+ */
+function handleEditorMount(monaco: typeof import("monaco-editor")) {
+  // The wrapper's own `Monaco` type is `any`, so taking it here would make
+  // everything downstream unchecked. Naming the editor's module type instead
+  // is narrower than what the prop supplies, which is allowed, and it is what
+  // `registerODELanguage` actually requires.
+  registerODELanguage(monaco);
 }
 
+/**
+ * The custom-ODE editor, with the Studio's own language registered.
+ *
+ * @returns The editor.
+ */
 export default function EquationEditor() {
   const { equations, threshold, reset, setEquations, setThreshold, setReset } =
     useStudioStore();
@@ -25,6 +39,11 @@ export default function EquationEditor() {
     reset ? `# reset: ${reset}` : "# reset: (none)",
   ].join("\n");
 
+  /**
+   * Carry the edited text into the store.
+   *
+   * @param value - The editor's contents, absent while it is loading.
+   */
   function handleChange(value: string | undefined) {
     if (!value) return;
     const lines = value.split("\n");

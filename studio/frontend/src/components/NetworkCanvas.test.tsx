@@ -138,7 +138,7 @@ describe("NetworkCanvas table view", () => {
 
     expect(toggle?.getAttribute("aria-pressed")).toBe("false");
     expect(container.querySelector("table")).toBeNull();
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 
@@ -162,7 +162,7 @@ describe("NetworkCanvas table view", () => {
     expect(container.querySelector("caption")?.textContent).toBe(
       "Network topology: 1 population holding 20 neurons, connected by 0 projections.",
     );
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 });
@@ -197,17 +197,17 @@ describe("NetworkCanvas projection editor", () => {
     });
     expect(container.querySelector("#projection-weight")).toBeNull();
 
-    await act(async () => useStudioStore.getState().selectProjection("e1"));
+    await act(async () => { useStudioStore.getState().selectProjection("e1"); });
 
     expect(container.querySelector("section")?.getAttribute("aria-label")).toBe(
       "Projection Input → Output",
     );
     expect(container.querySelector<HTMLInputElement>("#projection-weight")?.value).toBe("0.5");
 
-    await act(async () => useStudioStore.getState().selectProjection(null));
+    await act(async () => { useStudioStore.getState().selectProjection(null); });
 
     expect(container.querySelector("#projection-weight")).toBeNull();
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 
@@ -219,20 +219,26 @@ describe("NetworkCanvas projection editor", () => {
     await act(async () => {
       root.render(<NetworkCanvas />);
     });
-    await act(async () => useStudioStore.getState().selectProjection("e1"));
+    await act(async () => { useStudioStore.getState().selectProjection("e1"); });
     const delay = container.querySelector<HTMLInputElement>("#projection-delay");
-    const setter = Object.getOwnPropertyDescriptor(
+    if (delay === null) throw new Error("the projection editor drew no delay input");
+    // A React-controlled input ignores `element.value = x`; the change has to
+    // go through the prototype's own setter before the event is dispatched.
+    const descriptor = Object.getOwnPropertyDescriptor(
       window.HTMLInputElement.prototype,
       "value",
-    )?.set;
+    );
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- `.call` supplies the receiver
+    const setter = descriptor?.set;
+    if (setter === undefined) throw new Error("HTMLInputElement has no value setter");
 
     await act(async () => {
-      setter?.call(delay!, "2");
-      delay!.dispatchEvent(new Event("input", { bubbles: true }));
+      setter.call(delay, "2");
+      delay.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
     expect(at(useStudioStore.getState().graphProjections, 0).delay).toBe(2);
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 
@@ -319,14 +325,14 @@ describe("NetworkCanvas population editor", () => {
     await act(async () => {
       root.render(<NetworkCanvas />);
     });
-    await act(async () => useStudioStore.getState().selectPopulation("p1"));
+    await act(async () => { useStudioStore.getState().selectPopulation("p1"); });
 
     expect(container.querySelector("section")?.getAttribute("aria-label")).toBe(
       "Population Input",
     );
     expect(container.querySelector<HTMLInputElement>("#population-count")?.value).toBe("100");
     expect(useStudioStore.getState().populationModelContract?.model).toBe("LIF");
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 
@@ -526,7 +532,7 @@ describe("NetworkCanvas duplicate", () => {
 
     expect(duplicate?.disabled).toBe(true);
 
-    await act(async () => useStudioStore.getState().selectPopulations(["p1", "p2"]));
+    await act(async () => { useStudioStore.getState().selectPopulations(["p1", "p2"]); });
 
     expect(
       container.querySelector<HTMLButtonElement>('button[aria-label^="Duplicate the"]')?.disabled,
@@ -534,7 +540,7 @@ describe("NetworkCanvas duplicate", () => {
     expect(
       container.querySelector('button[aria-label^="Duplicate the"]')?.getAttribute("aria-label"),
     ).toBe("Duplicate the 2 selected populations and the projections between them");
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
     container.remove();
   });
 });

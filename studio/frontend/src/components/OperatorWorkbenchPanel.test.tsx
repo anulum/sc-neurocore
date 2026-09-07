@@ -14,6 +14,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { OperatorWorkbenchState } from "../operatorWorkbenchState";
 import OperatorWorkbenchPanel from "./OperatorWorkbenchPanel";
 
+/**
+ * A workbench state with whatever a case needs set.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The state.
+ */
 function workbenchState(overrides: Partial<OperatorWorkbenchState> = {}): OperatorWorkbenchState {
   return {
     cards: overrides.cards ?? [
@@ -132,6 +138,6 @@ describe("OperatorWorkbenchPanel", () => {
 
     expect(onOpenSynthesis).toHaveBeenCalledOnce();
     expect(onOpenCompiler).not.toHaveBeenCalled();
-    await act(async () => root.unmount());
+    await act(async () => { root.unmount(); });
   });
 });

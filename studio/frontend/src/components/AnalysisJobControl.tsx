@@ -18,6 +18,7 @@ import {
 } from "../analysisJob";
 import type { AnalysisJobRequestBuildResult } from "../analysisJobRequest";
 
+/** What the analysis-job control shows and what it can start. */
 export interface AnalysisJobControlProps {
   busy: boolean;
   canSubmit: boolean;
@@ -27,13 +28,20 @@ export interface AnalysisJobControlProps {
   state: AnalysisJobViewState;
 }
 
+/** Whether starting is allowed, and why not when it is not. */
 export type AnalysisJobControlStartDecision =
   | "started"
   | "blocked_invalid"
   | "blocked_busy";
 
 /**
- * Guarded start helper for the submit control (no side effects beyond startJob).
+ * Start the job if it may be started, and say what happened either way.
+ *
+ * Has no side effect beyond calling `startJob`, so the decision and the action
+ * can be checked together without mounting the control.
+ *
+ * @param input - The request, whether the control may submit, and the starter.
+ * @returns Which of the three outcomes occurred.
  */
 export function decideAnalysisJobControlStart(input: {
   busy: boolean;
@@ -53,6 +61,10 @@ export function decideAnalysisJobControlStart(input: {
 
 /**
  * Whether the submit button may be enabled.
+ *
+ * @param input - The request, whether the control may submit, and whether a
+ *   job is already running.
+ * @returns Whether to enable it.
  */
 export function isAnalysisJobControlSubmitEnabled(input: {
   busy: boolean;
@@ -62,6 +74,12 @@ export function isAnalysisJobControlSubmitEnabled(input: {
   return input.request.ok && input.canSubmit && !input.busy;
 }
 
+/**
+ * Summarise a completed job's metadata for the strip.
+ *
+ * @param state - The job's view state, which carries the metadata.
+ * @returns One labelled item per figure.
+ */
 function completedMetadataSummary(
   state: AnalysisJobViewState,
 ): { analysisType: string; classification: string; schema: string; status: string } | null {
@@ -78,7 +96,13 @@ function completedMetadataSummary(
 }
 
 /**
- * Focused presentational control for async analysis job submission/status.
+ * The submit button and status line for one analysis job.
+ *
+ * Presentational: it decides nothing, so the same control renders every phase
+ * a job can be in.
+ *
+ * @param props - The job's state and the actions it can invoke.
+ * @returns The control.
  */
 export default function AnalysisJobControl({
   busy,

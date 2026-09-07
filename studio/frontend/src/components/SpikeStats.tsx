@@ -8,6 +8,11 @@
 
 import { useStudioStore } from "../stores/studio";
 
+/**
+ * The current run's spike statistics.
+ *
+ * @returns The panel.
+ */
 export default function SpikeStats() {
   const { result, setActiveTab } = useStudioStore();
   if (!result) return null;
@@ -45,7 +50,7 @@ export default function SpikeStats() {
       </div>
       {stats.isi_histogram && (
         <div style={{ fontSize: 10, color: "var(--accent)", cursor: "pointer" }}
-          onClick={() => setActiveTab("isi")}>
+          onClick={() => { setActiveTab("isi"); }}>
           View ISI histogram →
         </div>
       )}

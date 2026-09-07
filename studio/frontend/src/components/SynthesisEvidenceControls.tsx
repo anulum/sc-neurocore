@@ -8,6 +8,7 @@
 import type { StudioEvidenceBundleResponse } from "../api/client";
 import EvidenceBundleArtifactList from "./EvidenceBundleArtifactList";
 
+/** The synthesis result whose evidence can be gathered, and how. */
 export interface SynthesisEvidenceControlsProps {
   bundle: StudioEvidenceBundleResponse | null;
   error: string | null;
@@ -17,6 +18,12 @@ export interface SynthesisEvidenceControlsProps {
   onExport: () => void;
 }
 
+/**
+ * Gather a synthesis run's artefacts into an evidence bundle.
+ *
+ * @param props - The run and the export action.
+ * @returns The controls.
+ */
 export default function SynthesisEvidenceControls({
   bundle,
   error,

@@ -68,10 +68,22 @@ export const BEHAVIOR_COLORS: Record<string, string> = {
     stochastic: "#bd6ecb",
 };
 
+/**
+ * The leading characters of a digest, enough to recognise it by.
+ *
+ * @param value - The full digest.
+ * @returns Its first ten characters.
+ */
 function shortDigest(value: string): string {
     return value.slice(0, 10);
 }
 
+/**
+ * Summarise a catalogue scan for the evidence strip.
+ *
+ * @param metadata - The scan's metadata, or `null` when none has run.
+ * @returns One labelled item per figure, empty when there is no scan.
+ */
 export function buildModelScanEvidenceItems(
     metadata: ModelScanMetadata | null,
 ): EvidenceSummaryItem[] {
@@ -86,6 +98,7 @@ export function buildModelScanEvidenceItems(
     ];
 }
 
+/** The filters the catalogue list is narrowed by. */
 interface ModelGroupFilters {
     modelFilter: string;
     familyFilter: string;
@@ -104,9 +117,16 @@ interface ModelGroupFilters {
     behaviorFilter?: string;
 }
 
-/** Filter the catalogue by search text, family, measured behaviour tag, live
- *  firing pattern, legacy evidence tier, and dual-axis science/silicon floors,
- *  then group the survivors by their displayed family. */
+/**
+ * Narrow the catalogue and group what survives by family.
+ *
+ * Filters by search text, family, measured behaviour tag, live firing pattern,
+ * legacy evidence tier, and the dual-axis science and silicon floors.
+ *
+ * @param models - The catalogue to filter.
+ * @param filters - What to narrow it by.
+ * @returns Family name to the models in it, families with none omitted.
+ */
 export function filterAndGroupModels<
     T extends {
         name: string;
@@ -131,10 +151,9 @@ export function filterAndGroupModels<
     if (filters.familyFilter) {
         filtered = filtered.filter((m) => m.family === filters.familyFilter);
     }
-    if (filters.behaviorFilter) {
-        filtered = filtered.filter((m) =>
-            m.behavior_tags?.includes(filters.behaviorFilter!),
-        );
+    const behaviorFilter = filters.behaviorFilter;
+    if (behaviorFilter) {
+        filtered = filtered.filter((m) => m.behavior_tags?.includes(behaviorFilter));
     }
     if (filters.minTier > 0) {
         filtered = filtered.filter((m) => (m.tier ?? 0) >= filters.minTier);
@@ -154,7 +173,7 @@ export function filterAndGroupModels<
             (m) =>
                 m.silicon_tier !== null &&
                 m.silicon_tier !== undefined &&
-                (m.silicon_tier as number) >= floor,
+                m.silicon_tier >= floor,
         );
     }
     if (filters.patternFilter) {
@@ -169,6 +188,11 @@ export function filterAndGroupModels<
     return groups;
 }
 
+/**
+ * The catalogue panel: search, facets, scan, and the model list.
+ *
+ * @returns The panel.
+ */
 export default function ModelBrowser() {
     const {
         models,
@@ -192,12 +216,12 @@ export default function ModelBrowser() {
     const [siliconEnrolledOnly, setSiliconEnrolledOnly] = useState(false);
 
     useEffect(() => {
-        loadModels();
+        void loadModels();
     }, [loadModels]);
     useEffect(() => {
         fetchModelFacets()
             .then(setFacets)
-            .catch(() => setFacets(null));
+            .catch(() => { setFacets(null); });
     }, []);
 
     const grouped = useMemo(
@@ -242,7 +266,7 @@ export default function ModelBrowser() {
                     type="text"
                     placeholder="Search models..."
                     value={modelFilter}
-                    onChange={(e) => setModelFilter(e.target.value)}
+                    onChange={(e) => { setModelFilter(e.target.value); }}
                     style={{
                         flex: 1,
                         padding: "4px 6px",
@@ -320,7 +344,7 @@ export default function ModelBrowser() {
                 <select
                     aria-label="Filter by family"
                     value={familyFilter}
-                    onChange={(e) => setFamilyFilter(e.target.value)}
+                    onChange={(e) => { setFamilyFilter(e.target.value); }}
                     style={{
                         width: "100%",
                         marginBottom: 4,
@@ -352,7 +376,7 @@ export default function ModelBrowser() {
                     }}
                 >
                     <span
-                        onClick={() => setBehaviorFilter("")}
+                        onClick={() => { setBehaviorFilter(""); }}
                         style={{
                             fontSize: 9,
                             padding: "1px 5px",
@@ -372,10 +396,9 @@ export default function ModelBrowser() {
                     {facets.behaviors.map((b) => (
                         <span
                             key={b.tag}
-                            onClick={() =>
-                                setBehaviorFilter(
+                            onClick={() => { setBehaviorFilter(
                                     b.tag === behaviorFilter ? "" : b.tag,
-                                )
+                                ); }
                             }
                             title={`${b.count} models measured ${b.tag}`}
                             style={{
@@ -385,13 +408,13 @@ export default function ModelBrowser() {
                                 cursor: "pointer",
                                 background:
                                     b.tag === behaviorFilter
-                                        ? BEHAVIOR_COLORS[b.tag] ||
+                                        ? BEHAVIOR_COLORS[b.tag] ??
                                           "var(--accent)"
                                         : "var(--bg-tertiary)",
                                 color:
                                     b.tag === behaviorFilter
                                         ? "var(--bg-primary)"
-                                        : BEHAVIOR_COLORS[b.tag] ||
+                                        : BEHAVIOR_COLORS[b.tag] ??
                                           "var(--text-muted)",
                             }}
                         >
@@ -413,7 +436,7 @@ export default function ModelBrowser() {
                 ].map((o) => (
                     <span
                         key={o.tier}
-                        onClick={() => setMinTier(o.tier)}
+                        onClick={() => { setMinTier(o.tier); }}
                         style={{
                             fontSize: 9,
                             padding: "1px 6px",
@@ -453,7 +476,7 @@ export default function ModelBrowser() {
                 ].map((o) => (
                     <span
                         key={`s-${o.tier}`}
-                        onClick={() => setMinScienceTier(o.tier)}
+                        onClick={() => { setMinScienceTier(o.tier); }}
                         style={{
                             fontSize: 9,
                             padding: "1px 6px",
@@ -542,7 +565,7 @@ export default function ModelBrowser() {
                     }}
                 >
                     <span
-                        onClick={() => setPatternFilter("")}
+                        onClick={() => { setPatternFilter(""); }}
                         style={{
                             fontSize: 9,
                             padding: "1px 5px",
@@ -561,8 +584,7 @@ export default function ModelBrowser() {
                     {patterns.map((p) => (
                         <span
                             key={p}
-                            onClick={() =>
-                                setPatternFilter(p === patternFilter ? "" : p)
+                            onClick={() => { setPatternFilter(p === patternFilter ? "" : p); }
                             }
                             style={{
                                 fontSize: 9,
@@ -571,12 +593,12 @@ export default function ModelBrowser() {
                                 cursor: "pointer",
                                 background:
                                     p === patternFilter
-                                        ? PATTERN_COLORS[p] || "var(--accent)"
+                                        ? PATTERN_COLORS[p] ?? "var(--accent)"
                                         : "var(--bg-tertiary)",
                                 color:
                                     p === patternFilter
                                         ? "var(--bg-primary)"
-                                        : PATTERN_COLORS[p] ||
+                                        : PATTERN_COLORS[p] ??
                                           "var(--text-muted)",
                             }}
                         >
@@ -615,7 +637,7 @@ export default function ModelBrowser() {
                                 return (
                                     <div
                                         key={m.name}
-                                        onClick={() => selectModel(m.name)}
+                                        onClick={() => { void selectModel(m.name); }}
                                         title={m.description || m.name}
                                         style={{
                                             padding: "2px 8px",
@@ -671,15 +693,10 @@ export default function ModelBrowser() {
                                         >
                                             <DualAxisBadge
                                                 scienceLabel={
-                                                    m.science_label ??
-                                                    `S${m.science_tier ?? 0}`
+                                                    m.science_label
                                                 }
                                                 siliconLabel={
-                                                    m.silicon_label ??
-                                                    (m.silicon_tier === null ||
-                                                    m.silicon_tier === undefined
-                                                        ? "none"
-                                                        : `H${m.silicon_tier}`)
+                                                    m.silicon_label
                                                 }
                                                 scienceTier={m.science_tier}
                                                 siliconTier={m.silicon_tier}
@@ -693,8 +710,7 @@ export default function ModelBrowser() {
                                                     href={`https://doi.org/${m.provenance.doi}`}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
+                                                    onClick={(e) => { e.stopPropagation(); }
                                                     }
                                                     title={`DOI ${m.provenance.doi}`}
                                                     style={{
@@ -728,7 +744,7 @@ export default function ModelBrowser() {
                                                                     background:
                                                                         BEHAVIOR_COLORS[
                                                                             t
-                                                                        ] ||
+                                                                        ] ??
                                                                         "var(--bg-tertiary)",
                                                                 }}
                                                             />
@@ -744,7 +760,7 @@ export default function ModelBrowser() {
                                                     background:
                                                         MATURITY_COLORS[
                                                             m.maturity
-                                                        ] ||
+                                                        ] ??
                                                         "var(--bg-tertiary)",
                                                 }}
                                             />
@@ -757,7 +773,7 @@ export default function ModelBrowser() {
                                                         background:
                                                             PATTERN_COLORS[
                                                                 beh.pattern
-                                                            ] ||
+                                                            ] ??
                                                             "var(--bg-tertiary)",
                                                         color: "var(--bg-primary)",
                                                         fontWeight: 600,
