@@ -17,6 +17,9 @@ import {
   type StudioTrainingTerminalStatus,
 } from "./studioTrainingStream";
 
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
 class FakeTrainingEventSource implements StudioTrainingStreamEventSource {
   closed = false;
   onerror: ((event: Event) => void) | null = null;

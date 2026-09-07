@@ -19,6 +19,12 @@ import {
   templatesLoadedState,
 } from "./modelSelectionStoreState";
 
+/**
+ * An editable ODE template.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function template(overrides: Partial<NeuronTemplate> = {}): NeuronTemplate {
   return {
     current: overrides.current ?? 10,
@@ -28,12 +34,21 @@ function template(overrides: Partial<NeuronTemplate> = {}): NeuronTemplate {
     equations: overrides.equations ?? ["dv/dt = -(v - E_L) / tau_m + I / C"],
     init: overrides.init ?? { v: -65 },
     name: overrides.name ?? "lif",
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     params: overrides.params ?? { C: 1, E_L: -65, tau_m: 10 },
     reset: overrides.reset ?? "v = -65",
     threshold: overrides.threshold ?? "v > -50",
   };
 }
 
+/**
+ * A catalogue entry, enough to browse by.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function modelSummary(overrides: Partial<ModelSummary> = {}): ModelSummary {
   return {
     name: "lif",
@@ -58,6 +73,9 @@ function modelSummary(overrides: Partial<ModelSummary> = {}): ModelSummary {
     n_state_vars: 1,
     state_var_names: ["v"],
     dt: 0.1,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     description: "LIF",
     intended_use: [],
     hardware_fit: [],
@@ -67,6 +85,12 @@ function modelSummary(overrides: Partial<ModelSummary> = {}): ModelSummary {
   };
 }
 
+/**
+ * A model's full contract.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
   return {
     ...modelSummary(overrides),
@@ -82,6 +106,9 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
     backends: [],
     reproducibility: { reference_config: "", golden_trace_sha256: "", reproducible: false },
     documentation_slug: "",
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     compile_configuration: {
       schema_name: "lif",
       default_integrator: "euler",
@@ -94,6 +121,12 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
   };
 }
 
+/**
+ * A saved preset.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function presetSummary(overrides: Partial<PresetSummary> = {}): PresetSummary {
   return {
     description: overrides.description ?? "Baseline LIF preset",

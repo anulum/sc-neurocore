@@ -11,6 +11,12 @@ import type { SimulateResponse, StudioOperatorStatus } from "./api/client";
 import { computeGuidedFlowState, type GuidedFlowInputs } from "./guidedFlowState";
 import { buildOperatorWorkbenchState, type OperatorWorkbenchInputs } from "./operatorWorkbenchState";
 
+/**
+ * The guided flow's inputs.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function guidedInputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInputs {
   return {
     analysisComplete: false,
@@ -21,12 +27,21 @@ function guidedInputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInpu
     modelSelected: false,
     simulationComplete: false,
     synthesisComplete: false,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     trainingComplete: false,
     trainingSkipped: false,
     ...overrides,
   };
 }
 
+/**
+ * An operator status the cards can be derived from.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOperatorStatus {
   return {
     audit: overrides.audit ?? {
@@ -82,6 +97,9 @@ function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOp
       authenticated_count: 2,
       enforced: true,
       protected_audit_action_count: 3,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
       protected_count: 3,
       protected_routes_audited: true,
       public_count: 1,
@@ -91,6 +109,11 @@ function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOp
   };
 }
 
+/**
+ * A finished run with the fields these cases read.
+ *
+ * @returns The fixture.
+ */
 function simulationResult(): SimulateResponse {
   return {
     current_trace: [10, 10],
@@ -111,6 +134,9 @@ function simulationResult(): SimulateResponse {
       state_variables: ["v"],
     },
     spike_count: 3,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     spikes: [0.1, 0.2, 0.3],
     stats: {
       isi_cv: null,
@@ -123,6 +149,12 @@ function simulationResult(): SimulateResponse {
   };
 }
 
+/**
+ * Everything the workbench derives its cards from.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function inputs(overrides: Partial<OperatorWorkbenchInputs> = {}): OperatorWorkbenchInputs {
   return {
     compileBundleExported: false,

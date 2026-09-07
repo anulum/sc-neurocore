@@ -62,6 +62,11 @@ const metrics: TrainingEpochMetrics = {
   val_loss: 0.5,
 };
 
+/**
+ * A weight-restore plan.
+ *
+ * @returns The fixture.
+ */
 function restorePlan(): TrainingWeightRestorePlan {
   return {
     architecture: "snn",
@@ -83,11 +88,19 @@ function restorePlan(): TrainingWeightRestorePlan {
     weights_artifact: {
       relative_path: "training/model_state.pt",
       sha256: "b".repeat(64),
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
       size_bytes: 256,
     },
   };
 }
 
+/**
+ * What importing a checkpoint returned.
+ *
+ * @returns The fixture.
+ */
 function importedCheckpoint(): TrainingCheckpointImportResponse {
   return {
     config: { epochs: 5, lr: 0.002 },

@@ -28,6 +28,12 @@ import {
   compilerVerilogLoadedState,
 } from "./compilerStoreState";
 
+/**
+ * A compile traceability chain, digests included.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function compileTraceability(
   overrides: Partial<CompileTraceability> = {},
 ): CompileTraceability {
@@ -48,12 +54,21 @@ function compileTraceability(
       params: { C: 1, E_L: -65, tau_m: 10 },
       reset: "v = -65",
       threshold: "v > -50",
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     },
     status: overrides.status ?? "completed",
     traceability_sha256: overrides.traceability_sha256 ?? "3".repeat(64),
   };
 }
 
+/**
+ * Generated RTL with its traceability.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function compileResponse(overrides: Partial<CompileResponse> = {}): CompileResponse {
   return {
     chars: overrides.chars ?? 128,
@@ -63,6 +78,11 @@ function compileResponse(overrides: Partial<CompileResponse> = {}): CompileRespo
   };
 }
 
+/**
+ * A co-simulation parity report that agreed.
+ *
+ * @returns The fixture.
+ */
 function cosimReport(): ModelCosimReport {
   return {
     bit_exact: true,
@@ -80,6 +100,9 @@ function cosimReport(): ModelCosimReport {
       kind: "generated_bit_true_c",
       source_sha256: "5".repeat(64),
       trace_sha256: "6".repeat(64),
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     },
     rtl: {
       kind: "iverilog_vvp",
@@ -89,12 +112,24 @@ function cosimReport(): ModelCosimReport {
     sample_count: 128,
     schema_version: "studio.cosim-parity.v1",
     signals: ["spike_out", "v_out", "theta_out"],
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     status: "completed",
     stimulus: { current: 10, current_q: 2560, n_steps: 128 },
     tools: { gcc: "gcc 13", iverilog: "Icarus 12", vvp: "VVP 12" },
   };
 }
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
 
+/**
+ * A built intermediate representation.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function irBuildResponse(overrides: Partial<IRBuildResponse> = {}): IRBuildResponse {
   return {
     errors: overrides.errors ?? [],
@@ -107,6 +142,12 @@ function irBuildResponse(overrides: Partial<IRBuildResponse> = {}): IRBuildRespo
   };
 }
 
+/**
+ * SystemVerilog emitted from an IR.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function svEmitResponse(overrides: Partial<SVEmitResponse> = {}): SVEmitResponse {
   return {
     chars: overrides.chars ?? 96,
@@ -115,6 +156,12 @@ function svEmitResponse(overrides: Partial<SVEmitResponse> = {}): SVEmitResponse
   };
 }
 
+/**
+ * SystemVerilog emitted straight from a system.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function svDirectResponse(overrides: Partial<SVDirectResponse> = {}): SVDirectResponse {
   return {
     chars: overrides.chars ?? 160,

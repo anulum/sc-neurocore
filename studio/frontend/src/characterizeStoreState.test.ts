@@ -17,6 +17,12 @@ import {
   characterizeRunStartState,
 } from "./characterizeStoreState";
 
+/**
+ * A characterisation with the fields these cases read.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function characterizeResponse(
   overrides: Partial<CharacterizeResponse> = {},
 ): CharacterizeResponse {

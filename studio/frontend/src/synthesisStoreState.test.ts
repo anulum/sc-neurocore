@@ -32,22 +32,40 @@ import {
   synthesisToolStatusLoadedState,
 } from "./synthesisStoreState";
 
+/**
+ * A healthy audit log.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function auditStatus(overrides: Partial<StudioAuditStatus> = {}): StudioAuditStatus {
   return {
     configured: overrides.configured ?? true,
     healthy: overrides.healthy ?? true,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     last_error: overrides.last_error ?? null,
     path_configured: overrides.path_configured ?? true,
     sink_type: overrides.sink_type ?? "jsonl",
   };
 }
 
+/**
+ * A job runner with nothing wrong.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   return {
     active_count: overrides.active_count ?? 0,
     allowed_kinds: overrides.allowed_kinds ?? ["synthesis"],
     completed_count: overrides.completed_count ?? 2,
     configured: overrides.configured ?? true,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     failed_count: overrides.failed_count ?? 0,
     process_count: overrides.process_count ?? 0,
     resource_profiles: overrides.resource_profiles ?? [],
@@ -57,6 +75,11 @@ function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
   };
 }
 
+/**
+ * One completed job.
+ *
+ * @returns The fixture.
+ */
 function jobRecord(
   jobId: string,
   createdAt: string,
@@ -70,25 +93,49 @@ function jobRecord(
     }],
     created_at_utc: createdAt,
     error: null,
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     execution_model: "process",
     finished_at_utc: createdAt,
     job_id: jobId,
     kind: "synthesis",
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     owner: "studio-synthesis",
     request_id: null,
     result: null,
     started_at_utc: createdAt,
     status: "completed",
   };
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
 }
 
+/**
+ * A job list.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListResponse {
   return {
     jobs: overrides.jobs ?? [],
     schema_version: overrides.schema_version ?? "studio.jobs.list.v1",
   };
 }
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
 
+/**
+ * A device's capacity.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function capacity(overrides: Partial<SynthCapacity> = {}): SynthCapacity {
   return {
     brams: overrides.brams ?? 8,
@@ -98,6 +145,12 @@ function capacity(overrides: Partial<SynthCapacity> = {}): SynthCapacity {
   };
 }
 
+/**
+ * What a design consumed.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function resources(overrides: Partial<SynthResources> = {}): SynthResources {
   return {
     brams: overrides.brams ?? 1,
@@ -109,8 +162,17 @@ function resources(overrides: Partial<SynthResources> = {}): SynthResources {
   };
 }
 
+/**
+ * A successful synthesis.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
   return {
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
     capacity: overrides.capacity ?? capacity(),
     error: overrides.error,
     log_excerpt: overrides.log_excerpt ?? "synthesis complete",
@@ -125,6 +187,9 @@ function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
       pnr_tool: "nextpnr",
       provenance_grade: "tool_backed",
       schema_version: "studio.synthesis-target-provenance.v1",
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
       status: "completed",
       synthesis_command: "synth_ice40",
       synthesis_ready: true,
@@ -132,9 +197,18 @@ function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
       tools: [],
     },
     utilisation: overrides.utilisation ?? { luts: 0.01 },
+/**
+ * An event source that is driven by the cases rather than by a network.
+ */
   };
 }
 
+/**
+ * One synthesis per target.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function multiTargetResult(
   overrides: Partial<MultiTargetResult> = {},
 ): MultiTargetResult {
@@ -152,6 +226,12 @@ function multiTargetResult(
   };
 }
 
+/**
+ * A resource estimate.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function synthEstimate(overrides: Partial<SynthEstimate> = {}): SynthEstimate {
   return {
     capacity: overrides.capacity ?? capacity(),
@@ -162,6 +242,12 @@ function synthEstimate(overrides: Partial<SynthEstimate> = {}): SynthEstimate {
   };
 }
 
+/**
+ * An operator status the cards can be derived from.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function operatorStatus(overrides: Partial<StudioOperatorStatus> = {}): StudioOperatorStatus {
   return {
     audit: overrides.audit ?? auditStatus(),

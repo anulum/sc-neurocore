@@ -37,6 +37,11 @@ const fallbackTrainingConfig: StudioProjectTrainingConfig = {
   learn_threshold: false,
 };
 
+/**
+ * A stored workspace.
+ *
+ * @returns The fixture.
+ */
 function snapshot(): StudioProjectStateSnapshot {
   return {
     sourceMode: "ode",

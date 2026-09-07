@@ -28,6 +28,12 @@ import {
   studioSTAResultState,
 } from "./studioAnalysisState";
 
+/**
+ * A finished run with the fields these cases read.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function simulationResult(overrides: Partial<SimulateResponse> = {}): SimulateResponse {
   return {
     current_trace: overrides.current_trace ?? [10, 10, 10],

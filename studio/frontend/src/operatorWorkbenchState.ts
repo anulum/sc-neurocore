@@ -5,9 +5,19 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio operator workbench state
+
+/**
+ * The operator's cards: what the Studio thinks needs doing next.
+ *
+ * Each card is derived from the store rather than stored, so the workbench
+ * cannot disagree with the panels it summarises. A card's status is taken from
+ * the guided flow's own step where there is one, which is what keeps the
+ * workbench and the guided run from telling the reader different things.
+ */
 import type { SimulateResponse, StudioOperatorStatus } from "./api/client";
 import type { GuidedFlowState, GuidedFlowStepKey, GuidedFlowStepStatus } from "./guidedFlowState";
 
+/** Which card. */
 export type OperatorWorkbenchCardKey =
   | "workspace"
   | "model"
@@ -16,9 +26,12 @@ export type OperatorWorkbenchCardKey =
   | "compile"
   | "export";
 
+/** What a card is asking of the reader. */
 export type OperatorWorkbenchCardStatus = "ready" | "active" | "warning" | "blocked";
+/** Which surface an evidence export is about. */
 export type OperatorWorkbenchEvidenceTarget = "project" | "compile" | "synthesis";
 
+/** Everything the cards are derived from. */
 export interface OperatorWorkbenchInputs {
   sourceMode: "model" | "ode";
   selectedModelName: string;
@@ -38,6 +51,7 @@ export interface OperatorWorkbenchInputs {
   projectBundleExported: boolean;
 }
 
+/** One card: what it is, where it stands, and what its button does. */
 export interface OperatorWorkbenchCard {
   action: string;
   detail: string;
@@ -47,6 +61,7 @@ export interface OperatorWorkbenchCard {
   value: string;
 }
 
+/** The whole workbench, derived from the store. */
 export interface OperatorWorkbenchState {
   cards: OperatorWorkbenchCard[];
   evidenceActionEnabled: boolean;
@@ -55,6 +70,7 @@ export interface OperatorWorkbenchState {
   subhead: string;
 }
 
+/** The word shown for each guided-flow step status. */
 const STEP_STATUS_LABELS: Record<GuidedFlowStepStatus, string> = {
   available: "ready",
   blocked: "blocked",
@@ -68,6 +84,9 @@ const STEP_STATUS_LABELS: Record<GuidedFlowStepStatus, string> = {
  * The workbench does not introduce new authority or hidden checks. It only
  * aggregates already-loaded store values, operator status, and guided-flow
  * evidence into compact cards that can be rendered before the detailed panels.
+ *
+ * @param inputs - The store values the cards are derived from.
+ * @returns The workbench.
  */
 export function buildOperatorWorkbenchState(
   inputs: OperatorWorkbenchInputs,
@@ -90,6 +109,12 @@ export function buildOperatorWorkbenchState(
   };
 }
 
+/**
+ * The workspace card: whether there is somewhere to save work.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The card.
+ */
 function workspaceCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   const projectName = inputs.projectName;
   const hasProject = projectName !== null;
@@ -103,6 +128,12 @@ function workspaceCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   };
 }
 
+/**
+ * The model card: whether something has been chosen to run.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The card.
+ */
 function modelCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   if (inputs.sourceMode === "ode") {
     return {
@@ -124,6 +155,12 @@ function modelCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   };
 }
 
+/**
+ * The simulation card: whether a run has produced anything.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The card.
+ */
 function simulationCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   if (inputs.isSimulating) {
     return {
@@ -155,6 +192,12 @@ function simulationCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard 
   };
 }
 
+/**
+ * The evidence card: what is gathered and what it is about.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The card.
+ */
 function evidenceCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   if (inputs.operatorStatus === null) {
     return {
@@ -186,6 +229,12 @@ function evidenceCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   };
 }
 
+/**
+ * The compile card: whether the design has reached RTL.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The card.
+ */
 function compileCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   const compileStep = guidedStep(inputs.guidedFlow, "compile");
   const synthStep = guidedStep(inputs.guidedFlow, "synthesise");
@@ -219,6 +268,12 @@ function compileCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   };
 }
 
+/**
+ * The export card: whether the evidence has been sealed.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The card.
+ */
 function exportCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   const exportTarget = selectedEvidenceTarget(inputs);
   if (exportTarget === null) {
@@ -253,6 +308,12 @@ function exportCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
   };
 }
 
+/**
+ * Which surface the evidence card is about.
+ *
+ * @param inputs - What the cards are derived from.
+ * @returns The target.
+ */
 function selectedEvidenceTarget(
   inputs: OperatorWorkbenchInputs,
 ): OperatorWorkbenchEvidenceTarget | null {
@@ -268,6 +329,13 @@ function selectedEvidenceTarget(
   return null;
 }
 
+/**
+ * Whether a bundle has been exported for one surface.
+ *
+ * @param inputs - What the cards are derived from.
+ * @param target - The surface.
+ * @returns Whether it has.
+ */
 function bundleExported(
   inputs: OperatorWorkbenchInputs,
   target: OperatorWorkbenchEvidenceTarget,
@@ -282,6 +350,12 @@ function bundleExported(
   }
 }
 
+/**
+ * The word shown for an evidence target.
+ *
+ * @param target - The surface.
+ * @returns The label.
+ */
 function evidenceTargetLabel(target: OperatorWorkbenchEvidenceTarget): string {
   switch (target) {
     case "compile":
@@ -293,6 +367,13 @@ function evidenceTargetLabel(target: OperatorWorkbenchEvidenceTarget): string {
   }
 }
 
+/**
+ * The sentence shown under the evidence card.
+ *
+ * @param target - The surface.
+ * @param exportStep - The guided step for exporting, if there is one.
+ * @returns The sentence.
+ */
 function evidenceTargetDetail(
   target: OperatorWorkbenchEvidenceTarget,
   exportStep: GuidedFlowState["steps"][number] | null,
@@ -307,11 +388,24 @@ function evidenceTargetDetail(
   }
 }
 
+/**
+ * The guided step the run is on, if a guided run is going.
+ *
+ * @param state - The guided flow's state.
+ * @returns The step, or `null`.
+ */
 function currentGuidedStep(state: GuidedFlowState): { key: GuidedFlowStepKey; title: string } | null {
   const step = state.steps.find((candidate) => candidate.status === "current");
   return step === undefined ? null : { key: step.key, title: step.title };
 }
 
+/**
+ * One guided step by name, if the flow has it.
+ *
+ * @param state - The guided flow's state.
+ * @param key - The step's name.
+ * @returns The step, or `null`.
+ */
 function guidedStep(
   state: GuidedFlowState,
   key: GuidedFlowStepKey,
@@ -319,6 +413,15 @@ function guidedStep(
   return state.steps.find((candidate) => candidate.key === key) ?? null;
 }
 
+/**
+ * A card's status, taken from its guided step.
+ *
+ * Deriving it keeps the workbench and the guided run from telling the reader
+ * different things about the same work.
+ *
+ * @param step - The step, if there is one.
+ * @returns The status.
+ */
 function statusFromStep(
   step: GuidedFlowState["steps"][number] | null,
 ): OperatorWorkbenchCardStatus {
@@ -331,6 +434,12 @@ function statusFromStep(
   return "blocked";
 }
 
+/**
+ * The sentence shown for a guided step.
+ *
+ * @param step - The step, if there is one.
+ * @returns The sentence.
+ */
 function stepDetail(step: GuidedFlowState["steps"][number] | null): string {
   if (step === null) {
     return "Workflow step is not registered";

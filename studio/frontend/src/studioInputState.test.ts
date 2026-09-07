@@ -27,6 +27,12 @@ import {
   type StudioNetworkParams,
 } from "./studioInputState";
 
+/**
+ * A model's full contract.
+ *
+ * @param overrides - Fields to set on top of the default.
+ * @returns The fixture.
+ */
 function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
   return {
     name: "lif",
