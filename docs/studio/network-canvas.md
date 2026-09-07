@@ -397,27 +397,39 @@ cannot be placed still has to be read.
 
 ## NIR Export/Import
 
-The canvas exports and imports the NIR-named JSON format
-(`format: "nir"`, `version: "0.1"`); this is a JSON interchange of the graph,
-not a conformance proof against the NIR specification.
+The canvas exports and imports the Studio's own graph envelope
+(`format: "sc-neurocore.studio.network-graph"`, `version: "2"`). It is a JSON
+interchange of the graph, not a conformance proof against the NIR
+specification, and the route keeps its historical name.
 
-- **Export:** populations become nodes (`type` is the catalogue model name),
-  projections become edges (weight, delay; the probability is not carried)
+- **Export:** populations become nodes (`type` is the catalogue model name,
+  with the `label` a reader gave the population); projections become edges
+  carrying weight, delay, and the connectivity rule with its `probability`,
+  `seed` and `autapses`.
 - **Import:** node `type` must be a catalogue model name (NIR primitives such
-  as `LIF` are not mapped to a model); imported edges connect all-to-all. The
-  assembled graph is validated with the default timestep and rejected when it
-  would not execute.
+  as `LIF` are not mapped to a model). The assembled graph is validated with
+  the default timestep and rejected when it would not execute.
+
+**Version 1 carried neither the labels nor the connectivity.** A `random`
+projection exported and re-imported through it came back `all_to_all` — the
+same weights over a different network, with nothing to notice it by, and every
+population renamed to its identifier. A version-1 document still reads, and
+still means all-to-all, because that is what it always meant; version 2
+round-trips the network that was exported.
 
 ```json
 {
-  "format": "nir",
-  "version": "0.1",
+  "format": "sc-neurocore.studio.network-graph",
+  "version": "2",
   "nodes": {
-    "pop_a": {"type": "SCLapicqueLIFNeuron", "count": 80, "neuron_type": "excitatory"},
-    "pop_b": {"type": "SCLapicqueLIFNeuron", "count": 20, "neuron_type": "inhibitory"}
+    "pop_a": {"type": "SCLapicqueLIFNeuron", "count": 80, "neuron_type": "excitatory",
+              "label": "Excitatory pool"},
+    "pop_b": {"type": "SCLapicqueLIFNeuron", "count": 20, "neuron_type": "inhibitory",
+              "label": "Inhibitory pool"}
   },
   "edges": [
-    {"source": "pop_a", "target": "pop_b", "weight": 40.0, "delay": 1.0}
+    {"source": "pop_a", "target": "pop_b", "weight": 40.0, "delay": 1.0,
+     "rule": "random", "probability": 0.1, "seed": 7, "autapses": false}
   ]
 }
 ```

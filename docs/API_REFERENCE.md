@@ -37521,9 +37521,13 @@ Import NIR-named JSON to a network graph.
 
 Every node ``type`` must be a catalogue model name: no NIR primitive is
 mapped to a model here (that mapping is a separate unit), and an unknown
-type is rejected rather than replaced by a default. Imported edges connect
-all-to-all with the given weight and delay because the format carries no
-probability.
+type is rejected rather than replaced by a default.
+
+A version-2 document carries the population label and each projection's
+connectivity rule with its probability, seed and autapse decision, so a
+round trip returns the network that was exported. A version-1 document
+carried none of those: its edges connect all-to-all, which is what it has
+always meant, and its populations are named by their identifiers.
 
 The assembled graph is validated against the graph schema with the Studio
 default timestep, so an import that would not execute (sign conflicts,

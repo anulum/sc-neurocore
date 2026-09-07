@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4862
+    "test_files": 4863
   },
   "documentation": {
     "public_pages": [
@@ -7398,6 +7398,7 @@
       "tests/test_studio_network_canvas_validation.py",
       "tests/test_studio_network_execution.py",
       "tests/test_studio_network_graph_spec.py",
+      "tests/test_studio_network_interchange_fidelity.py",
       "tests/test_studio_nir_compile.py",
       "tests/test_studio_nullcline_budget.py",
       "tests/test_studio_nullclines.py",

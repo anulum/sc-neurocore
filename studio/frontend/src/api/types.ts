@@ -2225,7 +2225,18 @@ export interface GraphSimResult {
  */
 export interface NIRFormat {
   format: string;
+  /**
+   * Envelope version. `"2"` carries each population's label and each
+   * projection's connectivity rule with its probability, seed and autapse
+   * decision; `"1"` carried none of them, so a round trip through it returned
+   * an all-to-all network. Both are readable.
+   */
   version: string;
+  /**
+   * Left opaque on purpose: this client transports the envelope, it does not
+   * interpret it, and describing the fields here would imply a second contract
+   * that does not exist.
+   */
   nodes: Record<string, unknown>;
   edges: unknown[];
 }

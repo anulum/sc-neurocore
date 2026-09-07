@@ -52,7 +52,15 @@ GRAPH_ENVELOPE_FORMAT = "sc-neurocore.studio.network-graph"
 
 #: Version of the honest envelope. The loader still accepts the legacy pair
 #: below, so files exported before the rename keep opening.
-GRAPH_ENVELOPE_VERSION = "1"
+#: Envelope version. `"2"` carries the population label and the connectivity
+#: rule with its probability, seed and autapse decision; `"1"` carried none of
+#: them, so a round trip through it silently became all-to-all. Both are read;
+#: a `"1"` document keeps the documented defaults.
+GRAPH_ENVELOPE_VERSION = "2"
+LEGACY_GRAPH_ENVELOPE_VERSION = "1"
+ACCEPTED_GRAPH_ENVELOPE_VERSIONS = frozenset(
+    {GRAPH_ENVELOPE_VERSION, LEGACY_GRAPH_ENVELOPE_VERSION}
+)
 
 #: The envelope earlier exports wrote. Accepted on import, never written.
 LEGACY_GRAPH_ENVELOPE_FORMAT = "nir"
@@ -260,22 +268,33 @@ def graph_to_nir(graph: object) -> dict[str, Any]:
     edges = []
 
     for pop in graph.get("populations", []):
-        nodes[pop["id"]] = {
+        node: dict[str, Any] = {
             "type": pop.get("model", DEFAULT_MODEL),
             "count": pop.get("count", 1),
             "neuron_type": pop.get("neuron_type", "excitatory"),
             "params": pop.get("params", {}),
         }
+        # The label is what a reader named the population. Dropping it replaced
+        # every name with its identifier on the way back in.
+        label = pop.get("label")
+        if isinstance(label, str) and label:
+            node["label"] = label
+        nodes[pop["id"]] = node
 
     for proj in graph.get("projections", []):
-        edges.append(
-            {
-                "source": proj["source"],
-                "target": proj["target"],
-                "weight": proj.get("weight", 1.0),
-                "delay": proj.get("delay", 0.0),
-            }
-        )
+        edge: dict[str, Any] = {
+            "source": proj["source"],
+            "target": proj["target"],
+            "weight": proj.get("weight", 1.0),
+            "delay": proj.get("delay", 0.0),
+        }
+        # Connectivity is the topology, not decoration: without the rule and its
+        # probability and seed, a random projection came back all-to-all — a
+        # different network wearing the same weights.
+        for field in ("rule", "probability", "seed", "autapses"):
+            if field in proj:
+                edge[field] = proj[field]
+        edges.append(edge)
 
     return {
         "format": GRAPH_ENVELOPE_FORMAT,
@@ -290,9 +309,13 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
 
     Every node ``type`` must be a catalogue model name: no NIR primitive is
     mapped to a model here (that mapping is a separate unit), and an unknown
-    type is rejected rather than replaced by a default. Imported edges connect
-    all-to-all with the given weight and delay because the format carries no
-    probability.
+    type is rejected rather than replaced by a default.
+
+    A version-2 document carries the population label and each projection's
+    connectivity rule with its probability, seed and autapse decision, so a
+    round trip returns the network that was exported. A version-1 document
+    carried none of those: its edges connect all-to-all, which is what it has
+    always meant, and its populations are named by their identifiers.
 
     The assembled graph is validated against the graph schema with the Studio
     default timestep, so an import that would not execute (sign conflicts,
@@ -349,6 +372,11 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
                 "position": {"x": x_offset, "y": 0},
                 "params": node.get("params", {}),
                 "drive": {"kind": "none"},
+                **(
+                    {"label": node["label"]}
+                    if isinstance(node.get("label"), str) and node["label"]
+                    else {}
+                ),
             }
         )
         x_offset += 200
@@ -362,16 +390,21 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
             raise ValueError(f"NIR edge {index} source must be a non-empty string")
         if not isinstance(target, str) or not target:
             raise ValueError(f"NIR edge {index} target must be a non-empty string")
-        projections.append(
-            {
-                "id": f"proj_{secrets.token_hex(4)}",
-                "source": source,
-                "target": target,
-                "weight": edge.get("weight", 1.0),
-                "delay": edge.get("delay", 0.0),
-                "rule": "all_to_all",
-            }
-        )
+        projection: dict[str, Any] = {
+            "id": f"proj_{secrets.token_hex(4)}",
+            "source": source,
+            "target": target,
+            "weight": edge.get("weight", 1.0),
+            "delay": edge.get("delay", 0.0),
+            # A document that carries no rule is a version-1 export, which never
+            # had one; all-to-all is what it has always meant and what its own
+            # documentation promised.
+            "rule": edge.get("rule", "all_to_all"),
+        }
+        for field in ("probability", "seed", "autapses"):
+            if field in edge:
+                projection[field] = edge[field]
+        projections.append(projection)
 
     graph = {"populations": populations, "projections": projections}
     errors = validate_graph(graph)
