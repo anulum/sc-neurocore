@@ -328,6 +328,7 @@ import {
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
 import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
+import { studioExperimentKey, studioTrainingKey } from "../studioExperimentKey";
 
 /**
  * The graph the store currently holds, as a history snapshot.
@@ -386,6 +387,51 @@ function studioGraphRestoredState(step: StudioGraphHistoryStep): {
  * keystroke that reschedules a run also re-render every subscriber.
  */
 let debounceTimer: StudioAutoSimulationTimer | null = null;
+
+/**
+ * Which of the store's experiment keys a result belongs to.
+ *
+ * The workflow asks three separate questions -- has the current experiment been
+ * simulated, analysed, trained -- so results record against three keys rather
+ * than one.
+ */
+type StudioExperimentKeyField =
+  | "analysisExperimentKey"
+  | "resultExperimentKey"
+  | "trainingExperimentKey";
+
+/**
+ * Apply a result only while the experiment that produced it is still on screen.
+ *
+ * A run started before the reader changed the model can still be in flight
+ * when they change it. Landing its response on top of the new configuration
+ * would put another experiment's trace in front of them and let the guided
+ * workflow report a completed simulation of a run nobody asked for.
+ *
+ * A superseded response is therefore dropped rather than applied -- but the
+ * busy flag is cleared regardless, because the run it belonged to really has
+ * ended and leaving the panel spinning would be a second lie on top of the
+ * first.
+ *
+ * @param context - The store accessors, the key captured when the request was
+ *   submitted, the field to record it in, and the patch to apply.
+ * @returns Whether the result was applied.
+ */
+function applyResultForExperiment(context: {
+  get: () => StudioState;
+  set: (partial: Partial<StudioState>) => void;
+  requestedKey: string;
+  field: StudioExperimentKeyField;
+  patch: Partial<StudioState>;
+}): boolean {
+  const currentKey = studioExperimentKey(simulationConfigInput(context.get()));
+  if (currentKey !== context.requestedKey) {
+    context.set(studioAnalysisIdleState());
+    return false;
+  }
+  context.set({ ...context.patch, [context.field]: context.requestedKey });
+  return true;
+}
 
 /**
  * Build every action the Studio store exposes.
@@ -798,12 +844,19 @@ export function createStudioStoreActions(
   runSimulation: async () => {
     const s = get();
     if (s.isSimulating) return;
+    const requestedKey = studioExperimentKey(simulationConfigInput(s));
     set(studioAnalysisStartState());
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const result = s.sourceMode === "model" && s.selectedModelName
         ? await simulateModel(cfg) : await simulateODE(cfg);
-      set(studioSimulationResultState(result));
+      applyResultForExperiment({
+        field: "resultExperimentKey",
+        get,
+        patch: studioSimulationResultState(result),
+        requestedKey,
+        set,
+      });
     } catch (e) {
       set(studioAnalysisFailureState(e));
     }
@@ -819,12 +872,19 @@ export function createStudioStoreActions(
       set(studioAnalysisErrorState("Precision compare only for custom ODE mode"));
       return;
     }
+    const requestedKey = studioExperimentKey(simulationConfigInput(s));
     set(studioAnalysisStartState("precision"));
     try {
       const precResult = await fetchPrecision(
         studioPrecisionRequest(simulationConfigInput(s), s.modelQFormat),
       );
-      set(studioPrecisionResultState(precResult));
+      applyResultForExperiment({
+        field: "analysisExperimentKey",
+        get,
+        patch: studioPrecisionResultState(precResult),
+        requestedKey,
+        set,
+      });
     } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
@@ -914,6 +974,7 @@ export function createStudioStoreActions(
   runCharacterize: () => {
     const s = get();
     if (s.isSimulating || !s.selectedModelName) return;
+    const requestedKey = studioExperimentKey(simulationConfigInput(s));
     set(characterizeRunStartState());
     const config = characterizeRequestConfig(s);
     const ws = connectProgress("characterize", config, (msg) => {
@@ -922,7 +983,15 @@ export function createStudioStoreActions(
     });
     ws.onerror = () => {
       fetchCharacterize(config).then(
-        (charResult) => { set(characterizeCompleteState(charResult)); },
+        (charResult) => {
+          applyResultForExperiment({
+            field: "analysisExperimentKey",
+            get,
+            patch: characterizeCompleteState(charResult),
+            requestedKey,
+            set,
+          });
+        },
         (e: unknown) => { set(characterizeFailureState(e)); },
       );
     };
@@ -968,11 +1037,18 @@ export function createStudioStoreActions(
   runCompare: async (configB) => {
     const s = get();
     if (s.isSimulating) return;
+    const requestedKey = studioExperimentKey(simulationConfigInput(s));
     set(studioAnalysisStartState("compare"));
     try {
       const configA = studioSimulationConfig(simulationConfigInput(s));
       const compareResult = await fetchCompare(configA, configB);
-      set(studioCompareResultState(compareResult));
+      applyResultForExperiment({
+        field: "analysisExperimentKey",
+        get,
+        patch: studioCompareResultState(compareResult),
+        requestedKey,
+        set,
+      });
     } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
@@ -982,6 +1058,7 @@ export function createStudioStoreActions(
       set(studioAnalysisErrorState("Nullclines need 2+ variable ODE in custom mode"));
       return;
     }
+    const requestedKey = studioExperimentKey(simulationConfigInput(s));
     set(studioAnalysisStartState());
     try {
       const vars = Object.keys(s.odeInit);
@@ -1006,18 +1083,31 @@ export function createStudioStoreActions(
           gridSize: 60,
         }),
       );
-      set(studioNullclineResultState(nullclineResult));
+      applyResultForExperiment({
+        field: "analysisExperimentKey",
+        get,
+        patch: studioNullclineResultState(nullclineResult),
+        requestedKey,
+        set,
+      });
     } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runFreqResponse: async () => {
     const s = get();
     if (s.isSimulating) return;
+    const requestedKey = studioExperimentKey(simulationConfigInput(s));
     set(studioAnalysisStartState("freq"));
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const freqResult = await fetchFreqResponse(studioFrequencyResponseRequest(cfg, s.current));
-      set(studioFrequencyResultState(freqResult));
+      applyResultForExperiment({
+        field: "analysisExperimentKey",
+        get,
+        patch: studioFrequencyResultState(freqResult),
+        requestedKey,
+        set,
+      });
     } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
@@ -1483,7 +1573,10 @@ export function createStudioStoreActions(
   startTraining: async () => {
     const s = get();
     if (s.trainingStatus === "running") return;
-    set(trainingStartState());
+    // Recorded at the start rather than at the end: what makes a finished run
+    // stale is a change to what was trained, and the reader can change that
+    // while the run is going.
+    set({ ...trainingStartState(), trainingExperimentKey: studioTrainingKey(s.trainingConfig) });
     try {
       const result = await apiStartTraining(s.trainingConfig);
       set(trainingStartedState(result.job_id));

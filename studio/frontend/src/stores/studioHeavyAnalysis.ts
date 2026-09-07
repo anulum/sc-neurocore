@@ -11,6 +11,7 @@ import type { AnalysisJobKind } from "../api/client";
 import { buildStudioAnalysisJobSelection } from "../studioAnalysisJobSelection";
 import { runStudioAnalysisJob } from "../studioAnalysisJobRunner";
 import { studioAnalysisFailureState } from "../studioAnalysisState";
+import { studioExperimentKey } from "../studioExperimentKey";
 import type { StudioSimulationConfigInput } from "../studioSimulationConfig";
 import type { StudioState } from "./studioTypes";
 
@@ -81,11 +82,16 @@ export async function runStoreHeavyAnalysis(
     set(studioAnalysisFailureState(selection.error));
     return;
   }
+  // The key is captured before the job starts, and every patch the runner
+  // applies carries it. A job that finishes after the reader has changed the
+  // experiment therefore records the experiment it actually ran, which is what
+  // stops the guided workflow counting it as an analysis of what is on screen.
+  const requestedKey = studioExperimentKey(simulationConfigInput(s));
   const outcome = await runStudioAnalysisJob(
     { simulation: simulationConfigInput(s), selection: selection.selection },
     {
       applyPatch: (patch) => {
-        set(patch);
+        set({ ...patch, analysisExperimentKey: requestedKey });
       },
     },
   );

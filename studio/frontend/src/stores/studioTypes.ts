@@ -116,6 +116,22 @@ export interface StudioState {
   freqResult: FreqResponse | null;
   staResult: { time_ms: number[]; average: number[]; n_spikes: number } | null;
   charResult: CharacterizeResponse | null;
+  /**
+   * The experiment `result` was produced under, or `null` when none has been.
+   *
+   * A run is evidence only of the configuration that produced it. The guided
+   * workflow compares this against the configuration in force, so a trace left
+   * over from a model the reader has since replaced stops counting as a
+   * completed simulation instead of quietly satisfying the step.
+   */
+  resultExperimentKey: string | null;
+  /**
+   * The experiment the most recent analysis was produced under.
+   *
+   * One key for all nine analyses: the workflow's analyse step asks whether
+   * some analysis of the current run exists, not which one.
+   */
+  analysisExperimentKey: string | null;
   multiResults: SimulateResponse[] | null;
   importedTrace: ImportedTrace | null;
   networkResult: NetworkResult | null;
@@ -183,6 +199,15 @@ export interface StudioState {
   trainingJobId: string | null;
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];
+  /**
+   * The experiment the current training run was started under.
+   *
+   * Training is the one step whose artefact outlives its configuration on
+   * purpose -- weights are restored into later runs -- so completion is bound
+   * to the configuration that trained them rather than inferred from their
+   * presence.
+   */
+  trainingExperimentKey: string | null;
   trainingWeightRestorePlan: TrainingWeightRestorePlan | null;
   trainingWeightRestoreVerification: TrainingWeightRestoreVerification | null;
   trainingWeightMaterialization: TrainingWeightRestoreResult | null;

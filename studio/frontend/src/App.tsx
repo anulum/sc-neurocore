@@ -53,6 +53,10 @@ import { buildGuidedRunController } from "./guidedRunController";
 import { buildOperatorWorkbenchState } from "./operatorWorkbenchState";
 import type { OperatorWorkbenchEvidenceTarget } from "./operatorWorkbenchState";
 import { buildStudioReadinessModel } from "./studioReadiness";
+import {
+  studioGuidedFlowInputs,
+  studioSynthesisComplete,
+} from "./studioGuidedFlowInputs";
 import { Btn, CapabilityUnavailable, Tab } from "./appChrome";
 
 /**
@@ -98,38 +102,11 @@ export default function App() {
   }, { disabled: s.isSimulating, capabilityEnabled: !panelUnavailable(analysisPanel),
     applyPatch: (patch) => { useStudioStore.setState(patch); } });
 
-  const cosimMatchesCompile = s.cosimResult?.bit_exact === true
-    && s.compileTraceability !== null
-    && s.cosimResult.rtl.source_sha256 === s.compileTraceability.output.rtl_sha256;
-  const synthesisComplete = s.sourceMode === "model"
-    ? s.synthResult?.silicon_terminal?.success === true
-    : s.synthResult !== null || s.multiTargetResult !== null;
-  const guidedFlowInputs: GuidedFlowInputs = {
-    modelSelected: s.sourceMode === "ode" ? s.equations.length > 0 : s.selectedModelName.length > 0,
-    simulationComplete: s.result !== null,
-    analysisComplete: [
-      s.fiResult,
-      s.bifResult,
-      s.sensResult,
-      s.precResult,
-      s.heatmapResult,
-      s.compareResult,
-      s.nullclineResult,
-      s.freqResult,
-      s.charResult,
-    ].some((analysis) => analysis !== null),
-    trainingComplete: s.trainingEpochs.length > 0,
+  const synthesisComplete = studioSynthesisComplete(s);
+  const guidedFlowInputs: GuidedFlowInputs = studioGuidedFlowInputs(s, {
+    evidenceExportSatisfied: evidenceSession.exportSatisfiesGuided,
     trainingSkipped: guidedTrainingSkipped,
-    compileComplete: s.compileTraceability !== null,
-    cosimApplicable: s.sourceMode === "model",
-    cosimComplete: cosimMatchesCompile,
-    synthesisComplete,
-    evidenceExported: s.evidenceBundle !== null
-      || s.projectEvidenceBundle !== null
-      || s.compileEvidenceBundle !== null
-      || s.synthesisEvidenceBundle !== null
-      || evidenceSession.exportSatisfiesGuided,
-  };
+  });
   const selectedCosimConfigured = s.sourceMode === "model"
     && (s.modelDetail?.compile_configuration?.cosim_integrators ?? [])
       .includes(s.modelIntegrator);
