@@ -8,8 +8,9 @@
 
 from __future__ import annotations
 
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
 from dataclasses import dataclass
-from typing import Any
+from typing import ClassVar, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -56,6 +57,9 @@ class StochasticLIFNeuron(BaseNeuron):
     >>> out.shape
     (8,)
     """
+
+    #: Any non-negative integer, as the NumPy generator behind it accepts.
+    SEED_DOMAIN: ClassVar[SeedDomain] = NUMPY_SEED_DOMAIN
 
     v_rest: float = LIF_V_REST
     v_reset: float = LIF_V_RESET

@@ -9,8 +9,9 @@
 from __future__ import annotations
 
 import math
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
 from dataclasses import dataclass, field
-from typing import Any
+from typing import ClassVar, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -33,6 +34,9 @@ class GLMNeuron:
     reproducible generator, and ``uniform`` to :meth:`step` to supply
     the Bernoulli sample explicitly (exact cross-backend parity).
     """
+
+    #: Any non-negative integer, as the NumPy generator behind it accepts.
+    SEED_DOMAIN: ClassVar[SeedDomain] = NUMPY_SEED_DOMAIN
 
     n_k: int = 10
     n_h: int = 20

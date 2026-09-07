@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 import math
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
+from typing import ClassVar
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -24,6 +26,9 @@ class SCStochasticRateAdaptationNeuron:
     behavior. It is not attributed to the deterministic Benda–Herz phase
     generator.
     """
+
+    #: Any non-negative integer, as the NumPy generator behind it accepts.
+    SEED_DOMAIN: ClassVar[SeedDomain] = NUMPY_SEED_DOMAIN
 
     a: float = 0.0
     f_max: float = 200.0

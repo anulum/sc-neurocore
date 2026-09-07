@@ -18,6 +18,7 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.network.population_seeds import derive_population_seeds
+from sc_neurocore.neurons.seed_domain import seed_domain
 from sc_neurocore.network.quiescence import (
     StateSignature,
     is_quiescent,
@@ -104,7 +105,11 @@ def _per_neuron_kwargs(
     if base_seed is None or isinstance(base_seed, bool) or not isinstance(base_seed, int):
         yield from ({**kw} for _ in range(n))
         return
-    for seed in derive_population_seeds(base_seed, n):
+    # Derive inside the domain the model declares, not the narrowest one any
+    # model has: a model with a 63-bit domain was receiving 16-bit seeds only
+    # because nothing published what it accepts.
+    domain = seed_domain(factory if isinstance(factory, type) else type(factory))
+    for seed in derive_population_seeds(base_seed, n, domain):
         yield {**kw, "seed": seed}
 
 

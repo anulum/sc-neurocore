@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import math
+from sc_neurocore.neurons.seed_domain import LFSR16_DOMAIN, SeedDomain
+from typing import ClassVar
 from dataclasses import dataclass
 
 import numpy as np
@@ -30,6 +32,9 @@ class EscapeRateNeuron:
 
     Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
     """
+
+    #: The shared 16-bit LFSR's whole state space; the constructor refuses anything wider.
+    SEED_DOMAIN: ClassVar[SeedDomain] = LFSR16_DOMAIN
 
     v: float = -70.0
     v_rest: float = -70.0

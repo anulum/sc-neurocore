@@ -38,6 +38,13 @@ import numpy as np
 
 import sc_neurocore
 from sc_neurocore.neurons import equation_builder
+from sc_neurocore.neurons.seed_domain import (
+    UNIVERSAL_SEED_DOMAIN,
+    SeedDomain,
+    SeedOutOfDomain,
+    check_seed,
+    seed_domain,
+)
 from sc_neurocore.neurons.facet_receipts import descriptor_contract_digest_of
 from sc_neurocore.neurons.model_catalogue import descriptor_path, load_descriptor
 from sc_neurocore.neurons.model_identity import ModelIdentityError, schema_for_class
@@ -129,9 +136,15 @@ def _runtime_block() -> dict[str, str]:
     }
 
 
-def _draw_seed() -> int:
-    """Draw a fresh non-zero seed that every seeded model accepts (16-bit)."""
-    return secrets.randbelow((1 << FRESH_SEED_BITS) - 1) + 1
+def _draw_seed(domain: SeedDomain) -> int:
+    """Draw a fresh seed from the domain the model declares.
+
+    A model that declares nothing is given the narrowest domain any seeded
+    model has, which is what this function used for every model before the
+    domains were declared.
+    """
+    low, high = domain
+    return low + secrets.randbelow(high - low + 1)
 
 
 @dataclass(frozen=True, slots=True, init=False)
@@ -322,8 +335,9 @@ def _model_randomness(
         raise ExperimentRejected(
             field="seed", reason="seed given both as a parameter override and as the seed field"
         )
+    domain = seed_domain(inputs.cls)
     if trial == "fresh":
-        drawn = _draw_seed()
+        drawn = _draw_seed(domain)
         return {
             "kind": "seeded-model",
             "seed": drawn,
@@ -333,6 +347,12 @@ def _model_randomness(
             "generator": "model seed field",
         }, drawn
     if seed is not None:
+        try:
+            check_seed(inputs.model, seed, domain)
+        except SeedOutOfDomain as refusal:
+            # Refused here, with the domain named, rather than by the
+            # constructor after the run has already been admitted.
+            raise ExperimentRejected(field="seed", reason=str(refusal)) from refusal
         return {
             "kind": "seeded-model",
             "seed": seed,
@@ -343,6 +363,10 @@ def _model_randomness(
         }, seed
     if "seed" in inputs.overrides_applied:
         override = int(inputs.constructor_kwargs["seed"])
+        try:
+            check_seed(inputs.model, override, domain)
+        except SeedOutOfDomain as refusal:
+            raise ExperimentRejected(field="seed", reason=str(refusal)) from refusal
         return {
             "kind": "seeded-model",
             "seed": override,
@@ -522,7 +546,10 @@ def resolve_ode_experiment(
         )
     if stochastic:
         if trial == "fresh":
-            effective_seed: int | None = _draw_seed()
+            # The equation playground has no catalogue model and so no declared
+            # domain; the universal one is what every draw used before models
+            # declared theirs.
+            effective_seed: int | None = _draw_seed(UNIVERSAL_SEED_DOMAIN)
             seed_source: SeedSource = "drawn"
         elif seed is not None:
             effective_seed = int(seed)

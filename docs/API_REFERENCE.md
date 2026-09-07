@@ -21360,7 +21360,7 @@ A group of N identical neurons with vectorized state access.
 
 ## Module `network.population_seeds`
 
-### Function `derive_population_seeds(base_seed, count)`
+### Function `derive_population_seeds(base_seed, count, domain)`
 Derive one distinct seed per neuron, reproducibly.
 
 Parameters
@@ -28870,6 +28870,52 @@ Checks both TOML and JSON versions if they exist, and verifies parity.
 Validate all bundled schemas.
 
 Returns a dict mapping schema name to its list of errors/warnings.
+
+---
+
+## Module `neurons.seed_domain`
+
+### Class `SeedOutOfDomain`
+Raised when a seed falls outside the domain its model declares.
+
+Parameters
+----------
+model : str
+    The model the seed was meant for.
+seed : int
+    The value offered.
+domain : tuple of int
+    The inclusive ``(low, high)`` bounds the model declares.
+
+- **__init__**(model, seed, domain)
+
+### Function `seed_domain(model)`
+Return the seeds a model accepts.
+
+Parameters
+----------
+model : type or None
+    The model class, or ``None`` when the caller has no class to ask.
+
+Returns
+-------
+tuple of int
+    The inclusive ``(low, high)`` bounds the model declares, or
+    :data:`UNIVERSAL_SEED_DOMAIN` when it declares none. An undeclared
+    model is given the narrowest domain rather than the widest, because a
+    seed that is too small is always accepted and one that is too large is
+    refused by the constructor after the run was admitted.
+
+Examples
+--------
+>>> from sc_neurocore.neurons.models.poisson import PoissonNeuron
+>>> seed_domain(PoissonNeuron)
+(0, 65535)
+>>> seed_domain(None)
+(1, 65535)
+
+### Function `check_seed(model_name, seed, domain)`
+Return *seed* when the domain admits it, or raise :class:`SeedOutOfDomain`.
 
 ---
 

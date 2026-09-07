@@ -27,6 +27,8 @@ Reference: Quantum-neural hybrid models, IBM Heron r2 noise models.
 from __future__ import annotations
 
 import math
+from sc_neurocore.neurons.seed_domain import NONZERO_SEED_DOMAIN, SeedDomain
+from typing import ClassVar
 from dataclasses import dataclass, field
 
 
@@ -47,6 +49,9 @@ class QuantumInspiredLIFNeuron:
     seed : int
         Initial RNG state for xorshift64. Default: 12345.
     """
+
+    #: Any positive integer. Zero is this generator's dead state and the constructor refuses it.
+    SEED_DOMAIN: ClassVar[SeedDomain] = NONZERO_SEED_DOMAIN
 
     tau: float = 20.0
     theta: float = 1.0

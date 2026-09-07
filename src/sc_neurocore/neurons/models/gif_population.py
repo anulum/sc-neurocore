@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import math
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
+from typing import ClassVar
 from dataclasses import dataclass, field
 
 
@@ -41,6 +43,10 @@ class GIFPopulationNeuron:
 
     Reference: Mensi, S. et al. (2012). J. Neurophysiol. 107:1756-1775.
     """
+
+    #: Any non-negative integer. The constructor validates nothing, so this
+    #: declaration is what refuses a negative seed before a run is admitted.
+    SEED_DOMAIN: ClassVar[SeedDomain] = NUMPY_SEED_DOMAIN
 
     v: float = -65.0
     theta: float = -50.0

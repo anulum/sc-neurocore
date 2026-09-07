@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 import math
+from sc_neurocore.neurons.seed_domain import LFSR16_DOMAIN, SeedDomain
+from typing import ClassVar
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -48,6 +50,9 @@ class PoissonNeuron:
     *Neuronal Dynamics*, Sections 7.2 and 7.7.
     https://doi.org/10.1017/CBO9781107447615
     """
+
+    #: The shared 16-bit LFSR's whole state space; the constructor refuses anything wider.
+    SEED_DOMAIN: ClassVar[SeedDomain] = LFSR16_DOMAIN
 
     rate_hz: float = 100.0
     dt_ms: float = 1.0

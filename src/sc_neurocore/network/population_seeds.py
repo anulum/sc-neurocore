@@ -33,11 +33,15 @@ from __future__ import annotations
 
 from hashlib import blake2b
 
+from sc_neurocore.neurons.seed_domain import UNIVERSAL_SEED_DOMAIN, SeedDomain
+
 LFSR16_SEED_DOMAIN = 65535
 """Largest seed the narrowest domain in this build accepts."""
 
 
-def derive_population_seeds(base_seed: int, count: int) -> list[int]:
+def derive_population_seeds(
+    base_seed: int, count: int, domain: SeedDomain = UNIVERSAL_SEED_DOMAIN
+) -> list[int]:
     """Derive one distinct seed per neuron, reproducibly.
 
     Parameters
@@ -62,22 +66,24 @@ def derive_population_seeds(base_seed: int, count: int) -> list[int]:
     """
     if count < 0:
         raise ValueError("count must not be negative")
-    if count > LFSR16_SEED_DOMAIN:
+    low, high = domain
+    size = high - low + 1
+    if count > size:
         raise ValueError(
             f"a population of {count} seeded neurons cannot be given distinct seeds: "
-            f"the domain holds {LFSR16_SEED_DOMAIN}. Split the population, or use a "
-            "model whose seed domain is declared and wider."
+            f"the model's declared domain [{low}, {high}] holds {size}. Split the "
+            "population, or use a model with a wider declared domain."
         )
     seeds: list[int] = []
     used: set[int] = set()
     for index in range(count):
-        candidate = _derived_seed(base_seed, index)
+        candidate = low + _derived_seed(base_seed, index) % size
         while candidate in used:
             # Walk forward through the domain. Terminates because the number of
             # seeds already taken is smaller than the domain, and it is
-            # deterministic, so the same base seed and count always produce the
-            # same list.
-            candidate = candidate % LFSR16_SEED_DOMAIN + 1
+            # deterministic, so the same base seed, count and domain always
+            # produce the same list.
+            candidate = low + (candidate - low + 1) % size
         used.add(candidate)
         seeds.append(candidate)
     return seeds
@@ -96,12 +102,13 @@ def _derived_seed(base_seed: int, index: int) -> int:
     Returns
     -------
     int
-        A seed in ``[1, 65535]``. The digest is taken over the decimal text of
-        both values so the derivation does not depend on the width or byte
-        order of a machine integer.
+        A non-negative 64-bit value the caller reduces into the model's
+        declared domain. The digest is taken over the decimal text of both
+        values so the derivation does not depend on the width or byte order of
+        a machine integer.
     """
     digest = blake2b(f"{base_seed}:{index}".encode(), digest_size=8).digest()
-    return int.from_bytes(digest, "big") % LFSR16_SEED_DOMAIN + 1
+    return int.from_bytes(digest, "big")
 
 
 __all__ = ["LFSR16_SEED_DOMAIN", "derive_population_seeds"]
