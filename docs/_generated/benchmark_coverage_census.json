@@ -1,0 +1,1394 @@
+{
+  "catalogue_models": 185,
+  "rows": [
+    {
+      "model": "ATypeKNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AdExNeuron",
+      "records": [],
+      "scripts": [
+        "bench_adex.py",
+        "bench_neuron_integrators.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "AdaptiveThresholdIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_adaptive_threshold_if.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "AdaptiveThresholdMoENeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AiharaMapNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AkidaNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AlphaMotorNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AlphaNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_alpha.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "AmariNeuralField",
+      "records": [
+        "bench_amari_field.json"
+      ],
+      "scripts": [
+        "bench_amari_field.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "ArcaneNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_arcane_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "AstrocyteLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AstrocyteModel",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AstrocyteNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AttentionGatedNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "AvRonCardiacNeuron",
+      "records": [],
+      "scripts": [
+        "bench_av_ron_cardiac.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "BKNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "BalancedResonateAndFireNeuron",
+      "records": [],
+      "scripts": [
+        "bench_balanced_resonate_and_fire.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "BendaHerzNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_benda_herz.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "BertramPhantomBurster",
+      "records": [],
+      "scripts": [
+        "bench_model_bertram_phantom.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "BoothRinzelNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "BrainScaleSAdExNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "BrunelWangNeuron",
+      "records": [
+        "bench_brunel_wang.json"
+      ],
+      "scripts": [
+        "bench_brunel_wang.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "ButeraRespiratoryNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_butera_respiratory.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "COBALIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_coba_lif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "CazellesMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_cazelles_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "CerebellarBasketNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ChandelierNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ChayKeizerMinimalNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ChayKeizerNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ChayNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ChialvoMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_chialvo_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "ClosedFormContinuousNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "CochlearHairCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ComplementaryLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "CompositionalBindingNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "CompteWMNeuron",
+      "records": [
+        "bench_compte_wm.json"
+      ],
+      "scripts": [
+        "bench_compte_wm.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "ConnorStevensNeuron",
+      "records": [],
+      "scripts": [
+        "bench_connor_stevens_mojo.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "ContinuousAttractorNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "CourageNekorkinMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_courage_nekorkin_map_simulate.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "DCNNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "DPINeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_dpi_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "DeSchutterPurkinjeNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_de_schutter_purkinje.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "DendrifyNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "DendriticNMDANeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_dendritic_nmda.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "DestexheThalamicNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "DifferentiableSurrogateNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "DirectionSelectiveRGC",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "DurstewitzDopamineNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_durstewitz_dopamine.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "EPropALIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "EnergyLIFNeuron",
+      "records": [
+        "bench_energy_lif.json"
+      ],
+      "scripts": [
+        "bench_model_energy_lif.py",
+        "bench_model_sc_normalized_energy_lif.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "ErmentroutKopellMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_ermentrout_kopell_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "ErmentroutKopellPopulation",
+      "records": [],
+      "scripts": [
+        "bench_ermentrout_kopell_pop.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "EscapeRateNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_escape_rate.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "ExpIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_expif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "FitzHughNagumoNeuron",
+      "records": [
+        "bench_fitzhugh_nagumo_simulate.json"
+      ],
+      "scripts": [
+        "bench_fitzhugh_nagumo_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "FitzHughRinzelNeuron",
+      "records": [
+        "bench_fitzhugh_rinzel_simulate.json"
+      ],
+      "scripts": [
+        "bench_fitzhugh_rinzel_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "FractionalLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GIFPopulationNeuron",
+      "records": [],
+      "scripts": [
+        "bench_gif_population.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "GLIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_glif_simulate.py",
+        "bench_sc_four_state_glif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "GLMNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GalvesLocherbachNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GammaMotorNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GammaRenewalNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GatedLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GolgiCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GolombFSNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_golomb_fs.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "GranuleCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "GutkinErmentroutNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_gutkin_ermentrout.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "HayL5PyramidalNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_hay_l5.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "HillTononiNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_hill_tononi.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "HindmarshRoseNeuron",
+      "records": [
+        "bench_hindmarsh_rose_simulate.json"
+      ],
+      "scripts": [
+        "bench_hindmarsh_rose_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "HodgkinHuxleyNeuron",
+      "records": [],
+      "scripts": [
+        "bench_hodgkin_huxley_mojo.py",
+        "bench_neuron_integrators.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "HuberBraunNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "HybridFisherPosnerLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "HybridLinearAttentionNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "IbarzTanakaMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_ibarz_tanaka_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "IhNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "InhibitoryLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "InhomogeneousPoissonNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "IntegerQIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_iqif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "Izhikevich2007Neuron",
+      "records": [],
+      "scripts": [
+        "bench_izhikevich2007_simulate.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "JansenRitUnit",
+      "records": [],
+      "scripts": [
+        "bench_jansen_rit.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "KLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "LapicqueNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_lapicque.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "LarterBreakspearNeuron",
+      "records": [
+        "bench_larter_breakspear.json"
+      ],
+      "scripts": [
+        "bench_model_larter_breakspear.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "LeakyCompeteFireNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_leaky_compete_fire.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "LearnableNeuronModel",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "LiquidTimeConstantNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "Loihi2Neuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "LoihiCUBANeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "LugaroCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "MATNeuron",
+      "records": [
+        "bench_mat.json"
+      ],
+      "scripts": [
+        "bench_model_mat.py",
+        "bench_model_sc_resetting_mat.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "MainenSejnowskiNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "MarderSTGNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "MartinottiNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_martinotti_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "McCullochPittsNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_mcculloch_pitts.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "McKeanNeuron",
+      "records": [
+        "bench_mckean.json"
+      ],
+      "scripts": [
+        "bench_model_mckean.py",
+        "bench_model_sc_triangular_mckean.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "MedvedevMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_medvedev_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "MetaPlasticNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "MihalasNieburNeuron",
+      "records": [],
+      "scripts": [
+        "bench_mihalas_niebur.py",
+        "bench_mihalas_niebur_simulate.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "MorrisLecarNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_morris_lecar.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "MotorUnit",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "MultiTimescaleNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "MulticompartmentMCNNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_multicompartment_mcn.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "NMDANeuron",
+      "records": [
+        "bench_nmda.json"
+      ],
+      "scripts": [
+        "bench_model_dendritic_nmda.py",
+        "bench_model_nmda.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "NagumoSatoMapNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "NeuroGridNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_neurogrid.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "NonResettingLIFNeuron",
+      "records": [
+        "bench_non_resetting_lif.json"
+      ],
+      "scripts": [
+        "bench_model_non_resetting_lif.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "NonlinearLIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_nlif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "PVFastSpikingNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_pv_fast_spiking_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "ParallelSpikingNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ParametricLIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_plif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "PerfectIntegratorNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_perfect_integrator.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "PernarowskiNeuron",
+      "records": [
+        "bench_pernarowski_simulate.json"
+      ],
+      "scripts": [
+        "bench_pernarowski_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "PersistentNaNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "PinskyRinzelNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "PlantR15Neuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "PoissonNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_poisson.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "PospischilNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_pospischil.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "PredictiveCodingNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "PrescottNeuron",
+      "records": [],
+      "scripts": [
+        "bench_prescott.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "QuadraticIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_quadratic_if.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "QuantumInspiredLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "RallCableNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_rall_cable.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "RenshawCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ResonateAndFireNeuron",
+      "records": [],
+      "scripts": [
+        "bench_balanced_resonate_and_fire.py",
+        "bench_model_resonate_and_fire.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "RulkovMapNeuron",
+      "records": [
+        "bench_rulkov_map.json"
+      ],
+      "scripts": [
+        "bench_rulkov_map.py",
+        "bench_sc_upward_crossing_rulkov_map.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCAdaptiveThresholdMapNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCChaoticMapNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCClippedLogisticBurstingMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_sc_clipped_logistic_bursting_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SCClippedRationalRecoveryMapNeuron",
+      "records": [],
+      "scripts": [
+        "bench_sc_clipped_rational_recovery_map.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SCDecoupledAdaptationIonMassNeuron",
+      "records": [
+        "bench_larter_breakspear.json"
+      ],
+      "scripts": [
+        "bench_model_larter_breakspear.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCExponentialTwoCompartmentLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCFourStateGLIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_sc_four_state_glif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SCInclusivePerfectIntegratorNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCLapicqueLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCLeakyTwoCompartmentLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCNonResettingAdaptiveLIFNeuron",
+      "records": [
+        "bench_sc_non_resetting_adaptive_lif.json"
+      ],
+      "scripts": [
+        "bench_model_sc_non_resetting_adaptive_lif.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCNormalizedEnergyLIFNeuron",
+      "records": [
+        "bench_sc_normalized_energy_lif.json"
+      ],
+      "scripts": [
+        "bench_model_sc_normalized_energy_lif.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCResettingMATNeuron",
+      "records": [
+        "bench_sc_resetting_mat.json"
+      ],
+      "scripts": [
+        "bench_model_sc_resetting_mat.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCResettingParallelSpikingNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCResettingWilsonHRNeuron",
+      "records": [
+        "bench_sc_resetting_wilson_hr_simulate.json"
+      ],
+      "scripts": [
+        "bench_sc_resetting_wilson_hr_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCScaledResetAdaptiveIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_sc_scaled_reset_adaptive_if.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SCSigmaDeltaAccumulatorNeuron",
+      "records": [
+        "bench_sc_sigma_delta_accumulator.json"
+      ],
+      "scripts": [
+        "bench_model_sc_sigma_delta_accumulator.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCSixStateThalamocorticalNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCStochasticRateAdaptationNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_sc_stochastic_rate_adaptation.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SCSymmetricQuadraticIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCThreeStatePhantomBurster",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SCTriangularMcKeanNeuron",
+      "records": [
+        "bench_sc_triangular_mckean.json"
+      ],
+      "scripts": [
+        "bench_model_sc_triangular_mckean.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCUnitCapacitanceRespiratoryNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_sc_unit_capacitance_respiratory.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SCUpwardCrossingRulkovMapNeuron",
+      "records": [
+        "bench_sc_upward_crossing_rulkov_map.json"
+      ],
+      "scripts": [
+        "bench_sc_upward_crossing_rulkov_map.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SCWBNMDAMagnesiumBlockNeuron",
+      "records": [
+        "bench_nmda.json"
+      ],
+      "scripts": [
+        "bench_model_nmda.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SFANeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_sfa.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SKNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SRM0Neuron",
+      "records": [],
+      "scripts": [
+        "bench_model_srm0.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SSTNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_sst_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SelfReferentialNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "ShermanRinzelKeizerNeuron",
+      "records": [
+        "bench_sherman_rinzel_keizer.json"
+      ],
+      "scripts": [
+        "bench_sherman_rinzel_keizer.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SiegertTransferFunction",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SigmaDeltaNeuron",
+      "records": [
+        "bench_sigma_delta.json"
+      ],
+      "scripts": [
+        "bench_model_sigma_delta.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "SigmoidRateNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_sigmoid_rate.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SpiNNaker2Neuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "SpiNNakerLIFNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_spinnaker_lif.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SpikeResponseNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_spike_response.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "StellateCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "StochasticIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "StochasticLIFNeuron",
+      "records": [],
+      "scripts": [
+        "benchmark_sc.py",
+        "brian2_benchmark.py",
+        "brunel_translator.py",
+        "snn_comparison.py",
+        "snntorch_vs_sc_microbench.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "SuperSpikeNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "TTypeCaNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "TermanWangOscillator",
+      "records": [
+        "bench_terman_wang_simulate.json"
+      ],
+      "scripts": [
+        "bench_terman_wang_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "ThetaNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_theta.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "ThresholdLinearRateNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_threshold_linear_rate.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "TraubMilesNeuron",
+      "records": [],
+      "scripts": [
+        "bench_traub_miles.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "TrueNorthNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "TsodyksMarkramNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "TwoCompartmentLIFNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "UnipolarBrushCell",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "UpperMotorNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_upper_motor_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "VIPNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_vip_neuron.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "WangBuzsakiNeuron",
+      "records": [
+        "bench_wang_buzsaki.json"
+      ],
+      "scripts": [
+        "bench_model_wang_buzsaki.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "WendlingNeuron",
+      "records": [],
+      "scripts": [],
+      "state": "absent"
+    },
+    {
+      "model": "WilsonCowanUnit",
+      "records": [],
+      "scripts": [
+        "bench_wilson_cowan.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "WilsonHRNeuron",
+      "records": [
+        "bench_wilson_hr_simulate.json"
+      ],
+      "scripts": [
+        "bench_sc_resetting_wilson_hr_simulate.py",
+        "bench_wilson_hr_simulate.py"
+      ],
+      "state": "measured"
+    },
+    {
+      "model": "WongWangUnit",
+      "records": [],
+      "scripts": [
+        "bench_wong_wang.py"
+      ],
+      "state": "apparatus_only"
+    },
+    {
+      "model": "YamadaNeuron",
+      "records": [],
+      "scripts": [
+        "bench_model_yamada.py"
+      ],
+      "state": "apparatus_only"
+    }
+  ],
+  "schema_version": "sc-neurocore.benchmark-coverage-census.v1",
+  "totals": {
+    "absent": 84,
+    "apparatus_only": 73,
+    "measured": 28
+  }
+}

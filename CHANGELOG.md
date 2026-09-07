@@ -10,6 +10,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+- `tools/benchmark_coverage_census.py` counts how many catalogue models have a
+  benchmark measured, so the figure stops being asserted by hand. It separates
+  three states — a committed record naming the model, a benchmark script naming
+  it with no record, and neither — because a script that exists is apparatus,
+  not a measurement. Measured now: **28 of 185 measured (15%), 73
+  apparatus_only, 84 absent**. It answers a different question from
+  `tools/benchmark_evidence_gate.py`, which judges the quality of the artefacts
+  that exist rather than how many models have any.
+
 ### Fixed
 - Benchmark records name the compiler that actually built the lane. `GOTOOLCHAIN`
   resolves a Go toolchain per module, so `go version` asked at the repository
