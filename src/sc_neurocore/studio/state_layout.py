@@ -258,7 +258,7 @@ def declared_state(class_name: str) -> tuple[LayoutSource, str, tuple[DeclaredSt
             role=roles.get(spec.name, "unassigned"),
             unit=spec.unit,
             meaning=spec.meaning,
-            declared_init=float(spec.init),
+            declared_init=None if spec.init is None else float(spec.init),
         )
         for spec in descriptor.state
     )
@@ -299,10 +299,28 @@ def scalar_value(value: object) -> float | None:
 
 
 def vector_value(value: object) -> np.ndarray[Any, Any] | None:
-    """Return ``value`` as a float64 array when it is a numeric array of rank ≥ 1."""
-    if not isinstance(value, np.ndarray) or value.ndim < 1 or value.dtype.kind not in "fiu":
+    """Return ``value`` as a float64 array when it is a numeric vector.
+
+    A model may hold a compartment vector, a population activity profile or a
+    filter buffer as a NumPy array or as a plain list — the choice is the
+    model's, and it is not a statement about whether the quantity is state. A
+    numeric sequence is therefore read as the vector it is; a string, a
+    dictionary, a ragged sequence or a sequence carrying a non-number is not a
+    vector and is refused, so an unrecordable value is still reported with its
+    reason rather than coerced into a shape.
+    """
+    if isinstance(value, np.ndarray):
+        if value.ndim < 1 or value.dtype.kind not in "fiu":
+            return None
+        return np.asarray(value, dtype=np.float64)
+    if not isinstance(value, (list, tuple)) or isinstance(value, (str, bytes)):
         return None
-    return np.asarray(value, dtype=np.float64)
+    if not all(
+        not isinstance(item, bool) and isinstance(item, (int, float, np.integer, np.floating))
+        for item in value
+    ):
+        return None
+    return np.asarray(value, dtype=np.float64).reshape(len(value))
 
 
 def _attribute(instance: object, name: str) -> tuple[bool, object]:

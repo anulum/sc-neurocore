@@ -107,7 +107,10 @@ class TestDeclaredLayout:
         assert result["state_layout"]["complete"] is True
 
     def test_undeclared_layout_is_reported_not_guessed(self) -> None:
-        result = _run("RallCableNeuron", duration=1.0)
+        # AstrocyteNeuron mirrors the wrapped astrocyte's calcium into ``v``, so
+        # it declares no state of its own while ``v`` moves. RallCableNeuron
+        # stood here until its compartment vector became declarable.
+        result = _run("AstrocyteNeuron", duration=1.0)
         layout = result["state_layout"]
         assert layout["source"] == "undeclared"
         assert layout["variables"] == []
@@ -406,6 +409,20 @@ class TestLayoutPrimitives:
             name for name in _CLASS_TO_MODULE if declared_state(name)[0] == "undeclared"
         )
         # Descriptors that declare no state are reported as undeclared, never
-        # guessed; the list is the catalogue's own gap, recorded in the ledger.
-        assert "RallCableNeuron" in undeclared
+        # guessed. The census is pinned rather than sampled, so the gap shrinks
+        # only by a deliberate test change. Two families remain, each with its
+        # own ledger row: four models carry their state under a private name
+        # (DISCOVERED-PRIVATE-REGISTERS-OUTSIDE-LAYOUT), and three mutate
+        # nothing at all, so an empty declaration is the truthful one and the
+        # layout has no way to say so
+        # (DISCOVERED-STATELESS-MODEL-CANNOT-DECLARE-ITSELF).
+        assert undeclared == [
+            "AstrocyteNeuron",
+            "GLMNeuron",
+            "GammaRenewalNeuron",
+            "HybridFisherPosnerLIFNeuron",
+            "InhomogeneousPoissonNeuron",
+            "McCullochPittsNeuron",
+            "SiegertTransferFunction",
+        ]
         assert declared_state(ATIF)[0] == "descriptor"

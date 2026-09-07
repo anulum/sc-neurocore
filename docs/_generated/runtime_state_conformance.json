@@ -925,12 +925,16 @@
       "model": "ConnorStevensNeuron"
     },
     {
-      "declared": [],
+      "declared": [
+        "u"
+      ],
       "lanes": {
         "rust-batch": {
           "carried": [],
           "complete": false,
-          "dropped": [],
+          "dropped": [
+            "u"
+          ],
           "runtime": "rust-batch",
           "schema_version": "sc-neurocore.runtime-state-packet.v1",
           "unnameable": [
@@ -938,7 +942,7 @@
           ]
         }
       },
-      "layout_source": "undeclared",
+      "layout_source": "descriptor",
       "model": "ContinuousAttractorNeuron"
     },
     {
@@ -2083,20 +2087,22 @@
       "model": "LarterBreakspearNeuron"
     },
     {
-      "declared": [],
+      "declared": [
+        "v"
+      ],
       "lanes": {
         "rust-batch": {
-          "carried": [],
-          "complete": false,
+          "carried": [
+            "v"
+          ],
+          "complete": true,
           "dropped": [],
           "runtime": "rust-batch",
           "schema_version": "sc-neurocore.runtime-state-packet.v1",
-          "unnameable": [
-            "v"
-          ]
+          "unnameable": []
         }
       },
-      "layout_source": "undeclared",
+      "layout_source": "descriptor",
       "model": "LeakyCompeteFireNeuron"
     },
     {
@@ -3001,20 +3007,22 @@
       "model": "QuantumInspiredLIFNeuron"
     },
     {
-      "declared": [],
+      "declared": [
+        "v"
+      ],
       "lanes": {
         "rust-batch": {
-          "carried": [],
-          "complete": false,
+          "carried": [
+            "v"
+          ],
+          "complete": true,
           "dropped": [],
           "runtime": "rust-batch",
           "schema_version": "sc-neurocore.runtime-state-packet.v1",
-          "unnameable": [
-            "v"
-          ]
+          "unnameable": []
         }
       },
-      "layout_source": "undeclared",
+      "layout_source": "descriptor",
       "model": "RallCableNeuron"
     },
     {
@@ -4446,13 +4454,13 @@
   "schema_version": "sc-neurocore.runtime-state-conformance.v1",
   "summary": {
     "models": 185,
-    "models_without_declared_state": 10,
+    "models_without_declared_state": 7,
     "per_lane": {
       "rust-batch": {
-        "carried": 123,
-        "complete": 18,
-        "dropped": 415,
-        "names_nothing": 52
+        "carried": 125,
+        "complete": 20,
+        "dropped": 416,
+        "names_nothing": 53
       }
     }
   }

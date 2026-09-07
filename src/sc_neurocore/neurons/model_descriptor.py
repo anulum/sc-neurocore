@@ -94,10 +94,18 @@ class ParameterSpec:
 
 @dataclass(frozen=True, slots=True)
 class StateVariableSpec:
-    """A model state variable with its initial value and semantics."""
+    """A model state variable with its initial value and semantics.
+
+    ``init`` is ``None`` for a variable whose initial value is not a single
+    number — a compartment vector, a population activity profile, a filter
+    buffer. Such a variable is state like any other and must be declared; what
+    it does not have is a scalar to declare as its start. Writing ``0.0`` there
+    would state something about the model that is not true, so the declaration
+    omits the value instead of inventing one.
+    """
 
     name: str
-    init: float
+    init: float | None
     unit: str = ""
     meaning: str = ""
 
@@ -504,7 +512,7 @@ def _parse_state(section: Mapping[str, object]) -> tuple[StateVariableSpec, ...]
             specs.append(
                 StateVariableSpec(
                     name=name,
-                    init=_float(value.get("init", 0.0)),
+                    init=None if value.get("init") is None else _float(value["init"]),
                     unit=_opt_str(value, "unit"),
                     meaning=_opt_str(value, "meaning"),
                 )

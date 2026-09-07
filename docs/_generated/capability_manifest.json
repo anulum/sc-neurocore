@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4845
+    "test_files": 4846
   },
   "documentation": {
     "public_pages": [
@@ -7465,6 +7465,7 @@
       "tests/test_studio_training_weight_materialize.py",
       "tests/test_studio_training_weight_restore.py",
       "tests/test_studio_training_weight_route_failures.py",
+      "tests/test_studio_vector_state_declaration.py",
       "tests/test_studio_worker_routes.py",
       "tests/test_studio_workspace_concurrency.py",
       "tests/test_studio_workspace_revisions.py",

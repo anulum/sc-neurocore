@@ -38,19 +38,28 @@ those names.
 ## What the catalogue looks like today
 
 The Rust batch lane transports one scalar trace, the soma voltage, from a model
-constructed with its own defaults. Across all 185 catalogue models (10 of which
+constructed with its own defaults. Across all 185 catalogue models (7 of which
 declare no state at all):
 
 | | |
 |---|---|
-| Declared variables it could carry | 123 |
-| Declared variables it would drop | 415 |
-| Models fully accounted for | 18 |
-| Models it can name nothing in | 52 |
+| Declared variables it could carry | 125 |
+| Declared variables it would drop | 416 |
+| Models fully accounted for | 20 |
+| Models it can name nothing in | 53 |
 
-Restricted to the 158 models the lane can currently run, of which 152 have a
-declared layout: 111 carried, 356 dropped, and 41 in which it can name nothing.
-`PinskyRinzelNeuron` is one of those 41 — it declares
+Those four numbers are the census the generator emits beside the matrix, so they
+move with it and the drift gate holds them.
+
+A second census answers a narrower question: what happens for the models the
+lane can actually be selected for, which is membership of the engine's own
+supported-model list. Of the 150 such models, 146 declare a layout, and across
+those the lane carries 104 declared variables and drops 346, naming nothing in
+42. **This second census is measured rather than generated** — nothing emits or
+checks it — so it is dated to the commit that last changed it and should be
+re-measured, not trusted, after any change to the declared layouts.
+
+`PinskyRinzelNeuron` is one of those 42 — it declares
 `v_s, v_d, h, n, s, c, q, ca` and has no `v` — so the lane records no state for
 it and says so in the result's custody notes rather than naming a trace after a
 variable the model does not have.

@@ -30,6 +30,8 @@ import textwrap
 from collections.abc import Mapping
 from typing import Any, TypeGuard
 
+import numpy as np
+
 from sc_neurocore.neurons.model_descriptor import (
     MODEL_DESCRIPTOR_SCHEMA_VERSION,
     ModelDescriptor,
@@ -271,6 +273,30 @@ def _instance_state_init(cls: type, name: str) -> float | None:
     return float(value)
 
 
+def _instance_state_is_vector(cls: type, name: str) -> bool:
+    """Return whether a state field holds a numeric vector on a default instance.
+
+    A compartment vector, a population activity profile or a filter buffer is
+    integration state exactly as a membrane potential is; what it does not have
+    is a single number to record as its start. Detecting it separately lets the
+    descriptor declare the variable while omitting an initial value, rather than
+    dropping the variable because it could not be summarised as one float.
+    """
+    try:
+        instance = cls()
+    except Exception:
+        return False
+    value = getattr(instance, name, None)
+    if isinstance(value, np.ndarray):
+        return bool(value.ndim >= 1 and value.dtype.kind in "fiu")
+    if not isinstance(value, (list, tuple)):
+        return False
+    return all(
+        not isinstance(item, bool) and isinstance(item, (int, float, np.integer, np.floating))
+        for item in value
+    )
+
+
 def _is_mirror_field(cls: type, name: str) -> bool:
     """Return ``True`` when ``self.<name>`` is assigned from a wrapped object's attribute.
 
@@ -432,6 +458,11 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
         init = _instance_state_init(cls, name)
         if init is not None:
             state[name] = {"init": init}
+        elif _instance_state_is_vector(cls, name):
+            # State the model carries as a vector. Declared with no initial
+            # value, because it has none to declare: writing 0.0 here would
+            # claim a scalar start the model does not have.
+            state[name] = {}
     # A public read-only property can expose execution state held by a private
     # implementation object. Recognised numeric state properties (currently the
     # shared RNG state contract) are as real and reproducibility-relevant as

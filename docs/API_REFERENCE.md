@@ -22858,6 +22858,13 @@ meaning:
 ### Class `StateVariableSpec`
 A model state variable with its initial value and semantics.
 
+``init`` is ``None`` for a variable whose initial value is not a single
+number — a compartment vector, a population activity profile, a filter
+buffer. Such a variable is state like any other and must be declared; what
+it does not have is a scalar to declare as its start. Writing ``0.0`` there
+would state something about the model that is not true, so the declaration
+omits the value instead of inventing one.
+
 
 ### Class `Provenance`
 Citation and licensing provenance for a model.
@@ -41051,7 +41058,15 @@ init : mapping or None
 Return ``value`` as a float when it is a real scalar, otherwise ``None``.
 
 ### Function `vector_value(value)`
-Return ``value`` as a float64 array when it is a numeric array of rank ≥ 1.
+Return ``value`` as a float64 array when it is a numeric vector.
+
+A model may hold a compartment vector, a population activity profile or a
+filter buffer as a NumPy array or as a plain list — the choice is the
+model's, and it is not a statement about whether the quantity is state. A
+numeric sequence is therefore read as the vector it is; a string, a
+dictionary, a ragged sequence or a sequence carrying a non-number is not a
+vector and is refused, so an unrecordable value is still reported with its
+reason rather than coerced into a shape.
 
 ### Function `observe_layout(instance, source, schema_profile, declared)`
 Observe the shape of every declared variable on a constructed instance.

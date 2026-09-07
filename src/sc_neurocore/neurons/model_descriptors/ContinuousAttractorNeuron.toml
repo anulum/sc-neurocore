@@ -27,7 +27,9 @@ behavior_tags = [
 
 [provenance]
 
-[state]
+[state.u]
+unit = "1"
+meaning = "activity of each ring unit; one entry per n_units, the bump position over them being the continuous value the attractor holds"
 
 [parameters.n_units]
 default = 16.0

@@ -34,7 +34,8 @@ doi = ""
 derivation_note = "Project recurrence retained count-neutrally; it is not attributed to the Fang et al. 2023 sliding PSN equations."
 
 [state.buffer]
-init = 0.0
+unit = "1"
+meaning = "the last kernel_size input samples, one entry per kernel tap, convolved with the kernel on every step"
 
 [parameters.kernel_size]
 default = 8.0

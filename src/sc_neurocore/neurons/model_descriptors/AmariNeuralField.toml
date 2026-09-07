@@ -44,8 +44,8 @@ derivation_note = "Equation (3), specialized to a periodic uniform grid with sou
 init = 64.0
 
 [state.u]
-init = 0.0
-shape = "n"
+unit = "1"
+meaning = "field activity at each of the n uniformly spaced ring sites; it has no single starting number, every site beginning at zero"
 
 [parameters.tau]
 default = 10.0

@@ -30,7 +30,9 @@ authors = [
 year = 1959
 doi = "10.1016/0014-4886(59)90046-9"
 
-[state]
+[state.v]
+unit = "mV"
+meaning = "membrane potential of each cable compartment, index 0 being the soma; one entry per n_comp, every compartment starting at v_rest rather than at a fixed number"
 
 [parameters.n_comp]
 default = 5.0

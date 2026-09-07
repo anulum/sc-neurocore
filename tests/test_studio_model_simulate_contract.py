@@ -251,12 +251,15 @@ class TestSuccessfulRuns:
         assert result["states"]["v"] == expected_v
 
     def test_undeclared_vector_state_is_reported_not_zeroed(self) -> None:
-        result = simulate_model("RallCableNeuron", duration=1.0, use_fast_path=False)
+        # GLM keeps its stimulus and spike history in two private buffers that
+        # no descriptor declares. RallCableNeuron stood here until its
+        # compartment vector became declarable; the guarantee is unchanged.
+        result = simulate_model("GLMNeuron", duration=1.0, use_fast_path=False)
         assert result["states"] == {}
         layout = result["state_layout"]
         assert layout["source"] == "undeclared"
         assert layout["complete"] is False
-        assert "v" in layout["undeclared_mutable"]
+        assert "_stim_buf" in layout["undeclared_mutable"]
         assert "the model declares no state layout" in layout["incomplete_reasons"]
         assert result["effective_inputs"]["state_recording"] == {"recorded": [], "excluded": []}
 
