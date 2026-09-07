@@ -342,7 +342,7 @@ class MMIOUpdateSpec:
 
     @property
     def control_bits(self) -> dict[str, int]:
-        """Return host-writable control-bit assignments."""
+        """Return host-writeable control-bit assignments."""
         return {
             "update_valid": CONTROL_UPDATE_VALID,
             "commit": CONTROL_COMMIT,
