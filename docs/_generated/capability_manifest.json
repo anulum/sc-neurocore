@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4852
+    "test_files": 4853
   },
   "documentation": {
     "public_pages": [
@@ -3665,6 +3665,7 @@
       "tests/test_alternative_path_reports.py",
       "tests/test_alternative_path_route_modes.py",
       "tests/test_amari_field_backends.py",
+      "tests/test_amari_field_descriptor.py",
       "tests/test_analog_bridge/analog_bridge_extended_support.py",
       "tests/test_analog_bridge/analog_bridge_support.py",
       "tests/test_analog_bridge/test_analog_bridge_emit_analog_config.py",

@@ -11,6 +11,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- The Amari neural field no longer records its site count as state. `n`, the
+  number of uniformly spaced sites on the periodic ring, is fixed at
+  construction and read by every step without ever being written, yet the
+  descriptor declared it in the state table with `init = 64.0`. A run therefore
+  traced a constant per step, and the runtime state census charged the Rust
+  batch lane with dropping it — a conformance gap that existed only because the
+  descriptor asked the lane to carry a number that never moves. The model's own
+  documentation page has always listed `n` under Parameters, and the Rust,
+  Julia, Go and Mojo lanes all take it as a size argument beside the parameter
+  block. It is now a curated parameter with unit, meaning and range, and the
+  census reports 415 dropped variables instead of 416. Nothing about the model's
+  behaviour changed.
+- A variable reclassified from state to parameter can now complete the move.
+  The descriptor merge preserves curated state entries the regeneration cannot
+  produce, because runtime state assigned outside the dataclass field list
+  exists nowhere else; the rule had no exception, so a name moved to the
+  parameter table kept its old curated state entry and the descriptor declared
+  it in both tables at once.
 - Spike gating returns the same numbers as an ungated run. A neuron was skipped
   when its input was zero and its voltage sat within one percent of rest, which
   froze the leak, the adaptation current and the refractory countdown of

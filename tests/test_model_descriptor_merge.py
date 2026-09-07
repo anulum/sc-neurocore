@@ -89,3 +89,38 @@ def test_merge_descriptor_payloads_preserves_curation_without_structural_drift()
     assert merged["silicon"]["compiles"] is True
     assert merged["silicon"]["cosim_validated"] is True
     assert merged["silicon"]["target_tier"] == "H1"
+
+
+def test_merge_drops_a_curated_state_entry_the_code_now_calls_a_parameter() -> None:
+    """A variable reclassified in the code must not stay in both tables.
+
+    Curated state entries are preserved even when the regeneration does not
+    produce them, because runtime state assigned outside the dataclass field
+    list exists nowhere else. That rule had no exception, so reclassifying a
+    field from state to parameter left the old curated entry behind and the
+    descriptor declared the same name twice — a change the corpus could never
+    then complete.
+    """
+
+    regenerated = generate_descriptor_payload("AmariNeuralField")
+    assert "n" in regenerated["parameters"]
+    curated: dict[str, Any] = {"state": {"n": {"init": 64.0}, "u": {"unit": "1"}}}
+
+    merged = merge_descriptor_payloads(curated, regenerated)
+
+    assert "n" not in merged["state"]
+    assert "n" in merged["parameters"]
+    assert merged["state"]["u"]["unit"] == "1"
+
+
+def test_merge_still_preserves_runtime_state_the_regeneration_cannot_see() -> None:
+    """The rule above must not take the curated-only state entries with it."""
+
+    regenerated = generate_descriptor_payload("AmariNeuralField")
+    curated: dict[str, Any] = {
+        "state": {"drive_history": {"init": 0.0, "meaning": "assigned by the step"}}
+    }
+
+    merged = merge_descriptor_payloads(curated, regenerated)
+
+    assert merged["state"]["drive_history"]["meaning"] == "assigned by the step"

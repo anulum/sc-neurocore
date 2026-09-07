@@ -40,12 +40,18 @@ doi = "10.1007/BF00337259"
 paper_title = "Dynamics of pattern formation in lateral-inhibition type neural fields"
 derivation_note = "Equation (3), specialized to a periodic uniform grid with source-level Heaviside activity and an explicit difference-of-exponentials lateral-inhibition kernel."
 
-[state.n]
-init = 64.0
-
 [state.u]
 unit = "1"
 meaning = "field activity at each of the n uniformly spaced ring sites; it has no single starting number, every site beginning at zero"
+
+[parameters.n]
+default = 64.0
+unit = "sites"
+meaning = "number of periodic field sites, at least two"
+range = [
+    2.0,
+    8192.0,
+]
 
 [parameters.tau]
 default = 10.0

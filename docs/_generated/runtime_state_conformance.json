@@ -208,7 +208,6 @@
     },
     {
       "declared": [
-        "n",
         "u"
       ],
       "lanes": {
@@ -216,7 +215,6 @@
           "carried": [],
           "complete": false,
           "dropped": [
-            "n",
             "u"
           ],
           "runtime": "rust-batch",
@@ -4459,7 +4457,7 @@
       "rust-batch": {
         "carried": 125,
         "complete": 20,
-        "dropped": 416,
+        "dropped": 415,
         "names_nothing": 53
       }
     },

@@ -132,6 +132,12 @@ _STRUCTURAL_OVERRIDES: dict[str, dict[str, Any]] = {
         "parameters": {"theta", "dt"},
     },
     "SCWBNMDAMagnesiumBlockNeuron": {"method": "euler-50-substeps"},
+    # ``n`` is the number of ring sites, fixed at construction and read by every
+    # step without ever being written.  The classifier recognises the name only
+    # because ``n`` is the Hodgkin-Huxley potassium activation gate, so it
+    # placed a construction count in the state table.  This is a decision about
+    # this identity; the name stays state everywhere it means the gate.
+    "AmariNeuralField": {"parameters": {"n"}},
 }
 
 
@@ -594,8 +600,10 @@ def merge_descriptor_payloads(
     are preserved from the curated payload. The curated ``metadata.name`` and
     ``documentation.slug`` are authoritative overlays: a hand-written descriptive
     name (e.g. "Ermentrout-Kopell Theta Euler Map") is never overwritten by the
-    generic generator default. The result is the regenerated payload with
-    curation overlaid, ready to be re-serialised.
+    generic generator default. A curated state entry whose name the regeneration
+    classified as a parameter is dropped rather than preserved, so a variable
+    reclassified in the code cannot end up declared in both tables. The result is
+    the regenerated payload with curation overlaid, ready to be re-serialised.
 
     Parameters
     ----------
@@ -637,8 +645,14 @@ def merge_descriptor_payloads(
                 spec[key] = _copy(overlay[key])
     # Runtime state variables assigned outside the dataclass field list (for
     # example membrane ``v`` on StochasticLIFNeuron) only exist in curation —
-    # preserve those keys so the corpus check cannot drop them.
+    # preserve those keys so the corpus check cannot drop them.  A name the
+    # regeneration placed in the parameter table is excluded: it is not runtime
+    # state, and carrying its stale curated entry over would declare one name in
+    # both tables at once, which no reclassification could then undo.
+    merged_parameters = _mapping(merged.get("parameters"))
     for name, overlay in cur_state.items():
+        if name in merged_parameters:
+            continue
         if name not in merged_state and isinstance(overlay, Mapping) and overlay:
             merged_state[name] = _copy(overlay)
 

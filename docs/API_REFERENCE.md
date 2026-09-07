@@ -22128,8 +22128,10 @@ documentation slug, and any richer provenance, dynamics, or display fields)
 are preserved from the curated payload. The curated ``metadata.name`` and
 ``documentation.slug`` are authoritative overlays: a hand-written descriptive
 name (e.g. "Ermentrout-Kopell Theta Euler Map") is never overwritten by the
-generic generator default. The result is the regenerated payload with
-curation overlaid, ready to be re-serialised.
+generic generator default. A curated state entry whose name the regeneration
+classified as a parameter is dropped rather than preserved, so a variable
+reclassified in the code cannot end up declared in both tables. The result is
+the regenerated payload with curation overlaid, ready to be re-serialised.
 
 Parameters
 ----------
