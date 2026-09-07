@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import copy
 import inspect
 from collections.abc import Callable, Iterator
 from typing import Any
@@ -17,6 +18,11 @@ from typing import Any
 import numpy as np
 
 from sc_neurocore.network.population_seeds import derive_population_seeds
+from sc_neurocore.network.quiescence import (
+    StateSignature,
+    is_quiescent,
+    quiescent_signature,
+)
 from sc_neurocore.neurons import models as _model_registry
 
 
@@ -141,6 +147,8 @@ class Population:
         self.label = label or cls.__name__
         self._model_cls = cls
         self._voltages = np.zeros(n, dtype=np.float64)
+        self._quiescent: StateSignature | None = None
+        self._quiescent_probed = False
         self._sync_voltages()
 
     def _sync_voltages(self) -> None:
@@ -148,25 +156,57 @@ class Population:
         for i, neuron in enumerate(self.neurons):
             self._voltages[i] = getattr(neuron, "v", 0.0)
 
+    def quiescent_signature(self) -> StateSignature | None:
+        """Return the state this population's model holds under zero input.
+
+        Measured once and cached. The probe runs on a reset copy of this
+        population's own first neuron, not on a default instance, so a
+        population built with parameters is measured at *its* rest state rather
+        than the model's. ``None`` when the model does not hold still — a
+        pacemaker, an oscillator, anything that moves or spikes without input —
+        in which case no neuron of this population is ever skipped.
+        """
+        if self._quiescent_probed:
+            return self._quiescent
+        self._quiescent_probed = True
+        if not self.neurons:
+            return self._quiescent
+        try:
+            resting = copy.deepcopy(self.neurons[0])
+        except Exception:
+            return self._quiescent
+        for name in ("reset", "reset_state"):
+            method = getattr(resting, name, None)
+            if callable(method):
+                try:
+                    method()
+                except Exception:
+                    return self._quiescent
+                break
+        self._quiescent = quiescent_signature(resting)
+        return self._quiescent
+
     def step_all(
         self, currents: np.ndarray[Any, Any], spike_gating: bool = False
     ) -> np.ndarray[Any, Any]:
         """Advance all neurons one timestep; return binary spike vector.
 
-        If *spike_gating* is True, neurons with zero input current and
-        voltage near rest (within 1% of threshold) are skipped. This
-        makes compute roughly proportional to active neurons — useful for
-        sparse-firing networks. Skipped neurons still decay via leak if
-        their model tracks sub-threshold dynamics.
+        If *spike_gating* is True, a neuron is skipped only when skipping it
+        and stepping it are the same thing: its input is exactly zero and its
+        whole state matches a state this model's zero-input map was measured to
+        leave unchanged. Compute then falls towards the active fraction of a
+        sparse network without the run differing from the same run ungated.
+
+        The test is exact rather than a tolerance around rest. A neuron a
+        little away from rest is precisely the one whose relaxation a skip
+        would discard, and skipping it froze a leak, an adaptation current or a
+        refractory countdown that the model would have advanced.
         """
         spikes = np.zeros(self.n, dtype=np.int8)
         if spike_gating:
+            signature = self.quiescent_signature()
             for i, neuron in enumerate(self.neurons):
-                v = getattr(neuron, "v", 0.0)
-                v_thresh = getattr(neuron, "v_threshold", 1.0)
-                v_rest = getattr(neuron, "v_rest", 0.0)
-                # Skip if no input AND voltage within 1% of rest
-                if currents[i] == 0.0 and abs(v - v_rest) < 0.01 * abs(v_thresh - v_rest):
+                if currents[i] == 0.0 and is_quiescent(neuron, signature):
                     continue
                 raw = neuron.step(float(currents[i]))
                 spikes[i] = min(max(int(raw), 0), 1)

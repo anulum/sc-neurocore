@@ -21343,6 +21343,8 @@ A group of N identical neurons with vectorized state access.
 
 - **__init__**(model, n, params, label)
   - Create *n* neurons of *model* (class or string name).
+- **quiescent_signature**()
+  - Return the state this population's model holds under zero input.
 - **step_all**(currents, spike_gating)
   - Advance all neurons one timestep; return binary spike vector.
 - **reset_all**()
@@ -21435,6 +21437,50 @@ delay : float, array-like, or 0
 
 ### Function `validate_csr_topology(indptr, indices, data, n_source, n_target)`
 Validate and normalize CSR connectivity arrays.
+
+---
+
+## Module `network.quiescence`
+
+### Class `Steppable`
+A neuron a population can drive one timestep with a scalar input.
+
+- **step**(current)
+  - Advance one timestep under *current* and return the spike flag.
+
+### Function `state_signature(neuron)`
+Return the exact signature of every attribute a neuron carries.
+
+### Function `quiescent_signature(neuron)`
+Return the signature of a state the zero-input map leaves unchanged.
+
+Parameters
+----------
+neuron : object
+    A neuron in the state whose quiescence is in question, usually a freshly
+    constructed or reset instance. It is not modified: the probe runs on a
+    copy.
+
+Returns
+-------
+tuple or None
+    The signature a neuron must match to be skippable, or ``None`` when this
+    model does not hold still — because a copy stepped with zero input
+    spiked, moved an attribute, refused the call, or could not be copied at
+    all. ``None`` means this model's populations are never gated.
+
+Examples
+--------
+>>> from sc_neurocore.neurons.models.adex import AdExNeuron
+>>> quiescent_signature(AdExNeuron()) is not None
+True
+>>> resting = AdExNeuron()
+>>> resting.v += 5.0
+>>> quiescent_signature(resting) is None
+True
+
+### Function `is_quiescent(neuron, signature)`
+Return whether a neuron sits exactly at the measured quiescent state.
 
 ---
 

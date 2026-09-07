@@ -64,26 +64,32 @@ class TestPopulation:
         assert pop.neurons[0].v_threshold == 0.5
 
     def test_spike_gating_skips_resting_silent_neuron_and_steps_active_neuron(self):
+        # The call counter lives on the class. Counting on the instance would
+        # move this model's state on every step, which is precisely what makes
+        # a model non-quiescent, so the counter would have decided the question
+        # it was there to observe.
         class GatedNeuron:
+            calls: list[float] = []
+
             def __init__(self):
                 self.v = 0.0
                 self.v_rest = 0.0
                 self.v_threshold = 1.0
-                self.step_calls = 0
 
             def step(self, current):
-                self.step_calls += 1
+                type(self).calls.append(current)
                 self.v += current
                 return self.v >= self.v_threshold
 
         pop = Population(GatedNeuron, n=2, label="gated")
+        assert pop.quiescent_signature() is not None
+        GatedNeuron.calls = []
 
         spikes = pop.step_all(np.array([0.0, 1.25]), spike_gating=True)
 
-        assert pop.neurons[0].step_calls == 0
+        assert GatedNeuron.calls == [1.25]
         assert pop.neurons[0].v == 0.0
         assert pop.voltages[0] == 0.0
-        assert pop.neurons[1].step_calls == 1
         assert pop.neurons[1].v == 1.25
         assert pop.voltages[1] == 1.25
         np.testing.assert_array_equal(spikes, np.array([0, 1], dtype=np.int8))
