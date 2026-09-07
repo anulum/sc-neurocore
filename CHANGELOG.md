@@ -10,6 +10,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+- The published Studio OpenAPI reference matches the running application again.
+  Three landed changes never reached it: `GET /api/graph/models/{name}` was
+  absent entirely, and `/api/export/svg` and `/api/graph/validate` carried
+  outdated response schemas. The reference is published through MkDocs, so the
+  public API documentation was describing an application that no longer exists.
+  The pinned backend route count moves 125 → 126 for the added route.
+
 ### Changed
 - The Studio network interchange envelope says what it is. Export wrote
   `{"format": "nir", "version": "0.1"}` for a payload whose node `type` is a

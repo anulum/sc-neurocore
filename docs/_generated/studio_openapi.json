@@ -3533,7 +3533,7 @@
     },
     "/api/export/svg": {
       "post": {
-        "description": "Render one catalogue model run as SVG under the fail-closed run contract.",
+        "description": "Render one catalogue model run as SVG under the fail-closed run contract.\n\nThe time base comes from the run, never from the request. `dt` is part\nof the run contract -- a model with a fixed step accepts only its own,\nso the effective step need not be the requested one -- and the axis\ndrawn under a trace has to be the axis the trace was produced on. The\nfallback that used to stand here read the requested step, or 0.1 ms,\nwhen the result carried none; it could not fire against the real\nrunner, which always reports `dt`, and it existed because a test's mock\nomitted the field.",
         "operationId": "export_svg_api_export_svg_post",
         "requestBody": {
           "content": {
@@ -3744,6 +3744,46 @@
         "summary": "Api Graph Models"
       }
     },
+    "/api/graph/models/{name}": {
+      "get": {
+        "description": "Return what a population of one model may be given, and what it may not.\n\nThe canvas has to let a user change a model's parameters, and it cannot\ndo that honestly from a list of names: which constructor fields are\nnumerically overridable, their kind and default, and the reason each\nother field is not an input are decided here. A browser that guessed\nwould be a second implementation of the run contract, free to drift\nfrom the one that validates the graph.",
+        "operationId": "api_graph_model_contract_api_graph_models__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Graph Model Contract Api Graph Models  Name  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Graph Model Contract"
+      }
+    },
     "/api/graph/population": {
       "post": {
         "operationId": "api_create_population_api_graph_population_post",
@@ -3867,6 +3907,7 @@
     },
     "/api/graph/validate": {
       "post": {
+        "description": "Report every validation failure, each with the field it belongs to.\n\n``errors`` is the flat list of messages this route has always\nanswered. ``issues`` adds the request field each message came from \u2014\n``projections[2].delay``, ``populations[0].params.tau`` \u2014 because an\neditor that cannot say *which* projection a message is about leaves the\nreader to find it by reading all of them.",
         "operationId": "api_validate_graph_api_graph_validate_post",
         "requestBody": {
           "content": {
