@@ -108,22 +108,41 @@ import os
 
 _logger = logging.getLogger(__name__)
 
+# Importing juliacall resolves and, on a machine without one, installs a Julia
+# environment. Doing that here meant `import sc_neurocore.network` provisioned
+# Julia for a caller who had only imported a package, so the Julia kernel is
+# loaded on first use of a circuit instead.
 _julia_ping_step: Callable[..., Any] | None = None
 _HAS_JULIA_PING_STEP = False
-try:
-    from juliacall import Main as jl
+_JULIA_PING_LOADED = False
 
-    _jl_ping_file = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__), "..", "accel", "julia", "network", "gamma_oscillation.jl"
+
+def _ensure_julia_ping_step() -> None:
+    """Load the Julia PING kernel once, on first use.
+
+    Idempotent by design: a caller that has already replaced either module
+    handle — a test pinning the kernel as present or absent — keeps its value,
+    because the load runs at most once and never again after that.
+    """
+    global _julia_ping_step, _HAS_JULIA_PING_STEP, _JULIA_PING_LOADED
+    if _JULIA_PING_LOADED:
+        return
+    _JULIA_PING_LOADED = True
+    try:
+        from juliacall import Main as jl
+
+        kernel = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), "..", "accel", "julia", "network", "gamma_oscillation.jl"
+            )
         )
-    )
-    if os.path.exists(_jl_ping_file):
-        jl.seval(f'include("{_jl_ping_file}")')
-        _julia_ping_step = jl.GammaOscillationAccel.py_ping_step
-        _HAS_JULIA_PING_STEP = True
-except Exception as _jl_err:  # noqa: BLE001
-    _logger.debug("Julia PING accel unavailable: %r", _jl_err)
+        if os.path.exists(kernel):
+            jl.seval(f'include("{kernel}")')
+            _julia_ping_step = jl.GammaOscillationAccel.py_ping_step
+            _HAS_JULIA_PING_STEP = True
+    except Exception as error:  # noqa: BLE001
+        _logger.debug("Julia PING accel unavailable: %r", error)
+
 
 _go_ping_step: Any = None  # ctypes function pointer; precise type varies
 _HAS_GO_PING_STEP = False
@@ -272,6 +291,7 @@ class PINGCircuit:
         # Resolve backend selection. "auto" prefers the Rust kernel
         # if available; explicit "rust" raises if the kernel is
         # missing rather than silently downgrading.
+        _ensure_julia_ping_step()
         if self.backend not in {"auto", "rust", "python", "julia", "go", "mojo"}:
             raise ValueError(
                 f"backend must be one of 'auto'|'rust'|'python'|'julia'|'go'|'mojo', got {self.backend!r}"

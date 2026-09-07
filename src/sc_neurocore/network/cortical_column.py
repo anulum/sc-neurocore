@@ -87,10 +87,11 @@ the connectivity (which is expensive at full scale).
 
 from __future__ import annotations
 
-import ctypes
+import ctypes as ctypes
 import importlib as _importlib
 import logging
 import os as os
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -126,17 +127,53 @@ if TYPE_CHECKING:
 
 
 _logger = logging.getLogger(__name__)
-_native_backends = discover_native_backends(__file__, _logger, _importlib.import_module)
-_rust_csr_spmv_add = _native_backends.rust_spmv
-_rust_csr_multi_spmv_add = _native_backends.rust_multi_spmv
-_julia_multi_spmv = _native_backends.julia_multi_spmv
-_go_multi_spmv = _native_backends.go_multi_spmv
-_mojo_multi_spmv = _native_backends.mojo_multi_spmv
-_HAS_RUST_CSR_SPMV = _rust_csr_spmv_add is not None
-_HAS_RUST_CSR_MULTI_SPMV = _rust_csr_multi_spmv_add is not None
-_HAS_JULIA_MULTI_SPMV = _julia_multi_spmv is not None
-_HAS_GO_MULTI_SPMV = _go_multi_spmv is not None
-_HAS_MOJO_MULTI_SPMV = _mojo_multi_spmv is not None
+# Discovering the native accelerators imports optional runtimes, and importing
+# a runtime can *provision* it: reaching the Julia kernel loader resolves and
+# installs a Julia environment. Doing that at module import meant that
+# `import sc_neurocore.network` — the public network API, which imports this
+# module — provisioned Julia for a caller who had only imported a package.
+# Discovery is therefore deferred to the first construction of a column, which
+# is the first moment an accelerator could be used.
+_rust_csr_spmv_add: Callable[..., Any] | None = None
+_rust_csr_multi_spmv_add: Callable[..., Any] | None = None
+_julia_multi_spmv: Callable[..., Any] | None = None
+_go_multi_spmv: Callable[..., Any] | None = None
+_mojo_multi_spmv: Callable[..., Any] | None = None
+_HAS_RUST_CSR_SPMV = False
+_HAS_RUST_CSR_MULTI_SPMV = False
+_HAS_JULIA_MULTI_SPMV = False
+_HAS_GO_MULTI_SPMV = False
+_HAS_MOJO_MULTI_SPMV = False
+_BACKENDS_DISCOVERED = False
+
+
+def _ensure_native_backends() -> None:
+    """Discover the native accelerators once, on first use.
+
+    Idempotent by design: a caller that has already replaced one of the module
+    handles — a test pinning a backend as present or absent — keeps its value,
+    because discovery runs at most once and never again after that.
+    """
+    global _BACKENDS_DISCOVERED
+    global _rust_csr_spmv_add, _rust_csr_multi_spmv_add
+    global _julia_multi_spmv, _go_multi_spmv, _mojo_multi_spmv
+    global _HAS_RUST_CSR_SPMV, _HAS_RUST_CSR_MULTI_SPMV
+    global _HAS_JULIA_MULTI_SPMV, _HAS_GO_MULTI_SPMV, _HAS_MOJO_MULTI_SPMV
+    if _BACKENDS_DISCOVERED:
+        return
+    _BACKENDS_DISCOVERED = True
+    backends = discover_native_backends(__file__, _logger, _importlib.import_module)
+    _rust_csr_spmv_add = backends.rust_spmv
+    _rust_csr_multi_spmv_add = backends.rust_multi_spmv
+    _julia_multi_spmv = backends.julia_multi_spmv
+    _go_multi_spmv = backends.go_multi_spmv
+    _mojo_multi_spmv = backends.mojo_multi_spmv
+    _HAS_RUST_CSR_SPMV = _rust_csr_spmv_add is not None
+    _HAS_RUST_CSR_MULTI_SPMV = _rust_csr_multi_spmv_add is not None
+    _HAS_JULIA_MULTI_SPMV = _julia_multi_spmv is not None
+    _HAS_GO_MULTI_SPMV = _go_multi_spmv is not None
+    _HAS_MOJO_MULTI_SPMV = _mojo_multi_spmv is not None
+
 
 # ── Main microcircuit class ──────────────────────────────────────────
 
@@ -193,6 +230,7 @@ class CorticalColumn(_CorticalConnectivity):
         self.n_delay_bins = n_delay_bins
         self.backend = backend
 
+        _ensure_native_backends()
         if self.backend not in {"auto", "rust", "python", "julia", "go", "mojo"}:
             raise ValueError(
                 f"backend must be one of 'auto'|'rust'|'python'|'julia'|'go'|'mojo', got {self.backend!r}"

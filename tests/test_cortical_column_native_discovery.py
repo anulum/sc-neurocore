@@ -14,10 +14,10 @@ from tests.cortical_column_support import *  # noqa: F403
 
 
 class TestNativeDiscovery:
-    def test_rust_discovery_uses_root_package_fallback(self, monkeypatch):
+    def test_rust_discovery_uses_root_package_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         real_import_module = cortical_column_module._importlib.import_module
 
-        def root_only_engine(name):
+        def root_only_engine(name: str) -> object:
             if name == "sc_neurocore_engine.sc_neurocore_engine":
                 raise ImportError(name)
             if name == "sc_neurocore_engine":
@@ -30,6 +30,9 @@ class TestNativeDiscovery:
         monkeypatch.setattr(cortical_column_module._importlib, "import_module", root_only_engine)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
+        # Discovery is deferred to first use so that importing the public
+        # network API cannot provision an optional runtime; ask for it here.
+        reloaded._ensure_native_backends()
         try:
             assert reloaded._HAS_RUST_CSR_SPMV is True
             assert reloaded._HAS_RUST_CSR_MULTI_SPMV is True
@@ -37,10 +40,10 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_rust_discovery_fails_closed_without_symbols(self, monkeypatch):
+    def test_rust_discovery_fails_closed_without_symbols(self, monkeypatch: pytest.MonkeyPatch) -> None:
         real_import_module = cortical_column_module._importlib.import_module
 
-        def missing_engine(name):
+        def missing_engine(name: str) -> object:
             if name in {"sc_neurocore_engine.sc_neurocore_engine", "sc_neurocore_engine"}:
                 raise ImportError(name)
             return real_import_module(name)
@@ -48,6 +51,9 @@ class TestNativeDiscovery:
         monkeypatch.setattr(cortical_column_module._importlib, "import_module", missing_engine)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
+        # Discovery is deferred to first use so that importing the public
+        # network API cannot provision an optional runtime; ask for it here.
+        reloaded._ensure_native_backends()
         try:
             assert reloaded._HAS_RUST_CSR_SPMV is False
             assert reloaded._rust_csr_spmv_add is None
@@ -57,10 +63,13 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_julia_discovery_failure_remains_optional(self, monkeypatch):
+    def test_julia_discovery_failure_remains_optional(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(sys.modules, "juliacall", None)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
+        # Discovery is deferred to first use so that importing the public
+        # network API cannot provision an optional runtime; ask for it here.
+        reloaded._ensure_native_backends()
         try:
             assert reloaded._HAS_JULIA_MULTI_SPMV is False
             assert reloaded._julia_multi_spmv is None
@@ -68,17 +77,20 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_optional_ctypes_backend_load_failures_remain_optional(self, monkeypatch):
-        def fake_exists(path):
+    def test_optional_ctypes_backend_load_failures_remain_optional(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def fake_exists(path: str) -> bool:
             return path.endswith("libcortical_column.so")
 
-        def reject_cdll(path):
+        def reject_cdll(path: str) -> object:
             raise OSError(path)
 
         monkeypatch.setattr(cortical_column_module.os.path, "exists", fake_exists)
         monkeypatch.setattr(cortical_column_module.ctypes, "CDLL", reject_cdll)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
+        # Discovery is deferred to first use so that importing the public
+        # network API cannot provision an optional runtime; ask for it here.
+        reloaded._ensure_native_backends()
         try:
             assert reloaded._HAS_GO_MULTI_SPMV is False
             assert reloaded._go_multi_spmv is None
@@ -88,7 +100,7 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_mojo_ctypes_discovery_configures_symbol(self, monkeypatch):
+    def test_mojo_ctypes_discovery_configures_symbol(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class FakeFunction:
             argtypes = None
             restype = object()
@@ -96,13 +108,16 @@ class TestNativeDiscovery:
         fake_function = FakeFunction()
         fake_lib = SimpleNamespace(py_parallel_csr_multi_spmv_add_c=fake_function)
 
-        def fake_exists(path):
+        def fake_exists(path: str) -> bool:
             return path.endswith("libcortical_column.so")
 
         monkeypatch.setattr(cortical_column_module.os.path, "exists", fake_exists)
         monkeypatch.setattr(cortical_column_module.ctypes, "CDLL", lambda _path: fake_lib)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
+        # Discovery is deferred to first use so that importing the public
+        # network API cannot provision an optional runtime; ask for it here.
+        reloaded._ensure_native_backends()
         try:
             assert reloaded._HAS_MOJO_MULTI_SPMV is True
             assert fake_function.argtypes is not None
