@@ -1,7 +1,7 @@
 {
   "auto_backend_order": [
-    "mojo",
     "rust",
+    "mojo",
     "go",
     "julia",
     "python"
@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 18443373,
-      "median_call_ms": 15.923714,
-      "median_call_ns": 15923714.0,
-      "median_ns_per_step": 79.61857,
-      "min_call_ns": 14655773,
+      "max_call_ns": 13886437,
+      "median_call_ms": 12.828194,
+      "median_call_ns": 12828194.0,
+      "median_ns_per_step": 64.14097,
+      "min_call_ns": 12404441,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        17519667,
-        18443373,
-        14655773,
-        15923714,
-        14699971
+        13886437,
+        12737659,
+        12404441,
+        13693245,
+        12828194
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -45,19 +45,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 19326250,
-      "median_call_ms": 17.096485,
-      "median_call_ns": 17096485.0,
-      "median_ns_per_step": 85.482425,
-      "min_call_ns": 15012997,
+      "max_call_ns": 17551435,
+      "median_call_ms": 13.738598,
+      "median_call_ns": 13738598.0,
+      "median_ns_per_step": 68.69299,
+      "min_call_ns": 12982725,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        19326250,
-        17634638,
-        15012997,
-        16724702,
-        17096485
+        13140915,
+        13738598,
+        16297583,
+        12982725,
+        17551435
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -74,19 +74,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 1.4210854715202004e-14,
-      "max_call_ns": 11154686,
-      "median_call_ms": 9.589359,
-      "median_call_ns": 9589359.0,
-      "median_ns_per_step": 47.946795,
-      "min_call_ns": 7575078,
+      "max_call_ns": 12379658,
+      "median_call_ms": 10.828414,
+      "median_call_ns": 10828414.0,
+      "median_ns_per_step": 54.14207,
+      "min_call_ns": 7456309,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 1.1368683772161603e-13,
       "samples_ns": [
-        9248577,
-        10765589,
-        7575078,
-        9589359,
-        11154686
+        7456309,
+        8712589,
+        12260366,
+        12379658,
+        10828414
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -103,19 +103,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 429118039,
-      "median_call_ms": 410.908249,
-      "median_call_ns": 410908249.0,
-      "median_ns_per_step": 2054.541245,
-      "min_call_ns": 367480257,
+      "max_call_ns": 392254563,
+      "median_call_ms": 370.332504,
+      "median_call_ns": 370332504.0,
+      "median_ns_per_step": 1851.66252,
+      "min_call_ns": 346413708,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        429118039,
-        414185252,
-        410908249,
-        367480257,
-        397296931
+        373986160,
+        346413708,
+        370332504,
+        392254563,
+        368484927
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -132,19 +132,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 15259655,
-      "median_call_ms": 14.156305,
-      "median_call_ns": 14156305.0,
-      "median_ns_per_step": 70.781525,
-      "min_call_ns": 12375804,
+      "max_call_ns": 10794716,
+      "median_call_ms": 9.993857,
+      "median_call_ns": 9993857.0,
+      "median_ns_per_step": 49.969285,
+      "min_call_ns": 9655222,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        14156305,
-        13675835,
-        12375804,
-        15259655,
-        14857896
+        10794716,
+        10647990,
+        9993857,
+        9655222,
+        9941561
       ],
       "spike_count": 277,
       "spike_count_matches_python": true,
@@ -175,7 +175,7 @@
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. python benchmarks/bench_model_adaptive_threshold_if.py --json benchmarks/results/bench_adaptive_threshold_if.json",
   "environment": {
     "affinity": [
-      3
+      0
     ],
     "go_binary": {
       "binary": "src/sc_neurocore/accel/go/adaptive_threshold_if/libadaptive_threshold_if.so",
@@ -201,25 +201,25 @@
       "package": "github.com/anulum/sc-neurocore/accel/adaptive_threshold_if"
     },
     "go_cli": "go version go1.24.0 linux/amd64",
-    "julia_cli": "julia version 1.12.6",
+    "julia_cli": "julia version 1.11.4",
     "julia_runtime": "1.11.9",
     "load_average": [
-      7.93359375,
-      8.16552734375,
-      6.80419921875
+      9.55419921875,
+      7.4873046875,
+      7.1220703125
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
     "mojo_pixi": "Mojo 1.0.0 (ed45d567)",
     "numpy": "2.2.6",
     "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
-    "python": "3.12.13",
+    "python": "3.12.3",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   },
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
   "hardware_measurement_claimed": false,
   "kernel": "adaptive_threshold_if_exact_relaxation_batch",
-  "lowest_median_native_backend": "mojo",
+  "lowest_median_native_backend": "rust",
   "measured_order": [
     "python",
     "rust",
@@ -245,13 +245,13 @@
     "reason": "independent compiler transcendental evaluation may differ by bounded ulps"
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "mojo",
+  "recommended_auto_backend": "rust",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     ".github/workflows/ci": {
-      "yml": "6bb5f3dda7c60bec25af0e3f78b69b614228ddcdac891e17d4be8afa15966842"
+      "yml": "f687ad8709a0b0211cc7e7030248922edaa7f67fddbc6cfa3657de302354bd4e"
     },
-    ".github/workflows/ci.yml": "6bb5f3dda7c60bec25af0e3f78b69b614228ddcdac891e17d4be8afa15966842",
+    ".github/workflows/ci.yml": "f687ad8709a0b0211cc7e7030248922edaa7f67fddbc6cfa3657de302354bd4e",
     "Cargo": {
       "lock": "91ed757d87477abf6bed5195e9258761d8f52a6dce4cd94ae653448871edd3ea"
     },
@@ -365,7 +365,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-09-05T20:32:17+00:00",
+  "timestamp_utc": "2026-09-07T14:11:55+00:00",
   "verification": {
     "rust_safety": {
       "command": [

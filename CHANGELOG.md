@@ -11,6 +11,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Seven benchmark gates that were red on stale evidence are green again. Their
+  records bound source digests that no longer matched the files they name —
+  `ci.yml`, `pyproject.toml`, two model and accelerator sources, two schemas and
+  the equation builder — so a reviewer could not tell a stale digest from a real
+  parity failure without re-running. Each was re-run at its own recorded
+  configuration, on the CPU its record names, and two of them additionally moved
+  from a slightly older release extension to the current one. No published claim
+  changed: every parity, event-count and safety assertion held before and after.
 - Five published benchmark records no longer rate the Rust lane against a debug
   build. They bound a 525 MB unoptimised engine extension where every other
   record bound the ~35 MB release build, so the Rust lane was measured several

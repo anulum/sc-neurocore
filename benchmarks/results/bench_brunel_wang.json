@@ -4,14 +4,14 @@
       "available": true,
       "event_count": 7867,
       "events_exact": true,
-      "median_ns": 21919377,
-      "ns_per_step": 109.596885,
+      "median_ns": 17371947,
+      "ns_per_step": 86.859735,
       "parity_max_abs_diff": 7.105427357601002e-15,
       "parity_tolerance": 2e-12,
       "samples_ns": [
-        24945279,
-        21919377,
-        19925734
+        18365146,
+        17371947,
+        15786019
       ],
       "trace_matches_python": true,
       "trace_sha256": "84559b1fc2b86926687824e5e6c74995d9940587b82f2800625aeb74b3fbd95e",
@@ -21,14 +21,14 @@
       "available": true,
       "event_count": 7867,
       "events_exact": true,
-      "median_ns": 22508859,
-      "ns_per_step": 112.544295,
+      "median_ns": 17280338,
+      "ns_per_step": 86.40169,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "samples_ns": [
-        22508859,
-        21162888,
-        22827307
+        17280338,
+        17860805,
+        17255559
       ],
       "trace_matches_python": true,
       "trace_sha256": "7ae4322ecfa86569397307b9ed02383111315376442047b96db77e38fa175990",
@@ -38,14 +38,14 @@
       "available": true,
       "event_count": 7867,
       "events_exact": true,
-      "median_ns": 17627027,
-      "ns_per_step": 88.135135,
+      "median_ns": 16916155,
+      "ns_per_step": 84.580775,
       "parity_max_abs_diff": 5.826450433232822e-13,
       "parity_tolerance": 2e-10,
       "samples_ns": [
-        16992463,
-        19719962,
-        17627027
+        14921672,
+        16916155,
+        17445921
       ],
       "trace_matches_python": true,
       "trace_sha256": "0e7a7971a6b024ef250491340d10ae6306086c76840e83c5969b18a405a66d1f",
@@ -55,14 +55,14 @@
       "available": true,
       "event_count": 7867,
       "events_exact": true,
-      "median_ns": 974663304,
-      "ns_per_step": 4873.31652,
+      "median_ns": 956016300,
+      "ns_per_step": 4780.0815,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 0.0,
       "samples_ns": [
-        1034490234,
-        974663304,
-        953487115
+        985966539,
+        956016300,
+        903469412
       ],
       "trace_matches_python": true,
       "trace_sha256": "7ae4322ecfa86569397307b9ed02383111315376442047b96db77e38fa175990",
@@ -72,14 +72,14 @@
       "available": true,
       "event_count": 7867,
       "events_exact": true,
-      "median_ns": 143294429,
-      "ns_per_step": 716.472145,
+      "median_ns": 121394215,
+      "ns_per_step": 606.971075,
       "parity_max_abs_diff": 0.0,
       "parity_tolerance": 2e-12,
       "samples_ns": [
-        123451883,
-        143294429,
-        186800847
+        125139806,
+        121394215,
+        108758841
       ],
       "trace_matches_python": true,
       "trace_sha256": "7ae4322ecfa86569397307b9ed02383111315376442047b96db77e38fa175990",
@@ -113,26 +113,26 @@
       3
     ],
     "go": "go version go1.24.0 linux/amd64",
-    "julia": "julia version 1.12.6",
+    "julia": "julia version 1.11.4",
     "load_average": [
-      8.1982421875,
-      8.22265625,
-      6.80712890625
+      9.1982421875,
+      7.5380859375,
+      7.146484375
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
-    "python": "3.12.13",
+    "python": "3.12.3",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   },
   "evidence_class": "local_regression",
-  "generated_at": "2026-09-05T20:32:08.249412+00:00",
+  "generated_at": "2026-09-07T14:12:16.999614+00:00",
   "hardware_measurement_claimed": false,
   "kernel": "brunel_wang_midpoint_rk2_batch",
   "measured_order": [
     "mojo",
-    "go",
     "julia",
+    "go",
     "rust",
     "python"
   ],
@@ -151,7 +151,7 @@
     "engine/src/bindings/population/brunel_wang.rs": "9d6ba36ff2a8a107a9c26f21e97605c2b88a8ba6ccaaa04f580d2091425a82b2",
     "engine/src/neurons/simple_spiking/brunel_wang.rs": "1d6aa052a502497d055061dfd17627dd9c408d123da15493ab6c5751b90c03a2",
     "hdl/formal/catalogue/sc_brunel_wang.v": "bbe1e193f0b3486cc8d3a42aef94b77d47205ade4bc6a54f7d642dd844a00fbd",
-    "src/sc_neurocore/accel/brunel_wang.py": "915961af0e285ff964878bcbeef4b743e128a6cd0de3d31ec82297fa5c9d7fb9",
+    "src/sc_neurocore/accel/brunel_wang.py": "34d0ffd4e514b45abe673d926cd972081e2321fdd577c3c9b418b0eaf20003fe",
     "src/sc_neurocore/accel/go/brunel_wang/brunel_wang.go": "dc2de7a13924a66db96944eeec491facc51b9634d99634890a52c67aa07e6c42",
     "src/sc_neurocore/accel/go/services/brunel_wang.go": "31e8bceb71aaaeb3be153b4a2e4c6320abbffae03c93440fd98c9534d9569d67",
     "src/sc_neurocore/accel/julia/neurons/brunel_wang.jl": "29e8f3fc9f619af5a83a5ab04af417422b5964ffc18aa835e550d998daf7cb07",
@@ -160,7 +160,7 @@
     "src/sc_neurocore/neurons/model_descriptors/BrunelWangNeuron.toml": "f14760d23f78c73683b45c4c3cdec1fa02c794716f0be10c3c907f8dae0a2eb0",
     "src/sc_neurocore/neurons/model_schemas/brunel_wang.json": "6edc5daf2c8db3064ffa3468f2de61af4d7e34840c3a72a0d8a10e2f830146e8",
     "src/sc_neurocore/neurons/model_schemas/brunel_wang.toml": "827a404f27655f71424c33892887bd772c93cf7f831bfa32be50631a78c9196e",
-    "src/sc_neurocore/neurons/models/brunel_wang.py": "c6d4935330f11b41c37dd86fc6081c587fac174a8cc2bb380dc483a59f7fa6ec",
+    "src/sc_neurocore/neurons/models/brunel_wang.py": "4f861bf823992346470e2aaa046c394ee98ffea100e52fe7886ee1ce5cf2f73d",
     "src/sc_neurocore/neurons/reference_trace_data/brunel_wang_2001_pyramidal.json": "48dd8793a70b91d5477ff62e57b4571a3bfeb2848a89a336d4073bd8bb318fe1"
   },
   "verification": {

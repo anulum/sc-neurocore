@@ -16,19 +16,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 7499718,
-      "median_call_ms": 5.388613,
-      "median_call_ns": 5388613.0,
-      "median_ns_per_step": 107.77226,
-      "min_call_ns": 4182497,
+      "max_call_ns": 9523294,
+      "median_call_ms": 3.783002,
+      "median_call_ns": 3783002.0,
+      "median_ns_per_step": 75.66004,
+      "min_call_ns": 3447434,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        5388613,
-        6179431,
-        4735490,
-        7499718,
-        4182497
+        3783002,
+        3942535,
+        3469093,
+        9523294,
+        3447434
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -45,19 +45,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 5091701,
-      "median_call_ms": 4.486269,
-      "median_call_ns": 4486269.0,
-      "median_ns_per_step": 89.72538,
-      "min_call_ns": 4200043,
+      "max_call_ns": 4561615,
+      "median_call_ms": 3.767142,
+      "median_call_ns": 3767142.0,
+      "median_ns_per_step": 75.34284,
+      "min_call_ns": 3164629,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4486269,
-        4488137,
-        4419041,
-        5091701,
-        4200043
+        3164629,
+        3767142,
+        3678005,
+        4073267,
+        4561615
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -74,19 +74,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 2.7755575615628914e-16,
-      "max_call_ns": 2767484,
-      "median_call_ms": 1.971567,
-      "median_call_ns": 1971567.0,
-      "median_ns_per_step": 39.43134,
-      "min_call_ns": 1634275,
+      "max_call_ns": 1835447,
+      "median_call_ms": 1.587759,
+      "median_call_ns": 1587759.0,
+      "median_ns_per_step": 31.75518,
+      "min_call_ns": 1540117,
       "parity_atol": 1e-10,
       "parity_max_abs_diff": 8.881784197001252e-16,
       "samples_ns": [
-        2767484,
-        2716476,
-        1971567,
-        1634275,
-        1688915
+        1594038,
+        1835447,
+        1540117,
+        1587759,
+        1574482
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -103,19 +103,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 111300355,
-      "median_call_ms": 109.20961,
-      "median_call_ns": 109209610.0,
-      "median_ns_per_step": 2184.1922,
-      "min_call_ns": 101845457,
+      "max_call_ns": 112718416,
+      "median_call_ms": 100.367278,
+      "median_call_ns": 100367278.0,
+      "median_ns_per_step": 2007.34556,
+      "min_call_ns": 99692718,
       "parity_atol": 0.0,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        101845457,
-        111300355,
-        109209610,
-        110050014,
-        103455358
+        112718416,
+        107175894,
+        99989335,
+        100367278,
+        99692718
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -132,19 +132,19 @@
       },
       "final_state_matches_python": true,
       "final_state_max_abs_diff": 0.0,
-      "max_call_ns": 2959660,
-      "median_call_ms": 2.598177,
-      "median_call_ns": 2598177.0,
-      "median_ns_per_step": 51.96354,
-      "min_call_ns": 2259960,
+      "max_call_ns": 2407188,
+      "median_call_ms": 2.176405,
+      "median_call_ns": 2176405.0,
+      "median_ns_per_step": 43.5281,
+      "min_call_ns": 2127954,
       "parity_atol": 1e-12,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        2598177,
-        2959660,
-        2453717,
-        2259960,
-        2641325
+        2176405,
+        2407188,
+        2341721,
+        2140260,
+        2127954
       ],
       "spike_count": 295,
       "spike_count_matches_python": true,
@@ -175,7 +175,7 @@
   "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. python benchmarks/bench_model_resonate_and_fire.py --json benchmarks/results/bench_resonate_and_fire.json",
   "environment": {
     "affinity": [
-      3
+      0
     ],
     "go_binary": {
       "binary": "src/sc_neurocore/accel/go/resonate_and_fire/libresonate_and_fire.so",
@@ -201,19 +201,19 @@
       "package": "github.com/anulum/sc-neurocore/accel/resonate_and_fire"
     },
     "go_cli": "go version go1.24.0 linux/amd64",
-    "julia_cli": "julia version 1.12.6",
+    "julia_cli": "julia version 1.11.4",
     "julia_runtime": "1.11.9",
     "load_average": [
-      8.09912109375,
-      8.1962890625,
-      6.82177734375
+      8.5654296875,
+      7.56005859375,
+      7.1689453125
     ],
     "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
     "mojo_pixi": "Mojo 1.0.0 (ed45d567)",
     "numpy": "2.2.6",
     "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
     "processor": "x86_64",
-    "python": "3.12.13",
+    "python": "3.12.3",
     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
   },
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
@@ -249,9 +249,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     ".github/workflows/ci": {
-      "yml": "6bb5f3dda7c60bec25af0e3f78b69b614228ddcdac891e17d4be8afa15966842"
+      "yml": "f687ad8709a0b0211cc7e7030248922edaa7f67fddbc6cfa3657de302354bd4e"
     },
-    ".github/workflows/ci.yml": "6bb5f3dda7c60bec25af0e3f78b69b614228ddcdac891e17d4be8afa15966842",
+    ".github/workflows/ci.yml": "f687ad8709a0b0211cc7e7030248922edaa7f67fddbc6cfa3657de302354bd4e",
     "Cargo": {
       "lock": "91ed757d87477abf6bed5195e9258761d8f52a6dce4cd94ae653448871edd3ea"
     },
@@ -365,7 +365,7 @@
     },
     "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
   },
-  "timestamp_utc": "2026-09-05T20:32:24+00:00",
+  "timestamp_utc": "2026-09-07T14:12:48+00:00",
   "verification": {
     "rust_safety": {
       "command": [
