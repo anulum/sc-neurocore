@@ -16,6 +16,7 @@ from typing import Any
 import numpy as np
 
 from .population import Population
+from .rust_dispatch import network_divergences
 from .projection import Projection
 from .monitor import SpikeMonitor, StateMonitor, RateMonitor
 from .stimulus import TimedArray, PoissonInput, StepCurrent
@@ -103,7 +104,15 @@ class Network:
         return not any(p.plasticity for p in self.projections)
 
     def _rust_incompatibilities(self) -> list[str]:
-        """List Python-only dynamics that the Rust backend would silently skip."""
+        """List what the Rust backend would silently skip or silently replace.
+
+        Two different failures share this list. Python-only *dynamics* the Rust
+        loop does not implement, and populations the Rust bridge cannot
+        construct: it receives only a model name and a count, so a population
+        built with parameters, one whose neurons carry derived seeds, or one
+        whose neurons have already moved would be replaced by default neurons
+        while every Python object went on reporting the caller's values.
+        """
         incompatible: list[str] = []
         if self._spike_gating:
             incompatible.append("spike_gating")
@@ -113,13 +122,14 @@ class Network:
             incompatible.append("StateMonitor")
         if self.rate_monitors:
             incompatible.append("RateMonitor")
+        incompatible.extend(network_divergences(self.populations))
         return incompatible
 
     def _raise_for_rust_incompatibilities(self) -> None:
-        """Fail fast when a caller forces Rust for Python-only semantics."""
+        """Fail fast when a caller forces Rust for semantics it cannot carry."""
         incompatible = self._rust_incompatibilities()
         if incompatible:
-            names = ", ".join(incompatible)
+            names = "; ".join(incompatible)
             raise NotImplementedError(
                 f"Rust backend does not support {names}; use backend='python' or backend='auto'"
             )
@@ -147,6 +157,14 @@ class Network:
         Per-step traces from ``StateMonitor`` and ``RateMonitor``, FIM
         feedback, and ``spike_gating`` remain Python-only; ``'auto'`` falls
         back to Python for those cases and forced ``'rust'`` raises.
+
+        The same applies to what the Rust bridge cannot be *told*. It receives
+        a model name and a neuron count, so it builds default neurons: a
+        population constructed with parameters, one whose neurons carry
+        independently derived seeds, or one whose neurons have already moved
+        cannot be reproduced there. ``'auto'`` runs those in Python and forced
+        ``'rust'`` raises, naming the population and the attributes, rather
+        than returning a run of the defaults under the caller's parameters.
         """
         self._spike_gating = spike_gating
         if backend == "mpi":

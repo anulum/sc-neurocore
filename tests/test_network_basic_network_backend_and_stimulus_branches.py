@@ -26,7 +26,11 @@ class TestNetworkBackendAndStimulusBranches:
         import sc_neurocore.network.network as network_mod
 
         monkeypatch.setattr(network_mod, "_RUST_ENGINE", False)
-        net = Network(Population("LapicqueNeuron", 2))
+        # A population the bridge could build, so the missing engine is the
+        # reason the forced backend refuses. LapicqueNeuron reaches this
+        # population through its source-profile constructor, which the bridge
+        # cannot express at all, and would refuse one step earlier.
+        net = Network(Population("AdExNeuron", 2))
         with pytest.raises(RuntimeError, match="Rust engine not available"):
             net.run(0.005, backend="rust")
 

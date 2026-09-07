@@ -21438,6 +21438,46 @@ Validate and normalize CSR connectivity arrays.
 
 ---
 
+## Module `network.rust_dispatch`
+
+### Function `population_divergence(population)`
+Return why the native bridge cannot build this population, or ``""``.
+
+Parameters
+----------
+population : Population
+    The population a caller assembled.
+
+Returns
+-------
+str
+    Empty when every neuron equals the neuron the bridge builds from the
+    model name, so dispatching preserves the network. Otherwise a
+    one-line reason naming the population and what differs.
+
+Examples
+--------
+>>> from sc_neurocore.network import Population
+>>> population_divergence(Population("AdExNeuron", 3))
+''
+>>> population_divergence(Population("AdExNeuron", 3, {"v_rest": -60.0}))
+"population 'AdExNeuron' carries v_rest, which the native bridge cannot receive"
+
+### Function `network_divergences(populations)`
+Return one reason per population the native bridge cannot build faithfully.
+
+Parameters
+----------
+populations : iterable of Population
+    Every population of the network.
+
+Returns
+-------
+list of str
+    Empty when the whole network can be dispatched without changing it.
+
+---
+
 ## Module `network.sc_compte_wm`
 
 ### Class `SCCompteCellSpec`

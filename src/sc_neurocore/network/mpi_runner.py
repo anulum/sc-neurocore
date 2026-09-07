@@ -30,6 +30,7 @@ except ImportError:
     MPI = None
     HAS_MPI = False
 
+from .rust_dispatch import network_divergences
 from .population import Population
 from .projection import Projection
 
@@ -94,12 +95,22 @@ class MPIRunner:
         self._initialize_rust_dispatch()
 
     def _initialize_rust_dispatch(self) -> None:
-        """Prepare a rank-local Rust runner when the installed engine supports it."""
+        """Prepare a rank-local Rust runner when the installed engine supports it.
+
+        The rank-local runner is built from model names and neuron counts, so
+        it can only stand in for populations whose neurons are exactly what
+        those names construct. A rank holding a population built with
+        parameters, one whose neurons carry derived seeds, or one whose
+        neurons have already moved keeps the Python path for that rank rather
+        than stepping default neurons under the caller's parameters.
+        """
         if not self._local_indices:
             return
         if not all(
             _rust_supports_model(self._populations[idx].model_name) for idx in self._local_indices
         ):
+            return
+        if network_divergences(self._populations[idx] for idx in self._local_indices):
             return
         engine_cls = _get_rust_engine()
         if engine_cls is False:

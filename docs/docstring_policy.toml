@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 469
+expected_file_count = 470
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -999,6 +999,10 @@ rationale = "Public MPI distributed network runner."
 [[file]]
 path = "src/sc_neurocore/network/network.py"
 rationale = "Public spiking-network engine."
+
+[[file]]
+path = "src/sc_neurocore/network/rust_dispatch.py"
+rationale = "Public answer to whether the native network bridge can reproduce a population from a model name alone, so a run is never dispatched to default neurons under a caller's parameters."
 
 [[file]]
 path = "src/sc_neurocore/network/population_seeds.py"
