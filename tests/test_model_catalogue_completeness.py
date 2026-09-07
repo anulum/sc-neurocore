@@ -60,7 +60,12 @@ def _disk_dataclass_models() -> dict[str, str]:
 
 
 def test_every_disk_dataclass_model_is_registered() -> None:
-    """Tier 0: no model can be defined on disk yet missing from the registry."""
+    """No ``@dataclass`` model under ``neurons/models/`` may miss the registry.
+
+    Scoped to that directory by construction — see
+    :func:`test_every_exported_neuron_is_registered_or_named` for the classes
+    that live beside it.
+    """
 
     discovered = _disk_dataclass_models()
     unregistered = sorted(name for name in discovered if name not in _CLASS_TO_MODULE)
@@ -114,3 +119,55 @@ def test_catalogue_size_matches_registry() -> None:
     extra = sorted(catalogue - registry)
     assert invisible == [], f"registered models missing from the catalogue: {invisible}"
     assert extra == [], f"catalogue models absent from the registry: {extra}"
+
+
+#: Public ``BaseNeuron`` subclasses that the catalogue registry does not carry,
+#: each with the reason it is absent. This is a measured ceiling, not a
+#: permission: both entries below are unexplained omissions found on
+#: 2026-09-07, recorded so the set cannot grow silently while they are
+#: resolved. Registering one means deleting its entry here.
+UNREGISTERED_PUBLIC_NEURONS = {
+    "HomeostaticLIFNeuron": (
+        "Turrigiano (2012) homeostatic threshold adaptation, exported from "
+        "sc_neurocore.neurons and absent from the catalogue with no recorded "
+        "reason."
+    ),
+    "SCIzhikevichNeuron": (
+        "Izhikevich (IEEE TNN 14(6), 2003), exported from sc_neurocore.neurons "
+        "and absent from the catalogue with no recorded reason. Its docstring "
+        "says software-only, which is not a catalogue exclusion criterion: the "
+        "corpus already carries 13 models whose profile refuses lowering."
+    ),
+}
+
+
+def test_every_exported_neuron_is_registered_or_named() -> None:
+    """A model the package exports is in the catalogue, or is named as absent.
+
+    The registry is what `list_models` enumerates, so a model missing from it is
+    invisible to Studio discovery, to the runtime-state conformance scope, and
+    to every consumer that derives a model set from the catalogue — no matter
+    how honestly the catalogue reports the models it does hold.
+
+    The neighbouring disk scan reads only ``neurons/models/``. Both classes in
+    :data:`UNREGISTERED_PUBLIC_NEURONS` live one directory up, which is why a
+    gate that looked complete never saw them.
+    """
+    import sc_neurocore.neurons as neurons_package
+    from sc_neurocore.neurons.base import BaseNeuron
+
+    exported = getattr(neurons_package, "__all__", None) or dir(neurons_package)
+    unregistered = sorted(
+        name
+        for name in exported
+        if not name.startswith("_")
+        and isinstance(getattr(neurons_package, name, None), type)
+        and issubclass(getattr(neurons_package, name), BaseNeuron)
+        and getattr(neurons_package, name) is not BaseNeuron
+        and name not in _CLASS_TO_MODULE
+    )
+
+    assert unregistered == sorted(UNREGISTERED_PUBLIC_NEURONS), (
+        "exported BaseNeuron subclasses outside the catalogue registry changed; "
+        f"found {unregistered}, recorded {sorted(UNREGISTERED_PUBLIC_NEURONS)}"
+    )
