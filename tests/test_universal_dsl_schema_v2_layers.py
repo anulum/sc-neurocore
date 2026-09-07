@@ -107,3 +107,52 @@ class TestSchemaV2Layers:
         )
         with pytest.raises(ValueError, match="not supported"):
             load_schema(bad)
+
+
+def test_loader_and_validator_agree_on_which_schema_versions_exist() -> None:
+    """Two modules hold this rule separately, so bind them before they drift.
+
+    `universal_dsl` refuses an unsupported version when loading and
+    `schema_validator` reports one when validating, each from its own literal.
+    They agree today by coincidence: admitting a version 3 in one and not the
+    other would let a schema load that validation refuses, or pass validation
+    and then fail to load.
+
+    Collapsing them into one constant is the real fix and is **not** done here:
+    25 facet receipts seal each of those two files, so the edit would invalidate
+    hardware verification evidence for a duplication that is latent rather than
+    active. This binds the two values until the next re-seal window, when the
+    constant can move for free.
+    """
+    from sc_neurocore.neurons.schema_validator import _SUPPORTED_VERSIONS
+    from sc_neurocore.neurons.universal_dsl import _SUPPORTED_SCHEMA_VERSIONS
+
+    assert set(_SUPPORTED_VERSIONS) == set(_SUPPORTED_SCHEMA_VERSIONS)
+
+
+def test_an_unsupported_version_is_refused_by_every_path(tmp_path: Path) -> None:
+    """A version outside the supported set is refused however a schema arrives."""
+    import tomli_w
+
+    from sc_neurocore.neurons.schema_validator import validate_schema_dict
+    from sc_neurocore.neurons.universal_dsl import (
+        _SUPPORTED_SCHEMA_VERSIONS,
+        UniversalNeuron,
+        load_schema,
+    )
+
+    unsupported = max(_SUPPORTED_SCHEMA_VERSIONS) + 1
+    schema = load_schema("lif")
+    schema = {**schema, "metadata": {**schema["metadata"], "schema_version": unsupported}}
+
+    errors = validate_schema_dict(schema, "unsupported.toml")
+    assert any(
+        error.level == "error" and "Unsupported schema version" in error.message for error in errors
+    )
+
+    path = tmp_path / "unsupported.toml"
+    path.write_text(tomli_w.dumps(schema), encoding="utf-8")
+    with pytest.raises(ValueError, match=f"Schema version {unsupported} is not supported"):
+        load_schema(path)
+    with pytest.raises(ValueError, match=f"Schema version {unsupported} is not supported"):
+        UniversalNeuron.from_schema(path)
