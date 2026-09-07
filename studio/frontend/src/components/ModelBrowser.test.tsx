@@ -11,7 +11,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ModelBehavior, ModelScanMetadata } from "../api/client";
-import { buildModelScanEvidenceItems, filterAndGroupModels } from "./ModelBrowser";
+import { CatalogueHealth, buildModelScanEvidenceItems, filterAndGroupModels } from "./ModelBrowser";
+import type { ModelFacets } from "../api/client";
 import type { ModelScanJobViewState } from "../modelScanJob";
 import { initialModelScanJobState } from "../modelScanJob";
 
@@ -405,5 +406,41 @@ describe("ModelBrowser", () => {
       behaviors: NONE,
     });
     expect(Object.values(grouped).flat().map((m) => m.name)).toEqual(["AdExNeuron"]);
+  });
+  it("says nothing about corpus health while every descriptor reads", () => {
+    const facets: ModelFacets = {
+      total: 3,
+      corpus_revision: "0123456789abcdef",
+      metadata_states: { available: 3, unavailable: 0, invalid: 0 },
+      invalid_models: [],
+      families: [],
+      maturities: {},
+      behaviors: [],
+    };
+
+    expect(renderToStaticMarkup(<CatalogueHealth facets={facets} />)).toBe("");
+  });
+
+  it("names the models whose metadata could not be read", () => {
+    const facets: ModelFacets = {
+      total: 3,
+      corpus_revision: "fedcba9876543210",
+      metadata_states: { available: 1, unavailable: 0, invalid: 2 },
+      invalid_models: ["AdExNeuron", "LIFNeuron"],
+      families: [],
+      maturities: {},
+      behaviors: [],
+    };
+
+    const markup = renderToStaticMarkup(<CatalogueHealth facets={facets} />);
+
+    expect(markup).toContain("2 of 3 models have unreadable metadata");
+    expect(markup).toContain("AdExNeuron");
+    expect(markup).toContain("LIFNeuron");
+    expect(markup).toContain('role="alert"');
+  });
+
+  it("renders nothing before the facets have loaded", () => {
+    expect(renderToStaticMarkup(<CatalogueHealth facets={null} />)).toBe("");
   });
 });

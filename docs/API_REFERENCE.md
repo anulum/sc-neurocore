@@ -36950,19 +36950,57 @@ dict
 Raised when Studio model metadata loading fails for a known model.
 
 
+### Function `corpus_revision(models)`
+Return a digest identifying the catalogue corpus and its health.
+
+Two clients holding the same revision hold the same identities in the same
+metadata states. The digest changes when a model is added or removed and
+when any entry's metadata state changes, so a client can tell a healthy
+corpus from a degraded one of the same size.
+
+Parameters
+----------
+models : list of dict
+    Catalogue entries as :func:`list_models` returns them.
+
+Returns
+-------
+str
+    A 16-character hexadecimal digest.
+
 ### Function `list_models()`
 Return declared metadata for every registered neuron model.
 
 Each entry is built from the model's committed descriptor (family, category,
 maturity, provenance, parameter and state counts). Models without a descriptor
-fall back to code introspection with an ``inferred`` category. Results are
-cached after the first call.
+fall back to code introspection with an ``inferred`` category and
+``metadata_state`` ``"unavailable"``.
+
+**Every registered model is returned.** A model whose metadata cannot be read
+is reported with ``metadata_state`` ``"invalid"`` and a ``metadata_error``,
+never dropped: an omitted row shows a smaller success count instead of a
+fault, and silently narrows every consumer that derives its scope from this
+list — the runtime-state conformance matrix among them.
+
+Results are cached after the first call.
+
+Returns
+-------
+list of dict
+    One entry per registered model, sorted by identity.
 
 ### Function `get_model_detail(name)`
 Return the full declared metadata view for a single model.
 
 ### Function `model_facets()`
-Return the catalogue facet taxonomy and counts for discovery UX.
+Return the catalogue facet taxonomy, counts, and corpus health.
+
+Returns
+-------
+dict
+    ``total`` registered identities, a ``corpus_revision`` digest, a
+    ``metadata_states`` census, the ``invalid_models`` by name, and the
+    family, maturity, behaviour and tier facets.
 
 ### Function `model_documentation(name)`
 Return the rendered reference documentation for a model, or ``None``.

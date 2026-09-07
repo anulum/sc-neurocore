@@ -159,6 +159,7 @@ nav:
       - Workspaces & Recovery: studio/workspaces.md
       - Onboarding Tour: studio/onboarding.md
       - Measured Behaviour Facet: studio/behaviour-facet.md
+      - Catalogue Health: studio/catalogue-health.md
       - Admin Identity & Audit: studio/admin-identity.md
       - OpenAPI Contract: api/studio_openapi.md
   - Tutorials:

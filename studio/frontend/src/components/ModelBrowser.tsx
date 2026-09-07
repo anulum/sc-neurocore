@@ -189,6 +189,39 @@ export function filterAndGroupModels<
 }
 
 /**
+ * Names the models whose metadata could not be read.
+ *
+ * Rendered only when the corpus is degraded. The catalogue lists an unreadable
+ * model rather than dropping it, so without this notice a fault would be
+ * visible only as an entry that refuses to open.
+ *
+ * @param facets - Catalogue facets, or `null` before they have loaded.
+ * @returns The notice, or `null` when the corpus reads cleanly.
+ */
+export function CatalogueHealth({ facets }: { facets: ModelFacets | null }) {
+    if (!facets || facets.invalid_models.length === 0) return null;
+    return (
+        <div
+            role="alert"
+            data-testid="catalogue-health"
+            style={{
+                marginBottom: 4,
+                padding: "3px 5px",
+                fontSize: 9,
+                fontFamily: "var(--font-mono)",
+                color: "var(--error, #c0392b)",
+                border: "1px solid var(--error, #c0392b)",
+                borderRadius: "var(--radius)",
+            }}
+            title={facets.invalid_models.join(", ")}
+        >
+            {facets.invalid_models.length} of {facets.total} models have unreadable
+            metadata and cannot be browsed: {facets.invalid_models.join(", ")}
+        </div>
+    );
+}
+
+/**
  * The catalogue panel: search, facets, scan, and the model list.
  *
  * @returns The panel.
@@ -339,6 +372,8 @@ export default function ModelBrowser() {
                         : ""}
                 </div>
             )}
+
+            <CatalogueHealth facets={facets} />
 
             {facets && (
                 <select
@@ -664,6 +699,25 @@ export default function ModelBrowser() {
                                                     .replace("Neuron", "")
                                                     .replace("Model", "")}
                                             </span>
+                                            {m.metadata_state !== "available" && (
+                                                <span
+                                                    data-testid={`model-metadata-state-${m.name}`}
+                                                    title={
+                                                        m.metadata_error ??
+                                                        "no committed descriptor; described by code introspection"
+                                                    }
+                                                    style={{
+                                                        marginLeft: 4,
+                                                        fontSize: 8,
+                                                        color:
+                                                            m.metadata_state === "invalid"
+                                                                ? "var(--error, #c0392b)"
+                                                                : "var(--text-muted)",
+                                                    }}
+                                                >
+                                                    [{m.metadata_state}]
+                                                </span>
+                                            )}
                                             <span
                                                 data-testid={`model-contract-${m.name}`}
                                                 style={{

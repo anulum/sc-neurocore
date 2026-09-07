@@ -337,6 +337,15 @@ export interface ModelProvenance {
 }
 
 /**
+ * Metadata health of one catalogue entry.
+ *
+ * `available` is a declared descriptor, `unavailable` a real model described by
+ * code introspection because no descriptor is committed, and `invalid` a model
+ * whose metadata could not be read at all.
+ */
+export type ModelMetadataState = "available" | "unavailable" | "invalid";
+
+/**
  * What the catalogue says about a model without loading its full contract.
  *
  * Enough to browse, filter and judge maturity by; not enough to run. Readiness
@@ -345,6 +354,16 @@ export interface ModelProvenance {
  */
 export interface ModelSummary {
   name: string; module: string; category: string;
+  /**
+   * Metadata health for this entry. `available` is a declared descriptor,
+   * `unavailable` a real model described by code introspection instead, and
+   * `invalid` a model whose metadata could not be read. An `invalid` entry is
+   * still listed: a catalogue that drops it reports a smaller success count
+   * rather than a fault.
+   */
+  metadata_state: ModelMetadataState;
+  /** Why the metadata could not be read, or `null` when it could. */
+  metadata_error: string | null;
   tier: number; evidence_kind: string;
   /** Dual-axis science readiness S0–S5 (catalogue contract). */
   science_tier: number;
@@ -460,7 +479,17 @@ export interface ModelDetail extends ModelSummary {
  * from the filters with it, rather than staying as an empty option.
  */
 export interface ModelFacets {
+  /** Every registered identity, so this does not move when a descriptor breaks. */
   total: number;
+  /**
+   * Digest over the identities and their metadata states. Two clients holding
+   * the same revision hold the same corpus in the same health.
+   */
+  corpus_revision: string;
+  /** How many entries are in each metadata state. */
+  metadata_states: Record<ModelMetadataState, number>;
+  /** The entries whose metadata could not be read, by name. */
+  invalid_models: string[];
   families: { family: string; category_slug: string; count: number }[];
   maturities: Record<string, number>;
   behaviors: { tag: string; count: number }[];

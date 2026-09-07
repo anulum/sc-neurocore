@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +42,16 @@ def _evidence_kind(tier: int) -> str:
     return ""
 
 
+#: Per-entry metadata health. ``available`` is a declared descriptor;
+#: ``unavailable`` is a real model whose descriptor is absent, described by code
+#: introspection instead; ``invalid`` is a model whose metadata could not be
+#: read at all. An ``invalid`` entry is still listed — a catalogue identity that
+#: vanishes on a metadata fault reports a smaller success count rather than a
+#: fault, and takes every list-scoped consumer's scope down with it.
+METADATA_STATE_AVAILABLE = "available"
+METADATA_STATE_UNAVAILABLE = "unavailable"
+METADATA_STATE_INVALID = "invalid"
+
 _models_cache: list[dict[str, Any]] | None = None
 
 
@@ -70,6 +81,8 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
     return {
         "name": descriptor.class_name,
         "module": descriptor.module,
+        "metadata_state": METADATA_STATE_AVAILABLE,
+        "metadata_error": None,
         "tier": tier,
         "evidence_kind": _evidence_kind(tier),
         "science_tier": tiers.science,
@@ -351,6 +364,8 @@ def _introspected_summary(name: str) -> dict[str, Any]:
     return {
         "name": name,
         "module": _CLASS_TO_MODULE[name],
+        "metadata_state": METADATA_STATE_UNAVAILABLE,
+        "metadata_error": None,
         "tier": 0,
         "evidence_kind": "",
         "science_tier": 0,
@@ -383,13 +398,109 @@ def _introspected_summary(name: str) -> dict[str, Any]:
     }
 
 
+def _unreadable_summary(name: str, reason: str) -> dict[str, Any]:
+    """Catalogue entry for a model whose metadata could not be read.
+
+    Carries the same keys as a healthy entry so every consumer keeps working on
+    a corpus with a fault in it, and states the fault rather than omitting the
+    row.
+
+    Parameters
+    ----------
+    name : str
+        The registered model identity.
+    reason : str
+        The failure, as the exception described it. Path-free: descriptor
+        loading reports the model, not the file it came from.
+
+    Returns
+    -------
+    dict
+        A catalogue entry with ``metadata_state`` ``"invalid"``.
+    """
+    return {
+        "name": name,
+        "module": _CLASS_TO_MODULE[name],
+        "metadata_state": METADATA_STATE_INVALID,
+        "metadata_error": reason,
+        "tier": 0,
+        "evidence_kind": "",
+        "science_tier": 0,
+        "science_label": "S0",
+        "silicon_tier": None,
+        "silicon_label": "none",
+        "verified_science_tier": 0,
+        "verified_science_label": "S0",
+        "verified_silicon_tier": None,
+        "verified_silicon_label": "none",
+        "verified_profile": None,
+        "validation_metric": "none",
+        "integration_method": "unknown",
+        "terminal_silicon_tier": "",
+        "terminal_reason": "Model metadata could not be read; no terminal silicon target known.",
+        "category": "unknown",
+        "category_slug": "",
+        "category_source": "unreadable",
+        "family": "unknown",
+        "maturity": "experimental",
+        "biophysical_detail": "point",
+        "n_state_vars": 0,
+        "n_params": 0,
+        "state_var_names": [],
+        "dt": None,
+        "description": "",
+        "intended_use": [],
+        "hardware_fit": [],
+        "behavior_tags": [],
+        "provenance": None,
+    }
+
+
+def corpus_revision(models: list[dict[str, Any]]) -> str:
+    """Return a digest identifying the catalogue corpus and its health.
+
+    Two clients holding the same revision hold the same identities in the same
+    metadata states. The digest changes when a model is added or removed and
+    when any entry's metadata state changes, so a client can tell a healthy
+    corpus from a degraded one of the same size.
+
+    Parameters
+    ----------
+    models : list of dict
+        Catalogue entries as :func:`list_models` returns them.
+
+    Returns
+    -------
+    str
+        A 16-character hexadecimal digest.
+    """
+    lines = sorted(
+        f"{entry['name']}:{entry['module']}:{entry['metadata_state']}" for entry in models
+    )
+    digest = hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+    return digest[:16]
+
+
 def list_models() -> list[dict[str, Any]]:
     """Return declared metadata for every registered neuron model.
 
     Each entry is built from the model's committed descriptor (family, category,
     maturity, provenance, parameter and state counts). Models without a descriptor
-    fall back to code introspection with an ``inferred`` category. Results are
-    cached after the first call.
+    fall back to code introspection with an ``inferred`` category and
+    ``metadata_state`` ``"unavailable"``.
+
+    **Every registered model is returned.** A model whose metadata cannot be read
+    is reported with ``metadata_state`` ``"invalid"`` and a ``metadata_error``,
+    never dropped: an omitted row shows a smaller success count instead of a
+    fault, and silently narrows every consumer that derives its scope from this
+    list — the runtime-state conformance matrix among them.
+
+    Results are cached after the first call.
+
+    Returns
+    -------
+    list of dict
+        One entry per registered model, sorted by identity.
     """
     global _models_cache
     if _models_cache is not None:
@@ -399,12 +510,14 @@ def list_models() -> list[dict[str, Any]]:
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
             descriptor = load_descriptor(name)
-            if descriptor is not None:
-                result.append(_descriptor_summary(descriptor))
-            else:
-                result.append(_introspected_summary(name))
-        except (TypeError, AttributeError, ValueError):
-            continue
+            entry = (
+                _descriptor_summary(descriptor)
+                if descriptor is not None
+                else _introspected_summary(name)
+            )
+        except (TypeError, AttributeError, ValueError) as exc:
+            entry = _unreadable_summary(name, f"{type(exc).__name__}: {exc}")
+        result.append(entry)
     _models_cache = result
     return result
 
@@ -435,7 +548,15 @@ def get_model_detail(name: str) -> dict[str, Any] | None:
 
 
 def model_facets() -> dict[str, Any]:
-    """Return the catalogue facet taxonomy and counts for discovery UX."""
+    """Return the catalogue facet taxonomy, counts, and corpus health.
+
+    Returns
+    -------
+    dict
+        ``total`` registered identities, a ``corpus_revision`` digest, a
+        ``metadata_states`` census, the ``invalid_models`` by name, and the
+        family, maturity, behaviour and tier facets.
+    """
     from collections import Counter
 
     models = list_models()
@@ -464,8 +585,25 @@ def model_facets() -> dict[str, Any]:
         {"tag": tag, "count": count}
         for tag, count in sorted(behavior_counts.items(), key=lambda item: (-item[1], item[0]))
     ]
+    metadata_states = {
+        METADATA_STATE_AVAILABLE: 0,
+        METADATA_STATE_UNAVAILABLE: 0,
+        METADATA_STATE_INVALID: 0,
+    }
+    for model in models:
+        metadata_states[str(model["metadata_state"])] += 1
     return {
         "total": len(models),
+        # ``total`` counts every registered identity, so it does not move when a
+        # descriptor breaks. The health census is what moves, and the offending
+        # models are named rather than left to be inferred from a count.
+        "corpus_revision": corpus_revision(models),
+        "metadata_states": metadata_states,
+        "invalid_models": sorted(
+            str(model["name"])
+            for model in models
+            if model["metadata_state"] == METADATA_STATE_INVALID
+        ),
         "families": families,
         "maturities": dict(sorted(maturity_counts.items())),
         "behaviors": behaviors,

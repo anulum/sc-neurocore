@@ -66,6 +66,7 @@ function modelSummary(overrides: Partial<ModelSummary> = {}): ModelSummary {
     terminal_reason: "No terminal silicon target declared.",
     category_slug: "point",
     category_source: "declared",
+    metadata_state: "available", metadata_error: null,
     family: "point",
     maturity: "experimental",
     biophysical_detail: "point",

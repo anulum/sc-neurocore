@@ -27,6 +27,7 @@ const modelDetail = {
   terminal_reason: "Point-neuron schema→RTL path; higher rungs need proof.",
   category_slug: "integrate-and-fire",
   category_source: "declared",
+  metadata_state: "available", metadata_error: null,
   family: "Integrate-and-Fire",
   maturity: "validated",
   biophysical_detail: "point",
