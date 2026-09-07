@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -379,3 +381,36 @@ def test_benchmark_evidence_gate_rejects_numeric_parity_mismatch(tmp_path: Path)
 
     assert report["passed"] is False
     assert any(failure["reason"] == "parity_group_mismatch" for failure in report["failures"])
+
+
+def test_committed_gate_report_states_what_the_gate_actually_finds() -> None:
+    """Bind the recorded report to a fresh run against the committed manifest.
+
+    Every other test here builds a synthetic manifest under ``tmp_path``. They
+    prove the mechanism and never ask the gate about this repository, which is
+    how the committed report came to assert ``passed: true`` while a real run
+    reported nineteen ``source_hash_mismatch`` failures. `tools/preflight.py`
+    does not refresh it either — it writes its own copy to a temporary
+    directory.
+
+    The assertion is equality, not a verdict: it does not pin how many failures
+    are acceptable, only that the recorded artefact says what the gate says.
+    """
+    tool = _load_tool()
+    repo_root = Path(__file__).resolve().parents[2]
+    artifact = repo_root / "benchmarks" / "results" / "benchmark_evidence_gate_report.json"
+
+    recorded = json.loads(artifact.read_text(encoding="utf-8"))
+
+    cwd = os.getcwd()
+    os.chdir(repo_root)
+    try:
+        with tempfile.TemporaryDirectory() as scratch:
+            fresh = tool.evaluate_benchmark_evidence_gate(
+                manifest_path=Path("benchmarks/benchmark_regression_gates.json"),
+                output_path=Path(scratch) / "report.json",
+            )
+    finally:
+        os.chdir(cwd)
+
+    assert recorded == fresh

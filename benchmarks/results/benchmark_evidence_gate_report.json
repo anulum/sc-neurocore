@@ -326,10 +326,106 @@
       "id": "sc-stochastic-rate-adaptation-multibackend-local-regression"
     }
   ],
-  "failure_count": 0,
-  "failures": [],
+  "failure_count": 19,
+  "failures": [
+    {
+      "gate_id": "expif-source-profile-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/exp_if.json->source_hashes.src/sc_neurocore/neurons/model_schemas/exp_if.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "expif-source-profile-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/exp_if.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/exp_if.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "expif-source-profile-multibackend-local-regression",
+      "path": "tests/test_model_expif_source_contract.py->source_hashes.tests/test_model_expif_source_contract.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "lapicque-exact-flow-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/lapicque.json->source_hashes.src/sc_neurocore/neurons/model_schemas/lapicque.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "lapicque-exact-flow-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/lapicque.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/lapicque.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "escape-rate-seeded-lfsr16-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/escape_rate.json->source_hashes.src/sc_neurocore/neurons/model_schemas/escape_rate.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "escape-rate-seeded-lfsr16-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/escape_rate.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/escape_rate.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "escape-rate-seeded-lfsr16-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/models/escape_rate.py->source_hashes.src/sc_neurocore/neurons/models/escape_rate.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "poisson-seeded-lfsr16-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/poisson.json->source_hashes.src/sc_neurocore/neurons/model_schemas/poisson.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "poisson-seeded-lfsr16-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/poisson.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/poisson.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "poisson-seeded-lfsr16-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/models/poisson.py->source_hashes.src/sc_neurocore/neurons/models/poisson.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "mcculloch-pitts-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml->source_hashes.src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "coba-lif-rk4-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/coba_lif.json->source_hashes.src/sc_neurocore/neurons/model_schemas/coba_lif.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "coba-lif-rk4-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/coba_lif.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/coba_lif.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "hodgkin-huxley-mojo-closure-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json->source_hashes.src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "hodgkin-huxley-mojo-closure-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "adex-five-backend-closure-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/adex.json->source_hashes.src/sc_neurocore/neurons/model_schemas/adex.json",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "adex-five-backend-closure-local-regression",
+      "path": "src/sc_neurocore/neurons/model_schemas/adex.toml->source_hashes.src/sc_neurocore/neurons/model_schemas/adex.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "sc-stochastic-rate-adaptation-multibackend-local-regression",
+      "path": "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py->source_hashes.python",
+      "reason": "source_hash_mismatch"
+    }
+  ],
   "gate_count": 81,
   "manifest": "benchmarks/benchmark_regression_gates.json",
-  "passed": true,
+  "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"
 }
