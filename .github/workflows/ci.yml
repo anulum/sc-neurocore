@@ -42,6 +42,11 @@ env:
   # Hosted CI installs and warms juliacall, so the Julia-lane import gate must
   # never skip here either (tests/julia_requirement.py).
   SC_NEUROCORE_REQUIRE_JULIA: "1"
+  # Hosted CI builds every Go and Mojo shared library, so the built-lane gate
+  # must never skip here: an unbuilt lane is a hard red rather than a skip
+  # (tests/native_lane_requirement.py).
+  SC_NEUROCORE_REQUIRE_GO: "1"
+  SC_NEUROCORE_REQUIRE_MOJO: "1"
 
 jobs:
   lint:

@@ -16,11 +16,13 @@ import shutil
 import subprocess
 from collections.abc import Callable, Iterator
 from pathlib import Path
+from types import ModuleType
 
 import numpy as np
 import pytest
 from filelock import FileLock
 
+from tests.native_lane_requirement import require_native_lane
 from tests.reload_guard import restore_first_party_reloads
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -140,3 +142,26 @@ def restore_first_party_module_identity() -> Iterator[None]:
     """
     with restore_first_party_reloads():
         yield
+
+
+@pytest.fixture(autouse=True)
+def require_built_native_lane(request: pytest.FixtureRequest) -> None:
+    """Skip a backend parametrisation whose lane was never built in this checkout.
+
+    A backend-parametrised test dispatches through the model's accelerator
+    module, which every such suite imports as ``backends``. Where that module
+    reports the lane unloadable, the lane was never built here and the case
+    would fail with ``<lane> backend is unavailable`` — a statement about the
+    toolchain wearing the shape of a defect in the model.
+
+    The gate is deliberately narrow: it fires only for a string ``backend``
+    parameter on a module that has a ``backends`` attribute, and only for the
+    lanes :mod:`tests.native_lane_requirement` covers. Hosted CI sets the
+    ``SC_NEUROCORE_REQUIRE_*`` switches, so a lane that fails to build there is
+    a hard error rather than a skip.
+    """
+    callspec = getattr(request.node, "callspec", None)
+    lane = callspec.params.get("backend") if callspec is not None else None
+    accel = getattr(request.module, "backends", None)
+    if isinstance(lane, str) and isinstance(accel, ModuleType):
+        require_native_lane(accel, lane, subject=request.module.__name__)
