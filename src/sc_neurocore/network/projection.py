@@ -133,10 +133,32 @@ class Projection:
     Parameters
     ----------
     delay : float, array-like, or 0
-        - 0: no delay (default)
-        - scalar > 0: uniform axonal delay (all synapses share one delay)
-        - 1-D array of length n_synapses: per-synapse delay in timesteps.
-          Enables heterogeneous axonal/synaptic delays.
+        Axonal delay **in timesteps**, not in milliseconds. The unit is the
+        integration step the network is run at, so the same number means a
+        different physical delay at a different ``dt``.
+
+        - 0: no delay (default).
+        - scalar > 0: uniform axonal delay, shared by every synapse.
+        - 1-D array of length ``n_synapses``: per-synapse delay, for
+          heterogeneous axonal delays.
+
+        A non-integral value is **rounded to the nearest whole step** —
+        half to even, so both ``1.5`` and ``2.5`` become 2 — and a positive
+        value below half a step still occupies one, because a spike that is
+        delayed at all cannot arrive in the step it was emitted. Read
+        :attr:`delay_steps` for what actually runs; ``delay`` keeps the value
+        that was asked for, and the two differ whenever the request was not a
+        whole number of steps.
+
+        The two forms round differently, which is stated rather than tidied
+        away: a **scalar** below half a step is floored at one, while the same
+        value in a **per-synapse array** rounds to zero. Changing either would
+        move existing runs, so both are pinned by tests instead.
+
+        The graph surface refuses a non-integral delay outright rather than
+        rounding. This facade rounds because it predates that rule and callers
+        depend on it; the difference is stated here rather than left to be
+        discovered.
     """
 
     TOPOLOGY_MAP = {
@@ -185,7 +207,13 @@ class Projection:
             self._post_trace = np.zeros(target.n, dtype=np.float64)
 
     def _init_delays(self, delay: float | np.ndarray[Any, Any]) -> None:
-        """Set up delay buffers based on delay specification."""
+        """Set up delay buffers from the delay specification.
+
+        Rounds a non-integral request to whole steps, half to even, and floors
+        a positive request at one step. Both are stated in the class docstring
+        and pinned by tests, because a delay that silently differs from the one
+        asked for is a run whose recorded parameters are not the ones it used.
+        """
         delay = np.atleast_1d(np.asarray(delay, dtype=np.float64)).flatten()
         n_synapses = len(self.data)
 
@@ -233,6 +261,34 @@ class Projection:
     def delay_mode(self) -> str:
         """Delay mode: 'none', 'uniform', or 'per_synapse'."""
         return self._delay_mode
+
+    @property
+    def delay_steps(self) -> int | np.ndarray[Any, Any]:
+        """The delay that actually runs, in whole timesteps.
+
+        ``delay`` holds what the caller asked for; this holds what the buffers
+        were built for. They differ whenever the request was not a whole number
+        of steps, and reading the wrong one is how a run gets recorded with a
+        delay it did not use.
+
+        Returns
+        -------
+        int or numpy.ndarray
+            The executed uniform delay, ``0`` when there is none, or the
+            per-synapse array.
+
+        Raises
+        ------
+        RuntimeError
+            When per-synapse delays were requested but never initialised.
+        """
+        if self._delay_mode == "none":
+            return 0
+        if self._delay_mode == "uniform":
+            return self._delay_steps_uniform
+        if self._per_syn_delays is None:
+            raise RuntimeError("Projection per-synapse delay state is not initialized")
+        return self._per_syn_delays
 
     @property
     def max_delay(self) -> int:

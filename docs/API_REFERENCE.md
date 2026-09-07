@@ -21391,10 +21391,32 @@ Synaptic projection from source to target population.
 Parameters
 ----------
 delay : float, array-like, or 0
-    - 0: no delay (default)
-    - scalar > 0: uniform axonal delay (all synapses share one delay)
-    - 1-D array of length n_synapses: per-synapse delay in timesteps.
-      Enables heterogeneous axonal/synaptic delays.
+    Axonal delay **in timesteps**, not in milliseconds. The unit is the
+    integration step the network is run at, so the same number means a
+    different physical delay at a different ``dt``.
+
+    - 0: no delay (default).
+    - scalar > 0: uniform axonal delay, shared by every synapse.
+    - 1-D array of length ``n_synapses``: per-synapse delay, for
+      heterogeneous axonal delays.
+
+    A non-integral value is **rounded to the nearest whole step** —
+    half to even, so both ``1.5`` and ``2.5`` become 2 — and a positive
+    value below half a step still occupies one, because a spike that is
+    delayed at all cannot arrive in the step it was emitted. Read
+    :attr:`delay_steps` for what actually runs; ``delay`` keeps the value
+    that was asked for, and the two differ whenever the request was not a
+    whole number of steps.
+
+    The two forms round differently, which is stated rather than tidied
+    away: a **scalar** below half a step is floored at one, while the same
+    value in a **per-synapse array** rounds to zero. Changing either would
+    move existing runs, so both are pinned by tests instead.
+
+    The graph surface refuses a non-integral delay outright rather than
+    rounding. This facade rounds because it predates that rule and callers
+    depend on it; the difference is stated here rather than left to be
+    discovered.
 
 - **__init__**(source, target, weight, probability, delay, topology, plasticity, seed, weight_threshold)
   - Create projection with CSR connectivity and optional delay/plasticity.
@@ -21402,6 +21424,8 @@ delay : float, array-like, or 0
   - Number of synaptic connections.
 - **delay_mode**()
   - Delay mode: 'none', 'uniform', or 'per_synapse'.
+- **delay_steps**()
+  - The delay that actually runs, in whole timesteps.
 - **max_delay**()
   - Maximum delay in timesteps across all synapses.
 - **propagate**(source_spikes)
