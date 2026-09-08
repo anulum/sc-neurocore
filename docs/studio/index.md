@@ -49,6 +49,13 @@ completion indicator; a subsequent successful run does. This applies to both
 catalogue models and custom ODEs. Visible historical results are not proof that
 the latest requested run succeeded.
 
+Asynchronous f-I, bifurcation, heatmap and sensitivity jobs likewise withdraw
+analysis completion while running or after failure, cancellation, timeout or
+request validation failure. Earlier plots remain available. A result arriving
+after the experiment changes is discarded rather than applied to the new
+configuration; completion requires a validated successful result for that
+configuration.
+
 ## Operator Workbench
 
 The first left-panel section is the operator workbench. It aggregates the live

@@ -45,6 +45,25 @@ export function simulationConfigInput(s: StudioState): StudioSimulationConfigInp
 }
 
 /**
+ * Derive an experiment identity or report invalid input without submitting.
+ *
+ * @param state - The current experiment configuration.
+ * @param set - Reports invalid configuration and withdraws completion evidence.
+ * @returns The key, or null when the configuration cannot be identified.
+ */
+function experimentKeyOrFailure(
+  state: StudioState,
+  set: (partial: Partial<StudioState>) => void,
+): string | null {
+  try {
+    return studioExperimentKey(simulationConfigInput(state));
+  } catch (error: unknown) {
+    set({ ...studioAnalysisFailureState(error), analysisExperimentKey: null });
+    return null;
+  }
+}
+
+/**
  * Run one heavy analysis as a job, and write its result into the store.
  *
  * These are the analyses that take long enough to need a job rather than a
@@ -79,23 +98,29 @@ export async function runStoreHeavyAnalysis(
     sweepParamY: s.sweepParamY,
   });
   if (!selection.ok) {
-    set(studioAnalysisFailureState(selection.error));
+    set({ ...studioAnalysisFailureState(selection.error), analysisExperimentKey: null });
     return;
   }
-  // The key is captured before the job starts, and every patch the runner
-  // applies carries it. A job that finishes after the reader has changed the
-  // experiment therefore records the experiment it actually ran, which is what
-  // stops the guided workflow counting it as an analysis of what is on screen.
-  const requestedKey = studioExperimentKey(simulationConfigInput(s));
+  // Only a successful result patch may attest this experiment. Start/failure
+  // patches must not relabel a historical result as a newly completed analysis.
+  const requestedKey = experimentKeyOrFailure(s, set);
+  if (requestedKey === null) return;
   const outcome = await runStudioAnalysisJob(
     { simulation: simulationConfigInput(s), selection: selection.selection },
     {
       applyPatch: (patch) => {
-        set({ ...patch, analysisExperimentKey: requestedKey });
+        if (experimentKeyOrFailure(get(), set) !== requestedKey) {
+          if (!patch.isSimulating) set({ isSimulating: false });
+          return;
+        }
+        // The result sink clears error and ends the run only after validation;
+        // start patches are busy, and failure patches carry a non-null error.
+        const completed = !patch.isSimulating && "error" in patch && patch.error === null;
+        set({ ...patch, analysisExperimentKey: completed ? requestedKey : null });
       },
     },
   );
   if (!outcome.ok && outcome.stage === "request") {
-    set(studioAnalysisFailureState(outcome.error));
+    set({ ...studioAnalysisFailureState(outcome.error), analysisExperimentKey: null });
   }
 }
