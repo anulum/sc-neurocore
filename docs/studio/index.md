@@ -8,6 +8,20 @@ neural network lifecycle: design neuron models, build networks, train with
 surrogate gradients, compile to SystemVerilog, and synthesise to FPGA — all
 from a single browser tab.
 
+## Share links
+
+**Share** copies a link carrying the selected model, the current, the duration
+and the protocol. Opening it applies them: the Studio waits for the catalogue,
+then selects the model the link names.
+
+A link can outlive the name it carries — the corpus renames identities and holds
+an alias of another model — so a link naming a model this catalogue does not
+hold **says which name failed** rather than opening the default Studio silently.
+
+Until this was wired the link was produced and never read: `Share` put a URL on
+the clipboard and nothing applied it, so a colleague opening one saw the default
+Studio with no sign the link had carried anything.
+
 ## First-Time Onboarding
 
 On first visit, an 8-step guided tour introduces the key features:

@@ -18,6 +18,8 @@ import {
   type StudioGraphSnapshot,
 } from "../studioGraphHistory";
 import type { PopulationNode, ProjectionEdge } from "../api/client";
+import { readStudioStartupHashState } from "../studioStartupRuntime";
+import { studioShareLinkDecision } from "../shareLinkApplication";
 import {
   fetchTemplates,
   fetchModels,
@@ -1762,6 +1764,31 @@ export function createStudioStoreActions(
     const nextState = studioSavedSessionRemovedState(get().savedSessions, name);
     set(nextState);
     writeStoredStudioSessions(nextState.savedSessions);
+  },
+
+  applyShareLink: async () => {
+    // The Share button has always produced a link. Nothing ever read one back:
+    // `readStudioStartupHashState` had no caller outside its own test, so a
+    // colleague opening the link got the default Studio and no indication that
+    // the link had carried anything. A link handed out that does nothing is
+    // worse than no link, because the button promises otherwise.
+    //
+    // The judgement lives in `studioShareLinkDecision`; this only carries it out.
+    const decision = studioShareLinkDecision(
+      readStudioStartupHashState(),
+      get().models.map((model) => model.name),
+    );
+    if (decision.kind === "none") return;
+    if (decision.kind === "unknown-model") {
+      set({ error: decision.message });
+      return;
+    }
+    set({
+      current: decision.current,
+      duration: decision.duration,
+      protocol: decision.protocol,
+    });
+    await get().selectModel(decision.modelName);
   },
 
   shareURL: () => {

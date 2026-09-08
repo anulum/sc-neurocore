@@ -81,6 +81,8 @@ export default function App() {
   const evidenceSession = useEvidenceCartSession();
   const s = useStudioStore();
   const { loadCapabilities, loadAuditStatus, loadAuthSession, loadOperatorStatus, loadPresets } = s;
+  const { applyShareLink } = s;
+  const modelCount = s.models.length;
   const vars = s.result ? Object.keys(s.result.states) : [];
   const hasPhase = vars.length >= 2;
   const hasISI = s.result?.stats.isi_histogram != null;
@@ -325,6 +327,14 @@ export default function App() {
     void loadOperatorStatus();
     void loadPresets();
   }, [loadAuditStatus, loadAuthSession, loadCapabilities, loadOperatorStatus, loadPresets]);
+
+  // A share link is applied after the catalogue has loaded, because the link
+  // names a model and the store has to be able to say whether this catalogue
+  // holds it. Before this the Share button produced links that nothing read.
+  useEffect(() => {
+    if (modelCount === 0) return;
+    void applyShareLink();
+  }, [applyShareLink, modelCount]);
 
   // Keyboard shortcuts
   useEffect(() => {

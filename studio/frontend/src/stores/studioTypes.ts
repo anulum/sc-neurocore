@@ -336,6 +336,14 @@ export interface StudioState {
    * thing that can: there is nothing to keep otherwise.
    */
   keepRefusedEdit: () => Promise<void>;
+  /**
+   * Apply the workspace a share link was opened with.
+   *
+   * A no-op without a link. When the link names a model this catalogue does
+   * not hold — the corpus renames identities — it says so rather than
+   * selecting nothing.
+   */
+  applyShareLink: () => Promise<void>;
   loadProjectFromServer: (name: string, revision?: number | null) => Promise<void>;
   listServerProjects: () => Promise<void>;
   deleteServerProject: (name: string) => Promise<void>;

@@ -28,23 +28,21 @@ function sourceFiles(dir: string): string[] {
 }
 
 /**
- * Inline `transition:` / `animation:` declarations written in a `style` prop.
+ * How many inline `transition:` / `animation:` declarations each file holds.
  *
- * One entry per declaration, not per line: two on one line must count twice,
- * or a second motion site hides behind the first.
+ * Counted per declaration, not per line, so a second one on an existing line
+ * cannot hide behind the first — and keyed by file rather than by line, so an
+ * unrelated edit above a motion site is not a failure. The first version of
+ * this pin carried line numbers and broke when a hook was added elsewhere in
+ * `App.tsx`, which is noise, not a finding.
  */
-function inlineMotionSites(): string[] {
-  return sourceFiles(SRC)
-    .flatMap((path) =>
-      readFileSync(path, "utf8")
-        .split("\n")
-        .flatMap((line, index) =>
-          Array.from(line.matchAll(/\b(transition|animation):\s*"/g)).map(
-            (match) => `${path.slice(SRC.length)}:${index + 1}:${match.index}`,
-          ),
-        ),
-    )
-    .sort();
+function inlineMotionSites(): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const path of sourceFiles(SRC)) {
+    const found = [...readFileSync(path, "utf8").matchAll(/\b(transition|animation):\s*"/g)];
+    if (found.length > 0) counts[path.slice(SRC.length)] = found.length;
+  }
+  return counts;
 }
 
 describe("reduced motion", () => {
@@ -70,10 +68,10 @@ describe("reduced motion", () => {
   it("pins the inline motion sites so a new one is a deliberate choice", () => {
     // Not a style rule: these are the declarations a stylesheet can only reach
     // with `!important`. A new one should be seen, not absorbed silently.
-    expect(inlineMotionSites()).toEqual([
-      "App.tsx:528:31",
-      "components/SynthesisDashboard.tsx:43:27",
-      "components/TrainingMonitor.tsx:106:96",
-    ]);
+    expect(inlineMotionSites()).toEqual({
+      "App.tsx": 1,
+      "components/SynthesisDashboard.tsx": 1,
+      "components/TrainingMonitor.tsx": 1,
+    });
   });
 });
