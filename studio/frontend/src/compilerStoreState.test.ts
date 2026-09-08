@@ -212,6 +212,9 @@ describe("compiler store state helpers", () => {
     });
     expect(compilerCosimInvalidatedState()).toEqual({ cosimResult: null });
     expect(compilerConfigurationInvalidatedState()).toEqual({
+      svSource: "",
+      irText: "",
+      irErrors: [],
       compileEvidenceBundle: null,
       compileEvidenceBundleError: null,
       compileTraceability: null,

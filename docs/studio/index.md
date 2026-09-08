@@ -56,6 +56,13 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Changing compiler inputs invalidates both generated RTL producers (Verilog and
+SystemVerilog), generated IR and its diagnostics. Starting a new generation
+also withdraws the previous source, preventing old SV from overriding fresh
+Verilog in synthesis. IR build remains busy through SV emission and publishes
+the completed pair together; failed or obsolete emission does not restore an
+earlier source. IR validation errors remain visible without emitting SV.
+
 Verilog compilation and selected-model co-simulation reject duplicate starts
 while busy and discard responses for changed request inputs. A new compile
 withdraws its previous RTL/traceability and dependent evidence; a co-simulation

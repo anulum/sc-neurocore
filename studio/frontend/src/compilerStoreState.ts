@@ -57,6 +57,9 @@ export interface CompilerCosimLoadedStatePatch {
 
 /** The configuration changed, so the RTL it produced no longer applies. */
 export interface CompilerConfigurationInvalidatedStatePatch {
+  svSource: "";
+  irText: "";
+  irErrors: string[];
   compileEvidenceBundle: null;
   compileEvidenceBundleError: null;
   compileTraceability: null;
@@ -166,6 +169,9 @@ export function compilerCosimLoadedState(
  */
 export function compilerConfigurationInvalidatedState(): CompilerConfigurationInvalidatedStatePatch {
   return {
+    svSource: "",
+    irText: "",
+    irErrors: [],
     compileEvidenceBundle: null,
     compileEvidenceBundleError: null,
     compileTraceability: null,

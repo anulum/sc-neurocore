@@ -55,9 +55,6 @@ import {
   fetchMultiSimulate,
   importTrace,
   simulateNetwork,
-  buildIR,
-  emitSV,
-  emitSVDirect,
   fetchSynthTools,
   runSynthesis as apiRunSynthesis,
   runSynthesisTerminal as apiRunSynthesisTerminal,
@@ -266,14 +263,8 @@ import {
   synthesisToolStatusLoadedState,
 } from "../synthesisStoreState";
 import {
-  compilerErrorState,
-  compilerFailureState,
   compilerConfigurationInvalidatedState,
   compilerCosimInvalidatedState,
-  compilerIRLoadedState,
-  compilerRunStartState,
-  compilerSVDirectLoadedState,
-  compilerSVLoadedState,
 } from "../compilerStoreState";
 import {
   modelDetailLoadedState,
@@ -1005,37 +996,9 @@ export function createStudioStoreActions(
     if (state !== null) set(state);
   },
 
-  runBuildIR: async () => {
-    const s = get();
-    if (s.sourceMode !== "ode") { set(compilerErrorState("IR build requires ODE mode")); return; }
-    set(compilerRunStartState("ir"));
-    try {
-      const cfg = {
-        equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
-        params: s.odeParams, dt: s.dt,
-      };
-      const result = await buildIR(cfg);
-      set(compilerIRLoadedState(result));
-      if (result.errors.length === 0) {
-        const sv = await emitSV(result.ir_text);
-        set(compilerSVLoadedState(sv));
-      }
-    } catch (e) { set(compilerFailureState(e)); }
-  },
+  runBuildIR: () => runStoreCompile("ir", get, set),
 
-  runEmitSV: async () => {
-    const s = get();
-    if (s.sourceMode !== "ode") { set(compilerErrorState("SV emit requires ODE mode")); return; }
-    set(compilerRunStartState("ir"));
-    try {
-      const result = await emitSVDirect({
-        equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
-        params: s.odeParams,
-        init: s.odeInit,
-      });
-      set(compilerSVDirectLoadedState(result));
-    } catch (e) { set(compilerFailureState(e)); }
-  },
+  runEmitSV: () => runStoreCompile("sv", get, set),
 
   setSynthTarget: (t) => { set(synthesisTargetState(t)); },
 

@@ -6,13 +6,17 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Compile and co-simulation request ownership
 
-import { compileModelVerilog, compileVerilog, cosimModelVerilog } from "../api/client";
+import { buildIR, emitSV, emitSVDirect, compileModelVerilog, compileVerilog, cosimModelVerilog } from "../api/client";
 import { canonicalSealText } from "../evidenceSeal";
 import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
 import { compilerConfigurationInvalidatedState, compilerCosimInvalidatedState,
   compilerCosimLoadedState, compilerFailureState, compilerRunStartState,
-  compilerVerilogLoadedState } from "../compilerStoreState";
+  compilerVerilogLoadedState, compilerIRLoadedState, compilerSVLoadedState,
+  compilerSVDirectLoadedState } from "../compilerStoreState";
 import type { StudioState } from "./studioTypes";
+
+/** Compiler entry points sharing exclusive request ownership. */
+type Operation = "compile" | "cosim" | "ir" | "sv";
 
 /**
  * Resolve a request without sending it.
@@ -21,7 +25,24 @@ import type { StudioState } from "./studioTypes";
  * @param operation - Compile or parity operation.
  * @returns Request identity and deferred execution.
  */
-function plan(state: StudioState, operation: "compile" | "cosim") {
+function plan(state: StudioState, operation: Operation) {
+  if (operation === "ir" || operation === "sv") {
+    if (state.sourceMode !== "ode") throw new Error("IR/SV generation requires ODE mode");
+    const system = { equations: state.equations, threshold: state.threshold || null,
+      reset: state.reset || null, params: state.odeParams };
+    if (operation === "sv") {
+      const request = { ...system, init: state.odeInit };
+      return { key: canonicalSealText({ operation, request }),
+        execute: async () => compilerSVDirectLoadedState(await emitSVDirect(request)) };
+    }
+    const request = { ...system, dt: state.dt };
+    return { key: canonicalSealText({ operation, request }), execute: async () => {
+      const ir = await buildIR(request);
+      const patch = compilerIRLoadedState(ir);
+      if (ir.errors.length > 0) return patch;
+      return { ...patch, ...compilerSVLoadedState(await emitSV(ir.ir_text)) };
+    } };
+  }
   const input = { dt: state.dt, integrator: state.modelIntegrator,
     modelDetail: state.modelDetail, modelParams: state.modelParams,
     qFormat: state.modelQFormat, selectedModelName: state.selectedModelName };
@@ -54,24 +75,26 @@ function plan(state: StudioState, operation: "compile" | "cosim") {
  * @param set - Apply patches without replacing unrelated state.
  */
 export async function runStoreCompile(
-  operation: "compile" | "cosim", get: () => StudioState,
+  operation: Operation, get: () => StudioState,
   set: (patch: Partial<StudioState>) => void,
 ): Promise<void> {
   const state = get();
   if (state.isSimulating) return;
-  set({ ...(operation === "compile" ? compilerConfigurationInvalidatedState() : compilerCosimInvalidatedState()),
-    ...compilerRunStartState("verilog") });
+  set({ ...(operation === "cosim" ? compilerCosimInvalidatedState() : compilerConfigurationInvalidatedState()),
+    ...compilerRunStartState(operation === "ir" || operation === "sv" ? "ir" : "verilog") });
   let requestedKey: string | null = null;
   try {
     const request = plan(state, operation);
     requestedKey = request.key;
     const patch = await request.execute();
-    if (plan(get(), operation).key !== requestedKey) { set({ isSimulating: false }); return; }
+    if (get().sourceMode !== state.sourceMode || plan(get(), operation).key !== requestedKey) {
+      set({ isSimulating: false }); return;
+    }
     set(patch);
   } catch (error: unknown) {
     let failure = error;
     try {
-      if (requestedKey !== null && plan(get(), operation).key !== requestedKey) {
+      if (requestedKey !== null && (get().sourceMode !== state.sourceMode || plan(get(), operation).key !== requestedKey)) {
         set({ isSimulating: false }); return;
       }
     } catch (currentInputError: unknown) { failure = currentInputError; }
