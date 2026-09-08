@@ -10,11 +10,12 @@ import type { StudioState } from "./stores/studioTypes";
 import type { StudioAnalysisJobIntegrationPatch } from "./useStudioAnalysisJobIntegration";
 
 /**
- * Apply panel-owned evidence without releasing a store-owned request.
+ * Apply panel-owned evidence without altering store-owned request diagnostics.
  *
  * Panel jobs track busy state in their own session. Shared result sinks also
- * serve exclusive store actions, so their isSimulating patch is not owned here.
- * Read and preserve the live value synchronously, not a render-time snapshot.
+ * serve exclusive store actions, so their isSimulating/error patches are not
+ * owned here. Panel failures remain in the panel session's own error state.
+ * Preserve live values synchronously, not a render-time snapshot.
  *
  * @param patch - Validated panel result or diagnostic and context keys.
  * @param get - Read live store request state.
@@ -24,5 +25,6 @@ export function applyStudioPanelAnalysisPatch(
   patch: StudioAnalysisJobIntegrationPatch,
   get: () => StudioState, set: (patch: Partial<StudioState>) => void,
 ): void {
-  set({ ...patch, isSimulating: get().isSimulating });
+  const state = get();
+  set({ ...patch, isSimulating: state.isSimulating, error: state.error });
 }

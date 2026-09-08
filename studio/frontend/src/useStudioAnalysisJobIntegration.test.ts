@@ -346,4 +346,23 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
     expect(useStudioStore.getState().isSimulating).toBe(false);
     expect(useStudioStore.getState().result).not.toBeNull();
   });
+
+  it.each(["completed", "failed", "malformed"] as const)("preserves simulation diagnostics alongside a %s panel job", async (status) => {
+    vi.useFakeTimers();
+    useStudioStore.setState(modelInput);
+    vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>().mockRejectedValue(new Error("Simulation failure")));
+    const api: AnalysisJobApi = { submit: async () => receipt(),
+      fetchJob: async () => jobRecord({ status: status === "failed" ? "failed" : "completed",
+        result: status === "completed" ? { ...fiResult } : null,
+        error: status === "failed" ? "Panel failure" : null }) };
+    mountHook(baseInput, { applyPatch: (patch) => { applyStudioPanelAnalysisPatch(patch, useStudioStore.getState, useStudioStore.setState); }, hookOptions: { api, pollIntervalMs: 10 } });
+    act(() => { if (latest?.request.ok) latest.startJob(latest.request.value); });
+    await act(async () => { await useStudioStore.getState().runSimulation(); });
+    expect(useStudioStore.getState().error).toBe("Simulation failure");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30); });
+    expect(latest?.state.phase).toBe(status);
+    expect(useStudioStore.getState().error).toBe("Simulation failure");
+    if (status === "completed") expect(latest?.state.error).toBeNull();
+    else expect(latest?.state.error).not.toBeNull();
+  });
 });

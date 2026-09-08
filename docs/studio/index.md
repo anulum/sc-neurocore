@@ -76,6 +76,8 @@ context. Malformed or failed jobs can be retried without reloading the Studio.
 
 Panel jobs track their own busy state. Their completion does not release the
 busy flag of a simulation or compiler request still running in the workspace.
+It also cannot clear that request's error message. Panel failures and malformed
+results remain visible in the panel's own job status independently.
 
 A new catalogue-model co-simulation, or a change to its current input, withdraws the
 prior model synthesis qualification and synthesis job handles immediately.
