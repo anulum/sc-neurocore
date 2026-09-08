@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Evidence exports use independent admin, project, compile and synthesis slots.
+A rerun withdraws the previous bundle from that slot; duplicate pending exports
+are refused, while different slots may run concurrently. A scoped response for
+changed project/compiler/job context is discarded, including changes during
+operator refresh. Admin exports are independent of the selected experiment.
+
 Synchronous synthesis, multi-target, terminal and place-and-route API responses
 include `studio_job_receipt` (`studio.job-receipt.v1`). It names the exact
 completed job and its artifact paths, byte sizes and SHA-256 digests. This is

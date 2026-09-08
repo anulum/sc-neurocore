@@ -28,7 +28,6 @@ import {
   fetchPreset,
   fetchStudioAuthSession,
   createStudioAuditQuarantineArchive,
-  createStudioEvidenceBundle,
   fetchStudioIdentityServiceAccounts,
   fetchStudioAuditQuarantineArchiveRetention,
   fetchStudioAuditExport,
@@ -229,13 +228,7 @@ import {
   trainingWeightRestoreVerificationStartState,
 } from "../trainingStoreState";
 import {
-  adminEvidenceBundleCreatedState,
-  adminEvidenceBundleFailureState,
-  adminEvidenceBundleLoadingState,
   evidenceBundleArtifactDownloadPlan,
-  scopedEvidenceBundleCreatedState,
-  scopedEvidenceBundleFailureState,
-  scopedEvidenceBundleLoadingState,
 } from "../evidenceBundles";
 import {
   adminBusyState,
@@ -309,6 +302,7 @@ import {
 import { studioExperimentKey, studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 import { runStoreCompile } from "./studioCompile";
 import { runStoreSynthesis } from "./studioSynthesis";
+import { runStoreBundle } from "./studioBundle";
 
 /**
  * The graph the store currently holds, as a history snapshot.
@@ -633,36 +627,8 @@ export function createStudioStoreActions(
       set(auditFailureState(error, "Audit archive retention purge failed"));
     }
   },
-  createEvidenceBundle: async (request) => {
-    set(adminEvidenceBundleLoadingState());
-    try {
-      const evidenceBundle = await createStudioEvidenceBundle(request);
-      const [operatorStatus, jobList] = await Promise.all([
-        fetchStudioOperatorStatus(),
-        fetchStudioJobs(),
-      ]);
-      set(adminEvidenceBundleCreatedState(evidenceBundle, operatorStatus, jobList));
-    } catch (error: unknown) {
-      set(adminEvidenceBundleFailureState(error));
-    }
-  },
-  createEvidenceBundleForSurface: async (surface, request) => {
-    if (surface === "admin") {
-      await get().createEvidenceBundle(request);
-      return;
-    }
-    set(scopedEvidenceBundleLoadingState(surface));
-    try {
-      const evidenceBundle = await createStudioEvidenceBundle(request);
-      const [operatorStatus, jobList] = await Promise.all([
-        fetchStudioOperatorStatus(),
-        fetchStudioJobs(),
-      ]);
-      set(scopedEvidenceBundleCreatedState(surface, evidenceBundle, operatorStatus, jobList));
-    } catch (error: unknown) {
-      set(scopedEvidenceBundleFailureState(surface, error));
-    }
-  },
+  createEvidenceBundle: (request) => runStoreBundle("admin", request, get, set),
+  createEvidenceBundleForSurface: (surface, request) => runStoreBundle(surface, request, get, set),
   downloadEvidenceBundleArtifact: async (relativePath) => {
     await get().downloadEvidenceBundleArtifactForSurface("admin", relativePath);
   },
