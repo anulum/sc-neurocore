@@ -5,7 +5,8 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio evidence bundle helper tests
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 
 import type {
   StudioAuditStatus,
@@ -33,7 +34,8 @@ import {
 
 const bundle: StudioEvidenceBundleResponse = {
   artifact_paths: ["evidence/manifest.json"],
-  artifacts: [],
+  artifacts: [{ relative_path: "evidence/manifest.json", size_bytes: 8,
+    sha256: createHash("sha256").update("manifest").digest("hex") }],
   bundle_id: "seb_project",
   job_id: "sj_bundle",
   manifest: {},
@@ -281,10 +283,10 @@ describe("evidence bundle surface helpers", () => {
     ).toEqual({ compileEvidenceBundleError: "missing artifact" });
   });
 
-  it("plans an evidence artifact download with scoped state patches", () => {
+  it("plans an evidence artifact download with scoped state patches", async () => {
     const plan = evidenceBundleArtifactDownloadPlan(
       "project",
-      "evidence/jobs/sj_bundle/artifacts/manifest.json",
+      "evidence/manifest.json",
       {
         compileEvidenceBundle: null,
         evidenceBundle: null,
@@ -300,19 +302,19 @@ describe("evidence bundle surface helpers", () => {
 
     const downloads: { payload: Blob; relativePath: string }[] = [];
     const payload = new Blob(["manifest"], { type: "application/json" });
-    plan.writePayload(payload, (downloadedPayload, relativePath) => {
+    await plan.writePayload(payload, (downloadedPayload, relativePath) => {
       downloads.push({ payload: downloadedPayload, relativePath });
     });
 
     expect(plan.jobId).toBe("sj_bundle");
-    expect(plan.relativePath).toBe("evidence/jobs/sj_bundle/artifacts/manifest.json");
+    expect(plan.relativePath).toBe("evidence/manifest.json");
     expect(plan.startState).toEqual({ projectEvidenceBundleError: null });
     expect(plan.failureState(new Error("download failed"))).toEqual({
       projectEvidenceBundleError: "download failed",
     });
     expect(downloads).toEqual([{
       payload,
-      relativePath: "evidence/jobs/sj_bundle/artifacts/manifest.json",
+      relativePath: "evidence/manifest.json",
     }]);
   });
 
@@ -334,5 +336,34 @@ describe("evidence bundle surface helpers", () => {
         evidenceBundleError: "No evidence bundle is available for artifact download.",
       },
     });
+  });
+
+  it.each(["short", "tampered"])("does not save corrupt artifact bytes: %s", async (contents) => {
+    const plan = evidenceBundleArtifactDownloadPlan("admin", "evidence/manifest.json", {
+      evidenceBundle: bundle, projectEvidenceBundle: null, compileEvidenceBundle: null, synthesisEvidenceBundle: null,
+    });
+    if (!plan.available) throw new Error("Expected declared artifact plan");
+    const save = vi.fn();
+    await expect(plan.writePayload(new Blob([contents]), save)).rejects.toThrow();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("refuses paths not declared in the bundle", () => {
+    const plan = evidenceBundleArtifactDownloadPlan("admin", "evidence/not-declared.json", {
+      evidenceBundle: bundle, projectEvidenceBundle: null, compileEvidenceBundle: null, synthesisEvidenceBundle: null,
+    });
+    expect(plan.available).toBe(false);
+  });
+
+  it("refuses ambiguous or malformed artifact metadata before fetching", () => {
+    const artifact = bundle.artifacts[0];
+    if (!artifact) throw new Error("Missing declared test artifact");
+    for (const artifacts of [[artifact, artifact], [{ ...artifact, sha256: "wrong" }],
+      [{ ...artifact, size_bytes: -1 }], [{ ...artifact, size_bytes: 1.5 }]]) {
+      expect(evidenceBundleArtifactDownloadPlan("admin", artifact.relative_path, {
+        evidenceBundle: { ...bundle, artifacts }, projectEvidenceBundle: null,
+        compileEvidenceBundle: null, synthesisEvidenceBundle: null,
+      }).available).toBe(false);
+    }
   });
 });

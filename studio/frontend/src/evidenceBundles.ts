@@ -42,6 +42,7 @@ import type {
   StudioOperatorStatus,
 } from "./api/client";
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
+import { sha256Blob } from "./trainingRestore";
 
 /** Which part of the Studio a bundle is about. */
 export type EvidenceBundleSurface = "admin" | "project" | "compile" | "synthesis";
@@ -112,7 +113,7 @@ export interface EvidenceBundleArtifactDownloadReadyPlan {
   jobId: string;
   relativePath: string;
   startState: EvidenceBundleDownloadStatePatch;
-  writePayload: (payload: Blob, downloader?: EvidenceBundleArtefactDownloader) => void;
+  writePayload: (payload: Blob, downloader?: EvidenceBundleArtefactDownloader) => Promise<void>;
 }
 
 /** A download that can proceed, or a refusal that says why not. */
@@ -409,13 +410,32 @@ export function evidenceBundleArtifactDownloadPlan(
       statePatch: evidenceBundleArtifactUnavailableState(surface),
     };
   }
+  const candidates: unknown[] = Array.isArray(bundle.artifacts) ? bundle.artifacts : [];
+  const matches = candidates.filter((item) => item !== null && typeof item === "object"
+    && "relative_path" in item && item.relative_path === relativePath);
+  const artifact = matches[0];
+  if (!Array.isArray(bundle.artifact_paths) || !bundle.artifact_paths.includes(relativePath)
+    || relativePath.includes("\\") || relativePath.includes("\0")
+    || relativePath.split("/").some((part) => part === "" || part === "." || part === "..")
+    || typeof bundle.job_id !== "string" || !/^sj_[A-Za-z0-9_-]+$/.test(bundle.job_id)
+    || matches.length !== 1 || artifact === null || typeof artifact !== "object"
+    || !("sha256" in artifact) || typeof artifact.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(artifact.sha256)
+    || !("size_bytes" in artifact) || typeof artifact.size_bytes !== "number"
+    || !Number.isSafeInteger(artifact.size_bytes) || artifact.size_bytes < 0) {
+    return { available: false, statePatch: evidenceBundleDownloadErrorState(surface,
+      "Artifact is not uniquely declared with valid size and SHA-256 metadata.") };
+  }
+  const expectedSize = artifact.size_bytes;
+  const expectedHash = artifact.sha256;
   return {
     available: true,
     failureState: (error) => evidenceBundleArtifactDownloadFailureState(surface, error),
     jobId: bundle.job_id,
     relativePath,
     startState: evidenceBundleArtifactDownloadStartState(surface),
-    writePayload: (payload, downloader = downloadBrowserArtefact) => {
+    writePayload: async (payload, downloader = downloadBrowserArtefact) => {
+      if (payload.size !== expectedSize) throw new Error("Evidence artifact size mismatch");
+      if (await sha256Blob(payload) !== expectedHash) throw new Error("Evidence artifact SHA-256 mismatch");
       downloader(payload, relativePath);
     },
   };

@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Evidence artifact downloads require a unique declared path, valid byte size and
+SHA-256 in the bundle metadata. The client checks the fetched bytes before
+starting the browser save; missing metadata, truncation or digest mismatch is
+reported on that export's slot and no file is saved. This checks byte integrity
+against the received bundle metadata, not independent scientific authenticity.
+
 Evidence exports use independent admin, project, compile and synthesis slots.
 A rerun withdraws the previous bundle from that slot; duplicate pending exports
 are refused, while different slots may run concurrently. A scoped response for

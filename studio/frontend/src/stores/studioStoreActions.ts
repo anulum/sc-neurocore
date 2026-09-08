@@ -641,7 +641,7 @@ export function createStudioStoreActions(
     set(downloadPlan.startState);
     try {
       const payload = await fetchStudioJobArtifact(downloadPlan.jobId, downloadPlan.relativePath);
-      downloadPlan.writePayload(payload);
+      await downloadPlan.writePayload(payload);
     } catch (error: unknown) {
       set(downloadPlan.failureState(error));
     }
