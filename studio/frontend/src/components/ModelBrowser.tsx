@@ -308,7 +308,9 @@ export default function ModelBrowser() {
                         color: "var(--text-primary)",
                         border: "1px solid var(--control-border)",
                         borderRadius: "var(--radius)",
-                        outline: "none",
+                        // No inline `outline: none` here: an inline style beats
+                        // the stylesheet, so it removed the focus ring that
+                        // `input:focus-visible` puts back.
                         fontFamily: "var(--font-mono)",
                     }}
                 />

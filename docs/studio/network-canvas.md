@@ -168,6 +168,17 @@ effectively nothing with it. Durations become `0.01ms` rather than `none` so
 that `transitionend` handlers still fire and nothing waits for an event that
 was cancelled.
 
+**Focus visibility is checked in `src/focusVisibility.test.ts`, not here.** The
+two controls that had no focus ring — the range sliders and the model browser's
+search field — are not on this view, so a Tab walk from the canvas never reaches
+them: it visits twenty-five buttons, which keep the browser's own ring, and
+passes whether the rule exists or not. Two attempts at an end-to-end case did
+exactly that and were withdrawn rather than kept as coverage they did not
+provide. The stylesheet contract is asserted instead, and the browser behaviour
+was measured directly: with no rule, a text input and a range slider compute
+`outlineStyle: none` and `boxShadow: none` after a real Tab; with it, both carry
+a ring.
+
 ### Colour contrast
 
 Contrast is the one property here that has to be **computed** rather than

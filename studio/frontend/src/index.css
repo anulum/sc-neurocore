@@ -839,6 +839,30 @@ select {
 select:hover { border-color: var(--accent); }
 select:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-dim); }
 
+/*
+ * Focus visibility.
+ *
+ * `select` removes its outline and puts one back on `:focus`. The text inputs
+ * and range sliders removed theirs and put nothing back, so a keyboard reader
+ * tabbing through the Studio could not see where they were — measured in a
+ * browser, not read off the stylesheet: computed `outlineStyle: none` and
+ * `boxShadow: none` on focus for both.
+ *
+ * `:focus-visible` rather than `:focus` so a pointer click does not ring a
+ * control the reader is already looking at, while every keyboard arrival does.
+ * The ring repeats `select:focus`'s shape so one indicator means one thing.
+ */
+input[type="text"]:focus-visible,
+input[type="search"]:focus-visible,
+input[type="number"]:focus-visible,
+textarea:focus-visible,
+input[type="range"]:focus-visible,
+button:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+  outline: none;
+}
+
 /* Button */
 .btn-simulate {
   padding: 5px 16px;
