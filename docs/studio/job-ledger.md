@@ -63,14 +63,20 @@ that had not finished. Pass `reconcile=False` to skip it, and call
 
 | What recovery finds | What it does |
 |---|---|
-| Lease held by a process still running, not expired | Leaves the job alone |
+| Lease held by a process still running | Leaves the job alone; reports an expired lease if present |
 | Lease held by a process on this host that is gone | `interrupted` |
-| Lease expired without a heartbeat | `interrupted` |
-| Lease held by a supervisor this host cannot probe | `unknown` |
+| Lease held by a supervisor this host cannot probe, even if expired | `unknown` |
 
-A lease already stamped with this process's own identity belongs to the
-incarnation that died: recovery runs at startup, before this process supervises
-anything.
+A lease stamped with this process's identity can belong to a job it is still
+running. Recovery probes that identity normally: opening another manager over
+the same root or calling `reconcile()` does not imply a restart. The identity
+includes the process-start token, so a reused PID cannot inherit a dead
+process's jobs.
+
+Lease expiry alone is not evidence that computation stopped. A live process may
+be busy without a heartbeat; recovery must not seal its outcome or permit its
+artifacts to be purged while it can still write them. An unprobeable supervisor
+stays `unknown` until there is evidence of its outcome, even after lease expiry.
 
 Nothing is ever promoted to `completed`, and no side effect is repeated to find
 out what happened. A result that was never committed is not a result.

@@ -21,12 +21,15 @@ import os
 import signal
 import subprocess
 import sys
+import threading
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobManager
+from sc_neurocore.studio.platform.jobs_context import StudioJobContext
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -104,11 +107,57 @@ def _manager(root: Path, **kwargs: object) -> StudioJobManager:
 
 
 class TestTwoProcessesShareOneRoot:
+    @pytest.mark.parametrize("observer", ["same-manager", "second-manager"])
+    @pytest.mark.parametrize("expired", [False, True], ids=["fresh-lease", "expired-lease"])
+    def test_recovery_preserves_a_job_running_in_this_process(
+        self, tmp_path: Path, observer: str, expired: bool
+    ) -> None:
+        """Recovery must not invent supervisor death while a real task is running."""
+        root = tmp_path / "jobs"
+        moment = [datetime.now(timezone.utc)]
+        manager = _manager(root, clock=lambda: moment[0])
+        started = threading.Event()
+        release = threading.Event()
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            started.set()
+            if not release.wait(10.0):
+                raise TimeoutError("test did not release the job")
+            context.write_artifact("result.txt", b"completed after recovery")
+            return {"answer": 42}
+
+        record = manager.submit(kind="analysis", owner="alice", request_id=None, task=task)
+        try:
+            assert started.wait(5.0)
+            if expired:
+                moment[0] += timedelta(seconds=120)
+            if observer == "same-manager":
+                decisions = manager.reconcile()
+                reader = manager
+            else:
+                reader = _manager(root, clock=lambda: moment[0])
+                decisions = reader.last_reconciliation
+            assert reader.record(record.job_id).status == "running"
+            assert [item.status for item in decisions] == ["running"]
+            assert reader.status().recovery[0]["status"] == "running"
+        finally:
+            release.set()
+            settled = manager.wait(record.job_id, 5.0)
+        assert settled.status == "completed"
+        assert settled.result == {"answer": 42}
+        assert (root / record.job_id / "result.txt").read_bytes() == b"completed after recovery"
+        assert [item["to_status"] for item in reader.transitions(record.job_id)] == [
+            "pending",
+            "running",
+            "completed",
+        ]
+
     def test_a_second_process_reads_a_job_the_first_completed(self, tmp_path: Path) -> None:
         root = tmp_path / "jobs"
         completed = _run_child(root, "complete")
-        assert completed.returncode == 0, completed.stderr  # type: ignore[union-attr]
-        reported = json.loads(completed.stdout)  # type: ignore[union-attr]
+        assert isinstance(completed, subprocess.CompletedProcess)
+        assert completed.returncode == 0, completed.stderr
+        reported = json.loads(completed.stdout)
         assert reported["status"] == "completed"
 
         # A different interpreter, after the first one exited.
@@ -127,8 +176,9 @@ class TestTwoProcessesShareOneRoot:
     def test_a_restarted_process_does_not_rerun_an_admitted_request(self, tmp_path: Path) -> None:
         root = tmp_path / "jobs"
         first = _run_child(root, "complete")
-        assert first.returncode == 0, first.stderr  # type: ignore[union-attr]
-        original = json.loads(first.stdout)["job_id"]  # type: ignore[union-attr]
+        assert isinstance(first, subprocess.CompletedProcess)
+        assert first.returncode == 0, first.stderr
+        original = json.loads(first.stdout)["job_id"]
 
         manager = _manager(root)
         resubmitted = manager.submit(
@@ -150,11 +200,13 @@ class TestSupervisorDeath:
     ) -> None:
         root = tmp_path / "jobs"
         child = _run_child(root, "abandon", wait=False)
+        assert isinstance(child, subprocess.Popen)
         started = root / "started.json"
         try:
             deadline = time.monotonic() + 90
             while not started.is_file() and time.monotonic() < deadline:
                 if child.poll() is not None:  # pragma: no cover - child failure
+                    assert child.stderr is not None
                     raise AssertionError(f"the child exited early: {child.stderr.read()}")
                 time.sleep(0.05)
             assert started.is_file(), "the child never started its job"

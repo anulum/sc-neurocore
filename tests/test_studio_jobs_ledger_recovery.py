@@ -136,9 +136,8 @@ class TestReconciliationRules:
         root = tmp_path / "jobs"
         manager = _manager(root)
         future = (datetime.now(tz=None).astimezone() + timedelta(hours=1)).isoformat()
-        # A genuinely different process, still running. Using this process's own
-        # identity would not test the rule: a restarting supervisor treats its
-        # own identity as the incarnation that died.
+        # Exercise another live process here; the real-task restart suite also
+        # checks reconciliation while this process owns the active job.
         peer = subprocess.Popen(  # noqa: S603 - fixed argv, no shell
             [sys.executable, "-c", "import time; time.sleep(300)"],
             stdout=subprocess.DEVNULL,
@@ -188,18 +187,21 @@ class TestReconciliationRules:
             == "interrupted"
         )
 
-    def test_an_expired_lease_is_interrupted_even_on_this_host(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize("expiry", ["2026-01-01T00:00:00Z", None])
+    def test_expired_or_missing_lease_does_not_prove_an_unprobeable_worker_stopped(
+        self, tmp_path: Path, expiry: str | None
+    ) -> None:
+        """An absent heartbeat must not grant terminal custody or purge authority."""
         root = tmp_path / "jobs"
         manager = _manager(root)
-        past = "2026-01-01T00:00:00Z"
         self._admit_running(
             manager,
             "sj_00000000000000cc",
             lease_owner="a-different-host:4242:1",
-            lease_expires_at_utc=past,
+            lease_expires_at_utc=expiry,
         )
 
         decisions = {decision.job_id: decision for decision in manager.reconcile()}
 
-        assert decisions["sj_00000000000000cc"].status == "interrupted"
-        assert "expired without a heartbeat" in decisions["sj_00000000000000cc"].reason
+        assert decisions["sj_00000000000000cc"].status == "unknown"
+        assert "not proof that the worker stopped" in decisions["sj_00000000000000cc"].reason

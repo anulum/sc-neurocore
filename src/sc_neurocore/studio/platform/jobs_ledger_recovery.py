@@ -10,7 +10,7 @@
 
 Recovery is deliberately unwilling to guess. A job whose lease belongs to a
 supervisor that is still running is left alone. A lease held by a supervisor
-this host can prove is gone, or one that expired without a heartbeat, becomes
+this host can prove is gone becomes
 ``interrupted`` — the job did not finish, its artifacts stay in its manifest,
 and nothing is re-run to find out. A supervisor this host cannot probe leaves
 the job ``unknown``, which is not terminal and awaits verification.
@@ -77,10 +77,10 @@ def reconcile_ledger(ledger: StudioJobLedger) -> tuple[StudioJobReconciliation, 
     Parameters
     ----------
     ledger : StudioJobLedger
-        The ledger to recover. Its own supervisor identity is treated as a
-        previous incarnation: a live process reconciles at startup, before it
-        supervises anything, so a lease already stamped with this identity
-        belongs to the process that died.
+        The ledger to recover. A lease belonging to this process is probed like
+        any other: constructing another manager or reconciling a live manager
+        does not imply process death. The identity includes a process-start
+        token, so a reused PID does not inherit an earlier process's jobs.
 
     Returns
     -------
@@ -96,20 +96,24 @@ def reconcile_ledger(ledger: StudioJobLedger) -> tuple[StudioJobReconciliation, 
         lease_owner = None if row["lease_owner"] is None else str(row["lease_owner"])
         expired = _expired(row["lease_expires_at_utc"], now)
         alive = None if lease_owner is None else supervisor_is_alive(lease_owner)
-        if lease_owner == ledger.supervisor:
-            alive = False
-        if alive is True and not expired:
+        if alive is True:
             outcomes.append(
                 StudioJobReconciliation(
                     job_id=job_id,
                     previous_status=previous,
                     status=previous,
-                    reason="the supervisor holding the lease is still running",
+                    reason=(
+                        "the supervisor is still running despite an expired lease"
+                        if expired
+                        else "the supervisor holding the lease is still running"
+                    ),
                 )
             )
             continue
-        if alive is None and not expired:
+        if alive is None:
             reason = "the supervisor holding the lease cannot be probed from this host"
+            if expired:
+                reason += "; lease expiry is not proof that the worker stopped"
             if previous != "unknown":
                 ledger.transition(job_id, "unknown", actor=ledger.supervisor, reason=reason)
             outcomes.append(
