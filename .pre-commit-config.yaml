@@ -61,6 +61,12 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.pre-commit-config\.yaml|src/sc_neurocore/(neurons|studio)/.*\.py|tools/(runtime_state_conformance\.py|runtime_state_ceiling\.toml))$'
+      - id: go-doc-ratchet
+        name: Go documentation debt ratchet
+        entry: python -m tools.go_doc_ratchet
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|.*\.go|tools/(go_doc_ratchet\.py|doc_debt_ceiling\.py|go_doc_ceiling\.json|godoc_coverage/.*))$'
       - id: api-reference-drift
         name: API reference drift
         entry: python scripts/generate_docs.py --check

@@ -443,10 +443,13 @@ class TestTheRunPrintsWhatItFound:
     ) -> None:
         """The wiring, not the tools: each measurement is reached and reported.
 
-        The two toolchain-backed measurements are replaced here so the Python
-        suite does not acquire a dependency on node and cargo — a suite that
-        skips when a toolchain is absent reports green for a run that measured
-        nothing, which is the failure this whole tool exists to prevent.
+        The toolchain-backed measurements are replaced here so the Python suite
+        does not acquire a dependency on node, cargo and go — a suite that skips
+        when a toolchain is absent reports green for a run that measured
+        nothing, which is the failure this whole tool exists to prevent. Go
+        joined them when it stopped being recorded as unmeasurable; its own
+        measurement is exercised against real Go in
+        ``tests/test_tools_go_doc_ratchet.py``.
         """
         target = tmp_path / "debt.json"
         monkeypatch.setattr(
@@ -485,10 +488,22 @@ class TestTheRunPrintsWhatItFound:
                 scopes=["engine/Cargo.toml"],
             ),
         )
+        monkeypatch.setattr(
+            "tools.documentation_debt.measure_go",
+            lambda *_a, **_k: Measurement(
+                language="go",
+                tool="go/parser via tools/godoc_coverage",
+                tool_version="go version go1.24.0 linux/amd64",
+                argv=["go", "run"],
+                undocumented=4,
+                files=3,
+                scopes=["*.go (tracked)"],
+            ),
+        )
 
         assert main(["--repo", str(REPO_ROOT), "--output", str(target)]) == 0
 
         report = json.loads(target.read_text(encoding="utf-8"))
-        assert report["summary"]["undocumented_total"] == 10
-        assert report["summary"]["languages_measured"] == 3
+        assert report["summary"]["undocumented_total"] == 14
+        assert report["summary"]["languages_measured"] == 4
         assert "undocumented in 1 files" in capsys.readouterr().out

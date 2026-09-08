@@ -29,6 +29,12 @@ A language whose measurement tool is not installed is recorded as
 ``not_measured`` **with the reason**. It is never given a number from a
 substitute method: a plausible figure from the wrong instrument is worse than
 an honest gap, because it looks like evidence.
+
+That reason has to keep being re-read, though, because it can name the wrong
+thing. Go stood here as not measured for want of a Go documentation *linter* —
+true, and beside the point: ``go/parser`` is what such linters are built on, it
+ships with the toolchain, and the toolchain was installed the whole time. The
+gap was in the reading, not in the language.
 """
 
 from __future__ import annotations
@@ -196,6 +202,95 @@ def read_rustc_stderr(stderr: str) -> tuple[int, int]:
     warnings = [line for line in lines if line.startswith("warning: missing documentation")]
     locations = [line.strip()[4:] for line in lines if line.strip().startswith("--> ")]
     return len(warnings), len({location.split(":", 1)[0] for location in locations})
+
+
+#: The Go program that takes the measurement, relative to the repository root.
+GO_COVERAGE_TOOL = "tools/godoc_coverage/main.go"
+#: Contract version the coverage tool stamps on its summary.
+GO_COVERAGE_SCHEMA_VERSION = "sc-neurocore.go-doc-coverage.v1"
+
+
+def go_scope(root: Path) -> list[str]:
+    """Return every tracked ``.go`` file, as git lists them.
+
+    The scope is a query rather than a list because a list is silently blind to
+    a file nobody adds to it, and rather than a filesystem walk because a walk
+    of the Go tree here reaches 18 057 files: a virtual environment lives
+    inside it, and its vendored toolchain would drown the project's own surface.
+    """
+    completed = _run(["git", "ls-files", "-z", "--", "*.go"], cwd=root, timeout=120.0)
+    return [path for path in completed.stdout.split("\0") if path]
+
+
+def measure_go_coverage(root: Path, paths: Sequence[str]) -> dict[str, Any]:
+    """Return the coverage tool's summary for one set of Go files.
+
+    Raises
+    ------
+    json.JSONDecodeError
+        The tool wrote something other than its summary, which happens when it
+        refused to measure. Its stderr names the file it could not parse.
+    """
+    completed = subprocess.run(  # noqa: S603 - fixed argv, no shell
+        ["go", "run", GO_COVERAGE_TOOL],
+        input="\n".join(paths),
+        capture_output=True,
+        text=True,
+        cwd=root,
+        timeout=1800,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise json.JSONDecodeError(completed.stderr.strip() or "the tool failed", "", 0)
+    summary: dict[str, Any] = json.loads(completed.stdout)
+    return summary
+
+
+def measure_go(root: Path) -> Measurement:
+    """Measure Go with the language's own parser.
+
+    Go was recorded here as not measured, because no Go documentation *linter*
+    is installed. ``go/parser`` is what those linters are built on, it ships
+    with the toolchain, and it answers exactly the question the directive asks:
+    which exported declarations carry no doc comment. That is a tool which
+    understands the language, not a grep for a comment above an export.
+    """
+    scopes = ["*.go (tracked)"]
+    argv = ["go", "run", GO_COVERAGE_TOOL]
+    version = _version(["go", "version"], cwd=root)
+    if version is None:
+        return unmeasured(
+            "go",
+            "go/parser via tools/godoc_coverage",
+            "the Go toolchain is not installed, so its parser could not be run",
+            scopes,
+        )
+    paths = go_scope(root)
+    if not paths:
+        return unmeasured(
+            "go",
+            "go/parser via tools/godoc_coverage",
+            "git listed no tracked .go files, so there was nothing to measure",
+            scopes,
+        )
+    try:
+        summary = measure_go_coverage(root, paths)
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as error:
+        return unmeasured(
+            "go",
+            "go/parser via tools/godoc_coverage",
+            f"the coverage tool produced no figure: {error}",
+            scopes,
+        )
+    return Measurement(
+        language="go",
+        tool="go/parser via tools/godoc_coverage",
+        tool_version=version,
+        argv=argv,
+        undocumented=int(summary["undocumented"]),
+        files=int(summary["files_with_findings"]),
+        scopes=scopes,
+    )
 
 
 def measure_python(root: Path, scopes: Sequence[str]) -> Measurement:
@@ -391,16 +486,17 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         measurements.append(measure_rust(root, args.rust_manifest))
-    measurements.append(
-        unmeasured(
-            "go",
-            "revive / staticcheck (exported-symbol comments)",
-            "no Go documentation linter is installed; the directive does not authorise "
-            "installing one, and a grep for a comment above an export is a heuristic, "
-            "not a measurement",
-            ["src/sc_neurocore/accel/go"],
+    if "go" in skip:
+        measurements.append(
+            unmeasured(
+                "go",
+                "go/parser via tools/godoc_coverage",
+                "skipped in this run",
+                ["*.go (tracked)"],
+            )
         )
-    )
+    else:
+        measurements.append(measure_go(root))
     measurements.append(
         unmeasured(
             "julia",

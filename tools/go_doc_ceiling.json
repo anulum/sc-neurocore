@@ -1,0 +1,11 @@
+{
+  "note": "Undocumented exported declarations in every tracked .go file, measured with Go's own parser through tools/godoc_coverage. This ceiling may fall and may not rise: see tools/go_doc_ratchet.py.",
+  "provenance": {
+    "argv": "git ls-files -- '*.go' | go run tools/godoc_coverage/main.go",
+    "go": "go version go1.24.0 linux/amd64",
+    "source_sha256": "e764cbaf6edb440806a295db29ec7bffbc1f2fbf"
+  },
+  "schema_version": "sc-neurocore.go-doc-ceiling.v1",
+  "undocumented": 1532,
+  "undocumented_files": 228
+}

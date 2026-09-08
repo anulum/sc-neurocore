@@ -26,6 +26,10 @@ The directive's other half — *deny at zero* — is served per module: a module
 whose debt reaches zero declares ``#![deny(missing_docs)]`` and is closed
 permanently, rather than being held open by a number somebody has to keep
 re-checking.
+
+Measuring Rust is this tool's job. The rule about the ceiling — that it may
+fall and may not rise — is every language's, and lives in
+``tools/doc_debt_ceiling.py`` so the languages cannot come to disagree about it.
 """
 
 from __future__ import annotations
@@ -34,11 +38,23 @@ import argparse
 import json
 import shutil
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
+from tools.doc_debt_ceiling import RatchetError, Verdict, read_ceiling
+from tools.doc_debt_ceiling import compare as _compare
+from tools.doc_debt_ceiling import write_ceiling as _write_ceiling
 from tools.documentation_debt import read_rustc_stderr
+
+__all__ = [
+    "RUST_DOC_CEILING_SCHEMA_VERSION",
+    "RatchetError",
+    "Verdict",
+    "compare",
+    "main",
+    "measure",
+    "read_ceiling",
+    "write_ceiling",
+]
 
 #: Contract version of the ceiling record.
 RUST_DOC_CEILING_SCHEMA_VERSION = "sc-neurocore.rust-doc-ceiling.v1"
@@ -46,73 +62,21 @@ RUST_DOC_CEILING_SCHEMA_VERSION = "sc-neurocore.rust-doc-ceiling.v1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 #: Where the committed ceiling lives, beside the crate it constrains.
 DEFAULT_CEILING = REPO_ROOT / "engine" / "missing_docs_ceiling.json"
-
-
-class RatchetError(RuntimeError):
-    """Raised when the lint cannot be run, so no verdict is possible."""
-
-
-@dataclass(frozen=True, slots=True)
-class Verdict:
-    """The comparison of a measurement against the committed ceiling.
-
-    Attributes
-    ----------
-    measured : int
-        Undocumented items the lint reported.
-    ceiling : int
-        The committed ceiling it was compared against.
-    ok : bool
-        Whether the measurement is at or below the ceiling.
-    """
-
-    measured: int
-    ceiling: int
-    ok: bool
-
-    def summary(self) -> str:
-        """Return the one line a reader of CI output needs."""
-        if self.measured > self.ceiling:
-            return (
-                f"Rust documentation debt rose: {self.measured} undocumented items, "
-                f"ceiling {self.ceiling} (+{self.measured - self.ceiling}). "
-                "Document the new items, or lower nothing and raise the ceiling "
-                "deliberately in a reviewed diff."
-            )
-        if self.measured < self.ceiling:
-            return (
-                f"Rust documentation debt fell: {self.measured} undocumented items, "
-                f"ceiling {self.ceiling} (-{self.ceiling - self.measured}). "
-                "Run with --update to lower the ceiling."
-            )
-        return f"Rust documentation debt unchanged at {self.measured} undocumented items."
+#: What the record means, written for whoever opens the file before the tool.
+CEILING_NOTE = (
+    "Undocumented items in the engine crate, measured with rustc's own "
+    "missing_docs lint. This ceiling may fall and may not rise: see "
+    "tools/rust_doc_ratchet.py."
+)
 
 
 def compare(measured: int, ceiling: int) -> Verdict:
     """Return the verdict for one measurement against the ceiling."""
-    return Verdict(measured=measured, ceiling=ceiling, ok=measured <= ceiling)
-
-
-def read_ceiling(path: Path) -> int:
-    """Return the committed ceiling.
-
-    Raises
-    ------
-    RatchetError
-        The record is absent or does not carry a usable ceiling; a missing
-        ceiling must stop the check rather than default to a permissive one.
-    """
-    if not path.is_file():
-        raise RatchetError(f"no ceiling record at {path}")
-    document: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-    ceiling = document.get("undocumented")
-    if not isinstance(ceiling, int) or ceiling < 0:
-        raise RatchetError("the ceiling record carries no whole-number ceiling")
-    return ceiling
+    return _compare(measured, ceiling, language="Rust")
 
 
 def write_ceiling(path: Path, *, undocumented: int, files: int, provenance: dict[str, str]) -> None:
-    """Write a ceiling record, refusing to raise an existing one.
+    """Write the crate's ceiling record, refusing to raise an existing one.
 
     Raises
     ------
@@ -120,25 +84,14 @@ def write_ceiling(path: Path, *, undocumented: int, files: int, provenance: dict
         The new figure is above the recorded one. Lowering is the tool's job;
         raising is a decision, and it belongs in a diff somebody signed.
     """
-    if path.is_file():
-        current = read_ceiling(path)
-        if undocumented > current:
-            raise RatchetError(
-                f"refusing to raise the ceiling from {current} to {undocumented}; "
-                "a rise is a deliberate edit, not an automatic one"
-            )
-    document = {
-        "note": (
-            "Undocumented items in the engine crate, measured with rustc's own "
-            "missing_docs lint. This ceiling may fall and may not rise: see "
-            "tools/rust_doc_ratchet.py."
-        ),
-        "provenance": dict(sorted(provenance.items())),
-        "schema_version": RUST_DOC_CEILING_SCHEMA_VERSION,
-        "undocumented": undocumented,
-        "undocumented_files": files,
-    }
-    path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_ceiling(
+        path,
+        undocumented=undocumented,
+        files=files,
+        note=CEILING_NOTE,
+        schema_version=RUST_DOC_CEILING_SCHEMA_VERSION,
+        provenance=provenance,
+    )
 
 
 def measure(root: Path, manifest: str) -> tuple[int, int, str]:

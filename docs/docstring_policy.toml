@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 485
+expected_file_count = 487
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1911,6 +1911,14 @@ rationale = "Public per-language documentation-debt measurement: the tools it dr
 [[file]]
 path = "tools/rust_doc_ratchet.py"
 rationale = "Public ratchet on the engine crate's undocumented items: why a crate-level lint is unavailable here, how the ceiling falls and never rises, and what a check does when it cannot run."
+
+[[file]]
+path = "tools/doc_debt_ceiling.py"
+rationale = "The committed-ceiling rule every language's documentation ratchet shares: why it may fall and never rise, and why a ceiling that cannot be read stops the check instead of passing it."
+
+[[file]]
+path = "tools/go_doc_ratchet.py"
+rationale = "Public ratchet on the Go surface's undocumented exported declarations: why the measurement comes from Go's own parser, why the scope is git's index rather than a list or a walk, and what a check does when the toolchain is absent."
 
 [[file]]
 path = "benchmarks/_non_resetting_lif_benchmark.py"
