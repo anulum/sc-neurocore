@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Characterisation applies the same rule to WebSocket progress and completion.
+A disconnected socket falls back to HTTP once; terminal sockets are detached
+and closed. Both transports validate the result shape before accepting success.
+Obsolete progress, results and failures are discarded when the experiment changes.
+Starting a rerun withdraws completion without deleting the earlier plot.
+
 Direct precision, comparison, nullcline and frequency-response requests follow
 the same current-experiment rule. Starting another direct analysis while a
 simulation or analysis is busy does not replace that run. Unsupported inputs

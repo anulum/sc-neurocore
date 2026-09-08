@@ -55,7 +55,6 @@ import {
   fetchCompare,
   fetchNullclines,
   fetchFreqResponse,
-  fetchCharacterize,
   fetchMultiSimulate,
   importTrace,
   simulateNetwork,
@@ -96,7 +95,6 @@ import {
   updateStudioIdentityBrowserUser,
   updateStudioIdentityServiceAccount,
   validateStudioAuditQuarantineArchive,
-  connectProgress,
 } from "../api/client";
 import {
   clearStoredStudioAuthToken,
@@ -291,13 +289,7 @@ import {
   templateSelectedState,
   templatesLoadedState,
 } from "../modelSelectionStoreState";
-import {
-  characterizeCompleteState,
-  characterizeFailureState,
-  characterizeProgressMessageState,
-  characterizeRequestConfig,
-  characterizeRunStartState,
-} from "../characterizeStoreState";
+import { runStoreCharacterize } from "./studioCharacterize";
 import {
   frequencyHzState,
   seedState,
@@ -966,29 +958,7 @@ export function createStudioStoreActions(
   },
 
   runCharacterize: () => {
-    const s = get();
-    if (s.isSimulating || !s.selectedModelName) return;
-    const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    set(characterizeRunStartState());
-    const config = characterizeRequestConfig(s);
-    const ws = connectProgress("characterize", config, (msg) => {
-      const state = characterizeProgressMessageState(msg);
-      if (state !== null) set(state);
-    });
-    ws.onerror = () => {
-      fetchCharacterize(config).then(
-        (charResult) => {
-          applyResultForExperiment({
-            field: "analysisExperimentKey",
-            get,
-            patch: characterizeCompleteState(charResult),
-            requestedKey,
-            set,
-          });
-        },
-        (e: unknown) => { set(characterizeFailureState(e)); },
-      );
-    };
+    runStoreCharacterize(get, set);
   },
 
   runMultiSimulate: async (modelNames) => {
