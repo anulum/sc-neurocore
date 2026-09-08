@@ -9,6 +9,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { ModelDetail } from "../api/client";
 import { useStudioStore } from "./studio";
+import { studioGuidedFlowInputs } from "../studioGuidedFlowInputs";
 
 const initial = useStudioStore.getState();
 const actions = ["runCompile", "runCosim"] as const;
@@ -147,4 +148,33 @@ it("refuses unsupported parity without an HTTP call", async () => {
   await useStudioStore.getState().runCosim();
   expect(fetch).not.toHaveBeenCalled();
   expect(useStudioStore.getState().error).toContain("requires catalogue model");
+});
+
+it.each(["rerun", "success", "current"] as const)("withdraws model synthesis qualification on parity %s", async (change) => {
+  const compiled = deferred("runCompile");
+  const compile = useStudioStore.getState().runCompile();
+  compiled(); await compile;
+  const oldTrace = useStudioStore.getState().compileTraceability;
+  useStudioStore.setState({ synthResult: { success: true, silicon_terminal: { success: true } } as NonNullable<typeof initial.synthResult>,
+    latestSynthesisJobId: "sj_previous" });
+  const finish = deferred("runCosim");
+  const pending = change !== "current" ? useStudioStore.getState().runCosim() : Promise.resolve();
+  if (change === "current") useStudioStore.getState().setCurrent(99);
+  const during = useStudioStore.getState();
+  if (change !== "current") finish(change === "rerun");
+  await pending;
+  expect(studioGuidedFlowInputs(during, { trainingSkipped: false, evidenceExportSatisfied: false }).synthesisComplete).toBe(false);
+  expect(useStudioStore.getState().latestSynthesisJobId).toBeNull();
+  expect(useStudioStore.getState().synthResult).toBeNull();
+  expect(useStudioStore.getState().compileTraceability).toBe(oldTrace);
+  expect(useStudioStore.getState().verilogSrc).toBe("module neuron; endmodule");
+  if (change === "success") expect(useStudioStore.getState().cosimResult?.bit_exact).toBe(true);
+});
+
+it("preserves ODE synthesis when only simulation current changes", () => {
+  const synthesis = { success: true } as NonNullable<typeof initial.synthResult>;
+  useStudioStore.setState({ sourceMode: "ode", synthResult: synthesis, latestSynthesisJobId: "sj_ode" });
+  useStudioStore.getState().setCurrent(99);
+  expect(useStudioStore.getState().synthResult).toBe(synthesis);
+  expect(useStudioStore.getState().latestSynthesisJobId).toBe("sj_ode");
 });

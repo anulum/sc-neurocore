@@ -210,7 +210,10 @@ describe("compiler store state helpers", () => {
       cosimResult: report,
       isSimulating: false,
     });
-    expect(compilerCosimInvalidatedState()).toEqual({ cosimResult: null });
+    expect(compilerCosimInvalidatedState(false)).toEqual({ cosimResult: null });
+    expect(compilerCosimInvalidatedState(true)).toEqual({ cosimResult: null,
+      synthResult: null, multiTargetResult: null,
+      latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null });
     expect(compilerConfigurationInvalidatedState()).toEqual({
       svSource: "",
       irText: "",

@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+A new catalogue-model co-simulation, or a change to its current input, withdraws the
+prior model synthesis qualification and synthesis job handles immediately.
+Compiled RTL and historical evidence bundles remain available; a new successful
+parity report alone does not restore the old synthesis qualification. ODE
+synthesis is unaffected by changes to this catalogue-parity input.
+
 Project, compile and synthesis export indicators require a bundle captured for
 the current surface context, with matching bundle and job identifiers. Changing
 that context withdraws completion without deleting the historical download.

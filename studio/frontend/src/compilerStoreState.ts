@@ -77,6 +77,10 @@ export interface CompilerConfigurationInvalidatedStatePatch {
 /** Something the parity report depended on changed, so it no longer applies. */
 export interface CompilerCosimInvalidatedStatePatch {
   cosimResult: null;
+  synthResult?: null;
+  multiTargetResult?: null;
+  latestSynthesisJobId?: null;
+  latestMultiTargetSynthesisJobId?: null;
 }
 
 /** A built intermediate representation arrived. */
@@ -190,10 +194,18 @@ export function compilerConfigurationInvalidatedState(): CompilerConfigurationIn
 /**
  * Discard a parity report whose premises have changed.
  *
+ * Model terminal synthesis depends on this report; withdraw its qualification
+ * and export job handles too. Keep compiled RTL and historical evidence bundles.
+ * ODE synthesis has no dependency on catalogue-model parity.
+ *
+ * @param modelMode - Whether synthesis depends on catalogue-model parity.
  * @returns The patch.
  */
-export function compilerCosimInvalidatedState(): CompilerCosimInvalidatedStatePatch {
-  return { cosimResult: null };
+export function compilerCosimInvalidatedState(modelMode: boolean): CompilerCosimInvalidatedStatePatch {
+  return { cosimResult: null, ...(modelMode ? {
+    synthResult: null, multiTargetResult: null,
+    latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null,
+  } : {}) };
 }
 
 /**

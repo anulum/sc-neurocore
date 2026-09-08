@@ -80,7 +80,7 @@ export async function runStoreCompile(
 ): Promise<void> {
   const state = get();
   if (state.isSimulating) return;
-  set({ ...(operation === "cosim" ? compilerCosimInvalidatedState() : compilerConfigurationInvalidatedState()),
+  set({ ...(operation === "cosim" ? compilerCosimInvalidatedState(state.sourceMode === "model") : compilerConfigurationInvalidatedState()),
     ...compilerRunStartState(operation === "ir" || operation === "sv" ? "ir" : "verilog") });
   let requestedKey: string | null = null;
   try {

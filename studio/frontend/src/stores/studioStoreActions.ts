@@ -480,7 +480,7 @@ export function createStudioStoreActions(
   },
   setDuration: (d) => { set(durationState(d)); get().autoSimulate(); },
   setCurrent: (c) => {
-    set({ ...currentState(c), ...compilerCosimInvalidatedState() });
+    set({ ...currentState(c), ...compilerCosimInvalidatedState(get().sourceMode === "model") });
     get().autoSimulate();
   },
   setProtocol: (p) => { set(protocolState(p)); get().autoSimulate(); },
