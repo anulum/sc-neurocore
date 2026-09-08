@@ -11,6 +11,8 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { at } from "./arrayAt";
 import { studioExperimentKey } from "./studioExperimentKey";
+import { useStudioStore } from "./stores/studio";
+import { applyStudioPanelAnalysisPatch } from "./studioPanelAnalysisPatch";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, createElement, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -126,11 +128,14 @@ describe("resolveStudioAnalysisJobIntegration (pure)", () => {
 });
 
 describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
+  const initialStore = useStudioStore.getState();
   let root: Root | null = null;
   let host: HTMLDivElement | null = null;
   let latest: UseStudioAnalysisJobIntegrationResult | null = null;
 
   afterEach(() => {
+    useStudioStore.setState(initialStore, true);
+    vi.unstubAllGlobals();
     vi.useRealTimers();
     if (root !== null) {
       act(() => {
@@ -316,5 +321,29 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(30); });
     expect(submit).toHaveBeenCalledTimes(2);
     expect(latest?.state.phase).toBe("completed");
+  });
+
+  it.each([true, false])("preserves simulation ownership when panel completes, simulation pending=%s", async (pending) => {
+    vi.useFakeTimers();
+    useStudioStore.setState(modelInput);
+    let finishSimulation = (_response: Response): void => { throw new Error("Simulation did not start"); };
+    vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>(() => new Promise<Response>((resolve) => { finishSimulation = resolve; })));
+    const api: AnalysisJobApi = { submit: async () => receipt(),
+      fetchJob: async () => jobRecord({ status: "completed", result: { ...fiResult } }) };
+    mountHook(baseInput, { applyPatch: (patch) => { applyStudioPanelAnalysisPatch(patch, useStudioStore.getState, useStudioStore.setState); }, hookOptions: { api, pollIntervalMs: 10 } });
+    act(() => { if (latest?.request.ok) latest.startJob(latest.request.value); });
+    const simulation = useStudioStore.getState().runSimulation();
+    expect(useStudioStore.getState().isSimulating).toBe(true);
+    const response = JSON.stringify({ time: [0], states: { v: [0] }, spikes: [], spike_count: 0, n_steps: 1, dt: 0.1, current_trace: [12], stats: { rate_hz: 0 } });
+    if (!pending) { finishSimulation(new Response(response)); await simulation; }
+    await act(async () => { await vi.advanceTimersByTimeAsync(30); });
+    const busyAfterPanel = useStudioStore.getState().isSimulating;
+    if (pending) finishSimulation(new Response(response));
+    await simulation;
+    expect(latest?.state.phase).toBe("completed");
+    expect(useStudioStore.getState().fiResult).toEqual(fiResult);
+    expect(busyAfterPanel).toBe(pending);
+    expect(useStudioStore.getState().isSimulating).toBe(false);
+    expect(useStudioStore.getState().result).not.toBeNull();
   });
 });

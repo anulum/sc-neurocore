@@ -74,6 +74,9 @@ the experiment prevents an old completion from updating the live workspace.
 Only a validated current completion supplies workflow and heatmap-selection
 context. Malformed or failed jobs can be retried without reloading the Studio.
 
+Panel jobs track their own busy state. Their completion does not release the
+busy flag of a simulation or compiler request still running in the workspace.
+
 A new catalogue-model co-simulation, or a change to its current input, withdraws the
 prior model synthesis qualification and synthesis job handles immediately.
 Compiled RTL and historical evidence bundles remain available; a new successful

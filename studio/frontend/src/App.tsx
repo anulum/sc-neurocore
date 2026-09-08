@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { studioBundleIsCurrent } from "./studioBundleContext";
+import { applyStudioPanelAnalysisPatch } from "./studioPanelAnalysisPatch";
 import { useStudioStore } from "./stores/studio";
 import type { ViewTab } from "./stores/studio";
 import { panelCapabilityState } from "./capabilityShell";
@@ -103,7 +104,7 @@ export default function App() {
       frequencyHz: s.frequencyHz, seed: s.seed, trial: s.trial,
     }, analysis: analysisKind, sweepParam: s.sweepParam, sweepParamY: s.sweepParamY,
   }, { disabled: s.isSimulating, capabilityEnabled: !panelUnavailable(analysisPanel),
-    applyPatch: (patch) => { useStudioStore.setState(patch); } });
+    applyPatch: (patch) => { applyStudioPanelAnalysisPatch(patch, useStudioStore.getState, useStudioStore.setState); } });
 
   const synthesisComplete = studioSynthesisComplete(s);
   const guidedFlowInputs: GuidedFlowInputs = studioGuidedFlowInputs(s, {
