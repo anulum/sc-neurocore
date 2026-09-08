@@ -113,29 +113,19 @@ def generate_replay_script(pack_filename: str = "replay_pack.json") -> str:
     -------
     str
         Python source that verifies, runs and judges the pack, and exits
-        non-zero when the experiment does not reproduce.
+        0 for reproduction, 1 for mismatch or 2 for refusal before execution.
+        Refusal details are JSON on standard error, matching the public CLI.
     """
     return f'''"""Replay a saved SC-NeuroCore Studio experiment and compare it in full.
 
 Exit status: 0 reproduced, 1 did not reproduce, 2 refused before running.
 
-Equivalent to:  python -m sc_neurocore.studio.replay_pack {pack_filename}
+Uses the public replay command's admission checks and exit statuses.
 """
 
-from pathlib import Path
+from sc_neurocore.studio.replay_pack import main
 
-from sc_neurocore.studio.replay_pack import ReplayRejected, load_replay_pack, replay_pack
-
-pack = load_replay_pack(Path({pack_filename!r}))
-try:
-    outcome = replay_pack(pack)
-except ReplayRejected as refusal:
-    raise SystemExit(f"refused ({{refusal.stage}}): {{refusal.reason}}") from refusal
-
-print("verdict:", outcome["verdict"])
-for difference in outcome["differences"]:
-    print("  -", difference)
-raise SystemExit(0 if outcome["verdict"] != "mismatch" else 1)
+raise SystemExit(main(["--", {pack_filename!r}]))
 '''
 
 

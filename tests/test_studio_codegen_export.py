@@ -78,7 +78,7 @@ CASES = {
 
 
 def _clean_environment() -> dict[str, str]:
-    """Return an environment that cannot import the checkout by path."""
+    """Remove explicit PYTHONPATH; installed editable-package hooks remain active."""
     environment = {key: value for key, value in os.environ.items() if key != "PYTHONPATH"}
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     return environment
@@ -209,6 +209,38 @@ class TestExportRefusesToLieAboutDrift:
 
 
 class TestOnelinerAndReplayScript:
+    @pytest.mark.parametrize("filename", ["--pack.json", 'pack"""quoted.json'])
+    def test_replay_filename_is_data_not_script_or_cli_syntax(
+        self, filename: str, tmp_path: Path
+    ) -> None:
+        """Option-like and quote-bearing filenames remain literal replay input paths."""
+        pack = build_replay_pack(STEP_SIGNATURE)
+        (tmp_path / filename).write_text(json.dumps(pack), encoding="utf-8")
+        completed = _execute(generate_replay_script(filename), tmp_path, "replay.py")
+        assert completed.returncode == 0, completed.stderr
+        assert "verdict: match" in completed.stdout
+
+    @pytest.mark.parametrize("mode", ["missing", "json", "schema", "revision", "backend"])
+    def test_replay_script_preserves_cli_refusal_exit_code(self, mode: str, tmp_path: Path) -> None:
+        """Generated replay scripts preserve CLI exit2 for admission and file refusals."""
+        pack = build_replay_pack(STEP_SIGNATURE)
+        path = tmp_path / "replay_pack.json"
+        if mode == "json":
+            path.write_text("not json", encoding="utf-8")
+        elif mode != "missing":
+            if mode == "schema":
+                pack["schema_version"] = "unsupported"
+            elif mode == "revision":
+                pack["request"]["dt"] = 0.1
+            elif mode == "backend":
+                pack["request"]["backend"] = "rust"
+            path.write_text(json.dumps(pack), encoding="utf-8")
+        completed = _execute(generate_replay_script(), tmp_path, "replay.py")
+        assert completed.returncode == 2, completed.stderr
+        assert completed.stdout == ""
+        assert json.loads(completed.stderr)["error"] == "replay_refused"
+        assert "Traceback" not in completed.stderr
+
     def test_the_oneliner_runs_the_same_experiment(self, tmp_path: Path) -> None:
         spec = resolve_experiment(STEP_SIGNATURE)
         reference = run_experiment(spec)
