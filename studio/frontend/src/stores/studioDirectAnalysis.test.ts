@@ -251,7 +251,9 @@ it("records the same Q-format that the production client submits", async () => {
   const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify(payload("runPrecision"))));
   vi.stubGlobal("fetch", fetch);
   await run("runPrecision");
-  const body: unknown = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body));
+  const requestBody = fetch.mock.calls[0]?.[1]?.body;
+  if (typeof requestBody !== "string") throw new Error("expected a JSON request body");
+  const body: unknown = JSON.parse(requestBody);
   expect(body).toMatchObject({ q_format: "Q16.16" });
   const key: unknown = JSON.parse(useStudioStore.getState().analysisExperimentKey ?? "null");
   expect(key).toMatchObject({ qFormat: "Q16.16" });
