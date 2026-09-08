@@ -947,6 +947,15 @@ export interface StudioJobArtifact {
   size_bytes: number;
 }
 
+/** Response-only identity from the exact completed process record, not a success verdict. */
+export interface StudioJobReceipt {
+  schema_version: "studio.job-receipt.v1";
+  job_id: string;
+  kind: string;
+  status: "completed";
+  artifacts: StudioJobArtifact[];
+}
+
 /**
  * One job: what it is, who owns it, where it got to, and what it left behind.
  *
@@ -1714,6 +1723,7 @@ export interface SynthesisTargetProvenanceMatrix {
  * one recomputed in the browser against a capacity it may have misread.
  */
 export interface SynthResult {
+  studio_job_receipt?: StudioJobReceipt;
   success: boolean;
   error?: string;
   target: string;
@@ -1741,6 +1751,7 @@ export interface SynthEstimate {
 
 /** The same design synthesised for every supported target, with their provenance. */
 export interface MultiTargetResult {
+  studio_job_receipt?: StudioJobReceipt;
   targets: Record<string, SynthResult>;
   supported: string[];
   target_provenance_matrix: SynthesisTargetProvenanceMatrix;
@@ -1754,6 +1765,7 @@ export interface MultiTargetResult {
  * the caller has to guess at.
  */
 export interface PnRResult {
+  studio_job_receipt?: StudioJobReceipt;
   success: boolean;
   error?: string;
   max_freq_mhz?: number | null;
@@ -1786,6 +1798,7 @@ export interface SiliconTerminalSourceChain {
  * from "finished and did not work".
  */
 export interface SiliconTerminalResult {
+  studio_job_receipt?: StudioJobReceipt;
   artifacts: {
     netlist_sha256: string | null;
     routed_design_sha256: string | null;

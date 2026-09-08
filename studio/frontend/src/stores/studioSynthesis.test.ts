@@ -117,3 +117,53 @@ it("withdraws both export handles before a refused request", async () => {
   expect(useStudioStore.getState().latestMultiTargetSynthesisJobId).toBeNull();
   expect(useStudioStore.getState().error).toBe("Generate Verilog first");
 });
+
+it.each(actions)("%s exports its receipt job despite a newer foreign job", async (action) => {
+  const path = action === "runSynthesis" ? "synthesis/result.json" : "synthesis/multi-target-result.json";
+  const receipt = { schema_version: "studio.job-receipt.v1", job_id: "sj_exact", kind: "synthesis", status: "completed",
+    artifacts: [{ relative_path: path, sha256: "a".repeat(64), size_bytes: 20 }] };
+  vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>((_url, init) => Promise.resolve(new Response(JSON.stringify(
+    init?.method === "POST" ? { studio_job_receipt: receipt, success: true, targets: {} }
+      : { audit: {}, jobs: [{ job_id: "sj_foreign", kind: "synthesis", created_at_utc: "2099-01-01", artifacts: receipt.artifacts }] },
+  )))));
+  await useStudioStore.getState()[action]();
+  const field = action === "runSynthesis" ? "latestSynthesisJobId" : "latestMultiTargetSynthesisJobId";
+  expect(useStudioStore.getState()[field]).toBe("sj_exact");
+});
+
+it.each([undefined, {}, { schema_version: "studio.job-receipt.v1", job_id: "sj_exact", kind: "synthesis", status: "completed", artifacts: [] }])(
+  "does not infer export identity from global jobs without a valid receipt: %j", async (receipt) => {
+    vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>((_url, init) => Promise.resolve(new Response(JSON.stringify(
+      init?.method === "POST" ? { success: true, studio_job_receipt: receipt }
+        : { audit: {}, jobs: [{ job_id: "sj_foreign", kind: "synthesis", created_at_utc: "2099-01-01",
+          artifacts: [{ relative_path: "synthesis/result.json", sha256: "a".repeat(64), size_bytes: 1 }] }] },
+    )))));
+    await useStudioStore.getState().runSynthesis();
+    expect(useStudioStore.getState().synthResult?.success).toBe(true);
+    expect(useStudioStore.getState().latestSynthesisJobId).toBeNull();
+  },
+);
+
+it("normalises the terminal envelope receipt instead of a nested or foreign job", async () => {
+  const digest = "a".repeat(64);
+  useStudioStore.setState({ sourceMode: "model", synthTarget: "ice40",
+    compileTraceability: { schema_version: "studio.compile-traceability.v1", source: "model",
+      status: "completed", evidence_classification: "compile", input_sha256: digest,
+      source_payload: { dt: 1, integrator: "map", model_name: "controlled", params: {}, q_format: "Q8.8", schema_name: "controlled", schema_sha256: digest }, traceability_sha256: digest,
+      output: { language: "verilog", module_name: "current", rtl_chars: 25, rtl_sha256: digest } },
+    cosimResult: { schema_version: "studio.cosim-parity.v1", status: "completed", bit_exact: true,
+      configuration: { dt: 1, integrator: "map", model_name: "controlled", q_format: "Q8.8", schema_name: "controlled", schema_sha256: digest },
+      first_mismatch: null, module_name: "current", sample_count: 1, signals: [],
+      reference: { kind: "generated_bit_true_c", source_sha256: digest, trace_sha256: digest },
+      rtl: { kind: "iverilog_vvp", source_sha256: digest, trace_sha256: digest },
+      stimulus: { current: 0, current_q: 0, n_steps: 1 }, tools: { gcc: "controlled", iverilog: "controlled", vvp: "controlled" } },
+  });
+  vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>((_url, init) => Promise.resolve(new Response(JSON.stringify(
+    init?.method === "POST" ? { success: true, synthesis: { success: true },
+      studio_job_receipt: { schema_version: "studio.job-receipt.v1", job_id: "sj_terminal_exact", kind: "synthesis", status: "completed",
+        artifacts: [{ relative_path: "synthesis/terminal-result.json", sha256: digest, size_bytes: 1 }] } }
+      : { audit: {}, jobs: [] },
+  )))));
+  await useStudioStore.getState().runSynthesis();
+  expect(useStudioStore.getState().latestSynthesisJobId).toBe("sj_terminal_exact");
+});

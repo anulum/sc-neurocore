@@ -1021,7 +1021,8 @@ export function createStudioStoreActions(
           s.compileTraceability,
           s.cosimResult,
         );
-        synthResult = { ...terminal.synthesis, silicon_terminal: terminal };
+        synthResult = { ...terminal.synthesis, silicon_terminal: terminal,
+          studio_job_receipt: terminal.studio_job_receipt };
         resultArtifactPath = "synthesis/terminal-result.json";
       } else {
         synthResult = await apiRunSynthesis(verilog, s.synthTarget);

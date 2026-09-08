@@ -317,8 +317,10 @@ describe("synthesis store state helpers", () => {
     });
   });
 
-  it("builds the single-target completion patch with the newest artifact job", () => {
+  it("builds single-target completion from its receipt, not the newest job", () => {
     const result = synthResult();
+    result.studio_job_receipt = { schema_version: "studio.job-receipt.v1", job_id: "sj_old",
+      kind: "synthesis", status: "completed", artifacts: [{ relative_path: "synthesis/result.json", sha256: "a".repeat(64), size_bytes: 1 }] };
     const operator = operatorStatus({ jobs: jobStatus({ completed_count: 3 }) });
     const jobs = jobList({
       jobs: [
@@ -332,14 +334,16 @@ describe("synthesis store state helpers", () => {
       isSimulating: false,
       jobRecords: jobs.jobs,
       jobStatus: operator.jobs,
-      latestSynthesisJobId: "sj_new",
+      latestSynthesisJobId: "sj_old",
       operatorStatus: operator,
       synthResult: result,
     });
   });
 
-  it("selects the newest same-job terminal result artifact", () => {
+  it("selects the receipt-bound terminal result artifact", () => {
     const result = synthResult();
+    result.studio_job_receipt = { schema_version: "studio.job-receipt.v1", job_id: "sj_terminal",
+      kind: "synthesis", status: "completed", artifacts: [{ relative_path: "synthesis/terminal-result.json", sha256: "a".repeat(64), size_bytes: 1 }] };
     const operator = operatorStatus();
     const jobs = jobList({
       jobs: [
@@ -360,8 +364,10 @@ describe("synthesis store state helpers", () => {
     ).latestSynthesisJobId).toBe("sj_terminal");
   });
 
-  it("builds the multi-target completion patch with the newest artifact job", () => {
+  it("builds the multi-target completion patch from its receipt", () => {
     const result = multiTargetResult();
+    result.studio_job_receipt = { schema_version: "studio.job-receipt.v1", job_id: "sj_multi",
+      kind: "synthesis", status: "completed", artifacts: [{ relative_path: "synthesis/multi-target-result.json", sha256: "a".repeat(64), size_bytes: 1 }] };
     const operator = operatorStatus();
     const jobs = jobList({
       jobs: [

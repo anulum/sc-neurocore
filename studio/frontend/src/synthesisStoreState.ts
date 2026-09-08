@@ -25,7 +25,7 @@ import type {
   SynthResult,
   SynthToolInfo,
 } from "./api/client";
-import { latestSynthesisJobIdWithArtefact } from "./evidenceBundles";
+import { synthesisJobIdFromReceipt } from "./evidenceBundles";
 
 /** The operator status and job list, refreshed after a run changed them. */
 export interface SynthesisOperatorRefreshPatch {
@@ -158,8 +158,8 @@ export function synthesisRunCompletedState(
   return {
     ...synthesisOperatorRefreshState(operatorStatus, jobList),
     isSimulating: false,
-    latestSynthesisJobId: latestSynthesisJobIdWithArtefact(
-      jobList.jobs,
+    latestSynthesisJobId: synthesisJobIdFromReceipt(
+      synthResult.studio_job_receipt,
       resultArtifactPath,
     ),
     synthResult,
@@ -182,8 +182,8 @@ export function multiTargetSynthesisRunCompletedState(
   return {
     ...synthesisOperatorRefreshState(operatorStatus, jobList),
     isSimulating: false,
-    latestMultiTargetSynthesisJobId: latestSynthesisJobIdWithArtefact(
-      jobList.jobs,
+    latestMultiTargetSynthesisJobId: synthesisJobIdFromReceipt(
+      multiTargetResult.studio_job_receipt,
       "synthesis/multi-target-result.json",
     ),
     multiTargetResult,

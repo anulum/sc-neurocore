@@ -11,7 +11,6 @@ import type {
   StudioAuditStatus,
   StudioEvidenceBundleResponse,
   StudioJobListResponse,
-  StudioJobRecord,
   StudioJobStatus,
   StudioOperatorStatus,
 } from "./api/client";
@@ -25,7 +24,7 @@ import {
   evidenceBundleArtifactUnavailableState,
   evidenceBundleDownloadSelection,
   evidenceBundleSurfaceKeys,
-  latestSynthesisJobIdWithArtefact,
+  synthesisJobIdFromReceipt,
   scopedEvidenceBundleCreatedState,
   scopedEvidenceBundleFailureState,
   scopedEvidenceBundleLoadingState,
@@ -49,41 +48,6 @@ const bundle: StudioEvidenceBundleResponse = {
     source_job_owner_counts: {},
   },
 };
-
-/**
- * Build a completed job carrying the given artefacts.
- *
- * @param jobId - The job's identifier.
- * @param createdAt - The instant it was created, started and finished.
- * @param kind - The kind of job it was.
- * @param artefactPaths - The artefacts it produced, by relative path.
- * @returns The job record.
- */
-function jobRecord(
-  jobId: string,
-  createdAt: string,
-  kind: string,
-  artefactPaths: string[],
-): StudioJobRecord {
-  return {
-    artifacts: artefactPaths.map((relativePath) => ({
-      relative_path: relativePath,
-      sha256: "a".repeat(64),
-      size_bytes: 128,
-    })),
-    created_at_utc: createdAt,
-    error: null,
-    execution_model: "process",
-    finished_at_utc: createdAt,
-    job_id: jobId,
-    kind,
-    owner: "studio",
-    request_id: null,
-    result: null,
-    started_at_utc: createdAt,
-    status: "completed",
-  };
-}
 
 /**
  * Build a healthy audit status, overridden field by field.
@@ -239,31 +203,21 @@ describe("evidence bundle surface helpers", () => {
     });
   });
 
-  it("chooses the newest synthesis job carrying the requested artefact", () => {
-    const jobs = [
-      jobRecord("sj_old", "2026-06-21T10:00:00Z", "synthesis", [
-        "synthesis/multi-target-result.json",
-      ]),
-      jobRecord("sj_new", "2026-06-21T11:00:00Z", "synthesis", [
-        "synthesis/multi-target-result.json",
-      ]),
-      jobRecord("sj_compile", "2026-06-21T12:00:00Z", "compiler", [
-        "synthesis/multi-target-result.json",
-      ]),
-    ];
-
-    expect(latestSynthesisJobIdWithArtefact(
-      jobs,
-      "synthesis/multi-target-result.json",
-    )).toBe("sj_new");
-  });
-
-  it("returns null when no synthesis job carries the requested artefact", () => {
-    expect(latestSynthesisJobIdWithArtefact([
-      jobRecord("sj_compile", "2026-06-21T12:00:00Z", "compiler", [
-        "compiler/result.json",
-      ]),
-    ], "synthesis/result.json")).toBeNull();
+  it("accepts only an exact receipt with one valid requested artifact", () => {
+    const artifact = { relative_path: "synthesis/result.json", sha256: "a".repeat(64), size_bytes: 1 };
+    const receipt = { schema_version: "studio.job-receipt.v1", job_id: "sj_exact",
+      status: "completed", kind: "synthesis", artifacts: [artifact] };
+    expect(synthesisJobIdFromReceipt(receipt, artifact.relative_path)).toBe("sj_exact");
+    expect(synthesisJobIdFromReceipt(receipt, "synthesis/terminal-result.json")).toBeNull();
+    const invalid: unknown[] = [null, undefined, {}, [], { ...receipt, schema_version: "other" },
+      { ...receipt, status: "running" }, { ...receipt, kind: "compiler" },
+      { ...receipt, job_id: "../other" }, { ...receipt, artifacts: [] },
+      { ...receipt, artifacts: [artifact, artifact] }, { ...receipt, artifacts: null },
+      { ...receipt, artifacts: [null] }, { ...receipt, artifacts: [{ ...artifact, sha256: "wrong" }] },
+      { ...receipt, artifacts: [{ ...artifact, size_bytes: -1 }] },
+      { ...receipt, artifacts: [{ ...artifact, size_bytes: 1.5 }] },
+      { ...receipt, artifacts: [{ ...artifact, size_bytes: Number.POSITIVE_INFINITY }] }];
+    for (const value of invalid) expect(synthesisJobIdFromReceipt(value, artifact.relative_path)).toBeNull();
   });
 
   it("builds admin evidence bundle state patches", () => {

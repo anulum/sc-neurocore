@@ -422,26 +422,37 @@ export function evidenceBundleArtifactDownloadPlan(
 }
 
 /**
- * The most recent job that actually holds one artefact.
+ * Read the exact completed synthesis job from its response receipt.
  *
- * Synthesis writes its artefacts under a job, and a surface may have run more
- * than once; the newest job carrying the path is the one a reader means.
+ * Global job order cannot identify this response. Missing or malformed legacy
+ * receipts leave export unavailable without inventing a replacement job.
  *
- * @param jobs - The jobs to search, newest last.
+ * @param receipt - Untrusted response metadata to validate.
  * @param artefactPath - The artefact to look for.
  * @returns The job's identifier, or `null` when none holds it.
  */
-export function latestSynthesisJobIdWithArtefact(
-  jobs: StudioJobRecord[],
+export function synthesisJobIdFromReceipt(
+  receipt: unknown,
   artefactPath: string,
 ): string | null {
-  const records = jobs
-    .filter((job) =>
-      job.kind === "synthesis"
-      && job.artifacts.some((artifact) => artifact.relative_path === artefactPath),
-    )
-    .sort((left, right) => right.created_at_utc.localeCompare(left.created_at_utc));
-  return records[0]?.job_id ?? null;
+  if (receipt === null || typeof receipt !== "object"
+    || !("schema_version" in receipt) || receipt.schema_version !== "studio.job-receipt.v1"
+    || !("status" in receipt) || receipt.status !== "completed"
+    || !("kind" in receipt) || receipt.kind !== "synthesis"
+    || !("job_id" in receipt) || typeof receipt.job_id !== "string"
+    || !/^sj_[A-Za-z0-9_-]+$/.test(receipt.job_id)
+    || !("artifacts" in receipt) || !Array.isArray(receipt.artifacts)) return null;
+  const matches = receipt.artifacts.filter((artifact: unknown) => artifact !== null
+    && typeof artifact === "object" && "relative_path" in artifact
+    && artifact.relative_path === artefactPath) as unknown[];
+  if (matches.length !== 1) return null;
+  const artifact = matches[0];
+  if (artifact === null || typeof artifact !== "object"
+    || !("sha256" in artifact) || typeof artifact.sha256 !== "string"
+    || !/^[a-f0-9]{64}$/.test(artifact.sha256)
+    || !("size_bytes" in artifact) || typeof artifact.size_bytes !== "number"
+    || !Number.isSafeInteger(artifact.size_bytes) || artifact.size_bytes < 0) return null;
+  return receipt.job_id;
 }
 
 /**
