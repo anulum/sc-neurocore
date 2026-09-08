@@ -848,7 +848,9 @@ export function createStudioStoreActions(
     const s = get();
     if (s.isSimulating) return;
     const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    set(studioAnalysisStartState());
+    // Keep the previous trace visible, but only the new successful response may
+    // restore completion evidence. A pending or failed rerun is not a success.
+    set({ ...studioAnalysisStartState(), resultExperimentKey: null });
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const result = s.sourceMode === "model" && s.selectedModelName

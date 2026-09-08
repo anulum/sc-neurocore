@@ -42,6 +42,13 @@ step's capability is unavailable in the capability registry. The panel reports a
 `completed/total` count and never invents marketing or tutorial copy — it
 reflects only the live store and capability state.
 
+Simulation completion requires a successful response for the current experiment.
+Starting another simulation withdraws that completion immediately, while keeping
+the previous trace visible for comparison. A failed rerun does not restore the
+completion indicator; a subsequent successful run does. This applies to both
+catalogue models and custom ODEs. Visible historical results are not proof that
+the latest requested run succeeded.
+
 ## Operator Workbench
 
 The first left-panel section is the operator workbench. It aggregates the live

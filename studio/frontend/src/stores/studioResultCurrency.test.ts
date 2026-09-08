@@ -15,6 +15,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { studioExperimentKey } from "../studioExperimentKey";
+import { studioGuidedFlowInputs } from "../studioGuidedFlowInputs";
 import { studioSimulationConfigInput } from "../studioSimulationConfigInput";
 import { useStudioStore } from "./studio";
 
@@ -30,6 +31,14 @@ const RUN_BODY = JSON.stringify({
   stats: { isi_cv: null, isi_histogram: null, isi_mean_ms: null, rate_hz: 0 },
   time: [0.1, 0.2],
 });
+
+/** Read simulation completion through the same projection used by App. */
+function simulationComplete(): boolean {
+  return studioGuidedFlowInputs(useStudioStore.getState(), {
+    evidenceExportSatisfied: false,
+    trainingSkipped: false,
+  }).simulationComplete;
+}
 
 afterEach(() => {
   useStudioStore.setState(initialState, true);
@@ -94,5 +103,40 @@ describe("a simulation response that arrives late", () => {
     expect(after.result).not.toBeNull();
     expect(after.resultExperimentKey).toBe(expected);
     expect(after.isSimulating).toBe(false);
+  });
+});
+
+describe("a simulation rerun replaces completion evidence", () => {
+  it.each(["model", "ode"] as const)("%s retains traces without completing a pending or failed rerun", async (sourceMode) => {
+    useStudioStore.setState({ sourceMode, selectedModelName: "SCLapicqueLIFNeuron" });
+    const first = deferredRun();
+    const initialRun = useStudioStore.getState().runSimulation();
+    first();
+    await initialRun;
+    expect(simulationComplete()).toBe(true);
+    const previousTrace = useStudioStore.getState().result;
+
+    let fail = (_reason: Error): void => { throw new Error("request not submitted"); };
+    vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>(() => new Promise<Response>(
+      (_resolve, reject) => { fail = reject; },
+    )));
+    const rerun = useStudioStore.getState().runSimulation();
+    expect(useStudioStore.getState().isSimulating).toBe(true);
+    expect(useStudioStore.getState().result).toBe(previousTrace);
+    const pendingComplete = simulationComplete();
+    fail(new Error("simulation unavailable"));
+    await rerun;
+    expect(useStudioStore.getState().isSimulating).toBe(false);
+    expect(useStudioStore.getState().error).toContain("simulation unavailable");
+    expect(useStudioStore.getState().result).toBe(previousTrace);
+    expect(pendingComplete).toBe(false);
+    expect(simulationComplete()).toBe(false);
+
+    const release = deferredRun();
+    const recovery = useStudioStore.getState().runSimulation();
+    release();
+    await recovery;
+    expect(simulationComplete()).toBe(true);
+    expect(useStudioStore.getState().error).toBeNull();
   });
 });
