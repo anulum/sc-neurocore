@@ -47,6 +47,10 @@ Simulation cart identity requires the server's 64-character lowercase hexadecima
 `run_metadata.result_sha256`. Missing or malformed metadata is not enqueued and
 does not prevent a subsequent valid run. This syntax check does not independently
 authenticate the response or recompute its scientific result digest.
+Export failures, including browser download errors, appear in the cart's error
+message. They retain the queued evidence for retry and do not record a new
+successful export. A successful retry clears the error; handing bytes to the
+browser is not confirmation that the user saved them to disk.
 
 Clicking a heatmap cell changes both parameters together and invalidates prior
 compiled output before simulating. Only a heatmap produced for the current

@@ -36,6 +36,7 @@ export interface EvidenceCartSession {
   error: string | null;
   exportBundle: EvidenceCartExportBundle | null;
   exportSatisfiesGuided: boolean;
+  /** Verify and hand the cart to the browser; display failures and reject for the caller. */
   exportSessionCart: () => Promise<void>;
   runAnalysisIntoCart: () => Promise<void>;
   runSimulationIntoCart: () => Promise<void>;
@@ -79,15 +80,17 @@ export function useEvidenceCartSession(): EvidenceCartSession {
   }, []);
 
   const exportSessionCart = useCallback(async () => {
-    const result = await exportEvidenceCartWithVerification(cart);
-    if (!result.ok) {
-      setError(result.error);
-      throw new Error(result.error);
+    try {
+      const result = await exportEvidenceCartWithVerification(cart);
+      if (!result.ok) throw new Error(result.error);
+      downloadBrowserArtefact(result.blob, result.filename);
+      setExportBundle(result.bundle);
+      setExportItemCount(cart.items.length);
+      setError(null);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Evidence cart export failed.");
+      throw error;
     }
-    downloadBrowserArtefact(result.blob, result.filename);
-    setExportBundle(result.bundle);
-    setExportItemCount(cart.items.length);
-    setError(null);
   }, [cart]);
 
   const runSimulationIntoCart = useCallback(async () => {

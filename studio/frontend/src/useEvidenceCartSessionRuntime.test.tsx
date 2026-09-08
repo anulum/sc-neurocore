@@ -20,7 +20,57 @@ afterEach(async () => {
   unsubscribe?.();
   await act(async () => { root?.unmount(); await Promise.resolve(); });
   useStudioStore.setState(initial, true);
-  document.body.replaceChildren(); vi.unstubAllGlobals();
+  document.body.replaceChildren(); vi.restoreAllMocks(); vi.unstubAllGlobals();
+});
+
+/** A browser save failure must be visible in the cart; retry exports the original evidence. */
+it.each(["url", "click"] as const)("reports %s download failure and permits retry", async (failure) => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  useStudioStore.setState({ sourceMode: "model", selectedModelName: "SCLapicqueLIFNeuron" });
+  const result = { time: [0.1], states: { v: [-65] }, current_trace: [10], spikes: [],
+    spike_count: 0, stats: { rate_hz: 0 }, dt: 0.1, n_steps: 1,
+    model_name: "SCLapicqueLIFNeuron", run_metadata: {
+      schema_version: "studio.simulation-run.v1", source: "model", status: "completed",
+      evidence_classification: "simulation", input_sha256: "a".repeat(64),
+      result_sha256: "b".repeat(64), dt: 0.1, n_steps: 1, sample_count: 1,
+      spike_count: 0, state_variables: ["v"],
+    } };
+  vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>(async () => new Response(JSON.stringify(result))));
+  const createUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:cart");
+  const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+  const broken = failure === "url" ? createUrl : click;
+  broken.mockImplementationOnce(() => { throw new Error("Browser save unavailable"); });
+  let session: EvidenceCartSession | undefined;
+  /** Publish actual hook actions and its UI-visible error state. */
+  function Host() {
+    const value = useEvidenceCartSession();
+    useEffect(() => { session = value; });
+    return <div role="alert">{value.error}</div>;
+  }
+  const host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+  await act(async () => { root?.render(<StrictMode><Host /></StrictMode>); });
+  await act(async () => {
+    if (!session) throw new Error("Cart hook not mounted");
+    await session.runSimulationIntoCart();
+  });
+  await act(async () => {
+    if (!session) throw new Error("Cart hook not mounted");
+    await expect(session.exportSessionCart()).rejects.toThrow("Browser save unavailable");
+  });
+  expect(host.textContent).toBe("Browser save unavailable");
+  expect(session?.exportBundle).toBeNull();
+  expect(session?.exportSatisfiesGuided).toBe(false);
+  expect(session?.cart.items).toHaveLength(1);
+  expect(revoke).toHaveBeenCalledTimes(failure === "url" ? 0 : 1);
+  await act(async () => {
+    if (!session) throw new Error("Cart hook not mounted");
+    await session.exportSessionCart();
+  });
+  expect(session?.error).toBeNull();
+  expect(session?.exportSatisfiesGuided).toBe(true);
+  expect(session?.exportBundle?.entries[0]?.payload).toMatchObject(result);
+  expect(revoke).toHaveBeenCalledTimes(failure === "url" ? 1 : 2);
 });
 
 /** Malformed HTTP metadata must neither enter the cart nor prevent a later valid run. */
