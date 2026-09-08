@@ -25,6 +25,7 @@ ungated runs must agree exactly, on the catalogue, not on a chosen few.
 from __future__ import annotations
 
 import importlib
+import threading
 from typing import Any
 
 import numpy as np
@@ -121,6 +122,109 @@ def _run(class_name: str, *, gated: bool, park: bool) -> list[tuple[str, str]]:
 
 
 class TestQuiescenceProbe:
+    def test_slotted_state_is_checked_before_a_population_skips(self) -> None:
+        """A changing register in slots must be visible without an instance dictionary."""
+
+        class Slotted:
+            """A slotted population model whose register advances without a drive."""
+
+            __slots__ = ("v", "ticks", "__weakref__")
+
+            def __init__(self) -> None:
+                self.v = 0.0
+                self.ticks = 0
+
+            def step(self, current: float) -> int:
+                """Advance the register on every call."""
+                self.ticks += 1
+                return 0
+
+        population = Population(Slotted, 1)
+        population.step_all(np.zeros(1), spike_gating=True)
+        assert population.neurons[0].ticks == 1
+
+    def test_uncopyable_model_state_disables_the_probe(self) -> None:
+        """A model owning a thread lock cannot be cloned safely for a probe."""
+
+        class Locked:
+            """A model whose external resource must never be copied by a probe."""
+
+            def __init__(self) -> None:
+                self.guard = threading.Lock()
+
+            def step(self, current: float) -> int:
+                """Hold the resource unchanged without emitting."""
+                return 0
+
+        assert quiescent_signature(Locked()) is None
+
+    def test_large_integer_state_advances_in_a_gated_population(self) -> None:
+        """A refractory counter beyond binary64 precision must not become a fixed point."""
+
+        class Counter:
+            """A public population model emitting after its second counter increment."""
+
+            def __init__(self) -> None:
+                self.v = 0.0
+                self.ticks = 2**53
+
+            def step(self, current: float) -> int:
+                """Advance the exact integer counter independently of the drive."""
+                self.ticks += 1
+                return int(self.ticks >= 2**53 + 2)
+
+        plain = Population(Counter, 1)
+        gated = Population(Counter, 1)
+        for _ in range(3):
+            np.testing.assert_array_equal(
+                plain.step_all(np.zeros(1)), gated.step_all(np.zeros(1), spike_gating=True)
+            )
+        assert gated.neurons[0].ticks == 2**53 + 3
+
+    @pytest.mark.parametrize("container", ["list", "tuple", "object-array"])
+    def test_a_nested_generator_cannot_be_skipped(self, container: str) -> None:
+        """A generator in a sequence advances even when the membrane stays at rest."""
+
+        class GeneratorState:
+            """A public population model with its stream stored in a register list."""
+
+            def __init__(self) -> None:
+                self.v = 0.0
+                stream = np.random.default_rng(17)
+                self.streams: (
+                    list[np.random.Generator]
+                    | tuple[np.random.Generator, ...]
+                    | np.ndarray[Any, Any]
+                )
+                if container == "tuple":
+                    self.streams = (stream,)
+                elif container == "object-array":
+                    self.streams = np.array([stream], dtype=object)
+                else:
+                    self.streams = [stream]
+
+            def step(self, current: float) -> int:
+                """Consume a stochastic transition without emitting a spike."""
+                self.streams[0].random()
+                return 0
+
+        plain = Population(GeneratorState, 1)
+        gated = Population(GeneratorState, 1)
+        for _ in range(3):
+            plain.step_all(np.zeros(1))
+            gated.step_all(np.zeros(1), spike_gating=True)
+        assert (
+            plain.neurons[0].streams[0].bit_generator.state
+            == gated.neurons[0].streams[0].bit_generator.state
+        )
+
+    @pytest.mark.parametrize("voltage", [float("inf"), float("-inf"), float("nan")])
+    def test_nonfinite_voltage_is_not_a_quiescent_state(self, voltage: float) -> None:
+        """Undefined or unbounded state must not be certified as a finite fixed point."""
+        neuron = _instance("LapicqueNeuron")
+        neuron.v = voltage
+        assert quiescent_signature(neuron) is None
+
     def test_a_model_that_moves_under_zero_input_has_no_quiescent_state(self) -> None:
         """AdEx's exponential term is non-zero at rest, so rest is not a fixed point."""
         assert quiescent_signature(_instance("AdExNeuron")) is None

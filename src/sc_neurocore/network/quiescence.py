@@ -26,6 +26,10 @@ relaxation the skip would discard.
 
 Making the test exact costs skips. That is the honest price: the previous
 heuristic bought its speed by returning different numbers.
+
+Scalar numbers are compared as exact rational values, without rounding integer
+registers through binary64. Opaque values anywhere inside a sequence or an
+object array disable skipping; pointer bytes are not a state comparison.
 """
 
 from __future__ import annotations
@@ -85,17 +89,24 @@ def _value_signature(value: object) -> str:
     """
     if isinstance(value, bool):
         return f"bool:{value!r}"
-    if isinstance(value, (int, float, np.integer, np.floating)):
-        # A real number is its value, not the scalar type it arrived in: a model
-        # whose voltage becomes a NumPy float after its first step is at the same
-        # state as one that never left Python's, and must still be skippable.
-        return f"number:{float(value)!r}"
+    if isinstance(value, (int, np.integer)):
+        return f"number:{int(value)}/1"
+    if isinstance(value, (float, np.floating)):
+        if not np.isfinite(value):
+            return INCOMPARABLE
+        numerator, denominator = value.as_integer_ratio()
+        return f"number:{numerator}/{denominator}"
     if isinstance(value, (str, bytes, type(None))):
         return f"{type(value).__name__}:{value!r}"
     if isinstance(value, np.ndarray):
+        if value.dtype.hasobject:
+            return INCOMPARABLE
         return f"ndarray:{value.shape}:{value.dtype}:{value.tobytes().hex()}"
     if isinstance(value, (list, tuple)):
-        return f"{type(value).__name__}:[{','.join(_value_signature(item) for item in value)}]"
+        items = [_value_signature(item) for item in value]
+        if INCOMPARABLE in items:
+            return INCOMPARABLE
+        return f"{type(value).__name__}:[{','.join(items)}]"
     return INCOMPARABLE
 
 
@@ -142,10 +153,10 @@ def quiescent_signature(neuron: object) -> StateSignature | None:
 
     Examples
     --------
-    >>> from sc_neurocore.neurons.models.adex import AdExNeuron
-    >>> quiescent_signature(AdExNeuron()) is not None
+    >>> from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
+    >>> quiescent_signature(LapicqueNeuron()) is not None
     True
-    >>> resting = AdExNeuron()
+    >>> resting = LapicqueNeuron()
     >>> resting.v += 5.0
     >>> quiescent_signature(resting) is None
     True

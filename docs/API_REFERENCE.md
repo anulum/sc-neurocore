@@ -21471,10 +21471,10 @@ tuple or None
 
 Examples
 --------
->>> from sc_neurocore.neurons.models.adex import AdExNeuron
->>> quiescent_signature(AdExNeuron()) is not None
+>>> from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
+>>> quiescent_signature(LapicqueNeuron()) is not None
 True
->>> resting = AdExNeuron()
+>>> resting = LapicqueNeuron()
 >>> resting.v += 5.0
 >>> quiescent_signature(resting) is None
 True
