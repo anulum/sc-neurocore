@@ -11,8 +11,9 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -21,10 +22,15 @@ from sc_neurocore.studio.platform.jobs_ledger_schema import (
     JOB_LEDGER_SCHEMA_VERSION,
     SCHEMA_VERSION,
     StudioJobLedgerCorrupt,
+    StudioJobSubmission,
 )
 from sc_neurocore.studio.platform.jobs import StudioJobManager
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
-from sc_neurocore.studio.platform.jobs_models import StudioJobArtifact, StudioJobRejected
+from sc_neurocore.studio.platform.jobs_models import (
+    StudioJobArtifact,
+    StudioJobRejected,
+    StudioJobStatus,
+)
 
 UTC_CLOCK_START = datetime.fromisoformat("2026-09-06T00:00:00+00:00")
 
@@ -40,7 +46,9 @@ def _job_manager(root: Path) -> StudioJobManager:
     )
 
 
-def _admit(ledger: StudioJobLedger, job_id: str = "sj_0000000000000001", **kwargs: object):
+def _admit(
+    ledger: StudioJobLedger, job_id: str = "sj_0000000000000001", **kwargs: object
+) -> StudioJobSubmission:
     fields: dict[str, object] = {
         "job_id": job_id,
         "kind": "analysis",
@@ -147,6 +155,42 @@ class TestAdmission:
 
 
 class TestStateMachine:
+    @pytest.mark.parametrize(
+        "status", ["completed", "failed", "cancelled", "timed_out", "interrupted"]
+    )
+    def test_repeating_a_terminal_status_preserves_the_entire_record(
+        self, tmp_path: Path, status: StudioJobStatus
+    ) -> None:
+        """An idempotent terminal retry changes neither fields nor audit history."""
+        moment = [UTC_CLOCK_START]
+        ledger = _ledger(tmp_path, clock=lambda: moment[0])
+        submitted = _admit(ledger)
+        ledger.transition(submitted.record.job_id, "running")
+        sealed = ledger.transition(submitted.record.job_id, status, result={"answer": 42})
+        history = ledger.transitions(sealed.job_id)
+        moment[0] += timedelta(seconds=20)
+        assert ledger.transition(sealed.job_id, status) == sealed
+        assert ledger.transition(sealed.job_id, status, result={"answer": 42}) == sealed
+        assert _ledger(tmp_path).record(sealed.job_id) == sealed
+        assert ledger.transitions(sealed.job_id) == history
+
+    @pytest.mark.parametrize(
+        "status", ["completed", "failed", "cancelled", "timed_out", "interrupted"]
+    )
+    def test_same_status_cannot_replace_a_terminal_result(
+        self, tmp_path: Path, status: StudioJobStatus
+    ) -> None:
+        """A late writer cannot replace sealed evidence without a new transition."""
+        ledger = _ledger(tmp_path)
+        submitted = _admit(ledger)
+        ledger.transition(submitted.record.job_id, "running")
+        sealed = ledger.transition(submitted.record.job_id, status, result={"answer": 42})
+        history = ledger.transitions(sealed.job_id)
+        with pytest.raises(StudioJobRejected, match="terminal"):
+            ledger.transition(sealed.job_id, status, result={"answer": 0})
+        assert _ledger(tmp_path).record(sealed.job_id) == sealed
+        assert ledger.transitions(sealed.job_id) == history
+
     def test_a_transition_is_appended_with_its_reason(self, tmp_path: Path) -> None:
         ledger = _ledger(tmp_path)
         _admit(ledger)
@@ -255,9 +299,57 @@ class TestPurge:
         ledger.delete("sj_0000000000000001")
         assert ledger.list_records() == ()
         assert ledger.transitions("sj_0000000000000001") == ()
+        with pytest.raises(KeyError):
+            ledger.delete("sj_0000000000000001")
+        assert ledger.list_records() == ()
 
 
 class TestArtifactCustody:
+    @pytest.mark.parametrize(
+        "replacement",
+        [
+            {"result": {"written": False}},
+            {"artifacts": ()},
+            {"error": "late error"},
+            {"started_at_utc": "2026-01-01T00:00:00Z"},
+            {"finished_at_utc": "2026-01-01T00:00:00Z"},
+        ],
+        ids=["result", "manifest", "error", "start", "finish"],
+    )
+    def test_late_writer_cannot_change_a_real_completed_job(
+        self, tmp_path: Path, replacement: dict[str, Any]
+    ) -> None:
+        """Independent ledger writers cannot revise the real runner's sealed evidence."""
+        root = tmp_path / "jobs"
+        manager = _job_manager(root)
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            context.write_artifact("result.bin", b"original payload")
+            return {"written": True}
+
+        submitted = manager.submit(kind="analysis", owner="alice", request_id=None, task=task)
+        sealed = manager.wait(submitted.job_id, timeout_seconds=5.0)
+        assert sealed.status == "completed"
+        writer = _ledger(root)
+        history = writer.transitions(sealed.job_id)
+        with pytest.raises(StudioJobRejected, match="cannot rewrite"):
+            writer.transition(sealed.job_id, "completed", **replacement)
+        assert manager.record(sealed.job_id) == sealed
+        assert writer.transitions(sealed.job_id) == history
+        assert manager.read_artifact(sealed.job_id, "result.bin").payload == b"original payload"
+        assert (
+            writer.transition(
+                sealed.job_id,
+                "completed",
+                started_at_utc=sealed.started_at_utc,
+                finished_at_utc=sealed.finished_at_utc,
+                error=sealed.error,
+                result=sealed.result,
+                artifacts=sealed.artifacts,
+            )
+            == sealed
+        )
+
     def test_a_completed_job_keeps_its_manifest_across_a_restart(self, tmp_path: Path) -> None:
         root = tmp_path / "jobs"
         manager = _job_manager(root)

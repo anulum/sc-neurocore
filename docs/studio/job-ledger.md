@@ -62,6 +62,12 @@ A job asked to cancel before its supervisor marks it running stays
 is never rewritten, so a late claim of success on an interrupted job is
 refused rather than accepted.
 
+Repeating the same terminal status is an idempotent no-op only when every
+supplied result, artifact manifest, error and start/finish timestamp matches
+the sealed record. Omitting a field leaves it unchanged. A conflicting retry
+is refused inside the ledger transaction; neither the record, heartbeat nor
+transition history changes. Recovery cannot silently replace a sealed result.
+
 ## Recovery on startup
 
 Constructing a `StudioJobManager` over an existing root reconciles every job

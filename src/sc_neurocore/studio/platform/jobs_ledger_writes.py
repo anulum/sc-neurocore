@@ -160,8 +160,9 @@ def transition_job(
 
     The move is refused when the state machine does not allow it, so a terminal
     record can never be rewritten and an interrupted job can never be quietly
-    completed. Repeating the current status is accepted and records the
-    accompanying fields without inventing a transition. A supervisor reporting
+    completed. Repeating a terminal status is a no-op only when all supplied
+    fields match the stored values; a conflicting retry is refused. Repeating
+    a live status can still record accompanying fields. A supervisor reporting
     ``running`` for a job that is already ``cancelling`` keeps the cancellation
     visible and records only the start time.
 
@@ -170,7 +171,8 @@ def transition_job(
     KeyError
         The job is not in the ledger.
     StudioJobRejected
-        The transition is not allowed from the job's current status.
+        The transition is not allowed from the job's current status, or a
+        supplied field conflicts with the already sealed terminal record.
     """
     timestamp = ledger.timestamp()
     with ledger.transaction() as connection:
@@ -191,6 +193,22 @@ def transition_job(
             raise StudioJobRejected(
                 f"Studio job {job_id} cannot move from '{current}' to '{to_status}'."
             )
+        if current in TERMINAL_STATUSES:
+            supplied = {
+                "started_at_utc": started_at_utc,
+                "finished_at_utc": finished_at_utc,
+                "error": error,
+                "result": None if result is None else json.dumps(dict(result), sort_keys=True),
+                "artifacts": None if artifacts is None else artifacts_to_json(artifacts),
+            }
+            changed = [
+                name for name, value in supplied.items() if value is not None and value != row[name]
+            ]
+            if changed:
+                raise StudioJobRejected(
+                    f"Studio terminal job {job_id} cannot rewrite fields: {', '.join(changed)}."
+                )
+            return record_from_row(row)
         sequence = int(row["sequence"]) + (0 if unchanged else 1)
         terminal = to_status in TERMINAL_STATUSES
         connection.execute(
