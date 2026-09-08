@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4865
+    "test_files": 4866
   },
   "documentation": {
     "public_pages": [
@@ -7306,6 +7306,7 @@
       "tests/test_studio_backup_plan.py",
       "tests/test_studio_benchmark_contribution.py",
       "tests/test_studio_browser_sessions.py",
+      "tests/test_studio_catalogue_identity_classification.py",
       "tests/test_studio_catalogue_metadata_state.py",
       "tests/test_studio_codegen_export.py",
       "tests/test_studio_compile_process.py",

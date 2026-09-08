@@ -364,6 +364,18 @@ export interface ModelSummary {
   metadata_state: ModelMetadataState;
   /** Why the metadata could not be read, or `null` when it could. */
   metadata_error: string | null;
+  /**
+   * Which kind of identity this is. The corpus mixes published literature with
+   * project originals and SC-compatibility identities, so a total is not a
+   * count of models from papers.
+   */
+  identity_kind: "source-literature" | "project-original" | "sc-compatibility" | "api-alias" | "";
+  /** Whether this identity counts towards the public source catalogue. */
+  counts_in_source_catalogue: boolean;
+  /** The label it is published under, empty when the registry holds none. */
+  public_label: string;
+  /** Other names that resolve to this identity. */
+  aliases: string[];
   tier: number; evidence_kind: string;
   /** Dual-axis science readiness S0–S5 (catalogue contract). */
   science_tier: number;
@@ -490,6 +502,10 @@ export interface ModelFacets {
   metadata_states: Record<ModelMetadataState, number>;
   /** The entries whose metadata could not be read, by name. */
   invalid_models: string[];
+  /** How many entries are of each identity kind. */
+  identity_kinds: Record<string, number>;
+  /** How many entries count towards the public source catalogue — not `total`. */
+  source_catalogue_total: number;
   families: { family: string; category_slug: string; count: number }[];
   maturities: Record<string, number>;
   behaviors: { tag: string; count: number }[];

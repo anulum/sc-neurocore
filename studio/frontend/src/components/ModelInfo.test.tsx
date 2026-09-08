@@ -28,6 +28,8 @@ const modelDetail = {
   category_slug: "integrate-and-fire",
   category_source: "declared",
   metadata_state: "available", metadata_error: null,
+  identity_kind: "source-literature", counts_in_source_catalogue: true,
+  public_label: "", aliases: [],
   family: "Integrate-and-Fire",
   maturity: "validated",
   biophysical_detail: "point",

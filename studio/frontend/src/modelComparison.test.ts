@@ -16,6 +16,8 @@ const summary = (o: Partial<ModelSummary>): ModelSummary =>
     name: "X", module: "x", category: "c", tier: 2, evidence_kind: "curated",
     category_slug: "c", category_source: "declared", family: "Fam", maturity: "validated",
     metadata_state: "available", metadata_error: null,
+    identity_kind: "source-literature", counts_in_source_catalogue: true,
+    public_label: "", aliases: [],
     biophysical_detail: "", n_state_vars: 2, n_params: 5, state_var_names: [],
     docstring: "", display_name: "X", provenance: null,
     ...o,

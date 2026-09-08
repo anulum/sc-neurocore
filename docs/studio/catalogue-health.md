@@ -47,6 +47,29 @@ is browsable as a fault, not absent.
 In the model browser, a degraded corpus raises a notice naming the affected
 models, and each affected row carries its state inline.
 
+## What kind of identity each entry is
+
+`total` counts every registered identity. It is **not** the number of models
+from the literature, and a browser that showed only a total invited exactly that
+reading. Each entry now carries:
+
+| Field | Meaning |
+| --- | --- |
+| `identity_kind` | `source-literature`, `project-original`, `sc-compatibility`, or `api-alias` |
+| `counts_in_source_catalogue` | Whether it counts towards the public source catalogue |
+| `public_label` | The label it is published under, empty when the registry holds none |
+| `aliases` | Other names that resolve to this identity |
+
+`GET /api/models/facets` adds `identity_kinds`, the census by kind, and
+`source_catalogue_total`, which is smaller than `total`. At the time of writing
+the corpus is 133 from the literature, 27 project originals and 25
+SC-compatibility identities, of which 160 count towards the source catalogue.
+
+The classification comes from `neurons/model_identity.py`, the same registry the
+identity ledger is generated from — not a second count kept beside it. An API
+alias is an identity there and not a registered catalogue model, so it reaches
+no row and cannot inflate the literature count.
+
 ## Guards
 
 `tests/test_studio_catalogue_metadata_state.py` makes one descriptor load raise

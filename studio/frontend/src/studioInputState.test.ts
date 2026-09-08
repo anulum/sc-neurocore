@@ -51,6 +51,8 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
     category_slug: "point",
     category_source: "declared",
     metadata_state: "available", metadata_error: null,
+    identity_kind: "source-literature", counts_in_source_catalogue: true,
+    public_label: "", aliases: [],
     family: "point",
     maturity: "experimental",
     biophysical_detail: "point",

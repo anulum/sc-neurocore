@@ -17,6 +17,7 @@ from typing import Any
 from sc_neurocore.neurons.descriptor_tiers import completeness_tiers, is_perfect
 from sc_neurocore.neurons.equation_builder import SUPPORTED_METHODS
 from sc_neurocore.neurons.model_catalogue import load_descriptor
+from sc_neurocore.neurons.model_identity import identity_registry
 from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     descriptor_completeness_tier,
@@ -59,6 +60,44 @@ class ModelMetadataError(RuntimeError):
     """Raised when Studio model metadata loading fails for a known model."""
 
 
+def _identity_fields(name: str) -> dict[str, Any]:
+    """Return one model's catalogue-identity classification.
+
+    The corpus is not one population: of 185 registered identities, 133 come
+    from published literature, 27 are project-original, 25 are SC-compatibility
+    identities and one is an API alias. A browser that shows only a total
+    invites a reader to count all of them as literature models, which the
+    backlog names directly — "class aliases do not inflate literature count".
+
+    Parameters
+    ----------
+    name : str
+        Registered model identity.
+
+    Returns
+    -------
+    dict
+        ``identity_kind``, whether it ``counts_in_source_catalogue``, the
+        ``public_label`` it is published under, and its ``aliases``. Empty
+        values when the registry does not hold the name, which is stated rather
+        than guessed.
+    """
+    identity = identity_registry().get(name)
+    if identity is None:
+        return {
+            "identity_kind": "",
+            "counts_in_source_catalogue": False,
+            "public_label": "",
+            "aliases": [],
+        }
+    return {
+        "identity_kind": identity.kind,
+        "counts_in_source_catalogue": identity.counts_in_source_catalogue,
+        "public_label": identity.public_label,
+        "aliases": list(identity.aliases),
+    }
+
+
 def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
     """Return a path-free provenance summary, or ``None`` when uncited."""
     prov = descriptor.provenance
@@ -81,6 +120,7 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
     return {
         "name": descriptor.class_name,
         "module": descriptor.module,
+        **_identity_fields(descriptor.class_name),
         "metadata_state": METADATA_STATE_AVAILABLE,
         "metadata_error": None,
         "tier": tier,
@@ -364,6 +404,7 @@ def _introspected_summary(name: str) -> dict[str, Any]:
     return {
         "name": name,
         "module": _CLASS_TO_MODULE[name],
+        **_identity_fields(name),
         "metadata_state": METADATA_STATE_UNAVAILABLE,
         "metadata_error": None,
         "tier": 0,
@@ -421,6 +462,7 @@ def _unreadable_summary(name: str, reason: str) -> dict[str, Any]:
     return {
         "name": name,
         "module": _CLASS_TO_MODULE[name],
+        **_identity_fields(name),
         "metadata_state": METADATA_STATE_INVALID,
         "metadata_error": reason,
         "tier": 0,
@@ -590,8 +632,13 @@ def model_facets() -> dict[str, Any]:
         METADATA_STATE_UNAVAILABLE: 0,
         METADATA_STATE_INVALID: 0,
     }
+    identity_kinds: Counter[str] = Counter()
+    source_catalogue_total = 0
     for model in models:
         metadata_states[str(model["metadata_state"])] += 1
+        identity_kinds[str(model.get("identity_kind", ""))] += 1
+        if model.get("counts_in_source_catalogue"):
+            source_catalogue_total += 1
     return {
         "total": len(models),
         # ``total`` counts every registered identity, so it does not move when a
@@ -599,6 +646,12 @@ def model_facets() -> dict[str, Any]:
         # models are named rather than left to be inferred from a count.
         "corpus_revision": corpus_revision(models),
         "metadata_states": metadata_states,
+        # `total` is every registered identity. It is not the number of models
+        # from the literature, and a browser that shows only the total invites
+        # exactly that reading: the corpus mixes published models, project
+        # originals, SC-compatibility identities and one API alias.
+        "identity_kinds": dict(sorted(identity_kinds.items())),
+        "source_catalogue_total": source_catalogue_total,
         "invalid_models": sorted(
             str(model["name"])
             for model in models
