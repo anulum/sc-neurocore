@@ -113,6 +113,7 @@ export interface StudioState {
   sensResult: SensitivityResponse | null;
   precResult: PrecisionResponse | null;
   heatmapResult: HeatmapResponse | null;
+  heatmapExperimentKey: string | null;
   compareResult: CompareResponse | null;
   nullclineResult: NullclineResponse | null;
   freqResult: FreqResponse | null;

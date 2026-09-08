@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { at } from "../arrayAt";
+import { selectStudioHeatmapPoint } from "../studioHeatmapSelection";
 import { useRef, useEffect, useCallback, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import type {
@@ -124,18 +124,8 @@ export default function SimulationPlot() {
     const xi = Math.floor(((x - L * dpr) / pw) * x_values.length);
     const yi = y_values.length - 1 - Math.floor(((y - T * dpr) / ph) * y_values.length);
     if (xi >= 0 && xi < x_values.length && yi >= 0 && yi < y_values.length) {
-      const params = store.sourceMode === "model" ? { ...store.modelParams } : { ...store.odeParams };
-      params[heatmapResult.param_x] = at(x_values, xi);
-      params[heatmapResult.param_y] = at(y_values, yi);
-      if (store.sourceMode === "model") {
-        useStudioStore.setState({ modelParams: params, activeTab: "trace" });
-      } else {
-        useStudioStore.setState({ odeParams: params, activeTab: "trace" });
-      }
-      // Fire-and-forget: the store reports the run's progress and its failure
-       // through its own state, and awaiting here would only delay the redraw
-       // that shows the new parameters.
-      void store.runSimulation();
+      void selectStudioHeatmapPoint(heatmapResult, xi, yi,
+        useStudioStore.getState, useStudioStore.setState);
     }
   }
 

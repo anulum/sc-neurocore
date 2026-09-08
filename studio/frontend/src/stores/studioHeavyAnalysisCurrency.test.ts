@@ -28,12 +28,13 @@ function complete(): boolean {
  * Release a real HTTP-client request with a terminal job receipt.
  *
  * @param status - Terminal outcome returned by the controlled transport.
+ * @param analysis - Analysis response shape exercised by the caller.
  * @returns Function that delivers the response after the store starts its job.
  */
-function pendingReceipt(status = "completed"): () => void {
+function pendingReceipt(status = "completed", analysis = "fi_curve"): () => void {
   let release = (): void => { throw new Error("request not submitted"); };
   const receipt = {
-      analysis: "fi_curve", execution_mode: "async_job", job_id: "sj_currency",
+      analysis, execution_mode: "async_job", job_id: "sj_currency",
       schema_version: "studio.analysis.job.v1", status_route: "/api/studio/jobs/sj_currency",
       job: {
         job_id: "sj_currency", kind: "analysis", status, owner: "studio",
@@ -41,11 +42,12 @@ function pendingReceipt(status = "completed"): () => void {
         finished_at_utc: null, execution_model: "thread", request_id: null,
         artifacts: [], error: status === "completed" ? null : "analysis unavailable",
         result: status === "completed" ? {
-          currents: [0, 1], rates: [0, 5],
+          ...(analysis === "heatmap" ? { param_x: "x", param_y: "y", x_values: [1], y_values: [2], rates: [[5]], rate_min: 5, rate_max: 5 }
+            : { currents: [0, 1], rates: [0, 5] }),
           analysis_metadata: {
-            analysis_type: "fi_curve", evidence_classification: "analysis",
+            analysis_type: analysis, evidence_classification: "analysis",
             input_sha256: "a".repeat(64), result_sha256: "b".repeat(64),
-            output_keys: ["currents", "rates"], schema_version: "studio.analysis-result.v1",
+            output_keys: analysis === "heatmap" ? ["rates", "x_values", "y_values"] : ["currents", "rates"], schema_version: "studio.analysis-result.v1",
             source: "ode", status: "completed",
           },
         } : null,
@@ -138,4 +140,21 @@ it("reports invalid input introduced while the job was running", async () => {
   expect(useStudioStore.getState().analysisExperimentKey).toBeNull();
   expect(useStudioStore.getState().isSimulating).toBe(false);
   expect(useStudioStore.getState().error).toContain("NaN");
+});
+
+it("attests the heatmap itself and withdraws it on failed rerun", async () => {
+  useStudioStore.setState({ sourceMode: "ode", odeParams: { x: 1, y: 2 }, sweepParam: "x", sweepParamY: "y" });
+  const release = pendingReceipt("completed", "heatmap");
+  const run = useStudioStore.getState().runHeatmap();
+  release(); await run;
+  expect(useStudioStore.getState().heatmapResult).not.toBeNull();
+  expect(useStudioStore.getState().heatmapExperimentKey).toBe(useStudioStore.getState().analysisExperimentKey);
+  expect(useStudioStore.getState().heatmapExperimentKey).not.toBeNull();
+  const old = useStudioStore.getState().heatmapResult;
+  const fail = pendingReceipt("failed", "heatmap");
+  const rerun = useStudioStore.getState().runHeatmap();
+  expect(useStudioStore.getState().heatmapExperimentKey).toBeNull();
+  fail(); await rerun;
+  expect(useStudioStore.getState().heatmapExperimentKey).toBeNull();
+  expect(useStudioStore.getState().heatmapResult).toBe(old);
 });

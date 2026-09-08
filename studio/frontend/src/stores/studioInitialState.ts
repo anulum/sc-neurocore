@@ -48,6 +48,7 @@ export const studioInitialData = {
   frequencyHz: 10, seed: null, trial: "replay",
   result: null, fiResult: null, bifResult: null, sensResult: null, precResult: null,
   heatmapResult: null, compareResult: null, nullclineResult: null,
+  heatmapExperimentKey: null,
   freqResult: null, staResult: null,
   charResult: null, multiResults: null, importedTrace: null, networkResult: null,
   networkParams: { n_exc: 80, n_inh: 20, w_ee: 0.1, w_ei: 0.4, w_ie: 0.1, w_ii: 0.4, p_conn: 0.2, ext_rate: 5.0 },

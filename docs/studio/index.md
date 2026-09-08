@@ -31,6 +31,13 @@ won't appear again (stored in localStorage).
 
 ## Guided Flow
 
+Clicking a heatmap cell changes both parameters together and invalidates prior
+compiled output before simulating. Only a heatmap produced for the current
+experiment is selectable; historical sweeps stay visible but cannot silently
+modify another experiment. Invalid coordinates/values and clicks during an
+active run do not change parameters. A new sweep withdraws the old selection
+qualification until it succeeds.
+
 The left panel shows a guided default flow over the seven lifecycle steps —
 design, simulate, analyse, train (optional), compile, synthesise, export
 evidence — so the Studio reads as a sequence rather than a loose set of panels.

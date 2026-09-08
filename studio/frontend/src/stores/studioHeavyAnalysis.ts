@@ -89,6 +89,7 @@ export async function runStoreHeavyAnalysis(
   if (s.isSimulating) return;
   if (kind === "bifurcation" && !s.sweepParam) return;
   if (kind === "heatmap" && (!s.sweepParam || !s.sweepParamY)) return;
+  if (kind === "heatmap") set({ heatmapExperimentKey: null });
   const selection = buildStudioAnalysisJobSelection({
     analysis: kind,
     sourceMode: s.sourceMode,
@@ -116,7 +117,8 @@ export async function runStoreHeavyAnalysis(
         // The result sink clears error and ends the run only after validation;
         // start patches are busy, and failure patches carry a non-null error.
         const completed = !patch.isSimulating && "error" in patch && patch.error === null;
-        set({ ...patch, analysisExperimentKey: completed ? requestedKey : null });
+        set({ ...patch, analysisExperimentKey: completed ? requestedKey : null,
+          ...(kind === "heatmap" ? { heatmapExperimentKey: completed ? requestedKey : null } : {}) });
       },
     },
   );
