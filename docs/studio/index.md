@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Single- and multi-target synthesis withdraw earlier results and export handles
+on rerun. The request stays busy through operator refresh; responses for a
+changed generated source, target or model parity prerequisite are discarded.
+A failed or refused rerun cannot inherit an earlier successful synthesis.
+These are UI lifecycle guarantees, not a substitute for synthesis evidence.
+
 Changing compiler inputs invalidates both generated RTL producers (Verilog and
 SystemVerilog), generated IR and its diagnostics. Starting a new generation
 also withdraws the previous source, preventing old SV from overriding fresh

@@ -252,13 +252,10 @@ import {
 } from "../capabilityShell";
 import {
   multiTargetSynthesisRunCompletedState,
-  multiTargetSynthesisRunStartState,
   synthesisErrorMessageState,
   synthesisErrorState,
   synthesisEstimateLoadedState,
-  synthesisFailureState,
   synthesisRunCompletedState,
-  synthesisRunStartState,
   synthesisTargetState,
   synthesisToolStatusLoadedState,
 } from "../synthesisStoreState";
@@ -311,6 +308,7 @@ import {
 } from "../studioAutoSimulation";
 import { studioExperimentKey, studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 import { runStoreCompile } from "./studioCompile";
+import { runStoreSynthesis } from "./studioSynthesis";
 
 /**
  * The graph the store currently holds, as a history snapshot.
@@ -1002,14 +1000,7 @@ export function createStudioStoreActions(
 
   setSynthTarget: (t) => { set(synthesisTargetState(t)); },
 
-  runSynthesis: async () => {
-    const s = get();
-    if (!s.svSource && !s.verilogSrc) {
-      set(synthesisErrorMessageState("Generate Verilog first"));
-      return;
-    }
-    set(synthesisRunStartState());
-    try {
+  runSynthesis: () => runStoreSynthesis(get, set, async (s) => {
       const verilog = s.svSource || s.verilogSrc;
       let resultArtifactPath = "synthesis/result.json";
       let synthResult: NonNullable<StudioState["synthResult"]>;
@@ -1039,38 +1030,28 @@ export function createStudioStoreActions(
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set(synthesisRunCompletedState(
+      return synthesisRunCompletedState(
         synthResult,
         operatorStatus,
         jobList,
         resultArtifactPath,
-      ));
-    } catch (e) { set(synthesisFailureState(e)); }
-  },
+      );
+  }),
 
-  runMultiTargetSynthesis: async () => {
-    const s = get();
+  runMultiTargetSynthesis: () => runStoreSynthesis(get, set, async (s) => {
     if (s.sourceMode === "model") {
-      set(synthesisErrorMessageState(
+      throw new Error(
         "Selected models use the digest-bound single-target synthesis/PnR terminal.",
-      ));
-      return;
+      );
     }
-    if (!s.svSource && !s.verilogSrc) {
-      set(synthesisErrorMessageState("Generate Verilog first"));
-      return;
-    }
-    set(multiTargetSynthesisRunStartState());
-    try {
       const verilog = s.svSource || s.verilogSrc;
       const multiTargetResult = await runMultiTargetSynthesis(verilog);
       const [operatorStatus, jobList] = await Promise.all([
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set(multiTargetSynthesisRunCompletedState(multiTargetResult, operatorStatus, jobList));
-    } catch (e) { set(synthesisFailureState(e)); }
-  },
+      return multiTargetSynthesisRunCompletedState(multiTargetResult, operatorStatus, jobList);
+  }),
 
   runSynthEstimate: async () => {
     const s = get();
