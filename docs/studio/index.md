@@ -59,6 +59,11 @@ configuration.
 Project, compile and synthesis export indicators require a bundle captured for
 the current surface context, with matching bundle and job identifiers. Changing
 that context withdraws completion without deleting the historical download.
+Download errors belong to the latest request on their originating panel and
+cannot overwrite a replacement bundle's diagnostics. An explicitly requested
+historical download can still finish after a new bundle arrives, subject to the
+same byte verification; it does not mark that new bundle complete.
+
 Administrative exports do not qualify the experiment's export step. This local
 context binding is not independent authentication of the server manifest.
 

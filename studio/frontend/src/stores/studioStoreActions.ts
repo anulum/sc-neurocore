@@ -18,6 +18,7 @@ import {
   type StudioGraphSnapshot,
 } from "../studioGraphHistory";
 import type { PopulationNode, ProjectionEdge } from "../api/client";
+import { createStoreArtifactDownloader } from "./studioArtifactDownload";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioShareLinkDecision } from "../shareLinkApplication";
 import {
@@ -228,7 +229,6 @@ import {
   trainingWeightRestoreVerificationStartState,
 } from "../trainingStoreState";
 import {
-  evidenceBundleArtifactDownloadPlan,
 } from "../evidenceBundles";
 import {
   adminBusyState,
@@ -632,20 +632,7 @@ export function createStudioStoreActions(
   downloadEvidenceBundleArtifact: async (relativePath) => {
     await get().downloadEvidenceBundleArtifactForSurface("admin", relativePath);
   },
-  downloadEvidenceBundleArtifactForSurface: async (surface, relativePath) => {
-    const downloadPlan = evidenceBundleArtifactDownloadPlan(surface, relativePath, get());
-    if (!downloadPlan.available) {
-      set(downloadPlan.statePatch);
-      return;
-    }
-    set(downloadPlan.startState);
-    try {
-      const payload = await fetchStudioJobArtifact(downloadPlan.jobId, downloadPlan.relativePath);
-      await downloadPlan.writePayload(payload);
-    } catch (error: unknown) {
-      set(downloadPlan.failureState(error));
-    }
-  },
+  downloadEvidenceBundleArtifactForSurface: createStoreArtifactDownloader(get, set),
   loadJobStatus: async () => {
     set(adminBusyState());
     try {
