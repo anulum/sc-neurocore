@@ -156,6 +156,9 @@ exclude = [
     "sc_neurocore.physics", "sc_neurocore.physics.*",
 ]
 
+[tool.setuptools.cmdclass]
+build_py = "build_support.BuildStudioResources"
+
 [tool.setuptools.package-data]
 sc_neurocore = [
   "py.typed",
@@ -168,6 +171,7 @@ sc_neurocore = [
   "neurons/model_schemas/*.json",
   "neurons/model_schemas/*.toml",
   "neurons/reference_trace_data/*.json",
+  "neurons/model_descriptors/*.toml",
 ]
 
 [tool.pytest.ini_options]

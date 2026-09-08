@@ -454,6 +454,15 @@ jobs:
             --include='src/sc_neurocore/chiplet/hierarchical*.py' \
             --fail-under=100 --show-missing
 
+      - name: Studio distribution build coverage
+        # Build copies in source and unpacked sdist map to the same owned hook.
+        if: matrix.primary
+        shell: bash
+        run: |
+          STUDIO_BUILD_COVERAGE_FILE="$PWD/.coverage-studio-build" python -m pytest tests/test_studio_distribution.py -q
+          COVERAGE_FILE=.coverage-studio-build python -m coverage combine --rcfile=tests/studio_distribution.coveragerc
+          COVERAGE_FILE=.coverage-studio-build python -m coverage report --rcfile=tests/studio_distribution.coveragerc
+
       - name: Studio replay exact statement coverage
         # Studio is excluded from aggregate coverage; replay has its own statement gate.
         if: matrix.primary

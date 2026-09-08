@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 487
+expected_file_count = 489
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1963,3 +1963,11 @@ rationale = "Public benchmark coverage census: what each of the three states mea
 [[file]]
 path = "src/sc_neurocore/studio/project.py"
 rationale = "Public Studio project storage and graph-to-target pipeline: what each step does and why the compile step refuses a hardware claim it cannot substantiate."
+
+[[file]]
+path = "src/build_support.py"
+rationale = "Distribution build command: canonical model page ownership, installed destination and refusal when source pages are absent."
+
+[[file]]
+path = "tests/test_studio_distribution.py"
+rationale = "Actual wheel and sdist resource equivalence, installed replay isolation and missing-documentation refusal contracts."

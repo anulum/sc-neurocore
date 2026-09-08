@@ -18,6 +18,13 @@ with the export instead of being reconstructed from a guess.
 
 ## The script
 
+Distribution builds include the model descriptor corpus. Model reference pages
+are copied from `docs/api/models` into the wheel's Studio resources by the
+Python build command; source distributions retain those same build inputs.
+These resources let an installed Studio resolve experiments and serve model
+documentation without a neighbouring source checkout. Their presence does not
+certify scientific or hardware readiness, which still requires matching evidence.
+
 `POST /api/codegen`, or the **Code** button, returns:
 
 | Field | What it is |
