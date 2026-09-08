@@ -24,9 +24,11 @@
  */
 
 import { useEffect, useMemo, useRef } from "react";
+import { studioExperimentKey } from "./studioExperimentKey";
+import { canonicalSealText } from "./evidenceSeal";
 
 import type { AnalysisJobKind, AnalysisJobRequestBody } from "./api/client";
-import type { AnalysisJobViewState } from "./analysisJob";
+import { isAnalysisJobBusy, type AnalysisJobViewState } from "./analysisJob";
 import {
   buildAnalysisJobRequest,
   type AnalysisJobRequestBuildResult,
@@ -51,8 +53,10 @@ import {
 
 /** What this hook writes to the store: a result, or a failure. */
 export type StudioAnalysisJobIntegrationPatch =
-  | StudioAnalysisFailureStatePatch
-  | StudioAnalysisResultSinkPatch;
+  | ((StudioAnalysisFailureStatePatch | StudioAnalysisResultSinkPatch) & {
+    analysisExperimentKey?: string | null; heatmapExperimentKey?: string | null;
+  })
+  | { analysisExperimentKey: null; heatmapExperimentKey?: null };
 
 /** What the panel has selected, as the reader left it. */
 export interface StudioAnalysisJobIntegrationInput {
@@ -172,7 +176,7 @@ export function studioAnalysisJobIntegrationCanSubmit(input: {
 export function applyCompletedAnalysisJobResult(input: {
   kind: AnalysisJobKind;
   state: AnalysisJobViewState;
-  applyPatch?: (patch: StudioAnalysisJobIntegrationPatch) => void;
+  applyPatch?: (patch: StudioAnalysisFailureStatePatch | StudioAnalysisResultSinkPatch) => void;
 }): { applied: boolean; error: string | null } {
   if (input.state.phase !== "completed" || input.state.result === null) {
     return { applied: false, error: null };
@@ -240,6 +244,7 @@ export function useStudioAnalysisJobIntegration(
 
   const session = useAnalysisJob(options.hookOptions ?? {});
   const appliedKeyRef = useRef<string | null>(null);
+  const submittedRef = useRef<{ experiment: string; kind: AnalysisJobKind; pending: boolean } | null>(null);
   const applyPatch = options.applyPatch;
 
   useEffect(() => {
@@ -250,22 +255,36 @@ export function useStudioAnalysisJobIntegration(
     ) {
       appliedKeyRef.current = null;
     }
-    if (resolved.selection === null) return;
+    const submitted = submittedRef.current;
+    if (session.state.phase !== "idle" && !isAnalysisJobBusy(session.state.phase)) {
+      if (submitted) submitted.pending = false;
+    }
+    if (submitted === null) return;
     if (session.state.phase !== "completed" || session.state.result === null) {
       return;
     }
     const key =
-      `${session.state.jobId ?? "none"}:${resolved.selection.analysis}`;
+      `${session.state.jobId ?? "none"}:${submitted.kind}`;
     if (appliedKeyRef.current === key) return;
+    submitted.pending = false;
+    appliedKeyRef.current = key;
+    try {
+      if (studioExperimentKey(input.simulation) !== submitted.experiment
+        || session.state.analysis !== submitted.kind) return;
+    } catch { return; }
     const outcome = applyCompletedAnalysisJobResult({
-      kind: resolved.selection.analysis,
+      kind: submitted.kind,
       state: session.state,
-      applyPatch,
+      applyPatch: (patch) => {
+        const completed = "error" in patch && patch.error === null;
+        applyPatch?.({ ...patch, analysisExperimentKey: completed ? submitted.experiment : null,
+          ...(submitted.kind === "heatmap" ? { heatmapExperimentKey: completed ? submitted.experiment : null } : {}) });
+      },
     });
     if (outcome.applied || outcome.error !== null) {
       appliedKeyRef.current = key;
     }
-  }, [applyPatch, resolved.selection, session.state]);
+  }, [applyPatch, input.simulation, session.state]);
 
   const canSubmit = studioAnalysisJobIntegrationCanSubmit({
     sessionCanSubmit: session.canSubmit,
@@ -282,7 +301,20 @@ export function useStudioAnalysisJobIntegration(
     busy: session.busy,
     canSubmit,
     state: session.state,
-    startJob: session.startJob,
+    startJob: (request) => {
+      if (!canSubmit || submittedRef.current?.pending || !resolved.request.ok) return;
+      try {
+        if (canonicalSealText(request) !== canonicalSealText(resolved.request.value)) return;
+        submittedRef.current = { experiment: studioExperimentKey(input.simulation), kind: request.analysis, pending: true };
+        appliedKeyRef.current = null;
+        applyPatch?.({ analysisExperimentKey: null,
+          ...(request.analysis === "heatmap" ? { heatmapExperimentKey: null } : {}) });
+        session.startJob(request);
+      } catch (error: unknown) {
+        submittedRef.current = null;
+        applyPatch?.(studioAnalysisFailureState(error));
+      }
+    },
     workbenchProps,
     session,
   };

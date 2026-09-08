@@ -68,6 +68,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Panel-submitted analysis jobs retain the experiment and analysis type captured
+at submission. Switching tabs does not reinterpret their result, and changing
+the experiment prevents an old completion from updating the live workspace.
+Only a validated current completion supplies workflow and heatmap-selection
+context. Malformed or failed jobs can be retried without reloading the Studio.
+
 A new catalogue-model co-simulation, or a change to its current input, withdraws the
 prior model synthesis qualification and synthesis job handles immediately.
 Compiled RTL and historical evidence bundles remain available; a new successful

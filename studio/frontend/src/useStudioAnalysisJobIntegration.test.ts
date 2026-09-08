@@ -1,14 +1,16 @@
-// @vitest-environment happy-dom
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Configure React 19 act environment for createRoot mounts.
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 // Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — real React DOM mount of useStudioAnalysisJobIntegration
+// @vitest-environment happy-dom
+
+// Configure React 19 act environment for createRoot mounts.
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { at } from "./arrayAt";
+import { studioExperimentKey } from "./studioExperimentKey";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, createElement, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -247,6 +249,8 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
     });
 
     expect(latest?.state.phase).toBe("completed");
+    expect(patches.some((patch) => typeof patch === "object" && patch !== null
+      && "analysisExperimentKey" in patch && patch.analysisExperimentKey === studioExperimentKey(modelInput))).toBe(true);
     expect(patches.some((p) =>
       typeof p === "object" && p !== null && "activeTab" in p
       && (p as { activeTab: string }).activeTab === "fi-curve"
@@ -269,5 +273,48 @@ describe("useStudioAnalysisJobIntegration real React DOM mount", () => {
       statusRoute: "/api/studio/jobs/sj_stale",
     });
     expect(patches.length).toBe(staleBefore);
+  });
+
+  it.each(["experiment", "panel"] as const)("binds completion to submitted context after changing %s", async (change) => {
+    vi.useFakeTimers();
+    const input = { ...baseInput, simulation: { ...modelInput } };
+    const patches: unknown[] = [];
+    const api: AnalysisJobApi = {
+      submit: async () => receipt(),
+      fetchJob: async () => jobRecord({ status: "completed", result: { ...fiResult } }),
+    };
+    mountHook(input, { applyPatch: (patch) => { patches.push(patch); }, hookOptions: { api, pollIntervalMs: 10 } });
+    act(() => { if (latest?.request.ok) latest.startJob(latest.request.value); });
+    // The hook re-renders on its real session update with changed owner inputs.
+    if (change === "experiment") input.simulation = { ...input.simulation, duration: 200 };
+    else input.analysis = "heatmap";
+    await act(async () => { await vi.advanceTimersByTimeAsync(30); });
+    expect(latest?.state.phase).toBe("completed");
+    expect(patches.some((patch) => typeof patch === "object" && patch !== null && "fiResult" in patch)).toBe(change === "panel");
+    expect(patches.some((patch) => typeof patch === "object" && patch !== null && "heatmapResult" in patch)).toBe(false);
+  });
+
+  it("permits recovery after malformed completion and refuses same-tick duplicates", async () => {
+    vi.useFakeTimers();
+    const submit = vi.fn(async () => receipt());
+    const api: AnalysisJobApi = { submit,
+      fetchJob: vi.fn<AnalysisJobApi["fetchJob"]>()
+        .mockResolvedValueOnce(jobRecord({ status: "completed", result: null }))
+        .mockResolvedValue(jobRecord({ status: "completed", result: { ...fiResult } })),
+    };
+    mountHook(baseInput, { hookOptions: { api, pollIntervalMs: 10 } });
+    act(() => {
+      if (latest?.request.ok) {
+        latest.startJob(latest.request.value);
+        latest.startJob(latest.request.value);
+      }
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30); });
+    expect(submit).toHaveBeenCalledOnce();
+    expect(latest?.state.phase).toBe("malformed");
+    act(() => { if (latest?.request.ok) latest.startJob(latest.request.value); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30); });
+    expect(submit).toHaveBeenCalledTimes(2);
+    expect(latest?.state.phase).toBe("completed");
   });
 });
