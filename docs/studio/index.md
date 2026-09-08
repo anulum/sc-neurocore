@@ -31,6 +31,12 @@ won't appear again (stored in localStorage).
 
 ## Guided Flow
 
+Simulation entries in the evidence cart retain the complete returned response:
+run metadata, resolved experiment, raw scalar/vector traces, display projection,
+and initial/final snapshots when supplied. Raw-data omission markers and reasons
+are preserved too; the cart never reconstructs missing full traces from a display
+projection. Export verification covers this retained payload.
+
 Clicking a heatmap cell changes both parameters together and invalidates prior
 compiled output before simulating. Only a heatmap produced for the current
 experiment is selectable; historical sweeps stay visible but cannot silently

@@ -116,16 +116,9 @@ export function decideSimulationEnqueue(
   const queued = enqueueEvidenceCartArtefact(
     cart,
     simulationCartDraft(sourceName, {
-      current_trace: input.result.current_trace,
-      dt: input.result.dt,
+      ...input.result,
       model_name: input.result.model_name ?? sourceName,
-      n_steps: input.result.n_steps,
       source_mode: input.sourceMode,
-      spike_count: input.result.spike_count,
-      spikes: input.result.spikes,
-      states: input.result.states,
-      stats: input.result.stats,
-      time: input.result.time,
     }),
   );
   if (!queued.ok) {

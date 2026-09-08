@@ -63,6 +63,40 @@ function simulateResult(overrides: Partial<SimulateResponse> = {}): SimulateResp
 }
 
 describe("decideSimulationEnqueue", () => {
+  it.each([true, false])("round-trips complete simulation evidence, raw included=%s", async (included) => {
+    const result = simulateResult({
+      spikes: [2], time: [0.1, 0.2, 0.3],
+      initial_state: { v: -65, synapses: [0, 1] },
+      final_state: { v: -55, synapses: [2, 3] },
+      raw: { schema_version: "studio.raw-trace.v1", included,
+        element_count: 12, element_budget: included ? 100 : 0, dt: 0.1, n_steps: 3,
+        sample_time_ms: "(index + 1) * dt", drive_interval_ms: "[index * dt, (index + 1) * dt)",
+        spike_indices: [2], spike_times_ms: [0.3], vector_snapshots_only: [],
+        ...(included ? { states: { v: [-65, -60, -55] }, vector_states: { synapses: [[0, 1], [1, 2], [2, 3]] }, drive: [10, 10, 10] }
+          : { reason: "raw element budget exceeded" }) },
+      display: { schema_version: "studio.display-projection.v1", method: "identity", max_points: 3,
+        bucket_count: 0, point_count: 3, sample_index: [0, 1, 2], first_sample_included: true,
+        final_sample_included: true, spikes_are_raw_steps: true },
+      experiment: { schema_version: "studio.experiment-spec.v1", source: "model", model: { name: "LIFNeuron" },
+        numerical: { method: "euler", family: "ode", dt: 0.1, dt_source: "request", substeps: 1, time_unit: "ms" },
+        steps: { n_steps: 3, duration_requested_ms: 0.3, duration_effective_ms: 0.3, synchronous_limit: 100 },
+        parameters: { tau: 10 }, initial_state: { v: -65 }, initial_state_source: "model-default",
+        protocol: { kind: "constant", current: 10 },
+        randomness: { kind: "none", seed: null, seed_source: "none", trial: "replay", effective_trial: "replay", generator: null },
+        backend: { selected: "python", rejected: [] }, runtime: { python: "controlled" },
+        experiment_sha256: "c".repeat(64), cache: { key: "controlled", cacheable: true } },
+    });
+    const queued = decideSimulationEnqueue(emptyEvidenceCart(), { runSucceeded: true,
+      sourceMode: "model", selectedModelName: "LIFNeuron", result, resultIdentityBefore: null });
+    expect(queued.action).toBe("enqueue");
+    if (queued.action !== "enqueue") throw new Error("Simulation was not queued");
+    const exported = await exportEvidenceCartWithVerification(queued.cart);
+    expect(exported.ok).toBe(true);
+    if (!exported.ok) throw new Error(exported.error);
+    const wire: unknown = JSON.parse(await exported.blob.text());
+    expect(wire).toMatchObject({ entries: [{ payload: { ...result, source_mode: "model" } }] });
+    expect(exported.bundle.entries[0]?.payload).toEqual({ ...result, source_mode: "model" });
+  });
   it("includes states and ODE identity; skips failed or unchanged results", () => {
     const priorMeta = {
       dt: 0.1,
