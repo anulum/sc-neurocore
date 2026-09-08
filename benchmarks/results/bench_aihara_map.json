@@ -4,58 +4,58 @@
       "available": true,
       "event_count": 120000,
       "event_count_matches_python": true,
-      "median_call_ms": 19.569715,
-      "minimum_call_ms": 15.535761,
+      "median_call_ms": 17.701295,
+      "minimum_call_ms": 16.171732,
       "parity_max_abs_diff": 2.220446049250313e-16,
       "samples_ms": [
-        37.329166,
-        19.569715,
-        15.535761
+        17.78569,
+        17.701295,
+        16.171732
       ],
-      "speedup_vs_python": 21.336003309194847,
+      "speedup_vs_python": 21.000228344875335,
       "y_final": 0.029895998794140066
     },
     "julia": {
       "available": true,
       "event_count": 120000,
       "event_count_matches_python": true,
-      "median_call_ms": 39.647253,
-      "minimum_call_ms": 30.465286,
+      "median_call_ms": 18.19624,
+      "minimum_call_ms": 16.392196,
       "parity_max_abs_diff": 0.0,
       "samples_ms": [
-        30.465286,
-        39.647253,
-        49.833988
+        32.187331,
+        18.19624,
+        16.392196
       ],
-      "speedup_vs_python": 10.531360243293527,
+      "speedup_vs_python": 20.429013741300402,
       "y_final": 0.029895998794140066
     },
     "mojo": {
       "available": true,
       "event_count": 120000,
       "event_count_matches_python": true,
-      "median_call_ms": 28.979007,
-      "minimum_call_ms": 27.324941,
+      "median_call_ms": 20.542462,
+      "minimum_call_ms": 20.206004,
       "parity_max_abs_diff": 5.262457136723242e-14,
       "samples_ms": [
-        29.356394,
-        27.324941,
-        28.979007
+        22.010533,
+        20.206004,
+        20.542462
       ],
-      "speedup_vs_python": 14.408344081631231,
+      "speedup_vs_python": 18.095749039233954,
       "y_final": 0.029895998794134404
     },
     "python": {
       "available": true,
       "event_count": 120000,
       "event_count_matches_python": true,
-      "median_call_ms": 417.539504,
-      "minimum_call_ms": 396.958896,
+      "median_call_ms": 371.731237,
+      "minimum_call_ms": 359.614599,
       "parity_max_abs_diff": 0.0,
       "samples_ms": [
-        396.958896,
-        417.539504,
-        505.704145
+        371.731237,
+        377.12221,
+        359.614599
       ],
       "speedup_vs_python": 1.0,
       "y_final": 0.029895998794140066
@@ -64,51 +64,62 @@
       "available": true,
       "event_count": 120000,
       "event_count_matches_python": true,
-      "median_call_ms": 72.172124,
-      "minimum_call_ms": 61.428269,
+      "median_call_ms": 12.297854,
+      "minimum_call_ms": 11.256921,
       "parity_max_abs_diff": 0.0,
       "samples_ms": [
-        72.172124,
-        61.428269,
-        85.870988
+        11.256921,
+        14.469252,
+        12.297854
       ],
-      "speedup_vs_python": 5.785329305259189,
+      "speedup_vs_python": 30.227325596807383,
       "y_final": 0.029895998794140066
     }
   },
   "environment": {
     "affinity": [
-      4
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "load_average": [
-      14.8037109375,
-      17.47607421875,
-      17.291015625
+      8.677734375,
+      8.662109375,
+      8.423828125
     ],
     "numpy": "2.2.6",
-    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.13",
     "scope": "local diagnostic regression evidence; not a portable ranking",
-    "single_cpu_pinned": true
+    "single_cpu_pinned": false
   },
   "kernel": "aihara_map_chaotic_batch",
   "measured_order": [
-    "go",
-    "mojo",
-    "julia",
     "rust",
+    "go",
+    "julia",
+    "mojo",
     "python"
   ],
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
-    "benchmarks/bench_aihara_map.py": "5c991fc9a8ea7688fa06bc792573b69f036e016a4aa1c8ab18a39ab92d01c7ea",
-    "engine/src/bindings/maps/aihara_map.rs": "3dbf302ac590f0134db4ca13daaae41c2c67e96752a806e656e5241165761458",
-    "engine/src/neurons/aihara_map.rs": "176526f0d05896b2c34d3a746564a6da9441f040e701a56134b8dc18a748b601",
+    "benchmarks/bench_aihara_map.py": "8292ebf0adda8322bdae6c6a9c36de8da5c0e374094669deaad837b5651ccd87",
+    "engine/src/bindings/maps/aihara_map.rs": "f0c870a1db7ae127b3de701a18fdcbe2931aa156cfa12cfebeb39e8c76ae2b95",
+    "engine/src/neurons/aihara_map.rs": "e1fea27323bc845f9cb78156213b1dec29d6fa8fa05587bb4721f1cc6f0b3e50",
     "src/sc_neurocore/accel/aihara_map.py": "7102cfbe9e5a0f36ec5bfb9134570810a2ef1842f795efaf7661a979f4401739",
-    "src/sc_neurocore/accel/go/aihara_map/aihara_map.go": "8bc56090146dc09b137d61be3f999a896cb591635fcdb5df1e5dbf59fd2f033d",
-    "src/sc_neurocore/accel/julia/neurons/aihara_map_neuron.jl": "f001b27719a9993f7e2466b9055504673cab95e221e66ec3093aff9cc58f155d",
-    "src/sc_neurocore/accel/mojo/aihara_map/aihara_map.mojo": "471a8021476444ac8f8e4fd40d2a5ab6d8d8b5f5409e1a578552165f44f7be09",
+    "src/sc_neurocore/accel/go/aihara_map/aihara_map.go": "27ef865b0eaacd7f3b75e0471b5e9a8abdbeda52221bd049d4cfcd02ce21f08d",
+    "src/sc_neurocore/accel/julia/neurons/aihara_map_neuron.jl": "af9860c971f88533984a9c49937b7f59a658117246864f3089e63cc0b7ca2b1e",
+    "src/sc_neurocore/accel/mojo/aihara_map/aihara_map.mojo": "7ceef32afb4056ac3aae19d50c04186df4fb1eeee6be05b63fbcb77b2a926c92",
     "src/sc_neurocore/neurons/models/aihara_map_neuron.py": "7d5411cac0fa326159f0a4b11b3895e2ab658126e7aef0f0d42e9df3c80aa67c"
   },
   "workload": {

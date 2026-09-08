@@ -21,6 +21,63 @@ def _logistic(value: Float64, epsilon: Float64) -> Float64:
     return exponential / (1.0 + exponential)
 
 
+@always_inline
+def _ranges_overlap(
+    a_addr: Int,
+    a_elements: Int,
+    b_addr: Int,
+    b_elements: Int,
+) -> Bool:
+    """Compare two nonempty Float64 ranges without reading caller storage."""
+    var a_bytes = a_elements * 8
+    var b_bytes = b_elements * 8
+    if a_addr <= b_addr:
+        return b_addr - a_addr < a_bytes
+    return a_addr - b_addr < b_bytes
+
+
+@always_inline
+def _active_regions_overlap(
+    steps: Int,
+    current_addr: Int,
+    y_out_addr: Int,
+    x_out_addr: Int,
+    spikes_out_addr: Int,
+    y_final_addr: Int,
+    x_final_addr: Int,
+    spike_count_addr: Int,
+) -> Bool:
+    """Detect any overlap among active input, trace and scalar output ranges."""
+    if (
+        _ranges_overlap(y_final_addr, 1, x_final_addr, 1)
+        or _ranges_overlap(y_final_addr, 1, spike_count_addr, 1)
+        or _ranges_overlap(x_final_addr, 1, spike_count_addr, 1)
+    ):
+        return True
+    if steps == 0:
+        return False
+    return (
+        _ranges_overlap(current_addr, steps, y_out_addr, steps)
+        or _ranges_overlap(current_addr, steps, x_out_addr, steps)
+        or _ranges_overlap(current_addr, steps, spikes_out_addr, steps)
+        or _ranges_overlap(current_addr, steps, y_final_addr, 1)
+        or _ranges_overlap(current_addr, steps, x_final_addr, 1)
+        or _ranges_overlap(current_addr, steps, spike_count_addr, 1)
+        or _ranges_overlap(y_out_addr, steps, x_out_addr, steps)
+        or _ranges_overlap(y_out_addr, steps, spikes_out_addr, steps)
+        or _ranges_overlap(y_out_addr, steps, y_final_addr, 1)
+        or _ranges_overlap(y_out_addr, steps, x_final_addr, 1)
+        or _ranges_overlap(y_out_addr, steps, spike_count_addr, 1)
+        or _ranges_overlap(x_out_addr, steps, spikes_out_addr, steps)
+        or _ranges_overlap(x_out_addr, steps, y_final_addr, 1)
+        or _ranges_overlap(x_out_addr, steps, x_final_addr, 1)
+        or _ranges_overlap(x_out_addr, steps, spike_count_addr, 1)
+        or _ranges_overlap(spikes_out_addr, steps, y_final_addr, 1)
+        or _ranges_overlap(spikes_out_addr, steps, x_final_addr, 1)
+        or _ranges_overlap(spikes_out_addr, steps, spike_count_addr, 1)
+    )
+
+
 def _run(
     n: Int32,
     y_init: Float64,
@@ -42,6 +99,11 @@ def _run(
     var steps = Int(n)
     if steps > 0 and (
         current_addr == 0 or y_out_addr == 0 or x_out_addr == 0 or spikes_out_addr == 0
+    ):
+        return 1
+    if _active_regions_overlap(
+        steps, current_addr, y_out_addr, x_out_addr, spikes_out_addr,
+        y_final_addr, x_final_addr, spike_count_addr,
     ):
         return 1
     if (
@@ -108,6 +170,14 @@ def aihara_map_simulate_c(
     x_final_addr: Int,
     spike_count_addr: Int,
 ) -> Int32:
+    """Write the full source-map receipt into disjoint caller-owned buffers.
+
+    Four Float64 ranges have n elements; three final outputs have one each.
+    Empty traces may have null addresses. Status 1 rejects null/overlapping
+    active buffers, 2 invalid configuration, 3 nonfinite input, 4 overflow.
+    Rejection never writes caller storage. Allocations and their lifetimes
+    remain the caller's responsibility; addresses are not allocation proofs.
+    """
     var status = _run(
         n, y_init, k, alpha, bias, epsilon, current_addr, y_out_addr,
         x_out_addr, spikes_out_addr, y_final_addr, x_final_addr,

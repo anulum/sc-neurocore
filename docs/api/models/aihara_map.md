@@ -95,11 +95,41 @@ The recurrence is chaotic, so last-bit differences in a transcendental
 implementation amplify with horizon. Verification therefore separates two
 claims:
 
-- tight short-horizon equation parity (`5e-11` over 64 maintained steps);
+- tight short-horizon equation parity (`5e-11` over the 64-step mixed-drive
+  protocol in `tests/test_aihara_map_backends.py`, not every chaotic input);
 - a measured 512-step Mojo state envelope (`2e-4`) with exact Eq. 12 events.
 
 This is stronger and more honest than claiming indefinite pointwise identity
 for chaotic trajectories.
+
+### Native buffer ownership
+
+The Go and Mojo `aihara_map_simulate_c` exports take four contiguous
+`Float64[n]` ranges (input, `y`, `x`, events) and three `Float64[1]` final
+outputs. All active ranges must be pairwise disjoint, including the input.
+Separate, adjacent views of one allocation are valid; overlapping views are
+not. Empty traces may be null, but final outputs must remain distinct.
+The caller must supply valid allocations and keep them alive for the call;
+the address checks do not establish allocation validity or prevent concurrent
+external writes.
+
+Return codes are `0` for success, `1` for invalid or overlapping buffers,
+`2` for invalid configuration, `3` for nonfinite input, and `4` for a
+nonfinite candidate. Rejection leaves caller storage unchanged.
+
+Julia's exported `simulate_aihara_map!`/`simulate_aihara_map_b` uses the same
+disjoint-range rule for its four vectors and returns the three final values
+as a tuple. It requires equal lengths, contiguous unit-stride `Float64`
+storage and writable outputs. Invalid buffers raise
+`AiharaMapConfigurationError` before writing any output. Empty vectors may
+share storage.
+
+The Python dispatchers allocate distinct output buffers already. Rust owns
+its output vectors rather than accepting writable caller buffers, so this
+ownership check does not change its interface. Model equations, event
+semantics and RTL are unchanged. Native callers relying on overlapping
+storage must allocate disjoint ranges; reverting this check restores silent
+result overwrites and is not a safe migration strategy.
 
 ## Schema, reference trace, and RTL
 
@@ -123,6 +153,10 @@ the depth-6 Z3 BMC are part of the focused Model 43 evidence.
 - `tests/test_model_aihara_map_neuron.py`: scalar contracts and atomic errors.
 - `tests/test_reference_aihara_map.py`: independent primary-equation oracle.
 - `tests/test_aihara_map_backends.py`: full native receipts and parity bounds.
+- `tests/test_aihara_native_buffer_contracts.py`: real Go/Mojo ABI overlap
+  rejection, adjacent storage, empty receipts and atomic numerical errors.
+- `tests/test_aihara_julia_buffer_contracts.py`: real PythonCall view overlap
+  rejection and complete adjacent-storage receipts.
 - `tests/test_cosim_aihara_map.py`: paired-schema and Q8.24 bounded co-sim.
 - Rust and Go unit tests: source first-step, Eq. 12 level semantics, and
   no-mutation failure behavior.

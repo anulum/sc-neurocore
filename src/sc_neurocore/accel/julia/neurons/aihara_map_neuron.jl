@@ -87,12 +87,37 @@ function _validate_buffer(buffer::AbstractVector, name::String, steps::Int; writ
         throw(AiharaMapConfigurationError("$name length mismatch"))
     (isempty(buffer) || (applicable(stride, buffer, 1) && stride(buffer, 1) == 1)) ||
         throw(AiharaMapConfigurationError("$name must have unit stride"))
+    applicable(pointer, buffer) ||
+        throw(AiharaMapConfigurationError("$name must expose contiguous storage"))
     if writable && !_writable(buffer)
         throw(AiharaMapConfigurationError("$name must be writable"))
     end
     return nothing
 end
 
+"""Reject intersecting contiguous ranges, including separate views of one owner."""
+function _buffers_distinct(buffers::NTuple{4, AbstractVector})::Bool
+    for left in 1:3, right in (left + 1):4
+        a, b = buffers[left], buffers[right]
+        (isempty(a) || isempty(b)) && continue
+        a_start, b_start = UInt(pointer(a)), UInt(pointer(b))
+        a_bytes, b_bytes = UInt(length(a)) * UInt(8), UInt(length(b)) * UInt(8)
+        overlaps = a_start <= b_start ? b_start - a_start < a_bytes : a_start - b_start < b_bytes
+        overlaps && return false
+    end
+    return true
+end
+
+"""
+    simulate_aihara_map!(y, k, alpha, bias, epsilon, current, y_out, x_out, spikes_out)
+
+Run the reduced source map into three caller-owned Float64 vectors. All four
+vectors must have equal lengths, unit stride, contiguous storage and disjoint
+active byte ranges; outputs must be writable. Empty vectors may share storage.
+Return `(y_final, x_final, event_count)`. Invalid buffers/configuration/input
+raise `AiharaMapConfigurationError`; nonfinite candidates raise
+`AiharaMapCandidateError`. Validation and simulation precede every output write.
+"""
 function simulate_aihara_map!(
     y_init::Real,
     k::Real,
@@ -109,6 +134,8 @@ function simulate_aihara_map!(
     _validate_buffer(y_out, "y_out", steps; writable = true)
     _validate_buffer(x_out, "x_out", steps; writable = true)
     _validate_buffer(spikes_out, "spikes_out", steps; writable = true)
+    _buffers_distinct((current, y_out, x_out, spikes_out)) ||
+        throw(AiharaMapConfigurationError("Aihara buffers must not overlap"))
     state = AiharaMapNeuronState(Float64.((y_init, k, alpha, bias, epsilon))...)
     valid(state) || throw(AiharaMapConfigurationError("invalid Aihara configuration"))
     all(isfinite, current) ||

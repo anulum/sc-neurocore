@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Go C ABI for source-faithful Aihara dynamics
 
+// Package main exports the checked Aihara Float64 batch through a C shared library.
 package main
 
 /*
@@ -29,6 +30,37 @@ func logistic(value, epsilon float64) float64 {
 	return exponential / (1.0 + exponential)
 }
 
+// distinctBuffers checks active byte ranges without dereferencing caller memory.
+// Final outputs always have one element; empty trace/input ranges are inactive.
+func distinctBuffers(steps int, pointers [7]unsafe.Pointer) bool {
+	for left := 0; left < len(pointers); left++ {
+		leftSize := uintptr(8)
+		if left < 4 {
+			leftSize *= uintptr(steps)
+		}
+		if leftSize == 0 {
+			continue
+		}
+		for right := left + 1; right < len(pointers); right++ {
+			rightSize := uintptr(8)
+			if right < 4 {
+				rightSize *= uintptr(steps)
+			}
+			a, b := uintptr(pointers[left]), uintptr(pointers[right])
+			if (a <= b && b-a < leftSize) || (b < a && a-b < rightSize) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// aihara_map_simulate_c writes a complete source-map receipt on success (0).
+// The caller owns seven pairwise-disjoint Float64 ranges: four n-element
+// input/trace ranges and three scalar outputs. Empty traces may be nil.
+// Status 1 rejects invalid/overlapping buffers, 2 configuration, 3 input,
+// and 4 numerical overflow. Any rejection leaves all caller storage unchanged.
+//
 //export aihara_map_simulate_c
 func aihara_map_simulate_c(
 	n C.int32_t,
@@ -41,6 +73,12 @@ func aihara_map_simulate_c(
 	}
 	steps := int(n)
 	if steps > 0 && (currentPtr == nil || yOutPtr == nil || xOutPtr == nil || spikesOutPtr == nil) {
+		return 1
+	}
+	if !distinctBuffers(steps, [7]unsafe.Pointer{
+		currentPtr, yOutPtr, xOutPtr, spikesOutPtr,
+		unsafe.Pointer(yFinal), unsafe.Pointer(xFinal), unsafe.Pointer(spikeCount),
+	}) {
 		return 1
 	}
 	values := [5]float64{float64(yInit), float64(k), float64(alpha), float64(bias), float64(epsilon)}
