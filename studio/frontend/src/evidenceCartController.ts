@@ -36,6 +36,7 @@ import {
   type EvidenceCartExportBundle,
   type EvidenceCartItemKind,
 } from "./evidenceCart";
+import { canonicalSealText } from "./evidenceSeal";
 export { analysisResultIdentity } from "./evidenceCartIdentity";
 
 /** What the store reports after a simulation run. */
@@ -175,9 +176,9 @@ export function decideAnalysisEnqueue(
 /**
  * Whether the guided flow's export step is satisfied by what has been exported.
  *
- * Both counts must match the cart. An export made before the reader queued
- * more must not tick the step: the flow would report evidence exported for
- * artefacts that are not in any bundle.
+ * Counts, ordered identities, metadata and payloads must match the exported
+ * snapshot. Same-count replacements are not already exported. This is a local
+ * freshness check; cryptographic verification remains in the export operation.
  *
  * @param cart - The cart as it stands.
  * @param lastExport - The last bundle built, if any.
@@ -192,7 +193,17 @@ export function evidenceCartExportSatisfiesGuided(
   if (lastExport === null || exportItemCount === null) {
     return false;
   }
-  return exportItemCount === cart.items.length && lastExport.entry_count === cart.items.length;
+  if (cart.items.length === 0 || exportItemCount !== cart.items.length
+    || lastExport.entry_count !== cart.items.length || lastExport.entries.length !== cart.items.length) return false;
+  try {
+    return cart.items.every((item, index) => {
+      const entry = lastExport.entries[index];
+      return entry?.id === item.id && item.kind === entry.kind
+        && item.classification === entry.classification && item.label === entry.label
+        && item.queuedAtUtc === entry.queued_at_utc && (item.sourceName ?? null) === entry.source_name
+        && canonicalSealText(item.payload) === canonicalSealText(entry.payload);
+    });
+  } catch { return false; }
 }
 
 /**

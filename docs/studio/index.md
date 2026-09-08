@@ -36,6 +36,9 @@ run metadata, resolved experiment, raw scalar/vector traces, display projection,
 and initial/final snapshots when supplied. Raw-data omission markers and reasons
 are preserved too; the cart never reconstructs missing full traces from a display
 projection. Export verification covers this retained payload.
+Exports snapshot all queued payloads before hashing. The completion indicator
+compares ordered item identities, metadata and contents with that snapshot,
+not merely the number of items. A same-count replacement requires a new export.
 
 Clicking a heatmap cell changes both parameters together and invalidates prior
 compiled output before simulating. Only a heatmap produced for the current

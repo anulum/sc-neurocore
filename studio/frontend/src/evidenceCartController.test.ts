@@ -346,6 +346,31 @@ describe("decideAnalysisEnqueue", () => {
 });
 
 describe("export freshness and payload round-trip", () => {
+  it.each(["payload", "label", "identity"] as const)("rejects same-count cart changes: %s", async (change) => {
+    const queued = enqueueEvidenceCartArtefact(emptyEvidenceCart(), simulationCartDraft("m", { values: [1, 2] }));
+    if (!queued.ok) throw new Error(queued.error);
+    const exported = await exportEvidenceCartWithVerification(queued.cart);
+    if (!exported.ok) throw new Error(exported.error);
+    const changed = { ...queued.cart, items: queued.cart.items.map((item) => ({ ...item,
+      ...(change === "payload" ? { payload: { values: [1, 3] } }
+        : change === "label" ? { label: "Changed label" } : { id: "ec_replacement" }),
+    })) };
+    expect(evidenceCartExportSatisfiesGuided(changed, exported.bundle, 1)).toBe(false);
+    expect(evidenceCartExportSatisfiesGuided(queued.cart, exported.bundle, 1)).toBe(true);
+  });
+
+  it("snapshots payloads before asynchronous export hashing", async () => {
+    const payload = { values: [1, 2] };
+    const queued = enqueueEvidenceCartArtefact(emptyEvidenceCart(), simulationCartDraft("m", payload));
+    if (!queued.ok) throw new Error(queued.error);
+    const pending = exportEvidenceCartWithVerification(queued.cart);
+    payload.values[1] = 3;
+    const exported = await pending;
+    expect(exported.ok).toBe(true);
+    if (!exported.ok) throw new Error(exported.error);
+    expect(exported.bundle.entries[0]?.payload).toEqual({ values: [1, 2] });
+    expect(evidenceCartExportSatisfiesGuided(queued.cart, exported.bundle, 1)).toBe(false);
+  });
   it("invalidates guided export satisfaction after new cart items", async () => {
     let cart = emptyEvidenceCart();
     const first = enqueueEvidenceCartArtefact(

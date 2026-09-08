@@ -240,9 +240,14 @@ export async function buildEvidenceCartExport(
     return { error: "Evidence cart is empty; queue at least one artefact" };
   }
   const exportedAtUtc = options.exportedAtUtc ?? new Date().toISOString();
+  // Capture every payload before yielding: hashing and exported bytes must
+  // describe the same snapshot, even if a caller later mutates its source.
+  const items = cart.items.map((item) => ({ ...item,
+    payload: JSON.parse(canonicalSealText(item.payload)) as unknown,
+  }));
   const entries: EvidenceCartExportEntry[] = [];
   const kindCounts: Record<string, number> = {};
-  for (const item of cart.items) {
+  for (const item of items) {
     const payloadSha = await sha256HexOfCanonicalJson(item.payload);
     kindCounts[item.kind] = (kindCounts[item.kind] ?? 0) + 1;
     entries.push({
