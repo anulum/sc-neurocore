@@ -38,6 +38,7 @@ import type { StudioSimulationConfigSource } from "./studioSimulationConfigInput
 /** Every field the guided workflow's completion rules read. */
 export interface StudioGuidedFlowSource extends StudioSimulationConfigSource {
   analysisExperimentKey: string | null;
+  modelQFormat: string;
   bifResult: BifurcationResponse | null;
   charResult: CharacterizeResponse | null;
   compareResult: CompareResponse | null;

@@ -56,6 +56,11 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Precision completion also includes the selected Q-format. Changing that format
+withdraws precision completion and discards in-flight outcomes for the old
+format, while preserving the previous plot. Format-independent analyses and
+simulation results are unaffected by this setting.
+
 Characterisation applies the same rule to WebSocket progress and completion.
 A disconnected socket falls back to HTTP once; terminal sockets are detached
 and closed. Both transports validate the result shape before accepting success.

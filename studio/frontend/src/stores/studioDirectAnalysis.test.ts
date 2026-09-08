@@ -191,3 +191,69 @@ it("reports missing nullcline initial variables instead of silent idle", async (
   expect(useStudioStore.getState().error).toContain("initial values for two variables");
   expect(useStudioStore.getState().isSimulating).toBe(false);
 });
+
+it("withdraws precision completion after a Q-format change without discarding the plot", async () => {
+  const finish = deferred("runPrecision");
+  const pending = run("runPrecision");
+  finish();
+  await pending;
+  const old = useStudioStore.getState().precResult;
+  expect(complete()).toBe(true);
+  useStudioStore.getState().setModelQFormat("Q16.16");
+  expect(complete()).toBe(false);
+  expect(useStudioStore.getState().precResult).toBe(old);
+  useStudioStore.getState().setModelQFormat("Q8.8");
+  expect(complete()).toBe(true);
+});
+
+it.each([false, true])("drops an obsolete precision profile response, rejected=%s", async (rejected) => {
+  const finish = deferred("runPrecision");
+  const pending = run("runPrecision");
+  useStudioStore.getState().setModelQFormat("Q16.16");
+  finish(rejected);
+  await pending;
+  expect(useStudioStore.getState().precResult).toBeNull();
+  expect(useStudioStore.getState().error).toBeNull();
+  expect(useStudioStore.getState().isSimulating).toBe(false);
+  expect(complete()).toBe(false);
+});
+
+it("keeps frequency analysis current across unrelated Q-format changes", async () => {
+  const finish = deferred("runFreqResponse");
+  const pending = run("runFreqResponse");
+  useStudioStore.getState().setModelQFormat("Q16.16");
+  finish();
+  await pending;
+  expect(complete()).toBe(true);
+});
+
+it("does not use an older frequency plot to qualify a mismatched precision profile", async () => {
+  let finish = deferred("runFreqResponse");
+  let pending = run("runFreqResponse");
+  finish();
+  await pending;
+  finish = deferred("runPrecision");
+  pending = run("runPrecision");
+  finish();
+  await pending;
+  useStudioStore.getState().setModelQFormat("Q16.16");
+  expect(useStudioStore.getState().freqResult).not.toBeNull();
+  expect(complete()).toBe(false);
+  finish = deferred("runPrecision");
+  pending = run("runPrecision");
+  finish();
+  await pending;
+  expect(complete()).toBe(true);
+});
+
+it("records the same Q-format that the production client submits", async () => {
+  useStudioStore.getState().setModelQFormat("Q16.16");
+  const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify(payload("runPrecision"))));
+  vi.stubGlobal("fetch", fetch);
+  await run("runPrecision");
+  const body: unknown = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body));
+  expect(body).toMatchObject({ q_format: "Q16.16" });
+  const key: unknown = JSON.parse(useStudioStore.getState().analysisExperimentKey ?? "null");
+  expect(key).toMatchObject({ qFormat: "Q16.16" });
+  expect(complete()).toBe(true);
+});

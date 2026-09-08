@@ -38,6 +38,7 @@ const TRAINING_CONFIG = {
 function source(overrides: Partial<StudioGuidedFlowSource> = {}): StudioGuidedFlowSource {
   return {
     analysisExperimentKey: null,
+    modelQFormat: "Q8.8",
     bifResult: null,
     charResult: null,
     compareResult: null,

@@ -324,7 +324,7 @@ import {
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
 import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
-import { studioExperimentKey, studioTrainingKey } from "../studioExperimentKey";
+import { studioExperimentKey, studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 
 /**
  * The graph the store currently holds, as a history snapshot.
@@ -872,7 +872,7 @@ export function createStudioStoreActions(
       studioPrecisionRequest(simulationConfigInput(s), s.modelQFormat),
     );
     return studioPrecisionResultState(precResult);
-  }, "precision"),
+  }, "precision", (s) => studioPrecisionKey(simulationConfigInput(s), s.modelQFormat)),
 
   runCompile: async () => {
     const s = get();

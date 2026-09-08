@@ -22,21 +22,23 @@ import type { StudioState } from "./studioTypes";
  * @param set - Apply patches without replacing unrelated state.
  * @param request - Build and execute the analysis from its captured state.
  * @param tab - Optional destination tab when starting the analysis.
+ * @param identity - Request-specific identity, including any extra inputs.
  */
 export async function runStoreDirectAnalysis(
   get: () => StudioState,
   set: (patch: Partial<StudioState>) => void,
   request: (state: StudioState) => Promise<Partial<StudioState>>,
   tab?: Parameters<typeof studioAnalysisStartState>[0],
+  identity: (state: StudioState) => string = (snapshot) => studioExperimentKey(studioSimulationConfigInput(snapshot)),
 ): Promise<void> {
   const state = get();
   if (state.isSimulating) return;
   set({ ...studioAnalysisStartState(tab), analysisExperimentKey: null });
   let requestedKey: string | null = null;
   try {
-    requestedKey = studioExperimentKey(studioSimulationConfigInput(state));
+    requestedKey = identity(state);
     const patch = await request(state);
-    if (studioExperimentKey(studioSimulationConfigInput(get())) !== requestedKey) {
+    if (identity(get()) !== requestedKey) {
       set({ isSimulating: false });
       return;
     }
@@ -45,7 +47,7 @@ export async function runStoreDirectAnalysis(
     let failure = error;
     try {
       if (requestedKey !== null
-        && studioExperimentKey(studioSimulationConfigInput(get())) !== requestedKey) {
+        && identity(get()) !== requestedKey) {
         set({ isSimulating: false });
         return;
       }

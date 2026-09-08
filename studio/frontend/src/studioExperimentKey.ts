@@ -66,6 +66,21 @@ export function studioExperimentKey(input: StudioSimulationConfigInput): string 
 }
 
 /**
+ * Identify a precision comparison, including its fixed-point word format.
+ *
+ * This extends the existing local experiment identity, not the server digest.
+ * Keeping it distinct prevents precision evidence qualifying another format
+ * while leaving format-independent simulation and analyses unchanged.
+ *
+ * @param input - Captured experiment configuration.
+ * @param qFormat - Exact word format sent in the precision request.
+ * @returns The precision-specific identity.
+ */
+export function studioPrecisionKey(input: StudioSimulationConfigInput, qFormat: string): string {
+  return canonicalSealText({ experiment: studioExperimentKey(input), qFormat });
+}
+
+/**
  * Whether a result recorded under `recorded` still describes `current`.
  *
  * A result with no recorded key is not current: it predates this mechanism, or

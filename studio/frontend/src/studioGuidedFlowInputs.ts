@@ -37,6 +37,7 @@
 import type { GuidedFlowInputs } from "./guidedFlowState";
 import {
   studioExperimentKey,
+  studioPrecisionKey,
   studioResultIsCurrent,
   studioTrainingKey,
 } from "./studioExperimentKey";
@@ -69,7 +70,6 @@ export function studioGuidedFlowInputs(
     state.fiResult,
     state.bifResult,
     state.sensResult,
-    state.precResult,
     state.heatmapResult,
     state.compareResult,
     state.nullclineResult,
@@ -77,8 +77,12 @@ export function studioGuidedFlowInputs(
     state.charResult,
   ];
   return {
-    analysisComplete: analysisResults.some((analysis) => analysis !== null)
-      && studioResultIsCurrent(state.analysisExperimentKey, currentExperimentKey),
+    analysisComplete: (analysisResults.some((analysis) => analysis !== null)
+      && studioResultIsCurrent(state.analysisExperimentKey, currentExperimentKey))
+      || (state.precResult !== null && studioResultIsCurrent(
+        state.analysisExperimentKey,
+        studioPrecisionKey(studioSimulationConfigInput(state), state.modelQFormat),
+      )),
     compileComplete: state.compileTraceability !== null,
     cosimApplicable: state.sourceMode === "model",
     cosimComplete: cosimMatchesCompile(state),
