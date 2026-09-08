@@ -71,6 +71,50 @@ function deferredRun(): () => void {
 }
 
 describe("a simulation response that arrives late", () => {
+  it("leaves an active request untouched on a busy duplicate", async () => {
+    const release = deferredRun();
+    const run = useStudioStore.getState().runSimulation();
+    const before = useStudioStore.getState();
+    await useStudioStore.getState().runSimulation();
+    expect(useStudioStore.getState()).toBe(before);
+    expect(globalThis.fetch).toHaveBeenCalledOnce();
+    release(); await run;
+    expect(simulationComplete()).toBe(true);
+  });
+
+  it("reports invalid changed inputs and releases a completed request", async () => {
+    const release = deferredRun();
+    const run = useStudioStore.getState().runSimulation();
+    useStudioStore.setState({ dt: Number.NaN });
+    release(); await run;
+    expect(useStudioStore.getState().error).toContain("NaN");
+    expect(useStudioStore.getState().isSimulating).toBe(false);
+    expect(useStudioStore.getState().resultExperimentKey).toBeNull();
+    expect(useStudioStore.getState().result).toBeNull();
+  });
+  it.each(["model", "ode"] as const)("discards an obsolete %s failure", async (sourceMode) => {
+    useStudioStore.setState({ sourceMode });
+    let fail = (_error: Error): void => { throw new Error("Request absent"); };
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(() => new Promise<Response>((_resolve, reject) => { fail = reject; })));
+    const run = useStudioStore.getState().runSimulation();
+    useStudioStore.getState().setDuration(200);
+    fail(new Error("Previous experiment failed"));
+    await run;
+    expect(useStudioStore.getState().error).toBeNull();
+    expect(useStudioStore.getState().isSimulating).toBe(false);
+    expect(useStudioStore.getState().resultExperimentKey).toBeNull();
+  });
+
+  it("reports invalid input without rejecting the fire-and-forget action", async () => {
+    useStudioStore.setState({ dt: Number.NaN });
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    vi.stubGlobal("fetch", fetch);
+    await expect(useStudioStore.getState().runSimulation()).resolves.toBeUndefined();
+    expect(useStudioStore.getState().error).not.toBeNull();
+    expect(useStudioStore.getState().isSimulating).toBe(false);
+    expect(useStudioStore.getState().resultExperimentKey).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it("does not land on an experiment the reader has since changed", async () => {
     const release = deferredRun();
     useStudioStore.setState({ selectedModelName: "SCLapicqueLIFNeuron", sourceMode: "model" });

@@ -19,6 +19,7 @@ import {
 } from "../studioGraphHistory";
 import type { PopulationNode, ProjectionEdge } from "../api/client";
 import { createStoreArtifactDownloader } from "./studioArtifactDownload";
+import { runStoreSimulation } from "./studioSimulation";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioShareLinkDecision } from "../shareLinkApplication";
 import {
@@ -44,8 +45,6 @@ import {
   purgeStudioAuditQuarantineArchiveRetention,
   restoreStudioAuditQuarantineArchive,
   rotateStudioIdentityBrowserUserPassword,
-  simulateODE,
-  simulateModel,
   fetchPrecision,
   fetchCodegen,
   fetchReplayPack,
@@ -173,7 +172,6 @@ import {
 import {
   studioAnalysisErrorState,
   studioAnalysisFailureState,
-  studioAnalysisIdleState,
   studioAnalysisStartState,
   studioCodegenResultState,
   studioCodegenStartState,
@@ -184,7 +182,6 @@ import {
   studioNetworkResultState,
   studioNullclineResultState,
   studioPrecisionResultState,
-  studioSimulationResultState,
   studioSTAResultState,
 } from "../studioAnalysisState";
 import {
@@ -299,7 +296,7 @@ import {
   scheduleStudioAutoSimulation,
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
-import { studioExperimentKey, studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
+import { studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 import { runStoreCompile } from "./studioCompile";
 import { runStoreSynthesis } from "./studioSynthesis";
 import { runStoreBundle } from "./studioBundle";
@@ -361,51 +358,6 @@ function studioGraphRestoredState(step: StudioGraphHistoryStep): {
  * keystroke that reschedules a run also re-render every subscriber.
  */
 let debounceTimer: StudioAutoSimulationTimer | null = null;
-
-/**
- * Which of the store's experiment keys a result belongs to.
- *
- * The workflow asks three separate questions -- has the current experiment been
- * simulated, analysed, trained -- so results record against three keys rather
- * than one.
- */
-type StudioExperimentKeyField =
-  | "analysisExperimentKey"
-  | "resultExperimentKey"
-  | "trainingExperimentKey";
-
-/**
- * Apply a result only while the experiment that produced it is still on screen.
- *
- * A run started before the reader changed the model can still be in flight
- * when they change it. Landing its response on top of the new configuration
- * would put another experiment's trace in front of them and let the guided
- * workflow report a completed simulation of a run nobody asked for.
- *
- * A superseded response is therefore dropped rather than applied -- but the
- * busy flag is cleared regardless, because the run it belonged to really has
- * ended and leaving the panel spinning would be a second lie on top of the
- * first.
- *
- * @param context - The store accessors, the key captured when the request was
- *   submitted, the field to record it in, and the patch to apply.
- * @returns Whether the result was applied.
- */
-function applyResultForExperiment(context: {
-  get: () => StudioState;
-  set: (partial: Partial<StudioState>) => void;
-  requestedKey: string;
-  field: StudioExperimentKeyField;
-  patch: Partial<StudioState>;
-}): boolean {
-  const currentKey = studioExperimentKey(simulationConfigInput(context.get()));
-  if (currentKey !== context.requestedKey) {
-    context.set(studioAnalysisIdleState());
-    return false;
-  }
-  context.set({ ...context.patch, [context.field]: context.requestedKey });
-  return true;
-}
 
 /**
  * Build every action the Studio store exposes.
@@ -774,28 +726,7 @@ export function createStudioStoreActions(
     });
   },
 
-  runSimulation: async () => {
-    const s = get();
-    if (s.isSimulating) return;
-    const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    // Keep the previous trace visible, but only the new successful response may
-    // restore completion evidence. A pending or failed rerun is not a success.
-    set({ ...studioAnalysisStartState(), resultExperimentKey: null });
-    try {
-      const cfg = studioSimulationConfig(simulationConfigInput(s));
-      const result = s.sourceMode === "model" && s.selectedModelName
-        ? await simulateModel(cfg) : await simulateODE(cfg);
-      applyResultForExperiment({
-        field: "resultExperimentKey",
-        get,
-        patch: studioSimulationResultState(result),
-        requestedKey,
-        set,
-      });
-    } catch (e) {
-      set(studioAnalysisFailureState(e));
-    }
-  },
+  runSimulation: () => runStoreSimulation(get, set),
 
   runFICurve: () => runStoreHeavyAnalysis("fi_curve", get, set),
   runBifurcation: () => runStoreHeavyAnalysis("bifurcation", get, set),

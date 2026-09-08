@@ -49,6 +49,11 @@ completion indicator; a subsequent successful run does. This applies to both
 catalogue models and custom ODEs. Visible historical results are not proof that
 the latest requested run succeeded.
 
+Late simulation errors are discarded when their experiment has changed, just
+like late traces. Invalid simulation input is reported in the Studio error
+state rather than escaping from a fire-and-forget action; busy duplicate
+requests leave the active run untouched.
+
 Asynchronous f-I, bifurcation, heatmap and sensitivity jobs likewise withdraw
 analysis completion while running or after failure, cancellation, timeout or
 request validation failure. Earlier plots remain available. A result arriving
