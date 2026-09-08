@@ -1,13 +1,14 @@
-// @vitest-environment happy-dom
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Configure React 19 act environment for createRoot mounts.
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 // Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Evidence cart session await parity (W12-G)
+// @vitest-environment happy-dom
+
+// Configure React 19 act environment for createRoot mounts.
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /**
  * Real React DOM mount of useEvidenceCartSession.
@@ -304,11 +305,11 @@ describe("useEvidenceCartSession runAnalysisIntoCart await parity (W12-G)", () =
     // Third run with a new digest enqueues once more.
     mockStore.state = {
       ...mockStore.state,
+      selectedModelName: "AdExNeuron",
       runFICurve: async () => {
         mockStore.state = {
           ...mockStore.state,
           fiResult: fiCurve(DIGEST_C, [0, 9]),
-          selectedModelName: "AdExNeuron",
         };
       },
     };

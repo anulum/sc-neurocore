@@ -39,6 +39,10 @@ projection. Export verification covers this retained payload.
 Exports snapshot all queued payloads before hashing. The completion indicator
 compares ordered item identities, metadata and contents with that snapshot,
 not merely the number of items. A same-count replacement requires a new export.
+Cart run actions capture their source before submission, so a subsequent UI
+selection cannot relabel completed evidence. Busy duplicate starts are ignored;
+React StrictMode replay does not duplicate entries. Repeated identical result
+digests remain deduplicated under the cart's content-identity policy.
 
 Clicking a heatmap cell changes both parameters together and invalidates prior
 compiled output before simulating. Only a heatmap produced for the current

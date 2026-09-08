@@ -11,7 +11,7 @@
  * handlers used by guided flow and the operator workbench.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { downloadBrowserArtefact } from "./browserArtefactDownload";
 import {
@@ -54,6 +54,9 @@ export interface EvidenceCartSession {
  */
 export function useEvidenceCartSession(): EvidenceCartSession {
   const [cart, setCart] = useState<EvidenceCart>(() => emptyEvidenceCart());
+  // Single synchronous decision cursor; React state is its rendered projection.
+  // Never enqueue or call setters inside a replayable functional state updater.
+  const cartRef = useRef(cart);
   const [exportBundle, setExportBundle] = useState<EvidenceCartExportBundle | null>(null);
   const [exportItemCount, setExportItemCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +73,7 @@ export function useEvidenceCartSession(): EvidenceCartSession {
       }
       return;
     }
+    cartRef.current = decision.cart;
     setCart(decision.cart);
     setError(null);
   }, []);
@@ -87,46 +91,44 @@ export function useEvidenceCartSession(): EvidenceCartSession {
   }, [cart]);
 
   const runSimulationIntoCart = useCallback(async () => {
-    const beforeId = simulationResultIdentity(useStudioStore.getState().result);
-    await useStudioStore.getState().runSimulation();
+    const beforeState = useStudioStore.getState();
+    if (beforeState.isSimulating) return;
+    const { selectedModelName, sourceMode } = beforeState;
+    const beforeId = simulationResultIdentity(beforeState.result);
+    await beforeState.runSimulation();
     const afterState = useStudioStore.getState();
-    setCart((current) => {
-      const decision = decideSimulationEnqueue(current, {
+    applyDecision(decideSimulationEnqueue(cartRef.current, {
         result: afterState.result,
         resultIdentityBefore: beforeId,
         runSucceeded: afterState.result !== null
           && simulationResultIdentity(afterState.result) !== beforeId,
-        selectedModelName: afterState.selectedModelName,
-        sourceMode: afterState.sourceMode,
-      });
-      applyDecision(decision);
-      return decision.action === "enqueue" ? decision.cart : current;
-    });
+        selectedModelName,
+        sourceMode,
+    }));
   }, [applyDecision]);
 
   const runAnalysisIntoCart = useCallback(async () => {
     // W12-G: snapshot identity before the async analysis job; re-read the store
     // only after runFICurve resolves (store path is runStudioAnalysisJob).
-    const beforeId = analysisResultIdentity(useStudioStore.getState().fiResult);
+    const beforeState = useStudioStore.getState();
+    if (beforeState.isSimulating) return;
+    const { selectedModelName, sourceMode } = beforeState;
+    const beforeId = analysisResultIdentity(beforeState.fiResult);
     setError(null);
-    await useStudioStore.getState().runFICurve();
+    await beforeState.runFICurve();
     const afterState = useStudioStore.getState();
     const after = afterState.fiResult;
     const afterId = analysisResultIdentity(after);
     const runSucceeded = afterId !== null && afterId !== beforeId;
-    setCart((current) => {
-      const decision = decideAnalysisEnqueue(current, {
+    applyDecision(decideAnalysisEnqueue(cartRef.current, {
         analysisKind: "fi_curve",
         analysisResult: after,
         resultIdentityAfter: afterId,
         resultIdentityBefore: beforeId,
         runSucceeded,
-        selectedModelName: afterState.selectedModelName,
-        sourceMode: afterState.sourceMode,
-      });
-      applyDecision(decision);
-      return decision.action === "enqueue" ? decision.cart : current;
-    });
+        selectedModelName,
+        sourceMode,
+    }));
   }, [applyDecision]);
 
   return {
