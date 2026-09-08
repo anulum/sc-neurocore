@@ -106,6 +106,37 @@ def _export(request: dict[str, Any]) -> tuple[str, dict[str, Any]]:
 
 
 class TestExportedScriptsRun:
+    @pytest.mark.parametrize(
+        "experiment_request",
+        [
+            {**NONDEFAULT_DT, "current": True, "duration": 1.0},
+            {
+                "equations": ["dv/dt = -v + I"],
+                "init": {"v": False},
+                "duration": 1.0,
+                "dt": 0.1,
+                "current": 1.0,
+            },
+        ],
+        ids=["model-boolean-drive", "ode-boolean-initial-state"],
+    )
+    @pytest.mark.parametrize("form", ["script", "oneliner"])
+    def test_python_api_accepted_values_remain_executable(
+        self, experiment_request: dict[str, Any], form: str, tmp_path: Path
+    ) -> None:
+        """Both public exports execute boolean values admitted by the real runner."""
+        spec = resolve_experiment(experiment_request)
+        reference = run_experiment(spec)
+        sealed = pinned_request(experiment_request, spec)
+        generator = generate_experiment_script if form == "script" else generate_oneliner
+        completed = _execute(generator(spec, sealed), tmp_path)
+        assert completed.returncode == 0, completed.stderr
+        assert (
+            f"{reference['spike_count']} spikes in {reference['n_steps']} steps" in completed.stdout
+        )
+        if form == "script":
+            assert str(reference["final_state"]) in completed.stdout
+
     @pytest.mark.parametrize("case", list(CASES), ids=list(CASES))
     def test_the_exported_script_reproduces_the_run_it_came_from(
         self, case: str, tmp_path: Path
@@ -189,7 +220,7 @@ class TestExportRefusesToLieAboutDrift:
         script, _ = _export(NONDEFAULT_DT)
         # A user edits the request but not the digest: the script must refuse
         # rather than print numbers under the exported experiment's name.
-        edited = script.replace('"dt": 0.05', '"dt": 0.02')
+        edited = script.replace("'dt': 0.05", "'dt': 0.02")
         assert edited != script
 
         completed = _execute(edited, tmp_path)
@@ -200,7 +231,7 @@ class TestExportRefusesToLieAboutDrift:
 
     def test_an_unresolvable_request_fails_loudly(self, tmp_path: Path) -> None:
         script, _ = _export(NONDEFAULT_DT)
-        edited = script.replace('"HodgkinHuxleyNeuron"', '"NoSuchNeuronExistsHere"')
+        edited = script.replace("'HodgkinHuxleyNeuron'", "'NoSuchNeuronExistsHere'")
 
         completed = _execute(edited, tmp_path)
 

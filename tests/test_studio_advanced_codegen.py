@@ -31,9 +31,9 @@ class TestCodegenAdvanced:
     def test_the_equation_export_carries_the_equations_and_the_initial_state(self):
         spec = resolve_experiment(EQUATIONS)
         script = generate_experiment_script(spec, pinned_request(EQUATIONS, spec))
-        assert '"dv/dt = -(v - E_L) / tau_m + I / C"' in script
-        assert '"E_L": -65.0' in script
-        assert '"init": {"v": -65.0}' in script
+        assert "'dv/dt = -(v - E_L) / tau_m + I / C'" in script
+        assert "'E_L': -65.0" in script
+        assert "'init': {'v': -65.0}" in script
         assert spec.experiment_sha256 in script
 
     def test_the_oneliner_runs_the_same_experiment(self):

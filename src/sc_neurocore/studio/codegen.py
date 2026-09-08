@@ -26,7 +26,7 @@ randomness of the run it came from, for every model, by construction.
 
 from __future__ import annotations
 
-import json
+from pprint import pformat
 from typing import Any
 
 from sc_neurocore.studio.experiment_spec import ExperimentSpec
@@ -69,11 +69,7 @@ print("final state:", result["final_state"])
 
 def _request_literal(request: dict[str, Any]) -> str:
     """Render a request mapping as a readable, deterministic Python literal."""
-    lines = ["REQUEST = {"]
-    for key in sorted(request):
-        lines.append(f"    {json.dumps(key)}: {json.dumps(request[key])},")
-    lines.append("}")
-    return "\n".join(lines)
+    return "REQUEST = " + pformat(request, sort_dicts=True)
 
 
 def generate_experiment_script(spec: ExperimentSpec, request: dict[str, Any]) -> str:
@@ -147,7 +143,7 @@ def generate_oneliner(spec: ExperimentSpec, request: dict[str, Any]) -> str:
         same effective experiment as the exported script; it does not check the
         digest, so use the script when reproducibility must be proven.
     """
-    literal = json.dumps(request, sort_keys=True)
+    literal = pformat(request, sort_dicts=True).replace("\n", " ")
     return (
         "from sc_neurocore.studio.experiment_spec import resolve_experiment, run_experiment; "
         f"r = run_experiment(resolve_experiment({literal})); "

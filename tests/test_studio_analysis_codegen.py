@@ -26,8 +26,8 @@ class TestCodegen:
         spec, script = self._script(
             {"name": "COBALIFNeuron", "params": {"c_m": 200.0}, "duration": 100.0, "current": 10.0}
         )
-        assert '"name": "COBALIFNeuron"' in script
-        assert '"c_m": 200.0' in script
+        assert "'name': 'COBALIFNeuron'" in script
+        assert "'c_m': 200.0" in script
         assert spec.experiment_sha256 in script
 
     def test_the_script_makes_no_assumption_about_the_step_signature(self):
