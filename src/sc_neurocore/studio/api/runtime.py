@@ -69,8 +69,24 @@ class StudioApiContext:
         owner: str,
         task_path: str,
         payload: StudioProcessJobPayload,
+        include_job_receipt: bool = False,
     ) -> dict[str, Any]:
-        """Run one importable task through the bounded process worker."""
+        """Run one importable task through the bounded process worker.
+
+        Parameters
+        ----------
+        kind, owner, task_path, payload:
+            Existing process admission and execution inputs.
+        include_job_receipt:
+            Attach a path-free ``studio_job_receipt`` from the exact completed
+            record. The default preserves existing caller response shapes.
+
+        Returns
+        -------
+        dict[str, Any]
+            Worker result, optionally with job identity and artifact digests.
+            The receipt is response metadata; stored result bytes are unchanged.
+        """
         submitted = self.studio_job_manager.submit_process_task(
             kind=kind,
             owner=owner,
@@ -83,6 +99,19 @@ class StudioApiContext:
             timeout_seconds=self.settings.job_default_timeout_seconds + 1.0,
         )
         if completed.status == "completed" and completed.result is not None:
+            if include_job_receipt:
+                return {
+                    **completed.result,
+                    "studio_job_receipt": {
+                        "schema_version": "studio.job-receipt.v1",
+                        "job_id": completed.job_id,
+                        "kind": completed.kind,
+                        "status": completed.status,
+                        "artifacts": [
+                            artifact.to_public_dict() for artifact in completed.artifacts
+                        ],
+                    },
+                }
             return cast(dict[str, Any], completed.result)
         if completed.status in {"pending", "running", "cancelling"}:
             raise HTTPException(503, "studio_job_wait_exceeded")

@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Synchronous synthesis, multi-target, terminal and place-and-route API responses
+include `studio_job_receipt` (`studio.job-receipt.v1`). It names the exact
+completed job and its artifact paths, byte sizes and SHA-256 digests. This is
+response metadata: it does not alter the stored result or its evidence digests.
+Clients must not infer that job's identity from the newest global job listing.
+
 Single- and multi-target synthesis withdraw earlier results and export handles
 on rerun. The request stays busy through operator refresh; responses for a
 changed generated source, target or model parity prerequisite are discarded.

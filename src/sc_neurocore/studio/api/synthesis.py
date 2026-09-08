@@ -68,6 +68,7 @@ def build_synthesis_router(context: StudioApiContext) -> APIRouter:
                 kind="synthesis",
                 owner="studio-synthesis",
                 task_path=SYNTHESIS_RUN_PROCESS_TASK,
+                include_job_receipt=True,
                 payload={
                     "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
                     "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
@@ -85,6 +86,7 @@ def build_synthesis_router(context: StudioApiContext) -> APIRouter:
                 kind="synthesis",
                 owner="studio-synthesis",
                 task_path=SYNTHESIS_MULTI_TARGET_PROCESS_TASK,
+                include_job_receipt=True,
                 payload={
                     "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
                     "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
@@ -102,6 +104,7 @@ def build_synthesis_router(context: StudioApiContext) -> APIRouter:
                 kind="synthesis",
                 owner="studio-synthesis-terminal",
                 task_path=SYNTHESIS_TERMINAL_PROCESS_TASK,
+                include_job_receipt=True,
                 payload={
                     "compile_traceability": req.compile_traceability,
                     "cosim_parity": req.cosim_parity,
@@ -135,6 +138,7 @@ def build_synthesis_router(context: StudioApiContext) -> APIRouter:
                 kind="synthesis",
                 owner="studio-pnr",
                 task_path=SYNTHESIS_PNR_PROCESS_TASK,
+                include_job_receipt=True,
                 payload={
                     "eda_process_cpu_seconds": eda_process_limits.cpu_seconds,
                     "eda_process_memory_bytes": eda_process_limits.address_space_bytes,
