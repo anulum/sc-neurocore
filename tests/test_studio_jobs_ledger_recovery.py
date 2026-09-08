@@ -26,7 +26,7 @@ import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobManager
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
-from sc_neurocore.studio.platform.jobs_models import StudioJobStatus
+from sc_neurocore.studio.platform.jobs_models import StudioJobRejected, StudioJobStatus
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import (
     _process_start_token,
     supervisor_identity,
@@ -58,6 +58,42 @@ def _manager(root: Path) -> StudioJobManager:
 
 
 class TestLease:
+    @pytest.mark.parametrize("elapsed", [10, 90])
+    def test_a_peer_cannot_take_a_lease_by_heartbeat(self, tmp_path: Path, elapsed: int) -> None:
+        """Expiry does not authorise another supervisor to claim the worker."""
+        owner = StudioJobLedger(root=tmp_path, supervisor="owner", clock=lambda: UTC_CLOCK_START)
+        _admit(owner)
+        before = owner.record("sj_0000000000000001")
+        peer = StudioJobLedger(
+            root=tmp_path,
+            supervisor="peer",
+            clock=lambda: UTC_CLOCK_START + timedelta(seconds=elapsed),
+        )
+        with pytest.raises(StudioJobRejected, match="lease"):
+            peer.heartbeat(before.job_id)
+        assert owner.record(before.job_id) == before
+        assert len(owner.transitions(before.job_id)) == 1
+
+    @pytest.mark.parametrize("status", ["cancelling", "unknown"])
+    def test_peer_transition_is_not_a_supervisor_heartbeat(
+        self, tmp_path: Path, status: StudioJobStatus
+    ) -> None:
+        """Control and recovery observations preserve the actual supervisor's lease evidence."""
+        owner = StudioJobLedger(root=tmp_path, supervisor="owner", clock=lambda: UTC_CLOCK_START)
+        _admit(owner)
+        before = owner.record("sj_0000000000000001")
+        peer = StudioJobLedger(
+            root=tmp_path,
+            supervisor="peer",
+            clock=lambda: UTC_CLOCK_START + timedelta(seconds=90),
+        )
+        observed = peer.transition(before.job_id, status)
+        assert observed.status == status
+        assert observed.lease_owner == before.lease_owner
+        assert observed.heartbeat_at_utc == before.heartbeat_at_utc
+        assert observed.lease_expires_at_utc == before.lease_expires_at_utc
+        assert len(owner.transitions(before.job_id)) == 2
+
     @pytest.mark.parametrize(
         "status", ["completed", "failed", "cancelled", "timed_out", "interrupted"]
     )

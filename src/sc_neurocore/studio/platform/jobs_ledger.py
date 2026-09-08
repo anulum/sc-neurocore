@@ -240,7 +240,11 @@ class StudioJobLedger:
         )
 
     def heartbeat(self, job_id: str) -> None:
-        """Extend this supervisor's lease on a job it is still running."""
+        """Extend this supervisor's lease; reject renewal by a different owner.
+
+        Expiry does not transfer ownership. Missing and terminal jobs remain
+        unchanged; an owned live job is renewed transactionally.
+        """
         heartbeat_job(self, job_id)
 
     def delete(self, job_id: str) -> None:

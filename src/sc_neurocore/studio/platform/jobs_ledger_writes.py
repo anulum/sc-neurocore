@@ -222,6 +222,7 @@ def transition_job(
             return record_from_row(row)
         sequence = int(row["sequence"]) + (0 if unchanged else 1)
         terminal = to_status in TERMINAL_STATUSES
+        owns_lease = row["lease_owner"] == ledger.supervisor
         connection.execute(
             _UPDATE_JOB,
             (
@@ -233,8 +234,8 @@ def transition_job(
                 None if artifacts is None else artifacts_to_json(artifacts),
                 terminal,
                 terminal,
-                ledger.lease_expiry(),
-                timestamp,
+                ledger.lease_expiry() if owns_lease else row["lease_expires_at_utc"],
+                timestamp if owns_lease else row["heartbeat_at_utc"],
                 sequence,
                 job_id,
             ),
@@ -261,11 +262,17 @@ def heartbeat_job(ledger: StudioJobLedger, job_id: str) -> None:
 
     Terminal and absent jobs remain unchanged. The transaction serialises this
     check with transitions so a finished job cannot acquire another lease.
+    Only the recorded owner can renew a live lease, even after expiry; another
+    supervisor raises ``StudioJobRejected`` without changing any stored fields.
     """
     with ledger.transaction() as connection:
-        row = connection.execute("SELECT status FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+        row = connection.execute(
+            "SELECT status, lease_owner FROM jobs WHERE job_id = ?", (job_id,)
+        ).fetchone()
         if row is None or row["status"] in TERMINAL_STATUSES:
             return
+        if row["lease_owner"] != ledger.supervisor:
+            raise StudioJobRejected(f"Studio job {job_id} lease belongs to another supervisor.")
         connection.execute(
             "UPDATE jobs SET heartbeat_at_utc = ?, lease_expires_at_utc = ?, lease_owner = ?"
             " WHERE job_id = ?",

@@ -100,6 +100,12 @@ record instead of applying the stale decision. A concurrently purged job is
 omitted and never recreated. Recovery reports the retained status, including
 completion committed by the actual supervisor; it does not invent that result.
 
+Only the recorded supervisor may renew a live lease. A heartbeat from another
+supervisor is rejected even when the lease has expired. Control or recovery
+transitions from another supervisor preserve the original heartbeat and lease
+expiry rather than claiming fresh evidence of worker liveness. Terminal
+transitions still clear the lease; this is not a lease-transfer mechanism.
+
 The decisions are readable afterwards:
 
 ```python
