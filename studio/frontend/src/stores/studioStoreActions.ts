@@ -46,9 +46,6 @@ import {
   rotateStudioIdentityBrowserUserPassword,
   simulateODE,
   simulateModel,
-  compileVerilog,
-  compileModelVerilog,
-  cosimModelVerilog,
   fetchPrecision,
   fetchCodegen,
   fetchReplayPack,
@@ -271,14 +268,12 @@ import {
 import {
   compilerErrorState,
   compilerFailureState,
-  compilerCosimLoadedState,
   compilerConfigurationInvalidatedState,
   compilerCosimInvalidatedState,
   compilerIRLoadedState,
   compilerRunStartState,
   compilerSVDirectLoadedState,
   compilerSVLoadedState,
-  compilerVerilogLoadedState,
 } from "../compilerStoreState";
 import {
   modelDetailLoadedState,
@@ -323,8 +318,8 @@ import {
   scheduleStudioAutoSimulation,
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
-import { modelCompileRequest, modelCosimRequest } from "../modelCompileConfig";
 import { studioExperimentKey, studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
+import { runStoreCompile } from "./studioCompile";
 
 /**
  * The graph the store currently holds, as a history snapshot.
@@ -874,45 +869,9 @@ export function createStudioStoreActions(
     return studioPrecisionResultState(precResult);
   }, "precision", (s) => studioPrecisionKey(simulationConfigInput(s), s.modelQFormat)),
 
-  runCompile: async () => {
-    const s = get();
-    set(compilerRunStartState("verilog"));
-    try {
-      const res = s.sourceMode === "model"
-        ? await compileModelVerilog(modelCompileRequest({
-          dt: s.dt,
-          integrator: s.modelIntegrator,
-          modelDetail: s.modelDetail,
-          modelParams: s.modelParams,
-          qFormat: s.modelQFormat,
-          selectedModelName: s.selectedModelName,
-        }))
-        : await compileVerilog({
-          equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
-          init: s.odeInit,
-        });
-      set(compilerVerilogLoadedState(res));
-    } catch (e) { set(compilerFailureState(e)); }
-  },
+  runCompile: () => runStoreCompile("compile", get, set),
 
-  runCosim: async () => {
-    const s = get();
-    set(compilerRunStartState("verilog"));
-    try {
-      if (s.sourceMode !== "model") {
-        throw new Error("Bit-exact selected-model co-simulation requires catalogue model mode.");
-      }
-      const res = await cosimModelVerilog(modelCosimRequest({
-        dt: s.dt,
-        integrator: s.modelIntegrator,
-        modelDetail: s.modelDetail,
-        modelParams: s.modelParams,
-        qFormat: s.modelQFormat,
-        selectedModelName: s.selectedModelName,
-      }, { current: s.current }));
-      set(compilerCosimLoadedState(res));
-    } catch (e) { set(compilerFailureState(e)); }
-  },
+  runCosim: () => runStoreCompile("cosim", get, set),
 
   runHeatmap: () => runStoreHeavyAnalysis("heatmap", get, set),
 

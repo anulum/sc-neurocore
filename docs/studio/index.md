@@ -56,6 +56,13 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Verilog compilation and selected-model co-simulation reject duplicate starts
+while busy and discard responses for changed request inputs. A new compile
+withdraws its previous RTL/traceability and dependent evidence; a co-simulation
+rerun withdraws its previous parity report. The identity uses the resolved
+compiler request: changing stimulus current affects co-simulation, but not RTL
+compilation. This does not by itself qualify a model for silicon.
+
 Precision completion also includes the selected Q-format. Changing that format
 withdraws precision completion and discards in-flight outcomes for the old
 format, while preserving the previous plot. Format-independent analyses and
