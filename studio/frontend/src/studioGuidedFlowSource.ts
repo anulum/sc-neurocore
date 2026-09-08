@@ -34,9 +34,10 @@ import type {
 } from "./api/client";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import type { StudioSimulationConfigSource } from "./studioSimulationConfigInput";
+import type { StudioBundleContextSource } from "./studioBundleContext";
 
 /** Every field the guided workflow's completion rules read. */
-export interface StudioGuidedFlowSource extends StudioSimulationConfigSource {
+export interface StudioGuidedFlowSource extends StudioSimulationConfigSource, StudioBundleContextSource {
   analysisExperimentKey: string | null;
   modelQFormat: string;
   bifResult: BifurcationResponse | null;

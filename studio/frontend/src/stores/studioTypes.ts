@@ -34,6 +34,7 @@ import type {
 } from "../studioProjectState";
 import type { StudioNetworkParams } from "../studioInputState";
 import type { EvidenceBundleSurface } from "../evidenceBundles";
+import type { StudioBundleContext } from "../studioBundleContext";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
 
 /** Whether a run is driven by a catalogue model or by an ODE. */
@@ -78,6 +79,7 @@ export interface StudioState {
   auditArchiveRestore: StudioAuditQuarantineArchiveRestoreResult | null;
   auditArchiveValidation: StudioAuditQuarantineArchiveValidation | null;
   evidenceBundle: StudioEvidenceBundleResponse | null;
+  bundleContexts: Partial<Record<EvidenceBundleSurface, StudioBundleContext>>;
   evidenceBundleError: string | null;
   evidenceBundleLoading: boolean;
   projectEvidenceBundle: StudioEvidenceBundleResponse | null;

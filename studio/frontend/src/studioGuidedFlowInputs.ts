@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — What the store says the guided workflow has accomplished
 
+import { studioBundleIsCurrent } from "./studioBundleContext";
+
 /**
  * Deciding what the guided workflow may call done.
  *
@@ -86,10 +88,9 @@ export function studioGuidedFlowInputs(
     compileComplete: state.compileTraceability !== null,
     cosimApplicable: state.sourceMode === "model",
     cosimComplete: cosimMatchesCompile(state),
-    evidenceExported: state.evidenceBundle !== null
-      || state.projectEvidenceBundle !== null
-      || state.compileEvidenceBundle !== null
-      || state.synthesisEvidenceBundle !== null
+    evidenceExported: studioBundleIsCurrent("project", state)
+      || studioBundleIsCurrent("compile", state)
+      || studioBundleIsCurrent("synthesis", state)
       || decisions.evidenceExportSatisfied,
     modelSelected: state.sourceMode === "ode"
       ? state.equations.length > 0

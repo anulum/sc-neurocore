@@ -7,6 +7,7 @@
 // SC-NeuroCore — What the guided workflow may and may not call done
 
 import { describe, expect, it } from "vitest";
+import { studioBundleContextKey } from "./studioBundleContext";
 
 import type { SimulateResponse, SynthResult } from "./api/client";
 import {
@@ -37,6 +38,10 @@ const TRAINING_CONFIG = {
  */
 function source(overrides: Partial<StudioGuidedFlowSource> = {}): StudioGuidedFlowSource {
   return {
+    bundleContexts: {}, graphPopulations: [], graphProjections: [],
+    synthTarget: "ice40", projectRevision: null,
+    latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null,
+    verilogSrc: "", svSource: "",
     analysisExperimentKey: null,
     modelQFormat: "Q8.8",
     bifResult: null,
@@ -87,8 +92,8 @@ const COMPILED = {
   output: { rtl_sha256: RTL_DIGEST },
 } as unknown as StudioGuidedFlowSource["compileTraceability"];
 
-/** An exported bundle, of which only the presence matters here. */
-const BUNDLE = {} as unknown as StudioGuidedFlowSource["evidenceBundle"];
+/** Identifiable receipt; these tests do not inspect artifact contents. */
+const BUNDLE = { bundle_id: "seb_test", job_id: "sj_test" } as StudioGuidedFlowSource["evidenceBundle"];
 
 /**
  * Build a co-simulation report over the given RTL.
@@ -338,8 +343,19 @@ describe("the rules this module carries unchanged", () => {
     ["a project bundle", "projectEvidenceBundle"],
     ["a compile bundle", "compileEvidenceBundle"],
     ["a synthesis bundle", "synthesisEvidenceBundle"],
-  ] as const)("completes the export step on %s", (_label, field) => {
-    expect(derive(source({ [field]: BUNDLE })).evidenceExported).toBe(true);
+  ] as const)("rejects an unattested %s", (_label, field) => {
+    expect(derive(source({ [field]: BUNDLE })).evidenceExported).toBe(false);
+  });
+
+  it.each(["project", "compile", "synthesis"] as const)("binds %s completion to its context and receipt", (surface) => {
+    const state = source({ [`${surface}EvidenceBundle`]: BUNDLE });
+    state.bundleContexts[surface] = {
+      key: studioBundleContextKey(surface, state), bundleId: "seb_test", jobId: "sj_test",
+    };
+    expect(derive(state).evidenceExported).toBe(true);
+    expect(derive({ ...state, sourceMode: "ode" }).evidenceExported).toBe(false);
+    state.bundleContexts[surface].jobId = "sj_other";
+    expect(derive(state).evidenceExported).toBe(false);
   });
 
   it("completes the export step on the session's own cart", () => {

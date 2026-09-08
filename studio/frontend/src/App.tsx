@@ -7,6 +7,7 @@
 // SC-NeuroCore — Source/config provenance header
 
 import { useEffect, useState } from "react";
+import { studioBundleIsCurrent } from "./studioBundleContext";
 import { useStudioStore } from "./stores/studio";
 import type { ViewTab } from "./stores/studio";
 import { panelCapabilityState } from "./capabilityShell";
@@ -125,21 +126,21 @@ export default function App() {
   const guidedFlow = computeGuidedFlowState(guidedFlowInputs, guidedFlowCapabilities);
   const studioReadiness = buildStudioReadinessModel(s.operatorStatus);
   const operatorWorkbench = buildOperatorWorkbenchState({
-    compileBundleExported: s.compileEvidenceBundle !== null,
+    compileBundleExported: studioBundleIsCurrent("compile", s),
     compileComplete: s.compileTraceability !== null,
     guidedFlow,
     isSimulating: s.isSimulating,
     modelCount: s.models.length,
     operatorStatus: s.operatorStatus,
     progressMessage: s.progressMsg,
-    projectBundleExported: s.projectEvidenceBundle !== null,
+    projectBundleExported: studioBundleIsCurrent("project", s),
     projectName: s.projectSaveResult?.name ?? null,
     savedSessionCount: s.savedSessions.length,
     selectedModelName: s.selectedModelName,
     serverProjectCount: s.serverProjects.length,
     simulationResult: s.result,
     sourceMode: s.sourceMode,
-    synthesisBundleExported: s.synthesisEvidenceBundle !== null,
+    synthesisBundleExported: studioBundleIsCurrent("synthesis", s),
     synthesisComplete,
   });
   const panelControl = (panelKey: PanelKey) => {

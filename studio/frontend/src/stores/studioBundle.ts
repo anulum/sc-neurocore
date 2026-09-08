@@ -9,33 +9,8 @@
 import { createStudioEvidenceBundle, fetchStudioOperatorStatus, fetchStudioJobs } from "../api/client";
 import { evidenceBundleSurfaceKeys, adminEvidenceBundleCreatedState,
   scopedEvidenceBundleCreatedState, type EvidenceBundleSurface } from "../evidenceBundles";
-import { canonicalSealText } from "../evidenceSeal";
-import { studioProjectSaveState } from "../studioProjectState";
-import { studioExperimentKey } from "../studioExperimentKey";
-import { studioSimulationConfigInput } from "../studioSimulationConfigInput";
+import { studioBundleContextKey as surfaceKey } from "../studioBundleContext";
 import type { StudioState } from "./studioTypes";
-
-/**
- * Identify the live surface whose export completion may be displayed.
- *
- * @param surface - Independent bundle slot.
- * @param state - State defining that surface, excluding bundle transport flags.
- * @returns Canonical local identity, not a server evidence digest.
- */
-function surfaceKey(surface: EvidenceBundleSurface, state: StudioState): string {
-  if (surface === "admin") return "admin";
-  if (surface === "project") return canonicalSealText({
-    project: studioProjectSaveState(state), revision: state.projectRevision,
-    experiment: studioExperimentKey(studioSimulationConfigInput(state)),
-    simulation: state.resultExperimentKey, analysis: state.analysisExperimentKey,
-    training: state.trainingExperimentKey,
-  });
-  return canonicalSealText({ source: state.sourceMode, rtl: state.verilogSrc, sv: state.svSource,
-    trace: state.compileTraceability,
-    ...(surface === "synthesis" ? { target: state.synthTarget, parity: state.cosimResult,
-      single: state.latestSynthesisJobId, multi: state.latestMultiTargetSynthesisJobId } : {}),
-  });
-}
 
 /**
  * Export one surface, accepting completion only while it remains current.
@@ -56,15 +31,19 @@ export async function runStoreBundle(
   const keys = surface === "admin" ? { bundle: "evidenceBundle", error: "evidenceBundleError", loading: "evidenceBundleLoading" } as const
     : evidenceBundleSurfaceKeys(surface);
   if (get()[keys.loading]) return;
-  set({ [keys.bundle]: null, [keys.error]: null, [keys.loading]: true });
+  const bundleContexts = { ...get().bundleContexts, [surface]: undefined };
+  set({ [keys.bundle]: null, [keys.error]: null, [keys.loading]: true, bundleContexts });
   let key: string | null = null;
   try {
     key = surfaceKey(surface, get());
     const bundle = await createStudioEvidenceBundle(request);
     const [operator, jobs] = await Promise.all([fetchStudioOperatorStatus(), fetchStudioJobs()]);
     if (surfaceKey(surface, get()) !== key) { set({ [keys.loading]: false }); return; }
-    set(surface === "admin" ? adminEvidenceBundleCreatedState(bundle, operator, jobs)
-      : scopedEvidenceBundleCreatedState(surface, bundle, operator, jobs));
+    set({ ...(surface === "admin" ? adminEvidenceBundleCreatedState(bundle, operator, jobs)
+      : scopedEvidenceBundleCreatedState(surface, bundle, operator, jobs)),
+      bundleContexts: { ...get().bundleContexts,
+        [surface]: { key, bundleId: bundle.bundle_id, jobId: bundle.job_id } },
+    });
   } catch (error: unknown) {
     let failure = error;
     try {

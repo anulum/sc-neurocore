@@ -8,6 +8,7 @@
 
 import { afterEach, expect, it, vi } from "vitest";
 import { useStudioStore } from "./studio";
+import { studioGuidedFlowInputs } from "../studioGuidedFlowInputs";
 const initial = useStudioStore.getState();
 const cases = [["admin", "evidenceBundle", "evidenceBundleError"],
   ["project", "projectEvidenceBundle", "projectEvidenceBundleError"],
@@ -31,7 +32,7 @@ function transport() {
     return new Promise<Response>((resolve, reject) => {
       finish = (fail = false) => {
         if (fail) reject(new Error("export offline"));
-        else resolve(new Response(JSON.stringify({ job_id: "sj_bundle", artifacts: [] })));
+        else resolve(new Response(JSON.stringify({ bundle_id: "seb_bundle", job_id: "sj_bundle", artifacts: [] })));
       };
     });
   });
@@ -114,4 +115,26 @@ it("reports unsealable project input without making a request", async () => {
   expect(io.fetch).not.toHaveBeenCalled();
   expect(useStudioStore.getState().projectEvidenceBundleError).toContain("NaN");
   expect(useStudioStore.getState().projectEvidenceBundleLoading).toBe(false);
+});
+
+it("preserves a historical project bundle without qualifying a changed experiment", async () => {
+  const io = transport();
+  const run = useStudioStore.getState().createEvidenceBundleForSurface("project", request);
+  io.finish(); await run;
+  const decisions = { trainingSkipped: false, evidenceExportSatisfied: false };
+  expect(studioGuidedFlowInputs(useStudioStore.getState(), decisions).evidenceExported).toBe(true);
+  const old = useStudioStore.getState().projectEvidenceBundle;
+  useStudioStore.getState().setSourceMode("ode");
+  expect(studioGuidedFlowInputs(useStudioStore.getState(), decisions).evidenceExported).toBe(false);
+  expect(useStudioStore.getState().projectEvidenceBundle).toBe(old);
+});
+
+it("does not count an administrative bundle as experiment export", async () => {
+  const io = transport();
+  const run = useStudioStore.getState().createEvidenceBundle(request);
+  io.finish(); await run;
+  expect(useStudioStore.getState().evidenceBundle).not.toBeNull();
+  expect(studioGuidedFlowInputs(useStudioStore.getState(), {
+    trainingSkipped: false, evidenceExportSatisfied: false,
+  }).evidenceExported).toBe(false);
 });

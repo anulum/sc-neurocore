@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Project, compile and synthesis export indicators require a bundle captured for
+the current surface context, with matching bundle and job identifiers. Changing
+that context withdraws completion without deleting the historical download.
+Administrative exports do not qualify the experiment's export step. This local
+context binding is not independent authentication of the server manifest.
+
 Evidence artifact downloads require a unique declared path, valid byte size and
 SHA-256 in the bundle metadata. The client checks the fetched bytes before
 starting the browser save; missing metadata, truncation or digest mismatch is

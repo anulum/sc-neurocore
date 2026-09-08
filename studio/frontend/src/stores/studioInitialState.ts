@@ -36,6 +36,7 @@ export const studioInitialData = {
   auditArchive: null, auditArchiveRetention: null, auditArchivePurge: null,
   auditArchiveRestore: null, auditArchiveValidation: null,
   evidenceBundle: null, evidenceBundleError: null, evidenceBundleLoading: false,
+  bundleContexts: {},
   projectEvidenceBundle: null, projectEvidenceBundleError: null, projectEvidenceBundleLoading: false,
   compileEvidenceBundle: null, compileEvidenceBundleError: null, compileEvidenceBundleLoading: false,
   synthesisEvidenceBundle: null, synthesisEvidenceBundleError: null, synthesisEvidenceBundleLoading: false,
