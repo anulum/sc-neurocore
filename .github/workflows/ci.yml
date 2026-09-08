@@ -122,6 +122,26 @@ jobs:
         working-directory: studio/frontend
         run: npm run test:e2e
 
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.13"
+          cache: pip
+
+      - name: Install live Studio backend dependencies
+        run: |
+          python -m pip install --require-hashes -r requirements/runtime.txt -r requirements/hub.txt
+          python tools/ci_install_editable_only.py
+
+      # These configurations own real backend servers and use the built bundle.
+      # An editable backend verifies source integration, not wheel installation.
+      - name: Playwright live replay export
+        working-directory: studio/frontend
+        run: npx playwright test --config playwright.export.config.ts
+
+      - name: Playwright live network canvas
+        working-directory: studio/frontend
+        run: npx playwright test --config playwright.graph.config.ts
+
   test:
     name: test (${{ matrix.python-minor }})
     runs-on: ubuntu-latest

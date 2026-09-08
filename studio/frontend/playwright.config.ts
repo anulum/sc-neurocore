@@ -12,7 +12,9 @@ export default defineConfig({
   testDir: "./e2e",
   testIgnore: [
     "catalogue-to-silicon-live.spec.ts",
+    "experiment-export-live.spec.ts",
     "module-federation-host.spec.ts",
+    "network-canvas-live.spec.ts",
   ],
   timeout: 30_000,
   expect: {
