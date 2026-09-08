@@ -216,8 +216,15 @@ class StudioJobLedger:
         error: str | None = None,
         result: Mapping[str, Any] | None = None,
         artifacts: Sequence[StudioJobArtifact] | None = None,
+        expected_record: StudioJobRecord | None = None,
     ) -> StudioJobRecord:
-        """Move one job to a new status and append the transition."""
+        """Move one job to a new status and append the transition.
+
+        When ``expected_record`` is supplied, compare all its public fields
+        inside the write transaction first. A changed record is returned
+        untouched; an absent job still raises ``KeyError``. This lets recovery
+        retain a concurrent result or heartbeat instead of acting on stale data.
+        """
         return transition_job(
             self,
             job_id,
@@ -229,6 +236,7 @@ class StudioJobLedger:
             error=error,
             result=result,
             artifacts=artifacts,
+            expected_record=expected_record,
         )
 
     def heartbeat(self, job_id: str) -> None:

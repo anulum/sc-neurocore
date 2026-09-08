@@ -26,6 +26,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sc_neurocore.studio.platform.jobs_ledger_supervisor import supervisor_is_alive
+from sc_neurocore.studio.platform.jobs_ledger_schema import record_from_row
 from sc_neurocore.studio.platform.jobs_models import UTC, StudioJobStatus
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle only matters to type checkers
@@ -85,64 +86,65 @@ def reconcile_ledger(ledger: StudioJobLedger) -> tuple[StudioJobReconciliation, 
     Returns
     -------
     tuple of StudioJobReconciliation
-        One decision per job examined, including those left running.
+        One decision per retained job examined, including those left running.
+        Concurrently purged jobs are omitted; concurrent updates are retained.
     """
     rows = ledger.live_rows()
     now = ledger.now()
     outcomes: list[StudioJobReconciliation] = []
     for row in rows:
         job_id = str(row["job_id"])
-        previous: StudioJobStatus = str(row["status"])  # type: ignore[assignment]
+        expected = record_from_row(row)
+        previous = expected.status
         lease_owner = None if row["lease_owner"] is None else str(row["lease_owner"])
         expired = _expired(row["lease_expires_at_utc"], now)
         alive = None if lease_owner is None else supervisor_is_alive(lease_owner)
         if alive is True:
-            outcomes.append(
-                StudioJobReconciliation(
-                    job_id=job_id,
-                    previous_status=previous,
-                    status=previous,
-                    reason=(
-                        "the supervisor is still running despite an expired lease"
-                        if expired
-                        else "the supervisor holding the lease is still running"
-                    ),
-                )
+            target = previous
+            reason = (
+                "the supervisor is still running despite an expired lease"
+                if expired
+                else "the supervisor holding the lease is still running"
             )
-            continue
-        if alive is None:
+        elif alive is None:
+            target = "unknown"
             reason = "the supervisor holding the lease cannot be probed from this host"
             if expired:
                 reason += "; lease expiry is not proof that the worker stopped"
-            if previous != "unknown":
-                ledger.transition(job_id, "unknown", actor=ledger.supervisor, reason=reason)
-            outcomes.append(
-                StudioJobReconciliation(
-                    job_id=job_id,
-                    previous_status=previous,
-                    status="unknown",
-                    reason=reason,
-                )
+        else:
+            target = "interrupted"
+            reason = (
+                "the lease expired without a heartbeat"
+                if expired
+                else "the supervisor holding the lease is gone"
             )
+        try:
+            if alive is True or (target == "unknown" and previous == "unknown"):
+                current = ledger.record(job_id)
+            else:
+                current = ledger.transition(
+                    job_id,
+                    target,
+                    actor=ledger.supervisor,
+                    reason=reason,
+                    finished_at_utc=ledger.timestamp() if target == "interrupted" else None,
+                    error=f"Studio job did not finish: {reason}."
+                    if target == "interrupted"
+                    else None,
+                    expected_record=expected,
+                )
+        except KeyError as exc:
+            if exc.args != (job_id,):
+                raise
+            # A concurrent terminal purge is not permission to recreate a job.
             continue
-        reason = (
-            "the lease expired without a heartbeat"
-            if expired
-            else "the supervisor holding the lease is gone"
-        )
-        ledger.transition(
-            job_id,
-            "interrupted",
-            actor=ledger.supervisor,
-            finished_at_utc=ledger.timestamp(),
-            error=f"Studio job did not finish: {reason}.",
-            reason=reason,
-        )
+        if current.status != target:
+            reason = "the job changed during reconciliation; the newer record was retained"
         outcomes.append(
             StudioJobReconciliation(
                 job_id=job_id,
                 previous_status=previous,
-                status="interrupted",
+                status=current.status,
                 reason=reason,
             )
         )

@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import signal
+import sqlite3
 import subprocess
 import sys
 import threading
@@ -55,6 +56,19 @@ if mode == "complete":
         experiment_sha256="a" * 64,
     )
     done = manager.wait(record.job_id, 60.0)
+    print(json.dumps({"job_id": done.job_id, "status": done.status}))
+elif mode == "complete_on_signal":
+    def after_signal(context):
+        (root / "started.json").write_text(json.dumps({"job_id": context.job_id}))
+        deadline = time.monotonic() + 10.0
+        while not (root / "finish").exists():
+            if time.monotonic() >= deadline:
+                raise TimeoutError("parent did not release job")
+            time.sleep(0.01)
+        context.write_artifact("result.bin", b"completed during recovery")
+        return {"answer": 42}
+    record = manager.submit(kind="analysis", owner="alice", request_id=None, task=after_signal)
+    done = manager.wait(record.job_id, 15.0)
     print(json.dumps({"job_id": done.job_id, "status": done.status}))
 elif mode == "abandon":
     def forever(context):
@@ -253,6 +267,59 @@ class TestTwoProcessesShareOneRoot:
 
 
 class TestSupervisorDeath:
+    @pytest.mark.parametrize("purge", [False, True], ids=["completed", "purged"])
+    def test_recovery_retains_a_job_settled_after_its_snapshot(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, purge: bool
+    ) -> None:
+        """A real child completion after snapshot must not break recovery or lose custody."""
+        root = tmp_path / "jobs"
+        child = _run_child(root, "complete_on_signal", wait=False)
+        assert isinstance(child, subprocess.Popen)
+        try:
+            marker = root / "started.json"
+            deadline = time.monotonic() + 10.0
+            while not marker.exists() and time.monotonic() < deadline:
+                assert child.poll() is None
+                time.sleep(0.01)
+            assert marker.exists()
+            job_id = json.loads(marker.read_text())["job_id"]
+            manager = _manager(root, reconcile=False)
+            live_rows = manager._ledger.live_rows
+
+            def snapshot_then_complete() -> tuple[sqlite3.Row, ...]:
+                rows = live_rows()
+                assert len(rows) == 1 and rows[0]["status"] == "running"
+                (root / "finish").touch()
+                stdout, stderr = child.communicate(timeout=10.0)
+                assert child.returncode == 0, stderr
+                assert json.loads(stdout)["status"] == "completed"
+                if purge:
+                    manager.purge_terminal_record(job_id)
+                return rows
+
+            monkeypatch.setattr(manager._ledger, "live_rows", snapshot_then_complete)
+            decisions = manager.reconcile()
+            if purge:
+                assert decisions == ()
+                assert manager.list_records() == ()
+                assert not (root / job_id).exists()
+            else:
+                assert decisions[0].status == "completed"
+                assert manager.record(job_id).result == {"answer": 42}
+                assert (
+                    manager.read_artifact(job_id, "result.bin").payload
+                    == b"completed during recovery"
+                )
+                assert [item["to_status"] for item in manager.transitions(job_id)] == [
+                    "pending",
+                    "running",
+                    "completed",
+                ]
+        finally:
+            if child.poll() is None:
+                os.killpg(os.getpgid(child.pid), signal.SIGKILL)
+                child.wait(timeout=5.0)
+
     def test_a_killed_supervisor_leaves_an_interrupted_job_not_a_lost_one(
         self, tmp_path: Path
     ) -> None:

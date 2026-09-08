@@ -155,6 +155,7 @@ def transition_job(
     error: str | None = None,
     result: Mapping[str, Any] | None = None,
     artifacts: Sequence[StudioJobArtifact] | None = None,
+    expected_record: StudioJobRecord | None = None,
 ) -> StudioJobRecord:
     """Move one job to a new status and append the transition.
 
@@ -165,6 +166,10 @@ def transition_job(
     a live status can still record accompanying fields. A supervisor reporting
     ``running`` for a job that is already ``cancelling`` keeps the cancellation
     visible and records only the start time.
+
+    With ``expected_record``, a differing current record is returned without
+    changing it. The comparison includes every public field, serialised as JSON
+    to preserve numeric and boolean distinctions, and runs under the write lock.
 
     Raises
     ------
@@ -179,6 +184,12 @@ def transition_job(
         row = connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
         if row is None:
             raise KeyError(job_id)
+        if expected_record is not None:
+            observed = record_from_row(row)
+            if json.dumps(observed.to_public_dict(), sort_keys=True) != json.dumps(
+                expected_record.to_public_dict(), sort_keys=True
+            ):
+                return observed
         current: StudioJobStatus = str(row["status"])  # type: ignore[assignment]
         # A job asked to cancel before its supervisor marked it running stays
         # "cancelling": it did start, and it is already winding down, so

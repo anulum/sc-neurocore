@@ -155,6 +155,75 @@ class TestAdmission:
 
 
 class TestStateMachine:
+    def test_recovery_propagates_unrelated_lookup_errors(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A failed lookup other than the job itself must not masquerade as a purge."""
+        ledger = _ledger(tmp_path)
+        submitted = _admit(ledger)
+        before = ledger.record(submitted.record.job_id)
+        history = ledger.transitions(before.job_id)
+
+        def broken_read(job_id: str) -> None:
+            raise KeyError("unrelated_record_field")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(ledger, "record", broken_read)
+            with pytest.raises(KeyError, match="unrelated_record_field"):
+                ledger.reconcile()
+        assert ledger.record(before.job_id) == before
+        assert ledger.transitions(before.job_id) == history
+
+    def test_recovery_does_not_hide_corrupt_artifacts_as_a_purge(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Only an absent job is omitted; malformed retained evidence remains an error."""
+        ledger = _ledger(tmp_path)
+        submitted = _admit(ledger)
+        live_rows = ledger.live_rows
+
+        def snapshot_then_corrupt() -> tuple[sqlite3.Row, ...]:
+            rows = live_rows()
+            with ledger.transaction() as connection:
+                connection.execute(
+                    "UPDATE jobs SET artifacts = ? WHERE job_id = ?",
+                    ("[{}]", submitted.record.job_id),
+                )
+            return rows
+
+        monkeypatch.setattr(ledger, "live_rows", snapshot_then_corrupt)
+        with pytest.raises(StudioJobLedgerCorrupt, match="relative_path"):
+            ledger.reconcile()
+
+    @pytest.mark.parametrize("change", ["none", "heartbeat", "result-type", "completed"])
+    def test_conditional_transition_checks_the_observed_record(
+        self, tmp_path: Path, change: str
+    ) -> None:
+        """A stale recovery decision cannot replace newer state, lease or typed data."""
+        moment = [UTC_CLOCK_START]
+        ledger = _ledger(tmp_path, clock=lambda: moment[0])
+        submitted = _admit(ledger)
+        expected = ledger.transition(submitted.record.job_id, "running", result={"value": 1})
+        if change == "heartbeat":
+            moment[0] += timedelta(seconds=10)
+            ledger.heartbeat(expected.job_id)
+        elif change == "result-type":
+            ledger.transition(expected.job_id, "running", result={"value": True})
+        elif change == "completed":
+            ledger.transition(expected.job_id, "completed", result={"value": 42})
+        current = ledger.record(expected.job_id)
+        history = ledger.transitions(expected.job_id)
+        observed = ledger.transition(
+            expected.job_id, "interrupted", expected_record=expected, reason="recovery"
+        )
+        if change == "none":
+            assert observed.status == "interrupted"
+            assert len(ledger.transitions(expected.job_id)) == len(history) + 1
+        else:
+            assert observed == current
+            assert ledger.transitions(expected.job_id) == history
+        assert _ledger(tmp_path).record(expected.job_id) == observed
+
     @pytest.mark.parametrize(
         "status", ["completed", "failed", "cancelled", "timed_out", "interrupted"]
     )

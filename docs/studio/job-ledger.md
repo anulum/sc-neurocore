@@ -94,6 +94,12 @@ stays `unknown` until there is evidence of its outcome, even after lease expiry.
 Nothing is ever promoted to `completed`, and no side effect is repeated to find
 out what happened. A result that was never committed is not a result.
 
+Recovery rechecks its observed record inside the transition transaction. If a
+result, status, lease or heartbeat changed meanwhile, it retains the newer
+record instead of applying the stale decision. A concurrently purged job is
+omitted and never recreated. Recovery reports the retained status, including
+completion committed by the actual supervisor; it does not invent that result.
+
 The decisions are readable afterwards:
 
 ```python
