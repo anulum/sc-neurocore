@@ -43,6 +43,10 @@ Cart run actions capture their source before submission, so a subsequent UI
 selection cannot relabel completed evidence. Busy duplicate starts are ignored;
 React StrictMode replay does not duplicate entries. Repeated identical result
 digests remain deduplicated under the cart's content-identity policy.
+Simulation cart identity requires the server's 64-character lowercase hexadecimal
+`run_metadata.result_sha256`. Missing or malformed metadata is not enqueued and
+does not prevent a subsequent valid run. This syntax check does not independently
+authenticate the response or recompute its scientific result digest.
 
 Clicking a heatmap cell changes both parameters together and invalidates prior
 compiled output before simulating. Only a heatmap produced for the current

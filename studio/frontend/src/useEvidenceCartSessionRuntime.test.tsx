@@ -23,6 +23,49 @@ afterEach(async () => {
   document.body.replaceChildren(); vi.unstubAllGlobals();
 });
 
+/** Malformed HTTP metadata must neither enter the cart nor prevent a later valid run. */
+it.each([
+  undefined, null, [], 12, {}, { result_sha256: null },
+  { result_sha256: "" }, { result_sha256: "not-a-digest" },
+  { result_sha256: "a".repeat(63) }, { result_sha256: "g".repeat(64) },
+])("rejects malformed simulation metadata %j and recovers", async (metadata) => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  useStudioStore.setState({ sourceMode: "model", selectedModelName: "SCLapicqueLIFNeuron" });
+  const response = { time: [0.1], states: { v: [-65] }, current_trace: [10],
+    spikes: [], spike_count: 0, stats: { rate_hz: 0 }, dt: 0.1, n_steps: 1,
+    model_name: "SCLapicqueLIFNeuron", run_metadata: metadata };
+  const validMetadata = { schema_version: "studio.simulation-run.v1", source: "model",
+    status: "completed", evidence_classification: "simulation", input_sha256: "a".repeat(64),
+    result_sha256: "b".repeat(64), dt: 0.1, n_steps: 1, sample_count: 1,
+    spike_count: 0, state_variables: ["v"] };
+  const fetch = vi.fn<typeof globalThis.fetch>()
+    .mockResolvedValueOnce(new Response(JSON.stringify(response)))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ ...response, run_metadata: validMetadata })));
+  vi.stubGlobal("fetch", fetch);
+  let session: EvidenceCartSession | undefined;
+  /** Expose the actual mounted hook actions, without replacing store behaviour. */
+  function Host() {
+    const value = useEvidenceCartSession();
+    useEffect(() => { session = value; });
+    return null;
+  }
+  const host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+  await act(async () => { root?.render(<StrictMode><Host /></StrictMode>); });
+  await act(async () => {
+    if (!session) throw new Error("Cart hook not mounted");
+    await session.runSimulationIntoCart();
+  });
+  expect(session?.cart.items).toHaveLength(0);
+  expect(useStudioStore.getState().isSimulating).toBe(false);
+  await act(async () => {
+    if (!session) throw new Error("Cart hook not mounted");
+    await session.runSimulationIntoCart();
+  });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(session?.cart.items).toHaveLength(1);
+  expect(session?.cart.items[0]?.payload).toMatchObject({ run_metadata: validMetadata });
+});
+
 it.each((["simulation", "analysis"] as const).flatMap((kind) =>
   [false, true].map((change) => ({ kind, change }))))("attributes $kind to submitted source, changed after result=$change", async ({ kind, change }) => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);

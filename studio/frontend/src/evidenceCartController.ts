@@ -75,20 +75,24 @@ export type QueueDecision =
  * shape with different values must not collide, and only a digest over the
  * values distinguishes them.
  *
- * @param result - The run's result, or `null` when there is none.
- * @returns The digest, or `null` when the result carries none. A result
+ * @param result - The untrusted HTTP result, or `null` when there is none.
+ * @returns The server's 64-character lowercase hexadecimal digest, or `null`
+ *   for absent or malformed metadata. This validates syntax, not authenticity. A result
  *   without a digest is unidentifiable, and the callers treat that as a reason
  *   to skip rather than a reason to queue.
  */
-export function simulationResultIdentity(result: SimulateResponse | null): string | null {
-  if (result === null) {
+export function simulationResultIdentity(result: unknown): string | null {
+  if (typeof result !== "object" || result === null || Array.isArray(result)
+    || !("run_metadata" in result)) {
     return null;
   }
-  const digest = result.run_metadata.result_sha256;
-  if (typeof digest !== "string" || digest.length === 0) {
+  const metadata = result.run_metadata;
+  if (typeof metadata !== "object" || metadata === null || Array.isArray(metadata)
+    || !("result_sha256" in metadata)) {
     return null;
   }
-  return digest;
+  const digest = metadata.result_sha256;
+  return typeof digest === "string" && /^[0-9a-f]{64}$/.test(digest) ? digest : null;
 }
 
 /**
