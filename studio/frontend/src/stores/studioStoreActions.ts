@@ -1519,7 +1519,7 @@ export function createStudioStoreActions(
   resetDefaults: () => {
     const s = get();
     if (s.sourceMode === "model" && s.modelDetail) {
-      set(modelDefaultsState(s.modelDetail));
+      set({ ...modelDefaultsState(s.modelDetail), ...compilerConfigurationInvalidatedState() });
     }
     void get().runSimulation();
   },

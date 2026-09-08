@@ -178,3 +178,23 @@ it("preserves ODE synthesis when only simulation current changes", () => {
   expect(useStudioStore.getState().synthResult).toBe(synthesis);
   expect(useStudioStore.getState().latestSynthesisJobId).toBe("sj_ode");
 });
+
+it("withdraws compiled output immediately when resetting model defaults", async () => {
+  useStudioStore.setState({ modelParams: { changed_parameter: 42 }, dt: 0.5 });
+  const compiled = deferred("runCompile");
+  const compile = useStudioStore.getState().runCompile();
+  compiled(); await compile;
+  expect(useStudioStore.getState().compileTraceability).not.toBeNull();
+  const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(new Error("Reset simulation failed"));
+  vi.stubGlobal("fetch", fetch);
+  useStudioStore.getState().resetDefaults();
+  const immediately = useStudioStore.getState();
+  await vi.waitFor(() => { expect(useStudioStore.getState().isSimulating).toBe(false); });
+  expect(immediately.modelParams).toEqual({});
+  expect(immediately.dt).toBe(detail.dt);
+  expect(immediately.compileTraceability).toBeNull();
+  expect(immediately.verilogSrc).toBe("");
+  expect(useStudioStore.getState().error).toBe("Reset simulation failed");
+  expect(useStudioStore.getState().compileTraceability).toBeNull();
+  expect(fetch).toHaveBeenCalledOnce();
+});

@@ -62,6 +62,10 @@ Compiled RTL and historical evidence bundles remain available; a new successful
 parity report alone does not restore the old synthesis qualification. ODE
 synthesis is unaffected by changes to this catalogue-parity input.
 
+Resetting a catalogue model to its defaults also invalidates generated RTL and
+downstream compiler evidence before starting the default simulation. A failed
+simulation cannot make the previous parameter set's compiled output current.
+
 Project, compile and synthesis export indicators require a bundle captured for
 the current surface context, with matching bundle and job identifiers. Changing
 that context withdraws completion without deleting the historical download.
