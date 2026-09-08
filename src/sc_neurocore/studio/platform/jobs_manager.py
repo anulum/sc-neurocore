@@ -77,7 +77,6 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         disabled, construction resolves the jobs an earlier supervisor left
         alive. ``max_concurrent_jobs`` and ``max_queued_jobs`` bound what runs.
         """
-
         if not allowed_kinds:
             raise ValueError("Studio job manager requires at least one allowed job kind.")
         if default_timeout_seconds <= 0:
@@ -135,7 +134,6 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         for the custody fields and what each binds. A task that never checks
         ``context.cancelled`` cannot be stopped: use a process job.
         """
-
         return _submit_thread_job(
             self,
             kind=kind,
@@ -169,7 +167,6 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         Same custody fields as :meth:`submit`. The worker leads its own process
         group, so stopping the job stops everything it started.
         """
-
         return _submit_process_job(
             self,
             kind=kind,
@@ -193,7 +190,6 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         seed_inputs: Mapping[str, bytes] | None = None,
     ) -> None:
         """Atomically deliver control data to one running process job."""
-
         _send_process_control_command(
             self,
             job_id,
@@ -203,15 +199,19 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
 
     def cancel(self, job_id: str) -> StudioJobRecord:
         """Request cooperative cancellation for one job."""
-
         return _cancel_job(self, job_id)
 
     def wait(self, job_id: str, timeout_seconds: float | None = None) -> StudioJobRecord:
-        """Wait for one job and return its latest immutable record."""
+        """Wait for a local or retained shared-ledger job without changing it.
 
+        A finite timeout returns the latest record even if the job is still
+        running; zero or negative values read without waiting. ``None`` waits
+        until a terminal record appears. Unknown IDs raise ``KeyError`` and
+        non-finite timeouts raise ``ValueError``. The wait does not reconcile,
+        cancel or re-execute work owned by another manager.
+        """
         return _wait_for_job(self, job_id, timeout_seconds)
 
     def status(self) -> StudioJobStatusSnapshot:
         """Return aggregate path-free manager health."""
-
         return _job_manager_status(self)

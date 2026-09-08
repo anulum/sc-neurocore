@@ -162,7 +162,7 @@ class TestTwoProcessesShareOneRoot:
 
         # A different interpreter, after the first one exited.
         manager = _manager(root)
-        record = manager.record(reported["job_id"])
+        record = manager.wait(reported["job_id"], timeout_seconds=0.1)
 
         assert record.status == "completed"
         assert record.result == {"answer": 42}
@@ -192,6 +192,64 @@ class TestTwoProcessesShareOneRoot:
         assert resubmitted.job_id == original
         assert resubmitted.result == {"answer": 42}
         assert len(manager.list_records()) == 1
+
+    @pytest.mark.parametrize("observer", ["same-manager", "second-manager"])
+    def test_wait_deadline_returns_live_record_without_cancelling_work(
+        self, tmp_path: Path, observer: str
+    ) -> None:
+        """A wait timeout is observation, not a job timeout or cancellation request."""
+        root = tmp_path / "jobs"
+        manager = _manager(root)
+        started = threading.Event()
+        release = threading.Event()
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            started.set()
+            if not release.wait(5.0):
+                raise TimeoutError("test did not release the job")
+            context.check_cancelled()
+            return {"answer": 42}
+
+        submitted = manager.submit(kind="analysis", owner="alice", request_id=None, task=task)
+        try:
+            assert started.wait(2.0)
+            reader = manager if observer == "same-manager" else _manager(root)
+            observed = reader.wait(submitted.job_id, timeout_seconds=0.02)
+            assert observed.status == "running"
+            assert observed.finished_at_utc is None
+            assert observed.result is None
+            assert reader.wait(submitted.job_id, timeout_seconds=0.0) == observed
+            assert reader.wait(submitted.job_id, timeout_seconds=-1.0) == observed
+            timer = threading.Timer(0.05, release.set)
+            timer.start()
+            try:
+                assert reader.wait(submitted.job_id, timeout_seconds=5.0).status == "completed"
+            finally:
+                timer.join(timeout=1.0)
+        finally:
+            release.set()
+            settled = manager.wait(submitted.job_id, timeout_seconds=5.0)
+        assert settled.status == "completed"
+        assert reader.wait(submitted.job_id) == settled
+        assert reader.wait(submitted.job_id, timeout_seconds=0.0) == settled
+        assert [row["to_status"] for row in reader.transitions(submitted.job_id)] == [
+            "pending",
+            "running",
+            "completed",
+        ]
+
+    @pytest.mark.parametrize("timeout", [float("nan"), float("inf"), float("-inf")])
+    def test_wait_rejects_nonfinite_deadlines(self, tmp_path: Path, timeout: float) -> None:
+        """Invalid observation deadlines fail explicitly rather than wait forever."""
+        manager = _manager(tmp_path / "jobs")
+        with pytest.raises(ValueError, match="finite"):
+            manager.wait("sj_absent", timeout_seconds=timeout)
+
+    def test_wait_refuses_an_absent_record(self, tmp_path: Path) -> None:
+        """Missing durable jobs still raise KeyError instead of appearing complete."""
+        manager = _manager(tmp_path / "jobs")
+        with pytest.raises(KeyError):
+            manager.wait("sj_absent", timeout_seconds=0.0)
 
 
 class TestSupervisorDeath:

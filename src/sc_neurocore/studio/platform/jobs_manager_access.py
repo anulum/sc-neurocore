@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import os
 import shutil
+import time
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
@@ -74,12 +76,31 @@ def _wait_for_job(
     job_id: str,
     timeout_seconds: float | None,
 ) -> StudioJobRecord:
-    """Wait for one job and return its latest immutable record."""
+    """Observe durable completion, using local events only as a wake-up hint.
 
+    A peer or restarted manager has no local handle for a retained job. Check
+    the shared ledger on a bounded interval so either manager can observe it.
+    The monotonic deadline limits observation and never changes job state.
+    """
+
+    if timeout_seconds is not None and not math.isfinite(timeout_seconds):
+        raise ValueError("Studio job wait timeout must be finite or None.")
+    deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
     with manager._lock:
-        done_event = manager._done_events[job_id]
-    done_event.wait(timeout_seconds)
-    return manager.record(job_id)
+        done_event = manager._done_events.get(job_id)
+    record = manager.record(job_id)
+    while record.status not in TERMINAL_STATUSES:
+        delay = 0.05
+        if deadline is not None:
+            delay = min(delay, max(0.0, deadline - time.monotonic()))
+            if delay == 0.0:
+                return record
+        if done_event is None:
+            time.sleep(delay)
+        else:
+            done_event.wait(delay)
+        record = manager.record(job_id)
+    return record
 
 
 def _get_job_record(

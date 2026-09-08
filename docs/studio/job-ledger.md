@@ -16,6 +16,13 @@ Schema `studio.job-ledger.v1`. Single host by design: SQLite in WAL mode
 serialises the writers sharing one root. A distributed worker contract is a
 separate obligation and is not implied here.
 
+`manager.wait(job_id, timeout_seconds=...)` observes the durable record even
+when another process submitted it or this manager was restarted. Local events
+can wake it sooner; otherwise it checks the ledger every 50 ms. A finite wait
+deadline returns the latest record, which may still be running. It does not
+cancel, reconcile or re-execute the job. Zero or negative timeout reads without
+waiting; `None` waits for a terminal outcome. Non-finite timeouts are rejected.
+
 Durability is a property of a **configured** job root
 (`SC_NEUROCORE_STUDIO_JOB_ROOT`). Without one, Studio creates a private
 directory for the process and its records go with it: an unconfigured root is
