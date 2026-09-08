@@ -121,6 +121,17 @@ hand.
 
 ## Bounded compute and cancellation
 
+Stop requests are durable: both thread and process supervisors observe the
+shared ledger, so a second manager can cancel an existing job. A repeated Stop
+also delivers the owning manager's local cancellation event. Cancellation is
+cooperative for threads; it is a request, not proof of completion.
+
+If cancellation-state observation fails, the supervisor first requests thread
+stop or reaps the process group, then attempts to record `failed` with the
+cleanup outcome. An uncooperative thread is explicitly reported as still alive.
+If the ledger also refuses that final write, no terminal outcome is claimed;
+the durable record needs recovery after storage is repaired.
+
 A Studio that accepts every submission and starts it immediately lets one
 caller decide how much of the machine it uses. Admission bounds that: a fixed
 number of jobs run at once, a fixed number wait behind them, and a submission

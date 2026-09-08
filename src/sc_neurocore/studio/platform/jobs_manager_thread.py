@@ -11,11 +11,14 @@
 from __future__ import annotations
 
 import secrets
+import sqlite3
 import threading
+import time
 from collections.abc import Mapping
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
+from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobLedgerCorrupt
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobCancelled,
@@ -49,7 +52,6 @@ def _submit_thread_job(
     the earlier job untouched: the work runs once, however often the request
     arrives.
     """
-
     if kind not in manager._allowed_kinds:
         raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
     timeout = manager._default_timeout_seconds if timeout_seconds is None else timeout_seconds
@@ -108,7 +110,6 @@ def _run_thread_supervised(
     timeout_seconds: float,
 ) -> None:
     """Run one task in a daemon thread and persist its terminal state."""
-
     context = StudioJobContext(
         job_id=job_id,
         work_dir=work_dir,
@@ -127,7 +128,33 @@ def _run_thread_supervised(
 
     worker = threading.Thread(target=target, daemon=True)
     worker.start()
-    worker.join(timeout_seconds)
+    deadline = time.monotonic() + timeout_seconds
+    while worker.is_alive():
+        try:
+            observed = manager._ledger.record(job_id)
+        except (sqlite3.Error, KeyError, StudioJobLedgerCorrupt) as exc:
+            cancel_event.set()
+            worker.join(COOPERATIVE_STOP_SECONDS)
+            stopped = not worker.is_alive()
+            if not stopped:
+                manager._note_unreaped_worker(job_id)
+            try:
+                manager._update(
+                    job_id,
+                    status="failed",
+                    error=f"Studio cancellation observation failed: {exc}. Worker stopped: {stopped}.",
+                    finished_at_utc=manager._timestamp_utc(),
+                    artifacts=context.artifacts,
+                )
+            finally:
+                done_event.set()
+            return
+        if observed.status == "cancelling":
+            cancel_event.set()
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        worker.join(min(0.05, remaining))
     if worker.is_alive():
         cancel_event.set()
         worker.join(max(min(timeout_seconds, COOPERATIVE_STOP_SECONDS), COOPERATIVE_STOP_SECONDS))

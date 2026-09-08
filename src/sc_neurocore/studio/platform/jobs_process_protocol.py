@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 
 # Process workers receive shell-free local argument vectors.
 import subprocess  # nosec B404
@@ -23,6 +24,7 @@ from pathlib import Path
 from typing import Literal, cast
 
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
+from sc_neurocore.studio.platform.jobs_ledger_schema import StudioJobLedgerCorrupt
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
     StudioJobRejected,
@@ -39,7 +41,6 @@ from sc_neurocore.studio.platform.jobs_reaper import (
 
 def _process_worker_environment() -> dict[str, str]:
     """Return an import-stable environment for Studio process workers."""
-
     environment = dict(os.environ)
     src_path = Path(__file__).resolve().parents[3]
     repo_path = src_path.parent
@@ -67,7 +68,6 @@ class _ProcessWorkerResult:
 
 def _validate_process_task_path(task_path: str) -> None:
     """Validate one ``module:function`` process-task import path."""
-
     module_path, separator, function_name = task_path.partition(":")
     if separator != ":" or not module_path.strip() or not function_name.strip():
         raise StudioJobRejected("Studio process task path must use module:function form.")
@@ -79,7 +79,6 @@ def _validate_process_task_path(task_path: str) -> None:
 
 def _json_payload(payload: StudioProcessJobPayload, error_message: str) -> str:
     """Serialize a mapping or raise the stable job-rejection contract."""
-
     try:
         return json.dumps(dict(payload), sort_keys=True)
     except (TypeError, ValueError) as exc:
@@ -94,7 +93,6 @@ def _terminate_process(process: subprocess.Popen[bytes]) -> None:
     stops the worker's descendants too. Both share one implementation, so the
     second wait can no longer raise out of a supervisor that is cleaning up.
     """
-
     _terminate_direct_child(
         process,
         DEFAULT_TERMINATE_GRACE_SECONDS,
@@ -104,7 +102,6 @@ def _terminate_process(process: subprocess.Popen[bytes]) -> None:
 
 def _load_process_result(result_path: Path) -> _ProcessWorkerResult:
     """Load one worker result or return a stable path-free failure."""
-
     if not result_path.exists():
         return _ProcessWorkerResult(
             status="failed",
@@ -133,7 +130,6 @@ def _load_process_result(result_path: Path) -> _ProcessWorkerResult:
 
 def _load_process_artifacts(result_path: Path) -> tuple[StudioJobArtifact, ...]:
     """Return validated worker artifacts, or an empty tuple when absent."""
-
     if not result_path.exists():
         return ()
     return _load_process_result(result_path).artifacts
@@ -141,7 +137,6 @@ def _load_process_artifacts(result_path: Path) -> tuple[StudioJobArtifact, ...]:
 
 def _parse_process_result(payload: dict[object, object]) -> _ProcessWorkerResult:
     """Narrow an untrusted result mapping to the worker result contract."""
-
     raw_status = payload.get("status")
     status: Literal["completed", "failed"] = "completed" if raw_status == "completed" else "failed"
     raw_result = payload.get("result")
@@ -159,7 +154,6 @@ def _parse_process_result(payload: dict[object, object]) -> _ProcessWorkerResult
 
 def _parse_process_artifacts(raw_artifacts: object) -> tuple[StudioJobArtifact, ...]:
     """Validate a worker artifact list without accepting partial manifests."""
-
     if not isinstance(raw_artifacts, list):
         return ()
     artifacts: list[StudioJobArtifact] = []
@@ -187,7 +181,6 @@ def _parse_process_artifacts(raw_artifacts: object) -> tuple[StudioJobArtifact, 
 
 def _unreaped_error(report: ReapReport) -> str:
     """Describe a worker group that survived its reap, so nobody assumes it did not."""
-
     return (
         f"The worker process group was not reaped after "
         f"{report.duration_seconds:.1f}s; {len(report.survivors)} process(es) may still be running."
@@ -206,7 +199,6 @@ def _run_process_supervised(
     timeout_seconds: float,
 ) -> None:
     """Supervise one isolated worker process to a terminal record."""
-
     manager._update(job_id, status="running", started_at_utc=manager._timestamp_utc())
     command = [
         sys.executable,
@@ -230,6 +222,26 @@ def _run_process_supervised(
     )
     deadline = time.monotonic() + timeout_seconds
     while process.poll() is None:
+        try:
+            observed = manager._ledger.record(job_id)
+        except (sqlite3.Error, KeyError, StudioJobLedgerCorrupt) as exc:
+            report = reap_process_group(process)
+            try:
+                manager._update(
+                    job_id,
+                    status="failed",
+                    error=(
+                        f"Studio cancellation observation failed: {exc}. "
+                        + ("Worker reaped." if report.reaped else _unreaped_error(report))
+                    ),
+                    finished_at_utc=manager._timestamp_utc(),
+                    artifacts=_load_process_artifacts(result_path),
+                )
+            finally:
+                done_event.set()
+            return
+        if observed.status == "cancelling":
+            cancel_event.set()
         if cancel_event.is_set():
             report = reap_process_group(process)
             manager._update(

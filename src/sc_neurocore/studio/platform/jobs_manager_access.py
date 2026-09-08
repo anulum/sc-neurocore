@@ -54,14 +54,15 @@ def _cancel_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord
     that race means the job is already stopped, so the record it reached is
     returned. A refusal for any other reason still propagates.
     """
-
     record = manager._ledger.record(job_id)
-    if record.status in TERMINAL_STATUSES or record.status == "cancelling":
+    if record.status in TERMINAL_STATUSES:
         return record
     with manager._lock:
         cancel_event = manager._cancel_events.get(job_id)
     if cancel_event is not None:
         cancel_event.set()
+    if record.status == "cancelling":
+        return record
     try:
         return manager._ledger.transition(job_id, "cancelling", reason="cancellation requested")
     except StudioJobRejected:
@@ -82,7 +83,6 @@ def _wait_for_job(
     the shared ledger on a bounded interval so either manager can observe it.
     The monotonic deadline limits observation and never changes job state.
     """
-
     if timeout_seconds is not None and not math.isfinite(timeout_seconds):
         raise ValueError("Studio job wait timeout must be finite or None.")
     deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
@@ -115,7 +115,6 @@ def _get_job_record(
     A job belonging to another actor or workspace raises ``KeyError``, so an
     isolated caller cannot distinguish it from one that never existed.
     """
-
     return manager._ledger.record(job_id, actor=actor, workspace=workspace)
 
 
@@ -126,7 +125,6 @@ def _list_job_records(
     workspace: str | None = None,
 ) -> tuple[StudioJobRecord, ...]:
     """Return all durable jobs in creation order, scoped when asked."""
-
     return manager._ledger.list_records(actor=actor, workspace=workspace)
 
 
@@ -137,13 +135,11 @@ def _list_job_snapshot(
     workspace: str | None = None,
 ) -> StudioJobListSnapshot:
     """Return a path-free snapshot of every job visible to the caller."""
-
     return StudioJobListSnapshot(records=manager.list_records(actor=actor, workspace=workspace))
 
 
 def _purge_terminal_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord:
     """Delete one terminal job directory and its in-memory state."""
-
     record = manager._ledger.record(job_id)
     if record.status not in TERMINAL_STATUSES:
         raise StudioJobRejected("Studio active jobs cannot be purged.")
@@ -183,7 +179,6 @@ def _commit_supervised_update(
     ``cancelling`` status; that rule lives inside the ledger transaction, where
     it cannot race the cancellation it is reconciling with.
     """
-
     record = manager._ledger.transition(
         job_id,
         status,
@@ -206,7 +201,6 @@ def _read_declared_artifact(
     relative_path: str,
 ) -> StudioJobArtifactPayload:
     """Return one manifest-declared payload after size and hash validation."""
-
     record = manager.record(job_id)
     requested_path = _normalize_artifact_lookup_path(relative_path)
     artifact = _find_artifact(record.artifacts, requested_path)
@@ -236,7 +230,6 @@ def _read_live_artifact(
     max_bytes: int,
 ) -> tuple[bytes, int]:
     """Return a bounded newly appended slice from one confined live artifact."""
-
     manager.record(job_id)
     if offset < 0:
         raise ValueError("Studio live artifact offset must be non-negative.")
@@ -266,7 +259,6 @@ def _read_live_artifact(
 
 def _job_manager_status(manager: _StudioJobManagerState) -> StudioJobStatusSnapshot:
     """Return aggregate path-free manager health and resource profiles."""
-
     records = manager.list_records()
     active_statuses = {"pending", "running", "cancelling"}
     allowed_kinds = tuple(sorted(manager._allowed_kinds))
