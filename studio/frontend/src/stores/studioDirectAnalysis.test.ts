@@ -10,6 +10,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { studioGuidedFlowInputs } from "../studioGuidedFlowInputs";
 import { studioSimulationConfig } from "../studioSimulationConfig";
 import { studioSimulationConfigInput } from "../studioSimulationConfigInput";
+import { studioExperimentKey } from "../studioExperimentKey";
 import { useStudioStore } from "./studio";
 
 const initial = useStudioStore.getState();
@@ -76,6 +77,34 @@ function payload(action: Action): object {
     case "runFreqResponse": return { analysis_metadata, frequencies_hz: [1, 2], rates: [0, 1], amplitude: 1 };
   }
 }
+
+it.each(["current", "stale", "empty", "nonfinite", "large"] as const)("validates nullcline range source: %s", async (condition) => {
+  const samples = condition === "large" ? Array.from({ length: 200000 }, (_, index) => index)
+    : condition === "empty" ? [] : condition === "nonfinite" ? [Number.NaN] : [100, 200];
+  vi.stubGlobal("fetch", vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify({
+    time: samples.map((_, index) => index), dt: 1, n_steps: samples.length,
+    states: { v: samples, w: samples.map((_, index) => 3 + index / Math.max(1, samples.length - 1)) },
+    current_trace: samples.map(() => 1), spikes: [], spike_count: 0, stats: { rate_hz: 0 },
+  }))));
+  await useStudioStore.getState().runSimulation();
+  const key = studioExperimentKey(studioSimulationConfigInput(useStudioStore.getState()));
+  expect(useStudioStore.getState().resultExperimentKey).toBe(key);
+  if (condition === "stale") useStudioStore.getState().setDuration(200);
+  const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify(payload("runNullclines"))));
+  vi.stubGlobal("fetch", fetch);
+  await useStudioStore.getState().runNullclines();
+  if (condition === "empty" || condition === "nonfinite") {
+    expect(fetch).not.toHaveBeenCalled();
+    expect(useStudioStore.getState().error).toContain(condition === "empty" ? "no samples" : "non-finite samples");
+    expect(useStudioStore.getState().isSimulating).toBe(false);
+    return;
+  }
+  const body = fetch.mock.calls[0]?.[1]?.body;
+  if (typeof body !== "string") throw new Error("Nullcline request absent");
+  const request: unknown = JSON.parse(body);
+  expect(request).toMatchObject({ ranges: condition === "stale" ? { v: [-80, 40], w: [-2, 2] }
+    : { v: condition === "large" ? [-10, 200009] : [90, 210], w: [2.5, 4.5] } });
+});
 
 /**
  * Hold the HTTP boundary until the case chooses success or failure.

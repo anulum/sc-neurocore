@@ -89,6 +89,12 @@ Resetting a catalogue model to its defaults also invalidates generated RTL and
 downstream compiler evidence before starting the default simulation. A failed
 simulation cannot make the previous parameter set's compiled output current.
 
+Nullcline domains use the latest simulation only when it belongs to the current
+experiment. Otherwise the existing fixed domains are used (first variable
+−80…40, second −2…2, in their native units); inspect whether these domains fit
+your model. Current traces with missing, empty or non-finite samples are rejected.
+Historical plots remain visible but do not define a different experiment's grid.
+
 Project, compile and synthesis export indicators require a bundle captured for
 the current surface context, with matching bundle and job identifiers. Changing
 that context withdraws completion without deleting the historical download.

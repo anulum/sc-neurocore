@@ -20,6 +20,7 @@ import {
 import type { PopulationNode, ProjectionEdge } from "../api/client";
 import { createStoreArtifactDownloader } from "./studioArtifactDownload";
 import { runStoreSimulation } from "./studioSimulation";
+import { studioNullclineRanges } from "../studioNullclineRanges";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioShareLinkDecision } from "../shareLinkApplication";
 import {
@@ -843,14 +844,7 @@ export function createStudioStoreActions(
     const vars = Object.keys(s.odeInit);
     const [var0, var1] = vars;
     if (var0 === undefined || var1 === undefined) throw new Error("Nullclines need initial values for two variables");
-    const v0vals = s.result?.states[var0];
-    const v1vals = s.result?.states[var1];
-    const r0: [number, number] = v0vals
-      ? [Math.min(...v0vals) - 10, Math.max(...v0vals) + 10]
-      : [-80, 40];
-    const r1: [number, number] = v1vals
-      ? [Math.min(...v1vals) - 0.5, Math.max(...v1vals) + 0.5]
-      : [-2, 2];
+    const ranges = studioNullclineRanges(s, var0, var1);
     const nullclineResult = await fetchNullclines(
       studioNullclineRequest({
         equations: s.equations,
@@ -858,7 +852,7 @@ export function createStudioStoreActions(
         odeInit: s.odeInit,
         protocol: s.protocol,
         current: s.current,
-        ranges: { [var0]: r0, [var1]: r1 },
+        ranges,
         gridSize: 60,
       }),
     );
