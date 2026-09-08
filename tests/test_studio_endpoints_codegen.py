@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import json
 
+import pytest
+from starlette.testclient import TestClient
+
 from tests.studio_endpoints_support import *  # noqa: F403
 
 
@@ -94,6 +97,29 @@ class TestCodegenEndpoint:
 
 
 class TestReplayPackEndpoint:
+    def test_pack_size_refusal_has_actionable_detail(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The real export route preserves the pack refusal rather than a generic error."""
+        monkeypatch.setattr("sc_neurocore.studio.replay_pack.MAX_PACK_BYTES", 16)
+        response = client.post(
+            "/api/export/replay-pack",
+            json={
+                "mode": "model",
+                "model_name": MODEL,
+                "duration": 2,
+                "dt": 0.1,
+                "current": 10,
+            },
+        )
+        assert response.status_code == 422
+        assert response.json()["detail"] == {
+            "error": "replay_refused",
+            "stage": "schema",
+            "reason": "replay pack exceeds the file size limit",
+            "differences": [],
+        }
+
     def test_the_pack_seals_the_experiment_and_its_expectation(self, client):
         r = client.post(
             "/api/export/replay-pack",
@@ -108,7 +134,7 @@ class TestReplayPackEndpoint:
         )
         assert r.status_code == 200
         pack = r.json()
-        assert pack["schema_version"] == "studio.replay-pack.v1"
+        assert pack["schema_version"] == "studio.replay-pack.v2"
         assert len(pack["experiment_identity_sha256"]) == 64
         assert pack["expectation"]["n_steps"] == 1000
         assert pack["expectation"]["spikes"] == sorted(pack["expectation"]["spikes"])

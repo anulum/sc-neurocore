@@ -532,8 +532,9 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         The experiment is resolved, its randomness pinned and the run executed
         once; the pack carries the re-resolvable request, the specification,
         the scientific identity digest, the complete expectation (every spike
-        event, a digest per state trace, the initial and final state, the drive
-        digest) and the environment that sealed it. Replay it with
+        event, full scalar/vector samples bound to trace digests, initial/final
+        state and drive digest) and the environment that sealed it. Missing raw
+        evidence or excessive pack size returns a structured HTTP 422 refusal. Replay it with
         ``python -m sc_neurocore.studio.replay_pack <pack.json>``.
         """
         payload = _request_payload(req)

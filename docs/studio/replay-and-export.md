@@ -62,14 +62,14 @@ experiment.
 ## The replay pack
 
 `POST /api/export/replay-pack`, or the **Replay pack** button, seals a
-`studio.replay-pack.v1` document:
+`studio.replay-pack.v2` document:
 
 | Block | Contents |
 |---|---|
 | `request` | The re-resolvable request, with any drawn seed pinned and `trial` set to `replay` |
 | `experiment` | The full public specification |
 | `experiment_identity_sha256` | Digest of the scientific blocks only |
-| `expectation` | Every spike event, a digest per state trace with endpoints and range, the initial and final state, the drive digest, the run statistics |
+| `expectation` | Every spike event, full scalar/vector state samples bound to trace digests, initial/final state, drive digest and run statistics |
 | `environment` | Package version, interpreter, NumPy, platform, machine |
 | `runner` | How to replay it |
 
@@ -117,10 +117,21 @@ Nothing runs until every refusal has been ruled out.
 
 Spike events and the drive are compared exactly — a spike train is an
 observable, not a rounding matter. State traces are compared by digest first
-and, if the digests differ, by the largest deviation of their endpoints and
-range against the tolerance; the outcome reports that number. Initial and final
+and, if the digests differ, by the largest pointwise deviation of all scalar and
+vector samples against the finite, non-negative tolerance. The outcome reports
+that number; unchanged endpoints or extrema cannot hide an interior difference. Initial and final
 states are compared per variable. A verdict of `match` means the digests agree;
 `match-within-tolerance` means they did not and the deviation was accepted.
+
+Pack v2 carries full samples bound to each trace digest. Missing raw trajectories
+or omitted vector histories refuse export, as do packs exceeding the reader's
+32 MiB size limit. Existing v1 packs without samples can establish exact digest
+agreement only: a differing digest is a mismatch, even with a positive tolerance.
+The hashes establish internal consistency, not independent authorship.
+
+CI measures the replay runner separately from the aggregate package coverage,
+with a 100% statement-coverage gate. Its tests retain standalone-process replay
+alongside in-process CLI checks; coverage does not establish scientific validity.
 
 ## Migrating from the earlier export
 

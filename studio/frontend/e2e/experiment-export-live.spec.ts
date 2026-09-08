@@ -125,7 +125,7 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
   // What the browser wrote to disk is what the server sealed.
   const saved = JSON.parse(readFileSync(packPath, "utf-8")) as ReplayPack;
   expect(saved).toEqual(served);
-  expect(saved.schema_version).toBe("studio.replay-pack.v1");
+  expect(saved.schema_version).toBe("studio.replay-pack.v2");
   expect(saved.request).toMatchObject({
     name: MODEL_NAME,
     dt: Number(REQUESTED_DT),

@@ -106,7 +106,7 @@ def generate_replay_script(pack_filename: str = "replay_pack.json") -> str:
     Parameters
     ----------
     pack_filename : str
-        Name of the ``studio.replay-pack.v1`` file the script reads, relative
+        Name of the ``studio.replay-pack.v2`` file the script reads, relative
         to the script's working directory.
 
     Returns

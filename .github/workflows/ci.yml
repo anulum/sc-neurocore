@@ -434,6 +434,20 @@ jobs:
             --include='src/sc_neurocore/chiplet/hierarchical*.py' \
             --fail-under=100 --show-missing
 
+      - name: Studio replay exact statement coverage
+        # Studio is excluded from aggregate coverage; replay has its own statement gate.
+        if: matrix.primary
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-studio-replay python -m coverage run \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/studio/replay_pack.py' \
+            -m pytest tests/test_studio_replay_pack.py -q
+          COVERAGE_FILE=.coverage-studio-replay python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/studio/replay_pack.py' \
+            --fail-under=100 --show-missing
+
       - name: Studio policy exact coverage
         if: matrix.primary
         shell: bash

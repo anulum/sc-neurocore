@@ -2400,14 +2400,14 @@ export interface CodegenResponse {
 }
 
 /**
- * A sealed `studio.replay-pack.v1` document from `/api/export/replay-pack`.
+ * A sealed `studio.replay-pack.v2` document from `/api/export/replay-pack`.
  *
  * The fields the UI needs are named; the specification, expectation and
  * environment blocks travel opaquely to the file the user saves, because their
  * contract belongs to the Python replay runner, not to the browser.
  */
 export interface ReplayPack {
-  schema_version: "studio.replay-pack.v1";
+  schema_version: "studio.replay-pack.v2";
   source: "model" | "ode";
   request: Record<string, unknown>;
   experiment: Record<string, unknown>;

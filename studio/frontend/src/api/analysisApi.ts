@@ -84,7 +84,7 @@ export const fetchCodegen = (req: Record<string, unknown>) =>
  * matched.
  *
  * @param req - The experiment to seal.
- * @returns The sealed `studio.replay-pack.v1` document.
+ * @returns The sealed `studio.replay-pack.v2` document.
  */
 export const fetchReplayPack = (req: Record<string, unknown>) =>
   post<ReplayPack>("/export/replay-pack", req);

@@ -34,6 +34,7 @@ from sc_neurocore.studio.replay_pack import (
     experiment_identity,
     experiment_identity_sha256,
     load_replay_pack,
+    main,
     pinned_request,
     replay_expectation,
     replay_pack,
@@ -75,6 +76,18 @@ def _run(request: dict[str, Any]) -> dict[str, Any]:
 
 
 class TestPinning:
+    @pytest.mark.parametrize("params", [{"seed": 77}, {"seed": 77, "rate_hz": 150}])
+    def test_model_parameter_seed_is_pinned_without_duplicate_declaration(
+        self, params: dict[str, int]
+    ) -> None:
+        """Seeded catalogue replay retains other parameters but declares its seed once."""
+        pack = build_replay_pack({"name": "PoissonNeuron", "params": params, "duration": 10.0})
+        assert pack["request"]["seed"] == 77
+        assert "seed" not in pack["request"].get("params", {})
+        if "rate_hz" in params:
+            assert pack["request"]["params"]["rate_hz"] == 150
+        assert replay_pack(pack)["verdict"] == "match"
+
     def test_a_fresh_trial_is_sealed_as_the_replay_of_its_drawn_seed(self) -> None:
         request = dict(STOCHASTIC_EQUATIONS, trial="fresh")
         spec = resolve_experiment(request)
@@ -130,6 +143,19 @@ class TestIdentity:
 
 
 class TestBuildAndReplay:
+    def test_vector_trajectory_and_snapshots_replay_in_full(self) -> None:
+        """The real neural-field result carries every vector component at each step."""
+        pack = build_replay_pack(
+            {"name": "AmariNeuralField", "duration": 2.0, "dt": 0.1, "current": 1.0}
+        )
+        assert len(pack["expectation"]["vector_states"]["u"]["samples"]) == 20
+        assert replay_pack(pack)["verdict"] == "match"
+        changed = _run(pack["request"])
+        changed["raw"]["vector_states"]["u"][10][3] += 0.1
+        outcome = compare_to_expectation(pack["expectation"], changed, tolerance=1e-6)
+        assert outcome["verdict"] == "mismatch"
+        assert outcome["worst_state_deviation"] == pytest.approx(0.1)
+
     @pytest.mark.parametrize(
         "request_body",
         [LAPICQUE, HODGKIN_HUXLEY, dict(STOCHASTIC_EQUATIONS, seed=4242)],
@@ -219,15 +245,45 @@ class TestComparisonCatchesRealDivergence:
     def test_a_state_within_tolerance_is_not_called_exact(self) -> None:
         pack = build_replay_pack(HODGKIN_HUXLEY)
         result = _run(pack["request"])
-        mutated = copy.deepcopy(pack["expectation"])
-        mutated["states"]["v"]["sha256"] = "0" * 64
-        mutated["states"]["v"]["last"] = float(mutated["states"]["v"]["last"]) + 1e-9
+        changed = copy.deepcopy(result)
+        changed["raw"]["states"]["v"][10] += 1e-9
+        mutated = replay_expectation(changed)
 
         outcome = compare_to_expectation(mutated, result, tolerance=1e-6)
 
         assert outcome["verdict"] == "match-within-tolerance"
         assert outcome["worst_state_deviation"] <= 1e-6
         assert compare_to_expectation(mutated, result, tolerance=0.0)["verdict"] == "mismatch"
+
+    @pytest.mark.parametrize("tolerance", [0.0, 1e-12])
+    def test_interior_permutation_is_not_hidden_by_equal_extrema(self, tolerance: float) -> None:
+        """Pointwise divergence must fail even when every stored summary agrees."""
+        result = _run(dict(HODGKIN_HUXLEY, duration=5.0))
+        expected = replay_expectation(result)
+        changed = copy.deepcopy(result)
+        trace = changed["raw"]["states"]["v"]
+        trace[10], trace[11] = trace[11], trace[10]
+        outcome = compare_to_expectation(expected, changed, tolerance=tolerance)
+        assert outcome["verdict"] == "mismatch"
+        assert outcome["worst_state_deviation"] == abs(trace[10] - trace[11])
+
+    def test_legacy_trace_digests_cannot_prove_a_tolerance_bound(self) -> None:
+        """Old packs remain exact-only when they lack full sealed samples."""
+        result = _run(LAPICQUE)
+        expected = replay_expectation(result)
+        for state in expected["states"].values():
+            del state["samples"]
+        assert compare_to_expectation(expected, result)["verdict"] == "match"
+        changed = copy.deepcopy(result)
+        changed["raw"]["states"]["v"][10] += 1e-9
+        assert compare_to_expectation(expected, changed, tolerance=1)["verdict"] == "mismatch"
+
+    @pytest.mark.parametrize("tolerance", [-1.0, float("nan"), float("inf")])
+    def test_invalid_tolerance_is_refused(self, tolerance: float) -> None:
+        """A nonfinite or negative threshold cannot turn divergence into success."""
+        result = _run(LAPICQUE)
+        with pytest.raises(ReplayRejected, match="finite and non-negative"):
+            compare_to_expectation(replay_expectation(result), result, tolerance=tolerance)
 
 
 def _through_a_browser(value: Any) -> Any:
@@ -267,6 +323,113 @@ class TestSurvivesTheBrowser:
 
 
 class TestRefusalsBeforeExecution:
+    @pytest.mark.parametrize(
+        "field,value", [("trace_source", "display"), ("states", None), ("vector_states", [])]
+    )
+    def test_invalid_v2_evidence_structure_is_refused(self, field: str, value: object) -> None:
+        """The versioned admission boundary rejects absent or downgraded trace groups."""
+        pack = build_replay_pack(LAPICQUE)
+        pack["expectation"][field] = value
+        with pytest.raises(ReplayRejected) as refusal:
+            verify_replay_pack(pack)
+        assert refusal.value.stage == "schema"
+
+    def test_nonnumeric_samples_are_a_structured_refusal(self) -> None:
+        """Malformed JSON sample values must not escape as an array conversion error."""
+        pack = build_replay_pack(LAPICQUE)
+        pack["expectation"]["states"]["v"]["samples"] = ["invalid"]
+        with pytest.raises(ReplayRejected, match="invalid sample evidence"):
+            verify_replay_pack(pack)
+
+    def test_missing_identity_digest_is_refused(self) -> None:
+        """A pack needs its scientific identity independently of valid sample hashes."""
+        pack = build_replay_pack(LAPICQUE)
+        del pack["experiment_identity_sha256"]
+        with pytest.raises(ReplayRejected, match="experiment_identity_sha256"):
+            verify_replay_pack(pack)
+
+    @pytest.mark.parametrize("equations", [False, True])
+    def test_missing_request_source_is_refused(self, equations: bool) -> None:
+        """Neither a catalogue name nor an equation program may disappear from replay."""
+        pack = build_replay_pack(dict(STOCHASTIC_EQUATIONS, seed=42) if equations else LAPICQUE)
+        del pack["request"]["equations" if equations else "name"]
+        with pytest.raises(ReplayRejected) as refusal:
+            verify_replay_pack(pack)
+        assert refusal.value.stage == "request"
+
+    def test_newly_invalid_seed_is_refused_by_resolution(self) -> None:
+        """A deterministic model cannot acquire an ignored stochastic seed in transit."""
+        pack = build_replay_pack(LAPICQUE)
+        pack["request"]["seed"] = 42
+        with pytest.raises(ReplayRejected) as refusal:
+            verify_replay_pack(pack)
+        assert refusal.value.stage == "identity"
+        assert "seed" in refusal.value.differences
+
+    def test_boolean_cannot_replace_a_numeric_identity_field(self) -> None:
+        """JSON booleans and numbers retain distinct identity despite Python equality."""
+        pack = build_replay_pack(LAPICQUE)
+        pack["experiment"]["numerical"]["substeps"] = True
+        pack["experiment_identity_sha256"] = experiment_identity_sha256(pack["experiment"])
+        with pytest.raises(ReplayRejected) as refusal:
+            verify_replay_pack(pack)
+        assert refusal.value.stage == "identity"
+
+    @pytest.mark.parametrize("missing", ["raw", "vector"])
+    def test_omitted_raw_evidence_is_not_replaced_by_display(self, missing: str) -> None:
+        """A display projection cannot certify the omitted full trajectory."""
+        result = _run(LAPICQUE)
+        if missing == "raw":
+            result["raw"]["included"] = False
+        else:
+            result["raw"]["vector_snapshots_only"] = ["u"]
+        with pytest.raises(ReplayRejected):
+            replay_expectation(result)
+
+    def test_export_refuses_a_pack_its_reader_cannot_load(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The writer enforces the same byte ceiling as the standalone reader."""
+        monkeypatch.setattr("sc_neurocore.studio.replay_pack.MAX_PACK_BYTES", 16)
+        with pytest.raises(ReplayRejected, match="file size limit"):
+            build_replay_pack(LAPICQUE)
+
+    def test_invalid_tolerance_is_refused_before_execution(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Invalid numerical policy must not spend compute before rejection."""
+        pack = build_replay_pack(LAPICQUE)
+
+        def fail(*args: object, **kwargs: object) -> None:
+            raise AssertionError("experiment executed before tolerance validation")
+
+        monkeypatch.setattr("sc_neurocore.studio.replay_pack.run_experiment", fail)
+        with pytest.raises(ReplayRejected, match="finite and non-negative"):
+            replay_pack(pack, tolerance=float("nan"))
+
+    def test_missing_full_samples_in_v2_are_refused(self) -> None:
+        """v2 cannot silently downgrade its trace contract to summary-only evidence."""
+        pack = build_replay_pack(LAPICQUE)
+        del pack["expectation"]["states"]["v"]["samples"]
+        with pytest.raises(ReplayRejected, match="missing samples"):
+            verify_replay_pack(pack)
+
+    def test_samples_must_match_their_declared_digest(self) -> None:
+        """Admission refuses edited samples even if the summary fields look plausible."""
+        pack = build_replay_pack(LAPICQUE)
+        pack["expectation"]["states"]["v"]["samples"][10] += 0.1
+        with pytest.raises(ReplayRejected, match="invalid sample evidence"):
+            verify_replay_pack(pack)
+
+    def test_legacy_pack_can_still_prove_exact_replay(self) -> None:
+        """Retained v1 digests remain usable without inventing unavailable samples."""
+        pack = build_replay_pack(LAPICQUE)
+        pack["schema_version"] = "studio.replay-pack.v1"
+        for block in pack["expectation"]["states"].values():
+            del block["samples"]
+        del pack["expectation"]["vector_states"]
+        assert replay_pack(pack)["verdict"] == "match"
+
     def test_an_unsupported_schema_is_refused(self) -> None:
         pack = build_replay_pack(HODGKIN_HUXLEY)
         pack["schema_version"] = "studio.replay-pack.v99"
@@ -357,6 +520,33 @@ class TestRefusalsBeforeExecution:
 class TestComparisonReportsStructuralDifference:
     """Branches a digest comparison alone would never reach."""
 
+    @pytest.mark.parametrize("samples", [["invalid"], [[1.0]], [float("nan")]])
+    def test_malformed_sealed_samples_are_not_a_tolerance_match(self, samples: list[Any]) -> None:
+        """The comparison API rejects nonnumeric, differently shaped and nonfinite evidence."""
+        result = _run(LAPICQUE)
+        expected = replay_expectation(result)
+        expected["states"]["v"]["samples"] = samples
+        assert compare_to_expectation(expected, result, tolerance=1)["verdict"] == "mismatch"
+
+    def test_edited_samples_cannot_reuse_an_unchanged_digest(self) -> None:
+        """Digest equality cannot bypass verification of the sealed sample payload."""
+        result = _run(LAPICQUE)
+        expected = replay_expectation(result)
+        expected["states"]["v"]["samples"][10] += 0.1
+        outcome = compare_to_expectation(expected, result)
+        assert outcome["verdict"] == "mismatch"
+        assert "sealed samples do not match" in outcome["differences"][0]
+
+    @pytest.mark.parametrize("value", [[1.0], float("nan")])
+    def test_snapshot_shape_and_finiteness_are_part_of_replay(self, value: object) -> None:
+        """A scalar snapshot cannot silently accept a vector or nonfinite value."""
+        result = _run(LAPICQUE)
+        expected = replay_expectation(result)
+        expected["initial_state"]["v"] = value
+        outcome = compare_to_expectation(expected, result)
+        assert outcome["verdict"] == "mismatch"
+        assert "initial_state.v: invalid shape" in outcome["differences"][0]
+
     def test_a_state_the_replay_does_not_produce_is_named(self) -> None:
         pack = build_replay_pack(HODGKIN_HUXLEY)
         result = _run(pack["request"])
@@ -444,7 +634,44 @@ class TestFileHandling:
 
 
 class TestPublicRunner:
-    """The runner other people use: a subprocess, outside the checkout."""
+    """Public CLI entrypoint and separate processes outside the checkout."""
+
+    @pytest.mark.parametrize("mode", ["json", "mismatch", "refusal", "drift", "tolerance"])
+    def test_public_cli_entrypoint_reports_its_actual_file_result(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str], mode: str
+    ) -> None:
+        """Exercise CLI file parsing, exit status and diagnostics in the measured process."""
+        pack = build_replay_pack(LAPICQUE)
+        args: list[str] = []
+        if mode == "json":
+            args.append("--json")
+        elif mode == "mismatch":
+            pack["expectation"]["spike_count"] += 1
+        elif mode in {"refusal", "drift"}:
+            pack["environment"]["platform"] = "different-platform"
+            if mode == "drift":
+                args.append("--allow-runtime-drift")
+        else:
+            pack["expectation"]["final_state"]["v"] += 1e-9
+            args.extend(["--tolerance", "1e-6"])
+        path = tmp_path / "cli-pack.json"
+        path.write_text(json.dumps(pack), encoding="utf-8")
+        status = main([str(path), *args])
+        captured = capsys.readouterr()
+        if mode == "json":
+            assert status == 0
+            assert json.loads(captured.out)["verdict"] == "match"
+        elif mode == "refusal":
+            assert status == 2
+            assert json.loads(captured.err)["stage"] == "runtime"
+        elif mode == "mismatch":
+            assert status == 1
+            assert "spike_count" in captured.out
+        else:
+            assert status == 0
+            assert (
+                "runtime drift admitted: platform" if mode == "drift" else "match-within-tolerance"
+            ) in captured.out
 
     def _run_runner(
         self, tmp_path: Path, pack: dict[str, Any], *args: str

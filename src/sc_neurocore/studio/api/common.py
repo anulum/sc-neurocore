@@ -22,6 +22,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from sc_neurocore.studio.model_run_contract import ModelInputError, ModelSimulationFailure
+from sc_neurocore.studio.replay_pack import ReplayRejected
 from sc_neurocore.studio.training_contract import TrainingConfigError
 from sc_neurocore.studio.workspace_lock import WorkspaceLockTimeout
 from sc_neurocore.studio.workspace_store import WorkspaceConflict
@@ -52,6 +53,9 @@ def _safe(fn: Callable[..., Any]) -> Any:
     A :class:`TrainingConfigError` becomes HTTP 422 with the field it refused
     and the supported values, for the same reason: a generic "invalid input"
     would leave a caller guessing which of eleven fields the Studio cannot run.
+
+    Replay refusals preserve their schema/request stage and explanation as HTTP
+    422, including missing full traces and the export byte limit.
     """
     try:
         return fn()
@@ -62,6 +66,8 @@ def _safe(fn: Callable[..., Any]) -> Any:
     except WorkspaceLockTimeout as exc:
         raise HTTPException(status_code=503, detail=exc.to_public_detail()) from None
     except TrainingConfigError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+    except ReplayRejected as exc:
         raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
     except (ModelInputError, ModelSimulationFailure) as exc:
         raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None

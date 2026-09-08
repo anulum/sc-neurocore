@@ -25,8 +25,8 @@ deliberately excludes the runtime block and the cache key. The identity is what
 must be unchanged for a replay to mean anything; the runtime is what must be
 *reported* when it differs.
 
-**The complete expectation.** Every spike event, a digest per state trace with
-its endpoints and range, the initial and final state, the drive digest and the
+**The complete expectation.** Every spike event, full scalar and vector samples
+with a digest per trace, the initial and final state, the drive digest and the
 run statistics. Comparison is exact on events and digests, and falls back to a
 stated numerical tolerance that reports the largest deviation it found. A
 replay never "passes" because two spike counts happen to agree.
@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import platform
 import sys
 from collections.abc import Mapping, Sequence
@@ -59,10 +60,11 @@ from sc_neurocore.studio.experiment_spec import (
     run_experiment,
 )
 from sc_neurocore.studio.simulation import MAX_STEPS
-from sc_neurocore.studio.trace_projection import full_state_traces
 
-REPLAY_PACK_SCHEMA_VERSION = "studio.replay-pack.v1"
-SUPPORTED_REPLAY_PACK_SCHEMA_VERSIONS = frozenset({REPLAY_PACK_SCHEMA_VERSION})
+REPLAY_PACK_SCHEMA_VERSION = "studio.replay-pack.v2"
+SUPPORTED_REPLAY_PACK_SCHEMA_VERSIONS = frozenset(
+    {REPLAY_PACK_SCHEMA_VERSION, "studio.replay-pack.v1"}
+)
 DEFAULT_STATE_TOLERANCE = 0.0
 MAX_PACK_BYTES = 32 * 1024 * 1024
 
@@ -286,9 +288,9 @@ def pinned_request(request: Mapping[str, Any], spec: ExperimentSpec) -> dict[str
 def replay_expectation(result: Mapping[str, Any]) -> dict[str, Any]:
     """Summarise a run result into the complete expectation a replay must meet.
 
-    Every scalar state trace contributes a digest of its float64 bytes plus its
-    endpoints and range, so a mismatch can be reported as a number rather than
-    as "the digest differs". Spike events are carried in full: they are the
+    Every scalar and vector trace contributes full samples and a float64 digest,
+    permitting a pointwise error bound rather than a summary comparison.
+    Spike events are carried in full: they are the
     observable a spiking experiment exists to produce.
 
     Parameters
@@ -301,22 +303,30 @@ def replay_expectation(result: Mapping[str, Any]) -> dict[str, Any]:
     -------
     dict
         The expectation block of a replay pack.
+
+    Raises
+    ------
+    ReplayRejected
+        When raw trajectories are omitted; display projections cannot replace them.
     """
-    traces = full_state_traces(result)
     raw = result.get("raw")
     raw_included = bool(isinstance(raw, Mapping) and raw.get("included"))
+    if not raw_included or not isinstance(raw, Mapping):
+        raise ReplayRejected(stage="schema", reason="complete raw traces are required for replay")
+    if raw.get("vector_snapshots_only"):
+        raise ReplayRejected(
+            stage="schema", reason="vector trajectories are missing from raw evidence"
+        )
     spikes = [int(index) for index in result.get("spikes", [])]
-    drive = list(
-        raw["drive"]
-        if raw_included and isinstance(raw, Mapping) and "drive" in raw
-        else result.get("current_trace", [])
-    )
+    traces = raw["states"]
+    drive = list(raw["drive"])
     states: dict[str, Any] = {}
     for name in sorted(traces):
         values = traces[name]
         states[name] = {
             "sha256": _sha256_floats(values),
             "n_samples": len(values),
+            "samples": list(values),
             "first": float(values[0]) if values else None,
             "last": float(values[-1]) if values else None,
             "min": float(np.min(values)) if values else None,
@@ -331,6 +341,14 @@ def replay_expectation(result: Mapping[str, Any]) -> dict[str, Any]:
         "spikes": spikes,
         "spikes_sha256": _sha256_ints(spikes),
         "states": states,
+        "vector_states": {
+            str(name): {
+                "sha256": _sha256_floats(values),
+                "n_samples": len(values),
+                "samples": values,
+            }
+            for name, values in raw.get("vector_states", {}).items()
+        },
         "initial_state": dict(result.get("initial_state") or {}),
         "final_state": dict(result.get("final_state") or {}),
         "drive_sha256": _sha256_floats(drive),
@@ -360,7 +378,7 @@ def build_replay_pack(request: Mapping[str, Any], *, max_steps: int = MAX_STEPS)
     Returns
     -------
     dict
-        A ``studio.replay-pack.v1`` document.
+        A ``studio.replay-pack.v2`` document.
 
     Raises
     ------
@@ -375,7 +393,7 @@ def build_replay_pack(request: Mapping[str, Any], *, max_steps: int = MAX_STEPS)
     spec = resolve_experiment(sealed_request, max_steps=max_steps)
     result = run_experiment(spec)
     public = spec.public
-    return {
+    pack = {
         "schema_version": REPLAY_PACK_SCHEMA_VERSION,
         "source": spec.source,
         "request": sealed_request,
@@ -390,6 +408,9 @@ def build_replay_pack(request: Mapping[str, Any], *, max_steps: int = MAX_STEPS)
             "entrypoint": "sc_neurocore.studio.replay_pack.replay_pack",
         },
     }
+    if len(json.dumps(pack, allow_nan=False).encode("utf-8")) > MAX_PACK_BYTES:
+        raise ReplayRejected(stage="schema", reason="replay pack exceeds the file size limit")
+    return pack
 
 
 def _require_mapping(pack: Any) -> Mapping[str, Any]:
@@ -413,6 +434,31 @@ def _admit_schema(pack: Mapping[str, Any]) -> None:
             raise ReplayRejected(
                 stage="schema", reason=f"pack field {key!r} is missing or not an object"
             )
+    if version == REPLAY_PACK_SCHEMA_VERSION:
+        expectation = pack["expectation"]
+        if expectation.get("trace_source") != "raw":
+            raise ReplayRejected(stage="schema", reason="v2 requires full raw trace evidence")
+        for group in ("states", "vector_states"):
+            if not isinstance(expectation.get(group), Mapping):
+                raise ReplayRejected(stage="schema", reason=f"v2 requires {group}")
+            for name, block in expectation[group].items():
+                if not isinstance(block, Mapping) or "samples" not in block:
+                    raise ReplayRejected(stage="schema", reason=f"{group}.{name}: missing samples")
+                try:
+                    samples = np.asarray(block["samples"], dtype=np.float64)
+                    valid = (
+                        samples.ndim >= 1
+                        and samples.shape[0] == expectation["n_steps"]
+                        and samples.shape[0] == block["n_samples"]
+                        and np.isfinite(samples).all()
+                        and _sha256_floats(block["samples"]) == block["sha256"]
+                    )
+                except (KeyError, TypeError, ValueError):
+                    valid = False
+                if not valid:
+                    raise ReplayRejected(
+                        stage="schema", reason=f"{group}.{name}: invalid sample evidence"
+                    )
     if not isinstance(pack.get("experiment_identity_sha256"), str):
         raise ReplayRejected(
             stage="schema", reason="pack field 'experiment_identity_sha256' is missing"
@@ -494,7 +540,7 @@ def verify_replay_pack(
     Parameters
     ----------
     pack : mapping
-        A ``studio.replay-pack.v1`` document.
+        A ``studio.replay-pack.v2`` document.
     allow_runtime_drift : bool
         Admit a package, interpreter, NumPy or platform difference and report
         it, instead of refusing. Never implicit.
@@ -565,23 +611,40 @@ def _compare_states(
     for name in sorted(set(sealed) & set(observed)):
         want = sealed[name]
         got = observed[name]
-        if want["sha256"] == got["sha256"]:
-            continue
         if want["n_samples"] != got["n_samples"]:
             differences.append(
                 f"state {name}: {got['n_samples']} samples replayed, {want['n_samples']} sealed"
             )
             continue
-        deviation = max(
-            abs(float(got[key]) - float(want[key]))
-            for key in ("first", "last", "min", "max")
-            if want[key] is not None and got[key] is not None
-        )
+        if "samples" not in want:
+            if want["sha256"] != got["sha256"]:
+                differences.append(f"state {name}: digest differs; full sealed samples unavailable")
+            continue
+        try:
+            wanted = np.asarray(want["samples"], dtype=np.float64)
+            actual = np.asarray(got["samples"], dtype=np.float64)
+        except (TypeError, ValueError):
+            differences.append(f"state {name}: malformed samples")
+            continue
+        if (
+            wanted.shape != actual.shape
+            or wanted.ndim == 0
+            or wanted.shape[0] != want["n_samples"]
+            or not np.isfinite(wanted).all()
+            or not np.isfinite(actual).all()
+        ):
+            differences.append(f"state {name}: invalid sample shape or non-finite values")
+            continue
+        if _sha256_floats(want["samples"]) != want["sha256"]:
+            differences.append(f"state {name}: sealed samples do not match their digest")
+            continue
+        if want["sha256"] == got["sha256"]:
+            continue
+        deviation = float(np.max(np.abs(actual - wanted), initial=0.0))
         worst = max(worst, deviation)
-        if deviation > tolerance:
+        if tolerance == 0.0 or deviation > tolerance:
             differences.append(
-                f"state {name}: endpoints and range deviate by {deviation:.6g} "
-                f"(tolerance {tolerance:g})"
+                f"state {name}: samples deviate by {deviation:.6g} (tolerance {tolerance:g})"
             )
         else:
             tolerated = True
@@ -597,9 +660,9 @@ def compare_to_expectation(
     """Compare a replayed result with a sealed expectation.
 
     Spike events are compared exactly; a spike train is an observable, not a
-    rounding matter. State traces are compared by digest first and, when the
-    digests differ, by the largest deviation of their endpoints and range
-    against ``tolerance``.
+    rounding matter. Scalar and vector state traces are compared sample by
+    sample when their digests differ. Legacy traces without samples are exact-only;
+    extrema never establish a tolerance bound.
 
     Parameters
     ----------
@@ -615,10 +678,17 @@ def compare_to_expectation(
     -------
     dict
         ``verdict``, the list of ``differences`` and the observed expectation.
+
+    Raises
+    ------
+    ReplayRejected
+        If tolerance is negative/nonfinite or complete raw evidence is unavailable.
     """
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ReplayRejected(stage="request", reason="tolerance must be finite and non-negative")
     observed = replay_expectation(result)
     differences: list[str] = []
-    for key in ("n_steps", "spike_count"):
+    for key in ("n_steps", "spike_count", "dt"):
         if observed[key] != expectation.get(key):
             differences.append(f"{key}: {observed[key]} replayed, {expectation.get(key)} sealed")
     if observed["spikes_sha256"] != expectation.get("spikes_sha256"):
@@ -641,6 +711,12 @@ def compare_to_expectation(
         expectation.get("states") or {}, observed["states"], tolerance=tolerance
     )
     differences.extend(state_differences)
+    vector_differences, vector_worst, vectors_tolerated = _compare_states(
+        expectation.get("vector_states") or {}, observed["vector_states"], tolerance=tolerance
+    )
+    differences.extend(f"vector {difference}" for difference in vector_differences)
+    worst = max(worst, vector_worst)
+    traces_tolerated = traces_tolerated or vectors_tolerated
     snapshots_tolerated = False
     for key in ("initial_state", "final_state"):
         sealed_state = expectation.get(key) or {}
@@ -651,7 +727,17 @@ def compare_to_expectation(
             if want is None or got is None:
                 differences.append(f"{key}: variable {name} present on one side only")
                 continue
-            deviation = abs(float(got) - float(want))
+            wanted = np.asarray(want, dtype=np.float64)
+            actual = np.asarray(got, dtype=np.float64)
+            if (
+                wanted.shape != actual.shape
+                or not np.isfinite(wanted).all()
+                or not np.isfinite(actual).all()
+            ):
+                differences.append(f"{key}.{name}: invalid shape or non-finite values")
+                continue
+            deviation = float(np.max(np.abs(actual - wanted), initial=0.0))
+            worst = max(worst, deviation)
             if deviation > tolerance:
                 differences.append(f"{key}.{name}: {got!r} replayed, {want!r} sealed")
             elif deviation > 0.0:
@@ -688,7 +774,7 @@ def replay_pack(
     Parameters
     ----------
     pack : mapping
-        A ``studio.replay-pack.v1`` document.
+        A ``studio.replay-pack.v2`` document.
     allow_runtime_drift : bool
         Admit and report a runtime difference instead of refusing.
     tolerance : float
@@ -707,6 +793,8 @@ def replay_pack(
     ReplayRejected
         From :func:`verify_replay_pack`, before the experiment runs.
     """
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ReplayRejected(stage="request", reason="tolerance must be finite and non-negative")
     admission = verify_replay_pack(
         pack, allow_runtime_drift=allow_runtime_drift, max_steps=max_steps
     )
@@ -766,7 +854,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="python -m sc_neurocore.studio.replay_pack",
         description="Replay a sealed SC-NeuroCore Studio experiment and compare it in full.",
     )
-    parser.add_argument("pack", type=Path, help="path to a studio.replay-pack.v1 JSON file")
+    parser.add_argument("pack", type=Path, help="path to a studio.replay-pack.v2 JSON file")
     parser.add_argument(
         "--allow-runtime-drift",
         action="store_true",
