@@ -56,6 +56,12 @@ after the experiment changes is discarded rather than applied to the new
 configuration; completion requires a validated successful result for that
 configuration.
 
+Direct precision, comparison, nullcline and frequency-response requests follow
+the same current-experiment rule. Starting another direct analysis while a
+simulation or analysis is busy does not replace that run. Unsupported inputs
+are reported as errors; old plots are retained without claiming the new request
+succeeded. Errors arriving from a superseded experiment are discarded too.
+
 ## Operator Workbench
 
 The first left-panel section is the operator workbench. It aggregates the live

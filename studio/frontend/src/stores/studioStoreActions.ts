@@ -322,6 +322,7 @@ import type {
   StudioState,
   StudioStoreActions,
 } from "./studioTypes";
+import { runStoreDirectAnalysis } from "./studioDirectAnalysis";
 import {
   runStoreHeavyAnalysis,
   simulationConfigInput,
@@ -871,27 +872,15 @@ export function createStudioStoreActions(
   runBifurcation: () => runStoreHeavyAnalysis("bifurcation", get, set),
   runSensitivity: () => runStoreHeavyAnalysis("sensitivity", get, set),
 
-  runPrecision: async () => {
-    const s = get();
+  runPrecision: () => runStoreDirectAnalysis(get, set, async (s) => {
     if (s.sourceMode !== "ode") {
-      set(studioAnalysisErrorState("Precision compare only for custom ODE mode"));
-      return;
+      throw new Error("Precision compare only for custom ODE mode");
     }
-    const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    set(studioAnalysisStartState("precision"));
-    try {
-      const precResult = await fetchPrecision(
-        studioPrecisionRequest(simulationConfigInput(s), s.modelQFormat),
-      );
-      applyResultForExperiment({
-        field: "analysisExperimentKey",
-        get,
-        patch: studioPrecisionResultState(precResult),
-        requestedKey,
-        set,
-      });
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
+    const precResult = await fetchPrecision(
+      studioPrecisionRequest(simulationConfigInput(s), s.modelQFormat),
+    );
+    return studioPrecisionResultState(precResult);
+  }, "precision"),
 
   runCompile: async () => {
     const s = get();
@@ -1039,82 +1028,46 @@ export function createStudioStoreActions(
     } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 
-  runCompare: async (configB) => {
-    const s = get();
-    if (s.isSimulating) return;
-    const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    set(studioAnalysisStartState("compare"));
-    try {
-      const configA = studioSimulationConfig(simulationConfigInput(s));
-      const compareResult = await fetchCompare(configA, configB);
-      applyResultForExperiment({
-        field: "analysisExperimentKey",
-        get,
-        patch: studioCompareResultState(compareResult),
-        requestedKey,
-        set,
-      });
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
+  runCompare: (configB) => runStoreDirectAnalysis(get, set, async (s) => {
+    const configA = studioSimulationConfig(simulationConfigInput(s));
+    const compareResult = await fetchCompare(configA, configB);
+    return studioCompareResultState(compareResult);
+  }, "compare"),
 
-  runNullclines: async () => {
-    const s = get();
+  runNullclines: () => runStoreDirectAnalysis(get, set, async (s) => {
     if (s.sourceMode !== "ode" || s.equations.length < 2) {
-      set(studioAnalysisErrorState("Nullclines need 2+ variable ODE in custom mode"));
-      return;
+      throw new Error("Nullclines need 2+ variable ODE in custom mode");
     }
-    const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    set(studioAnalysisStartState());
-    try {
-      const vars = Object.keys(s.odeInit);
-      const [var0, var1] = vars;
-      if (var0 === undefined || var1 === undefined) { set(studioAnalysisIdleState()); return; }
-      const v0vals = s.result?.states[var0];
-      const v1vals = s.result?.states[var1];
-      const r0: [number, number] = v0vals
-        ? [Math.min(...v0vals) - 10, Math.max(...v0vals) + 10]
-        : [-80, 40];
-      const r1: [number, number] = v1vals
-        ? [Math.min(...v1vals) - 0.5, Math.max(...v1vals) + 0.5]
-        : [-2, 2];
-      const nullclineResult = await fetchNullclines(
-        studioNullclineRequest({
-          equations: s.equations,
-          odeParams: s.odeParams,
-          odeInit: s.odeInit,
-          protocol: s.protocol,
-          current: s.current,
-          ranges: { [var0]: r0, [var1]: r1 },
-          gridSize: 60,
-        }),
-      );
-      applyResultForExperiment({
-        field: "analysisExperimentKey",
-        get,
-        patch: studioNullclineResultState(nullclineResult),
-        requestedKey,
-        set,
-      });
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
+    const vars = Object.keys(s.odeInit);
+    const [var0, var1] = vars;
+    if (var0 === undefined || var1 === undefined) throw new Error("Nullclines need initial values for two variables");
+    const v0vals = s.result?.states[var0];
+    const v1vals = s.result?.states[var1];
+    const r0: [number, number] = v0vals
+      ? [Math.min(...v0vals) - 10, Math.max(...v0vals) + 10]
+      : [-80, 40];
+    const r1: [number, number] = v1vals
+      ? [Math.min(...v1vals) - 0.5, Math.max(...v1vals) + 0.5]
+      : [-2, 2];
+    const nullclineResult = await fetchNullclines(
+      studioNullclineRequest({
+        equations: s.equations,
+        odeParams: s.odeParams,
+        odeInit: s.odeInit,
+        protocol: s.protocol,
+        current: s.current,
+        ranges: { [var0]: r0, [var1]: r1 },
+        gridSize: 60,
+      }),
+    );
+    return studioNullclineResultState(nullclineResult);
+  }),
 
-  runFreqResponse: async () => {
-    const s = get();
-    if (s.isSimulating) return;
-    const requestedKey = studioExperimentKey(simulationConfigInput(s));
-    set(studioAnalysisStartState("freq"));
-    try {
-      const cfg = studioSimulationConfig(simulationConfigInput(s));
-      const freqResult = await fetchFreqResponse(studioFrequencyResponseRequest(cfg, s.current));
-      applyResultForExperiment({
-        field: "analysisExperimentKey",
-        get,
-        patch: studioFrequencyResultState(freqResult),
-        requestedKey,
-        set,
-      });
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
+  runFreqResponse: () => runStoreDirectAnalysis(get, set, async (s) => {
+    const cfg = studioSimulationConfig(simulationConfigInput(s));
+    const freqResult = await fetchFreqResponse(studioFrequencyResponseRequest(cfg, s.current));
+    return studioFrequencyResultState(freqResult);
+  }, "freq"),
 
   computeSTA: () => {
     const { result } = get();
