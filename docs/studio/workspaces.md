@@ -29,14 +29,24 @@ before the replacement was written:
     revisions/1.json   immutable
     revisions/2.json   immutable
   .trash/
-    <name>.<ms>/       a deleted workspace, restorable
+    <name>.<ms>-<random>/   a deleted workspace, restorable
   .locks/
     <name>.lock.sqlite3   holds the workspace while one writer works on it
+    <name>.legacy-retired prevents re-adoption of a deleted legacy workspace
 ```
 
 `os.replace` is atomic on POSIX: a reader sees the old bytes or the new ones,
 never half of either. The directory is `fsync`ed after the rename, so the
 rename itself survives a power loss.
+
+Trash tokens are opaque; the random suffix keeps two deletions under an equal
+clock reading separate. Older `<name>.<ms>` tokens remain readable and restorable.
+Deletion of an adopted workspace preserves the original flat JSON file and first
+writes a durable retirement marker in `.locks/`. Reads cannot resurrect that
+older copy after deletion or restart. Restore uses the saved revision directory,
+not the flat migration source. Include `.locks/` in workspace backups. Rolling
+back to a version without retirement-marker support can re-adopt deleted legacy
+files; restore or archive those migration sources before such a rollback.
 
 A revision document is also a valid project payload — it carries `name`,
 `saved_at`, `version` and `state` — so the evidence bundle reads a revision

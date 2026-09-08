@@ -48,6 +48,7 @@ from pathlib import Path
 from typing import Any
 
 from sc_neurocore.studio.workspace_lifecycle import (
+    LEGACY_RETIRE_SUFFIX,
     branch_conflicting_edit,
     delete_workspace,
     deleted_workspaces,
@@ -232,6 +233,8 @@ class WorkspaceStore:
     def _adopt_legacy_held(self, name: str) -> bool:
         """Adopt a legacy file with this workspace already held."""
         legacy = self._legacy_path(name)
+        if (self._root / LOCK_DIR / f"{name}{LEGACY_RETIRE_SUFFIX}").exists():
+            return False
         if self._head_path(name).is_file() or not legacy.is_file():
             return False
         try:

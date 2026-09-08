@@ -42152,6 +42152,11 @@ WorkspaceConflict
 ### Function `delete_workspace(store, name)`
 Move a workspace aside so it can be restored.
 
+Retained legacy files stay byte-identical. A durable marker beside the lock
+prevents their automatic re-adoption after deletion, including after restart.
+Trash tokens include a random suffix so equal clock readings cannot combine
+two independent revision directories.
+
 Returns
 -------
 pathlib.Path

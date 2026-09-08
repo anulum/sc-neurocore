@@ -22,6 +22,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -152,6 +153,33 @@ class TestDurableWrite:
 
 
 class TestLifecycle:
+    def test_same_clock_deletions_remain_separately_restorable(self, tmp_path: Path) -> None:
+        """Repeated deletion under one clock tick preserves two independent histories."""
+        store = WorkspaceStore(root=tmp_path / "workspaces", clock=lambda: 1.0)
+        store.save("w", {"note": "first"})
+        first = store.delete("w")
+        store.save("w", {"note": "second"})
+        second = store.delete("w")
+        assert first != second
+        assert len(store.deleted()) == 2
+        assert all(entry["deleted_at"] == 1.0 for entry in store.deleted())
+        store.restore(first.name)
+        assert store.load("w")["state"] == {"note": "first"}
+        store.delete("w")
+        store.restore(second.name)
+        assert store.load("w")["state"] == {"note": "second"}
+
+    def test_old_timestamp_only_trash_tokens_remain_restorable(self, tmp_path: Path) -> None:
+        """Upgrading the trash-token writer retains existing deletion receipts."""
+        store = _store(tmp_path)
+        store.save("w", {"note": "before upgrade"})
+        deleted = store.delete("w")
+        legacy = deleted.with_name("w.1000")
+        deleted.rename(legacy)
+        assert store.deleted()[0]["deleted_at"] == 1.0
+        store.restore(legacy.name)
+        assert store.load("w")["state"] == {"note": "before upgrade"}
+
     def test_a_deleted_workspace_can_be_restored(self, tmp_path: Path) -> None:
         store = _store(tmp_path)
         store.save("w", {"note": "irreplaceable"}, expected_revision=None)
@@ -307,6 +335,34 @@ class TestLegacyLayout:
         # reversible, one that deletes is not.
         assert legacy.is_file()
 
+    def test_deleting_an_adopted_workspace_does_not_readopt_it(self, tmp_path: Path) -> None:
+        """The retained migration source must not resurrect a deleted older revision."""
+        legacy = self._legacy(tmp_path, "old", {"note": "original"})
+        original = legacy.read_bytes()
+        store = _store(tmp_path)
+        store.save("old", {"note": "latest"}, expected_revision=1)
+        token = store.delete("old").name
+        restarted = _store(tmp_path)
+        assert restarted.exists("old") is False
+        assert restarted.list_workspaces() == ()
+        with pytest.raises(KeyError):
+            restarted.load("old")
+        assert legacy.read_bytes() == original
+        restarted.restore(token)
+        assert restarted.load("old")["state"] == {"note": "latest"}
+        assert restarted.load("old", revision=1)["state"] == {"note": "original"}
+
+    def test_deleting_a_legacy_workspace_before_first_read_is_recoverable(
+        self, tmp_path: Path
+    ) -> None:
+        """Deletion adopts an unopened flat file before moving its revision to trash."""
+        self._legacy(tmp_path, "old", {"note": "never opened"})
+        store = _store(tmp_path)
+        token = store.delete("old").name
+        assert not store.exists("old")
+        store.restore(token)
+        assert store.load("old")["state"] == {"note": "never opened"}
+
     def test_an_adopted_workspace_saves_on_top_of_its_own_history(self, tmp_path: Path) -> None:
         self._legacy(tmp_path, "old", {"note": "one"})
         store = _store(tmp_path)
@@ -356,7 +412,7 @@ class TestLegacyLayout:
 
 
 class TestPublicProjectApi:
-    def _project_module(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    def _project_module(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ModuleType:
         import sc_neurocore.studio.project as project
 
         monkeypatch.setattr(project, "_PROJECTS_DIR", str(tmp_path / "projects"))

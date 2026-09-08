@@ -30,16 +30,22 @@ import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
+
+from sc_neurocore.studio.workspace_lock import LOCK_DIR
 
 from sc_neurocore.studio.workspace_schema import (
     WORKSPACE_STATE_BLOCKS,
     migrate_document,
+    write_atomic,
 )
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle only matters to type checkers
     from sc_neurocore.studio.workspace_store import WorkspaceRevision, WorkspaceStore
 
 TRASH_DIR = ".trash"
+#: Persistent marker preventing a retained migration source from being re-adopted.
+LEGACY_RETIRE_SUFFIX = ".legacy-retired"
 
 
 def _conflict(expected: int | None, actual: int) -> Exception:
@@ -123,6 +129,11 @@ def branch_conflicting_edit(
 def delete_workspace(store: WorkspaceStore, name: str) -> Path:
     """Move a workspace aside so it can be restored.
 
+    Retained legacy files stay byte-identical. A durable marker beside the lock
+    prevents their automatic re-adoption after deletion, including after restart.
+    Trash tokens include a random suffix so equal clock readings cannot combine
+    two independent revision directories.
+
     Returns
     -------
     pathlib.Path
@@ -134,13 +145,16 @@ def delete_workspace(store: WorkspaceStore, name: str) -> Path:
         The workspace does not exist.
     """
     with store.lock(name):
+        store.adopt_legacy(name)
         source = store.workspace_dir(name)
         if not source.is_dir():
             raise KeyError(name)
         trash = store.root / TRASH_DIR
         trash.mkdir(parents=True, exist_ok=True)
-        destination = trash / f"{name}.{int(store.now() * 1000)}"
-        shutil.move(str(source), str(destination))
+        destination = trash / f"{name}.{int(store.now() * 1000)}-{uuid4().hex}"
+        if (store.root / f"{name}.json").is_file():
+            write_atomic(store.root / LOCK_DIR / f"{name}{LEGACY_RETIRE_SUFFIX}", "retired\n")
+        source.rename(destination)
         return destination
 
 
@@ -154,9 +168,10 @@ def deleted_workspaces(store: WorkspaceStore) -> tuple[dict[str, object], ...]:
         if not directory.is_dir():
             continue
         name, _, stamp = directory.name.rpartition(".")
+        milliseconds = stamp.partition("-")[0]
         entries.append(
             {
-                "deleted_at": int(stamp) / 1000 if stamp.isdigit() else None,
+                "deleted_at": int(milliseconds) / 1000 if milliseconds.isdigit() else None,
                 "name": name or directory.name,
                 "token": directory.name,
             }
