@@ -6,8 +6,9 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore release-only Semgrep security overrides
 
-# Semgrep constrains these transitive versions more tightly
-# than its scan command requires. CI installs the complete hash-locked set with
-# --no-deps, and the real repository scanner is the compatibility gate.
+# Keep click on the reviewed security pin. MCP matches Semgrep's compatible
+# v1 dependency; MCP v2 removes the FastMCP imports its server still uses.
+# CI installs the complete hash-locked set with --no-deps, and the real
+# repository scanner is the compatibility gate.
 click==8.3.3
-mcp==1.28.1
+mcp==1.29.0

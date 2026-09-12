@@ -80,7 +80,7 @@ def test_semgrep_overrides_remove_mcp_waivers() -> None:
     for ghsa in ("GHSA-vj7q-gjh5-988w", "GHSA-jpw9-pfvf-9f58", "GHSA-hvrp-rf83-w775"):
         assert ghsa not in ignored
     assert "click==8.3.3" in overrides
-    assert "mcp==1.28.1" in overrides
+    assert "mcp==1.29.0" in overrides
 
 
 def test_semgrep_hash_lock_materializes_security_overrides() -> None:
@@ -88,7 +88,7 @@ def test_semgrep_hash_lock_materializes_security_overrides() -> None:
     locked = (_repo_root() / "requirements" / "semgrep.txt").read_text(encoding="utf-8")
 
     assert "click==8.3.3" in locked
-    assert "mcp==1.28.1" in locked
+    assert "mcp==1.29.0" in locked
     assert "click==8.1.8" not in locked
     assert "mcp==1.23.3" not in locked
 
