@@ -15,8 +15,13 @@ stationary point. The same applies to `08_dimer_opt`, which the README lists as 
 Consequences:
 
 - Every quantity computed on the `07` or `08` geometries is not minimum-based. This covers the
-  counterpoise binding estimate of −193.28 kcal/mol, the rigid distance scan, the CPCM(Water) and PBE0
+  counterpoise-corrected energy of −193.28 kcal/mol, the rigid distance scan, the CPCM(Water) and PBE0
   single points, and the frequency runs used to test those geometries.
+- The −193.28 kcal/mol value is an *interaction* energy (dimer minus both monomers in the dimer
+  basis at the dimer geometry), not a binding energy: it omits the monomer deformation terms. With the
+  same run's monomer single points against the relaxed r7 cluster the deformations are 38.21 and
+  33.38 kcal/mol, which would give a counterpoise-corrected binding energy of −121.69 kcal/mol for
+  that unconverged geometry.
 - The hydrated minimum was later obtained by reoptimising along the dominant imaginary mode and
   confirmed by a frequency run with no imaginary mode. The dimer was reoptimised along its soft
   mode; both displacement branches converged to one structure whose frequency validation is pending.
