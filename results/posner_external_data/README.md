@@ -382,3 +382,12 @@ Use:
 ```
 
 The resulting calibration JSON belongs under `results/posner_external_data/ibm/`.
+
+## Status Addendum — 2026-09-14
+
+The sections above record the May 2026 acquisition state and are kept as written. Current status and
+corrections to checksummed records are in `ml350/RECORD_CORRECTIONS_2026-09-14.md`. In short: the r7
+neutral geometry converged and passed a harmonic frequency check; the earlier tier-2 hydration and
+dimer optimisations did not converge, so values computed on them are withdrawn; the hydrated
+cluster was validated after mode-following reoptimisation; the dimer reoptimisation converged and
+awaits its frequency check. Runtime use of any value still requires the gates described above.
