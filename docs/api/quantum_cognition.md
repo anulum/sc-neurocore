@@ -719,30 +719,32 @@ PYTHONPATH=src python -m pytest tests/test_quantum_cognition.py -q
 
 ---
 
-## 13. Physical Evidence Boundary
+## 13. Physical Validity
 
-The quantum cognition API remains experimental, but the molecular-input lane is
-now backed by first-principles ORCA evidence rather than placeholder constants.
-As of 2026-06-26, the neutral dry Posner cluster, cation-radical EPR/HFC pass,
-neutral NMR pass, hydrated/dimer follow-up pass, and tier-2 optimized
-hydration/dimer physics pass have all completed on the ML350 with normal ORCA
-termination in the checked outputs.
+The quantum cognition API remains experimental. Its molecular-input lane is backed by
+first-principles ORCA 6.1.1 calculations on the neutral Posner cluster
+Ca<sub>9</sub>(PO<sub>4</sub>)<sub>6</sub> (B3LYP-D3BJ/def2-TZVP, RIJCOSX, VeryTightSCF,
+DefGrid3). Every value below is extracted by deterministic parsers with source-file
+SHA-256 provenance. None of them is yet a runtime model constant.
 
-Processed tier-2 values include an optimized hydrated-cluster energy of
-`-10412.778244957428 Eh`, an optimized neutral-dimer energy of
-`-19908.244951484612 Eh`, a counterpoise-corrected dimer binding estimate of
-`-193.284716 kcal/mol`, a CPCM(Water) hydrated single point of
-`-10412.897506075209 Eh`, and PBE0 cross-check single points for the hydrated
-cluster and dimer. These values are processed as internal deterministic
-evidence artifacts; they are not yet promoted into runtime model constants.
+Status as of 2026-09-14:
 
-The active continuation is a tier-3 validation run: hydrated optimized
-frequency/IR first, then optimized dimer frequency/IR. Those jobs determine
-whether the promoted geometries are true minima and whether the vibrational
-evidence is suitable for stronger Fisher-Posner control inputs. Until that
-frequency validation, uncertainty propagation, and explicit model-constant
-injection are complete, public API behavior and IBM hardware claims remain
-gated.
+| Structure | Evidence | Status |
+|---|---|---|
+| Dry neutral cluster | Converged geometry, −9954.022370 Eh, dipole 10.39 D; harmonic frequencies (111 modes, 30.87–1304.09 cm⁻¹, no imaginary mode, reproduced independently from the Hessian); ³¹P/⁴³Ca NMR shielding and five ³¹P–³¹P J couplings | Validated local minimum at this level of theory. It is a less compact C1 arrangement, not the S6 structure used in earlier Posner spin models (RMSD 1.49 Å); its J couplings are not yet computed with a coupling-optimised basis and are not comparable with published S6 values |
+| Cation radical (+1, doublet) | g-tensor (g<sub>iso</sub> 2.0438) and ³¹P/⁴³Ca hyperfine couplings on the dry geometry | Single point; oxidised-radical evidence, not neutral NMR evidence |
+| Six-water hydrated cluster | Reoptimisation along the dominant imaginary mode of an earlier unconverged geometry, then frequencies with no imaginary mode (G −10412.63318503 Eh) | Validated local minimum at this level of theory |
+| Neutral dimer | Earlier dimer and hydration optimisations stopped at their iteration limits without converging; their energies, the counterpoise binding estimate of −193.28 kcal/mol, and the solvent and functional cross-checks computed on them are no longer used as evidence. Mode-following reoptimisation from both sides of the remaining soft mode converged to one structure (aligned RMSD 0.0067 Å) | Converged stationary point; frequency validation pending |
+
+Consequences for users of this module:
+
+- No dimer binding energy is published. A binding value will be reported only after the
+  dimer frequency check shows no imaginary mode, followed by counterpoise correction and
+  monomer-deformation terms.
+- Hydration NMR on an unoptimised six-water placement is recorded as environment
+  sensitivity only.
+- Runtime constants, uncertainty propagation and IBM hardware claims stay gated until
+  the dimer is validated and the constants are injected from the extracted records.
 
 ---
 
