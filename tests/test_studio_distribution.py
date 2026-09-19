@@ -20,6 +20,8 @@ import zipfile
 
 import pytest
 
+from sc_neurocore.studio.codegen import generate_experiment_script, generate_oneliner
+from sc_neurocore.studio.experiment_spec import resolve_experiment
 from sc_neurocore.studio.replay_pack import build_replay_pack
 
 
@@ -135,7 +137,12 @@ def test_wheel_contains_exact_model_resources(
 
 
 def verify_installed_replays(installed: Path, workspace: Path) -> None:
-    """Replay four model families from the wheel with editable import hooks disabled.
+    """Execute replay packs, scripts and one-liners with editable hooks disabled.
+
+    Compare every scalar/vector sample, spike, drive digest and state boundary
+    for nondefault-timestep, nonconstant-drive, rate and seeded stochastic cases.
+    Dependencies reuse the test interpreter's site-packages; this is package
+    isolation, not a fresh dependency-resolution or platform receipt.
 
     Parameters
     ----------
@@ -151,8 +158,18 @@ def verify_installed_replays(installed: Path, workspace: Path) -> None:
         {"name": "AmariNeuralField", "duration": 5.0},
     ]
     packs = [build_replay_pack(request) for request in requests]
+    (workspace / "packs.json").write_text(json.dumps(packs), encoding="utf-8")
+    for index, pack in enumerate(packs):
+        spec = resolve_experiment(pack["request"])
+        for form, generator in (
+            ("script", generate_experiment_script),
+            ("oneliner", generate_oneliner),
+        ):
+            (workspace / f"{index}-{form}.py").write_text(
+                generator(spec, pack["request"]), encoding="utf-8"
+            )
     probe = """
-import json, sys
+import contextlib, io, json, runpy, sys
 from pathlib import Path
 installed = Path(sys.argv[1])
 sys.path[:0] = [str(installed), sys.argv[2]]
@@ -160,9 +177,9 @@ import sc_neurocore
 assert Path(sc_neurocore.__file__).is_relative_to(installed)
 from sc_neurocore.studio.model_catalogue import model_documentation
 from sc_neurocore.neurons.model_catalogue import load_descriptor
-from sc_neurocore.studio.replay_pack import replay_pack
+from sc_neurocore.studio.replay_pack import replay_pack, replay_expectation
 packs = json.load(sys.stdin)
-for pack in packs:
+for index, pack in enumerate(packs):
     name = pack["request"]["name"]
     assert load_descriptor(name) is not None, name
     assert model_documentation(name) is not None, name
@@ -170,9 +187,17 @@ for pack in packs:
     assert result["verdict"] == "match", result["differences"]
     assert result["worst_state_deviation"] == 0.0
     assert result["runtime_differences"] == []
+    for form, result_name in (("script", "result"), ("oneliner", "r")):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            namespace = runpy.run_path(f"{index}-{form}.py", run_name="__main__")
+        assert "spikes in" in output.getvalue(), output.getvalue()
+        assert replay_expectation(namespace[result_name]) == pack["expectation"], (name, form)
+        if form == "script":
+            assert namespace["REQUEST"] == pack["request"]
+            assert namespace["EXPERIMENT_SHA256"] == pack["experiment_sha256"]
     pack["expectation"]["spike_count"] += 1
     assert replay_pack(pack)["verdict"] == "mismatch"
-print("four model families replay exactly; tampering rejected")
+print("four model families replay exactly; both script forms reproduce full traces; tampering rejected")
 """
     result = subprocess.run(
         [sys.executable, "-I", "-S", "-c", probe, str(installed), sysconfig.get_path("purelib")],

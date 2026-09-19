@@ -62,6 +62,10 @@ If the installed package would resolve a different experiment — a changed
 model, descriptor, schema profile or numerical default — the script stops
 instead of printing numbers under the exported experiment's name.
 
+The notebook one-liner runs the pinned request but omits the digest check. Use
+the standalone script or replay pack when a changed installation must refuse
+the experiment before execution.
+
 Editing a value in `REQUEST` is allowed and is the point of having it there;
 the digest check then tells you that you are no longer running the exported
 experiment.
@@ -139,6 +143,22 @@ The hashes establish internal consistency, not independent authorship.
 CI measures the replay runner separately from the aggregate package coverage,
 with a 100% statement-coverage gate. Its tests retain standalone-process replay
 alongside in-process CLI checks; coverage does not establish scientific validity.
+
+## Export verification boundaries
+
+The live browser checks execute the Python shown in the code panel and compare
+its complete replay expectation with the pack exported from the same controls.
+They also save a downloaded pack, replay it in a separate interpreter and require
+a changed expectation to report a mismatch. A separate interpreter may still
+use an editable install; this check alone does not establish wheel isolation.
+
+The distribution checks build both a wheel and a wheel from an sdist, verify the
+packaged descriptors and model pages byte-for-byte, then run four model families
+with isolated Python startup (`-I -S`) and the extracted wheel first on the import
+path. Both generated script forms must match the originating run's full scalar
+and vector samples, spike events, initial/final state and drive digest. These
+checks reuse installed dependencies without processing editable hooks. They do
+not establish fresh dependency resolution or portability to another platform.
 
 ## Migrating from the earlier export
 

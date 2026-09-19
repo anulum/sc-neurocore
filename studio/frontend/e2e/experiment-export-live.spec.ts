@@ -7,9 +7,7 @@
 // SC-NeuroCore — live browser-to-server-to-replay export contract
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -73,7 +71,7 @@ async function chooseNondefaultExperiment(page: Page): Promise<void> {
 
 test("the browser exports a script that states the experiment the server resolved", async ({
   page,
-}) => {
+}, testInfo) => {
   await openStudioWithTheModel(page);
   await chooseNondefaultExperiment(page);
 
@@ -91,8 +89,30 @@ test("the browser exports a script that states the experiment the server resolve
   });
   const script = await page.getByTestId("codegen-script").innerText();
   expect(script).toContain(payload.experiment_sha256);
-  expect(script).toContain(`"dt": ${REQUESTED_DT}`);
-  expect(script).toContain(`"protocol": "${REQUESTED_PROTOCOL}"`);
+  const scriptPath = testInfo.outputPath("experiment.py");
+  writeFileSync(scriptPath, script, "utf-8");
+  const environment = { ...process.env };
+  delete environment.PYTHONPATH;
+  // Execute exactly what the code panel exposes, including digest admission.
+  // The interpreter may use an editable install; wheel isolation is verified
+  // separately by test_studio_distribution.py.
+  const output = execFileSync("python", ["-c", `
+import contextlib, io, json, runpy, sys
+from sc_neurocore.studio.replay_pack import replay_expectation
+with contextlib.redirect_stdout(io.StringIO()):
+    exported = runpy.run_path(sys.argv[1], run_name="__main__")
+print(json.dumps({"request": exported["REQUEST"],
+                  "expectation": replay_expectation(exported["result"])}))
+`, scriptPath], {
+    cwd: testInfo.outputDir, env: environment, encoding: "utf-8", timeout: 120_000,
+  });
+  const executed: unknown = JSON.parse(output);
+  const reference = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/export/replay-pack" && response.ok(),
+  );
+  await page.getByTestId("export-replay-pack").click();
+  const pack = (await (await reference).json()) as ReplayPack;
+  expect(executed).toEqual({ request: payload.request, expectation: pack.expectation });
   // The assumptions the previous export hard-coded must not be back.
   expect(script).not.toContain("step(current=");
   expect(script).not.toContain("neuron.v");
@@ -101,7 +121,7 @@ test("the browser exports a script that states the experiment the server resolve
   );
 });
 
-test("a pack downloaded from the browser replays in a clean interpreter", async ({ page }) => {
+test("a downloaded pack replays in a separate interpreter and reports tampering", async ({ page }, testInfo) => {
   await openStudioWithTheModel(page);
   await chooseNondefaultExperiment(page);
 
@@ -118,8 +138,8 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
     served.experiment_identity_sha256.slice(0, 12),
   );
 
-  const workspace = mkdtempSync(join(tmpdir(), "sc-neurocore-replay-"));
-  const packPath = join(workspace, "pack.json");
+  const workspace = testInfo.outputDir;
+  const packPath = testInfo.outputPath("pack.json");
   await artefact.saveAs(packPath);
 
   // What the browser wrote to disk is what the server sealed.
@@ -133,7 +153,8 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
   });
 
   // A separate interpreter, outside the repository, with no PYTHONPATH: the
-  // pack has to carry everything the replay needs.
+  // pack carries the replay inputs. Editable hooks can remain; this is not
+  // the separate installed-wheel receipt in test_studio_distribution.py.
   const environment = { ...process.env };
   delete environment.PYTHONPATH;
   const replayed = execFileSync(
@@ -161,7 +182,7 @@ test("a pack downloaded from the browser replays in a clean interpreter", async 
     ...saved,
     expectation: { ...saved.expectation, spike_count: spikeCount + 3 },
   };
-  const tamperedPath = join(workspace, "tampered.json");
+  const tamperedPath = testInfo.outputPath("tampered.json");
   writeFileSync(tamperedPath, JSON.stringify(tampered), "utf-8");
   let status = 0;
   let output: string;
