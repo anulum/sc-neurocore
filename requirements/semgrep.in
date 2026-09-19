@@ -10,3 +10,6 @@
 # and the MCP v1 dependency required by Semgrep's server imports.
 cryptography==50.0.1
 semgrep==1.176.1
+
+# Minimum compatible patch for the shared async runtime.
+anyio>=4.14.2
