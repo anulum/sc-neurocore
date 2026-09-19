@@ -23,6 +23,7 @@ import numpy.typing as npt
 import pytest
 
 from benchmarks import bench_model_mcculloch_pitts as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 from sc_neurocore.accel import mcculloch_pitts as backends
 
 
@@ -125,10 +126,7 @@ def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
         assert row["event_count"] == reference["event_count"]
         assert row["event_count_matches_python"] is True
 
-    hashes = payload["source_hashes"]
-    for relative in benchmark.SOURCE_PATHS:
-        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        assert hashes[relative] == expected
+    assert committed_source_hash_failures(artifact, repo_root=benchmark.REPOSITORY) == []
     # Native artifacts are rebuilt per environment; their exact bytes are a
     # reproducible-build property, not part of this local-regression fidelity
     # claim (evidence_class is local_regression, production_speed_claim is

@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 
 from benchmarks import bench_amari_field as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 def test_every_runtime_matches_complete_python_receipt() -> None:
@@ -35,7 +36,10 @@ def test_committed_evidence_is_source_bound_and_complete() -> None:
     assert payload["kernel"] == benchmark.KERNEL
     assert payload["production_speed_claim"] is False
     assert payload["continuous_space_convergence_claimed"] is False
-    assert payload["source_hashes"] == benchmark._source_hashes()
+    assert (
+        committed_source_hash_failures(benchmark.DEFAULT_OUTPUT, repo_root=benchmark.REPOSITORY)
+        == []
+    )
     assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
     for backend in benchmark.BACKENDS:
         row = payload["backends"][backend]

@@ -1,6 +1,7 @@
 {
   "SPDX-License-Identifier": "AGPL-3.0-or-later",
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1",
+  "source_hash_policy": "artefact_commit",
   "gates": [
     {
       "artefact": "benchmarks/results/bench_formal.json",

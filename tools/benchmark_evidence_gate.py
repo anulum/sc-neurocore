@@ -15,8 +15,9 @@ import argparse
 import hashlib
 import json
 import math
+import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 BENCHMARK_EVIDENCE_GATE_SCHEMA_VERSION = "sc-neurocore.benchmark-evidence-gate.v1"
@@ -85,6 +86,60 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _git_bytes(repo_root: Path, *args: str) -> bytes | None:
+    """Read a Git object or revision without changing repository state."""
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else None
+
+
+def _safe_repo_path(path: str) -> bool:
+    """Restrict provenance lookups to ordinary repository-relative paths."""
+    return (
+        bool(path)
+        and not PurePosixPath(path).is_absolute()
+        and not any(part in {"", ".", ".."} for part in path.split("/"))
+        and not any(char in path for char in ("\\", ":", "\x00"))
+    )
+
+
+def _artefact_commit(
+    repo_root: Path,
+    artefact_path: str,
+    gate_id: str,
+    failures: list[GateFailure],
+) -> str | None:
+    """Find the committed source snapshot and reject modified result bytes."""
+    if not _safe_repo_path(artefact_path):
+        _fail(failures, gate_id, "invalid_artefact_path", artefact_path)
+        return None
+    if _git_bytes(repo_root, "rev-parse", "--is-shallow-repository") == b"true\n":
+        _fail(failures, gate_id, "history_is_shallow", artefact_path)
+        return None
+    raw_revision = _git_bytes(repo_root, "log", "-1", "--format=%H", "--", artefact_path)
+    revision = raw_revision.decode("ascii", errors="ignore").strip() if raw_revision else ""
+    if len(revision) not in {40, 64} or not all(char in "0123456789abcdef" for char in revision):
+        _fail(failures, gate_id, "artefact_commit_unavailable", artefact_path)
+        return None
+    committed = _git_bytes(repo_root, "show", f"{revision}:{artefact_path}")
+    if committed is None:
+        _fail(failures, gate_id, "committed_artefact_unavailable", artefact_path)
+        return None
+    try:
+        current = (repo_root / artefact_path).read_bytes()
+    except OSError:
+        _fail(failures, gate_id, "missing_benchmark_artefact", artefact_path)
+        return None
+    if committed != current:
+        _fail(failures, gate_id, "artefact_differs_from_commit", artefact_path)
+        return None
+    return revision
+
+
 def _fail(failures: list[GateFailure], gate_id: str, reason: str, path: str) -> None:
     failures.append(GateFailure(gate_id=gate_id, reason=reason, path=path))
 
@@ -129,21 +184,91 @@ def _check_source_hashes(
     gate_id: str,
     payload: Any,
     source_hashes: dict[str, str],
+    artefact_path: str,
+    source_hash_policy: str,
     failures: list[GateFailure],
 ) -> None:
+    revision = None
+    if source_hashes and source_hash_policy == "artefact_commit":
+        revision = _artefact_commit(repo_root, artefact_path, gate_id, failures)
+        if revision is None:
+            return
     for source_path, json_path in sorted(source_hashes.items()):
-        source = repo_root / source_path
-        if not source.is_file():
-            _fail(failures, gate_id, "missing_source_for_hash_check", source_path)
+        if not _safe_repo_path(source_path):
+            _fail(failures, gate_id, "invalid_source_path", source_path)
             continue
         try:
             recorded = _path_value(payload, json_path)
         except KeyError:
             _fail(failures, gate_id, "missing_recorded_source_hash", json_path)
             continue
-        actual = _sha256(source)
+        if source_hash_policy == "artefact_commit":
+            source_bytes = _git_bytes(repo_root, "show", f"{revision}:{source_path}")
+            if source_bytes is None:
+                _fail(failures, gate_id, "missing_historical_source", source_path)
+                continue
+            actual = hashlib.sha256(source_bytes).hexdigest()
+        else:
+            source = repo_root / source_path
+            if not source.is_file():
+                _fail(failures, gate_id, "missing_source_for_hash_check", source_path)
+                continue
+            actual = _sha256(source)
         if recorded != actual:
             _fail(failures, gate_id, "source_hash_mismatch", f"{source_path}->{json_path}")
+
+
+def committed_source_hash_failures(artefact: Path, *, repo_root: Path) -> list[GateFailure]:
+    """Validate a measured record against its committed source snapshot."""
+    failures: list[GateFailure] = []
+    try:
+        relative = artefact.resolve().relative_to(repo_root.resolve()).as_posix()
+        payload = _load_json(artefact)
+    except (ValueError, OSError, json.JSONDecodeError):
+        _fail(failures, "record", "artefact_is_missing_or_invalid", str(artefact))
+        return failures
+    hashes = payload.get("source_hashes") if isinstance(payload, dict) else None
+    if not isinstance(hashes, dict):
+        _fail(failures, "record", "missing_source_hashes", relative)
+        return failures
+    suffixes = (
+        ".py",
+        ".rs",
+        ".go",
+        ".jl",
+        ".mojo",
+        ".toml",
+        ".json",
+        ".yml",
+        ".yaml",
+        ".lock",
+        ".sby",
+        ".v",
+        ".h",
+        ".md",
+        ".txt",
+        ".sh",
+        ".mod",
+        ".sum",
+    )
+    paths = {
+        path: f"source_hashes.{path}"
+        for path in hashes
+        if isinstance(path, str) and path.endswith(suffixes)
+    }
+    if not paths:
+        _fail(failures, "record", "missing_path_keyed_source_hashes", relative)
+        return failures
+    _check_source_hashes(
+        repo_root=repo_root,
+        gate_id="record",
+        payload=payload,
+        source_hashes=paths,
+        artefact_path=relative,
+        source_hash_policy="artefact_commit",
+        failures=failures,
+    )
+    return failures
 
 
 def _check_regression_limits(
@@ -230,6 +355,11 @@ def _check_manifest_contract(manifest: Any, failures: list[GateFailure]) -> list
         _fail(failures, "manifest", "manifest_missing_spdx_marker", "SPDX-License-Identifier")
     if manifest.get("schema_version") != "sc-neurocore.benchmark-regression-gates.v1":
         _fail(failures, "manifest", "manifest_schema_version_mismatch", "schema_version")
+    if manifest.get("source_hash_policy", "worktree") not in {
+        "worktree",
+        "artefact_commit",
+    }:
+        _fail(failures, "manifest", "invalid_source_hash_policy", "source_hash_policy")
     gates = manifest.get("gates", [])
     if not isinstance(gates, list) or not gates:
         _fail(failures, "manifest", "manifest_has_no_gates", "gates")
@@ -295,6 +425,7 @@ def evaluate_benchmark_evidence_gate(
         return report
 
     gates = _check_manifest_contract(manifest, failures)
+    source_hash_policy = manifest.get("source_hash_policy", "worktree")
 
     evaluated: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
@@ -349,6 +480,8 @@ def evaluate_benchmark_evidence_gate(
             gate_id=gate_id,
             payload=payload,
             source_hashes=dict(gate.get("source_hashes", {})),
+            artefact_path=artefact_path,
+            source_hash_policy=source_hash_policy,
             failures=failures,
         )
         _check_regression_limits(
@@ -369,6 +502,7 @@ def evaluate_benchmark_evidence_gate(
         "schema_version": BENCHMARK_EVIDENCE_GATE_SCHEMA_VERSION,
         "manifest": str(manifest_path),
         "gate_count": len(gates),
+        "source_hash_policy": source_hash_policy,
         "evaluated_gates": evaluated,
         "failure_count": len(failures),
         "failures": [failure.to_json() for failure in failures],

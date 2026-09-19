@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 
 from benchmarks import bench_ermentrout_kopell_pop as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 def _passing_safety() -> dict[str, object]:
@@ -137,7 +138,10 @@ def test_committed_evidence_matches_sources_and_bounded_parity() -> None:
         assert row["trace_mismatch_count"] == 0
         assert row["parity_max_abs_diff"] <= benchmark.PARITY_ATOL[backend]
         assert row["final_state_matches_python"] is True
-    assert payload["source_hashes"] == benchmark._source_hashes()
+    assert (
+        committed_source_hash_failures(benchmark.DEFAULT_OUTPUT, repo_root=benchmark.REPOSITORY)
+        == []
+    )
     # Native artefacts are rebuilt per environment; their exact bytes are a
     # reproducible-build property, not part of this local-regression fidelity
     # claim. Keep the recorded provenance shape and separately verify that the

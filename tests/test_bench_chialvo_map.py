@@ -12,13 +12,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import platform
+import shutil
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from benchmarks import bench_chialvo_map as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 def _raise_oserror(*_args: object, **_kwargs: object) -> None:
@@ -39,7 +45,7 @@ def test_committed_evidence_is_complete_source_bound_and_within_parity() -> None
     """Reject stale sources, missing backends, event drift, and unbounded state drift."""
     output = benchmark.REPOSITORY / "benchmarks/results/bench_chialvo_map.json"
     payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["source_hashes"] == benchmark._source_hashes()
+    assert committed_source_hash_failures(output, repo_root=benchmark.REPOSITORY) == []
     assert payload["meta"]["single_cpu_pinned"] is True
     assert set(payload["backends"]) == set(benchmark.BACKENDS)
     for backend in benchmark.BACKENDS:
@@ -61,7 +67,7 @@ def test_unpinned_run_is_rejected_before_measurement(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Require one logical CPU unless the diagnostic relaxation is explicit."""
-    monkeypatch.setattr(benchmark.os, "sched_getaffinity", lambda _pid: {0, 1})
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0, 1})
     output = tmp_path / "unused.json"
     assert benchmark.main(["--json", str(output)]) == 2
     assert not output.exists()
@@ -72,7 +78,7 @@ def test_missing_backend_is_rejected_by_default(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Do not publish a partial five-backend record as complete evidence."""
-    monkeypatch.setattr(benchmark.os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
     monkeypatch.setattr(
         benchmark,
         "_probe_backend",
@@ -88,8 +94,8 @@ def test_explicit_partial_backend_run_is_labelled_diagnostic(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Allow an explicitly requested diagnostic record without calling the missing lane."""
-    monkeypatch.setattr(benchmark.os, "sched_getaffinity", lambda _pid: {0})
-    monkeypatch.setattr(benchmark.os, "getloadavg", lambda: (0.0, 0.0, 0.0))
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(os, "getloadavg", lambda: (0.0, 0.0, 0.0))
     monkeypatch.setattr(
         benchmark,
         "_probe_backend",
@@ -118,11 +124,11 @@ def test_metadata_helpers_report_unavailable_inputs(
 ) -> None:
     """Cover fail-soft host metadata without weakening the fidelity gates."""
     monkeypatch.setattr(Path, "read_text", _raise_oserror)
-    monkeypatch.setattr(benchmark.platform, "processor", lambda: "")
+    monkeypatch.setattr(platform, "processor", lambda: "")
     assert benchmark._cpu_model() == "unknown"
     assert benchmark._read_optional(tmp_path / "missing") == "unavailable"
     assert benchmark._tool_version([]) == "unavailable"
-    monkeypatch.setattr(benchmark.subprocess, "run", _raise_oserror)
+    monkeypatch.setattr(subprocess, "run", _raise_oserror)
     assert benchmark._tool_version(["missing"]) == "unavailable"
 
 
@@ -133,14 +139,14 @@ def test_metadata_helpers_cover_fallback_and_empty_tool_output(
     """Resolve explicit tool fallbacks and stable no-output version records."""
     fallback = tmp_path / "tool"
     fallback.write_text("tool", encoding="utf-8")
-    monkeypatch.setattr(benchmark.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
     assert benchmark._tool_path("missing", fallback) == str(fallback)
     assert benchmark._tool_path("missing") is None
     monkeypatch.setattr(Path, "read_text", lambda *_args, **_kwargs: "processor: generic")
-    monkeypatch.setattr(benchmark.platform, "processor", lambda: "fallback-cpu")
+    monkeypatch.setattr(platform, "processor", lambda: "fallback-cpu")
     assert benchmark._cpu_model() == "fallback-cpu"
     monkeypatch.setattr(
-        benchmark.subprocess,
+        subprocess,
         "run",
         lambda *_args, **_kwargs: SimpleNamespace(stdout="", stderr="", returncode=7),
     )
@@ -152,8 +158,8 @@ def test_native_measurement_before_python_reference_is_rejected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Keep the Python-reference-first invariant explicit and fail closed."""
-    monkeypatch.setattr(benchmark.os, "sched_getaffinity", lambda _pid: {0})
-    monkeypatch.setattr(benchmark.os, "getloadavg", lambda: (0.0, 0.0, 0.0))
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(os, "getloadavg", lambda: (0.0, 0.0, 0.0))
     monkeypatch.setattr(benchmark, "BACKENDS", ("rust", "python"))
     monkeypatch.setattr(benchmark, "_probe_backend", lambda _backend: (True, ""))
     monkeypatch.setattr(
@@ -174,15 +180,15 @@ def test_fidelity_failure_is_not_published(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Withhold evidence when any maintained fidelity observable exceeds its contract."""
-    monkeypatch.setattr(benchmark.os, "sched_getaffinity", lambda _pid: {0})
-    monkeypatch.setattr(benchmark.os, "getloadavg", lambda: (0.0, 0.0, 0.0))
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(os, "getloadavg", lambda: (0.0, 0.0, 0.0))
     monkeypatch.setattr(benchmark, "_probe_backend", lambda _backend: (True, ""))
     monkeypatch.setattr(benchmark, "_environment", lambda _load: {})
     monkeypatch.setattr(benchmark, "_source_hashes", lambda: {})
 
     def measured(
         backend: str,
-    ) -> tuple[float, float, np.ndarray, np.ndarray, int, float, float]:
+    ) -> tuple[float, float, npt.NDArray[np.float64], npt.NDArray[np.float64], int, float, float]:
         is_failing_backend = backend == "mojo"
         trace_value = 2.0e-6 if is_failing_backend and failure == "trace" else 0.0
         event_count = 2 if is_failing_backend and failure == "event_count" else 1

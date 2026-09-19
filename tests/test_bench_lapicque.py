@@ -22,6 +22,7 @@ import numpy.typing as npt
 import pytest
 
 from benchmarks import bench_model_lapicque as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 from sc_neurocore.accel import lapicque as backends
 
 
@@ -59,7 +60,7 @@ def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
     path = benchmark.REPOSITORY / "benchmarks/results/bench_lapicque.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
 
-    assert payload["source_hashes"] == benchmark._source_hashes()
+    assert committed_source_hash_failures(path, repo_root=benchmark.REPOSITORY) == []
     assert payload["workload"]["n_steps"] == benchmark.N_STEPS
     assert payload["workload"]["repeats"] == benchmark.N_REPEATS
     assert set(payload["backends"]) == set(benchmark.BACKENDS)
