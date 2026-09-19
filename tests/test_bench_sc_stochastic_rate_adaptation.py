@@ -19,16 +19,27 @@ import pytest
 
 from benchmarks import bench_model_sc_stochastic_rate_adaptation as benchmark
 from sc_neurocore.accel.sc_stochastic_rate_adaptation import PARITY_ATOL
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 def test_committed_record_is_source_bound_and_has_five_parity_lanes() -> None:
-    """Reject stale source hashes or missing runtime evidence."""
-    record = json.loads(
-        (benchmark.ROOT / "benchmarks/results/bench_sc_stochastic_rate_adaptation.json").read_text(
-            encoding="utf-8"
-        )
+    """Bind the historical record to its measured sources and parity evidence."""
+    artifact = benchmark.ROOT / "benchmarks/results/bench_sc_stochastic_rate_adaptation.json"
+    record = json.loads(artifact.read_text(encoding="utf-8"))
+    assert set(record["source_hashes"]) == (
+        set(benchmark.SOURCE_FILES) | set(benchmark.BINARY_FILES) | {"rust_binary"}
     )
-    assert record["source_hashes"] == benchmark._hashes()
+    assert not committed_source_hash_failures(
+        artifact,
+        repo_root=benchmark.ROOT,
+        source_hash_paths={
+            path: f"source_hashes.{key}" for key, path in benchmark.SOURCE_FILES.items()
+        },
+    )
+    for key in (*benchmark.BINARY_FILES, "rust_binary"):
+        digest = record["source_hashes"][key]
+        assert isinstance(digest, str) and len(digest) == 64
+        assert all(char in "0123456789abcdef" for char in digest)
     assert record["steps"] == benchmark.STEPS
     assert record["repeats"] == benchmark.REPEATS
     assert set(record["backend_summary"]) == set(benchmark.BACKENDS)

@@ -10,9 +10,10 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULT = ROOT / "benchmarks/results/bench_wilson_hr_simulate.json"
@@ -27,9 +28,7 @@ def test_benchmark_is_source_bound_and_five_runtime() -> None:
     assert payload["evidence_class"] == "local_regression_non_isolated"
     assert payload["workload"] == {"n_steps": 2_000_000, "current": 0.1, "repeats": 5}
     assert set(payload["backends"]) == {"python", "rust", "julia", "go", "mojo"}
-    for name, digest in payload["source_hashes"].items():
-        if isinstance(digest, str):
-            assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
+    assert not committed_source_hash_failures(RESULT, repo_root=ROOT)
     for name, row in payload["backends"].items():
         assert row["median_ms"] > 0.0, name
         assert row["min_ms"] > 0.0, name
@@ -51,9 +50,7 @@ def test_retained_sc_benchmark_is_source_bound_and_five_runtime() -> None:
     assert payload["model"] == "SCResettingWilsonHRNeuron"
     assert payload["workload"] == {"n_steps": 2_000_000, "current": 2.0, "repeats": 5}
     assert set(payload["backends"]) == {"python", "rust", "julia", "go", "mojo"}
-    for name, digest in payload["source_hashes"].items():
-        if isinstance(digest, str):
-            assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
+    assert not committed_source_hash_failures(SC_RESULT, repo_root=ROOT)
     for name, row in payload["backends"].items():
         assert row["median_ms"] > 0.0, name
         assert row["min_ms"] > 0.0, name

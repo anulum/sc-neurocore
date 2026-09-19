@@ -174,6 +174,30 @@ def test_historical_result_rejects_missing_history_and_source(tmp_path: Path) ->
     assert [row["reason"] for row in missing["failures"]] == ["missing_historical_source"]
 
 
+def test_historical_result_accepts_lane_keyed_source_digest(tmp_path: Path) -> None:
+    """Explicit JSON-path mapping binds a lane-keyed digest to its source."""
+    tool = _load_tool()
+    repo = tmp_path / "repository"
+    artefact, _ = _historical_repo(repo)
+    source = repo / "benchmarks" / "bench_demo.py"
+    payload = {"source_hashes": {"python": tool._sha256(source)}}
+    _write_json(artefact, payload)
+    _commit(repo, "record lane keyed evidence")
+    paths = {"benchmarks/bench_demo.py": "source_hashes.python"}
+
+    assert (
+        tool.committed_source_hash_failures(artefact, repo_root=repo, source_hash_paths=paths) == []
+    )
+
+    payload["source_hashes"]["python"] = "0" * 64
+    _write_json(artefact, payload)
+    _commit(repo, "forge lane digest")
+    failures = tool.committed_source_hash_failures(
+        artefact, repo_root=repo, source_hash_paths=paths
+    )
+    assert [failure.reason for failure in failures] == ["source_hash_mismatch"]
+
+
 def test_benchmark_evidence_gate_accepts_reviewed_manifest(tmp_path: Path) -> None:
     tool = _load_tool()
     source = tmp_path / "benchmarks" / "bench_demo.py"

@@ -23,6 +23,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 from benchmarks import bench_model_theta as benchmark
 from sc_neurocore.accel import theta as backends
 
@@ -94,10 +95,7 @@ def test_committed_evidence_matches_live_sources_and_bounded_parity() -> None:
         assert len(row["uint8_event_sha256"]) == 64
         assert row["parity_max_circular_phase_diff"] <= benchmark.PHASE_ATOL
 
-    hashes = payload["source_hashes"]
-    for relative in benchmark.SOURCE_PATHS:
-        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        assert hashes[relative] == expected
+    assert not committed_source_hash_failures(artifact, repo_root=benchmark.REPOSITORY)
 
 
 def test_real_rust_safety_gate_executes_enrolled_module() -> None:

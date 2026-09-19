@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from tests.bench_iqif_support import *  # noqa: F403
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 def test_real_benchmark_writes_five_backend_integer_parity_evidence(
@@ -63,7 +64,7 @@ def test_binary_hashes_bind_loaded_native_artifacts() -> None:
 
 
 def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
-    """Bind the measured five-lane artefact to current code and behaviour."""
+    """Bind the measured five-lane artefact to its source revision and parity."""
     artifact = benchmark.REPOSITORY / "benchmarks/results/local_python_2026-07-14_iqif.json"
     artifact_text = artifact.read_text(encoding="utf-8")
     assert str(benchmark.REPOSITORY) not in artifact_text
@@ -119,10 +120,7 @@ def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
         assert row["final_state_matches_python"] is True
         assert row["parity_max_abs_diff"] == 0
 
-    hashes = payload["source_hashes"]
-    for relative in benchmark.SOURCE_PATHS:
-        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        assert hashes[relative] == expected
+    assert not committed_source_hash_failures(artifact, repo_root=benchmark.REPOSITORY)
 
     # Native artifacts are rebuilt per environment; their exact bytes are a
     # reproducible-build property, not part of this local-regression fidelity

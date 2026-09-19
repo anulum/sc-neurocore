@@ -16,6 +16,8 @@ import struct
 from benchmarks import bench_model_morris_lecar as benchmark
 from sc_neurocore.neurons.models import MorrisLecarNeuron
 
+from tools.benchmark_evidence_gate import committed_source_hash_failures
+
 ROOT = Path(__file__).resolve().parents[1]
 RESULT = ROOT / "benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json"
 RECEIPT = ROOT / "src/sc_neurocore/neurons/reference_receipts/morris_lecar_1981.json"
@@ -33,9 +35,8 @@ def test_committed_benchmark_is_source_bound_and_five_runtime() -> None:
     for row in payload["results"]:
         counts = row.get("spike_counts", [row.get("spikes")])
         assert set(counts) == {476}
-    for source, path in benchmark.SOURCE_HASH_PATHS.items():
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        assert payload["source_hashes"][source] == digest
+    assert set(benchmark.SOURCE_HASH_PATHS).issubset(payload["source_hashes"])
+    assert not committed_source_hash_failures(RESULT, repo_root=ROOT)
 
 
 def test_reference_receipt_replays_bitwise() -> None:

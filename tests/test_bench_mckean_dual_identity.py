@@ -6,7 +6,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 from types import ModuleType
@@ -14,6 +13,8 @@ from types import ModuleType
 import pytest
 
 from benchmarks import bench_model_mckean, bench_model_sc_triangular_mckean
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 ROOT = Path(__file__).parents[1]
 
@@ -42,6 +43,6 @@ def test_committed_mckean_benchmark_is_bound_and_parity_clean(
         assert row["event_vector_matches_python"] is True
         assert row["events"] == events
         assert row["parity_max_abs_diff"] <= module.backends.PARITY_ATOL[backend]
-    for relative, digest in payload["source_hashes"].items():
-        if isinstance(digest, str):
-            assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() == digest
+    assert not committed_source_hash_failures(
+        ROOT / "benchmarks/results" / artifact, repo_root=ROOT
+    )

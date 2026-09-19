@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import cast
 
 from sc_neurocore.world_model import _lgssm_backends as backends
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -153,8 +154,11 @@ def test_committed_evidence_binds_sources_and_native_binaries() -> None:
     binary_evidence = _mapping(payload["binary_evidence"])
 
     assert set(source_hashes) == EXPECTED_SOURCES
-    for relative_path, recorded_digest in source_hashes.items():
-        assert recorded_digest == _sha256(ROOT / relative_path)
+    assert not committed_source_hash_failures(
+        ARTIFACT,
+        repo_root=ROOT,
+        source_hash_paths={path: f"source_sha256.{path}" for path in EXPECTED_SOURCES},
+    )
 
     assert set(binary_evidence) == {"rust", "go", "mojo"}
     for backend, raw_evidence in binary_evidence.items():

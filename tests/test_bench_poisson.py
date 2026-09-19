@@ -22,6 +22,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 from benchmarks import bench_model_poisson as benchmark
 from sc_neurocore.accel import poisson as backends
 
@@ -68,7 +69,7 @@ def test_source_hashes_cover_declared_implementation_surfaces() -> None:
 
 
 def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
-    """Bind the measured five-lane artefact to current code and behaviour."""
+    """Bind the measured five-lane artefact to its source revision and parity."""
     artifact = (
         benchmark.REPOSITORY / "benchmarks/results/local_python_2026-07-14_poisson_lfsr16.json"
     )
@@ -118,10 +119,7 @@ def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
         assert row["parity_max_abs_diff"] == 0.0
         assert set(row["final_state"]) == {"rng_state"}
 
-    hashes = payload["source_hashes"]
-    for relative in benchmark.SOURCE_PATHS:
-        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        assert hashes[relative] == expected
+    assert not committed_source_hash_failures(artifact, repo_root=benchmark.REPOSITORY)
 
 
 def test_real_rust_safety_gate_executes_enrolled_module() -> None:

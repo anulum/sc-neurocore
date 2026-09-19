@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — NMDA benchmark evidence gate
 
-import hashlib
 import json
 from pathlib import Path
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULT = ROOT / "benchmarks/results/bench_nmda.json"
@@ -23,9 +24,7 @@ def test_benchmark_is_source_bound_and_five_runtime() -> None:
     assert set(payload["backends"]) == {"python", "rust", "go", "julia", "mojo"}
     assert (payload["steps"], payload["repeats"]) == (20_000, 3)
     assert (payload["source_current"], payload["sc_current"]) == (0.6, 5.0)
-    for name, digest in payload["source_hashes"].items():
-        if isinstance(digest, str):
-            assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
+    assert not committed_source_hash_failures(RESULT, repo_root=ROOT)
     for result in payload["backends"].values():
         assert result["source_median_ns_per_step"] > 0
         assert result["sc_median_ns_per_step"] > 0

@@ -14,6 +14,7 @@ import hashlib
 import json
 
 from benchmarks import bench_sc_compte_wm_network as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 def test_network_benchmark_is_source_bound_and_claim_bounded() -> None:
@@ -47,8 +48,9 @@ def test_committed_network_benchmark_receipt_has_current_source_custody() -> Non
     assert payload["configuration"]["cells"] == 2560
     assert payload["configuration"]["steps"] == 1000
     assert payload["repeat_receipts_exact"] is True
-    for relative in benchmark.SOURCE_PATHS:
-        assert (
-            payload["source_sha256"][relative]
-            == hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        )
+    assert set(payload["source_sha256"]) == set(benchmark.SOURCE_PATHS)
+    assert not committed_source_hash_failures(
+        benchmark.DEFAULT_OUTPUT,
+        repo_root=benchmark.REPOSITORY,
+        source_hash_paths={path: f"source_sha256.{path}" for path in payload["source_sha256"]},
+    )

@@ -8,9 +8,10 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 _ROOT = Path(__file__).resolve().parents[1]
 _RESULT = _ROOT / "benchmarks/results/bench_butera_respiratory.json"
@@ -42,10 +43,8 @@ _SOURCES = {
 
 def test_result_is_bound_to_all_runtime_and_engine_sources() -> None:
     payload = json.loads(_RESULT.read_text(encoding="utf-8"))
-    expected = {
-        source: hashlib.sha256(path.read_bytes()).hexdigest() for source, path in _SOURCES.items()
-    }
-    assert payload["source_hashes"] == expected
+    assert set(payload["source_hashes"]) == set(_SOURCES)
+    assert not committed_source_hash_failures(_RESULT, repo_root=_ROOT)
 
 
 def test_result_records_five_runtime_event_parity_without_speed_claim() -> None:

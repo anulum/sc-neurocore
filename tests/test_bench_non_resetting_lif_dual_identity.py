@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 from types import ModuleType
@@ -19,6 +18,8 @@ from benchmarks import (
     bench_model_non_resetting_lif,
     bench_model_sc_non_resetting_adaptive_lif,
 )
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,9 +57,9 @@ def test_committed_benchmark_is_source_bound_and_parity_clean(
         assert row["events"] == row["spikes"] == events
         assert row["parity_max_abs_diff"] <= module.backends.PARITY_ATOL[backend]
         assert row["median_ns_per_step"] > 0.0
-    for relative, digest in payload["source_hashes"].items():
-        if isinstance(digest, str):
-            assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() == digest
+    assert not committed_source_hash_failures(
+        ROOT / "benchmarks/results" / artifact, repo_root=ROOT
+    )
     for record in payload["binary_hashes"].values():
         assert len(record["sha256"]) == 64
         assert record["size_bytes"] > 0

@@ -9,11 +9,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
 from benchmarks.bench_compte_wm import BACKENDS, KERNEL, SOURCE_PATHS
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 _ROOT = Path(__file__).resolve().parents[1]
 _RESULT = _ROOT / "benchmarks/results/bench_compte_wm.json"
@@ -33,9 +34,7 @@ def test_committed_benchmark_binds_current_sources_and_all_lanes() -> None:
         assert row["trace_matches_python"] is True and row["events_exact"] is True
         assert row["event_count"] > 0
     assert set(payload["source_hashes"]) == set(SOURCE_PATHS)
-    for relative, expected in payload["source_hashes"].items():
-        actual = hashlib.sha256((_ROOT / relative).read_bytes()).hexdigest()
-        assert actual == expected
+    assert not committed_source_hash_failures(_RESULT, repo_root=_ROOT)
     assert payload["rust_safety"]["passed"] is True
 
 

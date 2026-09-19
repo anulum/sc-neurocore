@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
@@ -18,6 +17,7 @@ from pathlib import Path
 from typing import cast
 
 from benchmarks import bench_verilog_compiler as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,11 +44,6 @@ def _payload(path: Path = ARTIFACT) -> dict[str, object]:
     return cast(dict[str, object], json.loads(path.read_text(encoding="utf-8")))
 
 
-def _sha256(path: Path) -> str:
-    """Return a source-file SHA-256 digest."""
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def test_committed_evidence_discloses_loaded_host_scope() -> None:
     """The artifact cannot be mistaken for isolated production evidence."""
     payload = _payload()
@@ -68,12 +63,15 @@ def test_committed_evidence_discloses_loaded_host_scope() -> None:
 
 
 def test_committed_evidence_binds_every_compiler_source() -> None:
-    """Every recorded source digest matches the live repository file."""
+    """Every recorded source digest matches the measured source snapshot."""
     hashes = _mapping(_payload()["source_sha256"])
 
     assert set(hashes) == set(benchmark.SOURCE_PATHS)
-    for relative_path, digest in hashes.items():
-        assert digest == _sha256(ROOT / relative_path)
+    assert not committed_source_hash_failures(
+        ARTIFACT,
+        repo_root=ROOT,
+        source_hash_paths={path: f"source_sha256.{path}" for path in hashes},
+    )
 
 
 def test_committed_cases_have_complete_deterministic_samples() -> None:

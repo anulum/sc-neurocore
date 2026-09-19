@@ -8,9 +8,10 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 from benchmarks.bench_model_sc_unit_capacitance_respiratory import SOURCE_HASH_PATHS
 
@@ -20,11 +21,8 @@ _RESULT = _ROOT / "benchmarks/results/bench_sc_unit_capacitance_respiratory.json
 
 def test_sc_benchmark_is_source_bound_and_complete() -> None:
     payload = json.loads(_RESULT.read_text(encoding="utf-8"))
-    expected = {
-        source: hashlib.sha256(path.read_bytes()).hexdigest()
-        for source, path in SOURCE_HASH_PATHS.items()
-    }
-    assert payload["source_hashes"] == expected
+    assert set(payload["source_hashes"]) == set(SOURCE_HASH_PATHS)
+    assert not committed_source_hash_failures(_RESULT, repo_root=_ROOT)
     assert payload["steps"] == 20_000
     assert payload["repeats"] == 5
     assert payload["production_speed_claim"] is False

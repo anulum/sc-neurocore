@@ -16,6 +16,8 @@ import struct
 from benchmarks import bench_model_wang_buzsaki as benchmark
 from sc_neurocore.neurons.models import WangBuzsakiNeuron
 
+from tools.benchmark_evidence_gate import committed_source_hash_failures
+
 ROOT = Path(__file__).resolve().parents[1]
 RESULT = ROOT / "benchmarks/results/bench_wang_buzsaki.json"
 RECEIPT = ROOT / "src/sc_neurocore/neurons/reference_receipts/wang_buzsaki_1996.json"
@@ -36,11 +38,8 @@ def test_committed_benchmark_is_source_bound_and_five_runtime() -> None:
         assert row["spike_count_matches_python"] is True
         assert row["final_state_matches_python"] is True
         assert row["parity_max_abs_diff"] <= benchmark.PARITY_ATOL
-    expected = {
-        source: hashlib.sha256((ROOT / source).read_bytes()).hexdigest()
-        for source in benchmark.SOURCES
-    }
-    assert payload["source_hashes"] == expected
+    assert set(payload["source_hashes"]) == set(benchmark.SOURCES)
+    assert not committed_source_hash_failures(RESULT, repo_root=ROOT)
 
 
 def test_reference_receipt_replays_bitwise() -> None:

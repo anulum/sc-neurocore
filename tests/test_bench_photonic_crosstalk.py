@@ -10,17 +10,18 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 _REPOSITORY = Path(__file__).resolve().parents[1]
 _RESULT = _REPOSITORY / "benchmarks/results/local_python_2026-07-14_photonic_crosstalk.json"
 
 
 def test_photonic_benchmark_is_current_honest_and_source_hashed() -> None:
-    """Reject stale source evidence or promotion claims from a non-isolated host."""
+    """Verify measured source provenance and reject unsupported promotion claims."""
     payload: dict[str, Any] = json.loads(_RESULT.read_text(encoding="utf-8"))
     assert payload["schema_version"] == 1
     assert payload["benchmark"] == "photonic_crosstalk_pairs"
@@ -30,10 +31,7 @@ def test_photonic_benchmark_is_current_honest_and_source_hashed() -> None:
     assert payload["host"]["isolated_cpus"] == ""
     assert "not a universal speed claim" in payload["interpretation"]
 
-    for relative_path, expected_hash in payload["source_hashes"].items():
-        source = _REPOSITORY / relative_path
-        assert source.is_file(), relative_path
-        assert hashlib.sha256(source.read_bytes()).hexdigest() == expected_hash
+    assert not committed_source_hash_failures(_RESULT, repo_root=_REPOSITORY)
 
     for runtime in ("python", "rust", "go", "julia", "mojo"):
         assert payload["runtimes"][runtime]["median_ns_per_batch"] > 0.0

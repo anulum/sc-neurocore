@@ -18,7 +18,7 @@ import math
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Mapping
 
 BENCHMARK_EVIDENCE_GATE_SCHEMA_VERSION = "sc-neurocore.benchmark-evidence-gate.v1"
 
@@ -218,8 +218,17 @@ def _check_source_hashes(
             _fail(failures, gate_id, "source_hash_mismatch", f"{source_path}->{json_path}")
 
 
-def committed_source_hash_failures(artefact: Path, *, repo_root: Path) -> list[GateFailure]:
-    """Validate a measured record against its committed source snapshot."""
+def committed_source_hash_failures(
+    artefact: Path,
+    *,
+    repo_root: Path,
+    source_hash_paths: Mapping[str, str] | None = None,
+) -> list[GateFailure]:
+    """Validate a measured record against its committed source snapshot.
+
+    ``source_hash_paths`` maps repository source paths to their JSON paths for
+    records that key source digests by lane or use a different field name.
+    """
     failures: list[GateFailure] = []
     try:
         relative = artefact.resolve().relative_to(repo_root.resolve()).as_posix()
@@ -227,35 +236,38 @@ def committed_source_hash_failures(artefact: Path, *, repo_root: Path) -> list[G
     except (ValueError, OSError, json.JSONDecodeError):
         _fail(failures, "record", "artefact_is_missing_or_invalid", str(artefact))
         return failures
-    hashes = payload.get("source_hashes") if isinstance(payload, dict) else None
-    if not isinstance(hashes, dict):
-        _fail(failures, "record", "missing_source_hashes", relative)
-        return failures
-    suffixes = (
-        ".py",
-        ".rs",
-        ".go",
-        ".jl",
-        ".mojo",
-        ".toml",
-        ".json",
-        ".yml",
-        ".yaml",
-        ".lock",
-        ".sby",
-        ".v",
-        ".h",
-        ".md",
-        ".txt",
-        ".sh",
-        ".mod",
-        ".sum",
-    )
-    paths = {
-        path: f"source_hashes.{path}"
-        for path in hashes
-        if isinstance(path, str) and path.endswith(suffixes)
-    }
+    if source_hash_paths is None:
+        hashes = payload.get("source_hashes") if isinstance(payload, dict) else None
+        if not isinstance(hashes, dict):
+            _fail(failures, "record", "missing_source_hashes", relative)
+            return failures
+        suffixes = (
+            ".py",
+            ".rs",
+            ".go",
+            ".jl",
+            ".mojo",
+            ".toml",
+            ".json",
+            ".yml",
+            ".yaml",
+            ".lock",
+            ".sby",
+            ".v",
+            ".h",
+            ".md",
+            ".txt",
+            ".sh",
+            ".mod",
+            ".sum",
+        )
+        paths = {
+            path: f"source_hashes.{path}"
+            for path in hashes
+            if isinstance(path, str) and path.endswith(suffixes)
+        }
+    else:
+        paths = dict(source_hash_paths)
     if not paths:
         _fail(failures, "record", "missing_path_keyed_source_hashes", relative)
         return failures

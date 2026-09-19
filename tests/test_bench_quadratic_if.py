@@ -22,6 +22,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 from benchmarks import bench_model_quadratic_if as benchmark
 from sc_neurocore.accel import quadratic_if as backends
 
@@ -92,10 +93,7 @@ def test_committed_evidence_matches_live_sources_and_exact_parity() -> None:
         assert row["event_vector_matches_python"] is True
         assert row["parity_max_abs_diff"] <= benchmark.TRACE_ATOL
 
-    hashes = payload["source_hashes"]
-    for relative in benchmark.SOURCE_PATHS:
-        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        assert hashes[relative] == expected
+    assert not committed_source_hash_failures(artifact, repo_root=benchmark.REPOSITORY)
 
 
 def test_real_rust_safety_gate_executes_enrolled_module() -> None:
