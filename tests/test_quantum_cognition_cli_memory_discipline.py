@@ -63,9 +63,7 @@ def test_collection_paths_derive_from_the_configured_root(
     reloaded_brain = importlib.reload(gotm_brain)
     try:
         assert reloaded_cli._DEFAULT_GOTM_PATH == "/srv/collection"
-        assert reloaded_cli._DEFAULT_SNN_DIR == (
-            "/srv/collection/04_ARCANE_SAPIENCE/snn_stimuli"
-        )
+        assert reloaded_cli._DEFAULT_SNN_DIR == ("/srv/collection/04_ARCANE_SAPIENCE/snn_stimuli")
         assert reloaded_brain._AGENTIC_SHARED_PATH == "/srv/collection/agentic-shared"
     finally:
         monkeypatch.delenv(qc_cli.GOTM_ROOT_ENV_VAR, raising=False)

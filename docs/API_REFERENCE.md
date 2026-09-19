@@ -36233,14 +36233,15 @@ Generate a script that replays a saved pack and compares it in full.
 Parameters
 ----------
 pack_filename : str
-    Name of the ``studio.replay-pack.v1`` file the script reads, relative
+    Name of the ``studio.replay-pack.v2`` file the script reads, relative
     to the script's working directory.
 
 Returns
 -------
 str
     Python source that verifies, runs and judges the pack, and exits
-    non-zero when the experiment does not reproduce.
+    0 for reproduction, 1 for mismatch or 2 for refusal before execution.
+    Refusal details are JSON on standard error, matching the public CLI.
 
 ### Function `generate_oneliner(spec, request)`
 Generate a copy-paste one-liner that runs the same experiment.
@@ -39055,7 +39056,7 @@ lease_seconds : float
 - **transition**(job_id, to_status)
   - Move one job to a new status and append the transition.
 - **heartbeat**(job_id)
-  - Extend this supervisor's lease on a job it is still running.
+  - Extend this supervisor's lease; reject renewal by a different owner.
 - **delete**(job_id)
   - Remove one terminal job and its whole transition history.
 - **record**(job_id)
@@ -39124,15 +39125,16 @@ Resolve every job left alive by a supervisor that is no longer here.
 Parameters
 ----------
 ledger : StudioJobLedger
-    The ledger to recover. Its own supervisor identity is treated as a
-    previous incarnation: a live process reconciles at startup, before it
-    supervises anything, so a lease already stamped with this identity
-    belongs to the process that died.
+    The ledger to recover. A lease belonging to this process is probed like
+    any other: constructing another manager or reconciling a live manager
+    does not imply process death. The identity includes a process-start
+    token, so a reused PID does not inherit an earlier process's jobs.
 
 Returns
 -------
 tuple of StudioJobReconciliation
-    One decision per job examined, including those left running.
+    One decision per retained job examined, including those left running.
+    Concurrently purged jobs are omitted; concurrent updates are retained.
 
 ---
 
@@ -39236,23 +39238,31 @@ Move one job to a new status and append the transition.
 
 The move is refused when the state machine does not allow it, so a terminal
 record can never be rewritten and an interrupted job can never be quietly
-completed. Repeating the current status is accepted and records the
-accompanying fields without inventing a transition. A supervisor reporting
+completed. Repeating a terminal status is a no-op only when all supplied
+fields match the stored values; a conflicting retry is refused. Repeating
+a live status can still record accompanying fields. A supervisor reporting
 ``running`` for a job that is already ``cancelling`` keeps the cancellation
 visible and records only the start time.
+
+With ``expected_record``, a differing current record is returned without
+changing it. The comparison includes every public field, serialised as JSON
+to preserve numeric and boolean distinctions, and runs under the write lock.
 
 Raises
 ------
 KeyError
     The job is not in the ledger.
 StudioJobRejected
-    The transition is not allowed from the job's current status.
+    The transition is not allowed from the job's current status, or a
+    supplied field conflicts with the already sealed terminal record.
 
 ### Function `heartbeat_job(ledger, job_id)`
 Extend a live job's lease, checking its status in the write transaction.
 
 Terminal and absent jobs remain unchanged. The transaction serialises this
 check with transitions so a finished job cannot acquire another lease.
+Only the recorded owner can renew a live lease, even after expiry; another
+supervisor raises ``StudioJobRejected`` without changing any stored fields.
 
 ### Function `delete_job(ledger, job_id)`
 Remove one terminal job and its whole transition history.
@@ -39287,7 +39297,7 @@ Reading what those jobs did is the custody surface this inherits from
 - **cancel**(job_id)
   - Request cooperative cancellation for one job.
 - **wait**(job_id, timeout_seconds)
-  - Wait for one job and return its latest immutable record.
+  - Wait for a local or retained shared-ledger job without changing it.
 - **status**()
   - Return aggregate path-free manager health.
 
@@ -40789,9 +40799,9 @@ dict
 ### Function `replay_expectation(result)`
 Summarise a run result into the complete expectation a replay must meet.
 
-Every scalar state trace contributes a digest of its float64 bytes plus its
-endpoints and range, so a mismatch can be reported as a number rather than
-as "the digest differs". Spike events are carried in full: they are the
+Every scalar and vector trace contributes full samples and a float64 digest,
+permitting a pointwise error bound rather than a summary comparison.
+Spike events are carried in full: they are the
 observable a spiking experiment exists to produce.
 
 Parameters
@@ -40804,6 +40814,11 @@ Returns
 -------
 dict
     The expectation block of a replay pack.
+
+Raises
+------
+ReplayRejected
+    When raw trajectories are omitted; display projections cannot replace them.
 
 ### Function `build_replay_pack(request)`
 Resolve, pin, execute and seal one experiment into a replay pack.
@@ -40823,7 +40838,7 @@ max_steps : int
 Returns
 -------
 dict
-    A ``studio.replay-pack.v1`` document.
+    A ``studio.replay-pack.v2`` document.
 
 Raises
 ------
@@ -40843,7 +40858,7 @@ executed until every refusal has been ruled out.
 Parameters
 ----------
 pack : mapping
-    A ``studio.replay-pack.v1`` document.
+    A ``studio.replay-pack.v2`` document.
 allow_runtime_drift : bool
     Admit a package, interpreter, NumPy or platform difference and report
     it, instead of refusing. Never implicit.
@@ -40865,9 +40880,9 @@ ReplayRejected
 Compare a replayed result with a sealed expectation.
 
 Spike events are compared exactly; a spike train is an observable, not a
-rounding matter. State traces are compared by digest first and, when the
-digests differ, by the largest deviation of their endpoints and range
-against ``tolerance``.
+rounding matter. Scalar and vector state traces are compared sample by
+sample when their digests differ. Legacy traces without samples are exact-only;
+extrema never establish a tolerance bound.
 
 Parameters
 ----------
@@ -40884,13 +40899,18 @@ Returns
 dict
     ``verdict``, the list of ``differences`` and the observed expectation.
 
+Raises
+------
+ReplayRejected
+    If tolerance is negative/nonfinite or complete raw evidence is unavailable.
+
 ### Function `replay_pack(pack)`
 Admit, execute and judge one replay pack.
 
 Parameters
 ----------
 pack : mapping
-    A ``studio.replay-pack.v1`` document.
+    A ``studio.replay-pack.v2`` document.
 allow_runtime_drift : bool
     Admit and report a runtime difference instead of refusing.
 tolerance : float

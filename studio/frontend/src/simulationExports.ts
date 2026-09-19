@@ -67,7 +67,7 @@ export type SimulationExportPlan = SimulationExportReadyPlan | SimulationExportU
  * This string becomes a path, and the model name is user text. Anything
  * outside a conservative set is replaced, and a name that reduces to
  * nothing falls back rather than producing a dotfile or an empty name.
- * 
+ *
  * @param modelName - The model's name, if there is one.
  * @param fallback - The stem to use when the name yields none.
  * @returns A stem safe to use in a filename.

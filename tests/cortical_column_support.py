@@ -20,6 +20,7 @@ can be filtered with `pytest -k 'not Fidelity'` for fast iteration.
 import importlib
 import sys
 from types import SimpleNamespace
+from typing import Any
 import numpy as np
 import pytest
 from scipy import sparse
@@ -35,7 +36,8 @@ from sc_neurocore.network.cortical_column import (
 
 
 @pytest.fixture(scope="class")
-def rasters():
+def rasters() -> tuple[CorticalColumn, dict[str, np.ndarray[Any, Any]]]:
+    """Return a seeded cortical column and its spike rasters."""
     col = CorticalColumn(scale=0.1, scale_correction=True, seed=42)
     return col, col.simulate(duration_ms=600.0, dt=0.1)
 

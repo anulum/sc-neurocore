@@ -14,8 +14,10 @@ from tests.cortical_column_support import *  # noqa: F403
 
 
 class TestNativeDiscovery:
-    def test_rust_discovery_uses_root_package_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        real_import_module = cortical_column_module._importlib.import_module
+    def test_rust_discovery_uses_root_package_fallback(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        real_import_module = importlib.import_module
 
         def root_only_engine(name: str) -> object:
             if name == "sc_neurocore_engine.sc_neurocore_engine":
@@ -27,7 +29,7 @@ class TestNativeDiscovery:
                 )
             return real_import_module(name)
 
-        monkeypatch.setattr(cortical_column_module._importlib, "import_module", root_only_engine)
+        monkeypatch.setattr(importlib, "import_module", root_only_engine)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         # Discovery is deferred to first use so that importing the public
@@ -40,15 +42,17 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_rust_discovery_fails_closed_without_symbols(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        real_import_module = cortical_column_module._importlib.import_module
+    def test_rust_discovery_fails_closed_without_symbols(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        real_import_module = importlib.import_module
 
         def missing_engine(name: str) -> object:
             if name in {"sc_neurocore_engine.sc_neurocore_engine", "sc_neurocore_engine"}:
                 raise ImportError(name)
             return real_import_module(name)
 
-        monkeypatch.setattr(cortical_column_module._importlib, "import_module", missing_engine)
+        monkeypatch.setattr(importlib, "import_module", missing_engine)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         # Discovery is deferred to first use so that importing the public
@@ -63,7 +67,9 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_julia_discovery_failure_remains_optional(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_julia_discovery_failure_remains_optional(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setitem(sys.modules, "juliacall", None)
         _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
@@ -77,7 +83,9 @@ class TestNativeDiscovery:
             monkeypatch.undo()
             restore_module_namespace(cortical_column_module, _saved_ns)
 
-    def test_optional_ctypes_backend_load_failures_remain_optional(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_optional_ctypes_backend_load_failures_remain_optional(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         def fake_exists(path: str) -> bool:
             return path.endswith("libcortical_column.so")
 
