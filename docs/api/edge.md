@@ -512,10 +512,10 @@ Figures above are `time.perf_counter` deltas from
 
 ## 9. Known limitations
 
-- **Python runner is not the hot path.** `SCNetwork.run` in Python
-  costs ~14 ms per forward; the MCU Rust runner completes the same
-  network in <200 µs on a 160 MHz ESP32-C3. Use the Python path for
-  verification and weight-blob authoring, not for inference timing.
+- **Physical MCU timing is unverified.** No committed hardware measurement
+  supports an ESP32-C3 inference-latency figure. Use the Python runner for
+  functional verification and weight-blob authoring; measure latency on the
+  target board with a recorded network, toolchain and benchmark harness.
 - **Single-dimension Sobol.** Only dimension 1 (V_k = 2^{15-k}) is
   wired; decorrelating N > 1 input streams still needs a phase-shifted
   LFSR bank (see `sc_neurocore.v3.engine`).

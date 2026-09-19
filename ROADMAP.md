@@ -296,7 +296,7 @@ dependabot PRs merged.
 - ~~Generate Zynq 7020 deployment artefacts~~ ✓ (SHD bitstream generated,
   2.5% LUT in Vivado reports)
 - ~~Measure: LUT count, BRAM, DSP, Fmax~~ ✓ (Vivado reports committed)
-- Verify on physical PYNQ-Z2 board (on order)
+- Verify on physical PYNQ-Z2 board (board not yet available)
 - Measure dynamic power on silicon
 - ~~Emit FPGA power and thermal digital-twin JSON beside deployable bitstream
   artefacts, seeded from synthesis reports and board profile metadata~~ ✓
