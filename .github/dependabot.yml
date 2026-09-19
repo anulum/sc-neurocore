@@ -15,7 +15,13 @@ updates:
     labels: [dependencies, python]
     commit-message:
       prefix: "chore(deps)"
-    open-pull-requests-limit: 5
+    # The semgrep lock is compiled with uv and reviewed overrides; Dependabot
+    # invokes pip-compile without those overrides and cannot preserve the lock.
+    # Keep alerts enabled. Review updates in the canonical checkout instead.
+    open-pull-requests-limit: 0
+    rebase-strategy: disabled
+    ignore:
+      - dependency-name: "*"
 
   - package-ecosystem: cargo
     directory: /engine
