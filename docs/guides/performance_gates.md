@@ -12,9 +12,23 @@ SC-NeuroCore — Performance-gated pytest contract
 
 SC-NeuroCore keeps timing sanity checks out of the default pytest path. Tests
 that assert a wall-clock threshold are marked with `SC_NEUROCORE_PERF=1` so
-regular local and pull-request runs stay deterministic and cheap. The scheduled
-`Performance Benchmarks` workflow enables the same variable and runs the
-current perf-gated selector nightly.
+regular local and pull-request runs stay deterministic and cheap. The
+`Performance Benchmarks` workflow runs only by manual dispatch with a required
+run reason and change reference. It runs the same perf-gated selector alongside
+the Rust and Python benchmark suites. Run it for a new catalogue model after
+fidelity gates, a material numerical or compute-path change, a confirmed
+regression, a planned stable baseline, or an explicitly scoped comparison. Documentation changes,
+an unrelated source hash, and routine CI repetition do not justify a new
+timing record.
+
+The Rust Criterion comparison still posts an alert for a large timing change,
+but that alert is advisory because runner hardware and host state affect the
+measurement. Build, execution, and artifact-upload errors still fail the
+workflow. The dispatch reference and source SHA are retained with the raw
+benchmark output; historical timing records are not overwritten to match new
+code. The planned shared benchmark utility will add sealed plans, before/after
+hardware-state capture, immutable result lineage, and the same trigger
+decision for Catalogue and Studio before SC-NEUROCORE STABLE.
 
 Run the same selector locally when changing a perf-gated file:
 

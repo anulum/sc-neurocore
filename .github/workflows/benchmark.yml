@@ -10,22 +10,21 @@ name: Performance Benchmarks
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "43 3 * * *"
-  push:
-    branches: [main]
-    paths:
-      - "engine/**"
-      - "src/sc_neurocore/**"
-      - "benchmarks/**"
-      - ".github/workflows/benchmark.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "engine/**"
-      - "src/sc_neurocore/**"
-      - "benchmarks/**"
-      - ".github/workflows/benchmark.yml"
+    inputs:
+      run_reason:
+        description: Why this measurement is needed
+        required: true
+        type: choice
+        options:
+          - new_model
+          - material_change
+          - confirmed_regression
+          - stable_baseline
+          - operator_comparison
+      change_ref:
+        description: Model, change, regression, or comparison reference
+        required: true
+        type: string
 
 permissions: {}
 
@@ -50,6 +49,16 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record measurement reason
+        env:
+          BENCHMARK_RUN_REASON: ${{ inputs.run_reason }}
+          BENCHMARK_CHANGE_REF: ${{ inputs.change_ref }}
+        run: |
+          test -n "${BENCHMARK_CHANGE_REF//[[:space:]]/}"
+          printf 'Reason: %s\nReference: %s\nSource: %s\n' \
+            "$BENCHMARK_RUN_REASON" "$BENCHMARK_CHANGE_REF" "$GITHUB_SHA" \
+            | tee benchmark_run_context.txt
 
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
 
@@ -86,8 +95,18 @@ jobs:
           benchmark-data-dir-path: benchmarks/criterion
           alert-threshold: "500%"
           comment-on-alert: true
-          fail-on-alert: true
+          fail-on-alert: false
           alert-comment-cc-users: "@anulum-maintainers"
+
+      - name: Upload measurement context
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rust-benchmark-context
+          path: |
+            benchmark_run_context.txt
+            benchmark_output.txt
+          retention-days: 90
 
   python-benchmark:
     name: Python Benchmark Suite
@@ -97,6 +116,16 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record measurement reason
+        env:
+          BENCHMARK_RUN_REASON: ${{ inputs.run_reason }}
+          BENCHMARK_CHANGE_REF: ${{ inputs.change_ref }}
+        run: |
+          test -n "${BENCHMARK_CHANGE_REF//[[:space:]]/}"
+          printf 'Reason: %s\nReference: %s\nSource: %s\n' \
+            "$BENCHMARK_RUN_REASON" "$BENCHMARK_CHANGE_REF" "$GITHUB_SHA" \
+            > benchmarks/results/ci_benchmark_run_context.txt
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -114,6 +143,7 @@ jobs:
             --output benchmarks/results/ci_bitstream_numpy_lut.json
 
       - name: Upload results
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: python-benchmark-results
@@ -122,7 +152,6 @@ jobs:
 
   perf-gated-pytest:
     name: Perf-Gated Pytest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

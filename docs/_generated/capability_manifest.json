@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4867
+    "test_files": 4874
   },
   "documentation": {
     "public_pages": [
@@ -3040,7 +3040,8 @@
       "hdl_gen/openroad_flow/*.sh",
       "neurons/model_schemas/*.json",
       "neurons/model_schemas/*.toml",
-      "neurons/reference_trace_data/*.json"
+      "neurons/reference_trace_data/*.json",
+      "neurons/model_descriptors/*.toml"
     ]
   },
   "project": {
@@ -3100,6 +3101,7 @@
       "tests/behavior_probe_support.py",
       "tests/behavioral_equivalence_support.py",
       "tests/bench_iqif_support.py",
+      "tests/benchmark_history_support.py",
       "tests/benchmarks_neurobench_support.py",
       "tests/bio_chaos_spatial_learning_support.py",
       "tests/bio_support.py",
@@ -3646,7 +3648,9 @@
       "tests/test_ai_neurons_multi_timescale.py",
       "tests/test_ai_neurons_predictive_coding.py",
       "tests/test_ai_neurons_self_referential.py",
+      "tests/test_aihara_julia_buffer_contracts.py",
       "tests/test_aihara_map_backends.py",
+      "tests/test_aihara_native_buffer_contracts.py",
       "tests/test_alpha_accel_backend_selection.py",
       "tests/test_alpha_accel_c_facade.py",
       "tests/test_alpha_accel_input_validation.py",
@@ -3801,6 +3805,7 @@
       "tests/test_bench_resonate_and_fire.py",
       "tests/test_bench_safety_certification.py",
       "tests/test_bench_sc_compte_wm_network.py",
+      "tests/test_bench_sc_stochastic_rate_adaptation.py",
       "tests/test_bench_sc_unit_capacitance_respiratory.py",
       "tests/test_bench_sigma_delta_dual_identity.py",
       "tests/test_bench_sigmoid_rate.py",
@@ -7319,6 +7324,7 @@
       "tests/test_studio_dcls.py",
       "tests/test_studio_declared_state_observable.py",
       "tests/test_studio_deployment_profiles.py",
+      "tests/test_studio_distribution.py",
       "tests/test_studio_eda_process_limits.py",
       "tests/test_studio_eda_runtime_settings.py",
       "tests/test_studio_endpoints_analysis_budget.py",
@@ -7426,6 +7432,7 @@
       "tests/test_studio_project_manifest.py",
       "tests/test_studio_replay_pack.py",
       "tests/test_studio_router_contract.py",
+      "tests/test_studio_runtime_job_receipt.py",
       "tests/test_studio_runtime_settings_parsing_cors_and_websocket.py",
       "tests/test_studio_runtime_settings_parsing_hosts_and_headers.py",
       "tests/test_studio_runtime_settings_parsing_identity_and_throttle.py",
@@ -7594,6 +7601,7 @@
       "tests/test_tools/test_mlperf_sc_report.py",
       "tests/test_tools/test_mlperf_sc_run.py",
       "tests/test_tools/test_mnist_reproducibility_manifest.py",
+      "tests/test_tools/test_mojo_toolchain_contract.py",
       "tests/test_tools/test_online_o1_adaptation_benchmark.py",
       "tests/test_tools/test_optics_extra_ci_contract.py",
       "tests/test_tools/test_optional_dependency_matrix.py",
