@@ -295,16 +295,21 @@ jobs:
       # Compile each neuron's Go c-shared and Mojo shared library into the path
       # its ctypes loader opens (beside the source). These lib*.so are gitignored
       # build artefacts, so without this step every compiled-backend and
-      # benchmark test fails with "lib<name>.so is not built". `mojo` resolves to
-      # the pixi wrapper installed above. TIER 0: real backend builds, not skips.
+      # benchmark test fails with "lib<name>.so is not built". Invoke the
+      # pinned pixi wrapper by path: the dev install also provides a Python
+      # `mojo` executable, so PATH lookup can select a different toolchain.
+      # TIER 0: real backend builds, not skips.
       # --require lists the strict backends whose absence is a hard RuntimeError
       # (not a graceful skip), so a missing toolchain fails CI loudly.
       - name: Build accelerator backends (Go + Mojo)
         shell: bash
         run: |
+          MOJO_BIN="$RUNNER_TEMP/sc-neurocore-mojo-bin/mojo"
+          test -x "$MOJO_BIN"
+          "$MOJO_BIN" --version
           REQUIRED=theta,dpi_neuron,quadratic_if,perfect_integrator,lapicque,expif,adex,sigmoid_rate,mcculloch_pitts,iqif,coba_lif,poisson,escape_rate,lgssm,ermentrout_kopell_pop,ermentrout_kopell_map,izhikevich2007,resonate_and_fire,adaptive_threshold_if,alpha,aihara_map,sc_chaotic_map,nagumo_sato_map,sc_adaptive_threshold_map,mat,sc_resetting_mat,benda_herz,sc_stochastic_rate_adaptation,rulkov_map,sc_upward_crossing_rulkov_map
           python tools/build_accel_backends.py --language go --require "$REQUIRED"
-          python tools/build_accel_backends.py --language mojo --require "$REQUIRED"
+          python tools/build_accel_backends.py --language mojo --require "$REQUIRED" --mojo-command "$MOJO_BIN"
 
           # Self-contained backends live in accel/<lang>/<model>/ and locate their
           # library with a Path(__file__).resolve().parent / "lib<model>.so" loader.
@@ -327,12 +332,12 @@ jobs:
             # baseline as tools/build_accel_backends.py, so it cannot emit AVX-512 that SIGILLs
             # on a runner without AVX-512F. The drift gate below enforces this on every library.
             ( cd "src/sc_neurocore/accel/mojo/${model}" \
-                && mojo build --emit shared-lib --target-cpu x86-64-v3 -o "lib${model}.so" "${model}.mojo" )
+                && "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 -o "lib${model}.so" "${model}.mojo" )
           done
           for model in energy_lif sc_normalized_energy_lif mckean; do
             ( cd "src/sc_neurocore/accel/go/${model}" \
                 && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
-            mojo build -I "$GITHUB_WORKSPACE/src/sc_neurocore/accel/mojo/kernels" \
+            "$MOJO_BIN" build -I "$GITHUB_WORKSPACE/src/sc_neurocore/accel/mojo/kernels" \
               --emit shared-lib --target-cpu x86-64-v3 \
               -o "src/sc_neurocore/accel/mojo/${model}/lib${model}.so" \
               "src/sc_neurocore/accel/mojo/${model}/${model}_abi.mojo"
@@ -340,27 +345,27 @@ jobs:
           ( cd src/sc_neurocore/accel/go/neurons/mckean \
               && go build -buildmode=c-shared \
                 -o libsc_triangular_mckean.so mckean.go )
-          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+          "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libsc_triangular_mckean.so \
             src/sc_neurocore/accel/mojo/neurons/sc_triangular_mckean.mojo
           ( cd src/sc_neurocore/accel/go/neurons/wilson_hr \
               && go build -buildmode=c-shared -o libwilsonhr.so wilson_hr.go )
-          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+          "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libwilsonhr.so \
             src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo
           ( cd src/sc_neurocore/accel/go/neurons/cazelles_map \
               && go build -buildmode=c-shared -o libcazelles.so cazelles_map.go )
-          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+          "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libcazelles.so \
             src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo
           ( cd src/sc_neurocore/accel/go/neurons/sc_resetting_wilson_hr \
               && go build -buildmode=c-shared \
                 -o libsc_resetting_wilson_hr.so sc_resetting_wilson_hr.go )
-          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+          "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/neurons/libsc_resetting_wilson_hr.so \
             src/sc_neurocore/accel/mojo/neurons/sc_resetting_wilson_hr.mojo
           ( cd src/sc_neurocore/accel/mojo/sc_compte_wm_network \
-              && mojo build --emit shared-lib --target-cpu x86-64-v3 \
+              && "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
                 -o libsc_compte_wm_network.so sc_compte_wm_network.mojo )
 
           # Analysis and network parity suites are part of the aggregate coverage
@@ -371,14 +376,14 @@ jobs:
                 && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
           done
           for kernel in gamma_oscillation dimensionality gpfa sorting_quality; do
-            mojo build --emit shared-lib --target-cpu x86-64-v3 \
+            "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
               -o "src/sc_neurocore/accel/mojo/kernels/lib${kernel}.so" \
               "src/sc_neurocore/accel/mojo/kernels/${kernel}.mojo"
           done
-          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+          "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/kernels/libphi.so \
             src/sc_neurocore/accel/mojo/kernels/phi_estimation.mojo
-          mojo build --emit shared-lib --target-cpu x86-64-v3 \
+          "$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3 \
             -o src/sc_neurocore/accel/mojo/math/libtopology.so \
             src/sc_neurocore/accel/mojo/math/topology.mojo
 
