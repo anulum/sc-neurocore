@@ -54,6 +54,25 @@ def test_source_hashes_cover_declared_implementation_surfaces() -> None:
         assert len(expected) == 64
 
 
+def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
+    """Reject stale or partial five-runtime evidence in the committed record."""
+    path = benchmark.REPOSITORY / "benchmarks/results/bench_lapicque.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["source_hashes"] == benchmark._source_hashes()
+    assert payload["workload"]["n_steps"] == benchmark.N_STEPS
+    assert payload["workload"]["repeats"] == benchmark.N_REPEATS
+    assert set(payload["backends"]) == set(benchmark.BACKENDS)
+    assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
+    for backend in benchmark.BACKENDS:
+        row = payload["backends"][backend]
+        assert row["available"] is True
+        assert row["used"] is True
+        assert row["event_vector_matches_python"] is True
+        assert row["event_count"] == payload["backends"]["python"]["event_count"]
+        assert row["parity_max_abs_diff"] <= benchmark.TRACE_ATOL
+
+
 def test_unpinned_run_is_rejected_before_measurement(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

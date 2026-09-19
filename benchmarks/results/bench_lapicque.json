@@ -8,10 +8,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 8.93358,
-      "minimum_call_ms": 7.820487,
+      "median_call_ms": 4.773964,
+      "minimum_call_ms": 4.052171,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 31.29863861967991,
+      "speedup_vs_python": 30.027469415353778,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -23,10 +23,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 5.023316,
-      "minimum_call_ms": 3.179797,
+      "median_call_ms": 3.091795,
+      "minimum_call_ms": 2.592255,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 55.66221436198718,
+      "speedup_vs_python": 46.364671008265425,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -38,10 +38,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 1.55293,
-      "minimum_call_ms": 1.210892,
-      "parity_max_abs_diff": 1.2212453270876722E-15,
-      "speedup_vs_python": 180.0524762867612,
+      "median_call_ms": 0.841132,
+      "minimum_call_ms": 0.682963,
+      "parity_max_abs_diff": 1.2212453270876722e-15,
+      "speedup_vs_python": 170.42516275685622,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     },
@@ -53,8 +53,8 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 279.608892,
-      "minimum_call_ms": 255.986139,
+      "median_call_ms": 143.350058,
+      "minimum_call_ms": 121.449566,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
@@ -68,10 +68,10 @@
         "excited": true,
         "v": 1.999999999999989
       },
-      "median_call_ms": 3.607475,
-      "minimum_call_ms": 3.277998,
+      "median_call_ms": 2.458807,
+      "minimum_call_ms": 2.011873,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 77.50819950242206,
+      "speedup_vs_python": 58.30065474842067,
       "uint8_event_sha256": "5008c39a6facf380f19bb54e52fa3d85de4f53297e49dee2913a24f248b81b29",
       "used": true
     }
@@ -92,24 +92,24 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      10.32666015625,
-      10.32177734375,
-      14.6806640625
+      14.41552734375,
+      12.271484375,
+      12.82177734375
     ],
     "load_average_start": [
-      10.2607421875,
-      10.314453125,
-      14.7255859375
+      9.7509765625,
+      11.1435546875,
+      12.49951171875
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
-    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
     "runtime_versions": {
-      "go": "go version go1.24.0 linux/amd64",
-      "julia": "julia version 1.12.6",
-      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "go": "go version go1.27.1 linux/amd64",
+      "julia": "julia version 1.13.0",
+      "mojo": "Mojo 1.0.0 (ed45d567)",
       "numpy": "2.2.6",
-      "python": "3.12.3",
-      "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
+      "python": "3.12.13",
+      "rust": "rustc 1.98.1 (48a229cea 2026-09-01)"
     },
     "single_cpu_pinned": true
   },
@@ -177,10 +177,10 @@
     },
     "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml": "f529f1d14f4d08f0bfdc31c747beb17a93613008ec4f97638a8dd5e4366c084b",
     "src/sc_neurocore/neurons/model_schemas/lapicque": {
-      "json": "76854bc8be1d52866f1470999700e5f39370e85dfb25c70c1fbc77ade4c6b79f"
+      "json": "56e9b905fee94e2e63de03566b8faaba830f6269601607a243b1224036686047"
     },
-    "src/sc_neurocore/neurons/model_schemas/lapicque.json": "76854bc8be1d52866f1470999700e5f39370e85dfb25c70c1fbc77ade4c6b79f",
-    "src/sc_neurocore/neurons/model_schemas/lapicque.toml": "82ed589b679ddd661c50c7b28de121aa019ea80d553731c370ad0dcbc368f607",
+    "src/sc_neurocore/neurons/model_schemas/lapicque.json": "56e9b905fee94e2e63de03566b8faaba830f6269601607a243b1224036686047",
+    "src/sc_neurocore/neurons/model_schemas/lapicque.toml": "6783bcbd31d7c4f4792f415502b1a77f06f6143d57899df19c43ce54e05244b3",
     "src/sc_neurocore/neurons/models/lapicque": {
       "py": "4e067b4be98326a404df5b84153f95bb1155918950a641a0ca49af8db6dabe0c"
     },
@@ -195,6 +195,6 @@
     "parameters": "Lapicque 1907 normalized profile; K=1.1, R=10, rho=1, beta=1 ms; exact constant-source-voltage flow; first-attainment latch; no automatic reset",
     "repeats": 7,
     "source_voltage": 22.0,
-    "trace_atol": 5E-15
+    "trace_atol": 5e-15
   }
 }
