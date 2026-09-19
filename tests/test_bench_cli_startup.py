@@ -16,6 +16,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+from tests.benchmark_history_support import committed_bundle_digest
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT = _REPO_ROOT / "benchmarks" / "bench_cli_startup.py"
 _RESULT = _REPO_ROOT / "benchmarks" / "results" / "local_python_2026-07-12_cli_startup.json"
@@ -78,6 +80,7 @@ def test_cli_startup_benchmark_writes_path_free_comparison(tmp_path: Path) -> No
         assert isinstance(variant, dict)
         assert variant["local_path_recorded"] is False
         assert isinstance(variant["cli_source_sha256"], str)
+    assert variants[1]["cli_source_sha256"] == _current_cli_digest()
     results = payload["results"]
     assert isinstance(results, dict)
     for label in ("baseline", "candidate"):
@@ -137,7 +140,17 @@ def test_committed_cli_startup_result_matches_candidate_source() -> None:
         if isinstance(variant, dict) and variant.get("label") == "cli-package"
     )
     assert isinstance(candidate, dict)
-    assert candidate["cli_source_sha256"] == _current_cli_digest()
+    digest, count = committed_bundle_digest(
+        _RESULT,
+        repo_root=_REPO_ROOT,
+        select_paths=lambda tree: sorted(
+            path
+            for path in tree
+            if path.startswith("src/sc_neurocore/cli/") and path.endswith(".py")
+        ),
+    )
+    assert count == 15
+    assert candidate["cli_source_sha256"] == digest
     applicability = payload["polyglot_applicability"]
     assert isinstance(applicability, dict)
     assert applicability == {

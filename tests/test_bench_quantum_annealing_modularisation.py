@@ -16,6 +16,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+from tests.benchmark_history_support import committed_bundle_digest
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT = _REPO_ROOT / "benchmarks" / "bench_quantum_annealing_modularisation.py"
 _RESULT = (
@@ -86,6 +88,9 @@ def test_modularisation_benchmark_writes_path_free_comparison(tmp_path: Path) ->
         assert variant["local_path_recorded"] is False
         assert isinstance(variant["quantum_annealing_source_sha256"], str)
         assert variant["quantum_annealing_source_file_count"] == 10
+    live_digest, live_count = _current_source_digest()
+    assert variants[1]["quantum_annealing_source_sha256"] == live_digest
+    assert variants[1]["quantum_annealing_source_file_count"] == live_count
     results = payload["results"]
     assert isinstance(results, dict)
     for label in ("baseline", "candidate"):
@@ -145,7 +150,18 @@ def test_committed_modularisation_result_matches_candidate_source() -> None:
         if isinstance(variant, dict) and variant.get("label") == "quantum-modular"
     )
     assert isinstance(candidate, dict)
-    digest, file_count = _current_source_digest()
+    digest, file_count = committed_bundle_digest(
+        _RESULT,
+        repo_root=_REPO_ROOT,
+        select_paths=lambda tree: [
+            "src/sc_neurocore/bridges/quantum_annealing.py",
+            *sorted(
+                path
+                for path in tree
+                if path.startswith("src/sc_neurocore/bridges/annealing_") and path.endswith(".py")
+            ),
+        ],
+    )
     assert candidate["quantum_annealing_source_sha256"] == digest
     assert candidate["quantum_annealing_source_file_count"] == file_count == 10
     applicability = payload["polyglot_applicability"]

@@ -11,10 +11,13 @@
 from __future__ import annotations
 
 import importlib
+import hashlib
 import json
 from pathlib import Path
 import sys
 from typing import Any
+
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,22 +56,28 @@ def test_environment_declares_diagnostic_timing_class() -> None:
 
 
 def test_committed_result_is_source_bound_and_parity_gated() -> None:
-    """The checked-in result matches the current runner evidence schema."""
-    result = json.loads(
-        (ROOT / "benchmarks/results/bench_kl_refine.json").read_text(encoding="utf-8")
-    )
-    current_manifest = benchmark._source_manifest()
+    """The checked-in result matches measured source and parity evidence."""
+    artifact = ROOT / "benchmarks/results/bench_kl_refine.json"
+    result = json.loads(artifact.read_text(encoding="utf-8"))
+    manifest = result["source_manifest"]
+    sources = manifest["files"]
     assert result["schema_version"] == benchmark.BENCHMARK_SCHEMA_VERSION
     assert result["label"] == "candidate"
     assert result["canonical_equivalence"] is True
     assert len(result["canonical_partition_sha256"]) == 64
-    assert (
-        result["source_manifest"]["combined_source_sha256"]
-        == current_manifest["combined_source_sha256"]
+    assert not committed_source_hash_failures(
+        artifact,
+        repo_root=ROOT,
+        source_hash_paths={
+            **{path: f"source_manifest.files.{path}" for path in sources},
+            "benchmarks/bench_kl_refine.py": "source_manifest.runner_sha256",
+        },
     )
-    assert result["source_manifest"]["files"] == current_manifest["files"]
-    assert result["source_manifest"]["runner_sha256"] == current_manifest["runner_sha256"]
-    assert result["gate_source_hashes"] == benchmark._gate_source_hashes(current_manifest)
+    digest = hashlib.sha256()
+    for path, source_hash in sorted(sources.items()):
+        digest.update(path.encode("utf-8") + b"\0" + source_hash.encode("ascii") + b"\n")
+    assert manifest["combined_source_sha256"] == digest.hexdigest()
+    assert result["gate_source_hashes"] == benchmark._gate_source_hashes(manifest)
     assert all(info["available"] is True for info in result["backends"].values())
     assert all(row["parity_ok"] is True for row in result["rows"])
     assert set(result["timings_ms"]) == {"v100", "v200", "v500", "v1000"}

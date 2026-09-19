@@ -21,6 +21,9 @@ from typing import Any
 import numpy as np
 import pytest
 
+from tests.benchmark_history_support import committed_bundle_digest
+from tools.benchmark_evidence_gate import committed_source_hash_failures
+
 _ROOT = Path(__file__).resolve().parents[2]
 _BENCHMARKS = _ROOT / "benchmarks"
 _RESULT = _BENCHMARKS / "results/bench_learning_bridge.json"
@@ -176,7 +179,7 @@ def test_sample_rejects_process_and_json_failures(
 
 
 def _sample_value(timing: int = 10) -> dict[str, Any]:
-    result = {metric: timing for metric in support.TIMINGS}
+    result: dict[str, Any] = {metric: timing for metric in support.TIMINGS}
     result.update({field: 0.5 for field in support.WEIGHTS})
     result.update({field: "a" * 64 for field in support.HASHES})
     result.update(canonical_sha256="b" * 64, canonical_bytes=128, max_rss_kib=2048)
@@ -217,7 +220,7 @@ def test_probe_events_are_deterministic_and_typed() -> None:
 
 
 def test_committed_evidence_matches_candidate_source() -> None:
-    """Committed evidence remains bound to the current multi-language surface."""
+    """Committed evidence remains bound to its measured language sources."""
     raw = _RESULT.read_text(encoding="utf-8")
     assert "/home/" not in raw and "/media/" not in raw and "/tmp/" not in raw
     payload: object = json.loads(raw)
@@ -235,9 +238,28 @@ def test_committed_evidence_matches_candidate_source() -> None:
         for item in variants
         if isinstance(item, dict) and item.get("label") == "learning-modular"
     )
-    digest, hashes = support.source_digest(_ROOT)
+    explicit = {
+        "crates/autonomous_learning/src/lib.rs",
+        "crates/autonomous_learning/src/state_codec.rs",
+        "crates/autonomous_learning/src/wgpu_backend.rs",
+        "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go",
+        "src/sc_neurocore/accel/julia/_native/learning_bridge.jl",
+    }
+    digest, file_count = committed_bundle_digest(
+        _RESULT,
+        repo_root=_ROOT,
+        select_paths=lambda tree: sorted(
+            path
+            for path in tree
+            if path in explicit
+            or (path.startswith("src/sc_neurocore/_native/learning") and path.endswith(".py"))
+        ),
+    )
+    assert set(payload["source_hashes"]) == set(candidate["source_hashes"])
+    assert set(explicit).issubset(payload["source_hashes"])
+    assert not committed_source_hash_failures(_RESULT, repo_root=_ROOT)
     assert candidate["source_sha256"] == digest == payload["source_sha256"]
-    assert candidate["source_file_count"] == len(hashes) == 16
+    assert candidate["source_file_count"] == file_count == 16
     assert payload["comparison"]["canonical_output_equivalent"] is True
     for language in ("go_process_ns", "julia_process_ns"):
         assert payload["comparison"][language]["available"] is True

@@ -16,6 +16,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+from tests.benchmark_history_support import committed_bundle_digest
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT = _REPO_ROOT / "benchmarks" / "bench_dna_mapper_import.py"
 _RESULT = _REPO_ROOT / "benchmarks" / "results" / "local_python_2026-07-12_dna_mapper_import.json"
@@ -80,6 +82,7 @@ def test_dna_import_benchmark_writes_path_free_comparison(tmp_path: Path) -> Non
         assert isinstance(variant, dict)
         assert variant["local_path_recorded"] is False
         assert isinstance(variant["dna_mapper_source_sha256"], str)
+    assert variants[1]["dna_mapper_source_sha256"] == _current_source_digest()
     results = payload["results"]
     assert isinstance(results, dict)
     for label in ("baseline", "candidate"):
@@ -141,7 +144,20 @@ def test_committed_dna_import_result_matches_candidate_source() -> None:
         if isinstance(variant, dict) and variant.get("label") == "dna-modular"
     )
     assert isinstance(candidate, dict)
-    assert candidate["dna_mapper_source_sha256"] == _current_source_digest()
+    digest, count = committed_bundle_digest(
+        _RESULT,
+        repo_root=_REPO_ROOT,
+        select_paths=lambda tree: [
+            "src/sc_neurocore/bridges/__init__.py",
+            *sorted(
+                path
+                for path in tree
+                if path.startswith("src/sc_neurocore/bridges/dna_") and path.endswith(".py")
+            ),
+        ],
+    )
+    assert count == 11
+    assert candidate["dna_mapper_source_sha256"] == digest
     assert payload["polyglot_applicability"] == {
         "go": "not_applicable_no_runtime_mirror",
         "julia": "not_applicable_no_runtime_mirror",

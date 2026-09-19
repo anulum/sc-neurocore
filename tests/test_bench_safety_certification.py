@@ -16,6 +16,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+from tests.benchmark_history_support import committed_bundle_digest
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT = _REPO_ROOT / "benchmarks" / "bench_safety_certification.py"
 _RESULT = (
@@ -81,6 +83,7 @@ def test_safety_benchmark_writes_path_free_comparison(tmp_path: Path) -> None:
         assert isinstance(variant, dict)
         assert variant["local_path_recorded"] is False
         assert isinstance(variant["safety_cert_source_sha256"], str)
+    assert variants[1]["safety_cert_source_sha256"] == _current_source_digest()
     results = payload["results"]
     assert isinstance(results, dict)
     for label in ("baseline", "candidate"):
@@ -141,7 +144,17 @@ def test_committed_safety_result_matches_candidate_source() -> None:
         if isinstance(variant, dict) and variant.get("label") == "safety-modular"
     )
     assert isinstance(candidate, dict)
-    assert candidate["safety_cert_source_sha256"] == _current_source_digest()
+    digest, count = committed_bundle_digest(
+        _RESULT,
+        repo_root=_REPO_ROOT,
+        select_paths=lambda tree: sorted(
+            path
+            for path in tree
+            if path.startswith("src/sc_neurocore/safety_cert/") and path.endswith(".py")
+        ),
+    )
+    assert count == 13
+    assert candidate["safety_cert_source_sha256"] == digest
     assert payload["polyglot_applicability"] == {
         "go": "not_applicable_no_runtime_mirror",
         "julia": "not_applicable_no_runtime_mirror",
