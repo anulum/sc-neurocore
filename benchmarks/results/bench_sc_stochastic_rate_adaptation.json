@@ -1,23 +1,55 @@
 {
+  "backend_summary": {
+    "go": {
+      "events": 39,
+      "max_adaptation_error": 1.4210854715202004e-14,
+      "median_ns": 42289406
+    },
+    "julia": {
+      "events": 39,
+      "max_adaptation_error": 0.0,
+      "median_ns": 2428978
+    },
+    "mojo": {
+      "events": 39,
+      "max_adaptation_error": 1.3770318219030742e-11,
+      "median_ns": 3026811
+    },
+    "python": {
+      "events": 39,
+      "max_adaptation_error": 0.0,
+      "median_ns": 64660959
+    },
+    "rust": {
+      "events": 39,
+      "max_adaptation_error": 0.0,
+      "median_ns": 2316113
+    }
+  },
   "benchmark": "SC retained stochastic rate-adaptation recurrence",
+  "event_trace_sha256": "6fd680868f536a28c11a9a425f33a3752f987a80a814da1852ba948cf345f2d5",
   "evidence_class": "local_regression_non_isolated",
   "hardware_measurement_claimed": false,
+  "measurement_affinity": [
+    0
+  ],
   "production_speed_claim": false,
-  "steps": 20000,
   "repeats": 5,
   "source_hashes": {
-    "benchmark": "3e5ff0342b3b1515681e4bd8e0646f90cb6409d0baaffbaf292623ec6f7d64c3",
-    "python": "5af84a6ac3e3e57286a07895b4a5cd251e8f8badfa5c332cc834a78c383e6f90",
-    "rust_binary": "d5af7802a11372c2febe160a9e8eec6d86877d44a7cd2ab721a19c806fd3adb1",
-    "go_binary": "14ee4442057ef8761a996563245532d8c494eff4f480aca2d80aa6b65d21ace7",
-    "mojo_binary": "40d3f95c3999bf285e4e62412755f62772db7ae24ea69aeeb1b34a5e09b173a1"
+    "benchmark": "798fe542452e54b0dd753d54ea1e9341b1a645da115ee1b9c38a596886ca7b0a",
+    "dispatch": "b14da862f70ccb2257f341a83af8ddc3280b276bd51bc76f84c95fa7a6a2616e",
+    "go": "b0850b52d50108cd8c0126907ac7204f4f76e9cef745a5a9fc8a4f682e03c622",
+    "go_binary": "9f3e4ab7fe9c32f57233c6c1842eb257d27e279fc6f665a95da30e6570103483",
+    "go_loader": "bc2658939818ac8c22ea995624cfca95252b88235725cb6e2c9e892ab420133b",
+    "julia": "17af810cc8fa7d8cc5fd5418883a343f440a9fedd4888c6f70289762f1639b15",
+    "mojo": "578c444c387e9d1fd85e5d2e3d604fe75ab48d8c5eb041f577c922600b365d4b",
+    "mojo_abi": "7f9078a801850040b55aecfa5a5624eafb63f06659a3627af32d6e2b776e7f49",
+    "mojo_binary": "8c3a0088deecf7400ba4e80d38b859e16da9e5ab6bacf4c3863e6d87537e9ae8",
+    "mojo_loader": "c74242109a09f1689a1d24a4d2b7e38b5ebde4de639c8e699d192146adae1aeb",
+    "python": "e4ba1337ea73638ea27f2d53c5697d3d8004cabd05487ac28a40ac5c9eaff74c",
+    "rust_binary": "522c0b5d93ad56ee8a3bc5890c6796023ff94ee6a20272b677eef4fb078558e4",
+    "rust_binding": "c9646982275046229556c3ec75cdbda744a8738fca8fc5046b3803a6a032c81c",
+    "rust_model": "1bcd266cbcc207b73ce1dad06937bfee226f4bc04a8d2eb519b7c417bbe2a09f"
   },
-  "backend_summary": {
-    "python": {"median_ns": 52842016, "events": 39},
-    "rust": {"median_ns": 3414324, "events": 39},
-    "julia": {"median_ns": 2678439, "events": 39},
-    "go": {"median_ns": 46048908, "events": 39},
-    "mojo": {"median_ns": 2376090, "events": 39}
-  },
-  "event_trace_sha256": "6fd680868f536a28c11a9a425f33a3752f987a80a814da1852ba948cf345f2d5"
+  "steps": 20000
 }
