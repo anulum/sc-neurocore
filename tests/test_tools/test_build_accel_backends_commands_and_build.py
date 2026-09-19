@@ -8,7 +8,13 @@
 
 from __future__ import annotations
 
-from build_accel_backends_support import *  # noqa: F403
+import subprocess
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from build_accel_backends_support import MOD, _fake_completed, _target
 
 
 def test_go_command(tmp_path: Path) -> None:
@@ -65,9 +71,21 @@ def test_build_target_mojo_success(tmp_path: Path) -> None:
 
 
 def test_build_target_nonzero_exit(tmp_path: Path) -> None:
+    """Keep the first compiler error when warnings extend beyond the old tail."""
     target = _target(tmp_path, "go")
-    result = MOD.build_target(target, runner=lambda c, w: _fake_completed(2, "boom\nkaboom"))
-    assert not result.ok and "exit 2" in result.detail and "kaboom" in result.detail
+    diagnostics = "first error\n" + "warning\n" * 8 + "last note\n"
+    result = MOD.build_target(
+        target,
+        runner=lambda c, w: subprocess.CompletedProcess(
+            args=c, returncode=2, stdout="compiler summary\n", stderr=diagnostics
+        ),
+    )
+    assert not result.ok
+    assert result.detail == (
+        f"exit 2; source={target.source}\n"
+        f"stdout:\ncompiler summary\n"
+        f"stderr:\n{diagnostics.rstrip()}"
+    )
 
 
 def test_build_target_success_but_no_library(tmp_path: Path) -> None:

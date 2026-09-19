@@ -21,6 +21,10 @@ The shared libraries are gitignored build artefacts, so CI must run this before
 the backend/benchmark tests, otherwise every compiled-backend test fails with
 ``RuntimeError: lib<name>.so is not built``.
 
+On a failed build, print the complete compiler output so the first error is
+available in the CI log even when many later warnings follow it. Required
+backend failures still exit non-zero.
+
 Usage::
 
     python tools/build_accel_backends.py --language all
@@ -337,7 +341,7 @@ def build_target(
     mojo_command: Sequence[str] = ("mojo",),
     runner: Callable[[list[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> BuildResult:
-    """Build one target in its source directory; return the outcome."""
+    """Build one target; retain both compiler streams if it fails."""
     if target.language == "go":
         cmd = _go_command(target)
         env_note = "CGO_ENABLED=1"
@@ -350,8 +354,15 @@ def build_target(
     except FileNotFoundError as exc:
         return BuildResult(target, False, f"toolchain missing: {exc}")
     if completed.returncode != 0:
-        tail = (completed.stderr or completed.stdout or "").strip().splitlines()[-3:]
-        return BuildResult(target, False, f"exit {completed.returncode}: {' | '.join(tail)}")
+        streams = [
+            f"{name}:\n{output.rstrip()}"
+            for name, output in (("stdout", completed.stdout), ("stderr", completed.stderr))
+            if output
+        ]
+        detail = f"exit {completed.returncode}; source={target.source}"
+        if streams:
+            detail += "\n" + "\n".join(streams)
+        return BuildResult(target, False, detail)
     if not target.output.is_file():
         return BuildResult(target, False, "build reported success but no library produced")
     return BuildResult(target, True, env_note or "ok")
