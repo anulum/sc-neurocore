@@ -1,4 +1,4 @@
-ruff==0.16.5
+ruff==0.16.8
 bandit==1.9.4
 mypy==2.3.1
 numpy

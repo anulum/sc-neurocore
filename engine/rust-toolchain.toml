@@ -12,5 +12,5 @@
 # workflows. Bump all three together. Residual: rustup still resolves this
 # version from the official mutable dist channel without a per-artifact digest —
 # accepted + tracked in docs/internal/ci_supply_chain_residuals.md.
-channel = "1.97.1"
+channel = "1.98.1"
 components = ["rustfmt", "clippy"]

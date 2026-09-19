@@ -88,21 +88,25 @@ Julia bridge, Rust build frontend, plotting stack, and Jupyter surface in one
 environment:
 
 ```bash
-uv venv --python 3.12.13 .venv
+uv venv --python 3.12.14 .venv
 uv pip install --python .venv/bin/python --require-hashes \
   -r requirements/workstation.txt
 uv pip install --python .venv/bin/python --no-deps --no-build-isolation \
   --editable .
+source .venv/bin/activate
+command -v python pip pip-compile maturin mojo julia go rustc pixi node
 ```
 
 `requirements/workstation.txt` is compiled from `pyproject.toml` with the
 `dev` and `julia` extras, `requirements/build.in`,
 `requirements/maturin.in`, and the notebook-only
 `requirements/workstation.in`. The lock pins every Python package and archive
-hash. External Rust, Go, Julia, Mojo, and HDL executables remain host
-toolchains rather than Python dependencies.
+hash. Activating `.venv` puts its Python tools and the locked Mojo executable
+on `PATH`. Rust, Go, Julia, Pixi, Node, and HDL executables must also be
+available on `PATH` at the versions pinned by the CI workflows and project
+toolchain manifests.
 
-The packaged `juliapkg.json` constrains JuliaCall to Julia 1.11.9, matching
+The packaged `juliapkg.json` constrains JuliaCall to Julia 1.13.0, matching
 the required CI runtime. This prevents JuliaUp from silently selecting a newer
 installed release during first import.
 

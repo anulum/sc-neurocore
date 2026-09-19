@@ -5,3 +5,4 @@
 jupyter>=1.1,<2
 matplotlib>=3.5
 pip>=26,<27
+pip-tools==7.6.1
