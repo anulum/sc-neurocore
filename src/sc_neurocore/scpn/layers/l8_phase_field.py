@@ -64,6 +64,8 @@ class L8_PhaseFieldLayer:
         self.time += dt
         n = self.params.n_pulsars
         omegas = self.params.pulsar_omegas
+        if omegas is None:
+            raise RuntimeError("pulsar frequencies were not initialised")
 
         # Kuramoto coupling: phase differences
         phase_diff = self.phases[np.newaxis, :] - self.phases[:, np.newaxis]

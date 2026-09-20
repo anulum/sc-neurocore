@@ -365,7 +365,7 @@ class SCCompteWMNetwork:
         array = np.asarray(values, dtype=np.float64)
         if array.shape != (self.spec.n_excitatory,) or not np.all(np.isfinite(array)):
             raise ValueError("direct_exc_current_pa must be finite with shape (2048,)")
-        return cast(FloatArray, array.copy())
+        return array.copy()
 
     def step(
         self,
@@ -441,11 +441,11 @@ class SCCompteWMNetwork:
             v_inh_mv=cast(FloatArray, np.asarray(v_inh, dtype=np.float64)),
             refractory_exc_ms=cast(FloatArray, np.asarray(ref_exc, dtype=np.float64)),
             refractory_inh_ms=cast(FloatArray, np.asarray(ref_inh, dtype=np.float64)),
-            external_ampa_exc=cast(FloatArray, np.asarray(ext_exc, dtype=np.float64)),
-            external_ampa_inh=cast(FloatArray, np.asarray(ext_inh, dtype=np.float64)),
-            recurrent_nmda=cast(FloatArray, np.asarray(nmda, dtype=np.float64)),
-            recurrent_nmda_rise=cast(FloatArray, np.asarray(nmda_rise, dtype=np.float64)),
-            recurrent_gabaa=cast(FloatArray, np.asarray(gabaa, dtype=np.float64)),
+            external_ampa_exc=np.asarray(ext_exc, dtype=np.float64),
+            external_ampa_inh=np.asarray(ext_inh, dtype=np.float64),
+            recurrent_nmda=np.asarray(nmda, dtype=np.float64),
+            recurrent_nmda_rise=np.asarray(nmda_rise, dtype=np.float64),
+            recurrent_gabaa=np.asarray(gabaa, dtype=np.float64),
         )
         self._validate_state(next_state)
         input_digest = hashlib.sha256()

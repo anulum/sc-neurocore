@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 def _rho(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Hard-sigmoid activation (hardware-friendly, no exp)."""
-    return np.clip(x, 0.0, 1.0)
+    return np.asarray(np.clip(x, 0.0, 1.0))
 
 
 def _rho_prime(x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:

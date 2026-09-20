@@ -206,6 +206,8 @@ class SCIFNode:
         if self.n_neurons == 1 and len(x) > 1:
             self._broadcast_to(len(x))
         x = x[: self.n_neurons]
+        if self.v is None:
+            raise RuntimeError("IF state was not initialised")
         self.v += self.r * x * self.dt
         spikes = (self.v > self.v_threshold).astype(np.float64)
         if self.reset_mode == "subtract":
@@ -404,6 +406,8 @@ class SCIntegratorNode:
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         x = np.atleast_1d(x).flatten()[: len(self.r)]
+        if self.v is None:
+            raise RuntimeError("integrator state was not initialised")
         self.v += self.r * x * self.dt
         return self.v.copy()
 

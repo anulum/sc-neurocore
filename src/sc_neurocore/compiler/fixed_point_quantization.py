@@ -70,7 +70,7 @@ def _quantize_fixed_array(
 
     quantized = _round_scaled(w * q.scale, rounding)
     min_int, max_int = _fixed_integer_bounds(q)
-    return np.clip(quantized, min_int, max_int)
+    return np.asarray(np.clip(quantized, min_int, max_int))
 
 
 def _mixed_tensor_scale(weights: np.ndarray[Any, Any], fmt: QFormatMixed) -> float:

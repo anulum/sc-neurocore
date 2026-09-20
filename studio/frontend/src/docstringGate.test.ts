@@ -22,6 +22,9 @@
  */
 
 import { ESLint } from "eslint";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 // Building a type-aware ESLint program is slow, and one instance is reused
@@ -59,17 +62,19 @@ let shared: ESLint | undefined;
  * Lint one candidate under the project's own configuration.
  *
  * @param source - The candidate source.
- * @param filename - The name to lint it under, within `src`. The default is an
- *   existing fixture with no JSDoc nodes, so the parser cannot reuse comments
- *   from an unrelated source file when linting the short candidate text.
  * @returns The rule ids that fired, in the order they were reported.
  */
-async function lint(source: string, filename = "docstringGateFixture.ts"): Promise<string[]> {
-  shared ??= new ESLint({ cwd: new URL("..", import.meta.url).pathname });
-  const results = await shared.lintText(source, {
-    filePath: new URL(`./${filename}`, import.meta.url).pathname,
-  });
-  return results.flatMap((result) => result.messages.map((message) => message.ruleId ?? "unknown"));
+async function lint(source: string): Promise<string[]> {
+  const directory = await mkdtemp(fileURLToPath(new URL("./docstring-gate-", import.meta.url)));
+  const candidate = join(directory, "candidate.ts");
+  try {
+    await writeFile(candidate, source);
+    shared ??= new ESLint({ cwd: fileURLToPath(new URL("..", import.meta.url)) });
+    const results = await shared.lintFiles([candidate]);
+    return results.flatMap((result) => result.messages.map((message) => message.ruleId ?? "unknown"));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 }
 
 /**

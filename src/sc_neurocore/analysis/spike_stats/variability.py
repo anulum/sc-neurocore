@@ -183,7 +183,7 @@ def approximate_entropy(
     n = x.size
     if n < m + 2:
         return float("nan")
-    r = r_factor * x.std()
+    r = float(r_factor * x.std())
     if r <= 0:
         r = 0.01
     if _HAS_RUST and _ssc is not None:
@@ -210,7 +210,7 @@ def sample_entropy(binary_train: np.ndarray[Any, Any], m: int = 2, r_factor: flo
     n = x.size
     if n < m + 2:
         return float("nan")
-    r = r_factor * x.std()
+    r = float(r_factor * x.std())
     if r <= 0:
         r = 0.01
     if _HAS_RUST and _ssc is not None:
@@ -376,7 +376,7 @@ def complexity_pdf(
     if intervals.max() - intervals.min() < 1e-12:
         return np.array([], dtype=np.float64)
     hist, edges = np.histogram(intervals, bins=bins, density=True)
-    return hist.astype(np.float64)
+    return np.asarray(hist.astype(np.float64))
 
 
 def optimal_bin_width(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:

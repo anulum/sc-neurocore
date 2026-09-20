@@ -34,7 +34,7 @@ def rate_encode(values: np.ndarray[Any, Any], T: int, seed: int = 42) -> np.ndar
     """
     rng = np.random.RandomState(seed)
     rates = np.clip(values, 0, 1)
-    return (rng.random((T, len(rates))) < rates[np.newaxis, :]).astype(np.int8)
+    return np.asarray((rng.random((T, len(rates))) < rates[np.newaxis, :]).astype(np.int8))
 
 
 def latency_encode(values: np.ndarray[Any, Any], T: int) -> np.ndarray[Any, Any]:

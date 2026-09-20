@@ -344,7 +344,7 @@ class _LayerAccumulator:
             spikes_summed = spikes_flat.sum(axis=0)
         else:
             spikes_summed = spikes
-            spikes_flat = spikes[np.newaxis]  # type: ignore[assignment]
+            spikes_flat = spikes[np.newaxis]
 
         n_neurons = spikes_summed.shape[0]
 

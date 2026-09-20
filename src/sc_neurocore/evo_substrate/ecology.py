@@ -49,7 +49,7 @@ class IslandModel:
         migrations = 0
         for src_id in ids:
             if rng.random() < self.migration_rate:
-                dst_id = rng.choice([i for i in ids if i != src_id])
+                dst_id = int(rng.choice([i for i in ids if i != src_id]))
                 src = self.islands[src_id]
                 if src.population:
                     migrant = copy.deepcopy(src.population[0])

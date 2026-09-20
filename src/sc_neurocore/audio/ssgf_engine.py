@@ -156,7 +156,7 @@ class SSGFEngine:
         A = np.zeros((N, N))
         idx_upper = np.triu_indices(N, k=1)
         A[idx_upper] = flat
-        A = A + A.T  # type: ignore[assignment]  # symmetric
+        A = A + A.T  # symmetric
 
         # Softplus: log(1 + exp(x)), numerically stable
         W = np.where(A > 20, A, np.log1p(np.exp(A)))
@@ -198,7 +198,7 @@ class SSGFEngine:
         L_sym = 0.5 * (L_sym + L_sym.T)
 
         eigvals, eigvecs = np.linalg.eigh(L_sym)
-        self._eigvals = eigvals  # type: ignore[assignment]
+        self._eigvals = eigvals
         self._eigvecs = eigvecs
 
     # ── Cost ─────────────────────────────────────────────────────────

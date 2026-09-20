@@ -317,7 +317,7 @@ class SCCompteWMMojoNetwork:
         array = np.asarray(values, dtype=np.float64)
         if array.shape != (2048,) or not np.all(np.isfinite(array)):
             raise ValueError("direct_exc_current_pa must be finite with shape (2048,)")
-        return cast(FloatArray, np.ascontiguousarray(array))
+        return np.ascontiguousarray(array)
 
     def step(
         self,

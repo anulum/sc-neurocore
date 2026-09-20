@@ -89,7 +89,7 @@ class SpikeAugment:
         if self.hot_pixel_prob > 0:
             out = self._hot_pixel(out, rng)
 
-        return np.clip(out, 0, 1).astype(spikes.dtype)
+        return np.asarray(np.clip(out, 0, 1).astype(spikes.dtype))
 
     def _temporal_jitter(
         self, spikes: np.ndarray[Any, Any], rng: np.random.RandomState

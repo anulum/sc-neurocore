@@ -120,7 +120,7 @@ class FeynmanKacHeatSolver:
         """
         period = 2.0 * length
         folded = np.mod(x, period)
-        return np.where(folded <= length, folded, period - folded)
+        return np.asarray(np.where(folded <= length, folded, period - folded))
 
     # ─────────────────────── walker initialisation ───────────────────────
 
@@ -219,7 +219,7 @@ class FeynmanKacHeatSolver:
             raise ValueError("n_bins must be a positive integer")
         counts, _ = np.histogram(self.walkers, bins=n_bins, range=(0.0, self.length))
         bin_width = self.length / n_bins
-        return counts.astype(np.float64) / (self.walkers.size * bin_width)
+        return np.asarray(counts.astype(np.float64) / (self.walkers.size * bin_width))
 
     def expectation(
         self,

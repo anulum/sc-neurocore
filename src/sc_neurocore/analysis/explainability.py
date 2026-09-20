@@ -36,7 +36,8 @@ class SpikeToConceptMapper:
         active_indices = np.where(spikes > 0)[0]
 
         concepts = []
-        for idx in active_indices:
+        for active_idx in active_indices:
+            idx = int(active_idx)
             if idx in self.concept_map:
                 concepts.append(self.concept_map[idx])
             else:

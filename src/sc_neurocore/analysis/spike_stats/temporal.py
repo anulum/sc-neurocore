@@ -67,7 +67,7 @@ def response_onset(
     if binary_train.size <= baseline_steps:
         return float("nan")
     baseline_rate = binary_train[:baseline_steps].mean()
-    baseline_std = binary_train[:baseline_steps].std()
+    baseline_std = float(binary_train[:baseline_steps].std())
     if baseline_std == 0:
         baseline_std = 1e-10
     threshold = baseline_rate + threshold_sigma * baseline_std

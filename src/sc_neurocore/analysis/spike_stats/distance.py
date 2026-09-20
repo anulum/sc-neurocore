@@ -125,8 +125,8 @@ def spike_distance(
     eval_times = np.linspace(t_start, t_end, n_eval)
     s_vals = np.zeros(n_eval)
     for k, t in enumerate(eval_times):
-        idx_a = np.searchsorted(a, t, side="right")
-        idx_b = np.searchsorted(b, t, side="right")
+        idx_a = int(np.searchsorted(a, t, side="right"))
+        idx_b = int(np.searchsorted(b, t, side="right"))
         prev_a = a[max(0, idx_a - 1)] if a.size > 0 else t_start
         next_a = a[min(idx_a, a.size - 1)] if a.size > 0 else t_end
         prev_b = b[max(0, idx_b - 1)] if b.size > 0 else t_start

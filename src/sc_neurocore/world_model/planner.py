@@ -45,7 +45,7 @@ class SCPlanner:
             dist = np.linalg.norm(predicted_state - goal_state)
 
             if dist < min_dist:
-                min_dist = dist  # type: ignore[assignment]
+                min_dist = dist
                 best_action = candidate_action
 
         return best_action  # type: ignore[return-value]

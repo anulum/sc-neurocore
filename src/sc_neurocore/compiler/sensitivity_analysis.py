@@ -63,7 +63,7 @@ def analyze_sensitivity(
         errors: list[float] = []
 
         for _ in range(n_trials):
-            input_probabilities = rng.random_sample(n_inputs).astype(np.float64)
+            input_probabilities = np.asarray(rng.random_sample(n_inputs), dtype=np.float64)
             exact = weights @ input_probabilities
             target = np.clip(exact, 0.0, None)
 

@@ -97,7 +97,7 @@ class SpikeRegister:
 
     def write_bits(self, bits: np.ndarray[Any, Any]) -> None:
         """Write raw bit array."""
-        self._state = bits[: self.n_bits].astype(np.int8)  # type: ignore[assignment]
+        self._state = bits[: self.n_bits].astype(np.int8)
 
     def read_bits(self) -> np.ndarray[Any, Any]:  # pragma: no cover
         """Read raw bit array."""

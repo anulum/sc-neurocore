@@ -70,7 +70,7 @@ def pairwise_correlation(
         return np.array([[]])
     min_len = min(t.size for t in trains)
     mat = np.array([t[:min_len].astype(np.float64) for t in trains])
-    return np.corrcoef(mat)
+    return np.asarray(np.corrcoef(mat))
 
 
 def event_synchronization(
@@ -241,7 +241,7 @@ def signal_correlation(
     binned = [bin_spike_train(t, bin_size).astype(np.float64) for t in trains]
     min_bins = min(b.size for b in binned)
     mat = np.array([b[:min_bins] for b in binned])
-    return np.corrcoef(mat)
+    return np.asarray(np.corrcoef(mat))
 
 
 def spike_count_covariance(

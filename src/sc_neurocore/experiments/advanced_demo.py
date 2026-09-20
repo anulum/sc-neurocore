@@ -61,8 +61,8 @@ def run_advanced_demo() -> None:
             visual_in = np.zeros(10)
             print("    >> Sparse Input Detect (Energy Saving Mode)")
         else:
-            audio_in = np.random.random(10)  # type: ignore[assignment]
-            visual_in = np.random.random(10)  # type: ignore[assignment]
+            audio_in = np.random.random(10)
+            visual_in = np.random.random(10)
 
         # Fuse
         fused_input = fusion.forward({"audio": audio_in, "visual": visual_in})

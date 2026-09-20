@@ -158,7 +158,7 @@ def _numpy_popcount(packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     x -= (x >> np.uint64(1)) & m1
     x = (x & m2) + ((x >> np.uint64(2)) & m2)
     x = (x + (x >> np.uint64(4))) & m4
-    return (x * h01) >> np.uint64(56)
+    return np.asarray((x * h01) >> np.uint64(56))
 
 
 # ---------------------------------------------------------------------------

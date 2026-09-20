@@ -519,7 +519,7 @@ class VariabilityInjector:
             0,
             self.model.num_levels - 1,
         )
-        return levels
+        return np.asarray(levels)
 
     def inject_d2d(self, levels: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Apply device-to-device variability to quantised levels."""

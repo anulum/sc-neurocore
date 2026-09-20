@@ -143,7 +143,7 @@ class SpikingODELayer:
                 spike_counts[crossed] += 1
                 v_new[crossed] = self.dynamics.v_reset
 
-            self._v = v_new  # type: ignore[assignment]
+            self._v = v_new
             t += dt
             steps += 1
 

@@ -154,15 +154,15 @@ def _parse_nmnist_bin(path: Path, dt_ms: float) -> np.ndarray[Any, Any]:
     raw = np.fromfile(path, dtype=np.uint8)
     # Each event is 5 bytes: [addr_high, addr_low, ts2, ts1, ts0]
     n_events = len(raw) // 5
-    raw = raw[: n_events * 5].reshape(n_events, 5)
-    addr = (raw[:, 0].astype(np.uint16) << 8) | raw[:, 1].astype(np.uint16)
+    events = raw[: n_events * 5].reshape(n_events, 5)
+    addr = (events[:, 0].astype(np.uint16) << 8) | events[:, 1].astype(np.uint16)
     x = addr & 0x1F  # bits 0-4
     y = (addr >> 5) & 0x1F  # bits 5-9
     polarity = (addr >> 10) & 0x1  # bit 10
     ts = (
-        raw[:, 2].astype(np.uint32) << 16
-        | raw[:, 3].astype(np.uint32) << 8
-        | raw[:, 4].astype(np.uint32)
+        events[:, 2].astype(np.uint32) << 16
+        | events[:, 3].astype(np.uint32) << 8
+        | events[:, 4].astype(np.uint32)
     )
     ts_ms = ts.astype(np.float32) * (dt_ms / 1000.0)
     return np.column_stack([x, y, polarity, ts_ms]).astype(np.float32)

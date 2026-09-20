@@ -151,7 +151,7 @@ class CCWBridge:
                 smoothed = np.mean(self.metric_history[metric_name])
 
                 # Map to parameter range
-                ccw_params[param_name] = min_val + smoothed * (max_val - min_val)  # type: ignore[assignment]
+                ccw_params[param_name] = min_val + smoothed * (max_val - min_val)
 
         return ccw_params
 
