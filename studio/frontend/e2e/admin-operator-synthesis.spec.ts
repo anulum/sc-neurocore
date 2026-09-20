@@ -199,6 +199,24 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
       }],
       ["/api/studio/jobs", synthesisJobList],
       ["/api/synth/multi-target", {
+        studio_job_receipt: {
+          schema_version: "studio.job-receipt.v1",
+          job_id: "sj_synthesis",
+          kind: "synthesis",
+          status: "completed",
+          artifacts: [
+            {
+              relative_path: "synthesis/multi-target-result.json",
+              sha256: "d".repeat(64),
+              size_bytes: 512,
+            },
+            {
+              relative_path: "synthesis/multi-target-evidence.json",
+              sha256: "e".repeat(64),
+              size_bytes: 384,
+            },
+          ],
+        },
         supported: ["ice40", "gowin"],
         target_provenance_matrix: {
           matrix_sha256: "a".repeat(64),

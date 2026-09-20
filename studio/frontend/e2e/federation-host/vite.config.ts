@@ -23,8 +23,8 @@ export default defineConfig({
       dts: false,
       remotes: {},
       shared: {
-        react: { singleton: true, requiredVersion: "19.2.7" },
-        "react-dom": { singleton: true, requiredVersion: "19.2.7" },
+        react: { singleton: true, requiredVersion: "19.3.0" },
+        "react-dom": { singleton: true, requiredVersion: "19.3.0" },
       },
     }),
   ],

@@ -21,8 +21,8 @@ const studioApiProxy = {
 } as const;
 
 const reactSharedContract = {
-  react: { singleton: true, requiredVersion: "19.2.7" },
-  "react-dom": { singleton: true, requiredVersion: "19.2.7" },
+  react: { singleton: true, requiredVersion: "19.3.0" },
+  "react-dom": { singleton: true, requiredVersion: "19.3.0" },
 } as const;
 
 export default defineConfig({

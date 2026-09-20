@@ -25,6 +25,7 @@
  */
 
 import type { Page } from "@playwright/test";
+import type { ProjectSaveResponse } from "../src/api/client";
 
 /**
  * A healthy capability record, with the fields the admin surface reads.
@@ -266,12 +267,14 @@ export const auditArchivePurge = {
 export const projectSaveResult = {
   evidence_classification: "project_workspace",
   name: "saved-network",
+  parent_revision: null,
   project_sha256: "b".repeat(64),
+  revision: 1,
   saved_at: 1782010000,
   schema_version: "studio.project-save.v1",
   state_sha256: "a".repeat(64),
   version: "studio.project.v1",
-};
+} satisfies ProjectSaveResponse;
 
 export const jobStatus = {
   active_count: 1,
