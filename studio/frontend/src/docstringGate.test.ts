@@ -25,7 +25,7 @@ import { ESLint } from "eslint";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 // Building a type-aware ESLint program is slow, and one instance is reused
 // across the cases so the cost is paid once rather than four times.
@@ -55,6 +55,58 @@ const UNDOCUMENTED_INTERFACE = `export interface Carrier {
 }
 `;
 
+/** A docblock whose tags have no description preceding them. */
+const DESCRIPTION_MISSING = `/**
+ * @param value - The number to advance.
+ * @returns That number plus one.
+ */
+export function unlabelled(value: number): number {
+  return value + 1;
+}
+`;
+
+/** An interface with an empty docblock. */
+const EMPTY_INTERFACE = `/** */
+export interface Carrier {
+  value: number;
+}
+`;
+
+/** A type alias with an empty docblock. */
+const EMPTY_ALIAS = `/** */
+export type Carried = number;
+`;
+
+/** The parser sees every candidate before its TypeScript project is built. */
+const candidates = [
+  UNDOCUMENTED,
+  DOCUMENTED,
+  UNDOCUMENTED_INTERFACE,
+  DESCRIPTION_MISSING,
+  EMPTY_INTERFACE,
+  EMPTY_ALIAS,
+];
+const candidatePaths = new Map<string, string>();
+let candidateDirectory: string | undefined;
+
+beforeAll(async () => {
+  const directory = await mkdtemp(fileURLToPath(new URL("./docstring-gate-", import.meta.url)));
+  candidateDirectory = directory;
+  await Promise.all(
+    candidates.map(async (source, index) => {
+      const candidate = join(directory, `candidate-${index}.ts`);
+      await writeFile(candidate, source);
+      candidatePaths.set(source, candidate);
+    }),
+  );
+});
+
+afterAll(async () => {
+  if (candidateDirectory !== undefined) {
+    await rm(candidateDirectory, { recursive: true, force: true });
+  }
+});
+
 /** The instance every case shares; building a type-aware program is slow. */
 let shared: ESLint | undefined;
 
@@ -65,16 +117,11 @@ let shared: ESLint | undefined;
  * @returns The rule ids that fired, in the order they were reported.
  */
 async function lint(source: string): Promise<string[]> {
-  const directory = await mkdtemp(fileURLToPath(new URL("./docstring-gate-", import.meta.url)));
-  const candidate = join(directory, "candidate.ts");
-  try {
-    await writeFile(candidate, source);
-    shared ??= new ESLint({ cwd: fileURLToPath(new URL("..", import.meta.url)) });
-    const results = await shared.lintFiles([candidate]);
-    return results.flatMap((result) => result.messages.map((message) => message.ruleId ?? "unknown"));
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
+  const candidate = candidatePaths.get(source);
+  if (candidate === undefined) throw new Error("Unregistered documentation gate candidate");
+  shared ??= new ESLint({ cwd: fileURLToPath(new URL("..", import.meta.url)) });
+  const results = await shared.lintFiles([candidate]);
+  return results.flatMap((result) => result.messages.map((message) => message.ruleId ?? "unknown"));
 }
 
 /**
@@ -150,14 +197,7 @@ describe("the documentation gate", () => {
     "rejects a docblock with no description, which is decoration not documentation",
     { timeout: TIMEOUT_MS },
     async () => {
-      const rules = await lint(`/**
- * @param value - The number to advance.
- * @returns That number plus one.
- */
-export function unlabelled(value: number): number {
-  return value + 1;
-}
-`);
+      const rules = await lint(DESCRIPTION_MISSING);
 
       expect(rules).toContain("jsdoc/require-description");
     },
@@ -172,11 +212,7 @@ export function unlabelled(value: number): number {
       // looked at it. Four had already reached the audited scope. The contexts
       // are now stated in the configuration, and this is the candidate that
       // proves it.
-      const rules = await lint(`/** */
-export interface Carrier {
-  value: number;
-}
-`);
+      const rules = await lint(EMPTY_INTERFACE);
 
       expect(rules).toContain("jsdoc/require-description");
     },
@@ -186,9 +222,7 @@ export interface Carrier {
     "rejects an empty docblock on a type alias for the same reason",
     { timeout: TIMEOUT_MS },
     async () => {
-      const rules = await lint(`/** */
-export type Carried = number;
-`);
+      const rules = await lint(EMPTY_ALIAS);
 
       expect(rules).toContain("jsdoc/require-description");
     },
