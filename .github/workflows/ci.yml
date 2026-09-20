@@ -206,7 +206,7 @@ jobs:
       # compatible runtime once and put it first on PATH for every matrix leg.
       - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
         with:
-          version: "1.13.0"
+          version: "1.11.9"
           show-versioninfo: "never"
 
       # Go toolchain for the c-shared accel backends. Must match accel/go/go.mod's
@@ -399,7 +399,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(julia --startup-file=no -e 'print(VERSION)')" = "1.13.0"
+          test "$(julia --startup-file=no -e 'print(VERSION)')" = "1.11.9"
           python -c "import juliacall; juliacall.Main.seval('1+1')"
           JULIA_DEPOT_PATH="$GITHUB_WORKSPACE/.venv/julia_depot" \
             julia --startup-file=no \
@@ -722,7 +722,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.primary
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage.xml
           flags: python

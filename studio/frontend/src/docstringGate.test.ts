@@ -59,12 +59,12 @@ let shared: ESLint | undefined;
  * Lint one candidate under the project's own configuration.
  *
  * @param source - The candidate source.
- * @param filename - The name to lint it under, within `src`. It defaults to an
- *   existing module; a case passes a name of its own to prove that the scope
- *   does not depend on the file already being known.
+ * @param filename - The name to lint it under, within `src`. The default is an
+ *   existing fixture with no JSDoc nodes, so the parser cannot reuse comments
+ *   from an unrelated source file when linting the short candidate text.
  * @returns The rule ids that fired, in the order they were reported.
  */
-async function lint(source: string, filename = "studioGraphTable.ts"): Promise<string[]> {
+async function lint(source: string, filename = "docstringGateFixture.ts"): Promise<string[]> {
   shared ??= new ESLint({ cwd: new URL("..", import.meta.url).pathname });
   const results = await shared.lintText(source, {
     filePath: new URL(`./${filename}`, import.meta.url).pathname,
