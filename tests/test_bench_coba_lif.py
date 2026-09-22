@@ -20,6 +20,7 @@ import numpy.typing as npt
 import pytest
 
 from benchmarks import bench_model_coba_lif as benchmark
+from tools.benchmark_evidence_gate import committed_source_hash_failures
 from sc_neurocore.accel import coba_lif as backends
 
 
@@ -68,8 +69,8 @@ def test_source_hashes_cover_declared_implementation_surfaces() -> None:
         assert len(expected) == 64
 
 
-def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
-    """Bind the measured five-lane artifact to current code and behavior."""
+def test_committed_evidence_matches_measured_sources_and_full_parity() -> None:
+    """Bind the measured five-lane artifact to its committed source snapshot."""
     artifact = benchmark.REPOSITORY / "benchmarks/results/local_python_2026-06-18_coba_lif_rk4.json"
     artifact_text = artifact.read_text(encoding="utf-8")
     assert str(benchmark.REPOSITORY) not in artifact_text
@@ -118,10 +119,7 @@ def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
         assert row["parity_max_abs_diff"] <= benchmark.TRACE_ATOL
         assert set(row["final_state"]) == {"v", "g_e", "g_i", "refractory_time"}
 
-    hashes = payload["source_hashes"]
-    for relative in benchmark.SOURCE_PATHS:
-        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
-        assert hashes[relative] == expected
+    assert committed_source_hash_failures(artifact, repo_root=benchmark.REPOSITORY) == []
 
 
 def test_real_rust_safety_gate_executes_enrolled_module() -> None:

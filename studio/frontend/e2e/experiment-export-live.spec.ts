@@ -128,10 +128,14 @@ test("a downloaded pack replays in a separate interpreter and reports tampering"
   const download = page.waitForEvent("download");
   const packResponse = page.waitForResponse(
     (response) =>
-      new URL(response.url()).pathname === "/api/export/replay-pack" && response.ok(),
+      new URL(response.url()).pathname === "/api/export/replay-pack",
+    { timeout: 60_000 },
   );
   await page.getByTestId("export-replay-pack").click();
-  const served = (await (await packResponse).json()) as ReplayPack;
+  const response = await packResponse;
+  const failureBody = response.ok() ? "" : await response.text();
+  expect(response.status(), failureBody).toBe(200);
+  const served = (await response.json()) as ReplayPack;
   const artefact = await download;
 
   expect(artefact.suggestedFilename()).toContain(

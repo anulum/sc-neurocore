@@ -135,7 +135,7 @@ fn bind_core(core_index: usize) {
 }
 
 pub fn verify_bounds_at_depth(snapshot: &PetriNetSnapshot, depth: usize) -> bool {
-    // z3 0.20 manages the context globally/thread-locally; AST and Solver
+    // z3 0.21 manages the context globally/thread-locally; AST and Solver
     // constructors no longer take an explicit `&Context`.
     let solver = Solver::new();
 
