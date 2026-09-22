@@ -29,6 +29,7 @@ from sc_neurocore.accel.sc_stochastic_rate_adaptation import (
 STEPS = 20_000
 REPEATS = 5
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
+_MODEL_NAME = "SCStochasticRateAdaptationNeuron"
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_FILES = {
     "benchmark": "benchmarks/bench_model_sc_stochastic_rate_adaptation.py",
@@ -113,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         }
     record = {
         "benchmark": "SC retained stochastic rate-adaptation recurrence",
+        "model": _MODEL_NAME,
         "evidence_class": "local_regression_non_isolated",
         "hardware_measurement_claimed": False,
         "production_speed_claim": False,

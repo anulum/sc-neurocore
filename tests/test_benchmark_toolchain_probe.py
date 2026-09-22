@@ -23,11 +23,15 @@ so a record cannot quietly name the wrong one again.
 from __future__ import annotations
 
 import re
-import tomllib
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 from benchmarks import bench_brunel_wang, bench_compte_wm
 from benchmarks import _non_resetting_lif_benchmark as shared
