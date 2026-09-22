@@ -54,7 +54,7 @@ def _wrapped_phase_schema(theta: float = 0.0) -> dict[str, object]:
             "gain": 1.0,
             "theta_threshold": 3.141592653589793,
         },
-        "integration": {"dt": 1.0, "method": "map"},
+        "integration": {"dt": 0.1, "method": "map"},
         "dynamics": {"theta": f"({candidate}) % 6.283185307179586"},
         "threshold": {
             "condition": f"theta_prev < theta_threshold <= ({previous_candidate})",

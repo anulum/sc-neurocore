@@ -2452,16 +2452,16 @@
     },
     {
       "artefact": "benchmarks/results/bench_evo_substrate.json",
-      "description": "Source-bound evolutionary-substrate Python workflow diagnostics.",
+      "description": "Source-bound evolutionary-substrate Python workflow diagnostics on ML350.",
       "expected_values": {
-        "measurement_context.concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
-        "measurement_context.timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "measurement_context.concurrent_load_status": "non-exclusive server; resident Frontier infrastructure lock active; no other agent compute lock observed before run",
+        "measurement_context.timing_interpretation": "source-bound regression context on ML350 only, not a cross-host speed comparison or production throughput claim",
         "protocol.pythonhashseed": "0",
         "protocol.samples": 30,
         "protocol.warmups": 2,
         "schema_version": "sc-neurocore.evo-substrate-benchmark.v2",
         "source.source_file_count": 16,
-        "source.source_sha256": "1e372545ca6789f051e416494fa2c6d0c5c6ebc2d1fa8e99263c878456b541d9"
+        "source.source_sha256": "0eff1c4d895ebba1b3778feb9c2d4306ee66b369f62c3424437dddb779f78576"
       },
       "id": "evo-substrate-python-local-diagnostics",
       "required_numbers": [
@@ -2501,7 +2501,7 @@
       "artefact": "benchmarks/results/bench_evo_substrate_multilang.json",
       "description": "Source-bound Rust, Julia, Go, Mojo, and Python evolutionary-kernel diagnostics.",
       "expected_values": {
-        "measurement_context.concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "measurement_context.concurrent_load_status": "non-exclusive workstation run during the FEC build; one CPU and 2 GiB cgroup limit, lowest scheduling priority",
         "measurement_context.timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
         "protocol.dimension": 19,
         "protocol.inner_iterations": 100000,
@@ -2509,7 +2509,7 @@
         "protocol.warmups": 2,
         "schema_version": "sc-neurocore.evo-substrate-multilang-benchmark.v2",
         "source.source_file_count": 33,
-        "source.source_sha256": "05fb212fff2e38830e1aa979474f7acd265ec6e6da45c0cbc8796d5619720ce2",
+        "source.source_sha256": "d10ced63e4e70b0aa17124b4279b6385b5f8ab78912254619f9ba4f4472855f0",
         "unavailable": []
       },
       "id": "evo-substrate-five-language-local-diagnostics",

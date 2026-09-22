@@ -15,6 +15,7 @@ import hashlib
 import importlib
 import json
 import math
+import os
 import platform
 import re
 import shutil
@@ -84,6 +85,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--warmups", type=int, default=2)
     parser.add_argument("--output", type=Path, default=_DEFAULT_OUTPUT)
     parser.add_argument(
+        "--mojo-binary",
+        type=Path,
+        help="Source-built Mojo benchmark executable; avoids recompiling each sample.",
+    )
+    parser.add_argument(
         "--allow-missing",
         action="store_true",
         help="Record unavailable backends instead of failing.",
@@ -97,6 +103,10 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise ValueError("samples must be positive")
     if args.warmups < 0:
         raise ValueError("warmups must be non-negative")
+    if args.mojo_binary is not None and (
+        not args.mojo_binary.is_file() or not os.access(args.mojo_binary, os.X_OK)
+    ):
+        raise ValueError("mojo binary must be an executable file")
 
 
 def _vectors() -> tuple[
@@ -241,11 +251,14 @@ def _go() -> Samples | None:
     return results if set(results) == set(_KERNELS) else None
 
 
-def _mojo() -> Samples | None:
+def _mojo(binary: Path | None) -> Samples | None:
+    """Sample the pinned source-built executable or run the pinned compiler."""
     mojo = shutil.which("mojo")
     pixi = shutil.which("pixi")
     directory = _REPO_ROOT / "src" / "sc_neurocore" / "accel" / "mojo"
-    if mojo is not None:
+    if binary is not None:
+        command = [str(binary.resolve())]
+    elif mojo is not None:
         command = pin_isa([mojo, "run", "kernels/evo_substrate_bench.mojo"])
     elif pixi is not None and (directory / "pixi.toml").is_file():
         command = pin_isa([pixi, "run", "mojo", "run", "kernels/evo_substrate_bench.mojo"])
@@ -324,7 +337,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "rust": _rust,
         "julia": _julia,
         "go": _go,
-        "mojo": _mojo,
+        "mojo": lambda: _mojo(args.mojo_binary),
         "python": _python,
     }
     unavailable: set[str] = set()
@@ -369,6 +382,11 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "python": platform.python_version(),
             "platform": platform.platform(),
             "numpy": np.__version__,
+            "mojo_binary_sha256": (
+                hashlib.sha256(args.mojo_binary.read_bytes()).hexdigest()
+                if args.mojo_binary is not None
+                else None
+            ),
         },
         "source": {
             "git_head": subprocess.run(

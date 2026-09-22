@@ -193,18 +193,24 @@ PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
   --output benchmarks/results/bench_evo_substrate.json
 
 # Evolutionary substrate five-language evidence (30 interleaved samples)
+mojo build --target-cpu x86-64-v3 \
+  -o /tmp/evo_substrate_bench \
+  src/sc_neurocore/accel/mojo/kernels/evo_substrate_bench.mojo
 JULIA_DEPOT_PATH="$PWD/build/julia-depot" PYTHONHASHSEED=0 PYTHONPATH=src \
   taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_evo_substrate_multilang.py \
-  --samples 30 --warmups 2 \
+  --samples 30 --warmups 2 --mojo-binary /tmp/evo_substrate_bench \
   --output benchmarks/results/bench_evo_substrate_multilang.json
 ```
 
-The committed evolutionary-substrate schema-v2 artefacts were captured on a
-non-exclusive workstation without kernel-reserved isolated cores. They record
-the loaded-host condition and are local regression context only. Rerun both
-producers on reserved isolated cores, with affinity, governor, frequency,
-versions, and load evidence retained, before publishing performance claims.
+The Mojo binary must be built from the current benchmark source with the
+pinned toolchain; its SHA-256 is recorded in the evidence. Without
+`--mojo-binary`, the harness invokes `mojo run` for every sample. Both modes
+include compilation outside the timed kernel loop. The schema-v2 artefacts
+record host load and CPU affinity. Their timings are regression context only;
+compare runs on the same hardware and runtime. Rerun on reserved isolated
+cores, with governor, frequency, versions, and load evidence retained, before
+publishing performance claims.
 
 The Connor-Stevens closure artefact was captured with single-logical-CPU
 affinity but without a kernel-reserved core while the workstation was loaded.

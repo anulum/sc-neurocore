@@ -18,14 +18,14 @@
 # module. The Python orchestration (ReplicationEngine, LineageTracker,
 # etc.) stays in Python; only the compute kernels are mirrored here.
 
-from time import perf_counter_ns
-from math import abs
-from collections import List
+from std.time import perf_counter
+from std.math import abs
+from std.collections import List
 
-alias EPSILON: Float64 = 1.0e-10
+comptime EPSILON: Float64 = 1.0e-10
 
 
-fn genomic_distance(a: List[Float64], b: List[Float64]) -> Float64:
+def genomic_distance(a: List[Float64], b: List[Float64]) -> Float64:
     """Scale-invariant L1 distance: mean(|a-b|/(|a|+|b|+eps))."""
     var n = len(a)
     if n == 0:
@@ -38,7 +38,7 @@ fn genomic_distance(a: List[Float64], b: List[Float64]) -> Float64:
     return acc / Float64(n)
 
 
-fn crossover_uniform(
+def crossover_uniform(
     a: List[Float64],
     b: List[Float64],
     mask: List[UInt8],
@@ -54,7 +54,7 @@ fn crossover_uniform(
     return out^
 
 
-fn point_mutation(
+def point_mutation(
     gene: List[Float64],
     mask: List[UInt8],
     noise: List[Float64],
@@ -70,7 +70,7 @@ fn point_mutation(
     return out^
 
 
-fn population_diversity(
+def population_diversity(
     population: List[List[Float64]],
 ) -> Float64:
     """Mean pairwise genomic_distance across a population."""
@@ -86,10 +86,10 @@ fn population_diversity(
     return acc / count
 
 
-fn run_benchmark() raises:
+def run_benchmark() raises:
     """Time the three kernels over a 19-D vector and print ns/call."""
-    alias D: Int = 19
-    alias ITERS: Int = 100_000
+    comptime D: Int = 19
+    comptime ITERS: Int = 100_000
 
     var a = List[Float64]()
     var b = List[Float64]()
@@ -108,22 +108,22 @@ fn run_benchmark() raises:
 
     var sink: Float64 = 0.0
 
-    var t0 = perf_counter_ns()
+    var t0 = perf_counter()
     for _ in range(ITERS):
         sink += genomic_distance(a, b)
-    var dt_gd = Float64(perf_counter_ns() - t0) / Float64(ITERS)
+    var dt_gd = (perf_counter() - t0) * 1.0e9 / Float64(ITERS)
 
-    var t1 = perf_counter_ns()
+    var t1 = perf_counter()
     for _ in range(ITERS):
         var out = crossover_uniform(a, b, mask)
         sink += out[0]
-    var dt_cr = Float64(perf_counter_ns() - t1) / Float64(ITERS)
+    var dt_cr = (perf_counter() - t1) * 1.0e9 / Float64(ITERS)
 
-    var t2 = perf_counter_ns()
+    var t2 = perf_counter()
     for _ in range(ITERS):
         var out = point_mutation(a, mask, noise)
         sink += out[0]
-    var dt_pm = Float64(perf_counter_ns() - t2) / Float64(ITERS)
+    var dt_pm = (perf_counter() - t2) * 1.0e9 / Float64(ITERS)
 
     # Print so the value of `sink` cannot be constant-folded out.
     print("sink", sink)
@@ -132,5 +132,5 @@ fn run_benchmark() raises:
     print("point_mutation_ns_per_call ", dt_pm)
 
 
-fn main() raises:
+def main() raises:
     run_benchmark()
