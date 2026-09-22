@@ -134,7 +134,9 @@ def test_dependency_free_rust_safety_matches_python(tmp_path: Path) -> None:
     program = tmp_path / "trace.rs"
     binary = tmp_path / "trace"
     program.write_text(
-        f'''include!(r#"{source}"#);
+        f'''#[path = r#"{source}"#]
+mod safety;
+use safety::CompteWMNeuron;
 fn main() {{
     let mut state = CompteWMNeuron::new();
     for i in 0..64 {{
