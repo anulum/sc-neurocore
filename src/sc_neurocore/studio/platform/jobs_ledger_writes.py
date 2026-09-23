@@ -191,12 +191,8 @@ def transition_job(
             ):
                 return observed
         current: StudioJobStatus = str(row["status"])  # type: ignore[assignment]
-        # A job asked to cancel before its supervisor marked it running stays
-        # "cancelling": it did start, and it is already winding down, so
-        # reporting it as freshly running would contradict the request the user
-        # already made. Deciding this inside the transaction is what makes it
-        # race-free; the same check outside would read a status that the cancel
-        # changes a moment later.
+        # A delayed start report must preserve an earlier cancellation.
+        # Decide under the write lock to avoid a start/cancel race.
         if to_status == "running" and current == "cancelling":
             to_status = "cancelling"
         unchanged = to_status == current

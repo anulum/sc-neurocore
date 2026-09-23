@@ -106,5 +106,6 @@ class TestNIR:
         restored = nir_to_graph(nir)
         assert len(restored["populations"]) == 2
         assert len(restored["projections"]) == 1
-        # The format carries no probability: the restored edge is all-to-all.
-        assert restored["projections"][0]["rule"] == "all_to_all"
+        # Version 2 carries connectivity, so the restored graph keeps its rule.
+        assert restored["projections"][0]["rule"] == "random"
+        assert restored["projections"][0]["probability"] == 0.2
