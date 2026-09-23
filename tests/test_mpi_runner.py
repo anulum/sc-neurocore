@@ -10,20 +10,22 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from sc_neurocore.network.mpi_runner import HAS_MPI, _require_mpi
+from sc_neurocore.network import Network
 
 
-def test_import_without_mpi():
+def test_import_without_mpi() -> None:
     """MPIRunner module loads even when mpi4py is absent; HAS_MPI reflects availability."""
     assert isinstance(HAS_MPI, bool)
 
 
-def test_require_mpi_raises_without_mpi():
+def test_require_mpi_raises_without_mpi() -> None:
     """_require_mpi raises RuntimeError when HAS_MPI is False."""
     with (
         patch("sc_neurocore.network.mpi_runner.HAS_MPI", False),
@@ -32,7 +34,7 @@ def test_require_mpi_raises_without_mpi():
         _require_mpi()
 
 
-def _make_network():
+def _make_network() -> Network:
     """Build a minimal 2-population network for testing."""
     from sc_neurocore.network import Network, Population, Projection, SpikeMonitor
 
@@ -43,7 +45,7 @@ def _make_network():
     return Network(pop_a, pop_b, proj, mon, seed=42)
 
 
-def test_partition_populations():
+def test_partition_populations() -> None:
     """Round-robin partitioning assigns populations to ranks correctly."""
     net = _make_network()
 
@@ -64,7 +66,7 @@ def test_partition_populations():
     assert runner._rank_of == {0: 0, 1: 1}
 
 
-def test_single_rank_matches_python():
+def test_single_rank_matches_python() -> None:
     """Single-rank MPI simulation produces same spike count as Python backend."""
     net_py = _make_network()
     net_py.run(0.05, dt=0.001, backend="python")
@@ -76,10 +78,10 @@ def test_single_rank_matches_python():
     comm_mock.Get_rank.return_value = 0
     comm_mock.Get_size.return_value = 1
 
-    def fake_allgather(send, recv):
+    def fake_allgather(send: np.ndarray[Any, Any], recv: np.ndarray[Any, Any]) -> None:
         recv[:] = send
 
-    def fake_allgatherv(send, recv_info):
+    def fake_allgatherv(send: np.ndarray[Any, Any], recv_info: Any) -> None:
         recv_buf = recv_info[0]
         recv_buf[: len(send)] = send
 
@@ -101,7 +103,7 @@ def test_single_rank_matches_python():
     assert mpi_spikes == py_spikes
 
 
-def test_cross_rank_projection_identification():
+def test_cross_rank_projection_identification() -> None:
     """Projections spanning rank boundaries are classified as cross-rank."""
     net = _make_network()
 
@@ -124,7 +126,7 @@ def test_cross_rank_projection_identification():
     assert len(runner._local_projs) == 0
 
 
-def test_exchange_spikes_mock():
+def test_exchange_spikes_mock() -> None:
     """Spike exchange packs/unpacks correctly in single-rank mode."""
     net = _make_network()
 
@@ -132,10 +134,10 @@ def test_exchange_spikes_mock():
     comm_mock.Get_rank.return_value = 0
     comm_mock.Get_size.return_value = 1
 
-    def fake_allgather(send, recv):
+    def fake_allgather(send: np.ndarray[Any, Any], recv: np.ndarray[Any, Any]) -> None:
         recv[:] = send
 
-    def fake_allgatherv(send, recv_info):
+    def fake_allgatherv(send: np.ndarray[Any, Any], recv_info: Any) -> None:
         recv_buf = recv_info[0]
         recv_buf[: len(send)] = send
 
@@ -160,7 +162,7 @@ def test_exchange_spikes_mock():
     np.testing.assert_array_equal(result[1], [0, 1, 0])
 
 
-def test_run_mpi_raises_on_spike_gating():
+def test_run_mpi_raises_on_spike_gating() -> None:
     """Network.run(backend='mpi', spike_gating=True) must refuse — MPIRunner does not honour the flag."""
     net = _make_network()
     with pytest.raises(
@@ -169,7 +171,7 @@ def test_run_mpi_raises_on_spike_gating():
         net.run(0.005, dt=0.001, backend="mpi", spike_gating=True)
 
 
-def test_run_mpi_raises_on_fim_lambda():
+def test_run_mpi_raises_on_fim_lambda() -> None:
     """Network.run(backend='mpi') must refuse when fim_lambda > 0 — MPIRunner does not call _apply_fim."""
     from sc_neurocore.network import Network, Population, Projection
 
@@ -182,7 +184,7 @@ def test_run_mpi_raises_on_fim_lambda():
         net.run(0.005, dt=0.001, backend="mpi")
 
 
-def test_run_mpi_raises_on_embedded_stimuli_before_mpi_import():
+def test_run_mpi_raises_on_embedded_stimuli_before_mpi_import() -> None:
     """MPI backend must fail closed when stimuli would otherwise be ignored."""
     from sc_neurocore.network import Network, Population, StepCurrent
 
@@ -197,7 +199,7 @@ def test_run_mpi_raises_on_embedded_stimuli_before_mpi_import():
         net.run(0.005, dt=0.001, backend="mpi")
 
 
-def test_run_mpi_raises_on_state_monitors_before_mpi_import():
+def test_run_mpi_raises_on_state_monitors_before_mpi_import() -> None:
     """MPI backend must fail closed when state traces would otherwise be dropped."""
     from sc_neurocore.network import Network, Population, StateMonitor
 
@@ -211,7 +213,7 @@ def test_run_mpi_raises_on_state_monitors_before_mpi_import():
         net.run(0.005, dt=0.001, backend="mpi")
 
 
-def test_run_mpi_raises_on_plasticity_before_mpi_import():
+def test_run_mpi_raises_on_plasticity_before_mpi_import() -> None:
     """MPI backend must fail closed when plasticity updates would otherwise be skipped."""
     from sc_neurocore.network import Network, Population, Projection
 
@@ -225,21 +227,23 @@ def test_run_mpi_raises_on_plasticity_before_mpi_import():
         net.run(0.005, dt=0.001, backend="mpi")
 
 
-def test_step_local_uses_rust_dispatch_when_supported(monkeypatch):
+def test_step_local_uses_rust_dispatch_when_supported(monkeypatch: pytest.MonkeyPatch) -> None:
     """Supported local populations should step through the Rust per-rank API."""
     import sc_neurocore.network.mpi_runner as mpimod
     from sc_neurocore.network import Network, Population
 
     class FakeRustRunner:
-        def __init__(self):
+        def __init__(self) -> None:
             self.added: list[tuple[str, int]] = []
-            self.calls: list[tuple[int, np.ndarray]] = []
+            self.calls: list[tuple[int, np.ndarray[Any, Any]]] = []
 
         def add_population(self, model: str, n: int) -> int:
             self.added.append((model, n))
             return len(self.added) - 1
 
-        def step_population(self, pop_index: int, currents: np.ndarray):
+        def step_population(
+            self, pop_index: int, currents: np.ndarray[Any, Any]
+        ) -> dict[str, np.ndarray[Any, Any]]:
             self.calls.append((pop_index, np.asarray(currents, dtype=np.float64).copy()))
             return {
                 "spikes": np.array([1, 0, 1], dtype=np.uint8),
@@ -248,31 +252,26 @@ def test_step_local_uses_rust_dispatch_when_supported(monkeypatch):
 
     rust_instances: list[FakeRustRunner] = []
 
-    class FakeRustEngine:
-        @staticmethod
-        def supported_models():
-            return ["LapicqueNeuron", "Lapicque"]
-
-        def __new__(cls):
-            instance = FakeRustRunner()
-            rust_instances.append(instance)
-            return instance
+    def fake_rust_engine() -> FakeRustRunner:
+        instance = FakeRustRunner()
+        rust_instances.append(instance)
+        return instance
 
     comm_mock = MagicMock()
     comm_mock.Get_rank.return_value = 0
     comm_mock.Get_size.return_value = 1
 
-    pop = Population("LapicqueNeuron", 3, label="A")
+    pop = Population("AdExNeuron", 3, label="A")
     net = Network(pop, seed=42)
 
-    def forbidden_python_step(_currents, spike_gating=False):
+    def forbidden_python_step(_currents: np.ndarray[Any, Any], spike_gating: bool = False) -> None:
         raise AssertionError("MPIRunner used Python step_all despite available Rust dispatch")
 
-    pop.step_all = forbidden_python_step
+    monkeypatch.setattr(pop, "step_all", forbidden_python_step)
 
     monkeypatch.setattr(mpimod, "HAS_MPI", True)
     monkeypatch.setattr(mpimod, "MPI", MagicMock(COMM_WORLD=comm_mock))
-    monkeypatch.setattr(mpimod, "_get_rust_engine", lambda: FakeRustEngine)
+    monkeypatch.setattr(mpimod, "_get_rust_engine", lambda: fake_rust_engine)
     monkeypatch.setattr(mpimod, "_rust_supports_model", lambda _model: True)
 
     runner = mpimod.MPIRunner(net)
@@ -280,7 +279,7 @@ def test_step_local_uses_rust_dispatch_when_supported(monkeypatch):
     local_spikes = runner._step_local({0: currents}, {})
 
     assert runner._rust_dispatch_enabled is True
-    assert rust_instances[0].added == [("LapicqueNeuron", 3)]
+    assert rust_instances[0].added == [("AdExNeuron", 3)]
     assert len(rust_instances[0].calls) == 1
     call_pop_index, call_currents = rust_instances[0].calls[0]
     assert call_pop_index == 0

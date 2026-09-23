@@ -76,8 +76,11 @@ class TestLaneIsBuilt:
 
 
 class TestRequireNativeLane:
-    def test_an_absent_lane_skips_with_the_subject_named(self) -> None:
+    def test_an_absent_lane_skips_with_the_subject_named(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """A reader of the report must know which model went unexercised."""
+        monkeypatch.delenv("SC_NEUROCORE_REQUIRE_GO", raising=False)
         with pytest.raises(pytest.skip.Exception, match=r"go lane is not built for probe"):
             require_native_lane(_accel(lambda lane: False), "go", subject="probe")
 

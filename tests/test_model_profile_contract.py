@@ -52,6 +52,8 @@ REPRESENTATIVES = (
     "escape_rate",
     "poisson",
     "coba_lif",
+    "brunel_wang",
+    "compte_wm",
 )
 
 
@@ -88,12 +90,15 @@ def test_toml_and_json_twins_resolve_to_the_same_profile(profiles: dict[str, Mod
 def test_representatives_author_a_profile_and_the_rest_derive_one(
     profiles: dict[str, ModelProfile],
 ) -> None:
-    """Twelve representatives carry an authored section; every other schema is derived."""
+    """Fourteen representatives author roles; the original twelve declare numerical units."""
     authored = {name for name, profile in profiles.items() if profile.authored}
     assert authored == set(REPRESENTATIVES)
     for name in REPRESENTATIVES:
         assert profiles[name].is_executable, name
-        assert profiles[name].numerical.time_unit in {"ms", "iteration"}, name
+        if name in {"brunel_wang", "compte_wm"}:
+            assert "ms" in load_schema(name)["extensions"]["discretisation"], name
+        else:
+            assert profiles[name].numerical.time_unit in {"ms", "iteration"}, name
 
 
 def test_executable_and_descriptive_records_are_partitioned_by_vocabulary(
