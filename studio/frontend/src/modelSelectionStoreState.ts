@@ -66,8 +66,11 @@ export interface TemplateSelectedStatePatch {
 export interface ModelSelectionStartedStatePatch {
   error: null;
   fiResult: null;
+  modelDetail: null;
+  modelParams: Record<string, number>;
   result: null;
   selectedModelName: string;
+  sourceMode: "model";
 }
 
 /** A model's contract arrived: its defaults become the experiment. */
@@ -171,7 +174,10 @@ export function templateSelectedState(template: NeuronTemplate): TemplateSelecte
 export function modelSelectionStartedState(
   selectedModelName: string,
 ): ModelSelectionStartedStatePatch {
-  return { error: null, fiResult: null, result: null, selectedModelName };
+  return {
+    error: null, fiResult: null, modelDetail: null, modelParams: {},
+    result: null, selectedModelName, sourceMode: "model",
+  };
 }
 
 /**

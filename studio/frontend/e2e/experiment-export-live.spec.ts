@@ -55,6 +55,8 @@ async function openStudioWithTheModel(page: Page): Promise<void> {
   );
   await contract.locator("..").click();
   await detail;
+  await expect(page.getByTestId("slider-g_na")).toBeVisible();
+  await expect(page.getByTestId("slider-g_a")).not.toBeVisible();
 }
 
 /**

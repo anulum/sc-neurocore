@@ -384,6 +384,7 @@ export function createStudioStoreActions(
   set: (partial: Partial<StudioState> | ((state: StudioState) => Partial<StudioState>)) => void,
   get: () => StudioState,
 ): StudioStoreActions {
+  let modelSelectionVersion = 0;
   return {
   setSourceMode: (m) => { set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() }); },
   setEquations: (eqs) => {
@@ -694,12 +695,15 @@ export function createStudioStoreActions(
   },
 
   selectModel: async (name) => {
+    const version = ++modelSelectionVersion;
     set({ ...modelSelectionStartedState(name), ...compilerConfigurationInvalidatedState() });
     // No `detail === null` guard: the route's contract does not allow one, and
     // the guard that used to be here defended a single field of a response that
     // nothing validates. Response validation at the API boundary is recorded as
     // its own unit.
     const detail = await fetchModelDetail(name);
+    // An older request may finish after a newer model has been selected.
+    if (version !== modelSelectionVersion) return;
     set(modelDetailLoadedState(detail));
     void get().runSimulation();
   },
@@ -753,6 +757,9 @@ export function createStudioStoreActions(
     const s = get();
     set(studioCodegenStartState());
     try {
+      if (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName) {
+        throw new Error("Selected model is still loading");
+      }
       const res = await fetchCodegen(studioExperimentExportRequest(simulationConfigInput(s)));
       set(studioCodegenResultState(res.script, res.oneliner, res.replay_script, res.experiment_sha256));
     } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
@@ -761,6 +768,9 @@ export function createStudioStoreActions(
   exportReplayPack: async () => {
     const s = get();
     try {
+      if (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName) {
+        throw new Error("Selected model is still loading");
+      }
       const pack = await fetchReplayPack(studioExperimentExportRequest(simulationConfigInput(s)));
       const artefact = replayPackExport(pack);
       downloadBrowserArtefact(artefact.blob, artefact.filename);

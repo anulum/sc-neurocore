@@ -179,8 +179,11 @@ describe("model selection store state helpers", () => {
     expect(modelSelectionStartedState("lif")).toEqual({
       error: null,
       fiResult: null,
+      modelDetail: null,
+      modelParams: {},
       result: null,
       selectedModelName: "lif",
+      sourceMode: "model",
     });
     expect(modelDefaultParameters(detail)).toEqual({
       E_L: -65,

@@ -386,7 +386,7 @@ export default function App() {
           title={panelState("characterize").message}
           color="#fff176" />
         <Btn label="Code" onClick={() => { void s.runCodegen(); }}
-          disabled={panelUnavailable("code")}
+          disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
           title={panelState("code").message}
           testId="run-codegen"
           color="#90a4ae" />
@@ -470,7 +470,7 @@ export default function App() {
         <Btn label="CSV" onClick={s.exportCSV} disabled={!s.result} outline />
         <Btn label="SVG" onClick={s.exportSVG} disabled={!s.result} outline />
         <Btn label="Replay pack" onClick={() => { void s.exportReplayPack(); }}
-          disabled={panelUnavailable("code")}
+          disabled={panelUnavailable("code") || (s.sourceMode === "model" && s.modelDetail?.name !== s.selectedModelName)}
           title="Download a sealed pack another installation can run and compare"
           testId="export-replay-pack"
           outline />
