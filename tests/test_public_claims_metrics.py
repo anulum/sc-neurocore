@@ -390,8 +390,8 @@ def test_conda_forge_claims_are_recipe_draft_until_published() -> None:
     assert "conda install conda-forge::sc-neurocore" not in compact
 
 
-def test_public_maturity_classifier_stays_beta_until_v4_release() -> None:
-    """Keep package maturity below stable until public release evidence catches up."""
+def test_public_maturity_classifier_stays_beta_until_stable_gate() -> None:
+    """Keep package maturity below stable until the evidence gate is met."""
     root = _repo_root()
     classifiers = _project_classifiers()
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
@@ -409,8 +409,10 @@ def test_public_maturity_classifier_stays_beta_until_v4_release() -> None:
     assert "Development Status :: 4 - Beta" in classifiers
     assert "Development Status :: 5 - Production/Stable" not in classifiers
     assert "Development Status :: 5 - Production/Stable" not in pyproject
-    assert "broad research surface" in compact
-    assert "stable public api freeze" in compact
+    assert "supported development parent" in compact
+    assert "evidenced stable gate" in compact
+    assert "reviewed api, dependency, packaging, and migration contracts" in compact
+    assert "no split date or final layout is set" in compact
     assert "beta maturity" in compact
     assert "beta package surface" in compact
     assert "production-ready" not in compact
