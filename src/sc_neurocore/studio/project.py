@@ -391,8 +391,9 @@ def import_project(name: str, document: dict[str, Any]) -> dict[str, Any]:
     store = _store()
     try:
         created = store.import_document(name, document)
-    except WorkspaceSchemaError as exc:
-        return {"error": f"Invalid workspace document: {exc}"}
+    except WorkspaceSchemaError:
+        logger.exception("Studio workspace import rejected for %s", name)
+        return {"error": "Invalid workspace document"}
     return {"imported": name, "revision": created.revision}
 
 

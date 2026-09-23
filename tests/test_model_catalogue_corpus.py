@@ -124,6 +124,8 @@ def test_descriptor_access_rejects_path_like_class_names() -> None:
 def test_missing_descriptor_branch_and_public_summary_are_stable() -> None:
     """Valid absent descriptors return ``None`` and summaries stay JSON-safe."""
 
+    with pytest.raises(ValueError, match="not registered"):
+        descriptor_path("DescriptorAbsentForCoverage")
     assert load_descriptor_payload("DescriptorAbsentForCoverage") is None
     assert load_descriptor("DescriptorAbsentForCoverage") is None
 

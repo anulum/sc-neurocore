@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +55,7 @@ METADATA_STATE_UNAVAILABLE = "unavailable"
 METADATA_STATE_INVALID = "invalid"
 
 _models_cache: list[dict[str, Any]] | None = None
+logger = logging.getLogger(__name__)
 
 
 class ModelMetadataError(RuntimeError):
@@ -439,7 +441,7 @@ def _introspected_summary(name: str) -> dict[str, Any]:
     }
 
 
-def _unreadable_summary(name: str, reason: str) -> dict[str, Any]:
+def _unreadable_summary(name: str) -> dict[str, Any]:
     """Catalogue entry for a model whose metadata could not be read.
 
     Carries the same keys as a healthy entry so every consumer keeps working on
@@ -450,9 +452,6 @@ def _unreadable_summary(name: str, reason: str) -> dict[str, Any]:
     ----------
     name : str
         The registered model identity.
-    reason : str
-        The failure, as the exception described it. Path-free: descriptor
-        loading reports the model, not the file it came from.
 
     Returns
     -------
@@ -464,7 +463,7 @@ def _unreadable_summary(name: str, reason: str) -> dict[str, Any]:
         "module": _CLASS_TO_MODULE[name],
         **_identity_fields(name),
         "metadata_state": METADATA_STATE_INVALID,
-        "metadata_error": reason,
+        "metadata_error": "Model metadata unavailable",
         "tier": 0,
         "evidence_kind": "",
         "science_tier": 0,
@@ -557,8 +556,9 @@ def list_models() -> list[dict[str, Any]]:
                 if descriptor is not None
                 else _introspected_summary(name)
             )
-        except (TypeError, AttributeError, ValueError) as exc:
-            entry = _unreadable_summary(name, f"{type(exc).__name__}: {exc}")
+        except (TypeError, AttributeError, ValueError):
+            logger.exception("Studio model metadata unavailable for %s", name)
+            entry = _unreadable_summary(name)
         result.append(entry)
     _models_cache = result
     return result

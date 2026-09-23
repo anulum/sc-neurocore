@@ -474,9 +474,10 @@ class TestPublicProjectApi:
     ) -> None:
         project = self._project_module(tmp_path, monkeypatch)
 
-        result = project.import_project("w", {"nonsense": True})
+        result = project.import_project("w", {"nonsense": "private-payload-token"})
 
-        assert "Invalid workspace document" in result["error"]
+        assert result["error"] == "Invalid workspace document"
+        assert "private-payload-token" not in result["error"]
 
     def test_a_legacy_single_file_project_is_still_readable(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

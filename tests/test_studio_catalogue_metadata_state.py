@@ -14,7 +14,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from starlette.testclient import TestClient
 
+from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio import model_catalogue as catalogue
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -69,7 +71,20 @@ def test_unreadable_metadata_is_reported_not_omitted(broken_descriptor: str) -> 
 
     assert len(rows) == len(catalogue._CLASS_TO_MODULE)
     assert row["metadata_state"] == catalogue.METADATA_STATE_INVALID
-    assert row["metadata_error"] == "ValueError: descriptor is not valid TOML"
+    assert row["metadata_error"] == "Model metadata unavailable"
+
+
+def test_model_http_response_does_not_expose_descriptor_exception(
+    broken_descriptor: str,
+) -> None:
+    """The public catalogue reports a fault without its internal exception."""
+    with TestClient(create_app(), base_url="http://127.0.0.1") as client:
+        response = client.get("/api/models")
+    assert response.status_code == 200
+    row = next(item for item in response.json() if item["name"] == broken_descriptor)
+    assert row["metadata_state"] == catalogue.METADATA_STATE_INVALID
+    assert row["metadata_error"] == "Model metadata unavailable"
+    assert "descriptor is not valid TOML" not in response.text
 
 
 def test_an_invalid_entry_carries_every_key_a_healthy_entry_carries(

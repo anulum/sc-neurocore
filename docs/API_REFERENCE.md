@@ -22830,7 +22830,7 @@ pathlib.Path
 Raises
 ------
 ValueError
-    If ``class_name`` is empty, private, dotted, or path-like.
+    If ``class_name`` is empty, private, dotted, path-like or unregistered.
 
 ### Function `load_descriptor_payload(class_name)`
 Return the raw committed descriptor payload.

@@ -37,6 +37,9 @@ from sc_neurocore.neurons.model_taxonomy import canonical_model_name
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 DESCRIPTOR_DIR = Path(__file__).resolve().parent / "model_descriptors"
+_DESCRIPTOR_PATHS = {
+    name: DESCRIPTOR_DIR / f"{canonical_model_name(name)}.toml" for name in _CLASS_TO_MODULE
+}
 
 
 def descriptor_path(class_name: str) -> Path:
@@ -55,11 +58,14 @@ def descriptor_path(class_name: str) -> Path:
     Raises
     ------
     ValueError
-        If ``class_name`` is empty, private, dotted, or path-like.
+        If ``class_name`` is empty, private, dotted, path-like or unregistered.
     """
     if not class_name.isidentifier() or class_name.startswith("_"):
         raise ValueError("model class name must be a public Python identifier")
-    return DESCRIPTOR_DIR / f"{canonical_model_name(class_name)}.toml"
+    try:
+        return _DESCRIPTOR_PATHS[class_name]
+    except KeyError as exc:
+        raise ValueError("model class name is not registered") from exc
 
 
 def load_descriptor_payload(class_name: str) -> dict[str, Any] | None:
@@ -81,7 +87,11 @@ def load_descriptor_payload(class_name: str) -> dict[str, Any] | None:
     ValueError
         If ``class_name`` is empty, private, dotted, or path-like.
     """
-    path = descriptor_path(class_name)
+    if not class_name.isidentifier() or class_name.startswith("_"):
+        raise ValueError("model class name must be a public Python identifier")
+    path = _DESCRIPTOR_PATHS.get(class_name)
+    if path is None:
+        return None
     if not path.is_file():
         return None
     with path.open("rb") as handle:
