@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from tools.benchmark_evidence_gate import (
@@ -20,6 +20,41 @@ from tools.benchmark_evidence_gate import (
     _git_bytes,
     _safe_repo_path,
 )
+
+
+def assert_committed_source_hashes(
+    artefact: Path,
+    *,
+    repo_root: Path,
+    source_hashes: Mapping[str, str],
+) -> None:
+    """Check JSON or TOML receipt hashes against its artefact-writing Git tree.
+
+    Parameters
+    ----------
+    artefact:
+        Committed benchmark receipt to validate.
+    repo_root:
+        Repository whose full Git history contains the receipt and sources.
+    source_hashes:
+        Receipt-declared path-to-SHA-256 mapping.
+
+    Raises
+    ------
+    AssertionError
+        The receipt changed, its historical source is missing, or a digest
+        differs from the source at the receipt-writing commit.
+    """
+    relative = artefact.resolve().relative_to(repo_root.resolve()).as_posix()
+    failures: list[GateFailure] = []
+    revision = _artefact_commit(repo_root, relative, "record", failures)
+    assert revision is not None, failures
+    assert source_hashes, "receipt has no source hashes"
+    for source_path, expected in sorted(source_hashes.items()):
+        assert _safe_repo_path(source_path), source_path
+        content = _git_bytes(repo_root, "show", f"{revision}:{source_path}")
+        assert content is not None, source_path
+        assert hashlib.sha256(content).hexdigest() == expected, source_path
 
 
 def committed_bundle_digest(

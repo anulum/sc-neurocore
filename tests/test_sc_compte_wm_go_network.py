@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
+
+from tests.benchmark_history_support import assert_committed_source_hashes
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 GO_ROOT = REPOSITORY / "src/sc_neurocore/accel/go"
@@ -38,10 +39,6 @@ def _environment() -> dict[str, str]:
         }
     )
     return environment
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_go_network_native_parity_suite() -> None:
@@ -101,6 +98,9 @@ def test_go_benchmark_receipt_is_source_bound_and_matches_python() -> None:
     assert payload["input_sha256"] == python["input_sha256"]
     assert payload["spike_sha256"] == python["spike_sha256"]
     assert payload["spike_counts"] == python["spike_counts"]
-    for path in (GO_MOD, SOURCE, BENCHMARK):
-        relative = path.relative_to(REPOSITORY).as_posix()
-        assert payload["source_sha256"][relative] == _sha256(path)
+    assert set(payload["source_sha256"]) == {
+        path.relative_to(REPOSITORY).as_posix() for path in (GO_MOD, SOURCE, BENCHMARK)
+    }
+    assert_committed_source_hashes(
+        RESULT, repo_root=REPOSITORY, source_hashes=payload["source_sha256"]
+    )

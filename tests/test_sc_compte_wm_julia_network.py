@@ -10,18 +10,19 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 import os
 import subprocess
+import sys
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
+else:
     import tomli as tomllib
 
 from tests.toolchain_support import require_executable
+from tests.benchmark_history_support import assert_committed_source_hashes
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 JULIA_ROOT = REPOSITORY / "src/sc_neurocore/accel/julia/sc_compte_wm_network"
@@ -38,10 +39,6 @@ def _environment() -> dict[str, str]:
     environment = os.environ.copy()
     environment["JULIA_DEPOT_PATH"] = str(REPOSITORY / ".venv/julia_depot")
     return environment
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_julia_network_native_parity_suite() -> None:
@@ -88,10 +85,12 @@ def test_julia_benchmark_receipt_is_source_bound() -> None:
     assert payload["passed"] is True
     assert payload["persistent_bump_claimed"] is False
     assert payload["distractor_resistance_claimed"] is False
-    source_hashes = payload["source_sha256"]
-    for path in (PROJECT, MANIFEST, SOURCE, BENCHMARK):
-        relative = path.relative_to(REPOSITORY).as_posix()
-        assert source_hashes[relative] == _sha256(path)
+    assert set(payload["source_sha256"]) == {
+        path.relative_to(REPOSITORY).as_posix() for path in (PROJECT, MANIFEST, SOURCE, BENCHMARK)
+    }
+    assert_committed_source_hashes(
+        RESULT, repo_root=REPOSITORY, source_hashes=payload["source_sha256"]
+    )
 
 
 def test_julia_1000_step_event_receipt_matches_python() -> None:

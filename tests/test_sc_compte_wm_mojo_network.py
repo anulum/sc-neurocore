@@ -10,11 +10,11 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel.mojo.sc_compte_wm_network import (
@@ -26,6 +26,7 @@ from sc_neurocore.accel.mojo.sc_compte_wm_network import (
 from sc_neurocore.network import SCCompteWMNetworkSpec, SCCompteWMStimulus
 from sc_neurocore.network.sc_compte_wm_network import SCCompteWMNetworkState
 from sc_neurocore.neurons.models.compte_wm import CompteWMNeuron
+from tests.benchmark_history_support import assert_committed_source_hashes
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 FACADE = SOURCE_PATH.with_name("__init__.py")
@@ -34,12 +35,8 @@ RESULT = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network_mojo.json"
 PYTHON_RESULT = REPOSITORY / "benchmarks/results/bench_sc_compte_wm_network.json"
 
 
-def _zero_events() -> tuple[np.ndarray, np.ndarray]:
+def _zero_events() -> tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]:
     return np.zeros(2048, dtype=np.int64), np.zeros(512, dtype=np.int64)
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_mojo_library_and_documented_complete_abi_exist() -> None:
@@ -74,8 +71,8 @@ def test_mojo_counter_fixture_and_preserved_scalar_cell_parity() -> None:
 
 
 def test_mojo_recurrent_fft_matches_cross_runtime_dense_anchor() -> None:
-    zeros_exc = np.zeros(2048, dtype=np.float64)
-    zeros_inh = np.zeros(512, dtype=np.float64)
+    zeros_exc: npt.NDArray[np.float64] = np.zeros(2048, dtype=np.float64)
+    zeros_inh: npt.NDArray[np.float64] = np.zeros(512, dtype=np.float64)
     state = SCCompteWMNetworkState(
         step_index=0,
         v_exc_mv=np.full(2048, -60.0, dtype=np.float64),
@@ -144,6 +141,9 @@ def test_mojo_benchmark_is_source_bound_and_matches_python_events() -> None:
     assert payload["input_sha256"] == python["input_sha256"]
     assert payload["spike_sha256"] == python["spike_sha256"]
     assert payload["spike_counts"] == python["spike_counts"]
-    for path in (SOURCE_PATH, FACADE, BENCHMARK):
-        relative = path.relative_to(REPOSITORY).as_posix()
-        assert payload["source_sha256"][relative] == _sha256(path)
+    assert set(payload["source_sha256"]) == {
+        path.relative_to(REPOSITORY).as_posix() for path in (SOURCE_PATH, FACADE, BENCHMARK)
+    }
+    assert_committed_source_hashes(
+        RESULT, repo_root=REPOSITORY, source_hashes=payload["source_sha256"]
+    )
