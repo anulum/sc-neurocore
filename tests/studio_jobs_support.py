@@ -49,6 +49,7 @@ JOBS_TEST_PATHS = tuple(
         "test_studio_jobs_architecture.py",
         "test_studio_jobs_artifacts.py",
         "test_studio_jobs_cancel_race.py",
+        "test_studio_jobs_peer_cancellation.py",
         "test_studio_jobs_context.py",
         "test_studio_jobs_thread.py",
         "test_studio_jobs_process.py",
@@ -57,11 +58,13 @@ JOBS_TEST_PATHS = tuple(
         "test_studio_jobs_routes.py",
         "test_studio_jobs_admission.py",
         "test_studio_jobs_ledger.py",
+        "test_studio_jobs_ledger_state.py",
         "test_studio_jobs_ledger_reads.py",
         "test_studio_jobs_ledger_ordering.py",
         "test_studio_jobs_ledger_recovery.py",
         "test_studio_jobs_reaping.py",
         "test_studio_jobs_restart_recovery.py",
+        "test_studio_jobs_supervisor_recovery.py",
     )
 )
 EXPECTED_JOBS_EXPORTS = (

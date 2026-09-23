@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4874
+    "test_files": 4877
   },
   "documentation": {
     "public_pages": [
@@ -7381,12 +7381,15 @@
       "tests/test_studio_jobs_ledger_ordering.py",
       "tests/test_studio_jobs_ledger_reads.py",
       "tests/test_studio_jobs_ledger_recovery.py",
+      "tests/test_studio_jobs_ledger_state.py",
+      "tests/test_studio_jobs_peer_cancellation.py",
       "tests/test_studio_jobs_process.py",
       "tests/test_studio_jobs_process_control.py",
       "tests/test_studio_jobs_process_failures.py",
       "tests/test_studio_jobs_reaping.py",
       "tests/test_studio_jobs_restart_recovery.py",
       "tests/test_studio_jobs_routes.py",
+      "tests/test_studio_jobs_supervisor_recovery.py",
       "tests/test_studio_jobs_thread.py",
       "tests/test_studio_model_catalogue_documentation.py",
       "tests/test_studio_model_catalogue_http_api.py",
