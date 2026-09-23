@@ -411,13 +411,13 @@ The ONNX exporter writes a JSON representation of a network and stores weights a
 The profiling tools under `profiling/` and the performance tuning guide provide guidance on bitstream length, clock frequency, and resource usage. When optimizing, start with the smallest acceptable bitstream length and increase only if accuracy demands it. Use vectorized layers for CPU experiments and validate accuracy against bit-level results for critical runs.
 
 ### 6.10 Compiler intelligence features (Waves 6–11)
-SC-NeuroCore includes compiler intelligence features covering formal verification, safety certification, power management, carbon estimation, multi-target deployment, security hardening, supply-chain compliance, platform extensibility, and research hardware paradigms. The live hardware registry currently exposes **194 hardware profiles** across **38 platform classes**. These features are documented in dedicated guides:
+SC-NeuroCore includes compiler intelligence features for formal checks, safety-evidence preparation, power management, carbon estimation, target exploration, security tooling, supply-chain records, platform extensibility, and research hardware paradigms. The hardware registry provides target profiles; inspect the exact release inventory before quoting counts. These features are documented in dedicated guides:
 
 - **[Compiler Intelligence Guide](compiler_intelligence.md)** — Reference for compiler-intelligence features with code examples and usage patterns.
 - **[Research Platforms Guide](research_platforms.md)** — Deep-dive into the research platform classes (superconducting, spintronic, biological, quantum, thermodynamic, probabilistic, polariton, metamaterial, etc.).
 - **[Platform Extensibility Guide](platform_extensibility.md)** — 3 mechanisms: TOML loader, runtime discovery hook, and `from_constraints()` auto-constructor.
-- **[Safety Certification Guide](safety_certification.md)** — Automated certification pipeline for DO-254, IEC 61508, and ISO 26262.
-- **[Carbon & Sustainability Guide](carbon_sustainability.md)** — Carbon footprint estimation, energy scheduling, and EU regulatory compliance.
+- **[Safety Evidence Guide](safety_certification.md)** — Reviewable engineering evidence; no certification or conformity claim.
+- **[Carbon & Sustainability Guide](carbon_sustainability.md)** — Assumption-based carbon estimates and energy scheduling; no regulatory compliance claim.
 - **[Verification & Debug Guide](verification_debug.md)** — 14 verification features from pre-RTL stability through post-silicon debug, HIL calibration, and digital twin monitoring.
 - **[Multi-Target Deployment Guide](multi_target_deployment.md)** — Auto-target recommendation, heterogeneous dispatch, UCIe chiplet mapping, and topology optimisation.
 - **[Universal Coverage API Reference](universal_coverage_api_reference.md)** — Complete API reference for §52–§59 and 4 platform classes (optical_io, acoustic, fluidic, space_qualified).

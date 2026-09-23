@@ -1,9 +1,9 @@
 {
-  "title": "SC-NeuroCore: Universal Stochastic Computing Framework for Neuromorphic Hardware",
-  "description": "A high-performance neuromorphic computing framework combining stochastic computing with spiking neural networks. Current static inventory from the repository records 152 Python model source modules, 158 Python model classes, 175 Rust PyO3 model wrappers, 44 public package exports, 43 top-level non-testbench Verilog RTL modules, 16 tb_sc_* simulation testbenches, and 17 SHA-pinned GitHub Actions workflows. The framework includes bit-true Verilog RTL co-simulation, FPGA synthesis via IR compiler (SystemVerilog + MLIR/CIRCT), equation-to-Verilog compiler, formal verification tooling, NIR bridge interoperability, quantum hybrid computing, hyper-dimensional computing (HDC/VSA), Petri net simulation, CuPy GPU acceleration, JAX JIT training, MPI distributed simulation, and identity continuity substrate.",
+  "title": "SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design",
+  "description": "SC-NeuroCore is a research toolkit for stochastic computing and spiking neural networks. It provides deterministic bitstream simulation, selected Python and Rust model paths, hardware-oriented intermediate representations, RTL generation and co-simulation collateral, and explicit validation boundaries. The repository README contains a generated inventory for each exact source tree; hardware performance and scientific fidelity require separate evidence.",
   "creators": [
     {
-      "name": "Sotek, Miroslav",
+      "name": "Šotek, Miroslav",
       "affiliation": "ANULUM CH & LI",
       "orcid": "0009-0009-3560-0851"
     }
@@ -50,5 +50,5 @@
   "communities": [
     {"identifier": "zenodo"}
   ],
-  "notes": "Part of the SCPN (Self-Consistent Phenomenological Network) research framework by ANULUM. Published on Zenodo and Academia.edu."
+  "notes": "Part of the SCPN (Self-Consistent Phenomenological Network) research framework by ANULUM."
 }

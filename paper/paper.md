@@ -93,9 +93,10 @@ the same stochastic assumptions at Python, Rust, metadata, and HDL boundaries,
 and unsupported paths are expected to fail closed rather than silently emit
 unchecked artefacts. The project uses `pyproject.toml` packaging, AGPL-3.0-or-
 later licensing with a commercial licence option, a `CITATION.cff` file, and a
-Zenodo software DOI [@scneurocore_zenodo]. The current package version is
-3.14.0, and the current Python coverage gate is 96%; 100% remains a project
-target, not a present release claim.
+Zenodo software record series DOI [@scneurocore_zenodo]. The package metadata
+reports version 3.16.0, and the configured Python coverage gate is 100%.
+Passing that gate for a release requires its exact-head CI evidence and does
+not establish coverage of every optional or hardware-dependent path.
 
 # Research Impact Statement
 

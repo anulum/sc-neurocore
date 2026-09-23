@@ -6,9 +6,9 @@ authors:
   orcid: "https://orcid.org/0009-0009-3560-0851"
 title: "SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design"
 version: 3.16.0
-doi: 10.5281/zenodo.18906614
-date-released: 2026-04-13
-license: AGPL-3.0
+doi: 10.5281/zenodo.18881374
+date-released: 2026-07-04
+license: AGPL-3.0-or-later
 repository-code: "https://github.com/anulum/sc-neurocore"
 keywords:
   - neuromorphic

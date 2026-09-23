@@ -387,8 +387,9 @@ with open("sc_lif_array.upf", "w") as f:
 
 ### §45. Carbon Footprint Estimator — `estimate_carbon_footprint()`
 
-Estimates lifecycle CO₂ emissions (manufacturing + operation) per compilation
-target, enabling ESG-compliant hardware selection.
+Estimates manufacturing and operational CO₂ from configurable assumptions
+for each compilation target. These estimates are research comparisons,
+not a verified life-cycle assessment or compliance record.
 
 ```python
 from sc_neurocore.compiler.intelligence import estimate_carbon_footprint
@@ -399,8 +400,9 @@ for target in ["artix7", "loihi2", "finalspark_neuroplatform"]:
     print(f"{target}: {c.total_5yr_kg_co2:.1f} kg CO₂ (5yr)")
 ```
 
-**Regulatory context**: EU carbon labelling becomes mandatory in 2027.
-SC-NeuroCore is the only neuromorphic compiler that generates this data.
+Product-specific EU ecodesign information requirements depend on delegated
+acts under [Regulation (EU) 2024/1781](https://eur-lex.europa.eu/eli/reg/2024/1781/oj/eng).
+Use independently validated inputs before making environmental claims.
 
 ---
 

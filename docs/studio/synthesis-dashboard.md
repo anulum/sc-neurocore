@@ -4,7 +4,8 @@ The Synthesis Dashboard provides one-click FPGA synthesis from the Visual
 SNN Studio. Generate Verilog from your neuron equations, then synthesise
 to any supported FPGA target to see resource usage and timing estimates.
 
-No other SNN framework offers visual FPGA synthesis from a web IDE.
+These reports describe the generated RTL and selected tool targets;
+physical board deployment needs separate validation.
 
 ## Quick Start
 

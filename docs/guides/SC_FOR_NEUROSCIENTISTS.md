@@ -154,9 +154,9 @@ and much faster.
 |----------|-----------------|
 | Detailed biophysics (HH, multi-compartment) | Brian2/NEURON |
 | Large-scale network dynamics | SC-NeuroCore (Rust) or NEST |
-| Hardware-in-the-loop validation | SC-NeuroCore (FPGA co-sim) |
+| RTL co-simulation research | SC-NeuroCore (selected FPGA paths) |
 | STDP / learning experiments | SC-NeuroCore (STDP is native) |
-| Low-power edge deployment | SC-NeuroCore (FPGA) |
+| FPGA-oriented design exploration | SC-NeuroCore (board validation required) |
 | Population rate dynamics | SC-NeuroCore (VectorizedSCLayer) |
 | Published benchmarks (for comparison) | Brian2/NEST (community standard) |
 

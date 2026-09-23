@@ -13,7 +13,7 @@ const STORAGE_KEY = "sc-studio-onboarding-dismissed";
 const steps = [
   {
     title: "Welcome to SC-NeuroCore Studio",
-    text: "Design, train, compile, and deploy spiking neural networks from your browser. This quick tour shows you the key features.",
+    text: "Design, train, compile, and inspect synthesis evidence for spiking neural networks in your browser. Physical deployment requires separate board validation.",
   },
   {
     title: "Model Browser",
@@ -29,7 +29,7 @@ const steps = [
   },
   {
     title: "FPGA Pipeline",
-    text: "In ODE mode, click IR → SV → FPGA to compile your equation to SystemVerilog and synthesise for ice40, ECP5, Gowin, or Xilinx. No other SNN framework does this.",
+    text: "In ODE mode, click IR → SV → FPGA to compile a supported equation to SystemVerilog and inspect synthesis results for ice40, ECP5, Gowin, or Xilinx.",
   },
   {
     title: "Network Canvas",

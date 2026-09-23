@@ -85,7 +85,8 @@ core.apply_phase_inversion(node_id=42)
 SC-NeuroCore supports importing models from other SNN frameworks via
 [NIR](https://neuroir.org/) (Neuromorphic Intermediate Representation).
 This enables a workflow where you train in Norse or snnTorch, export to NIR,
-and deploy to FPGA via SC-NeuroCore.
+and prepare an FPGA-oriented RTL path via SC-NeuroCore; physical deployment
+requires separate board validation.
 
 ```python
 from sc_neurocore.nir_bridge import from_nir

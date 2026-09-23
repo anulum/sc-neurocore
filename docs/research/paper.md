@@ -9,7 +9,7 @@
 remaining production-hardening, validation, coverage, documentation, and
 hardware-evidence TODOs are complete.
 
-**Software DOI:** [10.5281/zenodo.18906614](https://doi.org/10.5281/zenodo.18906614)
+**Software record series DOI:** [10.5281/zenodo.18881374](https://doi.org/10.5281/zenodo.18881374)
 
 The canonical JOSS source is `paper/paper.md` at the repository root. This page
 mirrors the current submission stance for the public documentation site: the
@@ -24,9 +24,9 @@ intermediate representations, NIR bridge work, Rust acceleration paths, and
 Verilog-generation collateral.
 
 Public claims are limited to committed artefacts and CI-verifiable behaviour.
-The current package version is **3.14.0**, and the current Python coverage gate
-is **96%**. The project target remains 100% coverage, but 100% is not a current
-release claim.
+The package metadata reports version **3.16.0**. The configured Python coverage
+gate is **100%**; passing that gate for a release requires its exact-head CI
+evidence and is not a claim about every optional or hardware-dependent path.
 
 ## Submission Blockers
 

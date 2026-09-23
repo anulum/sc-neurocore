@@ -88,23 +88,21 @@ quadrantChart
     Flexi-NeurA: [0.7, 0.3]
 ```
 
-### Where SC-NeuroCore leads
+### Selected SC-NeuroCore capabilities
 
-1. **Stochastic computing** — Only framework with bitstream-level
+1. **Stochastic computing** — Includes bitstream-level
    simulation, packed AND+popcount operations, and Sobol LDS encoding
 2. **FPGA co-design** — IR compiler emits synthesizable SystemVerilog
    and MLIR/CIRCT, with bit-exact Python↔Verilog co-simulation
-3. **Formal verification** — 18 SymbiYosys proof jobs and 130 formal
-   statements (100 assert, 7 assume, 23 cover) across the HDL formal tree
-   (no other SNN framework offers formal proofs)
-4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   187 Rust PyO3 model wrappers and a 163-model NetworkRunner
+3. **Formal verification** — SymbiYosys jobs and formal statements;
+   use the generated README inventory for current counts and scope
+4. **Rust SIMD engine** — Architecture-specific dispatch and model wrappers;
+   use the generated README inventory for current counts
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
-6. **Analysis toolkit** — 132 spike train analysis functions across
-   24 modules, matching Elephant + PySpike combined
-7. **ArcaneNeuron** — self-referential cognition model with 5 coupled
-   subsystems (no equivalent in any other toolkit)
+6. **Analysis toolkit** — Spike train analysis modules; inspect the
+   exact release inventory before comparing counts with peer packages
+7. **ArcaneNeuron** — research model with five coupled subsystems
 8. **Identity substrate** — persistent spiking network with checkpointing,
    trace encoding/decoding, L16 Director cybernetic closure
 9. **Quantum-SC bridge** — IBM Heron r2 noise model, parameter-shift
@@ -116,8 +114,7 @@ quadrantChart
    research ecosystem with 40+ citing publications
 2. **Norse** — Bio-plausible SNN equations with auto-differentiation,
    active research community
-3. **Lava** — Direct Intel Loihi 2 hardware, event-driven asynchronous
-   execution, chip-in-the-loop validation (no other framework offers this)
+3. **Lava** — Intel Loihi hardware workflows and event-driven execution
 4. **Brian2** — Arbitrary neuron equations (string-based), 3000+
    publications, gold standard for computational neuroscience
 5. **Nengo** — Large-scale brain modelling (100K+ neurons), NEF
@@ -196,9 +193,9 @@ SC-NeuroCore MNIST classifier (Yosys synthesis, target: iCE40 UP5K):
 | `sc_dense_layer_core` | ~2,400 | ~800 | 2 |
 | 16→10 classifier | ~56K | ~18K | 16 |
 
-No other Python SNN framework produces synthesizable RTL. The closest
-competitor is Lava's Loihi compiler, which targets a fixed architecture
-(Loihi 2 cores) rather than general FPGA fabric.
+This repository includes a path from selected models to synthesizable RTL.
+Compare generated modules and target-specific evidence before drawing a
+hardware capability conclusion across frameworks.
 
 ---
 
@@ -222,18 +219,18 @@ Use that manifest as the evidence boundary for the public claim.
 
 ---
 
-## 6. When to Use Each Framework
+## 6. Possible Starting Points
 
-| Use Case | Best Choice | Why |
+| Use Case | Relevant Option | Why Consider It |
 |----------|-------------|-----|
-| FPGA deployment | **SC-NeuroCore** | Only option with IR→Verilog+MLIR |
+| FPGA RTL research | **SC-NeuroCore** | IR→Verilog/MLIR path; board deployment requires separate validation |
 | Intel Loihi hardware | **Lava** | Native Loihi support |
 | PyTorch SNN training | snnTorch or **SC-NeuroCore** | snnTorch has larger community; SC-NeuroCore adds SC export + FPGA path |
 | Computational neuroscience | **Brian2** | Arbitrary neuron equations |
 | Bio-plausible learning | **Norse** or **BindsNET** | STDP/bio-learning focus |
 | Large-scale brain models | **Nengo** | NEF, SpiNNaker support |
-| Stochastic + quantum hybrid | **SC-NeuroCore** | Unique quantum-SC bridge |
-| Formal safety verification | **SC-NeuroCore** | 18 SymbiYosys proof jobs and 130 formal statements |
+| Stochastic + quantum hybrid | **SC-NeuroCore** | Research bridge between these model paths |
+| Selected RTL property checks | **SC-NeuroCore** | SymbiYosys jobs; scope and counts depend on the exact tree |
 
 ---
 

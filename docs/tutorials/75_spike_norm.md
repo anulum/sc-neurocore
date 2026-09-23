@@ -5,7 +5,7 @@ activations and temporal dynamics correctly. Standard BN fails in SNNs
 because spike activations are binary and statistics shift across
 timesteps (temporal covariate shift). These normalizers fix that.
 
-No other SNN library ships all five as reusable modules.
+The five variants below are available as reusable modules in this package.
 
 ## The Problem
 

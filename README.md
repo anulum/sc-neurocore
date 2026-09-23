@@ -300,12 +300,13 @@ environment or run source-tree commands with `PYTHONPATH=src:bridge`.
 
 ### Visual SNN Design Studio (Experimental)
 
-> **Status:** Development preview. The Studio is functional but under active
-> development. API and UI may change between releases until the v4.0 stable API
-> freeze.
+> **Status:** Development preview. Selected workflows are available for
+> evaluation, while production hardening continues. API and UI may change
+> between releases until the reviewed stable API freeze.
 
-A web-based IDE for designing, training, compiling, and deploying spiking
-neural networks — from ODE equations to FPGA bitstream in a single browser tab.
+A web interface for designing, training, compiling, and inspecting hardware
+evidence for spiking neural networks. Physical FPGA deployment requires
+separate board validation.
 
 ```bash
 pip install sc-neurocore[studio]
@@ -323,18 +324,8 @@ sc-neurocore studio              # opens browser at http://127.0.0.1:8001
 | **Full Pipeline** | Network → simulate → compile → synthesise in one click |
 | **Project Save/Load** | Persistent workspaces as JSON, server-side storage |
 
-No other SNN framework provides a visual design-to-hardware pipeline.
-snnTorch has Jupyter notebooks. Brian2 has a basic GUI. Neither goes from
-visual network design to FPGA resource estimation.
-
-| Feature | SC-NeuroCore Studio | Brian2 GUI | snnTorch | Nengo GUI |
-|---------|:---:|:---:|:---:|:---:|
-| Visual network design | **Yes** | Basic | No | Yes |
-| ODE equation editor | **Yes** | No | No | No |
-| Live training curves | **Yes** | No | TensorBoard | No |
-| Verilog output viewer | **Yes** | No | No | No |
-| FPGA synthesis | **Yes** | No | No | No |
-| Co-simulation view | **Yes** | No | No | No |
+For measured comparisons and their evidence limits, see
+[Cross-Framework Evidence](docs/benchmarks/cross_framework.md).
 
 Full documentation: [Studio Guide](https://anulum.github.io/sc-neurocore/studio/)
 
@@ -762,13 +753,15 @@ If you use SC-NeuroCore in your research, please cite:
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
   version   = {3.16.0},
   year      = {2026},
-  doi       = {10.5281/zenodo.18906614},
+  doi       = {10.5281/zenodo.18881374},
   url       = {https://github.com/anulum/sc-neurocore},
   license   = {AGPL-3.0-or-later}
 }
 ```
 
-See also [`CITATION.cff`](CITATION.cff) for the machine-readable citation metadata.
+The DOI above identifies the software record series; no Zenodo record for
+version 3.16.0 has been deposited yet. See also [`CITATION.cff`](CITATION.cff)
+for the machine-readable citation metadata.
 
 ## AI Disclosure
 

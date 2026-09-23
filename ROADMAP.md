@@ -1,9 +1,9 @@
 # Roadmap
 
-> Last updated: 2026-07-06. Priorities may shift based on
+> Last updated: 2026-09-23. Priorities may shift based on
 > validation results and community feedback.
 
-## Current Maintenance Snapshot — 2026-07-06
+## Historical Maintenance Snapshot — 2026-07-06
 
 - Mainline CI was verified green on 2026-05-25 at `edc35c11934f`;
   obsolete completed failed/cancelled repair-sequence Actions runs were purged
@@ -13,9 +13,9 @@
   release deployments were retained as evidence.
 - Dependabot, code-scanning, and secret-scanning alert surfaces were rechecked
   on 2026-05-25 and reported zero open alerts.
-- Coverage is being recovered in staged slices. The current CI configuration
-  enforces a Python coverage gate of 99%; 100% remains the target, not the
-  current release claim.
+- Coverage was being recovered in staged slices. The configured Python
+  coverage gate is now 100%; an exact-head CI pass is required to claim it for
+  a release.
 - Open production blockers are tracked in internal audit and roadmap files.
   Do not use public docs as the source of truth for detailed task queues.
 - Cross-repository validation must confirm the SCPN datastream contract with
@@ -268,28 +268,39 @@ dependabot PRs merged.
 
 - Package metadata, generated capability snapshot, and public docs report
   version 3.16.0.
-- Current generated static inventory: 45 public exports, 153 Python model
-  source modules, 158 Python model classes, 175 Rust PyO3 model wrappers,
-  1,392 Python files under `tests/`, 581 public documentation pages, and
-  20 GitHub Actions workflows.
+- Current static inventory is generated in the
+  [README capability snapshot](README.md#version-and-capability-snapshot).
 - Current HDL static inventory: 43 top-level non-testbench Verilog RTL modules
   and 16 `tb_sc_*.v` simulation testbenches.
-- Current CI coverage gate is 99%; 100% remains the programme target.
+- The configured Python coverage gate is 100%; each release needs exact-head
+  CI evidence before claiming that it passed.
 
-## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
+## Future stable release — Physical FPGA Demos + Production
 
 ### Repository split and stable API freeze
 
-- Freeze the stable public API for the promoted runtime, compiler, hardware,
-  and bridge surfaces.
-- Split the current broad source tree into several focused repositories after
-  the ongoing experimental verification campaigns identify which modules are
-  production paths, retained research paths, or retired exploratory paths.
-- Keep the v3.x repository intentionally broad until that evidence is complete;
-  the current kitchen-sink shape is transitional, not the intended long-term
-  project layout.
-- Publish migration notes mapping v3.x modules to the v4.0 repository layout
-  before the split is completed.
+- Complete and evidence the full parent repository, including Studio, the
+  High Fidelity model catalogue, and every retained component, at a reviewed
+  STABLE gate before extracting repositories.
+- Define the public API, dependency, packaging, and migration contracts for
+  focused repositories. Final repository boundaries remain under review.
+- Keep this repository and installation as the supported path until the stable
+  gate, migration plan, and repository boundaries are approved.
+
+The proposed architecture separates responsibilities at stable interfaces:
+
+| Capability area | Intended responsibility | Contract direction |
+|-----------------|-------------------------|--------------------|
+| Simulation and catalogue | Numerical semantics, network execution, model identities and profiles | Base contracts for consumers |
+| Acceleration and learning | Optional execution backends, training and plasticity | Consume simulation contracts |
+| Compiler, verification and hardware | IR/RTL generation, equivalence evidence, target profiles and deployment records | Consume versioned model and simulation contracts |
+| Data, analysis and interchange | Spike/event formats, recording, analysis and external bridges | Exchange through versioned data contracts |
+| Studio | Visual workflows and presentation of execution and evidence | Consume the reviewed service APIs |
+| Benchmarks and evidence | Reproducible measurements and acceptance artefacts | Validate producer contracts without becoming a runtime dependency |
+
+These are capability boundaries for planning, not approved repository names
+or a final package count. Retained research components keep explicit maturity
+labels until their stable contracts are accepted.
 
 ### FPGA deployment proof (P0 blocker) PARTIALLY DONE
 

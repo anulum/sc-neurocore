@@ -6,10 +6,10 @@
 
 # Deployment Guide
 
-This guide covers deploying compiled SC-NeuroCore neurons to real FPGA
-hardware: resource estimation, timing constraints, Cocotb testbenches,
-project automation, CDC synchronisers, posit arithmetic, and bitstream
-generation.
+This guide covers the FPGA preparation path for selected compiled neurons:
+resource estimation, timing constraints, Cocotb testbenches, project
+automation, CDC synchronisers, posit arithmetic and bitstream generation.
+Physical board deployment requires separate target-specific validation.
 
 ## Resource Estimation (Without Synthesis)
 

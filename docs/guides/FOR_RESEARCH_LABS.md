@@ -24,10 +24,10 @@ is optional.
 
 | Your goal | Install command | What you get |
 |-----------|----------------|--------------|
-| Explore neuron models | `pip install sc-neurocore` | 173 models, simulation, analysis |
+| Explore neuron models | `pip install sc-neurocore` | Model catalogue, simulation, analysis; see generated README inventory |
 | Train SNNs | `pip install sc-neurocore[training]` | + PyTorch-backed training |
-| Benchmark against Brian2 | `pip install sc-neurocore[accel]` | + Numba JIT (4x speedup at 1K neurons) |
-| Deploy to FPGA | `pip install sc-neurocore` + [Yosys](https://github.com/YosysHQ/yosys) | + IR compiler, SystemVerilog emission |
+| Run selected accelerator benchmarks | `pip install sc-neurocore[accel]` | + Numba JIT; use measured benchmark evidence for comparisons |
+| Generate RTL for FPGA research | `pip install sc-neurocore` + [Yosys](https://github.com/YosysHQ/yosys) | + IR compiler and SystemVerilog emission; board validation remains separate |
 | Import NIR models | `pip install sc-neurocore[nir]` | + [NIR](https://neuroir.org/) bridge (Norse, snnTorch, Lava-DL interop) |
 | Research plotting/export stack | `pip install sc-neurocore[research]` | + matplotlib, networkx, ONNX, torch |
 | Local full research stack | `pip install sc-neurocore[full]` | Heavy optional extras for local research work |
@@ -145,9 +145,9 @@ Artix-7 100T at ~56K LUTs.
 
 ## For ML / SNN Training Labs
 
-SC-NeuroCore bridges float-domain training to hardware deployment.
+SC-NeuroCore bridges float-domain training to a hardware-oriented export path.
 Train with surrogate gradients in PyTorch, export to stochastic
-bitstream weights, deploy on FPGA.
+bitstream weights, then validate the exact design and target before deployment.
 
 ### Train a digit classifier
 
@@ -170,8 +170,8 @@ sc_weights = to_sc_weights(trained_model)
 # Weights are normalised to [0, 1] for bitstream encoding
 ```
 
-No other SNN training library (snnTorch, Norse) provides this
-train-to-hardware export path.
+This export prepares weights for the documented stochastic hardware
+path; validate the exact model, quantisation and target separately.
 
 ### Deeper reading
 

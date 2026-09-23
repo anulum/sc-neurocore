@@ -11,6 +11,11 @@ fontsize: 11pt
 fontfamily: mathpazo
 ---
 
+> Historical research proposal (January 2026). The architectural and
+> theoretical performance figures below are hypotheses and estimates,
+> not measured current-product throughput, energy or deployment evidence.
+> Use the current README and validation reports for supported paths.
+
 # 1. Introduction
 
 ## 1.1 The Von Neumann Bottleneck

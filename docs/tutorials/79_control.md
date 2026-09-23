@@ -2,25 +2,22 @@
 
 Spike-domain control theory: PID controllers, Kalman filters, and LQR
 regulators implemented with population-coded spike representations.
-Every control signal is a spike train — enabling deployment on
-neuromorphic hardware with microsecond latency and microwatt power.
-
-No other SNN library provides control-theory primitives in spike domain.
+Every control signal is represented as a spike train. Hardware latency,
+power and deployment suitability require measurements on a specific
+device and control loop.
 
 ## Why Spike-Based Control
 
 Traditional control: sensor → ADC → digital controller → DAC → actuator.
 Spike control: sensor → spike encoder → spike controller → actuator.
 
-| Property | Digital PID | Spike PID |
-|----------|-----------|-----------|
-| Latency | ~1 ms (ADC + compute + DAC) | ~10 µs (spike propagation) |
-| Power | ~10 mW (microcontroller) | ~10 µW (neuromorphic) |
-| Update rate | Fixed clock (1-10 kHz) | Event-driven (asynchronous) |
-| Resolution | Fixed (12-16 bit ADC) | Adaptive (population coding) |
+| Property | Conventional digital PID | Spike-domain representation |
+|----------|--------------------------|-----------------------------|
+| Update | Sampled at a configured rate | Driven by encoded events |
+| Signal | Numeric control value | Population-coded spike train |
 
-For robotics, prosthetics, and autonomous drones, spike-based control
-offers 100× lower latency and 1000× lower power.
+This tutorial demonstrates the software representation. It does not
+establish a latency or energy advantage for robotics or other devices.
 
 ## Spiking PID Controller
 

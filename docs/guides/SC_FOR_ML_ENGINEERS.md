@@ -219,8 +219,8 @@ sc_layer2 = VectorizedSCLayer(n_inputs=128, n_neurons=10, length=512)
 sc_layer2.weights = normalise_weights(w2)
 sc_layer2._refresh_packed_weights()
 
-# The SC network will have slightly lower accuracy due to quantisation
-# but can deploy on FPGA at milliwatt power
+# Quantisation can affect accuracy; measure it for this model.
+# FPGA power and deployment need target-specific board evidence.
 ```
 
 ## SC-native architectures

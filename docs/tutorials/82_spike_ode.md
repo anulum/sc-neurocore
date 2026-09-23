@@ -3,7 +3,7 @@
 Continuous-depth SNN layers with adaptive ODE solvers. Instead of fixed
 timesteps, the solver takes large steps when membrane potential is far
 from threshold and bisects on threshold crossings for sub-timestep spike
-precision. No other SNN library provides this as a reusable layer.
+precision. This package exposes the adaptive solver as a reusable layer.
 
 ## Why Adaptive Stepping
 

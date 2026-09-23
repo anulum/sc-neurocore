@@ -2,6 +2,10 @@
 
 **Release Date:** January 12, 2026
 
+> Historical release note. Capability and performance claims below reflect
+> their original release context; current support, measured evidence and
+> physical deployment limits are described in the README and validation docs.
+
 ## Executive Summary
 This release marks the transition of `sc-neurocore` from an experimental library to a **Universal Stochastic Computing Platform**. It now supports the entire lifecycle of neuromorphic engineering: from quantum-inspired algorithm design to hardware-aware verification and deployment.
 

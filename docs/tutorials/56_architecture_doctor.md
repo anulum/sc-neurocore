@@ -107,9 +107,8 @@ graph structure checks.
 
 ## Comparison
 
-No other SNN framework provides automated architecture diagnostics.
-The closest equivalent is running Yosys and manually interpreting
-resource reports — the doctor automates and extends this.
+The doctor combines graph checks and resource estimates in the Studio
+workflow. Target-specific Yosys reports remain separate evidence.
 
 ## References
 

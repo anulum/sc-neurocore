@@ -5,7 +5,8 @@ to stochastic computing hardware. It shows the intermediate representation
 (IR) and generated SystemVerilog side by side, with verification status
 and Q8.8 fixed-point parameter encoding.
 
-No other SNN framework exposes this pipeline visually.
+The inspector keeps the generated RTL and its source traceability visible
+for review before downstream synthesis or hardware validation.
 
 ## Quick Start
 

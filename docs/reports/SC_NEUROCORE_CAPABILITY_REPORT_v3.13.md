@@ -317,7 +317,7 @@ Python 3.10–3.14. Linux, macOS, Windows.
   author={Šotek, Miroslav},
   version={3.13.3},
   year={2026},
-  doi={10.5281/zenodo.18906614},
+  doi={10.5281/zenodo.21198962},
   url={https://github.com/anulum/sc-neurocore}
 }
 ```

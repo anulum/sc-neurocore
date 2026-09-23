@@ -6,10 +6,12 @@
 
 # Carbon & Sustainability Guide
 
-SC-NeuroCore is the world's first neuromorphic compiler with built-in
-**carbon footprint estimation** and **energy-aware compilation**. This guide
-covers the ESG (Environmental, Social, Governance) features required for
-EU carbon labelling compliance (mandatory from 2027).
+SC-NeuroCore includes research estimates for carbon footprint and
+energy-aware compilation. The calculations use configurable assumptions;
+they are not a product life-cycle assessment or regulatory compliance
+evidence. EU ecodesign information requirements depend on the applicable
+product group and delegated acts under
+[Regulation (EU) 2024/1781](https://eur-lex.europa.eu/eli/reg/2024/1781/oj/eng).
 
 ## Carbon Footprint Estimation (§45)
 
@@ -42,7 +44,8 @@ Total CO₂ = Manufacturing + (Power × Hours × Grid_Intensity)
 
 ### Custom Grid Intensity
 
-Different regions have different grid carbon intensities:
+The following values are illustrative inputs, not current regional
+measurements or values approved for reporting:
 
 | Region | kg CO₂/kWh |
 |--------|----------:|
@@ -172,22 +175,16 @@ report = generate_compilation_report(
 )
 ```
 
-## Regulatory Timeline
+## Use of Estimates
 
-| Year | Regulation | Impact |
-|------|-----------|--------|
-| 2024 | EU CSRD | ESG reporting for large companies |
-| 2025 | EU Taxonomy | Sustainable activity classification |
-| 2027 | EU Carbon Label | **Mandatory product carbon labelling** |
-| 2028 | EU CBAM | Carbon border adjustment mechanism |
-| 2030 | EU Climate Law | 55% emission reduction target |
-
-SC-NeuroCore's `estimate_carbon_footprint()` provides the data required
-for all of these regulations.
+The estimator does not supply the verified life-cycle inventory,
+measurement method or product-specific information needed for a legal
+declaration. Check the applicable product rules and use independently
+validated data before any external environmental claim.
 
 ## Further Reading
 
-- [Compiler Intelligence Guide](compiler_intelligence.md) — all 67 features
-- [Hardware Profiles Guide](hardware_profiles.md) — all 194 profiles
+- [Compiler Intelligence Guide](compiler_intelligence.md) — feature reference
+- [Hardware Profiles Guide](hardware_profiles.md) — target profile reference
 - [Deployment Guide](deployment_guide.md) — constraints, bitstream
 - [Safety Certification Guide](safety_certification.md) — DO-254/ISO 26262
