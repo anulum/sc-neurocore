@@ -386,7 +386,13 @@ export function createStudioStoreActions(
 ): StudioStoreActions {
   let modelSelectionVersion = 0;
   return {
-  setSourceMode: (m) => { set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() }); },
+  setSourceMode: (m) => {
+    if (m === "ode") modelSelectionVersion += 1;
+    set({ ...sourceModeState(m), ...compilerConfigurationInvalidatedState() });
+    if (m === "model" && get().modelDetail === null && get().selectedModelName) {
+      void get().selectModel(get().selectedModelName);
+    }
+  },
   setEquations: (eqs) => {
     set({ ...equationsState(eqs), ...compilerConfigurationInvalidatedState() });
     get().autoSimulate();
@@ -690,6 +696,7 @@ export function createStudioStoreActions(
   selectTemplate: (name) => {
     const template = get().templates.find((candidate) => candidate.name === name);
     if (template === undefined) return;
+    modelSelectionVersion += 1;
     set({ ...templateSelectedState(template), ...compilerConfigurationInvalidatedState() });
     void get().runSimulation();
   },

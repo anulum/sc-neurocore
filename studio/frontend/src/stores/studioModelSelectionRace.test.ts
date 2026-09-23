@@ -9,7 +9,7 @@
 import { createStore } from "zustand/vanilla";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ModelDetail } from "../api/client";
+import type { ModelDetail, NeuronTemplate } from "../api/client";
 import { fetchModelDetail, fetchReplayPack } from "../api/client";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
@@ -57,6 +57,64 @@ describe("Studio model selection", () => {
     expect(store.getState().selectedModelName).toBe("HodgkinHuxleyNeuron");
     expect(store.getState().modelDetail?.name).toBe("HodgkinHuxleyNeuron");
     expect(store.getState().modelParams).toEqual({ g_na: 1 });
+    expect(store.getState().runSimulation).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not replace an ODE experiment with a late model response", async () => {
+    let resolveDetail: ((value: ModelDetail) => void) | undefined;
+    vi.mocked(fetchModelDetail).mockImplementation(
+      () => new Promise((resolve) => { resolveDetail = resolve; }),
+    );
+    const store = createStore<StudioState>((set, get) => ({
+      ...studioInitialData,
+      ...createStudioStoreActions(set, get),
+    }));
+    store.setState({ runSimulation: vi.fn(() => Promise.resolve()) });
+
+    const pending = store.getState().selectModel("ATypeKNeuron");
+    store.getState().setSourceMode("ode");
+    resolveDetail?.(detail("ATypeKNeuron", "g_a"));
+    await pending;
+
+    expect(store.getState().sourceMode).toBe("ode");
+    expect(store.getState().modelDetail).toBeNull();
+    expect(store.getState().modelParams).toEqual({});
+    expect(store.getState().runSimulation).not.toHaveBeenCalled();
+  });
+
+  it("keeps a selected ODE template when an earlier model response arrives", async () => {
+    let resolveDetail: ((value: ModelDetail) => void) | undefined;
+    vi.mocked(fetchModelDetail).mockImplementation(
+      () => new Promise((resolve) => { resolveDetail = resolve; }),
+    );
+    const store = createStore<StudioState>((set, get) => ({
+      ...studioInitialData,
+      ...createStudioStoreActions(set, get),
+    }));
+    store.setState({
+      runSimulation: vi.fn(() => Promise.resolve()),
+      templates: [{
+        name: "ode",
+        description: "A controlled ODE template",
+        dt: 0.1,
+        duration: 100,
+        current: 10,
+        equations: ["dv/dt = -v"],
+        init: { v: -65 },
+        params: {},
+        threshold: "v > -50",
+        reset: "v = -65",
+      } as NeuronTemplate],
+    });
+
+    const pending = store.getState().selectModel("ATypeKNeuron");
+    store.getState().selectTemplate("ode");
+    resolveDetail?.(detail("ATypeKNeuron", "g_a"));
+    await pending;
+
+    expect(store.getState().sourceMode).toBe("ode");
+    expect(store.getState().odeParams).toEqual({});
+    expect(store.getState().modelDetail).toBeNull();
     expect(store.getState().runSimulation).toHaveBeenCalledTimes(1);
   });
 });
