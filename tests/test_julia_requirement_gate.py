@@ -36,6 +36,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 # Pinned inventory of Julia-lane modules gated by require_julia().
 _GATED_JULIA_FILES = (
     "tests/test_adaptive_threshold_if_julia_parity.py",
+    "tests/test_aihara_julia_buffer_contracts.py",
     "tests/test_alpha_julia_parity.py",
     "tests/test_gpfa_julia_parity.py",
     "tests/test_julia_rk4_neuron_parity.py",
