@@ -122,7 +122,7 @@ def test_security_scanner_workflow_runs_osv_scanner_lane() -> None:
         if isinstance(step, dict) and str(step.get("uses", "")).startswith("actions/setup-go@")
     ]
 
-    assert "1.26.7" in setup_go_versions
+    assert "1.27.1" in setup_go_versions
     assert "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8" in run_text
     assert "tools/security_scan/run_osv_scanners.py" in run_text
     assert "security/ci-security-packet/security/osv_scanner.json" in run_text
@@ -198,12 +198,17 @@ def test_security_scanner_workflow_avoids_unpinned_pip_and_curl_installers() -> 
     assert "install.sh" not in run_text
 
 
-def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly() -> None:
+def test_security_scanner_workflow_runs_cargo_fuzz_on_schedule_or_full_dispatch() -> None:
     workflow = _load_workflow()
+    dispatch = _workflow_events(workflow)["workflow_dispatch"]
+    assert dispatch["inputs"]["include_scheduled_jobs"]["default"] is False
     jobs = workflow["jobs"]
     fuzz_job = jobs["nightly-cargo-fuzz"]
 
-    assert fuzz_job["if"] == "github.event_name == 'schedule'"
+    assert fuzz_job["if"] == (
+        "github.event_name == 'schedule' || "
+        "(github.event_name == 'workflow_dispatch' && inputs.include_scheduled_jobs)"
+    )
 
     run_text = "\n".join(
         step["run"] for step in fuzz_job["steps"] if isinstance(step, dict) and "run" in step
@@ -224,12 +229,12 @@ def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly() -> None:
     assert "security/cargo-fuzz-packet/security/cargo_fuzz_summary.json" in run_text
 
 
-def test_security_scanner_workflow_runs_benchmark_regression_only_on_nightly() -> None:
+def test_security_scanner_workflow_runs_benchmark_on_schedule_or_full_dispatch() -> None:
     workflow = _load_workflow()
     jobs = workflow["jobs"]
     benchmark_job = jobs["nightly-benchmark-regression"]
 
-    assert benchmark_job["if"] == "github.event_name == 'schedule'"
+    assert benchmark_job["if"] == workflow["jobs"]["nightly-cargo-fuzz"]["if"]
 
     run_text = "\n".join(
         step["run"] for step in benchmark_job["steps"] if isinstance(step, dict) and "run" in step

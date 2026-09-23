@@ -13,6 +13,12 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      include_scheduled_jobs:
+        description: "Run scheduled fuzz and benchmark jobs for current-head verification"
+        type: boolean
+        required: false
+        default: false
   schedule:
     - cron: "17 2 * * *"
   push:
@@ -148,7 +154,7 @@ jobs:
 
   nightly-cargo-fuzz:
     name: Nightly Cargo Fuzz
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.include_scheduled_jobs)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -182,7 +188,7 @@ jobs:
 
   nightly-benchmark-regression:
     name: Nightly Benchmark Regression
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.include_scheduled_jobs)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
