@@ -501,6 +501,7 @@ export function createStudioStoreActions(
   setSeed: (seed) => { set(seedState(seed)); get().autoSimulate(); },
   setTrial: (trial) => { set(trialState(trial)); get().autoSimulate(); },
   setActiveTab: (tab) => { set(activeTabState(tab)); },
+  setCandidateDraft: (text) => { set({ candidates: text === "" ? [] : [{ text }] }); },
   setModelFilter: (f) => { set(modelFilterState(f)); },
   setSweepParam: (p) => { set(sweepParamState(p)); },
   setSweepParamY: (p) => { set(sweepParamYState(p)); },

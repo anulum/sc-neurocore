@@ -55,6 +55,7 @@ export const studioInitialData = {
   verilogSrc: "", irText: "", svSource: "", irErrors: [] as string[], compileTraceability: null,
   cosimResult: null,
   progressPct: 0, progressMsg: "",
+  candidates: [],
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [], graphIssues: [], selectedProjectionId: null, selectedPopulationId: null, selectedPopulationIds: [],
   graphNotice: null,
   populationModelContract: null,

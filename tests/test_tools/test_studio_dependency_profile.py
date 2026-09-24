@@ -45,7 +45,8 @@ def test_install_profile_docs_list_studio_testclient_transport() -> None:
 
     assert (
         '| `pip install "sc-neurocore[studio]"` | Web studio / local design UI | '
-        "`fastapi`, `uvicorn`, `httpx`, `httpx2`; `nir` for the canvas's NIR export and import |"
+        "`fastapi`, `uvicorn`, `httpx`, `httpx2`; `nir` for the canvas's NIR export and import; "
+        "`pint` and `sympy` for candidate-model units and equation diffs |"
     ) in docs
 
 
@@ -59,3 +60,17 @@ def test_studio_extra_installs_what_the_canvas_nir_export_imports() -> None:
 
     assert optional_dependencies["nir"] == ["nir>=1.0,<1.0.9"]
     assert "nir>=1.0,<1.0.9" in optional_dependencies["studio"]
+
+
+def test_studio_extra_installs_what_candidate_packages_import() -> None:
+    """Candidate units are parsed with pint and equations diffed with SymPy.
+
+    The Studio extra carries the pins the ``hdl`` and ``symbolic`` extras and the
+    full profile already use, so every profile resolves the same libraries.
+    """
+    optional_dependencies = _optional_dependencies()
+
+    for requirement, extra in (("pint>=0.23", "hdl"), ("sympy>=1.12", "symbolic")):
+        assert requirement in optional_dependencies[extra]
+        assert requirement in optional_dependencies["studio"]
+        assert requirement in optional_dependencies["full"]

@@ -476,6 +476,10 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/compile` | Compile ODE to Verilog with source-to-RTL traceability |
 | POST | `/api/models/compile` | Compile a selected catalogue model with explicit timestep, integrator and Q-format |
 | POST | `/api/models/cosim` | Run selected-model bit-exact C-reference versus real Icarus RTL parity |
+| POST | `/api/candidates/validate` | Locate every problem with a candidate model package ([Candidate Models](../studio/candidate-models.md)) |
+| POST | `/api/candidates/diff` | Diff a candidate against its parent, mathematically and semantically |
+| POST | `/api/candidates/simulate` | Run a candidate under its own profile, bounded |
+| POST | `/api/candidates/review-packet` | Run a candidate's reference tests and return its review packet |
 | GET | `/api/cache/stats` | Cache hit/miss statistics |
 | GET | `/api/health` | Health check |
 

@@ -5,6 +5,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Candidate models: author, check and review a proposed model in the Studio
+
+- A candidate package (`sc-neurocore.studio.candidate.v1`) carries one
+  Universal DSL model with the unit of every state variable and parameter,
+  its source, assumptions, authors, parent catalogue model and proposed
+  reference tests. A candidate is never listed as a catalogue model and
+  nothing writes a canonical file for it.
+- `POST /api/candidates/validate` reports every problem at once, each located
+  by a JSON pointer; units are parsed with pint, expressions pass the equation
+  safety gate, unknown fields are refused, and the Universal DSL has the last
+  word on the model.
+- `POST /api/candidates/diff` compares a candidate with its parent's canonical
+  schema; equations are converted from their syntax tree to SymPy (never
+  evaluated) and reported as unchanged, equivalent, changed with the
+  simplified difference, not comparable or undecided.
+- `POST /api/candidates/simulate` runs a candidate under its own profile for at
+  most 100 000 steps and reports divergence by step; `POST
+  /api/candidates/review-packet` runs the reference tests and binds candidate,
+  validation, diff, results, environment and what is not established under one
+  digest.
+- The Studio's **Candidate** tab imports, edits, validates, diffs, simulates and
+  reviews a candidate and exports it byte for byte and its review packet; the
+  draft is saved with the workspace in its `candidates` block. The `studio`
+  extra and the hub requirement set now install `pint` and `sympy`.
+
 ### Route policies: ten routes classified, and a missing policy refused
 
 - With route policies enforced, ten routes answered 500: the catalogue query,

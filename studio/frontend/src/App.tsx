@@ -20,6 +20,7 @@ import { useEvidenceCartSession } from "./useEvidenceCartSession";
 import EvidenceCartStrip from "./components/EvidenceCartStrip";
 import DevelopmentPreviewBanner from "./components/DevelopmentPreviewBanner";
 import TemplateLibrary from "./components/TemplateLibrary";
+import CandidatePanel from "./components/CandidatePanel";
 import EquationEditor from "./components/EquationEditor";
 import ParameterSliders from "./components/ParameterSliders";
 import SimulationPlot from "./components/SimulationPlot";
@@ -507,6 +508,7 @@ export default function App() {
           <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => { activatePanel("network"); }} {...panelControl("network")} />
           <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => { activatePanel("code"); }} {...panelControl("code")} />
           <Tab active={s.activeTab === "delays"} color="#f48fb1" label="Delays" onClick={() => { activatePanel("delays"); }} {...panelControl("delays")} />
+          <Tab active={s.activeTab === "candidate"} color="#b0bec5" label="Candidate" onClick={() => { activatePanel("candidate"); }} {...panelControl("candidate")} />
           {s.sourceMode === "ode" && (
             <>
               <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => { activatePanel("precision"); }} {...panelControl("precision")} />
@@ -789,6 +791,8 @@ export default function App() {
             <VerilogPreview />
           ) : s.activeTab === "delays" ? (
             <DclsPanel />
+          ) : s.activeTab === "candidate" ? (
+            <CandidatePanel />
           ) : s.activeTab === "code" ? (
             <div style={{ flex: 1, padding: 8, display: "flex", flexDirection: "column", minHeight: 0 }}>
               {s.codeScript ? (

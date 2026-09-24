@@ -967,12 +967,12 @@
     "model_documentation_pages": 200,
     "optional_extras": 30,
     "public_api_exports": 45,
-    "public_documentation_pages": 635,
+    "public_documentation_pages": 636,
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
     "studio_catalogue_models": 185,
-    "test_files": 5007
+    "test_files": 5011
   },
   "documentation": {
     "public_pages": [
@@ -1469,6 +1469,7 @@
       "docs/source_papers/parameters/chay_keizer_minimal_2023.md",
       "docs/studio/admin-identity.md",
       "docs/studio/behaviour-facet.md",
+      "docs/studio/candidate-models.md",
       "docs/studio/catalogue-health.md",
       "docs/studio/compiler-inspector.md",
       "docs/studio/evidence-verification.md",
@@ -3723,6 +3724,7 @@
       "tests/studio_analysis_support.py",
       "tests/studio_app_support.py",
       "tests/studio_audit_quarantine_support.py",
+      "tests/studio_candidate_support.py",
       "tests/studio_compiler_support.py",
       "tests/studio_endpoints_support.py",
       "tests/studio_evidence_bundle_support.py",
@@ -7532,6 +7534,9 @@
       "tests/test_studio_backup_plan.py",
       "tests/test_studio_benchmark_contribution.py",
       "tests/test_studio_browser_sessions.py",
+      "tests/test_studio_candidate_diff.py",
+      "tests/test_studio_candidate_package.py",
+      "tests/test_studio_candidate_run.py",
       "tests/test_studio_catalogue_identity_classification.py",
       "tests/test_studio_catalogue_metadata_state.py",
       "tests/test_studio_catalogue_query.py",

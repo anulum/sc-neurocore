@@ -86,6 +86,8 @@ function snapshot(): StudioProjectStateSnapshot {
       learn_beta: true,
       learn_threshold: true,
     },
+    // A draft is kept as typed, even when it is not yet valid JSON.
+    candidates: [{ text: '{"name": "Draft", "model": ' }],
   };
 }
 
@@ -171,7 +173,20 @@ describe("Studio project state helpers", () => {
       graphProjections: [],
       synthTarget: "ice40",
       trainingConfig: fallbackTrainingConfig,
+      candidates: [],
     });
+  });
+
+  it("keeps each stored candidate draft that carries text, exactly as typed", () => {
+    const restored = studioProjectStateFromLoadResponse(
+      { state: { candidates: [{ text: '{"name": ' }, { text: 7 }, "loose", null, { text: "" }] } },
+      fallbackTrainingConfig,
+    );
+    expect(restored.candidates).toEqual([{ text: '{"name": ' }, { text: "" }]);
+    expect(
+      studioProjectStateFromLoadResponse({ state: { candidates: "x" } }, fallbackTrainingConfig)
+        .candidates,
+    ).toEqual([]);
   });
 
   it("builds project persistence store patches", () => {

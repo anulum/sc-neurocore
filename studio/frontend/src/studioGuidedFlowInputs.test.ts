@@ -38,7 +38,7 @@ const TRAINING_CONFIG = {
  */
 function source(overrides: Partial<StudioGuidedFlowSource> = {}): StudioGuidedFlowSource {
   return {
-    bundleContexts: {}, graphPopulations: [], graphProjections: [],
+    bundleContexts: {}, candidates: [], graphPopulations: [], graphProjections: [],
     synthTarget: "ice40", projectRevision: null,
     latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null,
     verilogSrc: "", svSource: "",

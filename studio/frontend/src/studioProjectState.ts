@@ -40,6 +40,11 @@ export interface StudioProjectTrainingConfig {
   learn_threshold: boolean;
 }
 
+/** A candidate model draft, kept exactly as its author typed it. */
+export interface StudioCandidateDraft {
+  text: string;
+}
+
 /** Everything the store contributes to a snapshot. */
 export interface StudioProjectSnapshotInput {
   sourceMode: StudioSimulationSourceMode;
@@ -58,6 +63,8 @@ export interface StudioProjectSnapshotInput {
   graphProjections: ProjectionEdge[];
   synthTarget: string;
   trainingConfig: StudioProjectTrainingConfig;
+  /** Stored as the workspace's `candidates` block. */
+  candidates: StudioCandidateDraft[];
 }
 
 /** A workspace as it is stored. */
@@ -127,6 +134,7 @@ export function studioProjectSaveState(input: StudioProjectSnapshotInput): Studi
     graphProjections: input.graphProjections,
     synthTarget: input.synthTarget,
     trainingConfig: input.trainingConfig,
+    candidates: input.candidates,
   };
 }
 
@@ -312,7 +320,22 @@ export function studioProjectStateFromLoadResponse(
     graphProjections: projectionArrayValue(state.graphProjections),
     synthTarget: stringValue(state.synthTarget, "ice40"),
     trainingConfig: trainingConfigValue(state.trainingConfig, fallbackTrainingConfig),
+    candidates: candidateDraftsValue(state.candidates),
   };
+}
+
+/**
+ * Read stored candidate drafts, keeping only entries that carry text.
+ *
+ * @param value - The stored `candidates` block.
+ * @returns The drafts, or none for a workspace saved before candidates.
+ */
+function candidateDraftsValue(value: unknown): StudioCandidateDraft[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry: unknown) => {
+    const text = recordValue(entry).text;
+    return typeof text === "string" ? [{ text }] : [];
+  });
 }
 
 /**

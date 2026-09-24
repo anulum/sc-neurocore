@@ -10,6 +10,7 @@
     "e2e/admin-operator-synthesis.spec.ts",
     "e2e/adminOperatorHarness.ts",
     "e2e/analysis-job-host.spec.ts",
+    "e2e/candidate-authoring-live.spec.ts",
     "e2e/catalogue-to-silicon-live.spec.ts",
     "e2e/experiment-export-live.spec.ts",
     "e2e/federation-host/main.tsx",

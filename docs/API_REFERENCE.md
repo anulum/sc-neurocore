@@ -35977,6 +35977,26 @@ ValueError
 
 ---
 
+## Module `studio.api.candidates`
+
+### Class `CandidateRequest`
+A candidate package, sent whole.
+
+
+### Class `CandidateSimulateRequest`
+A candidate package and the run to perform with it.
+
+
+### Function `build_candidates_router(context)`
+Build the candidate-package router.
+
+Parameters
+----------
+context:
+    Shared runtime state; the candidate routes hold none of their own.
+
+---
+
 ## Module `studio.api.catalogue`
 
 ### Function `build_catalogue_router(context)`
@@ -36764,6 +36784,113 @@ NativeExecutionError
 ValueError
     For an empty or oversized drive, a word outside the format, or a
     kernel configuration the generator rejects.
+
+---
+
+## Module `studio.candidate_diff`
+
+### Function `compare_expressions(parent, candidate)`
+Compare two equations as text and as mathematics.
+
+Returns
+-------
+dict
+    ``status`` is ``unchanged`` (same text), ``equivalent`` (equal after
+    simplification), ``changed`` (with ``difference``, candidate minus
+    parent), ``undecided`` (too large to simplify here) or
+    ``not_comparable`` (with ``reason``).
+
+### Function `diff_models(parent, candidate)`
+Return what ``candidate`` changes against ``parent``, section by section.
+
+Both are Universal DSL schema documents.
+
+### Function `diff_candidate(document)`
+Diff a validated candidate against the catalogue model it names as parent.
+
+Returns
+-------
+dict
+    The diff, or a statement of why there is none: the candidate names no
+    parent, or the parent has no canonical schema to compare with.
+
+---
+
+## Module `studio.candidate_package`
+
+### Class `CandidateDiagnostic`
+One problem with a candidate, located by a JSON pointer.
+
+- **to_public_dict**()
+  - Return the diagnostic as the API reports it.
+
+### Class `CandidateValidation`
+The outcome of validating one candidate document.
+
+- **valid**()
+  - Whether the document has no problem.
+- **to_public_dict**()
+  - Return the validation as the API reports it.
+
+### Function `candidate_sha256(document)`
+Return the digest of a candidate's canonical JSON form.
+
+### Function `validate_candidate(document)`
+Validate a candidate document and locate every problem.
+
+Parameters
+----------
+document:
+    The parsed candidate package.
+catalogue:
+    Registered catalogue model names; taken from the registry when
+    omitted. A candidate may not take a catalogue model's name, and its
+    parent must be one.
+
+Returns
+-------
+CandidateValidation
+    The problems, each with a JSON pointer, and the document digest when
+    it is an object.
+
+---
+
+## Module `studio.candidate_run`
+
+### Class `CandidateRejected`
+The candidate is not valid, so it is not run.
+
+- **__init__**(validation)
+
+### Function `require_valid_candidate(document)`
+Refuse a candidate that is not valid.
+
+Raises
+------
+CandidateRejected
+    Carrying the located validation, when the candidate has any problem.
+
+### Function `simulate_candidate(document)`
+Simulate a valid candidate under a constant current.
+
+Raises
+------
+CandidateRejected
+    When the candidate is not valid; the exception carries the validation.
+ValueError
+    When ``steps`` is outside 1 .. ``MAX_CANDIDATE_STEPS``.
+
+### Function `run_reference_tests(document)`
+Run every reference test a valid candidate proposes.
+
+Each result states what was observed and, per expectation, whether it held.
+
+### Function `review_packet(document)`
+Assemble the review packet of a valid candidate.
+
+The packet carries the candidate unchanged, its validation, its diff
+against the parent, the reference-test results, the environment that
+produced them and what the packet does not establish, all under one digest.
 
 ---
 

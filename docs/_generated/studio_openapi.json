@@ -393,6 +393,50 @@
         "title": "BifurcationRequest",
         "type": "object"
       },
+      "CandidateRequest": {
+        "additionalProperties": false,
+        "description": "A candidate package, sent whole.",
+        "properties": {
+          "candidate": {
+            "additionalProperties": true,
+            "title": "Candidate",
+            "type": "object"
+          }
+        },
+        "required": [
+          "candidate"
+        ],
+        "title": "CandidateRequest",
+        "type": "object"
+      },
+      "CandidateSimulateRequest": {
+        "additionalProperties": false,
+        "description": "A candidate package and the run to perform with it.",
+        "properties": {
+          "candidate": {
+            "additionalProperties": true,
+            "title": "Candidate",
+            "type": "object"
+          },
+          "current": {
+            "default": 0.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "steps": {
+            "default": 1000,
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Steps",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidate"
+        ],
+        "title": "CandidateSimulateRequest",
+        "type": "object"
+      },
       "CompareRequest": {
         "description": "Request body for comparing two Studio simulation configurations.",
         "properties": {
@@ -3195,6 +3239,170 @@
           }
         },
         "summary": "Api Cache Stats"
+      }
+    },
+    "/api/candidates/diff": {
+      "post": {
+        "description": "Diff a valid candidate against its parent, mathematically and semantically.",
+        "operationId": "api_candidate_diff_api_candidates_diff_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Candidate Diff Api Candidates Diff Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Candidate Diff"
+      }
+    },
+    "/api/candidates/review-packet": {
+      "post": {
+        "description": "Run a valid candidate's reference tests and return its review packet.",
+        "operationId": "api_candidate_review_packet_api_candidates_review_packet_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Candidate Review Packet Api Candidates Review Packet Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Candidate Review Packet"
+      }
+    },
+    "/api/candidates/simulate": {
+      "post": {
+        "description": "Simulate a valid candidate under its own profile and a constant current.",
+        "operationId": "api_candidate_simulate_api_candidates_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateSimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Candidate Simulate Api Candidates Simulate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Candidate Simulate"
+      }
+    },
+    "/api/candidates/validate": {
+      "post": {
+        "description": "Report every problem with a candidate, each located by a JSON pointer.",
+        "operationId": "api_candidate_validate_api_candidates_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Candidate Validate Api Candidates Validate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Candidate Validate"
       }
     },
     "/api/characterize": {

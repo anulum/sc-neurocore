@@ -91,6 +91,25 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ("POST", "/api/codegen", RouteVisibility.AUTHENTICATED, "studio.codegen.generate"),
     (
         "POST",
+        "/api/candidates/validate",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.validate",
+    ),
+    ("POST", "/api/candidates/diff", RouteVisibility.AUTHENTICATED, "studio.candidates.diff"),
+    (
+        "POST",
+        "/api/candidates/simulate",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.simulate",
+    ),
+    (
+        "POST",
+        "/api/candidates/review-packet",
+        RouteVisibility.AUTHENTICATED,
+        "studio.candidates.review_packet",
+    ),
+    (
+        "POST",
         "/api/export/replay-pack",
         RouteVisibility.AUTHENTICATED,
         "studio.codegen.replay_pack",
