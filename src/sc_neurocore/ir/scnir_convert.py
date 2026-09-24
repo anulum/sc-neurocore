@@ -335,7 +335,7 @@ def _source(config: SCNIRConversionConfig, stream_index: int) -> SCNIRSource:
 
 
 def _population_encoding(neuron_type: str) -> SCNIREncoding:
-    if neuron_type in {"lif", "if", "cuba_lif"}:
+    if neuron_type in {"lif", "if", "cuba_lif", "sc_lif", "sc_if"}:
         return "unipolar"
     return "bipolar"
 

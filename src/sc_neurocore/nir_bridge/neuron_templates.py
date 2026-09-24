@@ -16,7 +16,10 @@ these templates, and the lightweight dict importer
 equations from the same table, so the two paths cannot drift apart. The keys are
 the internal neuron-type tags produced by
 :mod:`sc_neurocore.nir_bridge.neuron_graph` (``lif``, ``if``, ``li``,
-``cuba_lif``, ``cuba_li``, ``integrator``). The module deliberately has no
+``cuba_lif``, ``cuba_li``, ``integrator``), plus two Studio catalogue profiles
+(``sc_lif``, ``sc_if``) that only the Studio's network lowering selects. A
+template may name its integration ``method`` (``euler`` when absent) and the
+parameter its state starts from (``rest_param``, ``v_leak`` when absent). The module deliberately has no
 third-party dependencies so either consumer can import it without pulling in the
 heavier compilation stack.
 """
@@ -81,5 +84,35 @@ NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
         "threshold": None,
         "reset": None,
         "default_params": {"r": 1.0},
+    },
+    # Studio catalogue profiles. These are not NIR primitives and no NIR import
+    # produces them: the Studio's network lowering selects them so the hardware
+    # computes the catalogue model the Studio simulates, not NIR's version of it.
+    # ``SCLapicqueLIFNeuron`` profile ``sc_lif`` integrates a step exactly,
+    # v <- v_inf + (v - v_inf) * exp(-dt / tau) with v_inf = v_rest + R * I, so it
+    # is a map with ``decay = exp(-dt / tau)`` and ``gain = 1 - decay``, and it
+    # fires at v >= v_threshold.
+    "sc_lif": {
+        "equations": ["dv/dt = v * decay + (v_rest + I * r) * gain"],
+        "method": "map",
+        "rest_param": "v_rest",
+        "threshold": "v >= v_threshold",
+        "reset": "v = v_reset",
+        "default_params": {
+            "decay": 0.951229424500714,
+            "gain": 0.048770575499285984,
+            "v_rest": 0.0,
+            "r": 1.0,
+            "v_threshold": 1.0,
+            "v_reset": 0.0,
+        },
+    },
+    # ``PerfectIntegratorNeuron`` profile ``sc_inclusive``: the ``if`` dynamics
+    # with the inclusive comparison the catalogue model uses.
+    "sc_if": {
+        "equations": ["dv/dt = I * r"],
+        "threshold": "v >= v_threshold",
+        "reset": "v = v_reset",
+        "default_params": {"r": 1.0, "v_threshold": 1.0, "v_reset": 0.0},
     },
 }

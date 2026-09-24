@@ -239,10 +239,11 @@ def _population_neuron(neuron_type: str, pop: NeuronSpec) -> EquationNeuron:
     params = _resolved_population_params(neuron_type, pop)
 
     init: dict[str, float] = {}
+    rest_param = template.get("rest_param", "v_leak")
     for eq_str in template["equations"]:
         var_name = eq_str.split("/")[0].replace("d", "", 1).strip()
         if var_name == "v":
-            init["v"] = params.get("v_leak", 0.0)
+            init["v"] = params.get(rest_param, 0.0)
         else:
             init[var_name] = 0.0
 
@@ -253,4 +254,5 @@ def _population_neuron(neuron_type: str, pop: NeuronSpec) -> EquationNeuron:
         params=params,
         init=init,
         dt=pop.dt,
+        method=template.get("method", "euler"),
     )

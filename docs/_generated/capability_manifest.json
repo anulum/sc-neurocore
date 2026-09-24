@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 5002
+    "test_files": 5003
   },
   "documentation": {
     "public_pages": [
@@ -6409,6 +6409,7 @@
       "tests/test_nir_bridge/test_sinabs_interop.py",
       "tests/test_nir_bridge/test_snntorch_interop.py",
       "tests/test_nir_bridge/test_spikingjelly_interop.py",
+      "tests/test_nir_bridge/test_studio_profile_templates.py",
       "tests/test_nir_bridge/test_threshold_reset.py",
       "tests/test_nir_conv_string_padding.py",
       "tests/test_nir_fpga_pipeline_e2_e_auto_interconnect.py",
