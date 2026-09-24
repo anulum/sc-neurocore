@@ -25,6 +25,7 @@ _MODULE_PATHS = {
     "_training_attach": _REPO_ROOT / "src/sc_neurocore/studio/_training_attach.py",
     "_training_control": _REPO_ROOT / "src/sc_neurocore/studio/_training_control.py",
     "_training_events": _REPO_ROOT / "src/sc_neurocore/studio/_training_events.py",
+    "_training_stream": _REPO_ROOT / "src/sc_neurocore/studio/_training_stream.py",
     "_training_job": _REPO_ROOT / "src/sc_neurocore/studio/_training_job.py",
     "_training_datasets": _REPO_ROOT / "src/sc_neurocore/studio/_training_datasets.py",
     "_training_weight_capture": _REPO_ROOT / "src/sc_neurocore/studio/_training_weight_capture.py",
@@ -34,6 +35,7 @@ _MODULE_LINE_CEILINGS = {
     "_training_attach": 225,
     "_training_control": 350,
     "_training_events": 175,
+    "_training_stream": 125,
     "_training_job": 675,
     "_training_datasets": 100,
     "_training_weight_capture": 130,
@@ -43,10 +45,12 @@ _EXPECTED_DEPENDENCIES = {
         "_training_attach",
         "_training_control",
         "_training_events",
+        "_training_stream",
         "_training_job",
     },
     "_training_attach": {"_training_control", "_training_job"},
     "_training_control": {"_training_events", "_training_job"},
+    "_training_stream": {"_training_control", "_training_events"},
     "_training_events": set(),
     "_training_job": {"_training_events", "_training_datasets", "_training_weight_capture"},
     "_training_datasets": set(),
@@ -74,20 +78,20 @@ _EXPECTED_SIGNATURES = {
     "event_sink: 'Callable[[dict[str, object]], None] | None' = None, "
     "initial_state_dict: 'Mapping[str, object] | None' = None, "
     "resume_state: 'TrainingResumeState | None' = None) -> 'None'",
-    "export_training_checkpoint": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
-    "get_training_status": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
+    "export_training_checkpoint": "(job_id: 'str', job_manager: 'StudioJobService | None' = None) -> 'dict[str, Any]'",
+    "get_training_status": "(job_id: 'str', job_manager: 'StudioJobService | None' = None) -> 'dict[str, Any]'",
     "import_training_checkpoint": "(data: 'dict[str, Any]') -> 'dict[str, Any]'",
     "list_cell_types": "() -> 'list[dict[str, Any]]'",
-    "list_jobs": "() -> 'list[dict[str, Any]]'",
+    "list_jobs": "(job_manager: 'StudioJobService | None' = None) -> 'list[dict[str, Any]]'",
     "list_surrogates": "() -> 'list[dict[str, Any]]'",
     "request_live_training_weight_attach": "(target_job_id: 'str', source_job_id: 'str', "
-    "job_manager: 'StudioJobManager', *, expected_config_sha256: 'str | None' = None) -> 'dict[str, Any]'",
-    "start_training": "(config: 'dict[str, Any]', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
+    "job_manager: 'StudioJobService', *, expected_config_sha256: 'str | None' = None) -> 'dict[str, Any]'",
+    "start_training": "(config: 'dict[str, Any]', job_manager: 'StudioJobService | None' = None) -> 'dict[str, Any]'",
     "start_training_attach": "(source_job_id: 'str', config: 'dict[str, Any]', "
-    "job_manager: 'StudioJobManager', *, expected_config_sha256: 'str | None' = None, "
+    "job_manager: 'StudioJobService', *, expected_config_sha256: 'str | None' = None, "
     "mode: 'str' = 'warm_start') -> 'dict[str, Any]'",
-    "stop_training": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'dict[str, Any]'",
-    "stream_metrics": "(job_id: 'str', job_manager: 'StudioJobManager | None' = None) -> 'Any'",
+    "stop_training": "(job_id: 'str', job_manager: 'StudioJobService | None' = None) -> 'dict[str, Any]'",
+    "stream_metrics": "(job_id: 'str', job_manager: 'StudioJobService | None' = None) -> 'Any'",
 }
 _EXPECTED_HTTP_ROUTES = {
     ("POST", "/api/studio/training/weight-restore"),

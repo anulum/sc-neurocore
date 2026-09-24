@@ -145,8 +145,19 @@ class TestSupervisorIdentity:
         assert supervisor_is_alive("nonsense") is None
 
     def test_a_reused_process_id_is_not_the_same_supervisor(self) -> None:
-        host, pid, _token = supervisor_identity().split(":", 2)
-        assert supervisor_is_alive(f"{host}:{pid}:not-the-original-token") is False
+        host, pid, token = supervisor_identity().split(":", 2)
+        assert supervisor_is_alive(f"{host}:{pid}:{int(token) + 1}") is False
+
+    @pytest.mark.parametrize("token", ["", "0", "garbled", "-1", "1:2"])
+    def test_invalid_start_token_is_unknown_not_proof_of_death(self, token: str) -> None:
+        """Malformed metadata for this live process must not authorise recovery."""
+        host, pid, _ = supervisor_identity().split(":", 2)
+        assert supervisor_is_alive(f"{host}:{pid}:{token}") is None
+
+    def test_unrepresentable_pid_is_unknown(self) -> None:
+        """A corrupt persisted PID cannot crash a recovery scan."""
+        host, _, token = supervisor_identity().split(":", 2)
+        assert supervisor_is_alive(f"{host}:{10**100}:{token}") is None
 
 
 class TestReconciliationRules:

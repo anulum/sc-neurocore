@@ -290,6 +290,7 @@ def run_studio_preflight(
         )
     )
     checks.extend(_profile_checks(settings))
+    checks.append(_storage_mode_check(settings))
     checks.append(_browser_login_lockout_check(settings))
     checks.append(_route_policy_inventory_check())
     checks.append(_identity_store_check(settings, now=clock or datetime.now(UTC)))
@@ -341,6 +342,26 @@ def _profile_checks(settings: StudioRuntimeSettings) -> tuple[StudioPreflightChe
             remediation=()
             if not settings.allow_header_principal
             else ("Set SC_NEUROCORE_STUDIO_ALLOW_HEADER_PRINCIPAL=false.",),
+        ),
+    )
+
+
+def _storage_mode_check(settings: StudioRuntimeSettings) -> StudioPreflightCheck:
+    available = settings.storage_mode == "embedded"
+    return StudioPreflightCheck(
+        check_id="storage_mode",
+        status="pass" if available else "fail",
+        message=(
+            "Embedded Studio storage is available."
+            if available
+            else "Isolated Studio storage is unavailable for runtime startup."
+        ),
+        evidence={"selected_mode": settings.storage_mode},
+        remediation=()
+        if available
+        else (
+            "Complete the storage authority client and distinct-identity worker launcher "
+            "before selecting isolated mode.",
         ),
     )
 

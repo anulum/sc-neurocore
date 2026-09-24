@@ -133,10 +133,9 @@ def reconcile_ledger(ledger: StudioJobLedger) -> tuple[StudioJobReconciliation, 
                     else None,
                     expected_record=expected,
                 )
-        except KeyError as exc:
-            if exc.args != (job_id,):
-                raise
-            # A concurrent terminal purge is not permission to recreate a job.
+        except KeyError:
+            # Only an absent job raises KeyError here: a concurrent terminal
+            # purge is not permission to recreate it.
             continue
         if current.status != target:
             reason = "the job changed during reconciliation; the newer record was retained"

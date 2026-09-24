@@ -19,6 +19,7 @@ from typing import cast
 
 from sc_neurocore.studio.platform.jobs_models import (
     STUDIO_CONTROL_COMMAND_FILE,
+    STUDIO_CONTROL_COMMAND_MAX_BYTES,
     STUDIO_CONTROL_DIR,
     STUDIO_CONTROL_SEED_DIR,
     STUDIO_SEED_INPUT_DIR,
@@ -113,7 +114,8 @@ class StudioJobContext:
         target_path = self._artifact_path(relative_path)
         if not target_path.is_file():
             raise ValueError("Studio job artifact is unavailable.")
-        data = target_path.read_bytes()
+        with target_path.open("rb") as handle:
+            data = handle.read(self._max_artifact_bytes + 1)
         if len(data) > self._max_artifact_bytes:
             raise ValueError("Studio job artifact exceeds configured size limit.")
         artifact = StudioJobArtifact(
@@ -140,7 +142,8 @@ class StudioJobContext:
         )
         if not target_path.is_file():
             raise StudioJobArtifactUnavailable("Studio job seed input is unavailable.")
-        data = target_path.read_bytes()
+        with target_path.open("rb") as handle:
+            data = handle.read(self._max_artifact_bytes + 1)
         if len(data) > self._max_artifact_bytes:
             raise ValueError("Studio job seed input exceeds configured size limit.")
         return data
@@ -150,10 +153,13 @@ class StudioJobContext:
 
         command_path = self._work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE
         try:
-            raw = command_path.read_bytes()
+            with command_path.open("rb") as handle:
+                raw = handle.read(STUDIO_CONTROL_COMMAND_MAX_BYTES + 1)
         except FileNotFoundError:
             return None
         command_path.unlink(missing_ok=True)
+        if len(raw) > STUDIO_CONTROL_COMMAND_MAX_BYTES:
+            raise ValueError("Studio job control command exceeds configured size limit.")
         try:
             decoded = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -173,7 +179,8 @@ class StudioJobContext:
         )
         if not target_path.is_file():
             raise StudioJobArtifactUnavailable("Studio job control seed is unavailable.")
-        data = target_path.read_bytes()
+        with target_path.open("rb") as handle:
+            data = handle.read(self._max_artifact_bytes + 1)
         if len(data) > self._max_artifact_bytes:
             raise ValueError("Studio job control seed exceeds configured size limit.")
         return data

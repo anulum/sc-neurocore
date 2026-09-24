@@ -38,6 +38,10 @@ from sc_neurocore.studio.platform import (
     load_studio_identity_store,
 )
 from sc_neurocore.studio.synthesis import EdaProcessLimits
+from sc_neurocore.studio.platform.storage_isolated_runtime import build_isolated_job_manager
+from sc_neurocore.studio.platform.storage_mode import require_available_storage
+from sc_neurocore.studio.platform.storage_preflight import require_isolated_preflight
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 
 DEFAULT_STUDIO_JOB_KINDS = frozenset(
@@ -58,7 +62,7 @@ class StudioApiContext:
     studio_identity_authenticator: StudioIdentityAuthenticator | None
     studio_browser_session_manager: StudioBrowserSessionManager
     studio_browser_login_throttle: StudioBrowserLoginThrottle
-    studio_job_manager: StudioJobManager
+    studio_job_manager: StudioJobService
     studio_policy_gateway: PolicyGateway
     eda_process_limits: EdaProcessLimits
 
@@ -139,6 +143,9 @@ def build_studio_api_context(
         Shared mutable runtime state.
     """
     settings = runtime_settings or build_default_studio_runtime_settings()
+    require_available_storage(settings.storage_mode)
+    # Isolated startup is checked before any collaborator or file exists.
+    isolated = require_isolated_preflight(settings) if settings.storage_mode == "isolated" else None
     analysis_budget = _analysis_budget_from_settings(settings)
     studio_capabilities = build_default_studio_capability_registry()
     studio_route_policies = build_default_studio_route_policy_registry()
@@ -170,18 +177,29 @@ def build_studio_api_context(
     # path under the system temp directory would otherwise be shared by every
     # Studio on the host — accumulating another run's records, and on a
     # multi-user machine owned by whichever user created it first.
-    studio_job_root = (
-        Path(settings.job_root_path)
-        if settings.job_root_path is not None
-        else Path(tempfile.mkdtemp(prefix="sc-neurocore-studio-jobs-"))
-    )
-    studio_job_manager = StudioJobManager(
-        root=studio_job_root,
-        allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
-        default_timeout_seconds=settings.job_default_timeout_seconds,
-        max_artifact_bytes=settings.job_max_artifact_bytes,
-        configured=settings.job_root_path is not None,
-    )
+    studio_job_manager: StudioJobService
+    if isolated is not None:
+        # Every durable job operation goes to the storage authority; this
+        # process owns no job root and no ledger.
+        studio_job_manager = build_isolated_job_manager(
+            *isolated,
+            allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
+            default_timeout_seconds=settings.job_default_timeout_seconds,
+            max_artifact_bytes=settings.job_max_artifact_bytes,
+        )
+    else:
+        studio_job_root = (
+            Path(settings.job_root_path)
+            if settings.job_root_path is not None
+            else Path(tempfile.mkdtemp(prefix="sc-neurocore-studio-jobs-"))
+        )
+        studio_job_manager = StudioJobManager(
+            root=studio_job_root,
+            allowed_kinds=DEFAULT_STUDIO_JOB_KINDS,
+            default_timeout_seconds=settings.job_default_timeout_seconds,
+            max_artifact_bytes=settings.job_max_artifact_bytes,
+            configured=settings.job_root_path is not None,
+        )
     studio_policy_gateway = PolicyGateway(audit_sink=studio_audit_sink)
     context = StudioApiContext(
         app=app,

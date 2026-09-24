@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 import threading
 from collections.abc import Callable, Mapping
 from datetime import datetime
@@ -18,13 +19,13 @@ from pathlib import Path
 from sc_neurocore.studio.platform.jobs_admission import (
     DEFAULT_MAX_CONCURRENT_JOBS,
     DEFAULT_MAX_QUEUED_JOBS,
-    StudioJobAdmission,
 )
 from sc_neurocore.studio.platform.jobs_ledger import (
     DEFAULT_LEASE_SECONDS,
     StudioJobLedger,
     StudioJobReconciliation,
 )
+from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmission
 from sc_neurocore.studio.platform.jobs_manager_access import (
     _cancel_job,
     _job_manager_status,
@@ -76,11 +77,13 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         restart and a second process see the same jobs; unless ``reconcile`` is
         disabled, construction resolves the jobs an earlier supervisor left
         alive. ``max_concurrent_jobs`` and ``max_queued_jobs`` bound what runs.
+        Execution timeouts are finite positive seconds; invalid defaults raise
+        ``ValueError`` before creating the root or opening its ledger.
         """
         if not allowed_kinds:
             raise ValueError("Studio job manager requires at least one allowed job kind.")
-        if default_timeout_seconds <= 0:
-            raise ValueError("Studio job timeout must be positive.")
+        if not math.isfinite(default_timeout_seconds) or default_timeout_seconds <= 0:
+            raise ValueError("Studio job timeout must be finite and positive.")
         if max_artifact_bytes <= 0:
             raise ValueError("Studio job artifact size limit must be positive.")
         self._root = root.resolve()
@@ -91,11 +94,11 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         self._clock = clock or self._utc_now
         self._lock = threading.Lock()
         self._default_workspace = workspace
-        self._admission = StudioJobAdmission(
-            max_concurrent=max_concurrent_jobs, max_queued=max_queued_jobs
-        )
         self._ledger = StudioJobLedger(
             root=self._root, clock=self._clock, lease_seconds=lease_seconds
+        )
+        self._admission = SharedJobAdmission(
+            self._ledger, max_concurrent=max_concurrent_jobs, max_queued=max_queued_jobs
         )
         # Live handles for the jobs this process supervises. The durable state
         # is the ledger's; these only let this process wait and cancel.
@@ -106,7 +109,7 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         # thread cannot be killed, so this is reported rather than fixed.
         self._unreaped_workers: set[str] = set()
         if reconcile:
-            self._reconciliation = self._ledger.reconcile()
+            self.reconcile()
 
     @property
     def root(self) -> Path:
@@ -133,6 +136,8 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         :func:`~sc_neurocore.studio.platform.jobs_manager_thread._submit_thread_job`
         for the custody fields and what each binds. A task that never checks
         ``context.cancelled`` cannot be stopped: use a process job.
+        An explicit timeout must be finite positive seconds; invalid values
+        raise ``StudioJobRejected`` before admission or worker startup.
         """
         return _submit_thread_job(
             self,
@@ -161,11 +166,14 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
         idempotency_key: str | None = None,
         experiment_sha256: str | None = None,
         admission: Mapping[str, object] | None = None,
+        training_config: Mapping[str, object] | None = None,
     ) -> StudioJobRecord:
         """Submit one importable task to an isolated Python process.
 
         Same custody fields as :meth:`submit`. The worker leads its own process
         group, so stopping the job stops everything it started.
+        An explicit timeout must be finite positive seconds; invalid values
+        raise ``StudioJobRejected`` before admission or worker startup.
         """
         return _submit_process_job(
             self,
@@ -180,6 +188,7 @@ class StudioJobManager(StudioJobCustody, StudioJobSupervision):
             idempotency_key=idempotency_key,
             experiment_sha256=experiment_sha256,
             admission=admission,
+            training_config=training_config,
         )
 
     def send_control_command(

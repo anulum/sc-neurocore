@@ -10,12 +10,13 @@
 
 from __future__ import annotations
 
-import json
-from typing import cast
-
 from fastapi import APIRouter, HTTPException, Request
 
 from sc_neurocore.studio.api.runtime import StudioApiContext
+from sc_neurocore.studio.api.training_weight_jobs import (
+    RESTORE_METADATA_SEED,
+    RESTORE_WEIGHTS_SEED,
+)
 from sc_neurocore.studio.api.schemas import (
     StudioTrainingWeightAttachRequest,
     StudioTrainingWeightLiveAttachRequest,
@@ -25,13 +26,8 @@ from sc_neurocore.studio.platform import (
     STUDIO_TRAINING_WEIGHT_RESTORE_OWNER,
     TRAINING_WEIGHT_ARTIFACT_PATH,
     TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
-    TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH,
     StudioJobArtifactUnavailable,
-    StudioJobContext,
-    build_training_weight_restore_evidence,
     build_training_weight_restore_plan,
-    load_training_weight_state_dict,
-    materialize_training_weight_payload,
 )
 from sc_neurocore.studio.training import (
     get_training_status,
@@ -106,28 +102,18 @@ def build_training_weights_router(context: StudioApiContext) -> APIRouter:
         restore_plan_payload = restore_plan.to_public_dict()
         request_id = getattr(request.state, "studio_request_id", None)
 
-        def task(context: StudioJobContext) -> dict[str, object]:
-            materialization = materialize_training_weight_payload(
-                restore_plan=restore_plan_payload,
-                metadata_payload=metadata_payload,
-                weights_payload=weights_payload,
-                trusted_loader=load_training_weight_state_dict,
-            )
-            evidence = build_training_weight_restore_evidence(
-                materialization,
-                source_status=source_status,
-            )
-            context.write_artifact(
-                TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH,
-                json.dumps(evidence, indent=2, sort_keys=True),
-            )
-            return cast(dict[str, object], evidence)
-
-        submitted = studio_job_manager.submit(
+        submitted = studio_job_manager.submit_process_task(
             kind="training",
             owner=STUDIO_TRAINING_WEIGHT_RESTORE_OWNER,
             request_id=request_id if isinstance(request_id, str) else None,
-            task=task,
+            task_path=(
+                "sc_neurocore.studio.api.training_weight_jobs:execute_training_weight_restore_task"
+            ),
+            payload={"restore_plan": restore_plan_payload, "source_status": source_status},
+            seed_inputs={
+                RESTORE_METADATA_SEED: metadata_payload,
+                RESTORE_WEIGHTS_SEED: weights_payload,
+            },
         )
         completed = studio_job_manager.wait(
             submitted.job_id,

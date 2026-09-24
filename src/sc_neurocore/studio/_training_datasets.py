@@ -18,6 +18,26 @@ from __future__ import annotations
 from typing import Any
 
 
+def _seed_everything(seed: int) -> None:
+    """Seed Python, NumPy and Torch before building data or model state.
+
+    Parameters
+    ----------
+    seed : int
+        Seed from the validated training configuration.
+    """
+    import random
+
+    import numpy as np
+    import torch
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():  # pragma: no cover - no CUDA in this environment
+        torch.cuda.manual_seed_all(seed)
+
+
 def _make_synthetic(batch_size: int) -> tuple[Any, Any, int, int]:
     """Generate synthetic classification data for quick demonstrations.
 

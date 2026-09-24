@@ -29,16 +29,16 @@ from sc_neurocore.studio._training_control import (
     _register_job as _register_job,
     _start_training,
     _stop_training,
-    _stream_metrics,
 )
 from sc_neurocore.studio._training_events import TRAINING_EVENT_LOG_ARTIFACT_PATH
+from sc_neurocore.studio._training_stream import _stream_metrics
 from sc_neurocore.studio._training_job import (
     HAS_TORCH,
     _CELL_TYPES as _CELL_TYPES,
     _SURROGATES as _SURROGATES,
     TrainingJob,
 )
-from sc_neurocore.studio.platform.jobs import StudioJobManager
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 TrainingJob.__module__ = __name__
 
@@ -86,7 +86,7 @@ def list_cell_types() -> list[dict[str, Any]]:
 
 def start_training(
     config: dict[str, Any],
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Start a Studio training job.
 
@@ -98,7 +98,7 @@ def start_training(
     ----------
     config : dict[str, Any]
         Training Monitor configuration.
-    job_manager : StudioJobManager or None, optional
+    job_manager : StudioJobService or None, optional
         Bounded job manager used by the Studio HTTP route.
 
     Returns
@@ -112,7 +112,7 @@ def start_training(
 def start_training_attach(
     source_job_id: str,
     config: dict[str, Any],
-    job_manager: StudioJobManager,
+    job_manager: StudioJobService,
     *,
     expected_config_sha256: str | None = None,
     mode: str = "warm_start",
@@ -136,7 +136,7 @@ def start_training_attach(
         Completed source training job that published model weights.
     config : dict[str, Any]
         Target training configuration.
-    job_manager : StudioJobManager
+    job_manager : StudioJobService
         Bounded manager owning artifact reads and process submission.
     expected_config_sha256 : str or None, optional
         Optional digest that the source configuration must match.
@@ -166,7 +166,7 @@ def start_training_attach(
 def request_live_training_weight_attach(
     target_job_id: str,
     source_job_id: str,
-    job_manager: StudioJobManager,
+    job_manager: StudioJobService,
     *,
     expected_config_sha256: str | None = None,
 ) -> dict[str, Any]:
@@ -182,7 +182,7 @@ def request_live_training_weight_attach(
         Running target training job.
     source_job_id : str
         Completed source training job that published model weights.
-    job_manager : StudioJobManager
+    job_manager : StudioJobService
         Manager owning artifact reads and control-command delivery.
     expected_config_sha256 : str or None, optional
         Optional digest that the source configuration must match.
@@ -208,7 +208,7 @@ def request_live_training_weight_attach(
 
 def stop_training(
     job_id: str,
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Request cooperative stop for a Studio training job.
 
@@ -216,7 +216,7 @@ def stop_training(
     ----------
     job_id : str
         Training Monitor job identifier.
-    job_manager : StudioJobManager or None, optional
+    job_manager : StudioJobService or None, optional
         Manager used to propagate cancellation into a process worker.
 
     Returns
@@ -229,7 +229,7 @@ def stop_training(
 
 def get_training_status(
     job_id: str,
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Return path-free status for one Studio training job.
 
@@ -237,7 +237,7 @@ def get_training_status(
     ----------
     job_id : str
         Training Monitor job identifier.
-    job_manager : StudioJobManager or None, optional
+    job_manager : StudioJobService or None, optional
         Manager used to reconcile process state and verified evidence.
 
     Returns
@@ -249,14 +249,14 @@ def get_training_status(
     return _get_training_status(job_id, job_manager)
 
 
-def stream_metrics(job_id: str, job_manager: StudioJobManager | None = None) -> Any:
+def stream_metrics(job_id: str, job_manager: StudioJobService | None = None) -> Any:
     """Yield Server-Sent Events for one Studio training job.
 
     Parameters
     ----------
     job_id : str
         Training Monitor job identifier.
-    job_manager : StudioJobManager or None, optional
+    job_manager : StudioJobService or None, optional
         Manager used to tail process-worker JSONL events.
 
     Yields
@@ -267,20 +267,23 @@ def stream_metrics(job_id: str, job_manager: StudioJobManager | None = None) -> 
     yield from _stream_metrics(job_id, job_manager)
 
 
-def list_jobs() -> list[dict[str, Any]]:
+def list_jobs(job_manager: StudioJobService | None = None) -> list[dict[str, Any]]:
     """Return path-free summaries for known Studio training jobs.
 
     Returns
     -------
     list[dict[str, Any]]
-        Registry-order job identifiers, statuses, and configurations.
+        Creation-order job identifiers, statuses, and configurations from
+        the durable manager when supplied. Historical ledger rows without a
+        configuration snapshot report ``config: null`` rather than inventing
+        what ran. Without a manager, the legacy local registry is returned.
     """
-    return _list_jobs()
+    return _list_jobs(job_manager)
 
 
 def export_training_checkpoint(
     job_id: str,
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Return a portable checkpoint for one Studio training job.
 
@@ -288,7 +291,7 @@ def export_training_checkpoint(
     ----------
     job_id : str
         Training Monitor job identifier.
-    job_manager : StudioJobManager or None, optional
+    job_manager : StudioJobService or None, optional
         Manager used to attach verified terminal worker evidence.
 
     Returns

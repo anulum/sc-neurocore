@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from sc_neurocore.studio.api.analysis_guards import _guard_model_scan_request
 from sc_neurocore.studio.api.common import _safe
@@ -22,7 +22,6 @@ from sc_neurocore.studio.api.schemas import (
     BenchmarkRunRequest,
     DclsEvaluateRequest,
 )
-from sc_neurocore.studio.platform.jobs_context import StudioJobContext
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.benchmark_contribution import (
     ALLOWED_ENVIRONMENT_KEYS,
@@ -78,7 +77,6 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
         rejected with ``execution_mode=job_required`` so operators use
         :func:`api_model_scan_job` instead of blocking the HTTP request thread.
         """
-
         duration = 100.0
         _guard_model_scan_request(
             analysis_budget,
@@ -88,33 +86,24 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
         return _safe(lambda: scan_all_models(current=10.0, duration=duration))
 
     @router.post("/api/models/scan/jobs")
-    def api_model_scan_job() -> dict[str, Any]:
+    def api_model_scan_job(request: Request) -> dict[str, Any]:
         """Submit a full-catalogue model scan as an asynchronous Studio job.
 
         Returns a path-free job record immediately. Poll
         ``GET /api/studio/jobs/{job_id}`` for completion; the completed job
         ``result`` carries ``studio.model-scan.v1`` payload with evidence class.
         """
-
         duration = 100.0
         current = 10.0
-
-        def _task(job_context: StudioJobContext) -> dict[str, object]:
-            # 185 models is a long sweep; a cancelled job must stop between
-            # models rather than run to completion and then be discarded.
-            payload = scan_all_models(
-                current=current,
-                duration=duration,
-                should_stop=lambda: job_context.cancelled,
-            )
-            return dict(payload)
+        request_id = getattr(request.state, "studio_request_id", None)
 
         try:
-            record = studio_job_manager.submit(
+            record = studio_job_manager.submit_process_task(
                 kind="model_scan",
                 owner="studio",
-                request_id=None,
-                task=_task,
+                request_id=request_id if isinstance(request_id, str) else None,
+                task_path="sc_neurocore.studio.api.model_scan_jobs:execute_model_scan_process_task",
+                payload={"current": current, "duration": duration},
             )
         except StudioJobRejected as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from None

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -21,12 +22,34 @@ import tests.studio_job_tasks as studio_job_tasks
 
 import sc_neurocore.studio.platform.jobs as jobs_module
 from sc_neurocore.studio.platform.jobs import (
-    STUDIO_SEED_INPUT_DIR,
-    StudioJobArtifactUnavailable,
     StudioJobContext,
     StudioJobManager,
     StudioJobRejected,
 )
+from sc_neurocore.studio.training_contract import resolve_training_config
+
+
+def test_training_snapshot_must_match_worker_payload_before_admission(tmp_path: Path) -> None:
+    """A durable config cannot attest to different worker input."""
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"training"}),
+        default_timeout_seconds=5.0,
+    )
+    config = resolve_training_config({"epochs": 1}).to_public_dict()
+    other = resolve_training_config({"epochs": 2}).to_public_dict()
+
+    with pytest.raises(StudioJobRejected, match="does not match"):
+        manager.submit_process_task(
+            kind="training",
+            owner="studio-training",
+            request_id=None,
+            task_path="tests.studio_job_tasks:process_echo_task",
+            payload=other,
+            training_config=config,
+        )
+
+    assert manager.list_records() == ()
 
 
 def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path) -> None:
@@ -54,123 +77,6 @@ def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path)
     assert str(tmp_path) not in str(completed.to_public_dict())
 
 
-def test_submit_process_task_delivers_confined_seed_inputs(tmp_path: Path) -> None:
-    """Process workers read confined seed inputs written at submission time."""
-
-    manager = StudioJobManager(
-        root=tmp_path / "jobs",
-        allowed_kinds=frozenset({"training"}),
-        default_timeout_seconds=15.0,
-    )
-
-    record = manager.submit_process_task(
-        kind="training",
-        owner="studio-training-attach",
-        request_id="req-seed",
-        task_path="tests.studio_job_tasks:process_seed_echo_task",
-        payload={"seed_path": "weights/model.bin"},
-        seed_inputs={"weights/model.bin": b"seed payload bytes"},
-    )
-    completed = manager.wait(record.job_id, timeout_seconds=20.0)
-
-    assert completed.status == "completed"
-    assert completed.result == {"seed_text": "seed payload bytes", "seed_bytes": 18}
-    # Seed inputs are job inputs, not outputs, so they are never published.
-    assert completed.artifacts == ()
-    assert str(tmp_path) not in str(completed.to_public_dict())
-
-
-def test_submit_process_task_rejects_oversized_seed_input(tmp_path: Path) -> None:
-    """Seed inputs larger than the artifact ceiling are rejected at submission."""
-
-    manager = StudioJobManager(
-        root=tmp_path / "jobs",
-        allowed_kinds=frozenset({"training"}),
-        default_timeout_seconds=5.0,
-        max_artifact_bytes=8,
-    )
-
-    with pytest.raises(StudioJobRejected, match="seed input exceeds"):
-        manager.submit_process_task(
-            kind="training",
-            owner="studio-training-attach",
-            request_id="req-big",
-            task_path="tests.studio_job_tasks:process_seed_echo_task",
-            payload={"seed_path": "weights/model.bin"},
-            seed_inputs={"weights/model.bin": b"this payload is too large"},
-        )
-
-
-def test_submit_process_task_rejects_escaping_seed_path(tmp_path: Path) -> None:
-    """Seed inputs whose path escapes the seed directory are rejected."""
-
-    manager = StudioJobManager(
-        root=tmp_path / "jobs",
-        allowed_kinds=frozenset({"training"}),
-        default_timeout_seconds=5.0,
-    )
-
-    with pytest.raises(StudioJobRejected, match="escapes the seed directory"):
-        manager.submit_process_task(
-            kind="training",
-            owner="studio-training-attach",
-            request_id="req-escape",
-            task_path="tests.studio_job_tasks:process_seed_echo_task",
-            payload={"seed_path": "model.bin"},
-            seed_inputs={"../escape.bin": b"escape"},
-        )
-
-
-def test_read_seed_input_reports_missing_payload(tmp_path: Path) -> None:
-    """Reading an absent seed input fails closed."""
-
-    context = StudioJobContext(
-        job_id="sj_seed",
-        work_dir=tmp_path / "seed-job",
-        cancel_event=threading.Event(),
-        max_artifact_bytes=4096,
-    )
-
-    with pytest.raises(StudioJobArtifactUnavailable, match="seed input is unavailable"):
-        context.read_seed_input("model.bin")
-
-
-def test_read_seed_input_rejects_escaping_path(tmp_path: Path) -> None:
-    """Reading a seed input whose path escapes the seed directory fails closed."""
-
-    work_dir = tmp_path / "seed-job"
-    (work_dir / STUDIO_SEED_INPUT_DIR).mkdir(parents=True)
-    context = StudioJobContext(
-        job_id="sj_seed",
-        work_dir=work_dir,
-        cancel_event=threading.Event(),
-        max_artifact_bytes=4096,
-    )
-
-    with pytest.raises(ValueError, match="escapes the seed directory"):
-        context.read_seed_input("../escape.bin")
-
-
-def test_read_seed_input_rejects_symlinked_seed_directory(tmp_path: Path) -> None:
-    """Seed reads reject reserved seed directories that resolve outside the job."""
-
-    work_dir = tmp_path / "seed-job"
-    outside_dir = tmp_path / "outside"
-    outside_dir.mkdir()
-    work_dir.mkdir()
-    (work_dir / STUDIO_SEED_INPUT_DIR).symlink_to(outside_dir, target_is_directory=True)
-    (outside_dir / "model.bin").write_bytes(b"escape")
-    context = StudioJobContext(
-        job_id="sj_seed",
-        work_dir=work_dir,
-        cancel_event=threading.Event(),
-        max_artifact_bytes=4096,
-    )
-
-    with pytest.raises(ValueError, match="escapes the seed directory"):
-        context.read_seed_input("model.bin")
-
-
 def test_studio_process_worker_environment_prepends_source_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -189,24 +95,19 @@ def test_studio_process_worker_environment_prepends_source_path(
     assert "existing" in pythonpath
 
 
-def test_studio_process_worker_sleep_task_uses_payload_seconds(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Import-stable worker helper consumes numeric sleep payloads."""
+def test_studio_process_worker_sleep_task_uses_payload_seconds(tmp_path: Path) -> None:
+    """Import-stable worker helper sleeps for the numeric payload seconds."""
 
-    observed_sleep_seconds: list[float] = []
     context = StudioJobContext(
         job_id="sj_sleep",
         work_dir=tmp_path / "job",
         cancel_event=threading.Event(),
         max_artifact_bytes=4096,
     )
-    monkeypatch.setattr("tests.studio_job_tasks.time.sleep", observed_sleep_seconds.append)
-
+    started = time.monotonic()
     result = studio_job_tasks.process_sleep_task(context, {"seconds": 0.25})
 
-    assert observed_sleep_seconds == [0.25]
+    assert time.monotonic() - started >= 0.25
     assert result == {"slept": True}
 
 

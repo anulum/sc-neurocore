@@ -354,7 +354,18 @@ def test_cancellation_is_honoured_at_epoch_and_batch_boundaries(tmp_path: Path) 
         job_id=batch_context.job_id,
         cancelled=cancel_during_first_batch,
     )
-    result = batch_job.run_blocking(batch_context)
+    with pytest.raises(StudioJobCancelled, match="stopped"):
+        batch_job.run_blocking(batch_context)
 
-    assert result["training_status"] == "completed"
-    assert cast(dict[str, float], result["final_metrics"])["train_loss"] == 0.0
+    # A stop inside the first batch ends the run there: no epoch is reported as
+    # trained and no metrics or weights are published for the partial epoch.
+    assert batch_job.status == "stopped"
+    assert batch_job.final_metrics is None
+    assert batch_job.weight_checkpoint is None
+    batch_events = []
+    while not batch_job.metrics.empty():
+        batch_events.append(batch_job.metrics.get_nowait())
+    assert (batch_events[-1]["event"], batch_events[-1]["data"]) == ("stopped", {"epoch": 0})
+    assert "epoch" not in [event["event"] for event in batch_events]
+    evidence = json.loads((tmp_path / batch_context.job_id / "training/evidence.json").read_text())
+    assert evidence["status"] == "cancelled"

@@ -51,7 +51,7 @@ def test_studio_job_manager_completes_job_with_path_free_artifact_manifest(
     assert completed.result == {"ok": True}
     assert len(completed.artifacts) == 1
     assert completed.artifacts[0].relative_path == "reports/result.txt"
-    assert manager.list_snapshot().to_public_dict()["schema_version"] == "studio.jobs.list.v1"
+    assert manager.list_snapshot().to_public_dict()["schema_version"] == "studio.jobs.list.v2"
     assert str(tmp_path) not in str(completed.to_public_dict())
     assert (tmp_path / "jobs" / record.job_id / "reports" / "result.txt").read_bytes() == b"ok"
 

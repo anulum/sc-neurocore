@@ -147,6 +147,7 @@ class TestManagerAdmission:
             assert manager.wait(record.job_id, timeout_seconds=30.0).status == "completed"
 
         snapshot = manager.status().to_public_dict()["admission"]
+        assert isinstance(snapshot, dict)
         assert snapshot["running"] == 0
         assert snapshot["admitted"] == 3
         assert snapshot["refused"] == 0
@@ -171,8 +172,10 @@ class TestManagerAdmission:
         )
 
         assert again.job_id == first.job_id
-        # The duplicate released the slot it took, so the next job still fits.
-        assert manager.status().to_public_dict()["admission"]["running"] == 0
+        # The duplicate holds no slot, so the next job still fits.
+        snapshot = manager.status().to_public_dict()["admission"]
+        assert isinstance(snapshot, dict)
+        assert snapshot["running"] == 0
         third = manager.submit(
             kind="analysis", owner="operator", request_id="req-2", task=lambda c: {"v": 3}
         )

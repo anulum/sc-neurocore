@@ -183,7 +183,7 @@ def test_weight_restore_maps_worker_terminal_failures(
         )
 
     monkeypatch.setattr(StudioJobManager, "read_artifact", _read_artifact)
-    monkeypatch.setattr(StudioJobManager, "submit", _submit)
+    monkeypatch.setattr(StudioJobManager, "submit_process_task", _submit)
     monkeypatch.setattr(StudioJobManager, "wait", _wait)
     response = _build_client(tmp_path).post(
         "/api/studio/training/weight-restore",

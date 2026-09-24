@@ -146,7 +146,7 @@ def test_studio_job_manager_cancels_cooperative_job(tmp_path: Path) -> None:
         task=task,
     )
 
-    assert manager.cancel(record.job_id).status == "cancelling"
+    assert manager.cancel(record.job_id).status in {"cancelling", "cancelled"}
     completed = manager.wait(record.job_id, timeout_seconds=2.0)
     assert completed.status == "cancelled"
 

@@ -10,23 +10,18 @@
 
 from __future__ import annotations
 
-import json
-import queue
 import threading
-from collections.abc import Iterator
 from typing import Any, cast
 
 from sc_neurocore.studio._training_events import (
-    _event_from_platform_record,
-    _read_live_training_events,
     _training_status_from_platform_status,
 )
 from sc_neurocore.studio._training_job import TrainingJob
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
 from sc_neurocore.studio.platform.jobs import (
-    StudioJobManager,
     StudioJobRecord,
+    StudioJobRejected,
     StudioJobStatus,
 )
 from sc_neurocore.studio.platform.training_checkpoint import (
@@ -35,6 +30,7 @@ from sc_neurocore.studio.platform.training_checkpoint import (
 )
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
 from sc_neurocore.studio.training_contract import resolve_training_config
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 _jobs: dict[str, TrainingJob] = {}
 _jobs_lock = threading.Lock()
@@ -63,7 +59,7 @@ def _get_registered_pair(
 
 def _start_training(
     config: dict[str, Any],
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Start a process-backed or legacy-thread training job.
 
@@ -89,6 +85,7 @@ def _start_training(
             request_id=None,
             task_path=TRAINING_PROCESS_TASK,
             payload=config,
+            training_config=config,
         )
         proxy = TrainingJob(config, job_id=record.job_id)
         proxy.status = "running"
@@ -103,7 +100,7 @@ def _start_training(
 
 def _stop_training(
     job_id: str,
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Request cooperative stop, or report the state the run already reached.
 
@@ -111,25 +108,50 @@ def _stop_training(
     Stop is not an error. Reporting ``stopping`` for it would be worse than an
     error: it would say the request had taken effect on a run nothing can
     still affect. The status the job actually reached is returned instead.
+    With a manager, a persisted training record remains stoppable after the
+    process-local proxy is lost; a different job kind is not a training run.
     """
     job = _get_registered_job(job_id)
-    if job is None:
+    if job_manager is not None:
+        try:
+            record = job_manager.record(job_id)
+        except KeyError:
+            if job is None:
+                return {"error": f"Job {job_id} not found"}
+        else:
+            if record.kind != "training":
+                return {"error": f"Job {job_id} not found"}
+            if record.status == "unknown":
+                return {"job_id": job_id, "status": "unknown"}
+    elif job is None:
         return {"error": f"Job {job_id} not found"}
-    job.stop()
+    if job is not None:
+        job.stop()
     if job_manager is None:
         return {"job_id": job_id, "status": "stopping"}
     try:
         record = job_manager.cancel(job_id)
     except KeyError:
+        if job is None:
+            return {"error": f"Job {job_id} not found"}
         return {"job_id": job_id, "status": "stopping"}
+    except StudioJobRejected:
+        record = job_manager.record(job_id)
+        if record.kind != "training" or record.status not in TERMINAL_STATUSES | {"unknown"}:
+            raise
+    if record.status == "unknown":
+        return {"job_id": job_id, "status": "unknown"}
     if record.status in TERMINAL_STATUSES:
-        return {"job_id": job_id, "status": record.status}
+        return {
+            "job_id": job_id,
+            "status": _training_status_from_platform_status(record.status),
+        }
     return {"job_id": job_id, "status": "stopping"}
 
 
 def _get_training_status(
     job_id: str,
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
     """Return path-free status for a local job or persisted platform record."""
     job = _get_registered_job(job_id)
@@ -140,6 +162,8 @@ def _get_training_status(
             except KeyError:
                 pass
             else:
+                if record.kind != "training":
+                    return {"error": f"Job {job_id} not found"}
                 return _status_from_platform_record(
                     record,
                     evidence_summary=build_training_evidence_summary(
@@ -161,68 +185,18 @@ def _get_training_status(
     return job._public_status()
 
 
-def _stream_metrics(
-    job_id: str,
-    job_manager: StudioJobManager | None = None,
-) -> Iterator[str]:
-    """Yield SSE-formatted training metric events for one job."""
-    job = _get_registered_job(job_id)
-    if job is None:
-        if job_manager is not None:
-            try:
-                record = job_manager.record(job_id)
-            except KeyError:
-                record = None
-            if record is not None:
-                yield (
-                    f"data: {json.dumps(_event_from_platform_record(record.status, record.error, record.result))}\n\n"
-                )
-                return
-        yield f"data: {json.dumps({'event': 'error', 'data': {'message': 'Job not found'}})}\n\n"
-        return
-
-    live_event_offset = 0
-    live_event_buffer = ""
-    live_terminal_seen = False
-    while True:
-        if job_manager is not None:
-            try:
-                record = job_manager.record(job_id)
-            except KeyError:
-                record = None
-            if record is not None:
-                _sync_proxy_job(job, record.status, record.error, record.result)
-                live_events, live_event_offset, live_event_buffer = _read_live_training_events(
-                    job_manager,
-                    job_id,
-                    offset=live_event_offset,
-                    buffer=live_event_buffer,
-                )
-                for event in live_events:
-                    if event.get("event") in ("completed", "stopped", "error"):
-                        live_terminal_seen = True
-                    yield f"data: {json.dumps(event)}\n\n"
-                if live_terminal_seen:
-                    break
-                if job.status in ("completed", "stopped", "failed"):
-                    yield (
-                        "data: "
-                        f"{json.dumps(_event_from_platform_record(record.status, record.error, record.result))}\n\n"
-                    )
-                    break
-        try:
-            event = job.metrics.get(timeout=1.0)
-            yield f"data: {json.dumps(event)}\n\n"
-            if event["event"] in ("completed", "stopped", "error"):
-                break
-        except queue.Empty:
-            if job.status in ("completed", "stopped", "failed"):
-                break
-            yield f"data: {json.dumps({'event': 'heartbeat'})}\n\n"
-
-
-def _list_jobs() -> list[dict[str, Any]]:
-    """Return path-free summaries for all registered training jobs."""
+def _list_jobs(job_manager: StudioJobService | None = None) -> list[dict[str, Any]]:
+    """Return durable training summaries, or the legacy local registry."""
+    if job_manager is not None:
+        return [
+            {
+                "job_id": record.job_id,
+                "status": _training_status_from_platform_status(record.status),
+                "config": record.training_config,
+            }
+            for record in job_manager.list_records()
+            if record.kind == "training"
+        ]
     with _jobs_lock:
         return [
             {"job_id": job.id, "status": job.status, "config": job.config} for job in _jobs.values()
@@ -231,20 +205,34 @@ def _list_jobs() -> list[dict[str, Any]]:
 
 def _export_training_checkpoint(
     job_id: str,
-    job_manager: StudioJobManager | None = None,
+    job_manager: StudioJobService | None = None,
 ) -> dict[str, Any]:
-    """Build a portable checkpoint for one registered training job."""
+    """Build a checkpoint from a retained training record after proxy loss."""
     job = _get_registered_job(job_id)
-    if job is None:
+    record: StudioJobRecord | None = None
+    if job_manager is not None:
+        try:
+            record = job_manager.record(job_id)
+        except KeyError:
+            pass
+        else:
+            if record.kind != "training":
+                return {"error": f"Job {job_id} not found"}
+    if record is None and job is None:
         return {"error": f"Job {job_id} not found"}
+    config = record.training_config if record is not None else None
+    if config is None and job is not None:
+        config = job.config
+    if config is None:
+        return {"error": f"Job {job_id} has no retained training configuration"}
     status = _get_training_status(job_id, job_manager)
     final_metrics = status.get("final_metrics")
     evidence_summary = status.get("evidence_summary")
     weight_checkpoint = status.get("weight_checkpoint")
     checkpoint = build_training_checkpoint(
         job_id=job_id,
-        config=job.config,
-        status=str(status.get("status", job.status)),
+        config=config,
+        status=str(status.get("status", job.status if job is not None else "unknown")),
         final_metrics=final_metrics if isinstance(final_metrics, dict) else None,
         evidence_summary=evidence_summary if isinstance(evidence_summary, dict) else None,
         weight_checkpoint=weight_checkpoint if isinstance(weight_checkpoint, dict) else None,
@@ -279,6 +267,9 @@ def _sync_proxy_job(
         return
     if platform_status == "failed":
         job.status = "failed"
+        job.error = platform_error
+    if platform_status in {"interrupted", "unknown"}:
+        job.status = platform_status
         job.error = platform_error
 
 

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -114,6 +115,55 @@ def test_local_job_survives_missing_platform_record_and_cancel_lookup(tmp_path: 
     assert list(stream_metrics(job_id)) == []
 
 
+def test_stop_reaches_unregistered_durable_training_job(tmp_path: Path) -> None:
+    """Stop reaches a live training ledger row after the API proxy is gone."""
+    manager = _manager(tmp_path / "durable")
+    started = threading.Event()
+    release = threading.Event()
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        started.set()
+        release.wait(3.0)
+        context.check_cancelled()
+        return {}
+
+    submitted = manager.submit(kind="training", owner="studio-training", request_id=None, task=task)
+    try:
+        assert started.wait(2.0)
+        assert stop_training(submitted.job_id, manager) == {
+            "job_id": submitted.job_id,
+            "status": "stopping",
+        }
+    finally:
+        release.set()
+    assert manager.wait(submitted.job_id, timeout_seconds=5.0).status == "cancelled"
+
+
+def test_stop_of_unregistered_record_keeps_training_kind_and_terminal_state(
+    tmp_path: Path,
+) -> None:
+    """Only training records are stoppable; a finished run reports its state."""
+    manager = StudioJobManager(
+        root=tmp_path / "durable",
+        allowed_kinds=frozenset({"training", "evidence"}),
+        default_timeout_seconds=10.0,
+    )
+    training = manager.submit(
+        kind="training", owner="studio-training", request_id=None, task=lambda _ctx: {}
+    )
+    evidence = manager.submit(
+        kind="evidence", owner="studio-evidence", request_id=None, task=lambda _ctx: {}
+    )
+    assert manager.wait(training.job_id, timeout_seconds=5.0).status == "completed"
+    assert manager.wait(evidence.job_id, timeout_seconds=5.0).status == "completed"
+
+    assert stop_training(training.job_id, manager) == {
+        "job_id": training.job_id,
+        "status": "completed",
+    }
+    assert stop_training(evidence.job_id, manager) == {"error": f"Job {evidence.job_id} not found"}
+
+
 def test_process_proxy_emits_heartbeat_when_manager_record_is_unavailable(
     tmp_path: Path,
 ) -> None:
@@ -185,6 +235,10 @@ def test_unregistered_platform_records_map_to_public_status_and_sse(tmp_path: Pa
     assert invalid_status["weight_checkpoint"] is None
     assert failed_status["status"] == "failed"
     assert cancelled_status["status"] == "stopped"
+    assert stop_training(records["cancelled"].job_id, manager) == {
+        "job_id": records["cancelled"].job_id,
+        "status": "stopped",
+    }
     assert len(persisted_stream) == 1
     assert persisted_stream[0]["event"] == "completed"
     assert persisted_stream[0]["data"] == {"train_accuracy": 0.75}

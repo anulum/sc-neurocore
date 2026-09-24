@@ -6,30 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio worker process-group reaping
 
-"""Stopping a worker means stopping everything it started.
+"""Stop and verify a worker's entire process group, including descendants.
 
-Terminating the direct child is not stopping the job. A worker that spawned a
-subprocess leaves it running, still holding the job's files and its CPU, while
-the record says the job timed out — the Studio reporting an end that did not
-happen. So a worker runs in its own process group, and the group is what gets
-signalled, escalated and then *checked*.
-
-The check is the point. A reap reports what it actually achieved: whether the
-group is gone, how it went (exited, terminated, killed) and how long it took.
-Nothing here raises: a supervisor that crashes while cleaning up leaves a job
-with no terminal record at all, which is worse than a job whose reap is
-recorded as incomplete.
+Signal, escalate and check the group: direct-child exit alone is insufficient.
+Reports preserve cleanup outcome, elapsed time and surviving process IDs so
+the supervisor can retain custody instead of claiming an unverified stop.
 """
 
 from __future__ import annotations
 
-import errno
 import os
 import signal
 import subprocess
 import time
 from dataclasses import dataclass
 from typing import Literal
+
+from sc_neurocore.studio.platform.jobs_process_state import group_is_gone, group_survivors
 
 #: How long the group gets to exit after SIGTERM before SIGKILL follows.
 DEFAULT_TERMINATE_GRACE_SECONDS = 2.0
@@ -98,83 +91,34 @@ def process_group_of(process: subprocess.Popen[bytes]) -> int | None:
         return None
 
 
-def _is_zombie(pid: int) -> bool:
-    """Return whether a process has exited and is only awaiting collection.
-
-    A zombie still belongs to its process group, so ``killpg(group, 0)`` keeps
-    succeeding for it. Treating that as "still running" would report every
-    ordinary reap as a failure.
-    """
-    try:
-        with open(f"/proc/{pid}/stat", encoding="utf-8", errors="replace") as handle:
-            state = handle.read().rsplit(")", 1)[-1].split()[0]
-    except (OSError, IndexError):
-        return True
-    return state == "Z"
-
-
-def _group_survivors(group_id: int) -> tuple[int, ...]:
-    """Return the process ids still running in one group, zombies excluded."""
-    survivors: list[int] = []
-    try:
-        entries = os.listdir("/proc")
-    except OSError:  # pragma: no cover - non-Linux fallback
-        return ()
-    for entry in entries:
-        if not entry.isdigit():
-            continue
-        pid = int(entry)
-        try:
-            if os.getpgid(pid) != group_id:
-                continue
-        except (ProcessLookupError, PermissionError, OSError):
-            continue
-        if not _is_zombie(pid):
-            survivors.append(pid)
-    return tuple(survivors)
-
-
-def _group_is_gone(group_id: int) -> bool:
-    """Return whether nothing in the group is still running."""
-    try:
-        os.killpg(group_id, 0)
-    except ProcessLookupError:
-        return True
-    except PermissionError:  # pragma: no cover - a foreign group we cannot see
-        return False
-    except OSError as exc:  # pragma: no cover - defensive
-        return exc.errno == errno.ESRCH
-    # The group still exists as far as the kernel is concerned; that is only
-    # meaningful if something in it is actually running.
-    return not _group_survivors(group_id)
-
-
 def _signal_group(group_id: int, number: int) -> None:
-    """Signal a whole process group, ignoring one that has already gone."""
+    """Signal a whole process group, ignoring one that has already gone.
+
+    ``group_id`` is always a worker's own session group (its PID, above 1) and
+    never the caller's group, so ``killpg(1)``, which is ``kill(-1)``, and
+    ``killpg(0)`` cannot occur here.
+    """
     try:
         os.killpg(group_id, number)
     except (ProcessLookupError, PermissionError, OSError):
         return
 
 
-def _wait_for_group(
-    group_id: int, *, deadline: float, process: subprocess.Popen[bytes] | None = None
-) -> bool:
+def _wait_for_group(group_id: int, *, deadline: float, process: subprocess.Popen[bytes]) -> bool:
     """Wait for a group to stop running, collecting the direct child as it goes."""
     while time.monotonic() < deadline:
-        if process is not None:
-            process.poll()
-        if _group_is_gone(group_id):
+        process.poll()
+        if group_is_gone(group_id):
             return True
         time.sleep(_POLL_INTERVAL_SECONDS)
-    if process is not None:
-        process.poll()
-    return _group_is_gone(group_id)
+    process.poll()
+    return group_is_gone(group_id)
 
 
 def reap_process_group(
     process: subprocess.Popen[bytes],
     *,
+    owned_group_id: int | None = None,
     terminate_grace_seconds: float = DEFAULT_TERMINATE_GRACE_SECONDS,
     kill_grace_seconds: float = DEFAULT_KILL_GRACE_SECONDS,
 ) -> ReapReport:
@@ -194,6 +138,10 @@ def reap_process_group(
         How long the group may take to exit on SIGTERM.
     kill_grace_seconds : float
         How long the group may take to disappear after SIGKILL.
+    owned_group_id : int, optional
+        Group captured by the caller for a worker it started in its own session.
+        Retains descendant custody after the direct child has been collected.
+        Must equal that worker's PID and must not be the caller's group.
 
     Returns
     -------
@@ -202,7 +150,16 @@ def reap_process_group(
     """
     started = time.monotonic()
     group_id = process_group_of(process)
-    if process.poll() is not None and (group_id is None or _group_is_gone(group_id)):
+    if owned_group_id is not None:
+        if owned_group_id != process.pid or owned_group_id == os.getpgrp():
+            return ReapReport(
+                outcome="unreaped",
+                group_id=None,
+                returncode=process.returncode,
+                duration_seconds=time.monotonic() - started,
+            )
+        group_id = owned_group_id
+    if process.poll() is not None and (group_id is None or group_is_gone(group_id)):
         return ReapReport(
             outcome="exited",
             group_id=group_id,
@@ -215,8 +172,17 @@ def reap_process_group(
         # start workers in their own session; this branch keeps a misconfigured
         # worker from taking the Studio down with it.
         _terminate_direct_child(process, terminate_grace_seconds, kill_grace_seconds)
+        if process.returncode is None:
+            # Both signals were refused or ignored: the worker still runs.
+            return ReapReport(
+                outcome="unreaped",
+                group_id=None,
+                returncode=None,
+                duration_seconds=time.monotonic() - started,
+                survivors=(process.pid,),
+            )
         return ReapReport(
-            outcome="killed" if process.returncode not in (0, None) else "terminated",
+            outcome="killed" if process.returncode != 0 else "terminated",
             group_id=None,
             returncode=process.returncode,
             duration_seconds=time.monotonic() - started,
@@ -250,7 +216,7 @@ def reap_process_group(
         group_id=group_id,
         returncode=process.returncode,
         duration_seconds=time.monotonic() - started,
-        survivors=_group_survivors(group_id),
+        survivors=group_survivors(group_id),
     )
 
 
@@ -272,12 +238,13 @@ def _terminate_direct_child(
         return
     except subprocess.TimeoutExpired:
         pass
-    except (ProcessLookupError, PermissionError, OSError):  # pragma: no cover - defensive
+    except OSError:
+        # Delivery refused (for example by a security policy): report, not retry.
         return
     try:
         process.kill()
         process.wait(timeout=kill_grace)
-    except (subprocess.TimeoutExpired, ProcessLookupError, PermissionError, OSError):
+    except (subprocess.TimeoutExpired, OSError):
         return
 
 

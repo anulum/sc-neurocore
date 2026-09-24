@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
-from sc_neurocore.studio.platform.jobs_admission import StudioJobAdmission
+from sc_neurocore.studio.platform.jobs_shared_admission import SharedJobAdmission
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_recovery import StudioJobReconciliation
 from sc_neurocore.studio.platform.jobs_models import (
@@ -42,7 +42,7 @@ class _StudioJobManagerState(Protocol):
     #: live handles of jobs this process is supervising right now.
     _ledger: StudioJobLedger
     _default_workspace: str
-    _admission: StudioJobAdmission
+    _admission: SharedJobAdmission
     _unreaped_workers: set[str]
     _reconciliation: tuple[StudioJobReconciliation, ...]
     _done_events: dict[str, threading.Event]

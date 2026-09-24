@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 #: reading v1 would have counted an interrupted job as neither active nor
 #: failed, and seen no reason why.
 JOBS_STATUS_SCHEMA_VERSION = "studio.jobs.status.v2"
-JOBS_LIST_SCHEMA_VERSION = "studio.jobs.list.v1"
+JOBS_LIST_SCHEMA_VERSION = "studio.jobs.list.v2"
 DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
 UTC = timezone.utc
 
@@ -49,6 +49,7 @@ STUDIO_SEED_INPUT_DIR = ".studio_seed"
 STUDIO_CONTROL_DIR = ".studio_control"
 STUDIO_CONTROL_SEED_DIR = ".studio_control_seed"
 STUDIO_CONTROL_COMMAND_FILE = "command.json"
+STUDIO_CONTROL_COMMAND_MAX_BYTES = 1024 * 1024
 STUDIO_JOB_ID_PATTERN = re.compile(r"\Asj_[0-9a-f]{16}\Z")
 
 
@@ -107,6 +108,7 @@ class StudioJobRecord:
     idempotency_key: str | None = None
     experiment_sha256: str | None = None
     admission: dict[str, object] = field(default_factory=dict)
+    training_config: dict[str, object] | None = None
     lease_owner: str | None = None
     lease_expires_at_utc: str | None = None
     heartbeat_at_utc: str | None = None
@@ -133,6 +135,7 @@ class StudioJobRecord:
             "result": self.result,
             "started_at_utc": self.started_at_utc,
             "status": self.status,
+            "training_config": self.training_config,
             "workspace": self.workspace,
         }
 
@@ -181,6 +184,8 @@ class StudioJobStatusSnapshot:
     #: Jobs whose worker was still running after their terminal record.
     unreaped_workers: tuple[str, ...] = ()
     schema_version: str = JOBS_STATUS_SCHEMA_VERSION
+    #: Durable purge operations still awaiting safe restoration or cleanup.
+    pending_purge_count: int = 0
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable, path-free status snapshot."""
@@ -193,6 +198,7 @@ class StudioJobStatusSnapshot:
             "configured": self.configured,
             "failed_count": self.failed_count,
             "interrupted_count": self.interrupted_count,
+            "pending_purge_count": self.pending_purge_count,
             "process_count": self.process_count,
             "recovery": [dict(decision) for decision in self.recovery],
             "resource_profiles": [profile.to_public_dict() for profile in self.resource_profiles],
@@ -226,3 +232,38 @@ class StudioJobArtifactPayload:
 
     artifact: StudioJobArtifact
     payload: bytes
+
+
+@dataclass(frozen=True, slots=True)
+class StudioJobPurgeRecord:
+    """Operator journal evidence, without filesystem paths or process identity."""
+
+    job_id: str
+    phase: str
+    device: int | None
+    inode: int | None
+
+    def to_public_dict(self) -> dict[str, object]:
+        """Return recorded evidence only; neither presence nor completion is inferred."""
+        return {
+            "job_id": self.job_id,
+            "phase": self.phase,
+            "device": self.device,
+            "inode": self.inode,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioJobPurgeSnapshot:
+    """Bounded live journal page; subsequent pages are not a frozen snapshot."""
+
+    purges: tuple[StudioJobPurgeRecord, ...]
+    next_after: str | None
+
+    def to_public_dict(self) -> dict[str, object]:
+        """Serialize a versioned operator page with a lexical job-ID cursor."""
+        return {
+            "schema_version": "studio.jobs.purges.v1",
+            "purges": [record.to_public_dict() for record in self.purges],
+            "next_after": self.next_after,
+        }

@@ -16,19 +16,23 @@ with it rather than leaving orphaned transitions behind.
 from __future__ import annotations
 
 import json
+import sqlite3
+from contextlib import nullcontext
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
+from sc_neurocore.studio.platform.jobs_ledger_creation import (
+    create_job as create_job,
+    _INSERT_TRANSITION,
+)
 from sc_neurocore.studio.platform.jobs_ledger_schema import (
     ALLOWED_TRANSITIONS,
     TERMINAL_STATUSES,
-    StudioJobSubmission,
     artifacts_to_json,
     record_from_row,
 )
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
-    StudioJobExecutionModel,
     StudioJobRecord,
     StudioJobRejected,
     StudioJobStatus,
@@ -36,21 +40,6 @@ from sc_neurocore.studio.platform.jobs_models import (
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle only matters to type checkers
     from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
-
-_INSERT_JOB = """
-INSERT INTO jobs (
-    job_id, kind, actor, workspace, request_id, idempotency_key,
-    experiment_sha256, admission, execution_model, status,
-    created_at_utc, artifacts, lease_owner, lease_expires_at_utc,
-    heartbeat_at_utc, sequence
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, '[]', ?, ?, ?, 0)
-"""
-
-_INSERT_TRANSITION = """
-INSERT INTO job_transitions
-    (job_id, sequence, from_status, to_status, at_utc, actor, reason)
-VALUES (?, ?, ?, ?, ?, ?, ?)
-"""
 
 _UPDATE_JOB = """
 UPDATE jobs SET
@@ -68,81 +57,6 @@ WHERE job_id = ?
 """
 
 
-def create_job(
-    ledger: StudioJobLedger,
-    *,
-    job_id: str,
-    kind: str,
-    actor: str,
-    workspace: str,
-    request_id: str | None,
-    idempotency_key: str | None,
-    experiment_sha256: str | None,
-    admission: Mapping[str, Any] | None,
-    execution_model: StudioJobExecutionModel,
-) -> StudioJobSubmission:
-    """Admit one job, or return the one that already owns its key.
-
-    Parameters
-    ----------
-    ledger : StudioJobLedger
-        The ledger to write to.
-    job_id : str
-        Generated identifier for the new job.
-    kind, actor, workspace : str
-        What is running, for whom, and in which workspace. Actor and workspace
-        scope every later read.
-    request_id : str, optional
-        The caller's request correlation id.
-    idempotency_key : str, optional
-        When given, a second submission with the same key by the same actor and
-        workspace returns the first job instead of starting another.
-    experiment_sha256 : str, optional
-        Digest of the effective experiment this job runs, when it has one.
-    admission : mapping, optional
-        The admission decision recorded with the job.
-    execution_model : {"thread", "process"}
-        How the job is supervised.
-
-    Returns
-    -------
-    StudioJobSubmission
-        The stored record and whether it was already there.
-    """
-    timestamp = ledger.timestamp()
-    with ledger.transaction() as connection:
-        if idempotency_key is not None:
-            existing = connection.execute(
-                "SELECT * FROM jobs WHERE actor = ? AND workspace = ? AND idempotency_key = ?",
-                (actor, workspace, idempotency_key),
-            ).fetchone()
-            if existing is not None:
-                return StudioJobSubmission(record_from_row(existing), duplicate=True)
-        connection.execute(
-            _INSERT_JOB,
-            (
-                job_id,
-                kind,
-                actor,
-                workspace,
-                request_id,
-                idempotency_key,
-                experiment_sha256,
-                json.dumps(dict(admission or {}), sort_keys=True),
-                execution_model,
-                timestamp,
-                ledger.supervisor,
-                ledger.lease_expiry(),
-                timestamp,
-            ),
-        )
-        connection.execute(
-            _INSERT_TRANSITION, (job_id, 0, None, "pending", timestamp, actor, "admitted")
-        )
-        row = connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
-    return StudioJobSubmission(record_from_row(row), duplicate=False)
-
-
 def transition_job(
     ledger: StudioJobLedger,
     job_id: str,
@@ -156,6 +70,8 @@ def transition_job(
     result: Mapping[str, Any] | None = None,
     artifacts: Sequence[StudioJobArtifact] | None = None,
     expected_record: StudioJobRecord | None = None,
+    supervisor: str | None = None,
+    connection: sqlite3.Connection | None = None,
 ) -> StudioJobRecord:
     """Move one job to a new status and append the transition.
 
@@ -171,16 +87,31 @@ def transition_job(
     changing it. The comparison includes every public field, serialised as JSON
     to preserve numeric and boolean distinctions, and runs under the write lock.
 
+    ``supervisor`` names the lease owner acting through a storage service that
+    verified it; ``None`` means this ledger's own supervisor. Only the owner's
+    transition renews the lease.
+
+    An optional connection must be this ledger's active transaction, allowing
+    the storage authority to commit a terminal record together with the
+    release of its admission reservation.
+
     Raises
     ------
+    ValueError
+        ``connection`` is not this ledger's active transaction.
     KeyError
         The job is not in the ledger.
     StudioJobRejected
         The transition is not allowed from the job's current status, or a
         supplied field conflicts with the already sealed terminal record.
     """
+    if connection is not None and (
+        connection is not ledger.connection() or not connection.in_transaction
+    ):
+        raise ValueError("Job transition requires this ledger's active transaction.")
+    acting = ledger.supervisor if supervisor is None else supervisor
     timestamp = ledger.timestamp()
-    with ledger.transaction() as connection:
+    with ledger.transaction() if connection is None else nullcontext(connection) as connection:
         row = connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
         if row is None:
             raise KeyError(job_id)
@@ -218,7 +149,7 @@ def transition_job(
             return record_from_row(row)
         sequence = int(row["sequence"]) + (0 if unchanged else 1)
         terminal = to_status in TERMINAL_STATUSES
-        owns_lease = row["lease_owner"] == ledger.supervisor
+        owns_lease = row["lease_owner"] == acting
         connection.execute(
             _UPDATE_JOB,
             (
@@ -253,45 +184,89 @@ def transition_job(
     return record_from_row(updated)
 
 
-def heartbeat_job(ledger: StudioJobLedger, job_id: str) -> None:
+def heartbeat_job(ledger: StudioJobLedger, job_id: str, *, supervisor: str | None = None) -> bool:
     """Extend a live job's lease, checking its status in the write transaction.
 
     Terminal and absent jobs remain unchanged. The transaction serialises this
     check with transitions so a finished job cannot acquire another lease.
     Only the recorded owner can renew a live lease, even after expiry; another
     supervisor raises ``StudioJobRejected`` without changing any stored fields.
+    ``supervisor`` is a storage-verified delegated owner; ``None`` means this
+    ledger's own supervisor.
+
+    Returns
+    -------
+    bool
+        ``True`` when the lease was renewed, ``False`` when the job is absent
+        or already terminal.
     """
+    acting = ledger.supervisor if supervisor is None else supervisor
     with ledger.transaction() as connection:
         row = connection.execute(
             "SELECT status, lease_owner FROM jobs WHERE job_id = ?", (job_id,)
         ).fetchone()
         if row is None or row["status"] in TERMINAL_STATUSES:
-            return
-        if row["lease_owner"] != ledger.supervisor:
+            return False
+        if row["lease_owner"] != acting:
             raise StudioJobRejected(f"Studio job {job_id} lease belongs to another supervisor.")
         connection.execute(
             "UPDATE jobs SET heartbeat_at_utc = ?, lease_expires_at_utc = ?, lease_owner = ?"
             " WHERE job_id = ?",
-            (ledger.timestamp(), ledger.lease_expiry(), ledger.supervisor, job_id),
+            (ledger.timestamp(), ledger.lease_expiry(), acting, job_id),
+        )
+    return True
+
+
+def require_purgeable(
+    connection: sqlite3.Connection, job_id: str, *, purge_supervisor: str | None = None
+) -> None:
+    """Refuse missing, active or capacity-retaining jobs before discarding custody."""
+    row = connection.execute("SELECT status FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+    if row is None:
+        raise KeyError(job_id)
+    if str(row["status"]) not in TERMINAL_STATUSES:
+        raise StudioJobRejected(f"Studio job {job_id} is not terminal and cannot be purged.")
+    intent = connection.execute(
+        "SELECT supervisor,state FROM job_purges WHERE job_id=?", (job_id,)
+    ).fetchone()
+    if intent is not None and (
+        intent["supervisor"] != purge_supervisor or intent["state"] != "prepared"
+    ):
+        raise StudioJobRejected(f"Studio job {job_id} has a pending purge requiring recovery.")
+    if (
+        connection.execute(
+            "SELECT 1 FROM admission_reservations WHERE job_id=?", (job_id,)
+        ).fetchone()
+        is not None
+    ):
+        raise StudioJobRejected(
+            f"Studio job {job_id} retains worker capacity and cannot be purged."
         )
 
 
-def delete_job(ledger: StudioJobLedger, job_id: str) -> None:
-    """Remove one terminal job and its whole transition history.
+def delete_job(
+    ledger: StudioJobLedger, job_id: str, *, connection: sqlite3.Connection | None = None
+) -> None:
+    """Remove one unreserved terminal job, worker identity and transition history.
+
+    An optional connection must be this ledger's active transaction, allowing
+    the filesystem purge owner to serialize staging with record deletion.
 
     Raises
     ------
     KeyError
         The job is not in the ledger.
     StudioJobRejected
-        The job has not finished; a running job's history is not disposable.
+        The job is active or retains capacity; its custody is not disposable.
     """
-    with ledger.transaction() as connection:
-        row = connection.execute("SELECT status FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
-        if row is None:
-            raise KeyError(job_id)
-        if str(row["status"]) not in TERMINAL_STATUSES:
-            raise StudioJobRejected(f"Studio job {job_id} is not terminal and cannot be purged.")
+    if connection is not None and (
+        connection is not ledger.connection() or not connection.in_transaction
+    ):
+        raise ValueError("Job deletion requires this ledger's active transaction.")
+    purge_supervisor = ledger.supervisor if connection is not None else None
+    with ledger.transaction() if connection is None else nullcontext(connection) as connection:
+        require_purgeable(connection, job_id, purge_supervisor=purge_supervisor)
+        connection.execute("DELETE FROM job_workers WHERE job_id = ?", (job_id,))
         connection.execute("DELETE FROM jobs WHERE job_id = ?", (job_id,))
         connection.execute("DELETE FROM job_transitions WHERE job_id = ?", (job_id,))
 

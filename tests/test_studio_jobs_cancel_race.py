@@ -15,16 +15,17 @@ reached the operator as a server error for pressing Stop on a run that had just
 finished. Observed in a loaded slice run as
 ``Studio job sj_94b53edeb87d968a cannot move from 'cancelled' to 'cancelling'``.
 
-The race is made deterministic here by holding the pre-check's answer stale for
-exactly one call, which is the only way to drive that window on purpose; the
-ledger, the transition and the manager are the production ones.
+The race is made deterministic by the ledger connection's own statement trace:
+the real job is released and completes between the pre-check read and the
+transition write. The ledger, the transition and the manager are the production
+ones.
 """
 
 from __future__ import annotations
 
-from dataclasses import replace
 from pathlib import Path
 import os
+import threading
 import time
 from collections.abc import Mapping
 
@@ -79,43 +80,66 @@ class TestCancellingAJobThatAlreadyStopped:
         assert cancelled.status == "completed"
 
     def test_a_job_that_stops_inside_the_race_window_is_still_a_no_op(
-        self, manager: StudioJobManager, monkeypatch: pytest.MonkeyPatch
+        self, manager: StudioJobManager
     ) -> None:
-        """The pre-check sees a live job; the ledger sees a finished one."""
-        finished = _finished_job(manager)
-        ledger = manager._ledger
-        real_record = ledger.record
-        stale = [True]
+        """The pre-check sees a live job; the ledger sees a finished one.
 
-        def racing_record(job_id: str) -> StudioJobRecord:
-            record = real_record(job_id)
-            if stale[0]:
-                stale[0] = False
-                return replace(record, status="running")
-            return record
+        When cancel's connection starts the transition, right after its status
+        read, the real job is released and its supervisor commits completion
+        on another connection first.
+        """
+        release, started = threading.Event(), threading.Event()
 
-        monkeypatch.setattr(ledger, "record", racing_record)
+        def task(context: StudioJobContext) -> dict[str, object]:
+            started.set()
+            release.wait(10.0)
+            return {"done": True}
 
-        cancelled = manager.cancel(finished.job_id)
+        submitted = manager.submit(kind="compiler", owner="test", request_id=None, task=task)
+        assert started.wait(5.0)
+        statements: list[str] = []
 
+        def finish_before_write(statement: str) -> None:
+            read = statements and statements[-1].startswith("SELECT * FROM jobs WHERE job_id")
+            if read and statement == "BEGIN IMMEDIATE" and not release.is_set():
+                release.set()
+                assert manager._done_events[submitted.job_id].wait(10.0)
+            statements.append(statement)
+
+        connection = manager._ledger.connection()
+        connection.set_trace_callback(finish_before_write)
+        try:
+            cancelled = manager.cancel(submitted.job_id)
+        finally:
+            connection.set_trace_callback(None)
+
+        assert release.is_set()
         assert cancelled.status == "completed"
-        assert stale[0] is False
 
     def test_a_refusal_that_is_not_the_race_still_propagates(
-        self, manager: StudioJobManager, monkeypatch: pytest.MonkeyPatch
+        self, manager: StudioJobManager
     ) -> None:
-        """Swallowing every refusal would hide a real ledger inconsistency."""
-        finished = _finished_job(manager)
-        ledger = manager._ledger
-        real_record = ledger.record
+        """Swallowing every refusal would hide a real ledger inconsistency.
 
-        def always_running(job_id: str) -> StudioJobRecord:
-            return replace(real_record(job_id), status="running")
+        A job whose outcome is ``unknown`` cannot move to ``cancelling``; that
+        refusal is not a job that just stopped.
+        """
+        job_id = "sj_00000000000000aa"
+        manager._admission.admit(
+            job_id=job_id,
+            kind="compiler",
+            actor="test",
+            workspace="default",
+            request_id=None,
+            idempotency_key=None,
+            experiment_sha256=None,
+            admission=None,
+            execution_model="thread",
+        )
+        manager._ledger.transition(job_id, "unknown")
 
-        monkeypatch.setattr(ledger, "record", always_running)
-
-        with pytest.raises(StudioJobRejected, match="cannot move from 'completed'"):
-            manager.cancel(finished.job_id)
+        with pytest.raises(StudioJobRejected, match="cannot move from 'unknown'"):
+            manager.cancel(job_id)
 
     def test_cancelling_twice_is_a_no_op_the_second_time(self, manager: StudioJobManager) -> None:
         def task(context: StudioJobContext) -> dict[str, object]:

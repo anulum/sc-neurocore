@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from starlette.responses import Response
 
 from sc_neurocore.studio.api.runtime import StudioApiContext
@@ -33,6 +33,16 @@ def build_jobs_router(context: StudioApiContext) -> APIRouter:
     def api_studio_jobs() -> dict[str, object]:
         """Return path-free local job records for administrators."""
         return studio_job_manager.list_snapshot().to_public_dict()
+
+    @router.get("/api/studio/jobs/purges")
+    def api_studio_job_purges(
+        limit: int = Query(default=100, ge=1, le=1000), after: str | None = None
+    ) -> dict[str, object]:
+        """Read a bounded path-free purge journal page; never reconcile or clear it."""
+        try:
+            return studio_job_manager.purge_snapshot(limit=limit, after=after).to_public_dict()
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="invalid_purge_page") from exc
 
     @router.get("/api/studio/jobs/{job_id}")
     def api_studio_job(job_id: str) -> dict[str, object]:

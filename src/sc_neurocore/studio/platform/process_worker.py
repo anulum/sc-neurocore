@@ -13,7 +13,9 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import os
 import threading
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import cast
@@ -42,6 +44,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
     result_path = Path(args.result)
     try:
+        if (args.grant_socket is None) != (args.grant_server_uid is None):
+            raise ValueError("A socket grant needs both its endpoint and server identity.")
+        if args.grant_socket is not None and args.supervisor is None:
+            raise ValueError("A socket grant requires a named supervisor.")
+        if args.supervisor is not None:
+            from sc_neurocore.studio.platform.jobs_worker_guard import arm_worker_guard
+
+            if args.grant_socket is None:
+                from sc_neurocore.studio.platform.jobs_worker_registration import (
+                    await_worker_registration,
+                )
+
+                with sys.stdin.buffer:
+                    await_worker_registration(sys.stdin.buffer.fileno())
+            else:
+                from sc_neurocore.studio.platform.storage_worker_grant import (
+                    receive_socket_grant,
+                )
+
+                receive_socket_grant(
+                    Path(args.grant_socket), expected_server_uid=args.grant_server_uid
+                )
+            guard = arm_worker_guard(args.supervisor)
+            if guard.poll() is not None:
+                raise RuntimeError("Worker lifetime guard exited before task startup.")
         payload = _load_payload(Path(args.payload))
         task = _load_task(args.task)
         context = StudioJobContext(
@@ -71,6 +98,16 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument("--result", required=True)
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--max-artifact-bytes", type=int, required=True)
+    parser.add_argument("--supervisor", help="Expected supervisor for ledger-managed execution")
+    parser.add_argument(
+        "--grant-socket",
+        help="API grant endpoint for a launcher-started worker, replacing the stdin grant",
+    )
+    parser.add_argument(
+        "--grant-server-uid",
+        type=int,
+        help="Configured API identity that must own the grant endpoint",
+    )
     return parser.parse_args(argv)
 
 
@@ -108,7 +145,13 @@ def _write_result(
     error: str | None,
     context: StudioJobContext | None,
 ) -> None:
-    result_path.write_text(
+    """Publish the result whole: a worker killed while writing leaves no result.
+
+    The supervisor reads the result after stopping the worker; a truncated file
+    would turn its own verdict into an unreadable-output failure.
+    """
+    partial = result_path.with_name(f"{result_path.name}.partial")
+    partial.write_text(
         json.dumps(
             {
                 "artifacts": []
@@ -124,6 +167,7 @@ def _write_result(
         + "\n",
         encoding="utf-8",
     )
+    os.replace(partial, result_path)
 
 
 if __name__ == "__main__":  # pragma: no cover - exercised through subprocess tests.

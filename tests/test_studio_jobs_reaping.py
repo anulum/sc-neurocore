@@ -17,7 +17,9 @@ says so.
 
 from __future__ import annotations
 
+import errno
 import os
+import signal
 import subprocess
 import sys
 import threading
@@ -27,11 +29,13 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext, StudioJobManager
+from sc_neurocore.studio.platform import jobs_process_state
 from sc_neurocore.studio.platform.jobs_reaper import (
     ReapReport,
     process_group_of,
     reap_process_group,
 )
+from tests.studio_seccomp_support import SECCOMP_AVAILABLE, Refusal, run_refused
 
 
 def _spawn(code: str, *, new_session: bool = True) -> subprocess.Popen[bytes]:
@@ -56,6 +60,31 @@ def _alive(pid: int) -> bool:
 
 
 class TestReaper:
+    def test_a_missing_proc_stat_is_not_treated_as_a_live_worker(self) -> None:
+        assert jobs_process_state.process_exited(2**31) is True
+
+    @pytest.mark.skipif(not SECCOMP_AVAILABLE, reason="seccomp filters need Linux x86_64")
+    def test_an_unreaped_group_reports_its_live_worker(self) -> None:
+        """Signals the kernel refuses leave the worker live and reported, not assumed gone."""
+        result = run_refused(
+            "import os, signal, subprocess\n"
+            "from sc_neurocore.studio.platform.jobs_reaper import reap_process_group\n"
+            "worker = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(300)'],\n"
+            "    start_new_session=True)\n"
+            "install_refusals(REFUSALS)\n"
+            "report = reap_process_group(worker, terminate_grace_seconds=0.2,\n"
+            "    kill_grace_seconds=0.2)\n"
+            "alive = worker.poll() is None\n"
+            "descriptor = os.pidfd_open(worker.pid)\n"
+            "signal.pidfd_send_signal(descriptor, signal.SIGKILL)\n"
+            "worker.wait(timeout=10)\n"
+            "os.close(descriptor)\n"
+            "print(json.dumps({'outcome': report.outcome, 'reaped': report.reaped,\n"
+            "    'survivor': worker.pid in report.survivors, 'alive': alive}))\n",
+            [Refusal("kill", errno.EPERM)],
+        )
+        assert result == {"outcome": "unreaped", "reaped": False, "survivor": True, "alive": True}
+
     def test_a_finished_worker_is_reported_as_exited(self) -> None:
         process = _spawn("pass")
         process.wait(timeout=60)
@@ -91,6 +120,10 @@ class TestReaper:
             "time.sleep(300)\n"
         )
         _wait_for(marker)
+        # The file exists before the child finished writing its PID into it.
+        deadline = time.monotonic() + 10.0
+        while not marker.read_text() and time.monotonic() < deadline:
+            time.sleep(0.01)
         child_pid = int(marker.read_text())
         assert _alive(child_pid) is True
 
@@ -100,6 +133,35 @@ class TestReaper:
         assert report.reaped is True
         # The whole group went, not only the process the supervisor could see.
         assert _alive(child_pid) is False
+
+    @pytest.mark.skipif(not SECCOMP_AVAILABLE, reason="seccomp filters need Linux x86_64")
+    @pytest.mark.parametrize("refused", [signal.SIGTERM, signal.SIGKILL])
+    def test_a_direct_child_the_kernel_will_not_stop_is_reported_unreaped(
+        self, refused: signal.Signals
+    ) -> None:
+        """A worker outside its own group that survives both signals is never 'reaped'.
+
+        The worker ignores SIGTERM; the kernel refuses the ``refused`` signal.
+        """
+        result = run_refused(
+            "import os, signal, subprocess\n"
+            "from sc_neurocore.studio.platform.jobs_reaper import reap_process_group\n"
+            "worker = subprocess.Popen([sys.executable, '-c', 'import signal, time; '\n"
+            "    'signal.signal(signal.SIGTERM, signal.SIG_IGN); print(1, flush=True); '\n"
+            "    'time.sleep(60)'], stdout=subprocess.PIPE)\n"
+            "worker.stdout.readline()\n"
+            "install_refusals(REFUSALS)\n"
+            "report = reap_process_group(worker, terminate_grace_seconds=0.2,\n"
+            "    kill_grace_seconds=0.2)\n"
+            "alive = worker.poll() is None\n"
+            "descriptor = os.pidfd_open(worker.pid)\n"
+            "signal.pidfd_send_signal(descriptor, signal.SIGKILL)\n"
+            "worker.wait(timeout=10)\n"
+            "print(json.dumps({'outcome': report.outcome, 'reaped': report.reaped,\n"
+            "    'survivor': worker.pid in report.survivors, 'alive': alive}))\n",
+            [Refusal("kill", errno.EPERM, int(refused), argument_index=1)],
+        )
+        assert result == {"outcome": "unreaped", "reaped": False, "survivor": True, "alive": True}
 
     def test_a_worker_without_its_own_group_is_still_stopped(self) -> None:
         # A worker sharing the supervisor's group cannot be signalled as a
@@ -219,4 +281,5 @@ class TestModelScanCancellation:
 
         payload = scan_all_models(current=10.0, duration=20.0, should_stop=lambda: False)
 
-        assert len(payload["models"]) > 100
+        models = payload["models"]
+        assert isinstance(models, list) and len(models) > 100

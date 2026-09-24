@@ -6,31 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Studio durable job ledger
 
-"""The job records survive the process that made them.
+"""Durable, single-host Studio job records and transactional transitions.
 
-Studio job state used to live in one dictionary. The per-job sandbox
-directories and their artifacts outlived the interpreter; the records that gave
-them meaning did not. A restarted API answered ``404`` for a job it had
-completed a second earlier, a second API process over the same root saw none of
-the first one's work, the same request submitted twice ran twice, and a job
-that was running when the process died had no terminal state and no way to
-acquire one.
-
-This is the durable replacement: one SQLite file under the job root, written in
-transactions, with the schema and state machine of
-:mod:`sc_neurocore.studio.platform.jobs_ledger_schema` and the recovery rules of
-:mod:`sc_neurocore.studio.platform.jobs_ledger_recovery`. Every job carries who
-ran it (actor and workspace), what made it unique (idempotency key), what it
-ran (effective experiment digest and admission decision), who supervises it now
-(lease owner, expiry, heartbeat) and what it produced (terminal result and
-artifact manifest).
-
-Single host by design: WAL mode serialises the writers that share one job root.
-A distributed worker contract is a separate obligation and is not implied here.
+One WAL-backed SQLite ledger retains actor/workspace, deduplication, experiment,
+supervisor, terminal result and artifact evidence across API restarts. Schema,
+state machine and recovery live in the corresponding ledger modules. A shared
+root serialises writers; no distributed worker contract is implied.
 """
 
 from __future__ import annotations
 
+import math
 import sqlite3
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -48,6 +34,8 @@ from sc_neurocore.studio.platform.jobs_ledger_reads import (
     read_record,
     read_records,
     read_transitions,
+    read_pending_purge_count,
+    read_purge_snapshot,
 )
 from sc_neurocore.studio.platform.jobs_ledger_schema import (
     LEDGER_FILENAME,
@@ -69,6 +57,7 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobExecutionModel,
     StudioJobRecord,
     StudioJobStatus,
+    StudioJobPurgeSnapshot,
 )
 
 DEFAULT_LEASE_SECONDS = 60.0
@@ -89,7 +78,7 @@ class StudioJobLedger:
         Identity of the supervisor in this process; defaults to
         :func:`~sc_neurocore.studio.platform.jobs_ledger_supervisor.supervisor_identity`.
     lease_seconds : float
-        How long a lease stays valid without a heartbeat.
+        Finite positive seconds a lease stays valid without a heartbeat.
     """
 
     def __init__(
@@ -100,8 +89,8 @@ class StudioJobLedger:
         supervisor: str | None = None,
         lease_seconds: float = DEFAULT_LEASE_SECONDS,
     ) -> None:
-        if lease_seconds <= 0:
-            raise ValueError("Studio job lease duration must be positive.")
+        if not math.isfinite(lease_seconds) or lease_seconds <= 0:
+            raise ValueError("Studio job lease duration must be finite and positive.")
         self._root = root
         self._path = root / LEDGER_FILENAME
         self._clock: Callable[[], datetime] = clock or (lambda: datetime.now(UTC))
@@ -115,11 +104,23 @@ class StudioJobLedger:
         self._connect().executescript(SCHEMA_V1)
         with self.transaction() as connection:
             migrate(connection)
+        root_identity, file_identity = root.stat(), self._path.stat()
+        self._storage_identity = (
+            root_identity.st_dev,
+            root_identity.st_ino,
+            file_identity.st_dev,
+            file_identity.st_ino,
+        )
 
     @property
     def path(self) -> Path:
         """Return the ledger file path."""
         return self._path
+
+    @property
+    def storage_identity(self) -> tuple[int, int, int, int]:
+        """Return root and database device/inode evidence from initialization."""
+        return self._storage_identity
 
     @property
     def supervisor(self) -> str:
@@ -152,17 +153,17 @@ class StudioJobLedger:
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
-        """Run one unit of work; either all of it lands or none of it does."""
+        """Commit one unit of work; roll back on any failure, even one right after BEGIN."""
         connection = self._connect()
-        connection.execute("BEGIN IMMEDIATE")
         try:
+            connection.execute("BEGIN IMMEDIATE")
             yield connection
+            # No body ends its own transaction, so one is always open here.
+            connection.execute("COMMIT")
         except BaseException:
             if connection.in_transaction:
                 connection.execute("ROLLBACK")
             raise
-        if connection.in_transaction:
-            connection.execute("COMMIT")
 
     def now(self) -> datetime:
         """Return the ledger clock, truncated to whole seconds in UTC."""
@@ -189,6 +190,7 @@ class StudioJobLedger:
         experiment_sha256: str | None,
         admission: Mapping[str, Any] | None,
         execution_model: StudioJobExecutionModel,
+        training_config: Mapping[str, object] | None = None,
     ) -> StudioJobSubmission:
         """Admit one job, or return the one that already owns its key."""
         return create_job(
@@ -202,6 +204,7 @@ class StudioJobLedger:
             experiment_sha256=experiment_sha256,
             admission=admission,
             execution_model=execution_model,
+            training_config=training_config,
         )
 
     def transition(
@@ -262,6 +265,16 @@ class StudioJobLedger:
     ) -> tuple[StudioJobRecord, ...]:
         """Return records in creation order, scoped to an actor and workspace."""
         return read_records(self, actor=actor, workspace=workspace)
+
+    def pending_purge_count(self) -> int:
+        """Count unresolved purge intents without initiating recovery."""
+        return read_pending_purge_count(self)
+
+    def purge_snapshot(
+        self, *, limit: int = 100, after: str | None = None
+    ) -> StudioJobPurgeSnapshot:
+        """Read a bounded global operator page, without authorising any mutation."""
+        return read_purge_snapshot(self, limit=limit, after=after)
 
     def transitions(self, job_id: str) -> tuple[dict[str, Any], ...]:
         """Return the append-only transition history of one job, in order."""

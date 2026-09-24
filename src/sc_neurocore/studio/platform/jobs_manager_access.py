@@ -13,11 +13,11 @@ from __future__ import annotations
 import hashlib
 import math
 import os
-import shutil
 import time
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_ledger_schema import TERMINAL_STATUSES
+from sc_neurocore.studio.platform.jobs_purge import purge_terminal_job
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifact,
@@ -140,22 +140,7 @@ def _list_job_snapshot(
 
 def _purge_terminal_job(manager: _StudioJobManagerState, job_id: str) -> StudioJobRecord:
     """Delete one terminal job directory and its in-memory state."""
-    record = manager._ledger.record(job_id)
-    if record.status not in TERMINAL_STATUSES:
-        raise StudioJobRejected("Studio active jobs cannot be purged.")
-    try:
-        work_dir = manager._job_work_dir(record.job_id)
-    except ValueError as exc:
-        raise StudioJobRejected(str(exc)) from exc
-    if work_dir.exists():
-        if not work_dir.is_dir():
-            raise StudioJobRejected("Studio job purge target is not a directory.")
-        shutil.rmtree(work_dir)
-    manager._ledger.delete(job_id)
-    with manager._lock:
-        manager._done_events.pop(job_id, None)
-        manager._cancel_events.pop(job_id, None)
-    return record
+    return purge_terminal_job(manager, job_id)
 
 
 def _commit_supervised_update(
@@ -192,7 +177,12 @@ def _commit_supervised_update(
     if record.status in TERMINAL_STATUSES:
         # The job stopped occupying a slot the moment its outcome was
         # committed, not when the supervisor thread happens to unwind.
-        manager._admission.release()
+        with manager._lock:
+            unreaped = job_id in manager._unreaped_workers
+        if unreaped:
+            manager._admission.mark_unreaped(job_id=job_id)
+        else:
+            manager._admission.release(job_id=job_id)
 
 
 def _read_declared_artifact(
@@ -214,7 +204,13 @@ def _read_declared_artifact(
         raise StudioJobArtifactUnavailable(str(exc)) from exc
     if not artifact_path.is_file():
         raise StudioJobArtifactUnavailable("Studio job artifact is unavailable.")
-    payload = artifact_path.read_bytes()
+    if artifact.size_bytes < 0:
+        raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
+    # Bind allocation to the retained declaration, not the current file size.
+    # A reopened manager may legitimately have a lower write limit than the
+    # original producer; that does not invalidate previously sealed artifacts.
+    with artifact_path.open("rb") as handle:
+        payload = handle.read(artifact.size_bytes + 1)
     digest = hashlib.sha256(payload).hexdigest()
     if len(payload) != artifact.size_bytes or digest != artifact.sha256:
         raise StudioJobArtifactUnavailable("Studio job artifact integrity check failed.")
@@ -264,6 +260,7 @@ def _job_manager_status(manager: _StudioJobManagerState) -> StudioJobStatusSnaps
     allowed_kinds = tuple(sorted(manager._allowed_kinds))
     return StudioJobStatusSnapshot(
         configured=manager._configured,
+        pending_purge_count=manager._ledger.pending_purge_count(),
         allowed_kinds=allowed_kinds,
         active_count=sum(record.status in active_statuses for record in records),
         completed_count=sum(record.status == "completed" for record in records),

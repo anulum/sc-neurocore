@@ -127,14 +127,14 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
     assert payload["schema_version"] == OPERATOR_STATUS_SCHEMA_VERSION
     assert payload["deployment_profile"] == "development"
     assert payload["route_policies"] == {
-        "admin_count": 27,
+        "admin_count": 28,
         "authenticated_count": 62,
         "enforced": True,
-        "protected_audit_action_count": 89,
-        "protected_count": 89,
+        "protected_audit_action_count": 90,
+        "protected_count": 90,
         "protected_routes_audited": True,
         "public_count": 31,
-        "total_count": 120,
+        "total_count": 121,
     }
     assert payload["identity"] == {
         "configured": True,
@@ -169,6 +169,7 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "configured": True,
         "failed_count": 0,
         "interrupted_count": 0,
+        "pending_purge_count": 0,
         "process_count": 0,
         "recovery": [],
         "resource_profiles": [

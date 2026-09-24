@@ -80,6 +80,27 @@ def test_studio_preflight_passes_release_posture_without_secret_leaks(tmp_path: 
     assert str(tmp_path) not in encoded_payload
 
 
+def test_studio_preflight_refuses_unavailable_isolated_storage(tmp_path: Path) -> None:
+    identity_path = tmp_path / "private" / "studio-identities.json"
+    bootstrap_studio_admin_identity(
+        identity_path,
+        token_factory=lambda _: "release-preflight-token",
+    )
+    (tmp_path / "audit").mkdir()
+    (tmp_path / "jobs").mkdir()
+    env = _release_env(tmp_path, identity_path)
+    env["SC_NEUROCORE_STUDIO_STORAGE_MODE"] = "isolated"
+
+    report = run_studio_preflight(env)
+    storage_check = _check_by_id(report.checks, "storage_mode")
+
+    assert report.passed is False
+    assert storage_check.status == "fail"
+    assert storage_check.evidence == {"selected_mode": "isolated"}
+    assert "storage authority client" in storage_check.remediation[0]
+    assert _check_by_id(report.checks, "job_root").status == "pass"
+
+
 def test_studio_preflight_requires_identity_lifecycle_route_policies() -> None:
     required = {
         (method, path, visibility, audit_action)

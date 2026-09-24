@@ -24,6 +24,7 @@ sealed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -169,7 +170,9 @@ def write_studio_evidence_bundle(
         first-class action evidence in the bundle manifest.
     artifact_reader:
         Reader used to fetch verified job artifact bytes. Required when
-        ``job_records`` contains artifacts.
+        ``job_records`` contains artifacts. Returned metadata and bytes are
+        checked against the captured source record before copying; a newer
+        or substituted declaration cannot silently change that snapshot.
     audit_export:
         Optional path-free audit export payload.
     command_replay:
@@ -369,6 +372,12 @@ def write_studio_evidence_bundle(
             safe_relative_path = _safe_bundle_artifact_path(artifact.relative_path)
             bundle_path = f"evidence/jobs/{record.job_id}/artifacts/{safe_relative_path}"
             artifact_payload = reader(record.job_id, artifact.relative_path)
+            if (
+                artifact_payload.artifact != artifact
+                or len(artifact_payload.payload) != artifact.size_bytes
+                or hashlib.sha256(artifact_payload.payload).hexdigest() != artifact.sha256
+            ):
+                raise ValueError("Studio evidence artifact does not match its source record.")
             written = context.write_artifact(bundle_path, artifact_payload.payload)
             written_paths.append(written.relative_path)
             entry = _job_artifact_entry(

@@ -183,7 +183,10 @@ def _client_with_evidence_state(
     settings = StudioRuntimeSettings(
         audit_log_path=str(audit_path),
         job_root_path=str(tmp_path / "jobs"),
-        job_default_timeout_seconds=10.0,
+        # Process startup and subprocess branch tracing belong to this semantic
+        # integration fixture, not a ten-second performance acceptance target.
+        # Production retains its separate 300-second default.
+        job_default_timeout_seconds=30.0,
     )
     app = create_app(settings)
     sink = JsonlAuditSink(audit_path)

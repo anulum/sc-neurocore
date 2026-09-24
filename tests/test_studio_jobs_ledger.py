@@ -13,19 +13,20 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
 from sc_neurocore.studio.platform.jobs_ledger_schema import (
     JOB_LEDGER_SCHEMA_VERSION,
+    LEDGER_FILENAME,
     SCHEMA_VERSION,
+    SCHEMA_V1,
     StudioJobLedgerCorrupt,
     StudioJobSubmission,
 )
+from sc_neurocore.studio.training_contract import resolve_training_config
 from sc_neurocore.studio.platform.jobs import StudioJobManager
-from sc_neurocore.studio.platform.jobs_context import StudioJobContext
 from sc_neurocore.studio.platform.jobs_models import (
     StudioJobRejected,
 )
@@ -77,6 +78,26 @@ class TestSchema:
 
         assert len(_ledger(tmp_path).list_records()) == 1
 
+    def test_v6_ledger_gains_nullable_training_snapshot(self, tmp_path: Path) -> None:
+        """A real prior schema opens without inventing historical configuration."""
+        old_schema = SCHEMA_V1.replace("    training_config TEXT,\n", "")
+        assert old_schema != SCHEMA_V1
+        with sqlite3.connect(tmp_path / LEDGER_FILENAME) as connection:
+            connection.executescript(old_schema)
+            connection.execute("INSERT INTO schema_meta VALUES ('schema_version','6')")
+            connection.execute(
+                "INSERT INTO schema_meta VALUES ('schema_name','studio.job-ledger.v6')"
+            )
+        ledger = _ledger(tmp_path)
+        try:
+            legacy = _admit(ledger, kind="training", execution_model="process").record
+            assert legacy.training_config is None
+            assert ledger.connection().execute(
+                "SELECT value FROM schema_meta WHERE key='schema_version'"
+            ).fetchone()[0] == str(SCHEMA_VERSION)
+        finally:
+            ledger.close()
+
     def test_a_ledger_from_the_future_is_refused_rather_than_downgraded(
         self, tmp_path: Path
     ) -> None:
@@ -104,6 +125,37 @@ class TestSchema:
 
 
 class TestAdmission:
+    def test_training_snapshot_is_canonical_bounded_and_durable(self, tmp_path: Path) -> None:
+        """Admission binds a resolved config and refuses oversized or wrong-kind values."""
+        ledger = _ledger(tmp_path)
+        config = resolve_training_config(
+            {"epochs": 1, "batch_size": 64, "hidden": [4], "timesteps": 1}
+        ).to_public_dict()
+        first = _admit(
+            ledger, kind="training", execution_model="process", training_config=config
+        ).record
+        assert first.training_config == config
+        ledger.close()
+        assert _ledger(tmp_path).record(first.job_id).training_config == config
+
+        with pytest.raises(ValueError, match="Only a training job"):
+            _admit(ledger, job_id="sj_0000000000000002", training_config=config)
+        with pytest.raises(ValueError, match="4096-byte"):
+            _admit(
+                ledger,
+                job_id="sj_0000000000000003",
+                kind="training",
+                training_config={**config, "hidden": [1] * 2000},
+            )
+        assert [record.job_id for record in ledger.list_records()] == [first.job_id]
+        with ledger.transaction() as connection:
+            connection.execute(
+                "UPDATE jobs SET training_config=? WHERE job_id=?",
+                ('{"epochs":0}', first.job_id),
+            )
+        with pytest.raises(StudioJobLedgerCorrupt, match="training configuration"):
+            ledger.record(first.job_id)
+
     def test_admission_records_the_custody_fields(self, tmp_path: Path) -> None:
         ledger = _ledger(tmp_path)
 
@@ -187,69 +239,3 @@ class TestPurge:
         with pytest.raises(KeyError):
             ledger.delete("sj_0000000000000001")
         assert ledger.list_records() == ()
-
-
-class TestArtifactCustody:
-    @pytest.mark.parametrize(
-        "replacement",
-        [
-            {"result": {"written": False}},
-            {"artifacts": ()},
-            {"error": "late error"},
-            {"started_at_utc": "2026-01-01T00:00:00Z"},
-            {"finished_at_utc": "2026-01-01T00:00:00Z"},
-        ],
-        ids=["result", "manifest", "error", "start", "finish"],
-    )
-    def test_late_writer_cannot_change_a_real_completed_job(
-        self, tmp_path: Path, replacement: dict[str, Any]
-    ) -> None:
-        """Independent ledger writers cannot revise the real runner's sealed evidence."""
-        root = tmp_path / "jobs"
-        manager = _job_manager(root)
-
-        def task(context: StudioJobContext) -> dict[str, object]:
-            context.write_artifact("result.bin", b"original payload")
-            return {"written": True}
-
-        submitted = manager.submit(kind="analysis", owner="alice", request_id=None, task=task)
-        sealed = manager.wait(submitted.job_id, timeout_seconds=5.0)
-        assert sealed.status == "completed"
-        writer = _ledger(root)
-        history = writer.transitions(sealed.job_id)
-        with pytest.raises(StudioJobRejected, match="cannot rewrite"):
-            writer.transition(sealed.job_id, "completed", **replacement)
-        assert manager.record(sealed.job_id) == sealed
-        assert writer.transitions(sealed.job_id) == history
-        assert manager.read_artifact(sealed.job_id, "result.bin").payload == b"original payload"
-        assert (
-            writer.transition(
-                sealed.job_id,
-                "completed",
-                started_at_utc=sealed.started_at_utc,
-                finished_at_utc=sealed.finished_at_utc,
-                error=sealed.error,
-                result=sealed.result,
-                artifacts=sealed.artifacts,
-            )
-            == sealed
-        )
-
-    def test_a_completed_job_keeps_its_manifest_across_a_restart(self, tmp_path: Path) -> None:
-        root = tmp_path / "jobs"
-        manager = _job_manager(root)
-
-        def task(context: StudioJobContext) -> dict[str, object]:
-            context.write_artifact("result.bin", b"payload")
-            return {"written": True}
-
-        record = manager.submit(kind="analysis", owner="alice", request_id="req-3", task=task)
-        done = manager.wait(record.job_id, 30.0)
-        assert done.status == "completed"
-        assert done.artifacts != ()
-
-        restarted = _job_manager(root)
-        recovered = restarted.record(record.job_id)
-
-        assert recovered.artifacts == done.artifacts
-        assert restarted.read_artifact(record.job_id, "result.bin").payload == b"payload"

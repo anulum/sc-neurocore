@@ -39,6 +39,7 @@ PLATFORM_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.jobs.status.read",
     ),
     ("GET", "/api/studio/jobs", RouteVisibility.ADMIN, "studio.jobs.list"),
+    ("GET", "/api/studio/jobs/purges", RouteVisibility.ADMIN, "studio.jobs.purges.list"),
     (
         "GET",
         "/api/studio/jobs/{job_id}",

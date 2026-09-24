@@ -10,7 +10,31 @@
 
 from __future__ import annotations
 
-from tests.studio_audit_quarantine_support import *  # noqa: F403
+import json
+from pathlib import Path
+from typing import cast
+
+import pytest
+from starlette.testclient import TestClient
+
+from sc_neurocore.studio.app import create_app
+from sc_neurocore.studio.platform import (
+    AuditEvent,
+    JsonlAuditSink,
+    StudioRuntimeSettings,
+    StudioJobManager,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION,
+)
+from tests.studio_audit_quarantine_support import (
+    _job_manager,
+    _json_artifact,
+    _text_artifact,
+    _written_archive_pair,
+)
 
 
 def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
@@ -47,6 +71,9 @@ def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
     )
     body = response.json()
     manager = _job_manager(app)
+    assert manager.record(body["job_id"]).execution_model == "process"
+    assert manager.record(body["job_id"]).owner == "studio-audit-quarantine"
+    assert manager.record(body["job_id"]).request_id == response.headers["x-request-id"]
     archive_payload = _json_artifact(
         manager,
         body["job_id"],
@@ -235,6 +262,8 @@ def test_studio_audit_quarantine_archive_restore_route_writes_job_artifacts(
 
     assert response.status_code == 200
     assert body["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION
+    assert manager.record(body["job_id"]).execution_model == "process"
+    assert manager.record(body["job_id"]).request_id == response.headers["x-request-id"]
     assert body["archive_id"] == "saqa_sj_quarantine"
     assert body["summary"]["event_count"] == 1
     assert len(body["artifacts"]) == 2
@@ -316,3 +345,32 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
     assert restore_response.json()["detail"] == "missing_admin_role"
     assert purge_response.status_code == 403
     assert purge_response.json()["detail"] == "missing_admin_role"
+    assert _job_manager(app).list_records() == ()
+
+
+@pytest.mark.parametrize("operation", ["archive", "restore"])
+def test_quarantine_worker_rejects_malformed_envelope(tmp_path: Path, operation: str) -> None:
+    """Direct worker submission cannot bypass envelope validation or write artefacts."""
+    manager = StudioJobManager(
+        root=tmp_path, allowed_kinds=frozenset({"evidence"}), default_timeout_seconds=20.0
+    )
+    try:
+        job = manager.submit_process_task(
+            kind="evidence",
+            owner="studio-audit-quarantine",
+            request_id="invalid-envelope",
+            task_path=f"sc_neurocore.studio.api.audit_archive_jobs:execute_quarantine_{operation}_task",
+            payload={"unexpected": {}},
+        )
+        completed = manager.wait(job.job_id, 25.0)
+        assert completed.status == "failed", completed.error
+        assert completed.error == "ValidationError"
+        assert completed.result is None
+        assert completed.artifacts == ()
+        assert not (tmp_path / job.job_id / "evidence").exists()
+    finally:
+        for record in manager.list_records():
+            if record.status not in {"completed", "failed", "timed_out", "cancelled"}:
+                manager.cancel(record.job_id)
+                manager.wait(record.job_id, 15.0)
+        manager._ledger.close()

@@ -15,9 +15,10 @@ reached the operator as a server error for pressing Stop on a run that had just
 finished. Observed in a loaded slice run as
 ``Studio job sj_94b53edeb87d968a cannot move from 'cancelled' to 'cancelling'``.
 
-The race is made deterministic here by holding the pre-check's answer stale for
-exactly one call, which is the only way to drive that window on purpose; the
-ledger, the transition and the manager are the production ones.
+Observation failures are real: another connection corrupts the job's stored
+artifacts, so the owning supervisor's next ledger read fails; a refused
+terminal write is a real SQLite trigger. The ledger, the transitions and the
+managers are the production ones.
 """
 
 from __future__ import annotations
@@ -26,17 +27,30 @@ import threading
 import os
 import time
 import sqlite3
+from contextlib import closing
 
 import pytest
 
 from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
     StudioJobManager,
-    StudioJobRecord,
 )
 
 
 from tests.test_studio_jobs_cancel_race import manager as manager
+
+
+def _corrupt_artifacts(manager: StudioJobManager, job_id: str) -> None:
+    """Damage the stored artifacts of one job through a second real connection."""
+    with closing(sqlite3.connect(manager.ledger_path, isolation_level=None)) as other:
+        other.execute("UPDATE jobs SET artifacts='[{}]' WHERE job_id=?", (job_id,))
+
+
+def _status(manager: StudioJobManager, job_id: str) -> str:
+    """Read the stored status without decoding the rest of a possibly damaged row."""
+    with closing(sqlite3.connect(manager.ledger_path)) as observer:
+        row = observer.execute("SELECT status FROM jobs WHERE job_id=?", (job_id,)).fetchone()
+    return str(row[0])
 
 
 class TestPeerCancellation:
@@ -61,7 +75,7 @@ class TestPeerCancellation:
             assert manager.wait(submitted.job_id, 3.0).status == "cancelled"
 
     def test_read_failure_reports_a_thread_that_does_not_stop(
-        self, manager: StudioJobManager, monkeypatch: pytest.MonkeyPatch
+        self, manager: StudioJobManager
     ) -> None:
         """Control-store failure cannot claim that an uncooperative task was killed."""
         started, release, exited = threading.Event(), threading.Event(), threading.Event()
@@ -77,17 +91,10 @@ class TestPeerCancellation:
         submitted = manager.submit(kind="compiler", owner="test", request_id=None, task=task)
         try:
             assert started.wait(2.0)
-            real_record = manager._ledger.record
-
-            def failing_read(
-                job_id: str, *, actor: str | None = None, workspace: str | None = None
-            ) -> StudioJobRecord:
-                if threading.current_thread() is not threading.main_thread():
-                    raise sqlite3.OperationalError("injected observation failure")
-                return real_record(job_id, actor=actor, workspace=workspace)
-
-            monkeypatch.setattr(manager._ledger, "record", failing_read)
-            outcome = manager.wait(submitted.job_id, 3.0)
+            _corrupt_artifacts(manager, submitted.job_id)
+            # The damaged row is readable again once the supervisor settled it.
+            assert manager._done_events[submitted.job_id].wait(5.0)
+            outcome = manager.record(submitted.job_id)
             assert outcome.status == "failed"
             assert outcome.error is not None and "Worker stopped: False" in outcome.error
             assert outcome.result is None
@@ -105,7 +112,6 @@ class TestPeerCancellation:
     def test_peer_request_reaps_the_owning_process(
         self,
         manager: StudioJobManager,
-        monkeypatch: pytest.MonkeyPatch,
         read_failure: bool,
         write_failure: bool,
     ) -> None:
@@ -133,42 +139,48 @@ class TestPeerCancellation:
             os.kill(pid, 0)
             failed = threading.Event()
             errors: list[BaseException] = []
+            previous_hook = threading.excepthook
             if write_failure:
 
                 def capture_error(args: threading.ExceptHookArgs) -> None:
+                    # Observes the supervisor thread's unhandled error only.
                     if args.exc_value is not None:
                         errors.append(args.exc_value)
                     failed.set()
 
-                def refuse_update(*args: object, **kwargs: object) -> None:
-                    raise sqlite3.OperationalError("injected terminal write failure")
-
-                monkeypatch.setattr(threading, "excepthook", capture_error)
-                monkeypatch.setattr(manager, "_update", refuse_update)
-            if read_failure:
-                real_record = manager._ledger.record
-
-                def failing_read(
-                    job_id: str, *, actor: str | None = None, workspace: str | None = None
-                ) -> StudioJobRecord:
-                    if threading.current_thread() is not threading.main_thread():
-                        raise sqlite3.OperationalError("injected observation failure")
-                    return real_record(job_id, actor=actor, workspace=workspace)
-
-                monkeypatch.setattr(manager._ledger, "record", failing_read)
-            else:
-                assert peer.cancel(submitted.job_id).status in {"cancelling", "cancelled"}
-            if write_failure:
-                assert failed.wait(3.0)
-                assert len(errors) == 1
-                assert isinstance(errors[0], sqlite3.OperationalError)
-                assert str(errors[0]) == "injected terminal write failure"
-                assert manager._done_events[submitted.job_id].is_set()
-                retained = peer.wait(submitted.job_id, 0.02)
-                assert retained.status == "running" and retained.result is None
-                with pytest.raises(ProcessLookupError):
-                    os.kill(pid, 0)
-                return
+                threading.excepthook = capture_error
+                with closing(sqlite3.connect(manager.ledger_path, isolation_level=None)) as other:
+                    other.execute(
+                        "CREATE TRIGGER refuse_failure BEFORE UPDATE OF status ON jobs "
+                        "WHEN NEW.status = 'failed' "
+                        "BEGIN SELECT RAISE(ABORT, 'terminal write refused'); END"
+                    )
+            try:
+                if read_failure:
+                    _corrupt_artifacts(manager, submitted.job_id)
+                else:
+                    assert peer.cancel(submitted.job_id).status in {"cancelling", "cancelled"}
+                if write_failure:
+                    assert failed.wait(5.0)
+                    assert len(errors) == 1
+                    assert isinstance(errors[0], sqlite3.IntegrityError)
+                    assert str(errors[0]) == "terminal write refused"
+                    assert manager._done_events[submitted.job_id].is_set()
+                    assert _status(manager, submitted.job_id) == "running"
+                    with pytest.raises(ProcessLookupError):
+                        os.kill(pid, 0)
+                    return
+            finally:
+                threading.excepthook = previous_hook
+                if write_failure:
+                    with closing(
+                        sqlite3.connect(manager.ledger_path, isolation_level=None)
+                    ) as other:
+                        other.execute("DROP TRIGGER refuse_failure")
+                        other.execute(
+                            "UPDATE jobs SET artifacts='[]' WHERE job_id=?", (submitted.job_id,)
+                        )
+            assert manager._done_events[submitted.job_id].wait(5.0)
             outcome = peer.wait(submitted.job_id, 3.0)
             assert outcome.status == ("failed" if read_failure else "cancelled")
             assert outcome.result is None
@@ -185,7 +197,7 @@ class TestPeerCancellation:
 
     @pytest.mark.parametrize("read_failure", [False, True])
     def test_peer_request_reaches_the_owning_thread(
-        self, manager: StudioJobManager, monkeypatch: pytest.MonkeyPatch, read_failure: bool
+        self, manager: StudioJobManager, read_failure: bool
     ) -> None:
         """A second manager's durable Stop request reaches the real task context."""
         started = threading.Event()
@@ -207,19 +219,11 @@ class TestPeerCancellation:
         try:
             assert started.wait(2.0)
             if read_failure:
-                real_record = manager._ledger.record
-
-                def failing_read(
-                    job_id: str, *, actor: str | None = None, workspace: str | None = None
-                ) -> StudioJobRecord:
-                    if threading.current_thread() is not threading.main_thread():
-                        raise sqlite3.OperationalError("injected observation failure")
-                    return real_record(job_id, actor=actor, workspace=workspace)
-
-                monkeypatch.setattr(manager._ledger, "record", failing_read)
+                _corrupt_artifacts(manager, submitted.job_id)
             else:
                 requested = peer.cancel(submitted.job_id)
                 assert requested.status in {"cancelling", "cancelled"}
+            assert manager._done_events[submitted.job_id].wait(5.0)
             outcome = peer.wait(submitted.job_id, 2.0)
             assert outcome.status == ("failed" if read_failure else "cancelled")
             if read_failure:

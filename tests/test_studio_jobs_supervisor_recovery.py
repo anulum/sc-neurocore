@@ -19,8 +19,8 @@ from __future__ import annotations
 import json
 import os
 import signal
-import sqlite3
 import subprocess
+import threading
 import time
 from pathlib import Path
 
@@ -36,9 +36,14 @@ from tests.test_studio_jobs_restart_recovery import _manager, _run_child
 class TestSupervisorDeath:
     @pytest.mark.parametrize("purge", [False, True], ids=["completed", "purged"])
     def test_recovery_retains_a_job_settled_after_its_snapshot(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, purge: bool
+        self, tmp_path: Path, purge: bool
     ) -> None:
-        """A real child completion after snapshot must not break recovery or lose custody."""
+        """A real child completion after snapshot must not break recovery or lose custody.
+
+        When recovery's connection starts its first statement after reading
+        the live-row snapshot, the child really completes the job (and another
+        thread purges it) before recovery continues.
+        """
         root = tmp_path / "jobs"
         child = _run_child(root, "complete_on_signal", wait=False)
         assert isinstance(child, subprocess.Popen)
@@ -51,21 +56,35 @@ class TestSupervisorDeath:
             assert marker.exists()
             job_id = json.loads(marker.read_text())["job_id"]
             manager = _manager(root, reconcile=False)
-            live_rows = manager._ledger.live_rows
+            statements: list[str] = []
+            settled: list[str] = []
 
-            def snapshot_then_complete() -> tuple[sqlite3.Row, ...]:
-                rows = live_rows()
-                assert len(rows) == 1 and rows[0]["status"] == "running"
-                (root / "finish").touch()
-                stdout, stderr = child.communicate(timeout=10.0)
-                assert child.returncode == 0, stderr
-                assert json.loads(stdout)["status"] == "completed"
-                if purge:
+            def purge_elsewhere() -> None:
+                try:
                     manager.purge_terminal_record(job_id)
-                return rows
+                finally:
+                    manager._ledger.close()
 
-            monkeypatch.setattr(manager._ledger, "live_rows", snapshot_then_complete)
-            decisions = manager.reconcile()
+            def complete_after_snapshot(statement: str) -> None:
+                snapshot = "SELECT * FROM jobs WHERE status IN"
+                if statements and statements[-1].startswith(snapshot) and not settled:
+                    (root / "finish").touch()
+                    stdout, stderr = child.communicate(timeout=10.0)
+                    assert child.returncode == 0, stderr
+                    settled.append(json.loads(stdout)["status"])
+                    if purge:
+                        other = threading.Thread(target=purge_elsewhere)
+                        other.start()
+                        other.join(timeout=30.0)
+                statements.append(statement)
+
+            connection = manager._ledger.connection()
+            connection.set_trace_callback(complete_after_snapshot)
+            try:
+                decisions = manager.reconcile()
+            finally:
+                connection.set_trace_callback(None)
+            assert settled == ["completed"]
             if purge:
                 assert decisions == ()
                 assert manager.list_records() == ()

@@ -33,6 +33,7 @@ from sc_neurocore.studio.platform import (
     write_training_weight_checkpoint,
 )
 from sc_neurocore.studio.platform.training_process import run_training_process_task
+from sc_neurocore.studio.training_contract import resolve_training_config
 
 _SOURCE_CONFIG = {"dataset": "synthetic", "hidden": [16]}
 
@@ -137,6 +138,10 @@ def test_attach_warm_start_trains_and_writes_attach_evidence(tmp_path: Path) -> 
     assert body["status"] == "running"
     assert body["source_job_id"] == source_job_id
     attach_job_id = body["job_id"]
+    expected_config = resolve_training_config(
+        {"dataset": "synthetic", "hidden": [16], "epochs": 1, "timesteps": 5}
+    ).to_public_dict()
+    assert manager.record(attach_job_id).training_config == expected_config
 
     completed = manager.wait(attach_job_id, timeout_seconds=120.0)
     assert completed.status == "completed", completed.error

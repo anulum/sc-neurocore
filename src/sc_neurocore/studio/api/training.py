@@ -55,7 +55,7 @@ def build_training_router(context: StudioApiContext) -> APIRouter:
 
     @router.get("/api/training/jobs")
     def api_training_jobs() -> Any:
-        return list_jobs()
+        return list_jobs(studio_job_manager)
 
     @router.get("/api/training/status/{job_id}")
     def api_training_status(job_id: str) -> Any:

@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from fastapi import FastAPI
+from pydantic import JsonValue
 from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
@@ -45,7 +47,7 @@ def _build_client(tmp_path: Path) -> TestClient:
 def _job_manager(client: TestClient) -> StudioJobManager:
     """Return the app-local Studio job manager."""
 
-    return cast(StudioJobManager, client.app.state.studio_job_manager)
+    return cast(StudioJobManager, cast(FastAPI, client.app).state.studio_job_manager)
 
 
 def _torch_weights_bytes(config: dict[str, object] | None = None) -> bytes:
@@ -77,7 +79,7 @@ def _submit_training_source(
     """Submit a completed training job that publishes weight artifacts."""
 
     def task(context: StudioJobContext) -> dict[str, object]:
-        weight_checkpoint: dict[str, object] | None = None
+        weight_checkpoint: dict[str, JsonValue] | None = None
         if publish_weights:
             weight_checkpoint = write_training_weight_checkpoint(
                 context,
@@ -124,6 +126,10 @@ def test_weight_restore_materializes_completed_training_job(tmp_path: Path) -> N
 
     assert response.status_code == 200, response.text
     body = response.json()
+    record = manager.record(body["job_id"])
+    assert record.execution_model == "process"
+    assert record.owner == "studio-training-restore"
+    assert record.request_id == response.headers["x-request-id"]
     assert body["schema_version"] == "studio.training.weight-restore.v1"
     assert body["evidence_classification"] == "training"
     assert body["status"] == "completed"
@@ -149,6 +155,27 @@ def test_weight_restore_rejects_unknown_job(tmp_path: Path) -> None:
 
     assert response.status_code == 404
     assert response.json()["detail"] == "training_job_not_found"
+
+
+def test_weight_restore_rejects_digest_valid_unloadable_checkpoint(tmp_path: Path) -> None:
+    """A sealed non-checkpoint must fail in the real worker without evidence."""
+    pytest.importorskip("torch")
+    with _build_client(tmp_path) as client:
+        manager = _job_manager(client)
+        source_job_id = _submit_training_source(
+            manager, weights_bytes=b"not a torch checkpoint", config=_CONFIG
+        )
+        response = client.post(
+            "/api/studio/training/weight-restore", json={"source_job_id": source_job_id}
+        )
+        assert response.status_code == 500
+        assert response.json()["detail"] == "studio_job_failed"
+        jobs = [job for job in manager.list_records() if job.job_id != source_job_id]
+        assert len(jobs) == 1
+        assert jobs[0].execution_model == "process"
+        assert jobs[0].status == "failed"
+        assert jobs[0].result is None
+        assert not jobs[0].artifacts
 
 
 def test_weight_restore_rejects_job_without_weights(tmp_path: Path) -> None:

@@ -7012,6 +7012,67 @@
         "summary": "Api Studio Jobs"
       }
     },
+    "/api/studio/jobs/purges": {
+      "get": {
+        "description": "Read a bounded path-free purge journal page; never reconcile or clear it.",
+        "operationId": "api_studio_job_purges_api_studio_jobs_purges_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Job Purges Api Studio Jobs Purges Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Job Purges"
+      }
+    },
     "/api/studio/jobs/status": {
       "get": {
         "description": "Return path-free local worker health for operator dashboards.",

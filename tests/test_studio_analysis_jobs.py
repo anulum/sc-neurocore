@@ -37,7 +37,7 @@ def _poll_job_completed(
         if last.get("status") == "completed":
             return last
         if last.get("status") in {"failed", "timed_out", "cancelled"}:
-            pytest.fail(f"job terminal non-success: {last.get('status')}")
+            pytest.fail(f"job terminal non-success: {last.get('status')}: {last.get('error')}")
         time.sleep(0.05)
     pytest.fail(f"job did not complete within {timeout_s}s; last={last}")
 
@@ -52,42 +52,23 @@ def test_analysis_and_model_scan_job_routes_are_registered_in_route_policy() -> 
     assert analysis_job.audit_action == "studio.analysis.job"
 
 
-def test_analysis_job_polls_to_completed_with_analysis_result_schema(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+@pytest.mark.parametrize("trace", ["analysis-custody-trace", "invalid trace", None])
+def test_analysis_job_polls_to_completed_with_analysis_result_schema(trace: str | None) -> None:
     """POST /api/analysis/jobs must reach completed with a real analysis payload."""
 
-    from sc_neurocore.studio.api import analysis_jobs as analysis_job_module
-
-    def _fake_bifurcation(
-        simulate_fn: Any,
-        base_cfg: dict[str, Any],
-        sweep_param: str,
-        sweep_min: float,
-        sweep_max: float,
-        sweep_steps: int,
-        *,
-        variable: str | None = None,
-    ) -> dict[str, object]:
-        return {
-            "sweep_param": sweep_param,
-            "variable": variable,
-            "values": [sweep_min, sweep_max],
-            "rates": [0.0, 1.0],
-            "steps": sweep_steps,
-        }
-
-    monkeypatch.setattr(analysis_job_module, "bifurcation_sweep", _fake_bifurcation)
     client = TestClient(
         create_app(StudioRuntimeSettings()),
         base_url="http://127.0.0.1",
     )
     response = client.post(
         "/api/analysis/jobs",
+        headers={} if trace is None else {"x-request-id": trace},
         json={
             "analysis": "bifurcation",
             "payload": {
-                "model_name": "LIFNeuron",
+                "equations": ["dv/dt = (-v + I)/tau_m"],
+                "params": {"tau_m": 10.0},
+                "init": {"v": 0.0},
                 "sweep_param": "tau_m",
                 "sweep_min": 5.0,
                 "sweep_max": 15.0,
@@ -106,9 +87,20 @@ def test_analysis_job_polls_to_completed_with_analysis_result_schema(
     completed = _poll_job_completed(client, payload["status_route"])
     assert completed["status"] == "completed"
     assert completed["kind"] == "analysis"
+    normalized_trace = response.headers["x-request-id"]
+    assert normalized_trace
+    assert completed["request_id"] == normalized_trace
+    if trace == "analysis-custody-trace":
+        assert normalized_trace == trace
+    else:
+        assert normalized_trace != trace
+    assert completed["owner"] == "studio"
     result = completed["result"]
     assert isinstance(result, dict)
-    assert "analysis_metadata" in result or "sweep_param" in result
+    assert completed["execution_model"] == "process"
+    assert result["param_name"] == "tau_m"
+    assert len(result["param_values"]) == len(result["attractors"]) == 5
+    assert result["analysis_metadata"]["schema_version"] == "studio.analysis-result.v1"
 
 
 def test_over_budget_heatmap_recommends_existing_analysis_jobs_route() -> None:

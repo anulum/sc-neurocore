@@ -27,6 +27,26 @@ from sc_neurocore.studio.platform.jobs import (
 )
 
 
+def test_job_status_reports_pending_purge_without_exposing_custody(tmp_path: Path) -> None:
+    """HTTP health counts unresolved cleanup without leaking identity or performing recovery."""
+    app = create_app(runtime_settings=StudioRuntimeSettings(job_root_path=str(tmp_path / "jobs")))
+    manager = cast(StudioJobManager, app.state.studio_job_manager)
+    with manager._ledger.transaction() as connection:
+        connection.execute(
+            "INSERT INTO job_purges VALUES('sj_0000000000000001','private-purger',NULL,NULL,'committed')"
+        )
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        response = client.get("/api/studio/jobs/status")
+    assert response.status_code == 200
+    assert response.json()["pending_purge_count"] == 1
+    assert "private-purger" not in response.text
+    assert "sj_0000000000000001" not in response.text
+    assert str(tmp_path) not in response.text
+    assert (
+        manager._ledger.connection().execute("SELECT COUNT(*) FROM job_purges").fetchone()[0] == 1
+    )
+
+
 def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
@@ -40,6 +60,7 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.json() == {
+        "pending_purge_count": 0,
         "active_count": 0,
         "admission": {
             "admitted": 0,
@@ -191,7 +212,7 @@ def test_studio_job_list_and_detail_endpoints_are_admin_gated_and_path_free(
 
     assert denied.status_code == 401
     assert listed.status_code == 200
-    assert listed.json()["schema_version"] == "studio.jobs.list.v1"
+    assert listed.json()["schema_version"] == "studio.jobs.list.v2"
     assert listed.json()["jobs"][0]["job_id"] == record.job_id
     assert listed.json()["jobs"][0]["execution_model"] == "thread"
     assert listed.json()["jobs"][0]["artifacts"][0]["relative_path"] == "reports/result.txt"

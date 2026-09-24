@@ -21,9 +21,15 @@ import os
 import socket
 
 
-def supervisor_identity() -> str:
-    """Return a stable identity for the supervisor in this process."""
-    return f"{socket.gethostname()}:{os.getpid()}:{_process_start_token()}"
+def supervisor_identity(pid: int | None = None) -> str:
+    """Return host/PID/start identity for this process or an observed local child.
+
+    Omit pid for the current process. An explicit pid is a caller observation,
+    not an authenticated assertion. Unavailable metadata yields start token0;
+    registration must refuse that unknown identity instead of certifying it.
+    """
+    target = os.getpid() if pid is None else pid
+    return f"{socket.gethostname()}:{target}:{_process_start_token(target)}"
 
 
 def _process_start_token(pid: int | None = None) -> str:
@@ -33,7 +39,8 @@ def _process_start_token(pid: int | None = None) -> str:
         with open(f"/proc/{target}/stat", encoding="utf-8", errors="replace") as handle:
             fields = handle.read().rsplit(")", 1)[-1].split()
         return str(fields[19])
-    except (OSError, IndexError):  # pragma: no cover - non-Linux fallback
+    except OSError:
+        # Exited and reaped, or no Linux process metadata: unknown generation.
         return "0"
 
 
@@ -50,7 +57,10 @@ def supervisor_is_alive(identity: str) -> bool | None:
     bool or None
         ``True`` when the process is running, ``False`` when it provably is
         not, and ``None`` when this host cannot tell — a malformed identity, a
-        different host, or a platform without process metadata.
+        different host, or a platform without process metadata. A zero or
+        malformed start token is unknown, not evidence of process death.
+        A different UID may deny the signal probe; readable matching proc
+        metadata still proves this exact process generation is alive.
     """
     try:
         host, pid_text, token = identity.split(":", 2)
@@ -58,22 +68,41 @@ def supervisor_is_alive(identity: str) -> bool | None:
         return None
     if host != socket.gethostname():
         return None
+    if not token.isascii() or not token.isdecimal() or token.startswith("0"):
+        return None
     try:
         pid = int(pid_text)
     except ValueError:
+        return None
+    if pid <= 0:
         return None
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
         return False
     except PermissionError:
-        return True
-    except OSError:  # pragma: no cover - defensive
+        # Distinct storage/API UIDs may deny signals while exposing /proc stat.
+        # The matching process-start token below still proves this generation.
+        pass
+    except OverflowError:
         return None
-    started = _process_start_token(pid)
-    if started == "0":  # pragma: no cover - non-Linux fallback
-        return True
-    return started == token
+    try:
+        with open(f"/proc/{pid}/stat", encoding="utf-8", errors="replace") as handle:
+            fields = handle.read().rsplit(")", 1)[-1].split()
+        state, started = fields[0], fields[19]
+    except FileNotFoundError:
+        # A process can disappear between kill(0) and reading its metadata.
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except OSError:
+            return None
+        return None
+    except OSError:
+        # For example a hidden or unreadable proc entry of another identity.
+        return None
+    return state not in {"Z", "X", "x"} and started == token
 
 
 __all__ = ["supervisor_identity", "supervisor_is_alive"]

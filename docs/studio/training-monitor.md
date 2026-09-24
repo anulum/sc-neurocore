@@ -22,7 +22,28 @@ rates update in real time via Server-Sent Events.
 ### Live Metric Streaming
 
 Training metrics stream from backend to frontend via SSE (Server-Sent
-Events). Each epoch emits:
+Events).
+
+The browser reads this same-origin stream with authenticated `fetch`, using
+the Studio bearer header. The token is never placed in the stream URL and
+redirects are refused. Closing the monitor stream aborts the pending read.
+On opening the Training Monitor, the browser loads retained training runs and
+observes the newest one. Selecting another run fetches its current status and
+replays its persisted metric stream. If the stream disconnects, `Refresh runs`
+rechecks the selected run and reconnects its stream. A retained run's
+configuration is shown separately from the editable project settings. Rows
+admitted before the configuration snapshot say `config not recorded`; checkpoint
+export is unavailable for those rows. Runs with a retained configuration can
+export a portable checkpoint after API restart. Reattachment does not claim a
+new guided-flow training result for the currently edited project: the retained
+run's seed and clipping settings are not editable project fields.
+An `unknown` or disconnected run remains an active, uncertain observation in
+the panel. Refresh first: Stop is disabled until the API confirms a live run,
+and the panel does not offer a new Train action under that selection. A direct
+Stop request against a durable `unknown` record returns `unknown` without
+claiming cancellation.
+
+Each epoch emits:
 
 - **train_loss**, **val_loss** — spike count cross-entropy
 - **train_accuracy**, **val_accuracy** — classification accuracy
@@ -93,21 +114,45 @@ module callers can still use the legacy in-process thread path for local
 compatibility. The lifecycle is:
 
 ```
-idle → starting → running → completed | stopped | failed
+idle → starting → running → completed | stopped | failed | interrupted | unknown
 ```
 
 Multiple training jobs can run concurrently. Each job has a unique ID
 used for status queries and SSE stream subscription.
+Stop is cooperative: the worker checks it before each training batch, between
+training and validation, during validation, and before reporting completion.
+An already running tensor operation finishes before the next check.
+If a run reaches a terminal state before Stop arrives, the Stop response reports
+that state in the Training Monitor vocabulary. In particular, a cancelled
+platform job is `stopped`; the browser does not replace a completed outcome with
+`stopping` when a delayed Stop response arrives.
+After restart, `interrupted` means the ledger proved the supervisor is gone;
+`unknown` means liveness could not be established. Neither is presented as
+completed. Historical jobs admitted before the configuration snapshot was
+introduced remain listed with `config: null`.
+The SSE endpoint tails a retained training job's bounded event log through the
+manager even when the serving API process has no local proxy. Active and
+`unknown` records keep the stream open with heartbeats until their durable
+status resolves. Terminal records yield their recorded events followed by one
+terminal outcome when the event log has no terminal frame. The training status
+and stream routes refuse records of another Studio job kind.
+An interrupted record emits an `interrupted` SSE event; the browser keeps that
+status distinct from a training failure and closes the stream. A failed
+computation still emits `error`.
 
 ### Service Responsibility Boundary
 
 `sc_neurocore.studio.training` remains the historical public facade. Its
 implementation is separated into bounded, one-way responsibilities:
 
-- `_training_job` owns PyTorch discovery, dataset construction, the training
-  loop, checkpoint publication, and worker-side live-attach application.
+- `_training_job` owns PyTorch discovery, the training loop, checkpoint
+  publication, and worker-side live-attach application.
+- `_training_datasets` owns dataset construction and seeds the Python, NumPy,
+  and Torch generators before data or model creation.
 - `_training_control` owns the parent-process registry, status reconciliation,
-  checkpoint import/export, cancellation, and SSE streaming.
+  checkpoint import/export, and cancellation.
+- `_training_stream` owns SSE framing, bounded event tailing, and durable job
+  observation after the API process loses its local training proxy.
 - `_training_attach` owns warm-start and live-attach orchestration across
   verified job artifacts and confined worker channels.
 - `_training_events` owns portable JSON values, event persistence, and
@@ -274,7 +319,7 @@ step it protects.
 | GET | `/api/training/checkpoint/{job_id}` | Export portable checkpoint JSON |
 | POST | `/api/training/checkpoint/import` | Validate checkpoint and restore config |
 | GET | `/api/training/stream/{job_id}` | SSE metric stream |
-| GET | `/api/training/jobs` | List all jobs |
+| GET | `/api/training/jobs` | List retained training jobs in creation order; pre-v7 rows have `config: null` |
 | POST | `/api/studio/training/weight-restore` | Materialize and verify weights (admin) |
 | POST | `/api/studio/training/weight-restore/attach` | Warm-start a job from verified weights (admin) |
 | POST | `/api/studio/training/weight-restore/attach/live` | Live-attach verified weights into a running job (admin) |

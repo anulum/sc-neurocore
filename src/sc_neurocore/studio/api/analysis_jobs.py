@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, Literal
 
 from pydantic import ValidationError
@@ -44,8 +45,8 @@ from sc_neurocore.studio.evidence_receipt import attach_evidence_receipt
 from sc_neurocore.studio.evidence_scope import simulation_scope
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 from sc_neurocore.studio.platform.jobs_context import StudioJobContext
-from sc_neurocore.studio.platform.jobs_manager import StudioJobManager
 from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 AnalysisKind = Literal["fi_curve", "bifurcation", "heatmap", "sensitivity", "simulate"]
 
@@ -215,24 +216,93 @@ def run_analysis_job_task(
     return dict(result)
 
 
+def execute_analysis_process_task(
+    job_context: StudioJobContext, payload: Mapping[str, object]
+) -> dict[str, object]:
+    """Validate a named worker request and run the existing analysis implementation.
+
+    Parameters
+    ----------
+    job_context:
+        Context supplied by the registered process worker, never serialised.
+    payload:
+        JSON object with ``analysis``, ``payload`` and ``parameter_order``.
+        The explicit parameter-name sequence preserves stable sensitivity
+        ordering across transports that sort JSON object keys.
+
+    Returns
+    -------
+    dict[str, object]
+        Existing public analysis result, including its evidence metadata.
+
+    Raises
+    ------
+    ValueError
+        The envelope or selected analysis payload is invalid.
+    """
+    if set(payload) != {"analysis", "payload", "parameter_order"}:
+        raise AnalysisJobValidationError("invalid_analysis_payload")
+    request = AnalysisJobRequest.model_validate(
+        {"analysis": payload["analysis"], "payload": payload["payload"]}
+    )
+    analysis, normalized, _, _, _ = validate_analysis_job_request(request)
+    order = payload["parameter_order"]
+    params = normalized.get("params") or {}
+    if (
+        not isinstance(order, list)
+        or not all(isinstance(name, str) for name in order)
+        or len(order) != len(params)
+        or set(order) != set(params)
+    ):
+        raise AnalysisJobValidationError("invalid_analysis_payload")
+    if params:
+        normalized["params"] = {name: params[name] for name in order}
+    return run_analysis_job_task(analysis, normalized, job_context)
+
+
 def submit_analysis_job(
-    job_manager: StudioJobManager,
+    job_manager: StudioJobService,
     req: AnalysisJobRequest,
+    *,
+    request_id: str | None = None,
 ) -> dict[str, Any]:
-    """Validate and submit one analysis job; return the public job receipt."""
+    """Validate and submit one analysis job; return the public job receipt.
+
+    Parameters
+    ----------
+    job_manager : StudioJobService
+        Existing job admission and custody owner.
+    req : AnalysisJobRequest
+        Scientific analysis request, validated before admission.
+    request_id : str or None
+        Middleware-normalized HTTP trace, if submitted through an HTTP route.
+        This is neither an identity assertion nor an idempotency key.
+
+    Returns
+    -------
+    dict[str, Any]
+        Public receipt and projected analysis work with status route.
+
+    Raises
+    ------
+    AnalysisJobValidationError
+        The analysis input is invalid or job admission refuses the work.
+    """
     analysis, payload_dump, sim_count, duration, dt = validate_analysis_job_request(req)
     if sim_count < 1:
         raise AnalysisJobValidationError("analysis_job_empty")
 
-    def _task(job_context: StudioJobContext) -> dict[str, object]:
-        return run_analysis_job_task(analysis, payload_dump, job_context)
-
     try:
-        record = job_manager.submit(
+        record = job_manager.submit_process_task(
             kind="analysis",
             owner="studio",
-            request_id=None,
-            task=_task,
+            request_id=request_id,
+            task_path="sc_neurocore.studio.api.analysis_jobs:execute_analysis_process_task",
+            payload={
+                "analysis": analysis,
+                "payload": payload_dump,
+                "parameter_order": list(payload_dump.get("params") or {}),
+            },
         )
     except StudioJobRejected as exc:
         raise AnalysisJobValidationError("analysis_job_rejected") from exc

@@ -12,6 +12,7 @@ Reads take no transaction — SQLite in WAL mode gives a reader a consistent
 snapshot without blocking the writer. Scoping by actor and workspace happens
 here rather than in the caller, so a job outside the scope raises ``KeyError``
 instead of being filtered out somewhere that might forget.
+Purge journal pages are global operator evidence, not actor-scoped job records.
 """
 
 from __future__ import annotations
@@ -20,10 +21,56 @@ import sqlite3
 from typing import TYPE_CHECKING, Any
 
 from sc_neurocore.studio.platform.jobs_ledger_schema import LIVE_STATUSES, record_from_row
-from sc_neurocore.studio.platform.jobs_models import StudioJobRecord
+from sc_neurocore.studio.platform.jobs_models import (
+    STUDIO_JOB_ID_PATTERN,
+    StudioJobPurgeRecord,
+    StudioJobPurgeSnapshot,
+    StudioJobRecord,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle only matters to type checkers
     from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+
+
+def read_pending_purge_count(ledger: StudioJobLedger) -> int:
+    """Count all unresolved journal phases without exposing SQL to manager clients."""
+    return int(ledger.connection().execute("SELECT COUNT(*) FROM job_purges").fetchone()[0])
+
+
+def read_purge_snapshot(
+    ledger: StudioJobLedger, *, limit: int = 100, after: str | None = None
+) -> StudioJobPurgeSnapshot:
+    """Read at most 1000 intents without recovery, filesystem reads or process probes.
+
+    Cursor ordering is lexical by job ID. Pages reflect current database state;
+    concurrent changes can occur between requests. Invalid bounds/cursors raise
+    ValueError before querying, including when called without HTTP validation.
+    """
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
+        raise ValueError("Purge page limit must be an integer between 1 and 1000.")
+    if after is not None and STUDIO_JOB_ID_PATTERN.fullmatch(after) is None:
+        raise ValueError("Purge page cursor must be a job identifier.")
+    rows = (
+        ledger.connection()
+        .execute(
+            "SELECT job_id,state,device,inode FROM job_purges "
+            "WHERE job_id > ? ORDER BY job_id LIMIT ?",
+            (after or "", limit + 1),
+        )
+        .fetchall()
+    )
+    records = tuple(
+        StudioJobPurgeRecord(
+            job_id=str(row["job_id"]),
+            phase=str(row["state"]),
+            device=None if row["device"] is None else int(row["device"]),
+            inode=None if row["inode"] is None else int(row["inode"]),
+        )
+        for row in rows[:limit]
+    )
+    return StudioJobPurgeSnapshot(
+        purges=records, next_after=records[-1].job_id if len(rows) > limit else None
+    )
 
 
 def read_record(

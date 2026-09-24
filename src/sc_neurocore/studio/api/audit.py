@@ -15,6 +15,11 @@ from typing import Any, cast
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from sc_neurocore.studio.api.common import _safe
+from sc_neurocore.studio.api.evidence_jobs import (
+    EvidenceInputLimitExceeded,
+    EvidenceSeedInputs,
+    prepare_evidence_process_payload,
+)
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
     StudioAuditQuarantineArchivePurgeRequest,
@@ -28,13 +33,10 @@ from sc_neurocore.studio.platform import (
     AuditExportValue,
     AuditSinkError,
     JsonlAuditSink,
-    StudioJobContext,
+    StudioJobArtifactUnavailable,
     build_studio_audit_quarantine_archive_retention_plan,
     purge_studio_audit_quarantine_archive_prune_candidates,
     validate_studio_audit_quarantine_archive,
-    write_studio_audit_quarantine_archive,
-    write_studio_audit_quarantine_restore,
-    write_studio_evidence_bundle,
 )
 from sc_neurocore.studio.project import load_project
 
@@ -102,18 +104,12 @@ def build_audit_router(context: StudioApiContext) -> APIRouter:
             ) from exc
         request_id = getattr(request.state, "studio_request_id", None)
 
-        def task(context: StudioJobContext) -> dict[str, object]:
-            result = write_studio_audit_quarantine_archive(
-                context,
-                quarantine_export=quarantine_export,
-            ).to_public_dict()
-            return cast(dict[str, object], result)
-
-        submitted = studio_job_manager.submit(
+        submitted = studio_job_manager.submit_process_task(
             kind="evidence",
             owner="studio-audit-quarantine",
             request_id=request_id if isinstance(request_id, str) else None,
-            task=task,
+            task_path="sc_neurocore.studio.api.audit_archive_jobs:execute_quarantine_archive_task",
+            payload={"quarantine_export": quarantine_export},
         )
         completed = studio_job_manager.wait(
             submitted.job_id,
@@ -172,19 +168,12 @@ def build_audit_router(context: StudioApiContext) -> APIRouter:
             )
         request_id = getattr(request.state, "studio_request_id", None)
 
-        def task(context: StudioJobContext) -> dict[str, object]:
-            result = write_studio_audit_quarantine_restore(
-                context,
-                archive_payload=restore_request.archive,
-                manifest_payload=restore_request.manifest,
-            ).to_public_dict()
-            return cast(dict[str, object], result)
-
-        submitted = studio_job_manager.submit(
+        submitted = studio_job_manager.submit_process_task(
             kind="evidence",
             owner=STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER,
             request_id=request_id if isinstance(request_id, str) else None,
-            task=task,
+            task_path="sc_neurocore.studio.api.audit_archive_jobs:execute_quarantine_restore_task",
+            payload={"archive": restore_request.archive, "manifest": restore_request.manifest},
         )
         completed = studio_job_manager.wait(
             submitted.job_id,
@@ -245,30 +234,35 @@ def build_audit_router(context: StudioApiContext) -> APIRouter:
 
         request_id = getattr(request.state, "studio_request_id", None)
 
-        def task(context: StudioJobContext) -> dict[str, object]:
-            result = write_studio_evidence_bundle(
-                context,
-                project_payload=project_payload,
-                simulation_payloads=tuple(export_request.simulation_results),
-                analysis_payloads=tuple(export_request.analysis_results),
-                model_scan_payloads=tuple(export_request.model_scan_results),
-                weight_restore_payloads=tuple(export_request.weight_restore_results),
-                weight_restore_attach_payloads=tuple(export_request.weight_restore_attach_results),
-                default_flow_runs=tuple(export_request.default_flow_runs),
-                default_flow_attestations=tuple(export_request.default_flow_attestations),
-                job_records=tuple(job_records),
-                artifact_reader=studio_job_manager.read_artifact,
-                audit_export=audit_export,
-                command_replay=export_request.command_replay,
-            ).to_public_dict()
-            return cast(dict[str, object], result)
-
-        submitted = studio_job_manager.submit(
-            kind="evidence",
-            owner="studio-evidence",
-            request_id=request_id if isinstance(request_id, str) else None,
-            task=task,
-        )
+        try:
+            payload = prepare_evidence_process_payload(
+                {
+                    "project_payload": project_payload,
+                    "simulation_payloads": export_request.simulation_results,
+                    "analysis_payloads": export_request.analysis_results,
+                    "model_scan_payloads": export_request.model_scan_results,
+                    "weight_restore_payloads": export_request.weight_restore_results,
+                    "weight_restore_attach_payloads": export_request.weight_restore_attach_results,
+                    "default_flow_runs": export_request.default_flow_runs,
+                    "default_flow_attestations": export_request.default_flow_attestations,
+                    "audit_export": audit_export,
+                    "command_replay": export_request.command_replay,
+                },
+                job_records,
+                settings.evidence_max_input_bytes,
+            )
+            submitted = studio_job_manager.submit_process_task(
+                kind="evidence",
+                owner="studio-evidence",
+                request_id=request_id if isinstance(request_id, str) else None,
+                task_path="sc_neurocore.studio.api.evidence_jobs:execute_evidence_bundle_task",
+                payload=payload,
+                seed_inputs=EvidenceSeedInputs(job_records, studio_job_manager.read_artifact),
+            )
+        except EvidenceInputLimitExceeded as exc:
+            raise HTTPException(413, "studio_evidence_input_limit_exceeded") from exc
+        except (KeyError, ValueError, OSError, StudioJobArtifactUnavailable) as exc:
+            raise HTTPException(500, "studio_job_failed") from exc
         completed = studio_job_manager.wait(
             submitted.job_id,
             timeout_seconds=settings.job_default_timeout_seconds + 1.0,

@@ -15,7 +15,7 @@ import json
 from collections import OrderedDict
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from sc_neurocore.studio.analysis import (
     bifurcation_sweep,
@@ -224,7 +224,7 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
     studio_job_manager = context.studio_job_manager
 
     @router.post("/api/analysis/jobs")
-    def api_analysis_job(req: AnalysisJobRequest) -> dict[str, Any]:
+    def api_analysis_job(req: AnalysisJobRequest, request: Request) -> dict[str, Any]:
         """Submit a heavy analysis run as an asynchronous Studio job.
 
         Use this when a synchronous analysis route returns
@@ -232,7 +232,12 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
         analysis payload shape as the corresponding synchronous endpoint.
         """
         try:
-            return submit_analysis_job(studio_job_manager, req)
+            request_id = getattr(request.state, "studio_request_id", None)
+            return submit_analysis_job(
+                studio_job_manager,
+                req,
+                request_id=request_id if isinstance(request_id, str) else None,
+            )
         except AnalysisJobValidationError as exc:
             raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
 

@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 import secrets
 import sqlite3
 import threading
@@ -55,48 +56,56 @@ def _submit_thread_job(
     if kind not in manager._allowed_kinds:
         raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
     timeout = manager._default_timeout_seconds if timeout_seconds is None else timeout_seconds
-    if timeout <= 0:
-        raise StudioJobRejected("Studio job timeout must be positive.")
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise StudioJobRejected("Studio job timeout must be finite and positive.")
     job_id = f"sj_{secrets.token_hex(8)}"
     # A slot first: a job that cannot run yet must not appear in the ledger as
     # one that did, and a refused submission never happened at all.
-    manager._admission.reserve()
-    try:
-        submission = manager._ledger.create(
-            job_id=job_id,
-            kind=kind,
-            actor=owner,
-            workspace=workspace or manager._default_workspace,
-            request_id=request_id,
-            idempotency_key=idempotency_key,
-            experiment_sha256=experiment_sha256,
-            admission=admission,
-            execution_model="thread",
-        )
-    except BaseException:
-        manager._admission.release()
-        raise
-    if submission.duplicate:
-        # The work already ran or is running; this submission holds no slot.
-        manager._admission.release()
-        return submission.record
-    work_dir = _resolve_job_directory(
-        root=manager._root,
+    submission = manager._admission.admit(
         job_id=job_id,
-        error_message="Studio job path escapes the job root.",
+        kind=kind,
+        actor=owner,
+        workspace=workspace or manager._default_workspace,
+        request_id=request_id,
+        idempotency_key=idempotency_key,
+        experiment_sha256=experiment_sha256,
+        admission=admission,
+        execution_model="thread",
     )
-    work_dir.mkdir(parents=True, exist_ok=False)
-    cancel_event = threading.Event()
-    done_event = threading.Event()
-    with manager._lock:
-        manager._done_events[job_id] = done_event
-        manager._cancel_events[job_id] = cancel_event
-    supervisor = threading.Thread(
-        target=manager._run_supervised,
-        args=(job_id, work_dir, cancel_event, done_event, task, timeout),
-        daemon=True,
-    )
-    supervisor.start()
+    if submission.duplicate:
+        return submission.record
+    try:
+        work_dir = _resolve_job_directory(
+            root=manager._root,
+            job_id=job_id,
+            error_message="Studio job path escapes the job root.",
+        )
+        work_dir.mkdir(parents=True, exist_ok=False)
+        cancel_event = threading.Event()
+        done_event = threading.Event()
+        with manager._lock:
+            manager._done_events[job_id] = done_event
+            manager._cancel_events[job_id] = cancel_event
+        supervisor = threading.Thread(
+            target=manager._run_supervised,
+            args=(job_id, work_dir, cancel_event, done_event, task, timeout),
+            daemon=True,
+        )
+        supervisor.start()
+    except Exception as exc:
+        # ``Thread.start`` raises an ``Exception`` only before a thread exists,
+        # so no supervisor owns this job and the slot is released here.
+        manager._update(
+            job_id,
+            status="failed",
+            error=f"Studio job could not start: {exc}",
+            finished_at_utc=manager._timestamp_utc(),
+        )
+        with manager._lock:
+            done = manager._done_events.get(job_id)
+        if done is not None:
+            done.set()
+        raise
     return submission.record
 
 
@@ -127,7 +136,25 @@ def _run_thread_supervised(
             error_box["error"] = exc
 
     worker = threading.Thread(target=target, daemon=True)
-    worker.start()
+    try:
+        worker.start()
+    except Exception as exc:
+        if worker.ident is not None:
+            # A started worker still needs supervision even if start reports an error.
+            cancel_event.set()
+            error_box["error"] = exc
+        else:
+            try:
+                manager._update(
+                    job_id,
+                    status="failed",
+                    error=f"Studio worker could not start: {exc}",
+                    finished_at_utc=manager._timestamp_utc(),
+                    artifacts=context.artifacts,
+                )
+            finally:
+                done_event.set()
+            return
     deadline = time.monotonic() + timeout_seconds
     while worker.is_alive():
         try:

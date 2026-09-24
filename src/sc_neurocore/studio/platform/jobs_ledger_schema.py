@@ -16,21 +16,24 @@ of quietly rewriting what happened.
 
 from __future__ import annotations
 
-import json
 import sqlite3
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
 
+from sc_neurocore.studio.platform.jobs_ledger_rows import (
+    StudioJobLedgerCorrupt,
+    artifacts_from_json,
+    artifacts_to_json,
+    json_or_none,
+    record_from_row,
+)
 from sc_neurocore.studio.platform.jobs_models import (
-    StudioJobArtifact,
     StudioJobRecord,
     StudioJobStatus,
 )
 
-JOB_LEDGER_SCHEMA_VERSION = "studio.job-ledger.v1"
+JOB_LEDGER_SCHEMA_VERSION = "studio.job-ledger.v7"
 LEDGER_FILENAME = "job_ledger.sqlite3"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 7
 
 #: A job in one of these states has finished and will never move again.
 TERMINAL_STATUSES: frozenset[StudioJobStatus] = frozenset(
@@ -80,6 +83,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     idempotency_key TEXT,
     experiment_sha256 TEXT,
     admission TEXT NOT NULL,
+    training_config TEXT,
     execution_model TEXT NOT NULL,
     status TEXT NOT NULL,
     created_at_utc TEXT NOT NULL,
@@ -144,10 +148,6 @@ class StudioJobSubmission:
     duplicate: bool
 
 
-class StudioJobLedgerCorrupt(RuntimeError):
-    """Raised when the ledger file cannot be read as a Studio job ledger."""
-
-
 def migrate(connection: sqlite3.Connection) -> None:
     """Bring the stored schema forward, refusing a version from the future.
 
@@ -161,6 +161,23 @@ def migrate(connection: sqlite3.Connection) -> None:
         "SELECT value FROM schema_meta WHERE key = 'schema_version'"
     ).fetchone()
     if row is None:
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_admission
+
+        migrate_admission(connection)
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_worker_custody
+
+        migrate_worker_custody(connection)
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_purge_journal
+
+        migrate_purge_journal(connection)
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_purge_phases
+
+        migrate_purge_phases(connection)
+        from sc_neurocore.studio.platform.jobs_admission_schema import (
+            migrate_storage_admission_replay,
+        )
+
+        migrate_storage_admission_replay(connection)
         connection.execute(
             "INSERT INTO schema_meta (key, value) VALUES ('schema_version', ?)",
             (str(SCHEMA_VERSION),),
@@ -176,74 +193,46 @@ def migrate(connection: sqlite3.Connection) -> None:
             f"the ledger was written by schema version {stored}; this build understands "
             f"{SCHEMA_VERSION}. Upgrade the package rather than downgrading the ledger."
         )
-    # Forward migrations land here as `if stored < N:` steps. Version 1 is the
-    # initial schema, which SCHEMA_V1 already ensures.
+    if stored < 2:
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_admission
 
+        migrate_admission(connection)
+    if stored < 3:
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_worker_custody
 
-def json_or_none(value: str | None) -> Any:
-    """Decode one stored JSON column, or ``None``."""
-    if value is None:
-        return None
-    try:
-        return json.loads(value)
-    except json.JSONDecodeError as exc:
-        raise StudioJobLedgerCorrupt(f"stored JSON column is not valid JSON: {exc}") from exc
+        migrate_worker_custody(connection)
+    if stored < 4:
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_purge_journal
 
+        migrate_purge_journal(connection)
+    if stored < 5:
+        from sc_neurocore.studio.platform.jobs_admission_schema import migrate_purge_phases
 
-def artifacts_from_json(value: str) -> tuple[StudioJobArtifact, ...]:
-    """Rebuild an artifact manifest, refusing a malformed one."""
-    payload = json_or_none(value) or []
-    if not isinstance(payload, list):
-        raise StudioJobLedgerCorrupt("the artifact manifest is not a list")
-    artifacts: list[StudioJobArtifact] = []
-    for entry in payload:
-        if not isinstance(entry, Mapping):
-            raise StudioJobLedgerCorrupt("an artifact manifest entry is not an object")
-        try:
-            artifacts.append(
-                StudioJobArtifact(
-                    relative_path=str(entry["relative_path"]),
-                    size_bytes=int(entry["size_bytes"]),
-                    sha256=str(entry["sha256"]),
-                )
-            )
-        except (KeyError, TypeError, ValueError) as exc:
-            raise StudioJobLedgerCorrupt(f"an artifact manifest entry is malformed: {exc}") from exc
-    return tuple(artifacts)
+        migrate_purge_phases(connection)
+    if stored < 6:
+        from sc_neurocore.studio.platform.jobs_admission_schema import (
+            migrate_storage_admission_replay,
+        )
 
-
-def artifacts_to_json(artifacts: Sequence[StudioJobArtifact]) -> str:
-    """Serialise an artifact manifest deterministically."""
-    return json.dumps([artifact.to_public_dict() for artifact in artifacts], sort_keys=True)
-
-
-def record_from_row(row: sqlite3.Row) -> StudioJobRecord:
-    """Rebuild one immutable public record from its stored row."""
-    return StudioJobRecord(
-        job_id=str(row["job_id"]),
-        kind=str(row["kind"]),
-        owner=str(row["actor"]),
-        request_id=None if row["request_id"] is None else str(row["request_id"]),
-        status=str(row["status"]),  # type: ignore[arg-type]
-        execution_model=str(row["execution_model"]),  # type: ignore[arg-type]
-        created_at_utc=str(row["created_at_utc"]),
-        started_at_utc=None if row["started_at_utc"] is None else str(row["started_at_utc"]),
-        finished_at_utc=None if row["finished_at_utc"] is None else str(row["finished_at_utc"]),
-        error=None if row["error"] is None else str(row["error"]),
-        result=json_or_none(row["result"]),
-        artifacts=artifacts_from_json(str(row["artifacts"])),
-        workspace=str(row["workspace"]),
-        idempotency_key=None if row["idempotency_key"] is None else str(row["idempotency_key"]),
-        experiment_sha256=(
-            None if row["experiment_sha256"] is None else str(row["experiment_sha256"])
-        ),
-        admission=json_or_none(row["admission"]) or {},
-        lease_owner=None if row["lease_owner"] is None else str(row["lease_owner"]),
-        lease_expires_at_utc=(
-            None if row["lease_expires_at_utc"] is None else str(row["lease_expires_at_utc"])
-        ),
-        heartbeat_at_utc=None if row["heartbeat_at_utc"] is None else str(row["heartbeat_at_utc"]),
-    )
+        migrate_storage_admission_replay(connection)
+        connection.execute(
+            "UPDATE schema_meta SET value = ? WHERE key = 'schema_version'", (str(SCHEMA_VERSION),)
+        )
+        connection.execute(
+            "INSERT OR REPLACE INTO schema_meta(key,value) VALUES('schema_name',?)",
+            (JOB_LEDGER_SCHEMA_VERSION,),
+        )
+    if stored < 7:
+        columns = {str(row["name"]) for row in connection.execute("PRAGMA table_info(jobs)")}
+        if "training_config" not in columns:
+            connection.execute("ALTER TABLE jobs ADD COLUMN training_config TEXT")
+        connection.execute(
+            "UPDATE schema_meta SET value = ? WHERE key = 'schema_version'", (str(SCHEMA_VERSION),)
+        )
+        connection.execute(
+            "INSERT OR REPLACE INTO schema_meta(key,value) VALUES('schema_name',?)",
+            (JOB_LEDGER_SCHEMA_VERSION,),
+        )
 
 
 __all__ = [

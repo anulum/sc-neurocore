@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Job supervisor and subprocess coverage
+
+[run]
+branch = True
+source_dirs = src/sc_neurocore/studio/platform
+parallel = True
+sigterm = True
+# Spawned worker and guard interpreters are traced, so real process tests
+# count. With the lazy platform facade their start-up fits the real deadlines
+# under tracing (505 of 505 jobs tests passed traced, 2026-09-24).
+patch = subprocess
+
+[report]
+include = */sc_neurocore/studio/platform/jobs*.py
+# The gate stays at 100%; every line left uncovered stays visible in the
+# report until a real test reaches it.
+fail_under = 100
+show_missing = True

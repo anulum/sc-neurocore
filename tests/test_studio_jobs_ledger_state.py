@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from datetime import timedelta
 from pathlib import Path
 
@@ -29,45 +30,33 @@ from tests.test_studio_jobs_ledger import _ledger, _admit, UTC_CLOCK_START
 
 
 class TestStateMachine:
-    def test_recovery_propagates_unrelated_lookup_errors(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """A failed lookup other than the job itself must not masquerade as a purge."""
+    def test_recovery_does_not_hide_corrupt_artifacts_as_a_purge(self, tmp_path: Path) -> None:
+        """Only an absent job is omitted; malformed retained evidence remains an error.
+
+        Right after recovery read its snapshot of live rows, a second real
+        connection corrupts the job's stored artifacts, as damage between reads
+        would.
+        """
         ledger = _ledger(tmp_path)
         submitted = _admit(ledger)
-        before = ledger.record(submitted.record.job_id)
-        history = ledger.transitions(before.job_id)
+        statements: list[str] = []
 
-        def broken_read(job_id: str) -> None:
-            raise KeyError("unrelated_record_field")
+        def corrupt_after_snapshot(statement: str) -> None:
+            if statements and statements[-1].startswith("SELECT * FROM jobs WHERE status IN"):
+                with closing(sqlite3.connect(ledger.path, isolation_level=None)) as other:
+                    other.execute(
+                        "UPDATE jobs SET artifacts = ? WHERE job_id = ?",
+                        ("[{}]", submitted.record.job_id),
+                    )
+            statements.append(statement)
 
-        with monkeypatch.context() as patch:
-            patch.setattr(ledger, "record", broken_read)
-            with pytest.raises(KeyError, match="unrelated_record_field"):
+        connection = ledger.connection()
+        connection.set_trace_callback(corrupt_after_snapshot)
+        try:
+            with pytest.raises(StudioJobLedgerCorrupt, match="relative_path"):
                 ledger.reconcile()
-        assert ledger.record(before.job_id) == before
-        assert ledger.transitions(before.job_id) == history
-
-    def test_recovery_does_not_hide_corrupt_artifacts_as_a_purge(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Only an absent job is omitted; malformed retained evidence remains an error."""
-        ledger = _ledger(tmp_path)
-        submitted = _admit(ledger)
-        live_rows = ledger.live_rows
-
-        def snapshot_then_corrupt() -> tuple[sqlite3.Row, ...]:
-            rows = live_rows()
-            with ledger.transaction() as connection:
-                connection.execute(
-                    "UPDATE jobs SET artifacts = ? WHERE job_id = ?",
-                    ("[{}]", submitted.record.job_id),
-                )
-            return rows
-
-        monkeypatch.setattr(ledger, "live_rows", snapshot_then_corrupt)
-        with pytest.raises(StudioJobLedgerCorrupt, match="relative_path"):
-            ledger.reconcile()
+        finally:
+            connection.set_trace_callback(None)
 
     @pytest.mark.parametrize("change", ["none", "heartbeat", "result-type", "completed"])
     def test_conditional_transition_checks_the_observed_record(
@@ -208,3 +197,34 @@ class TestStateMachine:
             ledger.transition("sj_0000000000000009", "running")
         with pytest.raises(KeyError):
             ledger.record("sj_0000000000000009")
+
+
+@pytest.mark.parametrize("stored", ["null", "false", "0", '""', "{}", '"manifest"', "[", "[null]"])
+def test_corrupt_artifact_column_cannot_masquerade_as_an_empty_manifest(
+    tmp_path: Path, stored: str
+) -> None:
+    """Public reads and reconciliation refuse corrupt custody without rewriting its evidence."""
+    ledger = _ledger(tmp_path)
+    try:
+        submission = _admit(ledger)
+        job_id = submission.record.job_id
+        assert ledger.record(job_id).artifacts == ()
+        history = ledger.transitions(job_id)
+        with ledger.transaction() as connection:
+            connection.execute("UPDATE jobs SET artifacts=? WHERE job_id=?", (stored, job_id))
+        before = (
+            ledger.connection().execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()
+        )
+        with pytest.raises(StudioJobLedgerCorrupt):
+            ledger.record(job_id)
+        with pytest.raises(StudioJobLedgerCorrupt):
+            ledger.list_records()
+        with pytest.raises(StudioJobLedgerCorrupt):
+            ledger.reconcile()
+        assert ledger.transitions(job_id) == history
+        after = (
+            ledger.connection().execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()
+        )
+        assert after == before
+    finally:
+        ledger.close()

@@ -15,7 +15,8 @@ import math
 import time
 from typing import Any, cast
 
-from sc_neurocore.studio.platform.jobs import StudioJobManager, StudioJobStatus
+from sc_neurocore.studio.platform.jobs import StudioJobStatus
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 TRAINING_EVENT_LOG_ARTIFACT_PATH = "training/events.jsonl"
 
@@ -27,6 +28,8 @@ _TRAINING_STATUS_BY_PLATFORM_STATUS: dict[StudioJobStatus, str] = {
     "cancelling": "stopped",
     "cancelled": "stopped",
     "timed_out": "stopped",
+    "interrupted": "interrupted",
+    "unknown": "unknown",
 }
 
 
@@ -47,6 +50,12 @@ def _event_from_platform_record(
         return {
             "data": final_metrics if isinstance(final_metrics, dict) else {},
             "event": "completed",
+            "timestamp": time.time(),
+        }
+    if training_status == "interrupted":
+        return {
+            "data": {"message": platform_error or "Training interrupted."},
+            "event": "interrupted",
             "timestamp": time.time(),
         }
     if training_status == "failed":
@@ -84,7 +93,7 @@ def _json_compatible(value: object) -> Any:
 
 
 def _read_live_training_events(
-    job_manager: StudioJobManager,
+    job_manager: StudioJobService,
     job_id: str,
     *,
     offset: int,

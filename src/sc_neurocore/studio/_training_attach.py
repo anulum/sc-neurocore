@@ -20,7 +20,6 @@ from sc_neurocore.studio._training_control import (
 from sc_neurocore.studio._training_job import TrainingJob
 from sc_neurocore.studio.platform.jobs import (
     StudioJobArtifactUnavailable,
-    StudioJobManager,
     StudioJobRejected,
 )
 from sc_neurocore.studio.platform.training_weights import (
@@ -30,6 +29,8 @@ from sc_neurocore.studio.platform.training_weights import (
     build_training_weight_restore_plan,
     training_architecture_fingerprint,
 )
+from sc_neurocore.studio.training_contract import resolve_training_config
+from sc_neurocore.studio.platform.studio_job_service import StudioJobService
 
 _LIVE_ATTACH_WEIGHTS_SEED = "model_state.pt"
 _LIVE_ATTACH_METADATA_SEED = "model_state.json"
@@ -38,7 +39,7 @@ _LIVE_ATTACH_METADATA_SEED = "model_state.json"
 def _start_training_attach(
     source_job_id: str,
     config: dict[str, Any],
-    job_manager: StudioJobManager,
+    job_manager: StudioJobService,
     *,
     expected_config_sha256: str | None = None,
     mode: str = "warm_start",
@@ -56,6 +57,8 @@ def _start_training_attach(
         TRAINING_ATTACH_SEED_METADATA_PATH,
         TRAINING_ATTACH_SEED_WEIGHTS_PATH,
     )
+
+    config = dict(resolve_training_config(config).to_public_dict())
 
     status_payload = _get_training_status(source_job_id, job_manager)
     if "status" not in status_payload:
@@ -91,6 +94,7 @@ def _start_training_attach(
         owner=STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_OWNER,
         request_id=None,
         task_path=TRAINING_ATTACH_PROCESS_TASK,
+        training_config=config,
         payload={
             "config": config,
             "restore_plan": restore_plan.to_public_dict(),
@@ -117,7 +121,7 @@ def _start_training_attach(
 def _request_live_training_weight_attach(
     target_job_id: str,
     source_job_id: str,
-    job_manager: StudioJobManager,
+    job_manager: StudioJobService,
     *,
     expected_config_sha256: str | None = None,
 ) -> dict[str, Any]:

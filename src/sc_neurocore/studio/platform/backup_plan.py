@@ -18,6 +18,7 @@ from sc_neurocore.studio.platform.settings import (
     StudioRuntimeSettings,
     build_default_studio_runtime_settings,
 )
+from sc_neurocore.studio.platform.storage_mode import StudioStorageMode
 
 STUDIO_BACKUP_PLAN_SCHEMA_VERSION = "studio.backup-plan.v1"
 
@@ -92,6 +93,8 @@ class StudioBackupPlan:
     ----------
     deployment_profile:
         Active Studio deployment profile.
+    storage_mode:
+        Selected storage runtime. Isolated storage has no integrated authority yet.
     items:
         Durable state targets that an operator backup must capture.
     include_local_paths:
@@ -101,6 +104,7 @@ class StudioBackupPlan:
     """
 
     deployment_profile: str
+    storage_mode: StudioStorageMode
     items: tuple[StudioBackupPlanItem, ...]
     include_local_paths: bool = False
     schema_version: str = STUDIO_BACKUP_PLAN_SCHEMA_VERSION
@@ -119,9 +123,13 @@ class StudioBackupPlan:
 
     @property
     def ready_for_restore_drill(self) -> bool:
-        """Return whether all required targets are configured and present."""
+        """Return whether required targets and their runtime authority are ready."""
 
-        return self.missing_required_count == 0 and self.missing_existing_count == 0
+        return (
+            self.storage_mode == "embedded"
+            and self.missing_required_count == 0
+            and self.missing_existing_count == 0
+        )
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable backup-plan payload."""
@@ -137,6 +145,7 @@ class StudioBackupPlan:
             "missing_required_count": self.missing_required_count,
             "ready_for_restore_drill": self.ready_for_restore_drill,
             "schema_version": self.schema_version,
+            "storage_mode": self.storage_mode,
         }
 
 
@@ -207,21 +216,7 @@ def build_studio_backup_plan(
                 "Set SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH to the restored active log location.",
             ),
         ),
-        _directory_item(
-            item_id="job_root",
-            description="Studio job records, bounded worker directories, and artifacts.",
-            source_label="SC_NEUROCORE_STUDIO_JOB_ROOT",
-            configured_path=runtime_settings.job_root_path,
-            required=required_for_production,
-            backup_actions=(
-                "Capture the configured job root after stopping active worker submissions.",
-                "Keep manifest-declared artifacts with their SHA-256 metadata.",
-            ),
-            restore_actions=(
-                "Restore the job root before replaying job evidence or serving artifacts.",
-                "Set SC_NEUROCORE_STUDIO_JOB_ROOT to the restored directory location.",
-            ),
-        ),
+        _job_state_item(runtime_settings, required=required_for_production),
         _explicit_directory_item(
             item_id="project_workspace",
             description="Saved Studio project JSON workspaces.",
@@ -240,8 +235,54 @@ def build_studio_backup_plan(
     )
     return StudioBackupPlan(
         deployment_profile=runtime_settings.deployment_profile,
+        storage_mode=runtime_settings.storage_mode,
         include_local_paths=include_local_paths,
         items=items,
+    )
+
+
+def _job_state_item(settings: StudioRuntimeSettings, *, required: bool) -> StudioBackupPlanItem:
+    """Return the authoritative job state: the embedded job root or the authority root.
+
+    In the isolated profile the storage authority root holds the ledger, the
+    sealed artefacts and the purge journal; the compute spool is live worker
+    state, not authoritative, and is not part of the backup.
+    """
+    boundary = settings.storage_boundary
+    if settings.storage_mode == "isolated" and boundary is not None:
+        return _directory_item(
+            item_id="authority_root",
+            description="Storage authority ledger, sealed artifacts and purge journal.",
+            source_label="SC_NEUROCORE_STUDIO_STORAGE_BOUNDARY authority_root",
+            configured_path=str(boundary.authority_root),
+            required=required,
+            backup_actions=(
+                "Stop the storage service, then capture the authority root as the storage "
+                "identity, preserving ownership, modes and the ledger's WAL files.",
+                "Do not capture the compute spool; it is live worker state, not authority.",
+            ),
+            restore_actions=(
+                "Restore the authority root owned by the storage identity with mode 0700 "
+                "before starting the storage service; the service verifies ownership and "
+                "never repairs it.",
+                "Start the storage service to complete recorded purges and reconcile jobs "
+                "whose API generation is gone.",
+            ),
+        )
+    return _directory_item(
+        item_id="job_root",
+        description="Studio job records, bounded worker directories, and artifacts.",
+        source_label="SC_NEUROCORE_STUDIO_JOB_ROOT",
+        configured_path=settings.job_root_path,
+        required=required,
+        backup_actions=(
+            "Capture the configured job root after stopping active worker submissions.",
+            "Keep manifest-declared artifacts with their SHA-256 metadata.",
+        ),
+        restore_actions=(
+            "Restore the job root before replaying job evidence or serving artifacts.",
+            "Set SC_NEUROCORE_STUDIO_JOB_ROOT to the restored directory location.",
+        ),
     )
 
 

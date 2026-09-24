@@ -11,7 +11,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -23,6 +25,7 @@ from sc_neurocore.studio.platform.backup_plan import (
     build_studio_backup_plan,
 )
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
+from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
 
 
 def _production_settings(tmp_path: Path) -> StudioRuntimeSettings:
@@ -94,6 +97,19 @@ def test_studio_backup_plan_can_emit_local_paths_for_internal_handoff(
     assert str(items["project_workspace"]["local_path"]).endswith("projects")
 
 
+def test_studio_backup_plan_does_not_claim_isolated_restore_ready(tmp_path: Path) -> None:
+    project_root = tmp_path / "projects"
+    project_root.mkdir()
+    settings = replace(_production_settings(tmp_path), storage_mode="isolated")
+
+    payload = build_studio_backup_plan(settings, project_root=project_root).to_public_dict()
+
+    assert payload["storage_mode"] == "isolated"
+    assert payload["missing_required_count"] == 0
+    assert payload["missing_existing_count"] == 0
+    assert payload["ready_for_restore_drill"] is False
+
+
 def test_studio_backup_plan_marks_missing_production_targets() -> None:
     settings = StudioRuntimeSettings(
         deployment_profile="production",
@@ -162,3 +178,37 @@ def test_studio_backup_plan_cli_writes_explicit_local_path_manifest(
     assert capsys.readouterr().out == ""
     assert payload["include_local_paths"] is True
     assert any("local_path" in item for item in payload["items"])
+
+
+def test_isolated_backup_captures_the_authority_root_not_the_spool(tmp_path: Path) -> None:
+    """With a storage boundary, the authority root replaces the embedded job root."""
+    authority = tmp_path / "authority"
+    authority.mkdir()
+    boundary = StorageBoundaryConfiguration(
+        storage_uid=os.getuid() + 3,
+        api_uid=os.getuid() + 1,
+        worker_uid=os.getuid() + 2,
+        authority_root=authority,
+        spool_root=tmp_path / "spool",
+        socket_path=tmp_path / "endpoint" / "storage.sock",
+        workspace="default",
+        frame_max_bytes=8192,
+        max_metadata_bytes=4096,
+        max_seed_bytes=8192,
+        max_seed_entries=16,
+        max_manifest_bytes=1024,
+        max_artifact_bytes=65536,
+        max_artifact_entries=16,
+        transfer_timeout_seconds=2.0,
+        max_connections=2,
+    )
+    settings = replace(
+        _production_settings(tmp_path), storage_mode="isolated", storage_boundary=boundary
+    )
+    plan = build_studio_backup_plan(settings, include_local_paths=True, project_root=tmp_path)
+    items_payload = cast(list[dict[str, object]], plan.to_public_dict()["items"])
+    items = {str(item["item_id"]): item for item in items_payload}
+    assert "job_root" not in items
+    assert items["authority_root"]["local_path"] == str(authority)
+    assert items["authority_root"]["exists"] is True
+    assert plan.ready_for_restore_drill is False

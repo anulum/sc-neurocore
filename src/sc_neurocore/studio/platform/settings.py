@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -23,6 +24,20 @@ from sc_neurocore.studio.platform.analysis_limits import (
 )
 from sc_neurocore.studio.platform.jobs import (
     DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES as DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
+)
+from sc_neurocore.studio.platform.storage_launcher_client_settings import (
+    LauncherClientSettings,
+    parse_launcher_client,
+)
+from sc_neurocore.studio.platform.storage_mode import StudioStorageMode, parse_storage_mode
+from sc_neurocore.studio.platform.storage_configuration import (
+    StorageBoundaryConfiguration,
+    parse_storage_boundary,
+)
+from sc_neurocore.studio.platform.evidence_limits import (
+    DEFAULT_EVIDENCE_MAX_INPUT_BYTES,
+    parse_evidence_input_limit,
+    validate_evidence_input_limit,
 )
 
 StudioDeploymentProfile = Literal["development", "production"]
@@ -85,6 +100,7 @@ class StudioRuntimeSettings:
     job_root_path: str | None = None
     job_default_timeout_seconds: float = DEFAULT_STUDIO_JOB_TIMEOUT_SECONDS
     job_max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
+    evidence_max_input_bytes: int = DEFAULT_EVIDENCE_MAX_INPUT_BYTES
     eda_process_cpu_seconds: float | None = DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS
     eda_process_memory_bytes: int | None = DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES
     max_sync_analysis_steps_per_simulation: int = (
@@ -101,10 +117,27 @@ class StudioRuntimeSettings:
     audit_log_path: str | None = None
     audit_rotation_bytes: int | None = None
     audit_retained_files: int = DEFAULT_STUDIO_AUDIT_RETAINED_FILES
+    storage_mode: StudioStorageMode = "embedded"
+    storage_boundary: StorageBoundaryConfiguration | None = None
+    storage_launcher: LauncherClientSettings | None = None
 
     def __post_init__(self) -> None:
         """Validate settings that affect Studio security boundaries."""
 
+        if self.storage_mode not in ("embedded", "isolated"):
+            raise ValueError("Studio storage mode must be embedded or isolated.")
+        if self.storage_boundary is not None and self.storage_mode != "isolated":
+            raise ValueError("Studio storage boundary requires isolated mode.")
+        if self.storage_boundary is not None and not isinstance(
+            self.storage_boundary, StorageBoundaryConfiguration
+        ):
+            raise ValueError("Studio storage boundary must be validated configuration.")
+        if self.storage_launcher is not None and self.storage_mode != "isolated":
+            raise ValueError("Studio storage launcher requires isolated mode.")
+        if self.storage_launcher is not None and not isinstance(
+            self.storage_launcher, LauncherClientSettings
+        ):
+            raise ValueError("Studio storage launcher must be validated configuration.")
         if self.deployment_profile not in ("development", "production"):
             raise ValueError("Studio deployment profile must be development or production.")
         if not self.cors_allowed_origins:
@@ -133,10 +166,14 @@ class StudioRuntimeSettings:
             raise ValueError("Studio header principal fallback must be boolean.")
         if self.job_root_path is not None and not self.job_root_path.strip():
             raise ValueError("Studio job root path must not be empty.")
-        if self.job_default_timeout_seconds <= 0:
-            raise ValueError("Studio job timeout must be positive.")
+        if (
+            not math.isfinite(self.job_default_timeout_seconds)
+            or self.job_default_timeout_seconds <= 0
+        ):
+            raise ValueError("Studio job timeout must be finite and positive.")
         if self.job_max_artifact_bytes <= 0:
             raise ValueError("Studio job artifact size limit must be positive.")
+        validate_evidence_input_limit(self.evidence_max_input_bytes)
         if self.eda_process_cpu_seconds is not None and self.eda_process_cpu_seconds <= 0:
             raise ValueError("Studio EDA process CPU limit must be positive.")
         if self.eda_process_memory_bytes is not None and self.eda_process_memory_bytes <= 0:
@@ -373,6 +410,12 @@ def build_default_studio_runtime_settings(
     except ValueError as exc:
         raise ValueError("Studio retained audit file count must be an integer.") from exc
     return StudioRuntimeSettings(
+        evidence_max_input_bytes=parse_evidence_input_limit(
+            source.get("SC_NEUROCORE_STUDIO_EVIDENCE_MAX_INPUT_BYTES")
+        ),
+        storage_mode=parse_storage_mode(source.get("SC_NEUROCORE_STUDIO_STORAGE_MODE")),
+        storage_boundary=parse_storage_boundary(source.get("SC_NEUROCORE_STUDIO_STORAGE_BOUNDARY")),
+        storage_launcher=parse_launcher_client(source.get("SC_NEUROCORE_STUDIO_STORAGE_LAUNCHER")),
         deployment_profile=deployment_profile,
         cors_allowed_origins=origins,
         websocket_allowed_origins=websocket_origins,

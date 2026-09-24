@@ -28,6 +28,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobManager,
     StudioJobRejected,
 )
+from sc_neurocore.studio.platform.jobs_models import STUDIO_CONTROL_COMMAND_MAX_BYTES
 
 
 def test_poll_control_command_consumes_pending_command_once(tmp_path: Path) -> None:
@@ -49,6 +50,12 @@ def test_poll_control_command_consumes_pending_command_once(tmp_path: Path) -> N
 
     assert context.poll_control_command() == {"action": "attach_weights"}
     assert context.poll_control_command() is None
+
+    command_path = work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE
+    command_path.write_bytes(b"x" * (STUDIO_CONTROL_COMMAND_MAX_BYTES + 1))
+    with pytest.raises(ValueError, match="control command exceeds"):
+        context.poll_control_command()
+    assert not command_path.exists()
 
 
 def test_read_control_seed_reports_missing_payload(tmp_path: Path) -> None:
@@ -144,13 +151,21 @@ def test_send_control_command_delivers_to_running_job(tmp_path: Path) -> None:
             pytest.fail("process job did not reach running state")
         time.sleep(0.02)
 
+    work_dir = tmp_path / "jobs" / record.job_id
+    with pytest.raises(StudioJobRejected, match="control command exceeds"):
+        manager.send_control_command(
+            record.job_id,
+            command={"action": "attach_weights", "padding": "x" * STUDIO_CONTROL_COMMAND_MAX_BYTES},
+            seed_inputs={"must_not_exist.bin": b"seed"},
+        )
+    assert not (work_dir / STUDIO_CONTROL_SEED_DIR / "must_not_exist.bin").exists()
+
     manager.send_control_command(
         record.job_id,
         command={"action": "attach_weights", "architecture_fingerprint": "a" * 64},
         seed_inputs={"model_state.pt": b"seed weights"},
     )
 
-    work_dir = tmp_path / "jobs" / record.job_id
     command_path = work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE
     seed_path = work_dir / STUDIO_CONTROL_SEED_DIR / "model_state.pt"
     assert json.loads(command_path.read_text())["action"] == "attach_weights"

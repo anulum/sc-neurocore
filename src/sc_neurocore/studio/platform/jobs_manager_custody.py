@@ -14,8 +14,9 @@ responsibility: telling the truth about work that already happened. Starting
 and supervising work is the other one, and it lives in
 :mod:`sc_neurocore.studio.platform.jobs_manager`.
 
-Every read here is scopeable by actor and workspace, and an out-of-scope job
-raises ``KeyError`` rather than reporting that it exists.
+Record/list reads can be scoped by actor and workspace; an out-of-scope record
+raises ``KeyError``. Purge inspection is global operator evidence and requires
+administrator authorisation at the API boundary.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from sc_neurocore.studio.platform.jobs_ledger import StudioJobReconciliation
+from sc_neurocore.studio.platform.jobs_purge_recovery import recover_purges
 from sc_neurocore.studio.platform.jobs_manager_state import _StudioJobManagerState
 from sc_neurocore.studio.platform.jobs_manager_access import (
     _get_job_record,
@@ -36,6 +38,7 @@ from sc_neurocore.studio.platform.jobs_models import (
     StudioJobArtifactPayload,
     StudioJobListSnapshot,
     StudioJobRecord,
+    StudioJobPurgeSnapshot,
 )
 
 
@@ -73,13 +76,32 @@ class StudioJobCustody:
         """Return a path-free snapshot of every job visible to the caller."""
         return _list_job_snapshot(self, actor=actor, workspace=workspace)
 
+    def purge_snapshot(
+        self: _StudioJobManagerState, *, limit: int = 100, after: str | None = None
+    ) -> StudioJobPurgeSnapshot:
+        """Read a bounded global operator journal page without initiating recovery.
+
+        Validate 1–1000 items and an optional lexical job-ID cursor. This local
+        facade does not authenticate callers; HTTP applies the existing ADMIN
+        policy. A returned phase is recorded evidence, not a new safety decision.
+        """
+        return self._ledger.purge_snapshot(limit=limit, after=after)
+
     def transitions(self: _StudioJobManagerState, job_id: str) -> tuple[dict[str, object], ...]:
         """Return the append-only transition history of one job."""
         return self._ledger.transitions(job_id)
 
     def reconcile(self: _StudioJobManagerState) -> tuple[StudioJobReconciliation, ...]:
-        """Resolve jobs left alive by a supervisor that is no longer running."""
+        """Recover dead supervisors and retry this supervisor's committed purge cleanup.
+
+        Live foreign purge intents and this supervisor's prepared operations remain
+        untouched. Cleanup failures propagate; ``status().pending_purge_count``
+        reports retained intents. The return value describes job reconciliation,
+        not purge completion, and no job is re-executed.
+        """
+        recover_purges(self)
         self._reconciliation = self._ledger.reconcile()
+        self._admission.reconcile()
         return self._reconciliation
 
     @property

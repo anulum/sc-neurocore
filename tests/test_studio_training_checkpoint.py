@@ -39,6 +39,8 @@ from sc_neurocore.studio.platform.training_checkpoint import (
     import_training_checkpoint_payload,
 )
 from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.jobs_ledger import StudioJobLedger
+from sc_neurocore.studio.training_contract import resolve_training_config
 from sc_neurocore.studio.platform.training_weights import (
     STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
     TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
@@ -398,6 +400,55 @@ def test_training_checkpoint_endpoints_round_trip(tmp_path: Path) -> None:
     assert import_payload["config"] == checkpoint["config"]
     assert import_payload["source_weight_checkpoint"] == checkpoint["weight_checkpoint"]
     assert import_payload["weight_restore_plan"] is None
+
+
+def test_restarted_training_checkpoint_uses_retained_configuration(tmp_path: Path) -> None:
+    """A selected retained run remains exportable after API proxy loss."""
+    root = tmp_path / "jobs"
+    ledger = StudioJobLedger(root=root)
+    config = resolve_training_config({"hidden": [], "seed": 7}).to_public_dict()
+    retained = ledger.create(
+        job_id="sj_0000000000000001",
+        kind="training",
+        actor="studio-training",
+        workspace="default",
+        request_id=None,
+        idempotency_key=None,
+        experiment_sha256=None,
+        admission=None,
+        execution_model="process",
+        training_config=config,
+    ).record
+    ledger.transition(retained.job_id, "interrupted", reason="supervisor exited")
+    legacy = ledger.create(
+        job_id="sj_0000000000000002",
+        kind="training",
+        actor="studio-training",
+        workspace="default",
+        request_id=None,
+        idempotency_key=None,
+        experiment_sha256=None,
+        admission=None,
+        execution_model="process",
+    ).record
+    ledger.transition(legacy.job_id, "interrupted", reason="supervisor exited")
+    ledger.close()
+    client = TestClient(
+        create_app(StudioRuntimeSettings(job_root_path=str(root))),
+        base_url="http://127.0.0.1",
+    )
+
+    exported = client.get(f"/api/training/checkpoint/{retained.job_id}")
+
+    assert exported.status_code == 200
+    checkpoint = exported.json()
+    assert checkpoint["job_id"] == retained.job_id
+    assert checkpoint["status"] == "interrupted"
+    assert checkpoint["config"] == config
+    assert client.post("/api/training/checkpoint/import", json=checkpoint).status_code == 200
+    unavailable = client.get(f"/api/training/checkpoint/{legacy.job_id}")
+    assert unavailable.status_code == 404
+    assert "no retained training configuration" in unavailable.json()["detail"]
 
 
 def test_training_checkpoint_export_rejects_unknown_job(tmp_path: Path) -> None:

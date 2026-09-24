@@ -74,6 +74,36 @@ class TestJobLifecycle:
 
         assert stop_result == {"job_id": result["job_id"], "status": "stopping"}
 
+    def test_validation_stop_does_not_publish_completion(self, tmp_path: Path) -> None:
+        """A real validation-phase stop seals cancelled evidence, not success."""
+        torch = pytest.importorskip("torch")
+        context = StudioJobContext(
+            job_id="sj_training_validation_stop",
+            work_dir=tmp_path,
+            cancel_event=threading.Event(),
+            max_artifact_bytes=1_000_000,
+        )
+        job = TrainingJob(
+            {
+                "dataset": "synthetic",
+                "epochs": 1,
+                "batch_size": 64,
+                "hidden": [4],
+                "timesteps": 1,
+            },
+            job_id=context.job_id,
+            cancelled=lambda: not torch.is_grad_enabled(),
+        )
+
+        with pytest.raises(StudioJobCancelled, match="stopped"):
+            job.run_blocking(context)
+
+        assert job.status == "stopped"
+        assert job.final_metrics is None
+        assert job.weight_checkpoint is None
+        evidence = json.loads((tmp_path / "training" / "evidence.json").read_text())
+        assert evidence["status"] == "cancelled"
+
     def test_blocking_training_writes_terminal_evidence(
         self,
         monkeypatch: pytest.MonkeyPatch,

@@ -27,6 +27,7 @@ from sc_neurocore.studio.platform import (
     StudioIdentityAuthenticator,
     StudioIdentityResult,
 )
+from sc_neurocore.studio.platform.storage_requester import delegated
 
 
 def _studio_request_id(candidate: str | None) -> str:
@@ -213,7 +214,13 @@ def install_studio_security_middleware(
                     )
                     if decision.allowed:
                         request.state.studio_principal = identity_result.principal
-                        response = await call_next(request)
+                        with delegated(
+                            identity_result.principal,
+                            method=method,
+                            route=path_template,
+                            request_id=request_id,
+                        ):
+                            response = await call_next(request)
                     else:
                         response = JSONResponse(
                             {"detail": decision.reason},

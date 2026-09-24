@@ -35548,8 +35548,50 @@ AnalysisJobValidationError
 ### Function `run_analysis_job_task(analysis, payload_dump, _job_context)`
 Execute one validated analysis payload and return a public result dict.
 
+### Function `execute_analysis_process_task(job_context, payload)`
+Validate a named worker request and run the existing analysis implementation.
+
+Parameters
+----------
+job_context:
+    Context supplied by the registered process worker, never serialised.
+payload:
+    JSON object with ``analysis``, ``payload`` and ``parameter_order``.
+    The explicit parameter-name sequence preserves stable sensitivity
+    ordering across transports that sort JSON object keys.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Existing public analysis result, including its evidence metadata.
+
+Raises
+------
+ValueError
+    The envelope or selected analysis payload is invalid.
+
 ### Function `submit_analysis_job(job_manager, req)`
 Validate and submit one analysis job; return the public job receipt.
+
+Parameters
+----------
+job_manager : StudioJobService
+    Existing job admission and custody owner.
+req : AnalysisJobRequest
+    Scientific analysis request, validated before admission.
+request_id : str or None
+    Middleware-normalized HTTP trace, if submitted through an HTTP route.
+    This is neither an identity assertion nor an idempotency key.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    Public receipt and projected analysis work with status route.
+
+Raises
+------
+AnalysisJobValidationError
+    The analysis input is invalid or job admission refuses the work.
 
 ---
 
@@ -35557,6 +35599,53 @@ Validate and submit one analysis job; return the public job receipt.
 
 ### Function `build_audit_router(context)`
 Build the audit and evidence router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.audit_archive_jobs`
+
+### Function `execute_quarantine_archive_task(context, payload)`
+Write a quarantine export snapshot through the existing archive owner.
+
+Parameters
+----------
+context : StudioJobContext
+    Registered worker's bounded artefact context.
+payload : mapping
+    Exactly ``quarantine_export`` containing the path-free JSON export.
+    No audit sink, ledger path, clock override or callable is accepted.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Existing archive receipt, manifest and summary. Artefact bytes and
+    digests are produced by the original writer in this job's directory.
+
+Raises
+------
+ValueError
+    Envelope, export schema or artefact byte limits are invalid.
+
+### Function `execute_quarantine_restore_task(context, payload)`
+Validate and materialise a quarantine archive without updating the live sink.
+
+Parameters
+----------
+context : StudioJobContext
+    Registered worker's bounded artefact context.
+payload : mapping
+    Exactly ``archive`` and ``manifest``; the latter may be null. The
+    existing writer revalidates their schema and digest relationship.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Existing restore receipt naming generated JSONL and manifest artefacts.
+
+Raises
+------
+ValueError
+    Envelope or archive/manifest validation fails, or artefacts exceed limits.
 
 ---
 
@@ -35595,6 +35684,84 @@ Build the project and network-design router over shared Studio runtime state.
 
 ---
 
+## Module `studio.api.evidence_jobs`
+
+### Class `EvidenceInputLimitExceeded`
+Aggregate snapshot metadata and declared source bytes exceed policy.
+
+
+### Class `EvidenceSeedInputs`
+Load one verified source artifact at a time while the manager writes seeds.
+
+This mapping retains only declarations, never a cache of all binary payloads.
+The manager's existing per-seed limit remains independent of aggregate policy.
+
+Parameters
+----------
+records : sequence of StudioJobRecord
+    Captured records whose ordered artifacts define deterministic seed names.
+reader : callable
+    Trusted API-side artifact reader. Each lookup verifies returned metadata,
+    size and digest; construction does not read payloads or write files.
+
+- **__init__**(records, reader)
+- **__len__**()
+  - Return the declared seed count without reading source files.
+- **__iter__**()
+  - Yield deterministic seed names in source-record and artifact order.
+- **__getitem__**(name)
+  - Read and verify one seed; reject unknown names or changed source bytes.
+
+### Function `prepare_evidence_process_payload(inputs, records, max_input_bytes)`
+Validate complete snapshots and their total metadata-plus-artifact bytes.
+
+No source bytes are read here. Exceeding the explicit aggregate limit raises
+``EvidenceInputLimitExceeded`` before job admission or seed directory writes.
+Invalid writer inputs or records raise ``ValueError`` without dropping fields.
+
+Parameters
+----------
+inputs : mapping
+    Every original writer input category, excluding executable callbacks.
+records : sequence of StudioJobRecord
+    Complete source snapshots; declared artifact sizes contribute to the cap.
+max_input_bytes : int
+    Positive aggregate byte ceiling for encoded metadata and all seed copies.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Validated JSON-compatible envelope for the named process task.
+
+Raises
+------
+EvidenceInputLimitExceeded
+    Aggregate metadata and declared binary bytes exceed the configured cap.
+ValueError
+    The limit, JSON input envelope or declared sizes are invalid.
+
+### Function `execute_evidence_bundle_task(context, payload)`
+Recheck snapshots/seeds and invoke the original complete bundle writer.
+
+Parameters
+----------
+context : StudioJobContext
+    Registered worker's bounded seed and output context.
+payload : mapping
+    Exact inputs, complete records and API-selected max_input_bytes.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Original bundle receipt; the existing writer owns all evidence semantics.
+
+Raises
+------
+ValueError
+    Envelope, record, byte budget, seed integrity or evidence validation fails.
+
+---
+
 ## Module `studio.api.export`
 
 ### Function `build_export_router(context)`
@@ -35627,6 +35794,35 @@ Build the identity and browser-session router over shared Studio runtime state.
 
 ### Function `build_jobs_router(context)`
 Build the job inspection router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.model_scan_jobs`
+
+### Function `execute_model_scan_process_task(context, payload)`
+Validate the operating point and classify every model in the catalogue.
+
+Parameters
+----------
+context : StudioJobContext
+    Registered worker context. Process cancellation is enforced by the
+    supervisor; the scan also retains its cooperative stop callback.
+payload : mapping
+    Exactly ``current`` (finite, model-native input units) and ``duration``
+    (finite positive milliseconds). The HTTP route supplies these values.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Complete ``studio.model-scan.v1`` response with configuration/result
+    digests and explicit per-model failures. No catalogue subset is used.
+
+Raises
+------
+ValueError
+    The envelope has missing/extra fields or invalid numeric values.
+StudioJobCancelled
+    The cooperative callback requests cancellation before a model runs.
 
 ---
 
@@ -35961,6 +36157,34 @@ Build the system and capability router over shared Studio runtime state.
 
 ### Function `build_training_router(context)`
 Build the training monitor router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.training_weight_jobs`
+
+### Function `execute_training_weight_restore_task(context, payload)`
+Verify binary seeds and emit the existing path-free restore receipt.
+
+Parameters
+----------
+context : StudioJobContext
+    Registered worker context holding bounded metadata and checkpoint seeds.
+payload : mapping
+    Exactly ``restore_plan`` and ``source_status`` from the source job.
+    The original materializer validates lengths and digests before loading.
+
+Returns
+-------
+dict&#91;str, object&#93;
+    Restore evidence also written as the canonical JSON artifact. Loaded
+    tensor state remains inside this worker and is not returned.
+
+Raises
+------
+ValueError
+    Envelope, plan, seed integrity or restricted checkpoint loading fails.
+StudioJobArtifactUnavailable
+    A required submission seed is absent.
 
 ---
 
@@ -38333,6 +38557,8 @@ Parameters
 ----------
 deployment_profile:
     Active Studio deployment profile.
+storage_mode:
+    Selected storage runtime. Isolated storage has no integrated authority yet.
 items:
     Durable state targets that an operator backup must capture.
 include_local_paths:
@@ -38345,7 +38571,7 @@ schema_version:
 - **missing_existing_count**()
   - Return the number of configured targets that do not exist yet.
 - **ready_for_restore_drill**()
-  - Return whether all required targets are configured and present.
+  - Return whether required targets and their runtime authority are ready.
 - **to_public_dict**()
   - Return a JSON-serializable backup-plan payload.
 
@@ -38632,7 +38858,9 @@ job_records:
     first-class action evidence in the bundle manifest.
 artifact_reader:
     Reader used to fetch verified job artifact bytes. Required when
-    ``job_records`` contains artifacts.
+    ``job_records`` contains artifacts. Returned metadata and bytes are
+    checked against the captured source record before copying; a newer
+    or substituted declaration cannot silently change that snapshot.
 audit_export:
     Optional path-free audit export payload.
 command_replay:
@@ -38651,6 +38879,46 @@ Raises
 ValueError
     If replay metadata is not JSON-safe or job artifacts are supplied
     without an artifact reader.
+
+---
+
+## Module `studio.platform.evidence_limits`
+
+### Function `validate_evidence_input_limit(value)`
+Return a positive integer byte budget; reject booleans and coercions.
+
+Parameters
+----------
+value : int
+    Aggregate encoded-metadata and binary-seed ceiling, in bytes.
+
+Returns
+-------
+int
+    Unchanged validated byte limit; no settings or filesystem are modified.
+
+Raises
+------
+ValueError
+    The value is not a positive integer, including boolean inputs.
+
+### Function `parse_evidence_input_limit(value)`
+Parse the environment override, preserving the default only when absent.
+
+Parameters
+----------
+value : str or None
+    Explicit byte count, or None for the 256 MiB operational default.
+
+Returns
+-------
+int
+    Validated aggregate input limit, independent of per-artifact limits.
+
+Raises
+------
+ValueError
+    An explicit value is empty, non-integral or non-positive.
 
 ---
 
@@ -38988,6 +39256,65 @@ max_queued : int
 
 ---
 
+## Module `studio.platform.jobs_admission_recovery`
+
+### Function `recover_stopped_reservations(ledger)`
+Release dead-owner queues and terminal in-process work after reconciliation.
+
+A dead supervisor proves its threads ended, not its child processes. Keep
+process reservations unless stored identity proves their group stopped.
+Unprobeable identities and expiry alone never justify release.
+The caller reconciles job state first; this function never invents outcomes.
+
+---
+
+## Module `studio.platform.jobs_admission_replay`
+
+### Class `StorageAdmissionReplay`
+One authenticated requester, server workspace and exact mutation identity.
+
+The trusted storage service computes ``payload_sha256`` from its validated
+versioned request. A browser trace ID and the legacy job idempotency key do
+not replace this identity.
+
+- **validate**()
+  - Reject malformed replay identities before any reservation is opened.
+
+### Function `read_admission_replay(connection)`
+Return an immutable prior outcome or reject a changed request digest.
+
+### Function `write_admission_replay(connection)`
+Write the exact result inside the caller's job/capacity transaction.
+
+---
+
+## Module `studio.platform.jobs_admission_schema`
+
+### Function `migrate_purge_journal(connection)`
+Record exact directory custody before a filesystem/database purge begins.
+
+### Function `migrate_purge_phases(connection)`
+Extend purge phases without inferring completion evidence for legacy rows.
+
+The caller owns the transaction. Refuse custom indexes/triggers rather than
+silently destroying them while replacing the constrained table definition.
+
+### Function `migrate_worker_custody(connection)`
+Add worker identity evidence without inferring identities for historical jobs.
+
+### Function `migrate_admission(connection)`
+Create shared capacity tables and retain legacy occupied capacity.
+
+The caller owns the migration transaction. Do not use executescript here:
+it would commit the surrounding migration early. Job records and transition
+history are not rewritten. Unknown jobs and explicitly unreaped outcomes
+retain a reservation; their capacity cannot be reclaimed from expiry alone.
+
+### Function `migrate_storage_admission_replay(connection)`
+Add immutable exact-outcome replay without inferring legacy request digests.
+
+---
+
 ## Module `studio.platform.jobs_context`
 
 ### Class `StudioJobContext`
@@ -39032,11 +39359,13 @@ supervisor : str, optional
     Identity of the supervisor in this process; defaults to
     :func:`~sc_neurocore.studio.platform.jobs_ledger_supervisor.supervisor_identity`.
 lease_seconds : float
-    How long a lease stays valid without a heartbeat.
+    Finite positive seconds a lease stays valid without a heartbeat.
 
 - **__init__**()
 - **path**()
   - Return the ledger file path.
+- **storage_identity**()
+  - Return root and database device/inode evidence from initialization.
 - **supervisor**()
   - Return the identity this ledger stamps on leases it takes.
 - **close**()
@@ -39044,7 +39373,7 @@ lease_seconds : float
 - **connection**()
   - Return this thread's connection, opening it on first use.
 - **transaction**()
-  - Run one unit of work; either all of it lands or none of it does.
+  - Commit one unit of work; roll back on any failure, even one right after BEGIN.
 - **now**()
   - Return the ledger clock, truncated to whole seconds in UTC.
 - **timestamp**()
@@ -39063,6 +39392,10 @@ lease_seconds : float
   - Return one job record, scoped to an actor and workspace when given.
 - **list_records**()
   - Return records in creation order, scoped to an actor and workspace.
+- **pending_purge_count**()
+  - Count unresolved purge intents without initiating recovery.
+- **purge_snapshot**()
+  - Read a bounded global operator page, without authorising any mutation.
 - **transitions**(job_id)
   - Return the append-only transition history of one job, in order.
 - **live_rows**()
@@ -39072,7 +39405,58 @@ lease_seconds : float
 
 ---
 
+## Module `studio.platform.jobs_ledger_creation`
+
+### Function `create_job(ledger)`
+Admit one job, or return the one that already owns its key.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    The ledger to write to.
+job_id : str
+    Generated identifier for the new job.
+kind, actor, workspace : str
+    What is running, for whom, and in which workspace. Actor and workspace
+    scope every later read.
+request_id : str, optional
+    The caller's request correlation id.
+idempotency_key : str, optional
+    When given, a second submission with the same key by the same actor and
+    workspace returns the first job instead of starting another.
+experiment_sha256 : str, optional
+    Digest of the effective experiment this job runs, when it has one.
+admission : mapping, optional
+    The admission decision recorded with the job.
+training_config : mapping, optional
+    Canonical, bounded training configuration stored with admission.
+execution_model : {"thread", "process"}
+    How the job is supervised.
+connection : sqlite3.Connection, optional
+    This ledger's already active transaction, used by shared admission to
+    commit reservation and job together. Other connections are rejected.
+lease_owner : str, optional
+    Process generation verified by the storage service for a delegated
+    admission. The ordinary in-process path uses this ledger's supervisor.
+
+Returns
+-------
+StudioJobSubmission
+    The stored record and whether it was already there.
+
+---
+
 ## Module `studio.platform.jobs_ledger_reads`
+
+### Function `read_pending_purge_count(ledger)`
+Count all unresolved journal phases without exposing SQL to manager clients.
+
+### Function `read_purge_snapshot(ledger)`
+Read at most 1000 intents without recovery, filesystem reads or process probes.
+
+Cursor ordering is lexical by job ID. Pages reflect current database state;
+concurrent changes can occur between requests. Invalid bounds/cursors raise
+ValueError before querying, including when called without HTTP validation.
 
 ### Function `read_record(ledger, job_id)`
 Return one job record, scoped to an actor and workspace when given.
@@ -39138,6 +39522,29 @@ tuple of StudioJobReconciliation
 
 ---
 
+## Module `studio.platform.jobs_ledger_rows`
+
+### Class `StudioJobLedgerCorrupt`
+Raised when the ledger file cannot be read as a Studio job ledger.
+
+
+### Function `json_or_none(value)`
+Decode one stored JSON column, or ``None``.
+
+### Function `artifacts_from_json(value)`
+Rebuild an artifact manifest, refusing a malformed one.
+
+### Function `artifacts_to_json(artifacts)`
+Serialise an artifact manifest deterministically.
+
+### Function `record_from_row(row)`
+Rebuild one immutable public record from its stored row.
+
+### Function `training_config_from_json(value)`
+Decode a validated training snapshot, preserving absent legacy values.
+
+---
+
 ## Module `studio.platform.jobs_ledger_schema`
 
 ### Class `StudioJobSubmission`
@@ -39153,10 +39560,6 @@ duplicate : bool
     so the caller must not start a second run.
 
 
-### Class `StudioJobLedgerCorrupt`
-Raised when the ledger file cannot be read as a Studio job ledger.
-
-
 ### Function `migrate(connection)`
 Bring the stored schema forward, refusing a version from the future.
 
@@ -39166,24 +39569,16 @@ StudioJobLedgerCorrupt
     The file was written by a newer schema than this build understands.
     Downgrading a ledger would silently drop columns, so it is refused.
 
-### Function `json_or_none(value)`
-Decode one stored JSON column, or ``None``.
-
-### Function `artifacts_from_json(value)`
-Rebuild an artifact manifest, refusing a malformed one.
-
-### Function `artifacts_to_json(artifacts)`
-Serialise an artifact manifest deterministically.
-
-### Function `record_from_row(row)`
-Rebuild one immutable public record from its stored row.
-
 ---
 
 ## Module `studio.platform.jobs_ledger_supervisor`
 
-### Function `supervisor_identity()`
-Return a stable identity for the supervisor in this process.
+### Function `supervisor_identity(pid)`
+Return host/PID/start identity for this process or an observed local child.
+
+Omit pid for the current process. An explicit pid is a caller observation,
+not an authenticated assertion. Unavailable metadata yields start token0;
+registration must refuse that unknown identity instead of certifying it.
 
 ### Function `supervisor_is_alive(identity)`
 Return whether a supervisor is running, or ``None`` when unknowable.
@@ -39198,40 +39593,14 @@ Returns
 bool or None
     ``True`` when the process is running, ``False`` when it provably is
     not, and ``None`` when this host cannot tell — a malformed identity, a
-    different host, or a platform without process metadata.
+    different host, or a platform without process metadata. A zero or
+    malformed start token is unknown, not evidence of process death.
+    A different UID may deny the signal probe; readable matching proc
+    metadata still proves this exact process generation is alive.
 
 ---
 
 ## Module `studio.platform.jobs_ledger_writes`
-
-### Function `create_job(ledger)`
-Admit one job, or return the one that already owns its key.
-
-Parameters
-----------
-ledger : StudioJobLedger
-    The ledger to write to.
-job_id : str
-    Generated identifier for the new job.
-kind, actor, workspace : str
-    What is running, for whom, and in which workspace. Actor and workspace
-    scope every later read.
-request_id : str, optional
-    The caller's request correlation id.
-idempotency_key : str, optional
-    When given, a second submission with the same key by the same actor and
-    workspace returns the first job instead of starting another.
-experiment_sha256 : str, optional
-    Digest of the effective experiment this job runs, when it has one.
-admission : mapping, optional
-    The admission decision recorded with the job.
-execution_model : {"thread", "process"}
-    How the job is supervised.
-
-Returns
--------
-StudioJobSubmission
-    The stored record and whether it was already there.
 
 ### Function `transition_job(ledger, job_id, to_status)`
 Move one job to a new status and append the transition.
@@ -39248,8 +39617,18 @@ With ``expected_record``, a differing current record is returned without
 changing it. The comparison includes every public field, serialised as JSON
 to preserve numeric and boolean distinctions, and runs under the write lock.
 
+``supervisor`` names the lease owner acting through a storage service that
+verified it; ``None`` means this ledger's own supervisor. Only the owner's
+transition renews the lease.
+
+An optional connection must be this ledger's active transaction, allowing
+the storage authority to commit a terminal record together with the
+release of its admission reservation.
+
 Raises
 ------
+ValueError
+    ``connection`` is not this ledger's active transaction.
 KeyError
     The job is not in the ledger.
 StudioJobRejected
@@ -39263,16 +39642,30 @@ Terminal and absent jobs remain unchanged. The transaction serialises this
 check with transitions so a finished job cannot acquire another lease.
 Only the recorded owner can renew a live lease, even after expiry; another
 supervisor raises ``StudioJobRejected`` without changing any stored fields.
+``supervisor`` is a storage-verified delegated owner; ``None`` means this
+ledger's own supervisor.
+
+Returns
+-------
+bool
+    ``True`` when the lease was renewed, ``False`` when the job is absent
+    or already terminal.
+
+### Function `require_purgeable(connection, job_id)`
+Refuse missing, active or capacity-retaining jobs before discarding custody.
 
 ### Function `delete_job(ledger, job_id)`
-Remove one terminal job and its whole transition history.
+Remove one unreserved terminal job, worker identity and transition history.
+
+An optional connection must be this ledger's active transaction, allowing
+the filesystem purge owner to serialize staging with record deletion.
 
 Raises
 ------
 KeyError
     The job is not in the ledger.
 StudioJobRejected
-    The job has not finished; a running job's history is not disposable.
+    The job is active or retains capacity; its custody is not disposable.
 
 ---
 
@@ -39318,10 +39711,12 @@ from the supervising half so each file has one responsibility.
   - Return durable jobs in creation order, scoped when asked.
 - **list_snapshot**()
   - Return a path-free snapshot of every job visible to the caller.
+- **purge_snapshot**()
+  - Read a bounded global operator journal page without initiating recovery.
 - **transitions**(job_id)
   - Return the append-only transition history of one job.
 - **reconcile**()
-  - Resolve jobs left alive by a supervisor that is no longer running.
+  - Recover dead supervisors and retry this supervisor's committed purge cleanup.
 - **last_reconciliation**()
   - Return the decisions of the most recent recovery pass.
 - **ledger_path**()
@@ -39396,6 +39791,82 @@ Path-free list payload for Studio job operator views.
 Verified payload for one declared Studio job artifact.
 
 
+### Class `StudioJobPurgeRecord`
+Operator journal evidence, without filesystem paths or process identity.
+
+- **to_public_dict**()
+  - Return recorded evidence only; neither presence nor completion is inferred.
+
+### Class `StudioJobPurgeSnapshot`
+Bounded live journal page; subsequent pages are not a frozen snapshot.
+
+- **to_public_dict**()
+  - Serialize a versioned operator page with a lexical job-ID cursor.
+
+---
+
+## Module `studio.platform.jobs_process_state`
+
+### Function `process_exited(pid)`
+Return whether every thread of a process has exited.
+
+A zombie still belongs to its process group, so ``killpg(group, 0)`` keeps
+succeeding for it; treating it as running would report every ordinary reap
+as a failure. A thread-group leader that exits while its other threads run
+is also shown as a zombie, yet its process still executes, so each thread
+is checked. A process or thread that vanished during the check has exited.
+
+### Function `group_survivors(group_id)`
+Return the process ids still running in one group, zombies excluded.
+
+### Function `group_is_gone(group_id)`
+Return whether nothing in the group is still running.
+
+---
+
+## Module `studio.platform.jobs_purge`
+
+### Function `purge_terminal_job(manager, job_id)`
+Purge unreserved job custody without erasing files before a database refusal.
+
+A sibling staging directory retains the bytes until database deletion
+commits. Existing staging paths are never overwritten. If restoring after
+an error would overwrite a new path, retain the stage and report failure.
+
+---
+
+## Module `studio.platform.jobs_purge_paths`
+
+### Function `sync_directory(path)`
+Persist directory entry changes or propagate the OS error to recovery.
+
+### Function `move_without_replace(source, destination)`
+Move a directory atomically, returning False if the target already exists.
+
+Requires libc/kernel/filesystem renameat2 RENAME_NOREPLACE support. Other
+errors propagate to the caller's recovery handling; never fall back to a
+check-then-rename operation that could overwrite a concurrent destination.
+This excludes destination replacement, not concurrent source substitution.
+
+---
+
+## Module `studio.platform.jobs_purge_recovery`
+
+### Class `PurgeCustody`
+What purging and its recovery use from their owner.
+
+The ledger and custody root, and the owner's local handles of jobs it
+supervises, which a purge forgets. The embedded manager is one owner;
+the storage authority is another, with no local handles.
+
+
+### Function `recover_purges(manager)`
+Recover exact custody with committed cleanup-start and removal evidence.
+
+Each phase rechecks ownership under its own writer transaction. Ambiguous
+intents never resolve automatically, and live foreign supervisors retain
+ownership. Three bounded phases suffice; this is not a background retry loop.
+
 ---
 
 ## Module `studio.platform.jobs_reaper`
@@ -39448,11 +39919,117 @@ terminate_grace_seconds : float
     How long the group may take to exit on SIGTERM.
 kill_grace_seconds : float
     How long the group may take to disappear after SIGKILL.
+owned_group_id : int, optional
+    Group captured by the caller for a worker it started in its own session.
+    Retains descendant custody after the direct child has been collected.
+    Must equal that worker's PID and must not be the caller's group.
 
 Returns
 -------
 ReapReport
     The outcome, never an exception.
+
+---
+
+## Module `studio.platform.jobs_shared_admission`
+
+### Class `SharedJobAdmission`
+One root's capacity, with job-scoped reservations and release.
+
+Opening an observer does not change configuration. The first submission
+establishes root limits; conflicting submission limits are rejected.
+
+- **__init__**(ledger)
+- **admit**()
+  - Atomically admit capacity and job, or return the existing scoped key.
+- **release**()
+  - Release this supervisor's exact reservation; repeated release is a no-op.
+- **reconcile**()
+  - Release only reservations whose stopped work has been proved after job recovery.
+- **mark_unreaped**()
+  - Keep capacity occupied when a terminal job's worker has not stopped.
+- **snapshot**()
+  - Read one consistent root-wide occupancy and cumulative counter snapshot.
+
+---
+
+## Module `studio.platform.jobs_snapshot`
+
+### Function `decode_job_snapshot(payload)`
+Decode an exact complete snapshot, retaining every custody field.
+
+Parameters
+----------
+payload : mapping
+    Public record JSON, including nullable fields and artifact declarations.
+
+Returns
+-------
+StudioJobRecord
+    Domain record reconstructed from JSON, without storage or identity claims.
+
+Raises
+------
+ValueError
+    Fields are missing, unknown, non-JSON or violate native record types.
+
+---
+
+## Module `studio.platform.jobs_worker_custody`
+
+### Function `register_worker(ledger, job_id, expected_supervisor, worker_identity, group_id)`
+Bind an observed child to its admitted job on the trusted authority side.
+
+Persist host/PID/start-token identity, boot identity and process group in
+the job ledger. Refuse inactive jobs, mismatched ownership, absent capacity,
+duplicate workers and a supervisor whose liveness cannot be established.
+Registration is evidence of startup, not proof of later group termination.
+
+---
+
+## Module `studio.platform.jobs_worker_guard`
+
+### Function `arm_worker_guard(supervisor)`
+Arm before importing task code; refuse execution without a ready guard.
+
+The guard shares the worker's dedicated group. It survives worker GIL stalls
+and is stopped with the group by normal supervisor reaping. It never signals
+a group supplied by an unrelated process: its own membership retains custody.
+
+### Function `main()`
+Stop the worker's group on supervisor death or prolonged unknown liveness.
+
+Poll every 100 ms; tolerate unknown metadata for at most one second. Exit
+with status 1 after stopping the group. This guards local supervised
+compute, not hostile processes escaping the session or a system where the
+guard itself cannot be scheduled.
+
+---
+
+## Module `studio.platform.jobs_worker_recovery`
+
+### Function `worker_group_stopped(identity, boot_id, group_id)`
+Return true only for a validated old boot or a locally stopped group.
+
+Missing metadata, foreign hosts, malformed identities and inaccessible
+process metadata retain capacity. A live group with a reused ID also stays
+occupied; this probe never signals it. A member counts as stopped only when
+every one of its threads has exited: zombies cannot execute or spawn work,
+but a zombie thread-group leader can still have running threads.
+
+---
+
+## Module `studio.platform.jobs_worker_registration`
+
+### Function `start_worker_registration(ledger, job_id, process, expected_supervisor)`
+Capture the owned child before polling, then commit asynchronously and grant once.
+
+The supervisor continues timeout/cancellation monitoring while SQLite may
+wait for its writer lock. EOF is refusal. Identity arguments are observations
+of the trusted parent, not an interface for untrusted network assertions.
+
+### Function `await_worker_registration(descriptor)`
+Require the exact parent grant within three seconds; EOF or malformed input refuses.
 
 ---
 
@@ -39793,6 +40370,2980 @@ Runtime settings consumed by the Studio FastAPI application.
 
 ### Function `build_default_studio_runtime_settings(env)`
 Build Studio runtime settings from environment-style values.
+
+---
+
+## Module `studio.platform.storage_admission_client`
+
+### Class `PendingNamedAdmission`
+Immutable exact transfer state for one correlated authority reply.
+
+The original request object may contain mutable nested JSON; only these
+bytes were sent. The service identity and deadline are also snapshotted so
+a later caller cannot replace them with another configuration.
+
+
+### Function `send_named_admission_request(channel)`
+Send validated metadata and exact seed bytes on one connected Unix stream.
+
+The trusted API caller must construct the requester only from its
+middleware-authenticated principal. This function checks a frozen metadata
+and seed snapshot before sending, uses configuration-owned limits, and
+closes the channel on every failure. On success the caller retains an
+immutable transfer snapshot and the channel for one correlated response.
+The service independently derives and checks its own content identity.
+Sending does not reserve capacity, admit a job or authorize a worker.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream to the configured service.
+request : StorageNamedAdmissionRequest
+    Typed named metadata built from trusted API identity and route context.
+seed_inputs : mapping of str to bytes
+    Exact immutable seed content corresponding to the request manifest.
+configuration : StorageBoundaryConfiguration
+    Trusted workspace, service UID, byte budgets and transfer timeout.
+
+Returns
+-------
+PendingNamedAdmission
+    Original sent metadata, expected content identity, service UID and
+    absolute reply deadline. It grants no admission authority.
+
+Raises
+------
+ValueError
+    Request, workspace, metadata, manifest or seed bytes are invalid.
+PermissionError
+    The connected service peer has the wrong kernel UID.
+TimeoutError
+    The one absolute transfer deadline expires.
+OSError
+    A socket transfer fails; the ambiguous stream is closed.
+
+### Function `read_named_admission_result(channel)`
+Read one peer-verified result for the exact previously sent mutation.
+
+The original send and this response share one absolute deadline. The
+channel is consumed and closed on success, refusal, timeout or corruption.
+A timeout or disconnect is ambiguous: the API must use the same mutation
+ID and content for a deliberate durable replay, never infer no admission.
+
+Parameters
+----------
+channel : socket.socket
+    Same exclusively owned Unix stream used for the pending send.
+pending : PendingNamedAdmission
+    Immutable snapshot returned by that send, never browser input.
+
+Returns
+-------
+str
+    Correlated admitted job ID; read its complete record separately.
+
+Raises
+------
+StudioJobQueueFull
+    A correlated capacity refusal returned by the service.
+ValueError
+    Pending state, framing, schema or response correlation is invalid.
+PermissionError
+    The connected service peer UID differs from the sent snapshot.
+TimeoutError
+    The original absolute transfer deadline expires.
+EOFError
+    The service disconnects before a complete result arrives.
+OSError
+    Socket transfer fails.
+
+---
+
+## Module `studio.platform.storage_admission_digest`
+
+### Function `derive_storage_admission_replay()`
+Hash one exact named admission without trusting a caller-supplied digest.
+
+``task`` must match the service's reviewed named-operation map and its
+authorized route. ``requester`` must come from
+its policy-allowed trusted API peer, and ``workspace`` from configuration.
+Seeds must already have passed bounded ingress; this function hashes
+their actual content and refuses aggregate bytes beyond ``max_seed_bytes``.
+The caller's HTTP trace, mutation ID and process generation are excluded
+from content so a lost reply can replay after an API restart. This function
+prepares the replay key; it does not authorize, admit or launch a worker.
+
+Parameters
+----------
+requester : Principal
+    Authenticated principal delegated by the trusted API peer.
+mutation_id : str
+    Durable retry key, distinct from the HTTP trace identifier.
+workspace : str
+    Server-configured workspace, never a browser-selected scope.
+task : NamedStudioTask
+    Reviewed task selected for ``authorized_route``.
+authorized_route : str
+    Route whose existing policy the service has allowed.
+payload_json : bytes
+    Bounded UTF-8 JSON object from the admitted request.
+seed_inputs : mapping of str to bytes or ReceivedStorageSeedFile
+    Actual received seed bytes or private staged files. Staged files are
+    rehashed in bounded chunks; their declared digests are not trusted.
+execution_timeout_seconds, queue_wait_seconds : float or None
+    Worker deadline and distinct admission queue deadline.
+admission, training_config : mapping or None
+    Existing job admission and validated training snapshot controls.
+experiment_sha256 : str or None
+    Effective experiment digest, when one exists.
+max_metadata_bytes, max_seed_bytes, max_seed_entries : int
+    Explicit service limits for canonical content and received seeds.
+
+Returns
+-------
+StorageAdmissionReplay
+    Validated requester, mutation key and service-derived SHA-256 digest.
+
+Raises
+------
+ValueError
+    Invalid identity, JSON, nonfinite value, size or seed content.
+
+---
+
+## Module `studio.platform.storage_admission_protocol`
+
+### Class `StorageNamedAdmissionRequest`
+One named submission from a verified API peer, without worker authority.
+
+The service separately checks the configured workspace, route policy,
+reviewed task registry, delegated requester and peer process generation.
+``seed_manifest`` describes frames following this metadata request; the
+service checks actual bytes before deriving durable replay identity.
+No client-selected kind, owner, import path, digest or supervisor is valid.
+
+
+### Function `decode_named_admission_request(payload)`
+Decode one exact metadata frame with no ambiguous JSON object names.
+
+Parameters
+----------
+payload : bytes
+    Complete nonempty metadata frame from a peer-verified Unix stream.
+max_metadata_bytes : int
+    Service-configured positive frame ceiling checked before parsing.
+
+Returns
+-------
+StorageNamedAdmissionRequest
+    Strictly typed metadata, not an authorization or admission decision.
+
+Raises
+------
+ValueError
+    Bytes, JSON, schema version, operation, field types or size are invalid.
+
+Notes
+-----
+The caller must still verify the configured API UID and process generation,
+authorize the route, receive exact seed bytes and establish worker custody
+before durable admission. This decoder has no ledger or task import access.
+
+---
+
+## Module `studio.platform.storage_admission_response`
+
+### Class `StorageNamedAdmissionResponse`
+One exact admission or capacity-refusal outcome from the authority.
+
+A caller must supply the result of its durable authority transaction; the
+codec cannot prove persistence from a Python object alone. A lost reply
+remains ambiguous until the same mutation ID and content are replayed
+against the authority's durable table.
+
+- **validate_outcome**()
+  - Require mutually exclusive complete success and capacity shapes.
+
+### Function `encode_named_admission_response()`
+Serialize one actual authority outcome within a trusted frame ceiling.
+
+Parameters
+----------
+request : StorageNamedAdmissionRequest
+    Exact request already authorized and prepared by the service.
+replay : StorageAdmissionReplay
+    Service-derived content identity used in the durable transaction.
+outcome : StudioJobSubmission or StudioJobQueueFull
+    Admission or capacity refusal returned by the authority transaction.
+max_bytes : int
+    Positive trusted maximum response-frame payload bytes.
+
+Returns
+-------
+bytes
+    Strict versioned result to send over the peer-verified channel.
+
+Raises
+------
+ValueError
+    Correlation, domain outcome or complete frame size is invalid.
+
+### Function `decode_named_admission_response(payload)`
+Return the admitted job ID or raise the exact durable queue refusal.
+
+This codec checks a bounded response from a separately verified service
+peer. It cannot prove that the worker was launched or safely supervised;
+the service may emit success only after its own custody and admission gate.
+A lost reply is ambiguous and must use durable mutation replay, not an
+automatic fresh submission.
+
+Parameters
+----------
+payload : bytes
+    Complete response frame from a separately peer-verified service.
+request : StorageNamedAdmissionRequest
+    Exact submitted metadata retained by the trusted API caller.
+replay : StorageAdmissionReplay
+    Client-computed expected digest of the frozen request and seed bytes.
+max_bytes : int
+    Positive trusted maximum response-frame payload bytes.
+
+Returns
+-------
+str
+    Correlated admitted job ID; fetch its complete record separately.
+
+Raises
+------
+StudioJobQueueFull
+    A correlated durable capacity refusal.
+ValueError
+    Framing, JSON, schema, outcome or request correlation is invalid.
+
+---
+
+## Module `studio.platform.storage_artifact_client`
+
+### Function `artifact_request(workspace, job_id, relative_path)`
+Build a sealed artefact read with a fresh random request ID.
+
+### Function `exchange_artifact(channel, request)`
+Read one sealed artefact over a connected, exclusively owned stream.
+
+Raises
+------
+PermissionError
+    The peer is not the configured storage identity, or policy denied.
+KeyError
+    The job or its declared artefact is not in the workspace.
+StudioJobArtifactUnavailable
+    The authority could not serve trusted bytes, or the received bytes
+    differ from the declaration.
+ValueError
+    A reply is malformed or answers another request or artefact.
+TimeoutError, EOFError, OSError
+    The exchange failed; reading again is safe.
+
+---
+
+## Module `studio.platform.storage_artifact_protocol`
+
+### Class `StorageArtifactRequest`
+Read one declared artefact of a job in the configured workspace.
+
+
+### Class `StorageArtifactResponse`
+The declared artefact, or a fixed refusal.
+
+- **validate_artifact**()
+  - Exactly an answered read carries the artefact.
+
+### Function `encode_artifact_message(message)`
+Serialise a validated message as compact, sorted UTF-8 JSON.
+
+### Function `decode_artifact_request(payload)`
+Decode one exact request frame.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields, route or field is invalid.
+
+### Function `decode_artifact_response(payload)`
+Decode a response that must answer ``request`` and name its artefact.
+
+Raises
+------
+ValueError
+    The frame is malformed, answers another request, or names another path.
+PermissionError
+    The route's policy denied the requester.
+KeyError
+    The job or the declared artefact is not in the workspace.
+StudioJobArtifactUnavailable
+    The sealed bytes are missing or failed their integrity check.
+
+---
+
+## Module `studio.platform.storage_artifact_read`
+
+### Function `read_sealed_artifact(root, job_id, artifact)`
+Return the sealed bytes of ``artifact``, or ``None`` when they cannot be trusted.
+
+Parameters
+----------
+root : Path
+    The authority root holding ``<job_id>/<relative path>``.
+job_id : str
+    Job whose sealed directory is read.
+artifact : StudioJobArtifact
+    The declaration from the job's terminal record.
+
+### Function `serve_artifact_read(channel)`
+Serve one peer-verified sealed artefact read.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, closed by this handler on every outcome.
+ledger : StudioJobLedger
+    Existing authority; its root holds the sealed copies.
+gateway : PolicyGateway
+    Existing authorisation owner with its audit sink.
+workspace : str
+    Nonempty server-bound workspace.
+expected_api_uid : int
+    Configured API identity.
+max_bytes : int
+    Frame ceiling for the request, the answer and the artefact bytes.
+deadline : float
+    Absolute monotonic wire deadline.
+initial_frame : bytes or None
+    First frame already read by the owning listener, if any.
+
+Raises
+------
+ValueError
+    Configuration, request or workspace is invalid; nothing is answered.
+PermissionError
+    The peer is not the configured API.
+TimeoutError, EOFError, OSError
+    Wire transfer fails; reading again is safe.
+AuditSinkError
+    The policy audit cannot persist its decision; nothing is read.
+
+---
+
+## Module `studio.platform.storage_artifact_seal`
+
+### Class `SealedArtifactWriter`
+Seal one job's artefacts under a private authority root.
+
+Parameters
+----------
+root : Path
+    Authority root that holds the job ledger; it must be private to this
+    identity.
+job_id : str
+    Validated job identifier naming the job directory.
+
+- **__init__**(root, job_id)
+  - Hold the authority root and the job directory, creating it if needed.
+- **seal**(relative_path, payload)
+  - Seal one verified artefact at its canonical job-relative path.
+- **close**()
+  - Synchronise and release the held job and root directories.
+- **__enter__**()
+  - Return this writer for one finish request.
+- **__exit__**(kind, value, traceback)
+  - Release the held directories on every outcome.
+
+---
+
+## Module `studio.platform.storage_cancel`
+
+### Function `apply_cancel(ledger, request)`
+Apply one decoded request whose workspace matched the service.
+
+### Function `serve_cancel(channel)`
+Serve one peer-verified cancellation after the stop route's policy.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, closed by this handler on every outcome.
+ledger : StudioJobLedger
+    Existing authority.
+gateway : PolicyGateway
+    Existing authorisation owner with its audit sink.
+workspace : str
+    Nonempty server-bound workspace.
+expected_api_uid : int
+    Configured API identity.
+max_bytes : int
+    Frame ceiling for request and response.
+deadline : float
+    Absolute monotonic wire deadline.
+initial_frame : bytes or None
+    First frame already read by the owning listener, if any.
+
+Raises
+------
+ValueError
+    Configuration, request or workspace is invalid; nothing is answered.
+PermissionError
+    The peer is not the configured API.
+TimeoutError, EOFError, OSError
+    Wire transfer fails; repeating the request is safe.
+AuditSinkError
+    The policy audit cannot persist its decision; nothing is changed.
+
+---
+
+## Module `studio.platform.storage_cancel_client`
+
+### Function `cancel_request(workspace, job_id)`
+Build a cancellation with a fresh random request ID.
+
+### Function `exchange_cancel(channel, request)`
+Run one cancellation over a connected, exclusively owned stream.
+
+Returns
+-------
+StudioJobRecord
+    The job's complete record after the request.
+
+Raises
+------
+PermissionError
+    The peer is not the configured storage identity, or policy denied.
+KeyError
+    The job is not in the workspace.
+ValueError
+    The reply is malformed, answers another request, or names another job.
+TimeoutError, EOFError, OSError
+    The exchange failed; repeating the request is safe.
+
+---
+
+## Module `studio.platform.storage_cancel_protocol`
+
+### Class `StorageCancelRequest`
+Record that one job of the configured workspace should stop.
+
+
+### Class `StorageCancelResponse`
+The job's record after the request, or a fixed refusal.
+
+- **validate_record**()
+  - Exactly an answered request carries the record.
+
+### Function `encode_cancel_message(message)`
+Serialise a validated message as compact, sorted UTF-8 JSON.
+
+### Function `decode_cancel_request(payload)`
+Decode one exact request frame.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields or any field is invalid.
+
+### Function `decode_cancel_response(payload)`
+Decode a response and require that it answers ``request``.
+
+Raises
+------
+ValueError
+    The frame is malformed or answers another request or job.
+PermissionError
+    The authority's policy denied the requester.
+KeyError
+    The job is not in the workspace.
+
+---
+
+## Module `studio.platform.storage_configuration`
+
+### Class `StorageBoundaryConfiguration`
+Immutable role, path and resource intent, not proof of OS isolation.
+
+All fields are required. Three non-root OS identities must differ. Storage,
+spool and socket-parent trees must be canonical absolute disjoint paths.
+Limits carry explicit frame, metadata, seed, artefact, transfer and connection
+budgets.
+Actual ownership, ACLs, launcher and endpoint lifecycle are checked separately
+before a future isolated runtime can create its ledger or listener.
+
+- **validate_boundary**()
+  - Refuse collapsed identities and overlapping or aliased namespaces.
+
+### Function `parse_storage_boundary(value)`
+Decode explicit operator JSON without defaults or persistent side effects.
+
+Parameters
+----------
+value : str or None
+    Boundary JSON from trusted configuration; absence preserves no boundary.
+
+Returns
+-------
+StorageBoundaryConfiguration or None
+    Validated intent, never evidence of a launched isolated service.
+
+Raises
+------
+ValueError
+    JSON, duplicate fields, types, identity, paths or limits are invalid.
+
+---
+
+## Module `studio.platform.storage_connection`
+
+### Function `connect_storage_authority(configuration)`
+Return one peer-verified stream from the configured API identity.
+
+The caller exclusively owns and closes the returned connection. This
+confirms endpoint and kernel peer identity before any frame is sent; it
+does not authenticate a browser principal or enable the isolated runtime.
+No path, credential or UID is accepted from a worker request.
+
+---
+
+## Module `studio.platform.storage_dispatch`
+
+### Class `StorageServices`
+The authority's collaborators and the configured limits they serve with.
+
+``admission`` serves the status view; ``admit_named`` and
+``authority_dirfd`` serve named admission. An operation whose collaborator
+is absent is refused before its request is decoded.
+
+
+### Function `serve_operation(channel, metadata, services)`
+Serve the operation named by ``metadata`` on ``channel``.
+
+Parameters
+----------
+channel : socket.socket
+    Connected stream whose peer and first frame the caller verified.
+metadata : bytes
+    That first frame.
+services : StorageServices
+    The service's collaborators and limits.
+deadline : float
+    Absolute monotonic wire deadline.
+
+Raises
+------
+ValueError
+    The frame names no supported operation or its handler refused it.
+PermissionError
+    A collaborator the operation needs is not configured, or a handler's
+    peer or policy check refused.
+TimeoutError, EOFError, OSError
+    Wire transfer fails.
+
+---
+
+## Module `studio.platform.storage_finish`
+
+### Function `decide_finish(ledger, request)`
+Decide whether the verified API generation may finish this job now.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    Existing storage authority.
+request : StorageFinishRequest
+    Decoded request whose workspace already matched the service.
+supervisor : str
+    ``host:pid:token`` of the pidfd-verified API peer.
+
+Returns
+-------
+tuple
+    ``("ready", None)`` to receive artefacts, or a final reply and reason.
+
+### Function `commit_finish(ledger, request)`
+Commit the terminal record for sealed artefacts and settle its capacity.
+
+Both writes are one transaction: a crash never leaves a terminal job that
+still holds its reservation, which an identical retry could not release.
+An unreaped worker keeps the reservation, marked ``unreaped``, as the
+embedded supervisor does.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    Existing storage authority.
+request : StorageFinishRequest
+    Request whose artefacts are already sealed.
+supervisor : str
+    Delegated owner verified before the artefacts were received.
+
+Returns
+-------
+tuple
+    ``sealed``, or the answer for a job that became terminal meanwhile.
+
+### Function `serve_finish(channel)`
+Serve one peer-verified finish exchange and write its final answer.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, closed by this handler on every outcome.
+ledger : StudioJobLedger
+    Existing authority; artefacts are sealed under its root.
+workspace : str
+    Nonempty server-bound workspace.
+expected_api_uid : int
+    Configured API identity.
+frame_max_bytes : int
+    Ceiling for every frame, including one artefact.
+max_artifact_bytes, max_artifact_entries : int
+    Trusted aggregate artefact budgets.
+deadline : float
+    Absolute monotonic deadline for the whole exchange.
+initial_frame : bytes or None
+    First frame already read by the owning listener, if any.
+
+Raises
+------
+ValueError
+    Configuration, request, workspace or manifest is invalid; nothing is
+    answered or sealed.
+PermissionError
+    The peer is not the configured API or its generation cannot be proved.
+TimeoutError, EOFError, OSError
+    Wire transfer fails; bytes sealed before the failure are only retained
+    for an identical retry.
+
+---
+
+## Module `studio.platform.storage_finish_client`
+
+### Function `spool_finish_request(job_directory)`
+Build a finish request and its artefact bytes from a stopped worker's spool.
+
+Parameters
+----------
+job_directory : int
+    Held descriptor of ``<spool>/<job>/<generation>/<job>``.
+workspace, job_id : str
+    Configured workspace and the admitted job.
+outcome : FinishOutcome or None
+    The API's own verdict (``cancelled``/``timed_out``/``failed``) or
+    ``None`` to use the worker's report: ``completed`` only when the worker
+    reported completion and exited with status 0, as embedded.
+exit_status : int or None
+    Leader exit status reported by the launcher, if it ran.
+frame_max_bytes : int
+    Ceiling for the result file and for each artefact.
+max_artifact_bytes, max_artifact_entries : int
+    Aggregate budgets the authority enforces; a worker declaring more is
+    refused before any artefact is read into memory.
+error : str or None
+    The API's own error for an unsuccessful outcome; otherwise the worker's
+    error or the embedded supervisor's wording is used.
+worker_reaped : bool
+    Whether the launcher confirmed that every process of the generation
+    ended.
+
+Returns
+-------
+tuple
+    The validated request and the artefact bytes in manifest order.
+
+Raises
+------
+ValueError
+    The worker result or an artefact is missing its contract: absent or
+    non-regular files, changed bytes, a digest or size different from the
+    declaration, or an invalid manifest.
+
+### Function `exchange_finish(channel, request, payloads)`
+Run one finish exchange over a connected, exclusively owned stream.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream to the storage authority, closed on every outcome.
+request : StorageFinishRequest
+    Request to send.
+payloads : sequence of bytes
+    Artefact bytes in manifest order.
+expected_service_uid : int
+    Configured storage identity, checked before each frame.
+max_bytes : int
+    Frame ceiling.
+deadline : float
+    Absolute monotonic deadline for the whole exchange.
+
+Returns
+-------
+StorageFinishResponse
+    The final answer.
+
+Raises
+------
+ValueError
+    ``payloads`` do not match the manifest, or a reply is malformed.
+PermissionError
+    The peer is not the configured storage identity.
+TimeoutError, EOFError, OSError
+    The exchange failed; whether the authority sealed is unknown.
+
+---
+
+## Module `studio.platform.storage_finish_protocol`
+
+### Class `FinishArtifact`
+One declared artefact: a canonical job-relative path, its size and digest.
+
+- **validate_path**()
+  - Accept only a printable, canonical path that stays inside the job.
+
+### Class `StorageFinishRequest`
+Report a terminal outcome and declare the artefacts to seal.
+
+As in the embedded supervisor, only ``completed`` carries a ``result`` and
+never an ``error``; ``failed`` and ``timed_out`` carry an error and
+``cancelled`` may. ``worker_reaped`` is false when the launcher could not
+confirm that every process of the generation ended: the job becomes
+terminal but keeps its capacity as unreaped. A completed job was reaped.
+Artefact paths are unique; their bytes follow as frames in the listed order.
+
+- **validate_outcome**()
+  - Match result, error and reaping to the outcome; refuse duplicate paths.
+
+### Class `StorageFinishResponse`
+The authority's answer to one finish request.
+
+``ready`` is interim and asks for the artefact frames; every other reply
+is final.
+
+- **validate_reply**()
+  - Only a refusal carries a reason.
+
+### Function `validate_artifact_budget(artifacts)`
+Hold declared artefacts to the trusted budgets before any byte moves.
+
+Parameters
+----------
+artifacts : Sequence&#91;FinishArtifact&#93;
+    Declared artefacts, from a request or a worker's own manifest.
+frame_max_bytes : int
+    Largest single artefact the framed transfer can carry.
+max_artifact_bytes, max_artifact_entries : int
+    Aggregate byte and entry budgets from trusted configuration.
+
+Raises
+------
+ValueError
+    The declaration exceeds a budget.
+
+### Function `validate_finish_manifest(request)`
+Hold a request's manifest to the trusted artefact budgets.
+
+Raises
+------
+ValueError
+    The manifest exceeds a budget; see :func:`validate_artifact_budget`.
+
+### Function `encode_finish_message(message)`
+Serialise a validated request or response as sorted compact JSON.
+
+Parameters
+----------
+message : StorageFinishRequest or StorageFinishResponse
+    Already validated message.
+
+Returns
+-------
+bytes
+    UTF-8 JSON.
+
+### Function `decode_finish_request(payload)`
+Decode one exact request frame from the verified API peer.
+
+Parameters
+----------
+payload : bytes
+    Complete frame payload.
+max_bytes : int
+    Configured frame ceiling.
+
+Returns
+-------
+StorageFinishRequest
+    Strictly typed request; not an ownership decision.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields or any field shape is
+    invalid.
+
+### Function `decode_finish_response(payload)`
+Decode a response and require exact correlation with the sent request.
+
+Parameters
+----------
+payload : bytes
+    Complete frame payload from the verified storage peer.
+request : StorageFinishRequest
+    The request this response must answer.
+max_bytes : int
+    Configured frame ceiling.
+
+Returns
+-------
+StorageFinishResponse
+    Correlated answer.
+
+Raises
+------
+ValueError
+    The frame is malformed, inconsistent or answers another request.
+
+---
+
+## Module `studio.platform.storage_generation_exchanges`
+
+### Class `GenerationRuntime`
+Trusted API settings for supervising launched worker generations.
+
+``connect`` returns a new peer-verified stream to the storage authority,
+for example :func:`storage_connection.connect_storage_authority` bound to
+the boundary configuration. ``max_artifact_bytes`` is the worker's
+per-artefact budget; ``artifact_total_bytes`` and ``artifact_entries`` are
+the aggregate budgets the authority enforces. ``attempts`` bounds each
+resolution loop; ``transfer_timeout_seconds`` bounds each single exchange.
+``live`` is this API generation's registry of live worker directories.
+
+
+### Class `GenerationJob`
+One admitted job whose delegated lease this API generation owns.
+
+
+### Class `StartRefused`
+The authority did not register the worker; carries the finish verdict.
+
+- **__init__**(outcome, error)
+  - Keep the outcome and error the job must finish with.
+
+### Class `GenerationExchanges`
+Bounded exchanges of one API generation for one exact job generation.
+
+- **__init__**(runtime)
+  - Bind the runtime to the job and its 128-bit generation.
+- **launcher**(operation)
+  - Send one launcher request; ``None`` when no valid reply arrived.
+- **launch**()
+  - Launch this generation; ``None`` when no attempt was answered.
+- **stop**()
+  - Stop this generation; ``None`` when termination was not confirmed.
+- **register**(worker)
+  - Have the authority register the verified worker before its grant.
+- **heartbeat**()
+  - Renew the delegated lease; ``None`` when the reply was lost.
+- **finish**(request, payloads)
+  - Deliver the finish, repeating it identically after a lost reply.
+
+---
+
+## Module `studio.platform.storage_generation_supervisor`
+
+### Class `GenerationSupervisor`
+Supervise one job generation from spool staging to its finish reply.
+
+- **__init__**(runtime, job)
+  - Choose the generation; nothing is staged, launched or sent yet.
+- **generation**()
+  - Return the 128-bit launch generation of this supervisor.
+- **run**()
+  - Run the generation to the authority's final finish reply.
+
+### Function `supervise_generation(runtime, job)`
+Supervise one admitted job's launched generation to its finish reply.
+
+Parameters
+----------
+runtime : GenerationRuntime
+    Trusted API settings and the storage connection factory.
+job : GenerationJob
+    Admitted job whose delegated lease this API generation owns.
+cancel : threading.Event
+    Set by the API to cancel the job; the worker is stopped and the job
+    finishes ``cancelled``.
+
+Returns
+-------
+StorageFinishResponse
+    The authority's final reply.
+
+Raises
+------
+TimeoutError
+    The finish was never answered.
+
+---
+
+## Module `studio.platform.storage_isolated_jobs`
+
+### Class `IsolatedJobManager`
+Serve the API's job methods through the storage authority and launcher.
+
+- **__init__**(runtime, configuration)
+  - Bind the trusted runtime and boundary; nothing is contacted yet.
+- **submit_process_task**()
+  - Admit a named process job and supervise its launched worker here.
+- **generation_failures**()
+  - Return supervised generations that ended without a final finish reply.
+- **record**(job_id)
+  - Return one record of the configured workspace.
+- **wait**(job_id, timeout_seconds)
+  - Observe the record until terminal or the deadline, as embedded.
+- **list_records**()
+  - Return the workspace's records in creation order, scoped when asked.
+- **list_snapshot**()
+  - Return a path-free snapshot of every visible job.
+- **purge_snapshot**()
+  - Read one operator purge journal page.
+- **unreaped_workers**()
+  - Return jobs whose capacity is held because their workers were not reaped.
+- **status**()
+  - Return aggregate path-free health from the authority's summary.
+- **cancel**(job_id)
+  - Record the cancellation at the authority; stop a worker supervised here.
+- **read_artifact**(job_id, relative_path)
+  - Read one sealed artefact through the route the request was authorised for.
+- **read_live_artifact_bytes**(job_id, relative_path)
+  - Read one bounded slice from a live artefact of a job supervised here.
+- **send_control_command**(job_id)
+  - Deliver a command and control seeds to a running job supervised here.
+- **purge_terminal_record**(job_id)
+  - Purge one terminal job and its sealed directory at the authority.
+
+---
+
+## Module `studio.platform.storage_isolated_runtime`
+
+### Function `build_isolated_job_manager(boundary, launcher)`
+Return the isolated facade for this API process.
+
+Parameters
+----------
+boundary : StorageBoundaryConfiguration
+    Validated identities, roots, workspace and transfer budgets.
+launcher : LauncherClientSettings
+    Validated launcher endpoint, identity and supervision cadence.
+allowed_kinds : frozenset&#91;str&#93;
+    Job kinds the API admits.
+default_timeout_seconds : float
+    Execution timeout for jobs submitted without one.
+max_artifact_bytes : int
+    Per-artefact budget handed to each worker, as the embedded setting.
+
+---
+
+## Module `studio.platform.storage_isolated_submit`
+
+### Class `GenerationThreads`
+The generations this API supervises, with their cancel and done events.
+
+- **__init__**(runtime)
+  - Keep the runtime every supervised generation uses.
+- **failures**()
+  - Return the generations that ended without a final finish reply.
+- **events**(job_id)
+  - Return the cancel and done events of a supervised job, if any.
+- **start**(job)
+  - Supervise ``job`` in a new thread; ``False`` if already supervised.
+
+### Function `submit_named(configuration, delegation)`
+Admit one named job for the delegated requester.
+
+Returns
+-------
+GenerationJob
+    The admitted job, ready for :meth:`GenerationThreads.start` once its
+    record shows it is still pending.
+
+Raises
+------
+StudioJobRejected
+    Kind, owner, workspace, task or timeout is not the reviewed contract.
+StudioJobQueueFull
+    The authority refused for capacity.
+PermissionError, ValueError, TimeoutError, EOFError, OSError
+    The admission exchange failed or was refused; an identical submission
+    with the same idempotency key is answered with the same job.
+
+---
+
+## Module `studio.platform.storage_launcher_client`
+
+### Function `new_launcher_request(operation)`
+Build a request with a fresh random request ID.
+
+Parameters
+----------
+operation : {"launch", "stop", "status"}
+    Requested launcher operation.
+job_id : str
+    Admitted job ID, ``sj_`` plus 16 lowercase hexadecimal digits.
+generation : str
+    Launch generation chosen once per attempt, 32 lowercase hex digits.
+
+Returns
+-------
+LauncherRequest
+    Validated request.
+
+Raises
+------
+pydantic.ValidationError
+    An identifier does not match the wire grammar.
+
+### Function `exchange_launcher_request(socket_path, request)`
+Deliver one request to the verified launcher and return its reply.
+
+Parameters
+----------
+socket_path : Path
+    Configured launcher endpoint.
+request : LauncherRequest
+    Request to send.
+launcher_uid : int
+    Configured launcher identity that must own the accepting socket.
+deadline : float
+    Absolute monotonic deadline for connect, send and receive.
+
+Returns
+-------
+LauncherResponse
+    Reply correlated with ``request``.
+
+Raises
+------
+PermissionError
+    The endpoint is not owned by the configured launcher identity; no
+    request bytes were sent.
+TimeoutError
+    The deadline expired; whether the launcher acted is unknown.
+EOFError
+    The launcher closed without a reply; whether it acted is unknown.
+ValueError
+    The reply is malformed or does not answer this request.
+OSError
+    The endpoint is missing or the transfer failed.
+
+---
+
+## Module `studio.platform.storage_launcher_client_settings`
+
+### Class `LauncherClientSettings`
+How the API reaches the launcher and supervises launched generations.
+
+- **canonical_socket**(cls, value)
+  - Accept only an absolute canonical endpoint path.
+
+### Function `parse_launcher_client(value)`
+Decode operator JSON for the launcher client; absence means none.
+
+Raises
+------
+ValueError
+    JSON, duplicate fields, types or values are invalid.
+
+---
+
+## Module `studio.platform.storage_launcher_configuration`
+
+### Class `LauncherConfiguration`
+Operator-owned launcher configuration; no request can change it.
+
+``python_path`` lists the import roots given to the fixed bootstrap. The
+worker ceilings are passed to the bootstrap, which applies them before
+reading any request data. ``max_records`` bounds retained generation
+records used to answer lost-reply status queries.
+
+- **validate_paths**()
+  - Require absolute normalised paths and at least one worker import root.
+
+### Function `load_launcher_configuration(path)`
+Read the operator configuration file with strict, duplicate-free JSON.
+
+Parameters
+----------
+path : Path
+    Operator-owned configuration file.
+
+Returns
+-------
+LauncherConfiguration
+    Validated configuration.
+
+Raises
+------
+ValueError
+    Size, JSON or any field is invalid.
+OSError
+    The file cannot be read.
+
+---
+
+## Module `studio.platform.storage_launcher_endpoint`
+
+### Class `LauncherEndpoint`
+Bind, and later remove, exactly one launcher socket inode.
+
+The socket parent must be owned by the launcher and grant at most group
+traversal, so only the configured socket group (the API) can reach it.
+An existing entry is never adopted; shutdown unlinks only the unchanged
+inode this endpoint created.
+
+- **__init__**(socket_path)
+  - Retain the configured endpoint path; nothing is bound yet.
+- **open**()
+  - Bind and listen on a new socket through the held parent directory.
+- **close**()
+  - Remove the endpoint only if it is still the inode this object bound.
+
+---
+
+## Module `studio.platform.storage_launcher_protocol`
+
+### Class `LauncherRequest`
+One operation for an exact admitted job generation.
+
+``generation`` is chosen by the API once per launch attempt and reused for
+retries of that attempt, so a retry can never create a second generation.
+
+
+### Class `LauncherResponse`
+The launcher's observed state for the requested job generation.
+
+``running`` carries the launched worker PID and its process start token.
+``stopped`` means the launcher confirmed that no process of the generation
+it tracks remains, and carries the leader's exit status as
+:attr:`subprocess.Popen.returncode` reports it. ``absent`` means this launcher has no record of the
+generation. ``refused`` carries a fixed reason; with ``survivors`` a stop
+could not yet confirm termination and the identity is retained.
+
+- **validate_state**()
+  - Require the identity and reason fields that belong to each state.
+
+### Function `encode_launcher_request(request)`
+Serialise a validated request as canonical bounded JSON.
+
+Parameters
+----------
+request : LauncherRequest
+    Already validated request.
+
+Returns
+-------
+bytes
+    Sorted, compact UTF-8 JSON within :data:`LAUNCHER_MESSAGE_MAX_BYTES`.
+
+### Function `decode_launcher_request(payload)`
+Decode one exact request frame received from the verified API peer.
+
+Parameters
+----------
+payload : bytes
+    Complete frame payload.
+
+Returns
+-------
+LauncherRequest
+    Strictly typed request; not an authorisation of the job itself.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields, version or any field
+    shape is invalid.
+
+### Function `encode_launcher_response(response)`
+Serialise a validated response as canonical bounded JSON.
+
+Parameters
+----------
+response : LauncherResponse
+    Already validated response.
+
+Returns
+-------
+bytes
+    Sorted, compact UTF-8 JSON within :data:`LAUNCHER_MESSAGE_MAX_BYTES`.
+
+### Function `decode_launcher_response(payload)`
+Decode a response and require exact correlation with the sent request.
+
+Parameters
+----------
+payload : bytes
+    Complete frame payload from the verified launcher peer.
+request : LauncherRequest
+    The request this response must answer.
+
+Returns
+-------
+LauncherResponse
+    Correlated launcher observation.
+
+Raises
+------
+ValueError
+    The frame is malformed, inconsistent, or answers a different request,
+    operation, job or generation.
+
+---
+
+## Module `studio.platform.storage_launcher_service`
+
+### Function `main(argv)`
+Run the launcher service until SIGTERM or SIGINT.
+
+Parameters
+----------
+argv : Sequence&#91;str&#93; or None
+    ``--configuration PATH``; ``None`` reads ``sys.argv``.
+
+Returns
+-------
+int
+    ``0`` after an orderly stop. Startup refusal raises instead.
+
+Notes
+-----
+``ready`` is printed once the endpoint accepts connections. A refused or
+malformed connection is closed and the service continues; it never
+stops running workers on shutdown.
+
+---
+
+## Module `studio.platform.storage_listener`
+
+### Class `StorageRecordListener`
+Serve one bounded versioned request at a time from the configured API UID.
+
+Startup inspects an existing service-owned namespace and an existing ledger.
+It never creates a database, adopts a stale socket, repairs permissions, or
+starts a worker. Named admission requires an explicitly supplied trusted
+handler that establishes worker custody before returning a durable outcome.
+A caller owns the service loop and calls :meth:`serve_once` repeatedly;
+this class does not claim a deployed isolated profile.
+
+- **__init__**(configuration)
+  - Retain explicit configuration and existing authority collaborators.
+- **start**()
+  - Bind a new socket through held descriptors after strict path checks.
+- **serve_once**()
+  - Accept and serve one request under finite accept and wire deadlines.
+- **stop**()
+  - Close the listener and remove only its own unchanged socket inode.
+- **__enter__**()
+  - Start the endpoint and return its single owner.
+- **__exit__**(exc_type, exc_value, traceback)
+  - Close this listener without suppressing caller failures.
+
+---
+
+## Module `studio.platform.storage_live_spool`
+
+### Class `LiveSpools`
+This API generation's live worker directories, keyed by job.
+
+- **__init__**()
+  - Keep ``retain`` finished directories; bound each control seed.
+- **attach**(job_id, work)
+  - Hold a duplicate of a staged worker directory for ``job_id``.
+- **retire**(job_id)
+  - Mark an attached ``job_id`` finished; close the oldest beyond the bound.
+- **close**()
+  - Close every held directory.
+- **read**(job_id, relative_path)
+  - Return up to ``max_bytes`` appended after ``offset`` and the new offset.
+- **deliver**(job_id, command, seeds)
+  - Publish control seeds, then the command, into the job's live spool.
+
+---
+
+## Module `studio.platform.storage_mode`
+
+### Function `parse_storage_mode(value)`
+Parse the explicit environment selection without an unknown-value fallback.
+
+An absent value preserves embedded compatibility. Empty, misspelled and
+differently cased values raise ``ValueError``; whitespace is stripped.
+Parsing ``isolated`` expresses intent, not availability or qualification.
+
+Parameters
+----------
+value:
+    Environment value, or ``None`` when the option is absent.
+
+Returns
+-------
+StudioStorageMode
+    Validated selection, without creating storage or changing permissions.
+
+Raises
+------
+ValueError
+    The supplied value is empty or not a supported mode name.
+
+### Function `require_available_storage(mode)`
+Refuse an unknown storage selection before any runtime collaborator exists.
+
+Embedded storage preserves the existing non-isolated filesystem contract.
+Isolated startup additionally requires every check of
+:func:`storage_preflight.require_isolated_preflight` to pass before any
+collaborator is created; it never falls back to a local ledger.
+
+Parameters
+----------
+mode:
+    Validated storage selection from runtime settings.
+
+Raises
+------
+ValueError
+    The caller supplied an unknown mode despite the typed contract.
+
+---
+
+## Module `studio.platform.storage_named_admission`
+
+### Class `PreparedNamedAdmission`
+Authorized service inputs with verified seed content and peer custody.
+
+This value is not an admitted job. The service must establish a launcher
+handshake and then call its transactional admission owner; disconnects
+before that point have not created a replay outcome or reserved capacity.
+The exact bounded request is retained as bytes so later code cannot mutate
+nested payload or control mappings after replay identity was derived.
+``seed_files`` owns unlinked service files only until the listener returns
+its response; the admission handler must transfer them before returning.
+``seed_inputs`` remains the bounded byte path for direct callers.
+
+
+### Function `prepare_named_admission(channel)`
+Read and authorize a real connected API request without ledger mutation.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream from the configured API UID.
+gateway : PolicyGateway
+    Existing route-policy audit authority; a failed audit refuses.
+workspace : str
+    Server-configured scope, never selected by the request.
+expected_api_uid : int
+    Trusted configured API OS identity.
+frame_max_bytes, max_metadata_bytes : int
+    Framing and complete metadata byte ceilings.
+max_seed_bytes, max_seed_entries, max_manifest_bytes : int
+    Explicit aggregate seed, entry and UTF-8 name-byte ceilings.
+deadline : float
+    Absolute monotonic deadline shared by metadata and all seed frames.
+initial_frame : bytes or None
+    Optional metadata frame already read through this verified channel by
+    its listener before operation dispatch. Direct callers leave it unset.
+authority_dirfd : int or None
+    Held private service-authority directory for file-backed seed ingress.
+    When absent, use the existing bounded byte path for direct callers.
+
+Returns
+-------
+PreparedNamedAdmission
+    Authorized named task, actual seed content, service-derived replay key
+    and pidfd-verified API process generation; no job is admitted.
+
+Raises
+------
+ValueError
+    Request, task, workspace, frame or content contract is invalid.
+PermissionError
+    Peer identity or the existing route policy refuses the requester.
+TimeoutError
+    The shared transfer deadline expires.
+EOFError
+    The peer disconnects before all declared bytes arrive.
+OSError
+    A socket transfer fails. Any failure closes the ambiguous stream.
+AuditSinkError
+    The policy audit cannot persist its decision.
+
+---
+
+## Module `studio.platform.storage_named_admit`
+
+### Function `named_process_admission(admission)`
+Return the service's handler that admits prepared named process jobs.
+
+Parameters
+----------
+admission : SharedJobAdmission
+    The service's configured admission over its ledger.
+workspace : str
+    The server-bound workspace every admitted job belongs to.
+
+---
+
+## Module `studio.platform.storage_named_tasks`
+
+### Class `NamedStudioTask`
+One reviewed process task and its preserved ledger and route identities.
+
+``name`` is the only selectable operation ID. ``kind`` and ``owner``
+preserve the current ledger classification. ``task_path`` is passed to a
+trusted launcher outside storage; ``routes`` constrain policy delegation.
+Constructing this value does not authorize or execute the task.
+
+
+### Function `resolve_named_studio_task(name)`
+Return one exact reviewed task for an already authorized POST route.
+
+Unknown names and route/task mismatches refuse before any capacity or
+filesystem mutation. The returned ``task_path`` is metadata for a trusted
+launcher, never a module imported by the storage authority.
+
+Parameters
+----------
+name : str
+    Exact operation identifier supplied by the trusted API adapter.
+authorized_route : str
+    Route authenticated and authorized by the service policy gateway.
+
+Returns
+-------
+NamedStudioTask
+    Preserved kind, service owner and launcher task for that route.
+
+Raises
+------
+ValueError
+    Name, route or their exact pairing is not in the reviewed catalogue.
+
+### Function `named_studio_task_for_path(task_path)`
+Return the reviewed task that runs ``task_path`` on an authorised route.
+
+The isolated API facade keeps the embedded ``submit_process_task``
+signature, whose callers name the task by import path; only a path that
+the catalogue names for this exact route becomes a named submission.
+
+Raises
+------
+ValueError
+    No reviewed task runs that path on this route.
+
+---
+
+## Module `studio.platform.storage_namespace`
+
+### Class `StorageDirectoryDescriptors`
+Borrowed noninheritable directory handles valid only inside their context.
+
+Callers must not close, retain or delegate these handles to lower-trust
+processes. Descriptors are ownership evidence for opened objects, not a
+complete mount, ACL, capability or process-isolation qualification.
+
+
+### Function `open_storage_directories(configuration)`
+Hold existing authority and endpoint directories after ownership checks.
+
+Parameters
+----------
+configuration : StorageBoundaryConfiguration
+    Validated role/path intent. Authority and endpoint parent must exist.
+
+Yields
+------
+StorageDirectoryDescriptors
+    Borrowed handles, closed on acquisition failure or context exit.
+
+Raises
+------
+PermissionError
+    Platform, current service IDs, ancestor ownership or final modes refuse.
+OSError
+    A directory cannot be opened, including missing paths or symlinks.
+
+Notes
+-----
+Performs no mkdir, permission repair, ledger opening or listener binding.
+Authority mode must be exactly 0700; endpoint parent cannot admit group or
+other writes. Root/service-owned sticky ancestors are permitted. Privileged
+namespace changes, non-POSIX permissions and inherited capabilities require
+separate deployment checks. Same-UID tests do not establish worker isolation.
+
+---
+
+## Module `studio.platform.storage_operation`
+
+### Function `classify_storage_operation(metadata)`
+Select one exact versioned operation from a peer-verified frame.
+
+The owning listener limits and authenticates the frame before calling this
+function. Each selected handler still validates the full operation schema.
+
+---
+
+## Module `studio.platform.storage_peer`
+
+### Class `StoragePeer`
+Linux PID/UID/GID at connection creation, not live process custody.
+
+The PID is not a process generation token. UID/GID are OS identities, not
+authenticated HTTP principals or a workspace membership assertion.
+
+
+### Function `require_storage_peer(channel)`
+Require an exact configured UID on a connected Linux Unix stream.
+
+Parameters
+----------
+channel : socket.socket
+    Connected, exclusively owned socket. Peer rejection closes it.
+expected_uid : int
+    Trusted configuration value, never a peer-supplied assertion. Valid OS
+    UID from zero through uint32 maximum minus one; booleans are invalid.
+
+Returns
+-------
+StoragePeer
+    Kernel-reported connection credentials. No liveness guarantee is implied.
+
+Raises
+------
+ValueError
+    Expected UID is invalid; no socket operations are attempted.
+PermissionError
+    The platform/transport/peer is unsupported, unknown or not permitted.
+    The rejected socket is closed without transferring framed bytes.
+
+### Function `require_storage_supervisor_identity(channel)`
+Bind a connected trusted API peer to its kernel-anchored process generation.
+
+The peer pidfd must still refer to the SO_PEERCRED PID while its proc start
+token is read. An exited peer, unsupported pidfd option or unavailable
+start token refuses before admission. The returned identity is suitable
+for the existing ledger lease, not a browser authorization decision.
+
+### Function `read_verified_frame(channel)`
+Verify the OS peer before receiving a bounded storage frame.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream.
+expected_uid : int
+    Trusted peer UID; not an application role or principal assertion.
+max_bytes : int
+    Positive uint32 payload ceiling passed to the existing framing owner.
+deadline : float
+    Absolute monotonic deadline, not renewed by peer verification.
+
+Returns
+-------
+bytes
+    Complete nonempty payload from the verified connection.
+
+Raises
+------
+PermissionError
+    Peer verification refuses before any frame read.
+ValueError
+    UID, frame limit, deadline or declared length is invalid.
+TimeoutError
+    The original deadline expires.
+EOFError
+    The peer closes before a complete frame arrives.
+OSError
+    Frame transfer fails; the ambiguous socket is closed.
+
+### Function `write_verified_frame(channel, payload)`
+Verify the OS peer before sending a bounded storage frame.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream.
+payload : bytes
+    Nonempty payload within the explicit byte ceiling.
+expected_uid : int
+    Trusted peer UID, checked before sending even a length header.
+max_bytes : int
+    Positive uint32 payload ceiling passed to the framing owner.
+deadline : float
+    Absolute monotonic deadline, not renewed by peer verification.
+
+Raises
+------
+PermissionError
+    Peer verification refuses before any frame write.
+ValueError
+    UID, payload, frame limit or deadline is invalid.
+TimeoutError
+    The original deadline expires.
+OSError
+    Frame transfer fails; the ambiguous socket is closed.
+
+---
+
+## Module `studio.platform.storage_preflight`
+
+### Class `PreflightFailure`
+One failed check and why it failed.
+
+
+### Function `isolated_preflight(settings)`
+Return every failed check for an isolated API with ``settings``.
+
+Parameters
+----------
+settings : StudioRuntimeSettings
+    The runtime settings the API would start with.
+sysctl_root : Path
+    Directory holding the ``fs`` link-protection values; the host's
+    ``/proc/sys/fs`` unless a caller inspects another tree.
+
+Returns
+-------
+tuple of PreflightFailure
+    Empty when every check passed.
+
+### Function `require_isolated_preflight(settings)`
+Refuse to start an isolated API while any check fails.
+
+Returns
+-------
+tuple
+    The checked storage boundary and launcher client settings.
+
+Raises
+------
+RuntimeError
+    Names every failed check.
+
+---
+
+## Module `studio.platform.storage_purge`
+
+### Class `AuthorityCustody`
+The authority as a purge owner: its ledger and root, no local handles.
+
+- **__init__**(ledger)
+  - Bind purging to the authority's ledger and the root that holds it.
+
+### Function `apply_purge(custody, request)`
+Apply one decoded request whose workspace matched the service.
+
+### Function `serve_purge(channel)`
+Serve one peer-verified purge after the archive purge route's policy.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, closed by this handler on every outcome.
+custody : AuthorityCustody
+    The authority's ledger and root.
+gateway : PolicyGateway
+    Existing authorisation owner with its audit sink.
+workspace : str
+    Nonempty server-bound workspace.
+expected_api_uid : int
+    Configured API identity.
+max_bytes : int
+    Frame ceiling for request and response.
+deadline : float
+    Absolute monotonic wire deadline.
+initial_frame : bytes or None
+    First frame already read by the owning listener, if any.
+
+Raises
+------
+ValueError
+    Configuration, request or workspace is invalid; nothing is purged.
+PermissionError
+    The peer is not the configured API.
+TimeoutError, EOFError, OSError
+    Wire transfer fails; read the record to learn whether it was purged.
+AuditSinkError
+    The policy audit cannot persist its decision; nothing is purged.
+
+---
+
+## Module `studio.platform.storage_purge_client`
+
+### Function `purge_request(workspace, job_id)`
+Build a purge with a fresh random request ID.
+
+### Function `exchange_purge(channel, request)`
+Run one purge over a connected, exclusively owned stream.
+
+Returns
+-------
+StudioJobRecord
+    The record as it was before the purge.
+
+Raises
+------
+PermissionError
+    The peer is not the configured storage identity, or policy denied.
+KeyError
+    The job is not in the workspace.
+StudioJobRejected
+    The ledger refused the purge.
+ValueError
+    The reply is malformed or names another job.
+TimeoutError, EOFError, OSError
+    The exchange failed; read the record to learn whether it was purged.
+
+---
+
+## Module `studio.platform.storage_purge_protocol`
+
+### Class `StoragePurgeRequest`
+Purge one terminal job of the configured workspace.
+
+
+### Class `StoragePurgeResponse`
+The purged record, a refusal text, or a fixed status.
+
+- **validate_outcome**()
+  - A purge carries the record; a refusal carries the ledger's reason.
+
+### Function `encode_purge_message(message)`
+Serialise a validated message as compact, sorted UTF-8 JSON.
+
+### Function `decode_purge_request(payload)`
+Decode one exact request frame.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields or any field is invalid.
+
+### Function `decode_purge_response(payload)`
+Decode a response and require that it answers ``request``.
+
+Raises
+------
+ValueError
+    The frame is malformed or answers another request or job.
+PermissionError
+    The authority's policy denied the requester.
+KeyError
+    The job is not in the workspace.
+StudioJobRejected
+    The ledger refused the purge; the message is the ledger's.
+
+---
+
+## Module `studio.platform.storage_query`
+
+### Function `fit_page(request, items, more)`
+Encode the longest prefix of ``items`` whose response fits the frame.
+
+Each item is measured by its own compact encoding plus one separator, and
+the envelope is measured with a cursor of full length, so the estimate
+never undercounts the encoded page. A shortened page carries a cursor to
+its last item, so the API continues where it stopped.
+
+Raises
+------
+ValueError
+    A single item does not fit the frame: a configuration fault.
+
+### Function `apply_query(ledger, admission, request)`
+Answer one decoded request whose workspace matched the service.
+
+Returns
+-------
+bytes
+    The encoded response, within ``max_bytes``.
+
+### Function `serve_query(channel)`
+Serve one peer-verified query after the route's policy allowed it.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, closed by this handler on every outcome.
+ledger : StudioJobLedger
+    Existing authority; read only.
+admission : SharedJobAdmission
+    The service's configured admission, for occupancy and limits.
+gateway : PolicyGateway
+    Existing authorisation owner with its audit sink.
+workspace : str
+    Nonempty server-bound workspace.
+expected_api_uid : int
+    Configured API identity.
+max_bytes : int
+    Frame ceiling for request and response.
+deadline : float
+    Absolute monotonic wire deadline.
+initial_frame : bytes or None
+    First frame already read by the owning listener, if any.
+
+Raises
+------
+ValueError
+    Configuration, request or workspace is invalid; nothing is answered.
+PermissionError
+    The peer is not the configured API.
+TimeoutError, EOFError, OSError
+    Wire transfer fails.
+AuditSinkError
+    The policy audit cannot persist its decision; nothing is read.
+
+---
+
+## Module `studio.platform.storage_query_client`
+
+### Class `QueryReader`
+Read whole views through a connection factory and bounded exchanges.
+
+- **__init__**(connect)
+  - Keep the trusted endpoint settings; nothing is sent yet.
+- **records**(requester)
+  - Return every record of the workspace in creation order.
+- **status**(requester)
+  - Return the authority's aggregate summary for the workspace.
+- **purges**(requester)
+  - Return one operator purge journal page.
+
+### Class `StatusSummary`
+The authority's workspace summary, exactly as it serialises it.
+
+- **snapshot**()
+  - Return the embedded status shape for this summary.
+
+### Function `query_request(workspace, view)`
+Build a query with a fresh random request ID.
+
+Raises
+------
+pydantic.ValidationError
+    A field does not match the wire grammar.
+
+### Function `exchange_query(channel, request)`
+Run one query over a connected, exclusively owned stream.
+
+Raises
+------
+PermissionError
+    The peer is not the configured storage identity, or policy denied.
+ValueError
+    The reply is malformed, answers another request or refused the cursor.
+TimeoutError, EOFError, OSError
+    The exchange failed; reading again is safe.
+
+---
+
+## Module `studio.platform.storage_query_protocol`
+
+### Class `StorageQueryRequest`
+One bounded read; ``status`` takes no cursor.
+
+- **validate_cursor**()
+  - Refuse a cursor on the aggregate view.
+
+### Class `StorageQueryResponse`
+The authority's answer; items and summary belong to the requested view.
+
+- **validate_view**()
+  - Only an answered page carries items or a cursor; only status a summary.
+
+### Function `encode_query_message(message)`
+Serialise a validated message as compact, sorted UTF-8 JSON.
+
+### Function `decode_query_request(payload)`
+Decode one exact request frame.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields or any field is invalid.
+
+### Function `decode_query_response(payload)`
+Decode a response and require that it answers ``request``.
+
+Raises
+------
+ValueError
+    The frame is malformed or answers another request or view, or the
+    cursor was refused.
+PermissionError
+    The authority's policy denied the requester.
+
+---
+
+## Module `studio.platform.storage_record`
+
+### Function `serve_record_read(channel)`
+Serve one peer-verified read with policy evaluation before ledger lookup.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, owned and closed by this handler on every outcome.
+ledger : StudioJobLedger
+    Existing authority; no client-selected root, SQL or embedded fallback.
+gateway : PolicyGateway
+    Existing authorization owner with its configured audit sink.
+workspace : str
+    Nonempty server-bound scope; a request cannot select another workspace.
+expected_api_uid : int
+    Trusted API OS identity, distinct from workers in a qualified deployment.
+max_bytes : int
+    Explicit frame byte limit for both request and complete response.
+deadline : float
+    Absolute monotonic wire deadline. Audit/SQLite execution has separate
+    bounds; this is not a service-wide scheduling deadline.
+initial_frame : bytes or None
+    Optional first frame already read through the same peer-verified channel
+    by the owning listener. Direct callers leave this unset.
+
+Raises
+------
+ValueError
+    Configuration or wire request is invalid, or response exceeds its limit.
+PermissionError
+    The connection peer is not the configured trusted API.
+TimeoutError
+    A wire transfer exceeds the deadline.
+EOFError
+    Peer disconnects during a frame.
+OSError
+    Socket transfer fails.
+AuditSinkError
+    Existing policy audit cannot persist its decision; no record is sent.
+
+Notes
+-----
+Denied/missing reads return path-free outcomes, not internal exception text.
+Admin access remains cross-owner within the server-bound workspace. No job
+state, reservation, lease or transition is changed by this operation.
+
+---
+
+## Module `studio.platform.storage_record_client`
+
+### Function `read_storage_record(channel)`
+Exchange one bounded request with a peer-verified storage authority.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, exclusively owned and closed on every outcome.
+request : StorageRecordRequest
+    Exact validated read request. Requester claims must come from the trusted
+    API authentication adapter, never directly from a compute worker.
+expected_service_uid : int
+    Service OS identity supplied by trusted configuration, not the peer.
+max_bytes : int
+    Positive uint32 ceiling for each complete request and response frame.
+deadline : float
+    Absolute monotonic deadline shared by both transfers, never renewed.
+
+Returns
+-------
+StudioJobRecord
+    Complete correlated native snapshot, without creating a local ledger.
+
+Raises
+------
+ValueError
+    Configuration, framing, schema, correlation or snapshot is invalid.
+PermissionError
+    Service peer identity or authority policy refuses the operation.
+KeyError
+    Authority reports no record in the configured workspace.
+TimeoutError
+    The transfer deadline expires.
+EOFError
+    The authority disconnects before a complete response arrives.
+OSError
+    Socket transfer fails.
+
+Notes
+-----
+No reconnect, retry, mutation, local fallback or isolated readiness claim.
+Connection establishment and protected endpoint configuration belong to the
+runtime lifecycle owner; this function consumes an already connected socket.
+
+### Function `read_storage_record_at_endpoint(configuration)`
+Read one record over the configured, peer-verified service endpoint.
+
+The caller must construct ``request.requester`` from the API's authenticated
+principal. The server independently checks policy and binds the workspace.
+A failed connection or read has no local ledger fallback and no retry.
+Connection and frame exchange each have the configured finite timeout.
+
+---
+
+## Module `studio.platform.storage_record_protocol`
+
+### Class `StorageRequester`
+Exact delegated principal claim from the configured trusted API peer.
+
+
+### Class `StorageRecordRequest`
+Versioned read-only operation, keeping trace and requester separate.
+
+
+### Class `StorageRecordResponse`
+Exact read outcome; success requires a complete domain snapshot.
+
+
+### Function `decode_record_request(payload)`
+Decode a bounded exact request without accepting ambiguous JSON objects.
+
+Parameters
+----------
+payload : bytes
+    UTF-8 JSON payload already bounded by the peer-verified frame reader.
+
+Returns
+-------
+StorageRecordRequest
+    Strict typed request, not an authorization decision.
+
+Raises
+------
+ValueError
+    Encoding, nesting, duplicate keys, constants, fields or types are invalid.
+
+Notes
+-----
+Nullable fields remain mandatory. No defaults silently repair a request.
+Workspace and requester checks belong to the authority before ledger access.
+
+### Function `decode_record_response(payload)`
+Reconstruct one complete correlated record from a bounded response.
+
+Parameters
+----------
+payload : bytes
+    Complete bounded UTF-8 response from the verified storage peer.
+request : StorageRecordRequest
+    Original request, supplying expected trace, job and workspace.
+
+Returns
+-------
+StudioJobRecord
+    Complete native snapshot; no ledger is constructed on the client.
+
+Raises
+------
+ValueError
+    Wire schema, JSON, correlation, outcome or snapshot is inconsistent.
+PermissionError
+    Authority denied the read; no record was supplied.
+KeyError
+    Authority found no record in the requested workspace.
+
+Notes
+-----
+Trace matching is not replay authentication. The connected peer is verified
+separately, and errors never expose a partial or mismatched record.
+
+---
+
+## Module `studio.platform.storage_requester`
+
+### Class `Delegation`
+The allowed request: who asked, through which route, under which trace.
+
+
+### Function `delegated(principal)`
+Open the delegation of one authorised request for its duration.
+
+Parameters
+----------
+principal : Principal or None
+    The gateway-authenticated principal; ``None`` for a public route.
+method, route : str
+    The HTTP method and route template the gateway authorised.
+request_id : str
+    The request's trace identifier.
+
+### Function `current_delegation()`
+Return the delegation of the request being served, if any.
+
+---
+
+## Module `studio.platform.storage_seed_files`
+
+### Class `ReceivedStorageSeedFile`
+One logical seed and the digest of bytes actually received from the wire.
+
+
+### Class `ReceivedStorageSeedFiles`
+Own all private seed handles until admission transfers or rejects them.
+
+- **__init__**(files)
+- **close**()
+  - Release every unlinked seed file, including after a handler error.
+- **__enter__**()
+- **__exit__**()
+
+### Function `receive_storage_seed_files(channel)`
+Stream one bounded transfer into unlinked files under a held authority.
+
+The caller owns the returned handles and must close them after the
+admission handler has transferred the inputs. The authority directory
+descriptor remains owned by the caller. No request path becomes a disk
+path; each temporary file is private to the storage service UID.
+A failed or ambiguous transfer closes the channel and every staged file.
+
+---
+
+## Module `studio.platform.storage_seed_ingress`
+
+### Function `validate_storage_seed_manifest(manifest)`
+Validate one declared seed manifest and return deterministic frame order.
+
+Parameters
+----------
+manifest : mapping of str to int
+    Canonical relative seed names and their nonnegative byte lengths.
+frame_max_bytes : int
+    Positive upper bound for a single nonempty seed frame.
+max_seed_bytes, max_seed_entries, max_manifest_bytes : int
+    Aggregate byte, entry and UTF-8 name-byte budgets from trusted settings.
+deadline : float
+    One absolute monotonic transfer deadline.
+
+Returns
+-------
+tuple&#91;str, ...&#93;
+    Validated names sorted in the exact sender/receiver transfer order.
+
+Raises
+------
+ValueError
+    Manifest, path, size, limits or deadline shape is invalid.
+TimeoutError
+    The deadline has already expired.
+
+Notes
+-----
+The service and API client share this path, byte and resource contract.
+Validation does not read a socket or grant admission authority.
+
+### Function `receive_storage_seeds(channel)`
+Read exactly the declared seeds in sorted-name order on one Unix stream.
+
+The manifest is metadata already decoded from a bounded request frame.
+Each nonempty seed uses one or more nonempty frames, with no renewed
+deadline. Zero-byte seeds use no frames. The returned bytes are suitable
+for service-derived replay hashing; no claimed checksum is trusted.
+The caller still owns authorization, peer-process custody, the one-request
+connection lifecycle and the worker handoff.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream.
+manifest : mapping of str to int
+    Exact relative seed names and declared byte lengths from a bounded
+    versioned request; no checksum or path is trusted as an authority.
+expected_api_uid : int
+    Service-configured OS identity of the trusted API process.
+frame_max_bytes : int
+    Positive maximum payload size of each nonempty frame.
+max_seed_bytes, max_seed_entries, max_manifest_bytes : int
+    Explicit aggregate seed, entry and UTF-8 name-byte ceilings.
+deadline : float
+    Absolute monotonic deadline shared by every frame in this transfer.
+
+Returns
+-------
+dict&#91;str, bytes&#93;
+    Complete received seed content, keyed by its validated relative name.
+
+Raises
+------
+ValueError
+    Manifest, limits, frame length or deadline is invalid.
+PermissionError
+    The connected peer does not have the configured API identity.
+TimeoutError
+    The deadline expires, including a zero-byte transfer.
+EOFError
+    The peer closes before all declared bytes arrive.
+OSError
+    The socket transfer fails. Errors after validation close the stream.
+
+### Function `send_storage_seeds(channel)`
+Send received API seed bytes in the receiver's deterministic order.
+
+The caller places ``manifest`` in its preceding versioned request frame.
+This function checks it against a snapshot of the exact bytes before any
+seed frame. Invalid content refuses before transfer; an ambiguous transfer
+closes without retry. The caller owns the connection afterward.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream.
+seed_inputs : mapping of str to bytes
+    Immutable seed bytes from the authenticated API request.
+manifest : mapping of str to int
+    Name/size declarations already sent in the bounded request frame.
+expected_service_uid : int
+    Trusted configured service OS identity.
+frame_max_bytes : int
+    Positive maximum payload size of each nonempty frame.
+max_seed_bytes, max_seed_entries, max_manifest_bytes : int
+    Explicit aggregate seed, entry and UTF-8 name-byte ceilings.
+deadline : float
+    Absolute monotonic deadline shared by every frame in this transfer.
+
+Raises
+------
+ValueError
+    Seeds, limits or deadline are invalid before transfer.
+PermissionError
+    The connected peer is not the configured service identity.
+TimeoutError
+    The absolute transfer deadline expires.
+OSError
+    The socket transfer fails. Ambiguous transfers close the stream.
+
+---
+
+## Module `studio.platform.storage_service`
+
+### Class `StorageServiceConfiguration`
+The boundary plus the service-owned admission limits, audit and cadence.
+
+
+### Class `StorageService`
+The authority's ledger, admission, gateway and listener for one run.
+
+- **__init__**(configuration)
+  - Open the ledger and collaborators; nothing is bound yet.
+- **reconcile**()
+  - Finish committed purges, resolve abandoned jobs, release proven capacity.
+- **serve_once**()
+  - Serve one request, or reconcile when idle and the interval elapsed.
+
+### Function `load_service_configuration(path)`
+Read and strictly validate the service configuration file.
+
+Raises
+------
+ValueError
+    JSON, duplicate fields, types, values or the boundary are invalid.
+OSError
+    The file cannot be read.
+
+### Function `main(argv)`
+Run the storage authority until SIGTERM or SIGINT.
+
+Parameters
+----------
+argv : Sequence&#91;str&#93; or None
+    ``--configuration PATH``; ``None`` reads ``sys.argv``.
+
+Returns
+-------
+int
+    ``0`` after an orderly stop. Startup refusal raises instead.
+
+---
+
+## Module `studio.platform.storage_spool_staging`
+
+### Class `StagedGeneration`
+Held descriptors of one staged generation and its worker directory.
+
+The caller owns both descriptors and closes them with :meth:`close`; they
+are never passed to a worker.
+
+- **close**()
+  - Close both held descriptors.
+- **__enter__**()
+  - Return this staged generation.
+- **__exit__**(exc_type, exc_value, traceback)
+  - Close the descriptors without suppressing caller failures.
+
+### Function `canonical_parts(relative_path)`
+Return the components of a printable, canonical, confined relative path.
+
+Raises
+------
+ValueError
+    The path is not text, not printable, escapes, or is not canonical.
+
+### Function `stage_generation(spool_root, descriptor)`
+Create one generation's inputs and worker directory in the compute spool.
+
+Parameters
+----------
+spool_root : Path
+    Absolute compute spool root from trusted configuration.
+descriptor : WorkerDescriptor
+    Validated descriptor naming the job, generation and task.
+payload : bytes
+    Task payload JSON already validated for this job.
+seeds : Mapping&#91;str, bytes&#93;
+    Submission seeds by canonical relative path.
+group : int
+    Compute group that must read the inputs and write the worker directory.
+
+Returns
+-------
+StagedGeneration
+    Held generation and worker directories.
+
+Raises
+------
+ValueError
+    The spool root is relative or a seed path is not canonical.
+PermissionError
+    A reused job directory has other ownership or mode.
+FileExistsError
+    The generation, or any entry inside it, already exists.
+OSError
+    A directory or file cannot be created, owned or written.
+
+---
+
+## Module `studio.platform.storage_supervision`
+
+### Function `apply_supervision(ledger, request)`
+Apply one decoded request on behalf of the verified API generation.
+
+Parameters
+----------
+ledger : StudioJobLedger
+    Existing storage authority.
+request : SupervisionStartRequest or SupervisionHeartbeatRequest
+    Request whose workspace was already matched to ``workspace``.
+supervisor : str
+    ``host:pid:token`` of the pidfd-verified API peer.
+workspace : str
+    Server-configured workspace; jobs elsewhere are reported not found.
+
+Returns
+-------
+StorageSupervisionResponse
+    Outcome correlated with ``request``.
+
+### Function `serve_supervision(channel)`
+Serve one peer-verified supervision request and write its outcome.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream, closed by this handler on every outcome.
+ledger : StudioJobLedger
+    Existing authority.
+workspace : str
+    Nonempty server-bound workspace.
+expected_api_uid : int
+    Configured API identity.
+max_bytes : int
+    Frame ceiling for request and response.
+deadline : float
+    Absolute monotonic wire deadline.
+initial_frame : bytes or None
+    First frame already read by the owning listener, if any.
+
+Raises
+------
+ValueError
+    Configuration, request or workspace is invalid; nothing is written.
+PermissionError
+    The peer is not the configured API or its generation cannot be proved.
+TimeoutError, EOFError, OSError
+    Wire transfer fails.
+
+---
+
+## Module `studio.platform.storage_supervision_client`
+
+### Function `supervision_start_request(configuration)`
+Build a ``start`` request for the configured workspace.
+
+Parameters
+----------
+configuration : StorageBoundaryConfiguration
+    Trusted boundary configuration supplying the workspace.
+job_id : str
+    Admitted job ID.
+worker : str
+    ``host:pid:token`` identity verified at the grant endpoint.
+
+Returns
+-------
+SupervisionStartRequest
+    Validated request with a fresh random request ID.
+
+### Function `supervision_heartbeat_request(configuration)`
+Build a ``heartbeat`` request for the configured workspace.
+
+Parameters
+----------
+configuration : StorageBoundaryConfiguration
+    Trusted boundary configuration supplying the workspace.
+job_id : str
+    Job whose delegated lease should be renewed.
+
+Returns
+-------
+SupervisionHeartbeatRequest
+    Validated request with a fresh random request ID.
+
+### Function `exchange_supervision(channel, request)`
+Exchange one request over a connected, exclusively owned stream.
+
+Parameters
+----------
+channel : socket.socket
+    Connected Unix stream to the storage authority, closed on every outcome.
+request : SupervisionStartRequest or SupervisionHeartbeatRequest
+    Request to send.
+expected_service_uid : int
+    Configured storage identity, checked before each frame.
+max_bytes : int
+    Frame ceiling for request and response.
+deadline : float
+    Absolute monotonic deadline shared by both transfers.
+
+Returns
+-------
+StorageSupervisionResponse
+    Outcome correlated with ``request``.
+
+Raises
+------
+ValueError
+    The reply is malformed or answers another request.
+PermissionError
+    The peer is not the configured storage identity.
+TimeoutError, EOFError, OSError
+    The exchange failed; whether the authority acted is unknown.
+
+### Function `exchange_supervision_request(configuration, request)`
+Send one request to the configured, peer-verified storage endpoint.
+
+Parameters
+----------
+configuration : StorageBoundaryConfiguration
+    Trusted endpoint, identities, frame ceiling and transfer timeout.
+request : SupervisionStartRequest or SupervisionHeartbeatRequest
+    Request for the configured workspace.
+
+Returns
+-------
+StorageSupervisionResponse
+    Outcome correlated with ``request``.
+
+Raises
+------
+ValueError
+    The request names another workspace, or the reply is malformed.
+PermissionError
+    This process is not the configured API identity, or the service peer
+    is not the configured storage identity.
+TimeoutError, EOFError, OSError
+    The exchange failed; whether the authority acted is unknown.
+
+---
+
+## Module `studio.platform.storage_supervision_protocol`
+
+### Class `SupervisionStartRequest`
+Mark an admitted job running and bind the observed worker generation.
+
+``worker`` is the ``host:pid:token`` identity the API verified at its grant
+endpoint; the authority checks it again before registration.
+
+
+### Class `SupervisionHeartbeatRequest`
+Renew the delegated owner's lease on a live job.
+
+
+### Class `StorageSupervisionResponse`
+The authority's outcome for one supervision request.
+
+``started`` answers ``start``; ``renewed`` answers ``heartbeat``;
+``cancelling`` answers either for a job whose cancellation is recorded, so
+the owning API stops its worker; ``refused`` carries a fixed reason and changed nothing
+except, for a start of a job already cancelling, its recorded start time.
+
+- **validate_outcome**()
+  - Match outcome, operation and reason.
+
+### Function `encode_supervision_message(message)`
+Serialise a validated request or response as sorted compact JSON.
+
+Parameters
+----------
+message : SupervisionStartRequest, SupervisionHeartbeatRequest or StorageSupervisionResponse
+    Already validated message.
+
+Returns
+-------
+bytes
+    UTF-8 JSON; every field is bounded by the schema.
+
+### Function `decode_supervision_request(payload)`
+Decode one exact request frame from the verified API peer.
+
+Parameters
+----------
+payload : bytes
+    Complete frame payload.
+max_bytes : int
+    Configured frame ceiling.
+
+Returns
+-------
+SupervisionStartRequest or SupervisionHeartbeatRequest
+    Strictly typed request selected by ``operation``; not an ownership
+    decision.
+
+Raises
+------
+ValueError
+    Size, encoding, duplicate names, unknown fields or any field shape is
+    invalid.
+
+### Function `decode_supervision_response(payload)`
+Decode a response and require exact correlation with the sent request.
+
+Parameters
+----------
+payload : bytes
+    Complete frame payload from the verified storage peer.
+request : SupervisionStartRequest or SupervisionHeartbeatRequest
+    The request this response must answer.
+max_bytes : int
+    Configured frame ceiling.
+
+Returns
+-------
+StorageSupervisionResponse
+    Correlated outcome.
+
+Raises
+------
+ValueError
+    The frame is malformed, inconsistent or answers another request.
+
+---
+
+## Module `studio.platform.storage_transport`
+
+### Function `read_frame(channel)`
+Receive one nonempty frame within an absolute deadline.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream; peer authentication is external.
+max_bytes : int
+    Maximum permitted payload bytes, from one through uint32 maximum.
+deadline : float
+    Absolute monotonic time in seconds, shared by header and payload reads.
+    The remaining interval must fit the platform timeout range.
+
+Returns
+-------
+bytes
+    Complete payload; the four-byte network-order header is not returned.
+
+Raises
+------
+ValueError
+    Invalid arguments or an empty/oversized declared payload.
+TimeoutError
+    The absolute deadline expires.
+EOFError
+    The peer closes before the complete frame arrives.
+OSError
+    Socket transfer fails. Transfer failures close the connection.
+
+### Function `write_frame(channel, payload)`
+Send one nonempty byte payload under a single absolute deadline.
+
+Parameters
+----------
+channel : socket.socket
+    Exclusively owned connected Unix stream; peer authentication is external.
+payload : bytes
+    Nonempty immutable payload, excluding the generated length header.
+max_bytes : int
+    Maximum payload bytes, from one through uint32 maximum.
+deadline : float
+    Finite absolute monotonic time in seconds for the entire transfer.
+    The remaining interval must fit the platform timeout range.
+
+Raises
+------
+ValueError
+    Arguments or payload type/size are invalid; no transfer is attempted.
+TimeoutError
+    The total transfer deadline expires, including sender backpressure.
+OSError
+    Socket transfer fails. Transfer failures close the connection.
+
+Notes
+-----
+Header and body use separate sends to avoid a combined payload allocation.
+Success restores the caller's timeout. Failure never retries a mutation.
+
+---
+
+## Module `studio.platform.storage_worker_bootstrap`
+
+### Class `WorkerDescriptor`
+API-written selection for one generation; the launcher never reads it.
+
+``supervisor`` is the API process generation the worker guard follows.
+The task is selected by reviewed name and route, never by import path.
+
+
+### Function `read_worker_descriptor(spool_root)`
+Read and check the API-written descriptor for one exact generation.
+
+Parameters
+----------
+spool_root : Path
+    Absolute compute spool root from the launcher configuration.
+job_id, generation : str
+    Launcher-supplied identifiers; the descriptor must repeat them.
+server_uid : int
+    Configured API identity that must own every spool directory used.
+
+Returns
+-------
+WorkerDescriptor
+    Strictly validated descriptor whose task pairing is in the catalogue.
+
+Raises
+------
+ValueError
+    Identifiers, size, JSON, schema or task pairing is invalid.
+PermissionError
+    A spool directory or the descriptor is not API-owned or is writable by
+    others, or a path component is a symbolic link.
+OSError
+    A spool entry is missing.
+
+### Function `main(argv)`
+Confine this process, read its descriptor and run the gated worker.
+
+Parameters
+----------
+argv : Sequence&#91;str&#93; or None
+    Launcher-built argument vector; ``None`` reads ``sys.argv``.
+
+Returns
+-------
+int
+    The existing worker's exit status, or ``2`` when confinement or the
+    descriptor refuses before the worker starts. No task is imported on
+    any refusal path.
+
+---
+
+## Module `studio.platform.storage_worker_grant`
+
+### Class `ExpectedWorker`
+Worker process generation reported by the trusted launcher.
+
+``uid`` is the configured compute identity, ``pid`` and ``start_token``
+identify the launched process generation. The values are launcher
+observations; the endpoint compares them with kernel peer credentials.
+
+- **__post_init__**()
+  - Refuse root, non-positive or malformed expectations before any accept.
+
+### Class `WorkerGrantEndpoint`
+Own one single-use grant socket inside a held API directory descriptor.
+
+The caller keeps ``directory_fd`` open for the endpoint's lifetime and never
+passes it to a worker. :meth:`open` refuses an existing entry, so a stale or
+substituted socket is never adopted. :meth:`close` removes only the inode it
+created. The endpoint grants at most one worker and then closes its listener.
+
+- **__init__**(directory_fd, directory_path, name)
+  - Retain the held directory, its canonical path and the endpoint name.
+- **path**()
+  - Return the absolute endpoint path the worker must connect to.
+- **open**()
+  - Bind and listen on a new socket inode through the held directory.
+- **grant**(expected)
+  - Verify the launched worker, commit its identity and send one grant.
+- **close**()
+  - Close the listener and remove only this endpoint's unchanged socket.
+- **__enter__**()
+  - Open the endpoint and return its single owner.
+- **__exit__**(exc_type, exc_value, traceback)
+  - Close the endpoint without suppressing caller failures.
+
+### Function `validate_grant_name(name)`
+Return the grant endpoint name when it is the fixed per-generation name.
+
+Each launch generation has its own spool directory, so the endpoint name
+itself is constant and short enough to keep the full socket path within
+the Unix limit.
+
+Parameters
+----------
+name : str
+    Final path component; it must equal :data:`GRANT_ENDPOINT_NAME`.
+
+Returns
+-------
+str
+    The unchanged name.
+
+Raises
+------
+ValueError
+    The name has any other value.
+
+### Function `receive_socket_grant(path)`
+Connect to the API grant endpoint and require the exact ``ready`` grant.
+
+Parameters
+----------
+path : Path
+    Absolute endpoint path supplied by the trusted launcher descriptor.
+expected_server_uid : int
+    Configured API identity that must own the accepting socket.
+
+Raises
+------
+ValueError
+    The path is relative or its name does not match the grant grammar.
+PermissionError
+    The connected server is not the configured API identity.
+RuntimeError
+    EOF, a malformed token, trailing bytes or the three-second reader
+    deadline refuses the grant; no task may be imported.
+OSError
+    The endpoint is missing or refuses the connection.
+
+---
+
+## Module `studio.platform.storage_worker_launcher`
+
+### Class `WorkerLauncher`
+Serve bounded launch/stop/status requests from the configured API UID.
+
+Call :meth:`start`, then :meth:`serve_once` repeatedly from one long-lived
+thread, then :meth:`stop`. Every generation stays recorded until
+``max_records`` forces the oldest stopped record out, so retries and lost
+replies resolve to the same outcome.
+
+- **__init__**(configuration)
+  - Retain configuration; nothing is bound or spawned yet.
+- **privileged**()
+  - Return whether this launcher can switch to a different compute UID.
+- **start**()
+  - Become a subreaper and bind the API-only endpoint.
+- **maintain**()
+  - Observe trees, collect leader exits and handle adopted processes.
+- **serve_once**()
+  - Handle one request, or return after the transfer timeout with none.
+- **handle**(request)
+  - Apply one decoded request and return the observed outcome.
+- **stop**()
+  - Close the endpoint and remove only its own unchanged socket.
+- **__enter__**()
+  - Start the launcher and return its single owner.
+- **__exit__**(exc_type, exc_value, traceback)
+  - Close the endpoint without suppressing caller failures.
+
+---
+
+## Module `studio.platform.storage_worker_spawn`
+
+### Function `generation_spool_ready(root, job_id, generation, owner)`
+Return whether the API-prepared job and generation directories exist.
+
+Parameters
+----------
+root : Path
+    Configured compute spool root.
+job_id, generation : str
+    Validated identifiers from the launcher request.
+owner : int
+    Configured API identity that must own both directories.
+
+Returns
+-------
+bool
+    ``True`` only when both components are real directories owned by
+    ``owner``; symbolic links and missing entries yield ``False``.
+
+### Function `compute_identity_processes(uid)`
+Return PIDs of processes whose ``/proc`` entry is owned by ``uid``.
+
+A process that exits during the scan is skipped.
+
+### Function `spawn_worker_bootstrap(config)`
+Start one fixed bootstrap for an exact job generation.
+
+Parameters
+----------
+config : LauncherConfiguration
+    Operator configuration supplying interpreter, import roots, spool,
+    API identity, compute identity and ceilings.
+job_id, generation : str
+    Validated identifiers of the admitted job generation.
+privileged : bool
+    Whether this launcher switches to the configured compute identity.
+
+Returns
+-------
+subprocess.Popen&#91;bytes&#93;
+    The bootstrap, leading its own session, with no inherited descriptors
+    and standard streams connected to ``/dev/null``.
+
+Raises
+------
+OSError
+    The interpreter cannot be executed or the identity switch fails.
+
+---
+
+## Module `studio.platform.storage_worker_tree`
+
+### Class `TrackedProcess`
+One observed process generation held by an open pidfd.
+
+``start_token`` is the ``/proc/<pid>/stat`` start time read after the
+pidfd was opened and while the parent relation was confirmed.
+
+
+### Class `WorkerTree`
+Launcher custody of one worker leader and its observed descendants.
+
+The tree owns every pidfd it opens and closes them in :meth:`close`.
+``leader`` must be a direct child of the launcher so the launcher can reap
+it; descendants are reaped by their parents or by :func:`reap_adopted`.
+
+- **__init__**(leader)
+  - Take ownership of the leader pidfd.
+- **leader**()
+  - Return the launched worker leader.
+- **owns**(pid)
+  - Return whether ``pid`` is an observed member of this tree.
+- **observe**()
+  - Walk from every live member and track newly visible children.
+- **live**()
+  - Return tracked members whose pidfd does not yet report exit.
+- **kill**()
+  - SIGKILL every observed member until none is live or rounds run out.
+- **close**()
+  - Close every pidfd held by this tree.
+
+### Function `process_control(option, value)`
+Apply one Linux ``prctl`` option with a single integer argument.
+
+Parameters
+----------
+option : int
+    ``PR_*`` option number from ``linux/prctl.h``.
+value : int
+    First option argument; the remaining arguments are zero.
+
+Raises
+------
+OSError
+    The kernel refuses the call; the kernel errno is preserved.
+
+### Function `become_child_subreaper()`
+Mark the calling process as a child subreaper.
+
+Raises
+------
+OSError
+    The kernel refuses the ``prctl`` call.
+
+### Function `process_start_token(pid)`
+Return the ``/proc`` start time of ``pid`` as a decimal string.
+
+Raises
+------
+OSError
+    The process metadata is unavailable.
+
+### Function `reap_adopted(trees)`
+Reap adopted zombies and kill adopted processes no tree has attributed.
+
+Parameters
+----------
+trees : list&#91;WorkerTree&#93;
+    Every tree the launcher currently holds.
+leaders : set&#91;int&#93;
+    Worker leader PIDs whose status the launcher collects through their
+    own process handles; they are never reaped here.
+
+Returns
+-------
+tuple&#91;int, ...&#93;
+    PIDs of unattributed adopted processes that were sent SIGKILL.
+
+Notes
+-----
+Every listed process is a child of the calling launcher, which collects
+children only on its single serving thread. No other process can reap or
+reparent it first, so its PID cannot be reused while this call runs. A
+kill the kernel refuses to deliver leaves that process unreported.
+
+---
+
+## Module `studio.platform.studio_job_service`
+
+### Class `StudioJobService`
+Job submission, observation, control and custody used by the API.
+
+- **submit_process_task**()
+  - Submit one process task and return its record.
+- **wait**(job_id, timeout_seconds)
+  - Observe one job until terminal or the deadline.
+- **record**(job_id)
+  - Return one job record.
+- **list_records**()
+  - Return records in creation order, scoped when asked.
+- **list_snapshot**()
+  - Return a path-free snapshot of every visible job.
+- **status**()
+  - Return aggregate path-free health.
+- **purge_snapshot**()
+  - Read one operator purge journal page.
+- **cancel**(job_id)
+  - Request cooperative cancellation for one job.
+- **read_artifact**(job_id, relative_path)
+  - Read and verify one declared artefact.
+- **read_live_artifact_bytes**(job_id, relative_path)
+  - Read one bounded slice from a live artefact.
+- **send_control_command**(job_id)
+  - Deliver a command and control seeds to a running job.
+- **purge_terminal_record**(job_id)
+  - Purge one terminal job and its custody.
+- **unreaped_workers**()
+  - Return jobs whose workers were not confirmed stopped.
 
 ---
 
@@ -41746,7 +45297,7 @@ Parameters
 ----------
 config : dict&#91;str, Any&#93;
     Training Monitor configuration.
-job_manager : StudioJobManager or None, optional
+job_manager : StudioJobService or None, optional
     Bounded job manager used by the Studio HTTP route.
 
 Returns
@@ -41774,7 +45325,7 @@ source_job_id : str
     Completed source training job that published model weights.
 config : dict&#91;str, Any&#93;
     Target training configuration.
-job_manager : StudioJobManager
+job_manager : StudioJobService
     Bounded manager owning artifact reads and process submission.
 expected_config_sha256 : str or None, optional
     Optional digest that the source configuration must match.
@@ -41805,7 +45356,7 @@ target_job_id : str
     Running target training job.
 source_job_id : str
     Completed source training job that published model weights.
-job_manager : StudioJobManager
+job_manager : StudioJobService
     Manager owning artifact reads and control-command delivery.
 expected_config_sha256 : str or None, optional
     Optional digest that the source configuration must match.
@@ -41828,7 +45379,7 @@ Parameters
 ----------
 job_id : str
     Training Monitor job identifier.
-job_manager : StudioJobManager or None, optional
+job_manager : StudioJobService or None, optional
     Manager used to propagate cancellation into a process worker.
 
 Returns
@@ -41843,7 +45394,7 @@ Parameters
 ----------
 job_id : str
     Training Monitor job identifier.
-job_manager : StudioJobManager or None, optional
+job_manager : StudioJobService or None, optional
     Manager used to reconcile process state and verified evidence.
 
 Returns
@@ -41859,7 +45410,7 @@ Parameters
 ----------
 job_id : str
     Training Monitor job identifier.
-job_manager : StudioJobManager or None, optional
+job_manager : StudioJobService or None, optional
     Manager used to tail process-worker JSONL events.
 
 Yields
@@ -41867,13 +45418,16 @@ Yields
 str
     One SSE-formatted metric, heartbeat, terminal, or error event.
 
-### Function `list_jobs()`
+### Function `list_jobs(job_manager)`
 Return path-free summaries for known Studio training jobs.
 
 Returns
 -------
 list&#91;dict&#91;str, Any&#93;&#93;
-    Registry-order job identifiers, statuses, and configurations.
+    Creation-order job identifiers, statuses, and configurations from
+    the durable manager when supplied. Historical ledger rows without a
+    configuration snapshot report ``config: null`` rather than inventing
+    what ran. Without a manager, the legacy local registry is returned.
 
 ### Function `export_training_checkpoint(job_id, job_manager)`
 Return a portable checkpoint for one Studio training job.
@@ -41882,7 +45436,7 @@ Parameters
 ----------
 job_id : str
     Training Monitor job identifier.
-job_manager : StudioJobManager or None, optional
+job_manager : StudioJobService or None, optional
     Manager used to attach verified terminal worker evidence.
 
 Returns

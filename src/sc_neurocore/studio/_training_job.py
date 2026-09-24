@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping
 from contextlib import suppress
 from typing import Any, Protocol, cast
 
-from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic
+from sc_neurocore.studio._training_datasets import _load_mnist, _make_synthetic, _seed_everything
 from sc_neurocore.studio._training_weight_capture import (
     CapturedWeightCheckpoint,
     capture_weight_checkpoint,
@@ -78,33 +78,6 @@ class _TrainingLoss(Protocol):
 
     def item(self) -> float:
         """Return the scalar loss value."""
-
-
-def _seed_everything(seed: int) -> None:
-    """Seed every generator a training run draws from.
-
-    Parameters
-    ----------
-    seed : int
-        The seed recorded in the resolved configuration.
-
-    Notes
-    -----
-    The synthetic dataset, the weight initialisation and any dropout draw from
-    the Python, NumPy and Torch global generators. Seeding one of the three
-    leaves a run that still cannot be replayed, so all three are set together,
-    before the loaders and the model exist.
-    """
-    import random
-
-    import numpy as np
-
-    random.seed(seed)
-    np.random.seed(seed)
-    if HAS_TORCH:
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():  # pragma: no cover - no CUDA in this environment
-            torch.cuda.manual_seed_all(seed)
 
 
 class TrainingJob:
@@ -323,6 +296,15 @@ class TrainingJob:
         """Return whether local or platform cancellation was requested."""
         return self._stop_event.is_set() or (self._cancelled is not None and self._cancelled())
 
+    def _finish_if_stopped(self, epoch: int, monitor: Any) -> bool:
+        """Close monitor hooks and report a stop at a training boundary."""
+        if not self._stop_requested():
+            return False
+        self.status = "stopped"
+        self._emit("stopped", {"epoch": epoch})
+        monitor.remove()
+        return True
+
     def _public_status(self) -> dict[str, Any]:
         """Return the path-free public status for this training job."""
         return {
@@ -414,9 +396,7 @@ class TrainingJob:
         )
 
         for epoch in range(start_epoch, n_epochs):
-            if self._stop_requested():
-                self.status = "stopped"
-                self._emit("stopped", {"epoch": epoch})
+            if self._finish_if_stopped(epoch, monitor):
                 return
 
             if context is not None:
@@ -429,8 +409,8 @@ class TrainingJob:
             total = 0
 
             for batch_idx, (data, targets) in enumerate(train_loader):
-                if self._stop_requested():
-                    break
+                if self._finish_if_stopped(epoch, monitor):
+                    return
 
                 data, targets = data.to(device), targets.to(device)
                 data = data.view(data.shape[0], -1)
@@ -460,6 +440,9 @@ class TrainingJob:
                         },
                     )
 
+            if self._finish_if_stopped(epoch, monitor):
+                return
+
             train_loss = epoch_loss / max(total, 1)
             train_acc = correct / max(total, 1)
 
@@ -469,6 +452,8 @@ class TrainingJob:
             eval_total = 0
             with torch.no_grad():
                 for data, targets in test_loader:
+                    if self._finish_if_stopped(epoch, monitor):
+                        return
                     data, targets = data.to(device), targets.to(device)
                     data = data.view(data.shape[0], -1)
                     data = data.unsqueeze(0).expand(n_timesteps, *data.shape)
@@ -477,6 +462,9 @@ class TrainingJob:
                     eval_loss += loss.item() * targets.shape[0]
                     eval_correct += (spike_counts.argmax(dim=1) == targets).sum().item()
                     eval_total += targets.shape[0]
+
+            if self._finish_if_stopped(epoch, monitor):
+                return
 
             val_loss = eval_loss / max(eval_total, 1)
             val_acc = eval_correct / max(eval_total, 1)
@@ -511,6 +499,8 @@ class TrainingJob:
 
             monitor.reset()
 
+        if self._finish_if_stopped(n_epochs, monitor):
+            return
         self.status = "completed"
         self.final_metrics = {
             "train_loss": round(train_loss, 6),

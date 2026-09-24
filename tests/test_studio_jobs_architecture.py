@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Studio jobs architecture contracts
+# SC-NeuroCore — Studio jobs architecture contracts
 
 """Guard the focused Studio jobs module graph and historical public facade."""
 
@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import importlib
 import pickle
+from pathlib import Path
+
+from coverage import Coverage
 
 import sc_neurocore.studio.platform.jobs as jobs
 from tests.studio_jobs_support import (
@@ -91,3 +94,22 @@ def test_studio_jobs_files_remain_below_godfile_threshold() -> None:
         assert path.is_file(), path
         line_count = len(path.read_text(encoding="utf-8").splitlines())
         assert line_count <= 300, f"{path.name}: {line_count} lines"
+
+
+def test_jobs_coverage_gate_matches_the_measured_contract() -> None:
+    """Keep zero-hit discovery, branch and subprocess measurement, and the full gate.
+
+    Spawned worker and guard interpreters are traced so real process tests
+    count; the gate stays at 100% and every uncovered line stays visible
+    until a real test reaches it.
+    """
+    root = Path(__file__).resolve().parents[1]
+    measurement = Coverage(config_file=str(root / "tests/studio_jobs.coveragerc"))
+    assert measurement.get_option("run:source_dirs") == ["src/sc_neurocore/studio/platform"]
+    assert measurement.get_option("run:branch") is True
+    assert measurement.get_option("run:patch") == ["subprocess"]
+    assert measurement.get_option("run:parallel") is True
+    assert measurement.get_option("run:sigterm") is True
+    assert measurement.get_option("report:include") == ["*/sc_neurocore/studio/platform/jobs*.py"]
+    assert measurement.get_option("report:fail_under") == 100
+    assert measurement.get_option("report:show_missing") is True
