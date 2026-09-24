@@ -98,6 +98,32 @@ class TestExactResume:
         assert resume.epochs_completed == 1
         assert resumed["final_metrics"] == uninterrupted["result"]["final_metrics"]
 
+    def test_a_concurrent_in_process_run_does_not_disturb_an_exact_resume(
+        self, tmp_path: Path
+    ) -> None:
+        """The generators are process-global, so a second run must wait its turn.
+
+        A legacy in-process run left training in this process drew from the same
+        generators while the runs below trained; the resumed run then no longer
+        matched the uninterrupted one. The background run is mid-training (its
+        first epoch has been reported) when the runs below start.
+        """
+        background = TrainingJob({**_CONFIG, "epochs": 50, "seed": 3})
+        background.start()
+        while background.metrics.get(timeout=120)["event"] != "epoch":
+            pass
+        try:
+            uninterrupted = _saved_checkpoint(tmp_path, "sj_whole_busy", _CONFIG)
+            first = _saved_checkpoint(tmp_path, "sj_first_busy", {**_CONFIG, "epochs": 1})
+            resume = resume_state_from_payload(first["checkpoint"]["resume_state"])
+            resumed = _resumed(tmp_path, "sj_resumed_busy", _CONFIG, first, resume)
+        finally:
+            assert background._thread is not None
+            background._thread.join(timeout=300)
+
+        assert background.status == "completed"
+        assert resumed["final_metrics"] == uninterrupted["result"]["final_metrics"]
+
     def test_a_warm_start_is_a_different_run_and_does_not_pretend_otherwise(
         self, tmp_path: Path
     ) -> None:

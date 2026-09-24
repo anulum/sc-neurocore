@@ -273,6 +273,11 @@ same seed and configuration produce identical metrics; a different seed
 produces a different run. The seed lives in the request rather than in ambient
 process state, so a checkpoint's seed is what actually produced it.
 
+Those generators belong to the whole process, so a process trains one job at a
+time: a run that drew from them while another trained could not be replayed.
+The process-backed route gives every job its own process and never waits; a
+second legacy in-process run waits until the first has finished.
+
 ### Warm start and exact resume are different runs
 
 `POST /api/studio/training/weight-restore/attach` takes a `mode`:

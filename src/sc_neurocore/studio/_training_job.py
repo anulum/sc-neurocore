@@ -69,6 +69,13 @@ _CELL_TYPES = SUPPORTED_CELL_TYPES
 
 _PERSISTED_TRAINING_EVENT_TYPES = frozenset({"config", "epoch", "completed", "stopped", "error"})
 
+# Python, NumPy and Torch generators are process-global. Two training runs in
+# one process that draw from them at the same time disturb each other, and
+# neither can then be replayed or resumed exactly, so a process trains one job
+# at a time. The process-backed Studio route runs each job in its own process
+# and never waits here; the legacy in-process thread and direct callers do.
+_GLOBAL_GENERATORS = threading.Lock()
+
 
 class _TrainingLoss(Protocol):
     """Typed operations used from an otherwise untyped Torch loss tensor."""
@@ -316,6 +323,11 @@ class TrainingJob:
         }
 
     def _train(self, context: StudioJobContext | None = None) -> None:
+        """Train while holding this process's global generators."""
+        with _GLOBAL_GENERATORS:
+            self._train_seeded(context)
+
+    def _train_seeded(self, context: StudioJobContext | None) -> None:
         """Execute the Torch training loop and capture terminal weights."""
         if not HAS_TORCH:
             raise RuntimeError("PyTorch not installed. pip install sc-neurocore[research]")
