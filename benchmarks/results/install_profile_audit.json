@@ -101,7 +101,8 @@
     "hdl_gen/openroad_flow/*.sh",
     "neurons/model_schemas/*.json",
     "neurons/model_schemas/*.toml",
-    "neurons/reference_trace_data/*.json"
+    "neurons/reference_trace_data/*.json",
+    "neurons/model_descriptors/*.toml"
   ],
   "passed": true,
   "polyglot_research_sources_in_wheel": [],

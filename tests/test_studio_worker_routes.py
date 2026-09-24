@@ -75,6 +75,31 @@ def _artifact_json(
     return cast(dict[str, object], decoded)
 
 
+def _response_result_without_receipt(
+    manager: StudioJobManager, data: dict[str, object], record: StudioJobRecord
+) -> dict[str, object]:
+    """Check the response receipt and return the bytes persisted by the worker."""
+
+    receipt = data["studio_job_receipt"]
+    assert isinstance(receipt, dict)
+    assert receipt["schema_version"] == "studio.job-receipt.v1"
+    assert receipt["job_id"] == record.job_id
+    assert receipt["kind"] == record.kind
+    assert receipt["status"] == "completed"
+    expected_artifacts = []
+    for artifact in record.artifacts:
+        payload = manager.read_artifact(record.job_id, artifact.relative_path).payload
+        expected_artifacts.append(
+            {
+                "relative_path": artifact.relative_path,
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "size_bytes": len(payload),
+            }
+        )
+    assert receipt["artifacts"] == expected_artifacts
+    return {key: value for key, value in data.items() if key != "studio_job_receipt"}
+
+
 def _assert_evidence_manifest(
     manager: StudioJobManager,
     record: StudioJobRecord,
@@ -189,14 +214,15 @@ def test_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
     ]
     assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
     assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
-    assert _artifact_json(_job_manager(app), record, "synthesis/result.json") == data
+    result = _response_result_without_receipt(_job_manager(app), data, record)
+    assert _artifact_json(_job_manager(app), record, "synthesis/result.json") == result
     _assert_evidence_manifest(
         _job_manager(app),
         record,
         action_kind="studio.synthesis.run",
         evidence_path="synthesis/evidence.json",
         classification="synthesis",
-        result=data,
+        result=result,
         result_path="synthesis/result.json",
         replay_route="POST /api/synth/run",
     )
@@ -214,7 +240,12 @@ def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path)
 
     assert response.status_code == 200
     data = response.json()
-    assert set(data) == {"supported", "target_provenance_matrix", "targets"}
+    assert set(data) == {
+        "studio_job_receipt",
+        "supported",
+        "target_provenance_matrix",
+        "targets",
+    }
     assert (
         data["target_provenance_matrix"]["schema_version"]
         == "studio.synthesis-target-provenance-matrix.v1"
@@ -227,14 +258,15 @@ def test_multi_target_synthesis_route_records_bounded_worker_job(tmp_path: Path)
     ]
     assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
     assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
-    assert _artifact_json(_job_manager(app), record, "synthesis/multi-target-result.json") == data
+    result = _response_result_without_receipt(_job_manager(app), data, record)
+    assert _artifact_json(_job_manager(app), record, "synthesis/multi-target-result.json") == result
     _assert_evidence_manifest(
         _job_manager(app),
         record,
         action_kind="studio.synthesis.multi_target",
         evidence_path="synthesis/multi-target-evidence.json",
         classification="synthesis",
-        result=data,
+        result=result,
         result_path="synthesis/multi-target-result.json",
         replay_route="POST /api/synth/multi-target",
     )
@@ -263,14 +295,15 @@ def test_pnr_route_records_bounded_worker_job(tmp_path: Path) -> None:
     ]
     assert (tmp_path / "jobs" / record.job_id / ".studio_process_payload.json").is_file()
     assert (tmp_path / "jobs" / record.job_id / ".studio_process_result.json").is_file()
-    assert _artifact_json(_job_manager(app), record, "synthesis/pnr-result.json") == data
+    result = _response_result_without_receipt(_job_manager(app), data, record)
+    assert _artifact_json(_job_manager(app), record, "synthesis/pnr-result.json") == result
     _assert_evidence_manifest(
         _job_manager(app),
         record,
         action_kind="studio.synthesis.pnr",
         evidence_path="synthesis/pnr-evidence.json",
         classification="synthesis",
-        result=data,
+        result=result,
         result_path="synthesis/pnr-result.json",
         replay_route="POST /api/synth/pnr",
     )

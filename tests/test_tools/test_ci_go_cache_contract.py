@@ -40,7 +40,8 @@ def test_ci_builds_rk4_neuron_parity_backends() -> None:
 
     assert "partition rk4_neurons" in run_text
     assert 'go build -buildmode=c-shared -o "lib${model}.so"' in run_text
-    assert "mojo build --emit shared-lib --target-cpu x86-64-v3" in run_text
+    assert '"$MOJO_BIN" build --emit shared-lib --target-cpu x86-64-v3' in run_text
+    assert '--mojo-command "$MOJO_BIN"' in run_text
 
 
 def test_ci_builds_both_wilson_hr_runtime_identities() -> None:

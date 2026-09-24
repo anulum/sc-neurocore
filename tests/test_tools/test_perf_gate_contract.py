@@ -76,8 +76,8 @@ def _is_pytest_skipif(decorator: ast.expr) -> bool:
     )
 
 
-def test_perf_gated_tests_are_scheduled_and_documented() -> None:
-    """Ensure every perf-gated pytest file is covered by CI and public docs."""
+def test_perf_gated_tests_are_manually_dispatched_and_documented() -> None:
+    """Ensure every perf-gated pytest file is in the opt-in workflow and docs."""
 
     workflow = _load_benchmark_workflow()
     events = _workflow_events(workflow)
@@ -91,11 +91,10 @@ def test_perf_gated_tests_are_scheduled_and_documented() -> None:
     perf_files = _perf_gated_test_files()
 
     assert perf_files
-    assert "schedule" in events
-    assert (
-        perf_job["if"]
-        == "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
-    )
+    assert "workflow_dispatch" in events
+    assert "schedule" not in events
+    assert perf_job.get("if") is None
+    assert "manual dispatch" in docs_text
     assert perf_job["env"]["SC_NEUROCORE_PERF"] == "1"
     assert perf_job["env"]["PYTHONPATH"] == "src:."
     assert "SC_NEUROCORE_PERF=1" in docs_text
@@ -106,7 +105,7 @@ def test_perf_gated_tests_are_scheduled_and_documented() -> None:
 
 
 def test_perf_gated_selector_stays_narrow() -> None:
-    """Keep the scheduled perf lane separate from full-suite local policy."""
+    """Keep the opt-in perf lane separate from full-suite local policy."""
 
     workflow = _load_benchmark_workflow()
     run_text = "\n".join(
@@ -121,7 +120,7 @@ def test_perf_gated_selector_stays_narrow() -> None:
 
 
 def test_perf_gated_selector_paths_exist() -> None:
-    """Reject stale test paths before the scheduled workflow reaches pytest."""
+    """Reject stale test paths before the opt-in workflow reaches pytest."""
 
     workflow = _load_benchmark_workflow()
     run_text = "\n".join(
