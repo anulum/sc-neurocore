@@ -144,12 +144,14 @@ def test_route_policy_registry_exports_stable_policy_inventory() -> None:
 
 
 def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:
-    from sc_neurocore.studio.app import create_app  # noqa: PLC0415
-    from starlette.routing import Route  # noqa: PLC0415
+    """The platform routes the middleware matches all have policies, and exist."""
+    from sc_neurocore.studio.api.security import _iter_leaf_routes
+    from sc_neurocore.studio.app import create_app
+    from starlette.routing import Route
 
     app = create_app()
     platform_routes: list[tuple[str, str]] = []
-    for route in app.routes:
+    for route in _iter_leaf_routes(app.routes):
         if not isinstance(route, Route):
             continue
         if route.path != "/api/health" and not route.path.startswith("/api/studio/"):
@@ -161,6 +163,8 @@ def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:
 
     missing = app.state.studio_route_policies.missing_policies(tuple(platform_routes))
 
+    assert ("GET", "/api/health") in platform_routes
+    assert len(platform_routes) > 20
     assert missing == ()
 
 
