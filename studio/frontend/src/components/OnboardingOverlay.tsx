@@ -17,7 +17,8 @@ const steps = [
   },
   {
     title: "Model Browser",
-    text: "Browse 118 neuron models by category. Click any model to load it — the trace updates live. Adjust parameters with sliders in the left panel.",
+    text: (modelCount: number) =>
+      `Browse the catalogue's ${modelCount > 0 ? `${modelCount} ` : ""}neuron models by category. Click any model to load it — the trace updates live. Adjust parameters with sliders in the left panel.`,
   },
   {
     title: "ODE Mode",
@@ -48,9 +49,13 @@ const steps = [
 /**
  * The first-run tour, until it is dismissed.
  *
+ * A step that names the catalogue takes the number of models loaded from it,
+ * so the tour never states a count the catalogue has outgrown.
+ *
+ * @param props - `modelCount`: the models loaded from the catalogue, 0 until they arrive.
  * @returns The overlay, or `null` once dismissed.
  */
-export default function OnboardingOverlay() {
+export default function OnboardingOverlay({ modelCount }: { modelCount: number }) {
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
 
@@ -109,7 +114,7 @@ export default function OnboardingOverlay() {
           {current.title}
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 20 }}>
-          {current.text}
+          {typeof current.text === "function" ? current.text(modelCount) : current.text}
         </p>
 
         {/* Progress dots */}

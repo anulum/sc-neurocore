@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### The Studio tour names the catalogue it loaded
+
+- The first-run tour's model-browser step states the number of models the
+  catalogue delivered to the browser instead of a fixed 118, and states no
+  number until the catalogue has arrived.
+
 ### Catalogue counts in the documentation follow the catalogue
 
 - The capability manifest now counts the Studio catalogue: every model the

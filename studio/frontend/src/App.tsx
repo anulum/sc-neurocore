@@ -809,7 +809,7 @@ export default function App() {
       </div>
       <StatusBar />
       <KeyboardHelp />
-      <OnboardingOverlay />
+      <OnboardingOverlay modelCount={modelCount} />
     </div>
   );
 }
