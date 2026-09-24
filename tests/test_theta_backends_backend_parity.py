@@ -19,6 +19,28 @@ def test_every_acceleration_backend_is_executable() -> None:
     assert backends.ensure_mojo_loaded()
 
 
+@pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
+def test_public_accelerator_trace_matches_default_neuron(backend: str) -> None:
+    """Direct native trace entrypoints preserve the default neuron's phase."""
+    neuron = ThetaNeuron()
+    expected, expected_spikes = neuron.simulate(120, 0.5, backend="python")
+    if backend == "rust":
+        assert backends._HAS_RUST
+        trace, spikes, final = backends.simulate_rust(120, 0.5)
+    elif backend == "julia":
+        assert backends.ensure_julia_loaded()
+        trace, spikes, final = backends.simulate_julia(0.0, 0.01, 120, 0.5)
+    elif backend == "go":
+        assert backends.ensure_go_loaded()
+        trace, spikes, final = backends.simulate_go(0.0, 0.01, 120, 0.5)
+    else:
+        assert backends.ensure_mojo_loaded()
+        trace, spikes, final = backends.simulate_mojo(0.0, 0.01, 120, 0.5)
+    _assert_phase_parity(trace, expected)
+    assert spikes == expected_spikes
+    _assert_phase_parity(final, neuron.theta)
+
+
 @pytest.mark.parametrize(("current", "expected_spikes"), _GOLDENS)
 @pytest.mark.parametrize("backend", _COMPILED_BACKENDS)
 def test_compiled_backends_match_python_golden(

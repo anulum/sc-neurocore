@@ -33,6 +33,28 @@ def test_every_acceleration_backend_is_executable() -> None:
     assert backends.ensure_mojo_loaded()
 
 
+@pytest.mark.parametrize("backend", COMPILED_BACKENDS)
+def test_public_accelerator_trace_matches_default_neuron(backend: str) -> None:
+    """Direct native trace entrypoints preserve the default neuron's result."""
+    neuron = LapicqueNeuron()
+    expected, expected_spikes = neuron.simulate(120, 2.2, backend="python")
+    if backend == "rust":
+        assert backends._HAS_RUST
+        trace, spikes, final = backends.simulate_rust(120, 2.2)
+    elif backend == "julia":
+        assert backends.ensure_julia_loaded()
+        trace, spikes, final = backends.simulate_julia(0.0, 0.0, 0.0, 1.0, 20.0, 1.0, 1.0, 120, 2.2)
+    elif backend == "go":
+        assert backends.ensure_go_loaded()
+        trace, spikes, final = backends.simulate_go(0.0, 0.0, 0.0, 1.0, 20.0, 1.0, 1.0, 120, 2.2)
+    else:
+        assert backends.ensure_mojo_loaded()
+        trace, spikes, final = backends.simulate_mojo(0.0, 0.0, 0.0, 1.0, 20.0, 1.0, 1.0, 120, 2.2)
+    np.testing.assert_allclose(trace, expected, atol=TRACE_ATOL, rtol=0.0)
+    assert spikes == expected_spikes
+    assert final == pytest.approx(neuron.v, abs=TRACE_ATOL)
+
+
 @pytest.mark.parametrize(("current", "expected_spikes"), GOLDENS)
 @pytest.mark.parametrize("backend", COMPILED_BACKENDS)
 def test_compiled_backends_match_python_golden(
