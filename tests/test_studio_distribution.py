@@ -18,7 +18,6 @@ import subprocess
 import sys
 import sysconfig
 import tarfile
-import tomllib
 import zipfile
 
 import pytest
@@ -27,6 +26,11 @@ from sc_neurocore.neurons.model_identity import catalogue_counts
 from sc_neurocore.studio.codegen import generate_experiment_script, generate_oneliner
 from sc_neurocore.studio.experiment_spec import resolve_experiment
 from sc_neurocore.studio.replay_pack import build_replay_pack
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 
 @pytest.fixture(scope="module")

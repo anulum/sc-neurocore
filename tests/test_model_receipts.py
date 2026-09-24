@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import tomllib
+import sys
 
 import pytest
 
@@ -22,6 +22,11 @@ from sc_neurocore.neurons.model_receipts import (
     load_bound_receipt,
     referenced_receipt_name,
 )
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 DESCRIPTORS = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_descriptors"
 REFERENCE = "src/sc_neurocore/neurons/reference_receipts/{name}"
