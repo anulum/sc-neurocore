@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { GraphSimResult, NIRFormat, PipelineResult, PopulationNode, ProjectionEdge } from "./api/client";
+import type { GraphSimResult, PipelineResult, PopulationNode, ProjectionEdge } from "./api/client";
 import {
   STUDIO_DEFAULT_EXCITATORY_DRIVE,
   STUDIO_DEFAULT_POPULATION_MODEL,
@@ -176,19 +176,20 @@ describe("Studio graph request builders", () => {
       populations: [population],
       projections: [projection],
     };
-    const nir: NIRFormat = {
-      edges: [],
-      format: "nir",
-      nodes: {},
-      version: "1.0",
-    };
-
     expect(studioGraphImportedState(imported)).toEqual({
       activeTab: "canvas",
       graphPopulations: [population],
       graphProjections: [projection],
     });
-    expect(nir.format).toBe("nir");
+    // The timestep, duration and seed a graph states come with it.
+    expect(studioGraphImportedState({ ...imported, dt: 0.5, duration: 40, seed: 9 })).toEqual({
+      activeTab: "canvas",
+      graphPopulations: [population],
+      graphProjections: [projection],
+      dt: 0.5,
+      duration: 40,
+      seed: 9,
+    });
     expect(studioGraphFailureState(new Error("graph offline"), "fallback")).toEqual({
       error: "graph offline",
     });

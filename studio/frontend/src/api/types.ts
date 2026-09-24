@@ -2304,13 +2304,14 @@ export interface GraphSimResult {
 }
 
 /**
- * A NIR interchange document, carried opaquely.
+ * The Studio's own graph envelope, carried opaquely.
  *
- * The nodes and edges are not narrowed here: NIR is another project's format,
- * and a type that lagged behind it would refuse documents this Studio should
- * pass through unchanged.
+ * Earlier builds exported this JSON under the name NIR, which it never was:
+ * its node types are catalogue models, not NIR primitives. It is still read on
+ * import, so a saved envelope keeps opening; a real NIR file travels as
+ * {@link NIRExportResult} bytes instead.
  */
-export interface NIRFormat {
+export interface GraphEnvelope {
   format: string;
   /**
    * Envelope version. `"2"` carries each population's label and each
@@ -2326,6 +2327,39 @@ export interface NIRFormat {
    */
   nodes: Record<string, unknown>;
   edges: unknown[];
+}
+
+/**
+ * A network written as a real NIR (HDF5) file.
+ *
+ * The bytes travel as base64 because the route answers in JSON. `notes` says
+ * what the file does not carry exactly, such as the drive, which NIR has no
+ * primitive for, and the threshold comparison NIR states differently.
+ */
+export interface NIRExportResult {
+  schema_version: "sc-neurocore.studio.nir-export.v1";
+  filename: string;
+  media_type: string;
+  nir_version: string;
+  content_base64: string;
+  notes: string[];
+}
+
+/** What an import sends: a NIR file's bytes, or a saved graph envelope. */
+export type NIRImportRequest = { content_base64: string } | GraphEnvelope;
+
+/**
+ * A network read from a NIR file or a graph envelope.
+ *
+ * `origin` says which: `studio` is a file this Studio wrote, checked tensor by
+ * tensor against the network its metadata describes; `foreign` is a file
+ * another tool wrote, read only where the graph can hold it; `studio-envelope`
+ * is the legacy JSON envelope.
+ */
+export interface NIRImportResult {
+  graph: NetworkGraph;
+  origin: "studio" | "foreign" | "studio-envelope";
+  notes: string[];
 }
 
 /** One stored workspace, as it appears in a list. */

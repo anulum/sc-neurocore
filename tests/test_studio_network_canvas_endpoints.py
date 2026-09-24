@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import base64
+
 from tests.studio_network_canvas_support import *  # noqa: F403
 
 
@@ -97,27 +99,59 @@ class TestEndpoints:
         r = client.post("/api/graph/export-nir", json={"populations": [pop], "projections": []})
         assert r.status_code == 200
         data = r.json()
-        # The route name is unchanged and operator-visible; the envelope it
-        # returns now says what it is. Renaming the route is a separate,
-        # owner-visible decision tracked as DISCOVERED-NIR-PRIMITIVES-UNMAPPED.
-        assert data["format"] == GRAPH_ENVELOPE_FORMAT
+        # The route now writes a real NIR (HDF5) file and says what NIR cannot carry.
+        assert data["schema_version"] == "sc-neurocore.studio.nir-export.v1"
+        assert data["filename"] == "network.nir"
+        assert base64.b64decode(data["content_base64"])[:8] == b"\x89HDF\r\n\x1a\n"
+        assert any("milliseconds" in note for note in data["notes"])
 
     def test_import_nir_endpoint(self, client):
         nir = {"nodes": {"a": {"type": "SCLapicqueLIFNeuron", "count": 10}}, "edges": []}
         r = client.post("/api/graph/import-nir", json=nir)
         assert r.status_code == 200
         data = r.json()
-        assert len(data["populations"]) == 1
+        # An envelope an earlier export wrote still opens, and says it was not NIR.
+        assert data["origin"] == "studio-envelope"
+        assert len(data["graph"]["populations"]) == 1
 
     def test_export_nir_endpoint_rejects_malformed_graph(self, client):
         r = client.post("/api/graph/export-nir", json={"populations": [{"count": 10}]})
         assert r.status_code == 422
-        assert r.json()["detail"] == "Invalid input"
+        # The reason travels under the key the Studio client reads out.
+        assert r.json()["detail"]["reason"]
+
+    def test_an_exported_nir_file_imports_through_the_route(self, client):
+        graph = {"populations": [create_population(count=6)], "projections": [], "dt": 1.0}
+        exported = client.post("/api/graph/export-nir", json=graph).json()
+
+        r = client.post(
+            "/api/graph/import-nir", json={"content_base64": exported["content_base64"]}
+        )
+        assert r.status_code == 200
+        assert r.json()["origin"] == "studio"
+        assert r.json()["graph"]["populations"][0]["count"] == 6
+
+    def test_import_nir_endpoint_names_why_bytes_are_refused(self, client):
+        r = client.post(
+            "/api/graph/import-nir",
+            json={"content_base64": base64.b64encode(b"not an HDF5 file").decode("ascii")},
+        )
+        assert r.status_code == 422
+        assert "not a readable NIR graph" in r.json()["detail"]["reason"]
+
+    def test_import_nir_endpoint_names_an_unreadable_envelope_format(self, client):
+        r = client.post(
+            "/api/graph/import-nir", json={"format": "nir-2.0", "nodes": {}, "edges": []}
+        )
+        assert r.status_code == 422
+        assert "unreadable interchange format" in r.json()["detail"]["reason"]
 
     def test_import_nir_endpoint_rejects_malformed_edges(self, client):
         r = client.post("/api/graph/import-nir", json={"nodes": {"a": {}}, "edges": [{}]})
         assert r.status_code == 422
-        assert r.json()["detail"] == "Invalid input"
+        assert r.json()["detail"] == {
+            "reason": "Graph envelope edge 0 source must be a non-empty string"
+        }
 
     def test_project_load_endpoint_returns_loaded_state(self, client, monkeypatch):
         """The project adapter returns a successful load result unchanged."""

@@ -6,7 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -148,11 +148,12 @@ export default function NetworkCanvas() {
     addPopulation, updatePopulation, removePopulation,
     addProjection, removeProjection,
     undoGraphEdit, redoGraphEdit, graphHistory,
-    simulateGraphAction, exportGraphNIR, loadGraphModels, runPipelineAction,
+    simulateGraphAction, exportGraphNIR, importGraphNIR, loadGraphModels, runPipelineAction,
     isSimulating, synthTarget,
   } = useStudioStore();
 
   const [tableView, setTableView] = useState(false);
+  const nirFileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => { void loadGraphModels(); }, [loadGraphModels]);
 
@@ -342,6 +343,27 @@ export default function NetworkCanvas() {
           background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
           padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
         }}>Export NIR</button>
+        <button
+          onClick={() => { nirFileInput.current?.click(); }}
+          title="Replace the canvas with the network in a NIR file, or in a graph envelope saved as .json"
+          style={{
+            background: "transparent", color: "var(--text-muted)", border: "1px solid var(--control-border)",
+            padding: "2px 8px", fontSize: 10, cursor: "pointer", borderRadius: 3,
+          }}
+        >Import NIR</button>
+        <input
+          ref={nirFileInput}
+          accept=".nir,.h5,.hdf5,application/x-hdf5,.json,application/json"
+          aria-label="Import NIR network file"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            void importGraphNIR(file);
+            event.target.value = "";
+          }}
+          style={{ display: "none" }}
+          type="file"
+        />
         <span style={{ fontSize: 9, color: "var(--text-muted)" }}>
           {graphPopulations.length} pop · {graphProjections.length} proj · drag to connect
         </span>

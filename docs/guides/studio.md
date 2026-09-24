@@ -473,8 +473,8 @@ current protocol for each frequency. The injected trace is
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate graph JSON and return structured errors |
 | POST | `/api/graph/simulate` | Run a graph through the public `Network` runtime |
-| POST | `/api/graph/export-nir` | Export validated graph JSON to NIR-named JSON |
-| POST | `/api/graph/import-nir` | Import NIR-named JSON to Studio graph JSON |
+| POST | `/api/graph/export-nir` | Write the validated graph as a NIR (HDF5) file, returned as base64 with notes |
+| POST | `/api/graph/import-nir` | Read a NIR file or a legacy graph envelope into Studio graph JSON |
 
 A graph runs what it declares. Every population names a catalogue model whose
 constructor contract accepts the parameters and the graph timestep; every

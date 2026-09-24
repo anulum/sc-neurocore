@@ -193,7 +193,10 @@ import {
 } from "../simulationExports";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 import {
+  networkNirExportNotice,
   networkNirExportPlan,
+  networkNirImportNotice,
+  networkNirImportRequest,
 } from "../networkNirExport";
 import {
   parseTrainingCheckpointPayload,
@@ -1361,15 +1364,18 @@ export function createStudioStoreActions(
   exportGraphNIR: async () => {
     const s = get();
     try {
-      const nir = await apiExportNIR({ populations: s.graphPopulations, projections: s.graphProjections });
-      networkNirExportPlan(nir).writeArtefact();
+      const exported = await apiExportNIR(
+        studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt, s.seed),
+      );
+      networkNirExportPlan(exported).writeArtefact();
+      set({ graphNotice: networkNirExportNotice(exported) });
     } catch (e) { set(studioGraphFailureState(e, "Graph NIR export failed")); }
   },
 
-  importGraphNIR: async (nir) => {
+  importGraphNIR: async (file) => {
     try {
-      const graph = await apiImportNIR(nir);
-      set(studioGraphImportedState(graph));
+      const imported = await apiImportNIR(await networkNirImportRequest(file));
+      set({ ...studioGraphImportedState(imported.graph), graphNotice: networkNirImportNotice(imported) });
     } catch (e) { set(studioGraphFailureState(e, "Graph NIR import failed")); }
   },
 

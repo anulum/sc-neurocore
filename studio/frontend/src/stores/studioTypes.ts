@@ -18,7 +18,7 @@ import type {
   SynthEstimate, MultiTargetResult, SynthToolInfo, SurrogateInfo, TrainingEpochMetrics,
   TrainingWeightRestorePlan, TrainingWeightRestoreResult, TrainingWeightAttachResult,
   TrainingWeightLiveAttachResult, PopulationNode, PopulationModelContract, ProjectionEdge, GraphSimResult,
-  DeletedProjectSummary, NIRFormat, ProjectSaveResponse, ProjectSummary, PipelineResult,
+  DeletedProjectSummary, ProjectSaveResponse, ProjectSummary, PipelineResult,
   StudioAuditExport,
   StudioAuditStatus, StudioCapability, StudioAuditQuarantineArchivePurgeResult,
   StudioAuditQuarantineArchiveResult, StudioAuditQuarantineArchiveRetentionPlan,
@@ -397,8 +397,10 @@ export interface StudioState {
    */
   validateGraphAction: () => Promise<void>;
   simulateGraphAction: () => Promise<void>;
+  /** Write the canvas network as a NIR file and say what the file does not carry. */
   exportGraphNIR: () => Promise<void>;
-  importGraphNIR: (nir: NIRFormat) => Promise<void>;
+  /** Replace the canvas with the network in a NIR file or a saved graph envelope. */
+  importGraphNIR: (file: Blob & { name: string }) => Promise<void>;
   loadSurrogates: () => Promise<void>;
   loadTrainingJobs: () => Promise<void>;
   selectTrainingJob: (jobId: string) => Promise<void>;

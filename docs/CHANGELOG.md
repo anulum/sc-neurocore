@@ -5,6 +5,35 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio network NIR export and import
+
+- `POST /api/graph/export-nir` now writes a real NIR graph (HDF5, through the
+  reference `nir` package of the `nir` extra). It used to return the Studio's
+  own JSON graph envelope, whose node types were catalogue model names, under
+  the NIR name. `SCLapicqueLIFNeuron` (profile `sc_lif`) maps to `nir.LIF` and
+  `PerfectIntegratorNeuron` to `nir.IF` with `r = 1 / c_m`; a network with any
+  other model is refused, naming the population. Projections become
+  `nir.Linear` with the realised connectivity, followed by `nir.Delay`
+  including the runtime's one-step latency. The response
+  (`sc-neurocore.studio.nir-export.v1`) carries the file as base64 and notes on
+  what NIR does not carry: the drive, the `>=` threshold comparison, and a
+  non-resting initial membrane. Run through the NIR bridge, an exported network
+  spikes exactly as the Studio runs it.
+- `POST /api/graph/import-nir` reads `{"content_base64": ...}`. A file this
+  Studio wrote is rebuilt in its original order and refused if any tensor
+  differs from the network its metadata describes. A file another tool wrote
+  is read where the graph can hold it (uniform LIF and IF populations,
+  all-to-all single-weight projections, whole-step delays) and refused by name
+  otherwise. The legacy JSON envelope still reads and is reported as
+  `studio-envelope`. Refusals answer 422 with `detail.reason`.
+- The Network Canvas downloads `network.nir` and gains **Import NIR**
+  (`.nir` files, or `.json` envelopes saved by earlier builds). Both show what
+  the file did not carry exactly or what the reading assumed.
+- Breaking: the export route's response shape changed as above, and
+  `sc_neurocore.studio.network_graph.graph_to_nir` / `nir_to_graph` are
+  renamed `graph_to_envelope` / `envelope_to_graph`, since they never produced
+  or read NIR.
+
 ### Go alpha C ABI hygiene
 
 - Removed the pre-existing `unsafe.Pointer` to integer and back conversion in

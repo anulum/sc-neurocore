@@ -3648,6 +3648,7 @@
     },
     "/api/graph/export-nir": {
       "post": {
+        "description": "Write the graph as a real NIR file, with what NIR does not carry.",
         "operationId": "api_export_nir_api_graph_export_nir_post",
         "requestBody": {
           "content": {
@@ -3688,6 +3689,7 @@
     },
     "/api/graph/import-nir": {
       "post": {
+        "description": "Read a real NIR file, or a Studio graph envelope an earlier export wrote.",
         "operationId": "api_import_nir_api_graph_import_nir_post",
         "requestBody": {
           "content": {

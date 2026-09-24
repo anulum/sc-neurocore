@@ -38162,20 +38162,20 @@ Raises
 GraphExecutionFailure
     When a resolved graph fails while running.
 
-### Function `graph_to_nir(graph)`
-Export a validated network graph to the NIR-named JSON format.
+### Function `graph_to_envelope(graph)`
+Export a validated network graph as the Studio graph envelope (JSON).
 
 Raises
 ------
 ValueError
     When the graph does not validate.
 
-### Function `nir_to_graph(nir_data)`
-Import NIR-named JSON to a network graph.
+### Function `envelope_to_graph(nir_data)`
+Import a Studio graph envelope (JSON), current or legacy, to a network graph.
 
-Every node ``type`` must be a catalogue model name: no NIR primitive is
-mapped to a model here (that mapping is a separate unit), and an unknown
-type is rejected rather than replaced by a default.
+Every node ``type`` must be a catalogue model name, and an unknown type is
+rejected rather than replaced by a default. Real NIR files are read by
+:func:`sc_neurocore.studio.network_nir.nir_file_to_graph`.
 
 A version-2 document carries the population label and each projection's
 connectivity rule with its probability, seed and autapse decision, so a
@@ -38278,6 +38278,45 @@ Raises
 ------
 GraphRejected
     With the field and message of the first validation issue.
+
+---
+
+## Module `studio.network_nir`
+
+### Class `NIRMappingRefused`
+A graph or file holds something the other side cannot represent.
+
+
+### Class `NIRExport`
+One written NIR file and what the writing could not carry exactly.
+
+- **to_public_dict**()
+  - Return the JSON projection the Studio API serves.
+
+### Function `graph_to_nir_file(graph)`
+Export a Studio network graph as a real NIR (HDF5) file.
+
+Raises
+------
+GraphRejected
+    When the graph does not validate.
+NIRMappingRefused
+    When a population's model is not an NIR primitive.
+
+### Function `nir_file_to_graph(content_base64)`
+Read an NIR file (base64 of its bytes) into a Studio network graph.
+
+Returns
+-------
+dict
+    ``graph`` (the Studio graph), ``origin`` (``studio`` or ``foreign``)
+    and ``notes`` (what the reading assumed).
+
+Raises
+------
+NIRMappingRefused
+    When the file is not NIR, holds a node the graph cannot represent, or
+    its tensors do not match the Studio network its metadata describes.
 
 ---
 

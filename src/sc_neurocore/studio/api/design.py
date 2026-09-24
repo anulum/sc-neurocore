@@ -17,14 +17,19 @@ from fastapi import APIRouter, HTTPException
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.network_execution import GraphExecutionFailure
+from sc_neurocore.studio.network_nir import (
+    NIRMappingRefused,
+    graph_to_nir_file,
+    nir_file_to_graph,
+)
 from sc_neurocore.studio.network_graph import (
+    GraphRejected,
     available_models as graph_available_models,
     create_population,
     create_projection,
     graph_issues,
-    graph_to_nir,
+    envelope_to_graph,
     population_model_contract,
-    nir_to_graph,
     simulate_graph,
 )
 from sc_neurocore.studio.project import (
@@ -251,10 +256,42 @@ def build_design_router(context: StudioApiContext) -> APIRouter:
 
     @router.post("/api/graph/export-nir")
     def api_export_nir(data: dict[str, Any]) -> Any:
-        return _safe(lambda: graph_to_nir(data))
+        """Write the graph as a real NIR file, with what NIR does not carry."""
+
+        def run() -> dict[str, object]:
+            try:
+                return graph_to_nir_file(data).to_public_dict()
+            except (GraphRejected, NIRMappingRefused) as exc:
+                raise HTTPException(status_code=422, detail={"reason": str(exc)}) from None
+
+        return _safe(run)
 
     @router.post("/api/graph/import-nir")
     def api_import_nir(data: dict[str, Any]) -> Any:
-        return _safe(lambda: nir_to_graph(data))
+        """Read a real NIR file, or a Studio graph envelope an earlier export wrote."""
+
+        def run() -> dict[str, Any]:
+            try:
+                if "content_base64" in data:
+                    return nir_file_to_graph(data["content_base64"])
+                try:
+                    graph = envelope_to_graph(data)
+                except ValueError as exc:
+                    # The envelope loader's refusals are sentences written for
+                    # the reader; the generic handler would reduce them to
+                    # "Invalid input".
+                    raise NIRMappingRefused(str(exc)) from exc
+                return {
+                    "graph": graph,
+                    "origin": "studio-envelope",
+                    "notes": [
+                        "read as a Studio graph envelope (JSON), not as NIR; export again to "
+                        "obtain a real NIR file"
+                    ],
+                }
+            except (GraphRejected, NIRMappingRefused) as exc:
+                raise HTTPException(status_code=422, detail={"reason": str(exc)}) from None
+
+        return _safe(run)
 
     return router

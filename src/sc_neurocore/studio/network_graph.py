@@ -11,7 +11,7 @@
 Population and projection factories, validation, simulation through the
 public ``Network`` runtime (:mod:`sc_neurocore.studio.network_graph_spec`
 resolves the graph, :mod:`sc_neurocore.studio.network_execution` lowers and
-runs it) and the NIR-named JSON import/export. The explicit E-I template
+runs it) and the Studio graph envelope's JSON import/export. The explicit E-I template
 (:func:`sc_neurocore.studio.network.simulate_ei_network`) is no longer used
 for graphs: a graph runs the models, parameters, rules, signed weights, delays
 and drives it declares, or is rejected with the field and reason.
@@ -47,7 +47,9 @@ from sc_neurocore.studio.network_graph_spec import (
 #: delay. It is NOT the Neuromorphic Intermediate Representation. Earlier
 #: exports named themselves ``nir`` at version ``0.1``, which was never true —
 #: no NIR primitive is mapped here, and a real NIR file cannot be read by this
-#: loader. `sc_neurocore.nir_bridge` is the surface that speaks actual NIR.
+#: loader. Real NIR files are written and read by
+#: :mod:`sc_neurocore.studio.network_nir`, which maps populations and
+#: projections to NIR primitives through the same realisation the runtime uses.
 GRAPH_ENVELOPE_FORMAT = "sc-neurocore.studio.network-graph"
 
 #: Version of the honest envelope. The loader still accepts the legacy pair
@@ -250,8 +252,8 @@ def simulate_graph(graph: object) -> dict[str, Any]:
     return simulate_graph_spec(resolve_graph(graph))
 
 
-def graph_to_nir(graph: object) -> dict[str, Any]:
-    """Export a validated network graph to the NIR-named JSON format.
+def graph_to_envelope(graph: object) -> dict[str, Any]:
+    """Export a validated network graph as the Studio graph envelope (JSON).
 
     Raises
     ------
@@ -304,12 +306,12 @@ def graph_to_nir(graph: object) -> dict[str, Any]:
     }
 
 
-def nir_to_graph(nir_data: object) -> dict[str, Any]:
-    """Import NIR-named JSON to a network graph.
+def envelope_to_graph(nir_data: object) -> dict[str, Any]:
+    """Import a Studio graph envelope (JSON), current or legacy, to a network graph.
 
-    Every node ``type`` must be a catalogue model name: no NIR primitive is
-    mapped to a model here (that mapping is a separate unit), and an unknown
-    type is rejected rather than replaced by a default.
+    Every node ``type`` must be a catalogue model name, and an unknown type is
+    rejected rather than replaced by a default. Real NIR files are read by
+    :func:`sc_neurocore.studio.network_nir.nir_file_to_graph`.
 
     A version-2 document carries the population label and each projection's
     connectivity rule with its probability, seed and autapse decision, so a
@@ -336,15 +338,15 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
             f"unreadable interchange format {declared!r}: this loader reads the "
             f"Studio network graph envelope ({GRAPH_ENVELOPE_FORMAT!r}, or the "
             f"legacy {LEGACY_GRAPH_ENVELOPE_FORMAT!r} an earlier export wrote). "
-            "It does not read the Neuromorphic Intermediate Representation; no "
-            "NIR primitive is mapped to a model here."
+            "It does not read the Neuromorphic Intermediate Representation; NIR "
+            "files are imported as NIR, not as this envelope."
         )
     raw_nodes = nir_data.get("nodes", {})
     raw_edges = nir_data.get("edges", [])
     if not isinstance(raw_nodes, Mapping):
-        raise ValueError("NIR nodes must be an object")
+        raise ValueError("Graph envelope nodes must be an object")
     if not isinstance(raw_edges, list):
-        raise ValueError("NIR edges must be a list")
+        raise ValueError("Graph envelope edges must be a list")
 
     populations = []
     projections = []
@@ -352,14 +354,13 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
     x_offset = 0
     for node_id, node in raw_nodes.items():
         if not isinstance(node_id, str) or not node_id:
-            raise ValueError("NIR node ids must be non-empty strings")
+            raise ValueError("Graph envelope node ids must be non-empty strings")
         if not isinstance(node, Mapping):
-            raise ValueError(f"NIR node {node_id!r} must be an object")
+            raise ValueError(f"Graph envelope node {node_id!r} must be an object")
         model = node.get("type", DEFAULT_MODEL)
         if not isinstance(model, str) or model not in _CLASS_TO_MODULE:
             raise ValueError(
-                f"NIR node {node_id!r} type {model!r} is not a catalogue model; "
-                "NIR primitives are not mapped to models"
+                f"Graph envelope node {node_id!r} type {model!r} is not a catalogue model"
             )
         populations.append(
             {
@@ -383,13 +384,13 @@ def nir_to_graph(nir_data: object) -> dict[str, Any]:
 
     for index, edge in enumerate(raw_edges):
         if not isinstance(edge, Mapping):
-            raise ValueError(f"NIR edge {index} must be an object")
+            raise ValueError(f"Graph envelope edge {index} must be an object")
         source = edge.get("source")
         target = edge.get("target")
         if not isinstance(source, str) or not source:
-            raise ValueError(f"NIR edge {index} source must be a non-empty string")
+            raise ValueError(f"Graph envelope edge {index} source must be a non-empty string")
         if not isinstance(target, str) or not target:
-            raise ValueError(f"NIR edge {index} target must be a non-empty string")
+            raise ValueError(f"Graph envelope edge {index} target must be a non-empty string")
         projection: dict[str, Any] = {
             "id": f"proj_{secrets.token_hex(4)}",
             "source": source,
@@ -421,8 +422,8 @@ __all__ = [
     "create_population",
     "create_projection",
     "graph_issues",
-    "graph_to_nir",
-    "nir_to_graph",
+    "envelope_to_graph",
+    "graph_to_envelope",
     "population_model_admission",
     "population_model_contract",
     "simulate_graph",

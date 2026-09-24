@@ -12,8 +12,8 @@ from typing import Any
 from sc_neurocore.studio.network_graph import (
     GRAPH_ENVELOPE_VERSION,
     LEGACY_GRAPH_ENVELOPE_VERSION,
-    graph_to_nir,
-    nir_to_graph,
+    graph_to_envelope,
+    envelope_to_graph,
 )
 
 
@@ -62,7 +62,7 @@ def test_a_round_trip_returns_the_network_that_was_exported() -> None:
     projection came back `all_to_all` — the same weights over a different graph,
     with nothing to notice it by.
     """
-    restored = nir_to_graph(graph_to_nir(_graph()))
+    restored = envelope_to_graph(graph_to_envelope(_graph()))
     projection = restored["projections"][0]
 
     assert projection["rule"] == "random"
@@ -73,7 +73,7 @@ def test_a_round_trip_returns_the_network_that_was_exported() -> None:
 
 def test_a_population_keeps_the_name_a_reader_gave_it() -> None:
     """Every label was replaced by its identifier, not only names holding LIF."""
-    restored = nir_to_graph(graph_to_nir(_graph()))
+    restored = envelope_to_graph(graph_to_envelope(_graph()))
 
     assert [p["label"] for p in restored["populations"]] == [
         "Excitatory LIF pool",
@@ -83,7 +83,7 @@ def test_a_population_keeps_the_name_a_reader_gave_it() -> None:
 
 def test_the_export_declares_the_version_that_carries_connectivity() -> None:
     """A reader must be able to tell a faithful document from a lossy one."""
-    exported = graph_to_nir(_graph())
+    exported = graph_to_envelope(_graph())
 
     assert exported["version"] == GRAPH_ENVELOPE_VERSION
     assert GRAPH_ENVELOPE_VERSION != LEGACY_GRAPH_ENVELOPE_VERSION
@@ -105,7 +105,7 @@ def test_a_version_one_document_still_imports_with_its_own_meaning() -> None:
         "edges": [{"source": "p1", "target": "p2", "weight": 0.5, "delay": 0.0}],
     }
 
-    restored = nir_to_graph(legacy)
+    restored = envelope_to_graph(legacy)
     projection = restored["projections"][0]
 
     assert projection["rule"] == "all_to_all"

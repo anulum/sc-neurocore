@@ -408,42 +408,63 @@ cannot be placed still has to be read.
 
 ## NIR Export/Import
 
-The canvas exports and imports the Studio's own graph envelope
-(`format: "sc-neurocore.studio.network-graph"`, `version: "2"`). It is a JSON
-interchange of the graph, not a conformance proof against the NIR
-specification, and the route keeps its historical name.
+**Export NIR** writes the canvas network as a real
+[NIR](https://neuroir.org/) graph: an HDF5 file, `network.nir`, written by the
+reference `nir` package (the `nir` extra). A population becomes an NIR neuron
+primitive only where its model's dynamics are that primitive's:
 
-- **Export:** populations become nodes (`type` is the catalogue model name,
-  with the `label` a reader gave the population); projections become edges
-  carrying weight, delay, and the connectivity rule with its `probability`,
-  `seed` and `autapses`.
-- **Import:** node `type` must be a catalogue model name (NIR primitives such
-  as `LIF` are not mapped to a model). The assembled graph is validated with
-  the default timestep and rejected when it would not execute.
+| Studio model | NIR primitive | Parameters |
+|---|---|---|
+| `SCLapicqueLIFNeuron` (profile `sc_lif`) | `nir.LIF` | `tau`, `r = resistance`, `v_leak = v_rest`, `v_threshold`, `v_reset` |
+| `PerfectIntegratorNeuron` | `nir.IF` | `r = 1 / c_m`, `v_threshold`, `v_reset` |
 
-**Version 1 carried neither the labels nor the connectivity.** A `random`
-projection exported and re-imported through it came back `all_to_all` — the
-same weights over a different network, with nothing to notice it by, and every
-population renamed to its identifier. A version-1 document still reads, and
-still means all-to-all, because that is what it always meant; version 2
-round-trips the network that was exported.
+A network with any other model is refused, naming the population, rather than
+written as a primitive it is not. A projection becomes `nir.Linear` holding
+the connectivity the runtime realises from its rule, probability, seed and
+autapse decision (`weight` is `[target, source]`), followed by `nir.Delay`.
+The runtime delivers a spike `delay + 1` steps after it was emitted, so the
+`nir.Delay` carries that one-step latency too. Times are in milliseconds, the
+graph's unit; NIR records no unit.
 
-```json
-{
-  "format": "sc-neurocore.studio.network-graph",
-  "version": "2",
-  "nodes": {
-    "pop_a": {"type": "SCLapicqueLIFNeuron", "count": 80, "neuron_type": "excitatory",
-              "label": "Excitatory pool"},
-    "pop_b": {"type": "SCLapicqueLIFNeuron", "count": 20, "neuron_type": "inhibitory",
-              "label": "Inhibitory pool"}
-  },
-  "edges": [
-    {"source": "pop_a", "target": "pop_b", "weight": 40.0, "delay": 1.0,
-     "rule": "random", "probability": 0.1, "seed": 7, "autapses": false}
-  ]
-}
-```
+Some of the network has no NIR form, and the export says so in its notes
+rather than dropping it silently:
+
+- a population's drive (constant current or Poisson input): the file gives the
+  population an `nir.Input` node and records the drive in metadata;
+- the threshold comparison: `SCLapicqueLIFNeuron` and the `sc_inclusive`
+  perfect integrator fire at `v >= v_threshold`, NIR's LIF and IF at
+  `v > v_threshold`;
+- a non-resting initial membrane, since NIR primitives have no initial state.
+
+Each node also carries the Studio fields it came from, as JSON under the
+`sc_neurocore.studio` metadata key, with the graph's timestep, duration and
+seed on the graph. The exported network is checked by execution: run through
+the NIR bridge (`sc_neurocore.nir_bridge.from_nir`) with the recorded drive,
+its spike raster equals the Studio's own run.
+
+**Import NIR** reads a file back:
+
+- **A file this Studio wrote** is rebuilt from its metadata, in the graph's
+  original order (seeds a graph does not state are derived from that order),
+  and then re-exported and compared tensor by tensor. A file whose tensors were
+  edited after export is refused, not silently overridden by the metadata.
+- **A file another tool wrote** is read where the graph can hold it:
+  populations of uniform `nir.LIF` or `nir.IF` neurons joined by all-to-all
+  `nir.Linear` weights of one value, with an optional `nir.Delay` of at least
+  the runtime's one-step latency. A population whose outgoing weights are
+  negative is read as inhibitory; one with both signs is refused. Any other
+  primitive, a per-neuron parameter or a non-uniform weight matrix is refused
+  by name. The graph takes the default timestep, and the notes state the
+  threshold difference and any latency the file's instantaneous edge lacks.
+- **A `.json` file** is read as the Studio graph envelope that earlier builds
+  exported under the NIR name
+  (`format: "sc-neurocore.studio.network-graph"`, versions `"1"` and `"2"`).
+  Version 1 carried neither labels nor connectivity and still means
+  all-to-all; version 2 carries both. A version-1 file therefore reads back
+  as the wrong network: every `random` projection becomes `all_to_all` and
+  every population is renamed to its identifier.
+
+A refusal answers `422` with `{"detail": {"reason": "<why>"}}`.
 
 ## API Endpoints
 
@@ -455,8 +476,8 @@ round-trips the network that was exported.
 | POST | `/api/graph/projection` | Create a projection edge |
 | POST | `/api/graph/validate` | Validate a graph; every error at once, each with the field it came from |
 | POST | `/api/graph/simulate` | Run the graph through the public Network runtime |
-| POST | `/api/graph/export-nir` | Export to the NIR-named JSON |
-| POST | `/api/graph/import-nir` | Import from the NIR-named JSON |
+| POST | `/api/graph/export-nir` | Write the graph as a NIR (HDF5) file, returned as base64 with notes on what it does not carry |
+| POST | `/api/graph/import-nir` | Read a NIR file (`content_base64`) or a legacy graph envelope back into a graph |
 
 ### POST /api/graph/population
 

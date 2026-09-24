@@ -826,8 +826,9 @@ Drag-and-drop populations (excitatory = blue, inhibitory = red) and
 connect them with projections by dragging between node handles.
 Configure weights, delays, and connection probability per projection.
 
-Export/import networks in [NIR](https://neuroir.org/) format for
-interoperability with snnTorch, Norse, and SpikingJelly.
+Export and import networks as [NIR](https://neuroir.org/) files (HDF5).
+Which models map to NIR primitives, what the file does not carry, and what an
+import refuses are listed in [Network Canvas](network-canvas.md#nir-exportimport).
 
 ### Training Monitor
 

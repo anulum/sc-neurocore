@@ -136,11 +136,21 @@ export interface StudioGraphSimulationCompletedStatePatch {
   isSimulating: false;
 }
 
-/** A whole graph was imported, replacing what was on the canvas. */
+/**
+ * A whole graph was imported, replacing what was on the canvas.
+ *
+ * The timestep, duration and seed come with it when the graph states them: a
+ * projection delay is a whole number of the graph's timesteps, and unstated
+ * seeds are derived from the graph seed, so the network is only the same
+ * network under them.
+ */
 export interface StudioGraphImportedStatePatch {
   activeTab: "canvas";
   graphPopulations: PopulationNode[];
   graphProjections: ProjectionEdge[];
+  dt?: number;
+  duration?: number;
+  seed?: number;
 }
 
 /** A graph request failed, with the message to show. */
@@ -336,14 +346,17 @@ export function studioProjectionRemovedState(
 /**
  * A graph was imported.
  *
- * @param nir - The imported network.
+ * @param graph - The imported network.
  * @returns The patch, replacing the canvas entirely.
  */
-export function studioGraphImportedState(nir: NetworkGraph): StudioGraphImportedStatePatch {
+export function studioGraphImportedState(graph: NetworkGraph): StudioGraphImportedStatePatch {
   return {
     activeTab: "canvas",
-    graphPopulations: nir.populations,
-    graphProjections: nir.projections,
+    graphPopulations: graph.populations,
+    graphProjections: graph.projections,
+    ...(graph.dt === undefined ? {} : { dt: graph.dt }),
+    ...(graph.duration === undefined ? {} : { duration: graph.duration }),
+    ...(graph.seed === undefined ? {} : { seed: graph.seed }),
   };
 }
 

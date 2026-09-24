@@ -14,7 +14,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from sc_neurocore.studio.network_graph import graph_to_nir, nir_to_graph, validate_graph
+from sc_neurocore.studio.network_graph import graph_to_envelope, envelope_to_graph, validate_graph
 
 _JSON_SCALAR = (
     st.none()
@@ -44,7 +44,7 @@ def test_fuzz_validate_graph_never_crashes_on_json_payloads(payload: object) -> 
 @settings(max_examples=120, deadline=None)
 def test_fuzz_graph_to_nir_is_structured_or_rejected(payload: object) -> None:
     try:
-        nir = graph_to_nir(payload)
+        nir = graph_to_envelope(payload)
     except ValueError as exc:
         assert str(exc)
         return
@@ -58,7 +58,7 @@ def test_fuzz_graph_to_nir_is_structured_or_rejected(payload: object) -> None:
 @settings(max_examples=120, deadline=None)
 def test_fuzz_nir_to_graph_is_structured_or_rejected(payload: object) -> None:
     try:
-        graph = nir_to_graph(payload)
+        graph = envelope_to_graph(payload)
     except ValueError as exc:
         assert str(exc)
         return
@@ -92,4 +92,4 @@ def test_validate_graph_reports_malformed_population_and_projection() -> None:
 )
 def test_nir_to_graph_rejects_malformed_payloads(payload: dict[str, object]) -> None:
     with pytest.raises(ValueError):
-        nir_to_graph(payload)
+        envelope_to_graph(payload)

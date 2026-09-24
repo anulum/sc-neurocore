@@ -15,7 +15,9 @@ import type {
   GraphSimResult,
   GraphValidation,
   PopulationModelContract,
-  NIRFormat,
+  NIRExportResult,
+  NIRImportRequest,
+  NIRImportResult,
   ProjectionRule,
 } from "./types";
 
@@ -91,19 +93,20 @@ export const simulateGraph = (graph: NetworkGraph) =>
   post<GraphSimResult>("/graph/simulate", graph);
 
 /**
- * Export a graph as NIR, the interchange format other tools read.
+ * Export a graph as a real NIR file, the interchange format other tools read.
  *
- * @param graph - The graph to export.
- * @returns The NIR document.
+ * @param graph - The graph to export, with its timestep, duration and seed.
+ * @returns The file's bytes as base64, and what the file does not carry.
  */
 export const exportNIR = (graph: NetworkGraph) =>
-  post<NIRFormat>("/graph/export-nir", graph);
+  post<NIRExportResult>("/graph/export-nir", graph);
 
 /**
- * Import a NIR document as a graph.
+ * Import a NIR file, or a saved graph envelope, as a graph.
  *
- * @param nir - The NIR document.
- * @returns The graph it describes.
+ * @param request - The file's bytes as base64, or the envelope.
+ * @returns The graph it describes, where it came from, and what the reading
+ *   assumed.
  */
-export const importNIR = (nir: NIRFormat) =>
-  post<NetworkGraph>("/graph/import-nir", nir);
+export const importNIR = (request: NIRImportRequest) =>
+  post<NIRImportResult>("/graph/import-nir", request);

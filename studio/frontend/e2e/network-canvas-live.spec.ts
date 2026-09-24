@@ -113,6 +113,36 @@ test("the canvas builds a graph the live server validates and runs", async ({ pa
   expect(body.spec?.graph_sha256).toMatch(/^[0-9a-f]{64}$/);
 });
 
+test("a network exported as NIR reads back as the same network", async ({ page }, testInfo) => {
+  await openCanvas(page);
+  await addTwoConnectedPopulations(page);
+
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export NIR", exact: true }).click();
+  const exported = await download;
+  expect(exported.suggestedFilename()).toBe("network.nir");
+  const path = testInfo.outputPath("network.nir");
+  await exported.saveAs(path);
+  // A real NIR file is HDF5, whatever the route's JSON wrapped it in.
+  expect([...readFileSync(path).subarray(0, 8)]).toEqual([
+    0x89, 0x48, 0x44, 0x46, 0x0d, 0x0a, 0x1a, 0x0a,
+  ]);
+  await expect(page.getByRole("status").filter({ hasText: "Exported network.nir" }))
+    .toContainText("Not carried exactly");
+
+  // Change the canvas, then read the file back: the import replaces it.
+  await page.getByRole("button", { name: "+ Exc", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(3);
+  const imported = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/graph/import-nir",
+  );
+  await page.getByLabel("Import NIR network file").setInputFiles(path);
+  expect((await imported).ok()).toBe(true);
+  await expect(page.locator(".react-flow__node")).toHaveCount(2);
+  await expect(page.getByRole("status").filter({ hasText: "Imported" }))
+    .toContainText("every tensor matched its recorded network");
+});
+
 test("every toolbar control has an accessible name the browser can compute", async ({
   page,
 }) => {
