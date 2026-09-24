@@ -191,9 +191,32 @@ def test_embedded_and_unvalidated_boundaries_refuse(tmp_path: Path) -> None:
     assert list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.parametrize("nested", ['{"a": {}}', "[[]]", '{"storage_uid": [1]}'])
+def test_any_nesting_inside_the_flat_boundary_object_is_refused(nested: str) -> None:
+    """The boundary is one flat object; a nested value is refused before parsing."""
+    with pytest.raises(ValueError, match="nesting"):
+        build_default_studio_runtime_settings(
+            {
+                "SC_NEUROCORE_STUDIO_STORAGE_MODE": "isolated",
+                "SC_NEUROCORE_STUDIO_STORAGE_BOUNDARY": nested,
+            }
+        )
+
+
+def test_brackets_and_escaped_quotes_inside_strings_are_not_nesting(tmp_path: Path) -> None:
+    """Only structure counts: a workspace name may contain brackets and quotes."""
+    payload = _configuration(tmp_path)
+    payload["workspace"] = 'lab [{"a"}] \\ ]'
+
+    assert _settings(payload).storage_boundary is not None
+
+
 def test_native_parser_depth_failure_is_a_configuration_error() -> None:
-    """Actual interpreter nesting overflow remains an explicit startup refusal."""
-    # CPython's C JSON decoder limit is separate from sys.getrecursionlimit().
+    """Deep nesting is refused by the boundary's own limit on every interpreter.
+
+    CPython 3.12's JSON decoder raised RecursionError at this depth and 3.14's
+    decodes it, so the refusal no longer depends on which one runs.
+    """
     depth = 10_000
     with pytest.raises(ValueError, match="nesting"):
         build_default_studio_runtime_settings(

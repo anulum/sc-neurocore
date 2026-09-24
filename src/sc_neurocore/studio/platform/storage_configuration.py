@@ -104,6 +104,34 @@ def _canonical(path: Path) -> bool:
     return not any(component.is_symlink() for component in (path, *path.parents))
 
 
+# The boundary is one flat JSON object. Deeper input is refused before it is
+# parsed, rather than left to the interpreter's decoder limit: CPython 3.12
+# raises RecursionError on 10,000 nested arrays, CPython 3.14 decodes them.
+_BOUNDARY_NESTING_DEPTH = 1
+
+
+def _nesting_depth(text: str) -> int:
+    """Return the deepest array/object nesting of JSON text, ignoring strings."""
+    depth = deepest = 0
+    in_string = escaped = False
+    for char in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+            deepest = max(deepest, depth)
+        elif char in "]}":
+            depth -= 1
+    return deepest
+
+
 def _unique_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
     for key, value in pairs:
@@ -133,8 +161,7 @@ def parse_storage_boundary(value: str | None) -> StorageBoundaryConfiguration | 
     """
     if value is None:
         return None
-    try:
-        json.loads(value, object_pairs_hook=_unique_fields)
-        return StorageBoundaryConfiguration.model_validate_json(value, strict=True)
-    except RecursionError as exc:
-        raise ValueError("storage boundary JSON nesting is invalid") from exc
+    if _nesting_depth(value) > _BOUNDARY_NESTING_DEPTH:
+        raise ValueError("storage boundary JSON nesting is invalid")
+    json.loads(value, object_pairs_hook=_unique_fields)
+    return StorageBoundaryConfiguration.model_validate_json(value, strict=True)
