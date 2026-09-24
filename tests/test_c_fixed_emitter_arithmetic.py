@@ -27,9 +27,10 @@ class TestArithmetic:
         expr, *_ = _c("a / 4.0", state={"a": "s->a"})
         assert "fxmul(" in expr and "64" in expr and "sc_wrap" not in expr
 
-    def test_div_by_variable_uses_shift_divide(self):
+    def test_div_by_variable_scales_without_signed_left_shift(self):
         expr, *_ = _c("a / b", state={"a": "s->a", "b": "s->b"})
-        assert "sc_wrap(" in expr and "<< 8" in expr and "/" in expr
+        assert "sc_wrap(" in expr and "* 256" in expr and "/" in expr
+        assert "<<" not in expr
 
     def test_unary_negate(self):
         expr, *_ = _c("-a", state={"a": "s->a"})
