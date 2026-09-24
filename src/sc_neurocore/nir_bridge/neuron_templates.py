@@ -116,3 +116,11 @@ NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
         "default_params": {"r": 1.0, "v_threshold": 1.0, "v_reset": 0.0},
     },
 }
+
+#: Templates the Studio's network lowering selects for catalogue models. They
+#: are not NIR node types: no NIR import produces them, and the dict importer
+#: refuses them (``sc_lif`` is a per-step map, not a derivative).
+STUDIO_PROFILE_TEMPLATES: frozenset[str] = frozenset({"sc_lif", "sc_if"})
+
+#: The NIR point-neuron types, every template that is not a Studio profile.
+NIR_PRIMITIVE_TEMPLATES: frozenset[str] = frozenset(NEURON_TEMPLATES) - STUDIO_PROFILE_TEMPLATES
