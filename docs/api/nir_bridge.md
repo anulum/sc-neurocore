@@ -63,6 +63,14 @@ The resulting `NeuronGraph` is consumed directly by
         - SCSubgraphNode
         - SCMultiPortSubgraphNode
 
+::: sc_neurocore.nir_bridge.interchange_notes
+    options:
+      show_root_heading: true
+      members:
+        - InterchangeNote
+        - export_notes
+        - read_nir_file_version
+
 ### Recurrent Edge Handling
 
 Graphs with cycles (feedback connections) are automatically handled by
@@ -82,6 +90,37 @@ wrapped as `ValueError` on malformed or unreadable NIR payloads. Parsed graphs
 must expose mapping-like nodes and sequence-like edges, all node names and edge
 endpoints must be non-empty strings, and every edge endpoint must reference an
 existing node before the graph is lowered.
+
+### Interchange Notes
+
+NIR describes a graph and its parameters but not everything an executable
+network needs. `from_nir()` records each point where the import was not exact
+in `network.interchange_notes`, a list of `InterchangeNote(kind, subject,
+detail)`:
+
+| Kind | Recorded when |
+| --- | --- |
+| `assumed` | the timestep `dt` (NIR stores none); the reset rule of spiking nodes; a recurrent edge realised with a one-timestep delay |
+| `approximated` | a delay that is not a whole number of timesteps; an `Input` or `Output` with more than one port (only the first is used); a multi-port subgraph used as one node |
+| `not-carried` | graph metadata, which is not imported |
+
+`reset_mode` must be `"reset"` (the NIR convention) or `"subtract"`; any other
+value raises `ValueError`. A network read from a `.nir` file keeps the NIR
+version the file records in `network.nir_version` (`None` for an in-memory
+graph or a file that stores no version). `sc-neurocore compile-nir` prints the
+notes, and the Studio's `/api/nir/compile` returns them as
+`interchange_notes` together with `nir_version`.
+
+Exporting cannot carry everything either:
+`sc_neurocore.nir_bridge.interchange_notes.export_notes(network)` lists what
+`to_nir()` does not write -- the timestep, a subtract reset, node state and
+pooling input shapes. A node type the bridge cannot realise is still refused
+rather than noted.
+
+### Other Interchange Formats
+
+NeuroML and SONATA are supported for import only (see the adapters); the
+library has no NeuroML or SONATA exporter, and NIR is the only export format.
 
 ### High-Level Hardware Path
 

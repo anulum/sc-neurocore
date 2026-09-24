@@ -7149,7 +7149,7 @@ subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
     Top-level command registry.
 
 ### Function `run_compile_nir(args)`
-Compile a NIR or ONNX model to Verilog RTL artefacts.
+Compile a NIR file to Verilog RTL artefacts.
 
 Parameters
 ----------
@@ -7160,6 +7160,23 @@ Returns
 -------
 int
     Zero on success, otherwise one for invalid command input.
+
+### Function `compile_loaded_nir_network(network, args)`
+Lower an imported NIR network to RTL artefacts, as ``compile-nir`` does.
+
+Parameters
+----------
+network : SCNetwork
+    The network ``from_nir`` imported; a graph the Python API accepts but
+    no ``.nir`` file can express (a multi-port subgraph joined without port
+    addressing) reaches the same pipeline this way.
+args : argparse.Namespace
+    Parsed ``compile-nir`` arguments, already validated.
+
+Returns
+-------
+int
+    Zero once every artefact has been written.
 
 ### Function `run_compile(args)`
 Compile an ODE equation to Verilog RTL and optional synthesis.
@@ -29705,6 +29722,70 @@ Validate measured hardware noise and prepare it for simulation replay.
 
 ---
 
+## Module `nir_bridge.interchange_notes`
+
+### Class `InterchangeNote`
+One point where crossing the NIR boundary was not exact.
+
+Parameters
+----------
+kind:
+    ``assumed``, ``approximated`` or ``not-carried``.
+subject:
+    The graph (``""``) or the dotted path of the node or edge concerned.
+detail:
+    What happened, in words a user can check against the source graph.
+
+- **to_dict**()
+  - Return the note as a JSON-compatible mapping.
+
+### Function `read_nir_file_version(path)`
+Return the NIR version a ``.nir`` file records, if it records one.
+
+Parameters
+----------
+path:
+    The ``.nir`` (HDF5) file.
+
+Returns
+-------
+str or None
+    The version string, or ``None`` when the file stores no version.
+
+### Function `import_notes(graph, network)`
+Record what importing ``graph`` as ``network`` assumed or approximated.
+
+Parameters
+----------
+graph:
+    The NIR graph that was imported.
+network:
+    The parsed ``SCNetwork``, before any execution.
+dt:
+    The timestep the importer used.
+reset_mode:
+    The reset rule the importer gave spiking nodes.
+
+Returns
+-------
+list of InterchangeNote
+    Graph-level notes first, then per-node and per-edge notes in graph order.
+
+### Function `export_notes(network)`
+Record what exporting ``network`` to NIR does not carry.
+
+Parameters
+----------
+network:
+    The ``SCNetwork`` about to be exported.
+
+Returns
+-------
+list of InterchangeNote
+    Graph-level notes first, then per-node notes.
+
+---
+
 ## Module `nir_bridge.neuromorphic_adapters`
 
 ### Class `NeuromorphicAdapterPackage`
@@ -30048,7 +30129,15 @@ reset_mode : str
 Returns
 -------
 SCNetwork
-    Executable network with topologically sorted forward pass.
+    Executable network with topologically sorted forward pass. Its
+    ``interchange_notes`` list what the import assumed or approximated,
+    and ``nir_version`` is the version a ``.nir`` file records.
+
+Raises
+------
+ValueError
+    ``dt`` is not a positive finite number, ``reset_mode`` is neither
+    ``"reset"`` nor ``"subtract"``, or the graph is malformed.
 
 ---
 
@@ -37990,10 +38079,15 @@ GraphRejected
 ### Function `compile_nir_graph(graph)`
 Lower a parsed NIR graph to synthesisable Verilog and return the artefacts.
 
+The result carries ``interchange_notes``: what importing the graph assumed
+(the timestep, the reset rule, recurrent delays) or approximated.
+
 ### Function `compile_nir_file_bytes(data)`
 Compile a standard ``.nir`` (HDF5) document supplied as raw bytes.
 
-Options are forwarded to :func:`compile_nir_graph`.
+Options are forwarded to :func:`compile_nir_graph`. The result also
+records ``nir_version``, the NIR version the document stores (``None``
+when it stores none).
 
 ---
 

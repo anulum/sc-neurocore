@@ -21,7 +21,10 @@ try:
 except ImportError as e:
     raise ImportError("pip install nir") from e
 
+from .interchange_notes import InterchangeNote, import_notes, read_nir_file_version
 from .node_map import map_node
+
+_RESET_MODES = ("reset", "subtract")
 
 
 @dataclass
@@ -125,6 +128,11 @@ class SCNetwork:
     _topo_order: list[str] | None = None
     # Maps delay_node_name → source_node_name for recurrent connections
     _recurrent_map: dict[str, str] = field(default_factory=dict)
+    # How the graph was imported, and what that import assumed or approximated.
+    dt: float = 1.0
+    reset_mode: str = "reset"
+    nir_version: str | None = None
+    interchange_notes: list[InterchangeNote] = field(default_factory=list)
 
     @classmethod
     def from_nir(cls, source: Any, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:
@@ -331,19 +339,32 @@ def from_nir(source, dt: float = 1.0, reset_mode: str = "reset") -> SCNetwork:  
     Returns
     -------
     SCNetwork
-        Executable network with topologically sorted forward pass.
+        Executable network with topologically sorted forward pass. Its
+        ``interchange_notes`` list what the import assumed or approximated,
+        and ``nir_version`` is the version a ``.nir`` file records.
+
+    Raises
+    ------
+    ValueError
+        ``dt`` is not a positive finite number, ``reset_mode`` is neither
+        ``"reset"`` nor ``"subtract"``, or the graph is malformed.
     """
     _validate_import_options(dt, reset_mode)
 
+    version: str | None = None
     if isinstance(source, (str, Path)):
         graph = _read_nir_file(source)
+        version = read_nir_file_version(source)
     elif isinstance(source, nir.NIRGraph):
         graph = source
     else:
         raise TypeError(f"Expected NIRGraph or path, got {type(source)}")
 
     _validate_nir_graph_boundary(graph)
-    return _parse_graph(graph, dt=dt, reset_mode=reset_mode)
+    network = _parse_graph(graph, dt=dt, reset_mode=reset_mode)
+    network.nir_version = version
+    network.interchange_notes = import_notes(graph, network, dt=dt, reset_mode=reset_mode)
+    return network
 
 
 def _validate_import_options(dt: float, reset_mode: str) -> None:
@@ -351,6 +372,8 @@ def _validate_import_options(dt: float, reset_mode: str) -> None:
         raise ValueError("NIR import dt must be a finite number")
     if float(dt) <= 0:
         raise ValueError("NIR import dt must be positive")
+    if reset_mode not in _RESET_MODES:
+        raise ValueError(f"NIR import reset_mode must be one of {_RESET_MODES}, got {reset_mode!r}")
 
 
 def _read_nir_file(source: str | Path) -> Any:
@@ -422,4 +445,6 @@ def _parse_graph(
         edges=edges,
         input_nodes=input_nodes,
         output_nodes=output_nodes,
+        dt=float(dt),
+        reset_mode=reset_mode,
     )

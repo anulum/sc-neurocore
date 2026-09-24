@@ -22,6 +22,7 @@ import tempfile
 from typing import Any, Literal
 
 from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
+from sc_neurocore.nir_bridge.interchange_notes import read_nir_file_version
 
 
 def compile_nir_graph(
@@ -34,7 +35,11 @@ def compile_nir_graph(
     source_kind: Literal["lfsr", "sobol"] = "lfsr",
     target: str = "artix7",
 ) -> dict[str, Any]:
-    """Lower a parsed NIR graph to synthesisable Verilog and return the artefacts."""
+    """Lower a parsed NIR graph to synthesisable Verilog and return the artefacts.
+
+    The result carries ``interchange_notes``: what importing the graph assumed
+    (the timestep, the reset rule, recurrent delays) or approximated.
+    """
     network = from_nir(graph, dt=dt)
     neuron_graph = from_scnetwork(network, dt=dt)
     result = compile_network_to_fpga(
@@ -55,13 +60,16 @@ def compile_nir_graph(
         "weight_rom": result.weight_rom,
         "source_modules": dict(result.scnir_source_modules),
         "warnings": list(result.warnings),
+        "interchange_notes": [note.to_dict() for note in network.interchange_notes],
     }
 
 
 def compile_nir_file_bytes(data: bytes, **options: Any) -> dict[str, Any]:
     """Compile a standard ``.nir`` (HDF5) document supplied as raw bytes.
 
-    Options are forwarded to :func:`compile_nir_graph`.
+    Options are forwarded to :func:`compile_nir_graph`. The result also
+    records ``nir_version``, the NIR version the document stores (``None``
+    when it stores none).
     """
     if not data:
         raise ValueError("Empty NIR upload: no .nir bytes were provided.")
@@ -78,6 +86,7 @@ def compile_nir_file_bytes(data: bytes, **options: Any) -> dict[str, Any]:
         with open(path, "wb") as sink:
             sink.write(data)
         graph = nir.read(path)
+        version = read_nir_file_version(path)
     finally:
         os.unlink(path)
-    return compile_nir_graph(graph, **options)
+    return {**compile_nir_graph(graph, **options), "nir_version": version}

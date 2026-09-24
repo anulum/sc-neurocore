@@ -90,7 +90,7 @@ def _add_output_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def run_compile_nir(args: argparse.Namespace) -> int:
-    """Compile a NIR or ONNX model to Verilog RTL artefacts.
+    """Compile a NIR file to Verilog RTL artefacts.
 
     Parameters
     ----------
@@ -114,25 +114,49 @@ def run_compile_nir(args: argparse.Namespace) -> int:
         return 1
     import os
 
-    import nir as nir_lib
-
-    from sc_neurocore.ir import SCNIR_HDL_HANDOFF_MANIFEST_VERSION, write_scnir
-    from sc_neurocore.nir_bridge import compile_network_to_fpga, from_nir, from_scnetwork
+    from sc_neurocore.nir_bridge import from_nir
 
     ext = os.path.splitext(args.model)[1].lower()
     if ext != ".nir":
         print(f"Error: compile-nir supports .nir files, got '{ext}'")
         return 1
 
+    print(f"[1/4] Loading model: {args.model}")
+    # ``from_nir`` reads NIR files (HDF5) with ``nir.read``; it does not read ONNX.
+    network = from_nir(args.model, dt=args.dt)
+
+    print(f"  Loaded {len(network.topo_order)} nodes (NIR file version {network.nir_version})")
+    for note in network.interchange_notes:
+        subject = f" {note.subject}:" if note.subject else ""
+        print(f"  Interchange {note.kind}:{subject} {note.detail}")
+
+    return compile_loaded_nir_network(network, args)
+
+
+def compile_loaded_nir_network(network: Any, args: argparse.Namespace) -> int:
+    """Lower an imported NIR network to RTL artefacts, as ``compile-nir`` does.
+
+    Parameters
+    ----------
+    network : SCNetwork
+        The network ``from_nir`` imported; a graph the Python API accepts but
+        no ``.nir`` file can express (a multi-port subgraph joined without port
+        addressing) reaches the same pipeline this way.
+    args : argparse.Namespace
+        Parsed ``compile-nir`` arguments, already validated.
+
+    Returns
+    -------
+    int
+        Zero once every artefact has been written.
+    """
+    import os
+
+    from sc_neurocore.ir import SCNIR_HDL_HANDOFF_MANIFEST_VERSION, write_scnir
+    from sc_neurocore.nir_bridge import compile_network_to_fpga, from_scnetwork
+
     data_width = int(args.data_width)
     fraction = int(args.fraction)
-
-    print(f"[1/4] Loading model: {args.model}")
-    # ``nir.read`` reads NIR files (HDF5); it does not read ONNX models.
-    graph = nir_lib.read(args.model)
-    network = from_nir(graph, dt=args.dt)
-
-    print(f"  Loaded {len(network.topo_order)} nodes")
 
     print("[2/4] Building NeuronGraph...")
     neuron_graph = from_scnetwork(network, dt=args.dt)

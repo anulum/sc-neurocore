@@ -120,8 +120,8 @@ class TestThresholdAndReset:
         # v was 2.0 (r*I*dt = 1*2*1 = 2.0), spiked, subtract: 2.0 - 0.5 = 1.5
         assert sc.v[0] == pytest.approx(1.5)
 
-    def test_invalid_reset_mode_still_works(self) -> None:
-        """Unknown reset_mode falls through to default (reset) behavior."""
+    def test_invalid_reset_mode_is_refused(self) -> None:
+        """An unknown reset_mode is refused rather than silently treated as reset."""
 
         nodes = {
             "input": nir.Input(input_type={"input": np.array([1])}),
@@ -136,8 +136,5 @@ class TestThresholdAndReset:
         }
         edges = [("input", "lif"), ("lif", "output")]
         graph = nir.NIRGraph(nodes=nodes, edges=edges)
-        net = from_nir(graph, dt=1.0, reset_mode="unknown")
-        out = net.step({"input": np.array([2.0])})
-        assert out["output"][0] == 1.0
-        # Unknown mode falls through to else (reset mode)
-        assert net.nodes["lif"].v[0] == pytest.approx(0.0)
+        with pytest.raises(ValueError, match="reset_mode must be one of"):
+            from_nir(graph, dt=1.0, reset_mode="unknown")

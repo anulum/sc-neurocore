@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 4986
+    "test_files": 4988
   },
   "documentation": {
     "public_pages": [
@@ -6376,6 +6376,7 @@
       "tests/test_nir_bridge/test_fpga_scnir_manifest.py",
       "tests/test_nir_bridge/test_fpga_scnir_metadata.py",
       "tests/test_nir_bridge/test_framework_parameter_encoding.py",
+      "tests/test_nir_bridge/test_interchange_notes.py",
       "tests/test_nir_bridge/test_neuron_graph_architecture.py",
       "tests/test_nir_bridge/test_neuron_graph_builder_validation.py",
       "tests/test_nir_bridge/test_neuron_graph_connection_validation.py",
@@ -6387,6 +6388,7 @@
       "tests/test_nir_bridge/test_neuron_graph_metadata_validation.py",
       "tests/test_nir_bridge/test_nir_graph_ci_gate.py",
       "tests/test_nir_bridge/test_node_map.py",
+      "tests/test_nir_bridge/test_numeric_round_trip.py",
       "tests/test_nir_bridge/test_package_api.py",
       "tests/test_nir_bridge/test_parser.py",
       "tests/test_nir_bridge/test_rockpool_interop.py",

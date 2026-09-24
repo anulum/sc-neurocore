@@ -98,7 +98,9 @@ class TestCompileNirCommand:
         model_path.write_bytes(b"fixture")
         output = tmp_path / "compiled"
         fake_nir = fake_module("nir", read=lambda _path: object())
-        network = types.SimpleNamespace(topo_order=["input", "lif"])
+        network = types.SimpleNamespace(
+            topo_order=["input", "lif"], nir_version="1.0", interchange_notes=[]
+        )
         neuron_graph = types.SimpleNamespace(
             total_neurons=1,
             total_synapses=0,
@@ -833,35 +835,39 @@ class TestCompileNirCommand:
     def test_compile_nir_audits_exact_multiport_multioutput_hierarchy(
         self,
         tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        nir = pytest.importorskip("nir")
-        model_path = tmp_path / "nested_multiport_multioutput_fixture.nir"
-        model_path.write_bytes(b"synthetic multi-port fixture")
-        monkeypatch.setattr(
-            nir,
-            "read",
-            lambda _path: _nested_multiport_multioutput_lif_nir_graph(),
-        )
+        """A multi-port subgraph joined without port addressing audits exactly.
+
+        No ``.nir`` file can express this graph -- the upstream reader's type
+        inference refuses it -- so it enters as a Python graph through
+        ``from_nir`` and is lowered by the same pipeline ``compile-nir`` runs
+        after loading a file.
+        """
+        from sc_neurocore.cli.commands.compile import compile_loaded_nir_network
+        from sc_neurocore.cli.parser import build_parser
+        from sc_neurocore.nir_bridge import from_nir
+
         out_dir = tmp_path / "nested_multiport_multioutput_compiled"
-
-        rc = run_cli(
-            "compile-nir",
-            str(model_path),
-            "--module-name",
-            "nested_multiport_multioutput_net",
-            "--T",
-            "512",
-            "--source-kind",
-            "sobol",
-            "--base-seed",
-            "81",
-            "--audit-handoff",
-            "-o",
-            str(out_dir),
+        args = build_parser().parse_args(
+            [
+                "compile-nir",
+                str(tmp_path / "python-graph.nir"),
+                "--module-name",
+                "nested_multiport_multioutput_net",
+                "--T",
+                "512",
+                "--source-kind",
+                "sobol",
+                "--base-seed",
+                "81",
+                "--audit-handoff",
+                "-o",
+                str(out_dir),
+            ]
         )
+        network = from_nir(_nested_multiport_multioutput_lif_nir_graph(), dt=args.dt)
 
-        assert rc == 0
+        assert compile_loaded_nir_network(network, args) == 0
         document = json.loads((out_dir / "scnir_document.json").read_text(encoding="utf-8"))
         validate_scnir_dict(document)
         expected_ports = [
