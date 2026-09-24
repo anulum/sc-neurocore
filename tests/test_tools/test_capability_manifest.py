@@ -16,6 +16,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
+import pytest
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -417,3 +419,83 @@ def test_architecture_map_completeness_gate_rejects_unmapped_subpackage() -> Non
         )
         with pytest.raises(RuntimeError, match="missing a domain"):
             tool.build_architecture_map(repo)
+
+
+def test_the_catalogue_count_is_the_registry_the_studio_lists() -> None:
+    from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+
+    manifest = _load_tool().build_capability_manifest(_repo_root())
+
+    assert manifest["models"]["catalogue"] == sorted(_CLASS_TO_MODULE)
+    assert manifest["counts"]["studio_catalogue_models"] == len(_CLASS_TO_MODULE)
+
+
+def test_the_catalogue_is_read_only_from_the_registry_literal(tmp_path: Path) -> None:
+    tool = _load_tool()
+    registry = tmp_path / "__init__.py"
+    assert tool._catalogue_models(registry) == []
+
+    _write_file(registry, '"""Models."""\n_OTHER = {"Ignored": "ignored"}\n')
+    assert tool._catalogue_models(registry) == []
+
+    _write_file(
+        registry,
+        "\n".join(
+            (
+                "__all__: list[str] = []",
+                "_EXTRA = {}",
+                '_CLASS_TO_MODULE = {"BetaNeuron": "beta", "AlphaNeuron": "alpha", **_EXTRA}',
+            )
+        ),
+    )
+    assert tool._catalogue_models(registry) == ["AlphaNeuron", "BetaNeuron"]
+
+
+def _with_bound_page(repo: Path, count: str = "studio_catalogue_models") -> Path:
+    _write_portable_fixture(repo)
+    _write_file(
+        repo / "src/portable_project/models/__init__.py",
+        '_CLASS_TO_MODULE = {"PortableModel": "portable", "OtherModel": "other"}\n',
+    )
+    page = repo / "docs/guide.md"
+    _write_file(page, f"The catalogue holds <!-- count:{count} -->1<!-- /count --> models.\n")
+    return page
+
+
+def test_a_bound_count_is_rewritten_and_a_stale_one_fails_the_check() -> None:
+    tool = _load_tool()
+    with _tempdir() as repo:
+        page = _with_bound_page(repo)
+        config = tool.load_config(repo)
+
+        tool.refresh_outputs(repo, config=config, update_readme=False)
+        with pytest.raises(RuntimeError, match="stale bound count: docs/guide.md"):
+            tool.assert_outputs_current(repo, config=config)
+        assert "-->1<!--" in page.read_text(encoding="utf-8")
+
+        tool.refresh_outputs(repo, config=config)
+        assert page.read_text(encoding="utf-8") == (
+            "The catalogue holds <!-- count:studio_catalogue_models -->2<!-- /count --> models.\n"
+        )
+        tool.assert_outputs_current(repo, config=config)
+        assert "| Studio catalogue models | 2 |" in (repo / "README.md").read_text(encoding="utf-8")
+
+
+def test_a_binding_to_a_count_the_manifest_lacks_is_refused() -> None:
+    tool = _load_tool()
+    with _tempdir() as repo:
+        _with_bound_page(repo, count="no_such_count")
+        with pytest.raises(
+            RuntimeError, match="docs/guide.md binds an unknown count: no_such_count"
+        ):
+            tool.refresh_outputs(repo, config=tool.load_config(repo))
+
+
+def test_the_published_studio_pages_bind_the_catalogue_count() -> None:
+    manifest = _load_tool().build_capability_manifest(_repo_root())
+    binding = (
+        "<!-- count:studio_catalogue_models -->"
+        f"{manifest['counts']['studio_catalogue_models']}<!-- /count -->"
+    )
+    for page in ("docs/guides/studio.md", "docs/tutorials/studio_quickstart.md"):
+        assert binding in (_repo_root() / page).read_text(encoding="utf-8"), page

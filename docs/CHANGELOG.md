@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Catalogue counts in the documentation follow the catalogue
+
+- The capability manifest now counts the Studio catalogue: every model the
+  registry maps, which is what the Studio model browser lists. The README
+  inventory gains a "Studio catalogue models" row.
+- A documentation page states a count by binding it: the number sits between
+  an inline `<!-- count:NAME -->` and `<!-- /count -->` pair naming a manifest
+  count. Regenerating the manifest rewrites the number, and `tools/capability_manifest.py --check`
+  (already a CI step) fails on a stale bound number or a binding to a count
+  the manifest does not have.
+- The Studio guide, the Studio quickstart and the system map now bind the
+  catalogue count. They had stated 118 and 152 models while the catalogue
+  holds 185.
+
 ### Studio user interface in the wheel
 
 - A published wheel now carries the built Studio interface in

@@ -13,6 +13,12 @@ The manifest is intentionally derived from static files instead of imported
 modules. That keeps it deterministic in CI and avoids optional dependency
 side effects while still giving README, docs, and release tooling one source
 of truth for public capability counts.
+
+A documentation page states a count by binding it rather than writing it:
+``<!-- count:studio_catalogue_models -->185<!-- /count -->`` names a manifest
+count, and regeneration rewrites the number between the markers. ``--check``
+fails when a bound number is stale or names a count the manifest does not have,
+so a page cannot keep a figure the catalogue has outgrown.
 """
 
 from __future__ import annotations
@@ -41,6 +47,7 @@ DEFAULT_CONFIG = Path("tools/capability_manifest.toml")
 DEFAULT_README = Path("README.md")
 DEFAULT_MARKER_START = "<!-- capability-snapshot:start -->"
 DEFAULT_MARKER_END = "<!-- capability-snapshot:end -->"
+DOC_COUNT_BINDING = re.compile(r"<!-- count:([a-z_]+) -->(.*?)<!-- /count -->")
 
 # Engine infrastructure classes are public PyO3 bindings, but they are not
 # neuron/model wrappers and must not inflate the public model inventory when a
@@ -63,6 +70,7 @@ def _default_labels() -> dict[str, str]:
         "public_api_exports": "Public API exports",
         "python_model_source_modules": "Python model source modules",
         "python_model_classes": "Python model classes",
+        "studio_catalogue_models": "Studio catalogue models",
         "model_documentation_pages": "Model documentation pages",
         "rust_pyo3_model_wrappers": "Rust PyO3 model wrappers",
         "optional_extras": "Optional extras",
@@ -275,6 +283,7 @@ def build_capability_manifest(
     public_exports = _public_exports(paths.package_root / "__init__.py")
     python_model_sources = _python_model_sources(paths.models_root, repo=repo)
     python_model_classes = _python_model_classes(paths.models_root, repo=repo)
+    catalogue_models = _catalogue_models(paths.models_root / "__init__.py")
     rust_pyo3_wrappers = (
         _rust_pyo3_wrapper_names(paths.pyo3_wrappers) if paths.pyo3_wrappers.exists() else []
     )
@@ -312,6 +321,7 @@ def build_capability_manifest(
             "public_api_exports": len(public_exports),
             "python_model_source_modules": len(python_model_sources),
             "python_model_classes": len(python_model_classes),
+            "studio_catalogue_models": len(catalogue_models),
             "model_documentation_pages": len(model_docs),
             "rust_pyo3_model_wrappers": len(rust_pyo3_wrappers),
             "optional_extras": len(extras),
@@ -323,6 +333,7 @@ def build_capability_manifest(
         "models": {
             "python_source_modules": python_model_sources,
             "python_classes": python_model_classes,
+            "catalogue": catalogue_models,
             "documentation_pages": model_docs,
             "rust_pyo3_wrappers": rust_pyo3_wrappers,
         },
@@ -362,6 +373,7 @@ def render_markdown_snapshot(manifest: dict[str, Any]) -> str:
         (labels["public_api_exports"], counts["public_api_exports"]),
         (labels["python_model_source_modules"], counts["python_model_source_modules"]),
         (labels["python_model_classes"], counts["python_model_classes"]),
+        (labels["studio_catalogue_models"], counts["studio_catalogue_models"]),
         (labels["model_documentation_pages"], counts["model_documentation_pages"]),
         (labels["rust_pyo3_model_wrappers"], counts["rust_pyo3_model_wrappers"]),
         (labels["optional_extras"], counts["optional_extras"]),
@@ -414,6 +426,52 @@ def refresh_readme_block(
     return readme_path
 
 
+def bind_document_counts(text: str, counts: dict[str, int], *, source: str) -> str:
+    """Return ``text`` with every count binding set to the manifest's value.
+
+    Parameters
+    ----------
+    text:
+        A documentation page.
+    counts:
+        The manifest's ``counts``.
+    source:
+        The page's repository path, named when a binding is refused.
+
+    Raises
+    ------
+    RuntimeError
+        If a binding names a count the manifest does not have.
+    """
+
+    def bound(match: re.Match[str]) -> str:
+        key = match.group(1)
+        if key not in counts:
+            raise RuntimeError(f"{source} binds an unknown count: {key}")
+        return f"<!-- count:{key} -->{counts[key]}<!-- /count -->"
+
+    return DOC_COUNT_BINDING.sub(bound, text)
+
+
+def stale_document_counts(repo: Path, manifest: dict[str, Any]) -> list[tuple[Path, str]]:
+    """Return each public page whose bound counts differ from the manifest, rebound.
+
+    Returns
+    -------
+    list of tuple
+        The page and its text with current counts, for every page that changes.
+    """
+
+    stale: list[tuple[Path, str]] = []
+    for relative in manifest["documentation"]["public_pages"]:
+        page = repo / relative
+        text = page.read_text(encoding="utf-8")
+        rebound = bind_document_counts(text, manifest["counts"], source=relative)
+        if rebound != text:
+            stale.append((page, rebound))
+    return stale
+
+
 def write_outputs(
     manifest: dict[str, Any],
     *,
@@ -437,7 +495,7 @@ def refresh_outputs(
     markdown_output: Path | None = None,
     update_readme: bool = True,
 ) -> tuple[Path, Path, Path | None]:
-    """Regenerate JSON, Markdown, and optionally the README snapshot."""
+    """Regenerate JSON, Markdown, and optionally the README snapshot and bound page counts."""
 
     manifest = build_capability_manifest(repo, config)
     json_path, markdown_path = write_outputs(
@@ -452,6 +510,8 @@ def refresh_outputs(
             render_markdown_snapshot(manifest),
             config=config,
         )
+        for page, rebound in stale_document_counts(repo, manifest):
+            page.write_text(rebound, encoding="utf-8")
     return json_path, markdown_path, readme_path
 
 
@@ -480,6 +540,7 @@ def validate_manifest(payload: dict[str, Any]) -> dict[str, Any]:
             models.get("python_source_modules"),
         )
         _check_count(errors, counts, "python_model_classes", models.get("python_classes"))
+        _check_count(errors, counts, "studio_catalogue_models", models.get("catalogue"))
         _check_count(errors, counts, "model_documentation_pages", models.get("documentation_pages"))
         _check_count(errors, counts, "rust_pyo3_model_wrappers", models.get("rust_pyo3_wrappers"))
     return {"passed": not errors, "errors": errors}
@@ -514,6 +575,10 @@ def assert_outputs_current(
         readme_path = repo / config.readme_path
         if not _readme_block_matches(readme_path, expected_markdown, config=config):
             errors.append(f"stale README capability block: {config.readme_path}")
+        errors.extend(
+            f"stale bound count: {page.relative_to(repo).as_posix()}"
+            for page, _rebound in stale_document_counts(repo, manifest)
+        )
     if errors:
         raise RuntimeError("; ".join(errors))
 
@@ -577,6 +642,31 @@ def _python_model_classes(models_root: Path, *, repo: Path) -> list[dict[str, st
             if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
                 rows.append({"name": node.name, "path": _rel(path, repo)})
     return sorted(rows, key=lambda row: (row["name"], row["path"]))
+
+
+def _catalogue_models(registry: Path) -> list[str]:
+    """Return the model names the registry maps, as the Studio catalogue lists them.
+
+    The registry is the ``_CLASS_TO_MODULE`` dictionary literal in the model
+    package's ``__init__.py``; every key is a catalogue model.
+    """
+    if not registry.exists():
+        return []
+    for node in ast.parse(registry.read_text(encoding="utf-8")).body:
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "_CLASS_TO_MODULE"
+                for target in node.targets
+            )
+            and isinstance(node.value, ast.Dict)
+        ):
+            return sorted(
+                key.value
+                for key in node.value.keys
+                if isinstance(key, ast.Constant) and isinstance(key.value, str)
+            )
+    return []
 
 
 def _rust_pyo3_wrapper_names(path: Path) -> list[str]:
@@ -662,7 +752,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown-output", type=Path)
-    parser.add_argument("--no-readme", action="store_true")
+    parser.add_argument(
+        "--no-readme",
+        action="store_true",
+        help="leave the README snapshot and pages with bound counts untouched",
+    )
     parser.add_argument("--validate", type=Path)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args(list(argv) if argv is not None else None)

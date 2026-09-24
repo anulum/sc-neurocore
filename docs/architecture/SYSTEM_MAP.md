@@ -319,7 +319,7 @@ most-imported module (in-degree 10). **MAINTAINED.**
 (codecs) / DRAFT (`spike_gnn`, `spike_ode`).
 
 ### C. Neurons & synapses — *Core*
-`neurons` (152 models) · `synapses` · `sources` · `recorders`
+`neurons` (<!-- count:studio_catalogue_models -->185<!-- /count --> models) · `synapses` · `sources` · `recorders`
 → The model library + I/O. **MAINTAINED.**
 
 ### D. Plasticity & continual learning — *Core / Research*

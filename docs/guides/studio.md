@@ -32,7 +32,7 @@ sc-neurocore studio
 
 Opens `http://127.0.0.1:8001/studios/sc-neurocore/` in your browser; the
 root `http://127.0.0.1:8001/` redirects there. The Studio starts in **Model
-mode** with 118 neuron models browsable by category. Switch to **ODE mode** to
+mode** with <!-- count:studio_catalogue_models -->185<!-- /count --> neuron models browsable by category. Switch to **ODE mode** to
 write custom equations.
 
 The first screen opens on an operator workbench rather than a landing page. It
@@ -55,7 +55,7 @@ sc-neurocore studio --port 9000
 
 ## Two Modes
 
-### Model Mode (118 models)
+### Model Mode
 
 Browse all sc-neurocore neuron models grouped by category (Conductance, IF,
 Oscillator, Bursting, Hardware, Network, Statistical, AI). Each model's
@@ -463,7 +463,7 @@ current protocol for each frequency. The injected trace is
 |--------|----------|-------------|
 | GET | `/api/templates` | List ODE templates |
 | GET | `/api/templates/{name}` | Get template by name |
-| GET | `/api/models` | List all 118 models |
+| GET | `/api/models` | List every catalogue model |
 | GET | `/api/models/scan` | Classify all models by firing pattern under the synchronous analysis budget and return `studio.model-scan.v1` evidence metadata |
 | GET | `/api/models/{name}` | Get model detail (params, state vars) |
 | GET | `/api/presets` | List preset experiments |
