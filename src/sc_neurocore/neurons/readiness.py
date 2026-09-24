@@ -526,7 +526,10 @@ def verify_model(
     if profile is not None and profile not in profiles:
         raise ValueError(f"unknown profile {profile!r} for {class_name}")
     payload = load_descriptor_payload(class_name)
-    if payload is None:
+    # The canonical identity inventory requires a shipped descriptor for every
+    # registered model. Keep this fail-closed guard for a damaged installation;
+    # no public call can reach it with the published package contents.
+    if payload is None:  # pragma: no cover - guarded by the descriptor inventory
         facets = tuple(
             FacetVerification(spec.name, False, "not-declared", (), "", (), ()) for spec in FACETS
         )

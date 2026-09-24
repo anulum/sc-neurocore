@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -162,6 +163,37 @@ def test_derived_subjects_cover_every_required_kind() -> None:
     assert all(subject.kind == "compiler" for subject in compiler_subjects())
 
 
+def test_derived_subjects_include_only_resolved_evidence(tmp_path: Path) -> None:
+    """Real descriptor and evidence files determine validator and report membership."""
+    descriptor = tmp_path / "src/sc_neurocore/neurons/model_descriptors/LapicqueNeuron.toml"
+    descriptor.parent.mkdir(parents=True)
+    source = Path(__file__).resolve().parents[1] / descriptor.relative_to(tmp_path)
+    payload = tomllib.loads(source.read_text(encoding="utf-8"))
+    payload["validation"]["evidence"] = "artifacts/reference.json"
+    descriptor.write_text(tomli_w.dumps(payload), encoding="utf-8")
+    artifact = tmp_path / "artifacts/reference.json"
+    artifact.parent.mkdir()
+    artifact.write_text("{}\n", encoding="utf-8")
+    validator = tmp_path / "tests/test_probe.py"
+    validator.parent.mkdir()
+    validator.write_text("def test_probe() -> None:\n    pass\n", encoding="utf-8")
+    refs = (
+        "tests/test_probe.py::test_probe",
+        "artifacts/reference.json",
+        "artifacts/missing.json",
+    )
+    science = derive_subjects(
+        "LapicqueNeuron", "class_validated", repo_root=tmp_path, evidence_refs=refs
+    )
+    assert ("validator", "tests/test_probe.py") in {(s.kind, s.path) for s in science}
+    assert ("source-reference", "artifacts/reference.json") in {(s.kind, s.path) for s in science}
+    assert all(s.path != "artifacts/missing.json" for s in science)
+    synthesis = derive_subjects(
+        "LapicqueNeuron", "synthesis", repo_root=tmp_path, evidence_refs=refs
+    )
+    assert ("report", "artifacts/reference.json") in {(s.kind, s.path) for s in synthesis}
+
+
 def test_unregistered_class_is_an_error() -> None:
     """Verification of an unknown class fails instead of returning an empty record."""
     with pytest.raises(KeyError):
@@ -246,6 +278,34 @@ def test_fabricated_and_tampered_receipts_are_invalid_not_stale(
     assert verify_receipt(receipt, class_name="LapicqueNeuron", repo_root=repo)[0] == "invalid"
 
 
+def test_receipt_refuses_unregistered_identity_profile_and_missing_descriptor(
+    copied_receipt: tuple[Path, FacetReceipt],
+) -> None:
+    repo, receipt = copied_receipt
+    ghost = replace(receipt, class_name="GhostNeuron").sealed()
+    assert verify_receipt(ghost, class_name="GhostNeuron", repo_root=repo)[2] == (
+        "unregistered receipt identity",
+    )
+    wrong_profile = replace(receipt, profile="ghost-profile").sealed()
+    assert verify_receipt(wrong_profile, class_name=receipt.class_name, repo_root=repo)[2] == (
+        "unknown model profile: ghost-profile",
+    )
+    descriptor = repo / "src/sc_neurocore/neurons/model_descriptors" / f"{receipt.class_name}.toml"
+    original = descriptor.read_text(encoding="utf-8")
+    descriptor.unlink()
+    assert verify_receipt(receipt, class_name=receipt.class_name, repo_root=repo)[2] == (
+        "current model descriptor is missing",
+    )
+    payload = tomllib.loads(original)
+    payload["silicon"]["cosim_evidence"] = "tests/test_cosim_adaptive_threshold_if.py::test_gone"
+    descriptor.write_text(tomli_w.dumps(payload), encoding="utf-8")
+    status, _changed, problems = verify_receipt(
+        receipt, class_name=receipt.class_name, repo_root=repo
+    )
+    assert status == "invalid"
+    assert any("evidence" in problem for problem in problems)
+
+
 def test_profile_specific_readiness_does_not_promote_other_profiles() -> None:
     """Lapicque source evidence does not confer a class-wide LIF guarantee."""
     assert verify_model("LapicqueNeuron").verified_science < 4
@@ -279,3 +339,17 @@ def test_deleted_receipt_input_becomes_stale(
     assert status == "stale"
     assert changed == (f"{subject.kind}:{subject.path} (missing)",)
     assert problems == ()
+
+
+def test_unavailable_evidence_and_partial_science_credit(tmp_path: Path) -> None:
+    """Missing named files cannot be located; one science receipt stops at S4."""
+    from sc_neurocore.neurons.facet_receipts import latest_receipts
+
+    absent = verify_model("LapicqueNeuron", profile="lapicque", repo_root=tmp_path, receipts={})
+    assert absent.facet("class_validated").status == "unavailable"
+    assert absent.facet("class_validated").problems
+    key = ("LapicqueNeuron", "dynamics_faithful", "lapicque")
+    partial = verify_model(
+        "LapicqueNeuron", profile="lapicque", receipts={key: latest_receipts()[key]}
+    )
+    assert partial.verified_science == 4
