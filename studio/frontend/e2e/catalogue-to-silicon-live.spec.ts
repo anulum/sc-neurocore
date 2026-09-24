@@ -202,6 +202,10 @@ test("proven-readiness filters and a model link reach the live catalogue", async
   await page.goto(`./#model=${linked}`);
   await detail;
   await expect(page.getByTestId("model-integration-method")).toBeVisible();
+  // The model panel states which silicon operations this installation can run.
+  const capabilities = page.getByTestId("model-capabilities");
+  await expect(capabilities).toContainText("compile");
+  await expect(capabilities).toContainText("formal");
 
   await page.goto("about:blank");
   await page.goto("./#model=NoSuchNeuron");

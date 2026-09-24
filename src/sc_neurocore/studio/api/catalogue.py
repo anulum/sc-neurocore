@@ -38,6 +38,7 @@ from sc_neurocore.studio.dcls import (
     dcls_tent_profile,
 )
 from sc_neurocore.studio.model_scan import scan_all_models
+from sc_neurocore.studio.model_capabilities import model_capabilities
 from sc_neurocore.studio.catalogue_query import (
     CatalogueQuery,
     CatalogueQueryRejected,
@@ -133,6 +134,14 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
         except CatalogueQueryRejected as exc:
             raise HTTPException(status_code=422, detail={"reason": str(exc)}) from None
         return _safe(lambda: query_catalogue(query))
+
+    @router.get("/api/models/{name}/capabilities")
+    def api_model_capabilities(name: str) -> Any:
+        """Say which silicon operations this installation can run for one model, and why not."""
+        capabilities = _safe(lambda: model_capabilities(name))
+        if capabilities is None:
+            raise HTTPException(404, f"Model '{name}' is not in the catalogue")
+        return capabilities
 
     @router.get("/api/models/{name}/doc")
     def api_model_doc(name: str) -> Any:

@@ -9,6 +9,7 @@
 import { post, get } from "./http";
 import type {
   CatalogueQueryParams,
+  ModelCapabilities,
   CatalogueQueryResult,
   NeuronTemplate,
   ModelSummary,
@@ -51,6 +52,15 @@ export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${na
  * @returns Families, maturities, firing patterns and behaviour tags.
  */
 export const fetchModelFacets = () => get<ModelFacets>("/models/facets");
+
+/**
+ * Ask which silicon operations this installation can run for one model.
+ *
+ * @param name - The catalogue model.
+ * @returns Each operation, enabled or disabled with its reason.
+ */
+export const fetchModelCapabilities = (name: string) =>
+  get<ModelCapabilities>(`/models/${encodeURIComponent(name)}/capabilities`);
 
 /**
  * Ask the server which models a set of filters admits.

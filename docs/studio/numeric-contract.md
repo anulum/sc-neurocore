@@ -159,3 +159,23 @@ an integrator and a format.
 The compiler refuses an expression whose unwrapped sum could exceed twice the
 word width, because the datapath would then no longer match the kernel
 exactly.
+
+## Which silicon operations a model has here
+
+`GET /api/models/{name}/capabilities` (`sc-neurocore.studio.model-capabilities.v1`)
+states, for one catalogue model, which operations this installation can run,
+and gives every disabled one its reason. The model panel shows it as a short
+list under the model's badges.
+
+| Operation | Enabled when | Disabled with a reason when |
+| --- | --- | --- |
+| compile | the model has a canonical schema with an executable profile, and a Studio format holds it | there is no such schema, or no format holds the model |
+| co-simulate | a generated bit-true C kernel mirrors the RTL for at least one offered integrator and format, and `iverilog`, `vvp` and a C compiler are installed | no integrator is mirrored (every RK profile today), or a tool is missing |
+| synthesise | co-simulation is enabled and Yosys is installed; synthesis of a selected model runs only on RTL whose co-simulation was bit-exact | either is missing |
+| place and route | synthesis is enabled and the target's place-and-route tool is installed; it reports the design's maximum frequency | per target: no tool in the Studio flow (Gowin, Xilinx) or the tool is not installed |
+| formal | never, in the Studio | the Studio has no route that runs a formal job; the model's catalogue job, when it has one, is named with what it asserts and does not establish |
+
+Co-simulation is listed per integrator and format, because a kernel can mirror
+one format and not another. Every combination the matrix enables for a map
+model and an adaptive Euler model is executed by the test suite and must be
+bit-exact; an RK model compiles and has co-simulation disabled by name.

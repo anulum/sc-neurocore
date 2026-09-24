@@ -613,6 +613,40 @@ export interface CatalogueQueryResult {
   };
 }
 
+/** One silicon operation for one model: whether it can run here, and why not. */
+export interface ModelCapabilityOperation {
+  enabled: boolean;
+  /** Why the operation is disabled; `null` when it is enabled. */
+  reason: string | null;
+  integrators?: string[];
+  q_formats?: string[];
+  combinations?: { integrator: string; q_format: string; mirrored: boolean }[];
+  unmirrored_integrators?: string[];
+  targets?: string[];
+  disabled_targets?: Record<string, string>;
+  catalogue_job?: {
+    module: string;
+    claim: string;
+    q_format: string;
+    depth: number;
+    properties: string[];
+    not_established: string[];
+  } | null;
+}
+
+/** Which silicon operations this installation can run for one model. */
+export interface ModelCapabilities {
+  schema_version: "sc-neurocore.studio.model-capabilities.v1";
+  model: string;
+  operations: {
+    compile: ModelCapabilityOperation;
+    cosimulate: ModelCapabilityOperation;
+    synthesise: ModelCapabilityOperation;
+    place_and_route: ModelCapabilityOperation;
+    formal: ModelCapabilityOperation;
+  };
+}
+
 /** A model's prose documentation, as Markdown, with the slug it is filed under. */
 export interface ModelDoc {
   name: string;

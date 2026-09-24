@@ -37549,6 +37549,28 @@ dict
 
 ---
 
+## Module `studio.model_capabilities`
+
+### Function `model_capabilities(name)`
+Return what each silicon operation can do for ``name`` here, or ``None``.
+
+Parameters
+----------
+name:
+    A registered catalogue model.
+tool_status:
+    An EDA tool snapshot as :func:`~sc_neurocore.studio.synthesis.check_tools`
+    returns; taken now when omitted.
+formal_inventory:
+    The catalogue's formal-job inventory.
+
+Returns
+-------
+dict or None
+    ``None`` for a name the catalogue does not hold.
+
+---
+
 ## Module `studio.model_catalogue`
 
 ### Class `ModelMetadataError`

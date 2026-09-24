@@ -4490,6 +4490,46 @@
         "summary": "Api Model"
       }
     },
+    "/api/models/{name}/capabilities": {
+      "get": {
+        "description": "Say which silicon operations this installation can run for one model, and why not.",
+        "operationId": "api_model_capabilities_api_models__name__capabilities_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Capabilities Api Models  Name  Capabilities Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model Capabilities"
+      }
+    },
     "/api/models/{name}/doc": {
       "get": {
         "description": "Serve one model's reference page, or say why there is none.\n\nA model without a page and a distribution that packages no pages at all\nare different answers. Reporting the second as the first told an\noperator that this model is undocumented when every model is, for a\nreason that has nothing to do with the model.",

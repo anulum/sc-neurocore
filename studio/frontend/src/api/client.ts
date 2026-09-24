@@ -20,6 +20,7 @@ export {
   fetchModels,
   fetchModelDetail,
   fetchModelFacets,
+  fetchModelCapabilities,
   queryModels,
   catalogueQueryString,
   fetchModelDoc,

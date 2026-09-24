@@ -971,7 +971,7 @@
     "python_model_classes": 183,
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 207,
-    "test_files": 5004
+    "test_files": 5005
   },
   "documentation": {
     "public_pages": [
@@ -7463,6 +7463,7 @@
       "tests/test_studio_jobs_worker_recovery.py",
       "tests/test_studio_jobs_worker_registration.py",
       "tests/test_studio_ledger_lease_bounds.py",
+      "tests/test_studio_model_capabilities.py",
       "tests/test_studio_model_catalogue_documentation.py",
       "tests/test_studio_model_catalogue_http_api.py",
       "tests/test_studio_model_catalogue_summary.py",

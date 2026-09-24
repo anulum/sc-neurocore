@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio silicon operations per model
+
+- `GET /api/models/{name}/capabilities` states which silicon operations this
+  installation can run for a catalogue model — compile, co-simulate (per
+  integrator and format, only where a bit-true kernel mirrors the RTL),
+  synthesise, place and route (per target, with the tool that times it) and
+  formal — and gives every disabled operation its reason. The model panel
+  lists them. Every co-simulation combination enabled for a map model and an
+  adaptive Euler model is executed in the test suite and is bit-exact; RK
+  profiles compile and have co-simulation disabled by name.
+
 ### Studio network to hardware
 
 - The Studio pipeline builds hardware for the network on the Canvas. It used to

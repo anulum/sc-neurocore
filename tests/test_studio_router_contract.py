@@ -70,12 +70,12 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
 
-    # 129 since `GET /api/models/query`, the catalogue query that filters on
-    # verified readiness and returns drill-down facet counts.
+    # 130 since `GET /api/models/{name}/capabilities`, the matrix of silicon
+    # operations this installation can run for one model.
     # The count is pinned so a route cannot
     # appear without a deliberate change here; raising it is how a new route is
     # admitted, never by relaxing the assertion.
-    assert len(backend_routes) == 129
+    assert len(backend_routes) == 130
     assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
     assert len(root_routes) <= 1
     assert all(

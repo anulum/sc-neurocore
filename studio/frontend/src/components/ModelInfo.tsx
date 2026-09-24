@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import { formatCitation } from "../citation";
 import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
+import ModelCapabilitiesStrip from "./ModelCapabilities";
 import { perfectBadge, verifiedTiers, verifiedTiersSource } from "../modelReadinessBadge";
 import { copyModelLinkInRuntime } from "../studioShareRuntime";
 
@@ -146,6 +147,7 @@ export default function ModelInfo() {
             </div>
           </div>
         )}
+        <ModelCapabilitiesStrip modelName={modelDetail.name} />
         <div className="model-info">
           <div className="info-item">
             <span className="info-label">vars:</span>
