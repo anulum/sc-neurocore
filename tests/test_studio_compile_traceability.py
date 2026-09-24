@@ -262,6 +262,11 @@ def test_model_compile_route_emits_real_schema_backed_rtl(client: TestClient) ->
     assert "module sc_studio_lapicque" in payload["verilog"]
     configuration = dict(payload["compile_configuration"])
     profile = configuration.pop("profile")
+    contract = configuration.pop("numeric_contract")
+    assert (contract["q_format"], contract["representable"]) == ("Q8.8", True)
+    # No bit-true C kernel mirrors exponential Euler; the contract says why.
+    assert contract["bit_true_mirror"]["available"] is False
+    assert "exp_euler" in contract["bit_true_mirror"]["refusal"]
     assert configuration == {
         "dt": 1.0,
         "integrator": "exp_euler",

@@ -52,6 +52,8 @@ def test_model_compile_process_writes_rtl_and_action_evidence(tmp_path: Path) ->
     source_payload = cast(dict[str, object], traceability["source_payload"])
     configuration = dict(cast(dict[str, object], result["compile_configuration"]))
     profile = cast(dict[str, object], configuration.pop("profile"))
+    contract = cast(dict[str, object], configuration.pop("numeric_contract"))
+    assert (contract["q_format"], contract["representable"]) == ("Q16.16", True)
     assert configuration == {
         "dt": 1.0,
         "integrator": "exp_euler",
