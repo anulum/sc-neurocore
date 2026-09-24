@@ -80,6 +80,48 @@ WORKSPACE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.project.delete",
     ),
     (
+        "GET",
+        "/api/project/{name}/revisions",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.revisions",
+    ),
+    (
+        "POST",
+        "/api/project/{name}/fork",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.fork",
+    ),
+    (
+        "POST",
+        "/api/project/{name}/branch-refused-edit",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.branch",
+    ),
+    (
+        "GET",
+        "/api/project/deleted",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.deleted.list",
+    ),
+    (
+        "POST",
+        "/api/project/restore",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.restore",
+    ),
+    (
+        "GET",
+        "/api/project/{name}/export",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.export",
+    ),
+    (
+        "POST",
+        "/api/project/import",
+        RouteVisibility.AUTHENTICATED,
+        "studio.project.import",
+    ),
+    (
         "POST",
         "/api/pipeline/run",
         RouteVisibility.AUTHENTICATED,

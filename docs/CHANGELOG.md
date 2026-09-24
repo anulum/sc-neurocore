@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Route policies: ten routes classified, and a missing policy refused
+
+- With route policies enforced, ten routes answered 500: the catalogue query,
+  a model's capability matrix, a graph model's contract, and project
+  revisions, fork, refused-edit branch, deleted list, restore, export and
+  import. None had a registered policy, and looking one up failed inside the
+  security middleware. Each now has a policy: the catalogue and graph-model
+  reads are public like their neighbours, the project operations require an
+  authenticated principal like saving and loading.
+- The middleware refuses a route without a policy as `unclassified_route`
+  (403) instead of failing.
+- The test that every route has a policy walked only the application's top
+  level, where FastAPI's included routers now hide every route, so it checked
+  nothing. It walks the routes the middleware matches and requires more than a
+  hundred of them.
+
 ### Network Canvas: the whole graph editable without a pointer
 
 - The table view's rows carry **Edit** beside **Delete**, and each projection

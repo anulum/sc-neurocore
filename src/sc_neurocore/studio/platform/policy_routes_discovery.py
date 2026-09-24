@@ -26,6 +26,8 @@ DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     ("GET", "/api/models/facets", RouteVisibility.PUBLIC, "studio.models.read"),
     ("GET", "/api/models/{name}/doc", RouteVisibility.PUBLIC, "studio.models.read"),
+    ("GET", "/api/models/query", RouteVisibility.PUBLIC, "studio.models.read"),
+    ("GET", "/api/models/{name}/capabilities", RouteVisibility.PUBLIC, "studio.models.read"),
     ("GET", "/api/dcls/info", RouteVisibility.PUBLIC, "studio.dcls.read"),
     ("GET", "/api/dcls/benchmark", RouteVisibility.PUBLIC, "studio.dcls.benchmark"),
     ("POST", "/api/dcls/evaluate", RouteVisibility.PUBLIC, "studio.dcls.evaluate"),
@@ -89,4 +91,5 @@ DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.training.cell_types.read",
     ),
     ("GET", "/api/graph/models", RouteVisibility.PUBLIC, "studio.graph.models.read"),
+    ("GET", "/api/graph/models/{name}", RouteVisibility.PUBLIC, "studio.graph.models.read"),
 )

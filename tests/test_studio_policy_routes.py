@@ -165,12 +165,20 @@ def test_studio_app_exposes_route_policy_registry_for_platform_routes() -> None:
 
 
 def test_studio_app_classifies_every_api_and_websocket_route() -> None:
+    """Every route the security middleware can match has a policy.
+
+    The routes are walked the way the middleware walks them, through included
+    routers, and there must be many: when FastAPI began wrapping included
+    routers, a walk over the top level alone found no route at all and this
+    check passed while ten routes had no policy.
+    """
+    from sc_neurocore.studio.api.security import _iter_leaf_routes
     from sc_neurocore.studio.app import create_app  # noqa: PLC0415
     from starlette.routing import Route, WebSocketRoute  # noqa: PLC0415
 
     app = create_app()
     route_signatures: list[tuple[str, str]] = []
-    for route in app.routes:
+    for route in _iter_leaf_routes(app.routes):
         if isinstance(route, Route) and route.path.startswith("/api/"):
             route_methods = route.methods or set()
             route_signatures.extend(
@@ -181,7 +189,28 @@ def test_studio_app_classifies_every_api_and_websocket_route() -> None:
 
     missing = app.state.studio_route_policies.missing_policies(tuple(route_signatures))
 
+    assert len(route_signatures) > 100
     assert missing == ()
+
+
+def test_an_enforced_studio_refuses_a_route_without_a_policy_instead_of_failing() -> None:
+    """A route added without a policy is unclassified (403), never a server error."""
+    from sc_neurocore.studio.app import create_app
+    from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
+    from starlette.testclient import TestClient
+
+    app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
+
+    @app.get("/api/route-without-policy")
+    def route_without_policy() -> dict[str, str]:
+        return {"served": "yes"}
+
+    client = TestClient(app, base_url="http://127.0.0.1", raise_server_exceptions=False)
+    response = client.get("/api/route-without-policy")
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "unclassified_route"}
+    assert client.get("/api/models/query").status_code == 200
 
 
 def test_default_route_policy_registry_marks_stateful_routes_protected() -> None:

@@ -193,7 +193,12 @@ def install_studio_security_middleware(
             )
         elif settings.enforce_route_policies:
             route_signature = _studio_route_signature(app, request)
-            if route_signature is None:
+            # A route with no registered policy is refused like an unmatched
+            # one: looking its policy up would raise, and a lookup failure must
+            # never be the thing that decides whether a request is served.
+            if route_signature is None or studio_route_policies.missing_policies(
+                (route_signature,)
+            ):
                 response = JSONResponse({"detail": "unclassified_route"}, status_code=403)
             else:
                 method, path_template = route_signature
