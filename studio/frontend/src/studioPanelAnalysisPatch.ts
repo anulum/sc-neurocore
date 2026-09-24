@@ -6,6 +6,7 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Panel analysis to store ownership boundary
 
+import { studioStageOutcomeState } from "./stores/studioStageFailure";
 import type { StudioState } from "./stores/studioTypes";
 import type { StudioAnalysisJobIntegrationPatch } from "./useStudioAnalysisJobIntegration";
 
@@ -14,8 +15,10 @@ import type { StudioAnalysisJobIntegrationPatch } from "./useStudioAnalysisJobIn
  *
  * Panel jobs track busy state in their own session. Shared result sinks also
  * serve exclusive store actions, so their isSimulating/error patches are not
- * owned here. Panel failures remain in the panel session's own error state.
- * Preserve live values synchronously, not a render-time snapshot.
+ * owned here. Panel failures remain in the panel session's own error state,
+ * and are also remembered as a failed analysis stage for the current
+ * experiment; a delivered result withdraws that. Preserve live values
+ * synchronously, not a render-time snapshot.
  *
  * @param patch - Validated panel result or diagnostic and context keys.
  * @param get - Read live store request state.
@@ -26,5 +29,10 @@ export function applyStudioPanelAnalysisPatch(
   get: () => StudioState, set: (patch: Partial<StudioState>) => void,
 ): void {
   const state = get();
-  set({ ...patch, isSimulating: state.isSimulating, error: state.error });
+  const failure = "error" in patch && typeof patch.error === "string" ? patch.error : null;
+  const delivered = typeof patch.analysisExperimentKey === "string";
+  const stage = failure !== null || delivered
+    ? studioStageOutcomeState("analyse", failure, state)
+    : {};
+  set({ ...patch, ...stage, isSimulating: state.isSimulating, error: state.error });
 }

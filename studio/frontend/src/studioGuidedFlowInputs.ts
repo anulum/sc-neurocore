@@ -34,9 +34,17 @@ import { studioBundleIsCurrent } from "./studioBundleContext";
  * Nothing here invents applicability: co-simulation applies to catalogue
  * models only, and that is a property of the source mode rather than of any
  * result.
+ *
+ * Failure is kept apart from "not yet done". A stage whose latest attempt for
+ * the current experiment failed is reported with that attempt's message, from
+ * the store's record of it or from the result itself: a training run that
+ * failed or was interrupted, a co-simulation of the current RTL that is not
+ * bit-exact, a synthesis that reported failure. A failure recorded under an
+ * earlier experiment is not shown -- it was about inputs the reader has since
+ * changed.
  */
 
-import type { GuidedFlowInputs } from "./guidedFlowState";
+import type { GuidedFlowInputs, GuidedFlowStepKey } from "./guidedFlowState";
 import {
   studioExperimentKey,
   studioPrecisionKey,
@@ -104,7 +112,65 @@ export function studioGuidedFlowInputs(
         studioTrainingKey(state.trainingConfig),
       ),
     trainingSkipped: decisions.trainingSkipped,
+    failures: studioGuidedFlowFailures(state, currentExperimentKey),
   };
+}
+
+/**
+ * Why each stage's latest attempt for the current experiment failed.
+ *
+ * @param state - The store's current state.
+ * @param currentExperimentKey - The experiment the store now describes.
+ * @returns The failure message per failed stage; a recorded failure comes
+ *   first, a failure read from a result fills a stage it left empty.
+ */
+export function studioGuidedFlowFailures(
+  state: StudioGuidedFlowSource,
+  currentExperimentKey: string,
+): Partial<Record<GuidedFlowStepKey, string>> {
+  const failures: Partial<Record<GuidedFlowStepKey, string>> = {};
+  const recorded = state.stageFailure;
+  if (recorded !== null && recorded.experimentKey === currentExperimentKey) {
+    failures[recorded.stage] = recorded.message;
+  }
+  if ((state.trainingStatus === "failed" || state.trainingStatus === "interrupted")
+    && studioResultIsCurrent(state.trainingExperimentKey, studioTrainingKey(state.trainingConfig))) {
+    failures.train ??= `Training run ${state.trainingStatus}`;
+  }
+  if (state.cosimResult?.bit_exact === false
+    && state.compileTraceability !== null
+    && state.cosimResult.rtl.source_sha256 === state.compileTraceability.output.rtl_sha256) {
+    failures.cosim ??= "RTL co-simulation of the compiled design is not bit-exact";
+  }
+  const synthesis = studioSynthesisFailure(state);
+  if (synthesis !== null) {
+    failures.synthesise ??= synthesis;
+  }
+  return failures;
+}
+
+/**
+ * Why the synthesis on record failed, if it did.
+ *
+ * @param state - The store's current state.
+ * @returns The failure message, or `null` when synthesis succeeded or has
+ *   not reported an outcome.
+ */
+export function studioSynthesisFailure(state: StudioGuidedFlowSource): string | null {
+  if (studioSynthesisComplete(state)) {
+    return null;
+  }
+  if (state.sourceMode === "model") {
+    const terminal = state.synthResult?.silicon_terminal;
+    return terminal === undefined
+      ? null
+      : terminal.place_and_route?.error ?? "Synthesis/PnR terminal did not complete";
+  }
+  if (state.synthResult !== null) {
+    return state.synthResult.error ?? "Synthesis did not complete";
+  }
+  const targets = Object.keys(state.multiTargetResult?.targets ?? {});
+  return targets.length > 0 ? "No synthesis target succeeded" : null;
 }
 
 /**

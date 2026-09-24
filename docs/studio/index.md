@@ -60,16 +60,33 @@ modify another experiment. Invalid coordinates/values and clicks during an
 active run do not change parameters. A new sweep withdraws the old selection
 qualification until it succeeds.
 
-The left panel shows a guided default flow over the seven lifecycle steps —
-design, simulate, analyse, train (optional), compile, synthesise, export
-evidence — so the Studio reads as a sequence rather than a loose set of panels.
-Each step derives its status from the evidence already produced: `done` when the
-step's result exists (training also counts as done when explicitly skipped),
-`next` for the earliest actionable step, `ready` for a later actionable step,
-and `blocked` with a concrete reason when a prerequisite is missing or the
-step's capability is unavailable in the capability registry. The panel reports a
-`completed/total` count and never invents marketing or tutorial copy — it
-reflects only the live store and capability state.
+The left panel shows a guided default flow over the lifecycle steps — design,
+simulate, analyse, train (optional), compile, co-simulation parity (catalogue
+models), synthesise, export evidence — so the Studio reads as a sequence rather
+than a loose set of panels. Each step derives its status from evidence for the
+current inputs:
+
+- `done` only when the step's result exists for those inputs;
+- `skipped` when the reader skipped the optional training step, which lets the
+  flow continue but is not training evidence;
+- `not applicable` for co-simulation of a hand-written ODE, which is left out
+  of the step count;
+- `unsupported`, with the capability registry's message, when this deployment
+  cannot perform the step;
+- `failed`, with the attempt's message, when the latest attempt for the current
+  experiment failed — including a failed or interrupted training run, a
+  co-simulation of the current RTL that is not bit-exact, and a synthesis that
+  reported failure;
+- `next` for the step to act on, which may be a failed step offered as a retry;
+- `ready` for a later actionable step, and `blocked` with a concrete reason
+  when a prerequisite is missing.
+
+A failure recorded under an earlier experiment is not shown once the inputs
+change, and a new attempt at the same step withdraws it. The panel reports a
+`completed/total` count with skipped steps named separately. The workbench
+headline says `Retry:` for a failed step and names an unsupported step rather
+than calling the workflow complete. The panel never invents marketing or
+tutorial copy — it reflects only the live store and capability state.
 
 Simulation completion requires a successful response for the current experiment.
 Starting another simulation withdraws that completion immediately, while keeping

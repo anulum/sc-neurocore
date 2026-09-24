@@ -12,15 +12,20 @@
  * Eight steps, each unblocked by the one before it. The order is the argument
  * the workflow makes: you cannot analyse a run you have not done, cannot claim
  * parity for RTL you have not compiled, and cannot export evidence of a
- * synthesis that has not happened. A step is `blocked` with a stated reason
- * rather than merely disabled, because "why can I not click this" is the
- * question the reader actually has.
+ * synthesis that has not happened.
  *
- * Two steps bend the chain. `train` is optional and may be skipped, which is
- * why a later step can be `available` while an earlier one is not complete.
- * `cosim` is dropped entirely when co-simulation does not apply to the run --
- * removed from the flow, not shown as permanently blocked, because a step that
- * can never complete would make the count of remaining work a lie.
+ * Every status says something different and none borrows another's meaning.
+ * `completed` is evidence for the current inputs; nothing else counts as done.
+ * `skipped` is the reader's decision about the optional `train` step: it lets
+ * the flow continue but is not evidence. `not_applicable` is a step the run
+ * cannot have -- co-simulation of an equation typed by hand -- shown with its
+ * reason and left out of the count, because a step that can never complete
+ * would make the count of remaining work a lie. `unsupported` is a step this
+ * deployment cannot perform, named with the capability's own message.
+ * `failed` is a step whose latest attempt for the current inputs failed; it
+ * stays the thing to do next, as a retry. `blocked` waits on an earlier step,
+ * `current` is what to do next, and `available` is a later step reachable
+ * anyway because the optional step before it was left undone.
  */
 
 /** The eight steps of the guided workflow, in order. */
@@ -34,12 +39,16 @@ export type GuidedFlowStepKey =
   | "synthesise"
   | "export";
 
-/**
- * Where a step stands. `current` is the one to do next; `available` is a later
- * step that is reachable anyway, which happens when an optional step is
- * skipped.
- */
-export type GuidedFlowStepStatus = "completed" | "current" | "available" | "blocked";
+/** Where a step stands; see the module description for what each one means. */
+export type GuidedFlowStepStatus =
+  | "completed"
+  | "skipped"
+  | "not_applicable"
+  | "unsupported"
+  | "failed"
+  | "current"
+  | "available"
+  | "blocked";
 
 /** Accomplished-evidence facts that drive the guided flow, derived from the store. */
 export interface GuidedFlowInputs {
@@ -53,25 +62,36 @@ export interface GuidedFlowInputs {
   cosimComplete: boolean;
   synthesisComplete: boolean;
   evidenceExported: boolean;
+  /**
+   * Why a step's latest attempt for the current inputs failed. A step absent
+   * here has not failed for these inputs, even if an earlier experiment did.
+   */
+  failures?: Partial<Record<GuidedFlowStepKey, string>>;
 }
 
 /** Per-step capability availability from the Studio capability registry. */
 export type GuidedFlowCapabilityMap = Record<GuidedFlowStepKey, boolean>;
 
-/** One step: what it is, where it stands, and why it is blocked. */
+/** One step: what it is, where it stands, and why when it is not simply done or next. */
 export interface GuidedFlowStep {
   key: GuidedFlowStepKey;
   title: string;
   optional: boolean;
   status: GuidedFlowStepStatus;
-  blockedReason: string | null;
+  /** Why the step is blocked, unsupported, failed, skipped or not applicable. */
+  reason: string | null;
 }
 
-/** The whole flow: its steps, the current one, and how far it has got. */
+/** The whole flow: its steps, what to do next, and how far it has got. */
 export interface GuidedFlowState {
   steps: GuidedFlowStep[];
+  /** The step to act on next -- a `current` step or a `failed` one to retry. */
   currentStepKey: GuidedFlowStepKey | null;
+  /** Steps with evidence for the current inputs; skipped steps are not counted. */
   completedCount: number;
+  /** Optional steps the reader chose to skip. */
+  skippedCount: number;
+  /** Steps that apply to this run; `not_applicable` steps are excluded. */
   totalCount: number;
 }
 
@@ -96,6 +116,12 @@ const GUIDED_FLOW_STEPS: readonly GuidedFlowStepDefinition[] = [
   { key: "export", title: "Export evidence", optional: false, requires: "synthesise" },
 ];
 
+/** Why co-simulation is left out of a run it cannot apply to. */
+export const COSIM_NOT_APPLICABLE_REASON = "Co-simulation applies to catalogue models only";
+
+/** Why the optional training step shows as skipped. */
+export const TRAINING_SKIPPED_REASON = "by choice; not training evidence";
+
 /**
  * Assume every step's capability is available.
  *
@@ -118,15 +144,13 @@ function allCapabilitiesAvailable(): GuidedFlowCapabilityMap {
 }
 
 /**
- * Whether one step's work has been done.
+ * Whether a step has evidence for the current inputs.
  *
  * @param key - The step.
  * @param inputs - What the store says has been accomplished.
- * @returns Whether it counts as complete. `train` counts as complete when
- *   it was skipped: the reader made that decision and the flow should not
- *   keep asking.
+ * @returns Whether it is complete. A skipped `train` step is not.
  */
-function isStepComplete(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boolean {
+function hasEvidence(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boolean {
   switch (key) {
     case "design":
       return inputs.modelSelected;
@@ -135,7 +159,7 @@ function isStepComplete(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boole
     case "analyse":
       return inputs.analysisComplete;
     case "train":
-      return inputs.trainingComplete || inputs.trainingSkipped;
+      return inputs.trainingComplete;
     case "compile":
       return inputs.compileComplete;
     case "cosim":
@@ -145,6 +169,17 @@ function isStepComplete(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boole
     case "export":
       return inputs.evidenceExported;
   }
+}
+
+/**
+ * Whether a later step may proceed past this one.
+ *
+ * @param key - The step a later one requires.
+ * @param inputs - What the store says has been accomplished.
+ * @returns Whether it has evidence, or is the optional step the reader skipped.
+ */
+function satisfies(key: GuidedFlowStepKey, inputs: GuidedFlowInputs): boolean {
+  return hasEvidence(key, inputs) || (key === "train" && inputs.trainingSkipped);
 }
 
 /**
@@ -159,76 +194,89 @@ function titleOf(key: GuidedFlowStepKey): string {
 }
 
 /**
+ * Decide one step's status before `current` and `available` are told apart.
+ *
+ * @param definition - The step.
+ * @param inputs - What the store says has been accomplished.
+ * @param capabilities - Which steps the deployment can perform.
+ * @param unsupportedReasons - The capability registry's own message per step.
+ * @returns The status and its reason; `current` stands for any actionable step.
+ */
+function classify(
+  definition: GuidedFlowStepDefinition,
+  inputs: GuidedFlowInputs,
+  capabilities: GuidedFlowCapabilityMap,
+  unsupportedReasons: Partial<Record<GuidedFlowStepKey, string>>,
+): { status: GuidedFlowStepStatus; reason: string | null } {
+  const { key } = definition;
+  if (key === "cosim" && !inputs.cosimApplicable) {
+    return { status: "not_applicable", reason: COSIM_NOT_APPLICABLE_REASON };
+  }
+  if (hasEvidence(key, inputs)) {
+    return { status: "completed", reason: null };
+  }
+  if (key === "train" && inputs.trainingSkipped) {
+    return { status: "skipped", reason: TRAINING_SKIPPED_REASON };
+  }
+  if (!capabilities[key]) {
+    return {
+      status: "unsupported",
+      reason: unsupportedReasons[key] ?? `${definition.title} capability is unavailable`,
+    };
+  }
+  const required = key === "synthesise" && !inputs.cosimApplicable ? "compile" : definition.requires;
+  if (required !== null && !satisfies(required, inputs)) {
+    return { status: "blocked", reason: `Requires ${titleOf(required)}` };
+  }
+  const failure = inputs.failures?.[key];
+  if (failure !== undefined) {
+    return { status: "failed", reason: failure };
+  }
+  return { status: "current", reason: null };
+}
+
+/**
  * Compute the guided default-flow state from accomplished evidence and
  * per-step capability availability.
  *
- * A step is `completed` when its evidence exists (`train` also counts as
- * complete when explicitly skipped). A step is `blocked` when its capability is
- * unavailable or its required predecessor is not yet complete, with a concrete
- * `blockedReason`. The earliest actionable step is `current`; any later
- * actionable step (reachable because the optional `train` step can be skipped)
- * is `available`.
+ * The earliest actionable step -- one that is `current` or `failed` -- is what
+ * to do next; any later actionable step, reachable because the optional
+ * `train` step before it was left undone, is `available`. A failed step keeps
+ * its status so the reader sees why a retry is offered.
  *
- * @param inputs - What the store says has been accomplished.
+ * @param inputs - What the store says has been accomplished and what failed.
  * @param capabilities - Which steps the deployment can actually perform;
  *   every step is assumed available when this is not given.
- * @returns The flow: its steps with their statuses, the current one, and how
- *   many of them are done.
+ * @param unsupportedReasons - The capability registry's message for a step
+ *   the deployment cannot perform, used in place of a generic reason.
+ * @returns The flow: its steps with their statuses, the step to act on next,
+ *   and how many of them are done or skipped.
  */
 export function computeGuidedFlowState(
   inputs: GuidedFlowInputs,
   capabilities: GuidedFlowCapabilityMap = allCapabilitiesAvailable(),
+  unsupportedReasons: Partial<Record<GuidedFlowStepKey, string>> = {},
 ): GuidedFlowState {
-  let currentAssigned = false;
-  const definitions = GUIDED_FLOW_STEPS.filter(
-    (definition) => definition.key !== "cosim" || inputs.cosimApplicable,
-  );
-  const steps: GuidedFlowStep[] = definitions.map((definition) => {
-    const requiredStep = definition.key === "synthesise" && !inputs.cosimApplicable
-      ? "compile"
-      : definition.requires;
-    const completed = isStepComplete(definition.key, inputs);
-    if (completed) {
-      return { ...stepBase(definition), status: "completed", blockedReason: null };
+  let currentStepKey: GuidedFlowStepKey | null = null;
+  const steps: GuidedFlowStep[] = GUIDED_FLOW_STEPS.map((definition) => {
+    const { status, reason } = classify(definition, inputs, capabilities, unsupportedReasons);
+    const base = { key: definition.key, title: definition.title, optional: definition.optional };
+    if (status !== "current" && status !== "failed") {
+      return { ...base, status, reason };
     }
-    if (!capabilities[definition.key]) {
-      return {
-        ...stepBase(definition),
-        status: "blocked",
-        blockedReason: `${definition.title} capability is unavailable`,
-      };
+    if (currentStepKey === null) {
+      currentStepKey = definition.key;
+      return { ...base, status, reason };
     }
-    if (requiredStep !== null && !isStepComplete(requiredStep, inputs)) {
-      return {
-        ...stepBase(definition),
-        status: "blocked",
-        blockedReason: `Requires ${titleOf(requiredStep)}`,
-      };
-    }
-    if (!currentAssigned) {
-      currentAssigned = true;
-      return { ...stepBase(definition), status: "current", blockedReason: null };
-    }
-    return { ...stepBase(definition), status: "available", blockedReason: null };
+    return { ...base, status: status === "failed" ? "failed" : "available", reason };
   });
 
-  const currentStep = steps.find((step) => step.status === "current");
+  const applicable = steps.filter((step) => step.status !== "not_applicable");
   return {
     steps,
-    currentStepKey: currentStep ? currentStep.key : null,
-    completedCount: steps.filter((step) => step.status === "completed").length,
-    totalCount: steps.length,
+    currentStepKey,
+    completedCount: applicable.filter((step) => step.status === "completed").length,
+    skippedCount: applicable.filter((step) => step.status === "skipped").length,
+    totalCount: applicable.length,
   };
-}
-
-/**
- * The fields a step carries whatever its status.
- *
- * @param definition - The step's definition.
- * @returns Its key, title and optionality.
- */
-function stepBase(
-  definition: GuidedFlowStepDefinition,
-): Pick<GuidedFlowStep, "key" | "title" | "optional"> {
-  return { key: definition.key, title: definition.title, optional: definition.optional };
 }

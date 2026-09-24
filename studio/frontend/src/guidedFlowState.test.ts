@@ -8,11 +8,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COSIM_NOT_APPLICABLE_REASON,
+  TRAINING_SKIPPED_REASON,
   computeGuidedFlowState,
   type GuidedFlowCapabilityMap,
   type GuidedFlowInputs,
+  type GuidedFlowStep,
   type GuidedFlowStepKey,
-  type GuidedFlowStepStatus,
 } from "./guidedFlowState";
 
 /**
@@ -37,24 +39,45 @@ function inputs(overrides: Partial<GuidedFlowInputs> = {}): GuidedFlowInputs {
   };
 }
 
+/** Inputs for a run that has been designed, simulated and analysed. */
+const ANALYSED = { modelSelected: true, simulationComplete: true, analysisComplete: true };
+
 /**
- * Read one step's status out of a computed flow.
+ * Every capability available except the ones named.
+ *
+ * @param unavailable - The steps the deployment cannot perform.
+ * @returns The capability map.
+ */
+function capabilitiesWithout(...unavailable: GuidedFlowStepKey[]): GuidedFlowCapabilityMap {
+  const all: GuidedFlowCapabilityMap = {
+    design: true,
+    simulate: true,
+    analyse: true,
+    train: true,
+    compile: true,
+    cosim: true,
+    synthesise: true,
+    export: true,
+  };
+  for (const key of unavailable) {
+    all[key] = false;
+  }
+  return all;
+}
+
+/**
+ * Read one step out of a computed flow.
  *
  * @param state - The flow.
  * @param key - The step to look up.
- * @returns Its status, or `undefined` when the flow does not carry it --
- *   which is itself worth asserting, since `cosim` is dropped when it does
- *   not apply.
+ * @returns The step.
  */
-function statusOf(
-  state: ReturnType<typeof computeGuidedFlowState>,
-  key: GuidedFlowStepKey,
-): GuidedFlowStepStatus {
+function stepOf(state: ReturnType<typeof computeGuidedFlowState>, key: GuidedFlowStepKey): GuidedFlowStep {
   const step = state.steps.find((candidate) => candidate.key === key);
   if (!step) {
     throw new Error(`missing guided-flow step ${key}`);
   }
-  return step.status;
+  return step;
 }
 
 describe("computeGuidedFlowState", () => {
@@ -63,100 +86,177 @@ describe("computeGuidedFlowState", () => {
 
     expect(state.currentStepKey).toBe("design");
     expect(state.completedCount).toBe(0);
+    expect(state.skippedCount).toBe(0);
     expect(state.totalCount).toBe(7);
-    expect(statusOf(state, "design")).toBe("current");
-    expect(statusOf(state, "simulate")).toBe("blocked");
-    const simulate = state.steps.find((step) => step.key === "simulate");
-    expect(simulate?.blockedReason).toBe("Requires Design");
+    expect(stepOf(state, "design").status).toBe("current");
+    expect(stepOf(state, "simulate")).toMatchObject({ status: "blocked", reason: "Requires Design" });
   });
 
   it("advances the current step as evidence accumulates", () => {
-    const state = computeGuidedFlowState(
-      inputs({ modelSelected: true, simulationComplete: true }),
-    );
+    const state = computeGuidedFlowState(inputs({ modelSelected: true, simulationComplete: true }));
 
-    expect(statusOf(state, "design")).toBe("completed");
-    expect(statusOf(state, "simulate")).toBe("completed");
-    expect(statusOf(state, "analyse")).toBe("current");
+    expect(stepOf(state, "design").status).toBe("completed");
+    expect(stepOf(state, "simulate").status).toBe("completed");
+    expect(stepOf(state, "analyse").status).toBe("current");
     expect(state.completedCount).toBe(2);
   });
 
   it("treats train as the current optional step while compile stays available", () => {
-    const state = computeGuidedFlowState(
-      inputs({ modelSelected: true, simulationComplete: true, analysisComplete: true }),
-    );
+    const state = computeGuidedFlowState(inputs(ANALYSED));
 
-    expect(statusOf(state, "train")).toBe("current");
-    expect(state.steps.find((step) => step.key === "train")?.optional).toBe(true);
-    expect(statusOf(state, "compile")).toBe("available");
+    expect(stepOf(state, "train")).toMatchObject({ status: "current", optional: true });
+    expect(stepOf(state, "compile").status).toBe("available");
   });
 
-  it("counts a skipped training step as complete and moves to compile", () => {
-    const state = computeGuidedFlowState(
-      inputs({
-        modelSelected: true,
-        simulationComplete: true,
-        analysisComplete: true,
-        trainingSkipped: true,
-      }),
-    );
+  it("shows a skipped training step as skipped, not as training evidence", () => {
+    const state = computeGuidedFlowState(inputs({ ...ANALYSED, trainingSkipped: true }));
 
-    expect(statusOf(state, "train")).toBe("completed");
-    expect(statusOf(state, "compile")).toBe("current");
+    expect(stepOf(state, "train")).toMatchObject({ status: "skipped", reason: TRAINING_SKIPPED_REASON });
+    expect(stepOf(state, "compile").status).toBe("current");
+    expect(state.completedCount).toBe(3);
+    expect(state.skippedCount).toBe(1);
   });
 
-  it("blocks a step whose capability is unavailable with a concrete reason", () => {
-    const capabilities: GuidedFlowCapabilityMap = {
-      design: true,
-      simulate: false,
-      analyse: true,
-      train: true,
-      compile: true,
-      cosim: true,
-      synthesise: true,
-      export: true,
-    };
-    const state = computeGuidedFlowState(inputs({ modelSelected: true }), capabilities);
+  it("prefers completed training evidence over an earlier decision to skip", () => {
+    const state = computeGuidedFlowState(
+      inputs({ ...ANALYSED, trainingComplete: true, trainingSkipped: true }),
+    );
 
-    const simulate = state.steps.find((step) => step.key === "simulate");
-    expect(simulate?.status).toBe("blocked");
-    expect(simulate?.blockedReason).toBe("Simulate capability is unavailable");
-    // Design is done, simulate is capability-blocked, so nothing is current.
+    expect(stepOf(state, "train").status).toBe("completed");
+    expect(state.skippedCount).toBe(0);
+  });
+
+  it("marks a step the deployment cannot perform unsupported, with the registry's message", () => {
+    const state = computeGuidedFlowState(
+      inputs({ modelSelected: true }),
+      capabilitiesWithout("simulate"),
+      { simulate: "Simulation backend is offline" },
+    );
+
+    expect(stepOf(state, "simulate")).toMatchObject({
+      status: "unsupported",
+      reason: "Simulation backend is offline",
+    });
+    expect(stepOf(state, "analyse")).toMatchObject({ status: "blocked", reason: "Requires Simulate" });
     expect(state.currentStepKey).toBeNull();
+  });
+
+  it("names an unsupported step generically when the registry gives no message", () => {
+    const state = computeGuidedFlowState(inputs(), capabilitiesWithout("design"));
+
+    expect(stepOf(state, "design")).toMatchObject({
+      status: "unsupported",
+      reason: "Design capability is unavailable",
+    });
+  });
+
+  it("keeps completed evidence completed even when the capability is now unavailable", () => {
+    const state = computeGuidedFlowState(
+      inputs({ modelSelected: true, simulationComplete: true }),
+      capabilitiesWithout("simulate"),
+    );
+
+    expect(stepOf(state, "simulate").status).toBe("completed");
+    expect(state.currentStepKey).toBe("analyse");
   });
 
   it("requires model RTL co-simulation parity between compile and synthesis", () => {
     const state = computeGuidedFlowState(inputs({
-      analysisComplete: true,
+      ...ANALYSED,
       compileComplete: true,
       cosimApplicable: true,
-      modelSelected: true,
-      simulationComplete: true,
       trainingSkipped: true,
     }));
 
     expect(state.totalCount).toBe(8);
-    expect(statusOf(state, "cosim")).toBe("current");
-    expect(statusOf(state, "synthesise")).toBe("blocked");
-    expect(state.steps.find((step) => step.key === "synthesise")?.blockedReason)
-      .toBe("Requires Co-sim parity");
+    expect(stepOf(state, "cosim").status).toBe("current");
+    expect(stepOf(state, "synthesise")).toMatchObject({
+      status: "blocked",
+      reason: "Requires Co-sim parity",
+    });
   });
 
-  it("reports a fully completed flow with no current step", () => {
-    const state = computeGuidedFlowState(
-      inputs({
-        modelSelected: true,
-        simulationComplete: true,
-        analysisComplete: true,
-        trainingComplete: true,
-        compileComplete: true,
-        synthesisComplete: true,
-        evidenceExported: true,
-      }),
-    );
+  it("shows co-simulation as not applicable to a hand-written equation and leaves it out of the count", () => {
+    const state = computeGuidedFlowState(inputs({
+      ...ANALYSED,
+      compileComplete: true,
+      trainingSkipped: true,
+    }));
+
+    expect(stepOf(state, "cosim")).toMatchObject({
+      status: "not_applicable",
+      reason: COSIM_NOT_APPLICABLE_REASON,
+    });
+    expect(state.totalCount).toBe(7);
+    expect(state.currentStepKey).toBe("synthesise");
+  });
+
+  it("offers a failed step as the one to retry, with its reason", () => {
+    const state = computeGuidedFlowState(inputs({
+      ...ANALYSED,
+      trainingSkipped: true,
+      failures: { compile: "RTL emission failed" },
+    }));
+
+    expect(stepOf(state, "compile")).toMatchObject({ status: "failed", reason: "RTL emission failed" });
+    expect(state.currentStepKey).toBe("compile");
+    expect(state.completedCount).toBe(3);
+  });
+
+  it("does not count a failed step as done even when a later step is reachable", () => {
+    const state = computeGuidedFlowState(inputs({
+      ...ANALYSED,
+      failures: { train: "Training run failed", compile: "RTL emission failed" },
+    }));
+
+    expect(stepOf(state, "train").status).toBe("failed");
+    expect(state.currentStepKey).toBe("train");
+    expect(stepOf(state, "compile")).toMatchObject({ status: "failed", reason: "RTL emission failed" });
+    expect(state.completedCount).toBe(3);
+  });
+
+  it("lets a reachable step after a failed optional step stay available", () => {
+    const state = computeGuidedFlowState(inputs({
+      ...ANALYSED,
+      failures: { train: "Training run interrupted" },
+    }));
+
+    expect(state.currentStepKey).toBe("train");
+    expect(stepOf(state, "compile").status).toBe("available");
+  });
+
+  it("reports a step waiting on its predecessor as blocked rather than failed", () => {
+    const state = computeGuidedFlowState(inputs({
+      modelSelected: true,
+      failures: { compile: "RTL emission failed" },
+    }));
+
+    expect(stepOf(state, "compile")).toMatchObject({ status: "blocked", reason: "Requires Analyse" });
+    expect(state.currentStepKey).toBe("simulate");
+  });
+
+  it("lets evidence for the current inputs win over a recorded failure", () => {
+    const state = computeGuidedFlowState(inputs({
+      modelSelected: true,
+      simulationComplete: true,
+      failures: { simulate: "Simulation request failed" },
+    }));
+
+    expect(stepOf(state, "simulate").status).toBe("completed");
+  });
+
+  it("reports a fully completed flow with no step to act on", () => {
+    const state = computeGuidedFlowState(inputs({
+      ...ANALYSED,
+      trainingComplete: true,
+      compileComplete: true,
+      synthesisComplete: true,
+      evidenceExported: true,
+    }));
 
     expect(state.completedCount).toBe(7);
     expect(state.currentStepKey).toBeNull();
-    expect(state.steps.every((step) => step.status === "completed")).toBe(true);
+    expect(state.steps.filter((step) => step.status !== "not_applicable")
+      .every((step) => step.status === "completed")).toBe(true);
   });
 });

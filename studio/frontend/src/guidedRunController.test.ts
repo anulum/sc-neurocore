@@ -213,9 +213,8 @@ describe("buildGuidedRunController", () => {
     expect(afterAnalysis.blockerReason).toBeNull();
     await afterAnalysis.runNextStep();
     expect(calls).toEqual(["run-simulation", "run-analysis", "run-compile"]);
-    expect(afterAnalysis.completedEvidence).toEqual(
-      expect.arrayContaining(["Design", "Simulate", "Analyse", "Train"]),
-    );
+    // Skipping training is a decision, not training evidence.
+    expect(afterAnalysis.completedEvidence).toEqual(["Design", "Simulate", "Analyse"]);
   });
 
   it("runs bit-exact co-simulation after model compile and before synthesis", async () => {
@@ -290,5 +289,93 @@ describe("buildGuidedRunController", () => {
       error: "Evidence export is not ready yet.",
       ok: false,
     });
+  });
+
+  it("offers a failed step again as a retry and records how the retry ended", async () => {
+    const outcomes: [string, string | null][] = [];
+    const failing: GuidedRunActions = {
+      ...actions(),
+      recordOutcome: (step, failure) => { outcomes.push([step, failure]); },
+      runCompile: () => Promise.reject(new Error("RTL emission failed again")),
+    };
+    const controller = buildGuidedRunController({
+      exportReady: false,
+      flow: flow({
+        analysisComplete: true,
+        simulationComplete: true,
+        trainingSkipped: true,
+        failures: { compile: "RTL emission failed" },
+      }),
+      sourceMode: "ode",
+    }, failing);
+
+    expect(controller.nextActionKey).toBe("run-compile");
+    expect(controller.nextActionLabel).toBe("Retry: Compile RTL");
+    await expect(controller.runNextStep()).resolves.toEqual({
+      error: "RTL emission failed again",
+      ok: false,
+    });
+    expect(outcomes).toEqual([["compile", "RTL emission failed again"]]);
+  });
+
+  it("records a successful step so its earlier failure is withdrawn", async () => {
+    const outcomes: [string, string | null][] = [];
+    const controller = buildGuidedRunController({
+      exportReady: false,
+      flow: flow({ simulationComplete: false }),
+      sourceMode: "ode",
+    }, { ...actions(), recordOutcome: (step, failure) => { outcomes.push([step, failure]); } });
+
+    await expect(controller.runNextStep()).resolves.toEqual({ ok: true });
+    expect(outcomes).toEqual([["simulate", null]]);
+  });
+
+  it("records nothing when there was nothing to run", async () => {
+    const outcomes: string[] = [];
+    const recordOutcome = (step: string) => { outcomes.push(step); };
+    const blocked = buildGuidedRunController({
+      exportReady: false,
+      flow: flow({ modelSelected: false }),
+      sourceMode: "ode",
+    }, { ...actions(), recordOutcome });
+    const complete = buildGuidedRunController({
+      exportReady: true,
+      flow: flow({
+        analysisComplete: true,
+        compileComplete: true,
+        evidenceExported: true,
+        simulationComplete: true,
+        synthesisComplete: true,
+        trainingComplete: true,
+      }),
+      sourceMode: "ode",
+    }, { ...actions(), recordOutcome });
+
+    await blocked.runNextStep();
+    await complete.runNextStep();
+    expect(blocked.nextActionKey).toBe("blocked");
+    expect(complete.nextActionKey).toBe("complete");
+    expect(outcomes).toEqual([]);
+  });
+
+  it("names an unsupported step by its own reason when the registry gives no message", () => {
+    const controller = buildGuidedRunController({
+      exportReady: false,
+      flow: flow({}, { ...allCapabilities, simulate: false }),
+      sourceMode: "ode",
+    }, actions());
+
+    expect(controller.nextActionKey).toBe("blocked");
+    expect(controller.blockerReason).toBe("Simulate capability is unavailable");
+  });
+
+  it("does not claim skipped training as completed evidence", () => {
+    const controller = buildGuidedRunController({
+      exportReady: false,
+      flow: flow({ analysisComplete: true, simulationComplete: true, trainingSkipped: true }),
+      sourceMode: "ode",
+    }, actions());
+
+    expect(controller.completedEvidence).toEqual(["Design", "Simulate", "Analyse"]);
   });
 });

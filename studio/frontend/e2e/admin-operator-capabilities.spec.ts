@@ -71,8 +71,13 @@ test("unavailable panel contracts disable toolbar and keyboard activation", asyn
 
   await page.keyboard.press("3");
 
-  await expect(page.getByText("Analysis endpoints are unavailable.")).toHaveCount(0);
+  // The unavailable panel did not open; the guided workflow names why its
+  // analysis step cannot run here.
+  await expect(page.locator(".capability-blocked-panel")
+    .getByText("Analysis endpoints are unavailable.")).toHaveCount(0);
   await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.getByLabel("Guided flow", { exact: true }).locator('li[data-step="analyse"]'))
+    .toContainText("unsupported: Analysis endpoints are unavailable.");
 });
 
 test("missing active panel capability fails closed at startup", async ({ page }) => {
@@ -82,8 +87,15 @@ test("missing active panel capability fails closed at startup", async ({ page })
 
   await page.goto("/");
 
-  await expect(page.locator(".capability-blocked-title", { hasText: "Trace" })).toBeVisible();
-  await expect(page.getByText("Backend capability contract is missing from the registry.")).toBeVisible();
+  const blockedPanel = page.locator(".capability-blocked-panel", {
+    has: page.locator(".capability-blocked-title", { hasText: "Trace" }),
+  });
+  await expect(blockedPanel).toBeVisible();
+  await expect(blockedPanel.getByText("Backend capability contract is missing from the registry."))
+    .toBeVisible();
+  // The guided workflow names the same missing contract instead of offering a run.
+  await expect(page.getByLabel("Guided flow", { exact: true }).locator('li[data-step="simulate"]'))
+    .toContainText("unsupported: Backend capability contract is missing from the registry.");
   await page.keyboard.press("Space");
   await page.waitForTimeout(100);
   expect(api.requests("/api/simulate")).toBe(0);

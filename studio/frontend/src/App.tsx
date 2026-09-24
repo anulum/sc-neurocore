@@ -124,7 +124,21 @@ export default function App() {
     synthesise: !panelUnavailable("synth"),
     export: true,
   };
-  const guidedFlow = computeGuidedFlowState(guidedFlowInputs, guidedFlowCapabilities);
+  const guidedCapabilityMessages = {
+    analyse: panelState("fi-curve").message,
+    compile: panelState("verilog").message,
+    cosim: selectedCosimConfigured
+      ? panelState("verilog").message
+      : "Bit-exact co-simulation is available only for euler or map integrators.",
+    simulate: panelState("trace").message,
+    synthesise: panelState("synth").message,
+    train: panelState("train").message,
+  };
+  const guidedFlow = computeGuidedFlowState(
+    guidedFlowInputs,
+    guidedFlowCapabilities,
+    guidedCapabilityMessages,
+  );
   const studioReadiness = buildStudioReadinessModel(s.operatorStatus);
   const operatorWorkbench = buildOperatorWorkbenchState({
     compileBundleExported: studioBundleIsCurrent("compile", s),
@@ -252,16 +266,7 @@ export default function App() {
     }
   };
   const guidedRun = buildGuidedRunController({
-    capabilityMessages: {
-      analyse: panelState("fi-curve").message,
-      compile: panelState("verilog").message,
-      cosim: selectedCosimConfigured
-        ? panelState("verilog").message
-        : "Bit-exact co-simulation is available only for euler or map integrators.",
-      simulate: panelState("trace").message,
-      synthesise: panelState("synth").message,
-      train: panelState("train").message,
-    },
+    capabilityMessages: guidedCapabilityMessages,
     exportReady: operatorWorkbench.evidenceActionEnabled || evidenceSession.cart.items.length > 0,
     flow: guidedFlow,
     compileConfigured: s.sourceMode === "ode" || s.modelDetail?.compile_configuration != null,
@@ -292,6 +297,7 @@ export default function App() {
         throw new Error("RTL co-simulation source does not match the current compiled artifact.");
       }
     },
+    recordOutcome: s.recordStageOutcome,
     runSimulation: evidenceSession.runSimulationIntoCart,
     runSynthesis: async () => {
       await s.runSynthesis();

@@ -42,7 +42,9 @@ const uiOrigin = `http://127.0.0.1:${uiPort}`;
 // the `test:e2e:graph` script does.
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "network-canvas-live.spec.ts",
+  // Live-backend browser contracts over the built bundle: the network canvas
+  // and the guided workflow's truthfulness under races and failures.
+  testMatch: ["network-canvas-live.spec.ts", "guided-flow-truth-live.spec.ts"],
   // A shared workstation can be heavily loaded; the budget is for the
   // boundary, not for the host's spare capacity.
   timeout: 900_000,

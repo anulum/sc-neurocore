@@ -46,7 +46,11 @@ describe("GuidedFlowPanel guided run actions", () => {
     expect(html).toContain("Export evidence");
     expect(html).toContain("Evidence ready");
     expect(html).toContain("Completed evidence");
-    expect(html).toContain("Design, Simulate, Analyse, Train, Compile, Synthesise");
+    // The skipped training step is shown as skipped, never as completed evidence.
+    expect(html).toContain("Completed evidence: Design, Simulate, Analyse, Compile, Synthesise");
+    expect(html).toContain("5/7 (1 skipped)");
+    expect(html).toContain("skipped: by choice; not training evidence");
+    expect(html).toContain("not applicable: Co-simulation applies to catalogue models only");
   });
 
   it("renders blocker reasons from the controller", () => {

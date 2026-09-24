@@ -11,15 +11,17 @@
  *
  * The whole controller exists to answer one question -- what should happen when
  * the reader presses the one button -- and to say why when the answer is
- * nothing. A blocked flow reports the first blocker the reader can actually
- * act on: a step blocked merely because its predecessor is not done is not
- * actionable, so it is skipped in favour of one that names a real obstacle,
- * and a capability's own message is preferred over the flow's generic one
- * because it says what the deployment is missing.
+ * nothing. The step to act on is the flow's current one, which may be a failed
+ * step offered again as a retry. When nothing is actionable the controller
+ * names the first step this deployment cannot perform, preferring the
+ * capability's own message because it says what the deployment is missing; a
+ * step waiting on its predecessor is not an obstacle worth naming.
  *
  * Every action is awaited and its failure returned rather than thrown. The
  * caller is a click handler, and a rejected promise there is an unhandled
- * rejection with nothing naming the step that failed.
+ * rejection with nothing naming the step that failed. The outcome is also
+ * reported through `recordOutcome`, so the flow can show a failed step as
+ * failed rather than as merely not yet done.
  */
 import type { GuidedFlowState, GuidedFlowStepKey } from "./guidedFlowState";
 
@@ -44,6 +46,11 @@ export interface GuidedRunActions {
   runSimulation: () => Promise<void>;
   runSynthesis: () => Promise<void>;
   skipTraining: () => Promise<void>;
+  /**
+   * Record how a step's action ended: its failure message, or `null` when it
+   * succeeded. Called once per action the controller performs.
+   */
+  recordOutcome?: (step: GuidedFlowStepKey, failure: string | null) => void;
 }
 
 /** The flow, and what the deployment can currently do. */
@@ -72,11 +79,12 @@ export interface GuidedRunController {
   runNextStep: () => Promise<GuidedRunResult>;
 }
 
-/** The decided action: its key, its label, and any blocker. */
+/** The decided action: its key, its label, any blocker, and the step it acts on. */
 interface GuidedRunPlan {
   blockerReason: string | null;
   key: GuidedRunActionKey;
   label: string;
+  step: GuidedFlowStepKey | null;
 }
 
 /** What each completed step is called in the evidence summary. */
@@ -124,15 +132,19 @@ export function buildGuidedRunController(
  *   completion.
  */
 function guidedRunPlan(inputs: GuidedRunControllerInputs): GuidedRunPlan {
-  const current = inputs.flow.steps.find((step) => step.status === "current") ?? null;
-  if (current !== null) {
-    return currentStepPlan(current.key, inputs);
+  const currentKey = inputs.flow.currentStepKey;
+  if (currentKey !== null) {
+    const plan = { ...currentStepPlan(currentKey, inputs), step: currentKey };
+    const current = inputs.flow.steps.find((step) => step.key === currentKey);
+    return current?.status === "failed" && plan.key !== "blocked"
+      ? { ...plan, label: `Retry: ${plan.label}` }
+      : plan;
   }
   const blocker = firstActionableBlocker(inputs);
   if (blocker !== null) {
-    return { blockerReason: blocker, key: "blocked", label: "Resolve blocker" };
+    return { blockerReason: blocker, key: "blocked", label: "Resolve blocker", step: null };
   }
-  return { blockerReason: null, key: "complete", label: "Workflow complete" };
+  return { blockerReason: null, key: "complete", label: "Workflow complete", step: null };
 }
 
 /**
@@ -146,7 +158,7 @@ function guidedRunPlan(inputs: GuidedRunControllerInputs): GuidedRunPlan {
 function currentStepPlan(
   stepKey: GuidedFlowStepKey,
   inputs: GuidedRunControllerInputs,
-): GuidedRunPlan {
+): Omit<GuidedRunPlan, "step"> {
   switch (stepKey) {
     case "design":
       return { blockerReason: "Choose or enter a design before running.", key: "blocked", label: "Choose design" };
@@ -189,30 +201,25 @@ function currentStepPlan(
 }
 
 /**
- * Find the first blocker the reader can do something about.
+ * Find the first obstacle the reader can do something about.
  *
- * A step blocked only because its predecessor is unfinished is not
- * actionable and is skipped: telling someone their workflow is blocked
- * because they have not done the previous step is not help.
+ * Only a step the deployment cannot perform is an obstacle; a step blocked
+ * because its predecessor is unfinished is not, and telling someone their
+ * workflow is blocked because they have not done the previous step is not help.
  *
  * @param inputs - The flow and what the deployment can do.
  * @returns The reason, preferring a capability's own message, or `null`.
  */
 function firstActionableBlocker(inputs: GuidedRunControllerInputs): string | null {
-  const firstBlocked = inputs.flow.steps.find(
-    (step) =>
-      step.status === "blocked"
-      && step.blockedReason !== null
-      && !step.blockedReason.startsWith("Requires "),
-  );
-  if (firstBlocked === undefined) {
+  const unsupported = inputs.flow.steps.find((step) => step.status === "unsupported");
+  if (unsupported === undefined) {
     return null;
   }
-  return inputs.capabilityMessages?.[firstBlocked.key] ?? firstBlocked.blockedReason;
+  return inputs.capabilityMessages?.[unsupported.key] ?? unsupported.reason;
 }
 
 /**
- * Perform the planned action.
+ * Perform the planned action and record how it ended.
  *
  * @param plan - What was chosen.
  * @param actions - The work each step performs.
@@ -220,6 +227,24 @@ function firstActionableBlocker(inputs: GuidedRunControllerInputs): string | nul
  *   failure is returned, never thrown: the caller is a click handler.
  */
 async function runPlannedAction(
+  plan: GuidedRunPlan,
+  actions: GuidedRunActions,
+): Promise<GuidedRunResult> {
+  const result = await performPlannedAction(plan, actions);
+  if (plan.step !== null && plan.key !== "blocked" && plan.key !== "complete") {
+    actions.recordOutcome?.(plan.step, result.ok ? null : result.error ?? "Guided run action failed");
+  }
+  return result;
+}
+
+/**
+ * Perform the planned action.
+ *
+ * @param plan - What was chosen.
+ * @param actions - The work each step performs.
+ * @returns Whether it succeeded, with the message when it did not.
+ */
+async function performPlannedAction(
   plan: GuidedRunPlan,
   actions: GuidedRunActions,
 ): Promise<GuidedRunResult> {

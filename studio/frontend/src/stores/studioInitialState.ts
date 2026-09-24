@@ -78,7 +78,7 @@ export const studioInitialData = {
   codeScript: "", codeOneliner: "", codeReplayScript: "", codeExperimentSha256: "",
   savedSessions: readStoredStudioSessions(),
   resultExperimentKey: null, analysisExperimentKey: null, trainingExperimentKey: null,
-  error: null, refusedEdit: null, isSimulating: false,
+  error: null, stageFailure: null, refusedEdit: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
 } satisfies StudioStateData;

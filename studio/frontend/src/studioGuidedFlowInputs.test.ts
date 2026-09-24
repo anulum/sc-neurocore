@@ -73,6 +73,7 @@ function source(overrides: Partial<StudioGuidedFlowSource> = {}): StudioGuidedFl
     seed: null,
     selectedModelName: "SCLapicqueLIFNeuron",
     sensResult: null,
+    stageFailure: null,
     sourceMode: "model",
     synthesisEvidenceBundle: null,
     synthResult: null,
@@ -378,5 +379,95 @@ describe("the rules this module carries unchanged", () => {
     });
 
     expect(skipped.trainingSkipped).toBe(true);
+  });
+});
+
+describe("stage failures", () => {
+  it("shows a recorded failure only while its experiment is on screen", () => {
+    const state = source();
+    const key = studioExperimentKey(studioSimulationConfigInput(state));
+    state.stageFailure = { stage: "simulate", message: "Simulation request failed", experimentKey: key };
+
+    expect(derive(state).failures).toEqual({ simulate: "Simulation request failed" });
+    expect(derive({ ...state, duration: 150 }).failures).toEqual({});
+  });
+
+  it("never shows a failure recorded under no experiment", () => {
+    const state = source();
+    state.stageFailure = { stage: "simulate", message: "invalid current", experimentKey: null };
+
+    expect(derive(state).failures).toEqual({});
+  });
+
+  it.each(["failed", "interrupted"])("reads a %s training run of the configuration on screen as failed", (status) => {
+    const state = source({ trainingStatus: status });
+    state.trainingExperimentKey = studioTrainingKey(TRAINING_CONFIG);
+
+    expect(derive(state).failures).toEqual({ train: `Training run ${status}` });
+    expect(derive({ ...state, trainingExperimentKey: null }).failures).toEqual({});
+  });
+
+  it("does not read a stopped training run as failed", () => {
+    const state = source({ trainingStatus: "stopped" });
+    state.trainingExperimentKey = studioTrainingKey(TRAINING_CONFIG);
+
+    expect(derive(state).failures).toEqual({});
+  });
+
+  it("reads a co-simulation of the current RTL that is not bit-exact as failed", () => {
+    const state = source({ compileTraceability: COMPILED, cosimResult: cosim(false, RTL_DIGEST) });
+
+    expect(derive(state).failures).toEqual({
+      cosim: "RTL co-simulation of the compiled design is not bit-exact",
+    });
+    expect(derive({ ...state, cosimResult: cosim(false, "b".repeat(64)) }).failures).toEqual({});
+    expect(derive({ ...state, compileTraceability: null }).failures).toEqual({});
+  });
+
+  it("prefers the recorded message over one read from a result for the same stage", () => {
+    const state = source({ compileTraceability: COMPILED, cosimResult: cosim(false, RTL_DIGEST) });
+    const key = studioExperimentKey(studioSimulationConfigInput(state));
+    state.stageFailure = { stage: "cosim", message: "Parity mismatch at step 12", experimentKey: key };
+
+    expect(derive(state).failures).toEqual({ cosim: "Parity mismatch at step 12" });
+  });
+
+  it("reads a catalogue synthesis whose terminal reported failure as failed", () => {
+    const failed = {
+      silicon_terminal: { success: false, place_and_route: { error: "nextpnr: placement failed" } },
+    } as unknown as SynthResult;
+    const unexplained = { silicon_terminal: { success: false, place_and_route: null } } as unknown as SynthResult;
+
+    expect(derive(source({ synthResult: failed })).failures)
+      .toEqual({ synthesise: "nextpnr: placement failed" });
+    expect(derive(source({ synthResult: unexplained })).failures)
+      .toEqual({ synthesise: "Synthesis/PnR terminal did not complete" });
+    expect(derive(source({ synthResult: synth(false) })).failures).toEqual({});
+  });
+
+  it("reads an ODE synthesis that reported failure as failed", () => {
+    const withError = { success: false, error: "yosys: syntax error" } as unknown as SynthResult;
+
+    expect(derive(source({ sourceMode: "ode", synthResult: withError })).failures)
+      .toEqual({ synthesise: "yosys: syntax error" });
+    expect(derive(source({ sourceMode: "ode", synthResult: synth(false) })).failures)
+      .toEqual({ synthesise: "Synthesis did not complete" });
+    expect(derive(source({ sourceMode: "ode", synthResult: synth(true) })).failures).toEqual({});
+  });
+
+  it("reads a multi-target run in which no target succeeded as failed", () => {
+    const multi = (success: boolean) => ({
+      supported: ["ice40"],
+      target_provenance_matrix: {},
+      targets: { ice40: synth(success) },
+    }) as unknown as StudioGuidedFlowSource["multiTargetResult"];
+
+    expect(derive(source({ sourceMode: "ode", multiTargetResult: multi(false) })).failures)
+      .toEqual({ synthesise: "No synthesis target succeeded" });
+    expect(derive(source({ sourceMode: "ode", multiTargetResult: multi(true) })).failures).toEqual({});
+    expect(derive(source({
+      sourceMode: "ode",
+      multiTargetResult: { ...multi(false), targets: {} } as StudioGuidedFlowSource["multiTargetResult"],
+    })).failures).toEqual({});
   });
 });

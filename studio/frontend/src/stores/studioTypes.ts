@@ -36,6 +36,8 @@ import type { StudioNetworkParams } from "../studioInputState";
 import type { EvidenceBundleSurface } from "../evidenceBundles";
 import type { StudioBundleContext } from "../studioBundleContext";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
+import type { GuidedFlowStepKey } from "../guidedFlowState";
+import type { StudioStageFailure } from "./studioStageFailure";
 
 /** Whether a run is driven by a catalogue model or by an ODE. */
 export type SourceMode = "model" | "ode";
@@ -231,6 +233,8 @@ export interface StudioState {
   codeExperimentSha256: string;
   savedSessions: StudioSavedSession[];
   error: string | null;
+  /** The latest failed attempt at a workflow stage, with the experiment it failed under. */
+  stageFailure: StudioStageFailure | null;
   /**
    * Where a refused edit diverged from, set only by a save conflict.
    * `null` means there is nothing waiting to be kept.
@@ -333,6 +337,8 @@ export interface StudioState {
   runEmitSV: () => Promise<void>;
   setSynthTarget: (t: string) => void;
   runSynthesis: () => Promise<void>;
+  /** Record how a guided attempt at a stage ended: its failure, or `null` on success. */
+  recordStageOutcome: (stage: GuidedFlowStepKey, failure: string | null) => void;
   runMultiTargetSynthesis: () => Promise<void>;
   runSynthEstimate: () => Promise<void>;
   checkSynthTools: () => Promise<void>;

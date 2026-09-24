@@ -60,4 +60,39 @@ describe("GuidedFlowPanel", () => {
     expect(html).not.toContain('aria-current="step"');
     expect(html).not.toContain("blocked");
   });
+
+  it("points at a failed step as the one to retry and shows why it failed", () => {
+    const state = computeGuidedFlowState({
+      modelSelected: true,
+      simulationComplete: true,
+      analysisComplete: true,
+      trainingComplete: false,
+      trainingSkipped: true,
+      compileComplete: false,
+      cosimApplicable: true,
+      cosimComplete: false,
+      synthesisComplete: false,
+      evidenceExported: false,
+      failures: { compile: "RTL emission failed" },
+    }, {
+      analyse: true,
+      compile: true,
+      cosim: false,
+      design: true,
+      export: true,
+      simulate: true,
+      synthesise: true,
+      train: true,
+    }, { cosim: "Bit-exact co-simulation is available only for euler or map integrators." });
+
+    const html = renderToStaticMarkup(<GuidedFlowPanel state={state} />);
+
+    expect(html).toContain("3/8 (1 skipped)");
+    expect(html).toMatch(/data-step="compile" data-status="failed" aria-current="step"/);
+    expect(html).toContain("failed: RTL emission failed");
+    expect(html).toContain(
+      "unsupported: Bit-exact co-simulation is available only for euler or map integrators.",
+    );
+    expect(html).toContain("skipped: by choice; not training evidence");
+  });
 });

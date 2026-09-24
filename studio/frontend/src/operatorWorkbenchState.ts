@@ -76,6 +76,10 @@ const STEP_STATUS_LABELS: Record<GuidedFlowStepStatus, string> = {
   blocked: "blocked",
   completed: "done",
   current: "next",
+  failed: "failed",
+  not_applicable: "not applicable",
+  skipped: "skipped",
+  unsupported: "unsupported",
 };
 
 /**
@@ -104,8 +108,9 @@ export function buildOperatorWorkbenchState(
     ],
     evidenceActionEnabled: exportTarget !== null,
     evidenceExportTarget: exportTarget,
-    headline: currentStep === null ? "Workflow complete" : `Next: ${currentStep.title}`,
-    subhead: `${inputs.guidedFlow.completedCount}/${inputs.guidedFlow.totalCount} lifecycle steps complete`,
+    headline: guidedHeadline(inputs.guidedFlow, currentStep),
+    subhead: `${inputs.guidedFlow.completedCount}/${inputs.guidedFlow.totalCount} lifecycle steps complete`
+      + (inputs.guidedFlow.skippedCount > 0 ? `, ${inputs.guidedFlow.skippedCount} skipped` : ""),
   };
 }
 
@@ -389,14 +394,43 @@ function evidenceTargetDetail(
 }
 
 /**
- * The guided step the run is on, if a guided run is going.
+ * The guided step to act on next, if there is one.
  *
  * @param state - The guided flow's state.
- * @returns The step, or `null`.
+ * @returns The step, including a failed one offered as a retry, or `null`.
  */
-function currentGuidedStep(state: GuidedFlowState): { key: GuidedFlowStepKey; title: string } | null {
-  const step = state.steps.find((candidate) => candidate.status === "current");
-  return step === undefined ? null : { key: step.key, title: step.title };
+function currentGuidedStep(
+  state: GuidedFlowState,
+): { key: GuidedFlowStepKey; status: GuidedFlowStepStatus; title: string } | null {
+  const step = state.steps.find((candidate) => candidate.key === state.currentStepKey);
+  return step === undefined ? null : { key: step.key, status: step.status, title: step.title };
+}
+
+/**
+ * The workbench headline: what to do next, or why nothing can be done.
+ *
+ * With nothing to act on, either a step this deployment cannot perform is
+ * holding the workflow -- saying "complete" would then be false -- or every
+ * step that applies is done or was skipped: the first step that is neither
+ * would otherwise be current or failed.
+ *
+ * @param state - The guided flow's state.
+ * @param currentStep - The step to act on next, if any.
+ * @returns The headline.
+ */
+function guidedHeadline(
+  state: GuidedFlowState,
+  currentStep: ReturnType<typeof currentGuidedStep>,
+): string {
+  if (currentStep !== null) {
+    return currentStep.status === "failed"
+      ? `Retry: ${currentStep.title}`
+      : `Next: ${currentStep.title}`;
+  }
+  const unsupported = state.steps.find((step) => step.status === "unsupported");
+  return unsupported === undefined
+    ? "Workflow complete"
+    : `Blocked: ${unsupported.title} is unsupported here`;
 }
 
 /**
@@ -428,10 +462,19 @@ function statusFromStep(
   if (step === null) {
     return "blocked";
   }
-  if (step.status === "completed" || step.status === "available" || step.status === "current") {
-    return "ready";
+  switch (step.status) {
+    case "completed":
+    case "available":
+    case "current":
+    case "skipped":
+    case "not_applicable":
+      return "ready";
+    case "failed":
+      return "warning";
+    case "blocked":
+    case "unsupported":
+      return "blocked";
   }
-  return "blocked";
 }
 
 /**
@@ -444,5 +487,5 @@ function stepDetail(step: GuidedFlowState["steps"][number] | null): string {
   if (step === null) {
     return "Workflow step is not registered";
   }
-  return step.blockedReason ?? `${step.title} is ${STEP_STATUS_LABELS[step.status]}`;
+  return step.reason ?? `${step.title} is ${STEP_STATUS_LABELS[step.status]}`;
 }

@@ -35,6 +35,7 @@ import type {
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import type { StudioSimulationConfigSource } from "./studioSimulationConfigInput";
 import type { StudioBundleContextSource } from "./studioBundleContext";
+import type { StudioStageFailure } from "./stores/studioStageFailure";
 
 /** Every field the guided workflow's completion rules read. */
 export interface StudioGuidedFlowSource extends StudioSimulationConfigSource, StudioBundleContextSource {
@@ -57,6 +58,7 @@ export interface StudioGuidedFlowSource extends StudioSimulationConfigSource, St
   result: SimulateResponse | null;
   resultExperimentKey: string | null;
   sensResult: SensitivityResponse | null;
+  stageFailure: StudioStageFailure | null;
   synthesisEvidenceBundle: StudioEvidenceBundleResponse | null;
   synthResult: SynthResult | null;
   trainingConfig: StudioProjectTrainingConfig;

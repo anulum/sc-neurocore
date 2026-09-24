@@ -18,6 +18,10 @@ export interface GuidedFlowPanelProps {
 
 const STATUS_LABEL: Record<GuidedFlowStepStatus, string> = {
   completed: "done",
+  skipped: "skipped",
+  not_applicable: "not applicable",
+  unsupported: "unsupported",
+  failed: "failed",
   current: "next",
   available: "ready",
   blocked: "blocked",
@@ -25,10 +29,25 @@ const STATUS_LABEL: Record<GuidedFlowStepStatus, string> = {
 
 const STATUS_COLOR: Record<GuidedFlowStepStatus, string> = {
   completed: "#7bc67b",
+  skipped: "var(--text-muted)",
+  not_applicable: "var(--text-muted)",
+  unsupported: "#c98a8a",
+  failed: "#e0a060",
   current: "#7bb4ff",
   available: "var(--text-secondary)",
   blocked: "#c98a8a",
 };
+
+/**
+ * What a step's status column says.
+ *
+ * @param status - The step's status.
+ * @param reason - Why, when the status has a reason.
+ * @returns The label, followed by the reason when there is one.
+ */
+function statusText(status: GuidedFlowStepStatus, reason: string | null): string {
+  return reason === null ? STATUS_LABEL[status] : `${STATUS_LABEL[status]}: ${reason}`;
+}
 
 /**
  * The guided operator run, one step at a time.
@@ -74,6 +93,7 @@ export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelPr
         <span>Guided flow</span>
         <span aria-label="Guided flow progress">
           {state.completedCount}/{state.totalCount}
+          {state.skippedCount > 0 ? ` (${state.skippedCount} skipped)` : ""}
         </span>
       </div>
       {controller !== undefined && (
@@ -116,23 +136,21 @@ export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelPr
             key={step.key}
             data-step={step.key}
             data-status={step.status}
-            aria-current={step.status === "current" ? "step" : undefined}
+            aria-current={step.key === state.currentStepKey ? "step" : undefined}
             style={{
               display: "flex",
               justifyContent: "space-between",
               gap: 8,
               padding: "2px 0",
-              fontWeight: step.status === "current" ? 600 : 400,
+              fontWeight: step.key === state.currentStepKey ? 600 : 400,
             }}
           >
             <span>
               {step.title}
               {step.optional ? " (optional)" : ""}
             </span>
-            <span style={{ color: STATUS_COLOR[step.status] }} title={step.blockedReason ?? ""}>
-              {step.status === "blocked" && step.blockedReason
-                ? step.blockedReason
-                : STATUS_LABEL[step.status]}
+            <span style={{ color: STATUS_COLOR[step.status] }} title={step.reason ?? ""}>
+              {statusText(step.status, step.reason)}
             </span>
           </li>
         ))}

@@ -301,4 +301,67 @@ describe("buildOperatorWorkbenchState", () => {
       value: "development",
     });
   });
+
+  it("offers a failed step as a retry and marks its card as a warning", () => {
+    const state = buildOperatorWorkbenchState(inputs({
+      guidedFlow: computeGuidedFlowState(guidedInputs({
+        analysisComplete: true,
+        failures: { compile: "RTL emission failed" },
+        modelSelected: true,
+        simulationComplete: true,
+        trainingSkipped: true,
+      })),
+    }));
+
+    expect(state.headline).toBe("Retry: Compile");
+    expect(state.subhead).toBe("3/7 lifecycle steps complete, 1 skipped");
+    expect(state.cards.find((card) => card.key === "compile")).toMatchObject({
+      detail: "RTL emission failed",
+      status: "warning",
+      value: "failed",
+    });
+  });
+
+  it("does not call a workflow complete when an unsupported step holds it", () => {
+    const state = buildOperatorWorkbenchState(inputs({
+      guidedFlow: computeGuidedFlowState(
+        guidedInputs({ modelSelected: true }),
+        {
+          analyse: true,
+          compile: false,
+          cosim: true,
+          design: true,
+          export: true,
+          simulate: false,
+          synthesise: true,
+          train: true,
+        },
+        { simulate: "Simulation backend is offline" },
+      ),
+    }));
+
+    expect(state.headline).toBe("Blocked: Simulate is unsupported here");
+    expect(state.cards.find((card) => card.key === "compile")).toMatchObject({
+      detail: "Compile capability is unavailable",
+      status: "blocked",
+      value: "unsupported",
+    });
+  });
+
+  it("calls a workflow complete once every applicable step is done or skipped", () => {
+    const state = buildOperatorWorkbenchState(inputs({
+      guidedFlow: computeGuidedFlowState(guidedInputs({
+        analysisComplete: true,
+        compileComplete: true,
+        evidenceExported: true,
+        modelSelected: true,
+        simulationComplete: true,
+        synthesisComplete: true,
+        trainingSkipped: true,
+      })),
+    }));
+
+    expect(state.headline).toBe("Workflow complete");
+    expect(state.subhead).toBe("6/7 lifecycle steps complete, 1 skipped");
+  });
 });

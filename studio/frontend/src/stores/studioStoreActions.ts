@@ -313,6 +313,7 @@ import { studioPrecisionKey, studioTrainingKey } from "../studioExperimentKey";
 import { runStoreCompile } from "./studioCompile";
 import { runStoreSynthesis } from "./studioSynthesis";
 import { runStoreBundle } from "./studioBundle";
+import { studioStageOutcomeState, studioStageSet } from "./studioStageFailure";
 
 /**
  * The graph the store currently holds, as a history snapshot.
@@ -796,13 +797,13 @@ export function createStudioStoreActions(
     });
   },
 
-  runSimulation: () => runStoreSimulation(get, set),
+  runSimulation: () => runStoreSimulation(get, studioStageSet("simulate", get, set)),
 
-  runFICurve: () => runStoreHeavyAnalysis("fi_curve", get, set),
-  runBifurcation: () => runStoreHeavyAnalysis("bifurcation", get, set),
-  runSensitivity: () => runStoreHeavyAnalysis("sensitivity", get, set),
+  runFICurve: () => runStoreHeavyAnalysis("fi_curve", get, studioStageSet("analyse", get, set)),
+  runBifurcation: () => runStoreHeavyAnalysis("bifurcation", get, studioStageSet("analyse", get, set)),
+  runSensitivity: () => runStoreHeavyAnalysis("sensitivity", get, studioStageSet("analyse", get, set)),
 
-  runPrecision: () => runStoreDirectAnalysis(get, set, async (s) => {
+  runPrecision: () => runStoreDirectAnalysis(get, studioStageSet("analyse", get, set), async (s) => {
     if (s.sourceMode !== "ode") {
       throw new Error("Precision compare only for custom ODE mode");
     }
@@ -812,11 +813,15 @@ export function createStudioStoreActions(
     return studioPrecisionResultState(precResult);
   }, "precision", (s) => studioPrecisionKey(simulationConfigInput(s), s.modelQFormat)),
 
-  runCompile: () => runStoreCompile("compile", get, set),
+  runCompile: () => runStoreCompile("compile", get, studioStageSet("compile", get, set)),
 
-  runCosim: () => runStoreCompile("cosim", get, set),
+  recordStageOutcome: (stage, failure) => {
+    set(studioStageOutcomeState(stage, failure, get()));
+  },
 
-  runHeatmap: () => runStoreHeavyAnalysis("heatmap", get, set),
+  runCosim: () => runStoreCompile("cosim", get, studioStageSet("cosim", get, set)),
+
+  runHeatmap: () => runStoreHeavyAnalysis("heatmap", get, studioStageSet("analyse", get, set)),
 
   runCodegen: async () => {
     const s = get();
@@ -866,7 +871,7 @@ export function createStudioStoreActions(
   },
 
   runCharacterize: () => {
-    runStoreCharacterize(get, set);
+    runStoreCharacterize(get, studioStageSet("analyse", get, set));
   },
 
   runMultiSimulate: async (modelNames) => {
@@ -906,13 +911,13 @@ export function createStudioStoreActions(
     } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 
-  runCompare: (configB) => runStoreDirectAnalysis(get, set, async (s) => {
+  runCompare: (configB) => runStoreDirectAnalysis(get, studioStageSet("analyse", get, set), async (s) => {
     const configA = studioSimulationConfig(simulationConfigInput(s));
     const compareResult = await fetchCompare(configA, configB);
     return studioCompareResultState(compareResult);
   }, "compare"),
 
-  runNullclines: () => runStoreDirectAnalysis(get, set, async (s) => {
+  runNullclines: () => runStoreDirectAnalysis(get, studioStageSet("analyse", get, set), async (s) => {
     if (s.sourceMode !== "ode" || s.equations.length < 2) {
       throw new Error("Nullclines need 2+ variable ODE in custom mode");
     }
@@ -934,7 +939,7 @@ export function createStudioStoreActions(
     return studioNullclineResultState(nullclineResult);
   }),
 
-  runFreqResponse: () => runStoreDirectAnalysis(get, set, async (s) => {
+  runFreqResponse: () => runStoreDirectAnalysis(get, studioStageSet("analyse", get, set), async (s) => {
     const cfg = studioSimulationConfig(simulationConfigInput(s));
     const freqResult = await fetchFreqResponse(studioFrequencyResponseRequest(cfg, s.current));
     return studioFrequencyResultState(freqResult);
@@ -953,7 +958,7 @@ export function createStudioStoreActions(
 
   setSynthTarget: (t) => { set(synthesisTargetState(t)); },
 
-  runSynthesis: () => runStoreSynthesis(get, set, async (s) => {
+  runSynthesis: () => runStoreSynthesis(get, studioStageSet("synthesise", get, set), async (s) => {
       const verilog = s.svSource || s.verilogSrc;
       let resultArtifactPath = "synthesis/result.json";
       let synthResult: NonNullable<StudioState["synthResult"]>;
@@ -992,7 +997,7 @@ export function createStudioStoreActions(
       );
   }),
 
-  runMultiTargetSynthesis: () => runStoreSynthesis(get, set, async (s) => {
+  runMultiTargetSynthesis: () => runStoreSynthesis(get, studioStageSet("synthesise", get, set), async (s) => {
     if (s.sourceMode === "model") {
       throw new Error(
         "Selected models use the digest-bound single-target synthesis/PnR terminal.",
