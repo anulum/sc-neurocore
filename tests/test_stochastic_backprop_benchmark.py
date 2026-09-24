@@ -46,6 +46,9 @@ def test_stochastic_backprop_public_lazy_export(monkeypatch: pytest.MonkeyPatch)
     assert name in dir(benchmarks)
     assert getattr(benchmarks, name) is build_stochastic_backprop_benchmark
     assert benchmarks.__dict__[name] is build_stochastic_backprop_benchmark
+    report = benchmarks.build_stochastic_backprop_benchmark(bitstream_length=64, steps=4)
+    assert report["schema_version"] == STOCHASTIC_BACKPROP_BENCHMARK_SCHEMA_VERSION
+    assert report["sc_config"]["bitstream_length"] == 64
     with pytest.raises(AttributeError, match="has no attribute"):
         benchmarks.unknown_benchmark
 
