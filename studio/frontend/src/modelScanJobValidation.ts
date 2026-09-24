@@ -382,6 +382,8 @@ export function validateModelScanJobReceipt(
     && jobStatus !== "cancelling"
     && jobStatus !== "cancelled"
     && jobStatus !== "timed_out"
+    && jobStatus !== "interrupted"
+    && jobStatus !== "unknown"
   ) {
     return { ok: false, error: "model_scan_job_receipt_status_invalid" };
   }
@@ -415,6 +417,7 @@ export function validateModelScanJobReceipt(
         ? receipt.job.started_at_utc
         : null,
     status: jobStatus,
+    training_config: null,
   };
   return {
     ok: true,
@@ -443,6 +446,8 @@ const JOB_STATUSES: readonly StudioJobRecord["status"][] = [
   "cancelling",
   "cancelled",
   "timed_out",
+  "interrupted",
+  "unknown",
 ];
 
 /**
@@ -505,6 +510,7 @@ export function validateModelScanPollRecord(
       started_at_utc:
         typeof record.started_at_utc === "string" ? record.started_at_utc : null,
       status,
+      training_config: null,
     },
   };
 }

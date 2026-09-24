@@ -298,7 +298,7 @@ export const jobStatus = {
 
 export const jobList = {
   jobs: [],
-  schema_version: "studio.jobs.list.v1",
+  schema_version: "studio.jobs.list.v2",
 };
 
 export const artifactJobList = {
@@ -329,7 +329,7 @@ export const artifactJobList = {
       status: "completed",
     },
   ],
-  schema_version: "studio.jobs.list.v1",
+  schema_version: "studio.jobs.list.v2",
 };
 
 export const operatorStatus = {

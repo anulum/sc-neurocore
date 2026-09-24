@@ -9,7 +9,7 @@
 import { createStore } from "zustand/vanilla";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ModelDetail, NeuronTemplate } from "../api/client";
+import type { ModelDetail } from "../api/client";
 import { fetchModelDetail, fetchReplayPack } from "../api/client";
 import { studioInitialData } from "./studioInitialState";
 import { createStudioStoreActions } from "./studioStoreActions";
@@ -104,7 +104,7 @@ describe("Studio model selection", () => {
         params: {},
         threshold: "v > -50",
         reset: "v = -65",
-      } as NeuronTemplate],
+      }],
     });
 
     const pending = store.getState().selectModel("ATypeKNeuron");

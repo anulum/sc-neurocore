@@ -88,7 +88,7 @@ function jobStatus(overrides: Partial<StudioJobStatus> = {}): StudioJobStatus {
 function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListResponse {
   return {
     jobs: overrides.jobs ?? [],
-    schema_version: overrides.schema_version ?? "studio.jobs.list.v1",
+    schema_version: overrides.schema_version ?? "studio.jobs.list.v2",
   };
 }
 

@@ -37,14 +37,14 @@ export interface TrainingEvidenceModel {
 export function buildTrainingEvidenceModel(
   jobId: string | null,
   status: string,
-  config: Pick<TrainingConfig, "dataset" | "epochs" | "surrogate" | "timesteps">,
+  config: Pick<TrainingConfig, "dataset" | "epochs" | "surrogate" | "timesteps"> | null,
   latestEpoch: TrainingEpochMetrics | null,
 ): TrainingEvidenceModel {
   const submitted = jobId !== null && jobId.length > 0;
   return {
     actionKind: "studio.training.run",
     classification: "training",
-    configSummary:
+    configSummary: config === null ? "not recorded" :
       `${config.dataset}, ${config.epochs} epochs, ${config.surrogate}, ${config.timesteps} steps`,
     evidenceArtifact: submitted ? "training/evidence.json" : "pending",
     jobId: submitted ? jobId : "not submitted",

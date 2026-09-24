@@ -60,7 +60,7 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
         status: "completed",
       },
     ],
-    schema_version: "studio.jobs.list.v1",
+    schema_version: "studio.jobs.list.v2",
   };
   const api = await installApiDispatcher(
     page,

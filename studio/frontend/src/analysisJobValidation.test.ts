@@ -190,6 +190,18 @@ describe("receipt and poll binding", () => {
     ).toBe(false);
   });
 
+  it("accepts recovery statuses but refuses an unrecognised status", () => {
+    for (const status of ["interrupted", "unknown"]) {
+      const parsed = validateAnalysisPollRecord(jobEnvelope({ status }), "sj_a1");
+      expect(parsed.ok).toBe(true);
+      if (parsed.ok) expect(parsed.value.status).toBe(status);
+    }
+    expect(validateAnalysisPollRecord(jobEnvelope({ status: "recovered" }), "sj_a1")).toEqual({
+      ok: false,
+      error: "analysis_poll_job_status_invalid",
+    });
+  });
+
   it("rejects fail-open envelopes: empty artifacts, invalid model, nullables, metrics", () => {
     expect(
       validateAnalysisJobReceipt(

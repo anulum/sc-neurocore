@@ -56,6 +56,8 @@ const JOB_STATUSES: readonly StudioJobRecord["status"][] = [
   "cancelling",
   "cancelled",
   "timed_out",
+  "interrupted",
+  "unknown",
 ];
 
 /**
@@ -278,6 +280,7 @@ export function parseStudioJobRecord(
       result: value.result,
       started_at_utc: started.value,
       status: value.status,
+      training_config: null,
     },
   };
 }

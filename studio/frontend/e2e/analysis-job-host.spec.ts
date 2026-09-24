@@ -254,7 +254,7 @@ function hostMocks(): Map<string, ApiMockPayload> {
       roles: ["studio.admin"],
     }],
     ["/api/studio/audit/status", auditStatus],
-    ["/api/studio/jobs", { jobs: [], schema_version: "studio.jobs.list.v1" }],
+    ["/api/studio/jobs", { jobs: [], schema_version: "studio.jobs.list.v2" }],
     ["/api/studio/operator/status", operatorStatus],
     ["/api/models", []],
     ["/api/templates", []],

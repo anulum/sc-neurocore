@@ -78,6 +78,10 @@ describe("Studio training stream parser", () => {
       kind: "terminal",
       status: "stopped",
     });
+    expect(parseStudioTrainingStreamMessage(JSON.stringify({ event: "interrupted" }))).toEqual({
+      kind: "terminal",
+      status: "interrupted",
+    });
   });
 
   it("parses backend error events with a fallback message", () => {
@@ -170,6 +174,22 @@ describe("Studio training stream parser", () => {
     source.emit({ event: "completed" });
 
     expect(terminals).toEqual(["completed"]);
+    expect(source.closed).toBe(true);
+  });
+
+  it("dispatches interrupted as its own terminal state", () => {
+    const source = new FakeTrainingEventSource();
+    const terminals: StudioTrainingTerminalStatus[] = [];
+    connectStudioTrainingEventSource("job-1", {
+      onDisconnected: () => { throw new Error("unexpected disconnect"); },
+      onEpoch: () => { throw new Error("unexpected epoch"); },
+      onError: () => { throw new Error("interruption was reported as failure"); },
+      onTerminal: (status) => terminals.push(status),
+    }, () => source);
+
+    source.emit({ event: "interrupted", data: { message: "supervisor exited" } });
+
+    expect(terminals).toEqual(["interrupted"]);
     expect(source.closed).toBe(true);
   });
 

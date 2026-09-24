@@ -43,6 +43,7 @@ function jobRecord(
     request_id: null,
     result: null,
     started_at_utc: null,
+    training_config: null,
     ...overrides,
   };
 }

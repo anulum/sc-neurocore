@@ -78,6 +78,7 @@ function jobRecord(
     request_id: null,
     result: null,
     started_at_utc: null,
+    training_config: null,
     ...overrides,
   };
 }
@@ -351,6 +352,8 @@ describe("runner helpers", () => {
   it("classifies terminal phases and idle can-start", () => {
     expect(isAnalysisJobTerminalPhase("completed")).toBe(true);
     expect(isAnalysisJobTerminalPhase("malformed")).toBe(true);
+    expect(isAnalysisJobTerminalPhase("interrupted")).toBe(true);
+    expect(isAnalysisJobTerminalPhase("unknown")).toBe(false);
     expect(isAnalysisJobTerminalPhase("running")).toBe(false);
     expect(canStartStudioAnalysisJob()).toBe(true);
     expect(

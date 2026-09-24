@@ -54,6 +54,8 @@ export type ModelScanJobPhase =
   | "failed"
   | "cancelled"
   | "timed_out"
+  | "interrupted"
+  | "unknown"
   | "malformed";
 
 /** Everything the control needs: where the scan is, and what it found. */
@@ -79,6 +81,7 @@ const BUSY_PHASES: ReadonlySet<ModelScanJobPhase> = new Set([
   "submitting",
   "pending",
   "running",
+  "unknown",
 ]);
 
 /**
@@ -146,6 +149,10 @@ export function modelScanJobPhaseLabel(phase: ModelScanJobPhase): string {
       return "cancelled";
     case "timed_out":
       return "timed_out";
+    case "interrupted":
+      return "interrupted";
+    case "unknown":
+      return "unknown";
     case "malformed":
       return "invalid";
     default: {
@@ -306,6 +313,15 @@ export function reduceModelScanJob(
           scanMetadata: null,
         };
       }
+      if (status === "interrupted" || status === "unknown") {
+        return {
+          ...state,
+          behaviors: {},
+          error: `model_scan_job_${status}`,
+          phase: status,
+          scanMetadata: null,
+        };
+      }
       // Every other status has returned by now, so the record is completed.
       // There used to be a further `status === "completed"` test and a
       // `model_scan_job_status_unknown` fallback beneath it. The fallback was
@@ -431,7 +447,7 @@ export function createModelScanJobSession(
           }
           apply({ type: "poll", record });
           const phase = readState().phase;
-          if (phase === "pending" || phase === "running") {
+          if (phase === "pending" || phase === "running" || phase === "unknown") {
             schedulePoll(gen, statusRoute);
           } else {
             stopPolling();
@@ -484,6 +500,7 @@ export function createModelScanJobSession(
               if (
                 afterFirstPoll.phase === "pending"
                 || afterFirstPoll.phase === "running"
+                || afterFirstPoll.phase === "unknown"
               ) {
                 schedulePoll(gen, route);
               }

@@ -292,6 +292,7 @@ const jobRecord: StudioJobRecord = {
   result: { ok: true },
   started_at_utc: "2026-06-19T20:02:01Z",
   status: "completed",
+  training_config: null,
 };
 
 const identityServiceAccount: StudioIdentityServiceAccount = {

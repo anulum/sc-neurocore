@@ -91,7 +91,7 @@ function jobRecord(
     artifacts: [], created_at_utc: "2026-07-20T00:00:00Z", error: null,
     execution_model: "thread", finished_at_utc: null, job_id: "sj_dom",
     kind: "analysis", owner: "studio", request_id: null, result: null,
-    started_at_utc: null, ...overrides,
+    started_at_utc: null, training_config: null, ...overrides,
   };
 }
 

@@ -22,7 +22,7 @@ import {
   trainingPreconditionErrorState,
   trainingStartedState,
   trainingStartState,
-  trainingStoppingState,
+  trainingStopResultState,
   trainingStreamDisconnectedState,
   trainingStreamErrorState,
   trainingSurrogatesLoadedState,
@@ -122,20 +122,27 @@ describe("training store state helpers", () => {
       activeTab: "train",
       error: null,
       trainingEpochs: [],
+      trainingJobId: null,
+      trainingObservedConfig: null,
       trainingStatus: "starting",
       trainingWeightRestorePlan: null,
       trainingWeightRestoreVerification: null,
+      trainingWeightMaterialization: null,
+      trainingWeightAttach: null,
+      trainingWeightLiveAttach: null,
     });
     expect(trainingStartedState("sj_training")).toEqual({
       trainingJobId: "sj_training",
       trainingStatus: "running",
     });
-    expect(trainingStoppingState()).toEqual({ trainingStatus: "stopping" });
+    expect(trainingStopResultState("stopping")).toEqual({ trainingStatus: "stopping" });
+    expect(trainingStopResultState("completed")).toEqual({ trainingStatus: "completed" });
   });
 
   it("builds stream update patches", () => {
     expect(trainingEpochAppendedState([], metrics)).toEqual({ trainingEpochs: [metrics] });
     expect(trainingTerminalState("completed")).toEqual({ trainingStatus: "completed" });
+    expect(trainingTerminalState("interrupted")).toEqual({ trainingStatus: "interrupted" });
     expect(trainingStreamErrorState("diverged")).toEqual({
       error: "diverged",
       trainingStatus: "failed",

@@ -330,7 +330,7 @@ const synthesisJobList = {
       status: "completed",
     },
   ],
-  schema_version: "studio.jobs.list.v1",
+  schema_version: "studio.jobs.list.v2",
 };
 
 const evidenceBundle = {
@@ -376,7 +376,7 @@ function guidedMocks(): Map<string, ApiMockPayload> {
     }],
     ["/api/studio/auth/session", { authenticated: true, principal_id: "svc-admin", roles: ["studio.admin"] }],
     ["/api/studio/audit/status", auditStatus],
-    ["/api/studio/jobs", { sequence: [{ jobs: [], schema_version: "studio.jobs.list.v1" }, synthesisJobList] }],
+    ["/api/studio/jobs", { sequence: [{ jobs: [], schema_version: "studio.jobs.list.v2" }, synthesisJobList] }],
     ["/api/studio/operator/status", operatorStatus],
     ["/api/models", []],
     ["/api/templates", []],

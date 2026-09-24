@@ -10,21 +10,25 @@ import { expect, test, type Page } from "@playwright/test";
 
 interface ClassRepresentative {
   className: string;
-  integrator: string;
   modelName: string;
-  validation: string;
+}
+
+/** The detail fields the browser must render exactly as the live API declares them. */
+interface ModelContract {
+  integration_method: string;
+  validation_metric: string;
 }
 
 const CLASS_REPRESENTATIVES: readonly ClassRepresentative[] = [
-  { className: "linear IF", integrator: "euler", modelName: "PerfectIntegratorNeuron", validation: "parity" },
-  { className: "polynomial IF", integrator: "euler", modelName: "QuadraticIFNeuron", validation: "parity" },
-  { className: "conductance / transcendental", integrator: "rk4", modelName: "HodgkinHuxleyNeuron", validation: "parity" },
-  { className: "relaxation oscillator", integrator: "rk4", modelName: "FitzHughNagumoNeuron", validation: "parity" },
-  { className: "chaotic", integrator: "rk4", modelName: "HindmarshRoseNeuron", validation: "parity" },
-  { className: "discrete map", integrator: "map", modelName: "RulkovMapNeuron", validation: "trajectory" },
-  { className: "stochastic", integrator: "poisson_interval", modelName: "PoissonNeuron", validation: "statistical" },
-  { className: "multi-compartment", integrator: "euler", modelName: "PinskyRinzelNeuron", validation: "none" },
-  { className: "published-discrete", integrator: "euler", modelName: "BalancedResonateAndFireNeuron", validation: "none" },
+  { className: "linear IF", modelName: "PerfectIntegratorNeuron" },
+  { className: "polynomial IF", modelName: "QuadraticIFNeuron" },
+  { className: "conductance / transcendental", modelName: "HodgkinHuxleyNeuron" },
+  { className: "relaxation oscillator", modelName: "FitzHughNagumoNeuron" },
+  { className: "chaotic", modelName: "HindmarshRoseNeuron" },
+  { className: "discrete map", modelName: "RulkovMapNeuron" },
+  { className: "stochastic", modelName: "PoissonNeuron" },
+  { className: "multi-compartment", modelName: "PinskyRinzelNeuron" },
+  { className: "published-discrete", modelName: "BalancedResonateAndFireNeuron" },
 ] as const;
 
 const TERMINAL_REPRESENTATIVES = [
@@ -57,8 +61,17 @@ async function openLiveStudio(page: Page): Promise<Set<string>> {
       completedApiRoutes.add(url.pathname);
     }
   });
+  // The whole catalogue must load; its size is whatever the live server
+  // serves, so the expectation cannot go stale as models are enrolled.
+  const catalogue = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/models" && response.ok(),
+  );
   await page.goto("./");
-  await expect(page.getByText("160/160 models", { exact: true })).toBeVisible();
+  const models: unknown = await (await catalogue).json();
+  expect(Array.isArray(models)).toBe(true);
+  const total = (models as unknown[]).length;
+  expect(total).toBeGreaterThan(0);
+  await expect(page.getByText(`${total}/${total} models`, { exact: true })).toBeVisible();
   await expect(page.getByText("capability check failed")).toHaveCount(0);
   return completedApiRoutes;
 }
@@ -68,8 +81,9 @@ async function openLiveStudio(page: Page): Promise<Set<string>> {
  *
  * @param page - The page to drive.
  * @param modelName - The model's catalogue name.
+ * @returns The contract fields the live API answered for that model.
  */
-async function selectCatalogueModel(page: Page, modelName: string): Promise<void> {
+async function selectCatalogueModel(page: Page, modelName: string): Promise<ModelContract> {
   await page.getByPlaceholder("Search models...").fill(modelName);
   const contract = page.getByTestId(`model-contract-${modelName}`);
   await expect(contract).toBeVisible();
@@ -78,8 +92,11 @@ async function selectCatalogueModel(page: Page, modelName: string): Promise<void
     return url.pathname === `/api/models/${modelName}` && response.ok();
   });
   await contract.locator("..").click();
-  await detailResponse;
+  const detail = (await (await detailResponse).json()) as ModelContract;
+  expect(typeof detail.integration_method).toBe("string");
+  expect(typeof detail.validation_metric).toBe("string");
   await expect(page.getByTestId("model-integration-method")).toBeVisible();
+  return detail;
 }
 
 test("the live catalogue surfaces one honest representative of every scientific class", async ({ page }) => {
@@ -87,12 +104,13 @@ test("the live catalogue surfaces one honest representative of every scientific 
 
   for (const representative of CLASS_REPRESENTATIVES) {
     await test.step(representative.className, async () => {
-      await selectCatalogueModel(page, representative.modelName);
+      // The browser must show the served contract, not a copy that ages.
+      const served = await selectCatalogueModel(page, representative.modelName);
       await expect(page.getByTestId("model-integration-method")).toContainText(
-        representative.integrator,
+        served.integration_method,
       );
       await expect(page.getByTestId("model-validation-metric")).toContainText(
-        representative.validation,
+        served.validation_metric,
       );
     });
   }

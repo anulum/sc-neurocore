@@ -60,6 +60,8 @@ export type AnalysisJobPhase =
   | "failed"
   | "cancelled"
   | "timed_out"
+  | "interrupted"
+  | "unknown"
   | "malformed";
 
 /**
@@ -88,6 +90,7 @@ const BUSY: ReadonlySet<AnalysisJobPhase> = new Set([
   "submitting",
   "pending",
   "running",
+  "unknown",
 ]);
 
 /**
@@ -156,6 +159,10 @@ export function analysisJobPhaseLabel(phase: AnalysisJobPhase): string {
       return "cancelled";
     case "timed_out":
       return "timed_out";
+    case "interrupted":
+      return "interrupted";
+    case "unknown":
+      return "unknown";
     case "malformed":
       return "invalid";
     default: {
@@ -298,6 +305,14 @@ export function reduceAnalysisJob(
           ...state,
           error: "analysis_job_timed_out",
           phase: "timed_out",
+          result: null,
+        };
+      }
+      if (record.status === "interrupted" || record.status === "unknown") {
+        return {
+          ...state,
+          error: `analysis_job_${record.status}`,
+          phase: record.status,
           result: null,
         };
       }

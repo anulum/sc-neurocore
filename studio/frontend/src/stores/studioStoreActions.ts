@@ -61,6 +61,8 @@ import {
   runMultiTargetSynthesis,
   fetchSynthEstimate,
   fetchSurrogates as apiFetchSurrogates,
+  fetchTrainingJobs as apiFetchTrainingJobs,
+  fetchTrainingStatus as apiFetchTrainingStatus,
   startTraining as apiStartTraining,
   stopTraining as apiStopTraining,
   exportTrainingCheckpoint as apiExportTrainingCheckpoint,
@@ -201,13 +203,23 @@ import {
 } from "../trainingRestore";
 import {
   connectStudioTrainingEventSource,
+  type StudioTrainingStreamEventSource,
 } from "../studioTrainingStream";
+import {
+  decodeTrainingJobSummaries,
+  decodeTrainingRecoveryStatus,
+  decodeTrainingStopResult,
+  isTrainingTerminalStatus,
+  observedTrainingConfig,
+} from "../studioTrainingRecovery";
 import {
   trainingCheckpointExportPlan,
   trainingWeightRestoreVerificationExportPlan,
 } from "../trainingExports";
 import {
   trainingCheckpointImportedState,
+  trainingJobsLoadedState,
+  trainingRecoveredState,
   trainingConfigUpdatedState,
   trainingEpochAppendedState,
   trainingExportSuccessState,
@@ -215,7 +227,7 @@ import {
   trainingPreconditionErrorState,
   trainingStartedState,
   trainingStartState,
-  trainingStoppingState,
+  trainingStopResultState,
   trainingStreamDisconnectedState,
   trainingStreamErrorState,
   trainingSurrogatesLoadedState,
@@ -384,7 +396,44 @@ export function createStudioStoreActions(
   set: (partial: Partial<StudioState> | ((state: StudioState) => Partial<StudioState>)) => void,
   get: () => StudioState,
 ): StudioStoreActions {
+  let trainingStream: StudioTrainingStreamEventSource | null = null;
+  let trainingSelectionVersion = 0;
+  let trainingListVersion = 0;
   let modelSelectionVersion = 0;
+
+  const observeTrainingStream = (jobId: string): void => {
+    trainingStream?.close();
+    const version = trainingSelectionVersion;
+    const stillSelected = (): boolean =>
+      version === trainingSelectionVersion && get().trainingJobId === jobId;
+    trainingStream = connectStudioTrainingEventSource(jobId, {
+      onDisconnected: () => {
+        if (stillSelected() && !isTrainingTerminalStatus(get().trainingStatus)) {
+          set(trainingStreamDisconnectedState());
+        }
+      },
+      onEpoch: (metrics) => {
+        if (stillSelected()) {
+          set((prev) => trainingEpochAppendedState(prev.trainingEpochs, metrics));
+        }
+      },
+      onError: (message) => {
+        if (!stillSelected()) return;
+        if (!isTrainingTerminalStatus(get().trainingStatus)) {
+          set(trainingStreamErrorState(message));
+        }
+        void get().loadTrainingJobs();
+      },
+      onTerminal: (status) => {
+        if (!stillSelected()) return;
+        if (!isTrainingTerminalStatus(get().trainingStatus)) {
+          set(trainingTerminalState(status));
+        }
+        void get().loadTrainingJobs();
+      },
+    });
+  };
+
   return {
   setSourceMode: (m) => {
     if (m === "ode") modelSelectionVersion += 1;
@@ -494,6 +543,10 @@ export function createStudioStoreActions(
     }
   },
   logoutBrowserUser: async () => {
+    trainingSelectionVersion += 1;
+    trainingListVersion += 1;
+    trainingStream?.close();
+    trainingStream = null;
     set(studioAuthLoadingState());
     try {
       await logoutStudioBrowserUser();
@@ -503,6 +556,11 @@ export function createStudioStoreActions(
       clearStoredStudioAuthToken();
       syncStoredStudioAuthToken(setStudioAuthToken);
       set(studioAuthLogoutCompleteState());
+      set({
+        trainingJobs: [], trainingJobsError: null, trainingJobsLoading: false,
+        trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
+        trainingObservedConfig: null, trainingExperimentKey: null,
+      });
     }
   },
   loadAuditStatus: async () => {
@@ -1317,35 +1375,91 @@ export function createStudioStoreActions(
     } catch { /* non-critical */ }
   },
 
+  loadTrainingJobs: async () => {
+    const version = ++trainingListVersion;
+    set({ trainingJobsLoading: true, trainingJobsError: null });
+    try {
+      const jobs = decodeTrainingJobSummaries(await apiFetchTrainingJobs());
+      if (version !== trainingListVersion) return;
+      set(trainingJobsLoadedState(jobs));
+      const latest = jobs.at(-1);
+      const currentJobId = get().trainingJobId;
+      if (get().trainingStatus === "disconnected"
+        && currentJobId !== null
+        && jobs.some((job) => job.job_id === currentJobId)) {
+        await get().selectTrainingJob(currentJobId);
+      } else if (currentJobId === null && get().trainingStatus === "idle" && latest) {
+        await get().selectTrainingJob(latest.job_id);
+      }
+    } catch (error) {
+      if (version === trainingListVersion) {
+        set({ trainingJobsLoading: false, trainingJobsError: String(error) });
+      }
+    }
+  },
+
+  selectTrainingJob: async (jobId) => {
+    const selected = get().trainingJobs.find((job) => job.job_id === jobId);
+    if (!selected) {
+      set({ trainingJobsError: "Training job is not in the retained list" });
+      return;
+    }
+    const version = ++trainingSelectionVersion;
+    try {
+      const status = decodeTrainingRecoveryStatus(await apiFetchTrainingStatus(jobId), jobId);
+      if (version !== trainingSelectionVersion) return;
+      const observedConfig = observedTrainingConfig(selected.config);
+      set({
+        ...trainingRecoveredState(jobId, status, observedConfig),
+        trainingJobsError: null,
+      });
+      observeTrainingStream(jobId);
+    } catch (error) {
+      if (version === trainingSelectionVersion) set({ trainingJobsError: String(error) });
+    }
+  },
+
   startTraining: async () => {
     const s = get();
     if (s.trainingStatus === "running") return;
     // Recorded at the start rather than at the end: what makes a finished run
     // stale is a change to what was trained, and the reader can change that
     // while the run is going.
+    const version = ++trainingSelectionVersion;
+    trainingStream?.close();
+    trainingStream = null;
     set({ ...trainingStartState(), trainingExperimentKey: studioTrainingKey(s.trainingConfig) });
     try {
       const result = await apiStartTraining(s.trainingConfig);
-      set(trainingStartedState(result.job_id));
-      connectStudioTrainingEventSource(result.job_id, {
-        onDisconnected: () => { set(trainingStreamDisconnectedState()); },
-        onEpoch: (metrics) => { set((prev) => trainingEpochAppendedState(prev.trainingEpochs, metrics)); },
-        onError: (message) => { set(trainingStreamErrorState(message)); },
-        onTerminal: (status) => { set(trainingTerminalState(status)); },
-      });
+      if (version !== trainingSelectionVersion) {
+        void get().loadTrainingJobs();
+        return;
+      }
+      set({ ...trainingStartedState(result.job_id), trainingObservedConfig: s.trainingConfig });
+      observeTrainingStream(result.job_id);
+      void get().loadTrainingJobs();
     } catch (e) {
-      set(trainingFailureState(e, "Training start failed", { markFailed: true }));
+      if (version === trainingSelectionVersion) {
+        set(trainingFailureState(e, "Training start failed", { markFailed: true }));
+      }
     }
   },
 
   stopTraining: async () => {
     const s = get();
     if (!s.trainingJobId) return;
+    const jobId = s.trainingJobId;
+    const version = trainingSelectionVersion;
     try {
-      await apiStopTraining(s.trainingJobId);
-      set(trainingStoppingState());
+      const result = decodeTrainingStopResult(await apiStopTraining(jobId), jobId);
+      if (version !== trainingSelectionVersion || get().trainingJobId !== jobId) return;
+      if (!isTrainingTerminalStatus(get().trainingStatus)) {
+        set(trainingStopResultState(result));
+      }
     } catch (e) {
-      set(trainingFailureState(e, "Training stop failed"));
+      if (version === trainingSelectionVersion && get().trainingJobId === jobId) {
+        set(trainingFailureState(e, "Training stop failed"));
+      }
     }
   },
 

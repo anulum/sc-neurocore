@@ -29,6 +29,11 @@ const latestEpoch: TrainingEpochMetrics = {
 };
 
 describe("training evidence model", () => {
+  it("does not attribute current project settings to an old retained run", () => {
+    expect(buildTrainingEvidenceModel("sj_old", "interrupted", null, null).configSummary)
+      .toBe("not recorded");
+  });
+
   it("describes the pending training action-evidence contract before submission", () => {
     expect(buildTrainingEvidenceModel(null, "idle", config, null)).toEqual({
       actionKind: "studio.training.run",

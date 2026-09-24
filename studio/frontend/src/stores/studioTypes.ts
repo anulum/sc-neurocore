@@ -25,7 +25,7 @@ import type {
   StudioAuditQuarantineArchiveRestoreResult, StudioAuditQuarantineArchiveValidation,
   StudioAuthSession, StudioEvidenceBundleRequest, StudioEvidenceBundleResponse,
   StudioIdentityBrowserUser, StudioIdentityBrowserUserCreate, StudioIdentityServiceAccount,
-  StudioJobRecord, StudioJobStatus, StudioOperatorStatus,
+  StudioJobRecord, StudioJobStatus, StudioOperatorStatus, TrainingJobSummary,
 } from "../api/client";
 import type { StudioSavedSession } from "../studioSavedSessions";
 import type {
@@ -202,6 +202,11 @@ export interface StudioState {
   trainingJobId: string | null;
   trainingStatus: string;
   trainingEpochs: TrainingEpochMetrics[];
+  trainingJobs: TrainingJobSummary[];
+  trainingJobsLoading: boolean;
+  trainingJobsError: string | null;
+  /** The retained run's configuration, separate from editable project settings. */
+  trainingObservedConfig: StudioProjectTrainingConfig | null;
   /**
    * The experiment the current training run was started under.
    *
@@ -389,6 +394,8 @@ export interface StudioState {
   exportGraphNIR: () => Promise<void>;
   importGraphNIR: (nir: NIRFormat) => Promise<void>;
   loadSurrogates: () => Promise<void>;
+  loadTrainingJobs: () => Promise<void>;
+  selectTrainingJob: (jobId: string) => Promise<void>;
   startTraining: () => Promise<void>;
   stopTraining: () => Promise<void>;
   exportTrainingCheckpoint: () => Promise<void>;

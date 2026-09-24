@@ -359,6 +359,7 @@ export default function ModelBrowser() {
 
             {(modelScan.state.phase === "pending"
                 || modelScan.state.phase === "running"
+                || modelScan.state.phase === "unknown"
                 || modelScan.state.phase === "submitting") && (
                 <div
                     data-testid="model-scan-job-status"

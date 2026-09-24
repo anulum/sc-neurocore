@@ -40,6 +40,7 @@ function jobRecord(
     request_id: null,
     result: null,
     started_at_utc: null,
+    training_config: null,
     ...overrides,
   };
 }
@@ -184,6 +185,24 @@ describe("reduceModelScanJob", () => {
     expect(malformed.behaviors).toEqual({});
   });
 
+  it.each(["interrupted", "unknown"] as const)(
+    "keeps a recovered %s scan distinct from successful completion",
+    (status) => {
+      let state = reduceModelScanJob(initialModelScanJobState(), { type: "submit_started" });
+      state = reduceModelScanJob(state, { type: "submit_succeeded", receipt: receipt() });
+      state = reduceModelScanJob(state, {
+        type: "poll",
+        record: jobRecord({ status, result: validResult }),
+      });
+      expect(state.phase).toBe(status);
+      expect(state.error).toBe(`model_scan_job_${status}`);
+      expect(state.scanMetadata).toBeNull();
+      expect(state.behaviors).toEqual({});
+      expect(isModelScanJobBusy(state.phase)).toBe(status === "unknown");
+      expect(canSubmitModelScanJob(state)).toBe(status === "interrupted");
+    },
+  );
+
   it("rejects poll records for a different job id or kind as malformed", () => {
     let state = reduceModelScanJob(initialModelScanJobState(), { type: "submit_started" });
     state = reduceModelScanJob(state, {
@@ -211,12 +230,32 @@ describe("reduceModelScanJob", () => {
     expect(modelScanJobPhaseLabel("running")).toBe("running");
     expect(modelScanJobPhaseLabel("completed")).toBe("Scanned");
     expect(modelScanJobPhaseLabel("timed_out")).toBe("timed_out");
+    expect(modelScanJobPhaseLabel("interrupted")).toBe("interrupted");
+    expect(modelScanJobPhaseLabel("unknown")).toBe("unknown");
   });
 });
 
 describe("createModelScanJobSession polling", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("keeps polling an unknown scan until recovery marks it interrupted", async () => {
+    vi.useFakeTimers();
+    const fetchJob = vi.fn()
+      .mockResolvedValueOnce(jobRecord({ status: "unknown" }))
+      .mockResolvedValueOnce(jobRecord({ status: "interrupted" }));
+    const session = createModelScanJobSession({
+      api: { submit: async () => receipt(), fetchJob },
+      pollIntervalMs: 100,
+    });
+    await session.startScan();
+    expect(session.getState().phase).toBe("unknown");
+    expect(canSubmitModelScanJob(session.getState())).toBe(false);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(session.getState().phase).toBe("interrupted");
+    expect(fetchJob).toHaveBeenCalledTimes(2);
+    session.dispose();
   });
 
   it("submits once, polls pending/running to completed, and ignores duplicate starts", async () => {

@@ -61,6 +61,7 @@ const TERMINAL_PHASES: ReadonlySet<AnalysisJobPhase> = new Set([
   "failed",
   "cancelled",
   "timed_out",
+  "interrupted",
   "malformed",
 ]);
 

@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Commercial license available
 // © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
@@ -7,18 +8,74 @@
 // SC-NeuroCore — Source/config provenance header
 
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { describe, expect, it, vi } from "vitest";
+
+import { useStudioStore } from "../stores/studio";
 
 import {
   TrainingCheckpointControls,
   TrainingEvidenceStrip,
+  TrainingJobPicker,
   TrainingWeightAttachStrip,
   TrainingWeightLiveAttachStrip,
   TrainingWeightMaterializationStrip,
   TrainingWeightRestorePlanStrip,
 } from "./TrainingMonitor";
+import TrainingMonitor from "./TrainingMonitor";
 
 describe("TrainingMonitor", () => {
+  it("keeps an uncertain retained run active and does not offer a new Train action", async () => {
+    const original = useStudioStore.getState();
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("[]", {
+      headers: { "content-type": "application/json" },
+    })));
+    try {
+      await act(async () => { root.render(<TrainingMonitor />); });
+      await act(async () => {
+        useStudioStore.setState({
+          trainingJobId: "sj_uncertain",
+          trainingStatus: "unknown",
+          trainingEpochs: [],
+          trainingJobs: [{ job_id: "sj_uncertain", status: "unknown", config: null }],
+          trainingObservedConfig: null,
+        });
+      });
+      const html = host.innerHTML;
+
+      expect(html).toContain("Run status is uncertain; refresh runs to reconnect");
+      expect(html).toContain("config not recorded");
+      expect(html).toContain("Refresh to confirm the run before stopping");
+      expect(html).toContain("disabled=\"\" title=\"Refresh to confirm the run before stopping\"");
+      expect(html).not.toContain(">Train</button>");
+    } finally {
+      await act(async () => { root.unmount(); });
+      useStudioStore.setState(original, true);
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("shows retained runs and labels a legacy row without recorded config", () => {
+    const html = renderToStaticMarkup(
+      <TrainingJobPicker
+        jobs={[{ job_id: "sj_old", status: "interrupted", config: null }]}
+        selectedJobId="sj_old"
+        loading={false}
+        error={null}
+        onSelect={() => undefined}
+        onRefresh={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Retained run");
+    expect(html).toContain("sj_old");
+    expect(html).toContain("config not recorded");
+    expect(html).toContain("Refresh runs");
+  });
+
   it("renders path-free training evidence metadata for submitted jobs", () => {
     const html = renderToStaticMarkup(
       <TrainingEvidenceStrip

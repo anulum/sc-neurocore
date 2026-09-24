@@ -20,9 +20,10 @@
  */
 
 import type { TrainingEpochMetrics } from "./api/client";
+import { createFetchStudioTrainingSource } from "./studioTrainingFetchSource";
 
-/** The two ways a run ends of its own accord. */
-export type StudioTrainingTerminalStatus = "completed" | "stopped";
+/** Terminal outcomes that are distinct from a failed training computation. */
+export type StudioTrainingTerminalStatus = "completed" | "stopped" | "interrupted";
 
 /** One frame, as the browser delivers it. */
 export type StudioTrainingStreamMessageEvent = MessageEvent<string>;
@@ -117,7 +118,7 @@ export function parseStudioTrainingStreamMessage(data: string): StudioTrainingSt
     const metrics = trainingEpochMetricsValue(message.data);
     return metrics ? { kind: "epoch", metrics } : null;
   }
-  if (message.event === "completed" || message.event === "stopped") {
+  if (message.event === "completed" || message.event === "stopped" || message.event === "interrupted") {
     return { kind: "terminal", status: message.event };
   }
   if (message.event === "error") {
@@ -205,11 +206,11 @@ function numberRecordValue(value: unknown): Record<string, number> {
 }
 
 /**
- * Create a real `EventSource`, which is what production uses.
+ * Create the authenticated production stream source.
  *
  * @param url - The stream URL.
  * @returns The source.
  */
 function defaultStudioTrainingStreamFactory(url: string): StudioTrainingStreamEventSource {
-  return new EventSource(url);
+  return createFetchStudioTrainingSource(url);
 }

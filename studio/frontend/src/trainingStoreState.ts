@@ -24,9 +24,11 @@ import type {
   TrainingWeightLiveAttachResult,
   TrainingWeightRestorePlan,
   TrainingWeightRestoreResult,
+  TrainingJobSummary,
 } from "./api/client";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import type { StudioTrainingTerminalStatus } from "./studioTrainingStream";
+import type { TrainingStopStatus } from "./studioTrainingRecovery";
 import type { TrainingWeightRestoreVerification } from "./trainingRestore";
 
 /** The surrogate gradients and cell types arrived. */
@@ -39,15 +41,42 @@ export interface TrainingStartStatePatch {
   activeTab: "train";
   error: null;
   trainingEpochs: [];
+  trainingJobId: null;
+  trainingObservedConfig: null;
   trainingStatus: "starting";
   trainingWeightRestorePlan: null;
   trainingWeightRestoreVerification: null;
+  trainingWeightMaterialization: null;
+  trainingWeightAttach: null;
+  trainingWeightLiveAttach: null;
 }
 
 /** The server accepted the run and named it. */
 export interface TrainingStartedStatePatch {
   trainingJobId: string;
   trainingStatus: "running";
+}
+
+/** A durable run selected for observation, without changing project settings. */
+export interface TrainingRecoveredStatePatch {
+  error: null;
+  trainingJobId: string;
+  trainingStatus: string;
+  trainingEpochs: [];
+  trainingObservedConfig: StudioProjectTrainingConfig | null;
+  trainingExperimentKey: null;
+  trainingWeightRestorePlan: null;
+  trainingWeightRestoreVerification: null;
+  trainingWeightMaterialization: null;
+  trainingWeightAttach: null;
+  trainingWeightLiveAttach: null;
+}
+
+/** The durable list was loaded from the training route. */
+export interface TrainingJobsLoadedStatePatch {
+  trainingJobs: TrainingJobSummary[];
+  trainingJobsLoading: false;
+  trainingJobsError: null;
 }
 
 /** One epoch's metrics arrived, appended to the ones before it. */
@@ -72,8 +101,8 @@ export interface TrainingStreamDisconnectedStatePatch {
 }
 
 /** A stop was asked for and has not taken effect yet. */
-export interface TrainingStoppingStatePatch {
-  trainingStatus: "stopping";
+export interface TrainingStopResultStatePatch {
+  trainingStatus: TrainingStopStatus;
 }
 
 /** An imported checkpoint's configuration replaced the current one. */
@@ -160,9 +189,14 @@ export function trainingStartState(): TrainingStartStatePatch {
     activeTab: "train",
     error: null,
     trainingEpochs: [],
+    trainingJobId: null,
+    trainingObservedConfig: null,
     trainingStatus: "starting",
     trainingWeightRestorePlan: null,
     trainingWeightRestoreVerification: null,
+    trainingWeightMaterialization: null,
+    trainingWeightAttach: null,
+    trainingWeightLiveAttach: null,
   };
 }
 
@@ -177,6 +211,44 @@ export function trainingStartedState(jobId: string): TrainingStartedStatePatch {
     trainingJobId: jobId,
     trainingStatus: "running",
   };
+}
+
+/**
+ * Observe a retained job while preserving the editable project configuration.
+ *
+ * @param jobId - The retained job ID.
+ * @param status - Fresh status from the job's own endpoint.
+ * @param observedConfig - Verified configuration, or null for an old row.
+ * @returns The selected observation state.
+ */
+export function trainingRecoveredState(
+  jobId: string,
+  status: string,
+  observedConfig: StudioProjectTrainingConfig | null,
+): TrainingRecoveredStatePatch {
+  return {
+    error: null,
+    trainingJobId: jobId,
+    trainingStatus: status,
+    trainingEpochs: [],
+    trainingObservedConfig: observedConfig,
+    trainingExperimentKey: null,
+    trainingWeightRestorePlan: null,
+    trainingWeightRestoreVerification: null,
+    trainingWeightMaterialization: null,
+    trainingWeightAttach: null,
+    trainingWeightLiveAttach: null,
+  };
+}
+
+/**
+ * Record the verified retained list in the store.
+ *
+ * @param jobs - Jobs decoded from the durable route.
+ * @returns The list state patch.
+ */
+export function trainingJobsLoadedState(jobs: TrainingJobSummary[]): TrainingJobsLoadedStatePatch {
+  return { trainingJobs: jobs, trainingJobsLoading: false, trainingJobsError: null };
 }
 
 /**
@@ -236,12 +308,13 @@ export function trainingStreamDisconnectedState(): TrainingStreamDisconnectedSta
 }
 
 /**
- * Record that a stop was asked for.
+ * Record the Stop API's verified pending or terminal outcome.
  *
+ * @param status - The server's current outcome.
  * @returns The patch.
  */
-export function trainingStoppingState(): TrainingStoppingStatePatch {
-  return { trainingStatus: "stopping" };
+export function trainingStopResultState(status: TrainingStopStatus): TrainingStopResultStatePatch {
+  return { trainingStatus: status };
 }
 
 /**

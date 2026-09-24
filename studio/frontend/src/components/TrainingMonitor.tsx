@@ -8,6 +8,7 @@
 
 import { useEffect, useRef } from "react";
 import type {
+  TrainingJobSummary,
   TrainingWeightAttachResult,
   TrainingWeightLiveAttachResult,
   TrainingWeightRestorePlan,
@@ -133,6 +134,51 @@ export function TrainingEvidenceStrip({ evidence }: { evidence: TrainingEvidence
         { label: "Epoch", value: evidence.latestEpoch },
       ]}
     />
+  );
+}
+
+/**
+ * Select a retained run for observation without changing project settings.
+ *
+ * @param props - Retained jobs, current selection and actions.
+ * @returns The run selector and refresh control.
+ */
+export function TrainingJobPicker({
+  jobs,
+  selectedJobId,
+  loading,
+  error,
+  onSelect,
+  onRefresh,
+}: {
+  jobs: TrainingJobSummary[];
+  selectedJobId: string | null;
+  loading: boolean;
+  error: string | null;
+  onSelect: (jobId: string) => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <label htmlFor="training-retained-job" style={{ fontSize: 10 }}>Retained run</label>
+      <select
+        id="training-retained-job"
+        value={jobs.some((job) => job.job_id === selectedJobId) ? selectedJobId ?? "" : ""}
+        onChange={(event) => { if (event.target.value) onSelect(event.target.value); }}
+        style={{ maxWidth: 220, fontSize: 10 }}
+      >
+        <option value="">{jobs.length === 0 ? "No retained runs" : "Choose a run"}</option>
+        {jobs.map((job) => (
+          <option key={job.job_id} value={job.job_id}>
+            {job.job_id} · {job.status}{job.config === null ? " · config not recorded" : ""}
+          </option>
+        ))}
+      </select>
+      <button type="button" onClick={onRefresh} disabled={loading} style={{ fontSize: 10 }}>
+        {loading ? "Loading…" : "Refresh runs"}
+      </button>
+      {error !== null && <span role="alert" style={{ color: "#ff5252", fontSize: 10 }}>{error}</span>}
+    </div>
   );
 }
 
@@ -391,21 +437,29 @@ export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
+    trainingJobs, trainingJobsLoading, trainingJobsError, trainingObservedConfig,
     trainingWeightMaterialization, trainingWeightAttach, trainingWeightLiveAttach,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
+    loadTrainingJobs, selectTrainingJob, authSession,
     exportTrainingCheckpoint, importTrainingCheckpointText,
     exportTrainingWeightRestoreVerification, verifyTrainingWeightRestoreArtifact,
     materializeTrainingWeights, attachTrainingWeights, liveAttachTrainingWeights,
   } = useStudioStore();
 
   useEffect(() => { void loadSurrogates(); }, [loadSurrogates]);
+  useEffect(() => { void loadTrainingJobs(); }, [loadTrainingJobs, authSession]);
 
   const latestEpoch = trainingEpochs[trainingEpochs.length - 1] ?? null;
-  const isRunning = trainingStatus === "running" || trainingStatus === "starting";
+  const isActive = ["running", "starting", "stopping", "unknown", "disconnected"]
+    .includes(trainingStatus);
+  const isUncertain = trainingStatus === "unknown" || trainingStatus === "disconnected";
+  const canStop = trainingJobId !== null
+    && (trainingStatus === "running" || trainingStatus === "stopping");
+  const canLiveAttach = trainingStatus === "running";
   const evidence = buildTrainingEvidenceModel(
     trainingJobId,
     trainingStatus,
-    trainingConfig,
+    trainingJobId === null ? trainingConfig : trainingObservedConfig,
     latestEpoch,
   );
 
@@ -422,16 +476,26 @@ export default function TrainingMonitor() {
         </span>
         <span style={{
           fontSize: 9, padding: "1px 6px", borderRadius: 3,
-          background: isRunning ? "rgba(129, 199, 132, 0.2)" :
+          background: isUncertain ? "rgba(255, 193, 7, 0.2)" :
+                     isActive ? "rgba(129, 199, 132, 0.2)" :
                      trainingStatus === "completed" ? "rgba(79, 195, 247, 0.2)" :
                      trainingStatus === "failed" ? "rgba(255, 82, 82, 0.2)" : "var(--bg-tertiary)",
-          color: isRunning ? "#81c784" :
+          color: isUncertain ? "#ffc107" :
+                 isActive ? "#81c784" :
                  trainingStatus === "completed" ? "#4fc3f7" :
                  trainingStatus === "failed" ? "#ff5252" : "var(--text-muted)",
         }}>
           {trainingStatus}
         </span>
-        {!isRunning && (
+        <TrainingJobPicker
+          jobs={trainingJobs}
+          selectedJobId={trainingJobId}
+          loading={trainingJobsLoading}
+          error={trainingJobsError}
+          onSelect={(jobId) => { void selectTrainingJob(jobId); }}
+          onRefresh={() => { void loadTrainingJobs(); }}
+        />
+        {!isActive && (
           <button
             onClick={() => { void startTraining(); }}
             disabled={isSimulating}
@@ -443,9 +507,11 @@ export default function TrainingMonitor() {
             Train
           </button>
         )}
-        {isRunning && (
+        {isActive && (
           <button
             onClick={() => { void stopTraining(); }}
+            disabled={!canStop}
+            title={canStop ? "Request cooperative stop" : "Refresh to confirm the run before stopping"}
             style={{
               background: "#ff5252", color: "#fff", border: "none",
               padding: "3px 10px", fontSize: 10, cursor: "pointer",
@@ -455,7 +521,7 @@ export default function TrainingMonitor() {
           </button>
         )}
         <TrainingCheckpointControls
-          canExport={trainingJobId !== null}
+          canExport={trainingJobId !== null && trainingObservedConfig !== null}
           onExport={() => { void exportTrainingCheckpoint(); }}
           onImportText={(checkpointJson) => { void importTrainingCheckpointText(checkpointJson); }}
         />
@@ -476,13 +542,13 @@ export default function TrainingMonitor() {
         </button>
         <button
           onClick={() => { void attachTrainingWeights(); }}
-          disabled={trainingJobId === null || isRunning}
+          disabled={trainingJobId === null || isActive}
           title="Warm-start a new training job from the verified weights"
           style={{
             background: "var(--bg-tertiary)",
             border: "1px solid var(--control-border)",
-            color: trainingJobId !== null && !isRunning ? "var(--text-secondary)" : "var(--text-muted)",
-            cursor: trainingJobId !== null && !isRunning ? "pointer" : "not-allowed",
+            color: trainingJobId !== null && !isActive ? "var(--text-secondary)" : "var(--text-muted)",
+            cursor: trainingJobId !== null && !isActive ? "pointer" : "not-allowed",
             fontSize: 10,
             padding: "3px 8px",
           }}
@@ -491,13 +557,13 @@ export default function TrainingMonitor() {
         </button>
         <button
           onClick={() => { void liveAttachTrainingWeights(); }}
-          disabled={!isRunning || trainingWeightMaterialization === null}
+          disabled={!canLiveAttach || trainingWeightMaterialization === null}
           title="Attach the verified weights into the running job at the next epoch boundary"
           style={{
             background: "var(--bg-tertiary)",
             border: "1px solid var(--control-border)",
-            color: isRunning && trainingWeightMaterialization !== null ? "var(--text-secondary)" : "var(--text-muted)",
-            cursor: isRunning && trainingWeightMaterialization !== null ? "pointer" : "not-allowed",
+            color: canLiveAttach && trainingWeightMaterialization !== null ? "var(--text-secondary)" : "var(--text-muted)",
+            cursor: canLiveAttach && trainingWeightMaterialization !== null ? "pointer" : "not-allowed",
             fontSize: 10,
             padding: "3px 8px",
           }}
@@ -518,7 +584,7 @@ export default function TrainingMonitor() {
       <TrainingWeightLiveAttachStrip liveAttach={trainingWeightLiveAttach} />
 
       {/* Config panel */}
-      {!isRunning && (
+      {!isActive && (
         <div style={{
           padding: "8px 12px", borderBottom: "1px solid var(--border)",
           display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 6,
@@ -655,22 +721,26 @@ export default function TrainingMonitor() {
         )}
 
         {/* Empty state */}
-        {trainingEpochs.length === 0 && !isRunning && (
+        {trainingEpochs.length === 0 && !isActive && (
           <div style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
             color: "var(--text-muted)", fontSize: 11, minHeight: 100,
           }}>
-            Configure training parameters above, then click Train
+            {trainingJobId === null
+              ? "Configure training parameters above, then click Train"
+              : "No recorded epochs for this retained run"}
           </div>
         )}
 
         {/* Running indicator */}
-        {isRunning && trainingEpochs.length === 0 && (
+        {isActive && trainingEpochs.length === 0 && (
           <div style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
             color: "var(--text-muted)", fontSize: 11, minHeight: 100,
           }}>
-            Starting training...
+            {trainingStatus === "unknown" || trainingStatus === "disconnected"
+              ? "Run status is uncertain; refresh runs to reconnect"
+              : trainingStatus === "stopping" ? "Stopping training..." : "Starting training..."}
           </div>
         )}
       </div>

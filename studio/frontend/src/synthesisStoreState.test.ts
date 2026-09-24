@@ -108,6 +108,7 @@ function jobRecord(
     result: null,
     started_at_utc: createdAt,
     status: "completed",
+    training_config: null,
   };
 /**
  * An event source that is driven by the cases rather than by a network.
@@ -123,7 +124,7 @@ function jobRecord(
 function jobList(overrides: Partial<StudioJobListResponse> = {}): StudioJobListResponse {
   return {
     jobs: overrides.jobs ?? [],
-    schema_version: overrides.schema_version ?? "studio.jobs.list.v1",
+    schema_version: overrides.schema_version ?? "studio.jobs.list.v2",
   };
 }
 /**

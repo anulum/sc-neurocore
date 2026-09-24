@@ -38,6 +38,7 @@ function jobRecord(
     request_id: null,
     result: null,
     started_at_utc: null,
+    training_config: null,
     ...overrides,
   };
 }
@@ -138,6 +139,26 @@ describe("reduceAnalysisJob", () => {
     expect(redacted.error).not.toContain("/home/anulum");
   });
 
+  it.each(["interrupted", "unknown"] as const)(
+    "keeps a recovered %s job distinct from successful completion",
+    (status) => {
+      let state = reduceAnalysisJob(initialAnalysisJobState(), {
+        type: "submit_started",
+        analysis: "fi_curve",
+      });
+      state = reduceAnalysisJob(state, { type: "submit_succeeded", receipt: receipt() });
+      state = reduceAnalysisJob(state, {
+        type: "poll",
+        record: jobRecord({ status, result: fiResult }),
+      });
+      expect(state.phase).toBe(status);
+      expect(state.error).toBe(`analysis_job_${status}`);
+      expect(state.result).toBeNull();
+      expect(isAnalysisJobBusy(state.phase)).toBe(status === "unknown");
+      expect(canSubmitAnalysisJob(state)).toBe(status === "interrupted");
+    },
+  );
+
   it("rejects poll id/kind mismatch as malformed without success result", () => {
     let state = reduceAnalysisJob(initialAnalysisJobState(), {
       type: "submit_started",
@@ -160,6 +181,24 @@ describe("reduceAnalysisJob", () => {
 describe("createAnalysisJobSession", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("keeps polling an unknown job until recovery marks it interrupted", async () => {
+    vi.useFakeTimers();
+    const fetchJob = vi.fn()
+      .mockResolvedValueOnce(jobRecord({ status: "unknown" }))
+      .mockResolvedValueOnce(jobRecord({ status: "interrupted" }));
+    const session = createAnalysisJobSession({
+      api: { submit: async () => receipt(), fetchJob },
+      pollIntervalMs: 100,
+    });
+    await session.startJob({ analysis: "fi_curve", payload: {} });
+    expect(session.getState().phase).toBe("unknown");
+    expect(canSubmitAnalysisJob(session.getState())).toBe(false);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(session.getState().phase).toBe("interrupted");
+    expect(fetchJob).toHaveBeenCalledTimes(2);
+    session.dispose();
   });
 
   it("submits once, polls pending/running to completed, ignores duplicate starts", async () => {

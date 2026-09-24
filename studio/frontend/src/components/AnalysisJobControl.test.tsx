@@ -165,6 +165,8 @@ describe("AnalysisJobControl render", () => {
       "failed",
       "cancelled",
       "timed_out",
+      "interrupted",
+      "unknown",
       "malformed",
     ];
     for (const phase of phases) {

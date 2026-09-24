@@ -183,4 +183,19 @@ describe("receipt and poll job binding", () => {
       ).ok,
     ).toBe(false);
   });
+
+  it("accepts recovery statuses but refuses an unrecognised status", () => {
+    for (const status of ["interrupted", "unknown"]) {
+      const parsed = validateModelScanPollRecord(
+        { job_id: "sj_scan_1", kind: "model_scan", status },
+        "sj_scan_1",
+      );
+      expect(parsed.ok).toBe(true);
+      if (parsed.ok) expect(parsed.value.status).toBe(status);
+    }
+    expect(validateModelScanPollRecord(
+      { job_id: "sj_scan_1", kind: "model_scan", status: "recovered" },
+      "sj_scan_1",
+    )).toEqual({ ok: false, error: "model_scan_poll_status_invalid" });
+  });
 });

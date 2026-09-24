@@ -915,6 +915,8 @@ export interface StudioAuditQuarantineArchivePurgeResult {
  * the runner will not accept should not be offered.
  */
 export interface StudioJobStatus {
+  /** Unresolved durable purge operations; absent on older servers. */
+  pending_purge_count?: number;
   active_count: number;
   allowed_kinds: string[];
   completed_count: number;
@@ -975,13 +977,14 @@ export interface StudioJobRecord {
   request_id: string | null;
   result: Record<string, unknown> | null;
   started_at_utc: string | null;
-  status: "pending" | "running" | "completed" | "failed" | "cancelling" | "cancelled" | "timed_out";
+  status: "pending" | "running" | "completed" | "failed" | "cancelling" | "cancelled" | "timed_out" | "interrupted" | "unknown";
+  training_config: ResolvedTrainingConfig | null;
 }
 
 /** Every job the runner is holding. */
 export interface StudioJobListResponse {
   jobs: StudioJobRecord[];
-  schema_version: string;
+  schema_version: "studio.jobs.list.v2";
 }
 
 /**
@@ -1846,6 +1849,12 @@ export interface TrainingConfig {
   max_grad_norm: number;
 }
 
+/** The validated run configuration retained with a v7 ledger job. */
+export interface ResolvedTrainingConfig extends TrainingConfig {
+  schema_version: "studio.training-config.v1";
+  seed: number;
+}
+
 /** One epoch's losses and accuracies, on both the training and validation sets. */
 export interface TrainingEpochMetrics {
   epoch: number;
@@ -2009,7 +2018,7 @@ export interface TrainingCheckpointImportResponse {
 export interface TrainingJobSummary {
   job_id: string;
   status: string;
-  config: TrainingConfig;
+  config: ResolvedTrainingConfig | null;
 }
 
 /** Which sign a population's outgoing weights take. */

@@ -64,6 +64,8 @@ export const studioInitialData = {
   synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null,
   latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
+  trainingJobs: [], trainingJobsLoading: false, trainingJobsError: null,
+  trainingObservedConfig: null,
   trainingWeightRestorePlan: null, trainingWeightRestoreVerification: null,
   trainingWeightMaterialization: null, trainingWeightAttach: null,
   trainingWeightLiveAttach: null,

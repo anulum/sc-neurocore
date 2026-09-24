@@ -129,7 +129,7 @@ export function createAnalysisJobSession(
           }
           apply({ type: "poll", record });
           const polled = readState();
-          if (polled.phase === "pending" || polled.phase === "running") {
+          if (polled.phase === "pending" || polled.phase === "running" || polled.phase === "unknown") {
             schedulePoll(gen, statusRoute);
           } else {
             stopPolling();
@@ -182,6 +182,7 @@ export function createAnalysisJobSession(
               if (
                 afterFirstPoll.phase === "pending"
                 || afterFirstPoll.phase === "running"
+                || afterFirstPoll.phase === "unknown"
               ) {
                 schedulePoll(gen, route);
               }
