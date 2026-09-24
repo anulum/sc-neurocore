@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Release gate: the installed Studio is accepted before publication
+
+- `tools/studio_installed_acceptance.py` launches an installation's Studio
+  through its own `sc-neurocore studio` command, after checking that its
+  `sc_neurocore` is not the source checkout (the caller's `PYTHONPATH` and
+  `PYTHONHOME` are not passed on, so they cannot lend it one), and requires the root redirect to
+  the interface, every asset the interface names, and a catalogue listing
+  exactly the models the installed registry maps. It stops the server however
+  the checks end and reports the first check that failed.
+- The publish workflow installs the built wheel into a clean environment
+  (hash-pinned dependencies, the wheel without dependency resolution) and runs
+  the acceptance before the wheel can reach PyPI. The distribution tests run
+  the same acceptance on a wheel built from the source tree.
+
 ### The Studio tour names the catalogue it loaded
 
 - The first-run tour's model-browser step states the number of models the

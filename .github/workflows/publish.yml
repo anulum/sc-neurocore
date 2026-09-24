@@ -47,6 +47,13 @@ jobs:
       - run: python -m build
         env:
           SC_NEUROCORE_STUDIO_UI: required
+      - name: Accept the installed Studio the wheel provides
+        run: |
+          python -m venv "$RUNNER_TEMP/installed"
+          "$RUNNER_TEMP/installed/bin/pip" install --require-hashes \
+            -r requirements/runtime.txt -r requirements/hub.txt
+          "$RUNNER_TEMP/installed/bin/pip" install --no-deps dist/sc_neurocore-*.whl
+          python tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: python-dist

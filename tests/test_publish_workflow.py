@@ -137,3 +137,22 @@ def test_rust_engine_release_fallback_docs_name_wheel_and_source_paths() -> None
     assert "Python 3.10-3.14" in docs
     assert "Linux x86_64/aarch64, macOS, and Windows" in docs
     assert "local Rust toolchain" in docs
+
+
+def test_python_dist_is_accepted_installed_before_it_can_be_published() -> None:
+    """The wheel PyPI receives serves its Studio from a clean installation."""
+    jobs = _workflow()["jobs"]
+    build = _run_text(jobs["build-python-dist"])
+    steps = [step for step in jobs["build-python-dist"]["steps"] if isinstance(step, dict)]
+    names = [step.get("name", step.get("run", step.get("uses", ""))) for step in steps]
+
+    assert names.index("Accept the installed Studio the wheel provides") > names.index(
+        "python -m build"
+    )
+    assert "--require-hashes" in build
+    assert "--no-deps dist/sc_neurocore-*.whl" in build
+    assert 'tools/studio_installed_acceptance.py --python "$RUNNER_TEMP/installed/bin/python"' in (
+        build
+    )
+    assert jobs["publish-python-pypi"]["needs"] == ["build-python-dist"]
+    assert (_repo_root() / "tools" / "studio_installed_acceptance.py").is_file()

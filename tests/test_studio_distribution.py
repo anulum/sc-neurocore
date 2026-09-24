@@ -11,9 +11,12 @@
 from dataclasses import asdict
 from fnmatch import fnmatchcase
 from pathlib import Path
+from types import ModuleType
+import importlib.util
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import sysconfig
@@ -399,6 +402,53 @@ def test_rebuild_replaces_modified_and_removed_pages(
         assert wheel.read(f"sc_neurocore/studio/model_docs/{changed.name}") == changed.read_bytes()
 
 
+def studio_installed_acceptance() -> ModuleType:
+    """Load the release acceptance tool, which lives outside the package."""
+    path = Path(__file__).resolve().parents[1] / "tools" / "studio_installed_acceptance.py"
+    spec = importlib.util.spec_from_file_location("studio_installed_acceptance", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def installation_environment(installed: Path, root: Path) -> Path:
+    """Create a virtual environment whose ``sc_neurocore`` is the extracted wheel.
+
+    The test interpreter's packages supply the dependencies; path files inside
+    them (an editable install of the checkout) are not processed, so the only
+    ``sc_neurocore`` the environment can import is ``installed``.
+
+    Returns
+    -------
+    pathlib.Path
+        The environment's interpreter.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "venv", "--without-pip", str(root)], check=True, timeout=120
+    )
+    python = root / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    purelib = subprocess.run(
+        [str(python), "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=60,
+    ).stdout.strip()
+    (Path(purelib) / "installed_wheel.pth").write_text(
+        f"{installed}\n{sysconfig.get_path('purelib')}\n", encoding="utf-8"
+    )
+    return python
+
+
+def free_port() -> int:
+    """Return a port nothing listens on at the moment of asking."""
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return int(probe.getsockname()[1])
+
+
 def _with_built_ui(source: Path) -> Path:
     """Give a disposable source tree a small real UI build, as ``npm run build`` would."""
     ui = source / "studio/frontend/dist"
@@ -412,9 +462,13 @@ def _with_built_ui(source: Path) -> Path:
 
 
 def test_a_built_ui_ships_in_the_wheel_and_is_served_installed(
-    distribution_source: Path, tmp_path: Path
+    distribution_source: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """`pip install` then `sc-neurocore studio` must open a user interface, not an empty page."""
+    """`pip install` then `sc-neurocore studio` must open a user interface, not an empty page.
+
+    The installed copy is launched by the release acceptance tool through its own
+    CLI, in an environment whose only ``sc_neurocore`` is the wheel's.
+    """
     source = tmp_path / "source"
     shutil.copytree(
         distribution_source, source, ignore=shutil.ignore_patterns("build", "*.egg-info")
@@ -431,31 +485,14 @@ def test_a_built_ui_ships_in_the_wheel_and_is_served_installed(
                 == (ui / relative).read_bytes()
             )
         wheel.extractall(installed)
-    probe = """
-import sys
-from pathlib import Path
-installed = Path(sys.argv[1])
-sys.path[:0] = [str(installed), sys.argv[2]]
-from starlette.testclient import TestClient
-from sc_neurocore.studio import app as studio_app
-from sc_neurocore.studio.api.frontend import studio_frontend_candidates, studio_frontend_dir
-served = studio_frontend_dir(studio_frontend_candidates(studio_app.__file__))
-assert served is not None and served.is_relative_to(installed), served
-client = TestClient(studio_app.create_app(), base_url="http://127.0.0.1")
-assert client.get("/", follow_redirects=False).headers["location"] == "/studios/sc-neurocore/"
-assert client.get("/studios/sc-neurocore/assets/app.js").text == "console.log('studio')"
-print("installed Studio serves its own user interface")
-"""
-    run = subprocess.run(
-        [sys.executable, "-I", "-S", "-c", probe, str(installed), sysconfig.get_path("purelib")],
-        cwd=tmp_path,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    assert run.returncode == 0, run.stdout + run.stderr
-    assert "serves its own user interface" in run.stdout
+    environment = installation_environment(installed, tmp_path / "environment")
+    acceptance = studio_installed_acceptance()
+    assert acceptance.main(["--python", str(environment), "--port", str(free_port())]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["accepted"] is True
+    assert Path(report["package"]).is_relative_to(installed)
+    assert report["assets"] >= 1
+    assert report["models"] == len(list_models())
 
 
 def test_a_release_build_without_the_ui_is_refused(

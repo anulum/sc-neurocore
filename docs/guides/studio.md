@@ -22,7 +22,10 @@ An installation from a source checkout carries the interface only if
 succeeds, and `sc-neurocore studio` says that there is no interface and opens
 the API documentation at `/docs` instead. Release builds set
 `SC_NEUROCORE_STUDIO_UI=required`, which makes a build without the interface
-fail.
+fail. Before the wheel can be published, the release workflow installs it into
+a clean environment, launches `sc-neurocore studio` from that installation and
+requires the root redirect, every asset the interface names and the whole
+model catalogue to be served (`tools/studio_installed_acceptance.py`).
 
 ## Quick Start
 
