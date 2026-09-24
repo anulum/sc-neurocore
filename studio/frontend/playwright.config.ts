@@ -11,6 +11,7 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   testIgnore: [
+    "candidate-authoring-live.spec.ts",
     "catalogue-to-silicon-live.spec.ts",
     "experiment-export-live.spec.ts",
     "guided-flow-truth-live.spec.ts",
