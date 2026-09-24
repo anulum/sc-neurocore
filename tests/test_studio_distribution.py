@@ -205,7 +205,9 @@ def verify_installed_replays(installed: Path, workspace: Path) -> None:
     for nondefault-timestep, nonconstant-drive, rate and seeded stochastic cases.
     The installed catalogue must also report exactly the counts the source tree
     does, so a receipt-bound identity is receipt-bound only because its receipt
-    was shipped and resolved inside the installed package. Dependencies reuse the test interpreter's site-packages; this is package
+    was shipped and resolved inside the installed package. An offered execution
+    lane must run a kernel and agree with the Python lane; a lane the wheel
+    does not provide must refuse an explicit request. Dependencies reuse the test interpreter's site-packages; this is package
     isolation, not a fresh dependency-resolution or platform receipt.
 
     Parameters
@@ -257,6 +259,27 @@ assert lanes["python"].resources_present
 # The wheel ships no Julia kernels and no built Go or Mojo libraries, even
 # where juliacall itself is importable.
 assert not any(lanes[lane].resources_present for lane in ("julia", "go", "mojo")), lanes
+# Each lane the installation offers runs; a lane it lacks is refused, never
+# silently replaced by Python.
+import numpy as np
+from sc_neurocore.accel.alpha import simulate_alpha
+drive = [0.3] * 40 + [1.4] * 40
+reference = simulate_alpha(exc_current=drive, backend="python")
+assert int(np.sum(reference["spikes"])) > 0
+if lanes["rust"].resources_present:
+    native = simulate_alpha(exc_current=drive, backend="rust")
+    np.testing.assert_allclose(native["v"], reference["v"], rtol=0.0, atol=1e-12)
+    np.testing.assert_array_equal(native["spikes"], reference["spikes"])
+    refused = ("go", "mojo")
+else:
+    refused = ("rust", "go", "mojo")
+for lane in refused:
+    try:
+        simulate_alpha(exc_current=drive, backend=lane)
+    except RuntimeError as refusal:
+        assert "unavailable" in str(refusal)
+    else:
+        raise AssertionError(f"the {lane} lane ran without its resources")
 packs = json.load(sys.stdin)
 for index, pack in enumerate(packs):
     name = pack["request"]["name"]
