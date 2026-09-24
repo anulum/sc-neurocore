@@ -6,11 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Build-owned model documentation resources
 
-"""Package canonical model pages without keeping a second editable source copy."""
+"""Package canonical model pages and the built Studio UI without a second source copy."""
 
+import os
+import shutil
 from pathlib import Path
 
 from setuptools.command.build_py import build_py
+
+#: ``required`` makes a build without the built Studio UI fail; release builds
+#: set it. Any other value packages the UI when it has been built and omits it
+#: otherwise, so a source install without Node.js still works.
+STUDIO_UI_REQUIREMENT = "SC_NEUROCORE_STUDIO_UI"
 
 
 class BuildStudioResources(build_py):
@@ -46,3 +53,26 @@ class BuildStudioResources(build_py):
         self.force = True
         for page in pages:
             self.copy_file(str(page), str(destination / page.name))
+        self._package_studio_ui()
+
+    def _package_studio_ui(self) -> None:
+        """Copy the built Studio frontend into the package, or refuse a release without it.
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``SC_NEUROCORE_STUDIO_UI=required`` and the UI has not been built.
+        """
+        built = Path(__file__).resolve().parents[1] / "studio" / "frontend" / "dist"
+        destination = Path(self.build_lib) / "sc_neurocore" / "studio" / "frontend_dist"
+        if destination.exists():
+            shutil.rmtree(destination)
+        if not (built / "index.html").is_file():
+            if os.environ.get(STUDIO_UI_REQUIREMENT) == "required":
+                raise FileNotFoundError(
+                    f"No built Studio UI in {built}; build it first "
+                    "(cd studio/frontend && npm ci && npm run build)"
+                )
+            self.announce("Studio UI not built; the package carries no user interface", level=3)
+            return
+        shutil.copytree(built, destination)

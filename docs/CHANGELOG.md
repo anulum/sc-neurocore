@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio user interface in the wheel
+
+- A published wheel now carries the built Studio interface in
+  `sc_neurocore/studio/frontend_dist/`, so `pip install sc-neurocore[studio]`
+  followed by `sc-neurocore studio` opens a working interface without a
+  Node.js toolchain. Before this, only a source checkout with a local
+  `npm run build` had an interface; an installed Studio served an empty root.
+- The interface is mounted at `/studios/sc-neurocore/`, the path every asset of
+  the production build names, and the root redirects there. It had been
+  mounted at the root, where its assets did not resolve.
+- The publish and release workflows build the interface before packaging and
+  set `SC_NEUROCORE_STUDIO_UI=required`, so a release wheel without it fails
+  to build. A source build without a built interface still succeeds; the
+  launcher then says there is no interface and opens the API documentation.
+- A rebuild in a reused build directory drops an interface removed from the
+  source rather than shipping the stale copy.
+
 ### Studio identity store: private file, one serving process
 
 - The identity store is owner-only: a store another account owns is refused,

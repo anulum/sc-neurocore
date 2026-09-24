@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute, APIWebSocketRoute
 from starlette.testclient import TestClient
 
-from sc_neurocore.studio.api.frontend import mount_studio_frontend
+from sc_neurocore.studio.api.frontend import mount_studio_frontend, studio_entry
 from sc_neurocore.studio.app import create_app
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -104,13 +104,22 @@ def test_frontend_mount_supports_source_tree_fallback(tmp_path: Path) -> None:
     fallback_dist = tmp_path / "studio" / "frontend" / "dist"
     fallback_dist.mkdir(parents=True)
     (fallback_dist / "index.html").write_text("<html>fallback</html>", encoding="utf-8")
+    (fallback_dist / "assets").mkdir()
+    (fallback_dist / "assets" / "app.js").write_text("console.log(1)", encoding="utf-8")
     application = FastAPI()
 
     mount_studio_frontend(application, app_module_file=str(app_module_file))
-    response = TestClient(application, base_url="http://127.0.0.1").get("/")
+    client = TestClient(application, base_url="http://127.0.0.1")
+    root = client.get("/", follow_redirects=False)
+    page = client.get("/studios/sc-neurocore/")
+    asset = client.get("/studios/sc-neurocore/assets/app.js")
 
-    assert response.status_code == 200
-    assert response.text == "<html>fallback</html>"
+    # The build names its published path in every asset URL, so it is served there.
+    assert root.status_code == 307
+    assert root.headers["location"] == "/studios/sc-neurocore/"
+    assert page.status_code == 200
+    assert page.text == "<html>fallback</html>"
+    assert asset.status_code == 200
 
 
 def test_frontend_mount_leaves_root_unclaimed_without_distribution(tmp_path: Path) -> None:
@@ -122,3 +131,18 @@ def test_frontend_mount_leaves_root_unclaimed_without_distribution(tmp_path: Pat
     response = TestClient(application, base_url="http://127.0.0.1").get("/")
 
     assert response.status_code == 404
+
+
+def test_a_launched_studio_opens_its_ui_or_says_there_is_none(tmp_path: Path) -> None:
+    origin = "http://127.0.0.1:8001"
+    assert studio_entry(origin, tmp_path) == (
+        "http://127.0.0.1:8001/studios/sc-neurocore/",
+        ("SC-NeuroCore Studio starting at http://127.0.0.1:8001/studios/sc-neurocore/",),
+    )
+    assert studio_entry(origin, None) == (
+        "http://127.0.0.1:8001/docs",
+        (
+            "This installation carries no Studio user interface; its API documentation opens.",
+            "SC-NeuroCore Studio starting at http://127.0.0.1:8001/docs",
+        ),
+    )

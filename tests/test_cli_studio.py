@@ -20,7 +20,26 @@ import pytest
 from tests.cli_test_support import run_cli
 
 
+def _expected_entry(origin: str) -> tuple[str, tuple[str, ...]]:
+    """The page this checkout's Studio opens: its UI when built, else the API docs."""
+    pytest.importorskip("fastapi")
+    from sc_neurocore.studio import app as studio_app
+    from sc_neurocore.studio.api.frontend import (
+        studio_entry,
+        studio_frontend_candidates,
+        studio_frontend_dir,
+    )
+
+    return studio_entry(
+        origin, studio_frontend_dir(studio_frontend_candidates(studio_app.__file__))
+    )
+
+
+# The server and the browser are the command's two effects that cannot run in a
+# test process: uvicorn.run blocks serving forever and webbrowser.open launches
+# a desktop browser. Both are replaced so the arguments they receive are checked.
 def test_studio_launches_uvicorn(capsys: pytest.CaptureFixture[str]) -> None:
+    url, announcement = _expected_entry("http://127.0.0.1:8001")
     with (
         mock.patch("uvicorn.run") as m_uvicorn,
         mock.patch("webbrowser.open") as m_browser,
@@ -28,7 +47,8 @@ def test_studio_launches_uvicorn(capsys: pytest.CaptureFixture[str]) -> None:
         rc = run_cli("studio")
     assert rc == 0
     m_uvicorn.assert_called_once()
-    m_browser.assert_called_once_with("http://127.0.0.1:8001")
+    m_browser.assert_called_once_with(url)
+    assert capsys.readouterr().out.splitlines()[-len(announcement) :] == list(announcement)
 
 
 def test_studio_missing_fastapi(capsys: pytest.CaptureFixture[str]) -> None:
@@ -39,13 +59,14 @@ def test_studio_missing_fastapi(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_studio_command_routes_custom_port() -> None:
+    url, _ = _expected_entry("http://127.0.0.1:9000")
     with (
         mock.patch("uvicorn.run") as run_server,
         mock.patch("webbrowser.open") as open_browser,
     ):
         rc = run_cli("studio", "--port", "9000")
     assert rc == 0
-    open_browser.assert_called_once_with("http://127.0.0.1:9000")
+    open_browser.assert_called_once_with(url)
     assert run_server.call_args.kwargs["port"] == 9000
 
 

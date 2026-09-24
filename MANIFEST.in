@@ -8,3 +8,4 @@
 
 include src/build_support.py
 recursive-include docs/api/models *.md
+recursive-include studio/frontend/dist *

@@ -123,11 +123,20 @@ def run_studio(args: argparse.Namespace) -> int:
 
     import webbrowser
 
-    from sc_neurocore.studio.app import create_app
+    from sc_neurocore.studio import app as studio_app
+    from sc_neurocore.studio.api.frontend import (
+        studio_entry,
+        studio_frontend_candidates,
+        studio_frontend_dir,
+    )
 
-    app = create_app()
-    url = f"http://127.0.0.1:{int(args.port)}"
-    print(f"SC-NeuroCore Studio starting at {url}")
+    app = studio_app.create_app()
+    url, announcement = studio_entry(
+        f"http://127.0.0.1:{int(args.port)}",
+        studio_frontend_dir(studio_frontend_candidates(studio_app.__file__)),
+    )
+    for line in announcement:
+        print(line)
     webbrowser.open(url)
     uvicorn.run(app, host="127.0.0.1", port=int(args.port), log_level="warning")
     return 0

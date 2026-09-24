@@ -92,7 +92,20 @@ jobs:
           cargo install cargo-fuzz --version 0.13.2
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+        with:
+          node-version: "26.9.0"
+          cache: npm
+          cache-dependency-path: studio/frontend/package-lock.json
+      - name: Build the Studio UI the wheel carries
+        working-directory: studio/frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Build sdist
+        env:
+          SC_NEUROCORE_STUDIO_UI: required
         run: |
           pip install --require-hashes -r requirements/release.txt
           python -m build

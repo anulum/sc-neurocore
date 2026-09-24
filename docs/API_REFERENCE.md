@@ -36099,15 +36099,41 @@ Build the export and progress router over shared Studio runtime state.
 
 ## Module `studio.api.frontend`
 
+### Function `studio_frontend_candidates(app_module_file)`
+Return where a built frontend is looked for, in order.
+
+The packaged build comes first, so an installation serves its own; the
+checkout's build follows, found from the application module.
+
+### Function `studio_frontend_dir(candidates)`
+Return the first candidate holding a built frontend, or ``None``.
+
+### Function `studio_entry(origin, dist_dir)`
+Return the page a launched Studio opens and the lines announcing it.
+
+Parameters
+----------
+origin:
+    Scheme, host and port the API serves, without a trailing slash.
+dist_dir:
+    The built frontend :func:`studio_frontend_dir` found, or ``None``.
+
+Returns
+-------
+tuple
+    The URL to open, and the lines to print before opening it. Without a
+    frontend the root would be an empty page, so the API documentation
+    opens instead and the first line says why.
+
 ### Function `mount_studio_frontend(app)`
-Mount the production frontend when its distribution exists.
+Mount the built frontend at :data:`STUDIO_UI_PATH` when one exists.
 
 Parameters
 ----------
 app:
-    FastAPI application receiving the root route and static mount.
+    FastAPI application receiving the root redirect and the static mount.
 app_module_file:
-    Path of the compatibility application module used as the search anchor.
+    Path of the application module, the anchor for the checkout's build.
 
 ---
 

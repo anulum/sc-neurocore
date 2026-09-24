@@ -397,3 +397,101 @@ def test_rebuild_replaces_modified_and_removed_pages(
     with zipfile.ZipFile(wheel_path) as wheel:
         assert f"sc_neurocore/studio/model_docs/{removed.name}" not in wheel.namelist()
         assert wheel.read(f"sc_neurocore/studio/model_docs/{changed.name}") == changed.read_bytes()
+
+
+def _with_built_ui(source: Path) -> Path:
+    """Give a disposable source tree a small real UI build, as ``npm run build`` would."""
+    ui = source / "studio/frontend/dist"
+    (ui / "assets").mkdir(parents=True)
+    (ui / "index.html").write_text(
+        '<html><script src="/studios/sc-neurocore/assets/app.js"></script></html>',
+        encoding="utf-8",
+    )
+    (ui / "assets/app.js").write_text("console.log('studio')", encoding="utf-8")
+    return ui
+
+
+def test_a_built_ui_ships_in_the_wheel_and_is_served_installed(
+    distribution_source: Path, tmp_path: Path
+) -> None:
+    """`pip install` then `sc-neurocore studio` must open a user interface, not an empty page."""
+    source = tmp_path / "source"
+    shutil.copytree(
+        distribution_source, source, ignore=shutil.ignore_patterns("build", "*.egg-info")
+    )
+    ui = _with_built_ui(source)
+    result = build_distribution(source, "build_wheel", tmp_path / "wheel")
+    assert result.returncode == 0, result.stdout + result.stderr
+    (wheel_path,) = (tmp_path / "wheel").glob("*.whl")
+    installed = tmp_path / "installed"
+    with zipfile.ZipFile(wheel_path) as wheel:
+        for relative in ("index.html", "assets/app.js"):
+            assert (
+                wheel.read(f"sc_neurocore/studio/frontend_dist/{relative}")
+                == (ui / relative).read_bytes()
+            )
+        wheel.extractall(installed)
+    probe = """
+import sys
+from pathlib import Path
+installed = Path(sys.argv[1])
+sys.path[:0] = [str(installed), sys.argv[2]]
+from starlette.testclient import TestClient
+from sc_neurocore.studio import app as studio_app
+from sc_neurocore.studio.api.frontend import studio_frontend_candidates, studio_frontend_dir
+served = studio_frontend_dir(studio_frontend_candidates(studio_app.__file__))
+assert served is not None and served.is_relative_to(installed), served
+client = TestClient(studio_app.create_app(), base_url="http://127.0.0.1")
+assert client.get("/", follow_redirects=False).headers["location"] == "/studios/sc-neurocore/"
+assert client.get("/studios/sc-neurocore/assets/app.js").text == "console.log('studio')"
+print("installed Studio serves its own user interface")
+"""
+    run = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", probe, str(installed), sysconfig.get_path("purelib")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    assert run.returncode == 0, run.stdout + run.stderr
+    assert "serves its own user interface" in run.stdout
+
+
+def test_a_release_build_without_the_ui_is_refused(
+    distribution_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Release workflows set the requirement, so a published wheel cannot lack its UI."""
+    monkeypatch.setenv("SC_NEUROCORE_STUDIO_UI", "required")
+    source = tmp_path / "source"
+    shutil.copytree(
+        distribution_source, source, ignore=shutil.ignore_patterns("build", "*.egg-info")
+    )
+    result = build_distribution(source, "build_wheel", tmp_path / "wheel")
+    assert result.returncode != 0
+    assert "No built Studio UI" in result.stdout + result.stderr
+
+
+def test_a_source_build_without_the_ui_carries_none(
+    distribution_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A source install without Node.js still builds; it simply has no UI to serve.
+
+    The tree is first built with a UI, so the second build reuses a build
+    directory that still holds one: a UI removed from the source must not
+    survive in the next wheel.
+    """
+    monkeypatch.delenv("SC_NEUROCORE_STUDIO_UI", raising=False)
+    source = tmp_path / "source"
+    shutil.copytree(
+        distribution_source, source, ignore=shutil.ignore_patterns("build", "*.egg-info")
+    )
+    ui = _with_built_ui(source)
+    first = build_distribution(source, "build_wheel", tmp_path / "with-ui")
+    assert first.returncode == 0, first.stdout + first.stderr
+    shutil.rmtree(ui)
+    result = build_distribution(source, "build_wheel", tmp_path / "wheel")
+    assert result.returncode == 0, result.stdout + result.stderr
+    (wheel_path,) = (tmp_path / "wheel").glob("*.whl")
+    with zipfile.ZipFile(wheel_path) as wheel:
+        assert not [name for name in wheel.namelist() if "/frontend_dist/" in name]

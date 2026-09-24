@@ -11,7 +11,18 @@ interface.
 pip install sc-neurocore[studio]
 ```
 
-This installs FastAPI and Uvicorn alongside the core package.
+This installs FastAPI and Uvicorn alongside the core package. A published
+wheel also carries the built user interface in
+`sc_neurocore/studio/frontend_dist/`, so no Node.js toolchain is needed to run
+the Studio.
+
+An installation from a source checkout carries the interface only if
+`studio/frontend/dist/` has been built first (see
+[Development](#development)); without it the build still
+succeeds, and `sc-neurocore studio` says that there is no interface and opens
+the API documentation at `/docs` instead. Release builds set
+`SC_NEUROCORE_STUDIO_UI=required`, which makes a build without the interface
+fail.
 
 ## Quick Start
 
@@ -19,7 +30,8 @@ This installs FastAPI and Uvicorn alongside the core package.
 sc-neurocore studio
 ```
 
-Opens `http://127.0.0.1:8001` in your browser. The Studio starts in **Model
+Opens `http://127.0.0.1:8001/studios/sc-neurocore/` in your browser; the
+root `http://127.0.0.1:8001/` redirects there. The Studio starts in **Model
 mode** with 118 neuron models browsable by category. Switch to **ODE mode** to
 write custom equations.
 
@@ -544,6 +556,10 @@ Production build:
 cd studio/frontend
 npm run build   # → studio/frontend/dist/
 ```
+
+A checkout's `sc-neurocore studio` serves this build once it exists, and the
+package build copies it into the wheel as `sc_neurocore/studio/frontend_dist/`;
+an installation serves its own copy first.
 
 The production build serves two entry surfaces from the same source tree:
 

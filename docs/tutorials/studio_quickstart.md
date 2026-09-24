@@ -13,9 +13,9 @@ FPGA resources — all from a browser.
 sc-neurocore studio
 ```
 
-Your browser opens at `http://127.0.0.1:8001`. The interface starts in
-**Model mode** with the first of 118 neuron models selected and a
-live voltage trace displayed.
+Your browser opens at `http://127.0.0.1:8001/studios/sc-neurocore/`. The
+interface starts in **Model mode** with the first of 118 neuron models
+selected and a live voltage trace displayed.
 
 ## 2. Explore Neuron Models
 
