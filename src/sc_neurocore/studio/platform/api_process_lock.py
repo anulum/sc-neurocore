@@ -37,6 +37,10 @@ class StudioApiProcessConflict(RuntimeError):
     """Another process already serves this identity store."""
 
 
+class StudioApiLockUnavailable(RuntimeError):
+    """The lock file beside the identity store cannot be created or opened."""
+
+
 def api_lock_path(identity_path: Path) -> Path:
     """Return the file whose exclusive transaction marks the serving process."""
     return identity_path.with_name(f"{identity_path.name}.api-lock")
@@ -54,19 +58,30 @@ def hold_identity_store(identity_path: Path) -> Path:
     ------
     StudioApiProcessConflict
         When another process holds the store.
+    StudioApiLockUnavailable
+        When the lock file cannot be created or opened, for example because
+        the identity store's directory is not writable by this account.
     """
     lock_path = api_lock_path(identity_path)
     key = str(lock_path.resolve())
     with _GUARD:
         if key in _HELD:
             return lock_path
-        connection = sqlite3.connect(
-            lock_path, timeout=0, isolation_level=None, check_same_thread=False
-        )
         try:
+            connection = sqlite3.connect(
+                lock_path, timeout=0, isolation_level=None, check_same_thread=False
+            )
+        except sqlite3.DatabaseError as exc:
+            raise _lock_unavailable(lock_path, exc) from exc
+        try:
+            # The lock holds no data, so its journal stays in memory: the only
+            # file beside the identity store is the lock itself.
+            connection.execute("PRAGMA journal_mode=MEMORY")
             connection.execute("BEGIN EXCLUSIVE")
-        except sqlite3.OperationalError as exc:
+        except sqlite3.DatabaseError as exc:
             connection.close()
+            if "locked" not in str(exc):
+                raise _lock_unavailable(lock_path, exc) from exc
             raise StudioApiProcessConflict(
                 f"another Studio API process serves {identity_path.name}: browser sessions and "
                 "login throttles are kept in that process, so one identity store is served by "
@@ -76,4 +91,16 @@ def hold_identity_store(identity_path: Path) -> Path:
     return lock_path
 
 
-__all__ = ["StudioApiProcessConflict", "api_lock_path", "hold_identity_store"]
+def _lock_unavailable(lock_path: Path, exc: sqlite3.DatabaseError) -> StudioApiLockUnavailable:
+    return StudioApiLockUnavailable(
+        f"the Studio cannot open its API lock {lock_path} ({exc}); the lock is a file beside "
+        "the identity store that the account running Studio must be able to create and open"
+    )
+
+
+__all__ = [
+    "StudioApiLockUnavailable",
+    "StudioApiProcessConflict",
+    "api_lock_path",
+    "hold_identity_store",
+]

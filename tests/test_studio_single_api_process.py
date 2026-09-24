@@ -30,6 +30,7 @@ pytest.importorskip("fastapi")
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform.api_process_lock import (
+    StudioApiLockUnavailable,
     StudioApiProcessConflict,
     api_lock_path,
     hold_identity_store,
@@ -107,6 +108,10 @@ class TestOneApiProcess:
         identity = _identity(tmp_path / "identity.json")
         assert hold_identity_store(identity) == api_lock_path(identity)
         assert hold_identity_store(identity) == api_lock_path(identity)
+        assert sorted(path.name for path in tmp_path.iterdir()) == [
+            "identity.json",
+            "identity.json.api-lock",
+        ]
         create_app(_settings(identity, tmp_path))
         create_app(_settings(identity, tmp_path))
 
@@ -136,6 +141,35 @@ class TestOneApiProcess:
     def test_an_app_without_an_identity_store_holds_nothing(self, tmp_path: Path) -> None:
         create_app(StudioRuntimeSettings())
         assert not list(tmp_path.glob("*.api-lock"))
+
+    def test_a_lock_path_that_is_not_a_file_is_named_not_mistaken_for_a_conflict(
+        self, tmp_path: Path
+    ) -> None:
+        identity = _identity(tmp_path / "identity.json")
+        api_lock_path(identity).mkdir()
+        with pytest.raises(StudioApiLockUnavailable, match="cannot open its API lock"):
+            create_app(_settings(identity, tmp_path))
+
+    def test_a_lock_file_holding_something_else_is_named_not_mistaken_for_a_conflict(
+        self, tmp_path: Path
+    ) -> None:
+        identity = _identity(tmp_path / "identity.json")
+        api_lock_path(identity).write_bytes(b"not a Studio lock " * 64)
+        with pytest.raises(StudioApiLockUnavailable, match="file is not a database"):
+            hold_identity_store(identity)
+
+    @posix_only
+    @pytest.mark.skipif(os.name == "posix" and os.geteuid() == 0, reason="root writes anywhere")
+    def test_a_store_in_a_directory_studio_cannot_write_is_named(self, tmp_path: Path) -> None:
+        store = tmp_path / "store"
+        store.mkdir()
+        identity = _identity(store / "identity.json")
+        store.chmod(0o555)
+        try:
+            with pytest.raises(StudioApiLockUnavailable, match="identity.json.api-lock"):
+                hold_identity_store(identity)
+        finally:
+            store.chmod(0o755)
 
 
 @posix_only

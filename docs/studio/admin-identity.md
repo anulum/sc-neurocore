@@ -69,7 +69,10 @@ started on the same files — would keep its own: a session signed out in one
 would stay valid in the other, and the login-attempt limit would multiply. The
 first API process to open a store therefore holds it (an exclusive lock on
 `<store>.api-lock` beside it) for its lifetime, and another process that tries
-is refused at startup with the reason. The supported deployment is one lab
+is refused at startup with the reason. The lock file is created by the
+account running Studio, so the store's directory must be writable by it; when
+the lock cannot be created or opened, startup is refused with that reason,
+never reported as another process. The supported deployment is one lab
 process; `sc-neurocore studio` starts exactly one.
 
 ## 3. Authenticate requests

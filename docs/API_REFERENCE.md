@@ -38848,6 +38848,10 @@ AnalysisBudgetError
 Another process already serves this identity store.
 
 
+### Class `StudioApiLockUnavailable`
+The lock file beside the identity store cannot be created or opened.
+
+
 ### Function `api_lock_path(identity_path)`
 Return the file whose exclusive transaction marks the serving process.
 
@@ -38863,6 +38867,9 @@ Raises
 ------
 StudioApiProcessConflict
     When another process holds the store.
+StudioApiLockUnavailable
+    When the lock file cannot be created or opened, for example because
+    the identity store's directory is not writable by this account.
 
 ---
 

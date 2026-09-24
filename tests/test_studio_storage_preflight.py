@@ -25,6 +25,7 @@ from fastapi import FastAPI
 import pytest
 
 from sc_neurocore.studio.api.runtime import build_studio_api_context
+from sc_neurocore.studio.platform.api_process_lock import api_lock_path
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 from sc_neurocore.studio.platform.storage_isolated_jobs import IsolatedJobManager
 from sc_neurocore.studio.platform.storage_configuration import StorageBoundaryConfiguration
@@ -174,7 +175,11 @@ def test_unaccepted_direct_backend_limits_refuse_an_otherwise_ready_api(tmp_path
 def test_a_passing_preflight_builds_the_isolated_facade_and_no_local_job_state(
     tmp_path: Path,
 ) -> None:
-    """The API context holds the storage-backed facade; no job root or ledger appears."""
+    """The API context holds the storage-backed facade; no job root or ledger appears.
+
+    The one file the API process adds is its lock beside the identity store,
+    which marks the serving process and holds no job state.
+    """
     (tmp_path / "spool").mkdir()
     (tmp_path / "spool").chmod(0o750)
     (tmp_path / "launcher").mkdir()
@@ -199,4 +204,4 @@ def test_a_passing_preflight_builds_the_isolated_facade_and_no_local_job_state(
     context = build_studio_api_context(app, settings)
     assert isinstance(context.studio_job_manager, IsolatedJobManager)
     assert app.state.studio_job_manager is context.studio_job_manager
-    assert sorted(tmp_path.iterdir()) == before
+    assert sorted(tmp_path.iterdir()) == sorted([*before, api_lock_path(identity)])

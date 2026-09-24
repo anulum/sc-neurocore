@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Identity store lock: unavailable lock named, one file beside the store
+
+- A lock file that cannot be created or opened (a store directory the Studio
+  account cannot write, a directory or foreign file at the lock path) now
+  refuses startup with `StudioApiLockUnavailable`, naming the lock and the
+  reason, instead of a bare SQLite error. Only a held lock is reported as
+  another API process.
+- The lock keeps its journal in memory, so the only file the API process adds
+  beside the identity store is `<store>.api-lock`.
+
 ### Release gate: the installed Studio is accepted before publication
 
 - `tools/studio_installed_acceptance.py` launches an installation's Studio
