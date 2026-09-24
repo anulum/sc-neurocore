@@ -18,6 +18,7 @@ from typing import Any, cast
 from fastapi import FastAPI, HTTPException
 
 from sc_neurocore.studio.api.analysis_guards import _analysis_budget_from_settings
+from sc_neurocore.studio.platform.api_process_lock import hold_identity_store
 from sc_neurocore.studio.platform import (
     AnalysisBudget,
     AuditSink,
@@ -163,6 +164,10 @@ def build_studio_api_context(
         if settings.identity_file_path is not None
         else None
     )
+    if settings.identity_file_path is not None:
+        # Sessions and login throttles below live in this process: one process
+        # serves the store, and another that tries is refused.
+        hold_identity_store(Path(settings.identity_file_path))
     studio_browser_session_manager = StudioBrowserSessionManager(
         ttl_seconds=settings.browser_session_ttl_seconds
     )

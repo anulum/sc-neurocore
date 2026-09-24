@@ -53,6 +53,25 @@ When this is set to a readable store, the gated endpoints return `200` and serve
 the configured principals; an unreadable or malformed store returns
 `503 identity_store_unhealthy` instead.
 
+### The store stays private, and one process serves it
+
+The store holds credential hashes, so the Studio keeps it owner-only. Loading
+refuses a store another account owns, since that account could change who may
+sign in; a store its owner left readable by group or others is narrowed to
+`0600` before it is read, and the widening is logged, because its hashes were
+exposed until then. Every write leaves the file `0600`, whatever mode it had.
+POSIX modes do not apply on Windows, where the file's access-control list
+governs.
+
+Browser sessions and login throttles are kept in the API process. A second API
+process serving the same store — a second server worker, or a second server
+started on the same files — would keep its own: a session signed out in one
+would stay valid in the other, and the login-attempt limit would multiply. The
+first API process to open a store therefore holds it (an exclusive lock on
+`<store>.api-lock` beside it) for its lifetime, and another process that tries
+is refused at startup with the reason. The supported deployment is one lab
+process; `sc-neurocore studio` starts exactly one.
+
 ## 3. Authenticate requests
 
 Send the captured token as a bearer credential:

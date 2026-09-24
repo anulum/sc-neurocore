@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio identity store: private file, one serving process
+
+- The identity store is owner-only: a store another account owns is refused,
+  one readable by group or others is narrowed to `0600` before it is read (and
+  the widening logged), and every write leaves it `0600`. Writes used to keep
+  whatever mode the file had.
+- Browser sessions and login throttles live in the API process, so one process
+  serves an identity store: the first holds it for its lifetime and another API
+  process on the same store is refused at startup with the reason, instead of
+  keeping its own sessions and its own login-attempt count.
+
 ### Studio silicon operations per model
 
 - `GET /api/models/{name}/capabilities` states which silicon operations this

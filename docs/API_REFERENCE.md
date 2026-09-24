@@ -38816,6 +38816,30 @@ AnalysisBudgetError
 
 ---
 
+## Module `studio.platform.api_process_lock`
+
+### Class `StudioApiProcessConflict`
+Another process already serves this identity store.
+
+
+### Function `api_lock_path(identity_path)`
+Return the file whose exclusive transaction marks the serving process.
+
+### Function `hold_identity_store(identity_path)`
+Hold ``identity_path`` for this process, or refuse because another holds it.
+
+Returns
+-------
+pathlib.Path
+    The lock file.
+
+Raises
+------
+StudioApiProcessConflict
+    When another process holds the store.
+
+---
+
 ## Module `studio.platform.audit_quarantine_archive`
 
 ### Class `StudioAuditQuarantineArchiveResult`

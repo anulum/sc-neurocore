@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import json
 import os
+import logging
 import tempfile
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -31,6 +32,9 @@ from sc_neurocore.studio.platform.identity_passwords import (
 IDENTITY_SCHEMA_VERSION = "sc-neurocore.studio.identity.v1"
 UTC = timezone.utc
 _ADMIN_ROLE = "studio.admin"
+
+
+_LOGGER = logging.getLogger("sc_neurocore.studio.identity")
 
 
 class StudioIdentityLifecycleError(ValueError):
@@ -320,6 +324,7 @@ def load_studio_identity_store(path: Path) -> StudioIdentityStore:
     """
 
     try:
+        _require_private_identity_file(path)
         payload = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise ValueError("Studio identity file cannot be read.") from exc
@@ -784,12 +789,39 @@ def _write_identity_store(
         with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
             tmp_file.write(encoded)
             tmp_file.write("\n")
-        path_permissions = path.stat().st_mode & 0o777 if path.exists() else 0o600
-        tmp_path.chmod(path_permissions)
+        # The store holds credential hashes: it is written for its owner only,
+        # whatever mode an earlier copy had.
+        tmp_path.chmod(0o600)
         tmp_path.replace(path)
     except BaseException:
         tmp_path.unlink(missing_ok=True)
         raise
+
+
+def _require_private_identity_file(path: Path) -> None:
+    """Refuse an identity file another user owns; close one others can read.
+
+    The store holds credential hashes. One owned by another account is refused,
+    since its owner can change who may sign in. One the owner left readable by
+    group or others is narrowed to owner read and write before it is read, and
+    the widening is logged; its hashes were exposed until then. POSIX modes do
+    not exist on Windows, where the file's ACL governs instead.
+    """
+    if os.name != "posix":
+        return
+    info = path.stat()
+    if info.st_uid != os.geteuid():
+        raise ValueError(
+            "Studio identity file must be owned by the account running Studio; "
+            f"{path.name} is owned by uid {info.st_uid}."
+        )
+    if info.st_mode & 0o077:
+        path.chmod(0o600)
+        _LOGGER.warning(
+            "Studio identity file %s was readable beyond its owner (mode %o); narrowed to 600",
+            path.name,
+            info.st_mode & 0o777,
+        )
 
 
 def _require_active_admin_principal(
